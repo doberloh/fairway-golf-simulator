@@ -29,6 +29,24 @@ The procedural plants approximate regional growth forms using sculpted Cartoon g
 - **Autumn:** [Sugarloaf aerial photography](https://www.sugarloaf.com/events/swig-and-swing) — contrasting hardwood colors, bends, water, and greenside bunkers in a forest setting.
 - **Lakeshore Dunes:** [The Golf Club at Harbor Shores](https://en.wikipedia.org/wiki/The_Golf_Club_at_Harbor_Shores) and the [Senior PGA Championship hole notes](https://www.srpgachampionship.com/harbor-shores) -- holes 7-9 play through dunes along Lake Michigan (the 7th green about 25 ft up a dune), with woodland and river holes elsewhere; the owner's aerial photograph of a dune hole set the look. Fairway takes the mood, not the routing.
 
+## What lies between the holes (the cartoon overhaul, 25 October 2026)
+
+Read for the cartoon overhaul (docs/CARTOON_OVERHAUL.md), which gives each
+landscape landforms and ground of its own. The question asked of every
+reference was the golfer's: standing on a tee, what is the ground beside and
+beyond the hole made of? Sources in REFERENCES, *The cartoon overhaul*; most
+were read through a search tool's summary.
+
+| Landscape | What the real courses show between the holes | Taken for the generator |
+| --- | --- | --- |
+| Mountain | Banff Springs lies in a narrow valley with near-vertical cliffs about 3,000 ft over most fairways and a jagged rock face beside the 4th green; much of the routing is flat along the river. Jasper is a valley course with peaks behind almost every hole, on rocky ground. Crans-sur-Sierre: larch forest and meadow on a plateau. | Holes in the valleys; outcrops and cliff bands rising on the valley sides; scree below the cliffs; meadow where the slope eases; conifers thinning up the slopes. |
+| Desert | Troon North: bare desert, massive granite boulders, ravines and foothills, and a desert rule (a ball in the desert drops beside the nearest grass for one stroke). We-Ko-Pa: fairways at grade with the desert. Sedona courses: red sandstone round the holes. | Turf as ribbons in a desert floor; boulder piles; dry washes; sandstone buttes away from play. The desert itself stays in play (no penalty is added -- PLACED, see *New ground types in play*). |
+| Links | Dunes of wind-blown sand held by marram, fescue, gorse and buckthorn; Trump International's dunes reach about 100 ft over the fairways, all marram; pot bunkers revetted with sod. | Taller marram-covered dunes off the corridors, heather and gorse patches, blowouts. |
+| Heath and sandhills (Pacific Northwest, Haunted Hollow) | Sunningdale: pine, gorse and heather over rumpled sandy ground. Pinehurst No. 2: 35-40 acres of irrigated turf replaced with sand, wiregrass and pine straw, hardpan rather than waste bunkers so a ball bounces and runs. | Pine straw and needle duff under conifers as its own ground; hardpan-like firmness where the turf stops. |
+| Island | Teeth of the Dog: seven holes on the sea, jagged coral rock along them, tee pedestals of coral, paspalum turf. | Coral ironshore at the waterline between the beach and the turf. |
+| Midwest | Oak and hickory groves 70-150 years old; restored prairie of switchgrass, Indian grass and big bluestem in the out-of-play ground. | Tall prairie where the rough is not mown; parkland under the oaks. |
+| Autumn | New England hardwood courses with granite ledges and outcrops near greens, maples framing the fairways. | Granite ledge outcrops; leaf litter under the hardwoods. |
+
 ## How this changes the generator
 
 The old grid has been replaced with seeded corridor packing. Candidate holes use different bearings and tee positions near the preceding green. Sampled corridor clearances reject overlapping routes, and a compactness/return-distance score chooses among several complete routings. An exceptional fallback places a corridor beyond the existing footprint rather than permitting an overlap. This is a playable procedural routing heuristic, not a certified golf-course architecture or safety model.

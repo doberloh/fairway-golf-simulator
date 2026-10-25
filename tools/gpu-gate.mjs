@@ -41,12 +41,25 @@ export function look(seconds = 30) {
  return {util, temp, mem};
 }
 
+// GPU JOBS SOMEBODY ELSE STARTED (the cartoon-overhaul goal, 25 October 2026).
+// Two goals can run at once in two folders, and each keeps its own log, so a
+// log cannot say the other one is drawing. The card's own process list can: a
+// Playwright browser or a Blender that is not ours is another goal's job. The
+// owner's ordinary desktop Chrome is not counted -- it is always there.
+export function foreignJobs(ours = new Set()) {
+ let out = '';
+ try { out = execSync('nvidia-smi --query-compute-apps=pid,process_name --format=csv,noheader', {encoding: 'utf8'}); }
+ catch { return []; }
+ return out.split(/\r?\n/).filter(Boolean).map(l => { const [pid, ...name] = l.split(','); return {pid: Number(pid), name: name.join(',').trim()}; })
+  .filter(p => !ours.has(p.pid) && /ms-playwright|chrome-headless|headless_shell|blender/i.test(p.name));
+}
+
 export function runs() {
  try { return fs.readFileSync(LOG, 'utf8').split(/\r?\n/).filter(Boolean).map(l => JSON.parse(l)); }
  catch { return []; }
 }
 
-export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60, giveUpMin = 60} = {}) {
+export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60, giveUpMin = 60, lookSeconds = 30} = {}) {
  if (!goal) throw Error('gpuGate needs the goal this run belongs to (--goal).');
  const mine = runs().filter(r => r.goal === goal);
  if (mine.length >= cap) throw Error(`This goal has used its ${cap} GPU runs; stop and ask the owner.`);
@@ -57,13 +70,13 @@ export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60,
  }
  const started = Date.now();
  for (;;) {
-  const r = look(30);
-  if (r.util < utilMax && r.temp < tempMax) {
-   console.log(`gate: card ${r.util}% busy, ${r.temp} °C over 30 s -- starting (run ${mine.length + 1} of ${cap})`);
+  const r = look(lookSeconds), others = foreignJobs();
+  if (r.util < utilMax && r.temp < tempMax && !others.length) {
+   console.log(`gate: card ${r.util}% busy, ${r.temp} °C over ${lookSeconds} s -- starting (run ${mine.length + 1} of ${cap})`);
    return {...r, run: mine.length + 1};
   }
-  if (Date.now() - started > giveUpMin * 60000) throw Error(`The card stayed busy (${r.util}%, ${r.temp} °C) for an hour; not starting.`);
-  console.log(`gate: card ${r.util}% busy, ${r.temp} °C -- waiting a minute`);
+  if (Date.now() - started > giveUpMin * 60000) throw Error(`The card stayed busy (${r.util}%, ${r.temp} °C${others.length ? ', ' + others.map(o => o.name).join(', ') : ''}) for an hour; not starting.`);
+  console.log(`gate: card ${r.util}% busy, ${r.temp} °C${others.length ? `, another job on it (${others.map(o => o.name.split(/[\\/]/).pop()).join(', ')})` : ''} -- waiting a minute`);
   sleep(60000);
  }
 }

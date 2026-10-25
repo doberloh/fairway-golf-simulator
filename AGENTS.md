@@ -23,6 +23,24 @@ tests, look at visual changes in the browser, and build before updating
 archives. Physical launch-monitor testing waits until requested. A TODO entry
 is not permission to widen an unrelated task.
 
+## On the cartoon-overhaul branch, landscapes are meant to change
+
+The cartoon-overhaul rework (25 October 2026; brief in the local
+docs/reports/cartoon-overhaul-goal.md) redesigns every biome's landscape, so
+**a seed may and should make a different course than it does on main**:
+terrain, routing, ground types, planting, water. Nothing here asks to keep
+today's ground; never hold a change back because the fingerprint moved.
+
+- **What still holds is determinism:** on this branch a seed makes the same
+  course every time, on any machine.
+- **Every moved ground still bumps `GENERATOR_VERSION`** with its line, so an
+  older save is flagged rather than rebuilt in silence; old saves need not
+  load.
+- **Each generation rule set aside is written down** in
+  docs/CARTOON_OVERHAUL.md, *Rules set aside*.
+- **This section is for this branch only.** Before a merge to main, rewrite
+  it as what main's rules then are.
+
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -281,6 +299,8 @@ ask as above.
 - **Log every run** in the goal's notes: time, group, the card's readings
   before, the result.
 - The realistic-graphics goal (24 October 2026) has its own GPU limits, in its
+  goal text.
+- The cartoon-overhaul goal (25 October 2026) has its own GPU limits, in its
   goal text.
 
 ## Ask before a graphics profile; never just run one

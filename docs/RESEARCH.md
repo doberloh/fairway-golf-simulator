@@ -8905,7 +8905,13 @@ AGENTS.md's limits (40 runs for this goal, each gated and logged in
   between two measurements of the unchanged frame; `--cpuprofile` adds the
   DevTools sampling profile of the processor (build with `MINIFY=0`).
 - **`tools/gpu-gate.mjs`** -- the gate every run passes: 30 s of `nvidia-smi`
-  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap.
+  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap
+  (all four are arguments, so a goal with its own limits -- the cartoon
+  overhaul's 30%, 80 °C, a minute apart, no cap -- passes its own). Since 25
+  October 2026 it also waits while the card holds a Playwright browser or a
+  Blender that this run did not start (`foreignJobs`): two goals in two folders
+  keep two logs and cannot see each other's runs otherwise. The owner's own
+  desktop Chrome is not counted.
 - **`tools/devices.mjs`** -- device profiles (below); **`tools/png-diff.mjs`**
   -- a PNG decoder and changed-pixel count, no dependency.
 

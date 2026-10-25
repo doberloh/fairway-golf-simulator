@@ -237,6 +237,22 @@ line that this one goal carries its own limits in its text. That text (drafted
 in the local, git-ignored docs/reports/) is the authority for that goal only;
 every other goal and turn keeps the limits above.
 
+**The cartoon-overhaul goal, 25 October 2026.** A second graphics journey, on
+its own branch and worktree beside realistic-graphics: keep Cartoon but remake
+every asset, texture and biome landscape. The owner kept the graphics card
+allowed with the same crash precautions as the realistic goal and asked for the
+same AGENTS.md line, for the same reason. One addition in its text: the GPU log
+is kept per folder, so the two goals cannot see each other's runs, and this one
+waits whenever the card holds a browser or Blender it did not start.
+
+**Landscapes may change on cartoon-overhaul, 25 October 2026.** Reviewing the
+goal draft, the owner asked whether "same seed gives the same course" would be
+read as "the landscape must look as it does today". It could have been: the
+rest of AGENTS.md treats moved ground as something to avoid (the fingerprint,
+the version bump), so an agent could hold back the very redesign the goal asks
+for. The owner asked for a rule saying landscapes can change. What survives is
+determinism on the branch, not sameness with main.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

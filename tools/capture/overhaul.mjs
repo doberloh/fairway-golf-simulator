@@ -1,0 +1,87 @@
+// THE OVERHAUL'S FIXED VIEWS: the same pictures of every landscape, taken from
+// any build, so a before and an after line up (the cartoon overhaul, 25
+// October 2026; docs/CARTOON_OVERHAUL.md).
+//
+//   node tools/capture/overhaul.mjs <label> [biome ...] [--build <index.html>] [--views a,b]
+//
+// <label> names the set: `main` for the baseline taken from main's build, `r1`,
+// `r2` ... for each round. Pictures land in bench/shots/overhaul/<label>/<biome>/
+// (git-ignored) with a meta.json of the page's errors and the card's readings.
+// The default build is the capture build of the working tree
+// (`node tools/capture/build-hooked.mjs`); `--build bench/shots/overhaul/main-build/index.html`
+// is main's, kept from the start of the goal.
+//
+// THE SAME COURSE, NOT THE SAME GROUND. Every landscape plays seed `overhaul`,
+// nine holes. Once generation changes, that seed makes different land -- which
+// is the point of the overhaul -- so a pair of pictures is the same hole and
+// the same camera rule (behind its green, above its tee), not the same pixels.
+//
+// GPU. One landscape is about 25 seconds of the card. A run takes at most
+// three landscapes; run several runs with a minute between (the goal's crash
+// precautions). Every run goes through tools/gpu-gate.mjs and is logged.
+import fs from 'node:fs';
+import path from 'node:path';
+import {launch, openGame, save, HIDE_HUD, hourFor, hideBallAndAim} from './capture.mjs';
+import {gpuGate, logRun, readCard} from '../gpu-gate.mjs';
+import {BIOMES} from '../../src/biomes.js';
+
+const argv = process.argv.slice(2);
+const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
+const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
+const [label, ...named] = argv;
+if (!label) throw Error('usage: node tools/capture/overhaul.mjs <label> [biome ...] [--build file] [--views a,b]');
+const biomes = named.length ? named : Object.keys(BIOMES);
+if (biomes.length > 3) throw Error(`${biomes.length} landscapes in one run; at most three (the goal's GPU precautions). Run it in pieces.`);
+for (const b of biomes) if (!BIOMES[b]) throw Error(`unknown landscape "${b}"`);
+
+// Each view: a name, a caption, a time of day and a camera. A camera is a
+// lab.camera pose, or the source of a function of the world run in the page.
+export const VIEWS = [
+ {name: 'h1-tee', hole: 0, when: 'noon', caption: 'Hole 1 from the back tee, eye height', cam: {hole: 0, along: 0, height: 1.8, look: 'pin', pitch: -2.5}},
+ {name: 'h1-behind', hole: 0, when: 'noon', caption: 'Hole 1 from behind its green', cam: {hole: 0, fromPin: 80, around: 170, height: 30, pitch: -17}},
+ {name: 'h1-golden', hole: 0, when: 'golden', caption: 'Hole 1 from behind its green, golden hour', cam: {hole: 0, fromPin: 80, around: 170, height: 30, pitch: -17}},
+ {name: 'h2-side', hole: 1, when: 'afternoon', caption: 'Hole 2 from the side, afternoon', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ {name: 'h2-green', hole: 1, when: 'noon', caption: 'Hole 2, the green close to', cam: {hole: 1, fromPin: 24, around: 25, height: 2.4, pitch: -7}},
+ {name: 'h3-edge', hole: 2, when: 'morning', caption: 'Hole 3, the edge of the rough, morning', cam: {hole: 2, along: 140, across: 34, height: 2.2, look: 'pin', pitch: -3}},
+ {name: 'h3-between', hole: 2, when: 'noon', caption: 'Hole 3, the land beside it', cam: {hole: 2, fromPin: 160, around: 95, height: 55, pitch: -18}},
+ {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
+ {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
+];
+const views = only ? VIEWS.filter(v => only.includes(v.name)) : VIEWS;
+
+const OUT = path.join('bench', 'shots', 'overhaul', label);
+const card = gpuGate({goal: 'cartoon-overhaul', cap: Infinity, restMin: 1, utilMax: 30, tempMax: 80, lookSeconds: 30});
+const started = new Date().toISOString(), results = {};
+const b = await launch();
+try {
+ for (const biome of biomes) {
+  const dir = path.join(OUT, biome), errors = [];
+  fs.mkdirSync(dir, {recursive: true});
+  const p = await openGame(b, {width: 1600, height: 900, density: 1, game: build && path.resolve(build)});
+  p.on('pageerror', e => errors.push(`page error: ${e.message}`));
+  p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
+  const t0 = Date.now();
+  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed});
+  const built = Date.now() - t0;
+  await p.addStyleTag({content: HIDE_HUD});
+  let hole = 0;
+  for (const v of views) {
+   if (v.hole !== hole) { await p.evaluate(h => window.lab.hole(h), v.hole); hole = v.hole; await p.waitForTimeout(4000); await p.addStyleTag({content: HIDE_HUD}); }
+   await p.evaluate(([cam, at]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
+    window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when)]);
+   await hideBallAndAim(p);
+   // Near-field grass is built one tile a frame; give it time to fill.
+   await p.waitForTimeout(1600);
+   await save(p, [{file: path.join(dir, `${v.name}.jpg`), width: 1600, quality: .88}]);
+  }
+  await p.context().close();
+  results[biome] = {built, errors};
+  fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({label, biome, seed, build: build || 'working tree', built, errors, at: new Date().toISOString(),
+   views: views.map(v => ({name: v.name, caption: v.caption, when: v.when}))}, null, 1));
+  console.log(`${biome}: ${views.length} views, course built in ${(built / 1000).toFixed(1)} s, ${errors.length} error(s)`);
+ }
+} finally {
+ await b.close();
+ const after = readCard();
+ logRun({goal: 'cartoon-overhaul', what: `overhaul captures ${label}: ${biomes.join(', ')}`, started, before: card, after, result: Object.fromEntries(Object.entries(results).map(([k, r]) => [k, r.errors.length ? `${r.errors.length} errors` : 'ok']))});
+}
