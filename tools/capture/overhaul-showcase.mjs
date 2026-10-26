@@ -99,7 +99,7 @@ const PREFIX = [[/broadleaves/i, 'broadleaf'], [/conifers/i, 'conifer'], [/bould
  [/desert/i, 'desert'], [/long grass/i, 'grass'], [/^brush/i, 'brush'], [/island/i, 'island'], [/haunted/i, 'haunted'],
  [/houses/i, 'houses'], [/pumpkins/i, 'props'], [/deadfall/i, 'deadfall'], [/redwood/i, 'redwood'], [/lakeshore/i, 'lakeshore'],
  [/furniture/i, 'course'], [/landforms/i, 'land'], [/ground textures/i, 'turf'], [/stands/i, 'stands'], [/shared links/i, 'links-share'],
- [/lighting/i, 'light']];
+ [/lighting/i, 'light'], [/reading the ground/i, 'read'], [/heather/i, 'heather'], [/wildflowers/i, 'flowers']];
 function roundPictures(title) {
  const prefix = PREFIX.find(([re]) => re.test(title))?.[1];
  if (!prefix) return '';
@@ -208,12 +208,13 @@ code{background:var(--line);padding:0 3px;border-radius:3px}
 </style></head><body><main>
 <h1>Cartoon overhaul</h1>
 <p>Branch <code>cartoon-overhaul</code> against main (e3b6288), built ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC from <code>bench/shots/overhaul/</code>. The record and the notes are docs/CARTOON_OVERHAUL.md; this page only shows them.</p>
-<nav><a href="#before">Before and after</a><a href="#light">Light</a><a href="#rounds">Rounds</a><a href="#grounds">Ground types</a><a href="#numbers">Numbers</a><a href="#frame">Frame rate</a><a href="#rules">Rules set aside</a></nav>
+<nav><a href="#before">Before and after</a><a href="#light">Light</a><a href="#rounds">Rounds</a><a href="#reading">Reading the ground</a><a href="#grounds">Ground types</a><a href="#numbers">Numbers</a><a href="#frame">Frame rate</a><a href="#rules">Rules set aside</a></nav>
 <h2 id="before">Every landscape, main and the branch</h2>
 <p>Seed <code>overhaul</code>, nine holes, the same camera rule in both. Generation has changed, so a pair is the same hole and camera, not the same ground.</p>
 ${before}
 <h2 id="light">The lighting rounds</h2>${lighting()}
 <h2 id="rounds">Every asset and texture, round by round</h2>${rounds()}
+<h2 id="reading">Reading the ground</h2>${md(section('Reading the ground'))}${roundPictures('reading the ground')}
 <h2 id="grounds">The ground types</h2>${grounds()}
 <h2 id="numbers">Wait, size and frame rate</h2>${numbers()}
 <h2 id="frame">The frame-rate pass</h2>${md(section('Frame rate'))}

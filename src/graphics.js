@@ -351,18 +351,44 @@ const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
 // So the green settings carry a generation. Raise it when the chosen defaults
 // change and every saved record adopts them ONCE; anything the player sets
 // afterwards sticks, because their record is saved at the current generation.
-export const GREEN_READ_GEN = 4;
-const greenValue = (g, key, fallback) =>
- (g?.greenReadGen ?? 0) >= GREEN_READ_GEN ? clampPct(g?.[key], fallback) : fallback;
+// 5: the ground-readability phase of the cartoon overhaul (26 October 2026)
+// folded the seven ground-reading controls into one choice (READINGS below);
+// every record adopts Clear once -- Map lines where contour lines were on.
+export const GREEN_READ_GEN = 5;
+// READING THE GROUND, ONE CHOICE (the owner, 26 October 2026: "too many
+// complicated settings"). Seven switches and sliders -- ground shading, slope
+// tinting, grass sheen, contour lines, mowing stripes, green definition, green
+// mowing bands -- are three settings a player can tell apart:
+//   natural  the cues as the owner tuned them through September and October
+//   clear    the green's shape shown plainly: definition 85, bands 65, and its
+//            sheen allowed further (ground.js `span`)
+//   map      clear, with contour lines -- every metre, every 5 cm on a green
+// The keys stay in the record and the renderer reads them as before; the
+// choice writes them. Clear is the default -- PLACED in the readability rounds
+// (CARTOON_OVERHAUL *Reading the ground*), the owner's to overrule.
+export const READINGS = ['natural', 'clear', 'map'];
+export const READING_DEFAULT = 'clear';
+export const READING_LABELS = {natural: 'Natural', clear: 'Clear', map: 'Map lines'};
+export function readingCues(reading) {
+ const natural = {...GROUND_CUES, greenDefinition: GREEN_READ.definition, greenBands: GREEN_READ.bands};
+ const clear = {...natural, greenDefinition: 85, greenBands: 65};
+ return {natural, clear, map: {...clear, contours: true}}[READINGS.includes(reading) ? reading : READING_DEFAULT];
+}
+const current = g => (g?.greenReadGen ?? 0) >= GREEN_READ_GEN;
+// The reading a record is at: its own if current, else adopted once.
+const readingOf = g => current(g) && READINGS.includes(g?.groundReading) ? g.groundReading : g?.contours === true ? 'map' : READING_DEFAULT;
+const greenValue = (g, key, fallback) => current(g) ? clampPct(g?.[key], fallback) : readingCues(readingOf(g))[key];
+const cueValue = (g, key) => current(g) ? bool(g?.[key], readingCues(readingOf(g))[key]) : readingCues(readingOf(g))[key];
 const clean = g => ({
  greenReadGen: GREEN_READ_GEN,
+ groundReading: readingOf(g),
  quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
  frameCap: FRAME_CAPS.includes(g?.frameCap) ? g.frameCap : 0,
- relief: bool(g?.relief, GROUND_CUES.relief),
- slopeTint: bool(g?.slopeTint, GROUND_CUES.slopeTint),
- contours: bool(g?.contours, GROUND_CUES.contours),
- stripes: bool(g?.stripes, GROUND_CUES.stripes),
- sheen: bool(g?.sheen, GROUND_CUES.sheen),
+ relief: cueValue(g, 'relief'),
+ slopeTint: cueValue(g, 'slopeTint'),
+ contours: cueValue(g, 'contours'),
+ stripes: cueValue(g, 'stripes'),
+ sheen: cueValue(g, 'sheen'),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
  // AUTOMATIC RESOLUTION (F4, auto-resolution.js): on by default, because the
@@ -389,10 +415,13 @@ const clean = g => ({
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every
  // tier the tier allows them. Defaults are the settings the before/after report
  // was judged at.
- patches: clampPct(g?.patches, LOOKS.patches),
+ // Turf colour variation and the shade under trees left the panel in the
+ // readability phase (fewer settings): fixed at the values they were judged
+ // at. Haze and wind stay -- wind for anyone motion bothers.
+ patches: LOOKS.patches,
  haze: clampPct(g?.haze, LOOKS.haze),
  wind: clampPct(g?.wind, LOOKS.wind),
- shade: clampPct(g?.shade, LOOKS.shade),
+ shade: LOOKS.shade,
 });
 
 

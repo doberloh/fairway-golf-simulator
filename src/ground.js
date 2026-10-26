@@ -341,8 +341,21 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   if(code<8.5){
    // Heather: muted, a third the rough's own colour, in soft clumps (round 3:
    // saturated purple in 1.6 m blocks read as a pixelated decal).
-   float clump=patchNoise(q/3.2)*.7+patchNoise(q/.9)*.3;
-   return mix(gt_heather,rough,.32)*(.82+.26*smoothstep(.3,.8,clump));
+   // Round 4: round 3's flat mauve read as mud from above. A heath is a mat
+   // of dark woody cushions, olive-brown with the light on their tops, and
+   // flecked with bloom -- purple where the heather is (its tint's blue over
+   // its green), none on a dead moor.
+   // Round 5: round 4's olive-brown still averaged to dirt from afar, the
+   // flecks too fine to count; the mat now carries the heather's own hue at
+   // two-thirds, the cushions' light and shade make the texture, and the
+   // bloom is denser.
+   float clump=patchNoise(q/2.6)*.65+patchNoise(q/.8)*.35,cushion=smoothstep(.25,.85,clump);
+   float blooms=clamp((gt_heather.b-gt_heather.g)*6.,0.,1.);
+   // Round 6: still a burnt patch at .55; a heath in bloom is its colour, so
+   // the hue at three-quarters where it blooms, and a dead moor stays dark.
+   vec3 mat=mix(vec3(.1,.11,.05),mix(gt_heather,rough,.15),.5+.28*blooms)*(.66+.56*cushion);
+   float bloom=step(.7,hashGround(floor(q/.3)))*cushion*blooms;
+   return mix(mat,gt_heather*1.35,bloom*.8);
   }
   // Native grass: streaky tussocks.
   float streak=hashGround(floor(vec2(q.x/.28,q.y/1.1)));
@@ -640,7 +653,11 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // lines fade out instead of aliasing into noise where the ground is steep or
  // far away -- the same anti-aliasing the mowing stripes use.
  if(cueContours>.001&&kind!=6.){
-  float band=groundPoint.y/1.0;
+  // A line every metre -- and every 5 cm on a green and its fringe (the
+  // ground-readability rounds, 26 October 2026): a green falls less than a
+  // metre end to end, so at a metre it showed one line or none (10 cm, the
+  // first try, gave lines 3 m apart on a 3% green; 5 cm gives 1.7 m).
+  float band=groundPoint.y/(kind>=3.&&kind<=4.?.05:1.);
   float w=max(fwidth(band),1e-4);
   float edge=abs(fract(band)-.5)*2.;
   // A line in the middle of the transition, softened by exactly one pixel.
@@ -648,7 +665,7 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   // Past the point where bands are a pixel apart there is nothing to draw but
   // moire, so it fades out rather than stacking up.
   line*=1.-smoothstep(.25,.7,w);
-  turf*=1.-line*.22*cueContours;
+  turf*=1.-line*(kind>=3.&&kind<=4.?.3:.22)*cueContours;
  }
  // The CUP, not the green's centre. cupInfo.xy above is the GREEN and drives
  // the boundary; using it here punched the hole through the middle of every
@@ -805,7 +822,11 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    float onTurf=1.-clamp(dot(gs4,toEye),0.,1.),onFlat=1.-clamp(toEye.y,0.,1.);
    float sheen=pow(onTurf,4.)-pow(onFlat,4.);
    bool putting=kind>=3.;
-   turf*=clamp(1.+sheen*(kind==4.?1.2:putting?.5:1.)*cueSheen,putting?.9:.72,putting?1.1:1.3);
+   // The putting surface's cap opens with the green definition above its
+   // default (the ground-readability rounds): 10% either way at 50, about 18%
+   // at 85, where a player has asked to see the green's shape plainly.
+   float span=.1+.08*smoothstep(2.3,3.9,greenLift);
+   turf*=clamp(1.+sheen*(kind==4.?1.2:putting?.5:1.)*cueSheen,putting?1.-span:.72,putting?1.+span:1.3);
   }
   // SLOPE DRIES OUT, AND THAT IS A COLOUR, NOT A BRIGHTNESS.
   //
@@ -967,11 +988,23 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    vec3 leaf=mix(pick<.3?farC0:pick<.55?farC1:pick<.8?farC2:farC3,groveLeaf,.55);
    vec3 near=leaf*mix(.4,lit,smoothstep(0.,.35,lump));
    float sharp=1.-smoothstep(.12,.55,length(fwidth(wp))/farSize);
-   vec3 canopy=mix(groveLeaf*.72,near,sharp);
+   // Round 6: past the single crowns the forest was its groves alone -- 70 m
+   // blobs of one colour, camouflage from above (Autumn's overview). A middle
+   // scale between them: clusters of crowns about 26 m across, the nearest
+   // of a jittered grid so their edges are organic, each one of the leaf
+   // colours -- the mosaic a far wooded hillside shows -- fading to their
+   // average where a cluster is under a pixel; and the groves blended half
+   // toward the forest's average colour.
+   vec2 m2=wp/26.,mi=floor(m2);float mBest=9.,mPick=0.;
+   for(int a=-1;a<=1;a++)for(int b=-1;b<=1;b++){vec2 c=mi+vec2(float(a),float(b));vec2 h=fract(sin(vec2(dot(c,vec2(91.7,47.3)),dot(c,vec2(53.1,17.9))))*43758.5453);vec2 v=c+.15+.7*h-m2;float dd=dot(v,v);if(dd<mBest){mBest=dd;mPick=h.y;}}
+   vec3 avgLeaf=(farC0+farC1+farC2+farC3)*.25,mosaic=mPick<.3?farC0:mPick<.55?farC1:mPick<.8?farC2:farC3;
+   float mSharp=1.-smoothstep(.15,.6,length(fwidth(wp))/26.);
+   vec3 farLeaf=mix(mix(avgLeaf,groveLeaf,.5),mix(mosaic,groveLeaf,.35),mSharp*.75)*(.84+.24*patchNoise(wp/19.));
+   vec3 canopy=mix(farLeaf*.72,near,sharp);
    turf=mix(turf,canopy,mask);
   }
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v31';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v37';return m;
 }

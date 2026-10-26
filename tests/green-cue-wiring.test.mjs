@@ -62,6 +62,31 @@ test('the shipped defaults', () => {
  assert.ok(Math.abs(u.greenBandSoft - .4) < 1e-9, 'bands at 40%');
 });
 
+// THE GROUND-READING CHOICE (graphics.js READINGS; the cartoon overhaul's
+// readability phase): seven controls became Natural, Clear and Map lines.
+test('reading the ground is one choice, and each choice writes every cue', async () => {
+ const {READINGS, READING_DEFAULT, readingCues, saveGraphics, GREEN_READ_GEN} = await import('../src/graphics.js');
+ assert.deepEqual(READINGS, ['natural', 'clear', 'map']);
+ assert.equal(READING_DEFAULT, 'clear');
+ const n = readingCues('natural'), c = readingCues('clear'), m = readingCues('map');
+ // Natural is the cues as the owner tuned them.
+ assert.equal(n.greenDefinition, GREEN_READ.definition);
+ assert.equal(n.greenBands, GREEN_READ.bands);
+ assert.equal(n.contours, false);
+ // Clear shows the green more plainly; Map lines is Clear with the lines.
+ assert.ok(c.greenDefinition > n.greenDefinition && c.greenBands > n.greenBands);
+ assert.deepEqual({...m, contours: false}, c);
+ assert.equal(m.contours, true);
+ // An old record adopts the default once -- or Map lines if it had contours on.
+ assert.equal(saveGraphics({greenDefinition: 20}).groundReading, 'clear');
+ assert.equal(saveGraphics({greenDefinition: 20}).greenDefinition, c.greenDefinition);
+ assert.equal(saveGraphics({contours: true}).groundReading, 'map');
+ // A current record keeps its choice and its values.
+ const kept = saveGraphics({greenReadGen: GREEN_READ_GEN, groundReading: 'natural', ...n});
+ assert.equal(kept.groundReading, 'natural');
+ assert.equal(kept.greenDefinition, n.greenDefinition);
+});
+
 test('every cue can be turned fully off, and that is the plain green', () => {
  const off = greenCues({greenDefinition: 0, greenBands: 100});
  assert.equal(off.greenLift, 0);

@@ -1023,8 +1023,12 @@ const PHASE=[
  ['Routing the holes',.03],
  ['Shaping the land',.09],
  ['Cutting the water',.04],
- ['Building the ground',.81],
- ['Planting',.03],
+ // The cartoon overhaul's stands made planting a fifth of a wooded course's
+ // wait in one Node process (the grid runs on workers in the browser, so its
+ // share there is smaller still): .03 -> .10, taken from the grid. Measured on
+ // Autumn, PNW, Links and Desert, 18 holes; PLACED between them.
+ ['Building the ground',.74],
+ ['Planting',.10],
 ];
 const phaseAt=(i,local=0)=>{
  let base=0;for(let k=0;k<i;k++)base+=PHASE[k][1];
@@ -2139,7 +2143,14 @@ export function* generateWorldSteps(settings={},options={}){
  const stands=s.range?null:standsOf(bio,s.seed);
  if(stands){
   const mix=stands.plants??bio.plants.filter(([k])=>!GROUND_PLANTS.has(k));
-  for(const p of standSites(stands,halfX,halfZ,s.seed)){
+  // PROGRESS THROUGH THE STANDS (the cartoon overhaul): they made planting a
+  // fifth of a wooded course's wait, and as one step the bar stood still and
+  // the page got no frames for a second. Reporting is all a yield does here --
+  // generateWorld runs straight through -- so nothing generated moves.
+  const sites=standSites(stands,halfX,halfZ,s.seed);let visited=0;
+  yield phaseAt(4,.25);
+  for(const p of sites){
+   if(++visited%300===0)yield phaseAt(4,.25+.5*visited/sites.length);
    const {x,z}=p,n=nearest(x,z);
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'trees'))continue;
    if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
@@ -2160,7 +2171,10 @@ export function* generateWorldSteps(settings={},options={}){
   // two sites kept, by the ground-plant rules -- ground that allows shrubs,
   // clear of houses and of the view from the tee. No trunk, so nothing a
   // ball stops on. Marked `under`, so a graphics tier may draw fewer.
-  if(stands.under)for(const p of standSites({spacing:stands.under.spacing},halfX,halfZ,s.seed,'under')){
+  const underSites=stands.under?standSites({spacing:stands.under.spacing},halfX,halfZ,s.seed,'under'):[];visited=0;
+  yield phaseAt(4,.75);
+  for(const p of underSites){
+   if(++visited%600===0)yield phaseAt(4,.75+.2*visited/underSites.length);
    const {x,z}=p;
    if(p.shade>.55)continue;
    const n=nearest(x,z);

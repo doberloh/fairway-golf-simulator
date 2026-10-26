@@ -10176,3 +10176,54 @@ the washer 1.6 m ahead of the sign (renderer.js `addHoleDetails`; PLACED).
 Round 1 (`rounds/course-r1.png`, in the game `course-r1/`): it reads -- a
 blue dome on the tee, the sign with its card, the washer and the bench --
 and the gable cap is a flat slab seen from the front.
+
+### The clouds, rounds 6 and 7 of the light (26 October 2026)
+
+clouds.js: puffs are detail-2 icospheres (320 faces, were 80) flattened below
+a quarter of their radius; seven to twelve a cloud (were four to seven), sized
+by how far from the middle they sit so a cloud domes up. Shading, installed
+with the fade after the cascade setup: normals 62% toward the cloud's centre
+(the crowns' 80%, a little less so the puffs still read), the underside
+tinted .66 .72 .86 below 70% of a band 0.45 radii deep from the cloud's base,
+a rim of (1 - n.v)^6 times 0.4 of the sky colour plus the sun's colour times
+(sun behind)^3 times .8 -- round 6 had ^3 and 0.5 and the outlines glowed.
+All PLACED by eye. About 48,000 triangles for the whole sky, against 7,000.
+
+### Heather's paint, rounds 4-6 (26 October 2026)
+
+ground.js, code 8: cushions from two octaves of patch noise (2.6 m and 0.8 m),
+lit .66-1.22; the mat is the heather tint (15% toward the rough) mixed with
+a dark olive (linear .10 .11 .05) at 50%, 78% where the tint's blue exceeds
+its green by a sixth (a heath in bloom); bloom flecks on 30% of 0.3 m cells
+over the cushions, 1.35 times the tint. All PLACED by eye; a dead moor (a tint
+whose blue is not over its green) takes no bloom.
+
+Round 7 (heather near the camera): on heather ground the near-field tiles draw the heather model (Blender_Heather_1) for three in ten of their candidates, 0.30-0.55 m tall, leaf #5a5a3c and bloom #a86aa8 (Haunted #4a403c and #6c5862) -- PLACED; fading with the tiles between 28 and 48 m.
+
+## The overhaul's wildflowers (26 October 2026)
+
+The rough's flowers (vegetation.js addGroundCover; Midwest, Mountain, Links
+and Desert, 16% of the scatter's grass as before) as three meadow forms:
+ox-eye daisy, a small aster and a cup flower. Shapes and sizes from general
+knowledge, not looked up: 20-30 cm tall, heads 4-7 cm. Their colours are the
+landscapes' own (`scatter.flowers`). Drawn to 0.4 of the tier's long-grass
+reach (High 76 m), sinking over its last 40% -- PLACED, from the 8 M
+triangles they cost unbounded.
+
+### The far forest, round 6 (26 October 2026)
+
+ground.js: past the single crowns (farSize, 6-12 m), clusters from a jittered grid 26 m apart, nearest-point, each picking one of the four farForest colours, mixed in at three-quarters where a cluster spans more than a few pixels (fwidth against 26 m: full below .15, none above .6); the groves (70 m) blended half toward the average of the four colours; brightness .84-1.08 from patch noise at 19 m. PLACED by eye on Autumn's overview.
+
+## Reading the ground, the overhaul's phase (26 October 2026)
+
+Numbers behind docs/CARTOON_OVERHAUL.md *Reading the ground*:
+- Clear: green definition 85 (lift 3.9, bend 4.0), bands 65; Natural 50 and 40
+  (unchanged). PLACED from the captures.
+- The putting surface's sheen cap: 0.10 either way below lift 2.3 (definition
+  50), rising smoothly to 0.18 at lift 3.9 (85). The cap was 0.10 because at
+  4.5 times the gain whole regions of a green changed tone as the camera moved
+  (the owner, September); 0.18 is a little under twice it, and still a quarter
+  of that gain.
+- Contours on greens and fringes every 0.05 m (a 3% green: a line every 1.7
+  m), darkening 0.30 (0.22 elsewhere, a line every metre). 0.10 m was tried
+  first: lines 3.3 m apart, one or two across a green.

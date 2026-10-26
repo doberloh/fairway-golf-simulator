@@ -79,7 +79,9 @@ often has the how-to already worked out.
 - **Greens that read at midday**, five options in order of payoff: a smooth
   lighting ramp for the putting surface alone (the four-step toon ramp clamps
   a near-flat green to one brightness above about 48 degrees of sun); cross-cut
-  bands; contour lines on greens only, off by default; shading baked from each
+  bands; contour lines on greens only, off by default (BUILT on the
+  cartoon-overhaul branch as part of *Map lines*, 26 October 2026: 5 cm on
+  greens, a metre elsewhere -- not greens-only); shading baked from each
   green's shape; slope in hue. Graphics only. Expect an improvement, not a
   solved problem: part of why a green reads flat is the low viewing angle.
   Medium. (was: the entries under *Greens read better if the art style bends

@@ -162,18 +162,19 @@ every earlier model lacked:
   vertices a lobe has never moves anything built after it, and the twin has
   the full model's silhouette and paint with only its facets changed. An oak
   goes from 9,765 faces to 817, a pine from 5,929 to 717 -- about 330 KB for
-  all twenty (before the frame-rate pass below). A far twin draws a tiny
-  non-leaf lump -- a flower, a berry, under 15 cm -- as a four-face cone, and
-  keeps it, so the twin still has every role its model has.
+  all twenty (before the frame-rate pass below). They are ingested as the
+  `fartwin` family (never planted); `mesh-assets.js` `farParts` hands one out
+  part for part, and the cull draws it where a crown is small on screen, by
+  the tier's `farPainted` line (graphics.js). Introducing `own_stream`
+  re-jittered every full model once (the lobes' bumps moved; their places did
+  not). A far twin draws a tiny non-leaf lump -- a flower, a berry, under
+  15 cm -- as a four-face cone, and keeps it, so the twin still has every
+  role its model has.
 - **The finest lobe is a twelve-sided sphere** (the frame-rate pass):
   `add_lump(subdiv=3)`, `cloud_crown`'s default, is a UV sphere of 12 segments
   and 7 rings, 144 faces, where it was a 320-face icosphere. A maple crown
   9,700 -> 4,400 triangles. The 80-face icosphere was tried and rejected:
-  hexagonal outlines (CARTOON_OVERHAUL *Frame rate*). They are ingested as the `fartwin` family (never planted);
-  `mesh-assets.js` `farParts` hands one out part for part, and the cull draws
-  it where a crown is small on screen, by the tier's `farPainted` line
-  (graphics.js). Introducing `own_stream` re-jittered every full model once
-  (the lobes' bumps moved; their places did not).
+  hexagonal outlines (CARTOON_OVERHAUL *Frame rate*).
 
 The library's shapes: `cloud_crown` (a crown as a cloud of soft lobes on an
 ellipsoid, flattened underneath), `skirt` (one conifer tier: a drooping star
@@ -350,6 +351,18 @@ flutes, deepest at the foot. Crown widths are the generator's (species.js
 grove's 13,000-53,000: the model module fell from 19.8 MB to 7.8 MB. The
 grown models (tools/grow.mjs) no longer ship on this branch; `thinSprays` is
 kept, and tested on a built crown, for main's sake.
+
+### cartoon_flowers
+
+`tools/blender/cartoon_flowers.py`: the rough's wildflowers, where a 20-face
+gem sat on a grass tip -- an ox-eye daisy (three stems, rayed heads), an aster
+tuft (narrow leaves, five small heads) and a cup (a buttercup or lily on bare
+stems). Petals are flat two-triangle blades drawn two-sided (round 3; a
+daisy of 20-face petal lumps was 900 triangles), `accent` coloured per
+landscape (`scatter.flowers`), `bark` the eye, `leaf` the stems. Ingested
+as the `wildflower` family. The pack's contact sheet stands them beside a
+30 cm reference (`ct.export(..., figure=.3)`; a person's height made them
+specks).
 
 ### cartoon_course
 

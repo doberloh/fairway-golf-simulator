@@ -82,6 +82,19 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   the cull, whose rebuild is about 1.6 ms (see the entry below). A weak card
   is still unmeasured: the software arm is not run in a goal.
 
+- [ ] **A straight step in the fairway's tone, Midwest hole 2** (seed `overhaul`,
+  view `h2-green-b` in tools/capture/overhaul.mjs: the green from 45 degrees
+  round, noon). A vertical line runs from the bottom of the frame to the green,
+  lighter turf one side, darker the other, on Natural and Clear alike -- a
+  straight edge in something the ground shader blends (a ground grid seam, a
+  baked relief tile, a cloud shadow?). Seen 26 October; not looked into.
+- [ ] **Reading the ground is one choice now, seen only in captures** (CARTOON_OVERHAUL
+  *Reading the ground*). Check in a round: the Graphics panel's choice
+  (Natural, Clear, Map lines) changes the green at once; on Clear a green's
+  tilt shows from the fairway and on the putt, and its tone does not swim as
+  the camera moves round it (the reason its sheen was capped); Map lines'
+  5 cm contours on greens beside the green-reading grid; that nobody misses
+  the turf colour and tree-shade sliders. Clear as the default is PLACED.
 - [ ] **The tee furniture has been seen only in captures** (cartoon_course.py;
   BLENDER_ASSETS *cartoon_course*): the marker sits on the turf and is not
   mistaken for a ball; the sign's card faces the player at every tee; the

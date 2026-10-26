@@ -28,6 +28,10 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
+// `--cues '{"greenDefinition":70}'`: the ground-reading settings to draw with
+// (renderer.js setGroundCues; the ground-readability rounds), applied after
+// the course is built.
+const cues = JSON.parse(opt('--cues', 'null'));
 // `--homes`: the same course with fairway homes on (the game's default is
 // off, so no fixed view shows a house), and two views of the first ones --
 // the houses' rounds (tools/blender/cartoon_houses.py). Kept apart from the
@@ -52,6 +56,11 @@ export const VIEWS = [
  {name: 'h1-golden', hole: 0, when: 'golden', caption: 'Hole 1 from behind its green, golden hour', cam: {hole: 0, fromPin: 80, around: 170, height: 30, pitch: -17}},
  {name: 'h2-side', hole: 1, when: 'afternoon', caption: 'Hole 2 from the side, afternoon', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
  {name: 'h2-green', hole: 1, when: 'noon', caption: 'Hole 2, the green close to', cam: {hole: 1, fromPin: 24, around: 25, height: 2.4, pitch: -7}},
+ // The same green from 45 degrees further round: does its tone swim as the
+ // camera moves (the ground-readability rounds; why the sheen was capped)?
+ {name: 'h2-green-b', hole: 1, when: 'noon', caption: 'Hole 2, the green close to, 45 degrees round', cam: {hole: 1, fromPin: 24, around: 70, height: 2.4, pitch: -7}},
+ // A putt read from behind the ball (the ground-readability rounds).
+ {name: 'h2-putt', hole: 1, when: 'noon', caption: 'Hole 2, a putt read from 9 m', cam: {hole: 1, fromPin: 9, around: 25, height: 1.6, pitch: -9}},
  {name: 'h3-edge', hole: 2, when: 'morning', caption: 'Hole 3, the edge of the rough, morning', cam: {hole: 2, along: 140, across: 34, height: 2.2, look: 'pin', pitch: -3}},
  {name: 'h3-between', hole: 2, when: 'noon', caption: 'Hole 3, the land beside it', cam: {hole: 2, fromPin: 160, around: 95, height: 55, pitch: -18}},
  // The lighting rounds' hours (phase 5): the same side view of hole 2 at first
@@ -67,6 +76,13 @@ export const VIEWS = [
   const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L;
   const c = h.toWorld({x: t.x - ux * 6 + uz * 3, z: t.z - uz * 6 - ux * 3}), s = h.toWorld({x: t.x - uz * 6 + ux * 2, z: t.z + ux * 6 + uz * 2});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.6, pitch: -9}; }`},
+ // Heather close to (the overhaul's heather rounds): the heather nearest the
+ // first green, from 14 m off at eye height; behind the green where there is none.
+ {name: 'h1-heath', hole: 0, when: 'afternoon', caption: 'Heather close to', cam: `w => { const g = w.holes[0].worldPin; let best = null;
+  for (let r = 20; r < 400 && !best; r += 12) for (let a = 0; a < 6.28; a += .2) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'heather') { best = {x, z}; break; } }
+  if (!best) return {x: g.x, z: g.z - 60, yaw: 0, height: 20, pitch: -15};
+  const d = Math.hypot(best.x - g.x, best.z - g.z) || 1, cx = best.x + (g.x - best.x) / d * 14, cz = best.z + (g.z - best.z) / d * 14;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.8, pitch: -12}; }`},
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];
@@ -85,6 +101,7 @@ try {
   p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
   const t0 = Date.now();
   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {})});
+  if (cues) await p.evaluate(c => window.__view.setGroundCues(c), cues);
   const built = Date.now() - t0;
   await p.addStyleTag({content: HIDE_HUD});
   let hole = 0;

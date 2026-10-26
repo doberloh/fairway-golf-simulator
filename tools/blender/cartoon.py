@@ -494,15 +494,17 @@ def far_twin(name, build):
     return b
 
 
-def export(models, render=None, colours=None, far=False):
+def export(models, render=None, colours=None, far=False, figure=1.8):
     """fb.export_pack with PaintMesh and the paint exported as COLOR_0; with
     `far`, every model's far twin too (`<name>_Far`) -- or, given a set of
-    names, those models' only (a small plant's twin saves next to nothing)."""
+    names, those models' only (a small plant's twin saves next to nothing).
+    `figure`: the contact sheet's height reference in metres (a person by
+    default; a small pack passes something its own size)."""
     out, render_path = fb.args()
     use_toon_sheet(colours)
     fb.Mesh = PaintMesh
     if far:
         models = list(models) + [(name + '_Far', far_twin(name, build)) for name, build in models
                                  if far is True or name in far]
-    fb.export_pack(models, out, render_path or render,
+    fb.export_pack(models, out, render_path or render, figure=figure,
                    gltf_options={'export_vertex_color': 'ACTIVE', 'export_all_vertex_colors': False})

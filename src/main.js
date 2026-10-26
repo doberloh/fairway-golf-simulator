@@ -88,7 +88,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,o
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {randomSettings} from './settings-schema.js';
@@ -5997,27 +5997,10 @@ function renderPanel(name,content){
   <label class="check"><input id="gfxDistantFlags" type="checkbox" ${graphics.distantFlags?'checked':''}> Larger flags far away</label>
   <p class="note">Drawn to size, a flagstick is thinner than a pixel from a long way out and simply disappears. On, the stick and its flag grow with distance so you can always find the hole; from a chip or on the green they are exactly to size. Off, they are to size from everywhere. Only the picture changes: the ball hits the real flagstick either way.</p>
   <h3>Reading the ground</h3>
-  <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
-  <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
-  <p class="note">Slopes facing the sun lift a little and slopes facing away darken, as if the sun were always low, plus a lift on crowns and a shade in hollows worked out when the course is built. It comes from the same side as the real shadows, so the two agree. This is what makes a fairway read as a surface rather than a sheet at noon.</p>
-  <label class="check"><input id="gfxSlope" type="checkbox" ${graphics.slopeTint?'checked':''}> Slope tinting</label>
-  <p class="note">Slopes shed water and burn off toward straw; hollows hold it and stay lush. Works in colour rather than brightness, so it reads where the others are competing with the sun. Turf that is already dry, on a desert or links course, has little left to lose and barely changes.</p>
-  <label class="check"><input id="gfxSheen" type="checkbox" ${graphics.sheen?'checked':''}> Grass sheen</label>
-  <p class="note">Mown grass looked at from a low angle is lighter than grass looked down on, so turf tipping away from you reads lighter and turf tipping toward you darker. From a player's eye a gentle slope changes that angle a lot, which is how a real green shows its breaks at any hour. Strongest on fairways; on greens only a gentle hint of which way the green tips.</p>
-  <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
-  <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible thing here by a distance, because it turns a slope into a spacing you can count.</p>
-  <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
-  <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground, and the clean-up lap round the edge of each green.</p>
-  ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
-  <p class="note">A green is the flattest ground on the course, so it has the least shape to show. This lets the shading and the sheen treat it as steeper than it is, and bends its mowing bands to follow the surface. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did.</p>
-  ${slider('gfxGreenBands','Green mowing bands',graphics.greenBands,0,100,'%',5)}
-  <p class="note">How strong the light and dark bands are on greens. Stronger is the freshly mown look; softer leaves more of the shading to read.</p>
+  <label class="field">How the ground shows its shape<select id="gfxReading">${READINGS.map(r=>`<option value="${r}">${READING_LABELS[r]}</option>`).join('')}</select></label>
+  <p class="note"><b>Natural</b>: the slopes show the way the light, the grass and the mowing would show them, kept gentle on greens. <b>Clear</b>: the same, with a green's tilt and its mowing bands drawn plainly enough to read a putt from. <b>Map lines</b>: Clear, with a contour line every metre of height and every 5 cm on the greens -- frankly a map drawn on the grass, and the most legible of the three. None of them changes the ground a ball plays on, or costs a frame.</p>
   <h3>The look of the course</h3>
-  <p>Taste, not performance: none of these costs a measurable frame, and all four apply the moment you move them.</p>
-  ${slider('gfxPatches','Turf colour variation',graphics.patches,0,100,'%',5)}
-  <p class="note">No real course is one colour. Drifts of lighter, darker, drier and lusher grass in the rough, worn and well-watered patches on a fairway, damp sand in a bunker, and only the faintest change of tone on a green, where anything more would get in the way of reading it.</p>
-  ${slider('gfxShade','Shade under trees and rocks',graphics.shade,0,100,'%',5)}
-  <p class="note">A soft darkening at the foot of every trunk and boulder, and deeper under a forest where the crowns overlap, so things look set down on the grass rather than pasted on it. Worked out once when the course is built, from where everything stands.</p>
+  <p>Taste, not performance: neither costs a measurable frame, and both apply the moment you move them.</p>
   ${slider('gfxHaze','Distance haze',graphics.haze,0,100,'%',5)}
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
@@ -6049,8 +6032,10 @@ function renderPanel(name,content){
   };
   // A float write into uniforms the ground material already holds: no rebuild,
   // no recompile, so these take effect on the frame after the click.
-  for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxSheen','sheen'],['gfxContours','contours'],['gfxStripes','stripes']])
-   $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
+  // One choice writes every ground cue (graphics.js READINGS): uniforms the
+  // ground material already holds, so it shows on the next frame.
+  $('gfxReading').value=graphics.groundReading;
+  $('gfxReading').onchange=()=>{const r=$('gfxReading').value;graphics=saveGraphics({...graphics,groundReading:r,...readingCues(r)});view.setGroundCues(graphics);};
   // Live uniform writes, same as the toggles above: no rebuild, no recompile.
   // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an
   // output named <id>Value from the input's own data-unit, for every range in
@@ -6058,8 +6043,7 @@ function renderPanel(name,content){
   // `slider` helper left wireSliders looking up an element that did not exist,
   // and it threw on EVERY input event while this handler quietly worked -- so
   // the slider moved, the number updated, and the console filled up.
-  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
-   ['gfxPatches','patches'],['gfxShade','shade'],['gfxHaze','haze'],['gfxWind','wind']])
+  for(const [id,key] of [['gfxHaze','haze'],['gfxWind','wind']])
    $(id).oninput=e=>{
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);

@@ -179,6 +179,9 @@ const PICK = {
   'blender:Blender_House_Lshape_1', 'blender:Blender_House_Lshape_2'],
  // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): what
  // stands at every tee (renderer.js addHoleDetails), never planted.
+ // THE CARTOON WILDFLOWERS (tools/blender/cartoon_flowers.py): the rough's
+ // flowers (vegetation.js addGroundCover), coloured per landscape.
+ wildflower: ['blender:Blender_Flower_Daisy', 'blender:Blender_Flower_Aster', 'blender:Blender_Flower_Cup'],
  coursefurniture: ['blender:Blender_TeeMarker_1', 'blender:Blender_TeeSign_1', 'blender:Blender_Bench_1', 'blender:Blender_BallWasher_1'],
 };
 

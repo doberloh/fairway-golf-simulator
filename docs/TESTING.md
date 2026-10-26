@@ -141,7 +141,8 @@ the courses several suites share.
   `stands` (the overhaul's uncleared woods and thickets: every record whole and never reaching within 25 m of a corridor, a stand planted thicker than the open scatter, back from play and on ground that holds a tree, none on the Redwood or the range, the sites and field the seed's alone, and every landscape's far-forest record one the ground shader can take, and its long-grass record naming families the model module carries; the understory trunkless and inside stands only). `tee-corridor` counts the open scatter alone against its target and its tee surrounds, per hectare of ground that can hold a tree (a stand stands back from every tee by design). `instance-cull` holds that a painted crown swaps only to the far twin it ships, by `farPainted`, and that one without a twin is never thinned.
 - **The ground a ball plays from** -- `grounds` (the overhaul's ground types: a row in every table -- bounce, roll, skid, lie, relief rank, roll hop, sound, map colour, HUD label -- no restitution a dropped ball could gain height from, the orderings that make each one itself, what may stand on each, a pitch running further on rock than in heather, the shot card naming the ground).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
-  `ground-shader-structure`, `green-cue-wiring`, `glsl-reserved`,
+  `ground-shader-structure`, `green-cue-wiring` (also: the ground-reading
+  choice writes every cue, and an old record adopts it once), `glsl-reserved`,
   `three-namespace`, `flood-shadows`, `instance-cull` (also: a mesh with a reach drops
   whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,

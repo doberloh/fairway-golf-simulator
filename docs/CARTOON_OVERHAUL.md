@@ -21,7 +21,8 @@ When the owner comes back to play it, it should look familiar, and much better.
 | 2. Landscape generation | done (three rounds): a landform recipe per landscape, nine ground types that play (`src/grounds.js`, `src/landforms.js`), generator 37; shared links fairways (three rounds), generator 38; uncleared stands and the far forest (five rounds), generator 40; desert plants (41), the brush (42), pumpkins and toadstools (43) |
 | 3. Ground textures | done (three rounds): the turf detail atlas, the ground types' painted patterns |
 | 4. Assets, biome by biome | in progress: every tree, shrub, grass, brush, rock, house and Haunted Hollow prop pack remade, three or more rounds each (*Rounds*, below); still to come: course props (flags, tee markers, signs), flowers, the houses' foundations and gardens, and the rounds past three toward the addendum's ten |
-| 5. Rendering and lighting | in progress: five rounds of the light (*Lighting*, below), rendering only |
+| 5. Rendering and lighting | in progress: seven rounds of the light (*Lighting*, below), rendering only |
+| 5b. Reading the ground | in progress (the owner, 26 October 2026: "insert a phase for ground readability ... too many complicated settings"): four rounds (*Reading the ground*, below) |
 | 6. Frame-rate pass | first pass done (*Frame rate*, below): Links, Island and Redwood at or under main; the rest over, by numbers written there |
 | 7. Hand-over and showcase | first pass (26 October): every smoke journey that can run green (37; `server-program` skips itself until the standalone server is built, as on main), `npm run build` fresh, the generator bench all clear, the showcase built (`tools/capture/overhaul-showcase.mjs`); to be redone after the rounds still owed |
 
@@ -232,13 +233,14 @@ turf detail*); the ground types' own patterns are in ground.js `groundPaint`.
 Pictures: `bench/shots/overhaul/rounds/turf-r1..2.png`, in the game
 `turf-r2/`, `turf-r3/`.
 
-### Boulders -- three rounds, in the game
+### Boulders -- four rounds, in the game
 
 | Round | What was wrong | What changed |
 | --- | --- | --- |
 | 1 | Round stones threw spikes (bevel overran the hull) | -- |
 | 2 | Round stones coarse, capped in moss; sandstone beds all one size | Round stones as a lumpy sphere flattened underneath |
 | 3 | (game) good: red sandstone hoodoos in the Desert, lichened talus on Mountain | Smoother, crown moss only, beds varied, blocks seated |
+| 4 | (game) On a slope a stone's flat base sat level at its centre and its downhill edge hung in the air -- the desert's sandstone slabs most of all | Drawn tilted to the ground's slope (at most 22 degrees) and sunk by the rise across its half-width, so its top stays at the collider's and its foot goes into the ground (vegetation.js; `rocks-r4/`) |
 
 Pictures: `bench/shots/overhaul/rounds/rocks-r1..3.png`, in the game `rocks-r3/`.
 
@@ -278,7 +280,7 @@ Bay's 26-96 m fairways (RESEARCH, *Shared links fairways*).
 
 Pictures: `bench/shots/overhaul/links-share/`. Not yet seen in the game.
 
-### Uncleared stands and the far forest -- five rounds, generator 40
+### Uncleared stands and the far forest -- six rounds, generator 40
 
 Dense forest, bosque or thicket on every course but the Giant Redwood
 (src/stands.js; RESEARCH, *The overhaul's stands*), judged against the
@@ -301,9 +303,10 @@ Rounds 2-5 of the stands (continuing the table above):
 | 3 | Bare hills past the course | The far forest, painted on the landscape rings (ground.js `farForest`) |
 | 4 | Mountain's faces stretched the crowns into scales; Autumn flat salmon from afar | No canopy on steep ground; a fourth colour; darker far average |
 | 5 | Autumn still uniform at distance | Groves of one colour about 70 m across, which survive distance |
+| 6 | From above (the overview), the groves alone: smooth 70 m blobs, camouflage | A middle scale: organic clusters of crowns about 26 m across, each one of the four leaf colours, fading to their average where a cluster is under a pixel; the groves blended half toward the forest's average (ground.js; rendering only) |
 
-Pictures: `stands-r2/` to `stands-r5/`. Next: fewer, smaller evergreen
-blotches in Autumn's far hills; the desert's bosque waits for the desert pack.
+Pictures: `stands-r2/` to `stands-r5/`, `farforest-r6/`. The desert's
+bosque has had its own rounds since (*Desert plants*).
 
 ### Desert plants -- three rounds, generator 41
 
@@ -387,15 +390,16 @@ Pictures: `rounds/props-r1..3.png`, in the game `props-r3/`.
 
 Pictures: `rounds/deadfall-r1..3.png`, in the game `deadfall-r3/`.
 
-### The redwood grove -- three rounds
+### The redwood grove -- four rounds
 
 | Round | What was wrong | What changed |
 | --- | --- | --- |
 | 1 | (before) Grown trees in a realistic hand, 13,000-53,000 triangles | The cartoon_redwood pack. Fir, hemlock, cedar alike; seedling sparse; salal flat |
 | 2 | As round 1 | Cedar drooping, hemlock feathery; tanoak light; seedling full; salal a mound |
 | 3 | Redwood crown skimpy | Fuller, deeper crown. In the game: a cathedral grove; trunks perhaps too orange |
+| 4 | (game) At golden hour the trunks were pillar-box red (bark #8a4a32 under a low warm sun and the colour grade) | Bark a dulled cinnamon, #7a5242; red cedar #735040. The black bands on a trunk at golden hour are the tiers' real shadows, kept |
 
-Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`.
+Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`, `redwood-r4/`.
 
 ### Lakeshore's plants -- three rounds, one in the game
 
@@ -408,7 +412,7 @@ Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`.
 
 Pictures: `rounds/lakeshore-r1..3.png`, `rounds/grass-r4.png`, in the game `lakeshore-r3/`, `lakeshore-r4/`.
 
-### Lighting -- five rounds, rendering only
+### Lighting -- seven rounds, rendering only
 
 All judged on Autumn, Desert and Links (Haunted from round 4), round 5 on all
 ten, at noon, golden hour, dawn, dusk, night and floodlit night
@@ -422,12 +426,14 @@ Numbers are in RESEARCH, *The overhaul's lighting*.
 | 3 | Desert noon still flat; dusk brown | The sky's flat fill cut from 1.15 to .95, the sun 2.8 to 3.05; a lavender twilight between the orange dusk and the night |
 | 4 | At night the mist on the far hills was brighter than the sky (it read as snow); desert sand bleached at noon | The mist lifted toward white by day only; the desert's own exposure .9 |
 | 5 | The desert's exposure darkened its night too | A landscape's exposure applies by day; the floodlit view added -- all ten judged |
+| 6 | (clouds) Each cloud four to seven faceted balls, lit facet by facet: a cream lump | Seven to twelve finer puffs on a flat base, their normals leaning toward the cloud's centre so it lights as one body, a cool underside and a sky rim |
+| 7 | The rim made each outline brighter than the cloud | A thinner, quieter rim; a cooler, deeper underside |
 
-Still wrong after five: a noon desert has little shape from the light (its
+Still wrong after seven: a noon desert has little shape from the light (its
 dunes are gentle and the noon sun high -- the shading cues in ground.js carry
 it); the redwood trunk at golden hour is a garish red with black bands (an
 asset round, not a light one); edges/outlines, ambient occlusion beyond the
-contact pools, clouds, water and wind have not had their rounds yet.
+contact pools, water and wind have not had their rounds yet. Clouds: `clouds-r1/`, `clouds-r2/`.
 
 ## Frame rate -- the first pass (25 October 2026)
 
@@ -510,3 +516,47 @@ as main shows. Not fixed; the TODO entry says what to check in play.
 Still to do: the gable cap reads flat from the front; the flagstick and cup
 keep their exact sizes (the ball plays against them) and are not remade.
 Pictures: `rounds/course-r1.png`, in the game `course-r1/` (view `h1-teekit`).
+
+### Heather -- rounds 4 to 7 (rounds 1-3 under *Landforms and ground types*)
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 4 | Heather read as mud from above: flat mauve | A mat of cushions, olive-brown, flecked with purple bloom (none where the tint is not purple: a dead moor) -- darker, still dirt |
+| 5 | Dirt, burnt; the flecks too fine to count from afar | The heather's own hue at two-thirds, denser bloom -- Haunted's moor went a mottled pink |
+| 6 | Still a burnt patch on Links | The hue at three-quarters where it blooms: a textured mauve heath. Not yet a heath: flat paint cannot give it volume; low heather clumps in the near field are the next round. One patch on Links ends in a straight soft edge, unexplained |
+
+| 7 | Flat paint has no volume | Near the camera (the 48 m ring of grass tiles) heather grows low cushions of the heather model, three in ten of the tiles' candidates, 30-55 cm: blooming purple on Links, dark brown with dusty flecks on Haunted's moor (vegetation.js; decoration, as the forest floor) |
+
+Pictures: in the game `heather-r4/` .. `heather-r7/` (Links, Haunted; view `h1-heath`).
+
+### Wildflowers -- three rounds, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) A 20-face gem on a grass tip | The cartoon_flowers pack: daisy, aster, cup. The cup's petals lay flat, a white blob |
+| 2 | As round 1 | The cup's petals stand up. In the game: 8 M triangles of flowers in a Midwest frame, a quarter of it |
+| 3 | Far too costly | Flat two-triangle petals (a daisy 900 -> 250 triangles); drawn only to two-fifths of the long grass's reach, sinking before it -- 0.09 M |
+
+Pictures: `rounds/flowers-r1..3.png`, in the game `flowers-r2/`, `flowers-r3/`.
+
+## Reading the ground (26 October 2026)
+
+The owner asked for a phase of its own: can a player read the ground --
+fairways, greens, their slopes -- and are there too many settings for it?
+Judged at three views (behind the green from 30 m up, a green from 24 m at
+2.4 m, a putt from 9 m at a putter's eye) on Midwest, Links and Desert; the
+captures `read-r0/` .. `read-r3map/` (`--cues` on tools/capture/overhaul.mjs
+sets the cues for a set).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Fairways read well -- stripes, collars, bunker edges. A green from a player's eye is a flat pale oval: its slope does not show at noon, and its sheen is capped at 10% whatever the setting | Tried green definition 85 and bands 65: the bands show on a putt; contour lines at a metre draw one line on a green or none |
+| 2 | The sheen cap; contours too coarse for a green | The putting surface's cap opens with definition above its default (to about 18% at 85); contours every 10 cm on greens and fringes |
+| 3 | Seven controls for one question; 10 cm lines 3 m apart on a 3% green | One choice, **Natural / Clear / Map lines**, Clear the default (PLACED -- the owner's tuned 50/40 is Natural); contours every 5 cm on greens, a little darker; turf colour variation and the shade under trees left the panel, fixed at 60 |
+| 4 | Does Clear's freer sheen swim as the camera moves? | Checked, not changed: the same green from 45 degrees round (view `h2-green-b`), Natural and Clear -- the darker and lighter regions stay where they were on both. A straight vertical step in the fairway's tone across the approach, in both, is not this phase's (TODO) |
+
+Natural is what the owner tuned through September and October; making Clear
+the default reverses that tuning for anyone who has not chosen, and is the
+owner's to overrule (graphics.js `READING_DEFAULT`). Not yet looked at: the
+green-reading overlays (the grid and beads) beside the new contours, and
+Clear's sheen in motion rather than from two still angles (round 4).
