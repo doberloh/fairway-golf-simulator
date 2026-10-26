@@ -11,7 +11,8 @@
 // ground cover rather than as a tree.
 export const GROUND_PLANTS = new Set([
  'fern', 'swordfern', 'salal', 'sorrel', 'gorse', 'heather', 'agave',
- 'naupaka', 'shrub', 'bramble', 'dunegrass', 'juniper', 'commonjuniper',
+ 'naupaka', 'shrub', 'bramble', 'dunegrass', 'juniper', 'commonjuniper', 'cholla',
+ 'creosote', 'brittlebush', 'sagebrush', 'bracken', 'huckleberry',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the
@@ -37,11 +38,13 @@ export const crownRadius = tree => CROWN_FRACTION[tree.kind] ? CROWN_FRACTION[tr
 // is to collide with it, and the renderer must draw exactly that model. The
 // number is the model's widest half-extent as a fraction of its own height,
 // MEASURED off the ingested geometry (src/asset-meshes.js), not guessed: a
-// Kenney pumpkin is 0.69 as wide as it is tall, the red toadstool clump 0.65,
+// Kenney pumpkin was 0.69 as wide as it is tall, the red toadstool clump 0.65,
 // the single tall toadstool 0.29. The collision cylinder is that wide.
+// Since the cartoon overhaul the models are tools/blender/cartoon_props.py,
+// built to the same proportions and measured again (generator 43).
 export const PROP_MODELS = {
- pumpkin: [['crop_pumpkin', .693]],
- toadstool: [['mushroom_redGroup', .645], ['mushroom_redTall', .285], ['mushroom_tanGroup', .645]],
+ pumpkin: [['Blender_Pumpkin_1', .711], ['Blender_Pumpkin_2', .710], ['Blender_Pumpkin_3', .711]],
+ toadstool: [['Blender_Toadstool_RedGroup', .651], ['Blender_Toadstool_RedTall', .346], ['Blender_Toadstool_TanGroup', .767]],
 };
 
 // Has no trunk worth colliding with. The ground plants, plus the ocotillo:

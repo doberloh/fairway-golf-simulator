@@ -228,3 +228,128 @@ the one Kenney `bush` family the six species shared. Heather, naupaka, fern and
 bramble are sized by their spread (`SPREAD_SIZED`). Their flowers are in the
 models now, so vegetation.js no longer sticks gem-shaped flowers on gorse and
 heather. 33,700 vertices for all eighteen.
+
+### cartoon_desert
+
+`tools/blender/cartoon_desert.py`, 18 models: `Blender_Palo_*` (`palotree`:
+several low green trunks, an airy crown of small lobes on twigs, yellow
+flowers), `Blender_Mesquite_*` (`mesquitetree`: a crooked trunk, arching
+stems, a broad open dome), `Blender_Saguaro_*` (`saguaro`: a ribbed column
+with J arms, cream flowers), `Blender_Cholla_*`, `Blender_PricklyPear_1` and
+`Blender_Barrel_1` (`cholla`, the low cacti), `Blender_Ocotillo_*`
+(`ocotillo`: wands from the root crown, leaves after rain, red tips) and
+`Blender_Agave_*` (`agaveplant`, sized by spread). `ribbed()` in the pack
+builds a cactus column pleated into ribs, painted darker in the grooves.
+Palo verde and mesquite ship far twins (`export(far=<names>)` now takes a
+set of names: a small plant's twin saves nothing). They replace Kenney's
+cacti, the Kenney dead hardwoods that stood in for palo verde and mesquite,
+and the procedural ocotillo and agave.
+
+### cartoon_grass
+
+`tools/blender/cartoon_grass.py`, 17 clumps of long grass, a family each:
+`grassfescue`, `grassmarram`, `grassbluestem` (three-fingered "turkey foot"
+heads), `grassalpine` (with flowers), `grassbunch` (desert), `grasssedge`,
+`grasstussock` (Haunted Hollow) and `grassplume` (Island). Each is 40-200
+faces of two-sided blades (`fb.blade`) round a low mound, green at the root
+and the accent toward the tip, painted by height, normals straight up (the
+game lights grass like the ground). Decoration only: vegetation.js
+`addLongGrass` plants them in colonies on the wild ground, and the near-field
+tall grass uses the first family's first model.
+
+### cartoon_brush
+
+`tools/blender/cartoon_brush.py`, 10 shrubs light enough to plant by the
+thousand (lobes of 80 triangles): `Blender_Creosote_*` (`creosotebush`: an
+open vase of thin stems strung with small olive leaf clumps, yellow flowers),
+`Blender_Brittlebush_*` (`brittlebush`: a silver mound, daisies on stalks),
+`Blender_Sagebrush_*` (`sagebrush`), `Blender_Bracken_*` (`brackenfern`:
+triangular fronds of serrated leaflets) and `Blender_Huckleberry_*`
+(`huckleberrybush`). 465-1,500 faces each. They are the understory of the
+stands and fill the open Desert and Mountain.
+
+### cartoon_island
+
+`tools/blender/cartoon_island.py`, 7 trees: `Blender_Palm_*` (`palm`: a curved
+ringed column, a crown of 15-20 arching fronds of overlapping leaflets,
+coconuts) and `Blender_Hala_*` (`halatree`: prop roots, a forked trunk, a
+dense crown of strap-leaf rosettes, orange fruit). They replace Kenney's palms
+and the procedural hala. Their leaves are single faces, so vegetation.js draws
+the leaf part two-sided (`THIN_LEAVES`; also bracken and ocotillo). No far
+twins: flat leaves gain nothing from one.
+
+### cartoon_haunted
+
+`tools/blender/cartoon_haunted.py`, 10 dead trees from one crooked branching
+helper (`crooked`, `branch`): `Blender_Gnarled_*` (a short twisted trunk, thick
+limbs hooking up and clawing down), `Blender_Snag_*` (a broken conifer: jagged
+top, stubs, bark peeling to pale wood -- the accent), `Blender_DeadWillow_*`
+(a split trunk, long whips hanging) and `Blender_DeadOak_*` (`deadoaktree`, a
+twisted spreading skeleton). 320-950 faces each. They replace the MegaKit's
+gnarled oaks (about 7,500 vertices each), the Ultimate Stylized snags,
+Kenney's dead willows and the Kenney dead hardwoods (`arid`, now gone); the
+model module is about 650 KB smaller for it.
+
+### cartoon_houses
+
+`tools/blender/cartoon_houses.py`, 8 fairway homes, two of each form homes.js
+chooses (`Blender_House_Gable_*`, `_Hip_*`, `_Saltbox_*`, `_Lshape_*`): a unit
+box of walls, a roof in shingle courses with eaves (two-sided, so it does not
+vanish from below), shuttered windows with sills, a door, corner boards and a
+plinth, a brick chimney, some with a porch. Four roles, each tinted per house
+from a street's palette (homes.js `WALLS`, `ROOFS`, warm versions for warm
+biomes): `stone` walls, `bark` roof and shutters and chimney, `accent` trim,
+`dirt` glass and door. 80-110 faces. homes.js fits the WALLS to the collider
+box, measured off the walls' own part and recentred on them (`wallExtents`:
+the ingest centres a model on its whole box and scales it to unit height,
+chimney included); the eaves and a porch roof overhang it. They replace
+Kenney's building kit, whose texture atlases (about 63 KB) no longer ship.
+
+### cartoon_props
+
+`tools/blender/cartoon_props.py`, Haunted Hollow's props: `Blender_Pumpkin_1..3`
+(a ribbed lathe, 8-12 ribs, a twisted stem) and `Blender_Toadstool_RedGroup`,
+`_RedTall` and `_TanGroup` (domed caps flecked with white warts, stout stalks
+with a ring). Built to the Kenney models' proportions, because two things are
+laid on them: the collision radius (species.js `PROP_MODELS`, re-measured --
+pumpkins 0.71, the groups 0.65 and 0.77, the single 0.35) and the lantern face
+(haunts.js `faceGeometry`, on a body 0.67-0.70 of its height in half-width), so
+every pumpkin is round, not squashed. haunts.js draws them painted.
+
+### cartoon_deadfall
+
+`tools/blender/cartoon_deadfall.py`, the forest floor (vegetation.js
+`addDeadfall`, the Giant Redwood and Haunted Hollow): `Blender_Log_*` (`log`,
+built lying down -- a model is unit height, so its height is its thickness --
+sagging, with limb stubs, a sawn or splintered end and a blanket of moss
+cushions), `Blender_Stump_*` (`stump`: root flares, a cut or splintered top,
+moss on one side) and `Blender_MossRock_*` (`mossrock`: `pebble_rock` with a
+moss cap). They replace the grown nurse logs, stumps and boulders. Kenney's
+`rock`, `grass`, `flower` and the grown `litter` families, which nothing drew
+any more, are no longer taken.
+
+### cartoon_redwood
+
+`tools/blender/cartoon_redwood.py`, the Giant Redwood's forest in the
+overhaul's hand: `Blender_Redwood_*` (a fluted, flared red column bare for
+two-thirds of its height, a ragged crown of drooping tiers and clumps),
+`Blender_Fir_*`, `Blender_Hemlock_*` (feathery, a drooping leader),
+`Blender_RedCedar_*` (a buttressed fluted foot, long drooping sprays),
+`Blender_Tanoak_*`, `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
+`Blender_Salal_*` and `Blender_Sorrel_1`. `fluted_trunk` pleats a trunk into
+flutes, deepest at the foot. Crown widths are the generator's (species.js
+`CROWN_FRACTION`: half-width over height 0.095 redwood, 0.17 fir and hemlock,
+0.19 red cedar). 1,000-1,900 faces a tree, with far twins, against the grown
+grove's 13,000-53,000: the model module fell from 19.8 MB to 7.8 MB. The
+grown models (tools/grow.mjs) no longer ship on this branch; `thinSprays` is
+kept, and tested on a built crown, for main's sake.
+
+### cartoon_lakeshore
+
+`tools/blender/cartoon_lakeshore.py` remakes Lakeshore Dunes' set (lakeshore.py,
+built before the overhaul with no paint or bent normals) in the overhaul's
+hand under names of their own, `Blender_Lake*`, so the old pack stays as main
+has it: cottonwood (a furrowed trunk forking into great limbs, each carrying a
+cloud), black oak, sugar maple (with far twins), creeping and vase junipers,
+dune grass patches of splayed tussocks, and bleached driftwood (now drawn
+painted).

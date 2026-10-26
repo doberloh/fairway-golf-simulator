@@ -2057,9 +2057,16 @@ export function* generateWorldSteps(settings={},options={}){
  // The drawn trunk radius, which physics also uses. Kept local rather than
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
+ // The overhaul's brush (tools/blender/cartoon_brush.py), sized to the real
+ // plants, metres (RESEARCH, *The overhaul's brush*): creosote 1.2-3, brittle-
+ // bush 0.3-1.5, big sagebrush up to about 2 (field means 0.2-0.7), bracken
+ // 1-2, evergreen huckleberry 1.2-4 in the woods. PLACED within those.
+ const BRUSH_SIZE={creosote:[1.2,2.6],brittlebush:[.5,1.2],sagebrush:[.5,1.4],bracken:[.8,1.7],huckleberry:[1.2,2.8]};
  // A plant's height and spread from two uniform numbers -- drawn from the
- // ecology stream for the open scatter, hashed for a stand (stands.js).
- const treeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
+ // ecology stream for the open scatter, hashed for a stand (stands.js). The
+ // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
+ // 0.7-1.6 m, the teddy bear's real height (RESEARCH, *The overhaul's desert pack*).
+ const treeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the
@@ -2146,6 +2153,21 @@ export function* generateWorldSteps(settings={},options={}){
    if(small&&blocksView(launch,x,z,tree.y+h,r))continue;
    if(!small&&!roomFor(tree,stands.share))continue;
    if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
+   trees.push(tree);
+  }
+  // THE UNDERSTORY (the owner: THICK brush): shrubs and ferns under a stand,
+  // from a grid of their own (`under.spacing`, its own salt), about one in
+  // two sites kept, by the ground-plant rules -- ground that allows shrubs,
+  // clear of houses and of the view from the tee. No trunk, so nothing a
+  // ball stops on. Marked `under`, so a graphics tier may draw fewer.
+  if(stands.under)for(const p of standSites({spacing:stands.under.spacing},halfX,halfZ,s.seed,'under')){
+   const {x,z}=p;
+   if(p.shade>.55)continue;
+   const n=nearest(x,z);
+   if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'shrubs'))continue;
+   if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+   const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
+   if(blocksView(launch,x,z,tree.y+h,r))continue;
    trees.push(tree);
   }
  }

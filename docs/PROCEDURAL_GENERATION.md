@@ -194,4 +194,4 @@ outside the corridors, and patches between the holes where a broad noise
 field says so, never nearer play than 40-55 m. Each stand is planted from a
 jittered grid every 8-11 m, by the rules every tree obeys, with crowns
 allowed to close and trees 1.2 times the open scatter's size (generator 40). Hashed, not drawn: nothing else on the course is decided
-differently. The Giant Redwood (already a grove) and the range have none.
+differently. Under each stand an understory of shrubs and ferns is planted from a grid of its own (generator 42). The Giant Redwood (already a grove) and the range have none.

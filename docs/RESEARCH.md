@@ -9861,3 +9861,226 @@ owner's ridge photograph; Mountain's faces stretched; Autumn a flat salmon at
 distance); 4, cliffs bare, a fourth colour, darker average (Autumn still
 uniform at distance); 5, groves, which survive distance -- the Autumn hills
 now drift in colour, a little blotchy where the evergreen groves fall.
+
+## The overhaul's desert pack (25 October 2026, generator 41)
+
+Read for tools/blender/cartoon_desert.py (REFERENCES, *Desert plants*), via
+search summary. **Foothill palo verde** (Parkinsonia microphylla): 12-20 ft
+tall and 12-25 ft wide (Arid Zone Trees), up to 25 ft (Oregon State, U of A
+Arboretum), 10-13 ft (Yavapai extension) -- the sources disagree; smooth
+yellow-green photosynthetic bark, often multi-stemmed and low-branched, an
+open spreading crown, leafless much of the year. Models 5.5-7 m by 6.5-8 m.
+**Velvet mesquite** (Prosopis velutina): about 25-30 ft and 15-30 ft wide,
+crooked arching stems into a broad rounded crown; grows wild along washes,
+dense stands there are bosques (U of A, AMWUA, Yavapai extension). Models
+7-9 m by 8.5-9.5 m. **Saguaro**: 3-16 m, first arm at 75-100 years, some never
+branch (Wikipedia); models 8-12 m with 0, 2 and 4 arms. **Teddy-bear cholla**:
+1-5 ft (0.3-1.5 m) with a distinct trunk (gardenia.net, americansouthwest.net);
+a new plant kind `cholla` at 0.7-1.6 m (PLACED: the top of the range), which
+also draws a prickly pear and a barrel cactus -- before, the low cacti would
+have been scaled to saguaro height. **Ocotillo**: 6-100 wand-like branches
+from the root crown, 2-9 m (USDA FEIS), typically 8-20 ft (dimensions.com);
+models 3.5-5.5 m with 12-24 canes.
+
+**Rounds.** 1: palo verde flat discs on bare stalks (lollipops), mesquite
+stacked pancakes, cholla a few big yellow flames, prickly pear pads merged
+into one blob, agave leaves thin as grass; saguaro, barrel and ocotillo right.
+2: palo twigs each carrying a cloud of small lobes; mesquite taller and rounder
+lobes; cholla more, smaller joints; thinner pads set apart; agave leaves twice
+as broad -- palo verde now 11,000 faces, cholla still flames. 3: palo lobes 80
+triangles not 320 (3,500 faces); cholla joints chained on short arms turning
+up. In the game (`desert-r3/`): the bosque is a green thicket of mesquite and
+palo verde with saguaros in the open -- a little like an African savanna; and
+some layered sandstone boulders look as if they float on slopes (the rocks'
+next round).
+
+## The overhaul's long grass (25 October 2026)
+
+The owner's addendum asked for a large library of long grass for every
+landscape, and on a links "the long grass ... for the areas between holes".
+Sources (REFERENCES, *Long grass*), via search summary: **big bluestem** 3-8
+ft, the flowering stalks to about 6 ft, the seed head three finger-like
+branches, a turkey's foot (Purdue, Virginia Tech, Minnesota Wildflowers);
+**marram** foliage about 30 cm to 1 m, flowering culms 50-145 cm, leaves 1-3
+mm and rolled (naturescape, NZ flora); **red fescue** 8-120 cm across its
+forms, the fine links types about 30-45 cm with hair-like leaves (RHS, VicFlora).
+Clump heights in the game (PLACED, from these): fescue 0.55-0.8 m, marram
+0.95-1.1, bluestem 1.2-1.5, alpine tussock 0.3-0.35, desert bunchgrass
+0.6-0.75, sedge 0.35-0.45, moor tussock 0.4-0.5, plume grass 1.1-1.3.
+
+**What was built.** The clumps (BLENDER_ASSETS, *cartoon_grass*), and two
+plantings. Course-wide (vegetation.js `addLongGrass`, biomes.js `longGrass`):
+colonies of 8-14 clumps within 4 m, in broad drifts, on ground that allows
+grass at least 14-25 m outside the corridors; 1,800 (Island) to 7,000 (Links)
+colonies a course, scaled by the tier's grass share; no shadows. Near the
+camera, the tall tuft (native ground, or a tall-grass biome) is now four in
+ten of its candidates as clumps of the biome's first long-grass family. All
+decoration: nothing collides, no generated ground moves.
+
+**Rounds.** 1: right shapes but hair-thin blades (1.5-3 cm) and see-through
+clumps, gone at any distance. 2: blades 2.5 times as broad, 40% more of them,
+a mound at the core -- which read as a faceted rock under the tall ones. 3: a
+smaller, flatter, smoother mound. In the game (`grass-r3/`, `grass-r4/`): at
+first too sparse to see (about one clump per 85 m2); colonies doubled in
+size, and the near tall grass changed from brown spikes to fescue clumps with
+straw tips. The links tee now looks over a fescue rough; the clumps' bases are
+a little pineapple-like, a next round.
+
+## The overhaul's brush (25 October 2026, generator 42)
+
+The owner's addendum asked for brush and bushes for every landscape and THICK
+brush where the ground was never cleared. Sources (REFERENCES, *Brush*), via
+search summary: **creosote bush** an evergreen with many branches rising and
+spreading from the ground, typically about 5-6 ft, 4-10 ft (1.2-3 m) high and
+6-12 ft wide, yellow five-petalled flowers (NC State, Las Pilitas, Bird and
+Hike); **brittlebush** rounded bushes 30-150 cm, grey-silver hairy leaves,
+yellow daisies on long stalks (worldplants, DesertUSA, Oregon State); **big
+sagebrush** field means 0.23-0.67 m across 15 western sites (USGS), nurseries
+give about 6 ft -- the two describe different conditions, the field figure
+was weighted; **bracken** fronds 1-2 m (RHS, Woodland Trust), russet in
+autumn; **evergreen huckleberry** 1.2-4 m in the wild, squat in sun and taller
+in shade (UW, Puget Sound field botany), the RHS's 1-1.5 m is a garden figure.
+Sizes in the game (course.js `BRUSH_SIZE`, PLACED within those): creosote
+1.2-2.6 m, brittlebush 0.5-1.2, sagebrush 0.5-1.4, bracken 0.8-1.7,
+huckleberry 1.2-2.8.
+
+**What was built.** The pack (BLENDER_ASSETS, *cartoon_brush*); an
+**understory** under every stand (`stands.under`): its own hashed grid every
+8-8.5 m, about half the sites kept, inside the stand only, by the
+ground-plant rules (no trunk; clear of houses by 5 m like every plant; never
+in the view from the tee) -- PNW fern and huckleberry, Desert creosote,
+brittlebush and agave, Mountain huckleberry and fern, Midwest shrub and
+bracken, Island naupaka, Autumn bracken and shrub, Haunted bramble and
+bracken, Lakeshore bracken and shrub; and creosote and brittlebush in the
+open Desert mix, sagebrush in Mountain's. About 14,000 understory plants an
+18-hole course (28,000 at a 6 m grid with six in ten kept -- thinned for the
+frame). A graphics tier draws a share (graphics.js `understory`: Low a
+quarter, Medium a half, High and Ultra all), picked by a hash of position.
+
+**Rounds.** 1: creosote big plates on bare sticks (a houseplant), bracken
+thin and sparse; the rest right. 2: creosote strung with many small clumps
+(an airy vase), bracken's leaflets broader and filled to the rachis. 3:
+brittlebush and sagebrush mounds of more, smaller lobes (a dozen big ones read
+as hexagons). In the game (`brush-r3/`) the understory is mostly under the
+canopy, as a forest floor is, and shows at the stands' edges.
+
+## The overhaul's island pack (25 October 2026)
+
+Read for tools/blender/cartoon_island.py (REFERENCES, *Island trees*), via
+search summary. **Coconut palm** (Cocos nucifera): 10-45 m in one guide,
+tall selections 24-30 m (Agroforestree), maximum 30 m with a crown about 6 m
+across (NParks); fronds about 4.5-5.5 m (botanical sources; one care guide 4-6
+m, a Tamil Nadu sheet 3-4 m), 80-100 pairs of leaflets. Models 10-16 m with
+fronds 0.38-0.46 of the height (PLACED: a cartoon palm's crown is bigger for
+its height than a real one's, so it reads from afar). **Hala** (Pandanus
+tectorius): 4-14 m (one source), 20-30 ft (UH CTAHR OF-17), forking at 4-8 m,
+conspicuous prop roots, leaves 90-170 cm in four spiralling rows at the
+branch tips (Australian Tropical Rainforest Plants, NParks). Models 7-9 m.
+
+**Rounds.** 1: the palm's crown a small pom-pom of sparse triangles; the hala
+long bare branches under small tufts. 2: fronds longer and broader with
+twice the leaflets; hala branches shorter and forking, each tip a big
+rosette -- the leaflets read as saw-teeth. 3: leaflets angled forward past
+the next, so each frond is one full leaf; smaller hala fruit. In the game
+(`island-r3/`): crowns thin from below and the hala's tufts all but gone --
+single-faced leaves culled from behind -- and a brown knob atop every palm;
+the thin-leaved families are now drawn two-sided and the knob is a small
+green crown shaft (`island-r4/`).
+
+## The overhaul's haunted pack (25 October 2026)
+
+Read for tools/blender/cartoon_haunted.py (REFERENCES, *Dead trees*), via
+search summary: a **snag** is a standing dead tree, often missing its top or
+most of its small branches; USDA decay classes -- class II few limbs, no fine
+branching, a generally broken top; class III soft, few large branches, bark
+coming off in patches (Wikipedia, USDA). A **dead willow**: a broad trunk that
+may be split, long drooping branches hanging in twisted cascades
+(dimensions.com). A **dead oak**: wide-spreading twisting limbs, a skeletal
+outline (stock descriptions only -- no botanical source was found, and the
+shape is placed). The gnarled tree is placed outright: a storybook witch's
+tree, the biome's signature.
+
+**Rounds.** 1: willow and oak right; the gnarled tree's limbs thin and its
+hooks lost; the snag a pole. 2: gnarled chunkier and harder-twisted (it
+claws); the snag half as thick again. 3: the dead oak's limbs thicker and
+more twisted (round 2's was a tidy textbook tree). In the game
+(`haunted-r3/`): one hand at last; the snags' bare wood showed green (no
+accent colour, so the leaf's) and is now pale.
+
+## The overhaul's houses (25 October 2026)
+
+PLACED, not researched: the low suburban house a course is lined with, pushed
+toward a storybook -- deep eaves, a fat chimney, shutters, big windows -- so
+it reads at 200 m. Palettes PLACED: pale walls with weathered red, slate,
+brown and green roofs; stucco and terracotta in warm biomes.
+
+**Rounds** (`rounds/houses-r1..3.png`; in the game `houses-r3/`, `houses-r4/`,
+taken with the capture tool's new `--homes` views, since the fixed views'
+course has none). 1: clean but flat walls, a slab roof that would vanish from
+below, a pale chimney. 2: shutters, sills, corner boards, a plinth, roof
+undersides, a brick chimney. 3: shingle courses (subtle front-on). In the
+game: walls about 6% short of the collider (the eaves counted in the fit, and
+the ingest's unit-height scaling) -- now fitted to the walls themselves and
+recentred; the foundation and the sphere garden bushes are still plain (a
+next round).
+
+## The overhaul's props (25 October 2026, generator 43)
+
+Pumpkins and toadstools for Haunted Hollow (tools/blender/cartoon_props.py).
+The shapes are general knowledge rather than sourced (PLACED): a field pumpkin
+squat and deeply ribbed with a short twisted stem; the fly agaric a red cap
+flecked with white warts on a white ringed stalk, in troops. The proportions
+are the old models', kept so the collision cylinders and the lantern faces fit
+(BLENDER_ASSETS, *cartoon_props*); the radii were measured again off the new
+models and changed generation slightly (generator 43, Haunted Hollow only).
+
+**Rounds.** 1: pumpkins right; toadstools golf tees (long thin stalks, small
+caps). 2: stalks short and stout, caps broad. 3: more and bigger warts. A
+squashed pumpkin was made round, or its carved face would float off it.
+
+## The overhaul's deadfall (25 October 2026)
+
+Logs, stumps and mossy stones for the forest floor (tools/blender/
+cartoon_deadfall.py). General knowledge, not sourced (PLACED): a nurse log
+sags as it softens and carries moss along its upper flank; an old stump keeps
+its root flares and a cut or broken top; boulders on a forest floor are
+moss-capped. Decoration only (addDeadfall's own stream), so no ground moved.
+
+**Rounds.** 1: logs straight pipes with small flat moss patches; broken
+stumps a crown of big teeth with a flat hexagon of moss; mossy rocks
+low-poly, the moss half the stone. 2: logs sag, swell and keep limb stubs
+under a blanket of moss; splinters small and uneven; rocks smoother with only
+a cap of moss -- the stumps' moss sank inside the trunk. 3: the moss set on
+the skin. In the game (`deadfall-r3/`) a log reads on the redwood floor.
+
+## The overhaul's redwood grove (25 October 2026)
+
+The grove's species and proportions are the grown grove's (RESEARCH,
+*Redwood* sections, for the sources): crowns as wide as species.js
+`CROWN_FRACTION` says, which the generator spaces them by. What changed is
+the hand -- the grown trees were realistic and 13,000-53,000 triangles each
+(the baseline profile drew 159 M triangles a frame on Redwood at High); the
+cartoon ones are 1,000-1,900 with far twins.
+
+**Rounds** (`rounds/redwood-r1..3.png`). 1: the redwood right; fir, hemlock and
+cedar too alike; tanoak 7,000 faces; the seedling three discs on a pole;
+salal lily pads on the ground. 2: cedar long drooping ragged sprays, hemlock
+feathery; tanoak's lobes a quarter the triangles; seedling full; salal a
+mound under its leaves. 3: the redwood crown fuller and deeper. In the game
+(`redwood-r3/`): a cathedral grove of red columns -- perhaps too orange; a
+next round. The far-swap test's near limit was 300 m for the grown crown;
+the cartoon redwood's leaf part is its narrow top third, small on screen
+sooner, so it swaps from about 150 m (tests/instance-cull.test.mjs).
+
+## The overhaul's Lakeshore remake (25 October 2026)
+
+The same plants as Lakeshore Dunes' research (RESEARCH, *Lakeshore Dunes*), in
+the overhaul's hand (tools/blender/cartoon_lakeshore.py). **Rounds.** 1: oak,
+maple, juniper and driftwood right; the cottonwood broccoli (a small crown on
+a big trunk); dune grass thin. 2: the cottonwood's limbs each carry a broad
+cloud; dune grass patches of 12-18 tussocks with broader blades -- read as
+celery stalks. 3: the tussocks splay. In the game (`lakeshore-r3/`): the
+near-field tall grass, now marram clumps (the long grass's first Lakeshore
+family), stood a metre high in front of the tee and hid the ball -- so no
+tall grass grows within 10 m of any tee (vegetation.js, short tufts there),
+and the long grass's marram got a fourth round (splayed, `rounds/grass-r4.png`).

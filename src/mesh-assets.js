@@ -218,16 +218,19 @@ export const FAMILY_OF = {
  // The cartoon overhaul's broadleaves (tools/blender/cartoon_broadleaf.py), one
  // family per species since each has its own shape.
  oak: 'oaktree', maple: 'mapletree', aspen: 'aspentree', alder: 'aldertree',
- palm: 'palm',
- cactus: 'cactus',
- // Desert trees have no leafy counterpart in the packs; the arid dead-tree
- // silhouettes read far closer than a green canopy would. Ocotillo and agave
- // stay procedural -- spindly canes and a ground rosette are shapes these packs
- // simply do not contain, and a wrong silhouette is worse than a simple one.
- palo: 'arid', mesquite: 'arid',
- // Haunted Hollow: everything is dead. `deadoak` shares the desert's dead
- // hardwoods; the other three are families of their own.
- gnarled: 'gnarled', snag: 'snag', deadwillow: 'deadwillow', deadoak: 'arid',
+ palm: 'palm', hala: 'halatree',
+ // The cartoon overhaul's desert (tools/blender/cartoon_desert.py): palo
+ // verde and mesquite in leaf at last (they were Kenney's dead hardwoods),
+ // saguaros, the low cacti (cholla, prickly pear, barrel) as a kind of their
+ // own, ocotillo and agave (until now procedural).
+ cactus: 'saguaro', cholla: 'cholla', palo: 'palotree', mesquite: 'mesquitetree',
+ ocotillo: 'ocotillo', agave: 'agaveplant',
+ // The cartoon overhaul's brush (tools/blender/cartoon_brush.py).
+ creosote: 'creosotebush', brittlebush: 'brittlebush', sagebrush: 'sagebrush', bracken: 'brackenfern',
+ huckleberry: 'huckleberrybush',
+ // Haunted Hollow: everything is dead, and since the cartoon overhaul one
+ // hand (tools/blender/cartoon_haunted.py): four families of its own.
+ gnarled: 'gnarled', snag: 'snag', deadwillow: 'deadwillow', deadoak: 'deadoaktree',
  // The cartoon overhaul's shrubs (tools/blender/cartoon_shrubs.py): six
  // plants that were one Kenney `bush` family, each its own now.
  shrub: 'shrubbush', gorse: 'gorsebush', heather: 'heatherbush', naupaka: 'naupakabush', fern: 'fernbush', bramble: 'bramblebush',

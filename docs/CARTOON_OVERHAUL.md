@@ -294,3 +294,106 @@ Rounds 2-5 of the stands (continuing the table above):
 
 Pictures: `stands-r2/` to `stands-r5/`. Next: fewer, smaller evergreen
 blotches in Autumn's far hills; the desert's bosque waits for the desert pack.
+
+### Desert plants -- three rounds, generator 41
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Kenney cacti, dead hardwoods for palo verde and mesquite, procedural ocotillo and agave | The cartoon_desert pack. Palo verde lollipops; mesquite pancakes; cholla flames; prickly pear one blob; agave grass-thin |
+| 2 | As round 1 | Palo twigs carry lobe clouds; rounder mesquite; smaller cholla joints; pads apart; agave leaves twice as broad. Palo 11,000 faces |
+| 3 | Palo too heavy for a bosque; cholla still flames | Palo lobes a quarter the triangles; cholla joints chained on arms. In the game: a green bosque at last, a little savanna-like |
+
+Pictures: `rounds/desert-r1..3.png`, in the game `desert-r3/`.
+
+### Long grass -- three rounds of the models, two in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Only thin procedural blades; tall grass was the short tuft stretched into brown spikes | The cartoon_grass pack: eight grasses. Hair-thin and see-through |
+| 2 | Gone at any distance | Broader, more blades, a core mound -- a faceted rock under the tall ones |
+| 3 | The mound | Smaller, flatter, smoother. In the game: too sparse; colonies doubled and the near tall grass became the biome's clumps |
+
+Pictures: `rounds/grass-r1..3.png`, in the game `grass-r3/`, `grass-r4/`.
+
+### Brush -- three rounds, generator 42
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) No creosote, brittlebush, sagebrush, bracken or huckleberry; nothing under the stands | The cartoon_brush pack. Creosote a houseplant; bracken thin |
+| 2 | As round 1 | Creosote an airy vase of small clumps; bracken fronds filled |
+| 3 | Brittlebush and sagebrush mounds read as hexagons | More, smaller lobes. In the game: an understory under every stand, a share drawn per tier |
+
+Pictures: `rounds/brush-r1..3.png`, in the game `brush-r3/`.
+
+### Island trees -- three rounds, and one in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Kenney palms, a procedural hala | The cartoon_island pack. Palm crown a pom-pom; hala bare branches |
+| 2 | As round 1 | Long broad fronds; hala forking to big rosettes. Leaflets saw-teeth |
+| 3 | Saw-teeth | Overlapping leaflets. In the game: crowns culled from below, a brown knob |
+| 4 | (game) | Thin leaves two-sided; a small green crown shaft |
+
+Pictures: `rounds/island-r1..3.png`, in the game `island-r3/`, `island-r4/`.
+
+### Haunted Hollow's dead trees -- three rounds
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Three packs in three hands | The cartoon_haunted pack. Gnarled limbs thin; snag a pole |
+| 2 | As round 1 | Gnarled chunky and clawing; snag thicker |
+| 3 | Dead oak a textbook tree | Thicker, twisted limbs. In the game: snags' bare wood green, now pale |
+
+Pictures: `rounds/haunted-r1..3.png`, in the game `haunted-r3/`.
+
+### Houses -- three rounds, one in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Kenney's building kit | The cartoon_houses pack, a model per generated form. Flat walls; slab roof |
+| 2 | As round 1 | Shutters, sills, corner boards, plinth, roof undersides, brick chimney |
+| 3 | Roof one slab | Shingle courses. In the game: walls short of the collider |
+| 4 | (game) | Walls fitted to the collider and recentred |
+
+Pictures: `rounds/houses-r1..3.png`, in the game `houses-r3/`, `houses-r4/`.
+
+### Pumpkins and toadstools -- three rounds, generator 43
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Kenney's | The cartoon_props pack. Toadstools golf tees |
+| 2 | As round 1 | Stout stalks, broad caps |
+| 3 | Warts too few to read | More, bigger warts; every pumpkin round for the lantern face |
+
+Pictures: `rounds/props-r1..3.png`, in the game `props-r3/`.
+
+### Deadfall -- three rounds
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Grown logs, stumps and boulders in another hand | The cartoon_deadfall pack. Logs pipes; stumps a crown of teeth; rocks low-poly |
+| 2 | As round 1 | Sagging logs with stubs and moss blankets; small splinters; smoother rocks |
+| 3 | Stump moss inside the trunk | Moss on the skin |
+
+Pictures: `rounds/deadfall-r1..3.png`, in the game `deadfall-r3/`.
+
+### The redwood grove -- three rounds
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Grown trees in a realistic hand, 13,000-53,000 triangles | The cartoon_redwood pack. Fir, hemlock, cedar alike; seedling sparse; salal flat |
+| 2 | As round 1 | Cedar drooping, hemlock feathery; tanoak light; seedling full; salal a mound |
+| 3 | Redwood crown skimpy | Fuller, deeper crown. In the game: a cathedral grove; trunks perhaps too orange |
+
+Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`.
+
+### Lakeshore's plants -- three rounds, one in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) lakeshore.py's plainer hand | The cartoon_lakeshore pack. Cottonwood broccoli; dune grass thin |
+| 2 | As round 1 | Cottonwood clouds on great limbs; fuller dune grass -- celery |
+| 3 | Celery | Splayed tussocks |
+| 4 | (game) Tall marram hid the ball from the tee | No tall grass within 10 m of a tee; marram splayed (long grass round 4) |
+
+Pictures: `rounds/lakeshore-r1..3.png`, `rounds/grass-r4.png`, in the game `lakeshore-r3/`, `lakeshore-r4/`.

@@ -36,7 +36,13 @@ check.
 The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
 
 - [ ] **The new trees have been seen only in captures, not played.**
-  Broadleaves (oak, maple, aspen, alder) and conifers (spruce, pine, cedar),
+  Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
+  the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,
+  agave -- generator 41; does a ball still hit a saguaro where it is drawn?),
+  the Island's palms and hala, Haunted Hollow's dead trees, the houses
+  (does a ball off a wall bounce where the wall is drawn?), the pumpkins and
+  toadstools (do lantern faces sit on the skin?), the redwood grove and
+  the deadfall,
   built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
   packs*). Check in a round: crowns light as one soft body with no speckle;
   trunks are brown, not black; the wind moves the outer lobes more than the
@@ -67,7 +73,10 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   as you walk toward a stand (Ultra swaps below 3% of the screen, High 5%);
   nothing hitches when you turn; the painted forest on the far hills joins
   the last real trees without a visible line, and does not crawl or shimmer
-  as the camera moves (it was only seen in still captures). **Frame-time spikes got worse** on several
+  as the camera moves (it was only seen in still captures); the long grass
+  (vegetation.js addLongGrass and the near-field clumps) sways sensibly, does
+  not crawl or pop at the 48 m edge of the near tiles, and costs no frames
+  worth noticing -- it adds tens of thousands of instances, unmeasured. **Frame-time spikes got worse** on several
   landscapes in the profile (95th percentile Mountain 22 ms against 12,
   Autumn 26 against 15, on an RTX 4090) -- probably the cull re-copying many
   more instances; the frame-rate phase owes a fix and a measurement on main

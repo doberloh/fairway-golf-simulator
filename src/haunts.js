@@ -28,6 +28,7 @@ import {random} from './course.js';
 import {instanceModels} from './mesh-assets.js';
 import {addViewBlockers} from './vegetation.js';
 import {viewBlocker} from './camera-tours.js';
+import {toonRamp} from './textures.js';
 
 const PUMPKIN = '#dc8424', STEM = '#4d5a2a', CAP_RED = '#b5352b', CAP_TAN = '#b39a72', STALK = '#ddd3bf';
 // The carved face, unlit: near-black by day, candle-orange after dark.
@@ -72,14 +73,17 @@ function drawProps(group, props, view) {
  const entries = props.map(p => {
   const s = p.shade - .5;
   const accent = p.kind === 'pumpkin' ? pumpkin.clone().offsetHSL(s * .03, s * .1, s * .12)
-   : (p.model.includes('tan') ? tan : red).clone().offsetHSL(0, s * .1, s * .1);
+   : (p.model.toLowerCase().includes('tan') ? tan : red).clone().offsetHSL(0, s * .1, s * .1);
   return {model: p.model, owner: viewBlocker(p.x, p.y, p.z, p.h * 1.2, p.h), matrix: propMatrix(p, dummy),
    color: {accent, leaf: stem, bark: stalk, stone: stalk, dirt: stem}};
  });
  const materials = new Map();
- instanceModels(group, entries, role => {
-  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
-  return materials.get(role);
+ // Painted models (tools/blender/cartoon_props.py) read their vertex paint
+ // and the scene's ramp, as every cartoon model does.
+ instanceModels(group, entries, (role, variant, painted) => {
+  const key = role + (painted ? '|p' : '');
+  if (!materials.has(key)) materials.set(key, new T.MeshToonMaterial({color: '#ffffff', vertexColors: !!painted, gradientMap: painted ? toonRamp(view) : null}));
+  return materials.get(key);
  }, ({mesh, matrices, owners}) => addViewBlockers(view, mesh, matrices, owners));
 }
 

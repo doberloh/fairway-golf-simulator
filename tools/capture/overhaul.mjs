@@ -28,6 +28,16 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
+// `--homes`: the same course with fairway homes on (the game's default is
+// off, so no fixed view shows a house), and two views of the first ones --
+// the houses' rounds (tools/blender/cartoon_houses.py). Kept apart from the
+// fixed views, whose course must stay comparable with main's baseline.
+const homes = argv.includes('--homes');
+if (homes) argv.splice(argv.indexOf('--homes'), 1);
+const HOUSE_VIEWS = [0, 3].map((k, i) => ({name: `house-${i + 1}`, hole: 0, when: 'afternoon', caption: `Fairway home ${k + 1}`,
+ cam: `w => { const h = w.homes?.[${k}] ?? w.homes?.[0]; if (!h) return {x: 0, z: 0, height: 200, pitch: -40};
+  const a = h.rotation + .5, x = h.x + Math.sin(a) * 38, z = h.z + Math.cos(a) * 38;
+  return {x, z, yaw: Math.atan2(h.x - x, h.z - z) * 180 / Math.PI, height: 9, pitch: -9}; }`}));
 const [label, ...named] = argv;
 if (!label) throw Error('usage: node tools/capture/overhaul.mjs <label> [biome ...] [--build file] [--views a,b]');
 const biomes = named.length ? named : Object.keys(BIOMES);
@@ -47,7 +57,7 @@ export const VIEWS = [
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];
-const views = only ? VIEWS.filter(v => only.includes(v.name)) : VIEWS;
+const views = homes ? HOUSE_VIEWS : only ? VIEWS.filter(v => only.includes(v.name)) : VIEWS;
 
 const OUT = path.join('bench', 'shots', 'overhaul', label);
 const card = gpuGate({goal: 'cartoon-overhaul', cap: Infinity, restMin: 1, utilMax: 30, tempMax: 80, lookSeconds: 30});
@@ -61,7 +71,7 @@ try {
   p.on('pageerror', e => errors.push(`page error: ${e.message}`));
   p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
   const t0 = Date.now();
-  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed});
+  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {})});
   const built = Date.now() - t0;
   await p.addStyleTag({content: HIDE_HUD});
   let hole = 0;

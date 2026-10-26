@@ -72,3 +72,34 @@ test('every landscape paints forest on its far hills, from a record the shader c
  }
  assert.equal(farForestUniforms({}).farOn.value, 0);
 });
+
+// The long grass between the holes (vegetation.js addLongGrass, decoration):
+// every landscape's record names families the model module carries, with a
+// height and a weight, and colours the renderer can parse.
+test('every landscape grows long grass from families that exist', async () => {
+ const {familyModels} = await import('../src/mesh-assets.js');
+ for (const [key, bio] of Object.entries(BIOMES)) {
+  const g = bio.longGrass;
+  assert.ok(g, `${key} grows no long grass`);
+  assert.ok(g.count > 0 && g.near >= 10, `${key}: count ${g.count}, near ${g.near}`);
+  for (const [family, weight, height] of g.families) {
+   assert.ok(familyModels(family).length > 0, `${key}: no models in ${family}`);
+   assert.ok(weight > 0 && height > .2 && height < 2, `${key}: ${family} ${weight} ${height}`);
+  }
+  for (const c of [g.leaf, g.accent]) assert.match(c, /^#[0-9a-f]{6}$/i);
+ }
+});
+
+// A stand's understory (course.js `under`) is shrubs and ferns: trunkless, so
+// a ball passes through and a graphics tier may draw a share of it without
+// two players meeting different courses.
+test('the understory is plants a ball passes through, planted inside stands only', async () => {
+ const {GROUND_PLANTS} = await import('../src/species.js');
+ for (const [key, bio] of Object.entries(BIOMES)) {
+  for (const [kind] of bio.stands?.under?.plants ?? []) assert.ok(GROUND_PLANTS.has(kind), `${key}: ${kind} has a trunk`);
+ }
+ const w = build('pnw'), under = w.trees.filter(t => t.under);
+ assert.ok(under.length > 100, `only ${under.length} understory plants`);
+ const o = standsOf(w.bio, w.seed);
+ for (const t of under.slice(0, 400)) assert.ok(o.at(t.x, t.z, w.nearest(t.x, t.z).d) >= .5, 'understory outside a stand');
+});

@@ -131,19 +131,19 @@ test('a shadow map draws only the trees inside it, and every one of them', () =>
 
 test('the thinned twin stands in from its map onward and is never drawn into the picture', async () => {
  const {modelParts, farParts} = await import('../src/mesh-assets.js');
- const parts = modelParts('Redwood_Giant_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const parts = modelParts('Blender_Redwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  const group = new T.Group(), n = 40, mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
  const m = new T.Matrix4();
  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeTranslation((i % 8) * 30 - 105, 0, Math.floor(i / 8) * 30 - 520));
- mesh.castShadow = true; mesh.userData = {model: 'Redwood_Giant_1', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_Redwood_1', part: leaf, role: 'leaf'};
  group.add(mesh);
  const cull = cullInstances(group, {thinShadowsFrom: 1}), cam = camera(), near = sunOver(60), far = sunOver(400);
  cull.update(cam, null, [near, far]);
  const twin = group.children.find(o => o.name === 'shadow twin');
  assert.ok(twin, 'no twin was made');
  assert.equal(twin.instanceMatrix, mesh.instanceMatrix, 'the twin must share the instance buffer');
- assert.ok(twin.geometry.index.count < parts[leaf].geometry.index.count * .5);
- assert.equal(twin.geometry, farParts('Redwood_Giant_1')[leaf].geometry);
+ assert.ok(twin.geometry.index.count < parts[leaf].geometry.index.count * .6, 'the shipped twin is a fraction of the crown');
+ assert.equal(twin.geometry, farParts('Blender_Redwood_1')[leaf].geometry);
  // Map 0 keeps the whole tree; map 1 draws the twin instead.
  assert.ok(shadowCount(mesh, near) > 0); assert.equal(shadowCount(twin, near), 0);
  assert.equal(shadowCount(mesh, far), 0); assert.ok(shadowCount(twin, far) > 0);
@@ -152,31 +152,41 @@ test('the thinned twin stands in from its map onward and is never drawn into the
  assert.equal(twin.count, mesh.count);
 });
 
-test('thinning keeps a third of the sprays, grown about their own centres, and shares the trunk', async () => {
- const {modelParts, farParts} = await import('../src/mesh-assets.js');
- const full = modelParts('DouglasFir_2'), far = farParts('DouglasFir_2');
- for (let i = 0; i < full.length; i++) {
-  if (full[i].role !== 'leaf') { assert.equal(far[i].geometry, full[i].geometry); continue; }
-  const ratio = far[i].geometry.index.count / full[i].geometry.index.count;
-  assert.ok(ratio > .3 && ratio < .37, `kept ${ratio}`);
-  // Same crown: the thinned sprays fill the same envelope.
-  full[i].geometry.computeBoundingBox(); far[i].geometry.computeBoundingBox();
-  const a = full[i].geometry.boundingBox, b = far[i].geometry.boundingBox;
-  for (const k of ['x', 'y', 'z']) assert.ok(Math.abs((a.max[k] - a.min[k]) - (b.max[k] - b.min[k])) < (a.max[k] - a.min[k]) * .12, `envelope ${k}`);
+// Since the cartoon overhaul no shipped crown is thinned -- the grown grove it
+// was written for is remade -- so the arithmetic is held on a crown of
+// sprays built here: 600 separate little triangles filling a ball.
+test('thinning keeps a third of the sprays, grown about their own centres', async () => {
+ const {thinSprays} = await import('../src/mesh-assets.js');
+ const pos = [], idx = [];
+ let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+ for (let k = 0; k < 600; k++) {
+  const a = rnd() * 6.28, b = Math.acos(2 * rnd() - 1), r = 5 * Math.cbrt(rnd());
+  const c = [r * Math.sin(b) * Math.cos(a), 10 + r * Math.cos(b), r * Math.sin(b) * Math.sin(a)];
+  for (const d of [[.2, 0, 0], [0, .2, 0], [0, 0, .2]]) pos.push(c[0] + d[0], c[1] + d[1], c[2] + d[2]);
+  idx.push(k * 3, k * 3 + 1, k * 3 + 2);
  }
+ const full = new T.BufferGeometry();
+ full.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); full.setIndex(idx);
+ const far = thinSprays(full, 1 / 3);
+ const ratio = far.index.count / full.index.count;
+ assert.ok(ratio > .3 && ratio < .37, `kept ${ratio}`);
+ // Same crown: the thinned sprays fill the same envelope.
+ full.computeBoundingBox(); far.computeBoundingBox();
+ const a = full.boundingBox, b = far.boundingBox;
+ for (const k of ['x', 'y', 'z']) assert.ok(Math.abs((a.max[k] - a.min[k]) - (b.max[k] - b.min[k])) < (a.max[k] - a.min[k]) * .12, `envelope ${k}`);
 });
 
 test('small crowns are drawn thinned, every held crown exactly once, and none near the camera', async () => {
  const {modelParts} = await import('../src/mesh-assets.js');
- const parts = modelParts('Redwood_Giant_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const parts = modelParts('Blender_Redwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  const group = new T.Group(), spots = [];
  for (let z = -500; z <= 1500; z += 50) for (let x = -200; x <= 200; x += 50) spots.push([x, z]);
  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), spots.length), m = new T.Matrix4();
  // Unit-height models scaled to 60 m trees.
  spots.forEach(([x, z], i) => mesh.setMatrixAt(i, m.makeScale(60, 60, 60).setPosition(x, 0, z)));
- mesh.castShadow = true; mesh.userData = {model: 'Redwood_Giant_1', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_Redwood_1', part: leaf, role: 'leaf'};
  group.add(mesh);
- const cull = cullInstances(group, {farTrees: .15}), cam = camera();
+ const cull = cullInstances(group, {farPainted: .15}), cam = camera();
  cull.update(cam, null);
  const far = group.children.find(o => o.name === 'far trees');
  assert.ok(far && far.count > 0 && mesh.count > 0, `near ${mesh.count}, far ${far?.count}`);
@@ -186,13 +196,15 @@ test('small crowns are drawn thinned, every held crown exactly once, and none ne
  const a = new Set(near.map(key));
  for (const t of thin) assert.ok(!a.has(key(t)), `crown at ${key(t)} drawn twice`);
  assert.equal(near.length + thin.length, cull.stats().drawn);
- // Thinned ones are the distant ones; nothing within 300 m is thinned.
- for (const [x, z] of thin) assert.ok(Math.hypot(x, z + 520) > 300, `crown at ${x},${z} thinned too close`);
+ // Thinned ones are the distant ones; nothing within 150 m is thinned (300 m
+ // for the grown redwood this was written for; the cartoon one's leaf part is
+ // its narrow top third, so it is small on screen sooner).
+ for (const [x, z] of thin) assert.ok(Math.hypot(x, z + 520) > 150, `crown at ${x},${z} thinned too close`);
  assert.ok(cull.stats().thinCrowns > 0 && cull.stats().thinCrowns < 1);
  // Turned off, the far mesh empties and the full one holds everything again.
- cull.tune({farTrees: 0}); cull.update(cam, null);
+ cull.tune({farPainted: 0}); cull.update(cam, null);
  assert.equal(far.count, 0);
- cull.tune({farTrees: null});
+ cull.tune({farPainted: null});
 });
 
 // The cartoon overhaul's crowns have thousands of triangles -- far over

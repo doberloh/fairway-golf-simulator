@@ -52,8 +52,8 @@ export function standsOf(bio, seed) {
 // The places a stand tree may grow: one per grid cell, jittered within it,
 // with its own uniform numbers for the species, size and shade -- hashed, not
 // drawn, so the sites are the seed's alone.
-export function standSites(stands, halfX, halfZ, seed) {
- const s = stands.spacing, salt = saltOf(seed, 'stand-site'), out = [];
+export function standSites(stands, halfX, halfZ, seed, what = 'stand-site') {
+ const s = stands.spacing, salt = saltOf(seed, what), out = [];
  const nx = Math.ceil(halfX * 2 / s), nz = Math.ceil(halfZ * 2 / s);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
   const u = k => hash(i, j, salt + k * 7919);

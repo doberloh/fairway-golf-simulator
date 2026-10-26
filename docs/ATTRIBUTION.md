@@ -17,9 +17,18 @@ file gives it.
 
 Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
+On the `cartoon-overhaul` branch most of what these packs supplied is remade in
+Blender by this project's own scripts (*Built in Blender*, below): every
+broadleaf, conifer, shrub, boulder, desert plant, palm, Haunted Hollow tree
+and house. What the branch still draws from them is the Nature Kit's
+remaining scenery (rocks, grass and flowers where still used), the
+Ultimate Nature Pack's models in `tools/bake-assets.mjs`'s grown trees, and
+the pumpkins, toadstools and deadfall -- each named in
+`tools/build-meshes.mjs` PICK. The table stays until a pack ships nothing.
+
 ## Grown geometry, which is nobody else's at all
 
-The redwood biome now draws **only** from that folder -- no pack model, no
+On the `cartoon-overhaul` branch that folder no longer ships: the grove is remade in Blender (tools/blender/cartoon_redwood.py). On main, the redwood biome draws **only** from that folder -- no pack model, no
 imported texture, nothing borrowed. The other seven biomes are unchanged and
 still use the CC0 packs above.
 
@@ -79,7 +88,10 @@ Universal dedication and asks that support go through
 `vendor/blender-lakeshore/` (Lakeshore Dunes' dune grass, cottonwoods, black
 oaks, sugar maples, junipers and driftwood, 23 October 2026) is written by
 `tools/blender/lakeshore.py` and `tools/blender/fairway_blender.py`, this
-project's own scripts, run in Blender. Every vertex comes from those scripts;
+project's own scripts, run in Blender. On the `cartoon-overhaul` branch the
+same holds for every `vendor/blender-cartoon_*/` folder (the painted
+broadleaves, conifers, boulders, shrubs and desert plants, and their far
+twins), written by `tools/blender/cartoon_*.py` and `tools/blender/cartoon.py`. Every vertex comes from those scripts;
 nothing is imported, no texture is used, and no Blender asset library is
 touched. Blender itself (GPL) is a tool here, not a dependency: it is not in
 the game, the build or the tests, and what a GPL program outputs is not

@@ -80,6 +80,8 @@ export const TIERS = {
   farTrees: .15,
   // The painted trees' shipped twins (the cartoon overhaul), at the same line.
   farPainted: .15,
+  // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
+  understory: .25,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -128,6 +130,9 @@ export const TIERS = {
   // As low.
   farTrees: .15,
   farPainted: .15,
+  // Half a stand's understory: shrubs a ball passes through, so a share is
+  // only a look (vegetation.js). PLACED.
+  understory: .5,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -172,6 +177,7 @@ export const TIERS = {
   // Painted trees below 5% of the screen's height draw their shipped twin
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
+  understory: 1,
   // Shafts are composited additively over the finished frame, so this is how
   // bright they get, not how much of the picture they replace.
   godRays: .85,
@@ -246,6 +252,8 @@ export const TIERS = {
   // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
   // *Rules set aside*.
   farPainted: .03,
+  // The whole understory of a stand (vegetation.js `under`).
+  understory: 1,
   // Zoomed all the way out the whole course should keep its shadows. The
   // cascades stop at shadowFar to hold resolution up close, but in overview
   // there is no close, so they stretch to cover everything instead.
@@ -407,5 +415,5 @@ export function needsRebuild(a, b) {
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
-  (x.farPainted ?? 0) !== (y.farPainted ?? 0);
+  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1);
 }

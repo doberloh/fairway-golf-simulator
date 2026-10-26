@@ -90,21 +90,35 @@ test('houses are drawn from imported models fitted to the box physics collides w
  addHomes(view);
  const meshes=[];view.group.traverse(o=>{if(o.isInstancedMesh)meshes.push(o);});
  assert(meshes.length>0,'no instanced buildings were created');
- // Buildings are the textured ones; the nature models keep no UVs.
- const buildings=meshes.filter(m=>m.geometry.attributes.uv);
- assert(buildings.length>1,`houses drew from only ${buildings.length} model(s)`);
+ // The cartoon overhaul's houses (tools/blender/cartoon_houses.py) are painted
+ // models of four parts each -- walls, roof, trim, glass -- one mesh per part;
+ // a house is counted once, by its walls, and measured by its whole model.
+ const buildings=meshes.filter(m=>String(m.userData.model).startsWith('Blender_House')&&m.userData.role==='stone');
+ assert(new Set(buildings.map(m=>m.userData.model)).size>1,`houses drew from only ${buildings.length} model(s)`);
  const placed=buildings.reduce((n,m)=>n+m.count,0);
  assert.equal(placed,world.homes.length,`${placed} buildings drawn for ${world.homes.length} homes`);
+ const whole=new Map();
+ for(const m of meshes.filter(m=>String(m.userData.model).startsWith('Blender_House'))){
+  const b=whole.get(m.userData.model)??new T.Box3();m.geometry.computeBoundingBox();
+  // The collider is the WALLS' footprint and the house's full height: the
+  // eaves, their trim boards and a porch roof overhang it by design (homes.js).
+  const g=m.geometry.boundingBox,walls=m.userData.role==='stone';
+  b.expandByPoint(new T.Vector3(walls?g.min.x:0,g.min.y,walls?g.min.z:0));
+  b.expandByPoint(new T.Vector3(walls?g.max.x:0,g.max.y,walls?g.max.z:0));whole.set(m.userData.model,b);
+ }
  // What is drawn has to match the oriented box simulateShot resolves against,
  // or the ball bounces off something that is not where the house looks.
- const scale=new T.Vector3(),quat=new T.Quaternion(),pos=new T.Vector3(),box=new T.Box3();
+ const scale=new T.Vector3(),quat=new T.Quaternion(),pos=new T.Vector3();
  let checked=0;
  for(const mesh of buildings){
   const m=new T.Matrix4();
   for(let i=0;i<mesh.count;i++){
    mesh.getMatrixAt(i,m);m.decompose(pos,quat,scale);
-   box.setFromBufferAttribute(mesh.geometry.attributes.position);
-   const home=world.homes.find(h=>Math.hypot(h.x-pos.x,h.z-pos.z)<.01);
+   const box=whole.get(mesh.userData.model);
+   // The walls' middle, in the world, is the home's: the model's origin is
+   // shifted by the walls' own offset (homes.js wallExtents).
+   const mid=box.getCenter(new T.Vector3());mid.y=0;mid.applyMatrix4(m);
+   const home=world.homes.find(h=>Math.hypot(h.x-mid.x,h.z-mid.z)<.05);
    assert(home,'a building stands where no home was generated');
    const width=(box.max.x-box.min.x)*scale.x,depth=(box.max.z-box.min.z)*scale.z,height=(box.max.y-box.min.y)*scale.y;
    assert(Math.abs(width-home.width)<.6,`drawn width ${width.toFixed(2)} vs collider ${home.width.toFixed(2)}`);

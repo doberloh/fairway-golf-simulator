@@ -1448,7 +1448,7 @@ released. What it changes for distribution:
 The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md). Not merged, not
 released. What it changes for distribution so far:
 
-- **The built page is 23,506,100 bytes (10.81 MB gzipped)** at generator 39,
+- **The built page was 23,506,100 bytes (10.81 MB gzipped)** at generator 39,
   against 18,407,153 for Lakeshore Dunes. The growth is the remade models
   (`src/asset-meshes.js` 19,084.8 KB: painted Blender trees, shrubs and
   boulders, each painted tree with a shipped far twin of about a twelfth of
@@ -1458,6 +1458,12 @@ released. What it changes for distribution so far:
 - **Nothing fetched, no new dependency.** Every model is made by a committed
   Blender script (tools/blender/cartoon_*.py) and committed as `.glb`; the
   turf atlas by `tools/turf-detail.mjs`.
-- **`GENERATOR_VERSION` is 39** (landforms and ground types 37, shared links
-  fairways 38, uncleared stands 39); a save from main is told its course was
-  rebuilt (`showVersionNotice`). `SCHEMA_VERSION` is unchanged.
+- **`GENERATOR_VERSION` was 39 then** (landforms and ground types 37, shared
+  links fairways 38, uncleared stands 39), 43 now; a save from main is told its
+  course was rebuilt (`showVersionNotice`). `SCHEMA_VERSION` is unchanged.
+- **Later on the branch the page shrank**: the Giant Redwood's grown trees
+  (13,000-53,000 triangles each) were remade in Blender at 1,000-1,900, and
+  the Kenney houses, cacti, dead trees, rocks, grass and flowers and the
+  MegaKit and Ultimate Stylized dead trees stopped shipping. The model module
+  went from 19.8 MB to 7.8 MB at generator 43 (the built page is re-measured
+  at hand-over).

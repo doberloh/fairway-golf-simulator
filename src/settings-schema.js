@@ -196,7 +196,21 @@ export const SCHEMA_VERSION=11;
 // 40: the stands' second round: their edges 15-20 m nearer play, and stand
 //     trees 1.2 times as tall and wide as the open scatter's. Every landscape
 //     with a stand moved.
-export const GENERATOR_VERSION=40;
+// 41: the cartoon desert: the low cacti (teddy-bear cholla, prickly pear,
+//     barrel) are a plant of their own (`cholla`, 0.7-1.6 m) instead of
+//     being drawn from the saguaros' `cactus`, so the Desert's mix and its
+//     bosque's mix changed. Only the Desert moved.
+// 42: the brush (tools/blender/cartoon_brush.py): an understory of shrubs
+//     and ferns under every stand (`stands.under`, its own hashed grid), and
+//     creosote, brittlebush and sagebrush in the open Desert and Mountain
+//     mixes. Every landscape with a stand moved but Links (its stand is
+//     already gorse).
+// 43: Haunted Hollow's pumpkins and toadstools are the cartoon overhaul's
+//     own (tools/blender/cartoon_props.py): the prop's model is drawn from
+//     three pumpkins rather than one, and every collision radius is the new
+//     models' measured half-width (species.js PROP_MODELS). Only Haunted
+//     Hollow moved.
+export const GENERATOR_VERSION=43;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
