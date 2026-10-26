@@ -125,11 +125,16 @@ export function makeClouds(view, seed) {
    const reach = radius * (.12 + rng() * .5);
    // The middle ones taller, so the cloud domes up from its base.
    const size = radius * (.26 + rng() * .24) * (1.25 - reach / radius * .6);
+   // The clouds' round 3: each puff's flat base sat at its own random height,
+   // so from below a near cloud showed a stack of flat bottoms -- a pile of
+   // discs. Every puff now stands on the cloud's one base (the blob is cut
+   // flat at -0.25 of its height); the big middle ones still dome highest.
+   const tall = size * (.62 + rng() * .22);
    dummy.position.set(
     cloud.x + Math.cos(angle) * reach,
-    cloud.y + (rng() - .3) * radius * .16,
+    cloud.y + tall * .25,
     cloud.z + Math.sin(angle) * reach * .7);
-   dummy.scale.set(size, size * (.62 + rng() * .22), size * (.86 + rng() * .28));
+   dummy.scale.set(size, tall, size * (.86 + rng() * .28));
    dummy.rotation.set(0, rng() * 6.28, 0);
    dummy.updateMatrix();
    puffs.push({cloud: i, offset: dummy.matrix.clone()});

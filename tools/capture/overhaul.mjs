@@ -28,6 +28,8 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
+// `--tier high`: another graphics tier than Ultra (the shadows' round 3 checked High).
+const tier = opt('--tier', 'ultra');
 // `--cues '{"greenDefinition":70}'`: the ground-reading settings to draw with
 // (renderer.js setGroundCues; the ground-readability rounds), applied after
 // the course is built.
@@ -38,7 +40,9 @@ const cues = JSON.parse(opt('--cues', 'null'));
 // fixed views, whose course must stay comparable with main's baseline.
 const homes = argv.includes('--homes');
 if (homes) argv.splice(argv.indexOf('--homes'), 1);
-const HOUSE_VIEWS = [0, 3].map((k, i) => ({name: `house-${i + 1}`, hole: 0, when: 'afternoon', caption: `Fairway home ${k + 1}`,
+// `--houses 1,4`: which houses (by their order in world.homes) the two views look at.
+const houseList = (opt('--houses', '0,3')).split(',').map(Number);
+const HOUSE_VIEWS = houseList.map((k, i) => ({name: `house-${i + 1}`, hole: 0, when: 'afternoon', caption: `Fairway home ${k + 1}`,
  cam: `w => { const h = w.homes?.[${k}] ?? w.homes?.[0]; if (!h) return {x: 0, z: 0, height: 200, pitch: -40};
   const a = h.rotation + .5, x = h.x + Math.sin(a) * 38, z = h.z + Math.cos(a) * 38;
   return {x, z, yaw: Math.atan2(h.x - x, h.z - z) * 180 / Math.PI, height: 9, pitch: -9}; }`}));
@@ -59,6 +63,32 @@ export const VIEWS = [
  // The same green from 45 degrees further round: does its tone swim as the
  // camera moves (the ground-readability rounds; why the sheen was capped)?
  {name: 'h2-green-b', hole: 1, when: 'noon', caption: 'Hole 2, the green close to, 45 degrees round', cam: {hole: 1, fromPin: 24, around: 70, height: 2.4, pitch: -7}},
+ // A bunker close to (the sand's rounds): the sand nearest the second pin,
+ // from 9 m off at eye height.
+ {name: 'h2-bunker', hole: 1, when: 'afternoon', caption: 'Hole 2, a greenside bunker close to', cam: `w => { const g = w.holes[1].worldPin; let best = null;
+  for (let r = 4; r < 80 && !best; r += 2) for (let a = 0; a < 6.28; a += .15) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'sand') { best = {x, z}; break; } }
+  if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 4, pitch: -10};
+  const d = Math.hypot(best.x - g.x, best.z - g.z) || 1, cx = best.x - (g.x - best.x) / d * 9, cz = best.z - (g.z - best.z) / d * 9;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.8, pitch: -14}; }`},
+ // A pond from its bank at noon (the water's rounds): the water nearest the
+ // first green, from 12 m back on dry ground, looking across it.
+ {name: 'h1-pond', hole: 0, when: 'noon', caption: 'Hole 1, a pond from its bank', cam: `w => { const g = w.holes[0].worldPin; let best = null;
+  for (let r = 10; r < 600 && !best; r += 6) for (let a = 0; a < 6.28; a += .1) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'water') { best = {x, z, a}; break; } }
+  if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 4, pitch: -10};
+  const cx = best.x - Math.cos(best.a) * 12, cz = best.z - Math.sin(best.a) * 12;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 2.2, pitch: -8}; }`},
+ // A cliff close to (the rock's rounds): the steepest ground near the first
+ // green, from 40 m off and a little below its top.
+ {name: 'h1-cliff', hole: 0, when: 'afternoon', caption: 'Hole 1, the nearest cliff', cam: `w => { const g = w.holes[0].worldPin; let best = null, steep = 0;
+  for (let r = 30; r < 220; r += 8) for (let a = 0; a < 6.28; a += .15) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r;
+   const s = Math.abs(w.height(x + 2, z) - w.height(x - 2, z)) + Math.abs(w.height(x, z + 2) - w.height(x, z - 2)); if (s > steep) { steep = s; best = {x, z, a}; } }
+  const cx = best.x - Math.cos(best.a) * 40, cz = best.z - Math.sin(best.a) * 40, h = w.height(best.x, best.z) - w.height(cx, cz);
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: Math.max(2, h * .6), pitch: 0}; }`},
+ // The flag from 4 m (the course props' rounds).
+ {name: 'h2-flag', hole: 1, when: 'afternoon', caption: 'Hole 2, the flag from 4 m', cam: {hole: 1, fromPin: 4, around: 40, height: 1.8, pitch: 1}},
+ // The same flag from the other side: whichever way the wind sets it, one of
+ // the two sees the cloth's back (the flag's round 3, the number printed both ways).
+ {name: 'h2-flag-back', hole: 1, when: 'afternoon', caption: 'Hole 2, the flag from 4 m, the other side', cam: {hole: 1, fromPin: 4, around: 220, height: 1.8, pitch: 1}},
  // A putt read from behind the ball (the ground-readability rounds).
  {name: 'h2-putt', hole: 1, when: 'noon', caption: 'Hole 2, a putt read from 9 m', cam: {hole: 1, fromPin: 9, around: 25, height: 1.6, pitch: -9}},
  {name: 'h3-edge', hole: 2, when: 'morning', caption: 'Hole 3, the edge of the rough, morning', cam: {hole: 2, along: 140, across: 34, height: 2.2, look: 'pin', pitch: -3}},
@@ -76,6 +106,16 @@ export const VIEWS = [
   const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L;
   const c = h.toWorld({x: t.x - ux * 6 + uz * 3, z: t.z - uz * 6 - ux * 3}), s = h.toWorld({x: t.x - uz * 6 + ux * 2, z: t.z + ux * 6 + uz * 2});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.6, pitch: -9}; }`},
+ // The same furniture close to (its rounds past the first): the sign, washer
+ // and bench from 3.6 m, and the back tee's markers from 5 m behind them.
+ {name: 'h1-sign-near', hole: 0, when: 'afternoon', caption: 'Hole 1, the sign, washer and bench close to', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
+  const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L;
+  const c = h.toWorld({x: t.x + ux - uz * 2.5, z: t.z + uz + ux * 2.5}), s = h.toWorld({x: t.x - uz * 6 + ux * 2, z: t.z + ux * 6 + uz * 2});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.5, pitch: -4}; }`},
+ {name: 'h1-markers', hole: 0, when: 'afternoon', caption: 'Hole 1, the back tee markers close to', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
+  const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L;
+  const c = h.toWorld({x: t.x - ux * 6, z: t.z - uz * 6}), s = h.toWorld({x: t.x + ux * 2, z: t.z + uz * 2});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.3, pitch: -12}; }`},
  // Heather close to (the overhaul's heather rounds): the heather nearest the
  // first green, from 14 m off at eye height; behind the green where there is none.
  {name: 'h1-heath', hole: 0, when: 'afternoon', caption: 'Heather close to', cam: `w => { const g = w.holes[0].worldPin; let best = null;
@@ -96,7 +136,7 @@ try {
  for (const biome of biomes) {
   const dir = path.join(OUT, biome), errors = [];
   fs.mkdirSync(dir, {recursive: true});
-  const p = await openGame(b, {width: 1600, height: 900, density: 1, game: build && path.resolve(build)});
+  const p = await openGame(b, {width: 1600, height: 900, density: 1, game: build && path.resolve(build), quality: tier});
   p.on('pageerror', e => errors.push(`page error: ${e.message}`));
   p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
   const t0 = Date.now();

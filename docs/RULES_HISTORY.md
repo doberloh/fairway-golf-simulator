@@ -253,6 +253,20 @@ the version bump), so an agent could hold back the very redesign the goal asks
 for. The owner asked for a rule saying landscapes can change. What survives is
 determinism on the branch, not sameness with main.
 
+**The overhaul's terms outlive its goal, 26 October 2026.** The goal ran to
+its end without satisfying its own stop check: two items -- playing a round
+by hand, and taking or trading the frame-rate gap -- could only be the
+owner's, so the check repeated every turn while the agent could do nothing
+more. The owner cleared it on returning, called the work amazing, accepted
+the High and Ultra gap ("220 frames per second is still way higher than a golf
+sim actually needs"), and said single-turn requests would follow on the
+branch with the goal's computer and rule-suspension terms still in force. The
+brief that held those terms is local and git-ignored, so AGENTS.md now spells
+them out for the branch. Software rendering stays outside them: the 13 October
+crash was a software smoke run, and the goal's own limits never named it.
+Lesson for the next goal: a done-when clause should name only what an agent
+can finish alone, and say which items wait for the owner.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

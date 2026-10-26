@@ -124,7 +124,27 @@ float foamAlpha(){
 // include the lighting has already read diffuseColor (see the glint).
 const FOAM_LIGHT=`vec3 foamLight=(reflectedLight.directDiffuse+reflectedLight.indirectDiffuse)/max(diffuseColor.rgb*(1.-metalnessFactor),vec3(.001));`;
 const WATER_EDGES={
- still:'',
+ // THE SHALLOWS (the cartoon overhaul's water, round 1): a pond lightens and
+ // clears toward its bank, where the bed shows through -- the sea always knew
+ // its depth (seaHeights, from the ground grid) and a pond now reads the same
+ // map. Over the last 0.9 m of depth the colour lifts toward a sunlit sandy
+ // green and the water thins, so a pond has a lit rim and a dark heart
+ // instead of one flat colour bank to bank.
+ still:`{
+  vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
+  float inside=step(0.,su.x)*step(su.x,1.)*step(0.,su.y)*step(su.y,1.);
+  vec2 suv=(su*(seaGrid.zw-1.)+.5)/seaGrid.zw;
+  float depth=mix(50.,seaLevel-texture2D(seaHeights,suv).r,inside);
+  // Round 2: at .9 m the band was a hairline -- a pond has a cut bank, so it
+  // is that deep within a metre or so of its edge. Over 1.8 m now, stronger.
+  float shallow=(1.-smoothstep(.05,1.8,depth))*inside;
+  outgoingLight=mix(outgoingLight,outgoingLight*vec3(1.12,1.2,1.05)+vec3(.06,.09,.05),shallow*.85);
+  diffuseColor.a*=mix(1.,.72,shallow);
+  // Round 3: looking down from the bank the water went nearly clear, and the
+  // ripples made that patchy, so the bed's dark floor came through as brown
+  // smears. Deep water keeps most of its body; the shallows stay clear.
+  diffuseColor.a=max(diffuseColor.a,.82*(1.-shallow));
+ }`,
  sea:`{
   vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
   float inside=step(0.,su.x)*step(su.x,1.)*step(0.,su.y)*step(su.y,1.);
@@ -418,6 +438,22 @@ function trimToBall(points){
  return kept;
 }
 
+// A FLAG PRINTED ON BOTH SIDES (the cartoon overhaul's flag, round 3). One
+// double-sided plane shows its number mirrored from behind; this is two
+// one-sided faces back to back, the back one's picture flipped, in a single
+// geometry so the frame loop's ripple (which sets z from x) moves both alike.
+function twoSidedCloth(){
+ const front=new T.PlaneGeometry(.48,.33,12,4),n=front.attributes.position.count;
+ const pos=front.attributes.position.array,uv=front.attributes.uv.array,idx=front.index.array;
+ const P=new Float32Array(n*6),N=new Float32Array(n*6),U=new Float32Array(n*4),I=new Uint16Array(idx.length*2);
+ P.set(pos);P.set(pos,n*3);U.set(uv);
+ for(let i=0;i<n;i++){N[i*3+2]=1;N[(n+i)*3+2]=-1;U[(n+i)*2]=1-uv[i*2];U[(n+i)*2+1]=uv[i*2+1];}
+ I.set(idx);for(let t=0;t<idx.length;t+=3){I[idx.length+t]=idx[t]+n;I[idx.length+t+1]=idx[t+2]+n;I[idx.length+t+2]=idx[t+1]+n;}
+ const g=new T.BufferGeometry();
+ g.setAttribute('position',new T.BufferAttribute(P,3));g.setAttribute('normal',new T.BufferAttribute(N,3));g.setAttribute('uv',new T.BufferAttribute(U,2));g.setIndex(new T.BufferAttribute(I,1));
+ front.dispose();return g;
+}
+
 export class GolfView{
  constructor(canvas,quality='medium'){
   this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.CustomToneMapping;this.renderer.toneMappingExposure=1.05;
@@ -442,7 +478,7 @@ export class GolfView{
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
    lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
-  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}this.applyNearShadow();
+  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.shadowRadius(this.quality.shadow.radius);}this.applyNearShadow();
   this.sun.castShadow=false;this.sun.intensity=0;
  }
  // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
@@ -500,7 +536,7 @@ export class GolfView{
  // every cascade one size, so the nearest map is reallocated at its own.
  applyNearShadow(){
   const near=this.quality.nearShadow,light=this.csm?.lights[0];if(!near||!light)return;
-  light.shadow.radius=near.radius;
+  light.shadow.radius=this.shadowRadius(near.radius);
   if(light.shadow.mapSize.x!==near.size){light.shadow.mapSize.set(near.size,near.size);light.shadow.map?.dispose();light.shadow.map=null;this.cascadeForce=true;}
  }
  // ...AND ITS OWN TEXEL GRID. CSM snaps each cascade's centre to whole texels
@@ -667,8 +703,25 @@ export class GolfView{
  furniture(name,height,colours){
   const parts=this.style==='cartoon'&&modelParts(name);if(!parts)return null;
   const g=new T.Group();
-  for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);}
+  for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
+   // INKED OUTLINES (the cartoon overhaul's edges, round 2): the model again,
+   // inside out, pushed out along its normals and drawn dark, so only its rim
+   // shows past the model -- the inverted hull. Furniture only: a handful of
+   // pieces a hole, where it costs nothing (round 3: 1.2 cm read as a second
+   // hand beside the uninked trees; 0.8 cm is definition, not a new style).
+   const ink=new T.Mesh(p.geometry,this.inkMaterial(height));ink.castShadow=false;ink.receiveShadow=false;g.add(ink);}
   g.scale.setScalar(height);return g;
+ }
+ inkMaterial(height){
+  this.inks=this.inks||new Map();
+  const w=(.008/height).toFixed(5);
+  if(!this.inks.has(w)){
+   const m=new T.MeshBasicMaterial({color:'#2b2622',side:T.BackSide});
+   m.onBeforeCompile=s=>{s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=normalize(normal)*'+w+';');};
+   m.customProgramCacheKey=()=>'fairway-ink-'+w;
+   this.inks.set(w,m);
+  }
+  return this.inks.get(w);
  }
  surfaceMaterial(color,opts={}){
   const {roughness,flatShading,...toonOpts}=opts;
@@ -677,12 +730,18 @@ export class GolfView{
   return new T.MeshToonMaterial({color,gradientMap:this.propRamp,...toonOpts});
  }
  static isLit(m){return !!m&&!!(m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||m.isMeshToonMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial);}
+ // CRISP SHADOWS (the cartoon overhaul's shadows, round 2). The tiers soften a
+ // shadow's edge by spreading the PCF disk (graphics.js `shadow.radius`, 3.5
+ // on High, 4 on Ultra): in the cartoon style that read as a photograph's
+ // blur under drawn trees. Four tenths of it, never under three's own 1, so
+ // Low and Medium are as they were. The disk's sample count is fixed: no cost.
+ shadowRadius(r){return this.style==='blueprint'?r:Math.max(1,r*.4);}
  applyShadowSpan(){
   if(!this.sun||this.csm)return;
   const span=this.quality.shadowSpan,bias=this.quality.shadowBias;
   Object.assign(this.sun.shadow.camera,{left:-span.half,right:span.half,top:span.top,bottom:span.bottom,near:1,far:span.far});
   this.sun.shadow.camera.updateProjectionMatrix();
-  this.sun.shadow.normalBias=bias.normal;this.sun.shadow.bias=bias.constant;this.sun.shadow.radius=this.quality.shadow.radius;
+  this.sun.shadow.normalBias=bias.normal;this.sun.shadow.bias=bias.constant;this.sun.shadow.radius=this.shadowRadius(this.quality.shadow.radius);
  }
  // WHICH GROUND CUES ARE ON. A float write into uniforms the material already
  // holds -- never a define and never a rebuild, because changing a define
@@ -766,14 +825,14 @@ export class GolfView{
   this.renderer.shadowMap.type=T.PCFShadowMap;
   if(this.sun){
    this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
-   this.sun.shadow.radius=this.quality.shadow.radius;
+   this.sun.shadow.radius=this.shadowRadius(this.quality.shadow.radius);
    // A shadow map already allocated at the old size has to go before three will
    // build one at the new size.
    this.sun.shadow.map?.dispose();this.sun.shadow.map=null;
    this.sun.shadow.needsUpdate=true;
   }
   if(this.scene?.fog){const f=this.quality.fog;this.scene.fog.near=f.near;this.scene.fog.far=f.far;}
-  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
+  for(const light of this.csm?.lights||[]){light.shadow.radius=this.shadowRadius(this.quality.shadow.radius);light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
   this.applyShadowSpan();
   this.renderer.shadowMap.needsUpdate=true;
   // The constructor calls this before the camera exists, and resize() reaches
@@ -814,7 +873,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1376,7 +1435,18 @@ export class GolfView{
   const path=Array.isArray(body?.stream)?body.stream:null;
   const width=path?path.reduce((a,p)=>a+(p.width||0),0)/path.length:0;
   const kind=body?.ocean?'sea':path?(width<6?'creek':'river'):'still';
-  const sea=kind==='sea'?this.seaDepthMap():null;
+  // A CLEAN POND (the cartoon overhaul's water, round 3). As a near-mirror the
+  // ripples broke the reflected woods and their dark floor into brown smears
+  // across every pond, so the water read as muddy. In the cartoon style still
+  // water shows more of its own colour and less of the mirror.
+  // Round 4: that alone barely helped, nor did a more opaque body (the bed was
+  // not it): the smears are the reflection scattered by the ripples. A pond
+  // is calm, so its ripples bend the mirror a third as far (`calm`), and the
+  // woods come back as broad bands of the far shore instead of grit.
+  const calm=kind==='still'&&this.style==='cartoon';
+  if(calm){material.metalness=.38;material.envMapIntensity=1.3;}
+  // The sea and still water read their depth from the ground grid (WATER_EDGES).
+  const sea=kind==='sea'||kind==='still'&&!body?.ocean?this.seaDepthMap():null;
   // This course's sun, by reference: both change through the day.
   const sun={value:this.sunDir},sunColor={value:this.sun.color};
   material.onBeforeCompile=shader=>{
@@ -1393,7 +1463,7 @@ export class GolfView{
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
      {
       vec3 r=wRipple(vWaterWorld.xz,waterTime);
-      normal=normalize(normal+vec3(r.xy*.5,0.));
+      normal=normalize(normal+vec3(r.xy*${calm?'.17':'.5'},0.));
      }`)
     .replace('#include <opaque_fragment>',`
      {
@@ -1424,7 +1494,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v4-'+kind;
+  material.customProgramCacheKey=()=>'fairway-water-v7-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 
@@ -1650,10 +1720,21 @@ export class GolfView{
  // One flagstick and cup at a world point. The range builds one per green (its
  // targets' sticks taller and in their colour: `tall` and `cloth` scale them,
  // and holdFlagsticks keeps the scale), every course hole one.
- addCupAndFlag(p,y,{color=null,tall=1,cloth=1}={}){
+ // THE FLAG CARRIES ITS HOLE'S NUMBER (the cartoon overhaul's course props):
+ // white figures on the flag's colour, as most clubs print them, where the
+ // cloth was a plain rectangle. `number` absent (the range): plain, as before.
+ // The stick and cup are untouched -- the ball plays against them.
+ flagCloth(color,number){
+  const c=document.createElement('canvas');c.width=128;c.height=88;const ctx=c.getContext('2d');
+  ctx.fillStyle=color;ctx.fillRect(0,0,128,88);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(0,0,128,6);ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(0,82,128,6);
+  ctx.fillStyle='#fffaf0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
+  const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;this.resources.push(tex);return tex;
+ }
+ addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null}={}){
   const group=this.group,blue=this.style==='blueprint',white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':color||'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
+  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
   return {assembly,pole,flag,cup,liner,floor};
  }
@@ -1664,7 +1745,7 @@ export class GolfView{
   // two parts live in an assembly whose own y is driven by the hole-out lift
   // animation -- so they are moved individually rather than by shifting a parent.
   if(h.greens)this.addRangeGreens(h);
-  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z));this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
+  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
@@ -1717,9 +1798,9 @@ export class GolfView{
    // The furniture's sign: two timber posts and a gable cap round the board,
    // the hole's card on a face 5 cm in front of it (cartoon_course.py says
    // where the board is). The old box-on-a-post where the build has none.
-   const frame=this.furniture('Blender_TeeSign_1',2.35,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
+   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
    const sign=frame??new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
-   if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.35,1.25/2.35),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.35,.05/2.35);frame.add(face);}
+   if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.52,1.25/2.52),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.52,.05/2.52);frame.add(face);}
    sign.position.set(q.x,ground+(frame?0:1.55),q.z);
    // Facing the tee it belongs to, so it is read from where you stand rather
    // than from behind. The box is thin in Z, so its face points along the
@@ -1735,7 +1816,7 @@ export class GolfView{
    const put=(m,along,out)=>{if(!m)return;const ax=lx+bux*along+buz*out,az=lz+buz*along-bux*out,w=h.toWorld({x:ax,z:az});
     m.position.set(w.x,h.height(ax,az),w.z);m.rotation.y=Math.atan2(bw.x-w.x,bw.z-w.z);group.add(m);};
    put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'}),-2.2,-1.6);
-   put(this.furniture('Blender_BallWasher_1',1.05,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
+   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
   }
  }
  // Move the range's green, without rebuilding anything.
@@ -2084,6 +2165,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // See FLAG_MIN_PX. A few multiplies per hole per frame; nothing is rebuilt.
  holdFlagsticks(){
   const cam=this.camera,px=Math.max(1,this.cssSize().h)/(2*Math.tan(cam.fov*Math.PI/360)),grow=this.distantFlags===true;
+  // The cloth flies downwind (the cartoon overhaul's flag, round 3): it used to
+  // stand out along +x whatever the wind, so a player reading the flag read
+  // nothing. `windDirection` is the bearing the wind blows toward.
+  const wa=(this.world?.settings.windDirection||0)*Math.PI/180,wx=Math.sin(wa),wz=Math.cos(wa),turn=wa-Math.PI/2;
   for(const a of this.flagsticks||[]){
    const b=a?.userData.base;if(!b||!a.visible)continue;
    const d=Math.max(1,Math.hypot(cam.position.x-b.x,cam.position.y-b.y-1,cam.position.z-b.z)),perMetre=px/d;
@@ -2093,7 +2178,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    const {pole,cloth:f}=a.userData,k=a.userData.tall??1,cs=cloth*(a.userData.clothScale??1);
    pole.scale.set(thick*k,s*k,thick*k);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s*k/2,b.z);
    // The cloth's top stays at the top of the stick, its edge against the pole.
-   f.scale.setScalar(cs);f.position.set(b.x+.24*cs+FLAGSTICK_TOP_R*(thick*k-1),b.y+FLAGSTICK_HEIGHT*s*k-.165*cs,b.z);
+   const off=.24*cs+FLAGSTICK_TOP_R*(thick*k-1);
+   f.scale.setScalar(cs);f.rotation.y=turn;f.position.set(b.x+off*wx,b.y+FLAGSTICK_HEIGHT*s*k-.165*cs,b.z+off*wz);
   }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
@@ -2728,7 +2814,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // only, so neither move changes what it looks like.
   {const far=Math.max(1500,this.scene.fog.far*1.05);
    if(Math.abs(this.camera.far-far)>1){this.camera.far=far;this.camera.updateProjectionMatrix();}
-   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.holdFlagsticks();this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
+   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.holdFlagsticks();this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}{const w=this.world.settings.wind||0,speed=1.6+.13*w,amp=.12+.016*w;for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*speed+p.getX(i)*5)*amp*(p.getX(i)+.24));p.needsUpdate=true;}}if(this.camFlight){
   // A flight drives the camera outright. The damping below is a spring toward
   // a target; running both would fight the path and round off its ends.
   this.camFlight.elapsed+=dt;

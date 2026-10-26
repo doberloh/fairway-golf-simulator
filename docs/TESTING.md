@@ -265,7 +265,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | Journey | What it plays |
 | --- | --- |
 | `boot` | opens from file:// and reaches the menu |
-| `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole |
+| `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |

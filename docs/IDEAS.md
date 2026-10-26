@@ -72,6 +72,15 @@ often has the how-to already worked out.
 
 ## Weather and looks
 
+- **Drawn outlines on High and Ultra.** A screen-space edge pass on the depth
+  and normals (or the inverted-hull trick on trees and rocks) would give the
+  cartoon look ink lines round crowns, trunks and stones. The cheap version --
+  darkening a surface where it turns from the eye -- was tried in the cartoon
+  overhaul and showed nothing (CARTOON_OVERHAUL *Lighting*, round 10): trunks
+  are already dark and stones small. A real pass costs a frame the branch is
+  already over main by. The inverted hull is now on the tee furniture only
+  (0.8 cm, rounds 16-17), where it costs nothing; on trees and rocks it would
+  double their geometry. Medium; wants a profile. (Claude, 26 October 2026)
 - **Rain and a wet course.** Rain to look at, and a course that plays wet:
   softer, slower greens and less roll. The firmness and green-speed settings
   already do the playing half; the drawing half costs frames and wants a

@@ -179,6 +179,10 @@ const PICK = {
   'blender:Blender_House_Lshape_1', 'blender:Blender_House_Lshape_2'],
  // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): what
  // stands at every tee (renderer.js addHoleDetails), never planted.
+ // THE CARTOON GARDENS (tools/blender/cartoon_garden.py): a fairway home's
+ // picket fence and garden shrubs (homes.js), never planted.
+ gardenfence: ['blender:Blender_Fence_Picket'],
+ gardenshrub: ['blender:Blender_GardenShrub_Dome', 'blender:Blender_GardenShrub_Flowering', 'blender:Blender_GardenShrub_Cone'],
  // THE CARTOON WILDFLOWERS (tools/blender/cartoon_flowers.py): the rough's
  // flowers (vegetation.js addGroundCover), coloured per landscape.
  wildflower: ['blender:Blender_Flower_Daisy', 'blender:Blender_Flower_Aster', 'blender:Blender_Flower_Cup'],

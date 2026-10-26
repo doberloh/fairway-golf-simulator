@@ -70,6 +70,44 @@ export function occlusionAtlas(world, ex, ez, Sx, Sz) {
   const reach = r.reach || r.scale || 1;
   splat(open, Sx, Sz, ex, ez, r.x, r.z, reach * .7, reach * 1.3 + 1.2, .6);
  }
+ // Houses (the cartoon overhaul's occlusion, round 2): a house stood on the
+ // lawn as if pasted there -- its lit walls met the grass with no shade at all.
+ // A pool hugging its footprint. PLACED: round 2's .45 out to 2.5 m could not
+ // be seen -- the bake's texels are 1.75 m and the footing covers the first
+ // of them; round 3, .7 out to 4 m. Still faint in rough: the grass blades
+ // stand over the ground and are not darkened by it (a test at .95 out to 12 m
+ // showed the pool, so it is the blades, not the bake). It shows where the
+ // ground itself is seen -- bare, sandy or mown lots.
+ // The trees' and rocks' share is kept apart as `.plants`: the forest floor
+ // (vegetation.js) gathers where that is deep, and must not gather at a wall.
+ const plants = open.map(v => 1 - v);
+ for (const h of world.homes || []) {
+  if (Math.abs(h.x) > ex + 20 || Math.abs(h.z) > ez + 20 || !h.width || !h.depth) continue;
+  splatBox(open, Sx, Sz, ex, ez, h, 4, .7);
+ }
  for (let k = 0; k < open.length; k++) open[k] = 1 - open[k];
+ open.plants = plants;
  return open;
+}
+
+// A rectangle's pool: full `strength` at its walls, nothing `outer` metres out,
+// measured in the house's own turned frame (`rotation` about y, as homes.js
+// turns it). Inside the walls the distance is 0 -- full strength, under the
+// house, where nobody sees it.
+function splatBox(open, Sx, Sz, ex, ez, h, outer, strength) {
+ const sx = Sx / (ex * 2), sz = Sz / (ez * 2), hw = h.width / 2, hd = h.depth / 2;
+ const reach = Math.hypot(hw, hd) + outer, c = Math.cos(h.rotation || 0), s = Math.sin(h.rotation || 0);
+ const i0 = Math.max(0, Math.floor((h.x - reach + ex) * sx)), i1 = Math.min(Sx - 1, Math.ceil((h.x + reach + ex) * sx));
+ const j0 = Math.max(0, Math.floor((h.z - reach + ez) * sz)), j1 = Math.min(Sz - 1, Math.ceil((h.z + reach + ez) * sz));
+ for (let j = j0; j <= j1; j++) {
+  const dz = (j + .5) / sz - ez - h.z;
+  for (let i = i0; i <= i1; i++) {
+   const dx = (i + .5) / sx - ex - h.x;
+   // Into the house's frame: three.js turns +x toward -z for a positive y rotation.
+   const lx = dx * c - dz * s, lz = dx * s + dz * c;
+   const d = Math.hypot(Math.max(0, Math.abs(lx) - hw), Math.max(0, Math.abs(lz) - hd));
+   if (d >= outer) continue;
+   open[j * Sx + i] *= 1 - strength * (1 - smooth(0, outer, d));
+  }
+ }
 }

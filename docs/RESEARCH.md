@@ -10175,7 +10175,16 @@ own rule: the bench 2.2 m behind and 1.6 m beyond the sign facing the tee,
 the washer 1.6 m ahead of the sign (renderer.js `addHoleDetails`; PLACED).
 Round 1 (`rounds/course-r1.png`, in the game `course-r1/`): it reads -- a
 blue dome on the tee, the sign with its card, the washer and the bench --
-and the gable cap is a flat slab seen from the front.
+and the gable cap is a flat slab seen from the front. Round 3 (models round
+2, `rounds/course-r2.png`, in the game `course-r3/`): the cap's ridge turned
+to run front to back so its triangle faces the tee, 2.52 m to the ridge
+(PLACED, from 2.35), and the washer's round lump made a squared housing
+with a domed lid, as paddle washers are; both read at 25 m. Close to (3.6 m)
+that read as a mailbox: round 4 made it an upright plunger washer -- 16 cm
+square housing from 0.78 to 1.10 m, a 19 cm cap, the T-handle to 1.27 m
+(PLACED, from the common upright plunger washers). The sign's gable ends and
+soffit are timber; the black under its roof was the gable end's colour, not
+the underside's lighting, though both were changed.
 
 ### The clouds, rounds 6 and 7 of the light (26 October 2026)
 
@@ -10227,3 +10236,87 @@ Numbers behind docs/CARTOON_OVERHAUL.md *Reading the ground*:
 - Contours on greens and fringes every 0.05 m (a 3% green: a line every 1.7
   m), darkening 0.30 (0.22 elsewhere, a line every metre). 0.10 m was tried
   first: lines 3.3 m apart, one or two across a green.
+
+## The overhaul's gardens (26 October 2026)
+
+The gardens of the houses that line a course, from general knowledge, not
+looked up: picket fences about a metre high in sections of about 1.6 m;
+clipped boxwood, mophead hydrangeas and topiary cones along a house front.
+Sizes PLACED: fence 1.04 m to the post caps; shrubs 1.15-1.6 m in the game;
+the footing 0.09 m proud of the walls, in the biome's rock 45% toward
+#6b6357. Bloom colours (white, lilac, pink, blue) PLACED.
+
+### The shallows, rounds 8 and 9 of the light (26 October 2026)
+
+renderer.js `WATER_EDGES.still`: depth = the body's level minus the ground
+grid's height there (the sea's `seaHeights` map, now handed to still water
+too; past the grid a pond reads as deep). Over the last 1.8 m (0.9 m in round
+8, a hairline against a cut bank) the colour is lifted by (1.12, 1.20, 1.05)
+plus (0.06, 0.09, 0.05) at up to 85%, and the water's opacity falls to 72% --
+the bed showing through. PLACED by eye on Midwest and Lakeshore.
+
+### Cliffs and cut banks, rounds 4-7 (26 October 2026)
+
+ground.js: steepness is 1 - smoothstep(.55, .9, normal.y). Hardpan on steep
+ground: bands every 2.4 m of height (warped by patch noise at 11 m), mixed
+55% toward the rock colour, lip +12% over the top 7% of a band, shadow -14%
+over its first 6-14%. Rock: planes 70% patch noise, 30% their old hard cells;
+ledges +10% / -12% on the 6.5 m strata. The detail atlas's stone channel at
+30% of its strength on steep rock, 55% on gentle. All PLACED by eye.
+
+### The flag flies downwind (26 October 2026)
+
+renderer.js: every frame the cloth is turned to the wind's bearing
+(`windDirection`, the bearing it blows toward; the same convention as the
+trees' sway and the ball's drift) and set off the stick along it. Its ripple
+runs at 1.6 + 0.13 x wind (mph) radians a second and its depth grows from the
+stick to the free edge: 6 cm there in a calm, 13 cm at 10 mph, 25 cm at
+25 mph, for a 0.48 m cloth. All PLACED by eye; no source was used -- a real
+flag in a calm hangs limp, which this one does not (a cartoon flag that hung
+would hide its number).
+
+### Water, sand, edges, clouds and a drive: the late rounds (26 October 2026)
+
+All PLACED by eye; no outside source.
+
+- **Ponds (cartoon style only)**: metalness .62 to .38, reflection strength
+  2.1 to 1.3, and the ripple's tilt of the surface normal .5 to .17 of its
+  amplitude -- the last is what cleared the brown smears (the reflected woods
+  scattered by the ripples). Deep water's opacity held to at least .82
+  (made no visible difference). The sea, rivers and creeks are unchanged.
+- **Bunker rake**: patches from a jittered 4 m cell pattern; each patch's
+  furrows are arcs about a centre 6-14 m from the patch; 5.4 furrows a metre
+  (18.5 cm apart); a groove 24% of the spacing wide at -7%, a lit ridge at
+  +6% beside it, then a third deeper (x 1.36). Faded by on-screen spacing as
+  before.
+- **Ink outlines (tee furniture only)**: the inverted hull, 0.8 cm in world
+  space (1.2 cm was too heavy), colour #2b2622.
+- **Clouds**: every puff's flat base (cut at -0.25 of its height) set on the
+  cloud's own base height; before, each sat at a random -0.05 to +0.11 of the
+  cloud's radius.
+- **A drive's paving**: 32 x 96 texels over 3.4 x 9 m; joints every 3 m and
+  down the middle at 72% brightness, a 2-texel border at 107%, a 6% mottle;
+  base #d6d1c3 (was #b3ae9e as a flat slab).
+
+### A house's shade on the ground (26 October 2026)
+
+occlusion.js: a pool round each house's turned footprint, full strength at the
+walls fading to nothing 4 m out, strength .7 (round 2's .45 out to 2.5 m was
+not seen: the bake's texels are 1.75 m). The ground shader takes 60% of the
+bake (the fixed shade look), so the ground at a wall is about 40% darker. The
+rough's grass blades are not darkened by the bake, so in long rough the pool
+reads faintly. PLACED by eye.
+
+### Crisp shadows, and drives on the ground (26 October 2026)
+
+**Shadows (renderer.js `shadowRadius`).** In the cartoon style the PCF spread
+is 0.4 of the tier's (High 3.5 to 1.4 texels, Ultra 4 to 1.6, Ultra's nearest
+map 2.67 to 1.07), never under 1 (Low and Medium keep 1). PLACED by eye.
+
+**Drives (homes.js).** On the ground, tilted along the 9 m to the ground at
+both ends, 4 cm up; grass kept off a 4 x 9.6 m footprint (0.3 m margin).
+Paving 64 x 192 texels (about 19 a metre): concrete #c4bfb1 in 3 m panels; in
+warm landscapes sandstone #e4c8a0 in 0.6 m flags, running bond, joints 80%,
+each flag 93-107%. The texture had written linear colour values into an sRGB
+texture, darkening every drive -- fixed with `getRGB(..., SRGBColorSpace)`.
+PLACED.

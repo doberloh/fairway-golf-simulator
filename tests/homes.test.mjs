@@ -60,3 +60,18 @@ test('houses keep their siting rules, and sit on a foundation that reaches the g
  // Varied forms, not one stamped shape.
  assert(new Set(w.homes.map(h=>h.form)).size>=3,'houses should not all share one roof form');
 });
+
+test('the grass keeps off a house drive, turned with its house, and nowhere else', async () => {
+ const {onDrive,driveFrame}=await import('../src/homes.js');
+ const h={x:10,z:-20,width:12,depth:9,rotation:.7,trim:.8,garage:true};
+ const {gx,gz}=driveFrame(h),c=Math.cos(h.rotation),s=Math.sin(h.rotation);
+ // A point in the house's own frame, out to the world as homes.js turns it.
+ const world=(lx,lz)=>[h.x+lx*c+lz*s,h.z-lx*s+lz*c];
+ const test=onDrive([h,{...h,x:500,garage:false}]);
+ assert.ok(test(...world(gx,gz)),'the drive\'s middle');
+ assert.ok(test(...world(gx+1.5,gz-4.3)),'near a corner');
+ assert.ok(!test(...world(gx+3,gz)),'beside it');
+ assert.ok(!test(...world(0,0)),'the house itself');
+ assert.ok(!test(500+gx,gz),'a house with no garage has no drive');
+ assert.ok(!onDrive([])(0,0)&&!onDrive(undefined)(0,0));
+});

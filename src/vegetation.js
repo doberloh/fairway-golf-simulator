@@ -9,6 +9,8 @@ import {allows} from './grounds.js';
 import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
 import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
+// A house drive keeps the rough's grass off it (homes.js; the cartoon overhaul's paths, round 5).
+import {onDrive} from './homes.js';
 
 // EVERYTHING THE VIEW CLEARS BESIDES TREES (UI/UX pass V2): a batch is one
 // instanced mesh with, for each instance, the object it belongs to as
@@ -501,7 +503,7 @@ function sinkBeyond(material,reach){
  return material;
 }
 function addLongGrass(view){
- const {world}=view,rec=biomeOf(world.settings.biome).longGrass;
+ const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
  if(!rec)return;
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
@@ -520,7 +522,7 @@ function addLongGrass(view){
   const kind=pickKind(),n=8+Math.floor(rng()*7);
   for(let k=0;k<n;k++){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
-   if(!allows(at,'grass')||onShoreBank(world,x,z,false))continue;
+   if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
    const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5);
    dummy.position.set(x,world.height(x,z),z);
    dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
@@ -651,7 +653,8 @@ function addGroundCover(view){
    ({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners));
  }
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1.9:1);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
+ const offDrive=onDrive(world.homes);
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1.9:1);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
  // Drawn only to two-fifths of the long grass's reach, sinking before it
  // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
@@ -662,7 +665,7 @@ function addGroundCover(view){
 // Fine grass follows the camera in cached 24 m tiles. The complete course keeps
 // its taller meadow patches; only fine blades need this near-field detail.
 function addNearbyGrass(view){
- const w=view.world,tileSize=24,tiles=new Map(),group=new T.Group();group.name='Living rough';view.group.add(group);
+ const w=view.world,offDrive=onDrive(w.homes),tileSize=24,tiles=new Map(),group=new T.Group();group.name='Living rough';view.group.add(group);
  const geometry=grassClump(7,w.seed+':clump');
  const material=groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,.2,true)),dummy=new T.Object3D(),color=new T.Color();let lastKey='';
  // Tiles are built on demand as the camera moves, so at cascade-registration
@@ -800,7 +803,7 @@ function addNearbyGrass(view){
     if(Math.abs(x)<=w.halfX&&Math.abs(z)<=w.halfZ&&rng()<.3){const h=.3+rng()*.25;dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(h,h,h);dummy.updateMatrix();heaths.push(dummy.matrix.clone());}
     continue;
    }
-   if(!allows(surface,'grass')||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
+   if(!allows(surface,'grass')||offDrive(x,z)||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
    // Not tall round a tee (the cartoon overhaul): a metre of grass in front of
    // the pad hid the ball from the golfer's own eye (lakeshore-r3, -r4).
    const byTee=teeSpots.some(t=>(t.x-x)**2+(t.z-z)**2<100);

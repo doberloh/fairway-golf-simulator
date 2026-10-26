@@ -1467,5 +1467,8 @@ released. What it changes for distribution so far:
   (13,000-53,000 triangles each) were remade in Blender at 1,000-1,900, and
   the Kenney houses, cacti, dead trees, rocks, grass and flowers and the
   MegaKit and Ultimate Stylized dead trees stopped shipping. The model module
-  went from 19.8 MB to 7.8 MB at generator 43 (the built page is re-measured
-  at hand-over).
+  went from 19.8 MB to 7.8 MB at generator 43. Re-measured at the second
+  hand-over (26 October, after the wildflowers, heather, gardens, tee
+  furniture and numbered flags): **11,363,350 bytes, 5.50 MB gzipped**, the
+  model module 7,041 KB -- 119 KB more than the first measure above. After the
+  late rounds (third pass): 11,363,991 bytes.

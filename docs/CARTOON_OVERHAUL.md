@@ -20,11 +20,62 @@ When the owner comes back to play it, it should look familiar, and much better.
 | 1. Tools | the Blender library and paint pipeline done (`cartoon.py`, `inspect.mjs`, paint carried into the game); more as needed |
 | 2. Landscape generation | done (three rounds): a landform recipe per landscape, nine ground types that play (`src/grounds.js`, `src/landforms.js`), generator 37; shared links fairways (three rounds), generator 38; uncleared stands and the far forest (five rounds), generator 40; desert plants (41), the brush (42), pumpkins and toadstools (43) |
 | 3. Ground textures | done (three rounds): the turf detail atlas, the ground types' painted patterns |
-| 4. Assets, biome by biome | in progress: every tree, shrub, grass, brush, rock, house and Haunted Hollow prop pack remade, three or more rounds each (*Rounds*, below); still to come: course props (flags, tee markers, signs), flowers, the houses' foundations and gardens, and the rounds past three toward the addendum's ten |
-| 5. Rendering and lighting | in progress: seven rounds of the light (*Lighting*, below), rendering only |
-| 5b. Reading the ground | in progress (the owner, 26 October 2026: "insert a phase for ground readability ... too many complicated settings"): four rounds (*Reading the ground*, below) |
-| 6. Frame-rate pass | first pass done (*Frame rate*, below): Links, Island and Redwood at or under main; the rest over, by numbers written there |
-| 7. Hand-over and showcase | first pass (26 October): every smoke journey that can run green (37; `server-program` skips itself until the standalone server is built, as on main), `npm run build` fresh, the generator bench all clear, the showcase built (`tools/capture/overhaul-showcase.mjs`); to be redone after the rounds still owed |
+| 4. Assets, biome by biome | every tree, shrub, grass, brush, rock, house and Haunted Hollow prop pack remade, three or more rounds each (*Rounds*, below); the wildflowers, heather, the houses' gardens and footings, the tee furniture and the flag likewise. Rounds past three toward the addendum's ten have been given where a picture showed something still wrong, not as a count |
+| 5. Rendering and lighting | twenty-four rounds of the light (*Lighting*, below), rendering only |
+| 5b. Reading the ground | done (the owner, 26 October 2026: "insert a phase for ground readability ... too many complicated settings"): four rounds (*Reading the ground*, below); the Clear default approved |
+| 6. Frame-rate pass | done (*Frame rate*, below): Links, Island and Redwood at or under main; the rest over, by numbers written there -- the gap on High and Ultra accepted by the owner (*Working on the branch*); Low on weak machines not yet measured |
+| 8. After the goal | the goal ended 26 October 2026 and the owner reviewed it; single-turn requests follow on this branch under the same terms (*Working on the branch*); not merged |
+| 7. Hand-over and showcase | third pass (26 October, after the late rounds: water, sand, edges, wind, clouds, occlusion, flag, furniture, drives): `npm run build` fresh; the journeys those touch (boot, endless-round, no-late-shaders, range, range-greens, floodlit-night, surprise-round) green, but `endless-round` failed once in seven runs, on seed HARROW-4021, stopped at the scorecard -- six reruns on six other courses passed and the cause is not found (TODO); all 37 were green at the second pass, before these rounds; every landscape recaptured (`latest/`, 24 views each, no page errors); the showcase rebuilt (885 pictures). Fourth pass, after shadows and the drives: all 37 journeys green (`server-program` skipping itself as on main); `endless-round` then ran 8 more times on 8 courses, all green -- 15 of 16 since the one failure, which did not recur |
+
+### Rounds, counted (26 October 2026)
+
+Every asset, texture and light topic the brief names, with its rounds (a round
+is made, rendered, judged and written down; a round that judged and changed
+nothing is counted only where it says so). Details under *Rounds* and
+*Lighting* below.
+
+| Item | Rounds | Where |
+| --- | --- | --- |
+| Broadleaves, conifers | 5, 4 | *Broadleaves*, *Conifers*, *Frame rate* |
+| Shrubs, long grass, brush, desert plants | 4, 3, 3, 3 | their sections |
+| Wildflowers, heather | 3, 7 | their sections |
+| Island trees, Haunted Hollow's dead trees, deadfall, pumpkins and toadstools, the redwood grove, Lakeshore's plants | 3 each (redwood 4) | their sections |
+| Boulders, cliffs and cut banks | 4, 7 | *Boulders*, *Landforms*, *Cliffs* |
+| Houses, gardens and footings | 3, 3 | their sections |
+| Tee sign, ball washer | 4 (made; roof turned; underside; gable ends), 3 (made; squared housing; upright) | *Course furniture* |
+| Tee marker, bench | 3 (made; judged close to, unchanged; inked), 2 (made; inked) | *Course furniture* |
+| Flag | 3 (numbered; downwind; both sides) | *Course furniture* |
+| Turf, rough, ground types' patterns | 3 | *Ground textures*, *Landforms* |
+| Bunker sand | 3 (rounds 4-6 of the textures) | *Ground textures* |
+| Paths (a house's drive -- the course has no other) | 7 | *Ground textures* |
+| Ramp, rim, bounce, grading, sky, haze, dawn, dusk, night, floodlit | 5 (lighting 1-5, all ten landscapes) | *Lighting* |
+| Clouds | 3 | *Lighting* 6, 7, 18 |
+| Water | 4 | *Lighting* 8, 9, 14, 15 |
+| Edges | 3 (one rejected) | *Lighting* 10, 16, 17 |
+| Wind | 3 | *Lighting* 11-13 |
+| Ambient occlusion | 3 on houses (rounds 19-21); the forests' floor shade came with the stands (*Uncleared stands*: wider and deeper pools so woods read as woods) | *Lighting*, *Uncleared stands* |
+| Cast shadows | 3 (judged; crisp; checked on High) | *Lighting* 22-24 |
+| Reading the ground | 4 | *Reading the ground* |
+
+Every landscape, by its own landform recipe (biomes.js `landform`,
+landforms.js) and ground types -- generated per seed, judged in the fixed
+views of every landscape (`latest/` against `main/` in the showcase). The
+landforms, ground types and transitions had three rounds together
+(*Landforms and ground types*), the stands and far forest six, the links
+fairways three; each landscape's own plants are counted above.
+
+| Landscape | Landform | Ground types between the holes |
+| --- | --- | --- |
+| Pacific Northwest | crags, 22 m, two cliff steps | rock; pine straw under the stands |
+| Desert | mesas 22-48 m and dry washes | hardpan floor (with strata on banks), wash, rock |
+| Mountain | crags, 70 m, four cliff steps, scree fans | rock, scree |
+| Links | dunes and hummocks (5 m), shared fairways | marram, heather |
+| Midwest | prairie swales | native prairie |
+| Island | coral ironshore along the coast | coral |
+| Giant Redwood | crags as PNW's, lower (16 m), at the owner's word (the same country) | rock; duff under the giants |
+| Autumn | crags, 9 m, with summit rock | rock; leaf litter under the hardwoods |
+| Haunted Hollow | moor and tussock | heather (dead) |
+| Lakeshore Dunes | dunes (4 m), no heather, its blowouts kept | marram |
 
 ## Rules set aside
 
@@ -152,7 +203,7 @@ ground shader).
 ## New ground types in play
 
 A new ground type is not paint. Each one has, in one pure module
-(`src/grounds.js`, to come) with a Node test: how a ball bounces, rolls and
+(`src/grounds.js`) with a Node test: how a ball bounces, rolls and
 spins on it, how a shot comes out of it, its sound, its colour on the maps, its
 name on the HUD, and whether it is in play or a hazard. Every value is PLACED
 unless a source is given, and is listed in RESEARCH.md.
@@ -165,11 +216,92 @@ unless a source is given, and is listed in RESEARCH.md.
 | `tools/gen-time.mjs` | How long an 18-hole course takes to generate, per landscape |
 | `tools/capture/compare-rounds.mjs` | Rounds side by side for one landscape (a row per view, a column per round), or `--across` one round for many landscapes; light work, no game |
 | `tools/capture/overhaul-showcase.mjs` | The showcase page (`docs/reports/cartoon-overhaul-showcase.html`, local): every landscape main against the branch with sliders, the light and asset rounds with their notes from this page, the ground types and their maps, the wait, size and frame rate, the rules set aside |
+| `tools/capture/wind-sequence.mjs` | One camera on a windy course, a still every so often -- the wind judged without video |
 | `tools/frame-tris.mjs` | A frame's triangles model by model, from one spot (GPU gate) |
 | `tools/frame-spikes.mjs` | What each long frame spent its time on, camera still or orbiting (GPU gate) |
 | `tools/profile.mjs --build --json --against --biome` | Main's kept build profiled beside the branch's, tier ladders on any landscape |
 | `tools/surface-map.mjs` | A course's surfaces and ground types from above, 2 m a pixel, on the CPU -- for judging routing and shared fairways |
 | `tools/gpu-gate.mjs` `foreignJobs` | Waits while a Playwright browser or Blender that is not ours is on the card (the realistic-graphics goal runs in another folder) |
+| `tools/gpu-run.mjs --goal cartoon-overhaul --util 30 --temp 80 --rest 1 -- <command>` | Any graphics-card command (smoke, profile) through the same gate, logged with the card's readings before and after |
+| `tools/capture/build-hooked.mjs` | The capture build (`bench/shots/dist-exp/`): the working tree with the capture hooks; rebuild it before every capture after a code change |
+| `tools/blender/run.mjs <pack> --render` | Runs a Blender pack (`tools/blender/cartoon_*.py`), exports its `.glb` files to `vendor/` and renders its contact sheet to `bench/shots/blender/`; then `node tools/build-meshes.mjs` ingests them |
+
+## Working on the branch
+
+### Where it stands (26 October 2026, after the goal)
+
+The goal ended and the owner looked at the work: "really amazing work". Their
+calls, which stand until they say otherwise:
+
+- **The High and Ultra frame-rate gap is accepted** (*Frame rate*, below):
+  "220 frames per second is still way higher than a golf sim actually needs."
+  The open worry is low-end machines on Low -- Low went from about 0.55 to
+  1.0 ms a frame on Autumn on the 4090, and the software `weak` group has not
+  been run (TODO; it needs the owner's word each time -- a software run once
+  took the machine down).
+- **Every PLACED look choice was approved** as sensible: the Clear reading
+  of the ground as the default, crisp cartoon shadows, ink outlines on the tee
+  furniture only, the flag's wind ripple, the house shade at the walls.
+- **Not merged** -- the owner asked for it to wait. Single-turn requests now
+  follow on this branch, under the goal's computer and rule-suspension terms
+  (AGENTS.md, *On the cartoon-overhaul branch, the goal's working rules
+  outlive it*).
+- **To play it:** `dist/index.html` in this worktree, opened straight from
+  disk, or `npm run dev`. Houses are off by default (course settings).
+
+### How a round ran
+
+Each asset, texture or light topic: find what is wrong in a picture, change
+one thing, capture, judge against the last round and the reference, write the
+round into its table here (what was wrong, what changed, the picture's
+folder), and say so in RESEARCH with the numbers, PLACED where they were
+chosen by eye. A round that changes nothing is written down as judged and is
+not counted as a change. Typical loop:
+
+1. Blender assets: edit `tools/blender/cartoon_<pack>.py`, run
+   `node tools/blender/run.mjs cartoon_<pack> --render`, look at the sheet,
+   copy it to `bench/shots/overhaul/rounds/<name>-r<n>.png`, then
+   `node tools/build-meshes.mjs`. A model's real height is passed where the
+   game builds it (the ingest makes every model one unit tall).
+2. In the game: `node tools/capture/build-hooked.mjs`, then
+   `node tools/capture/overhaul.mjs <label> <up to three biomes> --views a,b`.
+   Pictures land in `bench/shots/overhaul/<label>/<biome>/` (git-ignored).
+   Options: `--homes` (house views; `--houses 1,4` picks which), `--tier
+   high`, `--cues '<json>'`, `--seed`. Views worth knowing: `h1-teekit`,
+   `h1-sign-near`, `h1-markers`, `h2-flag`, `h2-flag-back`, `h2-bunker`,
+   `h1-pond`, `h1-cliff`, `h1-heath`, `h2-putt`, `h2-green-b`, and the four
+   hours of `h2-side` (`h2-dawn`, `h2-dusk`, `h2-night`, `h2-flood`).
+3. A rendering change that could move a frame: `node tools/gpu-run.mjs ...
+   -- node tools/profile.mjs --only <group> --build <file> --json` against
+   main's kept build (`bench/shots/overhaul/main-build/`).
+4. Before handing over: `npm test` (run with `--test-concurrency=3` when
+   memory is short), `node tools/biome-fingerprint.mjs --check` after any
+   generation-side file, `npm run build`, smoke through `gpu-run`, the
+   `latest/` set recaptured in batches of at most three landscapes, and
+   `node tools/capture/overhaul-showcase.mjs`.
+
+### Lessons
+
+- **Judge close to.** The tee sign read right at 25 m and wrong at 3.6 m (a
+  black gable end), and the ball washer read as a mailbox -- views close to
+  were added and found both.
+- **Find the cause before tuning.** Ponds' brown smears were blamed first on
+  the mirror, then on the bed showing through; both changes did little. The
+  ripples scattering the reflection were the cause. A drive's "mud" was a
+  colour-space slip, not its colour. A faint house shade was the grass blades
+  covering the ground, proved by a deliberately exaggerated test.
+- **A fix can reveal an older fault.** Laying a drive on the ground showed it
+  had always floated beside raised footings, and that the grass grew through
+  it; the scatters now keep off drives.
+- **Shell edits on Windows.** Windows PowerShell's `Get-Content`/`Set-Content`
+  read and wrote ground.js in the wrong encoding (an em dash mangled) and
+  added a byte-order mark; restore from git and redo with the editor. Scripts
+  that write docs go through the editor too (backticks), and commit messages
+  with double quotes go through `git commit -F <file>`. The worktree refuses
+  complex shell commands; a short script written with the editor runs fine.
+- **A smoke failure is read before it is rerun** -- keep the whole log
+  (`Out-File`), not its last lines; the one endless-round failure could not be
+  explained because its failing step was not kept.
 
 ## Rounds
 
@@ -219,7 +351,7 @@ Pictures: `bench/shots/overhaul/land-r1/`, `land-r2/`, `land-r3/` against
 `main/`. Not played: the new lies are seen only in pictures and in Node
 (TODO).
 
-### Ground textures (turf detail) -- three rounds, in the game
+### Ground textures (turf detail, sand) -- four rounds, in the game
 
 `tools/turf-detail.mjs` paints the turf detail atlas (RESEARCH *The overhaul's
 turf detail*); the ground types' own patterns are in ground.js `groundPaint`.
@@ -229,9 +361,32 @@ turf detail*); the ground types' own patterns are in ground.js `groundPaint`.
 | 1 | Rough strokes read as dirt specks; nap as static; stone pitted like rivets | -- |
 | 2 | (game) mown detail invisible | Light blades with small dark feet, 1,500 clumps; nap at 60%; no pits |
 | 3 | (game) good; hardpan's cracks large and bold | Fairway .16, green .10, grit .24; hardpan plates halved and faint |
+| 4 | (bunker sand, close to: view `h2-bunker`) A flat cream field: rake lines at 2.5% unseen, the faces like the floor, no dish | Rake lines at 7%, fading by their own on-screen spacing; the steep faces a warmer, darker, damp sand (ground.js). A raked bunker with depth, no shimmer from 25 m |
+| 5 | (sand) The lines one straight sine across every bunker: corduroy, not raking | The sand in patches about 4 m across, each raked in arcs about its own centre 6-14 m off, meeting at seams as a raker's strokes do; each furrow a groove under a lit ridge (`sand-r2/`) |
+| 6 | (sand) The arcs faint at the player's feet | A third deeper (`sand-r3/`, Midwest, Desert, Haunted) |
 
 Pictures: `bench/shots/overhaul/rounds/turf-r1..2.png`, in the game
-`turf-r2/`, `turf-r3/`.
+`turf-r2/`, `turf-r3/`, `sand-r0/`, `sand-r1/`.
+
+**Paths**: the brief lists them among the textures; the course draws no cart
+or walking paths at all, and adding them would be new routing work, not a
+texture. The one paved surface is a house's drive, which had two rounds
+(homes.js `pavingTexture`, views `house-1`/`house-2` with `--homes`): round 1
+a flat grey slab made poured concrete -- 3 m panels, a joint down the middle,
+a smoother border (`paths-r1/`); round 2 paler, because at the slab's grey it
+read as mud beside the lawn (`paths-r2/`). Round 3, Desert (the one warm
+landscape; `--houses` picks the house with a garage): sandstone pavers 0.8 x
+0.4 m -- read as a wooden deck, and showed the drive had always been laid at
+the foundation's height, hanging over the falling ground (`paths-r3/`). Round
+4: square 0.6 m flags with softer joints, and the drive laid on the ground,
+tilted to it end to end (`paths-r4/`) -- still too dark. Round 5: the darkness
+was a colour-space slip in the texture (linear values written as sRGB), which
+was also round 1's "mud"; fixed, and the concrete back to the slab's grey
+(`paths-r5/`). On Midwest the rough's grass now grew up through the drive:
+the houses stand on raised footings, so the old drive had been floating.
+Round 6 kept level lots at the old height -- every lot counted as falling
+(`paths-r6/`, `paths-r7/`). Round 7: drives on the ground everywhere, and the
+three grass scatters keep off them (homes.js `onDrive`, a test) (`paths-r9/`).
 
 ### Boulders -- four rounds, in the game
 
@@ -412,7 +567,7 @@ Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`, `redwood-r4/`.
 
 Pictures: `rounds/lakeshore-r1..3.png`, `rounds/grass-r4.png`, in the game `lakeshore-r3/`, `lakeshore-r4/`.
 
-### Lighting -- seven rounds, rendering only
+### Lighting -- twenty-four rounds, rendering only
 
 All judged on Autumn, Desert and Links (Haunted from round 4), round 5 on all
 ten, at noon, golden hour, dawn, dusk, night and floodlit night
@@ -428,12 +583,29 @@ Numbers are in RESEARCH, *The overhaul's lighting*.
 | 5 | The desert's exposure darkened its night too | A landscape's exposure applies by day; the floodlit view added -- all ten judged |
 | 6 | (clouds) Each cloud four to seven faceted balls, lit facet by facet: a cream lump | Seven to twelve finer puffs on a flat base, their normals leaning toward the cloud's centre so it lights as one body, a cool underside and a sky rim |
 | 7 | The rim made each outline brighter than the cloud | A thinner, quieter rim; a cooler, deeper underside |
+| 8 | (water, from a pond's bank at noon: view `h1-pond`) The sea knew its depth, a pond did not: one flat colour bank to bank | Still water reads the sea's depth map (the ground grid): over the last 0.9 m toward the bank it lifts toward a sunlit sandy green and thins -- a hairline, because a pond's bank is cut |
+| 9 | The shallows a hairline | Over 1.8 m of depth, stronger: a lit rim and a pale shelf beside a dark middle (`water-r1/`, `water-r2/`) |
+| 10 | (edges) No edge treatment at all | Tried and REJECTED: a solid surface darkened where it turns from the eye (an "inked" edge, no outline pass) on trunks, boulders and houses. Invisible in the captures (`edges-r1/`): trunks are already dark, stones are small. A real outline pass would cost frames -- an idea for the owner (IDEAS, *Drawn outlines*) |
+| 11 | (wind) Not judged in stills | Checked, not changed: a sequence of stills on a 22 mph Midwest course, 1.2 s apart (`tools/capture/wind-sequence.mjs`, `wind-r0/`). The near crown's top moves a few tenths of a metre and its light changes as it bends toward and away from the sun -- wind, not frenzy. The model is anchored to measured trees (RESEARCH, *How a tree moves in the wind*); a cartoon exaggeration would be a guess against the owner's earlier call, so it is left for the owner to ask for |
+| 12 | (wind) The flag stood out to one side whatever the wind, alone of everything that moves | It flies downwind and ripples with the wind's strength (the furniture table's round 4) |
+| 13 | (wind) Do the flag, the crowns and the clouds agree? | Checked in a sequence aimed at a flag with woods behind (`wind-sequence.mjs --cam`, `wind-r3/`): the flag streams, the clouds drift and the crowns lean the same way. Not changed |
+| 14 | (water, from a pond's bank: `h1-pond` on Midwest, Autumn, Lakeshore) Every pond smeared with brown blotches: muddy, not clean | Tried first: deep water kept mostly opaque, in case the bed showed through -- no change (`water-r4/`), kept anyway for a clean body. Then a little less mirror (metalness .62 to .38, reflections 2.1 to 1.3): a little cleaner (`water-r3/`) |
+| 15 | (water) The blotches are the reflected woods and their dark floor, scattered by the ripples | In the cartoon style a pond's ripples bend the reflection a third as far: the woods come back as broad soft bands, the water clear teal (`water-r5/`). The sea, rivers and creeks keep their chop |
+| 16 | (edges) After round 10, still no edge treatment | An inked outline -- the model again, inside out, pushed out along its normals and drawn dark (the inverted hull) -- on the tee furniture only, a handful of pieces a hole: 1.2 cm. The props read crisp and drawn (`edges-r2/`) |
+| 17 | (edges) At 1.2 cm the props looked drawn in a second hand beside the uninked trees | 0.8 cm: definition, not a new style (`edges-r3/`). Kept. On trees, rocks and houses it would double their geometry on a frame already over main's -- not done (IDEAS, *Drawn outlines*) |
+| 18 | (clouds) A near cloud from below was a stack of flat discs: each puff had its own flat base at its own height | Every puff stands on its cloud's one base; the big middle ones dome highest -- a fair-weather cumulus (`clouds-r3/`, view `h2-flag` on Links) |
+| 19 | (ambient occlusion, a house close to: `--homes` views) A house stood on the lawn as if pasted there: the baked shade (occlusion.js) knew trees and boulders, not houses | Not changed yet: judged (`paths-r2/`) |
+| 20 | (occlusion) | Houses join the bake: a pool hugging each house's turned footprint, .45 out to 2.5 m; the forest floor (Ultra's ferns and sticks), which grows where that bake is deep, reads the trees' and rocks' share alone, so it never gathers at a wall (`ao-r2/`). Not visible: the bake's texels are 1.75 m and the footing covers the first |
+| 21 | (occlusion) Still not seen | .7 out to 4 m (`ao-r3/`). Faint in rough all the same: a test at .95 out to 12 m (`ao-probe/`) showed the pool, so the bake reaches the screen -- the rough's grass blades stand over the ground and are not darkened by it. It shows on bare, sandy and mown ground. Darkening the blades too is the next step if the owner wants it |
+| 22 | (cast shadows, `h1-teekit`, `h1-golden`, `h2-side` on Midwest, Desert, PNW) Colour right -- cool on warm sand, deep in the woods -- but every edge a photograph's blur under drawn trees: the tiers spread the shadow filter 3.5 (High) and 4 (Ultra) texels | Judged; not changed |
+| 23 | (shadows) | In the cartoon style the spread is four tenths of the tier's, never under three's own 1 (Low and Medium unchanged). The sign's shadow a clean drawn shape, a desert tree's shows its limbs (`shadow-r2/`). The filter's sample count is fixed: no cost |
+| 24 | (shadows) Do crisp edges step or speckle on High, whose map is coarser than Ultra's nearest? | Checked on High (`shadow-r3-high/`, new `--tier` on overhaul.mjs) and at golden hour on PNW: no stepping, no acne. Not changed |
 
-Still wrong after seven: a noon desert has little shape from the light (its
-dunes are gentle and the noon sun high -- the shading cues in ground.js carry
-it); the redwood trunk at golden hour is a garish red with black bands (an
-asset round, not a light one); edges/outlines, ambient occlusion beyond the
-contact pools, water and wind have not had their rounds yet. Clouds: `clouds-r1/`, `clouds-r2/`.
+Still wrong: a noon desert has little shape from the light (its dunes are
+gentle and the noon sun high -- the shading cues in ground.js carry it).
+Cast shadows: rounds 22-24 (crisp edges in the cartoon style). The redwood trunk's
+garish red at golden hour was an asset round (redwood bark '#7a5242').
+Clouds: `clouds-r1/` .. `clouds-r3/`.
 
 ## Frame rate -- the first pass (25 October 2026)
 
@@ -507,15 +679,23 @@ the camera turns onto new ground, spent waiting on the card outside the
 game's code with no program compiled -- the driver's first use of something,
 as main shows. Not fixed; the TODO entry says what to check in play.
 
-### Course furniture -- one round, in the game
+### Course furniture and the flag -- seven rounds, in the game
 
 | Round | What was wrong | What changed |
 | --- | --- | --- |
 | 1 | (before) A sphere for a tee marker, a box on a cylinder for the sign, no bench | The cartoon_course pack: a moulded marker, a timber sign under a gable cap with the hole's card in front, a bench and a ball washer at every tee |
+| 2 | (the flag) A plain orange rectangle on the stick | The hole's number in white on the flag's colour, as clubs print them (renderer.js `flagCloth`; the range's flags stay plain). The stick and cup keep their exact sizes. Picture: `flag-r1/` (view `h2-flag`) |
+| 3 | The sign's gable cap ran across the sign, so from the tee it was one flat red board; the ball washer's round lump read as an apple on a stick | The cap turned to run front to back: its triangle faces the player as a little roof, taller (2.52 m to the ridge) with a deeper overhang. The washer a squared housing with a domed lid. In the game both read at 25 m |
+| 4 | (the flag) The cloth stood out to the same side whatever the wind, rippled the same in a calm as in a gale, and its ripple moved its edge off the stick | It flies downwind (renderer.js `holdFlagsticks` turns it to `windDirection`, the bearing the wind blows toward) and ripples faster and deeper the stronger the wind (1.6 + 0.13 x mph a second; at the free edge 6 cm in a calm, 13 cm at 10 mph, 25 cm at 25 mph -- PLACED by eye), its edge held against the stick. The range's flags too. Picture: `flag-r2/` (views `h2-flag`, `h2-green-b`) |
+| 5 | (the flag) From behind, the number read mirrored | The cloth is two one-sided faces back to back, the back one's picture flipped, in one geometry so the ripple moves both: the number reads right from both sides (`flag-r3/`, new view `h2-flag-back`) |
+| 6 | (close to: new views `h1-sign-near`, 3.6 m, and `h1-markers`, 5 m) The washer read as a mailbox; a black triangle under the sign's roof | The washer upright, as a plunger washer is: a pale cap and the plunger's T-handle on top (1.27 m). The black was the roof's front gable end in the board's near-black green -- rounds 6 and 7 first blamed the underside (made timber, its normals bent up to catch light), which was not it; the gable ends timber, lighter at the peak (`course-r4/` .. `course-r6/`) |
+| 7 | (the markers, close to) Read as tee markers, not balls -- a squat dome on a collar | Not changed. They and the bench take the inked outline (the lighting table's rounds 16-17) |
 
-Still to do: the gable cap reads flat from the front; the flagstick and cup
-keep their exact sizes (the ball plays against them) and are not remade.
-Pictures: `rounds/course-r1.png`, in the game `course-r1/` (view `h1-teekit`).
+The flagstick and cup keep their exact sizes (the ball plays against them)
+and are not remade; the marker and bench were judged right in round 1.
+Pictures: `rounds/course-r1.png` .. `rounds/course-r3.png`; in the game
+`course-r1/`, `course-r3/` .. `course-r6/` (views `h1-teekit`, `h1-sign-near`,
+`h1-markers`), `flag-r1/` .. `flag-r3/`, `edges-r2/`, `edges-r3/`.
 
 ### Heather -- rounds 4 to 7 (rounds 1-3 under *Landforms and ground types*)
 
@@ -560,3 +740,27 @@ the default reverses that tuning for anyone who has not chosen, and is the
 owner's to overrule (graphics.js `READING_DEFAULT`). Not yet looked at: the
 green-reading overlays (the grid and beads) beside the new contours, and
 Clear's sheen in motion rather than from two still angles (round 4).
+
+### Gardens and footings -- three rounds, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) A fence of thin boxes, a garden of seven-sided balls, a wide pale-grey concrete plinth under every house | The cartoon_garden pack: picket fence, boxwood dome, flowering bush, topiary cone. The dome a lumpy blob, the flowers big white discs, the cone a stepped tree |
+| 2 | As round 1 | A smooth clipped dome; smaller, more flower heads; a twelve-tier cone that reads as one surface. In the game (homes.js): shrubs about a metre, small beside a house; the plinth still concrete |
+| 3 | Shrubs too small; the plinth | Shrubs 1.15-1.6 m; the footing in the landscape's rock darkened toward soil, 9 cm proud of the walls (was 17.5) |
+
+Pictures: `rounds/garden-r1..2.png`, in the game `garden-r2/`, `garden-r3/` (`--homes` views).
+
+### Cliffs and cut banks -- rounds 4 to 7 (rounds 1-3 under *Landforms and ground types*)
+
+Judged close to (view `h1-cliff`: the steepest ground within 220 m of the
+first green, from 40 m off) on Mountain, Desert, PNW and Redwood.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 4 | The desert floor's crack net stretched up a steep bank: crazy paving where a mesa's side shows layers | On steep ground the hardpan shows strata of the landscape's rock in its own colour, each with a lit lip and a shadow under it (ground.js) |
+| 5 | Mountain's and PNW's rock faces read as paving slabs too | The rock's broad planes softened to tone, and the same ledges added on steep rock -- the slabs stayed: not from the planes |
+| 6 | The slabs are the turf-detail atlas's stone channel (cracked plates laid from above), stretched on a face | Held to 30% on steep rock: PNW's cliff a clean face |
+| 7 | The same plates on gentle granite read as laid tiles | Held to 55% there: softer; they stand for jointed slab rock, the rock's earlier intent, and stay |
+
+Pictures: in the game `cliff-r3/` .. `cliff-r7/`.

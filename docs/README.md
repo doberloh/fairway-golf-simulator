@@ -48,8 +48,9 @@ the change that made it stale, not a follow-up.
 - **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the `cartoon-overhaul`
   branch only: the plan for remaking every model, texture, landscape and the
   lighting in the Cartoon style, its art direction, the baselines it is judged
-  against, its rounds, and every rule it has set aside. Read it first on that
-  branch.
+  against, its rounds, every rule it has set aside, and how to work on the
+  branch now its goal has ended (*Working on the branch*). Read it first on
+  that branch.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and
   cannot see, which formats and groups the round tests play, every smoke

@@ -17,8 +17,9 @@
 #                centre 1.55 m up and its face 4.5 cm in front of the posts'
 #                centre line, which is the model's -Y: glTF +Z)
 #   bench        a slatted timber bench with a back, 1.6 m long
-#   ball washer  a paddle washer on a post: a rounded box with a crank and a
-#                towel hanging from its side
+#   ball washer  a plunger washer on a post: an upright housing with a pale
+#                cap, the plunger's T-handle on top and a towel hanging from
+#                its side
 #
 # Measured in metres; each model's real height is noted beside it, because
 # the ingest scales every model to one unit tall and the game scales back.
@@ -63,7 +64,7 @@ def tee_marker():
 
 
 def tee_sign():
-    # 2.35 m tall. Posts 9 cm square, 1.16 m apart, the board between them.
+    # 2.52 m tall (round 2; round 3 a timber underside). Posts 9 cm square, 1.16 m apart, the board between them.
     def build(mesh, rng):
         for x in (-.58, .58):
             block(mesh, x - .045, x + .045, -.045, .045, 0, 2.18, 'bark', low=.6, high=1.0)
@@ -71,22 +72,37 @@ def tee_sign():
         block(mesh, -.54, .54, -.04, .03, .9, 2.2, 'stone', low=.85, high=1.0)
         # A crossbar under it.
         block(mesh, -.62, .62, -.05, .05, .82, .9, 'bark', low=.8, high=.95)
-        # The gable cap: two sloping boards and a ridge.
-        w, base, peak, d = .72, 2.18, 2.35, .14
+        # The gable cap: two sloping boards and a ridge. Round 2: round 1's ridge
+        # ran across the sign, so from the front the cap was one flat board;
+        # turned to run front to back, its triangle faces the player, taller
+        # (2.52 m to the ridge), with a deeper overhang.
+        w, base, peak, d = .74, 2.18, 2.52, .2
         for s in (-1, 1):
-            pts = [Vector((-w, s * d, base)), Vector((w, s * d, base)), Vector((w, 0, peak)), Vector((-w, 0, peak))]
-            if s > 0:
+            pts = [Vector((s * w, -d, base)), Vector((s * w, d, base)), Vector((0, d, peak)), Vector((0, -d, peak))]
+            if s < 0:
                 pts = pts[::-1]
             f = mesh.face(pts, 'accent')
             for v in f.verts:
                 mesh.paint[v] = (.95, .95, .95, 0.0)
-            g = mesh.face(pts[::-1], 'accent')
+            # The underside: round 3 -- painted as the roof in shade it was
+            # black from the tee, where a player stands under the eaves. Plain
+            # timber boards, lit, as a real sign's soffit is.
+            # Painting alone did not do it (round 4: still black), because the
+            # faces point down, away from sun and sky; their normals are bent
+            # up and toward the front, the crowns' trick, so the boards light.
+            g = mesh.face(pts[::-1], 'bark')
             for v in g.verts:
-                mesh.paint[v] = (.55, .55, .55, 0.0)
-        for x in (-w, w):
-            f = mesh.face([Vector((x, -d, base)), Vector((x, d, base)), Vector((x, 0, peak))][::(1 if x > 0 else -1)], 'accent')
+                mesh.paint[v] = (1.0, 1.0, 1.0, 0.0)
+                mesh.normal[v] = Vector((s * .25, -.55, .8)).normalized()
+        # The gable ends. Round 5: in the board's near-black green they read,
+        # from beside the sign, as a black hole under the roof (rounds 3 and 4
+        # blamed the underside); timber, like the posts, and lighter at the peak.
+        for y in (-d, d):
+            tri = [Vector((-w, y, base)), Vector((w, y, base)), Vector((0, y, peak))]
+            f = mesh.face(tri if y < 0 else tri[::-1], 'bark')
             for v in f.verts:
-                mesh.paint[v] = (.8, .8, .8, 0.0)
+                k = .85 + .25 * (v.co.z - base) / (peak - base)
+                mesh.paint[v] = (k, k, k, 0.0)
     return build
 
 
@@ -110,20 +126,22 @@ def bench():
 
 
 def ball_washer():
-    # 1.05 m tall.
+    # 1.27 m tall (round 3).
     def build(mesh, rng):
-        block(mesh, -.04, .04, -.04, .04, 0, .82, 'bark', low=.6, high=.95)
+        block(mesh, -.04, .04, -.04, .04, 0, .8, 'bark', low=.6, high=.95)
         # A small square foot plate.
         block(mesh, -.14, .14, -.14, .14, 0, .03, 'bark', low=.7, high=.8)
-        # The washer: a rounded box, its lid and the crank.
-        mesh.add_lump(Vector((0, 0, .9)), (.13, .07, .12), 'accent', rng, subdiv=3, jitter=0.0,
-                      crown=Vector((0, 0, .9)), blend=.25, shade=lambda w, n: .8 + .3 * max(0.0, min(1.0, (w.z - .8) / .22)))
-        mesh.add_tube([Vector((0, 0, 1.0)), Vector((0, 0, 1.05)), Vector((.06, 0, 1.05))], [.012, .012, .012], 6, 'bark',
-                      shade=lambda co, t: .7)
-        mesh.add_lump(Vector((.07, 0, 1.05)), (.022, .022, .022), 'stone', rng, subdiv=2, jitter=0.0, shade=lambda w, n: .9)
+        # The washer. Round 2 -- round 1's rounded lump read as an apple on a
+        # stick -- made it a squared housing with a domed lid, which from close
+        # to read as a mailbox. Round 3: upright, as a plunger washer is, a
+        # pale cap plate, and the T-handle of its plunger standing out on top.
+        block(mesh, -.08, .08, -.08, .08, .78, 1.1, 'accent', low=.8, high=1.02)
+        block(mesh, -.095, .095, -.095, .095, 1.1, 1.13, 'stone', low=.95, high=1.0)
+        block(mesh, -.012, .012, -.012, .012, 1.13, 1.24, 'bark', low=.75, high=.9)
+        block(mesh, -.07, .07, -.018, .018, 1.23, 1.27, 'accent', low=.9, high=1.05)
         # A towel hanging from the side: a thin rounded slab.
-        mesh.add_lump(Vector((.15, 0, .78)), (.015, .06, .13), 'stone', rng, subdiv=2, jitter=.05, squash_bottom=.2,
-                      shade=lambda w, n: .82 + .25 * max(0.0, min(1.0, (w.z - .65) / .26)))
+        mesh.add_lump(Vector((.1, 0, .9)), (.015, .06, .13), 'stone', rng, subdiv=2, jitter=.05, squash_bottom=.2,
+                      shade=lambda w, n: .82 + .25 * max(0.0, min(1.0, (w.z - .77) / .26)))
     return build
 
 

@@ -235,8 +235,9 @@ export function groundMaterial(view,palette){
  // straw in green, linearly filtered. Bytes, not floats: a quarter of the
  // memory the float copy of the ownership atlas it replaced took.
  const occ=occlusionAtlas(w,extent.x,extent.y,Sx,Sz),coverBytes=new Uint8Array(Sx*Sz*4);
- // Kept for the forest floor (U6, vegetation.js), which grows where the canopy is.
- view.groundOcclusion={occ,Sx,Sz,ex:extent.x,ez:extent.y};
+ // Kept for the forest floor (U6, vegetation.js), which grows where the canopy
+ // is: the trees' and rocks' share alone, never the houses' (occlusion.js).
+ view.groundOcclusion={occ:occ.plants||occ,Sx,Sz,ex:extent.x,ez:extent.y};
  for(let k=0;k<Sx*Sz;k++){coverBytes[k*4]=Math.round(occ[k]*255);coverBytes[k*4+1]=Math.round(owners[k*4+1]*255);}
  // Green: fallen needles or leaves (course.js `fallenField`), the bytes the
  // lie reads -- strawChannel above computes the same 0/1 at the same centres,
@@ -302,12 +303,18 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    // first had 3.4 m square facets and a stratum every 2.2 m, which tiled
    // like brickwork; these are warped, three times larger, half as often.
    vec2 w=q/9.+vec2(patchNoise(q/23.),patchNoise(q/19.+7.))*1.4;
-   float facet=hashGround(floor(w)),soft=patchNoise(q/5.);
+   // Round 5 (the cliffs): the planes' hard cell edges read as paving slabs on
+   // a face (Mountain, PNW); now mostly a soft tone between neighbouring
+   // planes, with only a hint of the step left.
+   float facet=mix(hashGround(floor(w)),patchNoise(w),.7),soft=patchNoise(q/5.);
    vec3 c=gt_rock*(.84+.18*facet+.08*soft);
    // Strata as broad alternating bands of tone, not lines (round 3: thin
    // lines every few metres read as contour lines drawn on the cliff).
-   float ys=y/6.5+.7*patchNoise(q/17.),strata=smoothstep(.35,.65,abs(fract(ys)-.5)*2.);
-   c*=mix(1.,.88+.12*strata,steep);
+   float ys=y/6.5+.7*patchNoise(q/17.),fy=fract(ys),strata=smoothstep(.35,.65,abs(fy-.5)*2.);
+   // Round 5: and a ledge to each stratum on a steep face -- a light lip at its
+   // top, a shadow under it -- as the desert's cut banks have (round 4).
+   float ledge=.1*smoothstep(.92,.98,fy)-.12*smoothstep(0.,.04,fy)*(1.-smoothstep(.04,.12,fy));
+   c*=mix(1.,(.88+.12*strata)*(1.+ledge),steep);
    c=mix(c,rough,(1.-steep)*.3);
    return c*(1.-.12*steep);
   }
@@ -323,7 +330,14 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    // (round 2: a strong regular crack net read as a wireframe).
    vec2 g=q/2.4+vec2(patchNoise(q/9.),patchNoise(q/11.+3.))*1.2;vec2 f=abs(fract(g)-.5);
    float crack=smoothstep(.46,.5,max(f.x,f.y));
-   return gt_hardpan*(.93+.1*patchNoise(q/7.))*(1.-.06*crack);
+   vec3 pan=gt_hardpan*(.93+.1*patchNoise(q/7.))*(1.-.06*crack*(1.-steep));
+   // Round 4 (the cliffs): on a steep bank the desert floor is a cut face, and
+   // its plates stretched up it read as crazy paving. There it shows the
+   // layers instead -- bands of the landscape's rock in the floor's colour, a
+   // light lip at the top of each and a shadow under it, as a mesa's side does.
+   float ys=y/2.4+.6*patchNoise(q/11.),fy=fract(ys),band=smoothstep(.35,.65,abs(fy-.5)*2.);
+   vec3 face=mix(gt_hardpan,gt_rock,.55)*(.86+.14*band)*(1.+.12*smoothstep(.9,.97,fy)-.14*smoothstep(.0,.06,fy)*(1.-smoothstep(.06,.14,fy)));
+   return mix(pan,face,steep);
   }
   if(code<5.5){float r=sin((q.x*.8+q.y*.35)*2.4+patchNoise(q/5.)*4.);return gt_waste*(.95+.05*r);}
   if(code<6.5){
@@ -944,13 +958,40 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   bool mown=kind>1.5&&kind<4.5||(teeGround>.5&&kind==1.);
   float scale=stone?6.5:gritty?1.6:mown?(kind==4.?1.3:1.8):kind==1.?2.2:2.8;
   float amp=stone?.34:gritty?.24:mown?(kind==4.?.1:.16):kind==1.?.2:.3;
+  // The cliffs, round 6: the stone channel is a cracked-plate pattern laid
+  // from above, and on a face it stretched into paving slabs (Mountain, PNW).
+  // Held to 30% where the rock stands steep; the strata and ledges carry it.
+  // Round 7: and to 55% on gentle rock too, where its hexagonal plates read
+  // as laid tiles (Mountain's slabs).
+  if(stone)amp*=mix(.3,.55,smoothstep(.55,.9,normalize(groundNormal).y));
   vec4 d1=texture2D(detail,wp/scale);
   float v=stone?d1.a:gritty?d1.b:mown?d1.g:d1.r;
   if(!stone&&!gritty&&!mown){vec2 q=mat2(.8,-.6,.6,.8)*wp/(scale*2.7);v=mix(v,texture2D(detail,q).r,.4);}
   float far=1.-smoothstep(.05,.5,length(fwidth(wp))/scale);
   turf*=1.+(v-.5)*2.*amp*(.35+.65*far)*(kind==6.?0.:1.);
  }
- if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
+ // BUNKER SAND (the cartoon overhaul's sand, round 1). Up close a bunker was a
+ // flat cream field: the rake lines at 2.5% could not be seen, and the faces
+ // read like the floor, so the dish had no depth. The rake lines now at 7%,
+ // fading by their own on-screen spacing rather than by the texel so they
+ // never shimmer; the steep faces a warmer, darker sand, damp where the sun
+ // does not dry them, which is what shows a bunker's shape at noon.
+ //
+ // Round 2: the lines were one straight sine across every bunker -- corduroy,
+ // not raking. A raker works in strokes: the sand is cut into patches about
+ // 4 m across (a jittered cell pattern), each raked in arcs about its own
+ // centre 6-14 m off, so lines curve and meet at seams. Each furrow is a
+ // thin groove under a lit ridge rather than a stripe.
+ if(kind==5.){
+  vec2 rc=p/4.,cell=floor(rc),bc=cell;float best=9.;
+  for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 c=cell+vec2(float(i),float(j));float d=length(c+vec2(hashGround(c),hashGround(c+17.3))-rc);if(d<best){best=d;bc=c;}}
+  float ang=hashGround(bc+5.1)*6.2832;vec2 centre=(bc+.5)*4.+vec2(cos(ang),sin(ang))*(6.+hashGround(bc+9.7)*8.);
+  float rp=length(p-centre)*5.4,g=fract(rp)-.5,fade=1.-smoothstep(.25,.6,fwidth(rp));
+  float rake=(smoothstep(.12,.3,abs(g))-.75+.6*exp(-pow((g+.32)/.08,2.)))*fade;
+  float face=1.-smoothstep(.8,.96,normalize(groundNormal).y);
+  // Round 3: the arcs read, but faintly at the player's feet -- deeper by a third.
+  turf*=(1.+rake*.095)*mix(vec3(1.),vec3(.9,.86,.8),face);
+ }
  // THE FOREST ON THE FAR HILLS (the cartoon overhaul; biomes.js farForest).
  // Past the course's own ground the landscape rings were bare hills; the
  // stands (stands.js) end at the property line. Here, painted, not planted: a
@@ -1006,5 +1047,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v37';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v44';return m;
 }

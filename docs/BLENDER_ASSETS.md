@@ -352,6 +352,17 @@ grove's 13,000-53,000: the model module fell from 19.8 MB to 7.8 MB. The
 grown models (tools/grow.mjs) no longer ship on this branch; `thinSprays` is
 kept, and tested on a built crown, for main's sake.
 
+### cartoon_garden
+
+`tools/blender/cartoon_garden.py`: a fairway home's garden, where homes.js drew
+a fence of thin boxes and seven-sided balls: a picket fence section (1.6 m,
+two capped posts, two rails, eight pointed pickets; `bark` the frame,
+`accent` the pickets) and three clipped shrubs -- a boxwood dome, a flowering
+mophead bush (`accent` the flowers, one colour a house from homes.js
+`BLOOMS`) and a topiary cone. Ingested as `gardenfence` and `gardenshrub`;
+homes.js instances them with the houses, so a street is a few draw calls.
+The foundation stays a box, now a stone footing in the landscape's rock.
+
 ### cartoon_flowers
 
 `tools/blender/cartoon_flowers.py`: the rough's wildflowers, where a 20-face
@@ -370,9 +381,13 @@ specks).
 hand, where renderer.js `addHoleDetails` drew a sphere for a tee marker and a
 box on a cylinder for the sign. A moulded marker (a squat dome on a collar,
 11 cm, `accent` coloured per tee), a hole sign (two timber posts and a gable
-cap round a 1.0 x 1.25 m board whose centre is 1.55 m up; the game lays the
-hole's card on a face 5 cm in front of it), a slatted bench and a paddle ball
-washer with a towel. Ingested as the `coursefurniture` family, never
+roof whose ridge runs front to back, 2.52 m to the ridge, round a 1.0 x
+1.25 m board whose centre is 1.55 m up; the game lays the hole's card on a
+face 5 cm in front of it -- `furniture()`'s height and the face's divisor must
+both be 2.52), a slatted bench and a plunger ball washer (an upright housing,
+a pale cap, the plunger's T-handle on top and a towel; 1.27 m, the height
+renderer.js gives it). The sign's gable ends and its roof's underside are
+timber; the underside's normals are bent up so it lights from below the eaves. Ingested as the `coursefurniture` family, never
 planted; renderer.js `furniture(name, height, colours)` builds one at its
 real height (the ingest makes every model one unit tall). Decoration: nothing
 a ball hits, as the sign never was. The plain shapes stay as the fallback.

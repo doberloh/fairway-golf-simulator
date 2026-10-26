@@ -957,6 +957,10 @@ const JOURNEYS = [
      if (holed === false) continue;
      // THE BALL CLOSE UP in the hole-out banner (Phase 5): drawn, turning, and
      // pictured for a look.
+     // The hole's par and score name, on every run (26 October 2026): one run
+     // failed after an albatross and the passing runs' scores were not kept.
+     const named = await t.page.waitForSelector('#holeOut:not([hidden])', {timeout: 2500}).then(() => t.page.evaluate(() => document.getElementById('holeOut').textContent.replace(/\s+/g, ' ').trim().slice(0, 60)), () => '?');
+     console.log(`       (${await t.page.evaluate(() => document.getElementById('holePar')?.textContent?.trim() || '?')}: "${named}")`);
      if (await t.page.waitForSelector('#holeOut:not([hidden]) .hole-out-ball', {timeout: 2500}).then(() => true, () => false)) {
       await t.page.waitForTimeout(400);
       const drawn = await t.page.evaluate(() => { const c = document.querySelector('#holeOut .hole-out-ball'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) n += d[i] > 200; return n / (c.width * c.height); });
