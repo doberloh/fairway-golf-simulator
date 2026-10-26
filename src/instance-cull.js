@@ -116,7 +116,8 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;
-  const record = {mesh, n, order, src, srcColour, srcRoot, rootAttr, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false};
+  const record = {mesh, n, order, src, srcColour, srcRoot, rootAttr, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false,
+   reach: mesh.userData.cullReach ?? 0, shadowNear: !!mesh.userData.shadowNear};
   const thinFrom = () => tune.thinShadowsFrom ?? thinShadowsFrom;
   // A SHADOW OF THE SAME TREE, DRAWN CHEAPER. From map `thinShadowsFrom` out,
   // a crown's shadow comes from its thinned twin -- a third of the sprays,
@@ -160,7 +161,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    twin.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
     const k = shadowOf.get(shadowCamera);
     this.userData.cullHeld = this.count;
-    this.count = k === undefined || k < thinFrom() ? 0 : all || !record.cum ? mesh.count : record.cum[k];
+    this.count = k === undefined || k < thinFrom() || record.shadowNear ? 0 : all || !record.cum ? mesh.count : record.cum[k];
    };
    twin.onAfterShadow = function () { this.count = this.userData.cullHeld; this.userData.cullHeld = undefined; };
    mesh.parent.add(twin);
@@ -173,7 +174,8 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   mesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
-   if (record.twin && k >= thinFrom()) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   // Only the nearest map for a plant whose shadow is near work (`shadowNear`).
+   if (record.twin && k >= thinFrom() || record.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
    if (all || !record.cum) return;
    this.userData.cullHeld = this.count;
    this.count = record.cum[k];
@@ -192,11 +194,13 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   farMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh};
   farMesh.name = 'far trees'; farMesh.count = 0; farMesh.visible = false;
   mesh.parent.add(farMesh);
-  const farRecord = {mesh: farMesh, n, order, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted};
+  const farRecord = {mesh: farMesh, n, order, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear};
   record.near = true;
   farMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
-   if (k === undefined || all || !farRecord.cum) return;
+   if (k === undefined) return;
+   if (farRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if (all || !farRecord.cum) return;
    this.userData.cullHeld = this.count;
    this.count = farRecord.cum[k];
   };
@@ -205,6 +209,9 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  });
 
  const visible = new Uint8Array(boxes.length).fill(1);
+ // Each square's distance from the camera at the last rebuild, for a mesh
+ // drawn only so far (`cullReach`, metres: the long grass).
+ const dist = new Float32Array(boxes.length);
  // WHICH SHADOW MAP A SQUARE IS FIRST NEEDED BY. Three draws a shadow caster
  // into every shadow map whose volume it overlaps, testing the object's
  // bounding sphere -- and a culled mesh has no sphere worth testing, so without
@@ -240,6 +247,9 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    for (let g = 0; g <= groups; g++) {
     for (let j = 0; j < runs.length; j += 3) {
      if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
+     // Past a mesh's reach -- by its nearest point, so a square only goes once
+     // all of it is beyond, where the clumps have sunk away.
+     if (!all && r.reach && dist[runs[j]] > r.reach) continue;
      const th = r.painted ? thinPainted : thin;
      if (r.near && th[runs[j]] && !all) continue;
      if (r.far && (all || !th[runs[j]])) continue;
@@ -313,7 +323,8 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    }
    for (let c = 0; c < boxes.length; c++) {
     const b = boxes[c];
-    if (b.distanceToPoint(camera.position) < tune.near) { visible[c] = 1; continue; }
+    dist[c] = b.distanceToPoint(camera.position);
+    if (dist[c] < tune.near) { visible[c] = 1; continue; }
     box.copy(b);
     if (reach) {
      const len = Math.min(tune.shadowCap, (b.max.y - b.min.y) * reach);

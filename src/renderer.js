@@ -45,6 +45,13 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
+import {modelParts} from './mesh-assets.js';
+// THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
+// round 3). The sky's flat fill was 1.15 against a sun of 2.8: a third of
+// every surface's light came from no direction, and a dune turned from a noon
+// sun drew barely darker than the flat beside it. PLACED by eye: about a
+// quarter now, so land reads by its shading.
+const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
@@ -413,7 +420,7 @@ function trimToBall(points){
 
 export class GolfView{
  constructor(canvas,quality='medium'){
-  this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
+  this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.CustomToneMapping;this.renderer.toneMappingExposure=1.05;
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
@@ -653,6 +660,16 @@ export class GolfView{
  //
  // Water is deliberately NOT routed through here: it needs metalness and a
  // reflection, and toon has neither.
+ // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): a painted
+ // model at its real height in metres (the ingest makes every model one unit
+ // tall), each role in its colour. Null where the build has none, so the
+ // plain shapes stay as the fallback.
+ furniture(name,height,colours){
+  const parts=this.style==='cartoon'&&modelParts(name);if(!parts)return null;
+  const g=new T.Group();
+  for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);}
+  g.scale.setScalar(height);return g;
+ }
  surfaceMaterial(color,opts={}){
   const {roughness,flatShading,...toonOpts}=opts;
   if(this.style!=='cartoon')return new T.MeshStandardMaterial({color,roughness:roughness??1,...opts});
@@ -809,22 +826,26 @@ export class GolfView{
   this.standIns=[];
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
-  this.renderer.toneMappingExposure=blue?1:toon?1.0:.94;
-  this.hemi=add(new T.HemisphereLight(blue?'#a4dcea':'#cce5ff',blue?'#2d4054':'#777855',1.15));
+  this.renderer.toneMappingExposure=blue?1:toon?bio.light?.exposure??1:.94;
+  // THE BOUNCE IS THE GROUND'S OWN COLOUR (the cartoon overhaul's lighting,
+  // round 1): light thrown up from sand is warm, from a violet moor violet.
+  // One olive for every landscape lit a desert crown's underside as if it
+  // stood on a lawn.
+  this.hemi=add(new T.HemisphereLight(blue?'#a4dcea':'#cce5ff',blue?'#2d4054':toon?new T.Color('#777855').lerp(new T.Color(bio.light?.bounce??bio.rough),.5):'#777855',HEMI));
   // The clock only ever tints these; they stay the base it returns to.
   this.hemiSkyBase=this.hemi.color.clone();this.hemiGroundBase=this.hemi.groundColor.clone();
   this.skyBgBase=this.scene.background.clone();this.fogBase=this.scene.fog.color.clone();
-  this.hemiBaseIntensity=1.15;
+  this.hemiBaseIntensity=HEMI;
   // Blueprint is a diagram, not a place: it keeps its flat even light and
   // ignores the clock entirely.
-  this.timed=!blue;this.baseExposure=blue?1:toon?1.0:.94;
+  this.timed=!blue;this.baseExposure=blue?1:toon?bio.light?.exposure??1:.94;
   // Each biome opens at the hour that reproduces the light it always had, so
   // an existing course looks unchanged until the slider moves.
   if(this.daylight.hour===null)this.daylight.hour=this.daylight.syncToLocal?localHour():defaultHour(bio.sun);
   const solar=solarState(this.daylight.hour,bio.sun);this.solar=solar;
   const sunDir=this.timed?solar.direction.clone():new T.Vector3(-.6,Math.sin(bio.sun*Math.PI/180),-.5).normalize();
-  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':bio.sunColor,blue?1.5:2.8));
-  this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:2.8;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
+  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':bio.sunColor,blue?1.5:SUN));
+  this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:SUN;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
   // Cascaded shadows: one frustum that follows the camera can only cover the
   // ground around it, so anything further away is lit as though nothing stands
   // between it and the sun. Cascades give each distance band its own map.
@@ -1408,7 +1429,7 @@ export class GolfView{
  }
 
  addSky(sunDir){
-  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},afterglow:{value:0},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle,afterglow;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
@@ -1428,6 +1449,18 @@ export class GolfView{
   return step(1.-density,h)*core*(.55+.45*sin(t*1.7+h*63.));
  }
  void main(){vec3 d=normalize(vSky);float h=max(d.y,0.);vec3 col=mix(horizon,top,pow(h,.55));float glow=pow(max(dot(d,sun),0.),64.);col+=glowColor*glow*.35;col=mix(col,discColor,smoothstep(.99955,.9998,dot(d,sun)));
+  // THE AFTERGLOW (the cartoon overhaul's lighting, round 2): while the sun is
+  // low and for a while after it sets, the horizon under it burns orange and
+  // the horizon opposite takes a pink band (the Belt of Venus) -- the colour a
+  // dusk is remembered by. The tint the clock lays over the whole dome made a
+  // dusk one muddy grey-blue. Banked to the horizon and by bearing from the
+  // sun, so the zenith keeps its own blue.
+  if(afterglow>.001){
+   vec2 ds=d.xz,ss=sun.xz;float toward=dot(normalize(ds+1e-5),normalize(ss+1e-5));
+   float low=exp(-h*7.)*smoothstep(-.06,.02,d.y);
+   vec3 burn=mix(vec3(.95,.42,.42),vec3(1.,.6,.28),smoothstep(.2,1.,toward));
+   col+=afterglow*low*(burn*smoothstep(-.3,1.,toward)*.8+vec3(.62,.45,.66)*smoothstep(.1,-1.,toward)*.32);
+  }
   // Stars go in before the clouds, so a cloud drifting over puts them out.
   if(starness>.001){vec3 sd=spin(d,starAxis,starAngle);float sf=starLayer(sd,150.,.05,skyTime)+starLayer(sd,70.,.02,skyTime*.6)*1.7;col+=vec3(.82,.88,1.)*sf*starness*smoothstep(0.,.16,d.y);}
   // A DRAWN MOON (a biome's moon field; amount 0 everywhere else): a disc on the
@@ -1648,8 +1681,11 @@ export class GolfView{
    for(const side of [-inset,inset]){
     // Perpendicular to the line of play, set a metre back from the tee centre.
     const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
-    const marker=new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
-    marker.position.set(q.x,h.height(x,z)+.085,q.z);group.add(marker);
+    // A moulded marker, a squat dome on a collar 11 cm tall (the furniture);
+    // a ball on the turf where the build has none.
+    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'});
+    const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
+    marker.position.set(q.x,h.height(x,z)+(made?0:.085),q.z);group.add(marker);
    }
   }
   // Numbered tee sign, timber posts, and a timber bench beside every tee.
@@ -1678,8 +1714,13 @@ export class GolfView{
    const side=-(TEE_APRON.x+1.4);
    const lx=backTee.x+buz*side,lz=backTee.z-bux*side;
    const q=h.toWorld({x:lx,z:lz}),ground=h.height(lx,lz);
-   const sign=new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
-   sign.position.set(q.x,ground+1.55,q.z);
+   // The furniture's sign: two timber posts and a gable cap round the board,
+   // the hole's card on a face 5 cm in front of it (cartoon_course.py says
+   // where the board is). The old box-on-a-post where the build has none.
+   const frame=this.furniture('Blender_TeeSign_1',2.35,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
+   const sign=frame??new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
+   if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.35,1.25/2.35),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.35,.05/2.35);frame.add(face);}
+   sign.position.set(q.x,ground+(frame?0:1.55),q.z);
    // Facing the tee it belongs to, so it is read from where you stand rather
    // than from behind. The box is thin in Z, so its face points along the
    // rotated +Z and the bearing is measured in world space -- the pad is
@@ -1687,8 +1728,14 @@ export class GolfView{
    const bw=h.toWorld(backTee);
    sign.rotation.y=Math.atan2(bw.x-q.x,bw.z-q.z);
    group.add(sign);
-   const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));
-   post.position.set(q.x,ground+.5,q.z);group.add(post);
+   if(!frame){const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));
+    post.position.set(q.x,ground+.5,q.z);group.add(post);}
+   // A bench a little further out, facing the tee, and a ball washer just
+   // ahead of the sign -- decoration, nothing a ball hits (the sign never was).
+   const put=(m,along,out)=>{if(!m)return;const ax=lx+bux*along+buz*out,az=lz+buz*along-bux*out,w=h.toWorld({x:ax,z:az});
+    m.position.set(w.x,h.height(ax,az),w.z);m.rotation.y=Math.atan2(bw.x-w.x,bw.z-w.z);group.add(m);};
+   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'}),-2.2,-1.6);
+   put(this.furniture('Blender_BallWasher_1',1.05,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
   }
  }
  // Move the range's green, without rebuilding anything.
@@ -2519,7 +2566,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.hemi.color.copy(this.hemiSkyBase).lerp(solar.tint,t);
   this.hemi.groundColor.copy(this.hemiGroundBase).lerp(solar.groundTint,t);
   this.hemi.intensity=this.hemiBaseIntensity*solar.hemiScale;
-  this.renderer.toneMappingExposure=this.baseExposure*solar.exposureScale;
+  // A landscape's own exposure (biomes.js light) is a daylight setting: the
+  // night keeps the one exposure every landscape is read by.
+  this.renderer.toneMappingExposure=(1+(this.baseExposure-1)*solar.dayness)*solar.exposureScale;
   if(this.skyMaterial){
    const u=this.skyMaterial.uniforms;u.sun.value.copy(solar.direction);
    // The dome's crown holds its colour a little longer than its horizon, which
@@ -2534,6 +2583,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    u.glowColor.value.copy(GLOW_DAY).lerp(GLOW_NIGHT,1-solar.dayness);
    u.discColor.value.copy(DISC_DAY).lerp(DISC_NIGHT,1-solar.dayness);
    u.starness.value=solar.starness;u.starAngle.value=starRotation(d.hour);
+   // From a sun twelve degrees up to six under the horizon, strongest at it.
+   u.afterglow.value=T.MathUtils.smoothstep(solar.elevation,-6,-.5)*(1-T.MathUtils.smoothstep(solar.elevation,1,12));
    // The drawn moon: orange on the horizon, paling as it climbs, faint by day.
    const moon=this.world.bio.moon;
    if(moon){
@@ -2554,7 +2605,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // Mist is lit by the sky, so it takes the air's own colour and sits a little
    // brighter than it. Tying it to the fog colour means it warms at dawn and
    // goes blue after dark without a second set of constants to keep in step.
-   u.mistColor.value.copy(this.scene.fog.color).lerp(WHITE,.22);
+   // Round 4 of the overhaul's lighting: by day only. At night the lift made
+   // the mist on the far hills brighter than the sky above them -- a pale band
+   // round the horizon that read as snow.
+   u.mistColor.value.copy(this.scene.fog.color).lerp(WHITE,.05+.17*solar.dayness);
    // Both derived from a stated visibility in metres rather than tuned by eye.
    // The haze never fully clears -- it is what gives distance its depth -- while
    // the sheet arrives and leaves with the morning.

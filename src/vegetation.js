@@ -7,7 +7,7 @@ import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS} from './species.js';
 import {allows} from './grounds.js';
 import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
-import {windMaterial,toonRamp} from './textures.js';
+import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 
 // EVERYTHING THE VIEW CLEARS BESIDES TREES (UI/UX pass V2): a batch is one
@@ -199,11 +199,18 @@ function addModelSpecies(view,kind,trees){
   const key=role+(painted?'|painted':'');
   if(!materials.has(key)){
    const base=painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view),side:thin&&role==='leaf'?T.DoubleSide:T.FrontSide}):new T.MeshToonMaterial({color:'#ffffff'});
-   materials.set(key,sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base);
+   const swayed=sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base;
+   // A painted crown catches a rim of sky at its edges (textures.js rimLit).
+   materials.set(key,painted&&role==='leaf'?rimLit(swayed):swayed);
   }
   return materials.get(key);
  };
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
+  // A BUSH'S SHADOW IS NEAR WORK (the frame-rate pass): knee- to head-high
+  // plants by the thousand went into every shadow map, where a texel is half
+  // a metre and more past the first. Only the nearest map takes them now
+  // (instance-cull.js `shadowNear`).
+  if(GROUND_PLANTS.has(kind))mesh.userData.shadowNear=true;
   // A PAINTED CROWN DOES NOT RECEIVE THE SHADOW MAP (the cartoon overhaul).
   // Its paint and its normals, bent toward the crown's centre, already shade
   // it as one body; sampled against the shadow map as well, those bent
@@ -484,6 +491,15 @@ function addDeadfall(view) {
 // does (windMaterial `crown`), four times as freely for its size. It casts no shadow -- a hundred
 // thousand blades in every shadow map is cost for nothing a player sees.
 // PLACED: every number in the records.
+// Shrinks an instance toward its root between 60% of `reach` and `reach`
+// metres from the camera. Chained after the material's other patches.
+function sinkBeyond(material,reach){
+ if(!reach)return material;
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
+ material.customProgramCacheKey=()=>key.call(material)+'-sink'+reach;
+ material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float sink=1.-smoothstep(${(reach*.6).toFixed(1)},${reach.toFixed(1)},distance(mvPosition.xz,cameraPosition.xz));mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*sink;mvPosition=modelViewMatrix*mvPosition;`);};
+ return material;
+}
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass;
  if(!rec)return;
@@ -518,10 +534,16 @@ function addLongGrass(view){
  const materials=new Map();
  const materialFor=(role,variant,painted)=>{
   const key=role+(painted?'|p':'');
-  if(!materials.has(key))materials.set(key,groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:!!painted,gradientMap:toonRamp(view)}),view,4,false,true,true,false,!!painted)));
+  if(!materials.has(key))materials.set(key,sinkBeyond(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:!!painted,gradientMap:toonRamp(view)}),view,4,false,true,true,false,!!painted)),reach));
   return materials.get(key);
  };
- instanceModels(group,entries,materialFor,({mesh})=>{mesh.castShadow=false;});
+ // DRAWN ONLY SO FAR (the frame-rate pass): a clump is a few pixels at two
+ // hundred metres, and Links drew 77,000 of them -- 15.7 M triangles -- to
+ // the horizon. Past the tier's reach the cull drops whole squares
+ // (instance-cull.js `cullReach`); over the last 40% before it each clump
+ // sinks into the ground, so nothing pops where the squares stop.
+ const reach=view.quality?.longGrassReach??0;
+ instanceModels(group,entries,materialFor,({mesh})=>{mesh.castShadow=false;if(reach)mesh.userData.cullReach=reach;});
 }
 
 function addDriftwood(view){

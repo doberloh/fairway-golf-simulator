@@ -162,7 +162,14 @@ every earlier model lacked:
   vertices a lobe has never moves anything built after it, and the twin has
   the full model's silhouette and paint with only its facets changed. An oak
   goes from 9,765 faces to 817, a pine from 5,929 to 717 -- about 330 KB for
-  all twenty. They are ingested as the `fartwin` family (never planted);
+  all twenty (before the frame-rate pass below). A far twin draws a tiny
+  non-leaf lump -- a flower, a berry, under 15 cm -- as a four-face cone, and
+  keeps it, so the twin still has every role its model has.
+- **The finest lobe is a twelve-sided sphere** (the frame-rate pass):
+  `add_lump(subdiv=3)`, `cloud_crown`'s default, is a UV sphere of 12 segments
+  and 7 rings, 144 faces, where it was a 320-face icosphere. A maple crown
+  9,700 -> 4,400 triangles. The 80-face icosphere was tried and rejected:
+  hexagonal outlines (CARTOON_OVERHAUL *Frame rate*). They are ingested as the `fartwin` family (never planted);
   `mesh-assets.js` `farParts` hands one out part for part, and the cull draws
   it where a crown is small on screen, by the tier's `farPainted` line
   (graphics.js). Introducing `own_stream` re-jittered every full model once
@@ -343,6 +350,19 @@ flutes, deepest at the foot. Crown widths are the generator's (species.js
 grove's 13,000-53,000: the model module fell from 19.8 MB to 7.8 MB. The
 grown models (tools/grow.mjs) no longer ship on this branch; `thinSprays` is
 kept, and tested on a built crown, for main's sake.
+
+### cartoon_course
+
+`tools/blender/cartoon_course.py`: what stands at every tee, in the overhaul's
+hand, where renderer.js `addHoleDetails` drew a sphere for a tee marker and a
+box on a cylinder for the sign. A moulded marker (a squat dome on a collar,
+11 cm, `accent` coloured per tee), a hole sign (two timber posts and a gable
+cap round a 1.0 x 1.25 m board whose centre is 1.55 m up; the game lays the
+hole's card on a face 5 cm in front of it), a slatted bench and a paddle ball
+washer with a towel. Ingested as the `coursefurniture` family, never
+planted; renderer.js `furniture(name, height, colours)` builds one at its
+real height (the ingest makes every model one unit tall). Decoration: nothing
+a ball hits, as the sign never was. The plain shapes stay as the fallback.
 
 ### cartoon_lakeshore
 

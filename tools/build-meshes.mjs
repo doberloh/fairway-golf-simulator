@@ -62,7 +62,8 @@ const PICK = {
   'Palo_1', 'Palo_2', 'Palo_3', 'Mesquite_1', 'Mesquite_2', 'Mesquite_3',
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
-  'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2']
+  'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
+  'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
  // palms and the procedural hala.
@@ -176,6 +177,9 @@ const PICK = {
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
   'blender:Blender_House_Hip_2', 'blender:Blender_House_Saltbox_1', 'blender:Blender_House_Saltbox_2',
   'blender:Blender_House_Lshape_1', 'blender:Blender_House_Lshape_2'],
+ // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): what
+ // stands at every tee (renderer.js addHoleDetails), never planted.
+ coursefurniture: ['blender:Blender_TeeMarker_1', 'blender:Blender_TeeSign_1', 'blender:Blender_Bench_1', 'blender:Blender_BallWasher_1'],
 };
 
 // Families that use only part of a model. A crown is foliage only, so the

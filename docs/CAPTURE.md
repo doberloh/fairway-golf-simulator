@@ -17,7 +17,7 @@ week).
 
 ## The scripts
 
-All of them except `contact-sheet.mjs`, `frame-grab.mjs` and `motion.mjs` need the capture
+All of them except `contact-sheet.mjs`, `compare-rounds.mjs`, `overhaul-showcase.mjs`, `frame-grab.mjs` and `motion.mjs` need the capture
 build first: `node tools/capture/build-hooked.mjs` writes
 `bench/shots/dist-exp/index.html`, the real game plus three handles the scripts
 drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
@@ -32,6 +32,8 @@ drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
 | `angles.mjs <biome> <seed> [holes]` | Small test pictures of one landscape from twelve views per hole, and a contact sheet: for **choosing a camera** before a 4K set | 1280x720, about a second a view |
 | `showcase.mjs <biome> <seed> [holes]` | **A landscape's showcase for the owner** (built for Lakeshore Dunes, 23 October 2026): three views per hole at noon and golden hour, the beach and the water if it has a sea, a close look at open sand away from play, two overviews, plus its `times.mjs` stills, the Blender contact sheets and a notes fragment (`bench/shots/showcase/<biome>/notes.html`) when they exist; lists every page error and `console.error` seen while it ran. One self-contained page, `docs/reports/<biome>-showcase.html` (local, never committed) | 1600x900 at density 1; about a minute |
 | `contact-sheet.mjs <folder> [columns]` | Every picture in a folder as one image (`_contact.jpg`), to look a set over | -- |
+| `overhaul-showcase.mjs [--after latest]` | The cartoon overhaul's showcase page in docs/reports/ (local), from what the other tools left under bench/shots/overhaul/ | -- |
+| `compare-rounds.mjs <biome> <label> <label> ...` | The cartoon overhaul's rounds side by side (`overhaul.mjs` sets); `--across <label> <biomes> --views a,b` one round over many landscapes | -- |
 | `frame-grab.mjs <video> <seconds>` | One frame of a recording as a JPEG, to check a clip without a player | the video's own size |
 | `motion.mjs <video.webm> [band] [--frames]` | **How smoothly the camera moves**, from the frames themselves: the jitter in each frame's shift against its neighbours, in pixels at 480 wide. CPU only. A band on the distant horizon (`74-130` on most clips) sees only the camera turning | a number per direction; a smooth flyover measures under about 0.012 |
 

@@ -243,13 +243,13 @@ test('a cartoon crown is never thinned: it swaps only to the twin it ships', asy
 test('a painted crown without a shipped twin is never thinned into shards', async () => {
  const {modelParts} = await import('../src/mesh-assets.js');
  const {TWIN_MIN_TRIANGLES} = await import('../src/instance-cull.js');
- const parts = modelParts('Blender_Gorse_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const parts = modelParts('Blender_Naupaka_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  assert.ok(parts[leaf].geometry.index.count / 3 >= TWIN_MIN_TRIANGLES, 'the cartoon gorse has more triangles than the twin threshold');
  assert.ok(parts[leaf].geometry.attributes.flex, 'and carries its paint');
  const group = new T.Group(), m = new T.Matrix4(), n = 200;
  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeScale(15, 15, 15).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 80));
- mesh.castShadow = true; mesh.userData = {model: 'Blender_Gorse_1', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_Naupaka_1', part: leaf, role: 'leaf'};
  group.add(mesh);
  const cull = cullInstances(group, {farTrees: .15, thinShadowsFrom: 1}), cam = camera();
  cull.update(cam, null);
@@ -270,4 +270,34 @@ test('the tiers that split cascades split them inside their own shadow reach', a
   // cascade never takes the thinned shadow twins (F3).
   assert.ok((t.thinShadowsFrom ?? Infinity) >= 1, `${name} thins the nearest cascade`);
  }
+});
+
+// The cartoon overhaul's frame-rate pass: the long grass is drawn only so far
+// (`cullReach`), and a bush's shadow goes only into the nearest map
+// (`shadowNear`).
+test('a mesh with a reach drops whole squares past it, and only those', () => {
+ const {group, mesh} = field();
+ mesh.userData.cullReach = 200;
+ const cull = cullInstances(group), cam = camera();
+ cull.update(cam, null);
+ const kept = held(mesh);
+ assert.ok(kept.length > 0, 'nothing kept');
+ // A square goes once its nearest point is past the reach, so nothing kept is
+ // further than the reach plus a square's diagonal (64 m squares).
+ for (const t of kept) assert.ok(Math.hypot(t.x, t.z + 520) < 200 + 64 * Math.SQRT2 + 2, `kept a tree ${Math.hypot(t.x, t.z + 520).toFixed(0)} m away`);
+ // ...and everything in view nearer than the reach less a square is still there.
+ const {group: g2, mesh: m2} = field(), plain = cullInstances(g2);
+ plain.update(cam, null);
+ const near = held(m2).filter(t => Math.hypot(t.x, t.z + 520) < 200 - 64 * Math.SQRT2).length;
+ assert.equal(kept.filter(t => Math.hypot(t.x, t.z + 520) < 200 - 64 * Math.SQRT2).length, near);
+});
+
+test('a plant whose shadow is near work casts into the nearest map alone', () => {
+ const {group, mesh} = field();
+ mesh.userData.shadowNear = true;
+ const cull = cullInstances(group), cam = camera(), nearMap = sunOver(120), farMap = sunOver(600);
+ cull.update(cam, null, [nearMap, farMap]);
+ assert.ok(shadowCount(mesh, nearMap) > 0, 'nothing in the nearest map');
+ assert.equal(shadowCount(mesh, farMap), 0, 'drawn into a further map');
+ assert.ok(mesh.count > 0, 'the count is put back');
 });

@@ -1448,7 +1448,9 @@ released. What it changes for distribution:
 The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md). Not merged, not
 released. What it changes for distribution so far:
 
-- **The built page was 23,506,100 bytes (10.81 MB gzipped)** at generator 39,
+- **The built page is 11,244,483 bytes (5.46 MB gzipped) on 26 October**, at
+  generator 43 after the frame-rate pass made the crowns lighter (the model
+  module 6,933 KB). It was 23,506,100 bytes (10.81 MB gzipped) at generator 39,
   against 18,407,153 for Lakeshore Dunes. The growth is the remade models
   (`src/asset-meshes.js` 19,084.8 KB: painted Blender trees, shrubs and
   boulders, each painted tree with a shipped far twin of about a twelfth of

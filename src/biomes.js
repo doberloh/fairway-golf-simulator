@@ -122,6 +122,12 @@ const DEFAULTS = {
  // only): {cover 0..1 of the country, colors [three leaf colours], size
  // metres between crowns, line the height it stops below}. Null: bare hills.
  farForest: null,
+ // The cartoon light (the overhaul's lighting rounds; rendering only):
+ // {shade, the colour the toon ramp's dark steps lean toward (textures.js
+ // rampSteps); bounce, the colour light thrown up from the ground takes
+ // (renderer.js; the rough's when absent); exposure, a multiplier on the
+ // camera's (1 when absent)}. Null: a grey ramp.
+ light: null,
  // Long grass between the holes (vegetation.js addLongGrass; decoration
  // only): {families [[family, weight, height m]], count of colonies, near
  // metres outside the corridors, leaf and accent colours}. Null: none.
@@ -149,7 +155,8 @@ const DEFAULTS = {
 
 // Only what differs from the defaults above.
 const TRAITS = {
- pnw: {longGrass: {families: [['grasssedge', 1, .5]], count: 2500, near: 25, leaf: '#4f6b39', accent: '#7a8a4a'},
+ pnw: {light: {shade: '#7f93b0'},
+  longGrass: {families: [['grasssedge', 1, .5]], count: 2500, near: 25, leaf: '#4f6b39', accent: '#7a8a4a'},
   farForest: {cover: .85, size: 10, colors: ['#2f5a2c', '#3c6b33', '#4d7a3a']},
   bank: '#526343', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420, treeDensity: 4,
   // Mossy basalt outcrops breaking through the forest.
@@ -159,7 +166,8 @@ const TRAITS = {
   stands: {edge: 50, wobble: 22, ramp: 20, patch: .18, scale: 260, near: 40, spacing: 9, share: .6,
    under: {spacing: 8, plants: [['fern', .5], ['huckleberry', .5]]}},
   plants: [['pine', .38], ['cedar', .3], ['alder', .17], ['fern', .15]]},
- desert: {longGrass: {families: [['grassbunch', 1, .8]], count: 2600, near: 20, leaf: '#a9a06a', accent: '#d9c88f'},
+ desert: {light: {shade: '#a78aa6', exposure: .9},
+  longGrass: {families: [['grassbunch', 1, .8]], count: 2600, near: 20, leaf: '#a9a06a', accent: '#d9c88f'},
   farForest: {cover: .35, size: 7, colors: ['#6c7146', '#7c7a4c', '#5e6640']},
   bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240,
   scatter: {rocks: 500, grass: 12000, tufts: 150, tallGrass: false,
@@ -181,7 +189,8 @@ const TRAITS = {
    under: {spacing: 8, plants: [['creosote', .5], ['brittlebush', .3], ['agave', .2]]},
    plants: [['mesquite', .38], ['palo', .27], ['cholla', .2], ['cactus', .08], ['ocotillo', .07]]},
   plants: [['cactus', .18], ['cholla', .1], ['palo', .18], ['mesquite', .14], ['ocotillo', .1], ['agave', .08], ['creosote', .14], ['brittlebush', .08]]},
- mountain: {longGrass: {families: [['grassalpine', 3, .4], ['grassfescue', 2, .6]], count: 3500, near: 18, leaf: '#6f8a48', accent: '#e8d36a'},
+ mountain: {light: {shade: '#7c90c4'},
+  longGrass: {families: [['grassalpine', 3, .4], ['grassfescue', 2, .6]], count: 3500, near: 18, leaf: '#6f8a48', accent: '#e8d36a'},
   farForest: {cover: .8, size: 9, line: 520, colors: ['#284c35', '#335c3c', '#466d3f']},
   bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950,
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
@@ -198,7 +207,8 @@ const TRAITS = {
    under: {spacing: 8, plants: [['huckleberry', .6], ['fern', .4]]},
    plants: [['spruce', .55], ['pine', .3], ['aspen', .15]]},
   plants: [['spruce', .4], ['pine', .28], ['aspen', .22], ['sagebrush', .1]]},
- links: {longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 2, 1.0]], count: 7000, near: 14, leaf: '#8a9150', accent: '#d8c27a'},
+ links: {light: {shade: '#8a98b0'},
+  longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 2, 1.0]], count: 7000, near: 14, leaf: '#8a9150', accent: '#d8c27a'},
   farForest: {cover: .3, size: 6, colors: ['#5b6a33', '#6d7a3a', '#8a8a3e']},
   bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0,
   sea: true, scatter: {rocks: 160, grass: 400000, tufts: 1600, tallGrass: true,
@@ -220,7 +230,8 @@ const TRAITS = {
   stands: {edge: 70, wobble: 30, ramp: 25, patch: .12, scale: 200, near: 40, spacing: 8, share: 0,
    plants: [['gorse', .8], ['shrub', .2]]},
   plants: [['gorse', .5], ['heather', .42], ['shrub', .08]]},
- midwest: {longGrass: {families: [['grassbluestem', 3, 1.5], ['grassfescue', 1, .8]], count: 4500, near: 22, leaf: '#6d8443', accent: '#a65e3a'},
+ midwest: {light: {shade: '#8494bc'},
+  longGrass: {families: [['grassbluestem', 3, 1.5], ['grassfescue', 1, .8]], count: 4500, near: 22, leaf: '#6d8443', accent: '#a65e3a'},
   farForest: {cover: .55, size: 12, colors: ['#3d6630', '#4c7536', '#5d833c']},
   bank: '#697348',
   // Restored prairie drifting through the out-of-play ground.
@@ -231,7 +242,8 @@ const TRAITS = {
    under: {spacing: 8.5, plants: [['shrub', .5], ['bracken', .5]]},
    plants: [['oak', .5], ['maple', .35], ['aspen', .15]]},
   plants: [['oak', .5], ['aspen', .18], ['maple', .22], ['shrub', .1]]},
- island: {longGrass: {families: [['grassplume', 1, 1.3]], count: 1800, near: 20, leaf: '#5d8f45', accent: '#efe4c4'},
+ island: {light: {shade: '#6fa0bf'},
+  longGrass: {families: [['grassplume', 1, 1.3]], count: 1800, near: 20, leaf: '#5d8f45', accent: '#efe4c4'},
   farForest: {cover: .8, size: 10, colors: ['#3f7a35', '#4d8a3a', '#62983f']},
   bank: '#aaad7a', ringLift: 0, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
   coastal: true, sea: true, inlandWater: false, litter: false,
@@ -252,7 +264,8 @@ const TRAITS = {
  //
  // The landform is PNW's, deliberately: the owner asked for the same country,
  // and the difference should be what grows on it.
- redwood: {longGrass: {families: [['grasssedge', 1, .5]], count: 2000, near: 25, leaf: '#3e5a32', accent: '#6c7d45'},
+ redwood: {light: {shade: '#6f8f98'},
+  longGrass: {families: [['grasssedge', 1, .5]], count: 2000, near: 25, leaf: '#3e5a32', accent: '#6c7d45'},
   farForest: {cover: .95, size: 12, colors: ['#26432a', '#2f4f2e', '#3a5a33']},
   bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
   // Forty-six metres to 380 FEET. A coast redwood is the tallest living thing
@@ -285,7 +298,8 @@ const TRAITS = {
   plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
    ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
    ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
- autumn: {longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
+ autumn: {light: {shade: '#9a7fa6'},
+  longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
   farForest: {cover: .9, size: 11, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']},
   bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
@@ -318,7 +332,8 @@ const TRAITS = {
  // bunkers and green-black water. Pumpkins and toadstools are three to five
  // times life size and solid (`props`), most pumpkins are carved lanterns that
  // light up at dusk, and ghosts drift over the holes (`ghosts`).
- haunted: {longGrass: {families: [['grasstussock', 1, .55]], count: 3500, near: 18, leaf: '#4c4a3f', accent: '#8a6f6a'},
+ haunted: {light: {shade: '#8a70b0'},
+  longGrass: {families: [['grasstussock', 1, .55]], count: 3500, near: 18, leaf: '#4c4a3f', accent: '#8a6f6a'},
   farForest: {cover: .7, size: 9, colors: ['#3b3140', '#4a3c45', '#2e2a33']},
   bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
   canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
@@ -361,7 +376,8 @@ const TRAITS = {
  //
  // Every number here is PLACED: a look matched to the photograph and to what
  // grows on the shore, not a measurement of anywhere.
- lakeshore: {longGrass: {families: [['grassmarram', 2, 1.0], ['grassfescue', 1, .7]], count: 3500, near: 18, leaf: '#7f9a4c', accent: '#cdb880'},
+ lakeshore: {light: {shade: '#8199bf'},
+  longGrass: {families: [['grassmarram', 2, 1.0], ['grassfescue', 1, .7]], count: 3500, near: 18, leaf: '#7f9a4c', accent: '#cdb880'},
   farForest: {cover: .75, size: 11, colors: ['#3b6a2e', '#4a7a34', '#5a873b']},
   bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
   sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',

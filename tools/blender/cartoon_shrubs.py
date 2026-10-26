@@ -164,4 +164,7 @@ MODELS = [
     ('Blender_Bramble_1', bramble(1.2, 2.4)), ('Blender_Bramble_2', bramble(1.0, 2.0)), ('Blender_Bramble_3', bramble(1.4, 2.8)),
 ]
 
-ct.export(MODELS, colours={'leaf': (0.3, 0.5, 0.24), 'bark': (0.36, 0.27, 0.22), 'accent': (0.92, 0.78, 0.25)})
+# Far twins for the bushes that stand in thickets by the thousand (the
+# frame-rate pass: Links drew 11.5 M triangles of gorse from its first tee).
+ct.export(MODELS, colours={'leaf': (0.3, 0.5, 0.24), 'bark': (0.36, 0.27, 0.22), 'accent': (0.92, 0.78, 0.25)},
+          far={f'Blender_{n}_{k}' for n in ('Shrub', 'Gorse') for k in (1, 2, 3)})

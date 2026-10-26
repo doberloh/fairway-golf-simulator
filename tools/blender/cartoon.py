@@ -61,7 +61,21 @@ class PaintMesh(fb.Mesh):
         `blend`; `shade(world_point, normal)` returns the rgb multiplier."""
         rng = own_stream(rng)
         bm = bmesh.new()
-        bmesh.ops.create_icosphere(bm, subdivisions=0 if FAR else subdiv, radius=1.0)
+        # THE FINEST LOBE IS A TWELVE-SIDED SPHERE (the frame-rate pass): the
+        # 320-face icosphere `subdiv=3` asked for made a broadleaf crown
+        # 8,000-9,700 triangles, and the 80-face one below it shows hexagons
+        # on every outline (rounds/broadleaf-r4.png, rejected). Twelve sides
+        # round, seven rings up, 144 faces: as round from the side, where a
+        # crown is seen, at under half the cost.
+        if not FAR and subdiv >= 3:
+            bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=7, radius=1.0)
+        elif FAR and role != 'leaf' and max(radii) < 0.15:
+            # A far twin's flower or berry, a few pixels across at the
+            # distance the twin is drawn: four faces, not twenty. Kept rather
+            # than dropped, so the twin still has every role the model has.
+            bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=True, segments=3, radius1=1.0, radius2=0.0, depth=1.5)
+        else:
+            bmesh.ops.create_icosphere(bm, subdivisions=0 if FAR else subdiv, radius=1.0)
         idx = self.slot(role)
         lookup = {}
         sx, sy, sz = radii

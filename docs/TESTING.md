@@ -142,9 +142,12 @@ the courses several suites share.
 - **The ground a ball plays from** -- `grounds` (the overhaul's ground types: a row in every table -- bounce, roll, skid, lie, relief rank, roll hop, sound, map colour, HUD label -- no restitution a dropped ball could gain height from, the orderings that make each one itself, what may stand on each, a pitch running further on rock than in heather, the shot card naming the ground).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
   `ground-shader-structure`, `green-cue-wiring`, `glsl-reserved`,
-  `three-namespace`, `flood-shadows`, `instance-cull`, `occlusion`, `clouds`,
+  `three-namespace`, `flood-shadows`, `instance-cull` (also: a mesh with a reach drops
+  whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
-  `auto-resolution`, `ui-scale`, `roll-hop`.
+  `auto-resolution`, `ui-scale`, `roll-hop`, `toon-ramp` (the overhaul's coloured
+  ramp: grey without a shade colour, brighter step by step in every landscape,
+  a shade colour moving the hue and not the brightness).
 - **Cameras and maps** -- `waterways-tours` also checks `treeBlocksView` (a tree on
   the line or filling the frame near the camera is cleared, one behind the ball,
   behind the camera, far off to the side, or under the line is not);

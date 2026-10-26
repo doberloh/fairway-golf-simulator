@@ -29,7 +29,7 @@ export const GAME = path.resolve('bench/shots/dist-exp', 'index.html');
 // at first light and burnt off about three hours later.
 export function hourFor(biome, when) {
  const peak = peakElevation(BIOMES[biome].sun), evening = e => hourForElevation(e, peak), morning = e => SUNRISE + SUNSET - evening(e);
- const at = {dawn: SUNRISE + .7, morning: morning(18), noon: (SUNRISE + SUNSET) / 2, afternoon: evening(32), golden: evening(5), night: 22}[when];
+ const at = {dawn: SUNRISE + .7, morning: morning(18), noon: (SUNRISE + SUNSET) / 2, afternoon: evening(32), golden: evening(5), dusk: evening(-1.5), night: 22}[when];
  if (at === undefined) throw Error(`unknown time of day "${when}"`);
  return at;
 }

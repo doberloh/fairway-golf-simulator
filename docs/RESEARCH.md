@@ -10084,3 +10084,95 @@ near-field tall grass, now marram clumps (the long grass's first Lakeshore
 family), stood a metre high in front of the tee and hid the ball -- so no
 tall grass grows within 10 m of any tee (vegetation.js, short tufts there),
 and the long grass's marram got a fourth round (splayed, `rounds/grass-r4.png`).
+
+## The overhaul's lighting (25 October 2026)
+
+The cartoon light, five rounds (docs/CARTOON_OVERHAUL.md *Lighting*). Rendering
+only; no generated ground moved. Every number here is PLACED by eye against the
+captures unless it says otherwise.
+
+- **The ramp** (textures.js `rampSteps`): eight steps, 70 84 100 122 150 184
+  218 250 of 255 (was four: 90 145 205 245), sampled at `dot(n, sun)*0.5+0.5`,
+  steps centred at 1/16, 3/16 ... 15/16. A slope turned 30 degrees from a sun
+  60 degrees up now draws about 15% darker than the flat beside it in the
+  direct light (8% with four steps). Coloured: each step leans toward the
+  landscape's `light.shade` by .9 .85 .7 .5 .3 .15 .05 0 (darkest first), the
+  colour divided by its own luminance so the brightness of each step stays
+  within 4/255 of the grey ramp (tests/toon-ramp.test.mjs). Shades: PNW
+  #7f93b0, Desert #a78aa6 (dusty violet), Mountain #7c90c4, Links #8a98b0,
+  Midwest #8494bc, Island #6fa0bf, Redwood #6f8f98, Autumn #9a7fa6, Haunted
+  #8a70b0, Lakeshore #8199bf. three reads only the ramp's red channel; the
+  chunk is patched to read all three.
+- **The rim** (textures.js `rimLit`, painted crowns only): (1 - n.v)^4 times
+  .35, times the hemisphere's sky colour plus the sun's colour times
+  (sun behind)^2 times .9, times the surface colour. Round 1 had (1 - n.v)^3
+  and .6 of the sun: pale crowns (birch, aspen, autumn yellows) went pastel.
+  Not on grass: its normals point up, so the term would light every clump.
+- **The bounce**: the hemisphere's ground colour is half the old olive #777855
+  and half the landscape's rough (or `light.bounce`). The clock still pulls it
+  to the dusk and night ground colours; the bounce still only falls as the sun
+  sets (tests/daylight.test.mjs).
+- **The split of the light**: hemisphere 1.15 to .95, sun 2.8 to 3.05
+  (renderer.js `HEMI`, `SUN`). With three's Lambert terms that is about a
+  quarter of a flat surface's light from the sky where it was over a quarter
+  -- the rough reckoning that made it worth trying, not a measurement.
+- **The grade** (textures.js `GRADE`): three's ACES curve, then saturation
+  times 1.12 about luminance, in the custom tone-mapping slot every material
+  and the bloom's composite include -- no extra pass.
+- **Twilight** (daylight.js): the air's tint runs DUSK #e8925c, TWILIGHT
+  #8a77a8, NIGHT #16233f as the sun goes from 1.5 degrees up to 3.5 under;
+  luminance .385, .213, .015, so it still only darkens. Without the middle
+  colour the half-way air was a brown-grey.
+- **The afterglow** (renderer.js sky shader): strength smoothstep(-6, -.5,
+  sun elevation) times (1 - smoothstep(1, 12, elevation)) -- from twelve
+  degrees up to six under, strongest at the horizon. Near the horizon (exp(-7
+  h)), toward the sun an orange-to-rose burn up to .8, opposite a pink band up
+  to .32: the Belt of Venus, the pink band of backscattered sunset light
+  above the anti-twilight horizon (REFERENCES).
+- **Mist at night**: lifted toward white by .05 + .17 x daylight (was .22
+  always). At night the far hills' mist outshone the sky.
+- **Exposure**: a landscape may set `light.exposure` (Desert .9), applied in
+  proportion to daylight so every night reads alike.
+
+Rejected: tinting the cast shadows through the shadow term (CSM replaces
+three's light loop, so a patch there would have to follow it); a fixed
+saturation per landscape (the chunk cannot take per-landscape uniforms
+without recompiling every program). Sources: Barla, Thollot and Markosian,
+*X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
+REFERENCES (Inasa Fujio); *Belt of Venus*.
+
+## The overhaul's frame rate, first pass (25 October 2026)
+
+The numbers, the changes and what was rejected are in docs/CARTOON_OVERHAUL.md
+*Frame rate*; the figures that set the levers:
+
+- **Where a frame went** (`tools/frame-tris.mjs`, High, first tee): Autumn
+  46.6 M triangles in the picture's buffers, maples, oaks and aspens 8,900-
+  10,400 a crown (66% of crowns whole, out to about 320 m at High's 5% line)
+  and shrubs 5,465; Links 34 M, of which long grass 15.7 M (77,000 clumps)
+  and gorse 11.5 M (3,400 a bush, no twin); PNW's pines 5,700-7,600.
+- **Ground against plants** (`tools/frame-variants.mjs`, Desert, High, tee 1):
+  main 1.08 ms = ground 0.67 + the rest 0.41; branch 2.67 = ground 0.97 +
+  the rest 1.70. The far forest painted on the hills costs nothing measurable;
+  the ground's own shadow 5%; brush 19%; trees' shadows 15%.
+- **Lobes**: icosphere subdivisions in Blender are 20, 80, 320 faces at 1, 2,
+  3; a UV sphere of 12 segments and 7 rings is 144 with a twelve-sided
+  outline. Chosen by eye on the contact sheets.
+- **Long grass reach**: 90 / 130 / 190 / 260 m by tier, sinking from 60% of
+  it -- PLACED; a clump of a metre is about 5 pixels at 190 m on 1080 lines.
+- **Twins sooner on Low and Medium**: .30 and .25 of the screen's height
+  (PLACED, from the measured 10-17%).
+
+## The overhaul's course furniture (25 October 2026)
+
+What the tee box carries on a real course: two markers per set of tees, the
+hole sign (number, par, length) beside the back tee, a bench and a ball
+washer. The sizes are PLACED from general knowledge of the equipment, not
+looked up: moulded tee markers about 15-20 cm across and 10-15 cm tall
+(placed 17 and 11), ball washers at about hip height (1.05 m to the crank),
+benches about 1.6 m long with a 45 cm seat. Where they stand is the game's
+own rule: the bench 2.2 m behind and 1.6 m beyond the sign facing the tee,
+the washer 1.6 m ahead of the sign (renderer.js `addHoleDetails`; PLACED).
+Round 1 (`rounds/course-r1.png`, in the game `course-r1/`): it reads -- a
+blue dome on the tee, the sign with its card, the washer and the bench --
+and the gable cap is a flat slab seen from the front.

@@ -76,11 +76,38 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   as the camera moves (it was only seen in still captures); the long grass
   (vegetation.js addLongGrass and the near-field clumps) sways sensibly, does
   not crawl or pop at the 48 m edge of the near tiles, and costs no frames
-  worth noticing -- it adds tens of thousands of instances, unmeasured. **Frame-time spikes got worse** on several
-  landscapes in the profile (95th percentile Mountain 22 ms against 12,
-  Autumn 26 against 15, on an RTX 4090) -- probably the cull re-copying many
-  more instances; the frame-rate phase owes a fix and a measurement on main
-  and on a weak card.
+  worth noticing -- it adds tens of thousands of instances (measured since:
+  CARTOON_OVERHAUL *Frame rate*; drawn only so far by tier). The frame-time
+  spikes seen in the first profile were measured in the frame-rate pass: not
+  the cull, whose rebuild is about 1.6 ms (see the entry below). A weak card
+  is still unmeasured: the software arm is not run in a goal.
+
+- [ ] **The tee furniture has been seen only in captures** (cartoon_course.py;
+  BLENDER_ASSETS *cartoon_course*): the marker sits on the turf and is not
+  mistaken for a ball; the sign's card faces the player at every tee; the
+  bench and ball washer never stand in a pond, a bunker or the line of a
+  shot. Also seen in the same captures: the tee pad reads as one flat, very
+  saturated green.
+- [ ] **The overhaul's frame-rate pass has been measured, not seen** (CARTOON_OVERHAUL
+  *Frame rate*). Check in a round: the long grass does not pop or visibly sink
+  at the edge of its reach (High 190 m, Low 90 m); on Low and Medium the trees
+  swap to their faceted twins from about 55 m -- acceptable there?; a bush's
+  shadow is missing past the nearest shadow map -- visible on a long shot?;
+  the twelve-sided crown lobes up close; the one-off long frame (about 120 ms
+  on the 4090) the first time the camera turns onto new ground. High and
+  Ultra stay 2-3.6 ms a frame over main on the 4090 (Autumn, PNW, Mountain,
+  Midwest): the owner decides whether the stands' look is worth it, or which
+  lever in CARTOON_OVERHAUL to pull.
+- [ ] **The overhaul's light has been seen only in still captures** (five
+  rounds; CARTOON_OVERHAUL *Lighting*). Check in a round, on several
+  landscapes: the rim on the crowns does not shimmer or crawl as the camera
+  moves (it is a view-angle term); a ball is easy to find at noon, dusk and
+  night; the lavender blue hour after sunset and the afterglow under the set
+  sun look like evening, not a filter; Haunted Hollow still reads spooky; the
+  colour grade does not make the HUD's tiny course models or the menu cards
+  garish (they share the renderer). Frame cost of the rim and the eight-step
+  ramp is unmeasured (a few instructions on painted crowns) -- the frame-rate
+  phase owes it.
 
 ## Lakeshore Dunes (branch `lakeshore-dunes-biome`, 23 October 2026)
 

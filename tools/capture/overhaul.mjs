@@ -54,6 +54,19 @@ export const VIEWS = [
  {name: 'h2-green', hole: 1, when: 'noon', caption: 'Hole 2, the green close to', cam: {hole: 1, fromPin: 24, around: 25, height: 2.4, pitch: -7}},
  {name: 'h3-edge', hole: 2, when: 'morning', caption: 'Hole 3, the edge of the rough, morning', cam: {hole: 2, along: 140, across: 34, height: 2.2, look: 'pin', pitch: -3}},
  {name: 'h3-between', hole: 2, when: 'noon', caption: 'Hole 3, the land beside it', cam: {hole: 2, fromPin: 160, around: 95, height: 55, pitch: -18}},
+ // The lighting rounds' hours (phase 5): the same side view of hole 2 at first
+ // light, in the dusk after sunset, and at night by the moon and under the
+ // floodlights.
+ {name: 'h2-dawn', hole: 1, when: 'dawn', caption: 'Hole 2 from the side, dawn', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ {name: 'h2-dusk', hole: 1, when: 'dusk', caption: 'Hole 2 from the side, dusk', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ {name: 'h2-night', hole: 1, when: 'night', caption: 'Hole 2 from the side, night', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ {name: 'h2-flood', hole: 1, when: 'night', flood: true, caption: 'Hole 2 from the side, night, floodlit', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ // The course furniture (tools/blender/cartoon_course.py): from behind the back
+ // tee and off to its left, toward the sign, bench and washer on its right.
+ {name: 'h1-teekit', hole: 0, when: 'afternoon', caption: 'Hole 1, the back tee\'s markers, sign and bench', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
+  const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L;
+  const c = h.toWorld({x: t.x - ux * 6 + uz * 3, z: t.z - uz * 6 - ux * 3}), s = h.toWorld({x: t.x - uz * 6 + ux * 2, z: t.z + ux * 6 + uz * 2});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.6, pitch: -9}; }`},
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];
@@ -77,8 +90,8 @@ try {
   let hole = 0;
   for (const v of views) {
    if (v.hole !== hole) { await p.evaluate(h => window.lab.hole(h), v.hole); hole = v.hole; await p.waitForTimeout(4000); await p.addStyleTag({content: HIDE_HUD}); }
-   await p.evaluate(([cam, at]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
-    window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when)]);
+   await p.evaluate(([cam, at, flood]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0; view.setFloodlights?.(flood);
+    window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when), !!v.flood]);
    await hideBallAndAim(p);
    // Near-field grass is built one tile a frame; give it time to fill.
    await p.waitForTimeout(1600);

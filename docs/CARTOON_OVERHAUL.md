@@ -18,12 +18,12 @@ When the owner comes back to play it, it should look familiar, and much better.
 | --- | --- |
 | 0. Plan and baselines | done: captures of `main`, generation times, the bench, this plan |
 | 1. Tools | the Blender library and paint pipeline done (`cartoon.py`, `inspect.mjs`, paint carried into the game); more as needed |
-| 2. Landscape generation | done (three rounds): a landform recipe per landscape, nine ground types that play (`src/grounds.js`, `src/landforms.js`), generator 37; shared links fairways (three rounds), generator 38; uncleared stands and the far forest (five rounds), generator 40; the long-grass library next |
+| 2. Landscape generation | done (three rounds): a landform recipe per landscape, nine ground types that play (`src/grounds.js`, `src/landforms.js`), generator 37; shared links fairways (three rounds), generator 38; uncleared stands and the far forest (five rounds), generator 40; desert plants (41), the brush (42), pumpkins and toadstools (43) |
 | 3. Ground textures | done (three rounds): the turf detail atlas, the ground types' painted patterns |
-| 4. Assets, biome by biome | in progress: broadleaves, conifers and boulders in the game (three rounds each) |
-| 5. Rendering and lighting | not started |
-| 6. Frame-rate pass | not started |
-| 7. Hand-over and showcase | not started |
+| 4. Assets, biome by biome | in progress: every tree, shrub, grass, brush, rock, house and Haunted Hollow prop pack remade, three or more rounds each (*Rounds*, below); still to come: course props (flags, tee markers, signs), flowers, the houses' foundations and gardens, and the rounds past three toward the addendum's ten |
+| 5. Rendering and lighting | in progress: five rounds of the light (*Lighting*, below), rendering only |
+| 6. Frame-rate pass | first pass done (*Frame rate*, below): Links, Island and Redwood at or under main; the rest over, by numbers written there |
+| 7. Hand-over and showcase | first pass (26 October): every smoke journey that can run green (37; `server-program` skips itself until the standalone server is built, as on main), `npm run build` fresh, the generator bench all clear, the showcase built (`tools/capture/overhaul-showcase.mjs`); to be redone after the rounds still owed |
 
 ## Rules set aside
 
@@ -53,7 +53,10 @@ All local, under `bench/shots/overhaul/` (git-ignored):
 - **Pictures**: `tools/capture/overhaul.mjs main <biomes> --build bench/shots/overhaul/main-build/index.html`
   -- nine fixed views per landscape (back tee at eye height, behind the first
   green, the same at golden hour, the second hole from the side, a green close
-  to, the edge of the rough, the land beside a hole, two overviews), seed
+  to, the edge of the rough, the land beside a hole, two overviews), and for
+  the lighting rounds four more of the second hole (dawn, dusk a degree and a
+  half after sunset, moonlit night, floodlit night) that main's baseline was
+  not taken with, seed
   `overhaul`, nine holes. `main-build/index.html` is main's capture build, kept
   so the baseline can be retaken.
 - **Generation**: `node tools/gen-time.mjs` -- an 18-hole course per landscape,
@@ -113,10 +116,12 @@ The techniques the stylised-nature community uses, all available here:
   soft body with a light side and a shade side instead of many facets.
 - **Painted occlusion**: vertex colour darkens a crown's core and underside and
   lightens its sun-side tips; a rock's base and cracks; a trunk's foot.
-- **A soft three-step ramp** for everything, the same one the ground uses,
-  including the imported models that today have none.
+- **One ramp for everything**, the same one the ground uses, including the
+  imported models that had none -- eight steps since the lighting's round 2,
+  and coloured: each landscape's shade side leans toward its own cool hue
+  (`light.shade` in biomes.js, textures.js `rampSteps`).
 - **Rim light** on foliage silhouettes, tinted by the sky (Fresnel; Barla's
-  cell shading).
+  cell shading) -- built in the lighting's round 1 (textures.js `rimLit`).
 - **Per-biome grading**: each landscape's light and colour stated in its record.
 
 ## Landscapes (the research, in brief)
@@ -157,6 +162,11 @@ unless a source is given, and is listed in RESEARCH.md.
 | --- | --- |
 | `tools/capture/overhaul.mjs` | The fixed views of any landscape from any build (above); gated and logged on the graphics card |
 | `tools/gen-time.mjs` | How long an 18-hole course takes to generate, per landscape |
+| `tools/capture/compare-rounds.mjs` | Rounds side by side for one landscape (a row per view, a column per round), or `--across` one round for many landscapes; light work, no game |
+| `tools/capture/overhaul-showcase.mjs` | The showcase page (`docs/reports/cartoon-overhaul-showcase.html`, local): every landscape main against the branch with sliders, the light and asset rounds with their notes from this page, the ground types and their maps, the wait, size and frame rate, the rules set aside |
+| `tools/frame-tris.mjs` | A frame's triangles model by model, from one spot (GPU gate) |
+| `tools/frame-spikes.mjs` | What each long frame spent its time on, camera still or orbiting (GPU gate) |
+| `tools/profile.mjs --build --json --against --biome` | Main's kept build profiled beside the branch's, tier ladders on any landscape |
 | `tools/surface-map.mjs` | A course's surfaces and ground types from above, 2 m a pixel, on the CPU -- for judging routing and shared fairways |
 | `tools/gpu-gate.mjs` `foreignJobs` | Waits while a Playwright browser or Blender that is not ours is on the card (the realistic-graphics goal runs in another folder) |
 
@@ -397,3 +407,106 @@ Pictures: `rounds/redwood-r1..3.png`, in the game `redwood-r3/`.
 | 4 | (game) Tall marram hid the ball from the tee | No tall grass within 10 m of a tee; marram splayed (long grass round 4) |
 
 Pictures: `rounds/lakeshore-r1..3.png`, `rounds/grass-r4.png`, in the game `lakeshore-r3/`, `lakeshore-r4/`.
+
+### Lighting -- five rounds, rendering only
+
+All judged on Autumn, Desert and Links (Haunted from round 4), round 5 on all
+ten, at noon, golden hour, dawn, dusk, night and floodlit night
+(`light-r0` .. `light-r5`; sheets from `tools/capture/compare-rounds.mjs`).
+Numbers are in RESEARCH, *The overhaul's lighting*.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) Washed out: crowns one tone and greyed by the tone curve, shade sides grey, one olive bounce for every landscape | A coloured ramp (each landscape's shade hue); a sky rim on painted crowns; the bounce takes the ground's colour; the colour given back after the tone curve |
+| 2 | Rim too strong on pale crowns; a noon dune no darker than the flat; dusk one muddy grey-blue | Thinner rim, more sun behind; eight ramp steps where there were four; an afterglow under the set sun and a pink band opposite |
+| 3 | Desert noon still flat; dusk brown | The sky's flat fill cut from 1.15 to .95, the sun 2.8 to 3.05; a lavender twilight between the orange dusk and the night |
+| 4 | At night the mist on the far hills was brighter than the sky (it read as snow); desert sand bleached at noon | The mist lifted toward white by day only; the desert's own exposure .9 |
+| 5 | The desert's exposure darkened its night too | A landscape's exposure applies by day; the floodlit view added -- all ten judged |
+
+Still wrong after five: a noon desert has little shape from the light (its
+dunes are gentle and the noon sun high -- the shading cues in ground.js carry
+it); the redwood trunk at golden hour is a garish red with black bands (an
+asset round, not a light one); edges/outlines, ambient occlusion beyond the
+contact pools, clouds, water and wind have not had their rounds yet.
+
+## Frame rate -- the first pass (25 October 2026)
+
+Measured on the RTX 4090 with `tools/profile.mjs`, main's kept build
+(`bench/shots/overhaul/main-build/`, e3b6288) and the branch's capture build
+profiled one after the other through the GPU gate; graphics time per frame,
+median, 1600x900 at pixel ratio 2. Runs under `bench/shots/overhaul/frames/`
+(local). Every change below is rendering only.
+
+**Landscapes, High, player view** (main -> branch at the start -> now):
+
+| Landscape | main | start | now | triangles a frame, main -> now |
+| --- | --- | --- | --- | --- |
+| PNW | 1.93 | 5.51 | 4.51 | 4.2 M -> 25.8 M |
+| Desert | 2.14 | 4.13 | 3.92 | 4.6 M -> 25.3 M |
+| Mountain | 1.81 | 5.79 | 4.16 | 3.8 M -> 25.7 M |
+| Links | 3.04 | 9.48 | 3.36 | 5.8 M -> 11.9 M |
+| Midwest | 2.00 | 8.16 | 4.12 | 4.7 M -> 30.4 M |
+| Island | 3.39 | 3.23 | 2.92 | 5.1 M -> 9.6 M |
+| Redwood | 5.87 | 2.86 | 2.10 | 62.6 M -> 9.0 M |
+| Autumn | 1.88 | 7.69 | 4.51 | 4.6 M -> 36.9 M |
+| Haunted | 3.00 | 6.99 | 4.47 | 11.5 M -> 38.5 M |
+| Lakeshore | 2.92 | 6.00 | 3.95 | 11.8 M -> 26.0 M |
+
+**Tiers, Autumn** (main -> now): Low 0.55 -> 1.00 ms, Medium 1.06 -> 1.62,
+High 1.88 -> 4.51, Ultra 2.07 -> 5.69. On Redwood every tier is faster than
+main (Low 2.34 -> 0.77, Ultra 6.09 -> 2.97).
+
+**What was done**, in order, each measured:
+
+1. *Lighter crown lobes* (broadleaves round 5, shrubs round 4, conifers
+   round 4; the redwood grove already used 80-face lobes): the finest lobe was a 320-face
+   icosphere; it is a twelve-sided sphere of 144 faces. A maple crown 9,700 ->
+   4,400 triangles, a pine 5,400-6,400 -> 2,400-2,900, the model file 7,984 ->
+   6,911 KB. The 80-face icosphere was tried first and REJECTED: hexagons on
+   every outline (`rounds/broadleaf-r4.png`). Autumn 77 -> 45 M triangles.
+2. *Long grass drawn only so far*: a reach per tier (Low 90 m, Medium 130,
+   High 190, Ultra 260), over whose last 40% each clump sinks into the
+   ground; whole squares past it are not drawn. Links 11 -> 3.5 ms.
+3. *Gorse and shrub far twins*, with a far twin's tiny flowers drawn as
+   four-face cones rather than twenty.
+4. *A bush's shadow only in the nearest map* (ground plants): 5% of a Desert
+   frame.
+5. *Low and Medium swap to twins sooner*: 30% and 25% of the screen's height
+   (were 15%), 10-17% of a Low frame.
+
+**Measured and not done**: twins sooner on High (8%: 1%; 12%: 4-6% -- not
+worth the facets); the trees' wind gust noise (no cost: -0.2% to +0.9% when
+patched correctly; `tools/variants/ultra-trees.mjs` "gust noise constant"
+reported 29-42% and is VOID -- its patch stops some meshes drawing, as the
+frame-rate goal found, draws 182 -> 150); twins everywhere on Low (only 16-20%:
+Low's cost is how many plants there are, not their detail); the far forest
+painted on the hills (nothing).
+
+**The gap, and why it stays.** What is left is the number of plants: the
+stands put thousands of solid trees in view (154,000 instances built on
+Autumn), and none can be left undrawn without a ball hitting an invisible
+trunk. High and Ultra cost 2-3.6 ms more than main on this card -- about 220
+frames a second on High where main ran 530; a card a fifth as fast would see
+roughly five times both. The levers left all cost the look the owner asked
+for: thinner stands, twins at mid distance, no tree shadows in the far
+cascade (15% of a Desert frame).
+
+**Hitches.** The profiler's worst frames moved between 12 and 390 ms from run
+to run, on main's build too (main's Haunted worst 73 ms, PNW 42).
+`tools/frame-spikes.mjs`: with the camera still, no long frame is the game's
+(one 21 ms frame in 600, all outside its code); orbiting a green, the cull
+rebuilds 166-172 times at about 1.6 ms and the near-field grass builds a tile
+in about 6 ms, and the one long frame (116-124 ms) comes early, the first time
+the camera turns onto new ground, spent waiting on the card outside the
+game's code with no program compiled -- the driver's first use of something,
+as main shows. Not fixed; the TODO entry says what to check in play.
+
+### Course furniture -- one round, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) A sphere for a tee marker, a box on a cylinder for the sign, no bench | The cartoon_course pack: a moulded marker, a timber sign under a gable cap with the hole's card in front, a bench and a ball washer at every tee |
+
+Still to do: the gable cap reads flat from the front; the flagstick and cup
+keep their exact sizes (the ball plays against them) and are not remade.
+Pictures: `rounds/course-r1.png`, in the game `course-r1/` (view `h1-teekit`).
