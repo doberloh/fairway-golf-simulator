@@ -123,7 +123,7 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `far-woods` (the far woods: outside the property, never in water, deterministic, wooded from the property line to 12 km and coarser with distance; every crown's base no higher than the DRAWN ground under it; the drawn ground reproducing the ring's vertices; each far shape flat-based and no wider at its base than the seat assumes; Island's far woods only on its islets; Low and Medium groves only), `water-mirror` (trees in still water: each twin under its own pond's level, straight below its tree; none for a tree far from still water, nor for the sea), `seasons` (Haunted Hollow's window to the minute, offered with and without the setting, a picker keeping a chosen landscape, an off-season endless run never rolling it and staying deterministic, the weekly stand-in only out of season and only from 9 November 2026, the splash's copy of the rotation, and an old graphics record loading with the setting off), `rival`, `player-colours`, `bag`,
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `far-woods` (the far woods: outside the property, never in water, deterministic, wooded from the property line to 12 km and coarser with distance; every crown's base no higher than the DRAWN ground under it; the drawn ground reproducing the ring's vertices; each far shape flat-based and no wider at its base than the seat assumes; Island's far woods only on its islets; Low and Medium groves only), `water-mirror` (trees in still water: each twin under its own pond's level, straight below its tree; none for a tree far from still water, nor for the sea; a pond made from its outline gets its bank's reflection, under the water and outside the pond), `seasons` (Haunted Hollow's window to the minute, offered with and without the setting, a picker keeping a chosen landscape, an off-season endless run never rolling it and staying deterministic, the weekly stand-in only out of season and only from 9 November 2026, the splash's copy of the rotation, and an old graphics record loading with the setting off), `rival`, `player-colours`, `bag`,
   `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
@@ -264,7 +264,11 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 `--endless-seed HARROW-4021` makes every fresh Endless run take that seed
 (the game's `lab.pinRun`; the journeys still press Start an endless run), so
 a run that failed can be played again on the same holes; the journey checks
-the run really is on it.
+the run really is on it (the map names the course, the run's seed and the
+hole's number: `HARROW-4021-1`). Replaying HARROW-4021 found the harness
+wrong: after an albatross the scorecard comes about 12 s after the banner
+and XP checks (4.9 s after a birdie), right on the old 12 s wait, so a holed
+putt now waits 30 s for the card, and the journey logs how long it took.
 
 | Journey | What it plays |
 | --- | --- |

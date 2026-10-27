@@ -700,17 +700,21 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
  return {streams,segments,at,carve,requested:specs.length};
 }
 export function addStreams(view){for(const stream of view.world.streams.streams){
- const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],flow=[],chan=[],indices=[];
+ const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],flow=[],chan=[],toEnd=[],indices=[];
  // Downstream direction and distance along the channel at every station, for
  // the water's ripples and foam to follow the bends (streamFrame).
  const frame=streamFrame(path);
+ // Metres to the channel's end, so its water can fade in at the start and out
+ // at the end (the far-landscape goal's waves, round 10: it stopped in a hard
+ // square edge across the channel).
+ const total=frame[frame.length-1]?.s??0;
  // Three vertices across each station: both banks plus a centre line. The centre
  // vertex is what lets the surface fade out at the waterline instead of ending
  // on a hard alpha step against the painted bed.
  for(let i=0;i<path.length;i++){const p=path[i],half=p.width*.5*(p.miter||1);
   const f=frame[i]||{tx:0,tz:0,s:0};
-  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));flow.push(f.tx*STREAM_FLOW,f.tz*STREAM_FLOW);chan.push(f.s,side*half);}
+  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));flow.push(f.tx*STREAM_FLOW,f.tz*STREAM_FLOW);chan.push(f.s,side*half);toEnd.push(Math.max(0,total-f.s));}
   if(i){const a=(i-1)*3;indices.push(a,a+3,a+1,a+1,a+3,a+4,a+1,a+4,a+2,a+2,a+4,a+5);}
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setAttribute('flow',new T.Float32BufferAttribute(flow,2));g.setAttribute('chan',new T.Float32BufferAttribute(chan,2));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setAttribute('flow',new T.Float32BufferAttribute(flow,2));g.setAttribute('chan',new T.Float32BufferAttribute(chan,2));g.setAttribute('chanEnd',new T.Float32BufferAttribute(toEnd,1));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
 }}

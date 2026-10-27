@@ -42,6 +42,23 @@ test('a tree by a still pond is mirrored under that pond, straight below itself'
  mirror.dispose();
 });
 
+// Round 8: the bank's own edge, turned over -- from the waterline outward and
+// down, never above the water, never inside the pond.
+test("a pond made from its outline gets its bank's reflection, under the water and outside it", () => {
+ const R = 20, level = 2, pts = Array.from({length: 48}, (_, i) => new T.Vector2(R * Math.cos(i / 48 * Math.PI * 2), R * Math.sin(i / 48 * Math.PI * 2)));
+ const geometry = new T.ShapeGeometry(new T.Shape(pts));
+ const view = {waterBodies: [{mesh: {geometry}, level, center: {x: 0, z: 0}, ocean: false, stream: false}], world: {trees: [{x: 26, z: 0, y: 3, h: 12, r: 4, kind: 'oak'}]}};
+ const mirror = makeWaterMirror(view, {farWoodGeometry, colors: [new T.Color('#3c6b33')]});
+ const skirt = mirror.scene.children.find(m => m.isMesh && !m.isInstancedMesh);
+ assert.ok(skirt, 'no bank reflection');
+ const p = skirt.geometry.attributes.position;
+ for (let i = 0; i < p.count; i++) {
+  assert.ok(p.getY(i) <= level + 1e-6, `a bank vertex ${p.getY(i).toFixed(2)} above the water`);
+  assert.ok(Math.hypot(p.getX(i), p.getZ(i)) >= R - .05, 'a bank vertex inside the pond');
+ }
+ mirror.dispose();
+});
+
 test('no still water, or no tree near it, makes no mirror', () => {
  assert.equal(makeWaterMirror({waterBodies: [{...pond(0, 0, 0), ocean: true}], world: {trees: [{x: 10, z: 0, y: 2, h: 10, r: 3}]}}, {farWoodGeometry, colors: [new T.Color()]}), null);
  assert.equal(makeWaterMirror({waterBodies: [pond(0, 0, 0)], world: {trees: [{x: 600, z: 0, y: 2, h: 10, r: 3}]}}, {farWoodGeometry, colors: [new T.Color()]}), null);

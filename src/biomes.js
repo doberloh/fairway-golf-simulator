@@ -404,9 +404,14 @@ const TRAITS = {
  // grows on the shore, not a measurement of anywhere.
  lakeshore: {light: {shade: '#8199bf'},
   longGrass: {families: [['grassmarram', 2, 1.0], ['grassfescue', 1, .7]], count: 3500, near: 18, leaf: '#7f9a4c', accent: '#cdb880'},
-  farForest: {cover: .75, size: 11, colors: ['#3b6a2e', '#4a7a34', '#5a873b']},
+  // Round 9 of the far landscape: dune woods, not a carpet -- at .75 under a full
+  // painted canopy its far land read wall-to-wall identical crowns; half
+  // cover and a fainter painting leave open dune and meadow between the woods.
+  farForest: {cover: .5, size: 11, paint: .6, colors: ['#3b6a2e', '#4a7a34', '#5a873b']},
   bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90, ringFace: null,
-  sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
+  // `lakeWaves` (the far-landscape goal's waves, round 11): its water is a
+  // freshwater lake drawn as sea, and its swash a lake's -- shorter, quicker.
+  sea: true, lakeWaves: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
   scatter: {rocks: 40, grass: 320000, tufts: 1600, tallGrass: true,
    rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#7f9c4a',
    flowers: ['#e8b93a', '#c9a0d0']},

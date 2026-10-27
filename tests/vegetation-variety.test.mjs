@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {generateWorld} from '../src/course.js';
-import {addVegetation} from '../src/vegetation.js';
+import {addVegetation,carryFade,CARRY_EDGE} from '../src/vegetation.js';
 import {addHomes} from '../src/homes.js';
 
 const build=(settings={})=>{
@@ -128,4 +128,25 @@ test('houses are drawn from imported models fitted to the box physics collides w
   }
  }
  assert(checked>5,`only ${checked} buildings checked`);
+});
+
+// THE CARRY (round 8 of the far-landscape goal's shared fairways): the ground
+// a tee shot carries, between the tee and its fairway inside the corridor,
+// keeps its grass short so the golfer sees the fairway; it grows back over
+// CARRY_EDGE m outside, and the fairway itself is no carry.
+test("a tee shot's carry is kept clear of tall grass, and only the carry",()=>{
+ const w=generateWorld({seed:'overhaul',biome:'links',holes:9});
+ const inCarry=carryFade(w);
+ for(const h of w.holes){
+  const z=(h.mowStart??h.fairwayStart??22)*.6,c=h.toWorld({x:h.center(z),z});
+  assert.equal(inCarry(c.x,c.z),0,`hole ${h.hole+1}: the middle of the carry is not clear`);
+  // Beside the carry, and on the fairway, wherever no other hole's carry
+  // reaches (one hole's tee shot may cross another's fairway).
+  const free=q=>w.holes.filter(o=>o!==h).every(o=>{const p=o.toLocal(q);return p.z>(o.mowStart??o.fairwayStart??22)||p.z<-30||Math.abs(p.x-o.center(Math.max(0,p.z)))>o.width(Math.max(0,p.z))+CARRY_EDGE;});
+  const out=h.toWorld({x:h.center(z)+h.width(z)+CARRY_EDGE+2,z});
+  if(free(out))assert.equal(inCarry(out.x,out.z),1,`hole ${h.hole+1}: past the carry's edge is still held short`);
+  // Past the mown start (a par 3's carry runs most of the way to its green).
+  const zf=((h.mowStart??h.fairwayStart??22)+h.length)/2,fw=h.toWorld({x:h.center(zf),z:zf});
+  if(free(fw))assert.equal(inCarry(fw.x,fw.z),1,`hole ${h.hole+1}: its fairway counts as carry`);
+ }
 });

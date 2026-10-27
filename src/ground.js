@@ -770,6 +770,14 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   // they were added to be useful. Reported from a screenshot, where a near
   // sloping green had no bands on it at all.
   float plan=(p.y*mow.y+p.x*mow.x)/period;
+  // A FAIRWAY'S BANDS IN THE WORLD (round 9 of the far-landscape goal's
+  // shared fairways). Laid from each hole's own origin, two holes sharing a
+  // fairway met in a seam down its middle -- the bands offset where the holes
+  // run opposite ways, turned where they run at an angle -- though a double
+  // fairway is mown as one. The same bands, measured from the world's origin
+  // along the hole's direction folded to one sense: for a lone hole only their
+  // phase moves; holes running either way along each other mow as one.
+  if(kind==2.){vec2 wm=vec2(mow.x*tr.z+mow.y*tr.w,-mow.x*tr.w+mow.y*tr.z);if(wm.x<0.)wm=-wm;plan=dot(wp,wm)/period;}
   // BANDS THAT FOLLOW THE SURFACE READ AS CONTOUR LINES. Straight bands over a
   // rolling green say nothing about it; bands that bend with the ground trace
   // its shape the way a contour map does. Greens only -- a fairway is not
@@ -791,7 +799,9 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    // Round 2: soft edges -- hard-edged, the diamonds read as tiles; grass
    // laid one way shades into grass laid the other over a hand's width.
    float s1=smoothstep(-.15-a1*6.283,.15+a1*6.283,sin((p1+hb)*6.283)),s2=smoothstep(-.15-a2*6.283,.15+a2*6.283,sin((p2+hb)*6.283));
-   s1=mix(s1,.5,smoothstep(.12,.45,a1));s2=mix(s2,.5,smoothstep(.12,.45,a2));
+   // Round 5: held a little further before they fade to the middle tone (from
+   // 5 pixels a period, was 8): from the approach they had already gone.
+   s1=mix(s1,.5,smoothstep(.2,.55,a1));s2=mix(s2,.5,smoothstep(.2,.55,a2));
    stripe=.5*(s1+s2);
   }
   vec3 gs=normalize(groundNormal);if(gs.y<0.)gs=-gs;
@@ -839,6 +849,18 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   }
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
+ // THE COLLAR'S LAP (round 6 of the diamond greens). A green's collar is cut
+ // round it in one lap, as its clean-up pass is; it was one flat tone. It
+ // shades as that pass does -- grass laid away from you light, toward you
+ // dark, turning smoothly round the green -- gentler than the green's own,
+ // and gone where the collar is under a pixel or two across.
+ if(kind==3.){
+  vec2 cx=dFdx(groundPoint.xz),cy=dFdy(groundPoint.xz);float cdet=cx.x*cy.y-cx.y*cy.x;
+  vec2 cg=abs(cdet)>1e-8?vec2(cy.y*dFdx(greenD)-cx.y*dFdy(greenD),cx.x*dFdy(greenD)-cy.x*dFdx(greenD))/cdet:vec2(0.,1.);
+  float collarLean=dot(normalize(vec2(-cg.y,cg.x)+1e-5),normalize(groundPoint.xz-cameraPosition.xz+1e-4));
+  float collarFar=smoothstep(.25,.6,max(fwidth(greenD),1e-4));
+  turf*=mix(1.,1.+.06*collarLean,(1.-collarFar)*stripeFade*cueStripes);
+ }
  // THE TEE PAD'S MOWING (the polish goal; the owner: "tee boxes need smaller
  // mow stripes and a cleanup mow line"). A tee is cut with a walk-behind
  // mower, about 0.55 m a pass, in passes along the line of play, then once
@@ -854,7 +876,9 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   float tstripe=smoothstep(-taa*6.283,taa*6.283,sin(tc*6.283));
   tstripe=mix(tstripe,.5,smoothstep(.12,.45,taa));
   float tlapW=max(fwidth(teePadD),1e-4);
-  float tlap=smoothstep(-.55-tlapW,-.55+tlapW,teePadD);
+  // Round 4 of the tee's lap: its inner edge soft over 8 cm at least, as a
+  // mower's edge is -- a pixel-sharp line read as paint.
+  float tlapE=max(tlapW,.08),tlap=smoothstep(-.55-tlapE,-.55+tlapE,teePadD);
   // THE FAR-LANDSCAPE GOAL (the owner: "The clean up pass on the tee box
   // should not make a checker pattern. It should just be one continuous
   // pass"). The lap took the bands' tone turned over, so it alternated light
@@ -869,7 +893,9 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   vec2 vw=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vl=vec2(vw.x*tr.z-vw.y*tr.w,vw.x*tr.w+vw.y*tr.z),vt=vec2(vl.x*teeAxis.y-vl.y*teeAxis.x,vl.x*teeAxis.x+vl.y*teeAxis.y);
   float lapTone=-.5+.35*dot(normalize(vec2(-tg.y,tg.x)+1e-5),vt);
   float tband=mix(tstripe*2.-1.,lapTone,tlap);
-  turf*=mix(1.,1.+tband*.075,cueStripes);
+  // Round 3: the lap at half again the bands' contrast (.11): at .075 it ran
+  // continuous but all but vanished from the tee (capture view h1-teekit).
+  turf*=mix(1.,1.+tband*mix(.075,.11,tlap),cueStripes);
   // Round 4: A TEE THAT IS USED. Players tee up between the markers and up to
   // two club lengths behind them, so that strip -- across the markers' span,
   // from just behind them to about 3 m back (they stand 1 m behind the tee's
@@ -1191,5 +1217,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v63';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v68';return m;
 }

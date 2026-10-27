@@ -135,27 +135,11 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   concrete (sandstone flags in Desert) lying on the ground with no grass
   through it; with houses on, the ground at a house's walls is shaded (faint in
   long rough, where the blades cover it) and Ultra's ferns do not gather there.
-- [ ] **`endless-round` failed once on the cartoon-overhaul branch** (26 October,
-  third hand-over pass): on seed HARROW-4021, its failure screenshot at the
-  scorecard with the next hole counting down -- the step that failed was not
-  kept (only the run's last lines were read). Six reruns on six other courses
-  passed. The branch's changes since the green full run are drawing only. The
-  known harness timing at this step is in the GitHub entry below. Since then:
-  a full run green, and 8 more endless runs on 8 courses with the whole log
-  kept, all green -- 15 of 16. To do: if it fails again, keep the log and say
-  whether the game or the harness is wrong; the smoke tool cannot pin an
-  endless seed, which would let HARROW-4021 be replayed. The one lead: that
-  run scored 2 on a par 5 -- an albatross, worth 250 XP and its own fanfare --
-  and no passing run's log named one (their scores were not kept). The step
-  that failed is one of the three after the scorecard (the scorecard's panel,
-  the XP popup and level, the next hole). The journey now logs each hole's
-  par and banner: 6 more runs, all green, every one in 3 strokes. The sim
-  drop adds no stroke ("No penalty added"), so 3 is a tee shot and two putts
-  from two yards, and the failed run's 2 a tee shot and one holed putt -- a
-  true albatross, no stroke lost (an earlier note here said otherwise; it was
-  wrong). What an albatross changes: about 315 XP for a fresh golfer (hole,
-  score, first birdie), short of level 2's 400, so no level-up; its own
-  fanfare. Still unexplained; lab.strike cannot stage a one-putt deliberately.
+- [ ] **After an albatross the scorecard waits about 7 s longer than after a
+  birdie** (measured in the smoke run, 27 October: 12.1 s against 4.9 s from
+  the banner and XP checks to the card). By design the card waits for the
+  hole-out banner and the XP popup; whether that long a still moment feels
+  like a celebration or a stall is the owner's to judge in play.
 - [ ] **The far woods and Desert's stacks have been captured, not played**
   (far-woods.js, vegetation.js addFarWoods; cartoon_rocks.py; CARTOON_OVERHAUL
   *The far woods*, *Desert rock stacks*). Check: no bare band between the
@@ -1310,6 +1294,23 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
+
+- [x] **`endless-round` failed once on the cartoon-overhaul branch** (26
+  October, seed HARROW-4021): **the harness was wrong, not the game.** Replayed
+  on the far-landscape goal (27 October) with `--endless-seed HARROW-4021`,
+  whole logs kept (`bench/shots/overhaul/harrow-4021*.log`, local): the run
+  holes hole 1, a par 5, in 2 -- the albatross -- every time. With the old
+  12 s wait for the scorecard: two passes, then one failure at "putt out", its
+  screenshot the scorecard up and counting down from 8 (it had just opened).
+  Measured with a line the journey now logs: after the albatross the card
+  came 12.1 s after the journey's banner and XP checks; after an ordinary
+  birdie on another run, 4.9 s. The wait sat right on the harness's 12 s
+  window, so the journey passed or failed by a tenth of a second. The wait
+  for a holed putt is now 30 s (both putt-out steps); four replays since,
+  all green. The first replay also failed on its own seed check (the map names
+  the course, `HARROW-4021-1`, not the run): fixed in the harness.
 
 ## Release 0.9.4 (23 October)
 

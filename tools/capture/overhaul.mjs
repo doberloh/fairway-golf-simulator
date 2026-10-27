@@ -149,15 +149,46 @@ export const VIEWS = [
  ...[0, 1].map(k => ({name: `share-tee${k ? '-b' : ''}`, hole: 0, when: 'afternoon', caption: `The ${k ? 'second' : 'first'} shared fairway from its tee`, cam: `w => { const hs = w.holes.filter(h => h.sharedFairway), h = hs[${k}] ?? hs[0] ?? w.holes[0], t = h.tees.blue || Object.values(h.tees)[0];
   const c = h.toWorld({x: t.x, z: t.z - 3}), s = h.toWorld({x: h.center(Math.min(h.length, t.z + 200)), z: Math.min(h.length, t.z + 200)});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.8, pitch: -2}; }`})),
- // A river or creek close to (the far-landscape goal's waves, round 5): the
- // stream segment nearest the first green, from 7 m beside its bank, 3 m up,
- // looking a little downstream. From high above where there is none.
- {name: 'stream-near', hole: 0, when: 'afternoon', caption: 'The nearest river or creek, close to', cam: `w => { const g = w.holes[0].worldPin, segs = w.streams?.segments || []; let s = null, bd = 1e9;
-  for (const q of segs) { const d = Math.hypot((q.a.x + q.b.x) / 2 - g.x, (q.a.z + q.b.z) / 2 - g.z); if (d < bd) { bd = d; s = q; } }
-  if (!s) return {x: 0, z: 0, height: 200, pitch: -40};
-  const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2, off = (s.a.width || 4) * .5 + 7;
-  const cx = mx - dz / L * off - dx / L * 6, cz = mz + dx / L * off - dz / L * 6;
-  return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 8 - cx, mz + dz / L * 8 - cz) * 180 / Math.PI, height: 3, pitch: -14}; }`},
+ // The first shared fairway from above and behind, 70 m up, looking down its
+ // middle (round 9 of the shared fairways: a seam in the mowing bands where
+ // two holes' fairways meet shows from here). Hole 1's fairway where none shares.
+ {name: 'share-top', hole: 0, when: 'noon', caption: 'The first shared fairway from above', cam: `w => { const h = w.holes.find(h => h.sharedFairway) ?? w.holes[0], m = ((h.mowStart ?? 22) + h.length) / 2;
+  const c = h.toWorld({x: h.center(m - 70), z: m - 70}), s = h.toWorld({x: h.center(m), z: m});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 70, pitch: -42}; }`},
+ // A river or creek close to (the far-landscape goal's waves, rounds 5-8):
+ // the stream segment nearest the first green whose viewpoint -- 4 m beyond
+ // its bank, 4 m up, looking a little downstream -- has no crown within 6 m
+ // (twice a camera stood inside Mountain's crowns). From high above where
+ // there is none.
+ {name: 'stream-near', hole: 0, when: 'noon', caption: 'The nearest river or creek, close to', cam: `w => { const g = w.holes[0].worldPin, segs = (w.streams?.segments || []).slice();
+  segs.sort((p, q) => Math.hypot((p.a.x + p.b.x) / 2 - g.x, (p.a.z + p.b.z) / 2 - g.z) - Math.hypot((q.a.x + q.b.x) / 2 - g.x, (q.a.z + q.b.z) / 2 - g.z));
+  const trees = w.trees || [];
+  for (const s of segs) {
+   const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2, off = (s.a.width || 4) * .5 + 4;
+   const cx = mx - dz / L * off - dx / L * 5, cz = mz + dx / L * off - dz / L * 5;
+   if (trees.some(t => Math.hypot(t.x - cx, t.z - cz) < (t.r || 4) + 6)) continue;
+   return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 6 - cx, mz + dz / L * 6 - cz) * 180 / Math.PI, height: 4, pitch: -30};
+  }
+  return {x: 0, z: 0, height: 200, pitch: -40}; }`},
+ // A driving range's target green close to (the diamond greens: "every biome
+ // plus the range greens"). Run with --course '{"range":true}': the first
+ // shown target 60 yd or more out, from its own size plus 6 m short of it on
+ // the line from the mats, 1.7 m up, looking at its pin.
+ {name: 'range-green', hole: 0, when: 'noon', caption: 'A range target green close to', cam: `w => { const h = w.holes[0], gs = (h.greens || []).filter(g => !g.hidden), g = gs.find(g => g.yards >= 60) ?? gs[0];
+  if (!g) return {x: 0, z: 0, height: 200, pitch: -40};
+  const c = g.green, L = Math.hypot(c.x, c.z) || 1, back = (g.greenSize ?? 17) + 6, cam = h.toWorld({x: c.x - c.x / L * back, z: c.z - c.z / L * back}), pin = h.toWorld(g.pin ?? c);
+  return {x: cam.x, z: cam.z, yaw: Math.atan2(pin.x - cam.x, pin.z - cam.z) * 180 / Math.PI, height: 1.7, pitch: -6}; }`},
+ // The surf (the far-landscape goal's waves, round 7): from the first green,
+ // out in sixteen directions to the first sea (water at the sea's level); the
+ // camera 14 m back up the beach, 3 m up, looking out at the swash. From high
+ // above where there is no sea.
+ {name: 'sea-near', hole: 0, when: 'afternoon', caption: 'The surf, from the beach', cam: `w => { const g = w.holes[0].worldPin, lv = w.waterLevel ?? 0; let best = null;
+  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, ux = Math.sin(a), uz = Math.cos(a);
+   for (let r = 20; r < 1500; r += 4) { const x = g.x + ux * r, z = g.z + uz * r; if (Math.abs(x) > w.halfX || Math.abs(z) > w.halfZ) break;
+    if (w.surface(x, z) === 'water' && w.height(x, z) <= lv + .05) { if (!best || r < best.r) best = {r, x, z, ux, uz}; break; } } }
+  if (!best) return {x: 0, z: 0, height: 200, pitch: -40};
+  const cx = best.x - best.ux * 14, cz = best.z - best.uz * 14;
+  return {x: cx, z: cz, yaw: Math.atan2(best.ux, best.uz) * 180 / Math.PI, height: 3, pitch: -12}; }`},
  {name: 'tee-surround', hole: 0, when: 'afternoon', caption: 'Hole 1, the back tee\'s surround from behind and to the side', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
   const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L, c = h.toWorld({x: t.x - ux * 14 + uz * 9, z: t.z - uz * 14 - ux * 9}), s = h.toWorld({x: t.x, z: t.z});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 2.4, pitch: -8}; }`},

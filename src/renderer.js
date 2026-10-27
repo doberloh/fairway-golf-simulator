@@ -15,6 +15,7 @@ import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
+import {biomeOf} from './biomes.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -90,7 +91,7 @@ const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
 // The pond's foam strip: v is 0 at the bank and 1 a metre and a half in. A band
 // that surges in and out along the shore, broken into lace by drifting noise.
 const FOAM_FRAG=`
-uniform float waterTime,foamPace,foamGrain,shoreLength;varying vec2 vFoamUv;varying vec3 vFoamWorld;
+uniform float waterTime,foamPace,foamGrain,shoreLength;varying vec2 vFoamUv;varying vec3 vFoamWorld;varying float vFoamWind;
 /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float fHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
 float foamAlpha(){
@@ -112,8 +113,9 @@ float foamAlpha(){
  float w1=fract(s/l1-t*.11),w2=fract(s/l2+t*.07+.37);
  float reach1=.25+.5*fNoise(vec2(mod(floor(s/l1-t*.11),997.)*1.7,3.1)),reach2=.2+.45*fNoise(vec2(mod(floor(s/l2+t*.07+.37),997.)*2.3,7.9));
  float crest1=smoothstep(0.,.5,w1)*(1.-smoothstep(.5,1.,w1)),crest2=smoothstep(0.,.5,w2)*(1.-smoothstep(.5,1.,w2));
- float front=max(crest1*reach1,crest2*reach2)+.08*fNoise(vec2(s*.21,t*.3));
- float lip=smoothstep(front-.07,front,v)*(1.-smoothstep(front,front+.1,v));
+ // Round 8: further up the bank the wind blows onto, short on the sheltered one.
+ float front=max(crest1*reach1,crest2*reach2)*mix(.45,1.25,vFoamWind)+.08*fNoise(vec2(s*.21,t*.3));
+ float lip=smoothstep(front-.07,front,v)*(1.-smoothstep(front,front+.1,v))*mix(.5,1.,vFoamWind);
  float wash=smoothstep(.0,.1,v)*(1.-smoothstep(front*.5,front,v))*.45;
  float band=max(lip,wash)*smoothstep(0.,.06,v);
  // Round 4: the wet line where water meets bank, always there (a pond's
@@ -211,8 +213,11 @@ const WATER_EDGES={
   // twin) and stronger wherever the surface mirrors at all. Round 3: four
   // taps 1.5 of the picture's pixels apart, averaged -- the surface softens a
   // reflection, and the twins' facets read as separate patches.
+  // Round 10: by the wind (mirrorWind, 0 calm to 1 at 15 mph) -- the ripples
+  // nudge it 0.006-0.024 and it softens over 3-9 pixels: a calm pond near
+  // a true mirror, a windy one broken up. At the default 4 mph about as before.
   if(mirrorOn>.5){
-   vec2 muv=gl_FragCoord.xy/mirrorScreen+normal.xy*.012,px=6./mirrorScreen;
+   vec2 muv=gl_FragCoord.xy/mirrorScreen+normal.xy*(.006+.018*mirrorWind),px=(3.+6.*mirrorWind)/mirrorScreen;
    vec4 mr=(texture2D(mirrorMap,muv+vec2(px.x,0.))+texture2D(mirrorMap,muv-vec2(px.x,0.))+texture2D(mirrorMap,muv+vec2(0.,px.y))+texture2D(mirrorMap,muv-vec2(0.,px.y)))*.25;
    // Round 4: by the mirror term alone (it had a floor of .35, so looking
    // steeply into a pond close by showed crowns as flat patches).
@@ -246,9 +251,16 @@ const WATER_EDGES={
   // At 30% of the water's clock, as the ponds are: at full speed the surf was
   // frantic (the owner). The swash cycle is 9 s of that clock, 30 s of real time.
   float t=waterTime*.3,ph=wNoise(vWaterWorld.xz*.015)*6.2832+wNoise(vWaterWorld.xz*.004+3.1)*3.;
-  float cyc=fract(t/9.+ph/6.2832);
+  // Round 11: a lake's swash its own (seaSwash: the cycle in seconds of this
+  // clock, and how far up it runs) -- Lakeshore's freshwater lake 5 s and 0.6,
+  // the ocean 9 s and all of it.
+  float cyc=fract(t/seaSwash.x+ph/6.2832);
   float run=cyc<.3?smoothstep(0.,1.,cyc/.3):1.-smoothstep(0.,1.,(cyc-.3)/.7);
-  float front=mix(.62,.03,run);
+  // THE FAR-LANDSCAPE GOAL'S WAVES, round 7: waves come in sets. Every swash
+  // ran up to the same line, a metronome; now each cycle's own reach, from a
+  // hash of its number, between 45% and all of the run-up.
+  float cycN=floor(t/seaSwash.x+ph/6.2832),reachK=(.45+.55*fract(sin(cycN*12.9898+3.1)*43758.5453))*seaSwash.y;
+  float front=mix(.62,.03,run*reachK);
   float lace=wNoise(vWaterWorld.xz*1.3+vec2(t*.25,-t*.18))*.6+wNoise(vWaterWorld.xz*3.9-vec2(t*.3,t*.1))*.4;
   float lip=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+.45,depth));
   float wake=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+1.1,depth))*.45;
@@ -275,11 +287,18 @@ const WATER_EDGES={
   // they are while the water and its foam pass through them -- the surest
   // sign of running water. Chevrons pointing downstream, fixed to the bed (no
   // drift), in patches where the bed is rough, faint along the banks.
-  float riffle=smoothstep(.55,.95,sin((vChan.x*.9+abs(across)*.6)*6.2832))*smoothstep(.5,.75,wNoise(vChan*vec2(.05,.2)+7.3));
+  // Round 6: crests 2 m apart (were 1.1 m: thinner than a pixel from the bank).
+  float riffle=smoothstep(.5,.92,sin((vChan.x*.5+abs(across)*.35)*6.2832))*smoothstep(.42,.68,wNoise(vChan*vec2(.05,.2)+7.3));
   foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
+  // Round 9: the wet line where the water meets the bank, as a pond's (round 4).
+  float wetEdge=smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore));
+  foam=max(foam,wetEdge*.35*(.7+.3*lace));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.9,.94,.92)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
+  // Round 10: in over the channel's first 3 m and out over its last, not a
+  // hard square edge across it (vChanEnd: metres to the end, streams.js).
+  diffuseColor.a*=smoothstep(0.,3.,vChan.x)*smoothstep(0.,3.,vChanEnd);
  }`,
  creek:`{
   float t=waterTime,drift=vChan.x-t*length(vFlow),across=vChan.y;
@@ -288,11 +307,17 @@ const WATER_EDGES={
   float foam=clamp(fleck*(.45+.5*vShore)+bank*.3*fleck,0.,1.)*.85;
   // Round 5: a creek's riffles, as the river's but tighter and brighter (it is
   // shallow and quick): standing chevrons over the rough stretches of its bed.
-  float riffle=smoothstep(.5,.92,sin((vChan.x*1.7+abs(across)*1.3)*6.2832))*smoothstep(.45,.7,wNoise(vChan*vec2(.08,.3)+2.9));
-  foam=max(foam,riffle*.38*(.6+.4*fleck));
+  // Round 6: crests 1.25 m apart (were 0.6 m, lost from the bank), in more
+  // and stronger patches.
+  float riffle=smoothstep(.45,.9,sin((vChan.x*.8+abs(across)*.6)*6.2832))*smoothstep(.35,.6,wNoise(vChan*vec2(.08,.3)+2.9));
+  foam=max(foam,riffle*.55*(.6+.4*fleck));
+  // Round 9: the wet line at the bank.
+  foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.35);
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.92,.95,.94)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
+  // Round 10: faded in and out at the channel's ends, as a river's.
+  diffuseColor.a*=smoothstep(0.,3.,vChan.x)*smoothstep(0.,3.,vChanEnd);
  }`,
 };
 // Ripples with no tile in them, for water with no reflection to carry it.
@@ -304,6 +329,10 @@ uniform float waterTime;uniform float waterChop;uniform float waterSwell;uniform
 varying vec2 vFlow;
 // Along a channel: metres downstream, and metres across from the centre line.
 varying vec2 vChan;
+// And metres to the channel's end (streams.js chanEnd; the waves' round 10).
+// Declared here as well as in the vertex patch: missing on this side, every
+// river and creek failed to compile for one build (caught by the captures).
+varying float vChanEnd;
 varying vec3 vWaterWorld;
 // Value noise, hashed from the world position itself: no tile, no texture
 // lookup, and a pattern that is different at every pond on the course.
@@ -1057,7 +1086,7 @@ export class GolfView{
    this.waterChop={value:.55};this.waterSwell={value:.45};
    // The trees-in-still-water picture (water-mirror.js), shared by every pond;
    // filled once the planting exists, below.
-   this.mirrorUniforms??={mirrorMap:{value:null},mirrorScreen:{value:new T.Vector2(1,1)},mirrorOn:{value:0}};
+   this.mirrorUniforms??={mirrorMap:{value:null},mirrorScreen:{value:new T.Vector2(1,1)},mirrorOn:{value:0},mirrorWind:{value:0}};
    for(const b of this.waterBodies)this.dressWater(b.mesh.material,b);
    // THE PROBE IS TAKEN HERE, not in `refreshEnvironment`. The sky is built
    // before the water is, so the refresh that runs from `addSky` finds no bodies
@@ -1076,7 +1105,7 @@ export class GolfView{
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
    const bio=this.world.bio;
    this.mirror=makeWaterMirror(this,{farWoodGeometry,colors:(bio.farForest?.colors??[bio.tree??'#3c6b33']).map(c=>new T.Color(c))});
-   if(this.mirror){this.mirrorUniforms.mirrorMap.value=this.mirror.target.texture;this.mirrorUniforms.mirrorOn.value=1;}
+   if(this.mirror){this.mirrorUniforms.mirrorMap.value=this.mirror.target.texture;this.mirrorUniforms.mirrorOn.value=1;this.mirrorUniforms.mirrorWind.value=Math.min(1,(this.world.settings.wind||0)/15);}
   }
   // Haunted Hollow's pumpkins, lanterns and ghosts; null on every other biome.
   this.haunts=addHaunts(this);
@@ -1493,13 +1522,20 @@ export class GolfView{
   // Closed with a copy of the first point (the far-landscape goal's waves):
   // the along-shore coordinate then runs 0 to 1 without wrapping inside a quad.
   let shore=0;for(let i=0;i<n;i++)shore+=Math.hypot(points[(i+1)%n].x-points[i].x,points[(i+1)%n].y-points[i].y);
+  // THE WIND'S SHORE (the far-landscape goal's waves, round 8): wavelets build
+  // across open water and land on the bank the wind blows onto; the bank it
+  // blows off lies in calm. Per point, how squarely the bank faces downwind
+  // (0 to 1; the outward normal against the wind's heading), scaled by how
+  // hard it blows. Points are (x, -z), so the normal's second part is -z.
+  const wa=(this.world?.settings.windDirection||0)*Math.PI/180,wx=Math.sin(wa),wz=Math.cos(wa),wk=Math.min(1,(this.world?.settings.wind||0)/12),lee=[];
   for(let i=0;i<=n;i++){
    const a=points[(i-1+n)%n],b=points[(i+1)%n],p=points[i%n];
    let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+   const face=(ty*inward)*wx+(tx*inward)*wz,windward=.5+.5*face*wk;lee.push(windward,windward);
    pos.push(p.x,p.y,0,p.x-ty*inward*W,p.y+tx*inward*W,0);uv.push(i/n,0,i/n,1);
    if(i<n){const k=i*2,m=(i+1)*2;idx.push(k,m,k+1,k+1,m,m+1);}
   }
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('foamWind',new T.Float32BufferAttribute(lee,1));g.setIndex(idx);g.computeVertexNormals();
   // ONE PASS (`forceSinglePass`). Three draws a transparent double-sided
   // material twice, back faces then front, flipping its side and marking it
   // changed for each -- two draws and two program checks per strip per frame.
@@ -1510,12 +1546,12 @@ export class GolfView{
   const pace={value:lake?.42:.3},grain={value:lake?.75:1};
   mat.onBeforeCompile=shader=>{
    shader.uniforms.waterTime=time;shader.uniforms.foamPace=pace;shader.uniforms.foamGrain=grain;shader.uniforms.shoreLength={value:shore};
-   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vFoamUv;varying vec3 vFoamWorld;')
-    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float foamWind;varying vec2 vFoamUv;varying vec3 vFoamWorld;varying float vFoamWind;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWind=foamWind;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
     .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey=()=>'fairway-shore-foam-v4';
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v5';
   const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
   this.group.add(mesh);
  }
@@ -1572,14 +1608,14 @@ export class GolfView{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
-   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};}
+   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};}
    if(kind==='still'&&this.mirrorUniforms)Object.assign(shader.uniforms,this.mirrorUniforms);
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
-    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;varying vec2 vFlow;varying vec2 vChan;')
-    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;');
+    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;attribute float chanEnd;varying vec2 vFlow;varying vec2 vChan;varying float vChanEnd;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;vChanEnd=chanEnd;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
-    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn;':''))
+    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;':''))
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
      {
       vec3 r=wRipple(vWaterWorld.xz,waterTime);
@@ -1614,7 +1650,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v18-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v25-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 

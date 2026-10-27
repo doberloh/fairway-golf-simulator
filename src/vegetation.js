@@ -519,6 +519,31 @@ function sinkBeyond(material,reach){
 // in how much of it grows over `TEE_FADE.span`. Decoration only: the ground
 // and its lie are as they were. PLACED.
 export const TEE_FADE = {clear: 1.2, span: 5.8};
+// THE CARRY (round 8 of the far-landscape goal's shared fairways, judged from
+// the tee): 0 inside a hole's corridor between its tee and the start of its
+// fairway, rising to 1 over `CARRY_EDGE` m outside it. Tall grass there hid
+// the fairway the golfer is aiming at. Each hole's carry boxed in the world
+// first, so most points cost a few comparisons. Decoration only. PLACED.
+export const CARRY_EDGE = 8;
+export function carryFade(world) {
+ const holes = world.holes.filter(h => !h.range).map(h => {
+  const z1 = h.mowStart ?? h.fairwayStart ?? 22, corners = [];
+  for (const z of [-30, z1 / 2, z1]) for (const s of [-1, 1]) corners.push(h.toWorld({x: h.center(Math.max(0, z)) + s * (h.width(Math.max(0, z)) + CARRY_EDGE + 4), z}));
+  const xs = corners.map(p => p.x), zs = corners.map(p => p.z);
+  return {h, z1, minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs)};
+ });
+ return (x, z) => {
+  let f = 1;
+  for (const c of holes) {
+   if (x < c.minX || x > c.maxX || z < c.minZ || z > c.maxZ) continue;
+   const p = c.h.toLocal({x, z});
+   if (p.z > c.z1 || p.z < -30) continue;
+   const zz = Math.max(0, p.z), out = Math.abs(p.x - c.h.center(zz)) - c.h.width(zz);
+   f = Math.min(f, Math.max(0, Math.min(1, out / CARRY_EDGE)));
+  }
+  return f;
+ };
+}
 export function teeFade(world) {
  const tees = [];
  for (const h of world.holes) for (const t of Object.values(h.tees || {})) {
@@ -619,7 +644,7 @@ function addFarWoods(view){
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
  if(!rec)return;
- const byTee=teeFade(world);
+ const byTee=teeFade(world),carry=carryFade(world);
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height})).filter(k=>k.models.length);
@@ -639,7 +664,8 @@ function addLongGrass(view){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
    if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
    // By a tee: thinner and shorter toward its mown edge, none at it.
-   const fade=byTee(x,z);if(fade<1&&rng()>Math.pow(fade,.7))continue;
+   // And out of a tee's carry (carryFade).
+   const fade=Math.min(byTee(x,z),carry(x,z));if(fade<1&&rng()>Math.pow(fade,.7))continue;
    const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5)*(.35+.65*fade);
    dummy.position.set(x,world.height(x,z),z);
    dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
@@ -778,7 +804,9 @@ function addGroundCover(view){
  // up to 1.7 m), and these blades were the spikes at the tee's edge, not the
  // colonies or the marram. All of them now, to 30% at the edge.
  const bladeFade=teeFade(world);
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=bladeFade(x,z),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
+ // And short in a tee's carry where blades grow long (Links; carryFade).
+ const tallBlades=!!biomeOf(world.settings.biome).scatter.tallGrass,bladeCarry=tallBlades?carryFade(world):null;
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
  // Drawn only to two-fifths of the long grass's reach, sinking before it
  // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
@@ -886,7 +914,7 @@ function addNearbyGrass(view){
  const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
  const clumpLeaf=new T.Color(lg?.leaf??'#8a9150'),clumpAccent=new T.Color(lg?.accent??'#d8c27a');
  let clumpMat=null;
- const nearTee=teeFade(w);
+ const nearTee=teeFade(w),inCarry=carryFade(w);
  if(clumpParts){
   clumpMat=fadeOut(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,4,false,true,true,false,true)));
   view.lazyMaterials?.push(clumpMat);
@@ -932,7 +960,15 @@ function addNearbyGrass(view){
    // the pad hid the ball from the golfer's own eye (lakeshore-r3, -r4). The
    // polish goal: not a wall at 10 m from the tee's point, but a fade from the
    // mown tee's edge (teeFade) -- tall grass thinning and shortening toward it.
-   const fade=nearTee(x,z),tallHere=biomeOf(w.settings.biome).scatter.tallGrass||surface==='native';
+   const tallHere=biomeOf(w.settings.biome).scatter.tallGrass||surface==='native';
+   // Not tall in the CARRY either (round 8 of the far-landscape goal's shared
+   // fairways, judged from the tee): between a tee and the start of its
+   // fairway, inside the hole's corridor, waist-high grass hid the whole
+   // fairway beyond -- a links' broad shared fairway read from its tee as a
+   // thin strip on the horizon. The rough there stays short, so the golfer
+   // sees where to aim, and grows tall again over 8 m outside the corridor.
+   let fade=nearTee(x,z);
+   if(tallHere&&fade>0)fade=Math.min(fade,inCarry(x,z));
    // Round 2: none at all within the clear margin (round 1 let 15% through
    // there, and those stood as spikes at the tee's edge from the ground).
    const tall=tallHere&&(fade>=1||rng()<Math.pow(fade,.7)),height=tall?(.6+rng()*.65)*(.35+.65*fade):.09+rng()*.17;

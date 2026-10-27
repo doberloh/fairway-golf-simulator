@@ -861,8 +861,11 @@ const JOURNEYS = [
     await t.pressToPlay('Start an endless run');
    });
    if (ENDLESS_SEED) {
-    const pinned = (await whereAmI(t.page)).seed;
-    if (pinned !== ENDLESS_SEED) throw new Error(`asked for Endless seed ${ENDLESS_SEED}, the run is on ${pinned}`);
+    // The map names the COURSE, an Endless hole's own seed: the run's seed and
+    // the hole's number (HARROW-4021-1 on run HARROW-4021). The first replay
+    // compared that with the run's seed and failed a correctly pinned run.
+    const course = (await whereAmI(t.page)).seed, pinned = course?.slice(0, course.lastIndexOf('-'));
+    if (pinned !== ENDLESS_SEED) throw new Error(`asked for Endless seed ${ENDLESS_SEED}, the run is on ${pinned} (course ${course})`);
    }
    // Which course, on every run and not only a failed one: a software frame's
    // cost depends on the course as well as the machine, and a slow run cannot
@@ -987,12 +990,20 @@ const JOURNEYS = [
      // says the ball is down there is no deciding left to do, so the wait
      // scales with the renderer; only a build that cannot say waits a fixed
      // time and putts again.
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false);
+     // HARROW-4021, replayed (the far-landscape goal): 12 s was too short for
+     // an albatross. The card waits for the XP popup and the level-up banner,
+     // and 250 XP on the smoke run's fresh profile crosses several levels --
+     // each about 2.4 s of filling bar, then a banner of up to 4.2 s -- so the
+     // card came at 12-14 s, and the journey failed one replay in three with
+     // the card on screen counting down. The game was right; 30 s now.
+     const waitFrom = Date.now();
+     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 30000 * SLOW : 12000}).then(() => true, () => false);
+     if (done) console.log(`       (the card ${((Date.now() - waitFrom) / 1000).toFixed(1)} s after the banner and XP checks)`);
      if (done) {
       if (await t.page.evaluate(() => !document.getElementById('xpGain').hidden)) throw new Error('the scorecard opened over the XP popup');
       return;
      }
-     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${30 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
@@ -2139,8 +2150,9 @@ const JOURNEYS = [
      // (14 October 2026), so give it time.
      const holed = await t.holed();
      if (holed === false) continue;
-     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false)) return;
-     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
+     // 30 s once holed, as the endless round's (an albatross's level-ups).
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 30000 * SLOW : 12000}).then(() => true, () => false)) return;
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${30 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });

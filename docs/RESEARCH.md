@@ -10523,7 +10523,13 @@ of the camera. The pond reads it at its fragment, offset by 0.012 x the
 rippled normal, lit by the water's own received light x 0.8 (0.55 from
 round 2), mixed in by min(0.9, 1.6 x Schlick + 0.15) (round 2: min(0.92,
 2.2 x Schlick + 0.35); round 4: min(0.92, 2.8 x Schlick)). Read as four taps
-1.5 of its pixels apart, averaged (round 3), 6 apart (round 5). All PLACED.
+1.5 of its pixels apart, averaged (round 3), 6 apart (round 5). Round 7:
+the shade columns half toward #1e2418, 0.7 as wide at the foot. Round 8:
+the bank, from the waterline 1.5 m out and 0.5 m up, the rough's colour x
+0.45 a third toward the shade tone. Round 9: crowns 1.35 x the crown radius,
+to 75% of the tree (was 70%). Round 10: by the wind, w = min(1, wind / 15
+mph): the ripple offset 0.006 + 0.018 w of the screen, the blur's taps
+3 + 6 w pixels apart. All PLACED.
 High and Ultra only.
 
 Shore foam, round 1 (renderer.js FOAM_FRAG): two wavelet trains along the
@@ -10534,7 +10540,10 @@ clock (opposite ways); each wavelet's reach 0.25-0.75 (first) or 0.2-0.65
 noise; a lip 0.07 deep and 0.1 behind the front, a wash at 45% from the
 bank to half the front. Round 4: a wet line always at the bank, from 0.015
 to 0.03-0.12 of the strip (a slow noise along the shore, 0.43 a metre, 0.17
-of the clock), at 0.32-0.5 strength by the lace. PLACED.
+of the clock), at 0.32-0.5 strength by the lace. Round 8: the wind's shore --
+per point, 0.5 + 0.5 x (the bank's outward normal . the wind's heading) x
+min(1, wind / 12 mph); the wavelets' reach x 0.45-1.25 and the lip's
+strength x 0.5-1 by it. PLACED.
 
 Still water's crests (renderer.js WATER_EDGES `still`), round 2: crests
 running in along the depth lines in the last 0.7 m of depth; round 3: only
@@ -10547,7 +10556,14 @@ River: crests where sin((0.9 x downstream + 0.6 x |across|) x 2 pi) is above
 0.55-0.95, gated by noise at 0.05 x 0.2 of the channel's metres (patches of
 about 20 m by 5), 0.1-0.3 strength rising toward the banks, laced. Creek:
 1.7 and 1.3, noise at 0.08 x 0.3, 0.38 strength. Fixed to the bed (no
-drift). PLACED.
+drift). Round 6: river 0.5 and 0.35 (crests 2 m apart), gate 0.42-0.68;
+creek 0.8 and 0.6 (1.25 m apart), gate 0.35-0.6, 0.55 strength -- at 0.6 m
+the crests were thinner than a pixel from the bank. Round 9: a wet line in
+the outer 7% of a channel's half-width (0.93-1 of `shore`), 0.35 strong.
+Round 10: a channel's water faded in over its first 3 m and out over its
+last. Round 11: the sea's swash cycle 9 s of its clock (30 s real) and the
+whole run-up; a lake drawn as sea (Lakeshore, `lakeWaves`) 5 s and 0.6 of
+it -- wind waves on a lake are shorter and smaller than ocean swell. PLACED.
 
 Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
 cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second
