@@ -179,17 +179,21 @@ times the width setting (`fairwayScale`). Routing (`routeParallel`) also
 offers each hole of 250 m or more a tee on the line beside an earlier long
 hole -- either direction, either side, at the least clearance the corridors
 allow, within a short walk of the last green -- and prefers a back-nine hole
-running home beside its front-nine partner, as the Old Course does. After
-routing and before anything measures a corridor (`shareFairways`), wherever
-two fairways run nearly parallel with under 85 m of rough between them, each
-widens to the middle, so the strip between becomes one fairway. Never across
-a pond; never at a tee end or green complex. Since generator 46 (the polish
-goal) a join needs at least 140 m of overlap, is mutual and must actually
-touch -- a hole whose widening meets no other fairway gives it back -- and
-where two fairways come within 14 m without joining, each edge pulls back to
-leave a clear strip of rough rather than a sliver. On 18 holes two to four
-holes share (none on some seeds). The values are placed (RESEARCH, *Shared
-links fairways*).
+running home beside its front-nine partner, as the Old Course does; since
+generator 47 a hole running back is also offered its tee 60 m further past
+the last green's level, so its fairway lies beside the other's rather than
+beside its teeing ground. After routing and before anything measures a
+corridor (`shareFairways`), wherever two fairways run nearly parallel with
+under 85 m of rough between them, each widens to the middle, so the strip
+between becomes one fairway. Never across a pond; never at a tee end or
+green complex. A join is decided for the PAIR (generator 47): taken only
+where the two fairways run alongside for at least 100 m and, on average, two
+thirds of their shareable stretch -- a double fairway, never a crossbar --
+tapered over 36 m at the fairway's ends; it must actually touch -- a hole
+whose widening meets no other fairway gives it back -- and where two
+fairways come within 14 m without joining, each edge pulls back to leave a
+clear strip of rough rather than a sliver. On 18 holes two to six holes
+share. The values are placed (RESEARCH, *Shared links fairways*).
 
 ## Uncleared stands (generator 39, the cartoon-overhaul branch)
 

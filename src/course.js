@@ -191,9 +191,19 @@ const heading=(h,z)=>{const a=h.toWorld({x:h.center(z-6),z:z-6}),b=h.toWorld({x:
 // does not stop and start (an H of square rungs); `blur` averages the shared
 // edge along that many metres, so it flows; `ease` -- longer here -- lets a
 // join run out as a long tongue of rough rather than a quick wedge.
-export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,debug=null}={}){
+// THE FAR-LANDSCAPE GOAL'S ROUNDS (the owner: "thoughtful fairway connections
+// on links"): a double fairway is a DECISION ABOUT A PAIR, as an architect
+// makes it -- these two holes, running alongside each other for most of
+// their fairways, are one piece of ground. Each hole used to decide side by
+// side alone, and later passes undid half-made joins; now each pair's join is
+// measured from both holes and taken or refused whole. `cover`: the share of
+// each hole's shareable stretch (its mown fairway short of the green complex)
+// the join must run along -- a pair that only crosses in the middle (the
+// staggered out-and-back, whose fairways each lie beside the other's tee
+// ground) is refused rather than joined by a crossbar.
+export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,debug=null}={}){
  const shareStretch=stretch;
- const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set());
+ const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set()),per=holes.map(()=>({}));
  // A pond drawn nearer another hole's centre line than its own is dropped
  // later (a pond stays on its own hole's ground), so it must not stop the
  // sharing now: one sited in the neighbour's fairway blocked the very strip
@@ -209,14 +219,14 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
   if(z1-z0<50)continue;
   const n=Math.max(2,Math.ceil((z1-z0)/step));
   for(const side of [-1,1]){
-   const want=new Float32Array(n+1),own=new Float32Array(n+1);
+   const want=new Float32Array(n+1),own=new Float32Array(n+1),who=new Int16Array(n+1).fill(-1),par=new Float32Array(n+1),rough=new Float32Array(n+1);
    for(let k=0;k<=n;k++){
     const z=z0+(z1-z0)*k/n,cx=h.center(z),w=side<0?h.leftWidth(z):h.rightWidth(z),dirH=heading(h,z);
     own[k]=w;
     // Out from this fairway's edge across the rough, a metre at a time.
     for(let t=w+1;t<=w+gap;t+=1){
      const q=h.toWorld({x:cx+side*t,z});
-     let hit=false;
+     let hit=false,partner=-1;
      for(const [j,o] of holes.entries()){
       if(j===i)continue;
       const p=o.toLocal(q),oz0=(o.mowStart??o.fairwayStart??22)+(shareStretch?5:15),oz1=o.length-(shareStretch?20:30);
@@ -225,7 +235,7 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
       if(Math.abs(off)>ow)continue;
       const dirO=heading(o,p.z);
       if(Math.abs(dirO.x*dirH.x+dirO.z*dirH.z)<cos){if(debug)debug.push({hole:h.hole,side,k,why:'angle',other:o.hole,dot:+Math.abs(dirO.x*dirH.x+dirO.z*dirH.z).toFixed(2)});continue;}
-      hit=true;partners[i].add(j);break;
+      hit=true;partner=j;partners[i].add(j);par[k]=Math.abs(dirO.x*dirH.x+dirO.z*dirH.z);break;
      }
      if(!hit)continue;
      // Meet at the middle of the rough between the two edges.
@@ -234,32 +244,47 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
      // neighbour's pond lies across the shared ground as surely as our own.
      let pondInWay=false;
      for(let u=w;u<=reach+8&&!pondInWay;u+=3){const v=h.toWorld({x:cx+side*u,z});pondInWay=holes.some((o,j)=>{if(!ownPonds[j].length)return false;const l=o.toLocal(v);return ownPonds[j].some(p=>insideOval(l.x,l.z,p,8));});}
-     if(!pondInWay)want[k]=reach;
+     if(!pondInWay){want[k]=reach;who[k]=partner;rough[k]=t-w;}
      else if(debug)debug.push({hole:h.hole,side,k,why:'pond'});
      break;
     }
    }
    // Close short gaps first (`close`): a gap between two joined stretches,
    // filled with the reach either side of it, so a join that only paused for
-   // a pond's margin or a passing kink is one join.
+   // a pond's margin or a passing kink is one join -- one with the SAME hole.
    if(close){
     const cg=Math.round(close/step);
     for(let k=0;k<=n;){
      if(want[k]){k++;continue;}
      let e=k;while(e<=n&&!want[e])e++;
-     if(k>0&&e<=n&&e-k<=cg){const a=want[k-1],b=want[e];for(let m=k;m<e;m++)want[m]=a+(b-a)*(m-k+1)/(e-k+1);}
+     if(k>0&&e<=n&&e-k<=cg&&who[k-1]===who[e]){const a=want[k-1],b=want[e];for(let m=k;m<e;m++){want[m]=a+(b-a)*(m-k+1)/(e-k+1);who[m]=who[e];}}
      k=e;
     }
    }
-   // Keep only runs of at least 40 m, then fade each run in and out.
-   const keep=new Float32Array(n+1);
+   // The runs: stretches of at least `run` m joined to one hole.
+   const runs=[];
    for(let k=0;k<=n;){
     if(!want[k]){k++;continue;}
-    let e=k;while(e<=n&&want[e])e++;
-    if((e-k)*step>=run)for(let m=k;m<e;m++)keep[m]=want[m];
+    let e=k;while(e<=n&&want[e]&&who[e]===who[k])e++;
+    if((e-k)*step>=run)runs.push({j:who[k],k0:k,k1:e});else if(debug)debug.push({hole:h.hole,side,k,why:`run ${(e-k)*step} m`});
     k=e;
    }
-   if(!keep.some(Boolean))continue;
+   per[i][side]={z0,z1,n,want,own,runs,par,rough};
+  }
+ }
+ // EACH PAIR TAKEN OR REFUSED WHOLE (above): how far each hole's joins with
+ // the other run, against each hole's own shareable stretch.
+ const joined=(i,j)=>{let L=0;for(const side of [-1,1])for(const r of per[i][side]?.runs||[])if(r.j===j)L+=(r.k1-r.k0)*step;return L;};
+ const span=i=>per[i][-1]?per[i][-1].z1-per[i][-1].z0:0;
+ // How parallel the pair runs along its join (mean |cos| of the two centre
+ // lines), and how much the rough between them changes along it.
+ const shape=(i,j)=>{let c=0,s=0,lo=1e9,hi=0;for(const side of [-1,1]){const p=per[i][side];for(const r of p?.runs||[])if(r.j===j)for(let m=r.k0;m<r.k1;m++){if(!p.par[m])continue;c++;s+=p.par[m];lo=Math.min(lo,p.rough[m]);hi=Math.max(hi,p.rough[m]);}}return {par:c?s/c:0,spread:c?hi-lo:0};};
+ const takes=(i,j)=>{const a=joined(i,j),b=joined(j,i);if(a<run||b<run)return false;const f=shape(i,j),ok=(a/Math.max(1,span(i))+b/Math.max(1,span(j)))/2>=cover;if(debug)debug.push({hole:holes[i].hole,why:`pair with ${holes[j].hole+1} covers ${(a/span(i)*100).toFixed(0)}% / ${(b/span(j)*100).toFixed(0)}%, parallel ${f.par.toFixed(3)}, rough spread ${f.spread.toFixed(0)} m${ok?'':' REFUSED'}`});return ok;};
+ for(const [i,h] of holes.entries())for(const side of [-1,1]){
+  const s=per[i][side];if(!s)continue;
+  const {z0,z1,n,want,own}=s,keep=new Float32Array(n+1);
+  for(const r of s.runs)if(takes(i,r.j))for(let m=r.k0;m<r.k1;m++)keep[m]=want[m];
+  if(!keep.some(Boolean))continue;
    // Blur the joined reach along its length (`blur`), inside each run only.
    if(blur){
     const br=Math.round(blur/step/2),src=keep.slice();
@@ -271,16 +296,25 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
    // the fairway's own edge a third of the way down the ease and the rest was
    // never seen -- a quick wedge whatever `ease` said.
    for(let k=0;k<=n;k++){
-    let best=0;
-    for(let m=Math.max(0,k-fade);m<=Math.min(n,k+fade);m++)if(keep[m])best=Math.max(best,(keep[m]-own[m])*smooth(1-Math.abs(m-k)/fade));
+    let best=0,full=0;
+    for(let m=Math.max(0,k-fade);m<=Math.min(n,k+fade);m++)if(keep[m]){const v=(keep[m]-own[m])*smooth(1-Math.abs(m-k)/fade);if(v>best){best=v;full=keep[m]-own[m];}}
+    // THE FAR-LANDSCAPE GOAL'S ROUND 6: A TONGUE OF ROUGH ENDS ROUND. Where a
+    // join ran out, the rough between the two fairways narrowed over the whole
+    // ease (170 m) to a hairline point -- the sliver the polish goal ruled
+    // out, drawn long. Now each side keeps at least half a strip of rough
+    // (`strip`) until the last quarter of its taper, then closes on a circle's
+    // profile, so the tongue ends in a rounded tip about a strip wide.
+    if(strip&&roundTip&&full>strip/2&&best>0){const f=best/full,fc=1-strip/2/full;if(f>fc){const u=Math.min(1,(f-fc)/(1-fc)*4);best=full*(1-(1-fc)*Math.sqrt(1-u));}}
     // Round 3: and to the stretch's ends. A join that ran up to the end of
     // its allowed stretch (25 m past the mown start, 40 m short of the green)
     // stopped there at full width -- the square end of every "H" rung.
-    best*=smooth(Math.min(k,n-k)/Math.max(1,fade*.6));
+    // The far-landscape goal: over `endEase` m when given -- at ease x 0.6
+    // (100 m on a links) only the middle 27 m of a 230 m stretch reached full
+    // width, and an out-and-back pair stood 5-16 m apart, never touching.
+    best*=smooth(Math.min(k,n-k)/Math.max(1,endEase!==null?endEase/step:fade*.6));
     out[k]=best>0?own[k]+best:0;
    }
    extra[i][side]={z0,z1,n,out};
-  }
  }
  // MUTUAL OR NOT AT ALL (the polish goal, round 13): a hole whose partners
  // all kept no widening of their own -- refused at their tee or green end --
@@ -290,7 +324,7 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
   if(!extra[i][-1]&&!extra[i][1])continue;
   // A partner that widened and reached back for THIS hole (S3's hole 1 had a
   // partner widening toward a third hole instead).
-  if(![...partners[i]].some(j=>(extra[j][-1]||extra[j][1])&&partners[j].has(i))){extra[i][-1]=null;extra[i][1]=null;}
+  if(![...partners[i]].some(j=>(extra[j][-1]||extra[j][1])&&partners[j].has(i))){if(debug)debug.push({hole:holes[i].hole,why:"no partner reached back",partners:[...partners[i]].map(j=>holes[j].hole)});extra[i][-1]=null;extra[i][1]=null;}
  }
  // The widened profile: the old width or the shared reach, whichever is wider.
  for(const [i,h] of holes.entries()){
@@ -317,7 +351,7 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
     const wd=side<0?h.leftWidth(z):h.rightWidth(z),q=h.toWorld({x:h.center(z)+side*(wd+.5),z});
     if(holes.some(o=>{if(o===h)return false;const p=o.toLocal(q);if(p.z<0||p.z>o.length)return false;const off=p.x-o.center(p.z);return Math.abs(off)<=(off<0?o.leftWidth(p.z):o.rightWidth(p.z));})){touch=true;break;}
    }
-   if(!touch){h._unshare();changed=true;}
+   if(!touch){if(debug)debug.push({hole:h.hole,why:"touches nothing"});h._unshare();changed=true;}
   }
  }
  for(const h of holes)delete h._unshare;

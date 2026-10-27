@@ -35,6 +35,10 @@ const tier = opt('--tier', 'ultra');
 // (renderer.js setGroundCues; the ground-readability rounds), applied after
 // the course is built.
 const cues = JSON.parse(opt('--cues', 'null'));
+// `--eval 'view => ...'`: run against the renderer once the course is built --
+// for a diagnostic picture (the far-landscape goal: the water made a pure
+// mirror, to see what its reflection probe holds). Never for a round's look.
+const evalAfter = opt('--eval', null);
 // `--homes`: the same course with fairway homes on (the game's default is
 // off, so no fixed view shows a house), and two views of the first ones --
 // the houses' rounds (tools/blender/cartoon_houses.py). Kept apart from the
@@ -156,6 +160,14 @@ export const VIEWS = [
   for (let r = 60; r < 400; r += 10) for (let a = 0; a < 6.28; a += .12) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r, y = w.height(x, z); if (y > top) { top = y; best = {x, z, a}; } }
   const cx = best.x - Math.cos(best.a) * 160, cz = best.z - Math.sin(best.a) * 160;
   return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 30, pitch: 4}; }`},
+ // THE FAR-LANDSCAPE GOAL'S VIEWS (26 October 2026). far-band and far-band-b
+ // stand inside the course and mostly look into its own trees; these stand
+ // just past the property line (40 m), above the canopy, looking out -- one
+ // on the inland side, one on the west -- and one high over the course's
+ // edge, where the land recedes to the horizon.
+ {name: 'far-out', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (south)', cam: `w => ({x: -w.halfX * .2, z: -(w.halfZ + 40), yaw: 180, height: 45, pitch: -4})`},
+ {name: 'far-side', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (west)', cam: `w => ({x: -(w.halfX + 40), z: w.halfZ * .2, yaw: 270, height: 45, pitch: -4})`},
+ {name: 'far-high', hole: 0, when: 'afternoon', caption: 'High over the course\'s edge, the land receding', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];
@@ -178,6 +190,7 @@ try {
   const t0 = Date.now();
   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {})});
   if (cues) await p.evaluate(c => window.__view.setGroundCues(c), cues);
+  if (evalAfter) console.log(biome, 'eval:', JSON.stringify(await p.evaluate(code => (0, eval)(code)(window.__view), evalAfter)));
   const built = Date.now() - t0;
   await p.addStyleTag({content: HIDE_HUD});
   let hole = 0;

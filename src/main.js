@@ -3328,7 +3328,12 @@ function startEndless(group,replaySeed){
 }
 // `replaySeed` starts a run that has been played before -- the profile's
 // "Replay this course" -- since an endless run's holes all grow from its seed.
+// `pinnedRun` (lab.pinRun, the smoke run's --endless-seed): the seed the next
+// fresh run takes, once -- so a run that failed can be played again on the
+// same holes through the same button.
+let pinnedRun=null;
 async function buildEndless(group,replaySeed){
+ if(!replaySeed&&pinnedRun){replaySeed=pinnedRun;pinnedRun=null;}
  // Straight off the main menu there is nothing to grow: the hole on screen is
  // already hole one, so the run adopts its seed and its world and starts. No
  // overlay either, because an overlay over work that is not happening is a lie.
@@ -6826,6 +6831,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    const group=challengeGroup(players);new Round(group);
    if(def.who==='group'&&players.length<2)throw Error(`${def.name} is for two to four golfers.`);
    return def.where==='round'?startGoalRound(def,group):startChallenge(id,group,{week});},
+  // The seed the next fresh Endless run takes (the smoke run's
+  // --endless-seed): pin, then press Start an endless run as a player does.
+  pinRun:seed=>{pinnedRun=String(seed);},
   course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.

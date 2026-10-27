@@ -224,7 +224,19 @@ export const SCHEMA_VERSION=11;
 //     fairway's own width over 170 m and at its stretch's ends; where two
 //     fairways come within 14 m and do not join, a clear strip of rough
 //     between them instead of a sliver. Only Links moved.
-export const GENERATOR_VERSION=46;
+// 47: Links' shared fairways (the far-landscape goal): a join is decided for
+//     the PAIR, from both holes, and taken only where their fairways run
+//     alongside for two thirds of their shareable length on average (100 m
+//     at least) -- a double fairway, not a crossbar; tapered at the fairway's
+//     ends over 36 m (was 100), so an out-and-back pair meets; and a hole
+//     routed back beside another is also offered its tee 60 m past
+//     the level of the last green (routing.js), so the two fairways lie
+//     alongside. Only Links moved.
+// 48: Links' shared fairways, round 6 (the far-landscape goal): where a join
+//     runs out, the rough between the two fairways keeps half a strip a side
+//     until the last quarter of the taper, then closes on a circle's profile
+//     -- a tongue with a rounded tip, not a hairline wedge. Only Links moved.
+export const GENERATOR_VERSION=48;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

@@ -124,6 +124,8 @@ export const TIERS = {
   // reflection pass -- the same 210 draws happen either way -- so the buffer
   // size is the only part of it a tier can currently reach. See TODO.
   reflection: 256,
+  // Trees in still water (water-mirror.js): an extra small render a frame.
+  mirrorTwins: false,
  },
  medium: {
   pixelRatio: 1.75,
@@ -156,6 +158,7 @@ export const TIERS = {
   floodShadows: 5,
   bloom: 0,
   reflection: 768,
+  mirrorTwins: false,
  },
  high: {
   pixelRatio: 2,
@@ -210,6 +213,7 @@ export const TIERS = {
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
   reflection: 1536,
+  mirrorTwins: true,
  },
  ultra: {
   pixelRatio: 2,
@@ -298,6 +302,7 @@ export const TIERS = {
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
   reflection: 2048,
+  mirrorTwins: true,
  },
 };
 
@@ -464,6 +469,7 @@ export function needsRebuild(a, b) {
  if ((x.mist > 0) !== (y.mist > 0)) return true;
  if ((x.bloom > 0) !== (y.bloom > 0)) return true;
  if (x.reflection !== y.reflection) return true;
+ if (!!x.mirrorTwins !== !!y.mirrorTwins) return true;
  // Cascades are built with the course and register themselves against every
  // material in it, so turning them on or off needs the scene built again.
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.

@@ -43,8 +43,15 @@ export function routeHoles(holes,s,random){
    if(i&&pull&&h.length>=250){
     const partner=i>=Math.ceil(holes.length/2)?holes.length-1-i:-1,from=placed.at(-1).pin,rMax=Math.max(...local.map(p=>p.r)),homeWeight=footprint.kind==='ribbon'?0:i>holes.length-4?.45:.05,guide=footprint.points[Math.round((i+1)/holes.length*64)];
     for(const [j,o] of placed.entries()){
-     const fx=Math.sin(o.rot),fz=Math.cos(o.rot),len=holes[j].length,oMax=Math.max(...o.points.map(p=>p.r)),t=(from.x-o.origin.x)*fx+(from.z-o.origin.z)*fz;
-     for(const dir of [1,-1]){
+     const fx=Math.sin(o.rot),fz=Math.cos(o.rot),len=holes[j].length,oMax=Math.max(...o.points.map(p=>p.r)),t0=(from.x-o.origin.x)*fx+(from.z-o.origin.z)*fz;
+     // THE FAR-LANDSCAPE GOAL (the owner: "thoughtful fairway connections"):
+     // a hole running BACK beside another is also offered its tee `shifts` m
+     // (60 on a links) further back past the level of the last green, so its fairway -- which
+     // on a links starts 85-110 m out -- lies beside the other's fairway
+     // rather than beside its teeing ground (the staggered pairs that met only
+     // in the middle). The extra walk is scored as any walk is. PLACED.
+     for(const [dir,shift] of [[1,0],[-1,0],...(pull.shifts??[]).map(d=>[-1,d])]){
+      const t=t0-dir*shift;
       // Room left beside hole j, running this way from the point level with the green.
       if(len<250||(dir>0?len-t:t)<Math.min(h.length,len)*.8)continue;
       const rot=o.rot+(dir>0?0:Math.PI),c=Math.cos(rot),sn=Math.sin(rot);

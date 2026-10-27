@@ -553,6 +553,158 @@ Tests: tests/far-woods.test.mjs (outside the property, never in water,
 deterministic, wooded in the first 60 m and in every kilometre out to 12 km,
 coarser with distance; Low and Medium draw groves, never nothing).
 
+## The far-landscape and mowing goal (26 October 2026)
+
+The third goal on the branch, after the owner looked at the polish goal's
+build. The brief is local (`docs/reports/cartoon-distance-goal.md`). Nine
+items: the far landscape on all ten landscapes (ten rounds, every round
+judged on every landscape); the tee's clean-up lap as one continuous pass;
+ten more rounds of links shared fairways; diamond-mowed greens; the straight
+tone step on Midwest hole 2; trees in the ponds' reflections (fifteen
+rounds); waves at the water's edge (twenty); the tee pad's colour; and a
+smoke run that can replay an Endless seed. Frame rate: at most 5% slower per
+tier than the goal's start, measured on every landscape the far landscape
+changes, Low and Medium first. The wait as a course loads is written down.
+
+**The start**, kept for comparisons: `bench/ab/start-distance.html` (the
+built game at 90dc61d), and a capture build of it,
+`bench/shots/dist-start/` -- made by `bench/shots/overhaul/_startbuild.mjs`
+(scratch), which swaps every source file changed since 90dc61d back to its
+starting text through `build-hooked.mjs`'s SWAP. The polish goal's last
+pictures (`latest/`) are kept as `dist-r0/`.
+
+**New views** (tools/capture/overhaul.mjs): `far-out` and `far-side` stand
+40 m past the property line, 45 m up, looking out (south and west), and
+`far-high` 160 m up over the course's edge -- `far-band` stands inside the
+course and on the wooded landscapes looks into its own trees.
+
+### The far landscape (far-landscape goal)
+
+The owner: "I don't like the way that the distance geometry turned out ...
+Lakeshore Dunes and Links have trees underwater? Desert has sort of a clear
+line where it transitions and rocks don't look great out there. I think we
+need more plateaus. Iterate. iterate. iterate. Floating assets out in the
+distance landscape doesn't look good."
+
+**Diagnosis.**
+- **The "trees underwater"** were the painted far forest (ground.js, THE
+  FOREST ON THE FAR HILLS), painted on the sea bed as on any ground; the
+  clear shelf showed its crowns through the water (`dist-r0/links/far-band`).
+  Only one far grove in 2,394 actually reached the sea.
+- **The floating** was the far woods standing on the landscape's fine relief
+  (`ringRelief`, sampled where each crown stands) while the ring DRAWS that
+  relief as triangles up to hundreds of metres wide: a crown's centre stood
+  up to 150 m over the drawn valley (Lakeshore, Desert), and a grove's
+  bowl-shaped underside lifted its rim off flat ground by a tenth of its
+  width. On Desert the hovering olive slabs are the "rocks" out there.
+- **Desert's line**: the painted canopy starts at the property line as a
+  dense regular carpet of crowns over the sand and stops at a hard edge.
+
+**The metric** (`node tools/bench.mjs farSeated`, every course, no setting):
+every far crown and grove, in each form it may be drawn as, checked on its
+own sixty points against `drawnGround` -- the ring's own triangles: its flat
+base no more than 2% of its radius (at least 30 cm) above the ground
+anywhere under it (PLACED: under a pixel at a crown that size's distance),
+and none of it in water. Before: hundreds floating on every landscape (up
+to 150 m); after round 1: **0 of 920,167** on the full tier.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | The two faults above | The ring as plain arrays (`ringMesh`) and `drawnGround`, its height at any point, read from the triangles the renderer draws; `drawnVertices` lists the drawn vertices under a footprint. Every far shape flat-based at its origin (`FAR_SHAPES`, `farWoodGeometry`; the three lumps of a cluster cut on one floor), seated by `seatOn`: held under rings of samples on its rim (spaced for the slope) and every drawn vertex under it, a grove tilted to the ground's plane (to 30 degrees) -- a canopy follows its hill -- and drawn at two thirds the size, twice at most, where the ground under it is so broken it would be buried past a third of its height; any part over water leaves it out. The painting stops a metre above the sea (`farSea`). The sea is clear on Links and Lakeshore; the groves sit on the hills (`far-r1/`) |
+| 2 | Desert's line at the ground's edge, Mountain's pale streaks, and no plateaus | The ring takes the landscape's own ground (ground.js, THE FAR RING'S OWN GROUND): its floor carried on past the course's ground (Desert's hardpan), its rock on steep faces (`ringFace`: rock, Desert's layered banks, none on the dune and island coasts), patterns settling to their average where under a pixel. Desert's far land as mesas and buttes (`ringMesas`, landscape-edge.js): a 4 km field warped by 700 m, two tiers (0.62 and 0.36 of the lift, cliffs a few rows wide) with talus aprons, over a quiet floor; its rings 16% apart up to 220 m (were 28%, unbounded) and 2.5 times as many round -- 96,801 triangles (CPU relief maps `ring/desert-mesa1.png`, a scatter of jagged fragments, then `-mesa2.png`, broad tables). Captures pending |
+| 3 | Each landscape's own far features: Island's horizon was empty sea; Haunted Hollow's near far woods were purple lumps reading as living woods; Autumn's far land was a flat plain of identical domes | Island's far sea raises five islets (`ringIslands`, landscape-edge.js `isles`: low hills 24-70 m with a beach skirt, 260-780 m across, 2.5-6 km out, on the denser rings; the far woods plant them -- `ring/island-isles2.png`; a first cut gave rings of land, three's smoothstep not taking reversed edges). Haunted Hollow's near crowns are clumps of three bare dead trunks with broken limbs (`snags`). Autumn's far woods a fifth evergreen (`farForest.evergreen`: spruces near, cones far, in its fourth colour), and its far land rising to 170 m (was the default 70). Links' inland ring already carries its dunes (13-40 m): left. Captures pending |
+| 4 | The LOD seam: a line round the course at 420 m, 6 m crowns inside, 19 m domes outside | Each site switches from crown to grove somewhere in a 240 m band (300-540 m, by its own hash), and a near crown grows with its band's spacing (to 40% of it), so the two sizes meet. Captures pending |
+
+The wait (measured each round on an 18-hole course, seed `overhaul`,
+against the goal's start; scratch `_fartime.mjs`): after round 4, placing
+the far woods takes 0.30-0.53 s (start 0.05-0.12): PNW +0.41 s, Giant
+Redwood +0.39, Autumn +0.34, Desert +0.31 and its denser ring +0.09 (ring
+0.11 s, was 0.02) -- under the goal's half second, written down as a real
+cost. What brought it down from 4.2 s (round 1's first cut): lakes and
+creeks asked directly instead of the whole surface classifier at every
+sample; a crown seated only in the form its tier draws; the treeline, water
+and slope tests on the drawn ground; fewer fixed samples with refinement
+only where the ground bends (83 lookups a crown, was 119); the ground
+lookup without an object per triangle.
+
+### The tee's clean-up lap (far-landscape goal)
+
+The owner: "The clean up pass on the tee box should not make a checker
+pattern. It should just be one continuous pass." **Diagnosis:** the lap took
+the bands' tone turned over (ground.js, the tee pad's mowing, `tband`), so
+wherever a light band met it the lap went dark and vice versa -- a checker
+round the pad.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | The checker | One tone all the way round (`-0.55` of the bands' contrast): a mower's single lap. Captures pending |
+
+### Diamond-mowed greens (far-landscape goal)
+
+The owner: "I want greens to be diamond mowed." A green was cut in single
+bands 1.6 m wide along one line (ground.js, MOWING STRIPES THAT FOLLOW THE
+GROUND). Its clean-up lap had the tee's fault: the bands' tone turned over,
+laid on top of them, a checker at the green's edge.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Single bands; a checker lap | Two passes crossing at right angles, each 45 degrees off the old line, with the same period, bend and fade as before: each spot carries both passes' tones -- light, dark, or a middle tone where they differ -- diamonds. The lap REPLACES the passes' tone with one of its own (0.55 of the contrast below the middle). Paint only. Captures pending |
+
+### Trees in still water (far-landscape goal)
+
+The owner: "Trees in calm ponds' reflections, from the bank and a tee ...
+Be efficient here." Fifteen rounds. A pond reflected a cube probe taken from
+its middle 4 m up (renderer.js, REFLECTIONS ON EVERY BODY): right for the
+sky, wrong for a bank -- a tree beside the water sits elsewhere in a mirror
+seen from across the pond than in a picture taken from its middle -- and
+the polish goal found its trees did not show at all (`dist-r0/midwest/h1-pond`:
+a flat teal sheet under a wooded bank).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | No trees in the water | `src/water-mirror.js`: twins of the trees round each still pond (the far woods' cluster or spruce, sized to the tree's crown and height, with a trunk), turned over about that pond's own level, drawn each frame with the ordinary camera into a picture half the screen's size, unlit; still water reads it at its own pixel, nudged by the ripples, lit by the light the water gets, as far as the surface is a mirror (renderer.js WATER_EDGES `still`). High and Ultra only (`mirrorTwins`), and drawn only while a still pond is within 700 m. Captures and its frame cost pending |
+
+### Waves at the water's edge (far-landscape goal)
+
+The owner: "Waves on the edges of ponds, lakes, ocean, rivers, creeks, 20
+iterations on making them look more realistic and not just reading as a
+sine wave on the edge. Be efficient with this as well." Twenty rounds.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | A pond's foam (renderer.js FOAM_FRAG) was one band breathing in and out with a sine of the world position, the same way all round | Wavelets ARRIVE: two trains running along the shore (metres along the outline, `shoreLength`, each a whole number of wavelets round so they meet where it closes), each wavelet its own reach from a slow noise; a lip at each front and a thinner wash left behind it. The foam strip closed with a copy of its first point, so the along-shore coordinate never wraps inside a quad. Captures pending |
+
+### Links shared fairways, the far-landscape goal's rounds
+
+The owner: "10 more passes on making thoughtful fairway connections on
+links." Judged from above (`tools/surface-map.mjs`, which now takes
+`--share '<json>'` to try a rule before writing it) on the seeds `overhaul`,
+`LINKS-A` .. `LINKS-D` and `S5` (18 holes; `share3-r0/` ..), and measured:
+every pair of holes whose fairways run within 26 degrees of parallel for 60 m
+or more, with the rough between them (scratch `_sidebyside.mjs`), and why
+each join was refused (`shareFairways`' debug sink, which now also names a
+run too short, a partner that did not reach back, a hole touching nothing,
+and each pair's coverage).
+
+**Diagnosis.** Of 35 side-by-side pairs on six courses, 4 were joined;
+LINKS-A, -B and -C shared nothing. Most of the rest are STAGGERED: two holes
+out and back whose fairways each lie beside the other's teeing ground (a
+links fairway starts 85-110 m out), so they overlap only in the middle.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | The 140 m minimum refused real pairs | Tried 100 m: two crossbars came back (`overhaul` 9-15, LINKS-B 8-9: fairways crossing at an angle, joined over their middle). Kept 140 m this round (judged) |
+| 2 | Each hole decided alone; later passes undid half-made joins | A join is decided for the PAIR, from both holes (`cover`): taken only where the two fairways run alongside for a share of each one's shareable stretch. Measured: the crossbars cover 60-63% of both fairways, the double fairways 66-100% |
+| 3 | Pairs taken stood 5-16 m apart and were then given back ("touches nothing"): the taper toward the fairway's ends ran 100 m in (ease x 0.6), leaving 27 m of a 230 m stretch at full width | That taper over 36 m (`endEase`); the pair's coverage judged on the mean of its two holes (LINKS-D's 1-2 covers 62% / 85% and is one big merged fairway). Links: run 100 m, cover 0.66. Joined holes per course 2, 2, 0, 2, 4, 4 (were 2, 0, 0, 0, 2, 4): LINKS-A's 11-12 and LINKS-C's 9-10 are new double fairways, no crossbar on any (`share3-r3/`, the rule as set) |
+| 4 | Most side-by-side pairs are staggered by the routing itself: a hole routed back beside another starts level with the last green, so its fairway (85-110 m out) lies beside the other's teeing ground | routing.js: a hole running back beside another is also offered its tee further back past the green's level, scored by its walk as any placement is. Tried 30 and 60 m: 31 joined holes on ten courses (were 20), but `overhaul` lost its pair (0) as the routing chose differently (`share3-r4/`). S3 shows a triple shared area (1-2-3) |
+| 5 | Which shifts | Swept over ten courses: none 20, 30+60 m 31, 25+50 m 31, 40 m 32, **60 m 38**, every course 2 or more (`overhaul` 5, LINKS-A 2, -B 6, -C 3, -D 5, S5 4, S1 4, S2 4, S3 3, S4 2). Links `routeParallel.shifts: [60]`. From above each join is one broad double fairway with a natural notch (`share3-r5/`) |
+
+| 6 | Where a join runs out, the rough between the two fairways narrowed over the whole 170 m ease to a hairline point: a long sliver | Each side keeps half a strip (7 m) of rough until the last quarter of its taper, then closes on a circle's profile (`roundTip`): a rounded tip about a strip wide. Over ten courses the samples with a 1.5-8 m sliver between fairways fell from 50 to 42, strips of 8-20 m rose from 270 to 278 (scratch `_slivers.mjs`; maps `share3-r6b/`). Generator 48 |
+
+Generator 47, then 48 (Links only). Every bench rule clear on the standard tier.
+tests/shared-fairways' count (at least two holes on each of three courses,
+six in all) holds with room: `overhaul` 5, S1 4, S3 3.
+
 ## Rounds
 
 Each asset, texture and lighting change goes through at least three rounds:

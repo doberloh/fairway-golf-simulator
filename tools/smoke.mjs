@@ -8,6 +8,8 @@
 //   node tools/smoke.mjs --headed     watch it happen
 //   node tools/smoke.mjs --list       what the journeys are
 //   node tools/smoke.mjs --file x.html  test some other built file
+//   node tools/smoke.mjs --only endless-round --endless-seed HARROW-4021
+//                                     an Endless run on a seed of your choosing
 //
 // WHY THIS EXISTS. `npm test` covers physics, generation and scoring, and
 // cannot see the interface at all: `main.js` is several thousand lines of
@@ -70,6 +72,10 @@ const option = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? ar
 const SOFTWARE = flag('software');
 const HEADED = flag('headed');
 const ONLY = option('only');
+// `--endless-seed HARROW-4021`: every journey's fresh Endless run takes this
+// seed (the game's lab.pinRun), so a run that failed is played again on the
+// same holes. Its journeys still press Start an endless run as a player does.
+const ENDLESS_SEED = option('endless-seed');
 // `--file some/Fairway.html` tests any built file instead of dist/ -- the one
 // inside a release ZIP, or an older build to prove a check goes red on the bug
 // it was written for. No staleness gate: the file was named on purpose.
@@ -849,10 +855,15 @@ const JOURNEYS = [
   what: 'the whole round loop: clubs, aim, cameras, a tee shot, a drop, putting out, the scorecard, the next hole',
   async run(t) {
    await menuReady(t);
+   if (ENDLESS_SEED) await t.page.evaluate(s => window.lab.pinRun(s), ENDLESS_SEED);
    await t.step('Endless → Start an endless run', async () => {
     await fromMenu(t, 'Endless');
     await t.pressToPlay('Start an endless run');
    });
+   if (ENDLESS_SEED) {
+    const pinned = (await whereAmI(t.page)).seed;
+    if (pinned !== ENDLESS_SEED) throw new Error(`asked for Endless seed ${ENDLESS_SEED}, the run is on ${pinned}`);
+   }
    // Which course, on every run and not only a failed one: a software frame's
    // cost depends on the course as well as the machine, and a slow run cannot
    // be told from a slow course without it (16 October 2026).

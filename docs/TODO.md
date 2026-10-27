@@ -35,6 +35,28 @@ check.
 
 The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
 
+- [ ] **The far landscape's third-goal rounds are built and not played**
+  (far-woods.js `seatOn`, landscape-edge.js `drawnGround`, `ringMesas`,
+  `ringIslands`; CARTOON_OVERHAUL *The far landscape (far-landscape goal)*).
+  Check from the tees and from high cameras on every landscape: no far tree
+  hangs over a valley or stands in the sea (the bench's `farSeated` says
+  none does); no painted crowns under Links' or Lakeshore's shallows; no
+  line where near crowns become groves (300-540 m out); Desert's mesas read
+  as tables with cliffs, not ramps, and its hardpan runs past the course's
+  edge with no line; Island's islets sit on the horizon; Haunted Hollow's
+  far trunks read dead; Autumn's evergreens and hills. The wait as a course
+  loads is 0.3-0.4 s longer on the wooded landscapes (measured, not felt).
+- [ ] **Links' double fairways have been judged from above, not from the
+  tee** (course.js shareFairways `cover`, `roundTip`; routing.js `shifts`;
+  generator 48). Check on seeds `overhaul` (holes 2-3, 8-11-12), LINKS-B and
+  S5: each join one broad mown shape from the tee, the rough between two
+  fairways closing in a rounded tongue, no crossbars.
+- [ ] **The tee's continuous lap, its own turf, and diamond-mowed greens are
+  built and not played** (ground.js). Check: the lap one tone all round a
+  tee and a green, no checker; a tee's colour between fairway and green;
+  diamonds that bend over a green's rolls and do not shimmer as the camera
+  moves; on Clear a green's tilt still reads through them; the range's
+  greens diamond-mowed too.
 - [ ] **The new trees have been seen only in captures, not played.**
   Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
   the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,

@@ -5,9 +5,14 @@
 // fairways*): the routing is easier to judge from above than in the game.
 import {generateWorld} from '../src/course.js';
 import {GROUNDS} from '../src/grounds.js';
+import {BIOMES} from '../src/biomes.js';
 import {writeFileSync} from 'node:fs';
 import {deflateSync} from 'node:zlib';
 const [seed = 'overhaul', n = '18', out = 'map.png', biome = 'links'] = process.argv.slice(2);
+// `--share '{"run":100}'`: the biome's sharedFairways options changed for this
+// map only, to judge a rule before writing it (the far-landscape goal).
+const shareAt = process.argv.indexOf('--share');
+if (shareAt > 0) Object.assign(BIOMES[biome].sharedFairways, JSON.parse(process.argv[shareAt + 1]));
 const w = generateWorld({seed, biome, holes: +n, trees: 60, homes: true});
 const res = 2, W = Math.ceil(2 * w.halfX / res), H = Math.ceil(2 * w.halfZ / res);
 const col = {fairway: [80, 170, 70], green: [60, 210, 90], fringe: [70, 190, 80], tee: [90, 200, 120], rough: [40, 110, 45], semiRough: [55, 140, 55], semirough: [55, 140, 55], bunker: [230, 210, 150], sand: [230, 210, 150], water: [40, 90, 200], path: [150, 140, 120]};

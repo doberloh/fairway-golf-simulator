@@ -33,6 +33,14 @@ const DEFAULTS = {
  ringLift: 70,
  // Peaked far range (landscape-edge.js `peaks`): off unless a landscape asks.
  ringPeaks: false,
+ // The ground type painted on the far ring's steep faces (ground.js GROUND_CODE;
+ // the far-landscape goal): the landscape's own rock, so a far cliff is rock
+ // rather than rough stretched up it. Null where the far land is dune or sea.
+ ringFace: 'rock',
+ // Far land as mesas and buttes (landscape-edge.js `mesas`): off unless asked.
+ ringMesas: false,
+ // Far islets out of the sea (landscape-edge.js `isles`): how many; none unless asked.
+ ringIslands: 0,
  // How far the router hops between holes on its long walk.
  hop: 58,
  // Scenery counts. Grass is blades, tufts are the near-field clumps.
@@ -171,7 +179,7 @@ const TRAITS = {
  desert: {light: {shade: '#a78aa6', exposure: .9},
   longGrass: {families: [['grassbunch', 1, .8]], count: 2600, near: 20, leaf: '#a9a06a', accent: '#d9c88f'},
   farForest: {cover: .35, size: 7, colors: ['#6c7146', '#7c7a4c', '#5e6640']},
-  bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240,
+  bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240, ringFace: 'hardpan', ringMesas: true,
   scatter: {rocks: 500, grass: 12000, tufts: 150, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
@@ -216,7 +224,7 @@ const TRAITS = {
  links: {light: {shade: '#8a98b0'},
   longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 2, 1.0]], count: 7000, near: 14, leaf: '#8a9150', accent: '#d8c27a'},
   farForest: {cover: .3, size: 6, colors: ['#5b6a33', '#6d7a3a', '#8a8a3e']},
-  bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0,
+  bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0, ringFace: null,
   sea: true, scatter: {rocks: 160, grass: 400000, tufts: 1600, tallGrass: true,
    rockScale: 1, bladeLength: 1.25, bladeWidth: 1.4, bladeTint: '#c2a05c',
    flowers: ['#ddc252', '#ae79a6']},
@@ -225,8 +233,10 @@ const TRAITS = {
   // Marram on rumpled dune crests, heather on the settled ground behind.
   // The Old Course and Chambers Bay: fairways 1.3 times as wide, holes routed
   // out and back side by side (routing.js), and fairways that meet where
-  // they do (course.js shareFairways). PLACED, all of it.
-  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 140, ease: 170, close: 70, blur: 60, stretch: true, strip: 14}, routeParallel: {gap: 60, weight: 600, walk: 130},
+  // they do (course.js shareFairways): a pair joined only where their
+  // fairways run alongside for two thirds of their length (the far-landscape
+  // goal), so a double fairway, never a crossbar. PLACED, all of it.
+  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 100, ease: 170, close: 70, blur: 60, stretch: true, strip: 14, cover: .66, endEase: 36}, routeParallel: {gap: 60, weight: 600, walk: 130, shifts: [60]},
   landform: {type: 'dunes', scale: 150, hummock: 38, height: 5, marram: .55, heather: .6,
    kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
   fallen: null,
@@ -251,7 +261,7 @@ const TRAITS = {
  island: {light: {shade: '#6fa0bf'},
   longGrass: {families: [['grassplume', 1, 1.3]], count: 1800, near: 20, leaf: '#5d8f45', accent: '#efe4c4'},
   farForest: {cover: .8, size: 10, colors: ['#3f7a35', '#4d8a3a', '#62983f']},
-  bank: '#aaad7a', ringLift: 0, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
+  bank: '#aaad7a', ringLift: 0, ringFace: null, ringIslands: 5, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
   coastal: true, sea: true, inlandWater: false, litter: false,
   // Teeth of the Dog: coral ironshore just above the beach.
   landform: {type: 'coral', low: 1.0, high: 3.4, kinds: {a: 'coral'}, gates: {a: {near: 3, ramp: 4}}},
@@ -306,7 +316,10 @@ const TRAITS = {
    ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
  autumn: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
-  farForest: {cover: .9, size: 11, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']},
+  // Round 3 of the far landscape: a fifth of the far woods evergreen (pine and
+  // hemlock among the maples), and the far land rising to the low mountains
+  // behind a New England valley (170 m; was the default 70).
+  farForest: {cover: .9, size: 11, evergreen: .2, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']}, ringLift: 170,
   bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   // New England: low granite ledges among the hardwoods, leaves under them.
@@ -385,7 +398,7 @@ const TRAITS = {
  lakeshore: {light: {shade: '#8199bf'},
   longGrass: {families: [['grassmarram', 2, 1.0], ['grassfescue', 1, .7]], count: 3500, near: 18, leaf: '#7f9a4c', accent: '#cdb880'},
   farForest: {cover: .75, size: 11, colors: ['#3b6a2e', '#4a7a34', '#5a873b']},
-  bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
+  bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90, ringFace: null,
   sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
   scatter: {rocks: 40, grass: 320000, tufts: 1600, tallGrass: true,
    rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#7f9c4a',

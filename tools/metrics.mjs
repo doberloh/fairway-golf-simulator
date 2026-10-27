@@ -2,6 +2,8 @@ import {greenApproaches, GREEN} from '../src/course.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
+import {farWoodSites, FAR_SHAPES} from '../src/far-woods.js';
+import {drawnGround} from '../src/landscape-edge.js';
 // What a generated course is measured on.
 //
 // EVERY METRIC IMPORTS ITS GEOMETRY FROM `src`. It never reimplements it.
@@ -530,6 +532,41 @@ METRICS.seated = {
    }
    series.gap.push(worst);
    if (worst > .03) invariants.floatingPlant++;
+  }
+  return {series, counts, invariants};
+ },
+};
+
+// THE FAR WOODS ON THE GROUND AS DRAWN (the far-landscape goal; src/far-woods.js
+// seatOn). Every far crown and grove, in each shape it may be drawn as (a near
+// crown is a grove on Low and Medium), checked on its own points -- three rings
+// of twenty at 90%, 60% and 30% of its base, turned off the seat's -- against
+// `drawnGround`, the landscape's own triangles: its flat base must not stand
+// more than 2% of its radius (at least 30 cm) above the ground anywhere under
+// it (PLACED: under a pixel at the distance a crown that size stands), and no
+// point of its base may be in water -- the sea below its level, or a pond,
+// lake or creek inside the course's ground. Runs on every course; no setting.
+METRICS.farSeated = {
+ describe: 'far crowns and groves floating above the drawn ground, or reaching water',
+ run(w) {
+  const counts = {farCrowns: 0}, invariants = {farFloating: 0, farInWater: 0}, series = {farGap: []};
+  const at = drawnGround(w), sea = !!w.bio?.sea, gx = w.groundGrid.halfX, gz = w.groundGrid.halfZ;
+  const wet = (x, z, y) => (sea && y < (w.waterLevel ?? 0)) || (Math.abs(x) < gx && Math.abs(z) < gz && w.surface(x, z) === 'water');
+  for (const groves of [false, true]) for (const s of farWoodSites(w, {groves})) {
+   const seat = s.seat, r = s.r, shape = FAR_SHAPES[s.shape];
+   {
+    counts.farCrowns++;
+    let worst = -Infinity, inWater = false;
+    for (const q of [.9, .6, .3]) for (let k = 0; k < 20; k++) {
+     const a = (k + .53) * Math.PI / 10, dx = Math.cos(a) * r * shape.foot * q, dz = Math.sin(a) * r * shape.foot * q;
+     const g = at(s.x + dx, s.z + dz), base = seat.y - (seat.ux * dx + seat.uz * dz) / seat.uy;
+     worst = Math.max(worst, base - g);
+     if (wet(s.x + dx, s.z + dz, g)) inWater = true;
+    }
+    series.farGap.push(worst);
+    if (worst > Math.max(.3, .02 * r)) invariants.farFloating++;
+    if (inWater) invariants.farInWater++;
+   }
   }
   return {series, counts, invariants};
  },

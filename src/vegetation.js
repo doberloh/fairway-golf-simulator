@@ -1,7 +1,7 @@
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
-import {farWoodSites} from './far-woods.js';
+import {farWoodSites,FAR_SHAPES} from './far-woods.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
@@ -548,29 +548,45 @@ export function teeFade(world) {
 // should not transition to just bare ground"). No shadow cast (scenery, past
 // every shadow map), lit by the toon ramp, fogged as the ground is. Low draws
 // every site as a grove dome (graphics.js `farWoods: 'groves'`), the cheapest.
-const CONIFER_FAR=new Set(['pnw','mountain','redwood']);
+// The far woods' shapes (far-woods.js FAR_SHAPES), each at unit radius with
+// a flat base at its origin -- the seat in far-woods.js lets that base down
+// onto the drawn ground, so nothing of a crown's underside hangs in the air.
+// Round 2 of the polish goal: a single cone read as a plain spike beside the
+// cartoon spruces, and a single lump as a ball: a spruce is two stacked tiers,
+// a broadleaf three lumps clustered. Round 6 (frame rate): 20-face lumps.
+export function farWoodGeometry(kind){
+ // A lump's underside is cut flat (it was squashed into a shallow bowl, whose
+ // rim stood off flat ground by a tenth of a grove's width).
+ const lump=(x,y,z,s)=>{let g=new T.IcosahedronGeometry(1,0);const p=g.attributes.position;for(let i=0;i<p.count;i++){const yy=p.getY(i),k=1+.12*Math.sin(p.getX(i)*5.1+p.getZ(i)*3.7);p.setXYZ(i,p.getX(i)*k*s+x,(yy<-.3?-.3:yy*k)*s+y,p.getZ(i)*k*s+z);}g=mergeVertices(g);return g;};
+ let geo;
+ if(kind==='spruce'){const a=new T.ConeGeometry(1,.6,7,1).translate(0,-.2,0),b=new T.ConeGeometry(.7,.55,7,1).translate(0,.22,0);geo=mergeGeometries([a,b]);a.dispose();b.dispose();}
+ // The three lumps cut on one floor, so each rests on the ground (their own
+ // cuts sat 3 cm of a unit apart, the higher two hanging).
+ else if(kind==='cluster'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
+  const p=geo.attributes.position;for(let i=0;i<p.count;i++)if(p.getY(i)<-.295)p.setY(i,-.295);}
+ else if(kind==='cone')geo=new T.ConeGeometry(1,1,6,1);
+ // Haunted Hollow's dead trunks (round 3 of the far landscape): three bare
+ // spikes leaning a little apart, each with two broken limbs, on one floor.
+ else if(kind==='snags'){const parts=[];for(const [x,z,h,lean] of [[0,0,1,.04],[.42,.2,.78,-.08],[-.3,-.36,.66,.07]]){
+   const t=new T.ConeGeometry(.07,h,5,1).translate(0,h/2,0).rotateZ(lean).translate(x,0,z);parts.push(t);
+   for(const [y,a] of [[.55,.9],[.72,-1.1]]){const l=new T.ConeGeometry(.025,.3*h,4,1).translate(0,.15*h,0).rotateZ(a).translate(x+Math.sin(-lean)*y*h,y*h,z);parts.push(l);}}
+  geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());}
+ else geo=lump(0,0,0,1);
+ geo.computeBoundingBox();geo.translate(0,-geo.boundingBox.min.y,0);
+ const [w,h]=FAR_SHAPES[kind].scale;geo.scale(w,h,w);geo.computeVertexNormals();geo.computeBoundingBox();
+ return geo;
+}
 function addFarWoods(view){
  const {world}=view,f=biomeOf(world.settings.biome).farForest;
  if(!f||view.quality?.farWoods===false)return;
- const sites=farWoodSites(world);
+ const groveOnly=view.quality?.farWoods==='groves',sites=farWoodSites(world,{groves:groveOnly});
  if(!sites.length)return;
- const cone=CONIFER_FAR.has(world.settings.biome),groveOnly=view.quality?.farWoods==='groves';
- // Round 2: a single cone read as a plain spike beside the cartoon spruces,
- // and a single lump as a ball: a spruce is two stacked tiers, a broadleaf
- // three lumps clustered.
- const lump=(x,y,z,s,detail=1)=>{let g=new T.IcosahedronGeometry(1,detail);const p=g.attributes.position;for(let i=0;i<p.count;i++){const yy=p.getY(i),k=1+.12*Math.sin(p.getX(i)*5.1+p.getZ(i)*3.7);p.setXYZ(i,p.getX(i)*k*s+x,(yy<-.3?-.3+(yy+.3)*.3:yy*k)*s+y,p.getZ(i)*k*s+z);}g=mergeVertices(g);return g;};
- let nearGeo;
- if(cone){const a=new T.ConeGeometry(1,.6,7,1).translate(0,-.2,0),b=new T.ConeGeometry(.7,.55,7,1).translate(0,.22,0);nearGeo=mergeGeometries([a,b]);a.dispose();b.dispose();}
- // Round 6 (frame rate): 20-face lumps (were 80): the clusters were 1.9 M
- // triangles on Autumn and took the tiers past the goal's 5%.
- else{const parts=[lump(0,0,0,1,0),lump(.55,-.12,.2,.7,0),lump(-.45,-.1,-.35,.65,0)];nearGeo=mergeGeometries(parts);parts.forEach(p=>p.dispose());}
- nearGeo.computeVertexNormals();
- // Round 5: a conifer grove is a tall cone (a dome on a steep spruce slope
- // read as a plate); every grove sunk by the slope under it.
- const groveGeo=cone?new T.ConeGeometry(1,1,6,1):lump(0,0,0,1,0);groveGeo.computeVertexNormals();
+ // One instanced set per shape drawn (round 3: Autumn's evergreens add spruces
+ // and cones to its clusters and domes).
+ const kinds=[...new Set(sites.map(s=>s.shape))];
  const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
- const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),r0=(f.size??11)*.55;
- const near=groveOnly?[]:sites.filter(s=>s.near),far=groveOnly?sites:sites.filter(s=>!s.near);
+ const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
+
  // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
  // mesh with its own bounds, so the card skips every sector out of view --
  // one mesh round the whole course drew all 17,000 crowns every frame
@@ -583,8 +599,8 @@ function addFarWoods(view){
   for(const part of sectors){
    if(!part.length)continue;
    const mesh=new T.InstancedMesh(geo,mat,part.length);
-   part.forEach((s,i)=>{place(s);dummy.rotation.set(0,s.pick*6.28,0);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
-    c.copy(colors[Math.floor(s.pick*colors.length)%colors.length]).multiplyScalar(.88+s.size*.2);mesh.setColorAt(i,c);});
+   part.forEach((s,i)=>{place(s);mesh.setMatrixAt(i,dummy.matrix);
+    c.copy(s.evergreen?colors[colors.length-1]:colors[Math.floor(s.pick*colors.length)%colors.length]).multiplyScalar(.88+s.size*.2);mesh.setColorAt(i,c);});
    // Drawn BEFORE the ground (renderOrder -1): the cost was filling pixels
    // over landscape already shaded by the ground's long shader; drawn first,
    // the ground behind a crown fails the depth test and is never shaded.
@@ -592,12 +608,13 @@ function addFarWoods(view){
    mesh.computeBoundingSphere();view.group.add(mesh);
   }
  };
- build(near,nearGeo,s=>{const r=r0*s.size;if(cone){dummy.position.set(s.x,s.y+r*1.6-.5,s.z);dummy.scale.set(r*.8,r*3.4,r*.8);}else{dummy.position.set(s.x,s.y+r*.75-.4,s.z);dummy.scale.set(r,r*.85,r);}},'Far woods');
- // A grove dome: as wide as its site's spacing, a third as tall (taller and
- // narrower for conifers), sunk a little so it sits on the ring's coarse faces.
- build(far,groveGeo,s=>{const r=Math.max(r0,s.r),sink=r*Math.min(.6,s.slope??0);
-  if(cone){dummy.position.set(s.x,s.y+r*.9-sink,s.z);dummy.scale.set(r*.55,r*2,r*.55);}
-  else{dummy.position.set(s.x,s.y+r*.18-r*.08-sink,s.z);dummy.scale.set(r,r*.42,r);}},'Far groves');
+ // Each crown on its seat: its base point, turned to the ground's slope where
+ // its shape tilts, spun about its own axis.
+ const pose=(seat,r,x,z,pick)=>{up.set(seat.ux,seat.uy,seat.uz);dummy.quaternion.setFromUnitVectors(Y,up).multiply(spin.setFromAxisAngle(Y,pick*6.28));
+  dummy.position.set(x,seat.y,z);dummy.scale.setScalar(r);dummy.updateMatrix();};
+ // A grove: as wide as its site's spacing (a stand of trees), drawn smaller
+ // where the ground under it is broken (far-woods.js).
+ for(const kind of kinds)build(sites.filter(s=>s.shape===kind),farWoodGeometry(kind),s=>pose(s.seat,s.r,s.x,s.z,s.pick),kind==='dome'||kind==='cone'?'Far groves':'Far woods');
 }
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);

@@ -10422,3 +10422,132 @@ Autumn 16,973, PNW 15,859, Midwest 10,423, Mountain 7,326, Desert 4,014,
 Island none. Building them: 36-95 ms a course here. The painted forest under
 them starts at the property line, fading in over 40 m (was the ground's edge
 and 70 m). All PLACED by eye.
+
+### The far landscape, seated on the drawn ground (the far-landscape goal, 26 October 2026)
+
+Measured first (scratch `bench/shots/overhaul/_drawn.mjs`, seed `overhaul`,
+nine holes): a far crown's centre stood above the ground as DRAWN (the ring's
+triangles) by more than 1 m on 2,019 of 10,426 sites on Lakeshore (worst
+108 m), 987 of 3,944 on Desert (153 m), 445 of 2,394 on Links (31 m), 294 of
+6,621 on Mountain (135 m): the sites stood on `ringRelief` sampled at the
+crown, while the ring is drawn from vertices up to hundreds of metres apart.
+`drawnGround` reproduces the ring's vertices within 0.5 m (nudged 0.01%
+inward of each; exactly, 0.00 m, against a brute-force search of every
+triangle at 4,000 points per course, once a fallback searches the
+neighbouring bands whole -- 10 of 4,000 points had fallen in the band beside
+the one their distance named).
+
+The seat (far-woods.js `seatOn`): samples on rings at 0, 35%, 70% and 100% of
+the base (1, 8, 14-48 and 22-96 points; the rim's spacing max(0.5 m,
+2 x max(0.3 m, 0.02 r) / (1.5 x slope + 0.1)), so a valley line crossing the
+rim between samples dips less than the tolerance) plus every drawn vertex
+under the base; a grove's plane by least squares, its slope capped at 0.58
+(30 degrees); the base let down to the lowest point under it, plus 2% of the
+radius. A grove let down by more than 35% of its height retries at 67% of
+its size, twice. Base widths and heights measured from the built shapes:
+cluster 1.01 x 1.01 r (three lumps cut on one floor at -0.295 of a unit),
+spruce 0.8 x 3.38 r, dome 0.86 x 0.5 r (its overhang reaches 1.08 r), cone
+0.55 x 2 r. Water: the sea below level + 0.4 m, a lake or a creek
+(`lakeOwner`, `streams.at`) inside the course's ground; the surface
+classifier at each crown's centre only.
+
+Bench `farSeated` (tolerance max(0.3 m, 0.02 r), PLACED as under a pixel):
+full tier 0 floating and 0 in water of 920,167 crowns (both tier forms);
+the gap's 95th percentile -0.13 m. Placing them on an 18-hole course, seed
+`overhaul`: Autumn 0.38 s (start 0.13), Giant Redwood 0.32 (0.12), PNW 0.30
+(0.12), Lakeshore 0.28 (0.09), Mountain 0.21 (0.10), Desert 0.17 (0.05).
+The surface classifier at every sample took Autumn to 4.2 s; asking lakes
+and creeks directly, 0.93 s; seating each crown only as its tier draws it,
+0.65 s; the rim's spacing by slope, 0.41 s.
+
+### The far ring's ground and Desert's mesas (the far-landscape goal, 26 October 2026)
+
+The ring's ground (ground.js): past the course's ground grid, the
+landscape's floor ground type painted everywhere (only Desert has one:
+hardpan), and `ringFace` on faces whose normal's y is under 0.8, fully under
+0.62 (rock on every landscape but Desert's hardpan banks; none on Links,
+Lakeshore and Island). Patterns fade to the type's average colour as a
+texel's footprint grows from 0.3 to 2.5 m (floor to 70%, faces to 50%). The
+painted far forest stops under the sea: masked out below 0.3 m above sea
+level, in fully from 1.2 m.
+
+Desert's mesas (landscape-edge.js `mesas`), heights as shares of `ringLift`
+(240 m): a field fbm(x/4000, z/4000, 3 octaves), its position warped by
++/-350 m (a 1.4 km fbm); tier 1 where the field crosses 0.55 (+/-0.018),
+0.62 of the lift (149 m); tier 2 at 0.62 (+/-0.014), 0.36 (86 m); a talus
+apron below each, 0.12 and 0.06 (29 and 14 m) over the field's last 0.08 to
+0.02 before the tier; a floor of fbm(x/900) x 0.06 (14 m). Faded in over the
+ring's first 900 m as every ring relief is. Rings: 16% wider each, at most
+220 m (were 28% and unbounded), and 2.5 times the vertices round each (peaks
+take 2): 50,664 vertices and 96,801 triangles on seed `overhaul`. Round 1's
+field (2.4 km, four octaves, 6 m cliffs, three tiers) broke into jagged
+fragments a few rows wide (`bench/shots/overhaul/ring/desert-mesa1.png`,
+CPU hillshade). All PLACED by eye against Monument Valley's buttes (about
+300 m) and the Colorado Plateau's stepped mesas.
+
+Round 3: Island's islets (`ringIslands: 5`): centres 2.5-6 km past the
+ground's edge at a seeded bearing, radius 260-780 m, a beach skirt 3.5 m
+high out to 1.25 radii and a hill 24-70 m high inside 0.95 radii, the
+outline varied by a 260 m noise (+/-12.5%). Haunted Hollow's near crowns:
+three bare spikes (0.07 of the radius wide, 1, 0.78 and 0.66 of the height,
+leaning 0.04-0.08 rad), each with two broken limbs, base 0.54 wide, 1.6
+tall. Autumn: `farForest.evergreen` 0.2 (spruces and cones in its fourth
+colour), `ringLift` 170 m (was 70). Round 4: the near-to-grove switch at
+300-540 m by each site's hash (was a line at 420 m); a near crown's radius
+max(r0, 0.4 x its band's spacing) x its size. The treeline, water and slope
+tests read the drawn ground (the fine relief past the ground's edge was a
+third of the far woods' time). The seat's outer rings (70%, 90%, rim)
+refined where two neighbours differ by more than the tolerance, up to six
+halvings (a Desert crown hung 1.6 m over a bank its slope estimate never
+saw; a Mountain crag's gully fell 15 m in 3 m). Full tier: 0 floating, 0 in
+water.
+
+### Trees in still water and waves at the edge (the far-landscape goal, 26 October 2026)
+
+water-mirror.js, round 1: a tree is mirrored when it stands within 30 m
+plus its own height of a still pond's rim (the pond's bounding radius from
+its centre) and its foot is at least 0.2 m above the pond's level. Its twin:
+a conifer (by kind: pine, spruce, cedar, fir, hemlock, redwood, cypress,
+larch) as the far woods' spruce shape, 83% of the tree's height from a
+sixth of the way up; anything else as the cluster, its top at the tree's
+top, 1.02 x the crown radius tall (at most 70% of the tree); a trunk 2.5%
+of the height wide (at least 0.15 m) and 55% of it tall. Coloured from the
+far forest's colours (trunks #3b2f25), unlit; turned over about the pond's
+level (y -> 2 x level - y). The picture: half the drawing buffer each way,
+cleared to transparent, drawn only while a still pond's rim is within 700 m
+of the camera. The pond reads it at its fragment, offset by 0.012 x the
+rippled normal, lit by the water's own received light x 0.8, mixed in by
+min(0.9, 1.6 x Schlick + 0.15). All PLACED. High and Ultra only.
+
+Shore foam, round 1 (renderer.js FOAM_FRAG): two wavelet trains along the
+outline, about 7.3 m and 11.9 m long (rounded so a whole number fit the
+shore), travelling at 0.11 and 0.07 wavelengths a second of the foam's
+clock (opposite ways); each wavelet's reach 0.25-0.75 (first) or 0.2-0.65
+(second) of the 1.4 m strip by a hash of its index, plus up to 0.08 of slow
+noise; a lip 0.07 deep and 0.1 behind the front, a wash at 45% from the
+bank to half the front. PLACED.
+
+### Links shared fairways, the far-landscape goal (26 October 2026)
+
+Survey (scratch `_sidebyside.mjs`): pairs of holes within 26 degrees of
+parallel for 60 m or more, on `overhaul`, LINKS-A..D and S5 (18 holes): 35
+pairs, 4 joined, rough between them 25-113 m. Coverage of each pair's join
+over each hole's shareable stretch (mown start + 10 m to 25 m short of the
+green): crossbars 60-63% on both holes (`overhaul` 9-15, LINKS-B 8-9 and
+4-5), double fairways 66-100% (LINKS-C 9-10 72/66, S5 9-15 81/100, 10-11
+76/97, LINKS-D 1-2 62/85, 3-4 69/103). Taken: mean of the two at least 0.66
+(PLACED), joins of 100 m or more (was 140), the taper at the fairway's ends
+36 m (was ease x 0.6 = 102 m, which left 27 m of a 230 m stretch at full
+width and pairs 5-16 m apart).
+
+Routing (routing.js `shifts`): a hole routed back beside another also
+offered its tee a further distance past the level of the last green. Joined
+holes over ten links courses (`overhaul`, LINKS-A..D, S1..S5): none 20; 30
+and 60 m 31; 25 and 50 m 31; 40 m 32; 60 m **38** (every course 2-6). Taken:
+60 m (PLACED).
+
+### The tee's turf (the far-landscape goal, 26 October 2026)
+
+ground.js `teeTurf`: the mean of the biome's fairway and fringe colours,
+15% of the way to its own grey (luminance 0.299/0.587/0.114), on the pad
+and its collar (was the semi-rough's colour). PLACED.
