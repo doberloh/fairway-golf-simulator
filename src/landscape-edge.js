@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {biomeOf} from './biomes.js';
+import {fbm,saltOf} from './landforms.js';
 // Join the detailed ground's exact perimeter vertices to progressively wider
 // landscape rings. No overlapping rectangular backdrop or exposed tile edge.
 //
@@ -14,16 +15,38 @@ import {biomeOf} from './biomes.js';
 // neighbouring rings with different counts are stitched by walking both at
 // once. The first ring is still exactly the ground's perimeter, vertex for
 // vertex, so the join to the course is unchanged.
+// THE RING'S RELIEF AT A POINT: what the landscape adds on top of the
+// course's own height, `distance` metres out from the ground's edge. One
+// function for the ring's vertices and for anything that stands on the ring
+// (far-woods.js), so the two cannot drift apart.
+export function ringRelief(w){
+ const bio=biomeOf(w.settings.biome),lift=bio.ringLift;
+ const shore=bio.edgeCoast?(x=>1-T.MathUtils.smoothstep(x,w.halfX-260,w.halfX+40)):(()=>1);
+ const peaks=bio.ringPeaks?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
+  return (x,z)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);return Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a);};})():null;
+ const ridgeAt=(x,z)=>peaks?peaks(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
+ return {peaks,at:(x,z,distance)=>lift*ridgeAt(x,z)*T.MathUtils.smoothstep(distance,0,900)*shore(x)};
+}
 export function landscapeGeometry(w){
  const g=w.groundGrid,edge=[];for(let i=0;i<g.nx;i++)edge.push(i);for(let j=0;j<g.nz;j++)edge.push(j*(g.nx+1)+g.nx);for(let i=g.nx;i>0;i--)edge.push(g.nz*(g.nx+1)+i);for(let j=g.nz;j>0;j--)edge.push(j*(g.nx+1));
- const bio=biomeOf(w.settings.biome),count=edge.length,lift=bio.ringLift;
+ const bio=biomeOf(w.settings.biome),count=edge.length;
  // A SEA ALONG ONE EDGE HAS NO FAR SHORE. The rings lift hills out of every
  // side, and on the water side that put a range of hills a kilometre out of
  // Lakeshore Dunes' lake, so it read as a wide river. Toward the coast (+x,
  // where course.js `land` sends an edgeCoast biome under water) the lift fades
  // to nothing. Links has an edge coast too but a ring lift of zero, so it is
  // unchanged.
- const shore=bio.edgeCoast?(x=>1-T.MathUtils.smoothstep(x,w.halfX-260,w.halfX+40)):(()=>1);
+ const relief=ringRelief(w);
+ // PEAKS, NOT ROLLS (the polish goal; the owner: "our mountains are very
+ // smooth"). The ring's relief was three summed sine waves: rolling ridges.
+ // A landscape with `ringPeaks` gets a ridged-noise field instead -- crests
+ // squared so they are knife-edged, summits where two ridge systems cross,
+ // a second, smaller set of spurs running off them -- so the far range reads
+ // as peaks and aretes, faceted at the rings' coarse spacing. Seeded from the
+ // course's seed; scenery only, nothing a ball reaches. PLACED. Round 5: a
+ // third, finer set of ridges (240 m) on the high ground, for the doubled
+ // vertices to show as gullies and ribs on the faces. (In `ringRelief`.)
+ const peaks=relief.peaks;
  // A point on the perimeter at a fractional position t (0..count, wrapping).
  const perimeter=t=>{
   const i=Math.floor(t)%count,f=t-Math.floor(t),a=edge[i],b=edge[(i+1)%count];
@@ -43,12 +66,13 @@ export function landscapeGeometry(w){
   if(ring===0){for(let i=0;i<count;i++){const id=edge[i];positions.push(g.positions[id*3],g.positions[id*3+1],g.positions[id*3+2]);ts.push(i);along.push(i);out.push(0);}}
   else{
    const outward=distance-steps[ring-1];
-   const n=Math.max(48,Math.min(count,Math.round(around(distance)/Math.max(outward,3))));
-   const fade=T.MathUtils.smoothstep(distance,0,900);
+   // A peaked range twice as dense along each ring (round 5: at one vertex
+   // per ring step its nearest faces were single planes hundreds of metres
+   // wide); a few thousand triangles more, out where nothing else is drawn.
+   const n=Math.max(48,Math.min(count*(peaks?2:1),Math.round(around(distance)/Math.max(outward,3)*(peaks?2:1))));
    for(let j=0;j<n;j++){
     const t=j/n*count,[x0,z0]=perimeter(t),r=Math.hypot(x0,z0),x=x0+x0/r*distance,z=z0+z0/r*distance;
-    const ridge=Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
-    positions.push(x,w.height(x,z)+lift*ridge*fade*shore(x),z);ts.push(t);along.push(t);out.push(distance);
+    positions.push(x,w.height(x,z)+relief.at(x,z,distance),z);ts.push(t);along.push(t);out.push(distance);
    }
   }
   rings.push({first,ts});

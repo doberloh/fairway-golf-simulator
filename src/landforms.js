@@ -98,10 +98,28 @@ const RECIPES = {
   // Round 2: the bands followed the noise's contours too faithfully and the
   // slopes came out banded like agate, so the terrace is read through a
   // little noise of its own and the risers wander.
-  const band = (x, z) => terrace(Math.max(0, Math.min(1, massif(x, z) + .07 * (fbm(x / 47, z / 47, s2 + 9, 2) - .5) * 2)), steps);
+  // THE POLISH GOAL'S CRAGS (`o.jag`, Mountain only; the owner: "our
+  // mountains are very smooth"). A massif from one smooth ridged field is a
+  // rounded knoll, and terraced it is a stack of rings. With `jag`, a sharper
+  // ridged field at a third of the scale (ridged squared again, so its crests
+  // are knife-edged: aretes and buttresses, the troughs between them
+  // couloirs) bends the terrace bands, so the cliff bands break and wander
+  // round spurs, and a fine jag roughens every face. Faded by the massif, so
+  // open country stays as it was. PLACED.
+  const s4 = saltOf(seed, 'arete'), jag = o.jag ?? 0;
+  // Round 2 (`crag-r2`): round 1's faces stayed plain sloping planes -- the
+  // spurs at a quarter of the scale (were a third), and the face's roughness
+  // at two scales, 23 m and 9 m, five times as deep.
+  const spur = (x, z) => { const r = ridged(x / (scale * .25), z / (scale * .25), s4, 2); return r * r; };
+  const band = (x, z) => {
+   const m = massif(x, z);
+   const bend = jag ? jag * (spur(x, z) - .35) * smooth(.05, .5, m) : 0;
+   return terrace(Math.max(0, Math.min(1, m + bend + .07 * (fbm(x / 47, z / 47, s2 + 9, 2) - .5) * 2)), steps);
+  };
+  const rough = (x, z) => jag ? jag * (.2 * (ridged(x / 23, z / 23, s4 + 5, 2) - .4) + .08 * (ridged(x / 9, z / 9, s4 + 6, 2) - .4)) * smooth(.1, .6, massif(x, z)) : 0;
   return {
    needsSlope: true,
-   lift: (x, z) => o.height * band(x, z).h,
+   lift: (x, z) => o.height * (band(x, z).h + rough(x, z)),
    // ROCK IS WHERE THE GROUND IS ACTUALLY STEEP (round 2). Read off the
    // recipe's own bands alone, rock was painted wherever a cliff WOULD have
    // been -- including where the corridor fade had squashed the crag flat,
@@ -110,6 +128,23 @@ const RECIPES = {
    raw: (x, z, y, slope = 0) => {
     const m = massif(x, z);
     if (m <= 0) return [0, 0];
+    // THE POLISH GOAL'S BANDING (`o.jag`): rock read off each terrace step's
+    // riser striped every slope -- rock, grass, rock, grass, a ring a step --
+    // with straight edges between. Here rock is where the finished ground is
+    // steep, its threshold wandering with two scales of noise, so it comes
+    // through the turf in tongues and outcrops; a gentle tread keeps its
+    // grass but carries rock patches; scree gathers on the moderate slopes at
+    // the foot. PLACED.
+    if (jag) {
+     const n1 = fbm(x / 19, z / 19, s2 + 31, 2), n2 = fbm(x / 61, z / 61, s2 + 37, 2);
+     const t = .34 + .18 * (n1 - .5) * 2 + .1 * (n2 - .5) * 2;
+     const face = smooth(t, t + .2, slope) * smooth(.02, .14, m);
+     const outcrop = smooth(.62, .74, n1 * .6 + n2 * .4) * smooth(.15, .45, m) * smooth(.12, .3, slope);
+     const summit = smooth(.86, .97, m) * smooth(.2, .4, slope) * (o.summitRock ?? 1);
+     const rock = Math.max(face, outcrop, summit);
+     const scree = o.scree ? smooth(.16, .26, slope) * (1 - smooth(t - .02, t + .1, slope)) * smooth(.04, .25, m) * smooth(.35, .55, n2) : 0;
+     return [rock, scree];
+    }
     const {f} = band(x, z);
     const face = smooth(.55, .78, f) * smooth(.02, .12, m) * smooth(.42, .7, slope);
     const summit = smooth(.86, .97, m) * smooth(.2, .4, slope);

@@ -1471,4 +1471,7 @@ released. What it changes for distribution so far:
   hand-over (26 October, after the wildflowers, heather, gardens, tee
   furniture and numbered flags): **11,363,350 bytes, 5.50 MB gzipped**, the
   model module 7,041 KB -- 119 KB more than the first measure above. After the
-  late rounds (third pass): 11,363,991 bytes.
+  late rounds (third pass): 11,363,991 bytes. After the polish goal (seated
+  trees, far woods, Mountain's crags, the stacks, Haunted Hollow's season):
+  11,403,624 bytes -- the far woods are generated, not shipped, so the growth
+  is the rock models and code. Generator 46.

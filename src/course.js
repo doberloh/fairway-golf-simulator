@@ -7,7 +7,7 @@ import {routeHoles} from './routing.js';
 import {buildRange,rangeContour} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
-import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS} from './species.js';
+import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
 // conditionals in other files. Re-exported because everything imports it from
@@ -185,8 +185,15 @@ export function fairwayWidth(h,z,margin=0,side=0){
 // not the tee-to-green line, so a dogleg's straight stretch can still lie
 // alongside its neighbour.
 const heading=(h,z)=>{const a=h.toWorld({x:h.center(z-6),z:z-6}),b=h.toWorld({x:h.center(z+6),z:z+6}),l=Math.hypot(b.x-a.x,b.z-a.z)||1;return {x:(b.x-a.x)/l,z:(b.z-a.z)/l};};
-export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30}={}){
- const extra=holes.map(()=>({[-1]:null,[1]:null}));
+// THE POLISH GOAL'S ROUNDS (the owner: "make the fairways look smoothly
+// conjoined ... it shouldn't look forced, it needs to look like it was thought
+// through"). `close` fills a gap in a join up to that many metres, so a join
+// does not stop and start (an H of square rungs); `blur` averages the shared
+// edge along that many metres, so it flows; `ease` -- longer here -- lets a
+// join run out as a long tongue of rough rather than a quick wedge.
+export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,debug=null}={}){
+ const shareStretch=stretch;
+ const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set());
  // A pond drawn nearer another hole's centre line than its own is dropped
  // later (a pond stays on its own hole's ground), so it must not stop the
  // sharing now: one sited in the neighbour's fairway blocked the very strip
@@ -194,26 +201,31 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30}={}){
  const along=(o,p)=>Math.abs(p.x-o.center(clamp(p.z,0,o.length)));
  const ownPonds=holes.map(h=>h.ponds.filter(p=>{const q=h.toWorld(p),own=along(h,p);return !holes.some(o=>o!==h&&along(o,o.toLocal(q))<own);}));
  for(const [i,h] of holes.entries()){
-  const z0=(h.mowStart??h.fairwayStart??22)+25,z1=h.length-40;
+  // Round 4 of the polish goal: from 10 m past the mown start to 25 m short
+  // of the green (were 25 and 40): with the ends now tapered, pairs whose
+  // closeness lay near those ends no longer joined at all and stood as two
+  // fairways a sliver of rough apart.
+  const z0=(h.mowStart??h.fairwayStart??22)+(shareStretch?10:25),z1=h.length-(shareStretch?25:40);
   if(z1-z0<50)continue;
   const n=Math.max(2,Math.ceil((z1-z0)/step));
   for(const side of [-1,1]){
-   const want=new Float32Array(n+1);
+   const want=new Float32Array(n+1),own=new Float32Array(n+1);
    for(let k=0;k<=n;k++){
     const z=z0+(z1-z0)*k/n,cx=h.center(z),w=side<0?h.leftWidth(z):h.rightWidth(z),dirH=heading(h,z);
+    own[k]=w;
     // Out from this fairway's edge across the rough, a metre at a time.
     for(let t=w+1;t<=w+gap;t+=1){
      const q=h.toWorld({x:cx+side*t,z});
      let hit=false;
      for(const [j,o] of holes.entries()){
       if(j===i)continue;
-      const p=o.toLocal(q),oz0=(o.mowStart??o.fairwayStart??22)+15,oz1=o.length-30;
-      if(p.z<oz0||p.z>oz1)continue;
+      const p=o.toLocal(q),oz0=(o.mowStart??o.fairwayStart??22)+(shareStretch?5:15),oz1=o.length-(shareStretch?20:30);
+      if(p.z<oz0||p.z>oz1){if(debug&&p.z>-20&&p.z<o.length+20){const off=p.x-o.center(clamp(p.z,0,o.length));if(Math.abs(off)<(off<0?o.leftWidth(clamp(p.z,0,o.length)):o.rightWidth(clamp(p.z,0,o.length))))debug.push({hole:h.hole,side,k,why:'stretch',other:o.hole,pz:Math.round(p.z),oz0:Math.round(oz0),oz1:Math.round(oz1)});}continue;}
       const off=p.x-o.center(p.z),ow=off<0?o.leftWidth(p.z):o.rightWidth(p.z);
       if(Math.abs(off)>ow)continue;
       const dirO=heading(o,p.z);
-      if(Math.abs(dirO.x*dirH.x+dirO.z*dirH.z)<cos)continue;
-      hit=true;break;
+      if(Math.abs(dirO.x*dirH.x+dirO.z*dirH.z)<cos){if(debug)debug.push({hole:h.hole,side,k,why:'angle',other:o.hole,dot:+Math.abs(dirO.x*dirH.x+dirO.z*dirH.z).toFixed(2)});continue;}
+      hit=true;partners[i].add(j);break;
      }
      if(!hit)continue;
      // Meet at the middle of the rough between the two edges.
@@ -223,7 +235,20 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30}={}){
      let pondInWay=false;
      for(let u=w;u<=reach+8&&!pondInWay;u+=3){const v=h.toWorld({x:cx+side*u,z});pondInWay=holes.some((o,j)=>{if(!ownPonds[j].length)return false;const l=o.toLocal(v);return ownPonds[j].some(p=>insideOval(l.x,l.z,p,8));});}
      if(!pondInWay)want[k]=reach;
+     else if(debug)debug.push({hole:h.hole,side,k,why:'pond'});
      break;
+    }
+   }
+   // Close short gaps first (`close`): a gap between two joined stretches,
+   // filled with the reach either side of it, so a join that only paused for
+   // a pond's margin or a passing kink is one join.
+   if(close){
+    const cg=Math.round(close/step);
+    for(let k=0;k<=n;){
+     if(want[k]){k++;continue;}
+     let e=k;while(e<=n&&!want[e])e++;
+     if(k>0&&e<=n&&e-k<=cg){const a=want[k-1],b=want[e];for(let m=k;m<e;m++)want[m]=a+(b-a)*(m-k+1)/(e-k+1);}
+     k=e;
     }
    }
    // Keep only runs of at least 40 m, then fade each run in and out.
@@ -235,14 +260,37 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30}={}){
     k=e;
    }
    if(!keep.some(Boolean))continue;
+   // Blur the joined reach along its length (`blur`), inside each run only.
+   if(blur){
+    const br=Math.round(blur/step/2),src=keep.slice();
+    for(let k=0;k<=n;k++){if(!src[k])continue;let s=0,c=0;for(let m=Math.max(0,k-br);m<=Math.min(n,k+br);m++)if(src[m]){s+=src[m];c++;}keep[k]=s/c;}
+   }
    const fade=Math.round(ease/step),out=new Float32Array(n+1);
+   // Round 2 of the polish goal: the taper runs from the shared reach down to
+   // the fairway's OWN width, not to nothing. Toward nothing, the edge met
+   // the fairway's own edge a third of the way down the ease and the rest was
+   // never seen -- a quick wedge whatever `ease` said.
    for(let k=0;k<=n;k++){
     let best=0;
-    for(let m=Math.max(0,k-fade);m<=Math.min(n,k+fade);m++)if(keep[m])best=Math.max(best,keep[m]*smooth(1-Math.abs(m-k)/fade));
-    out[k]=best;
+    for(let m=Math.max(0,k-fade);m<=Math.min(n,k+fade);m++)if(keep[m])best=Math.max(best,(keep[m]-own[m])*smooth(1-Math.abs(m-k)/fade));
+    // Round 3: and to the stretch's ends. A join that ran up to the end of
+    // its allowed stretch (25 m past the mown start, 40 m short of the green)
+    // stopped there at full width -- the square end of every "H" rung.
+    best*=smooth(Math.min(k,n-k)/Math.max(1,fade*.6));
+    out[k]=best>0?own[k]+best:0;
    }
    extra[i][side]={z0,z1,n,out};
   }
+ }
+ // MUTUAL OR NOT AT ALL (the polish goal, round 13): a hole whose partners
+ // all kept no widening of their own -- refused at their tee or green end --
+ // bulged halfway toward a fairway that never came to meet it. Its widening
+ // goes; the clear-strip pass below handles the gap.
+ if(strip)for(const [i] of holes.entries()){
+  if(!extra[i][-1]&&!extra[i][1])continue;
+  // A partner that widened and reached back for THIS hole (S3's hole 1 had a
+  // partner widening toward a third hole instead).
+  if(![...partners[i]].some(j=>(extra[j][-1]||extra[j][1])&&partners[j].has(i))){extra[i][-1]=null;extra[i][1]=null;}
  }
  // The widened profile: the old width or the shared reach, whichever is wider.
  for(const [i,h] of holes.entries()){
@@ -253,6 +301,65 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30}={}){
   h.rightWidth=z=>Math.max(R(z),at(eR,z));
   h.width=z=>Math.max(h.leftWidth(z),h.rightWidth(z));
   h.sharedFairway=true;
+  h._unshare=()=>{h.leftWidth=L;h.rightWidth=R;h.width=z=>Math.max(L(z),R(z));h.sharedFairway=false;};
+ }
+ // AND CHECKED ON THE RESULT: two holes can each reach for the other on
+ // different stretches and never meet (S3's 1 and 2 stayed 16.5 m apart).
+ // A widened hole whose edges touch no other fairway anywhere gives its
+ // widening back. Repeated until nothing changes, since a hole given back can
+ // leave its partner touching nothing.
+ if(strip)for(let changed=true;changed;){
+  changed=false;
+  for(const h of holes){
+   if(!h.sharedFairway)continue;
+   let touch=false;
+   for(let z=h.mowStart??22;z<h.length-10&&!touch;z+=6)for(const side of [-1,1]){
+    const wd=side<0?h.leftWidth(z):h.rightWidth(z),q=h.toWorld({x:h.center(z)+side*(wd+.5),z});
+    if(holes.some(o=>{if(o===h)return false;const p=o.toLocal(q);if(p.z<0||p.z>o.length)return false;const off=p.x-o.center(p.z);return Math.abs(off)<=(off<0?o.leftWidth(p.z):o.rightWidth(p.z));})){touch=true;break;}
+   }
+   if(!touch){h._unshare();changed=true;}
+  }
+ }
+ for(const h of holes)delete h._unshare;
+ if(strip)keepStrips(holes,strip,step,ease);
+}
+// ROUND 5 OF THE POLISH GOAL: A JOIN OR A REAL STRIP, NEVER A SLIVER. Where two
+// fairways come within `strip` m of each other and do not join -- a tee or a
+// green end, where joining is refused, or a pair not parallel enough -- a
+// sliver of rough a metre or three wide lay between them, the most forced
+// thing on a links. Each edge there is pulled back by half the shortfall, so
+// at least `strip` m of rough lies between, eased in and out over `ease` m and
+// never by more than a third of the fairway's own width. Edges that touch
+// (joined) are left. Measured over the whole fairway, mown start to green.
+function keepStrips(holes,strip,step,ease){
+ const cuts=holes.map(h=>{
+  const z0=h.mowStart??h.fairwayStart??22,z1=h.length-8,n=Math.max(2,Math.ceil((z1-z0)/step)),res={};
+  for(const side of [-1,1]){
+   const need=new Float32Array(n+1),joined=new Uint8Array(n+1);let any=false;
+   for(let k=0;k<=n;k++){
+    const z=z0+(z1-z0)*k/n,cx=h.center(z),w=side<0?h.leftWidth(z):h.rightWidth(z);
+    for(let t=w+.5;t<w+strip;t+=.5){
+     const q=h.toWorld({x:cx+side*t,z});let hit=false;
+     for(const o of holes){if(o===h)continue;const p=o.toLocal(q);if(p.z<0||p.z>o.length)continue;const off=p.x-o.center(p.z),ow=off<0?o.leftWidth(p.z):o.rightWidth(p.z);if(Math.abs(off)<=ow){hit=true;break;}}
+     if(hit){if(t-w>1.5){need[k]=(strip-(t-w))/2;any=true;}else joined[k]=1;break;}
+    }
+   }
+   if(!any)continue;
+   // Round 6: eased over a third of `ease`, and never into a joined stretch
+   // (round 5's full ease pulled joins apart again).
+   const fade=Math.max(1,Math.round(ease/3/step)),out=new Float32Array(n+1);
+   for(let k=0;k<=n;k++){if(joined[k])continue;let best=0;for(let m=Math.max(0,k-fade);m<=Math.min(n,k+fade);m++)if(need[m])best=Math.max(best,need[m]*smooth(1-Math.abs(m-k)/fade));out[k]=best;}
+   res[side]={z0,z1,n,out};
+  }
+  return res;
+ });
+ for(const [i,h] of holes.entries()){
+  const c=cuts[i];if(!c[-1]&&!c[1])continue;
+  const at=(e,z)=>{if(!e||z<e.z0||z>e.z1)return 0;const f=(z-e.z0)/(e.z1-e.z0)*e.n,k=Math.min(e.n-1,Math.floor(f)),t=f-k;return e.out[k]*(1-t)+e.out[k+1]*t;};
+  const L=h.leftWidth,R=h.rightWidth;
+  h.leftWidth=z=>{const w=L(z);return w-Math.min(w/3,at(c[-1],z));};
+  h.rightWidth=z=>{const w=R(z);return w-Math.min(w/3,at(c[1],z));};
+  h.width=z=>Math.max(h.leftWidth(z),h.rightWidth(z));
  }
 }
 export function hazardProfile(o,z){if(!o.banks)return {x:o.x,rx:o.rx};const f=clamp((z-o.z)/o.rz*.5+.5,0,1)*(o.banks.length-1),i=Math.min(o.banks.length-2,Math.floor(f)),t=f-i;return {x:o.banks[i].x+(o.banks[i+1].x-o.banks[i].x)*t,rx:o.banks[i].rx+(o.banks[i+1].rx-o.banks[i].rx)*t};}
@@ -2061,6 +2168,22 @@ export function* generateWorldSteps(settings={},options={}){
  // The drawn trunk radius, which physics also uses. Kept local rather than
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
+ // NO TRUNK ON A CLIFF'S LIP (the polish goal's floating trees, round 3): a
+ // tree whose trunk spans ground falling away by more than 15% of its height
+ // (PLACED) would be drawn that far into the ground to seat it (tree-seat.js)
+ // and read as stunted on the edge -- so none is planted there. Measured on a
+ // ring a tenth of the tree's height out (1-2.5 m): the widest trunk foot of
+ // any family, which is what the seat measures (one and a half girths, the
+ // first try, was a metre and let half the lipped pines and spruces through).
+ // NO GROUND COVER ON A WALL (species.js COVER_STEEPEST): the ground's slope
+ // over a plant's spread, the way tree-seat.js measures it. Past 40 degrees
+ // no seat holds a fern, so none is planted there -- in the open scatter and
+ // the stands alike.
+ // At two spans -- the cover's tilt span, and half of it -- the steeper of the
+ // two: a shrub at 39 degrees over its span stood on a 45-degree step.
+ const slopeOver=(x,z,d)=>Math.hypot(height(x+d,z)-height(x-d,z),height(x,z+d)-height(x,z-d))/(2*d);
+ const coverTooSteep=(x,z,r)=>{const d=Math.max(.5,r*.6);return Math.max(slopeOver(x,z,d),slopeOver(x,z,Math.max(.3,d/2)))>COVER_STEEPEST;};
+ const onLip=t=>{if(GROUND_PLANTS.has(t.kind))return false;const R=Math.min(2.5,Math.max(1,t.h*.1));let low=Infinity;for(let k=0;k<8;k++){const a=k*Math.PI/4;low=Math.min(low,height(t.x+Math.cos(a)*R,t.z+Math.sin(a)*R));}return t.y-low>t.h*.15;};
  // The overhaul's brush (tools/blender/cartoon_brush.py), sized to the real
  // plants, metres (RESEARCH, *The overhaul's brush*): creosote 1.2-3, brittle-
  // bush 0.3-1.5, big sagebrush up to about 2 (field means 0.2-0.7), bracken
@@ -2128,8 +2251,9 @@ export function* generateWorldSteps(settings={},options={}){
   // was exempt from both tests above, and 232 of them stood in a tee's view on
   // 12 planted courses (12 October 2026). Low cover still grows in front of a
   // tee; only cover whose top rises above the sightline is refused.
-  if(small&&blocksView(launch,x,z,tree.y+h,r))continue;
+  if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r)))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
+  if(onLip(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
  }
@@ -2161,8 +2285,8 @@ export function* generateWorldSteps(settings={},options={}){
    if(greenKeepOut(guards,x,z,closeness)>0&&Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)))<greenKeepOut(guards,x,z,closeness)+GREEN.ramp)continue;
    const tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true};
    if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z,trunkGirth(tree))))continue;
-   if(small&&blocksView(launch,x,z,tree.y+h,r))continue;
-   if(!small&&!roomFor(tree,stands.share))continue;
+   if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r)))continue;
+   if(!small&&(onLip(tree)||!roomFor(tree,stands.share)))continue;
    if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
    trees.push(tree);
   }
@@ -2181,7 +2305,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'shrubs'))continue;
    if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
    const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
-   if(blocksView(launch,x,z,tree.y+h,r))continue;
+   if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r))continue;
    trees.push(tree);
   }
  }

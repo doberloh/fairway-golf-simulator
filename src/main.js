@@ -74,6 +74,7 @@ import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnos
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
+import {hauntedInSeason,offered,markOffSeason} from './seasons.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -1061,6 +1062,14 @@ function applyRoundCamera(saved){
 // never part of what the seed decides. `style` is deliberately NOT carried:
 // endless forces cartoon, which is the mode's own choice and not a loss.
 const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),...playScope(from)});
+// SEASONAL LANDSCAPES (seasons.js). Whether Haunted Hollow is offered now, and
+// a fresh endless run's seed -- marked when it is not, so the run never rolls it.
+const hauntedOffered=()=>offered('haunted',{allYear:!!graphics?.hauntedAllYear});
+const freshRunSeed=()=>{const s=newRunSeed();return hauntedOffered()?s:markOffSeason(s);};
+// A picker's landscapes now: those in season, and the one already chosen.
+const seasonalBiomes=keep=>Object.entries(BIOMES).filter(([k])=>k===keep||offered(k,{allYear:!!graphics?.hauntedAllYear}));
+// Surprise me rolls again rather than land on a landscape out of season.
+const surpriseSettings=()=>{let s=randomSettings(Math.random);for(let i=0;i<20&&!offered(s.biome,{allYear:!!graphics?.hauntedAllYear});i++)s=randomSettings(Math.random);return s;};
 // Carrying the keys is only half of it -- they have to be made live. Boot and
 // import each did this by hand and `resumeRound` did not, so resuming a round
 // saved under a different bag played it with the CURRENT one while the bag panel
@@ -3324,7 +3333,7 @@ async function buildEndless(group,replaySeed){
  // already hole one, so the run adopts its seed and its world and starts. No
  // overlay either, because an overlay over work that is not happening is a lie.
  const adopt=menuBackdrop&&backdropRun&&(!replaySeed||replaySeed===backdropRun.seed);
- const seed=replaySeed||(adopt?backdropRun.seed:newRunSeed());
+ const seed=replaySeed||(adopt?backdropRun.seed:freshRunSeed());
  const fresh=new Round({players:round.players,mode:'stroke',tee:round.tee,...group,putting:restorePutting(),endless:true,seed});
  const begin=()=>{
   // Not leaveBackdrop(): that clears the world key to force a rebuild, which is
@@ -3404,7 +3413,7 @@ async function loadMenuBackdrop(report){
  // showpiece, so choosing Endless can play the hole you are already looking at
  // instead of discarding it and growing another. It is built under the key
  // loadCourse will ask for, which is what lets the world survive the handover.
- const seed=newRunSeed();
+ const seed=freshRunSeed();
  const backdrop=endlessSettings(endlessHole(seed,0));
  backdropRun={seed,settings:backdrop};
  // Its own hour, drawn from the seed so the hole and the light that falls on it
@@ -4269,7 +4278,7 @@ async function startEndlessRun(base){
  const group={...base,...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});
  endlessSetup=false;closePanel();
  if(endlessGoal)goalSummary=null;
- await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
+ await startEndless(group,endlessLandscape!=='any'?landscapeSeed(freshRunSeed(),endlessLandscape):undefined);
  toast('Endless: hole out and the next one grows.');
 }
 // A FRIEND'S CHALLENGE FOR A GROUP: stroke play against their card.
@@ -5563,7 +5572,7 @@ function renderPanel(name,content){
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
    seed:()=>`<label class="field">${named(FIELD.seed.label,'seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
-   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
+   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${seasonalBiomes(studioBiome).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${named(FIELD.footprint.label,'footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
   // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
@@ -5853,7 +5862,7 @@ function renderPanel(name,content){
   $('roundSurprise').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    try{
-    const fresh=randomSettings(Math.random),name=suggestCourseName(fresh);
+    const fresh=surpriseSettings(),name=suggestCourseName(fresh);
     await startRoundOn(fresh,readGroup(),name);
     toast(`“${name}”, built just now. Play well.`);
    }catch(e){$('roundError').textContent=e.message;}
@@ -5914,7 +5923,7 @@ function renderPanel(name,content){
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    const kind=$('roundCourse').value;
-   if(kind==='surprise'){const s=lobbySurprise||randomSettings(Math.random),name=suggestCourseName(s);
+   if(kind==='surprise'){const s=lobbySurprise||surpriseSettings(),name=suggestCourseName(s);
     try{await startRoundOn(s,readGroup(),name);lobbySurprise=null;toast(`“${name}”, built just now. Play well.`);}catch(e){$('roundError').textContent=e.message;}return;}
    if(kind==='weekly'||kind==='endless'||kind==='friend'){try{await (kind==='weekly'?startWeeklyRound:kind==='endless'?startEndlessRun:startRivalRound)(readGroup());}catch(e){$('roundError').textContent=e.message;if(kind==='friend')lobbySheet?.go(1);}return;}
    const chosen=findCourse($('roundCourse').value);
@@ -6005,6 +6014,8 @@ function renderPanel(name,content){
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
+  <label class="check"><input id="gfxHauntedAllYear" type="checkbox" ${graphics.hauntedAllYear?'checked':''}> Haunted Hollow all year</label>
+  <p class="note">Haunted Hollow is a seasonal landscape: offered from 1 October to 7 November${hauntedInSeason()?' (in season now)':''}. On, it is offered all year. A saved round or course, or a shared code, on Haunted Hollow opens any time either way.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -6049,6 +6060,7 @@ function renderPanel(name,content){
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
+  $('gfxHauntedAllYear').onchange=()=>{graphics=saveGraphics({...graphics,hauntedAllYear:$('gfxHauntedAllYear').checked});};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -6314,7 +6326,7 @@ function renderPanel(name,content){
  // colours of the landscape being shaped (ui-studio.js).
  studioSheet=name==='course'&&content.id==='drawerContent'
   ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed}),
-   setup:()=>studioSetup,landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
+   setup:()=>studioSetup,landscapes:seasonalBiomes(settings.biome).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
  if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
  // Challenges, the course of the week and saved courses, the same way
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
@@ -6342,9 +6354,9 @@ function renderPanel(name,content){
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,tag:`WEEK ${wk.week} · THE SAME FOR EVERYONE`,settings:ws,page:weeklyPage},
    game:appMode==='play'?'saved':lobbyGame,
-   surprise:appMode==='play'||lobbyGame!=='surprise'?null:(s=>({name:suggestCourseName(s),line:lineOf(s),settings:s,onRoll:()=>{lobbySurprise=randomSettings(Math.random);lobbyKeep=true;openPanel('round');}}))(lobbySurprise||=randomSettings(Math.random)),
+   surprise:appMode==='play'||lobbyGame!=='surprise'?null:(s=>({name:suggestCourseName(s),line:lineOf(s),settings:s,onRoll:()=>{lobbySurprise=surpriseSettings();lobbyKeep=true;openPanel('round');}}))(lobbySurprise||=surpriseSettings()),
    friend:appMode==='play'?null:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT',ready:!!r&&!rivalProblem(r,{version:GAME_VERSION})}))(listRivals().find(x=>x.id===rivalPick)||listRivals()[0]),
-   endless:appMode==='play'?null:{landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),landscape:endlessLandscape,
+   endless:appMode==='play'?null:{landscapes:seasonalBiomes(endlessLandscape).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),landscape:endlessLandscape,
     onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},best:endlessBest(),pictures:cardPictures},
    onGame:v=>{lobbyGame=v;if(v!=='saved')lobbyCourse=v;else if(!findCourse(lobbyCourse))lobbyCourse=listCourses()[0]?.id||'';lobbyKeep=true;lobbyStep=1;openPanel('round');},
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},

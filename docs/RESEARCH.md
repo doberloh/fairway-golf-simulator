@@ -9850,7 +9850,9 @@ sun's side with its gaps dark; colours drawn per crown and drifting in groves
 about 70 m across (three or four per landscape: Autumn red, orange, gold and an
 evergreen); patchy by a 380 m noise to `cover` of the country (Links 0.3,
 Desert 0.35 of olive scrub, Redwood 0.95); fading in over the first 70 m past
-the edge, where the last real stand trees hide the seam; held off ground
+the edge, where the last real stand trees hide the seam (since the polish
+goal: from the property line over 40 m, with real 3D crowns standing on it --
+*The far woods*); held off ground
 steeper than about 42-60 degrees (normal y 0.5-0.74: laid from above, the
 pattern stretched into vertical scales on Mountain's faces, and real woods
 stop at the rock anyway); and on Mountain held below 520 m. Where a crown is
@@ -10320,3 +10322,103 @@ warm landscapes sandstone #e4c8a0 in 0.6 m flags, running bond, joints 80%,
 each flag 93-107%. The texture had written linear colour values into an sRGB
 texture, darkening every drive -- fixed with `getRGB(..., SRGBColorSpace)`.
 PLACED.
+
+### Seated trees (the polish goal, 26 October 2026)
+
+tree-seat.js. A plant's footprint: for trees, the widest BARK vertex in the
+bottom 2% of a family's models, as a share of model height, x 1.3 (lift and
+girth both reach 1.14), capped at 2.5 m -- pine 0.079 x h, oak 0.161, aspen
+0.043 (the skirt-included widths, before round 2: spruce 0.202, cedar 0.307);
+for ground cover a third of its spread. The seat: the most the foot's plane
+stands above the ground on four rings (R, 0.75R, 0.5R, 0.25R) of 24 points,
+plus R x 0.05 (the lean), plus 8 cm; a cover's plane follows the ground's
+gradient up to 40 degrees and its seat is capped at 75% of its height.
+Generation (44): no cover where the slope over 0.6r (or half that) passes
+tan 40; no trunk where the ground falls more than 0.15 h within
+min(2.5, max(1, 0.1 h)). All PLACED by measurement against the metric, not
+from a source. Results: floating plants 3,661 / 65,178 -> 123 -> 61 -> 3 -> 0
+(quick tier, then the full tier's 588,521). Seat depths: median 0.12 m, p95
+0.90 m, max 7.7 m. Cost 0.11-0.15 s per 18-hole course on this PC.
+
+### Tee boxes' mowing (the polish goal, 26 October 2026)
+
+ground.js. A tee is cut with a walk-behind mower (about 0.55 m a pass) in
+passes along the line of play, then once round its edge. Drawn: bands 0.6 m
+wide (period 1.2 m) across the pad and its mown collar, contrast +/-7.5%,
+in the pad's own frame; a clean-up lap 0.55 m inside the mown tee's outer
+edge, reversed and darker by 4%; divots in the strip across the markers'
+span (|across| < 2.3-2.85 m) from 0.5-0.9 m to 2.8-3.4 m behind the tee's
+point, quarter-metre cells, 18% of them, each an oval about 7 x 11 cm,
+tinted (1.16, 1.02, 0.70) at 60%. All PLACED by eye; the mower width is
+general knowledge of walk-behind greens/tee mowers (21-26 in), not a cited
+source.
+
+### The fade from a tee into tall grass (the polish goal, 26 October 2026)
+
+vegetation.js `teeFade`: the distance from a point to the nearest mown tee's
+edge -- a rounded box of TEE_APRON.x by the pad's half-length x
+TEE_APRON_SCALE, corner TEE_ROUND x TEE_APRON_SCALE, in the pad's own frame,
+the shape ground.js paints. Fade f = smoothstep over 1.2 m (nothing tall)
+to 7 m. Long-grass colonies: kept with probability f^0.7, height x
+(0.35 + 0.65 f). Tiled tall clumps: likewise. Course-wide blades: height x
+(0.3 + 0.7 f), and the native ground's 1.9 x lift becomes 1 + 0.9 f. Ground
+cover (marram, dune grass): scaled x (0.35 + 0.65 f). All PLACED by eye.
+
+### Water depth colour (the polish goal, 26 October 2026)
+
+renderer.js WATER_EDGES. Still water: deep = smoothstep(0.15, 3.2 m, depth);
+shallow body = mix(water, (0.5, 0.66, 0.52), 0.35) x 0.62; deep body = water x
+(0.2, 0.32, 0.4); lit by the light the surface receives (the foam's
+`foamLight`); its share 0.78 x (1 - clamp(1.4 x Schlick, 0, 0.85)); opacity
+at least 0.86 (shallow) to 0.97 (deep). The sea: smoothstep(0.4, 8 m); shelf
+mix(water, (0.55, 0.72, 0.6), 0.4) x 0.7; open water x (0.22, 0.34, 0.46);
+share 0.7 x the same Schlick term. Past the ground map, depth = 50 m. Calm
+water's mirror: metalness 0.5, reflection 1.8. All PLACED by eye. The
+reflection probe is a sky probe, so a pond seen across shows sky, not the
+trees on its far bank -- a real reflection would need a reflector per body.
+
+### Mountain's crags and far peaks (the polish goal, 26 October 2026)
+
+landforms.js crags with `jag` (Mountain: 0.55): spur = ridged(x/(0.25 scale))^2
+(scale 300 m); the terrace input bent by jag x (spur - 0.35), faded in over
+massif 0.05-0.5; faces roughened by jag x (0.2 (ridged(x/23) - 0.4) + 0.08
+(ridged(x/9) - 0.4)) x 70 m. Rock: threshold t = 0.34 + 0.18 (n19 - 0.5) x 2 +
+0.1 (n61 - 0.5) x 2 on the gradient, rock over t..t+0.2; outcrops where
+0.6 n19 + 0.4 n61 passes 0.62-0.74 on slopes over 0.12-0.3; scree on slopes
+0.16-0.26 below t. Rock paint (ground.js): vertical joints every 5.5 m along
+the contour, -20% in a crack, +8% on its lit edge, weighted by steepness
+squared; strata weight 0.45. Far peaks (landscape-edge.js, `ringPeaks`): a =
+ridged(x/1500)^1.6 x 0.85 + ridged(x/560)^2 x 0.3 (0.4 + a) + ridged(x/240) x
+0.09 a, capped at 1.25, x ringLift 950 m; ring vertices doubled. All PLACED by
+eye. Real alpine crags (Banff's Mount Rundle, the Canadian Rockies' thrust
+sheets) show cliff bands broken by gullies and buttresses rather than even
+terraces; granite crags break along vertical joint sets -- general
+geomorphology, not a cited figure.
+
+### Shared links fairways, the polish goal's rounds (26 October 2026)
+
+course.js `shareFairways`, Links: gap 85 m, parallel within cos 0.9, a join
+only over runs of at least 140 m, gaps up to 70 m closed, the shared reach
+averaged over 60 m, tapered to the fairway's own width over 170 m and over
+0.6 of that at the stretch's ends; the stretch from 10 m past the mown start
+to 25 m short of the green (the neighbour's 5 and 20). `keepStrips`: where
+fairways come within 14 m without touching, each edge pulls back by half the
+shortfall, eased over 57 m, never into a joined stretch, never more than a
+third of the fairway's width. Holes joined on five 18-hole seeds: 3, 0, 3, 2,
+4. All PLACED by eye from the surface maps; no new source.
+
+### The far woods (the polish goal, 26 October 2026)
+
+far-woods.js: bands from the property line to 12,800 m; spacing max(13 m,
+0.06 x (d + 150 m)); each band max(4 spacings, d/4) deep; jitter 0.8 spacing;
+kept by the painting's patch noise (380 m cells) against cover +/- 0.12,
+below the treeline +/- 20 m, above 0.5 m (water), slope under 0.9 (near) or
+0.65 (groves) measured over 0.3 spacing. Near (under 420 m): clusters of
+three 20-face lumps, radius 0.55 x farForest.size x (0.75-1.25), or two-tier
+7-sided spruces; groves: a 20-face dome (r = 0.55 spacing x size, 0.42 tall)
+or a 6-sided cone (0.55 r wide, 2 r tall) on conifer landscapes, sunk by
+r x min(0.6, slope). Twelve angular sectors per mesh; renderOrder -1. Counts:
+Autumn 16,973, PNW 15,859, Midwest 10,423, Mountain 7,326, Desert 4,014,
+Island none. Building them: 36-95 ms a course here. The painted forest under
+them starts at the property line, fading in over 40 m (was the ground's edge
+and 70 m). All PLACED by eye.

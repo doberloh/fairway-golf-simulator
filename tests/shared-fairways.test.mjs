@@ -17,7 +17,40 @@ test('an 18-hole links shares fairways between holes running side by side', () =
   total += shared.length;
   for (const h of shared) assert.ok(h.length >= 250, `${seed}: a par 3 was widened`);
  }
- assert.ok(total >= 10, `only ${total} holes shared across three courses`);
+ // The polish goal (26 October 2026) joins fewer, longer overlaps -- the
+ // owner: "it shouldn't look forced" -- and counts only joins that really
+ // touch (several earlier "shared" holes were bulges facing each other across
+ // rough), so two to four holes a course share, not four to six; was
+ // `total >= 10`.
+ assert.ok(total >= 6, `only ${total} holes shared across three courses`);
+});
+
+// THE POLISH GOAL'S RULES FOR A SHARED FAIRWAY: never one-sided (a bulge
+// toward a fairway that did not come to meet it), and never a sliver of rough
+// between two fairways that nearly touch -- a join, or a clear strip.
+test('a shared fairway always has a partner, and near fairways leave a strip or join', () => {
+ for (const seed of ['overhaul', 'S1', 'S3']) {
+  const w = links(seed), H = w.holes;
+  const touches = (a, b) => {
+   let slivers = 0, touch = 0;
+   for (let z = (a.mowStart ?? 22); z < a.length - 10; z += 6) for (const side of [-1, 1]) {
+    const wd = side < 0 ? a.leftWidth(z) : a.rightWidth(z);
+    for (let t = wd + .5; t < wd + 12; t += .5) {
+     const p = b.toLocal(a.toWorld({x: a.center(z) + side * t, z}));
+     if (p.z < 0 || p.z > b.length) continue;
+     const off = p.x - b.center(p.z);
+     if (Math.abs(off) <= (off < 0 ? b.leftWidth(p.z) : b.rightWidth(p.z))) { if (t - wd < 1.5) touch++; else if (t - wd < 8) slivers++; break; }
+    }
+   }
+   return {slivers, touch};
+  };
+  for (const h of H.filter(h => h.sharedFairway))
+   assert.ok(H.some(o => o !== h && o.sharedFairway && touches(h, o).touch > 0), `${seed}: hole ${h.hole + 1} shares alone`);
+  for (let i = 0; i < H.length; i++) for (let j = i + 1; j < H.length; j++) {
+   const {slivers} = touches(H[i], H[j]);
+   assert.ok(slivers <= 3, `${seed}: holes ${i + 1} and ${j + 1} leave a sliver of rough at ${slivers} places`);
+  }
+ }
 });
 
 test('only a biome that asks for it shares fairways or routes side by side', () => {

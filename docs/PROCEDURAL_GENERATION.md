@@ -69,6 +69,8 @@ Nothing stands on mown turf, ever. Nothing stands where a tee shot would pass th
 
 The fourth rule is an edge rather than a wall. Planting used to stop dead at a fixed distance outside a hole's corridor, and a cliff produces two artefacts at once: a bare moat, and a pile-up just outside it where every refused candidate was pushed. Acceptance now climbs from nothing at a floor to certainty a little further out, so candidates near the edge are sometimes kept. **Near a tee the floor is a multiple of that hole's own corridor half-width, not a number of metres** -- the distance it is compared against grows with the fairway, so a fixed floor held at the default width and collapsed at the top of the range.
 
+Two more refusals keep plants off ground they could not stand on (generator 44, the polish goal): no ground cover where the ground over its spread is steeper than 40 degrees (measured at two spans, the steeper counting), and no trunk on a cliff's lip -- where the ground falls by more than 15% of the tree's height within a tenth of its height. Both are drawing problems at root (tree-seat.js seats every plant into its slope, and these are the cases no seat can hold), so they are generation rules rather than hidden plants.
+
 Greens are treated asymmetrically on purpose. The arc facing back down the fairway keeps its clearance whatever `greenTrees` says, because an approach has to have somewhere to land; the slider moves only the back and the flanks. The approach direction is taken from the middle of the hole seventy metres short of the green, so a dogleg's approach is where the shot really comes from.
 
 A hole may also be given a **specimen**: a feature tree or a cluster of stones standing in its own short grass, controlled by `fairwayFeature`. This is the one obstruction allowed on the line of play -- an oak in the middle of a fairway is the hole, not a fault -- and what makes it fair is the open grass down one side rather than an empty centre.
@@ -181,9 +183,13 @@ running home beside its front-nine partner, as the Old Course does. After
 routing and before anything measures a corridor (`shareFairways`), wherever
 two fairways run nearly parallel with under 85 m of rough between them, each
 widens to the middle, so the strip between becomes one fairway. Never across
-a pond; never at a tee end or green complex. On 18 holes four to six holes
-share; on nine, up to two. The values are placed (RESEARCH, *Shared links
-fairways*).
+a pond; never at a tee end or green complex. Since generator 46 (the polish
+goal) a join needs at least 140 m of overlap, is mutual and must actually
+touch -- a hole whose widening meets no other fairway gives it back -- and
+where two fairways come within 14 m without joining, each edge pulls back to
+leave a clear strip of rough rather than a sliver. On 18 holes two to four
+holes share (none on some seeds). The values are placed (RESEARCH, *Shared
+links fairways*).
 
 ## Uncleared stands (generator 39, the cartoon-overhaul branch)
 

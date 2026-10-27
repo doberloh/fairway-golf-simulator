@@ -1,12 +1,14 @@
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
+import {farWoodSites} from './far-woods.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
-import {GROUND_PLANTS} from './species.js';
+import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
+import {plantPose} from './tree-seat.js';
 import {allows} from './grounds.js';
-import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
+import {launchCorridors,blocksLaunch,BEACH_RISE,teePad,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND} from './course.js';
 import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 // A house drive keeps the rough's grass off it (homes.js; the cartoon overhaul's paths, round 5).
@@ -42,15 +44,8 @@ function texture(kind){
 // comes from a real model, but everything that makes a stand look like a place
 // rather than a stamp -- which model, its height and girth, its lean, its tint --
 // is still drawn per tree, the same way the procedural shapes do it.
-// Ground cover sized by its SPREAD rather than its height. A sword fern is a
-// low clump about a metre and a half across and its fronds reach further
-// sideways than up, so scaling it to t.h the way a tree is scaled gives a
-// ten-metre bush.
-// The dune grass and the creeping juniper (built in Blender) join them: a
-// beachgrass patch is two to five metres across and under a metre tall.
-// The cartoon overhaul's low, wide shrubs too: a heather mat is half a metre
-// tall and two across, so sized by its height it came out metres wide.
-const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern','dunegrass','juniper','heatherbush','naupakabush','fernbush','bramblebush','agaveplant']);
+// Ground cover sized by its SPREAD rather than its height: species.js
+// SPREAD_SIZED, shared with the seating (tree-seat.js).
 
 // NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
 //
@@ -142,6 +137,8 @@ function addModelSpecies(view,kind,trees){
  const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
+ const UP_AXIS=new T.Vector3(0,1,0),coverNormal=new T.Vector3(),coverTilt=new T.Quaternion();
+ const coverFade=teeFade(world);
  const entries=[];
  for(const t of trees){
   // Which model this tree is, decided once and stably per tree.
@@ -162,9 +159,18 @@ function addModelSpecies(view,kind,trees){
   // The bush family still sizes by height. It probably should not either, but
   // six biomes draw from it and that is a change to look at on its own.
   const spread=SPREAD_SIZED.has(FAMILY_OF[kind])?t.r/modelRadius(model)*lift:0;
-  const sy=spread||t.h*lift,sxz=spread||sy*girth;
-  dummy.position.set(t.x,t.y,t.z);
+  // Ground cover shortens toward a tee's mown edge (teeFade; the polish
+  // goal's tee surrounds, round 4): the planted marram and dune grass stood
+  // full height at the edge after the scattered grass had faded.
+  const nearTee=coverFade&&(GROUND_PLANTS.has(kind)||SPREAD_SIZED.has(FAMILY_OF[kind]))?.35+.65*coverFade(t.x,t.z):1;
+  const sy=(spread||t.h*lift)*nearTee,sxz=(spread||t.h*lift*girth)*nearTee;
+  // Seated: drawn down by the drop under its foot, so no trunk hangs over a
+  // slope, and ground cover laid along the slope first (tree-seat.js). The
+  // generator's y, and every collider, stay put.
+  const pose=plantPose(t,world.height);
+  dummy.position.set(t.x,t.y-pose.depth,t.z);
   dummy.rotation.set((rng()-.5)*.10,rng()*6.28,(rng()-.5)*.10);
+  if(pose.gx||pose.gz){coverTilt.setFromUnitVectors(UP_AXIS,coverNormal.set(-pose.gx,1,-pose.gz).normalize());dummy.quaternion.premultiply(coverTilt);}
   dummy.scale.set(sxz,sy,sxz);
   dummy.updateMatrix();
   const leaf=leafBase.clone();
@@ -377,6 +383,7 @@ export function addVegetation(view){
  addDeadfall(view);
  addDriftwood(view);
  addLongGrass(view);
+ addFarWoods(view);
  addGroundCover(view);
  addNearbyGrass(view);
 }
@@ -502,9 +509,100 @@ function sinkBeyond(material,reach){
  material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float sink=1.-smoothstep(${(reach*.6).toFixed(1)},${reach.toFixed(1)},distance(mvPosition.xz,cameraPosition.xz));mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*sink;mvPosition=modelViewMatrix*mvPosition;`);};
  return material;
 }
+// THE FADE FROM A TEE INTO THE TALL GRASS (the polish goal; the owner: "a
+// better fade into taller grass from the tee boxes on the links course").
+// The tiled grass went from short to tall at a hard 10 m from the tee's
+// point -- a wall, and not even round the mown shape -- and the long-grass
+// colonies ignored tees altogether. Now both ask how far a spot is from the
+// nearest mown tee's EDGE (its pad and collar, the shape ground.js paints)
+// and fade: nothing tall within `TEE_FADE.clear`, then rising in height and
+// in how much of it grows over `TEE_FADE.span`. Decoration only: the ground
+// and its lie are as they were. PLACED.
+export const TEE_FADE = {clear: 1.2, span: 5.8};
+export function teeFade(world) {
+ const tees = [];
+ for (const h of world.holes) for (const t of Object.values(h.tees || {})) {
+  const p = teePad(t);
+  if (!p) continue;
+  tees.push({h, x: t.x, z: p.z, ux: p.ux, uz: p.uz, hz: p.rz * TEE_APRON_SCALE, w: h.toWorld({x: t.x, z: p.z})});
+ }
+ const hx = TEE_APRON.x, r = TEE_ROUND * TEE_APRON_SCALE, reach = TEE_FADE.clear + TEE_FADE.span;
+ return (x, z) => {
+  let d = Infinity;
+  for (const t of tees) {
+   if ((t.w.x - x) ** 2 + (t.w.z - z) ** 2 > (reach + 12) ** 2) continue;
+   const l = t.h.toLocal({x, z}), dx = l.x - t.x, dz = l.z - t.z;
+   const qa = Math.abs(dx * t.uz - dz * t.ux) - hx + r, qb = Math.abs(dx * t.ux + dz * t.uz) - t.hz + r;
+   d = Math.min(d, Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r);
+  }
+  if (d === Infinity) return 1;
+  const f = Math.min(1, Math.max(0, (d - TEE_FADE.clear) / TEE_FADE.span));
+  return f * f * (3 - 2 * f);
+ };
+}
+// THE FAR WOODS (far-woods.js): real crowns from the property line out to
+// the landscape's edge, by distance bands. Two instanced meshes: NEAR crowns
+// (clusters of three lumps, or two-tier spruces on the conifer landscapes,
+// under 250 triangles), and FAR groves (one low faceted dome each, 20
+// triangles, standing for a stand of trees -- the owner: "LODs can fade but
+// should not transition to just bare ground"). No shadow cast (scenery, past
+// every shadow map), lit by the toon ramp, fogged as the ground is. Low draws
+// every site as a grove dome (graphics.js `farWoods: 'groves'`), the cheapest.
+const CONIFER_FAR=new Set(['pnw','mountain','redwood']);
+function addFarWoods(view){
+ const {world}=view,f=biomeOf(world.settings.biome).farForest;
+ if(!f||view.quality?.farWoods===false)return;
+ const sites=farWoodSites(world);
+ if(!sites.length)return;
+ const cone=CONIFER_FAR.has(world.settings.biome),groveOnly=view.quality?.farWoods==='groves';
+ // Round 2: a single cone read as a plain spike beside the cartoon spruces,
+ // and a single lump as a ball: a spruce is two stacked tiers, a broadleaf
+ // three lumps clustered.
+ const lump=(x,y,z,s,detail=1)=>{let g=new T.IcosahedronGeometry(1,detail);const p=g.attributes.position;for(let i=0;i<p.count;i++){const yy=p.getY(i),k=1+.12*Math.sin(p.getX(i)*5.1+p.getZ(i)*3.7);p.setXYZ(i,p.getX(i)*k*s+x,(yy<-.3?-.3+(yy+.3)*.3:yy*k)*s+y,p.getZ(i)*k*s+z);}g=mergeVertices(g);return g;};
+ let nearGeo;
+ if(cone){const a=new T.ConeGeometry(1,.6,7,1).translate(0,-.2,0),b=new T.ConeGeometry(.7,.55,7,1).translate(0,.22,0);nearGeo=mergeGeometries([a,b]);a.dispose();b.dispose();}
+ // Round 6 (frame rate): 20-face lumps (were 80): the clusters were 1.9 M
+ // triangles on Autumn and took the tiers past the goal's 5%.
+ else{const parts=[lump(0,0,0,1,0),lump(.55,-.12,.2,.7,0),lump(-.45,-.1,-.35,.65,0)];nearGeo=mergeGeometries(parts);parts.forEach(p=>p.dispose());}
+ nearGeo.computeVertexNormals();
+ // Round 5: a conifer grove is a tall cone (a dome on a steep spruce slope
+ // read as a plate); every grove sunk by the slope under it.
+ const groveGeo=cone?new T.ConeGeometry(1,1,6,1):lump(0,0,0,1,0);groveGeo.computeVertexNormals();
+ const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
+ const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),r0=(f.size??11)*.55;
+ const near=groveOnly?[]:sites.filter(s=>s.near),far=groveOnly?sites:sites.filter(s=>!s.near);
+ // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
+ // mesh with its own bounds, so the card skips every sector out of view --
+ // one mesh round the whole course drew all 17,000 crowns every frame
+ // (measured 9-11% of a Medium frame). No shadow received either; it made no
+ // difference, but none reaches out here.
+ const build=(list,geo,place,name)=>{
+  if(!list.length){geo.dispose();return;}
+  const sectors=Array.from({length:12},()=>[]);
+  for(const s of list)sectors[Math.floor(((Math.atan2(s.z,s.x)/(2*Math.PI))+1)*12)%12].push(s);
+  for(const part of sectors){
+   if(!part.length)continue;
+   const mesh=new T.InstancedMesh(geo,mat,part.length);
+   part.forEach((s,i)=>{place(s);dummy.rotation.set(0,s.pick*6.28,0);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
+    c.copy(colors[Math.floor(s.pick*colors.length)%colors.length]).multiplyScalar(.88+s.size*.2);mesh.setColorAt(i,c);});
+   // Drawn BEFORE the ground (renderOrder -1): the cost was filling pixels
+   // over landscape already shaded by the ground's long shader; drawn first,
+   // the ground behind a crown fails the depth test and is never shaded.
+   mesh.castShadow=false;mesh.receiveShadow=false;mesh.name=name;mesh.userData.noCull=true;mesh.renderOrder=-1;
+   mesh.computeBoundingSphere();view.group.add(mesh);
+  }
+ };
+ build(near,nearGeo,s=>{const r=r0*s.size;if(cone){dummy.position.set(s.x,s.y+r*1.6-.5,s.z);dummy.scale.set(r*.8,r*3.4,r*.8);}else{dummy.position.set(s.x,s.y+r*.75-.4,s.z);dummy.scale.set(r,r*.85,r);}},'Far woods');
+ // A grove dome: as wide as its site's spacing, a third as tall (taller and
+ // narrower for conifers), sunk a little so it sits on the ring's coarse faces.
+ build(far,groveGeo,s=>{const r=Math.max(r0,s.r),sink=r*Math.min(.6,s.slope??0);
+  if(cone){dummy.position.set(s.x,s.y+r*.9-sink,s.z);dummy.scale.set(r*.55,r*2,r*.55);}
+  else{dummy.position.set(s.x,s.y+r*.18-r*.08-sink,s.z);dummy.scale.set(r,r*.42,r);}},'Far groves');
+}
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
  if(!rec)return;
+ const byTee=teeFade(world);
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height})).filter(k=>k.models.length);
@@ -523,7 +621,9 @@ function addLongGrass(view){
   for(let k=0;k<n;k++){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
    if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
-   const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5);
+   // By a tee: thinner and shorter toward its mown edge, none at it.
+   const fade=byTee(x,z);if(fade<1&&rng()>Math.pow(fade,.7))continue;
+   const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5)*(.35+.65*fade);
    dummy.position.set(x,world.height(x,z),z);
    dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
    dummy.scale.set(h*(.9+rng()*.3),h,h*(.9+rng()*.3));
@@ -654,7 +754,14 @@ function addGroundCover(view){
  }
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
  const offDrive=onDrive(world.homes);
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1.9:1);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
+ // These blades shorten toward a tee's mown edge too (teeFade; the polish
+ // goal's tee surrounds). Round 3 shortened only the native ground's extra;
+ // round 5 found -- by asking the running game what stood tall at the tee --
+ // that on Links every blade is long (its scatter is the tall-grass kind,
+ // up to 1.7 m), and these blades were the spikes at the tee's edge, not the
+ // colonies or the marram. All of them now, to 30% at the edge.
+ const bladeFade=teeFade(world);
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=bladeFade(x,z),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
  // Drawn only to two-fifths of the long grass's reach, sinking before it
  // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
@@ -762,7 +869,7 @@ function addNearbyGrass(view){
  const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
  const clumpLeaf=new T.Color(lg?.leaf??'#8a9150'),clumpAccent=new T.Color(lg?.accent??'#d8c27a');
  let clumpMat=null;
- const teeSpots=w.holes.flatMap(h=>Object.values(h.tees||{}).map(t=>h.toWorld(t)));
+ const nearTee=teeFade(w);
  if(clumpParts){
   clumpMat=fadeOut(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,4,false,true,true,false,true)));
   view.lazyMaterials?.push(clumpMat);
@@ -805,11 +912,15 @@ function addNearbyGrass(view){
    }
    if(!allows(surface,'grass')||offDrive(x,z)||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
    // Not tall round a tee (the cartoon overhaul): a metre of grass in front of
-   // the pad hid the ball from the golfer's own eye (lakeshore-r3, -r4).
-   const byTee=teeSpots.some(t=>(t.x-x)**2+(t.z-z)**2<100);
-   const tall=!byTee&&(biomeOf(w.settings.biome).scatter.tallGrass||surface==='native'),height=tall?.6+rng()*.65:.09+rng()*.17;
+   // the pad hid the ball from the golfer's own eye (lakeshore-r3, -r4). The
+   // polish goal: not a wall at 10 m from the tee's point, but a fade from the
+   // mown tee's edge (teeFade) -- tall grass thinning and shortening toward it.
+   const fade=nearTee(x,z),tallHere=biomeOf(w.settings.biome).scatter.tallGrass||surface==='native';
+   // Round 2: none at all within the clear margin (round 1 let 15% through
+   // there, and those stood as spikes at the tee's edge from the ground).
+   const tall=tallHere&&(fade>=1||rng()<Math.pow(fade,.7)),height=tall?(.6+rng()*.65)*(.35+.65*fade):.09+rng()*.17;
    if(tall&&clumpParts){
-    if(rng()<.4){const h=clumpHeight*(.75+rng()*.5);dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(h,h,h);dummy.updateMatrix();clumps.push(dummy.matrix.clone());}
+    if(rng()<.4){const h=clumpHeight*(.75+rng()*.5)*(.35+.65*fade);dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(h,h,h);dummy.updateMatrix();clumps.push(dummy.matrix.clone());}
     continue;
    }
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.8,height,tall?1:.8);dummy.updateMatrix();

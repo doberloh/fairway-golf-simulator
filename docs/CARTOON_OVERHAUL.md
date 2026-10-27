@@ -222,7 +222,7 @@ unless a source is given, and is listed in RESEARCH.md.
 | `tools/profile.mjs --build --json --against --biome` | Main's kept build profiled beside the branch's, tier ladders on any landscape |
 | `tools/surface-map.mjs` | A course's surfaces and ground types from above, 2 m a pixel, on the CPU -- for judging routing and shared fairways |
 | `tools/gpu-gate.mjs` `foreignJobs` | Waits while a Playwright browser or Blender that is not ours is on the card (the realistic-graphics goal runs in another folder) |
-| `tools/gpu-run.mjs --goal cartoon-overhaul --util 30 --temp 80 --rest 1 -- <command>` | Any graphics-card command (smoke, profile) through the same gate, logged with the card's readings before and after |
+| `tools/gpu-run.mjs --goal cartoon-overhaul --util 30 --temp 80 --rest 1 -- <command>` | Any graphics-card command (smoke, profile) through the same gate, logged with the card's readings before and after; `--util 50` only while the owner watches over remote desktop (AGENTS.md) |
 | `tools/capture/build-hooked.mjs` | The capture build (`bench/shots/dist-exp/`): the working tree with the capture hooks; rebuild it before every capture after a code change |
 | `tools/blender/run.mjs <pack> --render` | Runs a Blender pack (`tools/blender/cartoon_*.py`), exports its `.glb` files to `vendor/` and renders its contact sheet to `bench/shots/blender/`; then `node tools/build-meshes.mjs` ingests them |
 
@@ -299,9 +299,259 @@ not counted as a change. Typical loop:
   that write docs go through the editor too (backticks), and commit messages
   with double quotes go through `git commit -F <file>`. The worktree refuses
   complex shell commands; a short script written with the editor runs fine.
+- **When a change makes no difference, ask the scene.** Four rounds of the
+  links tee fade changed the wrong scatter; a short probe listing the meshes
+  standing tall by the tee (instance heights near a point) found the right
+  one at once.
 - **A smoke failure is read before it is rerun** -- keep the whole log
   (`Out-File`), not its last lines; the one endless-round failure could not be
   explained because its failing step was not kept.
+
+## The polish goal (26 October 2026)
+
+The second goal on the branch, after the owner played the first: floating
+trees, the empty band before the distant scenery and real geometry for it,
+Mountain's crags and its grass-to-rock banding, Desert's stacks, the shared
+links fairways, Haunted Hollow made seasonal, water depth colour, the links
+tee surrounds and the tee boxes' mowing. The brief is local
+(`docs/reports/cartoon-polish-goal.md`). Frame rate: at most 5% slower per
+tier than the branch at the goal's start, never by making the hole in play
+look worse. Each item's rounds are recorded under it below.
+
+**Frame rate, measured.** The goal's starting build (f8603aa, kept as
+`bench/ab/start.html`) against the finished one, played alternately in the
+same session (`tools/frame-ab.mjs`, two rounds, spots play1, tee5, tee9; the
+card shared with the owner's remote-desktop session at 30-40%, which is why a
+saved baseline from an idle card could not be compared fairly -- frame-ab
+and the capture tool take `--util` for that now). Graphics frame, mean of
+spots: Autumn Low 1.50 -> 1.43 ms (-4.4%), Medium 1.48 -> 1.46 (-1.2%), High
+3.01 -> 3.12 (+3.4%), Ultra 3.79 -> 3.75 (-1.0%); Mountain Medium 1.52 -> 1.54
+(+1.4%), High 2.63 -> 2.53 (-4.0%). Every tier within 5%; nothing on the
+hole in play was made plainer -- the savings that paid for the far woods came
+from drawing them before the ground and culling them by sector. The p95
+frame moved +12% on Autumn High and +9% on Mountain High between rounds of
+the same build too (the same noise the first goal found), so it is not read.
+
+### Haunted Hollow is seasonal
+
+The owner: "should only be active in the month of October, through the first
+week of November, but add a toggle in the settings to activate it." Built as a
+pure rule (`src/seasons.js`, tests/seasons.test.mjs); main.js asks it.
+
+- **The window** (PLACED): 1 October to 7 November inclusive, by the player's
+  own clock.
+- **Not offered out of season**: Course studio's landscape grid and cards,
+  Surprise me (it rolls again), a fresh Endless run and the menu's backdrop
+  hole, the Endless landscape picker. **Never locked out**: a picker keeps the
+  landscape already chosen, and loading a saved round or course, a shared code
+  or a friend's challenge never asks.
+- **Endless runs** are one seed; whether Haunted Hollow may be rolled rides in
+  it as a mark (`!`), added when a run starts out of season. A marked run's
+  Haunted Hollow rolls become a stand-in drawn from the seed; an unmarked seed
+  -- every earlier run, every run started in season -- grows what it always
+  did.
+- **The course of the week** is everyone's, so it asks the season of the
+  week's Monday, not the player: out of season Haunted Hollow's turn plays
+  Autumn (PLACED: the nearest in mood), from week 149 (Monday 9 November 2026)
+  so no week already shown changes. The rotation's function stays
+  self-contained (the start splash runs a copy of it), tested.
+- **The setting** "Haunted Hollow all year" sits in Settings, Graphics, beside
+  the look of the course: a graphics-record field (`hauntedAllYear`, off), an
+  old record loads with it off. **Departure from the brief:** the brief asked
+  for a course-settings schema entry and a `SCHEMA_VERSION` bump; the course
+  settings ride inside every saved course and shared code, so a player
+  preference there would travel to friends. The graphics record is the
+  player's own; its load is the migration, and it is tested.
+- Achievements: *Ghost Hunter* comes with any round in Haunted Hollow, so in
+  season, with the setting on, or on a saved course; *Globetrotter* (nine
+  landscapes) is reachable with the nine others.
+
+### Floating trees -- four rounds (polish goal)
+
+The owner: "Trees appear to be floating in some cases. Need to make sure the
+trunks are fully into the ground." Judged by a bench metric first
+(`node tools/bench.mjs seated --set trees=65`: a plant whose drawn foot stands
+more than 3 cm above the ground anywhere under it, checked on its own points),
+then in the game (`polish-r0/` before, `trees-r3/` after: `h1-cliff`,
+`far-band`, `h3-between`, `h3-edge` on Mountain, PNW, Autumn).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 0 | A tree stood at the ground's height under its centre, on a flat foot leaned up to 0.05 rad: on a slope its downhill side hung in the air | (judged; the metric added) |
+| 1 | -- | Every plant drawn down by its seat (`src/tree-seat.js`): the drop under its footprint, the lean's lift, 2 cm. The footprint measured from the models (widest base in the bottom 2%). Floating: 3,661 of 65,178 (quick tier) to 123 -- but a spruce's "base" was its ground-sweeping boughs (3.5 m), sinking it metres deep |
+| 2 | Boughs counted as base; ground covers on steep stand floors hung up to 2.4 m | The footprint is the trunk's bark alone; ground covers lie along the slope (to 40 degrees) and are seated against it by their stems, at most half their height; trees 5 cm under. 61 left, nearly all covers on cliff faces |
+| 3 | No seat can hold a fern on a wall, and a tree spanning a cliff's lip was drawn up to 18 m into the ground | Generation (44): no cover on ground steeper than 40 degrees, no trunk where the ground falls more than 15% of its height within a tenth of it. 8 cm margin, covers to 75%. Every landscape: 2 of 588,000 left |
+| 4 | A shrub on a 45-degree step under a 39-degree average; two conifers over crag steps between the seat's rings | The cover steepness also measured at half the span; the seat on four rings of 24 points. **0 of 588,521** on every landscape (full tier) |
+
+Cost: the seat is 96 ground samples a plant, measured once as a course is
+drawn: 0.11-0.15 s on an 18-hole course here (Autumn 30,245 plants, 147 ms).
+Drawing only -- the generator's `y` and every collider are unchanged; the
+planting rules (generator 44) are the only change to what is generated.
+
+### Tee boxes' mowing -- five rounds (polish goal)
+
+The owner: "tee boxes need smaller mow stripes and a cleanup mow line." A tee
+was one flat colour, no stripes at all (`polish-r0/`, `tee-top`). ground.js,
+the tee pad's mowing. Views `tee-top` (above), `h1-teekit`, `h1-markers`;
+Midwest, Links, Autumn, Desert (`tee-r1/` .. `tee-r5/`).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | No mowing on a tee at all | Bands 0.8 m wide in the pad's own frame, running with the line of play, and a clean-up lap 0.55 m wide inside the pad's edge, the other way from the bands |
+| 2 | The pad's mown collar is the same colour, so the bands stopped partway in and the lap drew a frame inside the green | Bands and lap over the whole mown tee, the lap on its outer, visible edge |
+| 3 | From the tee the bands read broad and loud | 0.6 m bands, contrast .09 to .075 |
+| 4 | A tee nobody had played from | Divots in the strip players use -- across the markers' span, from just behind them to 3 m back -- quarter-metre cells, one in seven, paler (sand-and-seed filled) |
+| 5 | The divots were square cells, blocky close to | Each an oval, longer along the line of play (about 7 x 11 cm), at its own spot in its cell |
+
+### Links tee surrounds -- five rounds (polish goal)
+
+The owner: "There needs to be a better fade into taller grass from the tee
+boxes on the links course." Views `tee-surround` (from behind and to the side,
+eye height), `h1-teekit`, `tee-top`; Links and Lakeshore (`polish-r0/`,
+`teefade-r1/` .. `teefade-r5/`). Decoration only: the ground and its lie are
+unchanged.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 0 | A wall of tall fescue right to the tee's edge; the only rule was "not tall within 10 m of the tee's point" in one scatter, round the point not the mown shape | (judged) |
+| 1 | -- | `teeFade` (vegetation.js): distance from the nearest mown tee's edge (its pad and collar, the shape ground.js paints); nothing tall within 1.2 m, then rising in height and in how much grows over 5.8 m. Applied to the long-grass colonies and the tiled grass's tall clumps -- no visible change at the tee |
+| 2 | 15% still let through at the edge | None at all inside the clear margin; density rising with the fade's 0.7th power -- still no visible change |
+| 3 | -- | The course-wide blade scatter's extra height on native ground faded too -- no change |
+| 4 | -- | The planted ground cover (marram, dune grass) shortened toward the tee -- no change. Three rounds of fixes to the wrong thing |
+| 5 | Asked the running game what stood tall within 12 m of the tee: the course-wide blades, up to 1.7 m -- on Links every blade is long (its scatter is the tall-grass kind), not only on native ground | All of those blades fade to 30% at the edge. The tee now sits on low grass rising into the fescue over a few metres |
+
+Lesson (also under *Lessons*): when a change makes no visible difference,
+ask the scene what is drawn there before changing a fourth thing.
+
+### Water depth colour -- six rounds (polish goal)
+
+The owner: "are the water depth colors reversed? It looks lighter colored in
+the middle where it's deeper and should probably be darker?" **Diagnosis: yes,
+reversed.** A pond's shallows let the bed through (opacity down to .72 of a
+near-clear .22 looking down), and the bed under a pond is the dark bank colour,
+so the rim went brown; the deep middle was opaque and showed the water's own
+bright colour and the sky. Views `pond-top` (from 45 m up) and `h1-pond` (from
+the bank), noon; Midwest, Desert, Autumn, Lakeshore, Island, Links
+(`polish-r0/`, `water-p1/` .. `water-p6/`). renderer.js WATER_EDGES.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Reversed (above) | Still water's body is its depth's own colour, lit by the light it receives: the biome's water darker toward the deep, a sunlit sandy teal toward the bank, nearly opaque so the bed no longer decides. Direction right -- everything milky and pale |
+| 2 | Milky under the full sun | Both darker, the deep much darker and bluer: a dark teal heart, lighter shallows |
+| 3 | From the bank, a flat milky sheet: the body covered the reflection | The body's share falls with the grazing angle (Schlick): looked into, its depth colour; looked across, a mirror |
+| 4 | From the bank still no trees in the water | The calm mirror back up (metalness .38 -> .5, reflection 1.3 -> 1.8). No visible change: the reflection probe holds the sky, not the trees -- left as found, written down |
+| 5 | The sea and the big lakes one flat colour shore to horizon | The same depth body for the sea: a pale shelf over the first metres, deep blue by eight |
+| 6 | Lakeshore's lake unchanged: most of it lies past the ground map, where the blend was switched off | Past the map the depth counts as deep. Lakeshore's lake is shallow a long way out, so its near water is rightly the pale shelf |
+
+### Mountain: the grass-to-rock banding and craggy mountains -- five rounds each (polish goal)
+
+The owner: "There is weird banding where the terrain changes from grass to
+rock" and "our 'mountains' are very smooth". Judged on Mountain from the
+overview, the first tee, `h2-side` and a new view `crag-face` (the nearest big
+crag from 160 m), with `far-band-b` (`polish-r0/`, `crag-r1/` .. `crag-r5/`).
+
+**Diagnosis.** A crag was one smooth ridged field, terraced into four cliff
+bands, with rock painted on each band's riser and grass on its tread: a
+rounded knoll ringed rock-grass-rock-grass like agate. The rock texture added
+a stratum every 6.5 m of height -- ten more horizontal lines up a 70 m crag.
+The far range was three summed sine waves: rolling green ridges.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | The rings, and the rounded knolls | Mountain's recipe takes `jag` (landforms.js): a sharper ridged field at a third of the crag scale bends the cliff bands round spurs and couloirs; rock where the finished ground is steep, the threshold wandering with two scales of noise, so it comes through the turf in tongues and outcrops; scree on the moderate slopes at the foot. The rings were gone; the faces plain sloping planes |
+| 2 | Faces too smooth | Spurs at a quarter of the scale; the faces roughened at 23 m and 9 m, five times as deep. From above: knife-edged crests, broken spurs |
+| 3 | Fine horizontal stripes up every face: sandstone strata on granite | The rock paint (ground.js, all crag landscapes) takes vertical joints every 5-6 m along the face with lit edges, strongest on the steepest rock; the strata under half. From 160 m the crags read as cliffs: buttresses, ledges, vertical cracks |
+| 4 | The far range: rolling green waves | Mountain's landscape ring takes `ringPeaks` (landscape-edge.js): a ridged-noise field, crests squared to knife edges, summits where two ridge systems cross, spurs off them. Peaks and snowy aretes behind the valley |
+| 5 | The nearest far faces single flat planes, hundreds of metres wide | The peaked range twice as dense along each ring, and a finer 240 m set of ridges on the high ground for those vertices to show |
+
+Still to judge in play: the nearest far face stays pale under the haze (the
+distant-scenery item's rounds take it up). Generator 45 (Mountain only); every
+bench rule holds on every landscape and no plant floats on the new crags.
+
+### Shared links fairways, rounds 4 to 13 (polish goal; rounds 1-3 below)
+
+The owner: "that is going to need at least 10 more iterations to make the
+fairways look smoothly conjoined ... it shouldn't look forced, it needs to
+look like it was thought through." They were in (generator 38). Judged from
+above with `tools/surface-map.mjs` (CPU) on the seeds `overhaul` and
+`LINKS-A` .. `LINKS-D` (18 holes), pictures `share-r0/` .. `share-r9/`, and
+measured: every pair of holes whose fairways come within 40 m, the samples
+that touch and those a sliver (1.5-8 m) apart (`bench/shots/overhaul/
+_sharepairs.mjs`, scratch), and why each sample did or did not join
+(`shareFairways` takes a `debug` sink).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 4 (r0) | Square "rungs": two fairways joined over a short stretch made an H; V notches where a join stopped | (judged) |
+| 5 (r1) | -- | `close` (gaps in a join up to 70 m filled), `blur` (the shared edge averaged over 40 m), `ease` 60 -> 110 m. Almost no change |
+| 6 (r2) | The taper ran the reach to nothing, so the edge met the fairway's own edge a third of the way down and the rest was unseen | The taper runs to the fairway's own width. No change to the H |
+| 7 (r3) | The rungs' square ends are where a join reaches the end of its allowed stretch at full width | The join tapers to the stretch's ends. The rungs were gone -- and those pairs no longer joined, standing a sliver of rough apart |
+| 8 (r4) | Joins near the stretch's ends now lost | The stretch from 10 m past the mown start to 25 m short of the green (were 25 and 40). One pair merged with a long tongue; another kept its sliver |
+| 9 (r5) | A sliver of rough a metre or three wide wherever two fairways nearly touch but cannot join (a tee or green end) -- the most forced thing on a links | `strip` (`keepStrips`): there each edge pulls back to leave at least 10 m of rough. It spread into joined stretches too |
+| 10 (r6) | -- | Strips eased over a third of the distance and never into a joined stretch. Slivers: tens of samples a pair -> one or two |
+| 11 (r7) | 10 m read as a line from above; joins still lumpy | Strip 14 m, blur 60 m. H shapes left on two courses |
+| 12 (r8) | Measured why (the debug sink): on a links fairways start 90-120 m out, so two holes running opposite ways overlap only in the middle -- the join fills that overlap, a crossbar, and each far end has nothing to join | Ease 170 m, so a crossbar's ends run out as long diagonals |
+| 13 (r9) | Short overlaps still made crossbars | A join only over at least 140 m of overlap (was 80); shorter ones get a clean strip. Zero to four joined holes in 18 (were four or five), each one merged shape -- a split fairway -- not rungs |
+| 14 (r10) | A hole "shared" with no partner (the default seed's 15): a bulge toward a fairway that never came to meet it | A widening kept only if a partner it reached for widened and reached back |
+| 15 (r11) | Still: S3's 1 and 2 each widened, on different stretches, and stayed 16.5 m apart | Checked on the result: a widened hole whose edges touch no other fairway anywhere gives its widening back. Real joins: 2, 2, 2, 0, 2, 4 holes on six seeds -- fewer than the first goal's count, which included bulges that never touched. S5 shows the target: one large merged double fairway with a long tongue of rough, parallel neighbours behind clear strips |
+
+Generator 46 (Links only). Every bench rule holds on every landscape;
+tests/shared-fairways adds: a shared hole always touches a partner, and no
+pair of fairways leaves a sliver of rough (more than three places). Its count
+threshold went from ten to six joined holes over three courses -- the count
+is lower because it now counts only real joins (written here as a decision,
+not loosened to pass). Not yet seen in the game.
+
+### Desert rock stacks -- five rounds (polish goal)
+
+The owner: "some still look like there are floating rocks at the top of the
+stacks." The stacks are the layered sandstone boulders
+(`tools/blender/cartoon_rocks.py` `layered_rock`, Desert's `rockStyle`).
+Judged on the Blender sheet (`rounds/stack-r1.png` .. `stack-r5.png`) and in
+the game (view `rock-near`, the boulder nearest the first green;
+`stack-r3/` .. `stack-r5/`).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Each bed a lens, pointed underneath, touching the bed below at a narrow waist; the top block perched on it | Beds flat underneath as well as on top (`hull_rock` takes `flat_bottom`) |
+| 2 | Flattened, a bed spans only the middle of its ellipsoid, so beds spaced by their full height left gaps and the top block hung in the air (the sheet showed it plainly) | Each piece starts from the measured top of the one below, 4 cm into it. On the sheet every piece rests on the next |
+| 3 | (in the game) A wide slab on a narrow one, over a dark undercut | (judged) A bed's random size could make it wider than the one below |
+| 4 | -- | Each bed at most 95% as wide as the one below: the stack tapers up, as a weathered butte does. In the game hardly different -- the undercut stayed |
+| 5 | The undercut is each bed's own shape: cut from the middle of an ellipsoid, its sides bulge and curl in underneath and throw a dark band under its own lip | Beds cut from a thin band at the equator (flat top and bottom at 0.75), so their sides stand nearly upright; beds nearly in line (offsets halved) |
+
+A model change only: the stacks' sizes and colliders are the generator's and
+did not move (fingerprint silent).
+
+### The far woods -- eight rounds (polish goal)
+
+The owner: "it still looks like there is a band of completely empty space
+before those textured pieces start. Fix that and then can we make those an
+actual 3d mesh of some sort?" -- and during the rounds: "There needs to be 3d
+objects all the way to the edge of the landscape where relevant (really tall
+mountains obviously don't need trees all the way to the top, and desert
+probably doesn't need THICK coverage). LODs can obviously fade but should not
+transition to just bare ground ever."
+
+**Diagnosis.** The stands end at the property line; the course's ground runs
+150 m past it; the painted far forest faded in over 70 m past THAT -- about
+220 m of bare ground between the last tree and the painted woods
+(`polish-r0/` `far-band`). Views `far-band`, `far-band-b` (from the course's
+edge, 25 m up), `overview`, `h1-tee` (`farwoods-r1/` .. `farwoods-r5/`).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | The band | `src/far-woods.js` places crowns past the property line by the painting's own cover, treeline and cliffs; vegetation.js draws them as one instanced mesh (lumps, or cones on the conifer landscapes). The painting now starts at the property line, over 40 m (ground.js `farProp`) |
+| 2 | Cones read as spikes, lumps as balls | Two-tier spruces; broadleaf clusters of three lumps |
+| 3 | The crowns ended in a line at their reach | Thinning and shrinking over the last stretch |
+| 4 | The owner: 3D to the landscape's edge, never bare | Distance bands out to 12.8 km (the landscape ring's reach): spacing 13 m at the line, about 6% of the distance beyond, so the count stays bounded (4,000-17,000 a course); near 420 m clusters, beyond single low grove domes standing for a stand of trees. Autumn's woods run unbroken to the horizon; Mountain's stop at its treeline; Desert's are a thin scatter |
+| 5 | On Mountain's steep ring faces the domes were green plates | Conifer groves as tall cones; every grove sunk by its slope; groves held to gentler ground (0.65) |
+| 6 | (frame rate) The woods cost 9-11% of a Medium frame, 3-6% of High (an A/B on one page, `tools/variants/far-woods.mjs`) | Cheaper lumps (20 faces) and no shadow received -- no change: it was not the triangles |
+| 7 | (frame rate) One mesh round the whole course drew all its crowns every frame | Twelve sectors, each culled out of view: High 2.7-3.6%. Medium still 7-14%, so Medium (as Low) draws grove domes only |
+| 8 | (frame rate) The cost is filling pixels over ground already shaded by its long shader | The woods drawn before the ground (`renderOrder -1`), so the ground behind them is never shaded: from the play camera the woods now SAVE 5-10% on Medium and High; from tee 5 they cost about 0.08 ms on Low and Medium |
+
+Tests: tests/far-woods.test.mjs (outside the property, never in water,
+deterministic, wooded in the first 60 m and in every kilometre out to 12 km,
+coarser with distance; Low and Medium draw groves, never nothing).
 
 ## Rounds
 

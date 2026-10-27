@@ -263,12 +263,12 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),...farForestUniforms(bio)});
+   ...wildUniforms(w,!!wild,!!fallen),...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
- uniform float farOn,farCover,farLine,farSize;uniform vec3 farC0,farC1,farC2,farC3;
+ uniform float farOn,farCover,farLine,farSize;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -314,7 +314,16 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    // Round 5: and a ledge to each stratum on a steep face -- a light lip at its
    // top, a shadow under it -- as the desert's cut banks have (round 4).
    float ledge=.1*smoothstep(.92,.98,fy)-.12*smoothstep(0.,.04,fy)*(1.-smoothstep(.04,.12,fy));
-   c*=mix(1.,(.88+.12*strata)*(1.+ledge),steep);
+   // THE POLISH GOAL'S CRAGS, round 3: strata every 6.5 m drew ten horizontal
+   // stripes up a 70 m crag -- sandstone's habit, not granite's. A crag
+   // breaks along VERTICAL joints: here dark cracks every 5-6 m along the
+   // face (the coordinate along the slope's contour, warped), each with a lit
+   // edge, strongest on the steepest rock; the strata kept at under half.
+   vec2 tang=normalize(vec2(-n.z,n.x)+vec2(1e-4,0.));
+   float along=dot(q,tang)/5.5+.8*patchNoise(q/13.),fj=fract(along);
+   float joint=-.2*(1.-smoothstep(0.,.07,fj))+.08*smoothstep(.9,.99,fj);
+   c*=mix(1.,1.+joint,steep*steep);
+   c*=mix(1.,(.88+.12*strata)*(1.+ledge),steep*.45);
    c=mix(c,rough,(1.-steep)*.3);
    return c*(1.-.12*steep);
   }
@@ -498,12 +507,21 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // this paints exactly what localSurface classifies. The collar only claims
  // ground that is still rough, so a fairway or green beside a tee keeps it.
  float teeGround=0.;
+ // The pad a fragment lies on, for its mowing (the polish goal): its signed
+ // edge distance (negative inside) and the point in the pad's own frame.
+ float teePadD=1e3;vec2 teeF=vec2(0.);
  for(int ti=0;ti<3;ti++){vec4 tee=holeTexel(3.+float(ti)*2.,row);
   vec4 teeDir=holeTexel(4.+float(ti)*2.,row);
   // Into the pad's own frame: across the line of play, then along it.
   vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
-  if(tee.z>.5&&kind<.5&&teeBox(tf,vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)}),${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)})<0.){turf=tint_semi;kind=1.;teeGround=1.;}
-  if(tee.z>.5&&teeBox(tf,vec2(${TEE_PAD.x.toFixed(2)},tee.w),${TEE_ROUND.toFixed(2)})<0.){turf=tint_semi;kind=1.;teeGround=1.;}}
+  float apronD=tee.z>.5?teeBox(tf,vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)}),${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)}):1e3;
+  if(kind<.5&&apronD<0.){turf=tint_semi;kind=1.;teeGround=1.;}
+  float padD=tee.z>.5?teeBox(tf,vec2(${TEE_PAD.x.toFixed(2)},tee.w),${TEE_ROUND.toFixed(2)}):1e3;
+  if(padD<0.){turf=tint_semi;kind=1.;teeGround=1.;}
+  // The mowing reads the whole mown tee -- the pad and its collar, one colour
+  // and one mown shape on screen (round 2: striping the pad alone stopped the
+  // bands partway in and drew the lap as a frame inside the green).
+  if(teeGround>.5&&kind==1.&&apronD<teePadD){teePadD=apronD;teeF=tf;}}
  // THE BEACH, AND IT CLAIMS ROUGH ONLY -- AFTER THE TEES, NOT BEFORE.
  //
  // Ordering is the whole of it. Run before the tee block, the beach turned low
@@ -760,6 +778,40 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    turf*=mix(1.,1.-.06*(stripe*2.-1.)-.03,lap*stripeFade*cueStripes*(1.-smoothstep(.25,.6,lapW)));
   }
  }
+ // THE TEE PAD'S MOWING (the polish goal; the owner: "tee boxes need smaller
+ // mow stripes and a cleanup mow line"). A tee is cut with a walk-behind
+ // mower, about 0.55 m a pass, in passes along the line of play, then once
+ // round its edge. Round 1: bands 0.8 m wide (PLACED: a pass and a half,
+ // against a fairway's 6 m), laid in the pad's own frame so they run with the
+ // shot whatever the hole's bearing, and a clean-up lap 0.55 m wide inside
+ // the mown tee's edge, the other way from the bands it crosses. Round 2: over
+ // the pad and its collar together, the lap on the outer, visible edge.
+ if(teePadD<0.){
+  // Round 3: 0.6 m bands, softer (.075): at 0.8 m and .09 they read broad and
+  // loud from the tee.
+  float tc=teeF.x/1.2,taa=max(fwidth(tc),.001);
+  float tstripe=smoothstep(-taa*6.283,taa*6.283,sin(tc*6.283));
+  tstripe=mix(tstripe,.5,smoothstep(.12,.45,taa));
+  float tlapW=max(fwidth(teePadD),1e-4);
+  float tlap=smoothstep(-.55-tlapW,-.55+tlapW,teePadD);
+  float tband=mix(tstripe*2.-1.,-(tstripe*2.-1.)*.6-.4,tlap);
+  turf*=mix(1.,1.+tband*.075,cueStripes);
+  // Round 4: A TEE THAT IS USED. Players tee up between the markers and up to
+  // two club lengths behind them, so that strip -- across the markers' span,
+  // from just behind them to about 3 m back (they stand 1 m behind the tee's
+  // point) -- carries divots, filled with the sand-and-seed mix and left
+  // paler. Quarter-metre cells, about one in seven, faded at the strip's
+  // edges and with distance so they never shimmer. PLACED.
+  float zone=(1.-smoothstep(2.3,2.85,abs(teeF.x)))*smoothstep(-3.4,-2.8,teeF.y)*(1.-smoothstep(-.9,-.5,teeF.y));
+  // Round 5: each divot an oval, longer along the line of play the way a
+  // divot is cut (about 7 x 11 cm), at its own spot in its cell -- the
+  // round-4 squares were the cells themselves, and read as blocks close to.
+  vec2 dcell=floor(teeF*4.),df=fract(teeF*4.);
+  vec2 dc=vec2(hashGround(dcell+vec2(3.1,9.7)),hashGround(dcell+vec2(5.9,2.3)))*.44+.28;
+  float dshape=1.-smoothstep(.75,1.,length((df-dc)/vec2(.28,.44)));
+  float divot=step(.82,hashGround(dcell+vec2(7.3,1.1)))*dshape*zone*(1.-smoothstep(.3,.8,fwidth(teeF.x*4.)));
+  turf=mix(turf,turf*vec3(1.16,1.02,.7),divot*.6);
+ }
  // UNDULATION, EVERYWHERE, AT EVERY HOUR.
  //
  // A cast shadow only reads when the sun is low. At midday a two metre roll
@@ -1002,14 +1054,19 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // where a lump is under a pixel, it settles to its average colour rather
  // than shimmering. PLACED: every number (RESEARCH, *The overhaul's far forest*).
  if(farOn>.5){
-  vec2 qd=abs(wp)-extent;float outside=length(max(qd,0.));
+  // THE POLISH GOAL: from the property line, where the stands stop, fading in
+  // over 40 m -- not from the ground's edge 150 m further out and over 70 m,
+  // which left a bare band between the last tree and the painted woods. The
+  // far woods' crowns (vegetation.js) stand in that band; this is the floor
+  // between them.
+  vec2 qd=abs(wp)-farProp;float outside=length(max(qd,0.));
   if(outside>0.){
    float patchN=fract(sin(dot(floor(wp/380.),vec2(12.9898,78.233)))*43758.5453);
    vec2 pf=fract(wp/380.);pf=pf*pf*(3.-2.*pf);
    float n00=patchN,n10=fract(sin(dot(floor(wp/380.)+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
    float n01=fract(sin(dot(floor(wp/380.)+vec2(0.,1.),vec2(12.9898,78.233)))*43758.5453),n11=fract(sin(dot(floor(wp/380.)+vec2(1.,1.),vec2(12.9898,78.233)))*43758.5453);
    float broad=mix(mix(n00,n10,pf.x),mix(n01,n11,pf.x),pf.y);
-   float mask=smoothstep(0.,70.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y));
+   float mask=smoothstep(0.,40.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y));
    // No forest on a cliff: the pattern is laid from above and stretches into
    // scales on steep ground, and real woods stop at the rock anyway.
    mask*=smoothstep(.5,.74,normalize(groundNormal).y);
@@ -1047,5 +1104,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v44';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v51';return m;
 }

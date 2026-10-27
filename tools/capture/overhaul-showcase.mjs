@@ -95,7 +95,10 @@ const beforeOf = (biome, view) => {
 };
 
 // Which round pictures belong to a rounds section, by its title.
-const PREFIX = [[/broadleaves/i, 'broadleaf'], [/conifers/i, 'conifer'], [/boulders/i, 'rocks'], [/shrubs/i, 'shrubs'],
+// The polish goal's sections first: "Desert rock stacks" must not fall to /desert/.
+const PREFIX = [[/floating trees/i, 'trees'], [/far woods/i, 'farwoods'], [/rock stacks/i, 'stack'], [/tee boxes/i, 'tee'],
+ [/tee surrounds/i, 'teefade'], [/water depth/i, 'water'], [/craggy|grass-to-rock/i, 'crag'], [/shared links fairways, rounds 4/i, 'share'],
+ [/broadleaves/i, 'broadleaf'], [/conifers/i, 'conifer'], [/boulders/i, 'rocks'], [/shrubs/i, 'shrubs'],
  [/desert/i, 'desert'], [/long grass/i, 'grass'], [/^brush/i, 'brush'], [/island/i, 'island'], [/haunted/i, 'haunted'],
  [/houses/i, 'houses'], [/pumpkins/i, 'props'], [/deadfall/i, 'deadfall'], [/redwood/i, 'redwood'], [/lakeshore/i, 'lakeshore'],
  [/furniture/i, 'course'], [/landforms/i, 'land'], [/ground textures/i, 'turf'], [/stands/i, 'stands'], [/shared links/i, 'links-share'],

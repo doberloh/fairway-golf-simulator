@@ -284,13 +284,15 @@ def skirt(mesh, rng, center, radius, depth, points=9, droop=0.35, role='leaf', b
 # ---------------------------------------------------------------- rocks
 
 def hull_rock(mesh, rng, center, radii, points=26, role='stone', bevel=0.12, flat_top=0.0, seat=0.18,
-              strata=0, shade_low=0.62, shade_high=1.12, moss=None):
+              strata=0, shade_low=0.62, shade_high=1.12, moss=None, flat_bottom=0.0):
     """A chunky rock: the convex hull of jittered points in an ellipsoid,
     bevelled so its planes read, sunk `seat` of its height into the ground.
 
-    `flat_top` shaves the crown flat (a slab, a ledge); `strata` cuts that
-    many horizontal steps into it (sandstone). `moss` (a role) paints the
-    upward-facing faces in that role instead -- moss, lichen or snow."""
+    `flat_top` shaves the crown flat (a slab, a ledge); `flat_bottom` the
+    underside, so it sits on what is under it on a face, not a point;
+    `strata` cuts that many horizontal steps into it (sandstone). `moss` (a
+    role) paints the upward-facing faces in that role instead -- moss, lichen
+    or snow."""
     rx, ry, rz = radii
     bm = bmesh.new()
     for i in range(points):
@@ -301,6 +303,8 @@ def hull_rock(mesh, rng, center, radii, points=26, role='stone', bevel=0.12, fla
         z = y * rz * k
         if flat_top and z > rz * (1 - flat_top):
             z = rz * (1 - flat_top) + (z - rz * (1 - flat_top)) * 0.15
+        if flat_bottom and z < -rz * (1 - flat_bottom):
+            z = -rz * (1 - flat_bottom) + (z + rz * (1 - flat_bottom)) * 0.15
         bm.verts.new((math.cos(a) * r * rx * k, math.sin(a) * r * ry * k, z))
     bmesh.ops.convex_hull(bm, input=bm.verts)
     if bevel:

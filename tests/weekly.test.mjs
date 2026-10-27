@@ -27,9 +27,12 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  // Before Lakeshore Dunes' debut, nine weeks running visit the nine.
  const seen = new Set(Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12))));
  assert.equal(seen.size, 9);
- // From it, ten weeks running visit all ten.
- const after = new Set(Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12))));
- assert.equal(after.size, BIOME_KEYS.length);
+ // From it, ten weeks running visit every landscape but Haunted Hollow, whose
+ // turn falls out of its season (seasons.js) and goes to Autumn.
+ const after = Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12)));
+ assert.equal(new Set(after).size, BIOME_KEYS.length - 1);
+ assert.ok(!after.includes('haunted'));
+ assert.equal(after.filter(b => b === 'autumn').length, 2);
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');
 });
 

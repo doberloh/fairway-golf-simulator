@@ -1,5 +1,6 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {GROUND_PLANTS} from '../src/species.js';
+import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
 // What a generated course is measured on.
 //
@@ -502,5 +503,36 @@ function ovalContains(p, x, z) {
  const a = Math.atan2(dz, x - p.x), e = ovalRadius(p, a);
  return Math.hypot(x - p.x, dz) < Math.hypot(e.x, e.z) && best > 0;
 }
+
+// TREES SEATED IN THE GROUND (the polish goal; src/tree-seat.js). Every plant
+// is drawn down by its seat; this asks, independently of the seat's own sum,
+// whether any part of its footprint still stands above the ground drawn under
+// it -- on a ring at the footprint's radius and on one at half of it, sixteen
+// points each, so a hump the seat's eight samples missed is caught too. It
+// also catches a plant whose `y` no longer matches the ground (a landform
+// changed after planting). Run with trees on: `--set trees=65`.
+METRICS.seated = {
+ describe: 'plants whose drawn foot stands above the ground anywhere under it -- NEEDS `--set trees=65`',
+ run(w) {
+  const counts = {plantsChecked: 0}, invariants = {floatingPlant: 0}, series = {seatDepth: [], gap: []};
+  for (const t of w.trees || []) {
+   counts.plantsChecked++;
+   const pose = plantPose(t, w.height), base = t.y - pose.depth, R = footprintRadius(t);
+   series.seatDepth.push(pose.depth);
+   // The foot is a plane through the seated base with the pose's slope; the
+   // lean can lift an edge by r x SEAT_LEAN. Checked on its own points, not
+   // the seat's: rings at 85% and 50% of the footprint, twelve each, turned
+   // off the seat's sixteen.
+   let worst = -Infinity;
+   for (const r of [R * .85, R * .5]) for (let k = 0; k < 12; k++) {
+    const a = (k + .37) * Math.PI / 6, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
+    worst = Math.max(worst, base + pose.gx * dx + pose.gz * dz + r * SEAT_LEAN - w.height(t.x + dx, t.z + dz));
+   }
+   series.gap.push(worst);
+   if (worst > .03) invariants.floatingPlant++;
+  }
+  return {series, counts, invariants};
+ },
+};
 
 export const METRIC_NAMES = Object.keys(METRICS);

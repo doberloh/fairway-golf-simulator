@@ -31,6 +31,8 @@ const DEFAULTS = {
  coastal: false, sea: false, inlandWater: true,
  // How far the horizon ring lifts behind the course.
  ringLift: 70,
+ // Peaked far range (landscape-edge.js `peaks`): off unless a landscape asks.
+ ringPeaks: false,
  // How far the router hops between holes on its long walk.
  hop: 58,
  // Scenery counts. Grass is blades, tufts are the near-field clumps.
@@ -192,14 +194,18 @@ const TRAITS = {
  mountain: {light: {shade: '#7c90c4'},
   longGrass: {families: [['grassalpine', 3, .4], ['grassfescue', 2, .6]], count: 3500, near: 18, leaf: '#6f8a48', accent: '#e8d36a'},
   farForest: {cover: .8, size: 9, line: 520, colors: ['#284c35', '#335c3c', '#466d3f']},
-  bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950,
+  // `ringPeaks` (the polish goal): the far range as peaks and aretes
+  // (landscape-edge.js), not sine-wave rolls.
+  bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950, ringPeaks: true,
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
   altitudeRock: true, treeDensity: 3.8,
   // Banff: cliff bands rising off the valley floor the holes share; scree at
   // each band's foot; the forest thinning on the crags.
-  landform: {type: 'crags', scale: 300, height: 70, steps: 4, from: .45, cluster: .42, scree: true, reach: 120,
+  // `jag` (the polish goal): aretes, buttresses and couloirs bending the
+  // cliff bands, and rock by steepness rather than by terrace step.
+  landform: {type: 'crags', scale: 300, height: 70, steps: 4, from: .45, cluster: .42, scree: true, reach: 120, jag: .55,
    kinds: {a: 'rock', b: 'scree'}, gates: {a: {near: 14, ramp: 18}, b: {near: 10, ramp: 14}}},
   rockStyle: 'angular', rockMoss: '#9aa087',
   // A wall of spruce and pine round every fairway (the owner's photograph).
@@ -220,7 +226,7 @@ const TRAITS = {
   // The Old Course and Chambers Bay: fairways 1.3 times as wide, holes routed
   // out and back side by side (routing.js), and fairways that meet where
   // they do (course.js shareFairways). PLACED, all of it.
-  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 80, ease: 60}, routeParallel: {gap: 60, weight: 600, walk: 130},
+  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 140, ease: 170, close: 70, blur: 60, stretch: true, strip: 14}, routeParallel: {gap: 60, weight: 600, walk: 130},
   landform: {type: 'dunes', scale: 150, hummock: 38, height: 5, marram: .55, heather: .6,
    kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
   fallen: null,

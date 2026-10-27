@@ -53,16 +53,43 @@ def layered_rock(k):
         w = 1.1 + .12 * k
         # Round 3: the beds were pillows of one size; now each wears back by
         # its own amount and some carry a broken block on top.
+        # THE POLISH GOAL, round 1 (the owner: "some still look like there are
+        # floating rocks at the top of the stacks"): each bed was a lens, pointed
+        # underneath, so it touched the bed below at a narrow waist and the top
+        # slab hovered. Every bed is now flat underneath as well as on top, and
+        # sits a fifth of its height into the one below, so they meet on a face.
+        # Round 2 (stack-r1): flattened top and bottom, a bed spans only the
+        # middle of its ellipsoid -- from 0.6 to 1.4 of its half-height above
+        # its base -- so beds spaced by their full height left gaps and the top
+        # block hung in the air. Each piece now starts from the measured top of
+        # the one below, 4 cm into it. Thicker beds to keep the stack's height.
+        # Round 4 (stack-r3, in the game): a bed could come out wider than the
+        # one under it, and a wide slab on a narrow one read as floating over
+        # its own dark undercut. Each bed is now at most 95% as wide as the
+        # bed below: the stack tapers up, as a weathered butte does.
+        # Round 5 (stack-r4, in the game): a bed cut from the middle of an
+        # ellipsoid bulges and curls in underneath, so every bed undercut itself
+        # and threw a dark band under its own lip -- the "floating" look, even
+        # where beds touch. A bed is now cut from a thin band at the ellipsoid's
+        # equator (flat top and bottom at 0.75), so its sides stand nearly
+        # upright, and beds sit nearly in line (offsets halved). A bed of
+        # thickness t needs a half-height of t / (2 x 0.25); it spans base +
+        # 0.75 rz to base + 1.25 rz.
+        top, last, f = -.05, 1.05, .75
         for b in range(beds):
-            h = rng.uniform(.22, .42)
-            shrink = (1 - .1 * b) * rng.uniform(.78, 1.05)
-            off = Vector((rng.uniform(-.22, .22), rng.uniform(-.18, .18), 0))
-            ct.hull_rock(mesh, rng, Vector((off.x, off.y, z - .05)), (w * shrink, w * rng.uniform(.6, .85) * shrink, h * .5),
-                         points=12, bevel=.05, seat=0, flat_top=.6, shade_low=.7 + .06 * b, shade_high=1.0 + .05 * b)
-            z += h * .82
+            t = rng.uniform(.26, .42)
+            rz = t / (2 * (1 - f))
+            shrink = min(last * .95, (1 - .1 * b) * rng.uniform(.78, 1.05))
+            last = shrink
+            off = Vector((rng.uniform(-.09, .09), rng.uniform(-.07, .07), 0))
+            base = top - f * rz - .04
+            ct.hull_rock(mesh, rng, Vector((off.x, off.y, base)), (w * shrink, w * rng.uniform(.6, .85) * shrink, rz),
+                         points=14, bevel=.05, seat=0, flat_top=f, flat_bottom=f, shade_low=.7 + .06 * b, shade_high=1.0 + .05 * b)
+            top = base + (2 - f) * rz
         if k % 2 == 1:
-            ct.hull_rock(mesh, rng, Vector((rng.uniform(-.3, .3), rng.uniform(-.2, .2), z - .28)), (.35, .28, .22),
-                         points=9, bevel=.04, seat=0, shade_low=.85, shade_high=1.1)
+            rz = .22 / (2 * (1 - .6))
+            ct.hull_rock(mesh, rng, Vector((rng.uniform(-.15, .15), rng.uniform(-.1, .1), top - .6 * rz - .04)), (.35, .28, rz),
+                         points=10, bevel=.04, seat=0, flat_top=.6, flat_bottom=.6, shade_low=.85, shade_high=1.1)
     return build
 
 

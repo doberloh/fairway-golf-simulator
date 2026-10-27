@@ -28,6 +28,7 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
+const utilMax = Math.min(60, Number(opt('--util', 30)));
 // `--tier high`: another graphics tier than Ultra (the shadows' round 3 checked High).
 const tier = opt('--tier', 'ultra');
 // `--cues '{"greenDefinition":70}'`: the ground-reading settings to draw with
@@ -123,13 +124,48 @@ export const VIEWS = [
   if (!best) return {x: g.x, z: g.z - 60, yaw: 0, height: 20, pitch: -15};
   const d = Math.hypot(best.x - g.x, best.z - g.z) || 1, cx = best.x + (g.x - best.x) / d * 14, cz = best.z + (g.z - best.z) / d * 14;
   return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.8, pitch: -12}; }`},
+ // THE POLISH GOAL'S VIEWS (26 October 2026).
+ // The far scenery from the course's edge: the band between the course's own
+ // ground and the far woods or hills, looking out from 25 m up.
+ {name: 'far-band', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s edge', cam: `w => ({x: w.halfX * .82, z: w.halfZ * .1, yaw: 90, height: 25, pitch: -3})`},
+ {name: 'far-band-b', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s other edge', cam: `w => ({x: -w.halfX * .1, z: -w.halfZ * .82, yaw: 180, height: 25, pitch: -3})`},
+ // The back tee from above (the tee boxes' mowing), and a links tee's
+ // surround from behind and low (the fade into the tall grass).
+ {name: 'tee-top', hole: 0, when: 'noon', caption: 'Hole 1, the back tee from above', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
+  const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L, c = h.toWorld({x: t.x - ux * 9, z: t.z - uz * 9}), s = h.toWorld({x: t.x + ux * 3, z: t.z + uz * 3});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 16, pitch: -52}; }`},
+ {name: 'tee-surround', hole: 0, when: 'afternoon', caption: 'Hole 1, the back tee\'s surround from behind and to the side', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
+  const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L, c = h.toWorld({x: t.x - ux * 14 + uz * 9, z: t.z - uz * 14 - ux * 9}), s = h.toWorld({x: t.x, z: t.z});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 2.4, pitch: -8}; }`},
+ // A pond from above (the water's depth colour): the nearest water to the
+ // first green, from 45 m up.
+ {name: 'pond-top', hole: 0, when: 'noon', caption: 'Hole 1, a pond from above', cam: `w => { const g = w.holes[0].worldPin; let best = null;
+  for (let r = 10; r < 600 && !best; r += 6) for (let a = 0; a < 6.28; a += .1) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'water') { best = {x, z, a}; break; } }
+  if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 40, pitch: -50};
+  const cx = best.x - Math.cos(best.a) * 30, cz = best.z - Math.sin(best.a) * 30;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 45, pitch: -48}; }`},
+ // The nearest boulder to the first green, close to (Desert's stacks).
+ {name: 'rock-near', hole: 0, when: 'afternoon', caption: 'The boulder nearest the first green, close to', cam: `w => { const g = w.holes[0].worldPin; let best = null, bd = 1e9;
+  for (const r of w.rocks || []) { const d = Math.hypot(r.x - g.x, r.z - g.z); if (d < bd && (r.scale || 1) > 1.2) { bd = d; best = r; } }
+  if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 4, pitch: -10};
+  const s = Math.max(2, best.reach || best.scale || 2), cx = best.x - s * 3.2, cz = best.z - s * 2.2;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: Math.max(1.6, s * .9), pitch: -6}; }`},
+ // The nearest big crag from 160 m off and 30 m up (the polish goal's
+ // Mountain rounds): h1-cliff's 40 m can end up inside a crag's spur.
+ {name: 'crag-face', hole: 0, when: 'afternoon', caption: 'Hole 1, the nearest crag from 160 m', cam: `w => { const g = w.holes[0].worldPin; let best = null, top = -1e9;
+  for (let r = 60; r < 400; r += 10) for (let a = 0; a < 6.28; a += .12) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r, y = w.height(x, z); if (y > top) { top = y; best = {x, z, a}; } }
+  const cx = best.x - Math.cos(best.a) * 160, cz = best.z - Math.sin(best.a) * 160;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 30, pitch: 4}; }`},
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];
 const views = homes ? HOUSE_VIEWS : only ? VIEWS.filter(v => only.includes(v.name)) : VIEWS;
 
 const OUT = path.join('bench', 'shots', 'overhaul', label);
-const card = gpuGate({goal: 'cartoon-overhaul', cap: Infinity, restMin: 1, utilMax: 30, tempMax: 80, lookSeconds: 30});
+// `--util 50`: a higher load limit for the gate, when the owner says the card's
+// load is theirs and harmless (26 October 2026: a remote-desktop session read
+// 27-38% with nothing else running). Never past 60; the temperature limit stays.
+const card = gpuGate({goal: 'cartoon-overhaul', cap: Infinity, restMin: 1, utilMax, tempMax: 80, lookSeconds: 30});
 const started = new Date().toISOString(), results = {};
 const b = await launch();
 try {

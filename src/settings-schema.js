@@ -210,7 +210,21 @@ export const SCHEMA_VERSION=11;
 //     three pumpkins rather than one, and every collision radius is the new
 //     models' measured half-width (species.js PROP_MODELS). Only Haunted
 //     Hollow moved.
-export const GENERATOR_VERSION=43;
+// 44: no tree on a cliff's lip and no ground cover on a wall (the polish
+//     goal's floating trees): a trunk whose ground falls away by more than
+//     15% of its height within a tenth of its height, and a cover on ground
+//     steeper than 40 degrees, are not planted. Every landscape moved (its
+//     planting; the ground itself is unchanged).
+// 45: Mountain's crags (the polish goal): aretes, buttresses and couloirs
+//     bend the cliff bands and roughen the faces (landforms.js `jag`), and
+//     rock and scree are where the ground is steep rather than on each
+//     terrace's riser. Only Mountain moved.
+// 46: Links' shared fairways (the polish goal): a join only over a long
+//     overlap (140 m), its gaps closed, its edge blurred, tapered to the
+//     fairway's own width over 170 m and at its stretch's ends; where two
+//     fairways come within 14 m and do not join, a clear strip of rough
+//     between them instead of a sliver. Only Links moved.
+export const GENERATOR_VERSION=46;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

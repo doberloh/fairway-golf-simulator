@@ -144,6 +144,29 @@ const WATER_EDGES={
   // ripples made that patchy, so the bed's dark floor came through as brown
   // smears. Deep water keeps most of its body; the shallows stay clear.
   diffuseColor.a=max(diffuseColor.a,.82*(1.-shallow));
+  // THE POLISH GOAL'S WATER, round 1 (the owner: "are the water depth colors
+  // reversed? It looks lighter colored in the middle where it's deeper").
+  // They were: the shallows above let the bed through (alpha down to .72 of
+  // a near-clear .22 looking down), and the bed under a pond is the dark bank
+  // colour, so the rim went brown; the deep middle was opaque and showed the
+  // water's own bright colour and the sky. The body of still water is now its
+  // depth's own colour, lit by the light it receives: the biome's water darker
+  // and richer toward the deep, lifted toward a sunlit sandy teal toward the
+  // bank, nearly opaque, so the bed no longer decides. Reflections and glints
+  // keep a share on top.
+  ${FOAM_LIGHT}
+  float deep=smoothstep(.15,3.2,depth);
+  // Round 2: round 1's colours went milky under the sun's full light; both
+  // darker, the deep much darker and bluer.
+  vec3 shallowBody=mix(diffuseColor.rgb,vec3(.5,.66,.52),.35)*.62,deepBody=diffuseColor.rgb*vec3(.2,.32,.4);
+  vec3 body=mix(shallowBody,deepBody,deep)*foamLight;
+  // Round 3: from the bank the body covered the reflection too, and a pond
+  // seen across went a flat milky sheet. Water looked into shows its body;
+  // water looked across is a mirror -- so the body's share falls with the
+  // view's grazing angle (Schlick, as the opacity above).
+  float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
+  outgoingLight=mix(outgoingLight,body,.78*(1.-clamp(mirror*1.4,0.,.85)));
+  diffuseColor.a=max(diffuseColor.a,mix(.86,.97,deep));
  }`,
  sea:`{
   vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
@@ -151,6 +174,20 @@ const WATER_EDGES={
   vec2 suv=(su*(seaGrid.zw-1.)+.5)/seaGrid.zw;
   float depth=mix(50.,seaLevel-texture2D(seaHeights,suv).r,inside);
   diffuseColor.a*=smoothstep(0.,.35,depth);
+  // THE POLISH GOAL'S WATER, round 5: the sea and the big lakes (Lakeshore's
+  // is drawn as sea) were one flat colour from the shelf to the horizon. The
+  // same depth body as still water, over a sea's depths: a pale sandy shelf
+  // over the first metres, darkening to deep blue by eight. The foam below
+  // goes on top of it. Past the course's ground map the depth is not known
+  // and is taken as deep (50 m): Lakeshore's lake, most of it out there, kept
+  // its flat colour while this was gated to the map.
+  {
+   ${FOAM_LIGHT}
+   float deepSea=smoothstep(.4,8.,depth);
+   vec3 shelf=mix(diffuseColor.rgb,vec3(.55,.72,.6),.4)*.7,open=diffuseColor.rgb*vec3(.22,.34,.46);
+   float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
+   outgoingLight=mix(outgoingLight,mix(shelf,open,deepSea)*foamLight,.7*(1.-clamp(mirror*1.4,0.,.85))*smoothstep(.05,.35,depth));
+  }
   // At 30% of the water's clock, as the ponds are: at full speed the surf was
   // frantic (the owner). The swash cycle is 9 s of that clock, 30 s of real time.
   float t=waterTime*.3,ph=wNoise(vWaterWorld.xz*.015)*6.2832+wNoise(vWaterWorld.xz*.004+3.1)*3.;
@@ -1444,7 +1481,10 @@ export class GolfView{
   // is calm, so its ripples bend the mirror a third as far (`calm`), and the
   // woods come back as broad bands of the far shore instead of grit.
   const calm=kind==='still'&&this.style==='cartoon';
-  if(calm){material.metalness=.38;material.envMapIntensity=1.3;}
+  // The polish goal's water, round 4: with the ripples calmed and the body
+  // drawn from depth, a pond seen from its bank was a flat sheet with no
+  // trees in it; the mirror back up part of the way (.38 -> .5, 1.3 -> 1.8).
+  if(calm){material.metalness=.5;material.envMapIntensity=1.8;}
   // The sea and still water read their depth from the ground grid (WATER_EDGES).
   const sea=kind==='sea'||kind==='still'&&!body?.ocean?this.seaDepthMap():null;
   // This course's sun, by reference: both change through the day.
@@ -1494,7 +1534,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v7-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v13-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 

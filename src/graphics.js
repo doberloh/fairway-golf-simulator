@@ -40,6 +40,10 @@ export const TIERS = {
  // won't do on 30 September, on the look. Automatic resolution is what Low has.
  low: {
   pixelRatio: .75,
+  // The far woods (vegetation.js addFarWoods; the polish goal) are grove
+  // domes only on Low -- 20 triangles a site, never bare ground (the owner),
+  // and the cheapest for the weakest machines, the owner's one worry.
+  farWoods: 'groves',
   shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},
   grass: .35,
@@ -123,6 +127,9 @@ export const TIERS = {
  },
  medium: {
   pixelRatio: 1.75,
+  // The far woods as grove domes only, as on Low (the polish goal): the
+  // crown clusters cost Medium 7-14% of a frame against the goal's 5%.
+  farWoods: 'groves',
   shadow: {size: 2048, radius: 1},
   fog: {near: 1300, far: 5500, overviewNear: 4500, overviewFar: 14000},
   grass: 1,
@@ -410,6 +417,12 @@ const clean = g => ({
  // the switch carries the key, so everyone starts off. Drawing only: the ball
  // hits the real stick either way.
  distantFlags: bool(g?.distantFlags, false),
+ // HAUNTED HOLLOW ALL YEAR (seasons.js): off, so the landscape is offered
+ // only from 1 October to 7 November; on, any time. A player's preference,
+ // not a course setting: in the course schema it would ride inside every
+ // saved course and shared code. A record saved before it has no key, so
+ // every player starts with the season.
+ hauntedAllYear: bool(g?.hauntedAllYear, false),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every
@@ -457,5 +470,5 @@ export function needsRebuild(a, b) {
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
   (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
-  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0);
+  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true);
 }

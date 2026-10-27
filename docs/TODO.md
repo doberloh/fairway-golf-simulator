@@ -127,6 +127,54 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   wrong). What an albatross changes: about 315 XP for a fresh golfer (hole,
   score, first birdie), short of level 2's 400, so no level-up; its own
   fanfare. Still unexplained; lab.strike cannot stage a one-putt deliberately.
+- [ ] **The far woods and Desert's stacks have been captured, not played**
+  (far-woods.js, vegetation.js addFarWoods; cartoon_rocks.py; CARTOON_OVERHAUL
+  *The far woods*, *Desert rock stacks*). Check: no bare band between the
+  course's trees and the hills; woods to the horizon where the landscape is
+  wooded, none above Mountain's treeline, thin in the desert; nothing pops as
+  the camera turns (the woods are in twelve culled sectors); on Low and
+  Medium the far trees are simpler groves -- acceptable?; a desert stack's
+  beds sit on each other with no hovering top.
+- [ ] **Links' shared fairways have been judged from above, not played**
+  (course.js shareFairways; generator 46; CARTOON_OVERHAUL *Shared links
+  fairways, rounds 4 to 13*). Check from the tees on seeds that join (the
+  default seed's 2 and 3; S5's 9-11): one merged fairway, no square rungs,
+  no sliver of rough between near fairways; fewer joined holes than before --
+  enough of the "LARGE" shared fairways the owner asked for?
+- [ ] **Mountain's crags and far peaks have been captured, not played**
+  (landforms.js jag, landscape-edge.js ringPeaks; generator 45). Check: no
+  striped banding where grass meets rock; the crags read as cliffs from the
+  tees; the peaks behind the valley; no hole made unfair by a crag (the bench
+  says none is); the nearest far face is pale under the haze -- acceptable?
+- [ ] **Water depth colour has been captured, not played** (renderer.js
+  WATER_EDGES; CARTOON_OVERHAUL *Water depth colour*). Check from a tee and
+  from the air: a pond darker in the middle, lighter toward its banks; no
+  brown rim; the sea's shelf at Island and Links pale, the open water deep
+  blue; at dusk and night the water darkens with the light rather than
+  glowing.
+- [ ] **The links tee surrounds have been captured, not played**
+  (vegetation.js teeFade; CARTOON_OVERHAUL *Links tee surrounds*). Check on
+  Links and Lakeshore tees: the grass rises into the fescue over a few metres
+  rather than a wall; nothing tall in the strip a ball takes off the tee; the
+  same fade on every other landscape's tees reads as natural.
+- [ ] **The tee boxes' mowing has been captured, not played** (ground.js;
+  CARTOON_OVERHAUL *Tee boxes' mowing*). Check on several tees: the stripes
+  run with the shot whatever the hole's bearing; no shimmer as the camera
+  moves; the divots sit behind the markers, not in front; the range's mats
+  are untouched.
+- [ ] **Seated trees have been measured and captured, not played** (tree-seat.js;
+  CARTOON_OVERHAUL *Floating trees*). Check on Mountain and PNW slopes: no
+  trunk's foot shows daylight under it; ground cover on a slope lies along it
+  rather than sticking out level; nothing looks sunk (a tree on a steep slope
+  is drawn up to 15% of its height lower). The wait as a course loads is
+  0.1-0.15 s longer here.
+- [ ] **Haunted Hollow's season has been tested, not played** (seasons.js;
+  CARTOON_OVERHAUL *Haunted Hollow is seasonal*). Check: with the computer's
+  date out of season, Course studio, Surprise me and the Endless picker do not
+  offer it, and the menu's backdrop never grows it; Settings, Graphics,
+  "Haunted Hollow all year" brings it back at once (a picker open at the time
+  redraws when reopened); a saved course on Haunted Hollow still opens and
+  shows it selected; in season (today, until 7 November) everything offers it.
 - [ ] **The gardens have been seen only in captures** (cartoon_garden.py,
   homes.js): fences stand on the ground on a sloping lot (they were never
   fitted to it, before or now); the shrubs do not stand in the driveway or

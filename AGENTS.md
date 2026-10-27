@@ -43,10 +43,14 @@ today's ground; never hold a change back because the fingerprint moved.
 
 ## On the cartoon-overhaul branch, the goal's working rules outlive it
 
-The overhaul's `/goal` ended on 26 October 2026. The owner then said its rules
-for the computer and its rules set aside **still apply to every single-turn
-request on this branch**, until it is merged or the owner says otherwise. The
-brief is local and may be gone, so its limits are here:
+The overhaul's first `/goal` ended on 26 October 2026. The owner then said its
+rules for the computer and its rules set aside **still apply to every
+single-turn request and every later `/goal` on this branch** (the polish goal,
+26 October; the far-landscape and mowing goal drafted the same day: "This goal
+will maintain the same 'no ask' GPU/SMOKE/CPU usage rules as before"), until
+it is merged or the owner says otherwise. A goal here need not repeat them;
+its text points at this section. The briefs are local and may be gone, so the
+limits are here:
 
 - **The graphics card needs no asking on this branch**: `npm run smoke`,
   captures (`tools/capture/`), the game in the browser pane, `npm run profile`
@@ -62,6 +66,11 @@ brief is local and may be gone, so its limits are here:
   - a hung run, driver reset or lost WebGL context: write it down, wait 10
     minutes, retry once; a second failure ends GPU use for that request;
   - every job logged (`bench/ab/gpu-runs.jsonl`, goal `cartoon-overhaul`).
+  - **When the owner says they are watching over remote desktop**, their
+    session alone holds the card at 30-40%, so the gate may take `--util 50`
+    (the owner, 26 October 2026: "please feel free to use the GPU im just
+    monitoring remotely"). Only while no game, browser or Blender we did not
+    start is in the process list; the temperature limit does not move.
   - **Not covered: anything software-rendered** -- `smoke --software`, the
     profiler's `weak` group. One took the machine down on 13 October; ask
     every time.
@@ -340,8 +349,8 @@ ask as above.
 - The realistic-graphics goal (24 October 2026) has its own GPU limits, in its
   goal text.
 - The cartoon-overhaul goal (25 October 2026) had its own GPU limits; since
-  it ended they hold for single-turn work on that branch (*On the
-  cartoon-overhaul branch, the goal's working rules outlive it*).
+  it ended they hold for single-turn work and every later goal on that branch
+  (*On the cartoon-overhaul branch, the goal's working rules outlive it*).
 
 ## Ask before a graphics profile; never just run one
 
