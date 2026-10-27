@@ -109,7 +109,11 @@ float foamAlpha(){
  float s=vFoamUv.x*shoreLength;
  // Each train a whole number of wavelets round the shore, so they meet where
  // the outline closes.
- float l1=shoreLength/max(1.,floor(shoreLength/7.3+.5)),l2=shoreLength/max(1.,floor(shoreLength/11.9+.5));
+ // Round 16: wavelets as long as the water lets them grow -- a small pond's
+ // fetch is short, so its wavelets come shorter and closer (0.6 of the length
+ // on a pond 180 m round, 1.2 on one 360 m and more).
+ float sc=clamp(shoreLength/300.,.6,1.2);
+ float l1=shoreLength/max(1.,floor(shoreLength/(7.3*sc)+.5)),l2=shoreLength/max(1.,floor(shoreLength/(11.9*sc)+.5));
  float w1=fract(s/l1-t*.11),w2=fract(s/l2+t*.07+.37);
  float reach1=.25+.5*fNoise(vec2(mod(floor(s/l1-t*.11),997.)*1.7,3.1)),reach2=.2+.45*fNoise(vec2(mod(floor(s/l2+t*.07+.37),997.)*2.3,7.9));
  float crest1=smoothstep(0.,.5,w1)*(1.-smoothstep(.5,1.,w1)),crest2=smoothstep(0.,.5,w2)*(1.-smoothstep(.5,1.,w2));
@@ -264,7 +268,9 @@ const WATER_EDGES={
   float lace=wNoise(vWaterWorld.xz*1.3+vec2(t*.25,-t*.18))*.6+wNoise(vWaterWorld.xz*3.9-vec2(t*.3,t*.1))*.4;
   float lip=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+.45,depth));
   float wake=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+1.1,depth))*.45;
-  float breakers=exp(-pow((depth-1.15)/.22,2.))*.5;
+  // Round 12: the breakers come and go in stretches along the coast (a broad,
+  // slowly drifting noise), not one unbroken line of white all the way round.
+  float breakers=exp(-pow((depth-1.15)/.22,2.))*.5*smoothstep(.35,.65,wNoise(vWaterWorld.xz*.012+vec2(t*.04,-t*.03)));
   float foam=clamp((lip*1.25+wake)*smoothstep(.22,.6,lace)+breakers*smoothstep(.45,.8,lace),0.,1.)*inside;
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.93,.96,.95)*foamLight,foam*.9);
@@ -292,7 +298,9 @@ const WATER_EDGES={
   foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
   // Round 9: the wet line where the water meets the bank, as a pond's (round 4).
   float wetEdge=smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore));
-  foam=max(foam,wetEdge*.35*(.7+.3*lace));
+  // Round 15: faint and broken (at .35 and unbroken it ran down both banks as
+  // a painted white line, and a creek read as a road).
+  foam=max(foam,wetEdge*.14*smoothstep(.3,.7,lace));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.9,.94,.92)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
@@ -309,10 +317,14 @@ const WATER_EDGES={
   // shallow and quick): standing chevrons over the rough stretches of its bed.
   // Round 6: crests 1.25 m apart (were 0.6 m, lost from the bank), in more
   // and stronger patches.
-  float riffle=smoothstep(.45,.9,sin((vChan.x*.8+abs(across)*.6)*6.2832))*smoothstep(.35,.6,wNoise(vChan*vec2(.08,.3)+2.9));
-  foam=max(foam,riffle*.55*(.6+.4*fleck));
+  // Round 13: broader crests (they read as white dashes) and an opener V, in
+  // more of the bed, stronger.
+  float riffle=smoothstep(.3,.85,sin((vChan.x*.8+abs(across)*.35)*6.2832))*smoothstep(.3,.55,wNoise(vChan*vec2(.08,.3)+2.9));
+  // Round 15: softer (.7 read as lane markings down the middle).
+  foam=max(foam,riffle*.4*(.6+.4*fleck));
   // Round 9: the wet line at the bank.
-  foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.35);
+  // Round 15: faint and broken, as a river's.
+  foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.14*smoothstep(.35,.75,wNoise(vec2(drift*.6,across*2.))));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.92,.95,.94)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
@@ -1551,7 +1563,7 @@ export class GolfView{
    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
     .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey=()=>'fairway-shore-foam-v5';
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v6';
   const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
   this.group.add(mesh);
  }
@@ -1650,7 +1662,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v25-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v27-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 

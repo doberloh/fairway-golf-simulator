@@ -802,7 +802,13 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    // Round 5: held a little further before they fade to the middle tone (from
    // 5 pixels a period, was 8): from the approach they had already gone.
    s1=mix(s1,.5,smoothstep(.2,.55,a1));s2=mix(s2,.5,smoothstep(.2,.55,a2));
-   stripe=.5*(s1+s2);
+   // Round 7: each pass shades with the view, as cut grass does -- laid away
+   // from you light, toward you dark -- so a diamond turns from light to dark
+   // as you walk round the green. A pass travels along its bands, across its
+   // own normal: pass 1 along m2, pass 2 along m1; its strength is how
+   // squarely that line runs with the view (the hole's frame, as p).
+   vec2 dv=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vh=vec2(dv.x*tr.z-dv.y*tr.w,dv.x*tr.w+dv.y*tr.z);
+   stripe=clamp(.5+.33*((s1*2.-1.)*dot(m2,vh)+(s2*2.-1.)*dot(m1,vh)),0.,1.);
   }
   vec3 gs=normalize(groundNormal);if(gs.y<0.)gs=-gs;
   vec2 gl=vec2(gs.x*tr.z-gs.z*tr.w,gs.x*tr.w+gs.z*tr.z);
@@ -892,7 +898,11 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   vec2 tg=vec2(teeBox(teeF+vec2(re,0.),teeHalf,rr)-teeBox(teeF-vec2(re,0.),teeHalf,rr),teeBox(teeF+vec2(0.,re),teeHalf,rr)-teeBox(teeF-vec2(0.,re),teeHalf,rr));
   vec2 vw=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vl=vec2(vw.x*tr.z-vw.y*tr.w,vw.x*tr.w+vw.y*tr.z),vt=vec2(vl.x*teeAxis.y-vl.y*teeAxis.x,vl.x*teeAxis.x+vl.y*teeAxis.y);
   float lapTone=-.5+.35*dot(normalize(vec2(-tg.y,tg.x)+1e-5),vt);
-  float tband=mix(tstripe*2.-1.,lapTone,tlap);
+  // Round 5: the bands shade with the view too -- the passes run along the
+  // line of play, so from the tee one band light, the next dark, and they
+  // swap when you look back at it; side on they all but vanish, as cut grass
+  // does (vt.y: the view along the pad's own axis).
+  float tband=mix((tstripe*2.-1.)*clamp(vt.y*1.3,-1.,1.),lapTone,tlap);
   // Round 3: the lap at half again the bands' contrast (.11): at .075 it ran
   // continuous but all but vanished from the tee (capture view h1-teekit).
   turf*=mix(1.,1.+tband*mix(.075,.11,tlap),cueStripes);
@@ -1082,6 +1092,15 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   }
   if(kind==5.)turf=mix(turf,turf*vec3(.86,.84,.8),smoothstep(.55,.85,n3)*.8*cuePatches);
  }
+ // WET SAND (the far-landscape goal's waves, round 14). Where the swash runs
+ // up a beach it leaves the sand dark and wet: a band from the sea's edge to
+ // about 0.45 m above it (the sea stands at 0), darker toward the water, and
+ // under it. Sand only -- ground whose red is at least its green -- so grass
+ // low by the shore keeps its colour. PLACED.
+ if(farSea>.5){
+  float wetSand=(1.-smoothstep(.05,.45,groundPoint.y))*smoothstep(-.06,0.,turf.r-turf.g);
+  turf=mix(turf,turf*vec3(.74,.76,.8),wetSand*.85);
+ }
  // SOFT OCCLUSION (U1 in TODO): darker at the foot of every trunk and boulder
  // and under overlapping crowns, baked in occlusion.js. Only inside the course's
  // own ground -- the landscape past the edge shares this material and has no
@@ -1217,5 +1236,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v68';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v70';return m;
 }

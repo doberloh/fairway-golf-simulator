@@ -35,11 +35,14 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
  });
  const rounds = [], spires = [];
  for (const t of trees) {
-  if (!(t.h > 3)) continue;
+  // Round 11: bushes too, 1.2 m and up, where they stand within 15 m of the
+  // rim -- the bank's shrubs fill the first metre of a pond's reflection.
+  if (!(t.h > 1.2)) continue;
+  const bush = !(t.h > 3);
   // The nearest pond whose rim the tree stands within `reach` of plus its
   // height (a taller tree reflects from further back).
   let pond = null, best = 1e9;
-  for (const p of ponds) { const d = Math.hypot(t.x - p.x, t.z - p.z) - p.R; if (d < reach + t.h && d < best) { best = d; pond = p; } }
+  for (const p of ponds) { const d = Math.hypot(t.x - p.x, t.z - p.z) - p.R; if (d < (bush ? 15 : reach + t.h) && d < best) { best = d; pond = p; } }
   if (!pond || t.y < pond.b.level + .2) continue;
   (SPIRE.test(t.kind || '') ? spires : rounds).push({t, level: pond.b.level});
  }

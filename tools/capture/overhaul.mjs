@@ -179,12 +179,13 @@ export const VIEWS = [
   const c = g.green, L = Math.hypot(c.x, c.z) || 1, back = (g.greenSize ?? 17) + 6, cam = h.toWorld({x: c.x - c.x / L * back, z: c.z - c.z / L * back}), pin = h.toWorld(g.pin ?? c);
   return {x: cam.x, z: cam.z, yaw: Math.atan2(pin.x - cam.x, pin.z - cam.z) * 180 / Math.PI, height: 1.7, pitch: -6}; }`},
  // The surf (the far-landscape goal's waves, round 7): from the first green,
- // out in sixteen directions to the first sea (water at the sea's level); the
+ // out in sixteen directions to the first sea (water at the sea's level), up to
+ // 2.5 km and just past the map's edge (Lakeshore's lake lies 1.5 km east); the
  // camera 14 m back up the beach, 3 m up, looking out at the swash. From high
  // above where there is no sea.
  {name: 'sea-near', hole: 0, when: 'afternoon', caption: 'The surf, from the beach', cam: `w => { const g = w.holes[0].worldPin, lv = w.waterLevel ?? 0; let best = null;
   for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, ux = Math.sin(a), uz = Math.cos(a);
-   for (let r = 20; r < 1500; r += 4) { const x = g.x + ux * r, z = g.z + uz * r; if (Math.abs(x) > w.halfX || Math.abs(z) > w.halfZ) break;
+   for (let r = 20; r < 2500; r += 4) { const x = g.x + ux * r, z = g.z + uz * r; if (Math.abs(x) > w.halfX + 60 || Math.abs(z) > w.halfZ + 60) break;
     if (w.surface(x, z) === 'water' && w.height(x, z) <= lv + .05) { if (!best || r < best.r) best = {r, x, z, ux, uz}; break; } } }
   if (!best) return {x: 0, z: 0, height: 200, pitch: -40};
   const cx = best.x - best.ux * 14, cz = best.z - best.uz * 14;

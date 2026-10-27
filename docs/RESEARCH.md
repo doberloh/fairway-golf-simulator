@@ -10563,7 +10563,20 @@ the outer 7% of a channel's half-width (0.93-1 of `shore`), 0.35 strong.
 Round 10: a channel's water faded in over its first 3 m and out over its
 last. Round 11: the sea's swash cycle 9 s of its clock (30 s real) and the
 whole run-up; a lake drawn as sea (Lakeshore, `lakeWaves`) 5 s and 0.6 of
-it -- wind waves on a lake are shorter and smaller than ocean swell. PLACED.
+it -- wind waves on a lake are shorter and smaller than ocean swell. Round
+12: breakers gated by smoothstep(0.35, 0.65) of noise at 0.012 a metre,
+drifting 0.04 and 0.03 of the clock. Round 13: a creek's crests 0.3-0.85 of
+the wave, 0.8 and 0.35 a metre, gate 0.3-0.55, 0.7 strong. Round 14: wet
+sand -- below 0.05 m over the sea fully, fading out by 0.45 m, the colour x
+(0.74, 0.76, 0.8) at 0.85, where red - green > -0.06. Round 16: a pond's
+wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). PLACED.
+
+Mowing that shades with the view (ground.js; the diamonds' round 7, the
+tee's round 5): cut grass reads light where it is laid away from the eye
+and dark toward it, so a stripe's tone is its pass's light or dark times
+the cosine between the pass's line of travel and the view. Greens: two
+passes at right angles, each x 0.33, so the pair reaches the old range;
+tees: one set of passes along the line of play, x 1.3 clamped to 1. PLACED.
 
 Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
 cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second

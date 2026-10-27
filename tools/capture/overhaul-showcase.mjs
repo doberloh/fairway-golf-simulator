@@ -129,6 +129,43 @@ function rounds() {
  }).join('\n');
 }
 
+// THE FAR-LANDSCAPE AND MOWING GOAL (26-27 October 2026): every item's notes
+// (its ### section of the goal's ## section) and its rounds as a table --
+// landscape and view down the side, the start (`dist-r0/`, `far-r0/`) and
+// each capture round (`g3-r<n>/` and its `-streams`, `-range`, `-noclouds`
+// runs) across -- plus the shared fairways' maps (`share3-r<n>/`).
+const GOAL_ITEMS = [
+ {title: 'The far landscape', views: ['far-out', 'far-side', 'far-high'], biomes},
+ {title: 'The tee\'s clean-up lap', views: ['tee-top', 'h1-teekit'], biomes: ['desert', 'links', 'midwest']},
+ {title: 'Diamond-mowed greens', views: ['h2-putt', 'h2-green', 'range-green'], biomes: ['links', 'desert', 'midwest']},
+ {title: 'Trees in still water', views: ['h1-pond', 'shore-near'], biomes: ['lakeshore', 'midwest', 'autumn', 'pnw']},
+ {title: 'The straight tone step', views: ['h2-green-b'], biomes: ['midwest', 'links']},
+ {title: 'Waves at the water\'s edge', views: ['shore-near', 'sea-near', 'stream-near', 'h1-pond'], biomes: ['lakeshore', 'midwest', 'island', 'pnw', 'mountain']},
+ {title: 'Links shared fairways, the far-landscape goal', views: ['share-top', 'share-tee', 'share-tee-b'], biomes: ['links'], maps: true},
+];
+function farGoal() {
+ const goal = section('The far-landscape and mowing goal');
+ const parts = goal.split(/\n(?=### )/);
+ const n = d => Number(d.match(/^g3-r([0-9]+)/)?.[1] ?? 0);
+ const labels = ['dist-r0', 'far-r0', ...fs.readdirSync(SHOTS).filter(d => /^g3-r[0-9]+(-streams|-range|-noclouds)?$/.test(d)).sort((a, b) => n(a) - n(b) || a.localeCompare(b))];
+ const out = [md(parts[0])];
+ for (const item of GOAL_ITEMS) {
+  const text = parts.find(p => p.startsWith('### ' + item.title));
+  const rows = [];
+  for (const b of item.biomes) for (const v of item.views) {
+   const cells = labels.map(l => [l, path.join(SHOTS, l, b, `${v}.jpg`)]).filter(([, f]) => has(f));
+   if (cells.length) rows.push(`<tr><th>${esc(BIOMES[b]?.name ?? b)}<br><small>${esc(v)}</small></th>${cells.map(([l, f]) => `<td>${img(f, l)}</td>`).join('')}</tr>`);
+  }
+  let maps = '';
+  if (item.maps) {
+   const dirs = fs.readdirSync(SHOTS).filter(d => /^share3-r[0-9]+b?$/.test(d)).sort((a, b) => a.localeCompare(b, 'en', {numeric: true}));
+   maps = `<div class="grid">${dirs.flatMap(d => fs.readdirSync(path.join(SHOTS, d)).filter(f => f.endsWith('.png')).slice(0, 2).map(f => img(path.join(SHOTS, d, f), `${d} · ${f}`))).join('')}</div>`;
+  }
+  out.push(`<section><h3>${inline(text ? text.split('\n')[0].replace(/^### /, '') : item.title)}</h3>${text ? md(text.split('\n').slice(1).join('\n')) : ''}${rows.length ? `<div class="scroll"><table class="rounds">${rows.join('')}</table></div>` : ''}${maps}</section>`);
+ }
+ return out.join('\n');
+}
+
 // The lighting rounds: each view a row, each round a column, per landscape.
 function lighting() {
  const labels = fs.readdirSync(SHOTS).filter(d => /^light-r\d+$/.test(d)).sort((a, b) => a.localeCompare(b, 'en', {numeric: true}));
@@ -211,10 +248,11 @@ code{background:var(--line);padding:0 3px;border-radius:3px}
 </style></head><body><main>
 <h1>Cartoon overhaul</h1>
 <p>Branch <code>cartoon-overhaul</code> against main (e3b6288), built ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC from <code>bench/shots/overhaul/</code>. The record and the notes are docs/CARTOON_OVERHAUL.md; this page only shows them.</p>
-<nav><a href="#before">Before and after</a><a href="#light">Light</a><a href="#rounds">Rounds</a><a href="#reading">Reading the ground</a><a href="#grounds">Ground types</a><a href="#numbers">Numbers</a><a href="#frame">Frame rate</a><a href="#rules">Rules set aside</a></nav>
+<nav><a href="#before">Before and after</a><a href="#fargoal">Far landscape and mowing</a><a href="#light">Light</a><a href="#rounds">Rounds</a><a href="#reading">Reading the ground</a><a href="#grounds">Ground types</a><a href="#numbers">Numbers</a><a href="#frame">Frame rate</a><a href="#rules">Rules set aside</a></nav>
 <h2 id="before">Every landscape, main and the branch</h2>
 <p>Seed <code>overhaul</code>, nine holes, the same camera rule in both. Generation has changed, so a pair is the same hole and camera, not the same ground.</p>
 ${before}
+<h2 id="fargoal">The far landscape and mowing goal</h2>${farGoal()}
 <h2 id="light">The lighting rounds</h2>${lighting()}
 <h2 id="rounds">Every asset and texture, round by round</h2>${rounds()}
 <h2 id="reading">Reading the ground</h2>${md(section('Reading the ground'))}${roundPictures('reading the ground')}
