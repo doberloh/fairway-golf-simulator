@@ -31,7 +31,7 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
-## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
+## The cartoon overhaul (branch `cartoon-overhaul`, 25-27 October 2026; merged)
 
 The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
 
@@ -157,6 +157,14 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   concrete (sandstone flags in Desert) lying on the ground with no grass
   through it; with houses on, the ground at a house's walls is shaded (faint in
   long rough, where the blades cover it) and Ultra's ferns do not gather there.
+- [ ] **`ball-light-shaders` failed once in nine runs** (27 October, the
+  far-landscape goal's final smoke run): "1 lit shader(s) built as the menu
+  hole became the first hole: MeshToonMaterial", on a Links course
+  (CASTLE-1440-1); the next eight runs passed. The step adopts whatever
+  course the menu was showing, so `--endless-seed` cannot replay it. Not
+  known whether game or harness. To do: if it fails again, note the menu's
+  course and which toon material it names (the journey could print the
+  material's name or its program key).
 - [ ] **After an albatross the scorecard waits about 7 s longer than after a
   birdie** (measured in the smoke run, 27 October: 12.1 s against 4.9 s from
   the banner and XP checks to the card). By design the card waits for the

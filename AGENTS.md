@@ -23,69 +23,32 @@ tests, look at visual changes in the browser, and build before updating
 archives. Physical launch-monitor testing waits until requested. A TODO entry
 is not permission to widen an unrelated task.
 
-## On the cartoon-overhaul branch, landscapes are meant to change
+## The cartoon look is main's (merged 27 October 2026)
 
-The cartoon-overhaul rework (25 October 2026; brief in the local
-docs/reports/cartoon-overhaul-goal.md) redesigns every biome's landscape, so
-**a seed may and should make a different course than it does on main**:
-terrain, routing, ground types, planting, water. Nothing here asks to keep
-today's ground; never hold a change back because the fingerprint moved.
+The cartoon overhaul (25-27 October 2026; the record is
+docs/CARTOON_OVERHAUL.md) redesigned every landscape, model, mowing pattern,
+the water and the light, and is merged: it is what main looks like now. While
+it was a branch it had two rules of its own -- every landscape free to move,
+and the graphics card used without asking. **Both ended with the merge.**
 
-- **What still holds is determinism:** on this branch a seed makes the same
-  course every time, on any machine.
-- **Every moved ground still bumps `GENERATOR_VERSION`** with its line, so an
-  older save is flagged rather than rebuilt in silence; old saves need not
-  load.
-- **Each generation rule set aside is written down** in
-  docs/CARTOON_OVERHAUL.md, *Rules set aside*.
-- **This section is for this branch only.** Before a merge to main, rewrite
-  it as what main's rules then are.
-
-## On the cartoon-overhaul branch, the goal's working rules outlive it
-
-The overhaul's first `/goal` ended on 26 October 2026. The owner then said its
-rules for the computer and its rules set aside **still apply to every
-single-turn request and every later `/goal` on this branch** (the polish goal,
-26 October; the far-landscape and mowing goal drafted the same day: "This goal
-will maintain the same 'no ask' GPU/SMOKE/CPU usage rules as before"), until
-it is merged or the owner says otherwise. A goal here need not repeat them;
-its text points at this section. The briefs are local and may be gone, so the
-limits are here:
-
-- **The graphics card needs no asking on this branch**: `npm run smoke`,
-  captures (`tools/capture/`), the game in the browser pane, `npm run profile`
-  and Blender. Run them through `tools/gpu-run.mjs --goal cartoon-overhaul
-  --util 30 --temp 80 --rest 1` (the capture tools gate themselves), which
-  keeps these precautions:
-  - `nvidia-smi` read for about 30 seconds first; above 30% busy, or a game,
-    browser or Blender we did not start holding the card: wait, and say so;
-  - one job at a time, a few minutes at most, at least a minute apart;
-  - above 80 °C, stop and cool down 10 minutes;
-  - after every job, close browsers, built-in browser tabs and Blender, and
-    check nothing of ours is left on the card;
-  - a hung run, driver reset or lost WebGL context: write it down, wait 10
-    minutes, retry once; a second failure ends GPU use for that request;
-  - every job logged (`bench/ab/gpu-runs.jsonl`, goal `cartoon-overhaul`).
-  - **When the owner says they are watching over remote desktop**, their
-    session alone holds the card at 30-40%, so the gate may take `--util 50`
-    (the owner, 26 October 2026: "please feel free to use the GPU im just
-    monitoring remotely"). Only while no game, browser or Blender we did not
-    start is in the process list; the temperature limit does not move.
-  - **Not covered: anything software-rendered** -- `smoke --software`, the
-    profiler's `weak` group. One took the machine down on 13 October; ask
-    every time.
-- **The rules set aside stay set aside** -- the landscape-generation and
-  graphics rules where they block the look, and the build-size limit -- each
-  listed in docs/CARTOON_OVERHAUL.md, *Rules set aside*; a new one is added
-  there in the same commit.
-- **Frame rate: the High and Ultra gap is accepted** (the owner: "220 frames
-  per second is still way higher than a golf sim actually needs"). The worry
-  is low-end machines on Low: a change that adds cost to Low or Medium is
-  measured there before it is called done.
-- **Not merged until the owner says so**, as everywhere (*One branch per
-  journey*). Before that merge, this section goes with the one above.
-- How the overhaul worked -- its tools, rounds, capture views and lessons --
-  is in docs/CARTOON_OVERHAUL.md, *Working on the branch*.
+- **A seed keeps its course again**: the ordinary discipline of *Two version
+  numbers* holds. A change that moves ground needs its own reason and its
+  `GENERATOR_VERSION` line, as before the overhaul.
+- **What the overhaul set aside and kept is main's code now** -- the ground
+  types' planting rule (`allows`), a faded creek end rising to its ground,
+  the painted trees' far twins on High and Ultra, the tee surround measured on
+  the open scatter. Each is listed, with how to undo it, in
+  docs/CARTOON_OVERHAUL.md, *Rules set aside*. Nothing else is set aside.
+- **The graphics card is asked for again** (*Nothing runs on the graphics
+  card unless the owner asks*). Once asked, run the job through
+  `tools/gpu-run.mjs --goal <the request's name>`, which reads the card first
+  and logs the run.
+- **The frame-rate gap on High and Ultra stays accepted** (the owner, 26
+  October 2026: "220 frames per second is still way higher than a golf sim
+  actually needs"). The worry is low-end machines on Low: a change that adds
+  cost to Low or Medium is measured there before it is called done.
+- **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
+  the branch*** -- its capture views, how a round ran, and its lessons.
 
 ## Ideas live in IDEAS.md, and are read only when wanted
 
@@ -305,9 +268,9 @@ The owner plays games on this machine, and test runs on its GPU have crashed it
 twice while they did. **Nothing that draws on the graphics card runs unless the
 owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
 browser pane, `npm run profile`. Earlier permission does not carry over -- the
-exceptions are Blender (below), a `/goal` that says so (next section), and
-the cartoon-overhaul branch, within its precautions (*On the cartoon-overhaul
-branch, the goal's working rules outlive it*).
+exceptions are Blender (below) and a `/goal` that says so (next section).
+The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
+cartoon look is main's*).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.
@@ -348,9 +311,8 @@ ask as above.
   before, the result.
 - The realistic-graphics goal (24 October 2026) has its own GPU limits, in its
   goal text.
-- The cartoon-overhaul goal (25 October 2026) had its own GPU limits; since
-  it ended they hold for single-turn work and every later goal on that branch
-  (*On the cartoon-overhaul branch, the goal's working rules outlive it*).
+- The cartoon-overhaul goals (25-27 October 2026) had their own GPU limits,
+  which ended with the branch's merge (*The cartoon look is main's*).
 
 ## Ask before a graphics profile; never just run one
 

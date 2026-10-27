@@ -130,7 +130,7 @@ maple.
 
 ## The cartoon packs (the cartoon overhaul, from 25 October 2026)
 
-The `cartoon-overhaul` branch remakes every model in one hand
+The cartoon overhaul (merged 27 October 2026) remade every model in one hand
 (docs/CARTOON_OVERHAUL.md). Its packs are built from a shared library,
 `tools/blender/cartoon.py`, on top of `fairway_blender.py`, and add two things
 every earlier model lacked:
@@ -349,8 +349,8 @@ flutes, deepest at the foot. Crown widths are the generator's (species.js
 `CROWN_FRACTION`: half-width over height 0.095 redwood, 0.17 fir and hemlock,
 0.19 red cedar). 1,000-1,900 faces a tree, with far twins, against the grown
 grove's 13,000-53,000: the model module fell from 19.8 MB to 7.8 MB. The
-grown models (tools/grow.mjs) no longer ship on this branch; `thinSprays` is
-kept, and tested on a built crown, for main's sake.
+grown models (tools/grow.mjs) no longer ship; `thinSprays` is
+kept, and tested on a built crown, should a grown model return.
 
 ### cartoon_garden
 

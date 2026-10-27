@@ -212,6 +212,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A new biome is one record plus tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), the tool fixture lists, the tiny models' tables, the ambience, the capture list, and a debut week in the course of the week's rotation. [Per-biome tables still live outside the record]
 - Blowouts are one baked field read by both `surface()` and the ground shader: rough only, painted last, clear of water, inside the atlas. [BLOWOUTS ARE ONE BAKED FIELD]
 - The ground types are baked the same way, asked a, b, floor, fallen and painted in reverse; a new one is a row in grounds.js; planting asks `allows`, not `=== 'rough'`; the relief fades from the corridor alone, never through `open()`. [THE GROUND TYPES ARE ONE BAKED FIELD TOO]
+- An off-screen pass drawn only when something is in view builds its shaders late -- PROJECT_HANDOFF *AN OFF-SCREEN PASS IS DRAWN ON ITS FIRST FRAME*.
 - A hole's centre line read past its end creases the ground along a straight line through every tee and green -- PROJECT_HANDOFF *A CENTRE LINE READ PAST ITS END*.
 - Shared links fairways widen before `holeBoxes`, count every hole's pond in the strip, and judge parallel where the fairways lie -- PROJECT_HANDOFF *SHARED FAIRWAYS WIDEN BEFORE ANYTHING MEASURES A CORRIDOR*.
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.

@@ -116,6 +116,7 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
  }
  const target = new T.WebGLRenderTarget(4, 4, {depthBuffer: true});
  const frustum = new T.Frustum(), view4 = new T.Matrix4(), sphere = new T.Sphere(), center = new T.Vector3();
+ let warm = false;
  return {
   scene, target, ponds,
   // Drawn when a still pond is within `near` m of the camera, else cleared.
@@ -128,7 +129,13 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
    // or to the side, cost the whole pass for a picture nobody reads.
    camera.updateMatrixWorld();
    frustum.setFromProjectionMatrix(view4.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-   if (ponds.some(p => Math.hypot(camera.position.x - p.x, camera.position.z - p.z) < near + p.R && frustum.intersectsSphere(sphere.set(center.set(p.x, p.b.level, p.z), p.R)))) renderer.render(scene, camera);
+   // Drawn for real on its first frame whatever is in view, so its shaders are
+   // built then: drawn only with a pond in view, they compiled the moment one
+   // came into view -- two late shaders mid-turn (smoke, no-late-shaders, 27
+   // October 2026). A compile alone was not enough: drawn into this target
+   // they are other programs than compiled for the screen.
+   if (!warm || ponds.some(p => Math.hypot(camera.position.x - p.x, camera.position.z - p.z) < near + p.R && frustum.intersectsSphere(sphere.set(center.set(p.x, p.b.level, p.z), p.R)))) renderer.render(scene, camera);
+   warm = true;
    renderer.setRenderTarget(was); renderer.setClearColor(clear, alpha);
   },
   dispose() { target.dispose(); scene.traverse(o => { if (o.isMesh) o.geometry.dispose(); }); mat.dispose(); bankMat.dispose(); },

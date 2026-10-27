@@ -9461,7 +9461,7 @@ course in about 1.3 s in Node.
 
 ## The cartoon overhaul's trees (25 October 2026)
 
-The `cartoon-overhaul` branch remakes every tree in Blender (docs/CARTOON_OVERHAUL.md,
+The cartoon overhaul (merged 27 October 2026) remade every tree in Blender (docs/CARTOON_OVERHAUL.md,
 BLENDER_ASSETS.md *The cartoon packs*). Each species was read up first; the
 model then pushes the real proportions toward a cartoon. Sources in
 REFERENCES, *The cartoon overhaul*. Most were read through a search tool's
@@ -10605,8 +10605,9 @@ m or more gets one bunker, two from 90 m (`seam: 2`), radii 1.8-2.6 m
 (3.6-5.2 m across; real pot bunkers are about 2-5 m), 38% of the way from
 the lower-numbered hole's centre line to its partner's, in the middle half
 of the join, at least 45 m apart, 6 m clear of a pond, 4 m of another
-bunker, 20 m of a tee. PLACED: every number; the widths and the Old Course
-names from the course's own guides, not measured.
+bunker, 20 m of a tee. PLACED: every number. The Old Course's seam bunkers,
+their names and the 2-5 m size of a pot bunker are from memory -- no source
+was read for them; someone should look them up before they are relied on.
 
 Routing (routing.js `shifts`): a hole routed back beside another also
 offered its tee a further distance past the level of the last green. Joined

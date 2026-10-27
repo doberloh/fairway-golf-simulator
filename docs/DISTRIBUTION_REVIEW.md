@@ -156,8 +156,8 @@ The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
 64 KB in total**: Kenney house colour atlases (`colormap` plus three
 variations), CC0. Kenney's licence text states the content is free to use in
 personal, educational **and commercial** projects, with credit appreciated and
-not required. Quaternius ships the CC0 1.0 dedication. (On the
-`cartoon-overhaul` branch the page also carries one image that is not
+not required. Quaternius ships the CC0 1.0 dedication. (Since the
+cartoon overhaul the page also carries one image that is not
 imported: the turf detail atlas, a 906 KB PNG painted by this repository's
 own `tools/turf-detail.mjs` -- nothing to license.) (From 17 October 2026
 the page also carries two font files, about 35 KB, under the SIL Open Font
@@ -170,8 +170,8 @@ and repainted from the biome palette. Verified this pass rather than assumed:
   flags them as the one asset whose terms were never checked; they are ez-tree's
   bark maps, and no bark image is taken because trunks are painted.
 - **No ez-tree leaf sprite ships.** `broadleaf` appeared 14 times in the build
-  as a species *family* name, not as the sprite file. (On the
-  `cartoon-overhaul` branch that family is gone: its trees are built in
+  as a species *family* name, not as the sprite file. (Since the
+  cartoon overhaul that family is gone: its trees are built in
   Blender from this repository's scripts.)
 - **One font ships, from the `ui-1-0` branch (17 October 2026) on.** Until
   then none did: `--font-display` and `--font-ui` are system stacks and there
@@ -1443,10 +1443,10 @@ released. What it changes for distribution:
   different landscapes for the same week; a release before then keeps that
   to players who have not updated.
 
-## Addendum, 25 October 2026: the cartoon overhaul (branch, not released)
+## Addendum, 25 October 2026: the cartoon overhaul (merged 27 October, not released)
 
-The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md). Not merged, not
-released. What it changes for distribution so far:
+The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md), merged into main on
+27 October 2026; not released. What it changes for distribution so far:
 
 - **The built page is 11,244,483 bytes (5.46 MB gzipped) on 26 October**, at
   generator 43 after the frame-rate pass made the crowns lighter (the model
@@ -1475,3 +1475,8 @@ released. What it changes for distribution so far:
   trees, far woods, Mountain's crags, the stacks, Haunted Hollow's season):
   11,403,624 bytes -- the far woods are generated, not shipped, so the growth
   is the rock models and code. Generator 46.
+- **At the merge into main (27 October 2026, after the far-landscape and
+  mowing goal): 11,441,981 bytes, 5.52 MB gzipped**, generator 52 -- smaller
+  than main's last measured page before the overhaul (16.9 MB, *Addendum*
+  above). Still one offline file; nothing fetched. Not released: a release
+  waits for the owner, from main.

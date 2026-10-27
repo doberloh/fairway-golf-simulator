@@ -132,7 +132,7 @@ than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
 
-## The country between the holes (generator 37, the cartoon-overhaul branch)
+## The country between the holes (generator 37)
 
 Until generator 37 every landscape was the same rolling hills under three
 numbers. Each biome now names a **landform recipe** (`landform` in its record,
@@ -172,7 +172,7 @@ rock face, no boulder in a wash. None is a hazard.
 
 The driving range has no recipe: its flatness is the instrument.
 
-## Shared links fairways (generator 38, the cartoon-overhaul branch)
+## Shared links fairways (generator 38)
 
 Links only, from three entries in its biome record. Its fairways are cut 1.3
 times the width setting (`fairwayScale`). Routing (`routeParallel`) also
@@ -198,7 +198,7 @@ across, near the seam between the two holes' lines and on the
 lower-numbered hole's side (generator 51), as on the Old Course's double
 fairways. The values are placed (RESEARCH, *Shared links fairways*).
 
-## Uncleared stands (generator 39, the cartoon-overhaul branch)
+## Uncleared stands (generator 39)
 
 After the open scatter of trees, a biome's `stands` record plants the woods
 that were never cleared (`src/stands.js`): a ragged rim of dense forest,

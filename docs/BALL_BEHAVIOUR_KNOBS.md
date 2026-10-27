@@ -29,7 +29,7 @@ on the hops and roll that follow. Enforced in `physics.js`; see the
 ## Per-surface contact table — `CONTACT` in `src/physics.js`
 
 One row per surface: green, fringe, fairway, tee, semi, rough, sand -- and,
-on the `cartoon-overhaul` branch, one per ground type (rock, coral, scree,
+since the cartoon overhaul, one per ground type (rock, coral, scree,
 hardpan, waste sand, pine straw, leaves, heather, native grass). **Those rows
 are not edited here**: physics writes them from `src/grounds.js`, which holds
 every number for each type in one place -- `contact` (this table's knobs,

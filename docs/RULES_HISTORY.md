@@ -267,6 +267,15 @@ crash was a software smoke run, and the goal's own limits never named it.
 Lesson for the next goal: a done-when clause should name only what an agent
 can finish alone, and say which items wait for the owner.
 
+**The overhaul merged, 27 October 2026.** After two more goals on the branch
+(polish; far landscape and mowing) the owner said "This is the GFX overhaul i
+want" and asked for everything back in main. The branch's two AGENTS.md
+sections had said they must be rewritten before that merge, so they became one
+section saying what main's rules then were: a seed keeps its course again, the
+graphics card is asked for again, and the High and Ultra frame gap stays
+accepted. A branch's rules are written to end, and naming that ending in the
+rule itself is what made the merge a short edit rather than a judgement call.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at
@@ -310,6 +319,18 @@ test caught it; it was found a phase later by reading the code (14 October
 2026). The same day, a backslash written before a backtick in Python strings and in a
 `String.raw` template went into source comments as a stray backslash-backtick. Searching the touched files
 after a scripted edit catches both.
+
+On 27 October 2026 a cleanup made it worse: to remove one stray
+backslash-backtick from docs/CARTOON_OVERHAUL.md, a sed substitution of
+"backslash-backtick" by "backtick" was run -- and in GNU sed a backslash-backtick is the start-of-line anchor, so a backtick
+went in front of every one of the page's 1,245 lines, and was committed
+before anyone saw it. Repaired a commit later by taking one leading backtick
+off each line and checking against the last good commit. A tool that reads
+the text as patterns is the wrong tool for these characters; a script that
+replaces a literal string is the right one. The same goal also shipped a
+shader that used a varying it declared only on one side (every river and
+creek failed to compile for one build) -- caught because the capture tool
+logs shader errors; a module that loads in Node says nothing about its GLSL.
 
 ## The bench
 
