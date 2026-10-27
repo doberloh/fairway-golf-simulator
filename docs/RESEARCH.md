@@ -10569,7 +10569,10 @@ drifting 0.04 and 0.03 of the clock. Round 13: a creek's crests 0.3-0.85 of
 the wave, 0.8 and 0.35 a metre, gate 0.3-0.55, 0.7 strong. Round 14: wet
 sand -- below 0.05 m over the sea fully, fading out by 0.45 m, the colour x
 (0.74, 0.76, 0.8) at 0.85, where red - green > -0.06. Round 16: a pond's
-wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). PLACED.
+wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). Round 18: cat's paws --
+smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting 0.8 m a clock
+second downwind, x (0.35 + 0.65 min(1, wind / 12 mph)); the ripple slope
++0.45 x it, the mirror x (1 - 0.6 x it). PLACED.
 
 Mowing that shades with the view (ground.js; the diamonds' round 7, the
 tee's round 5): cut grass reads light where it is laid away from the eye

@@ -632,6 +632,57 @@ to 150 m); after round 1: **0 of 920,167** on the full tier.
 | 8 | Scrub thinned, not clumped | The clump gate narrow, 0.53-0.58, so the patchwork cuts into clumps and bare gaps (Desert 2,006 far sites, Links 1,132; round 7 1,674 and 958). Captured (`g3-r5/`): from high over Desert (`far-high`) the scrub now lies in clumps with bare sand between; from 45 m up at the property line (`far-out`) the view sits inside one 150 m clump, evenly spaced within it -- as creosote grows, each bush holding its own ground -- and left so |
 | 9 | Lakeshore's far land a wall-to-wall carpet of identical crowns under a full painted canopy -- on a landscape named for its dunes | Dune woods: cover 0.5 (was 0.75) and the painting 0.6, so open dune and meadow lie between the woods (7,723 far sites, were 12,851). Captured (`g3-r6/lakeshore/far-out`, `far-high`): dune woodland -- woods broken by open dune, meadow and sand blowouts, as its name says |
 
+**The frame check** (the goal: "at most 5% slower per tier than the goal's
+start ... Low and Medium first"). `tools/frame-ab.mjs`, the start
+(`bench/ab/start-distance.html`, 90dc61d) against the build at 12e6a65,
+alternately, two rounds, seed PROFILE, tees 1, 5 and 9, RTX 4090; frame by
+the mean of the spots (scratch `_frametable.mjs`, logs in
+`bench/shots/overhaul/frames*.log`, local):
+
+| Landscape | Low | Medium |
+| --- | --- | --- |
+| Desert | +9.0% (graphics time flat at every tee: 0.98/0.96, 0.52/0.52, 0.84/0.82 ms; the rise is the processor's 0.1 ms timer on a 1 ms frame) | +3.2% |
+| Links | **+14.3%** | **+9.7%** |
+| Lakeshore | +2.6% | +3.1% |
+| Mountain | +2.8% | +2.6% |
+| Autumn | +1.6% | -1.5% |
+| Haunted Hollow | +2.4% | +1.9% |
+| Island | -3.5% | +1.5% |
+| Midwest | +4.0% | -0.5% |
+| Giant Redwood | -0.4% | +2.2% |
+| PNW | +1.5% | -0.9% |
+
+**Links' rise is its new course, not its drawing.** Over seven spots (tees
+and play cameras 1, 5, 9, the overview) Links on Low was +14.5%, its draw
+calls up to 85% more at tee 9. Today's code built with only Links'
+`sharedFairways` and `routeParallel` put back as they were at the start
+measured +2.3% against the start (`frames-links7-oldroute.log`): draws and
+triangles within 3-6%. The pictures (`bench/ab/shots/links-shots/`, local)
+show why: at the start the tee-9 camera stood in waist-high grass looking at a
+narrow piece of course; the re-routed course (generators 47, 51) puts it
+looking over open ground at much more of the course, and draw calls follow
+what is in view. Nothing was taken from the hole in play to win it back --
+the owner's call: the joined fairways are what the Links rounds were for.
+Reported, not hidden.
+
+**High and Ultra** (the same tool and spots; the mirror draws on these two;
+logs `frames.log`, `frames2.log`). High, by mean: Desert -4.7%, Links
++13.1% (its new course, as above), Lakeshore +0.8%, Mountain +3.6%, Autumn
++0.1%, Haunted Hollow -5.6%, Island +1.9%, Midwest +11.8% then measured
+again +8.2% -- in both runs one B round spiked while the other matched the
+start (tee 1 3.56 against 3.40-3.52 ms, tee 9 2.96 against 2.89-2.97),
+Giant Redwood +2.6%, PNW +3.5%. Ultra was measured twice and the two
+disagree wildly (Mountain +52% then +4.6%, Giant Redwood -37% then -3%):
+single rounds spike by 30-60%, most often the first round of a build after
+the switch, on either build. Read round by round, the clean B round matches
+the start within about 3% on every landscape but Links (its course) and
+Haunted Hollow (+0.8% in the first sweep, high in both B rounds of the
+second: unresolved). The owner has accepted the High and Ultra gap
+(*Frame rate: the High and Ultra gap is accepted*, AGENTS.md); Low and
+Medium are the budget that matters, and there it holds but for Links.
+The mirror's pass is drawn only when a pond is in view since the mirror's
+round 14, measured above without it.
+
 The wait (measured each round on an 18-hole course, seed `overhaul`,
 against the goal's start; scratch `_fartime.mjs`): after round 4, placing
 the far woods takes 0.30-0.53 s (start 0.05-0.12): PNW +0.41 s, Giant
@@ -658,7 +709,7 @@ round the pad.
 | 2 | One flat dark ring reads as a border painted on, not a pass of a mower | The one pass shades as a pass does: grass laid away from you light, toward you dark, by the lap's way of travel (along the pad's outline, from the pad's own rounded-box distance) against the view, turning smoothly as it goes round -- never in steps. Captured (`g3-r5/*/h1-teekit`): one continuous pass round the pad, no checker anywhere -- but so faint from the tee it barely reads (`tee-surround` in `g3-r4/` stood too far off to judge) |
 | 3 | The lap barely there | The lap at half again the bands' contrast (0.11, the bands 0.075). Ground shader key v64. Captured (`g3-r6/*/h1-teekit`): the lap reads from the tee as one continuous pass round the pad, lighter along the side running away, no checker |
 | 4 | The lap's inner edge a pixel-sharp line, which reads as paint | Soft over 8 cm at least, as a mower's edge is. Ground key v68. Captured (`g3-r9/*/h1-teekit`): the lap's inner edge soft, the pass still one continuous ring |
-| 5 | The tee's bands were fixed tones while its lap shaded with the view | The bands shade with the view too: the passes run along the line of play, so from the tee one band is light, the next dark, swapped looking back, and side on they all but vanish (the view along the pad's axis, x 1.3, clamped). Captures pending |
+| 5 | The tee's bands were fixed tones while its lap shaded with the view | The bands shade with the view too: the passes run along the line of play, so from the tee one band is light, the next dark, swapped looking back, and side on they all but vanish (the view along the pad's axis, x 1.3, clamped). Captured (`g3-r11/*/h1-teekit`): the bands read along the line of play, the lap round them |
 
 **The tee pad's colour** (the goal's item 8; TODO: "the tee pad reads as
 one flat, very saturated green"). Round 1: the pad and collar in their own
@@ -686,7 +737,9 @@ laid on top of them, a checker at the green's edge.
 | 4 | Round 2's blur | The soft edge 0.15 of the half-wave each side (was 0.45): a crisp diamond whose edges do not step. Captured (`g3-r5/links/h2-putt`): the diamonds back, crisp and gentle; from 24 m (`h2-green`) they fade into the green's tone, as the bands always have at that distance |
 | 5 | Gone from the approach | Each pass holds its pattern until a period is 5 pixels across (was 8) before fading to the middle tone (the fade is what keeps a fine pattern from shimmering). Ground key v65. Captures pending |
 | 6 | The collar one flat tone round the diamonds and their lap | The collar mown in its own lap (ground.js, THE COLLAR'S LAP): shaded by its way of travel round the green against the view, as the green's lap (round 3), at 0.06 -- gentler than the green's -- and faded where the collar is under a pixel or two across. A capture view of a range target green (`range-green`, with `--course '{"range":true}'`) for "plus the range greens". Ground key v67. Captured (`g3-r8/links/h2-green`, `g3-r8-range/midwest/range-green`): the collar shades gently round the green; the range's 100-yard target green is diamond-mowed with its lap, as the course's are |
-| 7 | The diamonds were painted tones, the same from every side; cut grass is light laid away from you and dark laid toward you | Each pass shades with the view: pass 1 travels along pass 2's normal and pass 2 along pass 1's, and each band's tone is its light or dark times how squarely its line of travel runs with the view (x 0.33 each, so the two together reach the old range). A diamond turns from light to dark as you walk round the green; at no view do both passes vanish (they cross at right angles). Ground key v70. Captures pending |
+| 7 | The diamonds were painted tones, the same from every side; cut grass is light laid away from you and dark laid toward you | Each pass shades with the view: pass 1 travels along pass 2's normal and pass 2 along pass 1's, and each band's tone is its light or dark times how squarely its line of travel runs with the view (x 0.33 each, so the two together reach the old range). A diamond turns from light to dark as you walk round the green; at no view do both passes vanish (they cross at right angles). Ground key v70. Captured (`g3-r11/links/h2-putt`): the diamonds plainer than ever on the putt, light and dark by the view |
+| 8 | "Tilt readable on Clear" -- and on Natural? | A check round: the putt captured on Natural (definition 50, bands 40) beside Clear (`g3-r11-natural/`): diamonds on both, softer on Natural; the green's shading under them unchanged. No change |
+| 9 | The bands' contrast still widened along the old single mow line, though the passes now shade with the view | On a green it widens on ground falling away from the eye (the ground's downhill direction against the view), so a green's tilt reads through the diamonds from wherever you stand. Ground key v72. Captured (`g3-r12/links/h2-putt`, `h2-green`): the diamonds as round 7 on the putt; from 24 m they fade as before |
 
 ### Trees in still water (far-landscape goal)
 
@@ -710,7 +763,10 @@ a flat teal sheet under a wooded bank).
 | 8 | The sky's probe showed right up to the shore: nothing in the water said the bank rises there | The bank itself: a skirt per pond from its own outline (the ShapeGeometry its water is made from), from the waterline 1.5 m out and 0.5 m up, turned over like the trees, in the rough's colour at 0.45 toward the shade tone -- a thin dark band under the waterline that the reflected woods hang from. Test: under the water, outside the pond. Captured with round 9 (`g3-r7/`): a dark band under each far bank's waterline |
 | 9 | Round 7 captured (`g3-r6/autumn/h1-pond`): the columns merge into one dark band, but the reflection is mostly that band, with small orange crowns at its foot -- above the water these broadleaves fill most of their height | Crowns a third larger (1.35 of the crown radius) and up to three quarters of the tree (was 70%), so the columns shorten to the trunk zone. Captured (`g3-r7/autumn/h1-pond`, `midwest/h1-pond`): the autumn wood turned over in the water, big crowns over a short dark trunk band joined to the bank; Midwest's pond likewise |
 | 10 | Every pond broke its reflection the same, calm or blowing | By the wind (`mirrorWind`, 0 calm to 1 at 15 mph): the ripples nudge the picture 0.006-0.024 and soften it over 3-9 pixels -- a calm pond near a true mirror, a windy one broken up; at the default 4 mph about as before. Captured (`g3-r9/`, the default 4 mph): as before, as intended -- the wind's range waits for a windy round in play |
-| 11 | Only trees over 3 m were mirrored, so the first metre of each reflection under the bank was empty | Bushes too: 1.2 m and up, where they stand within 15 m of the rim (trees keep 60 m plus their height). Captures pending |
+| 11 | Only trees over 3 m were mirrored, so the first metre of each reflection under the bank was empty | Bushes too: 1.2 m and up, where they stand within 15 m of the rim (trees keep 60 m plus their height). Captured (`g3-r10/lakeshore/h1-pond`): the far bank reflects as one continuous band of wood down to the water, the bank's bushes filling its foot |
+| 12 | "From the bank and a tee": no picture from a tee yet | A view from the tee of the first hole with a pond 60-260 m out (`tee-pond`). Captured (`g3-r11/midwest`, `autumn`): from 150-160 m the pond is a sliver a few pixels tall, its far bank's band just showing; reflections are a thing of the bank and the approach. No change |
+| 13 | What does the mirror cost? | See *The frame check* above: High within budget on every ponded landscape but Midwest, whose second B round spiked with its processor time; measured again. Kept to High and Ultra (Low and Medium draw none). |
+| 14 | The mirror pass was drawn whenever a still pond lay within 700 m -- behind the camera too | Drawn only when a pond's bounds are in view (the camera's frustum against each pond's sphere): from a tee looking away from the water, or along a fairway with the pond behind, no pass at all. Captures pending |
 
 **Diagnosis of the old reflection** (round 0): every Midwest and Autumn pond
 had its probe, and the probe holds the trees -- its six faces read back
@@ -773,12 +829,15 @@ sine wave on the edge. Be efficient with this as well." Twenty rounds.
 | 8 | A pond lapped the same all round, whatever the wind | Wavelets build across open water and land on the bank the wind blows onto: each point of the foam strip carries how squarely its bank faces downwind, scaled by the wind's strength (full at 12 mph; `foamWind`), and the wavelets reach 0.45-1.25 of their run and their lips 0.5-1 of their strength by it; the wet line is the same everywhere. At the default 4 mph the banks differ gently. Shore foam key v5. Captures pending |
 | 9 | Rivers and creeks had no edge line, where ponds now have one | The wet line at a river's and a creek's bank (the outer 7% of the half-width, at 0.35, laced on a river). Water key v21. Captured with round 10 -- see there |
 | 10 | Seen in `g3-r7-streams/`: a creek's water began in a hard square edge across the channel, and the riffles showed as white dashes, not Vs | Each channel's water fades in over its first 3 m and out over its last (streams.js `chanEnd`, metres to the end; read only by the river and creek shaders). Water key v22. Captured (`g3-r8-streams/`): **every river and creek failed to compile** -- the fragment shader used `vChanEnd`, declared only in the vertex patch (the capture tool logged the shader error on all three; the streams drew no water). Declared in WATER_NOISE as well; water key v25. Mountain's view now clear of crowns. Recaptured (`g3-r9-streams/`): the water back on every stream, and where Midwest's creek begins it fades in, no square edge |
-| 11 | Lakeshore's freshwater lake is drawn as sea, and swashed like the ocean -- long 9 s run-ups up the beach | A lake's swash its own (`seaSwash`, from the landscape's `lakeWaves`): a 5 s cycle and 0.6 of the run-up; the ocean keeps 9 s and all of it. Water key v24. Captures pending |
-| 12 | The sea's line of breakers ran unbroken all round the coast | The breakers come and go in stretches: gated by a broad noise (about 80 m across) drifting slowly along the coast. Captures pending |
-| 13 | A creek's riffles showed as white dashes, not Vs | Broader crests (0.3-0.85 of the wave, were 0.45-0.9), an opener V (0.35 a metre across, was 0.6), in more of the bed (gate 0.3-0.55) and stronger (0.7). Captures pending |
-| 14 | Where the sea's swash runs up a beach the sand stayed dry-coloured to the waterline | Wet sand (ground.js WET SAND): on a landscape with a sea, sand from the water's edge to about 0.45 m above it (and under it) darkened to about three quarters, toward a cool grey, stronger toward the water; sand only (red at least green), so low grass keeps its colour. Ground key v69, water key v26. Captures pending |
-| 15 | Round 9 (`g3-r9-streams/mountain`): the wet line ran down both banks of a creek as an unbroken white line and its riffles as dashes down the middle -- the creek read as a road | The streams' wet line faint (0.14, was 0.35) and broken by noise; a creek's riffles softer (0.4, was 0.7). Water key v27. Captures pending |
-| 16 | Every pond's wavelets the same length, 7.3 and 11.9 m, whatever its size | As long as the water lets them grow: a small pond's fetch is short, so its wavelets come shorter and closer -- 0.6 of the length on a pond 180 m round, rising to 1.2 on one 360 m and more. Shore foam key v6. Captures pending |
+| 11 | Lakeshore's freshwater lake is drawn as sea, and swashed like the ocean -- long 9 s run-ups up the beach | A lake's swash its own (`seaSwash`, from the landscape's `lakeWaves`): a 5 s cycle and 0.6 of the run-up; the ocean keeps 9 s and all of it. Water key v24. Captured (`g3-r10/lakeshore/sea-near`, the lake found at last): small lapping swash on the lake shore; a 5 s cycle against 9 s cannot be told from a still -- the owner's eye in play |
+| 12 | The sea's line of breakers ran unbroken all round the coast | The breakers come and go in stretches: gated by a broad noise (about 80 m across) drifting slowly along the coast. Captured (`g3-r10/island/sea-near`): the surf broken into patches of lace along the beach, quiet stretches between |
+| 13 | A creek's riffles showed as white dashes, not Vs | Broader crests (0.3-0.85 of the wave, were 0.45-0.9), an opener V (0.35 a metre across, was 0.6), in more of the bed (gate 0.3-0.55) and stronger (0.7). Captured with round 15 -- see there |
+| 14 | Where the sea's swash runs up a beach the sand stayed dry-coloured to the waterline | Wet sand (ground.js WET SAND): on a landscape with a sea, sand from the water's edge to about 0.45 m above it (and under it) darkened to about three quarters, toward a cool grey, stronger toward the water; sand only (red at least green), so low grass keeps its colour. Ground key v69, water key v26. Captured (`g3-r10/*/sea-near`): Island's beach right; Lakeshore's flat lake shore dark from the water to the dunes -- round 17 |
+| 15 | Round 9 (`g3-r9-streams/mountain`): the wet line ran down both banks of a creek as an unbroken white line and its riffles as dashes down the middle -- the creek read as a road | The streams' wet line faint (0.14, was 0.35) and broken by noise; a creek's riffles softer (0.4, was 0.7). Water key v27. Captured (`g3-r10-streams/`): the creek reads as water again, not a road -- a dark channel with a few soft crests; the riffles still do not read as Vs from 6 m, left so |
+| 16 | Every pond's wavelets the same length, 7.3 and 11.9 m, whatever its size | As long as the water lets them grow: a small pond's fetch is short, so its wavelets come shorter and closer -- 0.6 of the length on a pond 180 m round, rising to 1.2 on one 360 m and more. Shore foam key v6. Captured (`g3-r11/`): the lapping on Midwest's and Lakeshore's ponds finer on the smaller pond; small in a still |
+| 17 | Round 10 (g3-r10/lakeshore/sea-near): Lakeshore's lake shore is so flat that wet sand to 0.45 m above the water darkened its whole beach, murky from the water to the dunes | Wet sand to 0.15 m and lighter (0.7 of the darkening): a swash band, not a beach. Ground key v71. Captured (`g3-r11/lakeshore/sea-near`): the beach in front of the swash still grey -- it lies at the water's level for its whole width, a wet flat; left for the owner's eye |
+| 18 | A pond's surface was one even texture of ripples, edge to edge | Cat's paws: gusts ruffle patches of still water that drift downwind (a noise at 0.05 a metre carried along the wind's heading); in them the ripples bite harder and the reflection fades by up to 60%, between them the water lies glassy. Stronger with the wind (0.35 in calm to 1 at 12 mph), on every tier. Water key v28. Captured (`g3-r12/midwest/h1-pond`, the default 4 mph): one end of the pond glassy with the wood mirrored in it, a ruffled patch at the other where the reflection breaks to sky |
+| 19 | Every pond's foam the same blue-white, whatever its water -- on Haunted Hollow's green-black water it stood out like paint | A quarter of the landscape's water colour in its foam. Captured (`g3-r12/`): the foam still reads white, a shade of its water in it |
 
 ### Links shared fairways, the far-landscape goal's rounds
 

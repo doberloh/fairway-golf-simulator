@@ -170,6 +170,16 @@ export const VIEWS = [
    return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 6 - cx, mz + dz / L * 6 - cz) * 180 / Math.PI, height: 4, pitch: -30};
   }
   return {x: 0, z: 0, height: 200, pitch: -40}; }`},
+ // A pond from a tee (the trees-in-water item: "from the bank and a tee"):
+ // the first hole with a pond 60-260 m down it, from its back tee at eye
+ // height, looking at the pond. Hole 1's tee view where no hole has one.
+ {name: 'tee-pond', hole: 0, when: 'noon', caption: 'A pond from the tee', cam: `w => { for (const h of w.holes) { const t = h.tees.blue || Object.values(h.tees)[0];
+   const p = (h.ponds || []).find(p => p.z - t.z > 60 && p.z - t.z < 260);
+   if (!p) continue;
+   const c = h.toWorld({x: t.x, z: t.z}), q = h.toWorld(p);
+   return {x: c.x, z: c.z, yaw: Math.atan2(q.x - c.x, q.z - c.z) * 180 / Math.PI, height: 1.8, pitch: -3}; }
+  const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], c = h.toWorld(t), s = h.toWorld({x: h.center(150), z: 150});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.8, pitch: -3}; }`},
  // A driving range's target green close to (the diamond greens: "every biome
  // plus the range greens"). Run with --course '{"range":true}': the first
  // shown target 60 yd or more out, from its own size plus 6 m short of it on

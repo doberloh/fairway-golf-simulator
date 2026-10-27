@@ -42,21 +42,43 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   hangs over a valley or stands in the sea (the bench's `farSeated` says
   none does); no painted crowns under Links' or Lakeshore's shallows; no
   line where near crowns become groves (300-540 m out); Desert's mesas read
-  as tables with cliffs, not ramps, and its hardpan runs past the course's
-  edge with no line; Island's islets sit on the horizon; Haunted Hollow's
-  far trunks read dead; Autumn's evergreens and hills. The wait as a course
-  loads is 0.3-0.4 s longer on the wooded landscapes (measured, not felt).
-- [ ] **Links' double fairways have been judged from above, not from the
-  tee** (course.js shareFairways `cover`, `roundTip`; routing.js `shifts`;
-  generator 48). Check on seeds `overhaul` (holes 2-3, 8-11-12), LINKS-B and
-  S5: each join one broad mown shape from the tee, the rough between two
-  fairways closing in a rounded tongue, no crossbars.
-- [ ] **The tee's continuous lap, its own turf, and diamond-mowed greens are
-  built and not played** (ground.js). Check: the lap one tone all round a
-  tee and a green, no checker; a tee's colour between fairway and green;
-  diamonds that bend over a green's rolls and do not shimmer as the camera
-  moves; on Clear a green's tilt still reads through them; the range's
-  greens diamond-mowed too.
+  as tables with red-rock sides, its scrub in clumps with bare sand between,
+  and its hardpan runs past the course's edge with no line; Lakeshore's far
+  land dune woodland, not a carpet; Island's islets sit on the horizon;
+  Haunted Hollow's far trunks read dead; Autumn's evergreens dark crowns in
+  the canopy, no spikes on the horizon. The wait as a course loads is
+  0.3-0.5 s longer on the wooded landscapes (measured, not felt).
+- [ ] **Links' double fairways have been judged from above and in captures,
+  not played** (course.js shareFairways `cover`, `roundTip`, `seamBunkers`;
+  routing.js `shifts`; vegetation.js `carryFade`; ground.js A FAIRWAY'S
+  BANDS IN THE WORLD; generators 48 and 51). Check on seeds `overhaul`,
+  LINKS-B and S5: from the tee the shared fairway shows over short rough in
+  the carry, the tall grass on either side; each join one broad mown shape
+  with its stripes running across it as one, a pot bunker or two on the seam
+  between the holes; the rough between two fairways closing in a rounded
+  tongue; no crossbars; a ball in a seam bunker plays from sand.
+- [ ] **The tee's lap, its turf, and diamond-mowed greens are built and not
+  played** (ground.js). Check: the lap one continuous pass round a tee and a
+  green, no checker, its inner edge soft; a tee's colour between fairway and
+  green; the diamonds, and a tee's bands, turning from light to dark as you
+  walk round them, as cut grass does, and never shimmering as the camera
+  moves; the collar shading gently round each green; on Clear a green's tilt
+  still reads through the diamonds (also on Natural); the range's greens
+  diamond-mowed too.
+- [ ] **The water's edges and reflections are built and not played**
+  (water-mirror.js; renderer.js FOAM_FRAG, WATER_EDGES; ground.js WET SAND;
+  CARTOON_OVERHAUL *Trees in still water*, *Waves at the water's edge*).
+  Check on High or Ultra (Low and Medium draw no mirror): a pond's far bank
+  reflected as one dark wooded band hanging from the waterline, crowns below
+  it, from the bank and from a tee; calmer reflections in calm weather,
+  broken up in wind; no posts or floating patches. On every tier: wavelets
+  arriving along a pond's bank rather than one band breathing, more on the
+  bank the wind blows onto, a thin wet line at every bank; the sea's swash
+  running up unevenly in sets, breakers in stretches, wet sand just above the
+  water (Lakeshore's lake shore not dark to the dunes); a lake's swash
+  quicker and smaller than the sea's; a creek's water fading in where it
+  starts, not a square edge, and never reading as a road; whether all of it
+  reads as water and not as a sine on the edge -- the owner's words.
 - [ ] **The new trees have been seen only in captures, not played.**
   Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
   the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,

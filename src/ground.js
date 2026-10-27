@@ -813,6 +813,11 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   vec3 gs=normalize(groundNormal);if(gs.y<0.)gs=-gs;
   vec2 gl=vec2(gs.x*tr.z-gs.z*tr.w,gs.x*tr.w+gs.z*tr.z);
   float along=dot(gl,mow);
+  // Round 9 of the diamonds: on a green, measured along the VIEW rather than
+  // the old single mow line -- its passes now shade with the view (round 7),
+  // so it is ground falling away from the eye that should widen their
+  // contrast, and the green's tilt reads through them from wherever you stand.
+  if(kind==4.){vec2 dv2=normalize(groundPoint.xz-cameraPosition.xz+1e-4);along=dot(gl,vec2(dv2.x*tr.z-dv2.y*tr.w,dv2.x*tr.w+dv2.y*tr.z));}
   // Contrast widens on ground falling away along the mow line and narrows on
   // ground rising into it, which is what makes a roll show up in the bands.
   //
@@ -1098,8 +1103,10 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // under it. Sand only -- ground whose red is at least its green -- so grass
  // low by the shore keeps its colour. PLACED.
  if(farSea>.5){
-  float wetSand=(1.-smoothstep(.05,.45,groundPoint.y))*smoothstep(-.06,0.,turf.r-turf.g);
-  turf=mix(turf,turf*vec3(.74,.76,.8),wetSand*.85);
+  // Round 17: to 0.15 m and lighter (.7) -- at 0.45 m a flat beach went dark
+  // from the water to the dunes (Lakeshore's lake shore, g3-r10 sea-near).
+  float wetSand=(1.-smoothstep(.03,.15,groundPoint.y))*smoothstep(-.06,0.,turf.r-turf.g);
+  turf=mix(turf,turf*vec3(.74,.76,.8),wetSand*.7);
  }
  // SOFT OCCLUSION (U1 in TODO): darker at the foot of every trunk and boulder
  // and under overlapping crowns, baked in occlusion.js. Only inside the course's
@@ -1236,5 +1243,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v70';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v72';return m;
 }

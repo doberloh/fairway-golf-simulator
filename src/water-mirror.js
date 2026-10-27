@@ -115,6 +115,7 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
   const skirt = new T.Mesh(g, bankMat); skirt.frustumCulled = false; scene.add(skirt);
  }
  const target = new T.WebGLRenderTarget(4, 4, {depthBuffer: true});
+ const frustum = new T.Frustum(), view4 = new T.Matrix4(), sphere = new T.Sphere(), center = new T.Vector3();
  return {
   scene, target, ponds,
   // Drawn when a still pond is within `near` m of the camera, else cleared.
@@ -123,7 +124,11 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
    if (target.width !== w || target.height !== h) target.setSize(w, h);
    const was = renderer.getRenderTarget(), clear = renderer.getClearColor(new T.Color()), alpha = renderer.getClearAlpha();
    renderer.setRenderTarget(target); renderer.setClearColor(0, 0); renderer.clear();
-   if (ponds.some(p => Math.hypot(camera.position.x - p.x, camera.position.z - p.z) < near + p.R)) renderer.render(scene, camera);
+   // Round 14: and only when a pond is in view -- a pond behind the camera,
+   // or to the side, cost the whole pass for a picture nobody reads.
+   camera.updateMatrixWorld();
+   frustum.setFromProjectionMatrix(view4.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+   if (ponds.some(p => Math.hypot(camera.position.x - p.x, camera.position.z - p.z) < near + p.R && frustum.intersectsSphere(sphere.set(center.set(p.x, p.b.level, p.z), p.R)))) renderer.render(scene, camera);
    renderer.setRenderTarget(was); renderer.setClearColor(clear, alpha);
   },
   dispose() { target.dispose(); scene.traverse(o => { if (o.isMesh) o.geometry.dispose(); }); mat.dispose(); bankMat.dispose(); },

@@ -225,7 +225,7 @@ const WATER_EDGES={
    vec4 mr=(texture2D(mirrorMap,muv+vec2(px.x,0.))+texture2D(mirrorMap,muv-vec2(px.x,0.))+texture2D(mirrorMap,muv+vec2(0.,px.y))+texture2D(mirrorMap,muv-vec2(0.,px.y)))*.25;
    // Round 4: by the mirror term alone (it had a floor of .35, so looking
    // steeply into a pond close by showed crowns as flat patches).
-   outgoingLight=mix(outgoingLight,mr.rgb*foamLight*.55,mr.a*clamp(mirror*2.8,0.,.92));
+   outgoingLight=mix(outgoingLight,mr.rgb*foamLight*.55,mr.a*clamp(mirror*2.8,0.,.92)*(1.-.6*paw));
   }
  }`,
  sea:`{
@@ -1553,7 +1553,10 @@ export class GolfView{
   // changed for each -- two draws and two program checks per strip per frame.
   // That exists for closed see-through shapes; a flat strip has nothing behind
   // itself to sort, so once is the same picture.
-  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
+  // Round 19 of the waves: a quarter of the water's own colour in its foam --
+  // one blue-white on every pond stood out on Haunted Hollow's green-black water.
+  const foamTint=new T.Color('#dde8e2').lerp(new T.Color(this.world?.bio?.water??'#4f88a3'),.25);
+  const mat=new T.MeshToonMaterial({color:foamTint,transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
   const time=this.waterTime??=({value:0});
   const pace={value:lake?.42:.3},grain={value:lake?.75:1};
   mat.onBeforeCompile=shader=>{
@@ -1563,7 +1566,7 @@ export class GolfView{
    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
     .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey=()=>'fairway-shore-foam-v6';
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v7';
   const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
   this.group.add(mesh);
  }
@@ -1622,16 +1625,23 @@ export class GolfView{
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
    if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};}
    if(kind==='still'&&this.mirrorUniforms)Object.assign(shader.uniforms,this.mirrorUniforms);
+   if(kind==='still'){shader.uniforms.waterWind=this.windVec;shader.uniforms.pawK={value:.35+.65*Math.min(1,(this.world.settings.wind||0)/12)};}
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
     .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;attribute float chanEnd;varying vec2 vFlow;varying vec2 vChan;varying float vChanEnd;')
     .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;vChanEnd=chanEnd;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
-    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;':''))
+    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK;':''))
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
+     // CAT'S PAWS (the far-landscape goal's waves, round 18): gusts ruffle
+     // patches of a pond that drift downwind; in them the ripples bite and the
+     // reflection breaks, between them the water lies glassy. Still water only;
+     // stronger with the wind (pawK, 0.35 calm to 1 at 12 mph). PLACED.
+     float paw=0.;
+     ${kind==='still'?'paw=smoothstep(.55,.85,wNoise(vWaterWorld.xz*.05-waterWind*waterTime*.8))*pawK;':''}
      {
       vec3 r=wRipple(vWaterWorld.xz,waterTime);
-      normal=normalize(normal+vec3(r.xy*${calm?'.17':'.5'},0.));
+      normal=normalize(normal+vec3(r.xy*(${calm?'.17':'.5'}+paw*.45),0.));
      }`)
     .replace('#include <opaque_fragment>',`
      {
@@ -1662,7 +1672,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v27-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v28-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 
