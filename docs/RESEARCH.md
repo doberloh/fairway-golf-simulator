@@ -10505,19 +10505,26 @@ water.
 ### Trees in still water and waves at the edge (the far-landscape goal, 26 October 2026)
 
 water-mirror.js, round 1: a tree is mirrored when it stands within 30 m
-plus its own height of a still pond's rim (the pond's bounding radius from
+(60 m from round 3) plus its own height of a still pond's rim (the pond's bounding radius from
 its centre) and its foot is at least 0.2 m above the pond's level. Its twin:
 a conifer (by kind: pine, spruce, cedar, fir, hemlock, redwood, cypress,
 larch) as the far woods' spruce shape, 83% of the tree's height from a
 sixth of the way up; anything else as the cluster, its top at the tree's
-top, 1.02 x the crown radius tall (at most 70% of the tree); a trunk 2.5%
-of the height wide (at least 0.15 m) and 55% of it tall. Coloured from the
-far forest's colours (trunks #3b2f25), unlit; turned over about the pond's
+top, 1.02 x the crown radius tall (at most 70% of the tree). Trunks were
+2.5% of the height wide, then 1.4% (round 2), 40% of it tall (round 3); they
+read as posts and went in round 5. Round 6: under each crown a dark column
+from the tree's foot to the crown (plus 0.3 of its radius into it), 7-sided,
+0.7 of the crown radius (a spire's: 0.18 x the height x 0.7), at 0.32 of the
+crown's colour -- the shade under the woods, so a reflected crown joins its
+bank. Coloured from the far forest's colours, unlit; turned over about the pond's
 level (y -> 2 x level - y). The picture: half the drawing buffer each way,
 cleared to transparent, drawn only while a still pond's rim is within 700 m
 of the camera. The pond reads it at its fragment, offset by 0.012 x the
-rippled normal, lit by the water's own received light x 0.8, mixed in by
-min(0.9, 1.6 x Schlick + 0.15). All PLACED. High and Ultra only.
+rippled normal, lit by the water's own received light x 0.8 (0.55 from
+round 2), mixed in by min(0.9, 1.6 x Schlick + 0.15) (round 2: min(0.92,
+2.2 x Schlick + 0.35); round 4: min(0.92, 2.8 x Schlick)). Read as four taps
+1.5 of its pixels apart, averaged (round 3), 6 apart (round 5). All PLACED.
+High and Ultra only.
 
 Shore foam, round 1 (renderer.js FOAM_FRAG): two wavelet trains along the
 outline, about 7.3 m and 11.9 m long (rounded so a whole number fit the
@@ -10525,7 +10532,26 @@ shore), travelling at 0.11 and 0.07 wavelengths a second of the foam's
 clock (opposite ways); each wavelet's reach 0.25-0.75 (first) or 0.2-0.65
 (second) of the 1.4 m strip by a hash of its index, plus up to 0.08 of slow
 noise; a lip 0.07 deep and 0.1 behind the front, a wash at 45% from the
-bank to half the front. PLACED.
+bank to half the front. Round 4: a wet line always at the bank, from 0.015
+to 0.03-0.12 of the strip (a slow noise along the shore, 0.43 a metre, 0.17
+of the clock), at 0.32-0.5 strength by the lace. PLACED.
+
+Still water's crests (renderer.js WATER_EDGES `still`), round 2: crests
+running in along the depth lines in the last 0.7 m of depth; round 3: only
+between 0.08 and 0.4 m deep, gated by a broad drifting noise, a lift of
+about 0.1-0.12 of white. PLACED.
+
+Standing ripples (WATER_EDGES `river`, `creek`, round 5): water over a bar
+or stone throws a V of waves that stays put while the flow passes through.
+River: crests where sin((0.9 x downstream + 0.6 x |across|) x 2 pi) is above
+0.55-0.95, gated by noise at 0.05 x 0.2 of the channel's metres (patches of
+about 20 m by 5), 0.1-0.3 strength rising toward the banks, laced. Creek:
+1.7 and 1.3, noise at 0.08 x 0.3, 0.38 strength. Fixed to the bed (no
+drift). PLACED.
+
+Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
+cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second
+value noise at 150 m cells -- about two in five, gathered. PLACED.
 
 ### Links shared fairways, the far-landscape goal (26 October 2026)
 
@@ -10539,6 +10565,16 @@ green): crossbars 60-63% on both holes (`overhaul` 9-15, LINKS-B 8-9 and
 (PLACED), joins of 100 m or more (was 140), the taper at the fairway's ends
 36 m (was ease x 0.6 = 102 m, which left 27 m of a 230 m stretch at full
 width and pairs 5-16 m apart).
+
+Seam bunkers (course.js `seamBunkers`, generator 51): on the Old Course
+the shared fairways carry pot bunkers between the two holes' lines (the
+Coffins on the 13th, the Principal's Nose on the 16th). Here: a join of 60
+m or more gets one bunker, two from 90 m (`seam: 2`), radii 1.8-2.6 m
+(3.6-5.2 m across; real pot bunkers are about 2-5 m), 38% of the way from
+the lower-numbered hole's centre line to its partner's, in the middle half
+of the join, at least 45 m apart, 6 m clear of a pond, 4 m of another
+bunker, 20 m of a tee. PLACED: every number; the widths and the Old Course
+names from the course's own guides, not measured.
 
 Routing (routing.js `shifts`): a hole routed back beside another also
 offered its tee a further distance past the level of the last green. Joined

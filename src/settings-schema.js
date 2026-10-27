@@ -236,7 +236,26 @@ export const SCHEMA_VERSION=11;
 //     runs out, the rough between the two fairways keeps half a strip a side
 //     until the last quarter of the taper, then closes on a circle's profile
 //     -- a tongue with a rounded tip, not a hairline wedge. Only Links moved.
-export const GENERATOR_VERSION=48;
+// 49: A green's false front (course-plan.js greenContour) drops only across
+//     the green's own width, fading over 12 m beyond each side; it ran the
+//     width of the world, so a straight 0.3-0.9 m step crossed the rough
+//     beside every false-fronted green (the TODO's "straight step in the
+//     fairway's tone"). Putting surfaces unchanged; the ground beside them
+//     moved on every landscape.
+// 50: The false front's drop starts along an ellipse of the green's own
+//     proportions, 74% of the way to its front edge, instead of a straight
+//     line across it: the slope tint drew that crease as a straight line
+//     (the tone step's round 3). Unchanged on the green's centre line; every
+//     landscape's false-fronted greens moved off it.
+// 51: Pot bunkers along the seam of each Links shared fairway, up to two a
+//     join, on the lower-numbered hole's side (the shared fairways' round 7).
+//     Links only.
+// 52: The straight tone step, round 5. A hole's side widths read the centre
+//     line's slope from points kept inside the hole (in the last half metre
+//     the width dropped 1.3 m), and past either end the distance from a hole
+//     follows its centre line carried straight on. Both creased the ground
+//     along a straight line through every green's end; every landscape moved.
+export const GENERATOR_VERSION=52;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

@@ -193,7 +193,10 @@ tapered over 36 m at the fairway's ends; it must actually touch -- a hole
 whose widening meets no other fairway gives it back -- and where two
 fairways come within 14 m without joining, each edge pulls back to leave a
 clear strip of rough rather than a sliver. On 18 holes two to six holes
-share. The values are placed (RESEARCH, *Shared links fairways*).
+share. Along each join of 60 m or more lie one or two pot bunkers, 3.6-5.2 m
+across, near the seam between the two holes' lines and on the
+lower-numbered hole's side (generator 51), as on the Old Course's double
+fairways. The values are placed (RESEARCH, *Shared links fairways*).
 
 ## Uncleared stands (generator 39, the cartoon-overhaul branch)
 

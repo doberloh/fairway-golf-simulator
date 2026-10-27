@@ -42,9 +42,9 @@ import {biomeOf} from './biomes.js';
 const glslHash = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 const smooth = (a, b, t) => { const u = Math.max(0, Math.min(1, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
 // The painting's patch noise, as ground.js computes it, so woods and painting agree.
-function broad(x, z) {
- const cx = Math.floor(x / 380), cz = Math.floor(z / 380);
- let fx = x / 380 - cx, fz = z / 380 - cz; fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);
+function broad(x, z, cell = 380) {
+ const cx = Math.floor(x / cell), cz = Math.floor(z / cell);
+ let fx = x / cell - cx, fz = z / cell - cz; fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);
  const n00 = glslHash(cx, cz), n10 = glslHash(cx + 1, cz), n01 = glslHash(cx, cz + 1), n11 = glslHash(cx + 1, cz + 1);
  const a = n00 + (n10 - n00) * fx, b = n01 + (n11 - n01) * fx;
  return a + (b - a) * fz;
@@ -70,6 +70,7 @@ export const FAR_SHAPES = {
  dome: {foot: .86, tall: .5, scale: [1, .42], tilt: true},         // a grove of broadleaves
  cone: {foot: .55, tall: 2, scale: [.55, 2], tilt: false},         // a grove of conifers
  snags: {foot: .75, tall: 1.6, scale: [1, 1.6], tilt: false},      // dead trunks, Haunted Hollow
+ scrub: {foot: 1.01, tall: .54, scale: [1, .45], tilt: false},     // low clumps, Desert and Links
 };
 // Which shapes a landscape's far woods take (round 3 of the far landscape:
 // Haunted Hollow's near crowns as clumps of bare dead trunks -- its purple
@@ -77,8 +78,11 @@ export const FAR_SHAPES = {
 // draws as spruces and cones among the broadleaves, Autumn's pines and
 // hemlocks, in its fourth colour).
 const CONIFER_FAR = new Set(['pnw', 'mountain', 'redwood']);
-export const farShapes = biome => CONIFER_FAR.has(biome) ? {near: 'spruce', grove: 'cone'} : biome === 'haunted' ? {near: 'snags', grove: 'dome'} : {near: 'cluster', grove: 'dome'};
-const EVERGREEN = {near: 'spruce', grove: 'cone'};
+export const farShapes = (biome, f) => f?.scrub ? {near: 'scrub', grove: 'scrub'} : f?.dead ? {near: 'snags', grove: 'snags'} : CONIFER_FAR.has(biome) ? {near: 'spruce', grove: 'cone'} : biome === 'haunted' ? {near: 'snags', grove: 'dome'} : {near: 'cluster', grove: 'dome'};
+// Far off, an evergreen among broadleaves is a dark crown in the canopy, not a
+// cone (round 7 of the far land: Autumn's cones, twice as tall as wide,
+// stood up past its horizon as a row of pale spikes).
+const EVERGREEN = {near: 'spruce', grove: 'dome'};
 
 // Where a shape of radius `r` stands at (x, z): its base point, its up
 // direction, and how far it was let down. `at` is the drawn ground, `verts`
@@ -162,7 +166,7 @@ export function farWoodSites(w, {reach = FAR_REACH, groves = false} = {}) {
  const f = biomeOf(w.settings.biome).farForest;
  if (!f) return [];
  const g = w.groundGrid, gx = g.halfX, gz = g.halfZ, px = w.halfX, pz = w.halfZ, at = drawnGround(w), verts = drawnVertices(w);
- const line = f.line ?? 1e5, cover = f.cover ?? 0, r0 = (f.size ?? 11) * .55, shapes = farShapes(w.settings.biome);
+ const line = f.line ?? 1e5, cover = f.cover ?? 0, r0 = (f.size ?? 11) * .55, shapes = farShapes(w.settings.biome, f);
  const sea = !!w.bio?.sea || !!biomeOf(w.settings.biome).sea, level = w.waterLevel ?? 0;
  // Water: the sea (drawn ground under its level), and inside the course's
  // ground a lake or a creek -- asked of the lakes and streams directly, at
@@ -185,6 +189,13 @@ export function farWoodSites(w, {reach = FAR_REACH, groves = false} = {}) {
    const d = boxOut(jx, jz, px, pz);
    if (d <= 2 || d < d0 || d >= d1) continue;
    if (smooth(1 - cover - .12, 1 - cover + .12, broad(jx, jz)) < glslHash(jx * .53, jz * .71)) continue;
+   // Scrub in clumps (round 7 of the far landscape: spread evenly it read as
+   // dots on a cloth): a finer patchwork, 150 m, keeps about two sites in five,
+   // gathered, with bare ground between.
+   // Round 8: the patchwork's values gather round a half, so a gate from
+   // .5 to .7 thinned evenly rather than gathering; a narrow one, .53-.58, cuts
+   // it into clumps and gaps.
+   if (f.scrub && smooth(.53, .58, broad(jx + 911, jz - 577, 150)) < glslHash(jz * .83, jx * .47)) continue;
    const y = groundAt(jx, jz);
    if (y > line + glslHash(jx, jz) * 40 - 20) continue;           // above the treeline
    if (y < .5) continue;                                          // water
@@ -201,13 +212,15 @@ export function farWoodSites(w, {reach = FAR_REACH, groves = false} = {}) {
    const size = .75 + glslHash(jz, jx) * .5, near = d < NEAR_REACH - 120 + 240 * glslHash(jx * .91, jz * 1.13), pick = glslHash(jx * 1.7, jz * 2.3);
    const evergreen = !!f.evergreen && pick >= 1 - f.evergreen, kind = evergreen ? EVERGREEN : shapes;
    if (near && !groves) {
-    const nearR = Math.max(r0, s * .4) * size, nearSeat = seatOn(at, jx, jz, nearR, FAR_SHAPES[kind.near], wet, verts, slope);
+    const nearR = (f.scrub || f.dead ? r0 : Math.max(r0, s * .4)) * size, nearSeat = seatOn(at, jx, jz, nearR, FAR_SHAPES[kind.near], wet, verts, slope);
     if (nearSeat) out.push({x: jx, z: jz, y, near, pick, size, slope, evergreen, shape: kind.near, r: nearR, seat: nearSeat});
     continue;
    }
    // A grove over broken ground is drawn smaller rather than buried: let down
    // by more than a third of its height, it tries again at two thirds the size.
-   let groveR = Math.max(r0, s * .55 * size), grove = null;
+   // Scrub (round 5: Desert's and Links' far land as low clumps that thin out
+   // with distance -- their domes read as slabs and boulders) stays small.
+   let groveR = f.scrub || f.dead ? r0 * 1.6 * size : Math.max(r0, s * .55 * size), grove = null;
    for (let k = 0; k < 3; k++, groveR *= .67) {
     grove = seatOn(at, jx, jz, groveR, FAR_SHAPES[kind.grove], wet, verts, slope);
     if (!grove || grove.drop < FAR_SHAPES[kind.grove].tall * groveR * .35 || groveR <= r0) break;

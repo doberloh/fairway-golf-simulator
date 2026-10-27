@@ -62,6 +62,10 @@ function wildUniforms(w, hasWild, hasFallen) {
   // The far ring's ground (the far-landscape goal): the landscape's floor
   // carried past the course's ground, and its rock on the ring's steep faces.
   ringFloor: {value: hasWild ? code(kinds.floor) : 0}, ringFace: {value: code(biomeOf(w.settings.biome).ringFace)},
+  // Where the ring's faces turn to rock, as the ground's up-ness: a mesa
+  // landscape's butte sides from gentler (round 7 of the far land: at .74 the
+  // buttes, their sides 25-40 degrees on the coarse rows, stood as sand cones).
+  ringFaceFrom: {value: biomeOf(w.settings.biome).ringMesas ? .86 : .74},
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   ...Object.fromEntries(Object.entries(tints).map(([k, v]) => ['gt_' + k, {value: v}])),
  };
@@ -158,7 +162,7 @@ export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, greens: 35, 
 // how it is drawn). Off where a biome has none.
 export function farForestUniforms(bio){
  const f=bio.farForest,c=f?.colors??['#000000','#000000','#000000'];
- return {farOn:{value:f?1:0},farCover:{value:f?.cover??0},farLine:{value:f?.line??1e5},farSize:{value:f?.size??11},farSea:{value:bio.sea?1:0},
+ return {farOn:{value:f?1:0},farPaint:{value:f?.paint??1},farCover:{value:f?.cover??0},farLine:{value:f?.line??1e5},farSize:{value:f?.size??11},farSea:{value:bio.sea?1:0},
   farC0:{value:new T.Color(c[0])},farC1:{value:new T.Color(c[1])},farC2:{value:new T.Color(c[2])},
   // A fourth colour where the record names one (Autumn's evergreens); else
   // the first, in shade.
@@ -271,7 +275,7 @@ export function groundMaterial(view,palette){
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
- uniform float farOn,farCover,farLine,farSize,farSea;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
+ uniform float farOn,farPaint,farCover,farLine,farSize,farSea;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -291,7 +295,7 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
- uniform float wildOn,fallenOn,ringFloor,ringFace;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
+ uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
  uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
@@ -512,13 +516,16 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  float teeGround=0.;
  // The pad a fragment lies on, for its mowing (the polish goal): its signed
  // edge distance (negative inside) and the point in the pad's own frame.
- float teePadD=1e3;vec2 teeF=vec2(0.);
+ float teePadD=1e3;vec2 teeF=vec2(0.),teeAxis=vec2(0.,1.),teeHalf=vec2(1.);
  // THE TEE'S OWN TURF (the far-landscape goal; TODO: "the tee pad reads as
  // one flat, very saturated green"). It wore the semi-rough's colour; a tee is
  // mown nearly as close as a fairway and kept like a green's surround, so its
  // turf is theirs -- half fairway, half fringe -- a little less saturated.
  // Round 1. Paint only: the lie is 'tee' whatever the colour.
- vec3 teeTurf=mix(vec3(dot(mix(tint_fairway,tint_fringe,.5),vec3(.299,.587,.114))),mix(tint_fairway,tint_fringe,.5),.85);
+ // Round 2: half fringe read minty against the fairway beside it -- now
+ // two thirds fairway, a third fringe, a touch darker, full saturation.
+ // Round 3: Desert's read deep and rich against its sand -- 10% toward grey.
+ vec3 teeTurf=mix(tint_fairway,tint_fringe,.33)*.96;teeTurf=mix(vec3(dot(teeTurf,vec3(.299,.587,.114))),teeTurf,.9);
  for(int ti=0;ti<3;ti++){vec4 tee=holeTexel(3.+float(ti)*2.,row);
   vec4 teeDir=holeTexel(4.+float(ti)*2.,row);
   // Into the pad's own frame: across the line of play, then along it.
@@ -530,7 +537,7 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   // The mowing reads the whole mown tee -- the pad and its collar, one colour
   // and one mown shape on screen (round 2: striping the pad alone stopped the
   // bands partway in and drew the lap as a frame inside the green).
-  if(teeGround>.5&&kind==1.&&apronD<teePadD){teePadD=apronD;teeF=tf;}}
+  if(teeGround>.5&&kind==1.&&apronD<teePadD){teePadD=apronD;teeF=tf;teeAxis=teeDir.xy;teeHalf=vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)});}}
  // THE BEACH, AND IT CLAIMS ROUGH ONLY -- AFTER THE TEES, NOT BEFORE.
  //
  // Ordering is the whole of it. Run before the tee block, the beach turned low
@@ -683,10 +690,14 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   vec3 gn=normalize(groundNormal);
   float grain=smoothstep(.3,2.5,length(fwidth(wp)));
   // A ground type's average colour, for where its pattern is under a pixel.
-  #define RING_TINT(c) ((c)<1.5?gt_rock*.93:(c)<4.5&&(c)>3.5?gt_hardpan*.97:turf)
+  #define RING_TINT(c) ((c)<1.5?gt_rock*.78:(c)<4.5&&(c)>3.5?gt_hardpan*.97:turf)
   if(ringFloor>.5)turf=mix(groundPaint(ringFloor,wp,groundPoint.y,gn,turf),RING_TINT(ringFloor),grain*.7);
-  float face=ringFace>.5?1.-smoothstep(.62,.8,gn.y):0.;
-  if(face>0.)turf=mix(turf,mix(groundPaint(ringFace,wp,groundPoint.y,gn,turf),RING_TINT(ringFace)*(ringFace>3.5?mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9:vec3(1.)),grain*.5),face);
+  // Round 5: from a gentler steepness (the ring's facets are coarse, so a
+  // mesa's cliff lies at 40-50 degrees on them; at .62-.8 its sides stayed sand).
+  float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+.16,gn.y):0.;
+  if(face>0.)turf=mix(turf,mix(groundPaint(ringFace,wp,groundPoint.y,gn,turf),RING_TINT(ringFace)*(ringFace>3.5?mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9:vec3(1.)),max(grain*.5,(1.-smoothstep(.25,.55,gn.y))*.85)),face);
+  // Round 5: and the steeper the face the plainer: a pattern laid from above
+  // stretches into vertical smears on a cliff (Mountain's pale streaks).
  }
  // LOCAL RELIEF, BAKED. Crowns lift and hollows darken at a fifteen metre radius
  // -- the size of the thing a golfer is trying to read. It replaces a
@@ -777,7 +788,9 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    vec2 m1=normalize(vec2(mow.x-mow.y,mow.y+mow.x)),m2=normalize(vec2(mow.x+mow.y,mow.y-mow.x));
    float p1=(p.y*m1.y+p.x*m1.x)/period,p2=(p.y*m2.y+p.x*m2.x)/period,hb=groundPoint.y*bend*bendMul/period;
    float a1=max(fwidth(p1),.001),a2=max(fwidth(p2),.001);
-   float s1=smoothstep(-a1*6.283,a1*6.283,sin((p1+hb)*6.283)),s2=smoothstep(-a2*6.283,a2*6.283,sin((p2+hb)*6.283));
+   // Round 2: soft edges -- hard-edged, the diamonds read as tiles; grass
+   // laid one way shades into grass laid the other over a hand's width.
+   float s1=smoothstep(-.15-a1*6.283,.15+a1*6.283,sin((p1+hb)*6.283)),s2=smoothstep(-.15-a2*6.283,.15+a2*6.283,sin((p2+hb)*6.283));
    s1=mix(s1,.5,smoothstep(.12,.45,a1));s2=mix(s2,.5,smoothstep(.12,.45,a2));
    stripe=.5*(s1+s2);
   }
@@ -813,7 +826,16 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   if(kind==4.){
    float lapW=max(fwidth(greenD),1e-4);
    float lap=smoothstep(-.65-lapW,-.65+lapW,greenD)*(1.-smoothstep(.25,.6,lapW));
-   tone=mix(tone,.965-spread*.55,lap);
+   // Round 3 of the diamonds (as the tee's lap, round 2): that one pass shades
+   // as a pass does -- laid away from you light, toward you dark -- turning
+   // smoothly as the mower goes round. Its way of travel is along the outline:
+   // the edge distance's slope over the ground, from the screen's own
+   // derivatives (world position against greenD), turned a right angle.
+   vec2 gx=dFdx(groundPoint.xz),gy=dFdy(groundPoint.xz);float gdet=gx.x*gy.y-gx.y*gy.x;
+   vec2 gg=abs(gdet)>1e-8?vec2(gy.y*dFdx(greenD)-gx.y*dFdy(greenD),gx.x*dFdy(greenD)-gy.x*dFdx(greenD))/gdet:vec2(0.,1.);
+   vec2 lv=normalize(groundPoint.xz-cameraPosition.xz+1e-4);
+   float lapLean=dot(normalize(vec2(-gg.y,gg.x)+1e-5),lv);
+   tone=mix(tone,.965+spread*(.75*lapLean-.25),lap);
   }
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
@@ -838,7 +860,15 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   // pass"). The lap took the bands' tone turned over, so it alternated light
   // and dark round the pad wherever a band met it. Round 1: one tone all the
   // way round, a mower's single lap.
-  float tband=mix(tstripe*2.-1.,-.55,tlap);
+  // Round 2: and that one pass shades as a pass does -- grass laid away from
+  // you light, toward you dark -- turning smoothly as the mower goes round,
+  // never in steps: the lap's direction of travel (along the pad's outline)
+  // against the view, in the pad's own frame.
+  float re=.05,rr=${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)};
+  vec2 tg=vec2(teeBox(teeF+vec2(re,0.),teeHalf,rr)-teeBox(teeF-vec2(re,0.),teeHalf,rr),teeBox(teeF+vec2(0.,re),teeHalf,rr)-teeBox(teeF-vec2(0.,re),teeHalf,rr));
+  vec2 vw=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vl=vec2(vw.x*tr.z-vw.y*tr.w,vw.x*tr.w+vw.y*tr.z),vt=vec2(vl.x*teeAxis.y-vl.y*teeAxis.x,vl.x*teeAxis.x+vl.y*teeAxis.y);
+  float lapTone=-.5+.35*dot(normalize(vec2(-tg.y,tg.x)+1e-5),vt);
+  float tband=mix(tstripe*2.-1.,lapTone,tlap);
   turf*=mix(1.,1.+tband*.075,cueStripes);
   // Round 4: A TEE THAT IS USED. Players tee up between the markers and up to
   // two club lengths behind them, so that strip -- across the markers' span,
@@ -1113,12 +1143,20 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    float mask=smoothstep(0.,40.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y));
    // No forest on a cliff: the pattern is laid from above and stretches into
    // scales on steep ground, and real woods stop at the rock anyway.
-   mask*=smoothstep(.5,.74,normalize(groundNormal).y);
+   // Round 6 of the far landscape: on the far ring the facets are hundreds of
+   // metres wide and steeper than the land they stand for, so whole faces went
+   // bare at 42 degrees -- Mountain's pale vertical streaks. Past the
+   // course's ground the woods hold on to 55 degrees.
+   float far=step(extent.x,abs(wp.x))+step(extent.y,abs(wp.y));
+   mask*=far>0.?smoothstep(.36,.58,normalize(groundNormal).y):smoothstep(.5,.74,normalize(groundNormal).y);
    // Nor under the sea (the far-landscape goal; the owner: "Lakeshore Dunes
    // and Links have trees underwater?"): the canopy was painted on the sea
    // bed too, and the clear shelf showed its crowns through the water. It
    // stops at the beach, a metre above the water.
    mask*=1.-farSea*(1.-smoothstep(.3,1.2,groundPoint.y));
+   // And as strong as the landscape paints it (paint; round 5: none on
+   // Desert, faint on Links -- scrub, not a canopy).
+   mask*=farPaint;
    // Lumps: the nearest of a jittered grid of crowns, farSize metres apart.
    vec2 g=wp/farSize,gi=floor(g);float best=9.;vec2 toC=vec2(0.);float pick=0.;
    for(int a=-1;a<=1;a++)for(int b=-1;b<=1;b++){vec2 c=gi+vec2(float(a),float(b));vec2 h=fract(sin(vec2(dot(c,vec2(127.1,311.7)),dot(c,vec2(269.5,183.3))))*43758.5453);vec2 v=c+.15+.7*h-g;float dd=dot(v,v);if(dd<best){best=dd;toC=v;pick=h.x;}}
@@ -1153,5 +1191,5 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v55';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v63';return m;
 }

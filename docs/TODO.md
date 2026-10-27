@@ -109,7 +109,14 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   round, noon). A vertical line runs from the bottom of the frame to the green,
   lighter turf one side, darker the other, on Natural and Clear alike -- a
   straight edge in something the ground shader blends (a ground grid seam, a
-  baked relief tile, a cloud shadow?). Seen 26 October; not looked into.
+  baked relief tile, a cloud shadow?). Seen 26 October. **Diagnosed and fixed
+  in generation, not yet seen in the game** (CARTOON_OVERHAUL *The straight
+  tone step*): creases in the ground, which the slope tint draws -- the false
+  front's straight drop (generators 49, 50), then a crease along a straight
+  line through every green's and tee's end, from the centre line read past
+  its end (generator 52). Not a cloud shadow (captured with them off). To
+  check in play: from Midwest hole 2's approach, and round a few other greens,
+  no straight line of lighter or yellower turf.
 - [ ] **Reading the ground is one choice now, seen only in captures** (CARTOON_OVERHAUL
   *Reading the ground*). Check in a round: the Graphics panel's choice
   (Natural, Clear, Map lines) changes the green at once; on Clear a green's

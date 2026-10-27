@@ -201,7 +201,7 @@ const heading=(h,z)=>{const a=h.toWorld({x:h.center(z-6),z:z-6}),b=h.toWorld({x:
 // the join must run along -- a pair that only crosses in the middle (the
 // staggered out-and-back, whose fairways each lie beside the other's tee
 // ground) is refused rather than joined by a crossbar.
-export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,debug=null}={}){
+export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,seam=0,debug=null}={}){
  const shareStretch=stretch;
  const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set()),per=holes.map(()=>({}));
  // A pond drawn nearer another hole's centre line than its own is dropped
@@ -356,6 +356,51 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
  }
  for(const h of holes)delete h._unshare;
  if(strip)keepStrips(holes,strip,step,ease);
+ if(seam)seamBunkers(holes,seam,step);
+}
+// BUNKERS ON THE SEAM (round 7 of the far-landscape goal's shared fairways;
+// the owner: "thoughtful fairway connections on links"). A double fairway on
+// the Old Course is not a bare lawn: pot bunkers lie along the line between
+// its two holes (the Coffins, the Principal's Nose), so the shared ground is
+// still two holes and a player chooses a side. Each joined stretch of 60 m or
+// more gets up to `count` pot bunkers, 3.6-5.2 m across, near the seam --
+// 38% of the way from the lower-numbered hole's centre line to its partner's,
+// so the bunker lies wholly on its own hole's ground (one that does not is
+// dropped with every other such bunker, below) -- spread along the middle of
+// the join at least 45 m apart. Never on a pond, a tee or another bunker, and
+// never past the hole's twelve hazard slots (ponds keep theirs). Seeded from
+// the hole's own shape. PLACED: every number.
+function seamBunkers(holes,count,step){
+ for(const [i,h] of holes.entries()){
+  if(!h.sharedFairway)continue;
+  const z0=(h.mowStart??22)+20,z1=h.length-45,runs=[];let run=null;
+  for(let z=z0;z<=z1;z+=step){
+   const c=h.center(z),q=h.toWorld({x:c,z});let hit=null;
+   for(const [j,o] of holes.entries()){
+    if(j<=i)continue;
+    const p=o.toLocal(q);if(p.z<0||p.z>o.length)continue;
+    const off=p.x-o.center(p.z),D=Math.abs(off);if(D<12||D>140)continue;
+    const back=h.toLocal(o.toWorld({x:o.center(p.z),z:p.z})),side=Math.sign(back.x-c);
+    const wh=side<0?h.leftWidth(z):h.rightWidth(z),wo=off<0?o.leftWidth(p.z):o.rightWidth(p.z);
+    if(wh+wo>=D-1){hit={j,x:c+(back.x-c)*.38};break;}
+   }
+   if(hit&&run&&run.j===hit.j)run.pts.push({z,x:hit.x});
+   else{run=hit?{j:hit.j,pts:[{z,x:hit.x}]}:null;if(run)runs.push(run);}
+  }
+  const r=rng(`seam:${h.hole}:${h.length.toFixed(2)}`);
+  for(const {pts} of runs){
+   if(pts[pts.length-1].z-pts[0].z<60)continue;
+   const want=Math.min(count,1+Math.floor((pts[pts.length-1].z-pts[0].z)/90)),placed=[];
+   for(let k=0;k<want*3&&placed.length<want;k++){
+    if(h.bunkers.length+h.ponds.length>=12)break;
+    const at=pts[Math.floor(pts.length*(.25+.5*r()))],rx=1.8+r()*.8,rz=1.8+r()*.8,x=at.x+(r()-.5)*4,z=at.z;
+    if(placed.some(b=>Math.abs(b.z-z)<45))continue;
+    if(h.ponds.some(p=>insideOval(x,z,p,rx+6))||h.bunkers.some(b=>insideOval(x,z,b,rx+4))||Object.values(h.tees).some(t=>Math.hypot(t.x-x,t.z-z)<20))continue;
+    const b={x,z,rx,rz,phase:r()*6.28,wave2:(r()-.5)*.04,wave3:.02+r()*.03,greenSide:false,seam:true};
+    h.bunkers.push(b);placed.push(b);
+   }
+  }
+ }
 }
 // ROUND 5 OF THE POLISH GOAL: A JOIN OR A REAL STRIP, NEVER A SLIVER. Where two
 // fairways come within `strip` m of each other and do not join -- a tee or a
@@ -436,7 +481,13 @@ export function generateCourse(settings={},hole=0){
  // wider than parkland's -- Chambers Bay's run 26-96 m (28-105 yd), against
  // about 22-29 m at Oakmont or Winged Foot -- so the same
  // setting cuts a broader one there. Never on the range (its own targets).
- const sideWidth=(edge,z)=>s.width/2*(s.range?1:bio.fairwayScale??1)*sample(edge,clamp(z/length,0,1))*Math.sqrt(1+(center(z+.5)-center(z-.5))**2);
+ // Widened by the centre line's slope, read from points kept inside the hole
+ // (the straight tone step, round 5): in the last half metre the point ahead
+ // fell past the green, where the centre line stops, so the slope halved and
+ // the width dropped 1.3 m in half a metre -- a step every distance from the
+ // hole carried, and the ground creased along it.
+ const lean=z=>{const a=Math.max(0,z-.5),b=Math.min(length,z+.5);return b>a?(center(b)-center(a))/(b-a):0;};
+ const sideWidth=(edge,z)=>s.width/2*(s.range?1:bio.fairwayScale??1)*sample(edge,clamp(z/length,0,1))*Math.sqrt(1+lean(z)**2);
  const leftWidth=z=>sideWidth(leftEdge,z),rightWidth=z=>sideWidth(rightEdge,z),width=z=>Math.max(leftWidth(z),rightWidth(z));
  // ONE LONG TEE ON A SHORT HOLE. The markers are spread down it rather than
  // sitting on three pads of their own, which on a par three is both what a
@@ -1275,6 +1326,8 @@ export function* generateWorldSteps(settings={},options={}){
  // Ground is asked about in scans, so whichever hole won last time usually wins
  // again. Measuring it first makes the rejection above bite straight away.
  let lastBest = 0;
+ // Each centre line's ends and the way it runs there, a metre in (`measure`).
+ const ends = holes.map(h => ({c0: h.center(0), t0: h.center(1) - h.center(0), cL: h.center(h.length), tL: h.center(h.length) - h.center(h.length - 1)}));
  function nearest(x, z) {
   let best = -1, distance = Infinity, local = null;
   // ONLY AN ISLAND READS `other`. Keeping a minimum per group of three holes
@@ -1285,7 +1338,16 @@ export function* generateWorldSteps(settings={},options={}){
   const measure = i => {
    const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
    const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
-   const d = Math.hypot(p.x - h.center(zz), p.z - zz) -
+   // THE STRAIGHT TONE STEP, round 5 (the far-landscape goal). Past either end
+   // the centre line carries straight on along its end direction. It stopped
+   // dead there, so beside a green the distance turned at once from "across
+   // the bending centre line" to "from its end point", a kink along a straight
+   // line through the green's end, out across the rough on both sides; the
+   // hills fade in by this distance, so the ground creased there and the slope
+   // tint drew it (Midwest hole 2, seen from the approach). Carried on, the
+   // distance turns smoothly; behind the green it still rounds the end.
+   const e = ends[i], cx = p.z > h.length ? e.cL + e.tL * (p.z - h.length) : p.z < 0 ? e.c0 + e.t0 * p.z : h.center(zz);
+   const d = Math.hypot(p.x - cx, p.z - zz) -
     (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
    if (groups) {const g = holeBoxes[i].group; if (d < groups[g]) groups[g] = d;}
    if (d < distance) {best = i; distance = d; local = p;}

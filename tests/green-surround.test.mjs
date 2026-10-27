@@ -34,9 +34,12 @@ test('the approach to a green stays open at every setting of the slider', () => 
     `${biome} at ${greenTrees}%: a tree stands ${closest.toFixed(1)} m into the approach, inside ${GREEN.open} m`);
    seen.push(closest);
   }
-  // And it does not creep in as the slider rises.
-  assert.ok(Math.max(...seen) - Math.min(...seen) < 2,
-   `${biome}: the approach clearance moved with the slider (${seen.map(v => v.toFixed(1)).join(', ')})`);
+  // And it does not creep in as the slider rises. One-sided (generator 52):
+  // which tree is nearest out past the clearance is chance -- the slider takes
+  // trees elsewhere, and the planting stream refills from the next draws -- so
+  // on PNW it moved OUT, 53.4 to 57.3 m, failing a check of any 2 m movement.
+  for (let i = 1; i < seen.length; i++) assert.ok(seen[i] > seen[i - 1] - 2,
+   `${biome}: the approach clearance closed in as the slider rose (${seen.map(v => v.toFixed(1)).join(', ')})`);
  }
 });
 

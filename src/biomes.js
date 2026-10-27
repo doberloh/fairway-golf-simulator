@@ -178,8 +178,11 @@ const TRAITS = {
   plants: [['pine', .38], ['cedar', .3], ['alder', .17], ['fern', .15]]},
  desert: {light: {shade: '#a78aa6', exposure: .9},
   longGrass: {families: [['grassbunch', 1, .8]], count: 2600, near: 20, leaf: '#a9a06a', accent: '#d9c88f'},
-  farForest: {cover: .35, size: 7, colors: ['#6c7146', '#7c7a4c', '#5e6640']},
-  bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240, ringFace: 'hardpan', ringMesas: true,
+  // Round 5 of the far landscape: scrub, not woods (low clumps thinning with
+  // distance), and no painted canopy under them -- it was a dark carpet on the
+  // sand (the owner: "desert probably doesn't need THICK coverage").
+  farForest: {cover: .35, size: 7, scrub: true, paint: 0, colors: ['#6c7146', '#7c7a4c', '#5e6640']},
+  bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240, ringFace: 'rock', ringMesas: true,
   scatter: {rocks: 500, grass: 12000, tufts: 150, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
@@ -223,7 +226,8 @@ const TRAITS = {
   plants: [['spruce', .4], ['pine', .28], ['aspen', .22], ['sagebrush', .1]]},
  links: {light: {shade: '#8a98b0'},
   longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 2, 1.0]], count: 7000, near: 14, leaf: '#8a9150', accent: '#d8c27a'},
-  farForest: {cover: .3, size: 6, colors: ['#5b6a33', '#6d7a3a', '#8a8a3e']},
+  // Round 5: gorse and broom scrub on the dunes, the canopy painting faint.
+  farForest: {cover: .3, size: 6, scrub: true, paint: .35, colors: ['#5b6a33', '#6d7a3a', '#8a8a3e']},
   bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0, ringFace: null,
   sea: true, scatter: {rocks: 160, grass: 400000, tufts: 1600, tallGrass: true,
    rockScale: 1, bladeLength: 1.25, bladeWidth: 1.4, bladeTint: '#c2a05c',
@@ -236,7 +240,7 @@ const TRAITS = {
   // they do (course.js shareFairways): a pair joined only where their
   // fairways run alongside for two thirds of their length (the far-landscape
   // goal), so a double fairway, never a crossbar. PLACED, all of it.
-  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 100, ease: 170, close: 70, blur: 60, stretch: true, strip: 14, cover: .66, endEase: 36}, routeParallel: {gap: 60, weight: 600, walk: 130, shifts: [60]},
+  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 100, ease: 170, close: 70, blur: 60, stretch: true, strip: 14, cover: .66, endEase: 36, seam: 2}, routeParallel: {gap: 60, weight: 600, walk: 130, shifts: [60]},
   landform: {type: 'dunes', scale: 150, hummock: 38, height: 5, marram: .55, heather: .6,
    kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
   fallen: null,
@@ -316,10 +320,10 @@ const TRAITS = {
    ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
  autumn: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
-  // Round 3 of the far landscape: a fifth of the far woods evergreen (pine and
+  // Round 3 of the far landscape: a few of the far woods evergreen (6%; pine and
   // hemlock among the maples), and the far land rising to the low mountains
   // behind a New England valley (170 m; was the default 70).
-  farForest: {cover: .9, size: 11, evergreen: .2, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']}, ringLift: 170,
+  farForest: {cover: .9, size: 11, evergreen: .06, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']}, ringLift: 170,
   bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   // New England: low granite ledges among the hardwoods, leaves under them.
@@ -353,7 +357,10 @@ const TRAITS = {
  // light up at dusk, and ghosts drift over the holes (`ghosts`).
  haunted: {light: {shade: '#8a70b0'},
   longGrass: {families: [['grasstussock', 1, .55]], count: 3500, near: 18, leaf: '#4c4a3f', accent: '#8a6f6a'},
-  farForest: {cover: .7, size: 9, colors: ['#3b3140', '#4a3c45', '#2e2a33']},
+  // Round 5 of the far landscape: dead trunks to the horizon (`dead`), not
+  // living canopy mounds; the painted floor faint and grey (round 7: .25, was
+  // .45 -- its round patches read as cobbles over the moor).
+  farForest: {cover: .7, size: 9, dead: true, paint: .25, colors: ['#5a5058', '#4a4248', '#3a3438']},
   bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
   canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
   waterTint: '#2f6b46', waterMurk: .25, spray: '#6a5a7a', sunColor: '#ffc29a',

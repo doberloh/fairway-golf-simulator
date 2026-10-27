@@ -10,7 +10,7 @@
 //
 // So the mirror holds only what it is for: the trees round each still pond,
 // as low-poly twins (the far woods' shapes, vegetation.js farWoodGeometry,
-// with a trunk), each turned upside down about ITS OWN pond's level, and
+// over a dark column of shade), each turned upside down about ITS OWN pond's level, and
 // drawn with the ordinary camera into a picture half the screen's size. A
 // pond reads that picture where its surface is a mirror (renderer.js
 // WATER_EDGES), so a tree appears exactly where its reflection would be,
@@ -24,7 +24,7 @@ import {crownRadius} from './species.js';
 // Conifers read as spires in water; everything else as a round crown.
 const SPIRE = /pine|spruce|cedar|fir|hemlock|redwood|cypress|larch/i;
 
-export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 30}) {
+export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 60}) {
  const still = view.waterBodies.filter(b => !b.ocean && !b.stream);
  if (!still.length) return null;
  const trees = view.world.trees || [];
@@ -33,7 +33,7 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 30}) {
   const R = b.mesh.geometry.boundingSphere?.radius ?? 30;
   return {b, R, x: b.center?.x ?? 0, z: b.center?.z ?? 0};
  });
- const rounds = [], spires = [], trunks = [];
+ const rounds = [], spires = [];
  for (const t of trees) {
   if (!(t.h > 3)) continue;
   // The nearest pond whose rim the tree stands within `reach` of plus its
@@ -42,7 +42,6 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 30}) {
   for (const p of ponds) { const d = Math.hypot(t.x - p.x, t.z - p.z) - p.R; if (d < reach + t.h && d < best) { best = d; pond = p; } }
   if (!pond || t.y < pond.b.level + .2) continue;
   (SPIRE.test(t.kind || '') ? spires : rounds).push({t, level: pond.b.level});
-  trunks.push({t, level: pond.b.level});
  }
  if (!rounds.length && !spires.length) return null;
  const scene = new T.Scene(), m = new T.Matrix4(), flip = new T.Matrix4(), c = new T.Color();
@@ -68,9 +67,17 @@ export function makeWaterMirror(view, {farWoodGeometry, colors, reach = 30}) {
  // A spire from a sixth of the way up to the top.
  add(spires, farWoodGeometry('spruce'), (t, mm) => { const s = t.h * .83 / 3.4; mm.compose(new T.Vector3(t.x, t.y + t.h * .17, t.z), new T.Quaternion(), new T.Vector3(s, s, s)); },
   (t, cc) => cc.copy(crown(t, 2)).multiplyScalar(.8));
- const trunk = new T.CylinderGeometry(.6, 1, 1, 5, 1).translate(0, .5, 0);
- add(trunks, trunk, (t, mm) => { const w = Math.max(.15, t.h * .025); mm.compose(new T.Vector3(t.x, t.y, t.z), new T.Quaternion(), new T.Vector3(w, t.h * .55, w)); },
-  (t, cc) => cc.set('#3b2f25'));
+ // No trunks (round 5): thin dark lines down the water read as posts. But
+ // crowns alone floated mid-pond, cut off from the bank (round 6): between a
+ // bank and its trees' reflected crowns lies the shade under them. So each
+ // tree's foot to its crown is a dark column most of the crown's width -- the
+ // reflected woods' shadowed floor -- joining crown to bank.
+ const shade = [...rounds, ...spires];
+ add(shade, new T.CylinderGeometry(1, 1, 1, 7, 1, true).translate(0, .5, 0), (t, mm) => {
+  const spire = SPIRE.test(t.kind || ''), r = (spire ? t.h * .18 : crownRadius(t) || t.r || t.h * .3) * .7;
+  const foot = spire ? t.h * .17 : t.h - Math.min(t.h * .7, 1.02 * (crownRadius(t) || t.r || t.h * .3));
+  mm.compose(new T.Vector3(t.x, t.y, t.z), new T.Quaternion(), new T.Vector3(r, foot + r * .3, r));
+ }, (t, cc) => cc.copy(crown(t, 1)).multiplyScalar(.32));
  const target = new T.WebGLRenderTarget(4, 4, {depthBuffer: true});
  return {
   scene, target, ponds,

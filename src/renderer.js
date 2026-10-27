@@ -116,8 +116,12 @@ float foamAlpha(){
  float lip=smoothstep(front-.07,front,v)*(1.-smoothstep(front,front+.1,v));
  float wash=smoothstep(.0,.1,v)*(1.-smoothstep(front*.5,front,v))*.45;
  float band=max(lip,wash)*smoothstep(0.,.06,v);
+ // Round 4: the wet line where water meets bank, always there (a pond's
+ // wavelets are small; at a distance only this line showed it had an edge),
+ // its width breathing slowly along the shore.
+ float wet=smoothstep(0.,.015,v)*(1.-smoothstep(.03,.07+.05*fNoise(vec2(s*.43,t*.17)),v));
  float lace=fNoise(vFoamWorld.xz*2.3*foamGrain+vec2(t*.21,-t*.16))*.62+fNoise(vFoamWorld.xz*5.7*foamGrain-vec2(t*.33,t*.12))*.38;
- return band*smoothstep(.42,.75,lace)*.55;
+ return max(band*smoothstep(.42,.75,lace)*.55,wet*(.32+.18*lace));
 }
 `;
 // THE EDGE OF EACH KIND OF WATER, in the water's own shader. Still water (ponds
@@ -185,21 +189,45 @@ const WATER_EDGES={
   float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
   outgoingLight=mix(outgoingLight,body,.78*(1.-clamp(mirror*1.4,0.,.85)));
   diffuseColor.a=max(diffuseColor.a,mix(.86,.97,deep));
+  // WAVELETS COMING IN (the far-landscape goal's waves, round 2): before the
+  // foam at the bank, small crests running in along the depth lines toward
+  // the shore -- so they follow its shape -- broken along their length by a
+  // drifting noise, catching the light; only in the last 0.7 m of depth.
+  // Round 3: on a pond shallow far out they streaked its middle -- the last
+  // 0.4 m only, dimmer, and only where a broad noise lets a set come in.
+  {
+   float wt=waterTime*.3,crestPh=depth*9.-wt*1.1+wNoise(vWaterWorld.xz*.35)*1.6;
+   float crest=smoothstep(.72,.98,sin(crestPh*6.2832)*.5+.5)*(1.-smoothstep(.08,.4,depth))*smoothstep(.3,.6,wNoise(vWaterWorld.xz*.18+3.7))*inside;
+   crest*=smoothstep(.35,.7,wNoise(vWaterWorld.xz*.9+vec2(wt*.2,-wt*.13)));
+   outgoingLight+=vec3(.1,.12,.11)*foamLight*crest;
+  }
   // TREES IN THE WATER (water-mirror.js; the far-landscape goal, round 1): the
   // bank's trees, turned over about this pond's level and drawn into a
   // half-size picture with the ordinary camera, read at this pixel and nudged
   // by the ripples; lit by the light the water gets, a little darker than the
   // trees themselves, as far as the surface is a mirror here.
+  // Round 2: round 1's trees came back pale and washed out -- a reflection
+  // of foliage in still water is dark and rich -- so darker (.55 of the lit
+  // twin) and stronger wherever the surface mirrors at all. Round 3: four
+  // taps 1.5 of the picture's pixels apart, averaged -- the surface softens a
+  // reflection, and the twins' facets read as separate patches.
   if(mirrorOn>.5){
-   vec4 mr=texture2D(mirrorMap,gl_FragCoord.xy/mirrorScreen+normal.xy*.012);
-   outgoingLight=mix(outgoingLight,mr.rgb*foamLight*.8,mr.a*clamp(mirror*1.6+.15,0.,.9));
+   vec2 muv=gl_FragCoord.xy/mirrorScreen+normal.xy*.012,px=6./mirrorScreen;
+   vec4 mr=(texture2D(mirrorMap,muv+vec2(px.x,0.))+texture2D(mirrorMap,muv-vec2(px.x,0.))+texture2D(mirrorMap,muv+vec2(0.,px.y))+texture2D(mirrorMap,muv-vec2(0.,px.y)))*.25;
+   // Round 4: by the mirror term alone (it had a floor of .35, so looking
+   // steeply into a pond close by showed crowns as flat patches).
+   outgoingLight=mix(outgoingLight,mr.rgb*foamLight*.55,mr.a*clamp(mirror*2.8,0.,.92));
   }
  }`,
  sea:`{
   vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
-  float inside=step(0.,su.x)*step(su.x,1.)*step(0.,su.y)*step(su.y,1.);
-  vec2 suv=(su*(seaGrid.zw-1.)+.5)/seaGrid.zw;
-  float depth=mix(50.,seaLevel-texture2D(seaHeights,suv).r,inside);
+  // THE FAR-LANDSCAPE GOAL: no line where the ground map ends. Past it the
+  // depth was taken as 50 m at once, so the pale shelf stopped in a straight
+  // line across the sea (Island's far views). The map's edge depth carries on
+  // and deepens over the next 400 m instead.
+  float past=length(max(abs(vWaterWorld.xz)-seaGrid.xy,0.)),inside=1.;
+  vec2 suv=(clamp(su,0.,1.)*(seaGrid.zw-1.)+.5)/seaGrid.zw;
+  float depth=mix(seaLevel-texture2D(seaHeights,suv).r,50.,smoothstep(0.,400.,past));
   diffuseColor.a*=smoothstep(0.,.35,depth);
   // THE POLISH GOAL'S WATER, round 5: the sea and the big lakes (Lakeshore's
   // is drawn as sea) were one flat colour from the shelf to the horizon. The
@@ -242,6 +270,13 @@ const WATER_EDGES={
   float bank=smoothstep(.4,.82,vShore)*(1.-smoothstep(.96,1.,vShore));
   float seam=exp(-pow((vShore-.22)/.08,2.));
   float foam=clamp(bank*smoothstep(.4,.7,lace)*.8+seam*smoothstep(.55,.8,lace)*.4,0.,1.);
+  // THE FAR-LANDSCAPE GOAL'S WAVES, round 5: the ripples that STAND. Water
+  // running over a bar or a stone throws a V of small waves that stay where
+  // they are while the water and its foam pass through them -- the surest
+  // sign of running water. Chevrons pointing downstream, fixed to the bed (no
+  // drift), in patches where the bed is rough, faint along the banks.
+  float riffle=smoothstep(.55,.95,sin((vChan.x*.9+abs(across)*.6)*6.2832))*smoothstep(.5,.75,wNoise(vChan*vec2(.05,.2)+7.3));
+  foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.9,.94,.92)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
@@ -251,6 +286,10 @@ const WATER_EDGES={
   float fleck=smoothstep(.6,.84,wNoise(vec2(drift*1.1,across*1.7+t*.03))*.6+wNoise(vec2(drift*2.6+t*.04,across*3.3))*.4);
   float bank=smoothstep(.55,.9,vShore)*(1.-smoothstep(.97,1.,vShore));
   float foam=clamp(fleck*(.45+.5*vShore)+bank*.3*fleck,0.,1.)*.85;
+  // Round 5: a creek's riffles, as the river's but tighter and brighter (it is
+  // shallow and quick): standing chevrons over the rough stretches of its bed.
+  float riffle=smoothstep(.5,.92,sin((vChan.x*1.7+abs(across)*1.3)*6.2832))*smoothstep(.45,.7,wNoise(vChan*vec2(.08,.3)+2.9));
+  foam=max(foam,riffle*.38*(.6+.4*fleck));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.92,.95,.94)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
@@ -1476,7 +1515,7 @@ export class GolfView{
    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
     .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey=()=>'fairway-shore-foam-v3';
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v4';
   const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
   this.group.add(mesh);
  }
@@ -1575,7 +1614,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v14-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v18-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 

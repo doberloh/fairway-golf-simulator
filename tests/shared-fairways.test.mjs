@@ -88,3 +88,25 @@ test('sharing is reproducible and leaves a lone hole alone', () => {
  shareFairways([h], BIOMES.links.sharedFairways);
  assert.equal(h.leftWidth(h.length / 2), before);
 });
+
+// Round 7 of the far-landscape goal's shared fairways (generator 51): pot
+// bunkers on a join's seam, so the shared ground still plays as two holes.
+test('a shared fairway carries pot bunkers on its seam, wholly in the fairway', () => {
+ let seen = 0;
+ for (const seed of ['overhaul', 'LINKS-B']) {
+  const w = links(seed);
+  for (const h of w.holes) for (const b of h.bunkers.filter(b => b.seam)) {
+   seen++;
+   assert.ok(h.sharedFairway, `${seed}: hole ${h.hole + 1} has a seam bunker but shares nothing`);
+   assert.ok(b.rx <= 2.6 && b.rz <= 2.6, `${seed}: a seam bunker ${b.rx.toFixed(1)} m across is no pot bunker`);
+   const c = h.toWorld(b);
+   assert.equal(w.surface(c.x, c.z), 'sand', `${seed}: hole ${h.hole + 1}'s seam bunker is not sand at its centre`);
+   // Round it, a step outside the sand: the shared fairway.
+   for (let k = 0; k < 8; k++) {
+    const a = k * Math.PI / 4, q = h.toWorld({x: b.x + Math.cos(a) * (b.rx + 2.5), z: b.z + Math.sin(a) * (b.rz + 2.5)});
+    assert.equal(w.surface(q.x, q.z), 'fairway', `${seed}: hole ${h.hole + 1}'s seam bunker is not ringed by fairway`);
+   }
+  }
+ }
+ assert.ok(seen >= 3, `only ${seen} seam bunkers on two courses`);
+});

@@ -39,6 +39,10 @@ const cues = JSON.parse(opt('--cues', 'null'));
 // for a diagnostic picture (the far-landscape goal: the water made a pure
 // mirror, to see what its reflection probe holds). Never for a round's look.
 const evalAfter = opt('--eval', null);
+// `--course '{"rivers":1,"creeks":2}'`: more course settings, merged into the course
+// asked for (the waves' round 5: seed `overhaul` has no running water). The
+// course is then not the fixed views' course; label such a run apart.
+const courseExtra = JSON.parse(opt('--course', '{}'));
 // `--homes`: the same course with fairway homes on (the game's default is
 // off, so no fixed view shows a house), and two views of the first ones --
 // the houses' rounds (tools/blender/cartoon_houses.py). Kept apart from the
@@ -138,6 +142,22 @@ export const VIEWS = [
  {name: 'tee-top', hole: 0, when: 'noon', caption: 'Hole 1, the back tee from above', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
   const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L, c = h.toWorld({x: t.x - ux * 9, z: t.z - uz * 9}), s = h.toWorld({x: t.x + ux * 3, z: t.z + uz * 3});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 16, pitch: -52}; }`},
+ // The Links shared fairways from the tee, as a player sees them (the
+ // far-landscape goal: "judged from the tee in the game too"): the first and
+ // second holes that share their fairway, from the back tee at eye height,
+ // looking 200 m down the hole. Hole 1's tee where no hole shares.
+ ...[0, 1].map(k => ({name: `share-tee${k ? '-b' : ''}`, hole: 0, when: 'afternoon', caption: `The ${k ? 'second' : 'first'} shared fairway from its tee`, cam: `w => { const hs = w.holes.filter(h => h.sharedFairway), h = hs[${k}] ?? hs[0] ?? w.holes[0], t = h.tees.blue || Object.values(h.tees)[0];
+  const c = h.toWorld({x: t.x, z: t.z - 3}), s = h.toWorld({x: h.center(Math.min(h.length, t.z + 200)), z: Math.min(h.length, t.z + 200)});
+  return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 1.8, pitch: -2}; }`})),
+ // A river or creek close to (the far-landscape goal's waves, round 5): the
+ // stream segment nearest the first green, from 7 m beside its bank, 3 m up,
+ // looking a little downstream. From high above where there is none.
+ {name: 'stream-near', hole: 0, when: 'afternoon', caption: 'The nearest river or creek, close to', cam: `w => { const g = w.holes[0].worldPin, segs = w.streams?.segments || []; let s = null, bd = 1e9;
+  for (const q of segs) { const d = Math.hypot((q.a.x + q.b.x) / 2 - g.x, (q.a.z + q.b.z) / 2 - g.z); if (d < bd) { bd = d; s = q; } }
+  if (!s) return {x: 0, z: 0, height: 200, pitch: -40};
+  const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2, off = (s.a.width || 4) * .5 + 7;
+  const cx = mx - dz / L * off - dx / L * 6, cz = mz + dx / L * off - dz / L * 6;
+  return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 8 - cx, mz + dz / L * 8 - cz) * 180 / Math.PI, height: 3, pitch: -14}; }`},
  {name: 'tee-surround', hole: 0, when: 'afternoon', caption: 'Hole 1, the back tee\'s surround from behind and to the side', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
   const L = Math.hypot(p.x - t.x, p.z - t.z) || 1, ux = (p.x - t.x) / L, uz = (p.z - t.z) / L, c = h.toWorld({x: t.x - ux * 14 + uz * 9, z: t.z - uz * 14 - ux * 9}), s = h.toWorld({x: t.x, z: t.z});
   return {x: c.x, z: c.z, yaw: Math.atan2(s.x - c.x, s.z - c.z) * 180 / Math.PI, height: 2.4, pitch: -8}; }`},
@@ -148,6 +168,14 @@ export const VIEWS = [
   if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 40, pitch: -50};
   const cx = best.x - Math.cos(best.a) * 30, cz = best.z - Math.sin(best.a) * 30;
   return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 45, pitch: -48}; }`},
+ // A shoreline close to (the far-landscape goal's waves): the first water
+ // found from the first green, seen from 7 m back on its bank and 2.5 m up,
+ // looking along the edge.
+ {name: 'shore-near', hole: 0, when: 'afternoon', caption: 'Hole 1, a shoreline close to', cam: `w => { const g = w.holes[0].worldPin; let best = null;
+  for (let r = 10; r < 900 && !best; r += 4) for (let a = 0; a < 6.28; a += .08) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'water') { best = {x, z, a}; break; } }
+  if (!best) return {x: g.x, z: g.z - 30, yaw: 0, height: 3, pitch: -10};
+  const cx = best.x - Math.cos(best.a) * 7, cz = best.z - Math.sin(best.a) * 7, side = best.a + .9;
+  return {x: cx, z: cz, yaw: Math.atan2(Math.cos(side), Math.sin(side)) * 180 / Math.PI, height: 2.5, pitch: -14}; }`},
  // The nearest boulder to the first green, close to (Desert's stacks).
  {name: 'rock-near', hole: 0, when: 'afternoon', caption: 'The boulder nearest the first green, close to', cam: `w => { const g = w.holes[0].worldPin; let best = null, bd = 1e9;
   for (const r of w.rocks || []) { const d = Math.hypot(r.x - g.x, r.z - g.z); if (d < bd && (r.scale || 1) > 1.2) { bd = d; best = r; } }
@@ -188,7 +216,7 @@ try {
   p.on('pageerror', e => errors.push(`page error: ${e.message}`));
   p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
   const t0 = Date.now();
-  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {})});
+  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {}), ...courseExtra});
   if (cues) await p.evaluate(c => window.__view.setGroundCues(c), cues);
   if (evalAfter) console.log(biome, 'eval:', JSON.stringify(await p.evaluate(code => (0, eval)(code)(window.__view), evalAfter)));
   const built = Date.now() - t0;

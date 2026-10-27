@@ -562,7 +562,7 @@ export function farWoodGeometry(kind){
  if(kind==='spruce'){const a=new T.ConeGeometry(1,.6,7,1).translate(0,-.2,0),b=new T.ConeGeometry(.7,.55,7,1).translate(0,.22,0);geo=mergeGeometries([a,b]);a.dispose();b.dispose();}
  // The three lumps cut on one floor, so each rests on the ground (their own
  // cuts sat 3 cm of a unit apart, the higher two hanging).
- else if(kind==='cluster'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
+ else if(kind==='cluster'||kind==='scrub'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
   const p=geo.attributes.position;for(let i=0;i<p.count;i++)if(p.getY(i)<-.295)p.setY(i,-.295);}
  else if(kind==='cone')geo=new T.ConeGeometry(1,1,6,1);
  // Haunted Hollow's dead trunks (round 3 of the far landscape): three bare
