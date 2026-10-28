@@ -42,6 +42,7 @@ import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievement
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {surfaceLabel,isGround,GROUNDS} from './grounds.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
@@ -73,6 +74,7 @@ import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnos
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
+import {hauntedInSeason,offered,markOffSeason} from './seasons.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -87,7 +89,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,o
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {randomSettings} from './settings-schema.js';
@@ -1010,7 +1012,7 @@ function recordProfileShot(result,before){
  // it stopped -- within 5% of the aim distance of the aim point; once a hole,
  // never for a putt. On the range, that alone, as a capped trickle.
  const L=lastShot,putt=before.lie==='green'||L?.kind==='putter';
- const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what))||result.end;
+ const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&(['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what)||isGround(c.what)))||result.end;
  const on=!result.hazard&&!putt&&onTheNumber(landed,L?.aimAt,L?.aimDist);
  const xpBefore=prof.xp||0;
  if(range){if(on){const got=rangeXp(prof);if(got)queueXpGain(prof,[{label:'On the number',xp:got}],xpBefore,1);}}
@@ -1060,6 +1062,14 @@ function applyRoundCamera(saved){
 // never part of what the seed decides. `style` is deliberately NOT carried:
 // endless forces cartoon, which is the mode's own choice and not a loss.
 const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),...playScope(from)});
+// SEASONAL LANDSCAPES (seasons.js). Whether Haunted Hollow is offered now, and
+// a fresh endless run's seed -- marked when it is not, so the run never rolls it.
+const hauntedOffered=()=>offered('haunted',{allYear:!!graphics?.hauntedAllYear});
+const freshRunSeed=()=>{const s=newRunSeed();return hauntedOffered()?s:markOffSeason(s);};
+// A picker's landscapes now: those in season, and the one already chosen.
+const seasonalBiomes=keep=>Object.entries(BIOMES).filter(([k])=>k===keep||offered(k,{allYear:!!graphics?.hauntedAllYear}));
+// Surprise me rolls again rather than land on a landscape out of season.
+const surpriseSettings=()=>{let s=randomSettings(Math.random);for(let i=0;i<20&&!offered(s.biome,{allYear:!!graphics?.hauntedAllYear});i++)s=randomSettings(Math.random);return s;};
 // Carrying the keys is only half of it -- they have to be made live. Boot and
 // import each did this by hand and `resumeRound` did not, so resuming a round
 // saved under a different bag played it with the CURRENT one while the bag panel
@@ -1390,7 +1400,7 @@ function updateHUD(){
  // function -- read before it, `ballOnGreen` is the previous pass's answer and
  // the map frames the green one update after the ball arrives on it.
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
-$('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
+$('lieLabel').textContent=surfaceLabel(lie);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
  $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();setWindArrow();
  for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();
@@ -1726,7 +1736,7 @@ function stepShape(which,dir,wrap=true){
 function drawLie(){
  if(!course||!round)return;
  const lie=currentLie(),f=onMat()?1:lieFactor(lie);
- const name=onMat()?'Mat':lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
+ const name=onMat()?'Mat':surfaceLabel(lie);
  const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
  const meter=$('lieReadout');
  if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
@@ -2931,7 +2941,7 @@ function reliefGround(){
   blocked:(x,z)=>{const cx=Math.floor(x/10),cz=Math.floor(z/10);for(let i=cx-2;i<=cx+2;i++)for(let j=cz-2;j<=cz+2;j++)for(const s of cells.get(i+','+j)||[])if(Math.hypot(x-s.x,z-s.z)<s.r)return true;return false;},
  };
 }
-const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||s}`;};
+const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||(isGround(s)?GROUNDS[s].word:s)}`;};
 function beginRelief(){
  if(!round.relief)return;
  endPick();reliefBack=0;
@@ -3318,12 +3328,17 @@ function startEndless(group,replaySeed){
 }
 // `replaySeed` starts a run that has been played before -- the profile's
 // "Replay this course" -- since an endless run's holes all grow from its seed.
+// `pinnedRun` (lab.pinRun, the smoke run's --endless-seed): the seed the next
+// fresh run takes, once -- so a run that failed can be played again on the
+// same holes through the same button.
+let pinnedRun=null;
 async function buildEndless(group,replaySeed){
+ if(!replaySeed&&pinnedRun){replaySeed=pinnedRun;pinnedRun=null;}
  // Straight off the main menu there is nothing to grow: the hole on screen is
  // already hole one, so the run adopts its seed and its world and starts. No
  // overlay either, because an overlay over work that is not happening is a lie.
  const adopt=menuBackdrop&&backdropRun&&(!replaySeed||replaySeed===backdropRun.seed);
- const seed=replaySeed||(adopt?backdropRun.seed:newRunSeed());
+ const seed=replaySeed||(adopt?backdropRun.seed:freshRunSeed());
  const fresh=new Round({players:round.players,mode:'stroke',tee:round.tee,...group,putting:restorePutting(),endless:true,seed});
  const begin=()=>{
   // Not leaveBackdrop(): that clears the world key to force a rebuild, which is
@@ -3403,7 +3418,7 @@ async function loadMenuBackdrop(report){
  // showpiece, so choosing Endless can play the hole you are already looking at
  // instead of discarding it and growing another. It is built under the key
  // loadCourse will ask for, which is what lets the world survive the handover.
- const seed=newRunSeed();
+ const seed=freshRunSeed();
  const backdrop=endlessSettings(endlessHole(seed,0));
  backdropRun={seed,settings:backdrop};
  // Its own hour, drawn from the seed so the hole and the light that falls on it
@@ -4268,7 +4283,7 @@ async function startEndlessRun(base){
  const group={...base,...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});
  endlessSetup=false;closePanel();
  if(endlessGoal)goalSummary=null;
- await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
+ await startEndless(group,endlessLandscape!=='any'?landscapeSeed(freshRunSeed(),endlessLandscape):undefined);
  toast('Endless: hole out and the next one grows.');
 }
 // A FRIEND'S CHALLENGE FOR A GROUP: stroke play against their card.
@@ -5562,7 +5577,7 @@ function renderPanel(name,content){
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
    seed:()=>`<label class="field">${named(FIELD.seed.label,'seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
-   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
+   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${seasonalBiomes(studioBiome).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${named(FIELD.footprint.label,'footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
   // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
@@ -5852,7 +5867,7 @@ function renderPanel(name,content){
   $('roundSurprise').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    try{
-    const fresh=randomSettings(Math.random),name=suggestCourseName(fresh);
+    const fresh=surpriseSettings(),name=suggestCourseName(fresh);
     await startRoundOn(fresh,readGroup(),name);
     toast(`“${name}”, built just now. Play well.`);
    }catch(e){$('roundError').textContent=e.message;}
@@ -5913,7 +5928,7 @@ function renderPanel(name,content){
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    const kind=$('roundCourse').value;
-   if(kind==='surprise'){const s=lobbySurprise||randomSettings(Math.random),name=suggestCourseName(s);
+   if(kind==='surprise'){const s=lobbySurprise||surpriseSettings(),name=suggestCourseName(s);
     try{await startRoundOn(s,readGroup(),name);lobbySurprise=null;toast(`“${name}”, built just now. Play well.`);}catch(e){$('roundError').textContent=e.message;}return;}
    if(kind==='weekly'||kind==='endless'||kind==='friend'){try{await (kind==='weekly'?startWeeklyRound:kind==='endless'?startEndlessRun:startRivalRound)(readGroup());}catch(e){$('roundError').textContent=e.message;if(kind==='friend')lobbySheet?.go(1);}return;}
    const chosen=findCourse($('roundCourse').value);
@@ -5996,31 +6011,16 @@ function renderPanel(name,content){
   <label class="check"><input id="gfxDistantFlags" type="checkbox" ${graphics.distantFlags?'checked':''}> Larger flags far away</label>
   <p class="note">Drawn to size, a flagstick is thinner than a pixel from a long way out and simply disappears. On, the stick and its flag grow with distance so you can always find the hole; from a chip or on the green they are exactly to size. Off, they are to size from everywhere. Only the picture changes: the ball hits the real flagstick either way.</p>
   <h3>Reading the ground</h3>
-  <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
-  <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
-  <p class="note">Slopes facing the sun lift a little and slopes facing away darken, as if the sun were always low, plus a lift on crowns and a shade in hollows worked out when the course is built. It comes from the same side as the real shadows, so the two agree. This is what makes a fairway read as a surface rather than a sheet at noon.</p>
-  <label class="check"><input id="gfxSlope" type="checkbox" ${graphics.slopeTint?'checked':''}> Slope tinting</label>
-  <p class="note">Slopes shed water and burn off toward straw; hollows hold it and stay lush. Works in colour rather than brightness, so it reads where the others are competing with the sun. Turf that is already dry, on a desert or links course, has little left to lose and barely changes.</p>
-  <label class="check"><input id="gfxSheen" type="checkbox" ${graphics.sheen?'checked':''}> Grass sheen</label>
-  <p class="note">Mown grass looked at from a low angle is lighter than grass looked down on, so turf tipping away from you reads lighter and turf tipping toward you darker. From a player's eye a gentle slope changes that angle a lot, which is how a real green shows its breaks at any hour. Strongest on fairways; on greens only a gentle hint of which way the green tips.</p>
-  <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
-  <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible thing here by a distance, because it turns a slope into a spacing you can count.</p>
-  <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
-  <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground, and the clean-up lap round the edge of each green.</p>
-  ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
-  <p class="note">A green is the flattest ground on the course, so it has the least shape to show. This lets the shading and the sheen treat it as steeper than it is, and bends its mowing bands to follow the surface. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did.</p>
-  ${slider('gfxGreenBands','Green mowing bands',graphics.greenBands,0,100,'%',5)}
-  <p class="note">How strong the light and dark bands are on greens. Stronger is the freshly mown look; softer leaves more of the shading to read.</p>
+  <label class="field">How the ground shows its shape<select id="gfxReading">${READINGS.map(r=>`<option value="${r}">${READING_LABELS[r]}</option>`).join('')}</select></label>
+  <p class="note"><b>Natural</b>: the slopes show the way the light, the grass and the mowing would show them, kept gentle on greens. <b>Clear</b>: the same, with a green's tilt and its mowing bands drawn plainly enough to read a putt from. <b>Map lines</b>: Clear, with a contour line every metre of height and every 5 cm on the greens -- frankly a map drawn on the grass, and the most legible of the three. None of them changes the ground a ball plays on, or costs a frame.</p>
   <h3>The look of the course</h3>
-  <p>Taste, not performance: none of these costs a measurable frame, and all four apply the moment you move them.</p>
-  ${slider('gfxPatches','Turf colour variation',graphics.patches,0,100,'%',5)}
-  <p class="note">No real course is one colour. Drifts of lighter, darker, drier and lusher grass in the rough, worn and well-watered patches on a fairway, damp sand in a bunker, and only the faintest change of tone on a green, where anything more would get in the way of reading it.</p>
-  ${slider('gfxShade','Shade under trees and rocks',graphics.shade,0,100,'%',5)}
-  <p class="note">A soft darkening at the foot of every trunk and boulder, and deeper under a forest where the crowns overlap, so things look set down on the grass rather than pasted on it. Worked out once when the course is built, from where everything stands.</p>
+  <p>Taste, not performance: neither costs a measurable frame, and both apply the moment you move them.</p>
   ${slider('gfxHaze','Distance haze',graphics.haze,0,100,'%',5)}
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
+  <label class="check"><input id="gfxHauntedAllYear" type="checkbox" ${graphics.hauntedAllYear?'checked':''}> Haunted Hollow all year</label>
+  <p class="note">Haunted Hollow is a seasonal landscape: offered from 1 October to 7 November${hauntedInSeason()?' (in season now)':''}. On, it is offered all year. A saved round or course, or a shared code, on Haunted Hollow opens any time either way.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -6048,8 +6048,10 @@ function renderPanel(name,content){
   };
   // A float write into uniforms the ground material already holds: no rebuild,
   // no recompile, so these take effect on the frame after the click.
-  for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxSheen','sheen'],['gfxContours','contours'],['gfxStripes','stripes']])
-   $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
+  // One choice writes every ground cue (graphics.js READINGS): uniforms the
+  // ground material already holds, so it shows on the next frame.
+  $('gfxReading').value=graphics.groundReading;
+  $('gfxReading').onchange=()=>{const r=$('gfxReading').value;graphics=saveGraphics({...graphics,groundReading:r,...readingCues(r)});view.setGroundCues(graphics);};
   // Live uniform writes, same as the toggles above: no rebuild, no recompile.
   // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an
   // output named <id>Value from the input's own data-unit, for every range in
@@ -6057,13 +6059,13 @@ function renderPanel(name,content){
   // `slider` helper left wireSliders looking up an element that did not exist,
   // and it threw on EVERY input event while this handler quietly worked -- so
   // the slider moved, the number updated, and the console filled up.
-  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
-   ['gfxPatches','patches'],['gfxShade','shade'],['gfxHaze','haze'],['gfxWind','wind']])
+  for(const [id,key] of [['gfxHaze','haze'],['gfxWind','wind']])
    $(id).oninput=e=>{
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
+  $('gfxHauntedAllYear').onchange=()=>{graphics=saveGraphics({...graphics,hauntedAllYear:$('gfxHauntedAllYear').checked});};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -6329,7 +6331,7 @@ function renderPanel(name,content){
  // colours of the landscape being shaped (ui-studio.js).
  studioSheet=name==='course'&&content.id==='drawerContent'
   ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed}),
-   setup:()=>studioSetup,landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
+   setup:()=>studioSetup,landscapes:seasonalBiomes(settings.biome).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
  if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
  // Challenges, the course of the week and saved courses, the same way
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
@@ -6357,9 +6359,9 @@ function renderPanel(name,content){
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,tag:`WEEK ${wk.week} · THE SAME FOR EVERYONE`,settings:ws,page:weeklyPage},
    game:appMode==='play'?'saved':lobbyGame,
-   surprise:appMode==='play'||lobbyGame!=='surprise'?null:(s=>({name:suggestCourseName(s),line:lineOf(s),settings:s,onRoll:()=>{lobbySurprise=randomSettings(Math.random);lobbyKeep=true;openPanel('round');}}))(lobbySurprise||=randomSettings(Math.random)),
+   surprise:appMode==='play'||lobbyGame!=='surprise'?null:(s=>({name:suggestCourseName(s),line:lineOf(s),settings:s,onRoll:()=>{lobbySurprise=surpriseSettings();lobbyKeep=true;openPanel('round');}}))(lobbySurprise||=surpriseSettings()),
    friend:appMode==='play'?null:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT',ready:!!r&&!rivalProblem(r,{version:GAME_VERSION})}))(listRivals().find(x=>x.id===rivalPick)||listRivals()[0]),
-   endless:appMode==='play'?null:{landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),landscape:endlessLandscape,
+   endless:appMode==='play'?null:{landscapes:seasonalBiomes(endlessLandscape).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),landscape:endlessLandscape,
     onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},best:endlessBest(),pictures:cardPictures},
    onGame:v=>{lobbyGame=v;if(v!=='saved')lobbyCourse=v;else if(!findCourse(lobbyCourse))lobbyCourse=listCourses()[0]?.id||'';lobbyKeep=true;lobbyStep=1;openPanel('round');},
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
@@ -6829,6 +6831,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    const group=challengeGroup(players);new Round(group);
    if(def.who==='group'&&players.length<2)throw Error(`${def.name} is for two to four golfers.`);
    return def.where==='round'?startGoalRound(def,group):startChallenge(id,group,{week});},
+  // The seed the next fresh Endless run takes (the smoke run's
+  // --endless-seed): pin, then press Start an endless run as a player does.
+  pinRun:seed=>{pinnedRun=String(seed);},
   course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.

@@ -58,7 +58,9 @@ const frames = (page, n) => page.evaluate(n => new Promise(done => {
  let i = 0; const step = () => (++i < n ? requestAnimationFrame(step) : done()); requestAnimationFrame(step);
 }), n);
 
-const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', 6))});
+// A goal with limits of its own passes them (the cartoon overhaul's: --util 30
+// --temp 80 --rest 1); without, AGENTS.md's.
+const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', 6)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 5))});
 const started = Date.now();
 const server = await new Promise(resolve => {
  const s = createServer((_, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); });

@@ -1,6 +1,6 @@
 # Fairway documentation
 
-Nineteen documents, and the fastest way through them is to know which question
+Twenty documents, and the fastest way through them is to know which question
 each one answers. Nothing here is an archive: every document is expected to
 describe the code as it stands today, and correcting a stale claim is part of
 the change that made it stale, not a follow-up.
@@ -45,6 +45,11 @@ the change that made it stale, not a follow-up.
   recognise one (`tools/blender/`, `vendor/blender-<pack>/`, `Blender_*`),
   the headless pipeline and its contact sheet, what the game keeps from a
   model, and the packs so far (Lakeshore Dunes).
+- **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the cartoon
+  overhaul, merged 27 October 2026: the record of remaking every model, texture, landscape and the
+  lighting in the Cartoon style, its art direction, the baselines it is judged
+  against, its rounds, every rule it has set aside, and how its rounds were worked (*Working on the branch*). Read it
+  before more work on the look.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and
   cannot see, which formats and groups the round tests play, every smoke

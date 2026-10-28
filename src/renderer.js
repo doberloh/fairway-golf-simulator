@@ -8,12 +8,14 @@ import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
 import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
 import {aimTarget,createShotEffects} from './shot-visuals.js';
 import {makeCameraFlight,holeEstablishingPose,FLIGHT_FLOOR,ARRIVE_HOLD} from './camera-tours.js';
-import {mapLayout,mapPoint,tilePlacement} from './course-map.js';
+import {mapLayout,mapPoint,mapPosition,tilePlacement} from './course-map.js';
+import {GROUNDS} from './grounds.js';
 import {clubColour} from './dispersion.js';
 import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
+import {biomeOf} from './biomes.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -44,11 +46,19 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
+import {modelParts} from './mesh-assets.js';
+// THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
+// round 3). The sky's flat fill was 1.15 against a sun of 2.8: a third of
+// every surface's light came from no direction, and a dune turned from a noon
+// sun drew barely darker than the flat beside it. PLACED by eye: about a
+// quarter now, so land reads by its shading.
+const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
-import {addVegetation} from './vegetation.js';
+import {addVegetation,farWoodGeometry} from './vegetation.js';
+import {makeWaterMirror} from './water-mirror.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
@@ -81,17 +91,43 @@ const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
 // The pond's foam strip: v is 0 at the bank and 1 a metre and a half in. A band
 // that surges in and out along the shore, broken into lace by drifting noise.
 const FOAM_FRAG=`
-uniform float waterTime,foamPace,foamGrain;varying vec2 vFoamUv;varying vec3 vFoamWorld;
+uniform float waterTime,foamPace,foamGrain,shoreLength;varying vec2 vFoamUv;varying vec3 vFoamWorld;varying float vFoamWind;
 /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float fHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
 float foamAlpha(){
  // A pond at 30% of the water's own clock: at full speed the lapping read as
  // frantic (the owner, after the first build). A lake a little livelier.
  float v=vFoamUv.y,t=waterTime*foamPace;
- float surge=.42+.16*sin(t*.8+vFoamWorld.x*.23+vFoamWorld.z*.19);
- float band=smoothstep(0.,.12,v)*(1.-smoothstep(surge*.55,surge,v));
+ // THE FAR-LANDSCAPE GOAL'S WAVES (the owner: "not just reading as a sine
+ // wave on the edge"), round 1. The surge was one sine of the world position:
+ // a band breathing in and out the same way all round. Now wavelets ARRIVE:
+ // two trains running along the shore at their own speeds and lengths (metres
+ // along the outline, so they follow every bend), each wavelet's reach set by
+ // a slow noise -- some run up further, some die short -- and the foam is a
+ // lip at each wavelet's front with a thinner wash left behind it as it falls
+ // back. PLACED.
+ float s=vFoamUv.x*shoreLength;
+ // Each train a whole number of wavelets round the shore, so they meet where
+ // the outline closes.
+ // Round 16: wavelets as long as the water lets them grow -- a small pond's
+ // fetch is short, so its wavelets come shorter and closer (0.6 of the length
+ // on a pond 180 m round, 1.2 on one 360 m and more).
+ float sc=clamp(shoreLength/300.,.6,1.2);
+ float l1=shoreLength/max(1.,floor(shoreLength/(7.3*sc)+.5)),l2=shoreLength/max(1.,floor(shoreLength/(11.9*sc)+.5));
+ float w1=fract(s/l1-t*.11),w2=fract(s/l2+t*.07+.37);
+ float reach1=.25+.5*fNoise(vec2(mod(floor(s/l1-t*.11),997.)*1.7,3.1)),reach2=.2+.45*fNoise(vec2(mod(floor(s/l2+t*.07+.37),997.)*2.3,7.9));
+ float crest1=smoothstep(0.,.5,w1)*(1.-smoothstep(.5,1.,w1)),crest2=smoothstep(0.,.5,w2)*(1.-smoothstep(.5,1.,w2));
+ // Round 8: further up the bank the wind blows onto, short on the sheltered one.
+ float front=max(crest1*reach1,crest2*reach2)*mix(.45,1.25,vFoamWind)+.08*fNoise(vec2(s*.21,t*.3));
+ float lip=smoothstep(front-.07,front,v)*(1.-smoothstep(front,front+.1,v))*mix(.5,1.,vFoamWind);
+ float wash=smoothstep(.0,.1,v)*(1.-smoothstep(front*.5,front,v))*.45;
+ float band=max(lip,wash)*smoothstep(0.,.06,v);
+ // Round 4: the wet line where water meets bank, always there (a pond's
+ // wavelets are small; at a distance only this line showed it had an edge),
+ // its width breathing slowly along the shore.
+ float wet=smoothstep(0.,.015,v)*(1.-smoothstep(.03,.07+.05*fNoise(vec2(s*.43,t*.17)),v));
  float lace=fNoise(vFoamWorld.xz*2.3*foamGrain+vec2(t*.21,-t*.16))*.62+fNoise(vFoamWorld.xz*5.7*foamGrain-vec2(t*.33,t*.12))*.38;
- return band*smoothstep(.5,.8,lace)*.42;
+ return max(band*smoothstep(.42,.75,lace)*.55,wet*(.32+.18*lace));
 }
 `;
 // THE EDGE OF EACH KIND OF WATER, in the water's own shader. Still water (ponds
@@ -116,23 +152,125 @@ float foamAlpha(){
 // include the lighting has already read diffuseColor (see the glint).
 const FOAM_LIGHT=`vec3 foamLight=(reflectedLight.directDiffuse+reflectedLight.indirectDiffuse)/max(diffuseColor.rgb*(1.-metalnessFactor),vec3(.001));`;
 const WATER_EDGES={
- still:'',
- sea:`{
+ // THE SHALLOWS (the cartoon overhaul's water, round 1): a pond lightens and
+ // clears toward its bank, where the bed shows through -- the sea always knew
+ // its depth (seaHeights, from the ground grid) and a pond now reads the same
+ // map. Over the last 0.9 m of depth the colour lifts toward a sunlit sandy
+ // green and the water thins, so a pond has a lit rim and a dark heart
+ // instead of one flat colour bank to bank.
+ still:`{
   vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
   float inside=step(0.,su.x)*step(su.x,1.)*step(0.,su.y)*step(su.y,1.);
   vec2 suv=(su*(seaGrid.zw-1.)+.5)/seaGrid.zw;
   float depth=mix(50.,seaLevel-texture2D(seaHeights,suv).r,inside);
+  // Round 2: at .9 m the band was a hairline -- a pond has a cut bank, so it
+  // is that deep within a metre or so of its edge. Over 1.8 m now, stronger.
+  float shallow=(1.-smoothstep(.05,1.8,depth))*inside;
+  outgoingLight=mix(outgoingLight,outgoingLight*vec3(1.12,1.2,1.05)+vec3(.06,.09,.05),shallow*.85);
+  diffuseColor.a*=mix(1.,.72,shallow);
+  // Round 3: looking down from the bank the water went nearly clear, and the
+  // ripples made that patchy, so the bed's dark floor came through as brown
+  // smears. Deep water keeps most of its body; the shallows stay clear.
+  diffuseColor.a=max(diffuseColor.a,.82*(1.-shallow));
+  // THE POLISH GOAL'S WATER, round 1 (the owner: "are the water depth colors
+  // reversed? It looks lighter colored in the middle where it's deeper").
+  // They were: the shallows above let the bed through (alpha down to .72 of
+  // a near-clear .22 looking down), and the bed under a pond is the dark bank
+  // colour, so the rim went brown; the deep middle was opaque and showed the
+  // water's own bright colour and the sky. The body of still water is now its
+  // depth's own colour, lit by the light it receives: the biome's water darker
+  // and richer toward the deep, lifted toward a sunlit sandy teal toward the
+  // bank, nearly opaque, so the bed no longer decides. Reflections and glints
+  // keep a share on top.
+  ${FOAM_LIGHT}
+  float deep=smoothstep(.15,3.2,depth);
+  // Round 2: round 1's colours went milky under the sun's full light; both
+  // darker, the deep much darker and bluer.
+  vec3 shallowBody=mix(diffuseColor.rgb,vec3(.5,.66,.52),.35)*.62,deepBody=diffuseColor.rgb*vec3(.2,.32,.4);
+  vec3 body=mix(shallowBody,deepBody,deep)*foamLight;
+  // Round 3: from the bank the body covered the reflection too, and a pond
+  // seen across went a flat milky sheet. Water looked into shows its body;
+  // water looked across is a mirror -- so the body's share falls with the
+  // view's grazing angle (Schlick, as the opacity above).
+  float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
+  outgoingLight=mix(outgoingLight,body,.78*(1.-clamp(mirror*1.4,0.,.85)));
+  diffuseColor.a=max(diffuseColor.a,mix(.86,.97,deep));
+  // WAVELETS COMING IN (the far-landscape goal's waves, round 2): before the
+  // foam at the bank, small crests running in along the depth lines toward
+  // the shore -- so they follow its shape -- broken along their length by a
+  // drifting noise, catching the light; only in the last 0.7 m of depth.
+  // Round 3: on a pond shallow far out they streaked its middle -- the last
+  // 0.4 m only, dimmer, and only where a broad noise lets a set come in.
+  {
+   float wt=waterTime*.3,crestPh=depth*9.-wt*1.1+wNoise(vWaterWorld.xz*.35)*1.6;
+   float crest=smoothstep(.72,.98,sin(crestPh*6.2832)*.5+.5)*(1.-smoothstep(.08,.4,depth))*smoothstep(.3,.6,wNoise(vWaterWorld.xz*.18+3.7))*inside;
+   crest*=smoothstep(.35,.7,wNoise(vWaterWorld.xz*.9+vec2(wt*.2,-wt*.13)));
+   outgoingLight+=vec3(.1,.12,.11)*foamLight*crest;
+  }
+  // TREES IN THE WATER (water-mirror.js; the far-landscape goal, round 1): the
+  // bank's trees, turned over about this pond's level and drawn into a
+  // half-size picture with the ordinary camera, read at this pixel and nudged
+  // by the ripples; lit by the light the water gets, a little darker than the
+  // trees themselves, as far as the surface is a mirror here.
+  // Round 2: round 1's trees came back pale and washed out -- a reflection
+  // of foliage in still water is dark and rich -- so darker (.55 of the lit
+  // twin) and stronger wherever the surface mirrors at all. Round 3: four
+  // taps 1.5 of the picture's pixels apart, averaged -- the surface softens a
+  // reflection, and the twins' facets read as separate patches.
+  // Round 10: by the wind (mirrorWind, 0 calm to 1 at 15 mph) -- the ripples
+  // nudge it 0.006-0.024 and it softens over 3-9 pixels: a calm pond near
+  // a true mirror, a windy one broken up. At the default 4 mph about as before.
+  if(mirrorOn>.5){
+   vec2 muv=gl_FragCoord.xy/mirrorScreen+normal.xy*(.006+.018*mirrorWind),px=(3.+6.*mirrorWind)/mirrorScreen;
+   vec4 mr=(texture2D(mirrorMap,muv+vec2(px.x,0.))+texture2D(mirrorMap,muv-vec2(px.x,0.))+texture2D(mirrorMap,muv+vec2(0.,px.y))+texture2D(mirrorMap,muv-vec2(0.,px.y)))*.25;
+   // Round 4: by the mirror term alone (it had a floor of .35, so looking
+   // steeply into a pond close by showed crowns as flat patches).
+   outgoingLight=mix(outgoingLight,mr.rgb*foamLight*.55,mr.a*clamp(mirror*2.8,0.,.92)*(1.-.6*paw));
+  }
+ }`,
+ sea:`{
+  vec2 su=vec2((vWaterWorld.x+seaGrid.x)/(2.*seaGrid.x),(vWaterWorld.z+seaGrid.y)/(2.*seaGrid.y));
+  // THE FAR-LANDSCAPE GOAL: no line where the ground map ends. Past it the
+  // depth was taken as 50 m at once, so the pale shelf stopped in a straight
+  // line across the sea (Island's far views). The map's edge depth carries on
+  // and deepens over the next 400 m instead.
+  float past=length(max(abs(vWaterWorld.xz)-seaGrid.xy,0.)),inside=1.;
+  vec2 suv=(clamp(su,0.,1.)*(seaGrid.zw-1.)+.5)/seaGrid.zw;
+  float depth=mix(seaLevel-texture2D(seaHeights,suv).r,50.,smoothstep(0.,400.,past));
   diffuseColor.a*=smoothstep(0.,.35,depth);
+  // THE POLISH GOAL'S WATER, round 5: the sea and the big lakes (Lakeshore's
+  // is drawn as sea) were one flat colour from the shelf to the horizon. The
+  // same depth body as still water, over a sea's depths: a pale sandy shelf
+  // over the first metres, darkening to deep blue by eight. The foam below
+  // goes on top of it. Past the course's ground map the depth is not known
+  // and is taken as deep (50 m): Lakeshore's lake, most of it out there, kept
+  // its flat colour while this was gated to the map.
+  {
+   ${FOAM_LIGHT}
+   float deepSea=smoothstep(.4,8.,depth);
+   vec3 shelf=mix(diffuseColor.rgb,vec3(.55,.72,.6),.4)*.7,open=diffuseColor.rgb*vec3(.22,.34,.46);
+   float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
+   outgoingLight=mix(outgoingLight,mix(shelf,open,deepSea)*foamLight,.7*(1.-clamp(mirror*1.4,0.,.85))*smoothstep(.05,.35,depth));
+  }
   // At 30% of the water's clock, as the ponds are: at full speed the surf was
   // frantic (the owner). The swash cycle is 9 s of that clock, 30 s of real time.
   float t=waterTime*.3,ph=wNoise(vWaterWorld.xz*.015)*6.2832+wNoise(vWaterWorld.xz*.004+3.1)*3.;
-  float cyc=fract(t/9.+ph/6.2832);
+  // Round 11: a lake's swash its own (seaSwash: the cycle in seconds of this
+  // clock, and how far up it runs) -- Lakeshore's freshwater lake 5 s and 0.6,
+  // the ocean 9 s and all of it.
+  float cyc=fract(t/seaSwash.x+ph/6.2832);
   float run=cyc<.3?smoothstep(0.,1.,cyc/.3):1.-smoothstep(0.,1.,(cyc-.3)/.7);
-  float front=mix(.62,.03,run);
+  // THE FAR-LANDSCAPE GOAL'S WAVES, round 7: waves come in sets. Every swash
+  // ran up to the same line, a metronome; now each cycle's own reach, from a
+  // hash of its number, between 45% and all of the run-up.
+  float cycN=floor(t/seaSwash.x+ph/6.2832),reachK=(.45+.55*fract(sin(cycN*12.9898+3.1)*43758.5453))*seaSwash.y;
+  float front=mix(.62,.03,run*reachK);
   float lace=wNoise(vWaterWorld.xz*1.3+vec2(t*.25,-t*.18))*.6+wNoise(vWaterWorld.xz*3.9-vec2(t*.3,t*.1))*.4;
   float lip=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+.45,depth));
   float wake=smoothstep(front-.05,front,depth)*(1.-smoothstep(front,front+1.1,depth))*.45;
-  float breakers=exp(-pow((depth-1.15)/.22,2.))*.5;
+  // Round 12: the breakers come and go in stretches along the coast (a broad,
+  // slowly drifting noise), not one unbroken line of white all the way round.
+  float breakers=exp(-pow((depth-1.15)/.22,2.))*.5*smoothstep(.35,.65,wNoise(vWaterWorld.xz*.012+vec2(t*.04,-t*.03)));
   float foam=clamp((lip*1.25+wake)*smoothstep(.22,.6,lace)+breakers*smoothstep(.45,.8,lace),0.,1.)*inside;
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.93,.96,.95)*foamLight,foam*.9);
@@ -150,18 +288,48 @@ const WATER_EDGES={
   float bank=smoothstep(.4,.82,vShore)*(1.-smoothstep(.96,1.,vShore));
   float seam=exp(-pow((vShore-.22)/.08,2.));
   float foam=clamp(bank*smoothstep(.4,.7,lace)*.8+seam*smoothstep(.55,.8,lace)*.4,0.,1.);
+  // THE FAR-LANDSCAPE GOAL'S WAVES, round 5: the ripples that STAND. Water
+  // running over a bar or a stone throws a V of small waves that stay where
+  // they are while the water and its foam pass through them -- the surest
+  // sign of running water. Chevrons pointing downstream, fixed to the bed (no
+  // drift), in patches where the bed is rough, faint along the banks.
+  // Round 6: crests 2 m apart (were 1.1 m: thinner than a pixel from the bank).
+  float riffle=smoothstep(.5,.92,sin((vChan.x*.5+abs(across)*.35)*6.2832))*smoothstep(.42,.68,wNoise(vChan*vec2(.05,.2)+7.3));
+  foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
+  // Round 9: the wet line where the water meets the bank, as a pond's (round 4).
+  float wetEdge=smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore));
+  // Round 15: faint and broken (at .35 and unbroken it ran down both banks as
+  // a painted white line, and a creek read as a road).
+  foam=max(foam,wetEdge*.14*smoothstep(.3,.7,lace));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.9,.94,.92)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
+  // Round 10: in over the channel's first 3 m and out over its last, not a
+  // hard square edge across it (vChanEnd: metres to the end, streams.js).
+  diffuseColor.a*=smoothstep(0.,3.,vChan.x)*smoothstep(0.,3.,vChanEnd);
  }`,
  creek:`{
   float t=waterTime,drift=vChan.x-t*length(vFlow),across=vChan.y;
   float fleck=smoothstep(.6,.84,wNoise(vec2(drift*1.1,across*1.7+t*.03))*.6+wNoise(vec2(drift*2.6+t*.04,across*3.3))*.4);
   float bank=smoothstep(.55,.9,vShore)*(1.-smoothstep(.97,1.,vShore));
   float foam=clamp(fleck*(.45+.5*vShore)+bank*.3*fleck,0.,1.)*.85;
+  // Round 5: a creek's riffles, as the river's but tighter and brighter (it is
+  // shallow and quick): standing chevrons over the rough stretches of its bed.
+  // Round 6: crests 1.25 m apart (were 0.6 m, lost from the bank), in more
+  // and stronger patches.
+  // Round 13: broader crests (they read as white dashes) and an opener V, in
+  // more of the bed, stronger.
+  float riffle=smoothstep(.3,.85,sin((vChan.x*.8+abs(across)*.35)*6.2832))*smoothstep(.3,.55,wNoise(vChan*vec2(.08,.3)+2.9));
+  // Round 15: softer (.7 read as lane markings down the middle).
+  foam=max(foam,riffle*.4*(.6+.4*fleck));
+  // Round 9: the wet line at the bank.
+  // Round 15: faint and broken, as a river's.
+  foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.14*smoothstep(.35,.75,wNoise(vec2(drift*.6,across*2.))));
   ${FOAM_LIGHT}
   outgoingLight=mix(outgoingLight,vec3(.92,.95,.94)*foamLight,foam);
   diffuseColor.a=max(diffuseColor.a,foam*.8);
+  // Round 10: faded in and out at the channel's ends, as a river's.
+  diffuseColor.a*=smoothstep(0.,3.,vChan.x)*smoothstep(0.,3.,vChanEnd);
  }`,
 };
 // Ripples with no tile in them, for water with no reflection to carry it.
@@ -173,6 +341,10 @@ uniform float waterTime;uniform float waterChop;uniform float waterSwell;uniform
 varying vec2 vFlow;
 // Along a channel: metres downstream, and metres across from the centre line.
 varying vec2 vChan;
+// And metres to the channel's end (streams.js chanEnd; the waves' round 10).
+// Declared here as well as in the vertex patch: missing on this side, every
+// river and creek failed to compile for one build (caught by the captures).
+varying float vChanEnd;
 varying vec3 vWaterWorld;
 // Value noise, hashed from the world position itself: no tile, no texture
 // lookup, and a pattern that is different at every pond on the course.
@@ -410,9 +582,25 @@ function trimToBall(points){
  return kept;
 }
 
+// A FLAG PRINTED ON BOTH SIDES (the cartoon overhaul's flag, round 3). One
+// double-sided plane shows its number mirrored from behind; this is two
+// one-sided faces back to back, the back one's picture flipped, in a single
+// geometry so the frame loop's ripple (which sets z from x) moves both alike.
+function twoSidedCloth(){
+ const front=new T.PlaneGeometry(.48,.33,12,4),n=front.attributes.position.count;
+ const pos=front.attributes.position.array,uv=front.attributes.uv.array,idx=front.index.array;
+ const P=new Float32Array(n*6),N=new Float32Array(n*6),U=new Float32Array(n*4),I=new Uint16Array(idx.length*2);
+ P.set(pos);P.set(pos,n*3);U.set(uv);
+ for(let i=0;i<n;i++){N[i*3+2]=1;N[(n+i)*3+2]=-1;U[(n+i)*2]=1-uv[i*2];U[(n+i)*2+1]=uv[i*2+1];}
+ I.set(idx);for(let t=0;t<idx.length;t+=3){I[idx.length+t]=idx[t]+n;I[idx.length+t+1]=idx[t+2]+n;I[idx.length+t+2]=idx[t+1]+n;}
+ const g=new T.BufferGeometry();
+ g.setAttribute('position',new T.BufferAttribute(P,3));g.setAttribute('normal',new T.BufferAttribute(N,3));g.setAttribute('uv',new T.BufferAttribute(U,2));g.setIndex(new T.BufferAttribute(I,1));
+ front.dispose();return g;
+}
+
 export class GolfView{
  constructor(canvas,quality='medium'){
-  this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
+  this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.CustomToneMapping;this.renderer.toneMappingExposure=1.05;
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
@@ -434,7 +622,7 @@ export class GolfView{
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
    lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
-  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}this.applyNearShadow();
+  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.shadowRadius(this.quality.shadow.radius);}this.applyNearShadow();
   this.sun.castShadow=false;this.sun.intensity=0;
  }
  // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
@@ -492,7 +680,7 @@ export class GolfView{
  // every cascade one size, so the nearest map is reallocated at its own.
  applyNearShadow(){
   const near=this.quality.nearShadow,light=this.csm?.lights[0];if(!near||!light)return;
-  light.shadow.radius=near.radius;
+  light.shadow.radius=this.shadowRadius(near.radius);
   if(light.shadow.mapSize.x!==near.size){light.shadow.mapSize.set(near.size,near.size);light.shadow.map?.dispose();light.shadow.map=null;this.cascadeForce=true;}
  }
  // ...AND ITS OWN TEXEL GRID. CSM snaps each cascade's centre to whole texels
@@ -652,6 +840,33 @@ export class GolfView{
  //
  // Water is deliberately NOT routed through here: it needs metalness and a
  // reflection, and toon has neither.
+ // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): a painted
+ // model at its real height in metres (the ingest makes every model one unit
+ // tall), each role in its colour. Null where the build has none, so the
+ // plain shapes stay as the fallback.
+ furniture(name,height,colours){
+  const parts=this.style==='cartoon'&&modelParts(name);if(!parts)return null;
+  const g=new T.Group();
+  for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
+   // INKED OUTLINES (the cartoon overhaul's edges, round 2): the model again,
+   // inside out, pushed out along its normals and drawn dark, so only its rim
+   // shows past the model -- the inverted hull. Furniture only: a handful of
+   // pieces a hole, where it costs nothing (round 3: 1.2 cm read as a second
+   // hand beside the uninked trees; 0.8 cm is definition, not a new style).
+   const ink=new T.Mesh(p.geometry,this.inkMaterial(height));ink.castShadow=false;ink.receiveShadow=false;g.add(ink);}
+  g.scale.setScalar(height);return g;
+ }
+ inkMaterial(height){
+  this.inks=this.inks||new Map();
+  const w=(.008/height).toFixed(5);
+  if(!this.inks.has(w)){
+   const m=new T.MeshBasicMaterial({color:'#2b2622',side:T.BackSide});
+   m.onBeforeCompile=s=>{s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=normalize(normal)*'+w+';');};
+   m.customProgramCacheKey=()=>'fairway-ink-'+w;
+   this.inks.set(w,m);
+  }
+  return this.inks.get(w);
+ }
  surfaceMaterial(color,opts={}){
   const {roughness,flatShading,...toonOpts}=opts;
   if(this.style!=='cartoon')return new T.MeshStandardMaterial({color,roughness:roughness??1,...opts});
@@ -659,12 +874,18 @@ export class GolfView{
   return new T.MeshToonMaterial({color,gradientMap:this.propRamp,...toonOpts});
  }
  static isLit(m){return !!m&&!!(m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||m.isMeshToonMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial);}
+ // CRISP SHADOWS (the cartoon overhaul's shadows, round 2). The tiers soften a
+ // shadow's edge by spreading the PCF disk (graphics.js `shadow.radius`, 3.5
+ // on High, 4 on Ultra): in the cartoon style that read as a photograph's
+ // blur under drawn trees. Four tenths of it, never under three's own 1, so
+ // Low and Medium are as they were. The disk's sample count is fixed: no cost.
+ shadowRadius(r){return this.style==='blueprint'?r:Math.max(1,r*.4);}
  applyShadowSpan(){
   if(!this.sun||this.csm)return;
   const span=this.quality.shadowSpan,bias=this.quality.shadowBias;
   Object.assign(this.sun.shadow.camera,{left:-span.half,right:span.half,top:span.top,bottom:span.bottom,near:1,far:span.far});
   this.sun.shadow.camera.updateProjectionMatrix();
-  this.sun.shadow.normalBias=bias.normal;this.sun.shadow.bias=bias.constant;this.sun.shadow.radius=this.quality.shadow.radius;
+  this.sun.shadow.normalBias=bias.normal;this.sun.shadow.bias=bias.constant;this.sun.shadow.radius=this.shadowRadius(this.quality.shadow.radius);
  }
  // WHICH GROUND CUES ARE ON. A float write into uniforms the material already
  // holds -- never a define and never a rebuild, because changing a define
@@ -748,14 +969,14 @@ export class GolfView{
   this.renderer.shadowMap.type=T.PCFShadowMap;
   if(this.sun){
    this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
-   this.sun.shadow.radius=this.quality.shadow.radius;
+   this.sun.shadow.radius=this.shadowRadius(this.quality.shadow.radius);
    // A shadow map already allocated at the old size has to go before three will
    // build one at the new size.
    this.sun.shadow.map?.dispose();this.sun.shadow.map=null;
    this.sun.shadow.needsUpdate=true;
   }
   if(this.scene?.fog){const f=this.quality.fog;this.scene.fog.near=f.near;this.scene.fog.far=f.far;}
-  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
+  for(const light of this.csm?.lights||[]){light.shadow.radius=this.shadowRadius(this.quality.shadow.radius);light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
   this.applyShadowSpan();
   this.renderer.shadowMap.needsUpdate=true;
   // The constructor calls this before the camera exists, and resize() reaches
@@ -793,10 +1014,10 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
+ disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -808,22 +1029,26 @@ export class GolfView{
   this.standIns=[];
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
-  this.renderer.toneMappingExposure=blue?1:toon?1.0:.94;
-  this.hemi=add(new T.HemisphereLight(blue?'#a4dcea':'#cce5ff',blue?'#2d4054':'#777855',1.15));
+  this.renderer.toneMappingExposure=blue?1:toon?bio.light?.exposure??1:.94;
+  // THE BOUNCE IS THE GROUND'S OWN COLOUR (the cartoon overhaul's lighting,
+  // round 1): light thrown up from sand is warm, from a violet moor violet.
+  // One olive for every landscape lit a desert crown's underside as if it
+  // stood on a lawn.
+  this.hemi=add(new T.HemisphereLight(blue?'#a4dcea':'#cce5ff',blue?'#2d4054':toon?new T.Color('#777855').lerp(new T.Color(bio.light?.bounce??bio.rough),.5):'#777855',HEMI));
   // The clock only ever tints these; they stay the base it returns to.
   this.hemiSkyBase=this.hemi.color.clone();this.hemiGroundBase=this.hemi.groundColor.clone();
   this.skyBgBase=this.scene.background.clone();this.fogBase=this.scene.fog.color.clone();
-  this.hemiBaseIntensity=1.15;
+  this.hemiBaseIntensity=HEMI;
   // Blueprint is a diagram, not a place: it keeps its flat even light and
   // ignores the clock entirely.
-  this.timed=!blue;this.baseExposure=blue?1:toon?1.0:.94;
+  this.timed=!blue;this.baseExposure=blue?1:toon?bio.light?.exposure??1:.94;
   // Each biome opens at the hour that reproduces the light it always had, so
   // an existing course looks unchanged until the slider moves.
   if(this.daylight.hour===null)this.daylight.hour=this.daylight.syncToLocal?localHour():defaultHour(bio.sun);
   const solar=solarState(this.daylight.hour,bio.sun);this.solar=solar;
   const sunDir=this.timed?solar.direction.clone():new T.Vector3(-.6,Math.sin(bio.sun*Math.PI/180),-.5).normalize();
-  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':bio.sunColor,blue?1.5:2.8));
-  this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:2.8;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
+  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':bio.sunColor,blue?1.5:SUN));
+  this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:SUN;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
   // Cascaded shadows: one frustum that follows the camera can only cover the
   // ground around it, so anything further away is lit as though nothing stands
   // between it and the sun. Cascades give each distance band its own map.
@@ -871,6 +1096,9 @@ export class GolfView{
    this.waterTime??={value:0};
    this.waterSpeed=WATER_SPEED;
    this.waterChop={value:.55};this.waterSwell={value:.45};
+   // The trees-in-still-water picture (water-mirror.js), shared by every pond;
+   // filled once the planting exists, below.
+   this.mirrorUniforms??={mirrorMap:{value:null},mirrorScreen:{value:new T.Vector2(1,1)},mirrorOn:{value:0},mirrorWind:{value:0}};
    for(const b of this.waterBodies)this.dressWater(b.mesh.material,b);
    // THE PROBE IS TAKEN HERE, not in `refreshEnvironment`. The sky is built
    // before the water is, so the refresh that runs from `addSky` finds no bodies
@@ -884,6 +1112,13 @@ export class GolfView{
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
+  // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
+  // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
+  if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
+   const bio=this.world.bio;
+   this.mirror=makeWaterMirror(this,{farWoodGeometry,colors:(bio.farForest?.colors??[bio.tree??'#3c6b33']).map(c=>new T.Color(c))});
+   if(this.mirror){this.mirrorUniforms.mirrorMap.value=this.mirror.target.texture;this.mirrorUniforms.mirrorOn.value=1;this.mirrorUniforms.mirrorWind.value=Math.min(1,(this.world.settings.wind||0)/15);}
+  }
   // Haunted Hollow's pumpkins, lanterns and ghosts; null on every other biome.
   this.haunts=addHaunts(this);
   this.addFloodlights();
@@ -893,7 +1128,7 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
-  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0});
+  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:this.quality.farPainted??0});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -1296,29 +1531,42 @@ export class GolfView{
   const n=points.length,W=lake?2.2:1.4,pos=[],uv=[],idx=[];
   let area=0;for(let i=0;i<n;i++){const a=points[i],b=points[(i+1)%n];area+=a.x*b.y-b.x*a.y;}
   const inward=area>0?1:-1;
-  for(let i=0;i<n;i++){
-   const a=points[(i-1+n)%n],b=points[(i+1)%n],p=points[i];
+  // Closed with a copy of the first point (the far-landscape goal's waves):
+  // the along-shore coordinate then runs 0 to 1 without wrapping inside a quad.
+  let shore=0;for(let i=0;i<n;i++)shore+=Math.hypot(points[(i+1)%n].x-points[i].x,points[(i+1)%n].y-points[i].y);
+  // THE WIND'S SHORE (the far-landscape goal's waves, round 8): wavelets build
+  // across open water and land on the bank the wind blows onto; the bank it
+  // blows off lies in calm. Per point, how squarely the bank faces downwind
+  // (0 to 1; the outward normal against the wind's heading), scaled by how
+  // hard it blows. Points are (x, -z), so the normal's second part is -z.
+  const wa=(this.world?.settings.windDirection||0)*Math.PI/180,wx=Math.sin(wa),wz=Math.cos(wa),wk=Math.min(1,(this.world?.settings.wind||0)/12),lee=[];
+  for(let i=0;i<=n;i++){
+   const a=points[(i-1+n)%n],b=points[(i+1)%n],p=points[i%n];
    let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+   const face=(ty*inward)*wx+(tx*inward)*wz,windward=.5+.5*face*wk;lee.push(windward,windward);
    pos.push(p.x,p.y,0,p.x-ty*inward*W,p.y+tx*inward*W,0);uv.push(i/n,0,i/n,1);
-   const k=i*2,m=((i+1)%n)*2;idx.push(k,m,k+1,k+1,m,m+1);
+   if(i<n){const k=i*2,m=(i+1)*2;idx.push(k,m,k+1,k+1,m,m+1);}
   }
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('foamWind',new T.Float32BufferAttribute(lee,1));g.setIndex(idx);g.computeVertexNormals();
   // ONE PASS (`forceSinglePass`). Three draws a transparent double-sided
   // material twice, back faces then front, flipping its side and marking it
   // changed for each -- two draws and two program checks per strip per frame.
   // That exists for closed see-through shapes; a flat strip has nothing behind
   // itself to sort, so once is the same picture.
-  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
+  // Round 19 of the waves: a quarter of the water's own colour in its foam --
+  // one blue-white on every pond stood out on Haunted Hollow's green-black water.
+  const foamTint=new T.Color('#dde8e2').lerp(new T.Color(this.world?.bio?.water??'#4f88a3'),.25);
+  const mat=new T.MeshToonMaterial({color:foamTint,transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
   const time=this.waterTime??=({value:0});
   const pace={value:lake?.42:.3},grain={value:lake?.75:1};
   mat.onBeforeCompile=shader=>{
-   shader.uniforms.waterTime=time;shader.uniforms.foamPace=pace;shader.uniforms.foamGrain=grain;
-   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vFoamUv;varying vec3 vFoamWorld;')
-    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+   shader.uniforms.waterTime=time;shader.uniforms.foamPace=pace;shader.uniforms.foamGrain=grain;shader.uniforms.shoreLength={value:shore};
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float foamWind;varying vec2 vFoamUv;varying vec3 vFoamWorld;varying float vFoamWind;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWind=foamWind;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
     .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey=()=>'fairway-shore-foam-v2';
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v7';
   const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
   this.group.add(mesh);
  }
@@ -1354,24 +1602,46 @@ export class GolfView{
   const path=Array.isArray(body?.stream)?body.stream:null;
   const width=path?path.reduce((a,p)=>a+(p.width||0),0)/path.length:0;
   const kind=body?.ocean?'sea':path?(width<6?'creek':'river'):'still';
-  const sea=kind==='sea'?this.seaDepthMap():null;
+  // A CLEAN POND (the cartoon overhaul's water, round 3). As a near-mirror the
+  // ripples broke the reflected woods and their dark floor into brown smears
+  // across every pond, so the water read as muddy. In the cartoon style still
+  // water shows more of its own colour and less of the mirror.
+  // Round 4: that alone barely helped, nor did a more opaque body (the bed was
+  // not it): the smears are the reflection scattered by the ripples. A pond
+  // is calm, so its ripples bend the mirror a third as far (`calm`), and the
+  // woods come back as broad bands of the far shore instead of grit.
+  const calm=kind==='still'&&this.style==='cartoon';
+  // The polish goal's water, round 4: with the ripples calmed and the body
+  // drawn from depth, a pond seen from its bank was a flat sheet with no
+  // trees in it; the mirror back up part of the way (.38 -> .5, 1.3 -> 1.8).
+  if(calm){material.metalness=.5;material.envMapIntensity=1.8;}
+  // The sea and still water read their depth from the ground grid (WATER_EDGES).
+  const sea=kind==='sea'||kind==='still'&&!body?.ocean?this.seaDepthMap():null;
   // This course's sun, by reference: both change through the day.
   const sun={value:this.sunDir},sunColor={value:this.sun.color};
   material.onBeforeCompile=shader=>{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
-   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};}
+   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};}
+   if(kind==='still'&&this.mirrorUniforms)Object.assign(shader.uniforms,this.mirrorUniforms);
+   if(kind==='still'){shader.uniforms.waterWind=this.windVec;shader.uniforms.pawK={value:.35+.65*Math.min(1,(this.world.settings.wind||0)/12)};}
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
-    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;varying vec2 vFlow;varying vec2 vChan;')
-    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;');
+    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;attribute float chanEnd;varying vec2 vFlow;varying vec2 vChan;varying float vChanEnd;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;vChanEnd=chanEnd;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
-    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;':''))
+    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK;':''))
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
+     // CAT'S PAWS (the far-landscape goal's waves, round 18): gusts ruffle
+     // patches of a pond that drift downwind; in them the ripples bite and the
+     // reflection breaks, between them the water lies glassy. Still water only;
+     // stronger with the wind (pawK, 0.35 calm to 1 at 12 mph). PLACED.
+     float paw=0.;
+     ${kind==='still'?'paw=smoothstep(.55,.85,wNoise(vWaterWorld.xz*.05-waterWind*waterTime*.8))*pawK;':''}
      {
       vec3 r=wRipple(vWaterWorld.xz,waterTime);
-      normal=normalize(normal+vec3(r.xy*.5,0.));
+      normal=normalize(normal+vec3(r.xy*(${calm?'.17':'.5'}+paw*.45),0.));
      }`)
     .replace('#include <opaque_fragment>',`
      {
@@ -1402,12 +1672,12 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v4-'+kind;
+  material.customProgramCacheKey=()=>'fairway-water-v28-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 
  addSky(sunDir){
-  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},afterglow:{value:0},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle,afterglow;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
@@ -1427,6 +1697,18 @@ export class GolfView{
   return step(1.-density,h)*core*(.55+.45*sin(t*1.7+h*63.));
  }
  void main(){vec3 d=normalize(vSky);float h=max(d.y,0.);vec3 col=mix(horizon,top,pow(h,.55));float glow=pow(max(dot(d,sun),0.),64.);col+=glowColor*glow*.35;col=mix(col,discColor,smoothstep(.99955,.9998,dot(d,sun)));
+  // THE AFTERGLOW (the cartoon overhaul's lighting, round 2): while the sun is
+  // low and for a while after it sets, the horizon under it burns orange and
+  // the horizon opposite takes a pink band (the Belt of Venus) -- the colour a
+  // dusk is remembered by. The tint the clock lays over the whole dome made a
+  // dusk one muddy grey-blue. Banked to the horizon and by bearing from the
+  // sun, so the zenith keeps its own blue.
+  if(afterglow>.001){
+   vec2 ds=d.xz,ss=sun.xz;float toward=dot(normalize(ds+1e-5),normalize(ss+1e-5));
+   float low=exp(-h*7.)*smoothstep(-.06,.02,d.y);
+   vec3 burn=mix(vec3(.95,.42,.42),vec3(1.,.6,.28),smoothstep(.2,1.,toward));
+   col+=afterglow*low*(burn*smoothstep(-.3,1.,toward)*.8+vec3(.62,.45,.66)*smoothstep(.1,-1.,toward)*.32);
+  }
   // Stars go in before the clouds, so a cloud drifting over puts them out.
   if(starness>.001){vec3 sd=spin(d,starAxis,starAngle);float sf=starLayer(sd,150.,.05,skyTime)+starLayer(sd,70.,.02,skyTime*.6)*1.7;col+=vec3(.82,.88,1.)*sf*starness*smoothstep(0.,.16,d.y);}
   // A DRAWN MOON (a biome's moon field; amount 0 everywhere else): a disc on the
@@ -1616,10 +1898,21 @@ export class GolfView{
  // One flagstick and cup at a world point. The range builds one per green (its
  // targets' sticks taller and in their colour: `tall` and `cloth` scale them,
  // and holdFlagsticks keeps the scale), every course hole one.
- addCupAndFlag(p,y,{color=null,tall=1,cloth=1}={}){
+ // THE FLAG CARRIES ITS HOLE'S NUMBER (the cartoon overhaul's course props):
+ // white figures on the flag's colour, as most clubs print them, where the
+ // cloth was a plain rectangle. `number` absent (the range): plain, as before.
+ // The stick and cup are untouched -- the ball plays against them.
+ flagCloth(color,number){
+  const c=document.createElement('canvas');c.width=128;c.height=88;const ctx=c.getContext('2d');
+  ctx.fillStyle=color;ctx.fillRect(0,0,128,88);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(0,0,128,6);ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(0,82,128,6);
+  ctx.fillStyle='#fffaf0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
+  const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;this.resources.push(tex);return tex;
+ }
+ addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null}={}){
   const group=this.group,blue=this.style==='blueprint',white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':color||'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
+  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
   return {assembly,pole,flag,cup,liner,floor};
  }
@@ -1630,7 +1923,7 @@ export class GolfView{
   // two parts live in an assembly whose own y is driven by the hole-out lift
   // animation -- so they are moved individually rather than by shifting a parent.
   if(h.greens)this.addRangeGreens(h);
-  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z));this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
+  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
@@ -1647,8 +1940,11 @@ export class GolfView{
    for(const side of [-inset,inset]){
     // Perpendicular to the line of play, set a metre back from the tee centre.
     const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
-    const marker=new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
-    marker.position.set(q.x,h.height(x,z)+.085,q.z);group.add(marker);
+    // A moulded marker, a squat dome on a collar 11 cm tall (the furniture);
+    // a ball on the turf where the build has none.
+    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'});
+    const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
+    marker.position.set(q.x,h.height(x,z)+(made?0:.085),q.z);group.add(marker);
    }
   }
   // Numbered tee sign, timber posts, and a timber bench beside every tee.
@@ -1677,8 +1973,13 @@ export class GolfView{
    const side=-(TEE_APRON.x+1.4);
    const lx=backTee.x+buz*side,lz=backTee.z-bux*side;
    const q=h.toWorld({x:lx,z:lz}),ground=h.height(lx,lz);
-   const sign=new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
-   sign.position.set(q.x,ground+1.55,q.z);
+   // The furniture's sign: two timber posts and a gable cap round the board,
+   // the hole's card on a face 5 cm in front of it (cartoon_course.py says
+   // where the board is). The old box-on-a-post where the build has none.
+   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
+   const sign=frame??new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
+   if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.52,1.25/2.52),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.52,.05/2.52);frame.add(face);}
+   sign.position.set(q.x,ground+(frame?0:1.55),q.z);
    // Facing the tee it belongs to, so it is read from where you stand rather
    // than from behind. The box is thin in Z, so its face points along the
    // rotated +Z and the bearing is measured in world space -- the pad is
@@ -1686,8 +1987,14 @@ export class GolfView{
    const bw=h.toWorld(backTee);
    sign.rotation.y=Math.atan2(bw.x-q.x,bw.z-q.z);
    group.add(sign);
-   const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));
-   post.position.set(q.x,ground+.5,q.z);group.add(post);
+   if(!frame){const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));
+    post.position.set(q.x,ground+.5,q.z);group.add(post);}
+   // A bench a little further out, facing the tee, and a ball washer just
+   // ahead of the sign -- decoration, nothing a ball hits (the sign never was).
+   const put=(m,along,out)=>{if(!m)return;const ax=lx+bux*along+buz*out,az=lz+buz*along-bux*out,w=h.toWorld({x:ax,z:az});
+    m.position.set(w.x,h.height(ax,az),w.z);m.rotation.y=Math.atan2(bw.x-w.x,bw.z-w.z);group.add(m);};
+   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'}),-2.2,-1.6);
+   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
   }
  }
  // Move the range's green, without rebuilding anything.
@@ -2036,6 +2343,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // See FLAG_MIN_PX. A few multiplies per hole per frame; nothing is rebuilt.
  holdFlagsticks(){
   const cam=this.camera,px=Math.max(1,this.cssSize().h)/(2*Math.tan(cam.fov*Math.PI/360)),grow=this.distantFlags===true;
+  // The cloth flies downwind (the cartoon overhaul's flag, round 3): it used to
+  // stand out along +x whatever the wind, so a player reading the flag read
+  // nothing. `windDirection` is the bearing the wind blows toward.
+  const wa=(this.world?.settings.windDirection||0)*Math.PI/180,wx=Math.sin(wa),wz=Math.cos(wa),turn=wa-Math.PI/2;
   for(const a of this.flagsticks||[]){
    const b=a?.userData.base;if(!b||!a.visible)continue;
    const d=Math.max(1,Math.hypot(cam.position.x-b.x,cam.position.y-b.y-1,cam.position.z-b.z)),perMetre=px/d;
@@ -2045,7 +2356,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    const {pole,cloth:f}=a.userData,k=a.userData.tall??1,cs=cloth*(a.userData.clothScale??1);
    pole.scale.set(thick*k,s*k,thick*k);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s*k/2,b.z);
    // The cloth's top stays at the top of the stick, its edge against the pole.
-   f.scale.setScalar(cs);f.position.set(b.x+.24*cs+FLAGSTICK_TOP_R*(thick*k-1),b.y+FLAGSTICK_HEIGHT*s*k-.165*cs,b.z);
+   const off=.24*cs+FLAGSTICK_TOP_R*(thick*k-1);
+   f.scale.setScalar(cs);f.rotation.y=turn;f.position.set(b.x+off*wx,b.y+FLAGSTICK_HEIGHT*s*k-.165*cs,b.z+off*wz);
   }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
@@ -2518,7 +2830,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.hemi.color.copy(this.hemiSkyBase).lerp(solar.tint,t);
   this.hemi.groundColor.copy(this.hemiGroundBase).lerp(solar.groundTint,t);
   this.hemi.intensity=this.hemiBaseIntensity*solar.hemiScale;
-  this.renderer.toneMappingExposure=this.baseExposure*solar.exposureScale;
+  // A landscape's own exposure (biomes.js light) is a daylight setting: the
+  // night keeps the one exposure every landscape is read by.
+  this.renderer.toneMappingExposure=(1+(this.baseExposure-1)*solar.dayness)*solar.exposureScale;
   if(this.skyMaterial){
    const u=this.skyMaterial.uniforms;u.sun.value.copy(solar.direction);
    // The dome's crown holds its colour a little longer than its horizon, which
@@ -2533,6 +2847,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    u.glowColor.value.copy(GLOW_DAY).lerp(GLOW_NIGHT,1-solar.dayness);
    u.discColor.value.copy(DISC_DAY).lerp(DISC_NIGHT,1-solar.dayness);
    u.starness.value=solar.starness;u.starAngle.value=starRotation(d.hour);
+   // From a sun twelve degrees up to six under the horizon, strongest at it.
+   u.afterglow.value=T.MathUtils.smoothstep(solar.elevation,-6,-.5)*(1-T.MathUtils.smoothstep(solar.elevation,1,12));
    // The drawn moon: orange on the horizon, paling as it climbs, faint by day.
    const moon=this.world.bio.moon;
    if(moon){
@@ -2553,7 +2869,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // Mist is lit by the sky, so it takes the air's own colour and sits a little
    // brighter than it. Tying it to the fog colour means it warms at dawn and
    // goes blue after dark without a second set of constants to keep in step.
-   u.mistColor.value.copy(this.scene.fog.color).lerp(WHITE,.22);
+   // Round 4 of the overhaul's lighting: by day only. At night the lift made
+   // the mist on the far hills brighter than the sky above them -- a pale band
+   // round the horizon that read as snow.
+   u.mistColor.value.copy(this.scene.fog.color).lerp(WHITE,.05+.17*solar.dayness);
    // Both derived from a stated visibility in metres rather than tuned by eye.
    // The haze never fully clears -- it is what gives distance its depth -- while
    // the sheet arrives and leaves with the morning.
@@ -2673,7 +2992,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // only, so neither move changes what it looks like.
   {const far=Math.max(1500,this.scene.fog.far*1.05);
    if(Math.abs(this.camera.far-far)>1){this.camera.far=far;this.camera.updateProjectionMatrix();}
-   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.holdFlagsticks();this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
+   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.holdFlagsticks();this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}{const w=this.world.settings.wind||0,speed=1.6+.13*w,amp=.12+.016*w;for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*speed+p.getX(i)*5)*amp*(p.getX(i)+.24));p.needsUpdate=true;}}if(this.camFlight){
   // A flight drives the camera outright. The damping below is a spring toward
   // a target; running both would fight the path and round off its ends.
   this.camFlight.elapsed+=dt;
@@ -2712,6 +3031,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    }
   }
   if(this.cloudUniforms)this.packClouds();
+  if(this.mirror){const s=this.renderer.getDrawingBufferSize(this.mirrorUniforms.mirrorScreen.value);this.mirror.render(this.renderer,this.camera,s);}
   this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);
@@ -2819,8 +3139,17 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  if(layers.fresh){const ctx=layers.base.getContext('2d');
  ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
  ctx.fillRect(0,0,w,h);
+ // THE OVERHAUL'S GROUND TYPES ON THE HOLE MAP: rock, hardpan, heather and
+ // the rest in their map colours (grounds.js `map`), from the lie itself --
+ // `surface` asked over a grid across the canvas -- so the map shows where a
+ // ball would play from rock. Only the still layer, so only when it changes.
+ if(!full&&(world.wild||world.fallenField)){
+  const N=96,tile=document.createElement('canvas');tile.width=tile.height=N;const tc=tile.getContext('2d'),img=tc.createImageData(N,N),col=new T.Color();
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const q=mapPosition(transform,(i+.5)/N*w,(j+.5)/N*h),p=course.toWorld(q),g=GROUNDS[world.surface(p.x,p.z)];if(!g)continue;col.set(g.map);img.data.set([col.r*255,col.g*255,col.b*255,255],(j*N+i)*4);}
+  tc.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(tile,0,0,w,h);
+ }
 
- if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
+ if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':GROUNDS[world.surface(x,z)]?.map??world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
   // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
   //
   // This used to be drawn at `w/2 - halfX*scale`, which silently assumes the

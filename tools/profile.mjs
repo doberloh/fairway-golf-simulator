@@ -7,6 +7,11 @@
 //   node tools/profile.mjs --save          store the run as the baseline
 //   node tools/profile.mjs --since         compare against the stored baseline
 //   node tools/profile.mjs --frames 600    longer samples, steadier numbers
+//   node tools/profile.mjs --build <html>  profile another build (main's, kept by the
+//                                          cartoon overhaul under bench/shots/overhaul/)
+//   node tools/profile.mjs --json <file>   write the run's results to a file
+//   node tools/profile.mjs --against <file>  compare with a run written by --json
+//   node tools/profile.mjs --biome autumn   the tier and view ladders on another landscape
 //
 // WHY THIS EXISTS, AND THE ONE THING IT MUST NOT DO. `tools/bench.mjs` measures
 // generation and says nothing about drawing. The only frame numbers this
@@ -30,7 +35,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'), '..');
-const DIST = path.join(ROOT, 'dist', 'index.html');
+const buildAt = process.argv.indexOf('--build');
+const DIST = buildAt >= 0 ? path.resolve(process.argv[buildAt + 1]) : path.join(ROOT, 'dist', 'index.html');
 const STORE = path.join(ROOT, 'bench', 'profile-baseline.json');
 
 const argv = process.argv.slice(2);
@@ -64,7 +70,9 @@ const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {
  const cases = [];
- const base = {biome: 'redwood', holes: 9, seed: 'PROFILE'};
+ // `--biome` moves the tier and view ladders to another landscape (the
+ // cartoon overhaul's are heaviest on Autumn and PNW, not Redwood).
+ const base = {biome: flag('biome', 'redwood'), holes: 9, seed: 'PROFILE'};
  // The tier ladder on the heaviest biome, which is what the tiers exist for.
  for (const quality of TIERS)
   cases.push({group: 'tiers', name: quality, arm: 'gpu', quality, ...base});
@@ -294,13 +302,20 @@ for (const group of [...new Set(results.map(r => r.group))]) {
        rows, budget);
 }
 
-if (argv.includes('--since') && fs.existsSync(STORE)) {
- const was = JSON.parse(fs.readFileSync(STORE, 'utf8'));
- console.log('\nSINCE THE BASELINE  (median ms, + is slower)');
+const against = flag('against', null);
+if (against || argv.includes('--since') && fs.existsSync(STORE)) {
+ const was = JSON.parse(fs.readFileSync(against ?? STORE, 'utf8'));
+ console.log(against ? `\nAGAINST ${against}  (median ms, p95 in brackets, + is slower)` : '\nSINCE THE BASELINE  (median ms, + is slower)');
  for (const r of results) {
   const old = was.results.find(x => x.group === r.group && x.name === r.name);
-  if (!old) continue;
+  if (!old?.stats || !r.stats) continue;
   const d = r.stats.median - old.stats.median;
+  // Against a chosen run, every case and the graphics card's side too.
+  if (against) {
+   const sign = v => (v > 0 ? '+' : '') + v.toFixed(2);
+   console.log(`  ${(r.group + '/' + r.name).padEnd(34)} cpu ${sign(d)} (p95 ${sign(r.stats.p95 - old.stats.p95)})  gpu ${sign((r.stats.gpuMedian ?? 0) - (old.stats.gpuMedian ?? 0))}`);
+   continue;
+  }
   if (Math.abs(d) > 0.15) console.log(`  ${(r.group + '/' + r.name).padEnd(34)} ${d > 0 ? '+' : ''}${d.toFixed(2)}`);
  }
 }
@@ -311,6 +326,13 @@ const mins = (Date.now() - started) / 60000;
 console.log(`
 ${results.length} cases in ${mins.toFixed(1)} minutes ` +
  `(${(mins * 60 / Math.max(1, results.length)).toFixed(0)} s a case)`);
+
+const jsonOut = flag('json', null);
+if (jsonOut) {
+ fs.mkdirSync(path.dirname(path.resolve(jsonOut)), {recursive: true});
+ fs.writeFileSync(jsonOut, JSON.stringify({taken: new Date().toISOString(), build: path.relative(ROOT, DIST), frames: FRAMES, results}, null, 1) + '\n');
+ console.log(`wrote ${jsonOut}`);
+}
 
 if (argv.includes('--save')) {
  fs.mkdirSync(path.dirname(STORE), {recursive: true});

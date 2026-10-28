@@ -8905,7 +8905,13 @@ AGENTS.md's limits (40 runs for this goal, each gated and logged in
   between two measurements of the unchanged frame; `--cpuprofile` adds the
   DevTools sampling profile of the processor (build with `MINIFY=0`).
 - **`tools/gpu-gate.mjs`** -- the gate every run passes: 30 s of `nvidia-smi`
-  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap.
+  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap
+  (all four are arguments, so a goal with its own limits -- the cartoon
+  overhaul's 30%, 80 °C, a minute apart, no cap -- passes its own). Since 25
+  October 2026 it also waits while the card holds a Playwright browser or a
+  Blender that this run did not start (`foreignJobs`): two goals in two folders
+  keep two logs and cannot see each other's runs otherwise. The owner's own
+  desktop Chrome is not counted.
 - **`tools/devices.mjs`** -- device profiles (below); **`tools/png-diff.mjs`**
   -- a PNG decoder and changed-pixel count, no dependency.
 
@@ -9452,3 +9458,1165 @@ course in about 1.3 s in Node.
   but raised the bar for everyone still working on it.
 - **Blowouts play as sand** (the bunker lie), the way a waste area is sand.
 - **Out of scope by the goal**: cart paths (IDEAS.md).
+
+## The cartoon overhaul's trees (25 October 2026)
+
+The cartoon overhaul (merged 27 October 2026) remade every tree in Blender (docs/CARTOON_OVERHAUL.md,
+BLENDER_ASSETS.md *The cartoon packs*). Each species was read up first; the
+model then pushes the real proportions toward a cartoon. Sources in
+REFERENCES, *The cartoon overhaul*. Most were read through a search tool's
+summary.
+
+**Bur oak** (Midwest and Autumn's `oak`). Missouri Department of
+Conservation: typically 85 ft tall with an 85 ft spread; Kentucky: 70-80 ft
+tall and wide; North Dakota: crown 40-70 ft tall, 35-60 ft wide; the
+Minnesota DNR: a broad top of heavy spreading branches over a relatively
+short trunk; Yale's tree survey: the larger branches near the crown's base
+grow out level and droop, smaller ones higher up grow upright, and old trees
+may become wider than tall. Taken: crown width about equal to height (the
+models are 16-20 m tall, 18-19 m across); the trunk forks at a quarter to a
+third of the height into four or five limbs that leave nearly level and then
+rise. PLACED: the trunk radius, 6% of the height -- about twice a real bur
+oak's (a 1 m diameter on a 25 m tree is 2%), for a cartoon's weight.
+
+**Sugar maple** (`maple`). UF/IFAS: 50-80 ft tall, 35-50 ft spread, a dense
+symmetrical oval to round crown; Maine's forest-trees handbook: open-grown
+branches start 8-10 ft up, an egg-shaped head when young and a broad rounded
+top when older; a Canadian database: 12-24 m by 9-18 m. Taken: width about
+0.65 of the height (13.5 m on 21 m), the crown starting at 45% of the height.
+
+**Quaking aspen** (`aspen`). Morton Arboretum: 40-50 ft tall, 20-30 ft
+spread, long-trunked and narrow with a rounded crown when mature; Minnesota
+DNR: up to 65 ft, an open rounded crown, bark white to grey-green, smooth.
+Sources disagree on height (30-65 ft); the models are 13-17 m. Taken: a
+crown about a third of the height across, from half way up; the dark lens
+scars of fallen branches are the trunk's accent. PLACED: nine scars a trunk.
+
+**Red alder** (`alder`, Pacific Northwest). Oregon State: typically 70-120
+ft; NRCan: up to 25 m. In stands a clear, slightly tapered bole and a narrow
+dome; in the open a broadly conical crown. Taken: a dome widest a third of
+the way up, 0.45 of the height across, on a clear bole to 86% of the height.
+
+**Engelmann spruce** (`spruce`). NEON: narrow conic when young, cylindric
+when older; Utah State: pyramidal. Taken: about 0.3 of the height across,
+skirts to the ground.
+
+**Ponderosa and lodgepole pine** (`pine`). NRCan: ponderosa's crown wide,
+irregularly cylindrical and flat-topped on old trees; the NPS: lodgepole
+narrow in dense stands, broader in the open and then sometimes like a
+ponderosa. One `pine` serves both (Pacific Northwest, Mountain, Lakeshore), so
+the model is the open-grown form: a clear trunk to about half its height and
+flat needle pads gathering into an irregular flat-topped crown 0.4-0.45 of the
+height across.
+
+**Western redcedar** (`cedar`). The Mountaineers' Cascade conifer chart:
+drooping branches. Taken: broad drooping skirts (0.42 of the height across),
+a strongly flared foot, a leader pushed off the axis. The drooping-leader
+detail is common knowledge in Pacific Northwest field guides and was not
+found in a fetched source: PLACED.
+
+**What the rounds changed** (pictures under `bench/shots/overhaul/rounds/`,
+local). Broadleaf round 1 built each crown as separate masses -- oaks came out
+as flat pancakes on thin stems (acacias), aspens and alders as stacked balls.
+Round 2 made one dome per oak over a trunk twice as thick, one crown per
+aspen and alder, and doubled the paint's range (0.45 to 1.2, from 0.62 to
+1.12, which had read as flat). Round 3 broke the oak's smooth "lid" with
+lobes standing proud and rounded the aspen's upright lozenges. In the game
+two more fixes: trunks painted nearly black at the foot (raised to 0.78), and
+crowns speckled by the shadow map, which painted crowns no longer receive.
+Conifer round 1: spruces were clip-art Christmas trees (thin skirts, an
+arrowhead tip), pines bonsai (few small pads on a long thin stem). Round 2:
+thicker skirts, more and bigger pine pads merged into one crown. Round 3:
+each bough ends in a rounded scallop instead of a star point, and the upper
+tiers overlap so no trunk shows.
+
+**Cost.** The Kenney oak was 64 leaf triangles; a cartoon oak is about
+6,000-9,000, a maple about 5,000, a spruce about 1,000. The module grew from
+15,353 KB to 17,370 KB (both packs, with the two Kenney families removed).
+Frame rate is measured in the overhaul's frame-rate phase against main's
+baseline; a lighter model for far trees and the Low tier is planned there.
+
+## The overhaul's ground types (25 October 2026, generator 37)
+
+The cartoon overhaul made the ground between the holes into surfaces of its
+own (docs/CARTOON_OVERHAUL.md, PROCEDURAL_GENERATION *The country between the
+holes*). Every value below is **PLACED** -- no source gives a golf ball's
+restitution on scree or the share of ball speed heather costs -- and each is
+set against the fitted surfaces either side of it. The whole table lives in
+`src/grounds.js`; `tests/grounds.test.mjs` holds the orderings.
+
+| Ground | cor | tilt | mu | ground + canopy | roll (m/s²) | skid mu | lie | relief rank | hop (m) | Why |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rough (fitted, for reference) | .0843 | .085 | .5225 | .105 + .17 | 3.8 | .70 | .90 | 3 | .05 | -- |
+| fairway (fitted) | .1305 | .1192 | .418 | .065 + .015 | 1.45 | .42 | 1 | 0 | .08 | -- |
+| rock | .22 | .10 | .30 | .02 + 0 | 1.0 | .35 | .82 | 4 | .14 | Hardest thing a ball lands on: highest kick, runs on, a poor lie. Kept under .24, past which a slow contact (x3.5) would return more than the drop |
+| coral | .20 | .12 | .38 | .02 + 0 | 2.0 | .45 | .80 | 4 | .12 | As rock, pitted: rolls less, a worse lie |
+| scree | .12 | .16 | .55 | .06 + .03 | 4.5 | .80 | .82 | 4 | .10 | Hard but loose: kicks, then grabs |
+| hardpan | .155 | .12 | .40 | .045 + .005 | 1.15 | .38 | .93 | 2 | .06 | Pinehurst's "hardpan rather than waste bunkers, so a ball bounces and runs" (REFERENCES): firmer than a fairway, a tight bare lie better than rough |
+| waste | .06 | .02 | .62 | .11 + .35 | 5.0 | .90 | .86 | 4 | 0 | Open sand that is not raked: firmer than a bunker, and it takes the spin as one does (`killsSpin`) |
+| pinestraw, litter | .075 | .07 | .56 | .10 + .20 | 4.2 | .70 | .88 | 3 | .03 | Soft; a ball sits down |
+| heather | .055 | .06 | .62 | .105 + .38 | 6.5 | .90 | .78 | 4 | 0 | Woody and wiry: the worst lie on a heath, a ball stops dead |
+| native | .06 | .07 | .60 | .105 + .32 | 6.0 | .85 | .82 | 4 | 0 | Marram, prairie, unmown fescue: deeper than rough |
+
+None is a penalty area or out of bounds (PLACED): a desert course's "desert
+rule" is a local rule (Troon North's scorecard: drop beside the nearest grass,
+one stroke), and this game's rules are the same everywhere. Sounds borrow the
+signed-off ones (rock and scree the hard rock sound, hardpan the tee's, the
+grasses and straw the rough's, waste sand the bunker's). The turf roll sliders
+do not scale them: those are for mown turf.
+
+Measured on one pitch (25 m/s, 32 degrees, 5,500 rpm) onto flat ground of
+each: it runs further after landing on rock than on rough, and less in heather
+(`tests/grounds.test.mjs`). Not tuned in play; to be checked by the owner.
+
+## The overhaul's landforms (25 October 2026, generator 37)
+
+What each landscape's recipe (`src/landforms.js`, `landform` in biomes.js)
+builds, and what it measured. **Every shape and number in the recipes is
+PLACED**: LANDSCAPE_RESEARCH says what lies between real holes, not how tall a
+cartoon mesa is.
+
+| Landscape | Recipe | Key numbers (PLACED) |
+| --- | --- | --- |
+| Mountain | crags | ridged field at 300 m, clusters from .42, 70 m tall in 4 cliff bands, fading in over 120 m from the corridors; rock gated 14 m (+18 ramp) outside the corridor envelope, scree 10 m (+14) |
+| Pacific Northwest | crags | 170 m, 22 m tall, 2 bands, clusters from .6; rock 14 m (+16) |
+| Giant Redwood | crags | 180 m, 16 m, 2 bands, clusters from .62 |
+| Autumn | crags | 150 m, 9 m (low ledges), 2 bands, clusters from .58, summit rock .6 |
+| Desert | mesas | a 280 m grid, 42% of cells hold a mesa 34-80 m across and 22-48 m tall, cliffs over the outer 14% of its radius, a talus apron to 1.7 radii; washes on a warped 260 m field 1.8% wide and 1.4 m deep; rock 8 m (+10), wash 12 m (+10), hardpan from 5 m (+6) |
+| Links | dunes | crests on a ridged 150 x 105 m field, 5 m tall, hummocks a third of that at 38 m; marram 9 m (+14), heather where a 70 m field passes .6, 8 m (+12) |
+| Lakeshore Dunes | dunes | 130 m, 4 m; marram 8 m (+14); its blowouts are unchanged |
+| Midwest | prairie | a 110 m field past .56, 24 m (+22) outside the corridor; swales of 4 m |
+| Island | coral | between 1.0 and 3.4 m above the sea, broken by a 17 m field |
+| Haunted Hollow | moor | an 80 m field past .5, 9 m (+14); tussocks of 3 m |
+
+**Shares** (seed `overhaul`, nine holes, `node tools/ground-shares.mjs`):
+Mountain rock 14%, scree 7%, pine straw 8%; Desert hardpan 74%, waste 7%, rock
+1%; Links native 28%, heather 4%; Midwest native 18%; Island coral 1%;
+Haunted heather 30%; Autumn rock 1.5%, leaves 8%; Pacific Northwest rock 2%,
+pine straw 9%; Redwood rock 1%, pine straw 6%; Lakeshore native 32%.
+
+**What the rounds changed** (pictures under `bench/shots/overhaul/land-r1..3/`,
+local). Round 1: a ridged field alone sits near its crest most of the time (70%
+of points above 0.87), so crags covered a fifth of every forest course -- a
+broad cluster mask fixed it; rock painted from the recipe's bands alone left
+flat rock decals wherever the corridor fade had flattened a crag, so rock is
+decided from the finished ground's slope (rise over run past .42-.7); the
+terraces followed the noise's contours and banded the slopes like agate, so
+the band index is read through noise; rock was textured in 3.4 m squares with
+a stratum every 2.2 m (brickwork), now warped 9 m planes and broad bands
+every 6.5 m; scree was white ribbons, now darker and browner; pine straw was
+orange rings, now half the rough's colour; hardpan's crack net read as a
+wireframe, now faint and warped; heather was saturated blocks, now muted and
+soft-edged. The colour's soft edge widened from .42-.58 to .34-.66 of the
+field around the 0.5 the lie switches at.
+
+**Two bugs the new ground exposed.** A creek's faded head kept the water
+level the full channel needed -- up to MAX_CUT under the ground -- while its
+carve faded to nothing: water lying under a links dune 8.7 m deep
+(tests/course-living.test.mjs). Across a fade the level now rises toward the
+surveyed ground (streams.js), and a fading channel never narrows below 1.2 m,
+since a 0.2 m trickle fell between the ground mesh's half-metre vertices.
+And the relief first rode on `open()`, which returns a quarter of the
+surrounding relief round the tees: crests stood in tee shots, blind shots
+blocked inside 80 m went from none to six on the full bench; the relief now
+fades from the corridor alone.
+
+**Bench** (`node tools/bench.mjs --tier full`, 45 courses): every invariant
+zero. Tee shots blocked by more than a metre 43 on main, 48 now, all by ground
+80 m or more out (the landing areas have more relief beside them); tees
+needing work 27. **Generation** (`node tools/gen-time.mjs`, 18 holes): 0.1-1.3 s
+longer per course -- Desert 2.29 to 3.57 s (the mesas are looked up on every
+height query), Autumn 3.10 to 3.51, Mountain 2.22 to 2.69, Island 5.86 to 6.11.
+
+## The overhaul's turf detail (25 October 2026)
+
+The ground had no texture images: its colour is palette and procedure
+(ground.js), and the finest detail was a per-pixel hash ("grain", 30 cells a
+metre, 7.5% strength) that read as noise. `tools/turf-detail.mjs` now paints
+four tileable 512 px patterns into the channels of one PNG, inlined as
+`src/turf-detail.js` (906 KB of PNG -- noise compresses badly): R clumps of
+tapering grass strokes leaning together, G a fine mown nap, B a stipple of
+grains and a few pebbles, A plates split by cracks. Each is centred on 128 and
+multiplied into the turf colour around 1, so the palette is untouched.
+
+| Surface | Channel | Tile (m) | Strength (PLACED) |
+| --- | --- | --- | --- |
+| rough, pine straw, leaves, heather, native grass | R, read twice (the second 2.7x larger and turned 37 degrees, 40% of it) | 2.8 | .30 |
+| semi-rough | R | 2.2 | .20 |
+| fairway, fringe, tee | G | 1.8 | .16 |
+| green | G | 1.3 | .10 |
+| sand, hardpan, waste | B | 1.6 | .24 |
+| rock, coral, scree | A | 6.5 | .34 |
+
+Held at 35% where a tile shrinks to under a fifth of its size on screen
+(`fwidth`), so the far ground is not busy; mipmapped and anisotropic.
+
+**Rounds.** 1: the rough's dark root strokes were as strong as its blades and
+read as dirt specks; the nap read as static; the stone had pits like rivets.
+2: blades the light stroke, long, with a small dark foot, 1,500 clumps; nap at
+60% of its spread; no pits. In the game the mown detail was invisible at
+.07-.11. 3: fairway .16, green .10, grit .24, and hardpan's own crack plates
+(ground.js `groundPaint`) halved in size and faint.
+
+**The texture unit it costs.** The ground's shader was at 15 of 16 units with
+the one spare the tests demand (tests/flood-shadows.test.mjs). The route curves
+and the semi-rough edges were two float textures on the same 512-texel grid,
+the second using two channels; they are now one texture twice as wide, read
+through `curveAt` and `outerAt`, which clamp the index to their own half so the
+linear filter never blends one into the other. The sampler count is 7 again.
+
+## The overhaul's boulders (25 October 2026)
+
+Each landscape's boulders are its own geology (BLENDER_ASSETS.md
+*cartoon_rocks*). Wikipedia, *Spheroidal weathering*: a jointed block's corners
+and edges weather faster than its faces, leaving a rounded corestone
+("woolsack") that stands free once the decayed rock round it erodes -- the
+**round** style (Midwest, Autumn, Links, Lakeshore, Island). Talus (JNCC
+*Mass movements*; fiveable, *frost wedging*): rock split by frost along its
+joints and bedding into angular fragments that collect below a cliff -- the
+**angular** style (Mountain, Pacific Northwest, Redwood, Haunted Hollow).
+Sandstone in horizontal beds, a softer bed wearing back under a harder one,
+is the **layered** style (Desert); the bedding detail is common geology and was
+not found in a fetched source (PLACED). Moss and lichen colours per biome are
+PLACED.
+
+**Rounds.** 1: the round stones were a convex hull with a wide bevel, which
+overran the hull's short edges and threw long spikes. 2: round stones built as
+a noise-displaced sphere flattened underneath -- right, but coarse, and mossed
+over the whole top like a cap. 3: smoother, moss only on the crown (facing up
+and high on the stone), sandstone beds of different sizes, a broken block on
+some, seated rather than floating.
+
+## The overhaul's shrubs (25 October 2026)
+
+Read for the shrub pack (BLENDER_ASSETS.md *cartoon_shrubs*), via search
+summary. **Gorse** (Ulex europaeus; BSBI Fermanagh, RHS): an evergreen,
+much-branched spiny shrub, usually about 2 m (RHS 1.5-2.5 m, up to 4 m and 7 m
+where introduced), dense thickets, leaves reduced to spines. Models 1.5-2.2 m.
+**Heather** (Calluna vulgaris; NC State Extension, plantura): usually under
+50 cm, up to 1.25 m, mat-forming in good conditions, shoots to about 60 cm.
+Models 0.35-0.5 m tall, 1.4-2.2 m across. **Beach naupaka** (Scaevola
+taccada; UH CTAHR OF-14, Wikipedia, FNAI): a dense, spreading, mounding shrub
+branching from the base, usually about 3 ft tall and 6-15 ft wide (Wikipedia
+gives 3-10 m -- the sources disagree, the garden figure was followed),
+fleshy leaves 8-25 cm crowded at the stem tips. Models 0.8-1.2 m by 2.2-3.4 m.
+The fern and bramble are drawn from the general form of each (PLACED).
+
+**Rounds.** 1: heather a few big blobs; naupaka mushroom trees on long stems;
+fern sparse pale triangles; bramble little trees. 2: heather a fine mat of
+seventy shoots; naupaka a filled dome; fern denser, broader overlapping
+leaflets; bramble a dark core under arching canes -- still canes like poles
+and naupaka a pancake. 3: naupaka a full dome its rosettes sit on; bramble's
+arches low and leafed along their length. In the game the Links shrubs read
+small and sparse -- the owner's addendum (thicker cover between links holes)
+takes that on.
+
+## Shared links fairways (25 October 2026, generator 38)
+
+The owner's addendum: "For links courses, maybe fairways can be LARGE and
+shared ... Courses like chambers bay have it." Sources (REFERENCES, *Shared
+links fairways*; all via search summary): the Old Course's 1st and 18th share
+one fairway about **129 yd (118 m)** wide -- the figure is repeated widely,
+one review says "over 100 yards", and no official measurement was found.
+Chambers Bay's fairways run **28-105 yd (26-96 m)**, the 13th the widest,
+against about 24-32 yd (22-29 m) at Oakmont or Winged Foot, with no
+intermediate cut between fairway and fescue.
+
+What was built (Links only; `fairwayScale`, `routeParallel`,
+`sharedFairways` in its biome record):
+
+- **Wider fairways: 1.3 times the setting** (PLACED). At the default 38 m a
+  links fairway is typically about 49 m, inside Chambers Bay's range.
+- **Side-by-side routing** (routing.js): each hole of 250 m or more is offered
+  a tee on the line running beside any earlier hole of 250 m or more, either
+  way and either side, at the least clearance the corridor test allows
+  (about 70-85 m centre to centre), within 130 m of the last green, with at
+  least 80% of the shorter hole alongside. A back-nine hole running home
+  beside its front-nine partner may walk 1.6 times as far and scores twice
+  the pull; the routing trial with most such holes is favoured. All PLACED.
+- **Meeting fairways** (course.js shareFairways): where two fairways run
+  within 0.9 (about 26 degrees) of parallel at that point and the rough
+  between is under 85 m, each widens to the middle, over runs of 80 m or
+  more, fading over 60 m. Never across any hole's pond. PLACED: all four.
+  Two 33 m half-fairways 85 m apart make one about 150 m across -- wider
+  than the Old Course's 118 m, as the owner asked for LARGE.
+
+**Measured** (18 holes, seeds overhaul, S1, S2, S3, with a CPU surface map):
+4, 5, 4 and 6 holes share; nine-hole courses 0-2. Fairway is 6-9% of the
+property (sampled on a 6 m grid; generator 37 was not measured the same way). Bench: every rule clear; blind tee shots over
+1 m, 42 of 1215 (all beyond 80 m).
+
+**What did not work, in order.** (1) Widening alone, gap 55 m: 0-3 holes per
+course -- random routing seldom sets holes close and parallel. (2) A bonus
+for random placements beside an earlier hole: fewer still; the clearance test
+rejects most near misses. (3) Turning the previous hole round beside itself:
+feasible for 2-7 holes a trial, but at the maximum clearance (about 100-160 m
+apart), too far to share; stepping the clearance in made it 65-85 m. (4) The
+parallel test compared tee-to-green lines, so every dogleg failed it even
+where the fairways lay side by side -- now the centre lines' directions at
+the point. (5) A pond drawn by one hole but sitting in its neighbour's
+fairway blocked the shared strip, though it is dropped later (a pond keeps to
+its own hole's ground) -- such ponds are now ignored, and every other hole's
+pond in the strip counts. (6) 30 m fades left square-cut "rungs" between
+holes; 60 m tapers them. (7) A 95 m gap made blobs between holes that only
+glanced past each other; the parallel limit went from 0.75 to 0.9.
+
+## The overhaul's stands (25 October 2026, generator 39)
+
+The owner's addendum: "parts of the course THICK brush or forest (like on the
+perimeter of courses where forest wasnt fully cleared) ... We should have some
+version of that for all courses. It might not be trees ... Desert might be
+tough but be creative," with three photographs: an autumn hillside closed in
+hardwoods across a lake, Appalachian ridges of unbroken forest round a green,
+and tall pines walling a fairway. Before this, every landscape planted one even
+scatter thinning to nothing about 135 m from the holes -- an orchard on bare
+hills (`bench/shots/overhaul/shrubs-r3/pnw/overview.jpg`).
+
+**What was built** (src/stands.js; every number PLACED, per biome in its
+`stands` record): a ragged RIM -- everything more than `edge` m (45-110,
+give or take `wobble` 25-40 by a 170 m noise) outside the corridors, rising
+over `ramp` 20-30 m -- and PATCHES between the holes where a broad noise
+(`scale` 200-260 m) passes a threshold set for roughly `patch` (12-20%) of the
+country, never within `near` (40-55 m). Inside, one site per `spacing` m
+(8-11 for trees, 8 for links gorse) on a hashed jittered grid, planted after
+the open scatter by its rules -- ground that allows a tree, clear of houses,
+the launch corridors, the view from the tee, the green approaches -- with
+crowns allowed to close (`share` 0.5-0.6 of the summed radii). Mixes:
+Pacific Northwest pine, cedar and alder; Mountain spruce and pine (the
+photograph's wall); Desert a mesquite bosque with palo verde, cholla and
+ocotillo (the Sonoran Desert's densest country is its washes' bosques);
+Links gorse thickets (Bandon, the Old Course's whins); Midwest oak and maple
+woodlots; Island palm and hala jungle; Autumn closed hardwoods; Haunted
+Hollow a dead-wood thicket; Lakeshore the woods behind the dunes closed. The
+Giant Redwood has none: its grown trees are up to 53,000 triangles each and it
+is already a grove.
+
+**Measured** (18 holes, seed `overhaul`, Node): stand trees per course --
+PNW 12,173, Mountain 10,575, Autumn 12,964, Haunted 14,497, Lakeshore 9,171,
+Desert 8,929, Midwest 8,225, Links about 16,000 gorse and shrubs (40,443 at a
+5 m spacing, thinned to 8 m), Island 98 (its rim is sea). The wait to build
+an 18-hole course barely moved (PNW 3.28 s; Island 6.38 s). Bench: every
+rule clear once the tee-surround metric measured the open scatter alone (a
+stand made every tee look clear-cut beside it: 35 courses failed with the
+surrounds unchanged), and on ground that can hold a tree rather than rough
+alone (stand needles turn rough into pine straw, shrinking the
+denominator).
+
+**The far twins** (BLENDER_ASSETS, *The cartoon packs*): 16,000 painted crowns
+at 6,000-10,000 triangles each could not be drawn. Each painted tree ships a
+twin built from the same seed with every lobe an icosahedron, about a twelfth
+of the triangles, drawn where a crown is under `farPainted` of the screen's
+height: Low and Medium 15%, High 5%, Ultra 3% (about 30 pixels on 1080
+lines) -- PLACED.
+
+**Frame cost** (`node tools/profile.mjs --only biomes --since`, High, RTX
+4090, the profile's 9-hole course, seed PROFILE, player view):
+graphics time per frame PNW 4.12 ms, Desert 3.22, Mountain 4.53, Links 4.71,
+Midwest 4.30, Island 5.38, Redwood 5.72, Autumn 4.94, Haunted 6.53, Lakeshore
+4.65 -- each below the stored baseline (28 September, before the frame-rate
+goal: 5.0-8.7 ms), with 28-46 M triangles a frame against its 5.7-8.5 M. The
+processor's 95th-percentile frame got worse on several (Mountain 22.3 ms
+against 11.9, Autumn 25.6 against 14.6, Midwest 21.7 against 14.8): spikes,
+probably the cull copying many more instances when it rebuilds. Not yet
+measured on main's current build or on a weak card; the frame-rate phase owes
+both.
+
+**Round 1 in the game** (`bench/shots/overhaul/stands-r1/`): PNW and
+Mountain read as forest cut through for the holes; but the stands are single
+trees with bare ground between, their edge stands well back from play, the
+hills beyond the property are bare, and the Desert's bosque is the old
+leafless procedural mesquite -- a dead orchard -- until the desert pack is
+remade.
+
+**Rounds 2-5** (generator 40; `stands-r2` to `stands-r5`). 2: edges 15-20 m
+nearer play (PNW rim from 70 to 50 m out, Mountain 45, Autumn 50), stand trees
+1.2 times as tall and wide as the open scatter's (`grow`, PLACED: trees in a
+closed wood reach for light), and a stand's floor shaded deeper and wider
+(occlusion.js: 0.38 out to 1.7 crowns against a lone tree's 0.22 to 1.1) --
+Autumn's overview now reads as the owner's hillside. Stand counts fell a
+little (PNW 11,249) as the larger crowns took more room. The flyover's ring,
+which assumed no tree passed 29 m, now asks the trees near it
+(camera-tours.js; the full-forest test came within 3.9 m of a crown). 3-5:
+the far hills (below).
+
+## The overhaul's far forest (25 October 2026)
+
+Past the course's own ground the landscape rings (landscape-edge.js) were bare
+hills; the stands stop at the property line. The far forest is PAINTED by the
+ground shader (ground.js, biomes.js `farForest`), not planted -- no geometry,
+no texture, no sampler (the ground has one to spare against WebGL's sixteen):
+crown-sized lumps on a jittered grid every `size` m (6-12), each lit from the
+sun's side with its gaps dark; colours drawn per crown and drifting in groves
+about 70 m across (three or four per landscape: Autumn red, orange, gold and an
+evergreen); patchy by a 380 m noise to `cover` of the country (Links 0.3,
+Desert 0.35 of olive scrub, Redwood 0.95); fading in over the first 70 m past
+the edge, where the last real stand trees hide the seam (since the polish
+goal: from the property line over 40 m, with real 3D crowns standing on it --
+*The far woods*); held off ground
+steeper than about 42-60 degrees (normal y 0.5-0.74: laid from above, the
+pattern stretched into vertical scales on Mountain's faces, and real woods
+stop at the rock anyway); and on Mountain held below 520 m. Where a crown is
+under a pixel the lumps settle to their grove's colour at 0.72 brightness, so
+the far hills stay mottled instead of shimmering or going flat. Every number
+PLACED. Rounds: 3, the canopy appears (PNW's far mountain reads as the
+owner's ridge photograph; Mountain's faces stretched; Autumn a flat salmon at
+distance); 4, cliffs bare, a fourth colour, darker average (Autumn still
+uniform at distance); 5, groves, which survive distance -- the Autumn hills
+now drift in colour, a little blotchy where the evergreen groves fall.
+
+## The overhaul's desert pack (25 October 2026, generator 41)
+
+Read for tools/blender/cartoon_desert.py (REFERENCES, *Desert plants*), via
+search summary. **Foothill palo verde** (Parkinsonia microphylla): 12-20 ft
+tall and 12-25 ft wide (Arid Zone Trees), up to 25 ft (Oregon State, U of A
+Arboretum), 10-13 ft (Yavapai extension) -- the sources disagree; smooth
+yellow-green photosynthetic bark, often multi-stemmed and low-branched, an
+open spreading crown, leafless much of the year. Models 5.5-7 m by 6.5-8 m.
+**Velvet mesquite** (Prosopis velutina): about 25-30 ft and 15-30 ft wide,
+crooked arching stems into a broad rounded crown; grows wild along washes,
+dense stands there are bosques (U of A, AMWUA, Yavapai extension). Models
+7-9 m by 8.5-9.5 m. **Saguaro**: 3-16 m, first arm at 75-100 years, some never
+branch (Wikipedia); models 8-12 m with 0, 2 and 4 arms. **Teddy-bear cholla**:
+1-5 ft (0.3-1.5 m) with a distinct trunk (gardenia.net, americansouthwest.net);
+a new plant kind `cholla` at 0.7-1.6 m (PLACED: the top of the range), which
+also draws a prickly pear and a barrel cactus -- before, the low cacti would
+have been scaled to saguaro height. **Ocotillo**: 6-100 wand-like branches
+from the root crown, 2-9 m (USDA FEIS), typically 8-20 ft (dimensions.com);
+models 3.5-5.5 m with 12-24 canes.
+
+**Rounds.** 1: palo verde flat discs on bare stalks (lollipops), mesquite
+stacked pancakes, cholla a few big yellow flames, prickly pear pads merged
+into one blob, agave leaves thin as grass; saguaro, barrel and ocotillo right.
+2: palo twigs each carrying a cloud of small lobes; mesquite taller and rounder
+lobes; cholla more, smaller joints; thinner pads set apart; agave leaves twice
+as broad -- palo verde now 11,000 faces, cholla still flames. 3: palo lobes 80
+triangles not 320 (3,500 faces); cholla joints chained on short arms turning
+up. In the game (`desert-r3/`): the bosque is a green thicket of mesquite and
+palo verde with saguaros in the open -- a little like an African savanna; and
+some layered sandstone boulders look as if they float on slopes (the rocks'
+next round).
+
+## The overhaul's long grass (25 October 2026)
+
+The owner's addendum asked for a large library of long grass for every
+landscape, and on a links "the long grass ... for the areas between holes".
+Sources (REFERENCES, *Long grass*), via search summary: **big bluestem** 3-8
+ft, the flowering stalks to about 6 ft, the seed head three finger-like
+branches, a turkey's foot (Purdue, Virginia Tech, Minnesota Wildflowers);
+**marram** foliage about 30 cm to 1 m, flowering culms 50-145 cm, leaves 1-3
+mm and rolled (naturescape, NZ flora); **red fescue** 8-120 cm across its
+forms, the fine links types about 30-45 cm with hair-like leaves (RHS, VicFlora).
+Clump heights in the game (PLACED, from these): fescue 0.55-0.8 m, marram
+0.95-1.1, bluestem 1.2-1.5, alpine tussock 0.3-0.35, desert bunchgrass
+0.6-0.75, sedge 0.35-0.45, moor tussock 0.4-0.5, plume grass 1.1-1.3.
+
+**What was built.** The clumps (BLENDER_ASSETS, *cartoon_grass*), and two
+plantings. Course-wide (vegetation.js `addLongGrass`, biomes.js `longGrass`):
+colonies of 8-14 clumps within 4 m, in broad drifts, on ground that allows
+grass at least 14-25 m outside the corridors; 1,800 (Island) to 7,000 (Links)
+colonies a course, scaled by the tier's grass share; no shadows. Near the
+camera, the tall tuft (native ground, or a tall-grass biome) is now four in
+ten of its candidates as clumps of the biome's first long-grass family. All
+decoration: nothing collides, no generated ground moves.
+
+**Rounds.** 1: right shapes but hair-thin blades (1.5-3 cm) and see-through
+clumps, gone at any distance. 2: blades 2.5 times as broad, 40% more of them,
+a mound at the core -- which read as a faceted rock under the tall ones. 3: a
+smaller, flatter, smoother mound. In the game (`grass-r3/`, `grass-r4/`): at
+first too sparse to see (about one clump per 85 m2); colonies doubled in
+size, and the near tall grass changed from brown spikes to fescue clumps with
+straw tips. The links tee now looks over a fescue rough; the clumps' bases are
+a little pineapple-like, a next round.
+
+## The overhaul's brush (25 October 2026, generator 42)
+
+The owner's addendum asked for brush and bushes for every landscape and THICK
+brush where the ground was never cleared. Sources (REFERENCES, *Brush*), via
+search summary: **creosote bush** an evergreen with many branches rising and
+spreading from the ground, typically about 5-6 ft, 4-10 ft (1.2-3 m) high and
+6-12 ft wide, yellow five-petalled flowers (NC State, Las Pilitas, Bird and
+Hike); **brittlebush** rounded bushes 30-150 cm, grey-silver hairy leaves,
+yellow daisies on long stalks (worldplants, DesertUSA, Oregon State); **big
+sagebrush** field means 0.23-0.67 m across 15 western sites (USGS), nurseries
+give about 6 ft -- the two describe different conditions, the field figure
+was weighted; **bracken** fronds 1-2 m (RHS, Woodland Trust), russet in
+autumn; **evergreen huckleberry** 1.2-4 m in the wild, squat in sun and taller
+in shade (UW, Puget Sound field botany), the RHS's 1-1.5 m is a garden figure.
+Sizes in the game (course.js `BRUSH_SIZE`, PLACED within those): creosote
+1.2-2.6 m, brittlebush 0.5-1.2, sagebrush 0.5-1.4, bracken 0.8-1.7,
+huckleberry 1.2-2.8.
+
+**What was built.** The pack (BLENDER_ASSETS, *cartoon_brush*); an
+**understory** under every stand (`stands.under`): its own hashed grid every
+8-8.5 m, about half the sites kept, inside the stand only, by the
+ground-plant rules (no trunk; clear of houses by 5 m like every plant; never
+in the view from the tee) -- PNW fern and huckleberry, Desert creosote,
+brittlebush and agave, Mountain huckleberry and fern, Midwest shrub and
+bracken, Island naupaka, Autumn bracken and shrub, Haunted bramble and
+bracken, Lakeshore bracken and shrub; and creosote and brittlebush in the
+open Desert mix, sagebrush in Mountain's. About 14,000 understory plants an
+18-hole course (28,000 at a 6 m grid with six in ten kept -- thinned for the
+frame). A graphics tier draws a share (graphics.js `understory`: Low a
+quarter, Medium a half, High and Ultra all), picked by a hash of position.
+
+**Rounds.** 1: creosote big plates on bare sticks (a houseplant), bracken
+thin and sparse; the rest right. 2: creosote strung with many small clumps
+(an airy vase), bracken's leaflets broader and filled to the rachis. 3:
+brittlebush and sagebrush mounds of more, smaller lobes (a dozen big ones read
+as hexagons). In the game (`brush-r3/`) the understory is mostly under the
+canopy, as a forest floor is, and shows at the stands' edges.
+
+## The overhaul's island pack (25 October 2026)
+
+Read for tools/blender/cartoon_island.py (REFERENCES, *Island trees*), via
+search summary. **Coconut palm** (Cocos nucifera): 10-45 m in one guide,
+tall selections 24-30 m (Agroforestree), maximum 30 m with a crown about 6 m
+across (NParks); fronds about 4.5-5.5 m (botanical sources; one care guide 4-6
+m, a Tamil Nadu sheet 3-4 m), 80-100 pairs of leaflets. Models 10-16 m with
+fronds 0.38-0.46 of the height (PLACED: a cartoon palm's crown is bigger for
+its height than a real one's, so it reads from afar). **Hala** (Pandanus
+tectorius): 4-14 m (one source), 20-30 ft (UH CTAHR OF-17), forking at 4-8 m,
+conspicuous prop roots, leaves 90-170 cm in four spiralling rows at the
+branch tips (Australian Tropical Rainforest Plants, NParks). Models 7-9 m.
+
+**Rounds.** 1: the palm's crown a small pom-pom of sparse triangles; the hala
+long bare branches under small tufts. 2: fronds longer and broader with
+twice the leaflets; hala branches shorter and forking, each tip a big
+rosette -- the leaflets read as saw-teeth. 3: leaflets angled forward past
+the next, so each frond is one full leaf; smaller hala fruit. In the game
+(`island-r3/`): crowns thin from below and the hala's tufts all but gone --
+single-faced leaves culled from behind -- and a brown knob atop every palm;
+the thin-leaved families are now drawn two-sided and the knob is a small
+green crown shaft (`island-r4/`).
+
+## The overhaul's haunted pack (25 October 2026)
+
+Read for tools/blender/cartoon_haunted.py (REFERENCES, *Dead trees*), via
+search summary: a **snag** is a standing dead tree, often missing its top or
+most of its small branches; USDA decay classes -- class II few limbs, no fine
+branching, a generally broken top; class III soft, few large branches, bark
+coming off in patches (Wikipedia, USDA). A **dead willow**: a broad trunk that
+may be split, long drooping branches hanging in twisted cascades
+(dimensions.com). A **dead oak**: wide-spreading twisting limbs, a skeletal
+outline (stock descriptions only -- no botanical source was found, and the
+shape is placed). The gnarled tree is placed outright: a storybook witch's
+tree, the biome's signature.
+
+**Rounds.** 1: willow and oak right; the gnarled tree's limbs thin and its
+hooks lost; the snag a pole. 2: gnarled chunkier and harder-twisted (it
+claws); the snag half as thick again. 3: the dead oak's limbs thicker and
+more twisted (round 2's was a tidy textbook tree). In the game
+(`haunted-r3/`): one hand at last; the snags' bare wood showed green (no
+accent colour, so the leaf's) and is now pale.
+
+## The overhaul's houses (25 October 2026)
+
+PLACED, not researched: the low suburban house a course is lined with, pushed
+toward a storybook -- deep eaves, a fat chimney, shutters, big windows -- so
+it reads at 200 m. Palettes PLACED: pale walls with weathered red, slate,
+brown and green roofs; stucco and terracotta in warm biomes.
+
+**Rounds** (`rounds/houses-r1..3.png`; in the game `houses-r3/`, `houses-r4/`,
+taken with the capture tool's new `--homes` views, since the fixed views'
+course has none). 1: clean but flat walls, a slab roof that would vanish from
+below, a pale chimney. 2: shutters, sills, corner boards, a plinth, roof
+undersides, a brick chimney. 3: shingle courses (subtle front-on). In the
+game: walls about 6% short of the collider (the eaves counted in the fit, and
+the ingest's unit-height scaling) -- now fitted to the walls themselves and
+recentred; the foundation and the sphere garden bushes are still plain (a
+next round).
+
+## The overhaul's props (25 October 2026, generator 43)
+
+Pumpkins and toadstools for Haunted Hollow (tools/blender/cartoon_props.py).
+The shapes are general knowledge rather than sourced (PLACED): a field pumpkin
+squat and deeply ribbed with a short twisted stem; the fly agaric a red cap
+flecked with white warts on a white ringed stalk, in troops. The proportions
+are the old models', kept so the collision cylinders and the lantern faces fit
+(BLENDER_ASSETS, *cartoon_props*); the radii were measured again off the new
+models and changed generation slightly (generator 43, Haunted Hollow only).
+
+**Rounds.** 1: pumpkins right; toadstools golf tees (long thin stalks, small
+caps). 2: stalks short and stout, caps broad. 3: more and bigger warts. A
+squashed pumpkin was made round, or its carved face would float off it.
+
+## The overhaul's deadfall (25 October 2026)
+
+Logs, stumps and mossy stones for the forest floor (tools/blender/
+cartoon_deadfall.py). General knowledge, not sourced (PLACED): a nurse log
+sags as it softens and carries moss along its upper flank; an old stump keeps
+its root flares and a cut or broken top; boulders on a forest floor are
+moss-capped. Decoration only (addDeadfall's own stream), so no ground moved.
+
+**Rounds.** 1: logs straight pipes with small flat moss patches; broken
+stumps a crown of big teeth with a flat hexagon of moss; mossy rocks
+low-poly, the moss half the stone. 2: logs sag, swell and keep limb stubs
+under a blanket of moss; splinters small and uneven; rocks smoother with only
+a cap of moss -- the stumps' moss sank inside the trunk. 3: the moss set on
+the skin. In the game (`deadfall-r3/`) a log reads on the redwood floor.
+
+## The overhaul's redwood grove (25 October 2026)
+
+The grove's species and proportions are the grown grove's (RESEARCH,
+*Redwood* sections, for the sources): crowns as wide as species.js
+`CROWN_FRACTION` says, which the generator spaces them by. What changed is
+the hand -- the grown trees were realistic and 13,000-53,000 triangles each
+(the baseline profile drew 159 M triangles a frame on Redwood at High); the
+cartoon ones are 1,000-1,900 with far twins.
+
+**Rounds** (`rounds/redwood-r1..3.png`). 1: the redwood right; fir, hemlock and
+cedar too alike; tanoak 7,000 faces; the seedling three discs on a pole;
+salal lily pads on the ground. 2: cedar long drooping ragged sprays, hemlock
+feathery; tanoak's lobes a quarter the triangles; seedling full; salal a
+mound under its leaves. 3: the redwood crown fuller and deeper. In the game
+(`redwood-r3/`): a cathedral grove of red columns -- perhaps too orange; a
+next round. The far-swap test's near limit was 300 m for the grown crown;
+the cartoon redwood's leaf part is its narrow top third, small on screen
+sooner, so it swaps from about 150 m (tests/instance-cull.test.mjs).
+
+## The overhaul's Lakeshore remake (25 October 2026)
+
+The same plants as Lakeshore Dunes' research (RESEARCH, *Lakeshore Dunes*), in
+the overhaul's hand (tools/blender/cartoon_lakeshore.py). **Rounds.** 1: oak,
+maple, juniper and driftwood right; the cottonwood broccoli (a small crown on
+a big trunk); dune grass thin. 2: the cottonwood's limbs each carry a broad
+cloud; dune grass patches of 12-18 tussocks with broader blades -- read as
+celery stalks. 3: the tussocks splay. In the game (`lakeshore-r3/`): the
+near-field tall grass, now marram clumps (the long grass's first Lakeshore
+family), stood a metre high in front of the tee and hid the ball -- so no
+tall grass grows within 10 m of any tee (vegetation.js, short tufts there),
+and the long grass's marram got a fourth round (splayed, `rounds/grass-r4.png`).
+
+## The overhaul's lighting (25 October 2026)
+
+The cartoon light, five rounds (docs/CARTOON_OVERHAUL.md *Lighting*). Rendering
+only; no generated ground moved. Every number here is PLACED by eye against the
+captures unless it says otherwise.
+
+- **The ramp** (textures.js `rampSteps`): eight steps, 70 84 100 122 150 184
+  218 250 of 255 (was four: 90 145 205 245), sampled at `dot(n, sun)*0.5+0.5`,
+  steps centred at 1/16, 3/16 ... 15/16. A slope turned 30 degrees from a sun
+  60 degrees up now draws about 15% darker than the flat beside it in the
+  direct light (8% with four steps). Coloured: each step leans toward the
+  landscape's `light.shade` by .9 .85 .7 .5 .3 .15 .05 0 (darkest first), the
+  colour divided by its own luminance so the brightness of each step stays
+  within 4/255 of the grey ramp (tests/toon-ramp.test.mjs). Shades: PNW
+  #7f93b0, Desert #a78aa6 (dusty violet), Mountain #7c90c4, Links #8a98b0,
+  Midwest #8494bc, Island #6fa0bf, Redwood #6f8f98, Autumn #9a7fa6, Haunted
+  #8a70b0, Lakeshore #8199bf. three reads only the ramp's red channel; the
+  chunk is patched to read all three.
+- **The rim** (textures.js `rimLit`, painted crowns only): (1 - n.v)^4 times
+  .35, times the hemisphere's sky colour plus the sun's colour times
+  (sun behind)^2 times .9, times the surface colour. Round 1 had (1 - n.v)^3
+  and .6 of the sun: pale crowns (birch, aspen, autumn yellows) went pastel.
+  Not on grass: its normals point up, so the term would light every clump.
+- **The bounce**: the hemisphere's ground colour is half the old olive #777855
+  and half the landscape's rough (or `light.bounce`). The clock still pulls it
+  to the dusk and night ground colours; the bounce still only falls as the sun
+  sets (tests/daylight.test.mjs).
+- **The split of the light**: hemisphere 1.15 to .95, sun 2.8 to 3.05
+  (renderer.js `HEMI`, `SUN`). With three's Lambert terms that is about a
+  quarter of a flat surface's light from the sky where it was over a quarter
+  -- the rough reckoning that made it worth trying, not a measurement.
+- **The grade** (textures.js `GRADE`): three's ACES curve, then saturation
+  times 1.12 about luminance, in the custom tone-mapping slot every material
+  and the bloom's composite include -- no extra pass.
+- **Twilight** (daylight.js): the air's tint runs DUSK #e8925c, TWILIGHT
+  #8a77a8, NIGHT #16233f as the sun goes from 1.5 degrees up to 3.5 under;
+  luminance .385, .213, .015, so it still only darkens. Without the middle
+  colour the half-way air was a brown-grey.
+- **The afterglow** (renderer.js sky shader): strength smoothstep(-6, -.5,
+  sun elevation) times (1 - smoothstep(1, 12, elevation)) -- from twelve
+  degrees up to six under, strongest at the horizon. Near the horizon (exp(-7
+  h)), toward the sun an orange-to-rose burn up to .8, opposite a pink band up
+  to .32: the Belt of Venus, the pink band of backscattered sunset light
+  above the anti-twilight horizon (REFERENCES).
+- **Mist at night**: lifted toward white by .05 + .17 x daylight (was .22
+  always). At night the far hills' mist outshone the sky.
+- **Exposure**: a landscape may set `light.exposure` (Desert .9), applied in
+  proportion to daylight so every night reads alike.
+
+Rejected: tinting the cast shadows through the shadow term (CSM replaces
+three's light loop, so a patch there would have to follow it); a fixed
+saturation per landscape (the chunk cannot take per-landscape uniforms
+without recompiling every program). Sources: Barla, Thollot and Markosian,
+*X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
+REFERENCES (Inasa Fujio); *Belt of Venus*.
+
+## The overhaul's frame rate, first pass (25 October 2026)
+
+The numbers, the changes and what was rejected are in docs/CARTOON_OVERHAUL.md
+*Frame rate*; the figures that set the levers:
+
+- **Where a frame went** (`tools/frame-tris.mjs`, High, first tee): Autumn
+  46.6 M triangles in the picture's buffers, maples, oaks and aspens 8,900-
+  10,400 a crown (66% of crowns whole, out to about 320 m at High's 5% line)
+  and shrubs 5,465; Links 34 M, of which long grass 15.7 M (77,000 clumps)
+  and gorse 11.5 M (3,400 a bush, no twin); PNW's pines 5,700-7,600.
+- **Ground against plants** (`tools/frame-variants.mjs`, Desert, High, tee 1):
+  main 1.08 ms = ground 0.67 + the rest 0.41; branch 2.67 = ground 0.97 +
+  the rest 1.70. The far forest painted on the hills costs nothing measurable;
+  the ground's own shadow 5%; brush 19%; trees' shadows 15%.
+- **Lobes**: icosphere subdivisions in Blender are 20, 80, 320 faces at 1, 2,
+  3; a UV sphere of 12 segments and 7 rings is 144 with a twelve-sided
+  outline. Chosen by eye on the contact sheets.
+- **Long grass reach**: 90 / 130 / 190 / 260 m by tier, sinking from 60% of
+  it -- PLACED; a clump of a metre is about 5 pixels at 190 m on 1080 lines.
+- **Twins sooner on Low and Medium**: .30 and .25 of the screen's height
+  (PLACED, from the measured 10-17%).
+
+## The overhaul's course furniture (25 October 2026)
+
+What the tee box carries on a real course: two markers per set of tees, the
+hole sign (number, par, length) beside the back tee, a bench and a ball
+washer. The sizes are PLACED from general knowledge of the equipment, not
+looked up: moulded tee markers about 15-20 cm across and 10-15 cm tall
+(placed 17 and 11), ball washers at about hip height (1.05 m to the crank),
+benches about 1.6 m long with a 45 cm seat. Where they stand is the game's
+own rule: the bench 2.2 m behind and 1.6 m beyond the sign facing the tee,
+the washer 1.6 m ahead of the sign (renderer.js `addHoleDetails`; PLACED).
+Round 1 (`rounds/course-r1.png`, in the game `course-r1/`): it reads -- a
+blue dome on the tee, the sign with its card, the washer and the bench --
+and the gable cap is a flat slab seen from the front. Round 3 (models round
+2, `rounds/course-r2.png`, in the game `course-r3/`): the cap's ridge turned
+to run front to back so its triangle faces the tee, 2.52 m to the ridge
+(PLACED, from 2.35), and the washer's round lump made a squared housing
+with a domed lid, as paddle washers are; both read at 25 m. Close to (3.6 m)
+that read as a mailbox: round 4 made it an upright plunger washer -- 16 cm
+square housing from 0.78 to 1.10 m, a 19 cm cap, the T-handle to 1.27 m
+(PLACED, from the common upright plunger washers). The sign's gable ends and
+soffit are timber; the black under its roof was the gable end's colour, not
+the underside's lighting, though both were changed.
+
+### The clouds, rounds 6 and 7 of the light (26 October 2026)
+
+clouds.js: puffs are detail-2 icospheres (320 faces, were 80) flattened below
+a quarter of their radius; seven to twelve a cloud (were four to seven), sized
+by how far from the middle they sit so a cloud domes up. Shading, installed
+with the fade after the cascade setup: normals 62% toward the cloud's centre
+(the crowns' 80%, a little less so the puffs still read), the underside
+tinted .66 .72 .86 below 70% of a band 0.45 radii deep from the cloud's base,
+a rim of (1 - n.v)^6 times 0.4 of the sky colour plus the sun's colour times
+(sun behind)^3 times .8 -- round 6 had ^3 and 0.5 and the outlines glowed.
+All PLACED by eye. About 48,000 triangles for the whole sky, against 7,000.
+
+### Heather's paint, rounds 4-6 (26 October 2026)
+
+ground.js, code 8: cushions from two octaves of patch noise (2.6 m and 0.8 m),
+lit .66-1.22; the mat is the heather tint (15% toward the rough) mixed with
+a dark olive (linear .10 .11 .05) at 50%, 78% where the tint's blue exceeds
+its green by a sixth (a heath in bloom); bloom flecks on 30% of 0.3 m cells
+over the cushions, 1.35 times the tint. All PLACED by eye; a dead moor (a tint
+whose blue is not over its green) takes no bloom.
+
+Round 7 (heather near the camera): on heather ground the near-field tiles draw the heather model (Blender_Heather_1) for three in ten of their candidates, 0.30-0.55 m tall, leaf #5a5a3c and bloom #a86aa8 (Haunted #4a403c and #6c5862) -- PLACED; fading with the tiles between 28 and 48 m.
+
+## The overhaul's wildflowers (26 October 2026)
+
+The rough's flowers (vegetation.js addGroundCover; Midwest, Mountain, Links
+and Desert, 16% of the scatter's grass as before) as three meadow forms:
+ox-eye daisy, a small aster and a cup flower. Shapes and sizes from general
+knowledge, not looked up: 20-30 cm tall, heads 4-7 cm. Their colours are the
+landscapes' own (`scatter.flowers`). Drawn to 0.4 of the tier's long-grass
+reach (High 76 m), sinking over its last 40% -- PLACED, from the 8 M
+triangles they cost unbounded.
+
+### The far forest, round 6 (26 October 2026)
+
+ground.js: past the single crowns (farSize, 6-12 m), clusters from a jittered grid 26 m apart, nearest-point, each picking one of the four farForest colours, mixed in at three-quarters where a cluster spans more than a few pixels (fwidth against 26 m: full below .15, none above .6); the groves (70 m) blended half toward the average of the four colours; brightness .84-1.08 from patch noise at 19 m. PLACED by eye on Autumn's overview.
+
+## Reading the ground, the overhaul's phase (26 October 2026)
+
+Numbers behind docs/CARTOON_OVERHAUL.md *Reading the ground*:
+- Clear: green definition 85 (lift 3.9, bend 4.0), bands 65; Natural 50 and 40
+  (unchanged). PLACED from the captures.
+- The putting surface's sheen cap: 0.10 either way below lift 2.3 (definition
+  50), rising smoothly to 0.18 at lift 3.9 (85). The cap was 0.10 because at
+  4.5 times the gain whole regions of a green changed tone as the camera moved
+  (the owner, September); 0.18 is a little under twice it, and still a quarter
+  of that gain.
+- Contours on greens and fringes every 0.05 m (a 3% green: a line every 1.7
+  m), darkening 0.30 (0.22 elsewhere, a line every metre). 0.10 m was tried
+  first: lines 3.3 m apart, one or two across a green.
+
+## The overhaul's gardens (26 October 2026)
+
+The gardens of the houses that line a course, from general knowledge, not
+looked up: picket fences about a metre high in sections of about 1.6 m;
+clipped boxwood, mophead hydrangeas and topiary cones along a house front.
+Sizes PLACED: fence 1.04 m to the post caps; shrubs 1.15-1.6 m in the game;
+the footing 0.09 m proud of the walls, in the biome's rock 45% toward
+#6b6357. Bloom colours (white, lilac, pink, blue) PLACED.
+
+### The shallows, rounds 8 and 9 of the light (26 October 2026)
+
+renderer.js `WATER_EDGES.still`: depth = the body's level minus the ground
+grid's height there (the sea's `seaHeights` map, now handed to still water
+too; past the grid a pond reads as deep). Over the last 1.8 m (0.9 m in round
+8, a hairline against a cut bank) the colour is lifted by (1.12, 1.20, 1.05)
+plus (0.06, 0.09, 0.05) at up to 85%, and the water's opacity falls to 72% --
+the bed showing through. PLACED by eye on Midwest and Lakeshore.
+
+### Cliffs and cut banks, rounds 4-7 (26 October 2026)
+
+ground.js: steepness is 1 - smoothstep(.55, .9, normal.y). Hardpan on steep
+ground: bands every 2.4 m of height (warped by patch noise at 11 m), mixed
+55% toward the rock colour, lip +12% over the top 7% of a band, shadow -14%
+over its first 6-14%. Rock: planes 70% patch noise, 30% their old hard cells;
+ledges +10% / -12% on the 6.5 m strata. The detail atlas's stone channel at
+30% of its strength on steep rock, 55% on gentle. All PLACED by eye.
+
+### The flag flies downwind (26 October 2026)
+
+renderer.js: every frame the cloth is turned to the wind's bearing
+(`windDirection`, the bearing it blows toward; the same convention as the
+trees' sway and the ball's drift) and set off the stick along it. Its ripple
+runs at 1.6 + 0.13 x wind (mph) radians a second and its depth grows from the
+stick to the free edge: 6 cm there in a calm, 13 cm at 10 mph, 25 cm at
+25 mph, for a 0.48 m cloth. All PLACED by eye; no source was used -- a real
+flag in a calm hangs limp, which this one does not (a cartoon flag that hung
+would hide its number).
+
+### Water, sand, edges, clouds and a drive: the late rounds (26 October 2026)
+
+All PLACED by eye; no outside source.
+
+- **Ponds (cartoon style only)**: metalness .62 to .38, reflection strength
+  2.1 to 1.3, and the ripple's tilt of the surface normal .5 to .17 of its
+  amplitude -- the last is what cleared the brown smears (the reflected woods
+  scattered by the ripples). Deep water's opacity held to at least .82
+  (made no visible difference). The sea, rivers and creeks are unchanged.
+- **Bunker rake**: patches from a jittered 4 m cell pattern; each patch's
+  furrows are arcs about a centre 6-14 m from the patch; 5.4 furrows a metre
+  (18.5 cm apart); a groove 24% of the spacing wide at -7%, a lit ridge at
+  +6% beside it, then a third deeper (x 1.36). Faded by on-screen spacing as
+  before.
+- **Ink outlines (tee furniture only)**: the inverted hull, 0.8 cm in world
+  space (1.2 cm was too heavy), colour #2b2622.
+- **Clouds**: every puff's flat base (cut at -0.25 of its height) set on the
+  cloud's own base height; before, each sat at a random -0.05 to +0.11 of the
+  cloud's radius.
+- **A drive's paving**: 32 x 96 texels over 3.4 x 9 m; joints every 3 m and
+  down the middle at 72% brightness, a 2-texel border at 107%, a 6% mottle;
+  base #d6d1c3 (was #b3ae9e as a flat slab).
+
+### A house's shade on the ground (26 October 2026)
+
+occlusion.js: a pool round each house's turned footprint, full strength at the
+walls fading to nothing 4 m out, strength .7 (round 2's .45 out to 2.5 m was
+not seen: the bake's texels are 1.75 m). The ground shader takes 60% of the
+bake (the fixed shade look), so the ground at a wall is about 40% darker. The
+rough's grass blades are not darkened by the bake, so in long rough the pool
+reads faintly. PLACED by eye.
+
+### Crisp shadows, and drives on the ground (26 October 2026)
+
+**Shadows (renderer.js `shadowRadius`).** In the cartoon style the PCF spread
+is 0.4 of the tier's (High 3.5 to 1.4 texels, Ultra 4 to 1.6, Ultra's nearest
+map 2.67 to 1.07), never under 1 (Low and Medium keep 1). PLACED by eye.
+
+**Drives (homes.js).** On the ground, tilted along the 9 m to the ground at
+both ends, 4 cm up; grass kept off a 4 x 9.6 m footprint (0.3 m margin).
+Paving 64 x 192 texels (about 19 a metre): concrete #c4bfb1 in 3 m panels; in
+warm landscapes sandstone #e4c8a0 in 0.6 m flags, running bond, joints 80%,
+each flag 93-107%. The texture had written linear colour values into an sRGB
+texture, darkening every drive -- fixed with `getRGB(..., SRGBColorSpace)`.
+PLACED.
+
+### Seated trees (the polish goal, 26 October 2026)
+
+tree-seat.js. A plant's footprint: for trees, the widest BARK vertex in the
+bottom 2% of a family's models, as a share of model height, x 1.3 (lift and
+girth both reach 1.14), capped at 2.5 m -- pine 0.079 x h, oak 0.161, aspen
+0.043 (the skirt-included widths, before round 2: spruce 0.202, cedar 0.307);
+for ground cover a third of its spread. The seat: the most the foot's plane
+stands above the ground on four rings (R, 0.75R, 0.5R, 0.25R) of 24 points,
+plus R x 0.05 (the lean), plus 8 cm; a cover's plane follows the ground's
+gradient up to 40 degrees and its seat is capped at 75% of its height.
+Generation (44): no cover where the slope over 0.6r (or half that) passes
+tan 40; no trunk where the ground falls more than 0.15 h within
+min(2.5, max(1, 0.1 h)). All PLACED by measurement against the metric, not
+from a source. Results: floating plants 3,661 / 65,178 -> 123 -> 61 -> 3 -> 0
+(quick tier, then the full tier's 588,521). Seat depths: median 0.12 m, p95
+0.90 m, max 7.7 m. Cost 0.11-0.15 s per 18-hole course on this PC.
+
+### Tee boxes' mowing (the polish goal, 26 October 2026)
+
+ground.js. A tee is cut with a walk-behind mower (about 0.55 m a pass) in
+passes along the line of play, then once round its edge. Drawn: bands 0.6 m
+wide (period 1.2 m) across the pad and its mown collar, contrast +/-7.5%,
+in the pad's own frame; a clean-up lap 0.55 m inside the mown tee's outer
+edge, reversed and darker by 4%; divots in the strip across the markers'
+span (|across| < 2.3-2.85 m) from 0.5-0.9 m to 2.8-3.4 m behind the tee's
+point, quarter-metre cells, 18% of them, each an oval about 7 x 11 cm,
+tinted (1.16, 1.02, 0.70) at 60%. All PLACED by eye; the mower width is
+general knowledge of walk-behind greens/tee mowers (21-26 in), not a cited
+source.
+
+### The fade from a tee into tall grass (the polish goal, 26 October 2026)
+
+vegetation.js `teeFade`: the distance from a point to the nearest mown tee's
+edge -- a rounded box of TEE_APRON.x by the pad's half-length x
+TEE_APRON_SCALE, corner TEE_ROUND x TEE_APRON_SCALE, in the pad's own frame,
+the shape ground.js paints. Fade f = smoothstep over 1.2 m (nothing tall)
+to 7 m. Long-grass colonies: kept with probability f^0.7, height x
+(0.35 + 0.65 f). Tiled tall clumps: likewise. Course-wide blades: height x
+(0.3 + 0.7 f), and the native ground's 1.9 x lift becomes 1 + 0.9 f. Ground
+cover (marram, dune grass): scaled x (0.35 + 0.65 f). All PLACED by eye.
+
+### Water depth colour (the polish goal, 26 October 2026)
+
+renderer.js WATER_EDGES. Still water: deep = smoothstep(0.15, 3.2 m, depth);
+shallow body = mix(water, (0.5, 0.66, 0.52), 0.35) x 0.62; deep body = water x
+(0.2, 0.32, 0.4); lit by the light the surface receives (the foam's
+`foamLight`); its share 0.78 x (1 - clamp(1.4 x Schlick, 0, 0.85)); opacity
+at least 0.86 (shallow) to 0.97 (deep). The sea: smoothstep(0.4, 8 m); shelf
+mix(water, (0.55, 0.72, 0.6), 0.4) x 0.7; open water x (0.22, 0.34, 0.46);
+share 0.7 x the same Schlick term. Past the ground map, depth = 50 m. Calm
+water's mirror: metalness 0.5, reflection 1.8. All PLACED by eye. The
+reflection probe is a sky probe, so a pond seen across shows sky, not the
+trees on its far bank -- a real reflection would need a reflector per body.
+
+### Mountain's crags and far peaks (the polish goal, 26 October 2026)
+
+landforms.js crags with `jag` (Mountain: 0.55): spur = ridged(x/(0.25 scale))^2
+(scale 300 m); the terrace input bent by jag x (spur - 0.35), faded in over
+massif 0.05-0.5; faces roughened by jag x (0.2 (ridged(x/23) - 0.4) + 0.08
+(ridged(x/9) - 0.4)) x 70 m. Rock: threshold t = 0.34 + 0.18 (n19 - 0.5) x 2 +
+0.1 (n61 - 0.5) x 2 on the gradient, rock over t..t+0.2; outcrops where
+0.6 n19 + 0.4 n61 passes 0.62-0.74 on slopes over 0.12-0.3; scree on slopes
+0.16-0.26 below t. Rock paint (ground.js): vertical joints every 5.5 m along
+the contour, -20% in a crack, +8% on its lit edge, weighted by steepness
+squared; strata weight 0.45. Far peaks (landscape-edge.js, `ringPeaks`): a =
+ridged(x/1500)^1.6 x 0.85 + ridged(x/560)^2 x 0.3 (0.4 + a) + ridged(x/240) x
+0.09 a, capped at 1.25, x ringLift 950 m; ring vertices doubled. All PLACED by
+eye. Real alpine crags (Banff's Mount Rundle, the Canadian Rockies' thrust
+sheets) show cliff bands broken by gullies and buttresses rather than even
+terraces; granite crags break along vertical joint sets -- general
+geomorphology, not a cited figure.
+
+### Shared links fairways, the polish goal's rounds (26 October 2026)
+
+course.js `shareFairways`, Links: gap 85 m, parallel within cos 0.9, a join
+only over runs of at least 140 m, gaps up to 70 m closed, the shared reach
+averaged over 60 m, tapered to the fairway's own width over 170 m and over
+0.6 of that at the stretch's ends; the stretch from 10 m past the mown start
+to 25 m short of the green (the neighbour's 5 and 20). `keepStrips`: where
+fairways come within 14 m without touching, each edge pulls back by half the
+shortfall, eased over 57 m, never into a joined stretch, never more than a
+third of the fairway's width. Holes joined on five 18-hole seeds: 3, 0, 3, 2,
+4. All PLACED by eye from the surface maps; no new source.
+
+### The far woods (the polish goal, 26 October 2026)
+
+far-woods.js: bands from the property line to 12,800 m; spacing max(13 m,
+0.06 x (d + 150 m)); each band max(4 spacings, d/4) deep; jitter 0.8 spacing;
+kept by the painting's patch noise (380 m cells) against cover +/- 0.12,
+below the treeline +/- 20 m, above 0.5 m (water), slope under 0.9 (near) or
+0.65 (groves) measured over 0.3 spacing. Near (under 420 m): clusters of
+three 20-face lumps, radius 0.55 x farForest.size x (0.75-1.25), or two-tier
+7-sided spruces; groves: a 20-face dome (r = 0.55 spacing x size, 0.42 tall)
+or a 6-sided cone (0.55 r wide, 2 r tall) on conifer landscapes, sunk by
+r x min(0.6, slope). Twelve angular sectors per mesh; renderOrder -1. Counts:
+Autumn 16,973, PNW 15,859, Midwest 10,423, Mountain 7,326, Desert 4,014,
+Island none. Building them: 36-95 ms a course here. The painted forest under
+them starts at the property line, fading in over 40 m (was the ground's edge
+and 70 m). All PLACED by eye.
+
+### The far landscape, seated on the drawn ground (the far-landscape goal, 26 October 2026)
+
+Measured first (scratch `bench/shots/overhaul/_drawn.mjs`, seed `overhaul`,
+nine holes): a far crown's centre stood above the ground as DRAWN (the ring's
+triangles) by more than 1 m on 2,019 of 10,426 sites on Lakeshore (worst
+108 m), 987 of 3,944 on Desert (153 m), 445 of 2,394 on Links (31 m), 294 of
+6,621 on Mountain (135 m): the sites stood on `ringRelief` sampled at the
+crown, while the ring is drawn from vertices up to hundreds of metres apart.
+`drawnGround` reproduces the ring's vertices within 0.5 m (nudged 0.01%
+inward of each; exactly, 0.00 m, against a brute-force search of every
+triangle at 4,000 points per course, once a fallback searches the
+neighbouring bands whole -- 10 of 4,000 points had fallen in the band beside
+the one their distance named).
+
+The seat (far-woods.js `seatOn`): samples on rings at 0, 35%, 70% and 100% of
+the base (1, 8, 14-48 and 22-96 points; the rim's spacing max(0.5 m,
+2 x max(0.3 m, 0.02 r) / (1.5 x slope + 0.1)), so a valley line crossing the
+rim between samples dips less than the tolerance) plus every drawn vertex
+under the base; a grove's plane by least squares, its slope capped at 0.58
+(30 degrees); the base let down to the lowest point under it, plus 2% of the
+radius. A grove let down by more than 35% of its height retries at 67% of
+its size, twice. Base widths and heights measured from the built shapes:
+cluster 1.01 x 1.01 r (three lumps cut on one floor at -0.295 of a unit),
+spruce 0.8 x 3.38 r, dome 0.86 x 0.5 r (its overhang reaches 1.08 r), cone
+0.55 x 2 r. Water: the sea below level + 0.4 m, a lake or a creek
+(`lakeOwner`, `streams.at`) inside the course's ground; the surface
+classifier at each crown's centre only.
+
+Bench `farSeated` (tolerance max(0.3 m, 0.02 r), PLACED as under a pixel):
+full tier 0 floating and 0 in water of 920,167 crowns (both tier forms);
+the gap's 95th percentile -0.13 m. Placing them on an 18-hole course, seed
+`overhaul`: Autumn 0.38 s (start 0.13), Giant Redwood 0.32 (0.12), PNW 0.30
+(0.12), Lakeshore 0.28 (0.09), Mountain 0.21 (0.10), Desert 0.17 (0.05).
+The surface classifier at every sample took Autumn to 4.2 s; asking lakes
+and creeks directly, 0.93 s; seating each crown only as its tier draws it,
+0.65 s; the rim's spacing by slope, 0.41 s.
+
+### The far ring's ground and Desert's mesas (the far-landscape goal, 26 October 2026)
+
+The ring's ground (ground.js): past the course's ground grid, the
+landscape's floor ground type painted everywhere (only Desert has one:
+hardpan), and `ringFace` on faces whose normal's y is under 0.8, fully under
+0.62 (rock on every landscape but Desert's hardpan banks; none on Links,
+Lakeshore and Island). Patterns fade to the type's average colour as a
+texel's footprint grows from 0.3 to 2.5 m (floor to 70%, faces to 50%). The
+painted far forest stops under the sea: masked out below 0.3 m above sea
+level, in fully from 1.2 m.
+
+Desert's mesas (landscape-edge.js `mesas`), heights as shares of `ringLift`
+(240 m): a field fbm(x/4000, z/4000, 3 octaves), its position warped by
++/-350 m (a 1.4 km fbm); tier 1 where the field crosses 0.55 (+/-0.018),
+0.62 of the lift (149 m); tier 2 at 0.62 (+/-0.014), 0.36 (86 m); a talus
+apron below each, 0.12 and 0.06 (29 and 14 m) over the field's last 0.08 to
+0.02 before the tier; a floor of fbm(x/900) x 0.06 (14 m). Faded in over the
+ring's first 900 m as every ring relief is. Rings: 16% wider each, at most
+220 m (were 28% and unbounded), and 2.5 times the vertices round each (peaks
+take 2): 50,664 vertices and 96,801 triangles on seed `overhaul`. Round 1's
+field (2.4 km, four octaves, 6 m cliffs, three tiers) broke into jagged
+fragments a few rows wide (`bench/shots/overhaul/ring/desert-mesa1.png`,
+CPU hillshade). All PLACED by eye against Monument Valley's buttes (about
+300 m) and the Colorado Plateau's stepped mesas.
+
+Round 3: Island's islets (`ringIslands: 5`): centres 2.5-6 km past the
+ground's edge at a seeded bearing, radius 260-780 m, a beach skirt 3.5 m
+high out to 1.25 radii and a hill 24-70 m high inside 0.95 radii, the
+outline varied by a 260 m noise (+/-12.5%). Haunted Hollow's near crowns:
+three bare spikes (0.07 of the radius wide, 1, 0.78 and 0.66 of the height,
+leaning 0.04-0.08 rad), each with two broken limbs, base 0.54 wide, 1.6
+tall. Autumn: `farForest.evergreen` 0.2 (spruces and cones in its fourth
+colour), `ringLift` 170 m (was 70). Round 4: the near-to-grove switch at
+300-540 m by each site's hash (was a line at 420 m); a near crown's radius
+max(r0, 0.4 x its band's spacing) x its size. The treeline, water and slope
+tests read the drawn ground (the fine relief past the ground's edge was a
+third of the far woods' time). The seat's outer rings (70%, 90%, rim)
+refined where two neighbours differ by more than the tolerance, up to six
+halvings (a Desert crown hung 1.6 m over a bank its slope estimate never
+saw; a Mountain crag's gully fell 15 m in 3 m). Full tier: 0 floating, 0 in
+water.
+
+### Trees in still water and waves at the edge (the far-landscape goal, 26 October 2026)
+
+water-mirror.js, round 1: a tree is mirrored when it stands within 30 m
+(60 m from round 3) plus its own height of a still pond's rim (the pond's bounding radius from
+its centre) and its foot is at least 0.2 m above the pond's level. Its twin:
+a conifer (by kind: pine, spruce, cedar, fir, hemlock, redwood, cypress,
+larch) as the far woods' spruce shape, 83% of the tree's height from a
+sixth of the way up; anything else as the cluster, its top at the tree's
+top, 1.02 x the crown radius tall (at most 70% of the tree). Trunks were
+2.5% of the height wide, then 1.4% (round 2), 40% of it tall (round 3); they
+read as posts and went in round 5. Round 6: under each crown a dark column
+from the tree's foot to the crown (plus 0.3 of its radius into it), 7-sided,
+0.7 of the crown radius (a spire's: 0.18 x the height x 0.7), at 0.32 of the
+crown's colour -- the shade under the woods, so a reflected crown joins its
+bank. Coloured from the far forest's colours, unlit; turned over about the pond's
+level (y -> 2 x level - y). The picture: half the drawing buffer each way,
+cleared to transparent, drawn only while a still pond's rim is within 700 m
+of the camera. The pond reads it at its fragment, offset by 0.012 x the
+rippled normal, lit by the water's own received light x 0.8 (0.55 from
+round 2), mixed in by min(0.9, 1.6 x Schlick + 0.15) (round 2: min(0.92,
+2.2 x Schlick + 0.35); round 4: min(0.92, 2.8 x Schlick)). Read as four taps
+1.5 of its pixels apart, averaged (round 3), 6 apart (round 5). Round 7:
+the shade columns half toward #1e2418, 0.7 as wide at the foot. Round 8:
+the bank, from the waterline 1.5 m out and 0.5 m up, the rough's colour x
+0.45 a third toward the shade tone. Round 9: crowns 1.35 x the crown radius,
+to 75% of the tree (was 70%). Round 10: by the wind, w = min(1, wind / 15
+mph): the ripple offset 0.006 + 0.018 w of the screen, the blur's taps
+3 + 6 w pixels apart. All PLACED.
+High and Ultra only.
+
+Shore foam, round 1 (renderer.js FOAM_FRAG): two wavelet trains along the
+outline, about 7.3 m and 11.9 m long (rounded so a whole number fit the
+shore), travelling at 0.11 and 0.07 wavelengths a second of the foam's
+clock (opposite ways); each wavelet's reach 0.25-0.75 (first) or 0.2-0.65
+(second) of the 1.4 m strip by a hash of its index, plus up to 0.08 of slow
+noise; a lip 0.07 deep and 0.1 behind the front, a wash at 45% from the
+bank to half the front. Round 4: a wet line always at the bank, from 0.015
+to 0.03-0.12 of the strip (a slow noise along the shore, 0.43 a metre, 0.17
+of the clock), at 0.32-0.5 strength by the lace. Round 8: the wind's shore --
+per point, 0.5 + 0.5 x (the bank's outward normal . the wind's heading) x
+min(1, wind / 12 mph); the wavelets' reach x 0.45-1.25 and the lip's
+strength x 0.5-1 by it. PLACED.
+
+Still water's crests (renderer.js WATER_EDGES `still`), round 2: crests
+running in along the depth lines in the last 0.7 m of depth; round 3: only
+between 0.08 and 0.4 m deep, gated by a broad drifting noise, a lift of
+about 0.1-0.12 of white. PLACED.
+
+Standing ripples (WATER_EDGES `river`, `creek`, round 5): water over a bar
+or stone throws a V of waves that stays put while the flow passes through.
+River: crests where sin((0.9 x downstream + 0.6 x |across|) x 2 pi) is above
+0.55-0.95, gated by noise at 0.05 x 0.2 of the channel's metres (patches of
+about 20 m by 5), 0.1-0.3 strength rising toward the banks, laced. Creek:
+1.7 and 1.3, noise at 0.08 x 0.3, 0.38 strength. Fixed to the bed (no
+drift). Round 6: river 0.5 and 0.35 (crests 2 m apart), gate 0.42-0.68;
+creek 0.8 and 0.6 (1.25 m apart), gate 0.35-0.6, 0.55 strength -- at 0.6 m
+the crests were thinner than a pixel from the bank. Round 9: a wet line in
+the outer 7% of a channel's half-width (0.93-1 of `shore`), 0.35 strong.
+Round 10: a channel's water faded in over its first 3 m and out over its
+last. Round 11: the sea's swash cycle 9 s of its clock (30 s real) and the
+whole run-up; a lake drawn as sea (Lakeshore, `lakeWaves`) 5 s and 0.6 of
+it -- wind waves on a lake are shorter and smaller than ocean swell. Round
+12: breakers gated by smoothstep(0.35, 0.65) of noise at 0.012 a metre,
+drifting 0.04 and 0.03 of the clock. Round 13: a creek's crests 0.3-0.85 of
+the wave, 0.8 and 0.35 a metre, gate 0.3-0.55, 0.7 strong. Round 14: wet
+sand -- below 0.05 m over the sea fully, fading out by 0.45 m, the colour x
+(0.74, 0.76, 0.8) at 0.85, where red - green > -0.06. Round 16: a pond's
+wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). Round 18: cat's paws --
+smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting 0.8 m a clock
+second downwind, x (0.35 + 0.65 min(1, wind / 12 mph)); the ripple slope
++0.45 x it, the mirror x (1 - 0.6 x it). PLACED.
+
+Mowing that shades with the view (ground.js; the diamonds' round 7, the
+tee's round 5): cut grass reads light where it is laid away from the eye
+and dark toward it, so a stripe's tone is its pass's light or dark times
+the cosine between the pass's line of travel and the view. Greens: two
+passes at right angles, each x 0.33, so the pair reaches the old range;
+tees: one set of passes along the line of play, x 1.3 clamped to 1. PLACED.
+
+Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
+cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second
+value noise at 150 m cells -- about two in five, gathered. PLACED.
+
+### Links shared fairways, the far-landscape goal (26 October 2026)
+
+Survey (scratch `_sidebyside.mjs`): pairs of holes within 26 degrees of
+parallel for 60 m or more, on `overhaul`, LINKS-A..D and S5 (18 holes): 35
+pairs, 4 joined, rough between them 25-113 m. Coverage of each pair's join
+over each hole's shareable stretch (mown start + 10 m to 25 m short of the
+green): crossbars 60-63% on both holes (`overhaul` 9-15, LINKS-B 8-9 and
+4-5), double fairways 66-100% (LINKS-C 9-10 72/66, S5 9-15 81/100, 10-11
+76/97, LINKS-D 1-2 62/85, 3-4 69/103). Taken: mean of the two at least 0.66
+(PLACED), joins of 100 m or more (was 140), the taper at the fairway's ends
+36 m (was ease x 0.6 = 102 m, which left 27 m of a 230 m stretch at full
+width and pairs 5-16 m apart).
+
+Seam bunkers (course.js `seamBunkers`, generator 51): on the Old Course
+the shared fairways carry pot bunkers between the two holes' lines (the
+Coffins on the 13th, the Principal's Nose on the 16th). Here: a join of 60
+m or more gets one bunker, two from 90 m (`seam: 2`), radii 1.8-2.6 m
+(3.6-5.2 m across; real pot bunkers are about 2-5 m), 38% of the way from
+the lower-numbered hole's centre line to its partner's, in the middle half
+of the join, at least 45 m apart, 6 m clear of a pond, 4 m of another
+bunker, 20 m of a tee. PLACED: every number. The Old Course's seam bunkers,
+their names and the 2-5 m size of a pot bunker are from memory -- no source
+was read for them; someone should look them up before they are relied on.
+
+Routing (routing.js `shifts`): a hole routed back beside another also
+offered its tee a further distance past the level of the last green. Joined
+holes over ten links courses (`overhaul`, LINKS-A..D, S1..S5): none 20; 30
+and 60 m 31; 25 and 50 m 31; 40 m 32; 60 m **38** (every course 2-6). Taken:
+60 m (PLACED).
+
+### The tee's turf (the far-landscape goal, 26 October 2026)
+
+ground.js `teeTurf`: the mean of the biome's fairway and fringe colours,
+15% of the way to its own grey (luminance 0.299/0.587/0.114), on the pad
+and its collar (was the semi-rough's colour). PLACED.

@@ -36,24 +36,79 @@ export {ROLE_OF, ROLES} from './mesh-read.mjs';
 
 // Which models we actually take, and what each stands in for in the game.
 const PICK = {
- conifer: ['tree_pineTallA', 'tree_pineTallB', 'tree_pineTallC', 'tree_pineTallD',
-  'tree_pineRoundA', 'tree_pineRoundC', 'tree_pineRoundE',
-  'tree_pineSmallA', 'tree_pineSmallC', 'tree_pineDefaultA', 'tree_pineDefaultB'],
- broadleaf: ['tree_oak', 'tree_default', 'tree_detailed', 'tree_fat', 'tree_tall',
-  'tree_thin', 'tree_simple', 'tree_small', 'tree_blocks', 'tree_plateau'],
- palm: ['tree_palm', 'tree_palmBend', 'tree_palmShort', 'tree_palmTall'],
- cactus: ['cactus_short', 'cactus_tall', 'Cactus_1', 'Cactus_2', 'Cactus_3', 'Cactus_4', 'Cactus_5'],
- rock: ['rock_largeA', 'rock_largeB', 'rock_largeC', 'rock_largeD', 'rock_largeE', 'rock_largeF',
-  'rock_smallA', 'rock_smallB', 'rock_smallC', 'rock_smallD', 'rock_smallE',
-  'rock_tallA', 'rock_tallB', 'rock_tallC', 'rock_tallD', 'rock_tallE'],
- bush: ['plant_bush', 'plant_bushDetailed', 'plant_bushLarge', 'plant_bushSmall'],
- grass: ['grass', 'grass_large', 'grass_leafs'],
- flower: ['flower_purpleA', 'flower_redA', 'flower_yellowA'],
+ // THE CARTOON OVERHAUL'S CONIFERS (tools/blender/cartoon_conifer.py),
+ // replacing Kenney's stacked-cone conifer family.
+ // THE CARTOON BOULDERS (tools/blender/cartoon_rocks.py), one family per
+ // geology, picked by a biome's `rockStyle`; four each, the generator's
+ // `shape` choosing.
+ boulderround: ['blender:Blender_BoulderRound_1', 'blender:Blender_BoulderRound_2', 'blender:Blender_BoulderRound_3', 'blender:Blender_BoulderRound_4'],
+ boulderangular: ['blender:Blender_BoulderAngular_1', 'blender:Blender_BoulderAngular_2', 'blender:Blender_BoulderAngular_3', 'blender:Blender_BoulderAngular_4'],
+ boulderlayered: ['blender:Blender_BoulderLayered_1', 'blender:Blender_BoulderLayered_2', 'blender:Blender_BoulderLayered_3', 'blender:Blender_BoulderLayered_4'],
+ sprucetree: ['blender:Blender_Spruce_1', 'blender:Blender_Spruce_2', 'blender:Blender_Spruce_3'],
+ pinetree: ['blender:Blender_Pine_1', 'blender:Blender_Pine_2', 'blender:Blender_Pine_3'],
+ cedartree: ['blender:Blender_Cedar_1', 'blender:Blender_Cedar_2', 'blender:Blender_Cedar_3'],
+ // THE CARTOON OVERHAUL'S BROADLEAVES (tools/blender/cartoon_broadleaf.py),
+ // replacing Kenney's broadleaf family -- the cube- and plateau-crowned trees
+ // -- for every landscape that plants oak, maple, aspen or alder.
+ oaktree: ['blender:Blender_Oak_1', 'blender:Blender_Oak_2', 'blender:Blender_Oak_3'],
+ mapletree: ['blender:Blender_Maple_1', 'blender:Blender_Maple_2', 'blender:Blender_Maple_3'],
+ aspentree: ['blender:Blender_Aspen_1', 'blender:Blender_Aspen_2', 'blender:Blender_Aspen_3'],
+ aldertree: ['blender:Blender_Alder_1', 'blender:Blender_Alder_2'],
+ // THE FAR TWINS (cartoon.py `far_twin`): each painted tree again at a
+ // twelfth of its triangles, never planted -- src/mesh-assets.js `farParts`
+ // hands one out where a crown is small on screen (instance-cull.js).
+ fartwin: ['Spruce_1', 'Spruce_2', 'Spruce_3', 'Pine_1', 'Pine_2', 'Pine_3', 'Cedar_1', 'Cedar_2', 'Cedar_3',
+  'Oak_1', 'Oak_2', 'Oak_3', 'Maple_1', 'Maple_2', 'Maple_3', 'Aspen_1', 'Aspen_2', 'Aspen_3', 'Alder_1', 'Alder_2',
+  'Palo_1', 'Palo_2', 'Palo_3', 'Mesquite_1', 'Mesquite_2', 'Mesquite_3',
+  'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
+  'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
+  'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
+  'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
+  .map(n => `blender:Blender_${n}_Far`),
+ // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
+ // palms and the procedural hala.
+ palm: ['blender:Blender_Palm_1', 'blender:Blender_Palm_2', 'blender:Blender_Palm_3', 'blender:Blender_Palm_4'],
+ halatree: ['blender:Blender_Hala_1', 'blender:Blender_Hala_2', 'blender:Blender_Hala_3'],
+ // THE CARTOON DESERT (tools/blender/cartoon_desert.py), replacing Kenney's
+ // cacti and dead hardwoods and the procedural ocotillo and agave.
+ palotree: ['blender:Blender_Palo_1', 'blender:Blender_Palo_2', 'blender:Blender_Palo_3'],
+ mesquitetree: ['blender:Blender_Mesquite_1', 'blender:Blender_Mesquite_2', 'blender:Blender_Mesquite_3'],
+ saguaro: ['blender:Blender_Saguaro_1', 'blender:Blender_Saguaro_2', 'blender:Blender_Saguaro_3'],
+ cholla: ['blender:Blender_Cholla_1', 'blender:Blender_Cholla_2', 'blender:Blender_PricklyPear_1', 'blender:Blender_Barrel_1'],
+ ocotillo: ['blender:Blender_Ocotillo_1', 'blender:Blender_Ocotillo_2', 'blender:Blender_Ocotillo_3'],
+ agaveplant: ['blender:Blender_Agave_1', 'blender:Blender_Agave_2'],
+ // THE CARTOON LONG GRASS (tools/blender/cartoon_grass.py): decoration
+ // between the holes, one family per grass (vegetation.js addLongGrass).
+ // THE CARTOON BRUSH (tools/blender/cartoon_brush.py): the shrubs the
+ // landscapes lacked, and the understory of the stands.
+ creosotebush: ['blender:Blender_Creosote_1', 'blender:Blender_Creosote_2'],
+ brittlebush: ['blender:Blender_Brittlebush_1', 'blender:Blender_Brittlebush_2'],
+ sagebrush: ['blender:Blender_Sagebrush_1', 'blender:Blender_Sagebrush_2'],
+ brackenfern: ['blender:Blender_Bracken_1', 'blender:Blender_Bracken_2'],
+ huckleberrybush: ['blender:Blender_Huckleberry_1', 'blender:Blender_Huckleberry_2'],
+ grassfescue: ['blender:Blender_Fescue_1', 'blender:Blender_Fescue_2', 'blender:Blender_Fescue_3'],
+ grassmarram: ['blender:Blender_Marram_1', 'blender:Blender_Marram_2'],
+ grassbluestem: ['blender:Blender_Bluestem_1', 'blender:Blender_Bluestem_2'],
+ grassalpine: ['blender:Blender_Alpine_1', 'blender:Blender_Alpine_2'],
+ grassbunch: ['blender:Blender_Bunch_1', 'blender:Blender_Bunch_2'],
+ grasssedge: ['blender:Blender_Sedge_1', 'blender:Blender_Sedge_2'],
+ grasstussock: ['blender:Blender_Tussock_1', 'blender:Blender_Tussock_2'],
+ grassplume: ['blender:Blender_Plume_1', 'blender:Blender_Plume_2'],
+ // Kenney's `rock`, `grass` and `flower` families and the grown `litter` are
+ // no longer taken (the cartoon overhaul): nothing drew them once the
+ // boulders, the grass and the ground cover were remade.
+ // THE CARTOON OVERHAUL'S SHRUBS (tools/blender/cartoon_shrubs.py), replacing
+ // the one Kenney bush family six species shared.
+ shrubbush: ['blender:Blender_Shrub_1', 'blender:Blender_Shrub_2', 'blender:Blender_Shrub_3'],
+ gorsebush: ['blender:Blender_Gorse_1', 'blender:Blender_Gorse_2', 'blender:Blender_Gorse_3'],
+ heatherbush: ['blender:Blender_Heather_1', 'blender:Blender_Heather_2', 'blender:Blender_Heather_3'],
+ naupakabush: ['blender:Blender_Naupaka_1', 'blender:Blender_Naupaka_2', 'blender:Blender_Naupaka_3'],
+ fernbush: ['blender:Blender_Fern_1', 'blender:Blender_Fern_2', 'blender:Blender_Fern_3'],
+ bramblebush: ['blender:Blender_Bramble_1', 'blender:Blender_Bramble_2', 'blender:Blender_Bramble_3'],
  // Quaternius (OBJ). Taken only where the Kenney kit has no counterpart: its
  // models carry several times the vertices, so duplicating coverage we already
  // have costs about a megabyte of packed geometry for no visible gain. The
  // desert is the gap -- Kenney has two cacti and nothing arid.
- arid: ['CommonTree_Dead_1', 'CommonTree_Dead_3', 'CommonTree_Dead_5'],
  // Houses. Unlike the nature kits these carry a texture atlas rather than a
  // colour per material, so they keep their UVs and ship the atlas with them --
  // role tinting alone would flatten a whole house to one colour.
@@ -66,10 +121,11 @@ const PICK = {
  // to fill it are no longer taken -- a nurse log with moss only along its
  // upper flank, a stump with root buttresses and a springboard notch, and a
  // boulder that is a boulder rather than a sphere, all beat what was there.
- log: ['grown:NurseLog_1', 'grown:NurseLog_2', 'grown:NurseLog_3', 'grown:NurseLog_4', 'grown:FallenLog_1', 'grown:FallenLog_2'],
- stump: ['grown:Stump_1', 'grown:Stump_2', 'grown:Stump_3', 'grown:Stump_Bare_1', 'grown:Stump_Bare_2', 'grown:RootWad_1'],
- mossrock: ['grown:Boulder_1', 'grown:Boulder_2', 'grown:Boulder_3', 'grown:MossMound_1', 'grown:MossMound_2', 'grown:MossMound_3'],
- litter: ['grown:Litter_1', 'grown:Litter_2', 'grown:Litter_3'],
+ // The cartoon overhaul's deadfall (tools/blender/cartoon_deadfall.py) replaces
+ // the grown logs, stumps and mossy stones: one hand with the rest.
+ log: ['blender:Blender_Log_1', 'blender:Blender_Log_2', 'blender:Blender_Log_3'],
+ stump: ['blender:Blender_Stump_1', 'blender:Blender_Stump_2', 'blender:Blender_Stump_3'],
+ mossrock: ['blender:Blender_MossRock_1', 'blender:Blender_MossRock_2', 'blender:Blender_MossRock_3'],
  // The MegaKit fern is no longer taken: `swordfern` above is a grown
  // shuttlecock of once-pinnate fronds, which is what the plant actually is.
  // THE REDWOOD GROVE IS GROWN, NOT IMPORTED. Everything below comes out of
@@ -79,44 +135,58 @@ const PICK = {
  // The `_Far` twins tools/grow.mjs also bakes are NOT taken. Swapping by
  // distance was measured to save half a millisecond a frame and to cost the
  // look entirely -- see the note at the top of src/vegetation.js.
- redwood: ['grown:Redwood_Giant_1', 'grown:Redwood_Giant_2', 'grown:Redwood_Giant_3', 'grown:Redwood_Giant_4',
-  'grown:Redwood_Mature_1', 'grown:Redwood_Mature_2', 'grown:Redwood_Mature_3', 'grown:Redwood_Mature_4'],
- dougfir: ['grown:DouglasFir_1', 'grown:DouglasFir_2', 'grown:DouglasFir_3', 'grown:DouglasFir_4'],
- hemlock: ['grown:Hemlock_1', 'grown:Hemlock_2', 'grown:Hemlock_3'],
- redcedar: ['grown:RedCedar_1', 'grown:RedCedar_2', 'grown:RedCedar_3'],
- tanoak: ['grown:Tanoak_1', 'grown:Tanoak_2', 'grown:Tanoak_3'],
- swordfern: ['grown:SwordFern_1', 'grown:SwordFern_2', 'grown:SwordFern_3', 'grown:SwordFern_4', 'grown:SwordFern_5', 'grown:SwordFern_6'],
- salal: ['grown:Salal_1', 'grown:Salal_2', 'grown:Salal_3', 'grown:Salal_4'],
- sorrel: ['grown:Sorrel_1', 'grown:Sorrel_2', 'grown:Sorrel_3', 'grown:Sorrel_4'],
- seedling: ['grown:Seedling_1', 'grown:Seedling_2', 'grown:Seedling_3', 'grown:Seedling_4'],
- // HAUNTED HOLLOW. Three bare silhouettes, chosen in `npm run assets` rather
- // than by file name: the MegaKit's gnarled dead oaks (heavy -- about 7.5k
- // vertices each -- and worth it, they are the biome), the tall pale snags
- // from the Ultimate Stylized pack, and the dead willows' forked bare limbs.
- // Both Quaternius packs have a `DeadTree_N`, and the bare name is the
- // model's key here, so the two sets must not share a number.
- // TwistedTree was looked at and passed over: its foliage is a textured card
- // sheet, which this ingest drops (see TEXTURED_FAMILIES).
- gnarled: ['megakit:DeadTree_1', 'megakit:DeadTree_2', 'megakit:DeadTree_4'],
- snag: ['ultimate-stylized:DeadTree_3', 'ultimate-stylized:DeadTree_6', 'ultimate-stylized:DeadTree_8'],
- deadwillow: ['Willow_Dead_1', 'Willow_Dead_2', 'Willow_Dead_4'],
+ // THE CARTOON REDWOOD GROVE (tools/blender/cartoon_redwood.py, the cartoon
+ // overhaul) replaces the grown grove: one hand with every other landscape,
+ // and 1,000-1,900 faces a tree where the grown ones were 13,000-53,000.
+ redwood: ['blender:Blender_Redwood_1', 'blender:Blender_Redwood_2', 'blender:Blender_Redwood_3'],
+ dougfir: ['blender:Blender_Fir_1', 'blender:Blender_Fir_2'],
+ hemlock: ['blender:Blender_Hemlock_1', 'blender:Blender_Hemlock_2'],
+ redcedar: ['blender:Blender_RedCedar_1', 'blender:Blender_RedCedar_2'],
+ tanoak: ['blender:Blender_Tanoak_1', 'blender:Blender_Tanoak_2'],
+ swordfern: ['blender:Blender_SwordFern_1', 'blender:Blender_SwordFern_2'],
+ salal: ['blender:Blender_Salal_1', 'blender:Blender_Salal_2'],
+ sorrel: ['blender:Blender_Sorrel_1'],
+ seedling: ['blender:Blender_Seedling_1', 'blender:Blender_Seedling_2'],
+ // HAUNTED HOLLOW, remade in one hand (tools/blender/cartoon_haunted.py, the
+ // cartoon overhaul): until then three packs -- the MegaKit's gnarled dead
+ // oaks, the Ultimate Stylized snags, Kenney's dead willows and dead
+ // hardwoods (`arid`, which also stood in for palo verde and mesquite).
+ gnarled: ['blender:Blender_Gnarled_1', 'blender:Blender_Gnarled_2', 'blender:Blender_Gnarled_3'],
+ snag: ['blender:Blender_Snag_1', 'blender:Blender_Snag_2', 'blender:Blender_Snag_3'],
+ deadwillow: ['blender:Blender_DeadWillow_1', 'blender:Blender_DeadWillow_2'],
+ deadoaktree: ['blender:Blender_DeadOak_1', 'blender:Blender_DeadOak_2'],
  // The forest floor's Halloween: pumpkins and toadstools among the deadfall.
- pumpkin: ['crop_pumpkin'],
- toadstool: ['mushroom_redGroup', 'mushroom_redTall', 'mushroom_tanGroup'],
+ // THE CARTOON PROPS (tools/blender/cartoon_props.py), replacing Kenney's.
+ pumpkin: ['blender:Blender_Pumpkin_1', 'blender:Blender_Pumpkin_2', 'blender:Blender_Pumpkin_3'],
+ toadstool: ['blender:Blender_Toadstool_RedGroup', 'blender:Blender_Toadstool_RedTall', 'blender:Blender_Toadstool_TanGroup'],
  // LAKESHORE DUNES, BUILT IN BLENDER. Every name starting `Blender_` comes
  // out of a script in tools/blender/ (here tools/blender/lakeshore.py) and
  // lives in a `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how
  // to remake or extend them. Material names are already roles, so no override.
- dunegrass: ['blender:Blender_DuneGrass_1', 'blender:Blender_DuneGrass_2', 'blender:Blender_DuneGrass_3'],
- cottonwood: ['blender:Blender_Cottonwood_1', 'blender:Blender_Cottonwood_2', 'blender:Blender_Cottonwood_3'],
- blackoak: ['blender:Blender_BlackOak_1', 'blender:Blender_BlackOak_2', 'blender:Blender_BlackOak_3'],
- sugarmaple: ['blender:Blender_SugarMaple_1', 'blender:Blender_SugarMaple_2'],
- juniper: ['blender:Blender_Juniper_1', 'blender:Blender_Juniper_2'],
- juniperbush: ['blender:Blender_Juniper_3'],
- driftwood: ['blender:Blender_Driftwood_1', 'blender:Blender_Driftwood_2', 'blender:Blender_Driftwood_3'],
- house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
-  'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
-  'building-type-q', 'building-type-s'],
+ // Since the cartoon overhaul: tools/blender/cartoon_lakeshore.py's remakes
+ // (`Blender_Lake*`), in the overhaul's hand; lakeshore.py's stay for main.
+ dunegrass: ['blender:Blender_LakeDuneGrass_1', 'blender:Blender_LakeDuneGrass_2', 'blender:Blender_LakeDuneGrass_3'],
+ cottonwood: ['blender:Blender_LakeCottonwood_1', 'blender:Blender_LakeCottonwood_2', 'blender:Blender_LakeCottonwood_3'],
+ blackoak: ['blender:Blender_LakeBlackOak_1', 'blender:Blender_LakeBlackOak_2', 'blender:Blender_LakeBlackOak_3'],
+ sugarmaple: ['blender:Blender_LakeSugarMaple_1', 'blender:Blender_LakeSugarMaple_2'],
+ juniper: ['blender:Blender_LakeJuniper_1', 'blender:Blender_LakeJuniper_2'],
+ juniperbush: ['blender:Blender_LakeJuniper_3'],
+ driftwood: ['blender:Blender_LakeDriftwood_1', 'blender:Blender_LakeDriftwood_2', 'blender:Blender_LakeDriftwood_3'],
+ // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
+ // building kit: two of each form homes.js chooses, picked by name.
+ house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
+  'blender:Blender_House_Hip_2', 'blender:Blender_House_Saltbox_1', 'blender:Blender_House_Saltbox_2',
+  'blender:Blender_House_Lshape_1', 'blender:Blender_House_Lshape_2'],
+ // THE CARTOON COURSE FURNITURE (tools/blender/cartoon_course.py): what
+ // stands at every tee (renderer.js addHoleDetails), never planted.
+ // THE CARTOON GARDENS (tools/blender/cartoon_garden.py): a fairway home's
+ // picket fence and garden shrubs (homes.js), never planted.
+ gardenfence: ['blender:Blender_Fence_Picket'],
+ gardenshrub: ['blender:Blender_GardenShrub_Dome', 'blender:Blender_GardenShrub_Flowering', 'blender:Blender_GardenShrub_Cone'],
+ // THE CARTOON WILDFLOWERS (tools/blender/cartoon_flowers.py): the rough's
+ // flowers (vegetation.js addGroundCover), coloured per landscape.
+ wildflower: ['blender:Blender_Flower_Daisy', 'blender:Blender_Flower_Aster', 'blender:Blender_Flower_Cup'],
+ coursefurniture: ['blender:Blender_TeeMarker_1', 'blender:Blender_TeeSign_1', 'blender:Blender_Bench_1', 'blender:Blender_BallWasher_1'],
 };
 
 // Families that use only part of a model. A crown is foliage only, so the
@@ -225,6 +295,16 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    const index = new Uint16Array(g.index);
    const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
+   // THE CARTOON PAINT (tools/blender/cartoon.py), four bytes a vertex: RGB a
+   // halved multiplier on the role's colour, alpha the wind flex. Only from
+   // models built in Blender -- a pack model with colours of its own would
+   // otherwise start carrying them, and every other model's bytes must stay
+   // as they were.
+   if (hit.pack.startsWith('blender-') && g.color?.length === count * 4) {
+    const paint = new Uint8Array(count * 4);
+    for (let i = 0; i < paint.length; i++) paint[i] = Math.max(0, Math.min(255, Math.round(g.color[i] * 255)));
+    part.paintAt = push(paint);
+   }
    if (TEXTURED_FAMILIES.has(family) && g.uv && g.uv.length === count * 2) {
    // A TILING UV DOES NOT FIT IN 0..1, which is what this used to assume.
    // House UVs are atlas coordinates and never leave the unit square, so
@@ -254,8 +334,11 @@ for (const [family, entries] of Object.entries(PICK)) {
 // ships three recoloured variations alongside the default for exactly that
 // reason, and carrying all four is what stops a street being one colour.
 // 12 KB each.
+// Only while a textured family still draws a pack model: since the cartoon
+// overhaul's houses (painted, in Blender) nothing reads them.
 const atlases = [];
-for (const pack of readdirSync(VENDOR))
+const textured = [...TEXTURED_FAMILIES].some(f => (PICK[f] || []).some(n => !n.startsWith('blender:')));
+if (textured) for (const pack of readdirSync(VENDOR))
  for (const file of ['colormap.png', 'variation-a.png', 'variation-b.png', 'variation-c.png']) {
   const candidate = join(VENDOR, pack, file);
   if (existsSync(candidate)) atlases.push(readFileSync(candidate).toString('base64'));

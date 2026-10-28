@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {LAUNCH, launchCorridors, blocksLaunch, fairwayAim} from '../src/course.js';
 import {trunkRadius} from '../src/physics.js';
 import {world} from './worlds.mjs';
+import {allows} from '../src/grounds.js';
 
 // THE SHOT A HOLE ASKS FOR. A par three is played to the green; anything longer
 // gets a drive. Firing a fixed 210 m from every tee measured trees BEHIND THE
@@ -104,11 +105,14 @@ test('the corridor rejects candidates without thinning the forest', () => {
   const {trees: perHole, holes} = w.settings;
   const target = Math.round(perHole * holes * w.bio.treeDensity);
   const floor = SEA_LIMITED[biome];
+  // The open scatter: the target is its count. A stand (stands.js) is planted
+  // on top, from a grid, with no target of its own.
+  const open = w.trees.filter(t => !t.stand);
   if (floor === undefined)
-   assert.equal(w.trees.length, target, `${biome} placed ${w.trees.length} of ${target}`);
+   assert.equal(open.length, target, `${biome} placed ${open.length} of ${target}`);
   else
-   assert.ok(w.trees.length >= floor,
-    `${biome} placed ${w.trees.length}, below its ${floor} floor -- the corridor is now costing real trees`);
+   assert.ok(open.length >= floor,
+    `${biome} placed ${open.length}, below its ${floor} floor -- the corridor is now costing real trees`);
  }
 });
 
@@ -135,17 +139,20 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
    let n = 0, rough = 0;
    for (let i = 0; i < 30000; i++) {
     const x = (rnd() - .5) * w.halfX * 2, z = (rnd() - .5) * w.halfZ * 2;
-    n++; if (w.surface(x, z) === 'rough') rough++;
+    n++; if (allows(w.surface(x, z), 'trees')) rough++;
    }
-   const overall = w.trees.length / ((w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4);
+   // The open scatter, as tools/metrics.mjs measures it: a stand stands back
+   // from every tee by design and would make every surround look clear-cut.
+   const open = w.trees.filter(t => !t.stand);
+   const overall = open.length / ((w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4);
    let rr = 0, rn = 0;
    for (const t of tees) for (let i = 0; i < 700; i++) {
     const ang = rnd() * 6.283, r = Math.sqrt(rnd()) * 20;
-    rn++; if (w.surface(t.x + Math.cos(ang) * r, t.z + Math.sin(ang) * r) === 'rough') rr++;
+    rn++; if (allows(w.surface(t.x + Math.cos(ang) * r, t.z + Math.sin(ang) * r), 'trees')) rr++;
    }
    const near = new Set();
-   for (const t of tees) for (let i = 0; i < w.trees.length; i++)
-    if (Math.hypot(w.trees[i].x - t.x, w.trees[i].z - t.z) < 20) near.add(i);
+   for (const t of tees) for (let i = 0; i < open.length; i++)
+    if (Math.hypot(open[i].x - t.x, open[i].z - t.z) < 20) near.add(i);
    return (near.size / (tees.length * Math.PI * 400 / 1e4 * (rr / rn))) / overall;
   });
   const mean = each.reduce((x, y) => x + y, 0) / each.length;

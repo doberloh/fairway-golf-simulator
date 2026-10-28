@@ -1,4 +1,5 @@
 import {greenDistance} from '../src/course.js';
+import {allows} from '../src/grounds.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {generateWorld,generateCourse,DEFAULT_COURSE,random,ovalRadius} from '../src/course.js';
 import {FOOTPRINTS,footprintCurve,footprintIcon} from '../src/footprints.js';
@@ -11,7 +12,7 @@ test('rivers and creeks have real water lies and submerged beds, and protect gre
  for(const stream of w.streams.streams)for(const p of stream.points){if(Math.abs(p.x)>w.halfX||Math.abs(p.z)>w.halfZ)continue;
   wet++;assert.equal(w.surface(p.x,p.z),'water');assert(w.height(p.x,p.z)<p.level+.06);}
  assert(wet>30);for(const h of w.holes){assert.equal(h.surface(h.pin.x,h.pin.z),'green');for(const t of Object.values(h.tees))assert.equal(h.surface(t.x,t.z),'tee');}});
-test('homes occupy dry gentle rough and keep trees out of their footprints',()=>{const w=getWorld();assert(w.homes.length>0);for(const h of w.homes){assert.equal(w.surface(h.x,h.z),'rough');assert(w.trees.every(t=>Math.hypot(t.x-h.x,t.z-h.z)>=Math.max(h.width,h.depth)+5));}assert.equal(generateWorld({homes:false,trees:0,water:0}).homes.length,0);});
+test('homes occupy dry gentle rough and keep trees out of their footprints',()=>{const w=getWorld();assert(w.homes.length>0);for(const h of w.homes){assert(allows(w.surface(h.x,h.z),'trees'),`a house on ${w.surface(h.x,h.z)}`);assert(w.trees.every(t=>Math.hypot(t.x-h.x,t.z-h.z)>=Math.max(h.width,h.depth)+5));}assert.equal(generateWorld({homes:false,trees:0,water:0}).homes.length,0);});
 // A CHARACTERISATION TEST, AND IT SAYS SO. This asserted one seed's worst
 // green surround was under 0.6, and it passed because SHOULDERS measured 0.582.
 // Across eight seeds on these same settings the figures were 0.582, 0.706,

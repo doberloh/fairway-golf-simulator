@@ -13,9 +13,9 @@ const holeOf=home=>world.holes.find(h=>h.hole===home.hole);
 const frame=home=>{const c=Math.cos(home.rotation),s=Math.sin(home.rotation);return (x,z)=>({x:home.x+x*c+z*s,z:home.z-x*s+z*c});};
 // A level, spinless shot from `from` toward `to` (world), launched `height`
 // above the turf. Flat and fast so it crosses a house's width still in the air.
-function fire(hole,from,to,height,options={}){
+function fire(hole,from,to,height,options={},vla=0){
  const a=hole.toLocal(from),b=hole.toLocal(to);
- return simulateShot({origin:{x:a.x,z:a.z},aim:Math.atan2(b.x-a.x,b.z-a.z)*180/Math.PI,hla:0,vla:0,speed:40,spin:0,spinAxis:0,height},hole,options);
+ return simulateShot({origin:{x:a.x,z:a.z},aim:Math.atan2(b.x-a.x,b.z-a.z)*180/Math.PI,hla:0,vla,speed:40,spin:0,spinAxis:0,height},hole,options);
 }
 // Houses on holes that do not run due north: the case the old collider got wrong.
 const turned=world.homes.filter(h=>Math.abs(Math.sin(holeOf(h).rotation))>.3);
@@ -37,7 +37,16 @@ test('a ball passing just outside a house\'s wall does not touch it',()=>{
  for(const home of turned){const at=frame(home),hole=holeOf(home);
   for(const sz of [1,-1]){
    // Parallel to the long wall, 0.6 m outside it, the full length and more.
-   const z=sz*(home.depth/2+.6),r=fire(hole,at(-home.width/2-10,z),at(home.width/2+10,z),2);
+   // Lofted 4 degrees so it is still in the air past the far corner: flat it
+   // landed partway along, and on generator 37's prairie swales the landing
+   // bounce kicked it the 0.6 m into the wall -- the ground deciding the
+   // result, not the collider this tests. And with this house the only one
+   // standing: since houses may stand on prairie (generator 37) the rows are
+   // denser, and eight of nine "hits" were the next house down the street,
+   // which the shot along the wall line simply flew into.
+   const others=world.homes.splice(0,world.homes.length,home);
+   const z=sz*(home.depth/2+.6),r=fire(hole,at(-home.width/2-10,z),at(home.width/2+10,z),2,{},4);
+   world.homes.splice(0,1,...others);
    n++;if(r.homeHits===0)clear++;
   }}
  assert(clear/n>.97,`${n-clear} of ${n} shots past a wall struck it anyway`);

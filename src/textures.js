@@ -15,11 +15,62 @@ import {biomeOf} from './biomes.js';
 //
 // That went unnoticed while the sun was fixed high and bright. A low sun is what
 // exposed it: the ground went to dusk and the grass stayed at noon.
+//
+// THE RAMP IS COLOURED (the cartoon overhaul's lighting, round 1). Painted
+// films shade toward a cool colour, not toward grey: the side of a crown
+// turned from the sun goes blue-violet, the way skylight fills it. three reads
+// only the ramp's red channel, so the chunk is taught to read all three, and
+// each landscape's `light.shade` (biomes.js) leans the two dark steps toward
+// its own hue at unchanged brightness. A grey ramp draws exactly as before.
+T.ShaderChunk.gradientmap_pars_fragment=T.ShaderChunk.gradientmap_pars_fragment.replace('vec3( texture2D( gradientMap, coord ).r )','texture2D( gradientMap, coord ).rgb');
+// THE GRADE (the cartoon overhaul's lighting, round 1). ACES, the filmic curve
+// the game has always used, greys strong colour as it compresses it -- the
+// copper of an autumn crown came out tan. The renderer now asks for three's
+// custom tone mapping, which is ACES and then the colour given back a little
+// (`GRADE`, PLACED by eye). In the one chunk every material and the bloom's
+// composite include, so it costs no pass of its own.
+export const GRADE=1.12;
+T.ShaderChunk.tonemapping_pars_fragment=T.ShaderChunk.tonemapping_pars_fragment.replace('vec3 CustomToneMapping( vec3 color ) { return color; }',
+ `vec3 CustomToneMapping( vec3 color ) { color = ACESFilmicToneMapping( color ); float grey = dot( color, vec3( .2126, .7152, .0722 ) ); return max( mix( vec3( grey ), color, ${GRADE.toFixed(3)} ), 0. ); }`);
+// Round 2: eight steps where there were four, falling faster through the lit
+// half. With four, a slope turned 30 degrees from a noon sun drew 8% darker
+// than the flat beside it and the desert's dunes had no shape at all; now it
+// is about 15%. The darkest step keeps a floor (a course you cannot read is a
+// bug, not a mood).
+const RAMP=[70,84,100,122,150,184,218,250],LEAN=[.9,.85,.7,.5,.3,.15,.05,0];
+export function rampSteps(shade){
+ const c=shade?new T.Color(shade):null,l=c?.2126*c.r+.7152*c.g+.0722*c.b:1,data=new Uint8Array(RAMP.length*4);
+ RAMP.forEach((g,i)=>{for(let k=0;k<3;k++){const hue=c?[c.r,c.g,c.b][k]/l:1;data[i*4+k]=Math.round(Math.min(255,g*(1+(hue-1)*LEAN[i])));}data[i*4+3]=255;});
+ return data;
+}
 export function toonRamp(view){
- const t=new T.DataTexture(new Uint8Array([90,90,90,255,145,145,145,255,205,205,205,255,245,245,245,255]),4,1);
+ const t=new T.DataTexture(rampSteps(view?.world?.bio?.light?.shade),RAMP.length,1);
  t.minFilter=t.magFilter=T.LinearFilter;t.needsUpdate=true;
  view?.resources?.push(t);
  return t;
+}
+
+// A RIM OF SKY ROUND A CROWN (the cartoon overhaul's lighting, round 1).
+// Where a surface turns away from the eye it catches the sky behind it -- the
+// bright edge that separates a painted tree from the trees behind it (Barla's
+// cell shading; the stylised-foliage tutorials, RESEARCH *The overhaul's
+// lighting*). The sky's own colour, so it follows the clock to dusk and night
+// with no constants of its own, and the sun's colour on top where the sun
+// stands behind the crown. Times the surface's colour, so a red maple's rim is
+// red. Chained after any other `onBeforeCompile` (windMaterial).
+export function rimLit(material,strength=.35){
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
+ material.customProgramCacheKey=()=>key.call(material)+'-rim'+strength;
+ material.onBeforeCompile=shader=>{compile?.(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
+ #if NUM_HEMI_LIGHTS>0
+ {vec3 toEye=normalize(vViewPosition);float edge=1.-clamp(dot(normal,toEye),0.,1.);edge*=edge;edge*=edge;
+  vec3 rim=hemisphereLights[0].skyColor;
+  #if NUM_DIR_LIGHTS>0
+  float behind=clamp(dot(-toEye,directionalLights[0].direction),0.,1.);rim+=directionalLights[0].color*behind*behind*.9;
+  #endif
+  reflectedLight.indirectDiffuse+=diffuseColor.rgb*rim*edge*${strength.toFixed(3)};}
+ #endif`);};
+ return material;
 }
 
 export function surfaceTextures(biome,kind){
@@ -86,12 +137,16 @@ export function surfaceTextures(biome,kind){
 // swaying thing samples it at its root, grass and trees alike, so a front bends
 // the rough and then the trees as it passes. Earlier versions were one sine
 // wave at 50 m/s (everything in step) and then round patches (no front).
-export function windMaterial(material,view,strength=1,ground=false,crown=false,leaf=true,rooted=false){
+// `flexed`: a painted model (tools/blender/cartoon.py) whose vertices say how
+// freely each moves (`flex`, 0 rooted to 1 a leaf tip). The rustle on top of
+// the bend follows it, so a crown's outer lobes flutter and its core holds
+// still, instead of every leaf vertex shivering alike.
+export function windMaterial(material,view,strength=1,ground=false,crown=false,leaf=true,rooted=false,flexed=false){
  material.onBeforeCompile=shader=>{
   shader.uniforms.foliageTime=view.foliageTime;shader.uniforms.breeze=view.breeze;
   shader.uniforms.windVec=view.windVec;shader.uniforms.sway=view.sway??{value:1};
   shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
-uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;${rooted?'\nattribute vec4 treeRoot;':''}
+uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;${rooted?'\nattribute vec4 treeRoot;':''}${flexed?'\nattribute float flex;':''}
 /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float gustHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(gustHash(i),gustHash(i+vec2(1.,0.)),f.x),mix(gustHash(i+vec2(0.,1.)),gustHash(i+vec2(1.,1.)),f.x),f.y);}`);
   // Displaced in world units AFTER instancing.
@@ -125,7 +180,7 @@ float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mi
    mvPosition.xyz=root+rel;
    ${leaf?`// Leaves rustle on top: centimetres, fast, varying smoothly through the
    // crown so it shimmers without coming loose from the branches.
-   float rustle=sin(foliageTime*7.3+dot(mvPosition.xyz,vec3(1.9,1.3,2.3)))*.04*(.4+gust)*breeze*sway*up;
+   float rustle=sin(foliageTime*7.3+dot(mvPosition.xyz,vec3(1.9,1.3,2.3)))*.04*(.4+gust)*breeze*sway*${flexed?'(.25+1.5*flex)':'up'};
    mvPosition.xyz+=vec3(across.x,.4,across.y)*rustle;`:''}`
    :`float beat=foliageTime*${ground?'2.4':'1.8'}+phase;
    float push=.25+.95*gust+(.12+.3*gust)*sin(beat);
@@ -138,5 +193,5 @@ float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mi
                  +across*(sin(beat*1.7+phase)*(.1+.2*gust)*breeze*lever);`}
   #endif
   mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);
- };material.customProgramCacheKey=()=>`breeze-wind-v3-${strength}-${ground}-${crown}-${leaf}-${rooted}`;return material;
+ };material.customProgramCacheKey=()=>`breeze-wind-v3-${strength}-${ground}-${crown}-${leaf}-${rooted}-${flexed}`;return material;
 }

@@ -12,6 +12,7 @@
 // the checklist in the panel, the validation of a saved record, the tests. Add
 // a field here and it appears in all four. Add it in two places and they drift.
 import {MPH, YARD} from './physics.js';
+import {GROUNDS} from './grounds.js';
 
 const FOOT = 0.3048;
 
@@ -41,7 +42,7 @@ const fixed = (v, dp) => v == null ? null : v.toFixed(dp);
 // with what the lie took off beside it in red; for a Swing Meter shot it shows
 // the speed the ball left with, and the same red note. Carry and total are the
 // game's own result, so they carry the penalty already, and say so.
-const LIE_WORD = {semi: 'semi-rough', rough: 'rough', sand: 'sand'};
+const LIE_WORD = {semi: 'semi-rough', rough: 'rough', sand: 'sand', ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.word]))};
 const docked = r => { const l = r?.shot?.lie; return l && l.factor < 1 && Number.isFinite(l.before) ? l : null; };
 export const liePenaltyNote = r => { const l = docked(r); return l ? `−${(l.before * (1 - l.factor) / MPH).toFixed(1)} ${LIE_WORD[l.surface] || l.surface}` : null; };
 const lieTag = r => { const l = docked(r); return l ? LIE_WORD[l.surface] || l.surface : null; };

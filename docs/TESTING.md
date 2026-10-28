@@ -9,7 +9,7 @@ changes what it covers.
 | Layer | Command | Runs on | What it can see | What it cannot |
 | --- | --- | --- | --- | --- |
 | **Node tests** | `npm test` | the processor, about 3-4 minutes | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
-| **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
+| **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
 | **Frame comparison** | `node tools/frame-ab.mjs --goal <name>` (two builds, alternately), `node tools/frame-variants.mjs` (ideas live in one page) | **the graphics card**, about a minute a run, through `tools/gpu-gate.mjs` | a change's frame time, draws and triangles against noise; pixels changed against two loads of one build; with `--device`, a phone or laptop's screen and processor and an ESTIMATE of its graphics; `tools/frame-look.mjs`: two hooked builds with the renderer's clock stopped, so wind, clouds and water stand still and every changed pixel is the code, plus the pin label, wind arrows, map and page errors; `tools/frame-motion.mjs`: the same round in both builds on a virtual clock (a driver, the TV cameras, the overview), each frame read inside the frame it shows | whether a person would notice; real devices; the menus and panels (the smoke test's job) |
@@ -123,7 +123,7 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `rival`, `player-colours`, `bag`,
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `far-woods` (the far woods: outside the property, never in water, deterministic, wooded from the property line to 12 km and coarser with distance; every crown's base no higher than the DRAWN ground under it; the drawn ground reproducing the ring's vertices; each far shape flat-based and no wider at its base than the seat assumes; Island's far woods only on its islets; Low and Medium groves only), `water-mirror` (trees in still water: each twin under its own pond's level, straight below its tree; none for a tree far from still water, nor for the sea; a pond made from its outline gets its bank's reflection, under the water and outside the pond), `seasons` (Haunted Hollow's window to the minute, offered with and without the setting, a picker keeping a chosen landscape, an off-season endless run never rolling it and staying deterministic, the weekly stand-in only out of season and only from 9 November 2026, the splash's copy of the rotation, and an old graphics record loading with the setting off), `rival`, `player-colours`, `bag`,
   `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
@@ -135,12 +135,20 @@ the courses several suites share.
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
   `tee-corridor`, `water-*`, `waterways-tours`, `vegetation-variety`,
   `generation-steps`, `parallel-ground`, `settings-schema`, `haunted-props`,
-  `blowouts` (Lakeshore Dunes' sand: the field baked on the atlas grid and read back as a linear filter reads it, the gate off the playing lines, water clearance, about a tenth of the dune rough, nothing planted on it, no other biome building a field, and the ground shader asking the same questions in the same order -- a structure check, since no test runs the shader).
+  `blowouts` (Lakeshore Dunes' sand: the field baked on the atlas grid and read back as a linear filter reads it, the gate off the playing lines, water clearance, about a tenth of the dune rough, nothing planted on it, no other biome building a field, and the ground shader asking the same questions in the same order -- a structure check, since no test runs the shader),
+  `landforms` (the cartoon overhaul's country between the holes: every recipe names real ground types, the field baked and read back as the blowouts' is, a seed's own bytes, every gate keeping its ground off the playing lines, the range flat and plain, each landscape getting the ground it asks for -- off the corridor, clear of creeks, no tree on what will not hold one -- pine straw played from the bytes it is painted with, and the shader painting in the lie's order),
+  `shared-fairways` (the overhaul's links: an 18-hole links shares fairways on at least two holes a course and six across three seeds, never a par 3; no other landscape asks for it or gets it; a widened edge is fairway in the world; sharing is reproducible and a lone hole is left alone; a join carries pot bunkers on its seam, sand at the centre and ringed by fairway),
+  `stands` (the overhaul's uncleared woods and thickets: every record whole and never reaching within 25 m of a corridor, a stand planted thicker than the open scatter, back from play and on ground that holds a tree, none on the Redwood or the range, the sites and field the seed's alone, and every landscape's far-forest record one the ground shader can take, and its long-grass record naming families the model module carries; the understory trunkless and inside stands only). `tee-corridor` counts the open scatter alone against its target and its tee surrounds, per hectare of ground that can hold a tree (a stand stands back from every tee by design). `instance-cull` holds that a painted crown swaps only to the far twin it ships, by `farPainted`, and that one without a twin is never thinned.
+- **The ground a ball plays from** -- `grounds` (the overhaul's ground types: a row in every table -- bounce, roll, skid, lie, relief rank, roll hop, sound, map colour, HUD label -- no restitution a dropped ball could gain height from, the orderings that make each one itself, what may stand on each, a pitch running further on rock than in heather, the shot card naming the ground).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
-  `ground-shader-structure`, `green-cue-wiring`, `glsl-reserved`,
-  `three-namespace`, `flood-shadows`, `instance-cull`, `occlusion`, `clouds`,
+  `ground-shader-structure`, `green-cue-wiring` (also: the ground-reading
+  choice writes every cue, and an old record adopts it once), `glsl-reserved`,
+  `three-namespace`, `flood-shadows`, `instance-cull` (also: a mesh with a reach drops
+  whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
-  `auto-resolution`, `ui-scale`, `roll-hop`.
+  `auto-resolution`, `ui-scale`, `roll-hop`, `toon-ramp` (the overhaul's coloured
+  ramp: grey without a shade colour, brighter step by step in every landscape,
+  a shade colour moving the hue and not the brightness).
 - **Cameras and maps** -- `waterways-tours` also checks `treeBlocksView` (a tree on
   the line or filling the frame near the camera is cleared, one behind the ball,
   behind the camera, far off to the side, or under the line is not);
@@ -253,11 +261,19 @@ the courses several suites share.
 error, `console.error` or network request; a failed journey leaves a
 screenshot in `bench/shots/smoke/`. `--only a,b` runs some; `--software` runs
 without the graphics card (much slower; it once crashed this machine -- ask).
+`--endless-seed HARROW-4021` makes every fresh Endless run take that seed
+(the game's `lab.pinRun`; the journeys still press Start an endless run), so
+a run that failed can be played again on the same holes; the journey checks
+the run really is on it (the map names the course, the run's seed and the
+hole's number: `HARROW-4021-1`). Replaying HARROW-4021 found the harness
+wrong: after an albatross the scorecard comes about 12 s after the banner
+and XP checks (4.9 s after a birdie), right on the old 12 s wait, so a holed
+putt now waits 30 s for the card, and the journey logs how long it took.
 
 | Journey | What it plays |
 | --- | --- |
 | `boot` | opens from file:// and reaches the menu |
-| `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole |
+| `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |

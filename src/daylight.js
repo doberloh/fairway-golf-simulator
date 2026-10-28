@@ -91,6 +91,11 @@ const MOON_LEAD = .3;
 // the biome sky, the fog and the hemisphere light all start somewhere different
 // and all have to come back to exactly where they started by morning.
 const DUSK = new T.Color('#e8925c'), NIGHT = new T.Color('#16233f'), GROUND_NIGHT = new T.Color('#1b2334');
+// THE TWILIGHT BETWEEN THEM (the cartoon overhaul's lighting, round 3): straight
+// from orange to navy, the half-way air was a muddy brown-grey -- every dusk
+// capture read as dirt. Half-way is lavender now, the blue hour of the painted
+// references, and the luminance still only falls (.385, .213, .015).
+const TWILIGHT = new T.Color('#8a77a8');
 // The sky and the ground do NOT take the same dusk colour, and using one for
 // both was the bug behind tall grass glowing after sunset.
 //
@@ -146,7 +151,7 @@ export function solarState(hour, biomeSun) {
  // dusk warmth past about three degrees leaves the sky reading as night while
  // the ambient is still lighting upright surfaces for a sunset that is over.
  const nightness = smoothstep(1.5, -3.5, elevation);
- const tint = mix(DUSK, NIGHT, nightness);
+ const tint = nightness < .5 ? mix(DUSK, TWILIGHT, nightness * 2) : mix(TWILIGHT, NIGHT, nightness * 2 - 1);
  // Reaches a full 1. The old ceiling of .92 left eight percent of the daytime
  // sky blue mixed into the ambient permanently, so night never quite arrived.
  const tintAmount = Math.max(warmth * .55, nightness);

@@ -69,7 +69,9 @@ test('the menus change colour with the week, through every biome', () => {
   assert.equal(screenPalette({screen: 'menu', date: new Date(2026, 9, 25 + 7 * w)}).biome, p.biome);
   seen.add(p.biome);
  }
- assert.equal(seen.size, BIOME_KEYS.length);
+ // Every landscape but Haunted Hollow, whose turn in these weeks falls out of
+ // its season and wears Autumn's colours (seasons.js, weekly.js).
+ for (const k of BIOME_KEYS.filter(k => k !== 'haunted')) assert.ok(seen.has(k), k);
 });
 
 test('a palette becomes the kit\'s custom properties, with the one shared under-par red', () => {

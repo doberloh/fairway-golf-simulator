@@ -4,6 +4,7 @@ import {simulateShot} from '../src/physics.js';
 import {launchCorridors, blocksLaunch, inTeeFan, teeFans} from '../src/course.js';
 import {PROP_MODELS} from '../src/species.js';
 import {world} from './worlds.mjs';
+import {allows} from '../src/grounds.js';
 
 // Haunted Hollow's giant pumpkins and toadstools are SOLID: the owner asked for
 // them at three to five times life size and with colliders, so they are world
@@ -34,7 +35,9 @@ test('a prop is as wide as the model it is drawn with', () => {
 test('props keep off the turf and out of every tee shot', () => {
  const w = haunted(), launch = launchCorridors(w.holes, w.height), fans = teeFans(w.holes);
  for (const p of w.props) {
-  assert.equal(w.surface(p.x, p.z), 'rough', `${p.kind} on ${w.surface(p.x, p.z)}`);
+  // Natural ground that takes a shrub: the rough, or (since the cartoon
+  // overhaul) the moor's heather -- never turf, sand or water.
+  assert.ok(allows(w.surface(p.x, p.z), 'shrubs'), `${p.kind} on ${w.surface(p.x, p.z)}`);
   assert.ok(!blocksLaunch(launch, p.x, p.z, p.y, p.y + p.h, p.reach), `${p.kind} in a tee shot`);
   assert.ok(!inTeeFan(fans, p.x, p.z, p.reach), `${p.kind} in a tee fan`);
  }
@@ -60,6 +63,12 @@ test('a ball rolled into a giant pumpkin does not pass through it', () => {
     // pumpkin, and the control below would blame the course for it. Two on
     // hole 7 began in water once the seeded draws moved (GENERATOR_VERSION 35).
     .filter(p => !['water', 'sand'].includes(h.surface(p.x, p.z - p.reach - 2)))
+    // Nor does one that starts in heather or past it on the moor (the cartoon
+    // overhaul's ground, which stops a ball dead) -- this tests the pumpkin,
+    // so the run-up is ordinary rough.
+    // The whole path is checked, not only its start: on generator 37 a pond
+    // sat just past one pumpkin and the control roll ended in it.
+    .filter(p => Array.from({length: 9}, (_, k) => h.surface(p.x, p.z - p.reach - 2 + k / 8 * (2 * p.reach + 3))).every(g => g !== 'heather' && g !== 'water'))
     .sort((a, b) => b.reach - a.reach).slice(0, 3);
    for (const p of mine) {
     const end = simulateShot({origin: {x: p.x, z: p.z - p.reach - 2}, aim: 0, hla: 0, vla: 0, spin: 0, spinAxis: 0, speed: 25}, h, {wind: [0, 0, 0]});

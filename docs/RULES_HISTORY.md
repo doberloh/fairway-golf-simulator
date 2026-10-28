@@ -237,6 +237,45 @@ line that this one goal carries its own limits in its text. That text (drafted
 in the local, git-ignored docs/reports/) is the authority for that goal only;
 every other goal and turn keeps the limits above.
 
+**The cartoon-overhaul goal, 25 October 2026.** A second graphics journey, on
+its own branch and worktree beside realistic-graphics: keep Cartoon but remake
+every asset, texture and biome landscape. The owner kept the graphics card
+allowed with the same crash precautions as the realistic goal and asked for the
+same AGENTS.md line, for the same reason. One addition in its text: the GPU log
+is kept per folder, so the two goals cannot see each other's runs, and this one
+waits whenever the card holds a browser or Blender it did not start.
+
+**Landscapes may change on cartoon-overhaul, 25 October 2026.** Reviewing the
+goal draft, the owner asked whether "same seed gives the same course" would be
+read as "the landscape must look as it does today". It could have been: the
+rest of AGENTS.md treats moved ground as something to avoid (the fingerprint,
+the version bump), so an agent could hold back the very redesign the goal asks
+for. The owner asked for a rule saying landscapes can change. What survives is
+determinism on the branch, not sameness with main.
+
+**The overhaul's terms outlive its goal, 26 October 2026.** The goal ran to
+its end without satisfying its own stop check: two items -- playing a round
+by hand, and taking or trading the frame-rate gap -- could only be the
+owner's, so the check repeated every turn while the agent could do nothing
+more. The owner cleared it on returning, called the work amazing, accepted
+the High and Ultra gap ("220 frames per second is still way higher than a golf
+sim actually needs"), and said single-turn requests would follow on the
+branch with the goal's computer and rule-suspension terms still in force. The
+brief that held those terms is local and git-ignored, so AGENTS.md now spells
+them out for the branch. Software rendering stays outside them: the 13 October
+crash was a software smoke run, and the goal's own limits never named it.
+Lesson for the next goal: a done-when clause should name only what an agent
+can finish alone, and say which items wait for the owner.
+
+**The overhaul merged, 27 October 2026.** After two more goals on the branch
+(polish; far landscape and mowing) the owner said "This is the GFX overhaul i
+want" and asked for everything back in main. The branch's two AGENTS.md
+sections had said they must be rewritten before that merge, so they became one
+section saying what main's rules then were: a seed keeps its course again, the
+graphics card is asked for again, and the High and Ultra frame gap stays
+accepted. A branch's rules are written to end, and naming that ending in the
+rule itself is what made the merge a short edit rather than a judgement call.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at
@@ -280,6 +319,18 @@ test caught it; it was found a phase later by reading the code (14 October
 2026). The same day, a backslash written before a backtick in Python strings and in a
 `String.raw` template went into source comments as a stray backslash-backtick. Searching the touched files
 after a scripted edit catches both.
+
+On 27 October 2026 a cleanup made it worse: to remove one stray
+backslash-backtick from docs/CARTOON_OVERHAUL.md, a sed substitution of
+"backslash-backtick" by "backtick" was run -- and in GNU sed a backslash-backtick is the start-of-line anchor, so a backtick
+went in front of every one of the page's 1,245 lines, and was committed
+before anyone saw it. Repaired a commit later by taking one leading backtick
+off each line and checking against the last good commit. A tool that reads
+the text as patterns is the wrong tool for these characters; a script that
+replaces a literal string is the right one. The same goal also shipped a
+shader that used a varying it declared only on one side (every river and
+creek failed to compile for one build) -- caught because the capture tool
+logs shader errors; a module that loads in Node says nothing about its GLSL.
 
 ## The bench
 

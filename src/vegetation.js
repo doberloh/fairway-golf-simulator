@@ -1,13 +1,18 @@
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
+import {farWoodSites,FAR_SHAPES} from './far-woods.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
-import {GROUND_PLANTS} from './species.js';
-import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
-import {windMaterial,toonRamp} from './textures.js';
+import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
+import {plantPose} from './tree-seat.js';
+import {allows} from './grounds.js';
+import {launchCorridors,blocksLaunch,BEACH_RISE,teePad,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND} from './course.js';
+import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
+// A house drive keeps the rough's grass off it (homes.js; the cartoon overhaul's paths, round 5).
+import {onDrive} from './homes.js';
 
 // EVERYTHING THE VIEW CLEARS BESIDES TREES (UI/UX pass V2): a batch is one
 // instanced mesh with, for each instance, the object it belongs to as
@@ -39,13 +44,8 @@ function texture(kind){
 // comes from a real model, but everything that makes a stand look like a place
 // rather than a stamp -- which model, its height and girth, its lean, its tint --
 // is still drawn per tree, the same way the procedural shapes do it.
-// Ground cover sized by its SPREAD rather than its height. A sword fern is a
-// low clump about a metre and a half across and its fronds reach further
-// sideways than up, so scaling it to t.h the way a tree is scaled gives a
-// ten-metre bush.
-// The dune grass and the creeping juniper (built in Blender) join them: a
-// beachgrass patch is two to five metres across and under a metre tall.
-const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern','dunegrass','juniper']);
+// Ground cover sized by its SPREAD rather than its height: species.js
+// SPREAD_SIZED, shared with the seating (tree-seat.js).
 
 // NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
 //
@@ -118,22 +118,27 @@ function groundLit(material){
 const CONIFERS=new Set(['redwood','dougfir','hemlock','redcedar','pine','spruce','cedar']);
 // Rigid: a cactus is a column of water in a skin, and an agave's leaves are
 // stiff blades. Neither moves in any wind a round of golf is played in.
-const STILL=new Set(['cactus','agave']);
+const STILL=new Set(['cactus','agave','cholla']);
+const THIN_LEAVES=new Set(['palm','halatree','brackenfern','ocotillo']);
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
- const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55'};
+ const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55',palo:'#9aa64e',mesquite:'#6c804b',cholla:'#6f8f5e',ocotillo:'#6f7a45',agave:'#7caa9b',creosote:'#5d6b39',brittlebush:'#a9b39b',sagebrush:'#9aa58c',bracken:'#5d8a3a',huckleberry:'#3f5f34',hala:'#678f3d',redwood:'#3d5a35',fir:'#355a3a',hemlock:'#4a6b3e',redcedar:'#3f6a40',tanoak:'#4f6b38',seedling:'#4a7041',swordfern:'#3f6e33',salal:'#3e5f30',sorrel:'#5f8a3e'};
  // Bark is one brown unless a species says otherwise. The dead trees do: a
  // haunted wood is told apart by its bark, since it has no leaves to do it.
- const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b'};
+ const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b',palo:'#8fa553',mesquite:'#4d3d31',cholla:'#5a5040',ocotillo:'#7a6e5c',creosote:'#5a4a3a',bracken:'#6b5a3a',sagebrush:'#6a5d4e',huckleberry:'#5a4636',palm:'#93876a',hala:'#8a7b66',redwood:'#7a5242',fir:'#5d4636',hemlock:'#5a4a3e',redcedar:'#735040',tanoak:'#6e6256',sorrel:'#6f8a4e'};
  // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
  // does: its blade tips are a second part, straw over green, which is what
  // American beachgrass looks like by midsummer.
- const accents={dunegrass:'#c9b67c'};
+ // The cartoon aspen's accent is the dark "eyes" on its pale trunk.
+ // The cartoon shrubs' flowers and berries (tools/blender/cartoon_shrubs.py).
+ const accents={dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',bramble:'#2c1f2e',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
  const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
+ const UP_AXIS=new T.Vector3(0,1,0),coverNormal=new T.Vector3(),coverTilt=new T.Quaternion();
+ const coverFade=teeFade(world);
  const entries=[];
  for(const t of trees){
   // Which model this tree is, decided once and stably per tree.
@@ -154,9 +159,18 @@ function addModelSpecies(view,kind,trees){
   // The bush family still sizes by height. It probably should not either, but
   // six biomes draw from it and that is a change to look at on its own.
   const spread=SPREAD_SIZED.has(FAMILY_OF[kind])?t.r/modelRadius(model)*lift:0;
-  const sy=spread||t.h*lift,sxz=spread||sy*girth;
-  dummy.position.set(t.x,t.y,t.z);
+  // Ground cover shortens toward a tee's mown edge (teeFade; the polish
+  // goal's tee surrounds, round 4): the planted marram and dune grass stood
+  // full height at the edge after the scattered grass had faded.
+  const nearTee=coverFade&&(GROUND_PLANTS.has(kind)||SPREAD_SIZED.has(FAMILY_OF[kind]))?.35+.65*coverFade(t.x,t.z):1;
+  const sy=(spread||t.h*lift)*nearTee,sxz=(spread||t.h*lift*girth)*nearTee;
+  // Seated: drawn down by the drop under its foot, so no trunk hangs over a
+  // slope, and ground cover laid along the slope first (tree-seat.js). The
+  // generator's y, and every collider, stay put.
+  const pose=plantPose(t,world.height);
+  dummy.position.set(t.x,t.y-pose.depth,t.z);
   dummy.rotation.set((rng()-.5)*.10,rng()*6.28,(rng()-.5)*.10);
+  if(pose.gx||pose.gz){coverTilt.setFromUnitVectors(UP_AXIS,coverNormal.set(-pose.gx,1,-pose.gz).normalize());dummy.quaternion.premultiply(coverTilt);}
   dummy.scale.set(sxz,sy,sxz);
   dummy.updateMatrix();
   const leaf=leafBase.clone();
@@ -176,13 +190,42 @@ function addModelSpecies(view,kind,trees){
  // physics collides with still agrees with the one drawn. A cactus does not
  // move at all.
  const sway=STILL.has(kind)?0:CONIFERS.has(kind)?.7:1;
- const materialFor=role=>{
-  if(!materials.has(role))materials.set(role,sway&&['leaf','bark','accent'].includes(role)
-   ?windMaterial(new T.MeshToonMaterial({color:'#ffffff'}),view,sway,false,true,role!=='bark')
-   :new T.MeshToonMaterial({color:'#ffffff'}));
-  return materials.get(role);
+ // A PAINTED MODEL (the cartoon overhaul, tools/blender/cartoon.py) carries
+ // its own shading -- a dark core, light tips -- as vertex colour, and its
+ // foliage normals are bent toward the crown's centre, so it is lit through
+ // the scene's one soft ramp like the ground it stands on. The pack models
+ // keep the material they always had (no ramp: three's flat 0.7 floor) until
+ // each is replaced.
+ // THIN LEAVES ARE SEEN FROM BOTH SIDES (the cartoon overhaul): a palm frond,
+ // a hala's strap leaves, a bracken frond and an ocotillo's leaves are single
+ // faces, not closed lobes, and with back faces culled the palms' crowns read
+ // thin from below and the hala's tufts all but vanished (island-r3 in the
+ // game). Only these: a closed crown drawn two-sided would shade its hidden
+ // inside for nothing.
+ const thin=THIN_LEAVES.has(FAMILY_OF[kind]);
+ const materialFor=(role,variant,painted)=>{
+  const key=role+(painted?'|painted':'');
+  if(!materials.has(key)){
+   const base=painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view),side:thin&&role==='leaf'?T.DoubleSide:T.FrontSide}):new T.MeshToonMaterial({color:'#ffffff'});
+   const swayed=sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base;
+   // A painted crown catches a rim of sky at its edges (textures.js rimLit).
+   materials.set(key,painted&&role==='leaf'?rimLit(swayed):swayed);
+  }
+  return materials.get(key);
  };
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
+  // A BUSH'S SHADOW IS NEAR WORK (the frame-rate pass): knee- to head-high
+  // plants by the thousand went into every shadow map, where a texel is half
+  // a metre and more past the first. Only the nearest map takes them now
+  // (instance-cull.js `shadowNear`).
+  if(GROUND_PLANTS.has(kind))mesh.userData.shadowNear=true;
+  // A PAINTED CROWN DOES NOT RECEIVE THE SHADOW MAP (the cartoon overhaul).
+  // Its paint and its normals, bent toward the crown's centre, already shade
+  // it as one body; sampled against the shadow map as well, those bent
+  // normals put the shadow lookup on the wrong side of its own lobes and the
+  // crown comes up speckled with acne (seen on the first in-game round). It
+  // still casts its shadow on the ground and everything else.
+  if(mesh.geometry.attributes.flex&&mesh.userData.role==='leaf')mesh.receiveShadow=false;
   const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
   view.treeInstances.push({mesh,matrices,owners,hidden});
  });
@@ -329,10 +372,18 @@ export function addVegetation(view){
    else if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
   }
  };
- for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
+ // A STAND'S UNDERSTORY (course.js, `under`) is shrubs and ferns a ball
+ // passes through, so a tier may draw a share of it without two players
+ // meeting different courses (graphics.js `understory`): picked by a hash of
+ // where each stands, so the same ones every time.
+ const underShare=view.quality?.understory??1,keepUnder=t=>!t.under||(Math.abs(Math.sin(t.x*12.9898+t.z*78.233)*43758.5453)%1)<underShare;
+ const drawn=view.world.trees.filter(keepUnder);
+ for(const kind of new Set(drawn.map(t=>t.kind)))addSpecies(view,kind,drawn.filter(t=>t.kind===kind));
 
  addDeadfall(view);
  addDriftwood(view);
+ addLongGrass(view);
+ addFarWoods(view);
  addGroundCover(view);
  addNearbyGrass(view);
 }
@@ -382,7 +433,7 @@ function addDeadfall(view) {
   } else {
    x = (rng() - .5) * world.halfX * 2; z = (rng() - .5) * world.halfZ * 2;
   }
-  if (world.surface(x, z) !== 'rough' || world.nearest(x, z).d < 8) continue;
+  if (!allows(world.surface(x, z), 'trees') || world.nearest(x, z).d < 8) continue;
   // Deadfall is knee height, so this only ever bites close to a tee -- which
   // is the one place a log in the shot path is worth removing.
   if (blocksLaunch(launch, x, z, world.height(x, z), world.height(x, z) + 1.6)) continue;
@@ -417,9 +468,11 @@ function addDeadfall(view) {
    color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35), dirt, accent}});
  }
  const materials = new Map();
- const materialFor = role => {
-  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
-  return materials.get(role);
+ // Painted since the cartoon overhaul (tools/blender/cartoon_deadfall.py).
+ const materialFor = (role, variant, painted) => {
+  const key = role + (painted ? '|p' : '');
+  if (!materials.has(key)) materials.set(key, new T.MeshToonMaterial({color: '#ffffff', vertexColors: !!painted, gradientMap: painted ? toonRamp(view) : null}));
+  return materials.get(key);
  };
  instanceModels(group, entries, materialFor, ({mesh, matrices, owners}) => addViewBlockers(view, mesh, matrices, owners));
 }
@@ -432,6 +485,212 @@ function addDeadfall(view) {
 // between the waterline and the height where the beach stops (BEACH_RISE),
 // where a lake actually leaves its wood. Sizes are PLACED: 0.25-0.5 m thick,
 // three to five metres long by the models' own proportions.
+// LONG GRASS BETWEEN THE HOLES (the cartoon overhaul; the owner's addendum:
+// "a large library of brush, bushes, LONG grass ... for each biome", and on a
+// links "the long grass ... for the areas between holes"). Clumps built in
+// Blender (tools/blender/cartoon_grass.py) -- fescue and marram on a links,
+// big bluestem on the prairie, alpine tussocks, desert bunchgrass, forest
+// sedge, a dead moor tussock, island plume grass -- planted in colonies of a
+// few clumps, in drifts, on wild ground at least `near` metres outside the
+// corridors. A biome's `longGrass` record names the families (with each one's
+// height), how many colonies, and its two colours. Decoration like the
+// driftwood: the course never hears of it, nothing collides with it, it is
+// placed from its own stream, so it moves no generated ground. The graphics
+// tier's grass share scales the count. It bends from its root as a tree
+// does (windMaterial `crown`), four times as freely for its size. It casts no shadow -- a hundred
+// thousand blades in every shadow map is cost for nothing a player sees.
+// PLACED: every number in the records.
+// Shrinks an instance toward its root between 60% of `reach` and `reach`
+// metres from the camera. Chained after the material's other patches.
+function sinkBeyond(material,reach){
+ if(!reach)return material;
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
+ material.customProgramCacheKey=()=>key.call(material)+'-sink'+reach;
+ material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float sink=1.-smoothstep(${(reach*.6).toFixed(1)},${reach.toFixed(1)},distance(mvPosition.xz,cameraPosition.xz));mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*sink;mvPosition=modelViewMatrix*mvPosition;`);};
+ return material;
+}
+// THE FADE FROM A TEE INTO THE TALL GRASS (the polish goal; the owner: "a
+// better fade into taller grass from the tee boxes on the links course").
+// The tiled grass went from short to tall at a hard 10 m from the tee's
+// point -- a wall, and not even round the mown shape -- and the long-grass
+// colonies ignored tees altogether. Now both ask how far a spot is from the
+// nearest mown tee's EDGE (its pad and collar, the shape ground.js paints)
+// and fade: nothing tall within `TEE_FADE.clear`, then rising in height and
+// in how much of it grows over `TEE_FADE.span`. Decoration only: the ground
+// and its lie are as they were. PLACED.
+export const TEE_FADE = {clear: 1.2, span: 5.8};
+// THE CARRY (round 8 of the far-landscape goal's shared fairways, judged from
+// the tee): 0 inside a hole's corridor between its tee and the start of its
+// fairway, rising to 1 over `CARRY_EDGE` m outside it. Tall grass there hid
+// the fairway the golfer is aiming at. Each hole's carry boxed in the world
+// first, so most points cost a few comparisons. Decoration only. PLACED.
+export const CARRY_EDGE = 8;
+export function carryFade(world) {
+ const holes = world.holes.filter(h => !h.range).map(h => {
+  const z1 = h.mowStart ?? h.fairwayStart ?? 22, corners = [];
+  for (const z of [-30, z1 / 2, z1]) for (const s of [-1, 1]) corners.push(h.toWorld({x: h.center(Math.max(0, z)) + s * (h.width(Math.max(0, z)) + CARRY_EDGE + 4), z}));
+  const xs = corners.map(p => p.x), zs = corners.map(p => p.z);
+  return {h, z1, minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs)};
+ });
+ return (x, z) => {
+  let f = 1;
+  for (const c of holes) {
+   if (x < c.minX || x > c.maxX || z < c.minZ || z > c.maxZ) continue;
+   const p = c.h.toLocal({x, z});
+   if (p.z > c.z1 || p.z < -30) continue;
+   const zz = Math.max(0, p.z), out = Math.abs(p.x - c.h.center(zz)) - c.h.width(zz);
+   f = Math.min(f, Math.max(0, Math.min(1, out / CARRY_EDGE)));
+  }
+  return f;
+ };
+}
+export function teeFade(world) {
+ const tees = [];
+ for (const h of world.holes) for (const t of Object.values(h.tees || {})) {
+  const p = teePad(t);
+  if (!p) continue;
+  tees.push({h, x: t.x, z: p.z, ux: p.ux, uz: p.uz, hz: p.rz * TEE_APRON_SCALE, w: h.toWorld({x: t.x, z: p.z})});
+ }
+ const hx = TEE_APRON.x, r = TEE_ROUND * TEE_APRON_SCALE, reach = TEE_FADE.clear + TEE_FADE.span;
+ return (x, z) => {
+  let d = Infinity;
+  for (const t of tees) {
+   if ((t.w.x - x) ** 2 + (t.w.z - z) ** 2 > (reach + 12) ** 2) continue;
+   const l = t.h.toLocal({x, z}), dx = l.x - t.x, dz = l.z - t.z;
+   const qa = Math.abs(dx * t.uz - dz * t.ux) - hx + r, qb = Math.abs(dx * t.ux + dz * t.uz) - t.hz + r;
+   d = Math.min(d, Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r);
+  }
+  if (d === Infinity) return 1;
+  const f = Math.min(1, Math.max(0, (d - TEE_FADE.clear) / TEE_FADE.span));
+  return f * f * (3 - 2 * f);
+ };
+}
+// THE FAR WOODS (far-woods.js): real crowns from the property line out to
+// the landscape's edge, by distance bands. Two instanced meshes: NEAR crowns
+// (clusters of three lumps, or two-tier spruces on the conifer landscapes,
+// under 250 triangles), and FAR groves (one low faceted dome each, 20
+// triangles, standing for a stand of trees -- the owner: "LODs can fade but
+// should not transition to just bare ground"). No shadow cast (scenery, past
+// every shadow map), lit by the toon ramp, fogged as the ground is. Low draws
+// every site as a grove dome (graphics.js `farWoods: 'groves'`), the cheapest.
+// The far woods' shapes (far-woods.js FAR_SHAPES), each at unit radius with
+// a flat base at its origin -- the seat in far-woods.js lets that base down
+// onto the drawn ground, so nothing of a crown's underside hangs in the air.
+// Round 2 of the polish goal: a single cone read as a plain spike beside the
+// cartoon spruces, and a single lump as a ball: a spruce is two stacked tiers,
+// a broadleaf three lumps clustered. Round 6 (frame rate): 20-face lumps.
+export function farWoodGeometry(kind){
+ // A lump's underside is cut flat (it was squashed into a shallow bowl, whose
+ // rim stood off flat ground by a tenth of a grove's width).
+ const lump=(x,y,z,s)=>{let g=new T.IcosahedronGeometry(1,0);const p=g.attributes.position;for(let i=0;i<p.count;i++){const yy=p.getY(i),k=1+.12*Math.sin(p.getX(i)*5.1+p.getZ(i)*3.7);p.setXYZ(i,p.getX(i)*k*s+x,(yy<-.3?-.3:yy*k)*s+y,p.getZ(i)*k*s+z);}g=mergeVertices(g);return g;};
+ let geo;
+ if(kind==='spruce'){const a=new T.ConeGeometry(1,.6,7,1).translate(0,-.2,0),b=new T.ConeGeometry(.7,.55,7,1).translate(0,.22,0);geo=mergeGeometries([a,b]);a.dispose();b.dispose();}
+ // The three lumps cut on one floor, so each rests on the ground (their own
+ // cuts sat 3 cm of a unit apart, the higher two hanging).
+ else if(kind==='cluster'||kind==='scrub'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
+  const p=geo.attributes.position;for(let i=0;i<p.count;i++)if(p.getY(i)<-.295)p.setY(i,-.295);}
+ else if(kind==='cone')geo=new T.ConeGeometry(1,1,6,1);
+ // Haunted Hollow's dead trunks (round 3 of the far landscape): three bare
+ // spikes leaning a little apart, each with two broken limbs, on one floor.
+ else if(kind==='snags'){const parts=[];for(const [x,z,h,lean] of [[0,0,1,.04],[.42,.2,.78,-.08],[-.3,-.36,.66,.07]]){
+   const t=new T.ConeGeometry(.07,h,5,1).translate(0,h/2,0).rotateZ(lean).translate(x,0,z);parts.push(t);
+   for(const [y,a] of [[.55,.9],[.72,-1.1]]){const l=new T.ConeGeometry(.025,.3*h,4,1).translate(0,.15*h,0).rotateZ(a).translate(x+Math.sin(-lean)*y*h,y*h,z);parts.push(l);}}
+  geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());}
+ else geo=lump(0,0,0,1);
+ geo.computeBoundingBox();geo.translate(0,-geo.boundingBox.min.y,0);
+ const [w,h]=FAR_SHAPES[kind].scale;geo.scale(w,h,w);geo.computeVertexNormals();geo.computeBoundingBox();
+ return geo;
+}
+function addFarWoods(view){
+ const {world}=view,f=biomeOf(world.settings.biome).farForest;
+ if(!f||view.quality?.farWoods===false)return;
+ const groveOnly=view.quality?.farWoods==='groves',sites=farWoodSites(world,{groves:groveOnly});
+ if(!sites.length)return;
+ // One instanced set per shape drawn (round 3: Autumn's evergreens add spruces
+ // and cones to its clusters and domes).
+ const kinds=[...new Set(sites.map(s=>s.shape))];
+ const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
+ const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
+
+ // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
+ // mesh with its own bounds, so the card skips every sector out of view --
+ // one mesh round the whole course drew all 17,000 crowns every frame
+ // (measured 9-11% of a Medium frame). No shadow received either; it made no
+ // difference, but none reaches out here.
+ const build=(list,geo,place,name)=>{
+  if(!list.length){geo.dispose();return;}
+  const sectors=Array.from({length:12},()=>[]);
+  for(const s of list)sectors[Math.floor(((Math.atan2(s.z,s.x)/(2*Math.PI))+1)*12)%12].push(s);
+  for(const part of sectors){
+   if(!part.length)continue;
+   const mesh=new T.InstancedMesh(geo,mat,part.length);
+   part.forEach((s,i)=>{place(s);mesh.setMatrixAt(i,dummy.matrix);
+    c.copy(s.evergreen?colors[colors.length-1]:colors[Math.floor(s.pick*colors.length)%colors.length]).multiplyScalar(.88+s.size*.2);mesh.setColorAt(i,c);});
+   // Drawn BEFORE the ground (renderOrder -1): the cost was filling pixels
+   // over landscape already shaded by the ground's long shader; drawn first,
+   // the ground behind a crown fails the depth test and is never shaded.
+   mesh.castShadow=false;mesh.receiveShadow=false;mesh.name=name;mesh.userData.noCull=true;mesh.renderOrder=-1;
+   mesh.computeBoundingSphere();view.group.add(mesh);
+  }
+ };
+ // Each crown on its seat: its base point, turned to the ground's slope where
+ // its shape tilts, spun about its own axis.
+ const pose=(seat,r,x,z,pick)=>{up.set(seat.ux,seat.uy,seat.uz);dummy.quaternion.setFromUnitVectors(Y,up).multiply(spin.setFromAxisAngle(Y,pick*6.28));
+  dummy.position.set(x,seat.y,z);dummy.scale.setScalar(r);dummy.updateMatrix();};
+ // A grove: as wide as its site's spacing (a stand of trees), drawn smaller
+ // where the ground under it is broken (far-woods.js).
+ for(const kind of kinds)build(sites.filter(s=>s.shape===kind),farWoodGeometry(kind),s=>pose(s.seat,s.r,s.x,s.z,s.pick),kind==='dome'||kind==='cone'?'Far groves':'Far woods');
+}
+function addLongGrass(view){
+ const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
+ if(!rec)return;
+ const byTee=teeFade(world),carry=carryFade(world);
+ const group=new T.Group();group.name='Long grass';view.group.add(group);
+ const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
+ const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height})).filter(k=>k.models.length);
+ if(!kinds.length)return;
+ const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
+ const leaf=new T.Color(rec.leaf),accent=new T.Color(rec.accent),entries=[];
+ const colonies=Math.round(rec.count*(view.quality?.grass??1));
+ for(let tries=0,made=0;made<colonies&&tries<colonies*6;tries++){
+  const cx=(rng()-.5)*world.halfX*2,cz=(rng()-.5)*world.halfZ*2;
+  // Drifts: a broad wave the colonies gather in, so the long grass lies in
+  // swathes with open ground between, as it does in life.
+  const drift=.5+.5*Math.sin(cx/53+Math.sin(cz/71)*1.7)*Math.cos(cz/47-Math.sin(cx/89));
+  if(rng()>drift*drift)continue;
+  if(world.nearest(cx,cz).d<rec.near)continue;
+  const kind=pickKind(),n=8+Math.floor(rng()*7);
+  for(let k=0;k<n;k++){
+   const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
+   if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
+   // By a tee: thinner and shorter toward its mown edge, none at it.
+   // And out of a tee's carry (carryFade).
+   const fade=Math.min(byTee(x,z),carry(x,z));if(fade<1&&rng()>Math.pow(fade,.7))continue;
+   const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5)*(.35+.65*fade);
+   dummy.position.set(x,world.height(x,z),z);
+   dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
+   dummy.scale.set(h*(.9+rng()*.3),h,h*(.9+rng()*.3));
+   dummy.updateMatrix();
+   const tint=leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
+   entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:accent.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
+  }
+  made++;
+ }
+ const materials=new Map();
+ const materialFor=(role,variant,painted)=>{
+  const key=role+(painted?'|p':'');
+  if(!materials.has(key))materials.set(key,sinkBeyond(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:!!painted,gradientMap:toonRamp(view)}),view,4,false,true,true,false,!!painted)),reach));
+  return materials.get(key);
+ };
+ // DRAWN ONLY SO FAR (the frame-rate pass): a clump is a few pixels at two
+ // hundred metres, and Links drew 77,000 of them -- 15.7 M triangles -- to
+ // the horizon. Past the tier's reach the cull drops whole squares
+ // (instance-cull.js `cullReach`); over the last 40% before it each clump
+ // sinks into the ground, so nothing pops where the squares stop.
+ const reach=view.quality?.longGrassReach??0;
+ instanceModels(group,entries,materialFor,({mesh})=>{mesh.castShadow=false;if(reach)mesh.userData.cullReach=reach;});
+}
+
 function addDriftwood(view){
  const {world}=view,per=biomeOf(world.settings.biome).driftwood;
  if(!per||!world.bio.sea)return;
@@ -459,7 +718,8 @@ function addDriftwood(view){
   entries.push({model,owner:viewBlocker(x,y,z,size*4,size),matrix:dummy.matrix.clone(),
    color:{bark:wood,leaf:wood,stone:wood,dirt,accent:wood}});
  }
- const material=new T.MeshToonMaterial({color:'#ffffff'});
+ // Painted since the cartoon overhaul (tools/blender/cartoon_lakeshore.py).
+ const material=new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view)});
  instanceModels(group,entries,()=>material,({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners));
 }
 
@@ -479,38 +739,85 @@ function addGroundCover(view){
              :new T.MeshStandardMaterial({color:c,roughness:1,...opts});};
  const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
- const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),rockOwners=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
+ const grass=[],grassColors=[],flowers=[],flowerColors=[];
+ // THE WILDFLOWERS (the cartoon overhaul; tools/blender/cartoon_flowers.py):
+ // small clusters of daisies, asters and cups standing in the rough, where a
+ // 20-face gem sat on a grass tip. The same draws as before decide where one
+ // grows and its colour, so the grass after it is where it was; which of the
+ // three, and its size, come from where it stands. The gem is the fallback.
+ const flowerModels=familyModels('wildflower'),flowerEntries=[],stemTint=new T.Color('#5f8a45'),flowerEye=new T.Color('#f2c84b');
  // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
  // world, because a rock the generator does not know about is a rock physics
  // cannot collide with -- which is what they were until they moved. Placing
  // them here again would put a second set of stones in different places.
- for(const r of world.rocks||[]){
-  dummy.position.set(r.x,r.y+r.scale*.25,r.z);
-  dummy.rotation.set(r.rot[0],r.rot[1],r.rot[2]);
-  dummy.scale.set(r.sx,r.sy,r.sz);
-  dummy.updateMatrix();rockOwners[r.shape].push(viewBlocker(r.x,r.y,r.z,2*Math.max(r.sx,r.sz),r.scale*.25+r.sy));rocks[r.shape].push(dummy.matrix.clone());rockColors[r.shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
- // A single icosahedron for every boulder is the other half of why scree reads
- // as one chunk repeated. Build a few distinct stones and deal rocks between
- // them; each gets its own material because instance() disposes the material it
- // is handed when a bucket comes up empty.
- for(let k=0;k<STONES;k++){
-  const stone=new T.IcosahedronGeometry(1,real?2:0),p=stone.attributes.position,f1=1.7+k*2.3,f2=2.6+k*1.7;
-  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
-   const r=1+(real?.1:.26)*Math.sin(x*f1+z*f2+k)*Math.cos(y*f2-z*f1)+(real?.07:.17)*Math.cos(z*(f1+2.9)+x*f2-k*1.7);
-   p.setXYZ(i,x*r,y*r,z*r);}
-  stone.computeVertexNormals();
-  addViewBlockers(view,instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]),rocks[k],rockOwners[k]);
+ //
+ // THE CARTOON BOULDERS (the cartoon overhaul; tools/blender/cartoon_rocks.py)
+ // replace four squashed icosahedra that read as grey gems. A biome's stone is
+ // its own geology (`rockStyle`: round granite, angular talus, layered
+ // sandstone) and the generator's `shape` (0-3) picks which of four. Each is
+ // fitted to the collider the generator built: its bottom at centre - sy, its
+ // top at the stone's `top` (centre + sy), its half-widths sx and sz -- so a
+ // ball hits the stone it sees. A model rests on its flat base, so it turns
+ // about the vertical with only a slight tilt, where a round gem could be
+ // tumbled any way. The upward faces are the accent: moss or lichen where the
+ // biome names one (`rockMoss`), the stone otherwise. One draw per stone from
+ // `rng`, as before, so the grass after it is where it was.
+ {
+  const bioR=biomeOf(world.settings.biome),style=bioR.rockStyle||'round',family='boulder'+style;
+  const models=familyModels(family),entries=[];
+  const stoneBase=new T.Color(world.bio.rock),moss=bioR.rockMoss?new T.Color(bioR.rockMoss):null,tilt=new T.Quaternion(),seat=new T.Vector3();
+  for(const r of world.rocks||[]){
+   const tint=rng(),model=models[r.shape%models.length];
+   if(!model)continue;
+   const {rx,rz}=modelExtents(model);
+   // SEATED ON THE SLOPE (the cartoon overhaul's rocks, round 4). A model
+   // rests on a flat base, set level at the stone's centre; on a dune or a
+   // hillside its downhill edge hung in the air -- the desert's sandstone
+   // slabs most of all, flat and wide. Drawn tilted toward the ground's own
+   // slope (at most 22 degrees) and sunk by the rise across its half-width,
+   // so its highest point stays at the collider's top (tests/vegetation-
+   // variety) and the downhill edge goes into the ground rather than above it.
+   // The collider is the generator's and does not move; on a slope the drawn
+   // stone now leans inside it rather than matching its level base.
+   const e=1.5,gx=(world.height(r.x+e,r.z)-world.height(r.x-e,r.z))/(2*e),gz=(world.height(r.x,r.z+e)-world.height(r.x,r.z-e))/(2*e);
+   const slope=Math.min(Math.hypot(gx,gz),Math.tan(22*Math.PI/180)),dir=Math.atan2(gz,gx),across=Math.max(r.sx,r.sz);
+   dummy.position.set(r.x,r.y+r.scale*.25-r.sy-across*slope,r.z);
+   dummy.rotation.set((r.rot[0]-.5)*.12,r.rot[1],(r.rot[2]-.5)*.12);
+   tilt.setFromUnitVectors(UP,seat.set(-Math.cos(dir)*slope,1,-Math.sin(dir)*slope).normalize());
+   dummy.quaternion.premultiply(tilt);
+   dummy.scale.set(r.sx/rx,2*r.sy,r.sz/rz);
+   dummy.updateMatrix();
+   const stone=stoneBase.clone().multiplyScalar(.82+tint*.4);
+   entries.push({model,owner:viewBlocker(r.x,r.y,r.z,2*Math.max(r.sx,r.sz),r.scale*.25+r.sy),matrix:dummy.matrix.clone(),
+    color:{stone,accent:moss?moss.clone().lerp(stone,.25):stone,bark:stone,leaf:stone,dirt:stone}});
+  }
+  const materials=new Map();
+  instanceModels(group,entries,(role,variant,painted)=>{const key=painted?'p':'f';if(!materials.has(key))materials.set(key,new T.MeshToonMaterial({color:'#ffffff',vertexColors:!!painted,gradientMap:ramp??toonRamp(view)}));return materials.get(key);},
+   ({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners));
  }
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
- for(const t of world.trees.filter(t=>['gorse','heather','palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
+ const offDrive=onDrive(world.homes);
+ // These blades shorten toward a tee's mown edge too (teeFade; the polish
+ // goal's tee surrounds). Round 3 shortened only the native ground's extra;
+ // round 5 found -- by asking the running game what stood tall at the tee --
+ // that on Links every blade is long (its scatter is the tall-grass kind,
+ // up to 1.7 m), and these blades were the spikes at the tee's edge, not the
+ // colonies or the marram. All of them now, to 30% at the edge.
+ const bladeFade=teeFade(world);
+ // And short in a tee's carry where blades grow long (Links; carryFade).
+ const tallBlades=!!biomeOf(world.settings.biome).scatter.tallGrass,bladeCarry=tallBlades?carryFade(world):null;
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
+ // Drawn only to two-fifths of the long grass's reach, sinking before it
+ // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
+ // triangles of a Midwest frame.
+ if(flowerEntries.length){const fm=new Map(),reach=(view.quality?.longGrassReach??0)*.4;instanceModels(group,flowerEntries,(role,variant,painted)=>{const key=painted?'p':'f';if(!fm.has(key))fm.set(key,sinkBeyond(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:!!painted,gradientMap:toonRamp(view)}),view,4,false,true,true,false,!!painted)),reach));return fm.get(key);},({mesh})=>{mesh.castShadow=false;if(reach)mesh.userData.cullReach=reach;});}
 }
 
 // Fine grass follows the camera in cached 24 m tiles. The complete course keeps
 // its taller meadow patches; only fine blades need this near-field detail.
 function addNearbyGrass(view){
- const w=view.world,tileSize=24,tiles=new Map(),group=new T.Group();group.name='Living rough';view.group.add(group);
+ const w=view.world,offDrive=onDrive(w.homes),tileSize=24,tiles=new Map(),group=new T.Group();group.name='Living rough';view.group.add(group);
  const geometry=grassClump(7,w.seed+':clump');
  const material=groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,.2,true)),dummy=new T.Object3D(),color=new T.Color();let lastKey='';
  // Tiles are built on demand as the camera moves, so at cascade-registration
@@ -583,7 +890,7 @@ function addNearbyGrass(view){
   for(let i=0;i<490;i++){
    const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,roll=rng(),frond=i<400;
    if(Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||roll>canopy(x,z)*(frond?1.9:1.1))continue;
-   if(w.surface(x,z)!=='rough'||onShoreBank(w,x,z,false))continue;
+   if(!allows(w.surface(x,z),'trees')||onShoreBank(w,x,z,false))continue;
    const s=frond?.6+rng()*.9:.35+rng()*1.3;
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,frond?0:(rng()-.5)*.12);dummy.scale.set(frond?s:s,frond?s*(.7+rng()*.6):1,frond?s:1);dummy.updateMatrix();
    if(frond){fronds.setMatrixAt(nf,dummy.matrix);color.copy(tint).lerp(new T.Color('#7fa24a'),.12+rng()*.38);fronds.setColorAt(nf++,color);}
@@ -595,8 +902,43 @@ function addNearbyGrass(view){
   for(const m of kept){m.userData={noCull:true};m.receiveShadow=true;m.computeBoundingSphere();}
   return kept;
  };
+ // TALL GRASS NEAR THE CAMERA IS THE LANDSCAPE'S OWN LONG GRASS (the cartoon
+ // overhaul). Where the near tufts were tall -- native ground, or a biome
+ // that grows tall grass everywhere -- they were the short tuft stretched
+ // into brown spikes. Now that ground grows clumps of the biome's first
+ // long-grass family (tools/blender/cartoon_grass.py; addLongGrass above),
+ // one model, a mesh per part riding on the tile like the forest floor,
+ // fading out with it. Four in ten of the tall candidates become a clump,
+ // since a clump is many blades. PLACED: the share and the sizes.
+ const lg=biomeOf(w.settings.biome).longGrass,clumpModel=lg?familyModels(lg.families[0][0])[0]:null;
+ const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
+ const clumpLeaf=new T.Color(lg?.leaf??'#8a9150'),clumpAccent=new T.Color(lg?.accent??'#d8c27a');
+ let clumpMat=null;
+ const nearTee=teeFade(w),inCarry=carryFade(w);
+ if(clumpParts){
+  clumpMat=fadeOut(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,4,false,true,true,false,true)));
+  view.lazyMaterials?.push(clumpMat);
+  for(const p of clumpParts)standIn(p.geometry,clumpMat);
+ }
+ // HEATHER HAS VOLUME NEAR THE CAMERA (the cartoon overhaul's heather, round
+ // 7). Painted ground alone read as a flat patch however it was coloured
+ // (rounds 4-6 of its paint); the heath round the player is low cushions of
+ // the heather model (tools/blender/cartoon_shrubs.py), ankle to knee high,
+ // in the same tiles and fading with them -- decoration, as the forest floor.
+ // Blooming where the landscape's heather is purple, grey-brown on a dead
+ // moor. PLACED: the share and the sizes.
+ const heathParts=w.holes.length&&biomeOf(w.settings.biome).landform?.kinds&&Object.values(biomeOf(w.settings.biome).landform.kinds).includes('heather')?modelParts(familyModels('heatherbush')[0]??''):null;
+ const moor=w.settings.biome==='haunted',heathLeaf=new T.Color(moor?'#4a403c':'#5a5a3c'),heathAccent=new T.Color(moor?'#6c5862':'#a86aa8');
+ if(heathParts&&!clumpMat){clumpMat=fadeOut(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,4,false,true,true,false,true)));view.lazyMaterials?.push(clumpMat);}
+ if(heathParts)for(const p of heathParts)standIn(p.geometry,clumpMat);
+ const partsTile=(parts,matrices,leaf,accent)=>parts.map(p=>{
+  const m=new T.InstancedMesh(p.geometry,clumpMat,matrices.length);
+  matrices.forEach((mx,i)=>{m.setMatrixAt(i,mx);m.setColorAt(i,color.copy(p.role==='accent'?accent:leaf).offsetHSL(0,0,((i*.618)%1-.5)*.08));});
+  m.userData={noCull:true};m.receiveShadow=true;m.castShadow=false;m.computeBoundingSphere();return m;
+ });
+ const clumpTile=matrices=>partsTile(clumpParts,matrices,clumpLeaf,clumpAccent);
  const buildTile=(tx,tz)=>{
-  const key=keyOf(tx,tz);
+  const key=keyOf(tx,tz),clumps=[],heaths=[];
   // Written straight into the mesh rather than cloned into arrays and copied in
   // afterwards: that was two throwaway objects per surviving blade, about 2500 a
   // tile. The mesh is allocated for every candidate and its count pulled back to
@@ -608,8 +950,32 @@ function addNearbyGrass(view){
   // that cost a full instance each and read as noise on a surface whose job is
   // to be visibly BETWEEN fairway and rough. The mown-height difference is the
   // information; geometry on top of it was not adding any.
-  for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(surface!=='rough'||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
-   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.09+rng()*.17;
+  for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);
+   if(surface==='heather'&&heathParts){
+    if(Math.abs(x)<=w.halfX&&Math.abs(z)<=w.halfZ&&rng()<.3){const h=.3+rng()*.25;dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(h,h,h);dummy.updateMatrix();heaths.push(dummy.matrix.clone());}
+    continue;
+   }
+   if(!allows(surface,'grass')||offDrive(x,z)||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
+   // Not tall round a tee (the cartoon overhaul): a metre of grass in front of
+   // the pad hid the ball from the golfer's own eye (lakeshore-r3, -r4). The
+   // polish goal: not a wall at 10 m from the tee's point, but a fade from the
+   // mown tee's edge (teeFade) -- tall grass thinning and shortening toward it.
+   const tallHere=biomeOf(w.settings.biome).scatter.tallGrass||surface==='native';
+   // Not tall in the CARRY either (round 8 of the far-landscape goal's shared
+   // fairways, judged from the tee): between a tee and the start of its
+   // fairway, inside the hole's corridor, waist-high grass hid the whole
+   // fairway beyond -- a links' broad shared fairway read from its tee as a
+   // thin strip on the horizon. The rough there stays short, so the golfer
+   // sees where to aim, and grows tall again over 8 m outside the corridor.
+   let fade=nearTee(x,z);
+   if(tallHere&&fade>0)fade=Math.min(fade,inCarry(x,z));
+   // Round 2: none at all within the clear margin (round 1 let 15% through
+   // there, and those stood as spikes at the tee's edge from the ground).
+   const tall=tallHere&&(fade>=1||rng()<Math.pow(fade,.7)),height=tall?(.6+rng()*.65)*(.35+.65*fade):.09+rng()*.17;
+   if(tall&&clumpParts){
+    if(rng()<.4){const h=clumpHeight*(.75+rng()*.5)*(.35+.65*fade);dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(h,h,h);dummy.updateMatrix();clumps.push(dummy.matrix.clone());}
+    continue;
+   }
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.8,height,tall?1:.8);dummy.updateMatrix();
    mesh.setMatrixAt(kept,dummy.matrix);
    color.set(tall?'#bd9e5f':w.bio.rough).lerp(new T.Color(tall?'#e8d797':'#aebd69'),rng()*.35);
@@ -626,7 +992,10 @@ function addNearbyGrass(view){
   // something (a hidden parent would hide that too).
   // The floor rides on the grass tile as its children, so parking, evicting
   // and disposing a tile carries it along without a second bookkeeping.
-  if(floorOn){for(const m of floorTile(tx,tz,key))mesh.add(m);const dispose=mesh.dispose.bind(mesh);mesh.dispose=()=>{for(const c of mesh.children)c.dispose();dispose();};}
+  if(clumps.length)for(const m of clumpTile(clumps))mesh.add(m);
+  if(heaths.length)for(const m of partsTile(heathParts,heaths,heathLeaf,heathAccent))mesh.add(m);
+  if(floorOn)for(const m of floorTile(tx,tz,key))mesh.add(m);
+  if(mesh.children.length){const dispose=mesh.dispose.bind(mesh);mesh.dispose=()=>{for(const c of mesh.children)c.dispose();dispose();};}
   mesh.visible=kept>0||mesh.children.length>0;
   return mesh;
  };

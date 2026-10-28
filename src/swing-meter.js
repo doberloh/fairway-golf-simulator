@@ -28,6 +28,7 @@ import {simulateShot, YARD, R, clamp} from './physics.js';
 import {spinForPower} from './clubs.js';
 import {launchForDistance, rollDeceleration, struckDistance} from './turf.js';
 import {playsLike} from './plays-like.js';
+import {GROUNDS} from './grounds.js';
 
 // THE LIE, as a share of ball speed kept. One table for every golfer: the Swing
 // Meter takes it off the swing, and (unless the round switches it off) a launch
@@ -35,9 +36,11 @@ import {playsLike} from './plays-like.js';
 // Sand was 72% until 14 October 2026; the owner softened it to 80% when the rule
 // was extended to monitor shots. Placed, not published -- RESEARCH.md *The lie
 // costs ball speed* has the simulators it was compared with.
-export const LIE_SPEED = {semi: .96, rough: .9, sand: .8};
+// The overhaul's ground types (grounds.js) add their own rows: rock, scree,
+// heather and the rest each keep a share of their own.
+export const LIE_SPEED = {semi: .96, rough: .9, sand: .8, ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.lie]))};
 export const lieFactor = surface => LIE_SPEED[surface] ?? 1;
-export const LIE_NAMES = {semi: 'semi-rough', rough: 'rough', sand: 'sand'};
+export const LIE_NAMES = {semi: 'semi-rough', rough: 'rough', sand: 'sand', ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.word]))};
 // A LAUNCH MONITOR'S SHOT FROM A LIE. The measured ball speed is multiplied by
 // the lie's share -- unless the round switched that off (`on`), or the ball is on
 // the range's mat -- and launch, direction, spin and axis are left exactly as

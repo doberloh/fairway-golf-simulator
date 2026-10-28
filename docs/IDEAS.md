@@ -72,6 +72,15 @@ often has the how-to already worked out.
 
 ## Weather and looks
 
+- **Drawn outlines on High and Ultra.** A screen-space edge pass on the depth
+  and normals (or the inverted-hull trick on trees and rocks) would give the
+  cartoon look ink lines round crowns, trunks and stones. The cheap version --
+  darkening a surface where it turns from the eye -- was tried in the cartoon
+  overhaul and showed nothing (CARTOON_OVERHAUL *Lighting*, round 10): trunks
+  are already dark and stones small. A real pass costs a frame the branch is
+  already over main by. The inverted hull is now on the tee furniture only
+  (0.8 cm, rounds 16-17), where it costs nothing; on trees and rocks it would
+  double their geometry. Medium; wants a profile. (Claude, 26 October 2026)
 - **Rain and a wet course.** Rain to look at, and a course that plays wet:
   softer, slower greens and less roll. The firmness and green-speed settings
   already do the playing half; the drawing half costs frames and wants a
@@ -79,7 +88,9 @@ often has the how-to already worked out.
 - **Greens that read at midday**, five options in order of payoff: a smooth
   lighting ramp for the putting surface alone (the four-step toon ramp clamps
   a near-flat green to one brightness above about 48 degrees of sun); cross-cut
-  bands; contour lines on greens only, off by default; shading baked from each
+  bands; contour lines on greens only, off by default (BUILT on the
+  cartoon-overhaul branch as part of *Map lines*, 26 October 2026: 5 cm on
+  greens, a metre elsewhere -- not greens-only); shading baked from each
   green's shape; slope in hue. Graphics only. Expect an improvement, not a
   solved problem: part of why a green reads flat is the low viewing angle.
   Medium. (was: the entries under *Greens read better if the art style bends

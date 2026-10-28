@@ -40,6 +40,10 @@ export const TIERS = {
  // won't do on 30 September, on the look. Automatic resolution is what Low has.
  low: {
   pixelRatio: .75,
+  // The far woods (vegetation.js addFarWoods; the polish goal) are grove
+  // domes only on Low -- 20 triangles a site, never bare ground (the owner),
+  // and the cheapest for the weakest machines, the owner's one worry.
+  farWoods: 'groves',
   shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},
   grass: .35,
@@ -78,6 +82,18 @@ export const TIERS = {
   // *Distant crowns drawn thinned* and *Low and Medium trees: striped crowns
   // and shards*.
   farTrees: .15,
+  // The painted trees' shipped twins (the cartoon overhaul): below 30% of the
+  // screen's height, a 15 m tree from about 55 m. The overhaul's stands put
+  // thousands of crowns in view, all solid, so none can be left out; swapping
+  // at 30% rather than 15% measured 10-17% of a Low frame on Autumn
+  // (CARTOON_OVERHAUL *Frame rate*). PLACED.
+  farPainted: .3,
+  // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
+  understory: .25,
+  // How far the long grass between the holes is drawn, in metres; it sinks
+  // into the ground over the last 40% (vegetation.js addLongGrass, the
+  // frame-rate pass: Links drew 77,000 clumps out to the horizon). PLACED.
+  longGrassReach: 90,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -108,9 +124,14 @@ export const TIERS = {
   // reflection pass -- the same 210 draws happen either way -- so the buffer
   // size is the only part of it a tier can currently reach. See TODO.
   reflection: 256,
+  // Trees in still water (water-mirror.js): an extra small render a frame.
+  mirrorTwins: false,
  },
  medium: {
   pixelRatio: 1.75,
+  // The far woods as grove domes only, as on Low (the polish goal): the
+  // crown clusters cost Medium 7-14% of a frame against the goal's 5%.
+  farWoods: 'groves',
   shadow: {size: 2048, radius: 1},
   fog: {near: 1300, far: 5500, overviewNear: 4500, overviewFar: 14000},
   grass: 1,
@@ -125,12 +146,19 @@ export const TIERS = {
   thinShadowsFrom: Infinity,
   // As low.
   farTrees: .15,
+  // As low, a little later. PLACED.
+  farPainted: .25,
+  // Half a stand's understory: shrubs a ball passes through, so a share is
+  // only a look (vegetation.js). PLACED.
+  understory: .5,
+  longGrassReach: 130,
   godRays: 0,
   clouds: 0,
   mist: 0,
   floodShadows: 5,
   bloom: 0,
   reflection: 768,
+  mirrorTwins: false,
  },
  high: {
   pixelRatio: 2,
@@ -166,6 +194,11 @@ export const TIERS = {
   // 167 more draw calls there and 50-60 everywhere -- each far mesh is a draw
   // in the picture and in every cascade. Processor time for no graphics time.
   farTrees: 0,
+  // Painted trees below 5% of the screen's height draw their shipped twin
+  // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
+  farPainted: .05,
+  understory: 1,
+  longGrassReach: 190,
   // Shafts are composited additively over the finished frame, so this is how
   // bright they get, not how much of the picture they replace.
   godRays: .85,
@@ -180,6 +213,7 @@ export const TIERS = {
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
   reflection: 1536,
+  mirrorTwins: true,
  },
  ultra: {
   pixelRatio: 2,
@@ -233,6 +267,16 @@ export const TIERS = {
   // instruction is that Ultra stays amazing, and the swap bought at most a
   // millisecond, from one kind of tee.
   farTrees: 0,
+  // PAINTED TREES (the cartoon overhaul) DO swap on Ultra, set aside from
+  // "every crown on Ultra is the whole tree" for the stands: thousands of
+  // crowns at once. A twin is the same lobes in the same places, faceted
+  // (tools/blender/cartoon.py `far_twin`), drawn only below 3% of the
+  // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
+  // *Rules set aside*.
+  farPainted: .03,
+  // The whole understory of a stand (vegetation.js `under`).
+  understory: 1,
+  longGrassReach: 260,
   // Zoomed all the way out the whole course should keep its shadows. The
   // cascades stop at shadowFar to hold resolution up close, but in overview
   // there is no close, so they stretch to cover everything instead.
@@ -258,6 +302,7 @@ export const TIERS = {
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
   reflection: 2048,
+  mirrorTwins: true,
  },
 };
 
@@ -318,18 +363,44 @@ const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
 // So the green settings carry a generation. Raise it when the chosen defaults
 // change and every saved record adopts them ONCE; anything the player sets
 // afterwards sticks, because their record is saved at the current generation.
-export const GREEN_READ_GEN = 4;
-const greenValue = (g, key, fallback) =>
- (g?.greenReadGen ?? 0) >= GREEN_READ_GEN ? clampPct(g?.[key], fallback) : fallback;
+// 5: the ground-readability phase of the cartoon overhaul (26 October 2026)
+// folded the seven ground-reading controls into one choice (READINGS below);
+// every record adopts Clear once -- Map lines where contour lines were on.
+export const GREEN_READ_GEN = 5;
+// READING THE GROUND, ONE CHOICE (the owner, 26 October 2026: "too many
+// complicated settings"). Seven switches and sliders -- ground shading, slope
+// tinting, grass sheen, contour lines, mowing stripes, green definition, green
+// mowing bands -- are three settings a player can tell apart:
+//   natural  the cues as the owner tuned them through September and October
+//   clear    the green's shape shown plainly: definition 85, bands 65, and its
+//            sheen allowed further (ground.js `span`)
+//   map      clear, with contour lines -- every metre, every 5 cm on a green
+// The keys stay in the record and the renderer reads them as before; the
+// choice writes them. Clear is the default -- PLACED in the readability rounds
+// (CARTOON_OVERHAUL *Reading the ground*), the owner's to overrule.
+export const READINGS = ['natural', 'clear', 'map'];
+export const READING_DEFAULT = 'clear';
+export const READING_LABELS = {natural: 'Natural', clear: 'Clear', map: 'Map lines'};
+export function readingCues(reading) {
+ const natural = {...GROUND_CUES, greenDefinition: GREEN_READ.definition, greenBands: GREEN_READ.bands};
+ const clear = {...natural, greenDefinition: 85, greenBands: 65};
+ return {natural, clear, map: {...clear, contours: true}}[READINGS.includes(reading) ? reading : READING_DEFAULT];
+}
+const current = g => (g?.greenReadGen ?? 0) >= GREEN_READ_GEN;
+// The reading a record is at: its own if current, else adopted once.
+const readingOf = g => current(g) && READINGS.includes(g?.groundReading) ? g.groundReading : g?.contours === true ? 'map' : READING_DEFAULT;
+const greenValue = (g, key, fallback) => current(g) ? clampPct(g?.[key], fallback) : readingCues(readingOf(g))[key];
+const cueValue = (g, key) => current(g) ? bool(g?.[key], readingCues(readingOf(g))[key]) : readingCues(readingOf(g))[key];
 const clean = g => ({
  greenReadGen: GREEN_READ_GEN,
+ groundReading: readingOf(g),
  quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
  frameCap: FRAME_CAPS.includes(g?.frameCap) ? g.frameCap : 0,
- relief: bool(g?.relief, GROUND_CUES.relief),
- slopeTint: bool(g?.slopeTint, GROUND_CUES.slopeTint),
- contours: bool(g?.contours, GROUND_CUES.contours),
- stripes: bool(g?.stripes, GROUND_CUES.stripes),
- sheen: bool(g?.sheen, GROUND_CUES.sheen),
+ relief: cueValue(g, 'relief'),
+ slopeTint: cueValue(g, 'slopeTint'),
+ contours: cueValue(g, 'contours'),
+ stripes: cueValue(g, 'stripes'),
+ sheen: cueValue(g, 'sheen'),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
  // AUTOMATIC RESOLUTION (F4, auto-resolution.js): on by default, because the
@@ -351,15 +422,24 @@ const clean = g => ({
  // the switch carries the key, so everyone starts off. Drawing only: the ball
  // hits the real stick either way.
  distantFlags: bool(g?.distantFlags, false),
+ // HAUNTED HOLLOW ALL YEAR (seasons.js): off, so the landscape is offered
+ // only from 1 October to 7 November; on, any time. A player's preference,
+ // not a course setting: in the course schema it would ride inside every
+ // saved course and shared code. A record saved before it has no key, so
+ // every player starts with the season.
+ hauntedAllYear: bool(g?.hauntedAllYear, false),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every
  // tier the tier allows them. Defaults are the settings the before/after report
  // was judged at.
- patches: clampPct(g?.patches, LOOKS.patches),
+ // Turf colour variation and the shade under trees left the panel in the
+ // readability phase (fewer settings): fixed at the values they were judged
+ // at. Haze and wind stay -- wind for anyone motion bothers.
+ patches: LOOKS.patches,
  haze: clampPct(g?.haze, LOOKS.haze),
  wind: clampPct(g?.wind, LOOKS.wind),
- shade: clampPct(g?.shade, LOOKS.shade),
+ shade: LOOKS.shade,
 });
 
 
@@ -389,9 +469,12 @@ export function needsRebuild(a, b) {
  if ((x.mist > 0) !== (y.mist > 0)) return true;
  if ((x.bloom > 0) !== (y.bloom > 0)) return true;
  if (x.reflection !== y.reflection) return true;
+ if (!!x.mirrorTwins !== !!y.mirrorTwins) return true;
  // Cascades are built with the course and register themselves against every
  // material in it, so turning them on or off needs the scene built again.
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
-  (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0);
+  (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
+  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
+  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true);
 }

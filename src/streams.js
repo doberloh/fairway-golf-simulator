@@ -92,7 +92,18 @@ export function downhillProfile(points,height,maxCut=MAX_CUT){
    if(trimmedHead)t=Math.min(t,run[i]/FADE);
    if(trimmedTail)t=Math.min(t,(total-run[i])/FADE);
    p.taper=Math.max(0,Math.min(1,t))**.7;
-   p.width*=Math.max(.08,p.taper);p.depth*=p.taper;
+   // Never narrower than the ground mesh can carry (its finest cells are half
+   // a metre): a 0.2 m trickle fell between vertices, so the ground drawn and
+   // played there stood above its own water. Was 8% of the width.
+   p.width=Math.max(p.width*p.taper,Math.min(p.width,1.2));p.depth*=p.taper;
+   // AND ITS WATER RISES TO MEET THE GROUND (the cartoon overhaul, generator
+   // 37). The carve fades with the taper but the level did not: a faded head
+   // kept the level the full channel needed, as much as MAX_CUT below the
+   // ground beside it, so its last stations were water lying under a hillside
+   // -- invisible on smooth hills, and 8.7 m under a links dune crest once the
+   // dunes grew (tests/course-living.test.mjs). Across the fade the level now
+   // eases up to the surveyed ground, which is already a freeboard below it.
+   p.level=Math.max(p.level,best.values[i]+(p.level-best.values[i])*p.taper);
   });
  }
  best.trimmedHead=trimmedHead;best.trimmedTail=trimmedTail;
@@ -689,17 +700,21 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
  return {streams,segments,at,carve,requested:specs.length};
 }
 export function addStreams(view){for(const stream of view.world.streams.streams){
- const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],flow=[],chan=[],indices=[];
+ const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],flow=[],chan=[],toEnd=[],indices=[];
  // Downstream direction and distance along the channel at every station, for
  // the water's ripples and foam to follow the bends (streamFrame).
  const frame=streamFrame(path);
+ // Metres to the channel's end, so its water can fade in at the start and out
+ // at the end (the far-landscape goal's waves, round 10: it stopped in a hard
+ // square edge across the channel).
+ const total=frame[frame.length-1]?.s??0;
  // Three vertices across each station: both banks plus a centre line. The centre
  // vertex is what lets the surface fade out at the waterline instead of ending
  // on a hard alpha step against the painted bed.
  for(let i=0;i<path.length;i++){const p=path[i],half=p.width*.5*(p.miter||1);
   const f=frame[i]||{tx:0,tz:0,s:0};
-  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));flow.push(f.tx*STREAM_FLOW,f.tz*STREAM_FLOW);chan.push(f.s,side*half);}
+  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));flow.push(f.tx*STREAM_FLOW,f.tz*STREAM_FLOW);chan.push(f.s,side*half);toEnd.push(Math.max(0,total-f.s));}
   if(i){const a=(i-1)*3;indices.push(a,a+3,a+1,a+1,a+3,a+4,a+1,a+4,a+2,a+2,a+4,a+5);}
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setAttribute('flow',new T.Float32BufferAttribute(flow,2));g.setAttribute('chan',new T.Float32BufferAttribute(chan,2));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setAttribute('flow',new T.Float32BufferAttribute(flow,2));g.setAttribute('chan',new T.Float32BufferAttribute(chan,2));g.setAttribute('chanEnd',new T.Float32BufferAttribute(toEnd,1));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
 }}

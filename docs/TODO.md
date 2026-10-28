@@ -31,6 +31,235 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The cartoon overhaul (branch `cartoon-overhaul`, 25-27 October 2026; merged)
+
+The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
+
+- [ ] **The far landscape's third-goal rounds are built and not played**
+  (far-woods.js `seatOn`, landscape-edge.js `drawnGround`, `ringMesas`,
+  `ringIslands`; CARTOON_OVERHAUL *The far landscape (far-landscape goal)*).
+  Check from the tees and from high cameras on every landscape: no far tree
+  hangs over a valley or stands in the sea (the bench's `farSeated` says
+  none does); no painted crowns under Links' or Lakeshore's shallows; no
+  line where near crowns become groves (300-540 m out); Desert's mesas read
+  as tables with red-rock sides, its scrub in clumps with bare sand between,
+  and its hardpan runs past the course's edge with no line; Lakeshore's far
+  land dune woodland, not a carpet; Island's islets sit on the horizon;
+  Haunted Hollow's far trunks read dead; Autumn's evergreens dark crowns in
+  the canopy, no spikes on the horizon. The wait as a course loads is
+  0.3-0.5 s longer on the wooded landscapes (measured, not felt).
+- [ ] **Links' double fairways have been judged from above and in captures,
+  not played** (course.js shareFairways `cover`, `roundTip`, `seamBunkers`;
+  routing.js `shifts`; vegetation.js `carryFade`; ground.js A FAIRWAY'S
+  BANDS IN THE WORLD; generators 48 and 51). Check on seeds `overhaul`,
+  LINKS-B and S5: from the tee the shared fairway shows over short rough in
+  the carry, the tall grass on either side; each join one broad mown shape
+  with its stripes running across it as one, a pot bunker or two on the seam
+  between the holes; the rough between two fairways closing in a rounded
+  tongue; no crossbars; a ball in a seam bunker plays from sand.
+- [ ] **The tee's lap, its turf, and diamond-mowed greens are built and not
+  played** (ground.js). Check: the lap one continuous pass round a tee and a
+  green, no checker, its inner edge soft; a tee's colour between fairway and
+  green; the diamonds, and a tee's bands, turning from light to dark as you
+  walk round them, as cut grass does, and never shimmering as the camera
+  moves; the collar shading gently round each green; on Clear a green's tilt
+  still reads through the diamonds (also on Natural); the range's greens
+  diamond-mowed too.
+- [ ] **The water's edges and reflections are built and not played**
+  (water-mirror.js; renderer.js FOAM_FRAG, WATER_EDGES; ground.js WET SAND;
+  CARTOON_OVERHAUL *Trees in still water*, *Waves at the water's edge*).
+  Check on High or Ultra (Low and Medium draw no mirror): a pond's far bank
+  reflected as one dark wooded band hanging from the waterline, crowns below
+  it, from the bank and from a tee; calmer reflections in calm weather,
+  broken up in wind; no posts or floating patches. On every tier: wavelets
+  arriving along a pond's bank rather than one band breathing, more on the
+  bank the wind blows onto, a thin wet line at every bank; the sea's swash
+  running up unevenly in sets, breakers in stretches, wet sand just above the
+  water (Lakeshore's lake shore not dark to the dunes); a lake's swash
+  quicker and smaller than the sea's; a creek's water fading in where it
+  starts, not a square edge, and never reading as a road; whether all of it
+  reads as water and not as a sine on the edge -- the owner's words.
+- [ ] **The new trees have been seen only in captures, not played.**
+  Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
+  the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,
+  agave -- generator 41; does a ball still hit a saguaro where it is drawn?),
+  the Island's palms and hala, Haunted Hollow's dead trees, the houses
+  (does a ball off a wall bounce where the wall is drawn?), the pumpkins and
+  toadstools (do lantern faces sit on the skin?), the redwood grove and
+  the deadfall,
+  built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
+  packs*). Check in a round: crowns light as one soft body with no speckle;
+  trunks are brown, not black; the wind moves the outer lobes more than the
+  core; a ball hits a trunk where one is drawn; nothing pops at distance; the
+  frame rate on Low and on a phone (each crown is now thousands of triangles
+  where Kenney's were tens -- measured in the overhaul's frame-rate phase).
+- [ ] **The new ground types have not been played** (generator 37; PLAYING.md,
+  RESEARCH *The overhaul's ground types*). Seen in captures and measured in
+  Node only. Check in a round, on each landscape: the lie box names the
+  ground (Rock, Hardpan, Heather...); a ball kicks off rock and runs, stops in
+  heather, takes no spin in waste sand; the hole map shows them; the painted
+  edge and the lie agree (drop a ball either side of a rock edge); no tree
+  stands on a cliff face; Mountain's crags and the Desert's mesas never
+  intrude on a hole; the 18-hole wait is not noticeably longer (it is 0.1-1.3 s
+  in Node). All their numbers are placed: retune by feel in `src/grounds.js`.
+- [ ] **Shared links fairways have not been seen in the game** (generator 38;
+  RESEARCH *Shared links fairways*). Judged only from overhead maps drawn in
+  Node (`tools/surface-map.mjs`). Check on North Sea Links, 18 holes: the
+  merged fairways read as one sweep from the tee, not a strip bolted on; the
+  aim line and the hole map still make clear which way the hole goes; a ball
+  in the shared ground lies as fairway; the mowing stripes run sensibly where
+  two holes meet. If the routing feels cramped or the merges too big, the
+  four numbers are in the Links record in `src/biomes.js`.
+- [ ] **The uncleared stands have been seen only in captures, not played**
+  (generator 39; RESEARCH *The overhaul's stands*). Check in a round: a ball
+  hit into a stand finds a lie and can be played out; the camera following a
+  ball into the woods does not sit inside a crown; the far twins do not pop
+  as you walk toward a stand (Ultra swaps below 3% of the screen, High 5%);
+  nothing hitches when you turn; the painted forest on the far hills joins
+  the last real trees without a visible line, and does not crawl or shimmer
+  as the camera moves (it was only seen in still captures); the long grass
+  (vegetation.js addLongGrass and the near-field clumps) sways sensibly, does
+  not crawl or pop at the 48 m edge of the near tiles, and costs no frames
+  worth noticing -- it adds tens of thousands of instances (measured since:
+  CARTOON_OVERHAUL *Frame rate*; drawn only so far by tier). The frame-time
+  spikes seen in the first profile were measured in the frame-rate pass: not
+  the cull, whose rebuild is about 1.6 ms (see the entry below). A weak card
+  is still unmeasured: the software arm is not run in a goal.
+
+- [ ] **A straight step in the fairway's tone, Midwest hole 2** (seed `overhaul`,
+  view `h2-green-b` in tools/capture/overhaul.mjs: the green from 45 degrees
+  round, noon). A vertical line runs from the bottom of the frame to the green,
+  lighter turf one side, darker the other, on Natural and Clear alike -- a
+  straight edge in something the ground shader blends (a ground grid seam, a
+  baked relief tile, a cloud shadow?). Seen 26 October. **Diagnosed and fixed
+  in generation, not yet seen in the game** (CARTOON_OVERHAUL *The straight
+  tone step*): creases in the ground, which the slope tint draws -- the false
+  front's straight drop (generators 49, 50), then a crease along a straight
+  line through every green's and tee's end, from the centre line read past
+  its end (generator 52). Not a cloud shadow (captured with them off). To
+  check in play: from Midwest hole 2's approach, and round a few other greens,
+  no straight line of lighter or yellower turf.
+- [ ] **Reading the ground is one choice now, seen only in captures** (CARTOON_OVERHAUL
+  *Reading the ground*). Check in a round: the Graphics panel's choice
+  (Natural, Clear, Map lines) changes the green at once; on Clear a green's
+  tilt shows from the fairway and on the putt, and its tone does not swim as
+  the camera moves round it (the reason its sheen was capped); Map lines'
+  5 cm contours on greens beside the green-reading grid; that nobody misses
+  the turf colour and tree-shade sliders. Clear as the default is PLACED.
+- [ ] **The overhaul's late rounds have been seen only in captures** -- the
+  ponds' shallows, raked bunker sand, cliffs and cut banks, numbered flags that fly
+  downwind (CARTOON_OVERHAUL). Check in a round: a pond's pale shelf is where the water
+  is shallow (it reads the ground grid); rake lines do not shimmer as the
+  camera moves; a mesa's side shows layers, not paving; a flag flies the way
+  the trees bend and the wind shown on screen blows, and its number reads from
+  both sides; a calm pond is clear teal, not smeared; the tee furniture's thin
+  ink outline looks like the same hand as the trees; a house's drive reads as
+  concrete (sandstone flags in Desert) lying on the ground with no grass
+  through it; with houses on, the ground at a house's walls is shaded (faint in
+  long rough, where the blades cover it) and Ultra's ferns do not gather there.
+- [ ] **`ball-light-shaders` failed once in nine runs** (27 October, the
+  far-landscape goal's final smoke run): "1 lit shader(s) built as the menu
+  hole became the first hole: MeshToonMaterial", on a Links course
+  (CASTLE-1440-1); the next eight runs passed. The step adopts whatever
+  course the menu was showing, so `--endless-seed` cannot replay it. Not
+  known whether game or harness. To do: if it fails again, note the menu's
+  course and which toon material it names (the journey could print the
+  material's name or its program key).
+- [ ] **After an albatross the scorecard waits about 7 s longer than after a
+  birdie** (measured in the smoke run, 27 October: 12.1 s against 4.9 s from
+  the banner and XP checks to the card). By design the card waits for the
+  hole-out banner and the XP popup; whether that long a still moment feels
+  like a celebration or a stall is the owner's to judge in play.
+- [ ] **The far woods and Desert's stacks have been captured, not played**
+  (far-woods.js, vegetation.js addFarWoods; cartoon_rocks.py; CARTOON_OVERHAUL
+  *The far woods*, *Desert rock stacks*). Check: no bare band between the
+  course's trees and the hills; woods to the horizon where the landscape is
+  wooded, none above Mountain's treeline, thin in the desert; nothing pops as
+  the camera turns (the woods are in twelve culled sectors); on Low and
+  Medium the far trees are simpler groves -- acceptable?; a desert stack's
+  beds sit on each other with no hovering top.
+- [ ] **Links' shared fairways have been judged from above, not played**
+  (course.js shareFairways; generator 46; CARTOON_OVERHAUL *Shared links
+  fairways, rounds 4 to 13*). Check from the tees on seeds that join (the
+  default seed's 2 and 3; S5's 9-11): one merged fairway, no square rungs,
+  no sliver of rough between near fairways; fewer joined holes than before --
+  enough of the "LARGE" shared fairways the owner asked for?
+- [ ] **Mountain's crags and far peaks have been captured, not played**
+  (landforms.js jag, landscape-edge.js ringPeaks; generator 45). Check: no
+  striped banding where grass meets rock; the crags read as cliffs from the
+  tees; the peaks behind the valley; no hole made unfair by a crag (the bench
+  says none is); the nearest far face is pale under the haze -- acceptable?
+- [ ] **Water depth colour has been captured, not played** (renderer.js
+  WATER_EDGES; CARTOON_OVERHAUL *Water depth colour*). Check from a tee and
+  from the air: a pond darker in the middle, lighter toward its banks; no
+  brown rim; the sea's shelf at Island and Links pale, the open water deep
+  blue; at dusk and night the water darkens with the light rather than
+  glowing.
+- [ ] **The links tee surrounds have been captured, not played**
+  (vegetation.js teeFade; CARTOON_OVERHAUL *Links tee surrounds*). Check on
+  Links and Lakeshore tees: the grass rises into the fescue over a few metres
+  rather than a wall; nothing tall in the strip a ball takes off the tee; the
+  same fade on every other landscape's tees reads as natural.
+- [ ] **The tee boxes' mowing has been captured, not played** (ground.js;
+  CARTOON_OVERHAUL *Tee boxes' mowing*). Check on several tees: the stripes
+  run with the shot whatever the hole's bearing; no shimmer as the camera
+  moves; the divots sit behind the markers, not in front; the range's mats
+  are untouched.
+- [ ] **Seated trees have been measured and captured, not played** (tree-seat.js;
+  CARTOON_OVERHAUL *Floating trees*). Check on Mountain and PNW slopes: no
+  trunk's foot shows daylight under it; ground cover on a slope lies along it
+  rather than sticking out level; nothing looks sunk (a tree on a steep slope
+  is drawn up to 15% of its height lower). The wait as a course loads is
+  0.1-0.15 s longer here.
+- [ ] **Haunted Hollow's season has been tested, not played** (seasons.js;
+  CARTOON_OVERHAUL *Haunted Hollow is seasonal*). Check: with the computer's
+  date out of season, Course studio, Surprise me and the Endless picker do not
+  offer it, and the menu's backdrop never grows it; Settings, Graphics,
+  "Haunted Hollow all year" brings it back at once (a picker open at the time
+  redraws when reopened); a saved course on Haunted Hollow still opens and
+  shows it selected; in season (today, until 7 November) everything offers it.
+- [ ] **The gardens have been seen only in captures** (cartoon_garden.py,
+  homes.js): fences stand on the ground on a sloping lot (they were never
+  fitted to it, before or now); the shrubs do not stand in the driveway or
+  the porch; a house on a slope shows a tall stone footing -- deliberate, but
+  check it reads as a basement wall rather than a plinth.
+- [ ] **The tee furniture has been seen only in captures** (cartoon_course.py;
+  BLENDER_ASSETS *cartoon_course*): the marker sits on the turf and is not
+  mistaken for a ball; the sign's card faces the player at every tee; the
+  bench and ball washer never stand in a pond, a bunker or the line of a
+  shot. Also seen in the same captures: the tee pad reads as one flat, very
+  saturated green.
+- [ ] **The overhaul's frame-rate pass has been measured, not seen** (CARTOON_OVERHAUL
+  *Frame rate*). Check in a round: the long grass does not pop or visibly sink
+  at the edge of its reach (High 190 m, Low 90 m); on Low and Medium the trees
+  swap to their faceted twins from about 55 m -- acceptable there?; a bush's
+  shadow is missing past the nearest shadow map -- visible on a long shot?;
+  the twelve-sided crown lobes up close; the one-off long frame (about 120 ms
+  on the 4090) the first time the camera turns onto new ground. High and
+  Ultra stay 2-3.6 ms a frame over main on the 4090 (Autumn, PNW, Mountain,
+  Midwest) -- **accepted by the owner, 26 October 2026** ("220 frames per
+  second is still way higher than a golf sim actually needs").
+- [ ] **Low on a weak machine, measured against main** (the owner's one
+  frame-rate worry, 26 October 2026). Low doubled on the 4090 (Autumn 0.55 to
+  1.0 ms) but nobody has measured a machine without a real graphics card:
+  `node tools/profile.mjs --only weak` (the software arm, about a minute) on
+  main's kept build and the branch's. **Ask the owner first, every time:** a
+  software-rendered smoke run took the machine down on 13 October, and
+  AGENTS.md keeps `weak` out even of GPU-allowed goals -- the branch's
+  standing GPU terms do not cover it. If Low misses main's figure there, the
+  Low levers are in CARTOON_OVERHAUL *Frame rate* (twins sooner, the long
+  grass's reach).
+- [ ] **The overhaul's light has been seen only in still captures** (five
+  rounds; CARTOON_OVERHAUL *Lighting*). Check in a round, on several
+  landscapes: the rim on the crowns does not shimmer or crawl as the camera
+  moves (it is a view-angle term); a ball is easy to find at noon, dusk and
+  night; the lavender blue hour after sunset and the afterglow under the set
+  sun look like evening, not a filter; Haunted Hollow still reads spooky; the
+  colour grade does not make the HUD's tiny course models or the menu cards
+  garish (they share the renderer). Frame cost of the rim and the eight-step
+  ramp is unmeasured (a few instructions on painted crowns) -- the frame-rate
+  phase owes it.
+
 ## Lakeshore Dunes (branch `lakeshore-dunes-biome`, 23 October 2026)
 
 - [ ] **The tenth biome is built and has not been played.** A Lake Michigan
@@ -1095,6 +1324,23 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
+
+- [x] **`endless-round` failed once on the cartoon-overhaul branch** (26
+  October, seed HARROW-4021): **the harness was wrong, not the game.** Replayed
+  on the far-landscape goal (27 October) with `--endless-seed HARROW-4021`,
+  whole logs kept (`bench/shots/overhaul/harrow-4021*.log`, local): the run
+  holes hole 1, a par 5, in 2 -- the albatross -- every time. With the old
+  12 s wait for the scorecard: two passes, then one failure at "putt out", its
+  screenshot the scorecard up and counting down from 8 (it had just opened).
+  Measured with a line the journey now logs: after the albatross the card
+  came 12.1 s after the journey's banner and XP checks; after an ordinary
+  birdie on another run, 4.9 s. The wait sat right on the harness's 12 s
+  window, so the journey passed or failed by a tenth of a second. The wait
+  for a holed putt is now 30 s (both putt-out steps); four replays since,
+  all green. The first replay also failed on its own seed check (the map names
+  the course, `HARROW-4021-1`, not the run): fixed in the harness.
 
 ## Release 0.9.4 (23 October)
 

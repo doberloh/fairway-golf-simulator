@@ -356,9 +356,25 @@ export function greenContour(h,x,z){
  // The false front: along the line of play (local -z is toward the tee), from
  // just in front of where front hole locations stop to the edge and beyond, so
  // the collar and the approach keep falling with it.
+ //
+ // ACROSS THE GREEN'S WIDTH ONLY (the far-landscape goal; TODO "a straight
+ // step in the fairway's tone, Midwest hole 2"; the owner: "seen mostly around
+ // greens but can extend far out"). The drop ran the whole width of the world
+ // at that line, so the green's shoulder carried a straight 0.3-0.9 m step out
+ // through the rough on both sides, and the cartoon light drew it as a line.
+ // It now covers the green's own width and fades over 12 m beyond each side:
+ // the putting surface is unchanged, the ground beside it no longer stepped.
+ //
+ // AND ALONG THE GREEN'S FRONT EDGE, NOT A STRAIGHT LINE (round 3 of the
+ // tone step): the slope tint yellows mown turf between about 1 and 6 degrees,
+ // so the drop's straight crease still drew a straight line across the green's
+ // front, plainest from the side. It now starts 74% of the way to the front
+ // edge along an ellipse of the green's own proportions, so the crease curves
+ // round the front as the edge does. Unchanged on the centre line.
  if(r.falseFront<(h.settings.falseFronts??0)/100){
-  const reach=h.greenSize??17,start=-reach*.74,depth=r.frontDepth;
-  y-=r.frontDrop*Math.pow(slider,.6)*smoothstep01((start-dz)/depth);
+  const reach=h.greenSize??17,half=reach*(h.greenAspect??1.17),depth=r.frontDepth;
+  const start=-reach*.74*Math.sqrt(Math.max(.15,1-(dx/half)**2));
+  y-=r.frontDrop*Math.pow(slider,.6)*smoothstep01((start-dz)/depth)*(1-smoothstep01((Math.abs(dx)-half)/12));
  }
  return y;
 }

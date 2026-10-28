@@ -2,6 +2,7 @@
 // same way stimp does. It is a separate axis from roll and neither derives from
 // the other: a green can be quick and soft, or slow and baked. See firmness.js.
 import {firmnessValue} from './firmness.js';
+import {GROUNDS} from './grounds.js';
 export const DEFAULT_TURF={stimp:10,fairway:100,semi:100,rough:100,firmness:'Normal'};
 export const STIMP_RELEASE_SPEED=1.83;
 export function turfConfig(input={}){const p={...DEFAULT_TURF,...input};for(const [k,lo,hi]of [['stimp',6,15],['fairway',30,180],['semi',30,180],['rough',30,180]])if(!Number.isFinite(p[k])||p[k]<lo||p[k]>hi)throw Error('Green Stimp must be 6–15 ft and turf roll 30–180%.');
@@ -49,8 +50,11 @@ export function rollSpeedGain(speed,k=ROLL_SPEED_GAIN){
 // Every existing caller wants this one, and it is unchanged from before the
 // speed law existed. Increasing roll% reduces resistance; Stimp is a level
 // ground run in feet.
+// The overhaul's ground types (grounds.js) bring their own base value and are
+// not scaled by any roll slider -- the turf settings are for mown turf.
 export function rollDeceleration(surface,input={}){
  const p={...DEFAULT_TURF,...input};
+ if(GROUNDS[surface])return GROUNDS[surface].roll;
  return surface==='green'
   ? STIMP_RELEASE_SPEED**2/(2*p.stimp*.3048)
   : ({fringe:.95,fairway:1.45,tee:1.45,semi:2.35,rough:3.8,sand:6,water:8}[surface]||3.8)
@@ -107,7 +111,7 @@ export const SLIDE_FRICTION = 0.305;
 // skid is shorter off the green. These are simulator presets in the same spirit
 // as the rolling values above, not agronomic measurements.
 const SLIDE_BASE = {green: SLIDE_FRICTION, fringe: 0.35, fairway: 0.42, tee: 0.42, semi: 0.55, rough: 0.70, sand: 0.95};
-export const slideFriction = surface => SLIDE_BASE[surface] ?? 0.70;
+export const slideFriction = surface => SLIDE_BASE[surface] ?? GROUNDS[surface]?.slide ?? 0.70;
 const GRAVITY = 9.80665;
 
 // DISTANCE IS NO LONGER EXACTLY QUADRATIC IN LAUNCH SPEED, and that is the one

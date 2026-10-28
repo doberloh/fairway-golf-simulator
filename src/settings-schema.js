@@ -170,7 +170,92 @@ export const SCHEMA_VERSION=11;
 //     needing work 32 -> 14, no invariant broken). The green's bumps scale
 //     with it (course-plan.js GREEN_REF), so putting slopes are unchanged:
 //     median 1.03% before and after, 90th percentile 1.68 -> 1.67%.
-export const GENERATOR_VERSION=36;
+// 37: the cartoon overhaul's country between the holes (landforms.js, 25
+//     October 2026, branch cartoon-overhaul): every biome but Lakeshore's
+//     beach gets a landform recipe -- crags and cliff bands on Mountain,
+//     outcrops in the forests, granite ledges in Autumn, mesas and washes in
+//     the Desert, marram dunes on Links, prairie in the Midwest, coral on the
+//     Island coast, a heather moor in Haunted Hollow -- whose relief rises
+//     between the holes and whose ground types (grounds.js: rock, scree,
+//     hardpan, waste sand, heather, native grass, coral) play as their own
+//     surfaces. Fallen needles and leaves became played ground too, and trees,
+//     boulders, props and houses keep to what each ground allows. Every
+//     biome's ground moved.
+// 38: shared links fairways (the cartoon overhaul, the owner's addendum, 25
+//     October 2026): Links fairways are cut 1.3 times as wide, the routing
+//     offers each hole a place running beside an earlier one (a back-nine
+//     hole beside its front-nine partner first), and where two run side by
+//     side within 85 m their fairways widen to meet (course.js
+//     shareFairways). Only Links' ground moved.
+// 39: uncleared stands (the cartoon overhaul, the owner's addendum, 25
+//     October 2026; stands.js): dense forest, bosque or gorse thicket round
+//     every property and in patches between the holes, planted from a hashed
+//     grid after the open scatter. Every landscape but the Giant Redwood
+//     moved: its new trees, the needles and leaves under them, and what
+//     anchors to trees (deadfall, Haunted Hollow's toadstools).
+// 40: the stands' second round: their edges 15-20 m nearer play, and stand
+//     trees 1.2 times as tall and wide as the open scatter's. Every landscape
+//     with a stand moved.
+// 41: the cartoon desert: the low cacti (teddy-bear cholla, prickly pear,
+//     barrel) are a plant of their own (`cholla`, 0.7-1.6 m) instead of
+//     being drawn from the saguaros' `cactus`, so the Desert's mix and its
+//     bosque's mix changed. Only the Desert moved.
+// 42: the brush (tools/blender/cartoon_brush.py): an understory of shrubs
+//     and ferns under every stand (`stands.under`, its own hashed grid), and
+//     creosote, brittlebush and sagebrush in the open Desert and Mountain
+//     mixes. Every landscape with a stand moved but Links (its stand is
+//     already gorse).
+// 43: Haunted Hollow's pumpkins and toadstools are the cartoon overhaul's
+//     own (tools/blender/cartoon_props.py): the prop's model is drawn from
+//     three pumpkins rather than one, and every collision radius is the new
+//     models' measured half-width (species.js PROP_MODELS). Only Haunted
+//     Hollow moved.
+// 44: no tree on a cliff's lip and no ground cover on a wall (the polish
+//     goal's floating trees): a trunk whose ground falls away by more than
+//     15% of its height within a tenth of its height, and a cover on ground
+//     steeper than 40 degrees, are not planted. Every landscape moved (its
+//     planting; the ground itself is unchanged).
+// 45: Mountain's crags (the polish goal): aretes, buttresses and couloirs
+//     bend the cliff bands and roughen the faces (landforms.js `jag`), and
+//     rock and scree are where the ground is steep rather than on each
+//     terrace's riser. Only Mountain moved.
+// 46: Links' shared fairways (the polish goal): a join only over a long
+//     overlap (140 m), its gaps closed, its edge blurred, tapered to the
+//     fairway's own width over 170 m and at its stretch's ends; where two
+//     fairways come within 14 m and do not join, a clear strip of rough
+//     between them instead of a sliver. Only Links moved.
+// 47: Links' shared fairways (the far-landscape goal): a join is decided for
+//     the PAIR, from both holes, and taken only where their fairways run
+//     alongside for two thirds of their shareable length on average (100 m
+//     at least) -- a double fairway, not a crossbar; tapered at the fairway's
+//     ends over 36 m (was 100), so an out-and-back pair meets; and a hole
+//     routed back beside another is also offered its tee 60 m past
+//     the level of the last green (routing.js), so the two fairways lie
+//     alongside. Only Links moved.
+// 48: Links' shared fairways, round 6 (the far-landscape goal): where a join
+//     runs out, the rough between the two fairways keeps half a strip a side
+//     until the last quarter of the taper, then closes on a circle's profile
+//     -- a tongue with a rounded tip, not a hairline wedge. Only Links moved.
+// 49: A green's false front (course-plan.js greenContour) drops only across
+//     the green's own width, fading over 12 m beyond each side; it ran the
+//     width of the world, so a straight 0.3-0.9 m step crossed the rough
+//     beside every false-fronted green (the TODO's "straight step in the
+//     fairway's tone"). Putting surfaces unchanged; the ground beside them
+//     moved on every landscape.
+// 50: The false front's drop starts along an ellipse of the green's own
+//     proportions, 74% of the way to its front edge, instead of a straight
+//     line across it: the slope tint drew that crease as a straight line
+//     (the tone step's round 3). Unchanged on the green's centre line; every
+//     landscape's false-fronted greens moved off it.
+// 51: Pot bunkers along the seam of each Links shared fairway, up to two a
+//     join, on the lower-numbered hole's side (the shared fairways' round 7).
+//     Links only.
+// 52: The straight tone step, round 5. A hole's side widths read the centre
+//     line's slope from points kept inside the hole (in the last half metre
+//     the width dropped 1.3 m), and past either end the distance from a hole
+//     follows its centre line carried straight on. Both creased the ground
+//     along a straight line through every green's end; every landscape moved.
+export const GENERATOR_VERSION=52;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

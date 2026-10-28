@@ -8,6 +8,8 @@
 //   node tools/smoke.mjs --headed     watch it happen
 //   node tools/smoke.mjs --list       what the journeys are
 //   node tools/smoke.mjs --file x.html  test some other built file
+//   node tools/smoke.mjs --only endless-round --endless-seed HARROW-4021
+//                                     an Endless run on a seed of your choosing
 //
 // WHY THIS EXISTS. `npm test` covers physics, generation and scoring, and
 // cannot see the interface at all: `main.js` is several thousand lines of
@@ -70,6 +72,10 @@ const option = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? ar
 const SOFTWARE = flag('software');
 const HEADED = flag('headed');
 const ONLY = option('only');
+// `--endless-seed HARROW-4021`: every journey's fresh Endless run takes this
+// seed (the game's lab.pinRun), so a run that failed is played again on the
+// same holes. Its journeys still press Start an endless run as a player does.
+const ENDLESS_SEED = option('endless-seed');
 // `--file some/Fairway.html` tests any built file instead of dist/ -- the one
 // inside a release ZIP, or an older build to prove a check goes red on the bug
 // it was written for. No staleness gate: the file was named on purpose.
@@ -849,10 +855,18 @@ const JOURNEYS = [
   what: 'the whole round loop: clubs, aim, cameras, a tee shot, a drop, putting out, the scorecard, the next hole',
   async run(t) {
    await menuReady(t);
+   if (ENDLESS_SEED) await t.page.evaluate(s => window.lab.pinRun(s), ENDLESS_SEED);
    await t.step('Endless → Start an endless run', async () => {
     await fromMenu(t, 'Endless');
     await t.pressToPlay('Start an endless run');
    });
+   if (ENDLESS_SEED) {
+    // The map names the COURSE, an Endless hole's own seed: the run's seed and
+    // the hole's number (HARROW-4021-1 on run HARROW-4021). The first replay
+    // compared that with the run's seed and failed a correctly pinned run.
+    const course = (await whereAmI(t.page)).seed, pinned = course?.slice(0, course.lastIndexOf('-'));
+    if (pinned !== ENDLESS_SEED) throw new Error(`asked for Endless seed ${ENDLESS_SEED}, the run is on ${pinned} (course ${course})`);
+   }
    // Which course, on every run and not only a failed one: a software frame's
    // cost depends on the course as well as the machine, and a slow run cannot
    // be told from a slow course without it (16 October 2026).
@@ -957,6 +971,10 @@ const JOURNEYS = [
      if (holed === false) continue;
      // THE BALL CLOSE UP in the hole-out banner (Phase 5): drawn, turning, and
      // pictured for a look.
+     // The hole's par and score name, on every run (26 October 2026): one run
+     // failed after an albatross and the passing runs' scores were not kept.
+     const named = await t.page.waitForSelector('#holeOut:not([hidden])', {timeout: 2500}).then(() => t.page.evaluate(() => document.getElementById('holeOut').textContent.replace(/\s+/g, ' ').trim().slice(0, 60)), () => '?');
+     console.log(`       (${await t.page.evaluate(() => document.getElementById('holePar')?.textContent?.trim() || '?')}: "${named}")`);
      if (await t.page.waitForSelector('#holeOut:not([hidden]) .hole-out-ball', {timeout: 2500}).then(() => true, () => false)) {
       await t.page.waitForTimeout(400);
       const drawn = await t.page.evaluate(() => { const c = document.querySelector('#holeOut .hole-out-ball'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) n += d[i] > 200; return n / (c.width * c.height); });
@@ -972,12 +990,20 @@ const JOURNEYS = [
      // says the ball is down there is no deciding left to do, so the wait
      // scales with the renderer; only a build that cannot say waits a fixed
      // time and putts again.
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false);
+     // HARROW-4021, replayed (the far-landscape goal): 12 s was too short for
+     // an albatross. The card waits for the XP popup and the level-up banner,
+     // and 250 XP on the smoke run's fresh profile crosses several levels --
+     // each about 2.4 s of filling bar, then a banner of up to 4.2 s -- so the
+     // card came at 12-14 s, and the journey failed one replay in three with
+     // the card on screen counting down. The game was right; 30 s now.
+     const waitFrom = Date.now();
+     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 30000 * SLOW : 12000}).then(() => true, () => false);
+     if (done) console.log(`       (the card ${((Date.now() - waitFrom) / 1000).toFixed(1)} s after the banner and XP checks)`);
      if (done) {
       if (await t.page.evaluate(() => !document.getElementById('xpGain').hidden)) throw new Error('the scorecard opened over the XP popup');
       return;
      }
-     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${30 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
@@ -2124,8 +2150,9 @@ const JOURNEYS = [
      // (14 October 2026), so give it time.
      const holed = await t.holed();
      if (holed === false) continue;
-     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false)) return;
-     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
+     // 30 s once holed, as the endless round's (an albatross's level-ups).
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 30000 * SLOW : 12000}).then(() => true, () => false)) return;
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${30 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });

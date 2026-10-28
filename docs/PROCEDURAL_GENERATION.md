@@ -69,6 +69,8 @@ Nothing stands on mown turf, ever. Nothing stands where a tee shot would pass th
 
 The fourth rule is an edge rather than a wall. Planting used to stop dead at a fixed distance outside a hole's corridor, and a cliff produces two artefacts at once: a bare moat, and a pile-up just outside it where every refused candidate was pushed. Acceptance now climbs from nothing at a floor to certainty a little further out, so candidates near the edge are sometimes kept. **Near a tee the floor is a multiple of that hole's own corridor half-width, not a number of metres** -- the distance it is compared against grows with the fairway, so a fixed floor held at the default width and collapsed at the top of the range.
 
+Two more refusals keep plants off ground they could not stand on (generator 44, the polish goal): no ground cover where the ground over its spread is steeper than 40 degrees (measured at two spans, the steeper counting), and no trunk on a cliff's lip -- where the ground falls by more than 15% of the tree's height within a tenth of its height. Both are drawing problems at root (tree-seat.js seats every plant into its slope, and these are the cases no seat can hold), so they are generation rules rather than hidden plants.
+
 Greens are treated asymmetrically on purpose. The arc facing back down the fairway keeps its clearance whatever `greenTrees` says, because an approach has to have somewhere to land; the slider moves only the back and the flanks. The approach direction is taken from the middle of the hole seventy metres short of the green, so a dogleg's approach is where the shot really comes from.
 
 A hole may also be given a **specimen**: a feature tree or a cluster of stones standing in its own short grass, controlled by `fairwayFeature`. This is the one obstruction allowed on the line of play -- an oak in the middle of a fairway is the hole, not a fault -- and what makes it fair is the open grass down one side rather than an empty centre.
@@ -129,3 +131,80 @@ A tee is raised only after siting has failed to find a view, and never by more
 than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
+
+## The country between the holes (generator 37)
+
+Until generator 37 every landscape was the same rolling hills under three
+numbers. Each biome now names a **landform recipe** (`landform` in its record,
+`src/landforms.js`) that adds relief and ground of its own between the holes,
+from what lies between the holes on real courses of its kind
+(LANDSCAPE_RESEARCH, *What lies between the holes*):
+
+- **crags** (Mountain; smaller in the Pacific Northwest, the Redwood grove and
+  Autumn's granite ledges): a ridged field gathered into clusters by a broad
+  mask, cut into stepped cliff bands. Rock on the risers and summits where the
+  finished ground is really steep, scree on the treads at their feet (Mountain).
+- **mesas** (Desert): flat-topped sandstone buttes on a seeded grid of cells,
+  cliffs on their sides and a talus apron, and dry washes winding between them.
+  Every remaining rough more than a few metres past the corridor is hardpan.
+- **dunes** (Links, Lakeshore Dunes): rumpled ground and dune crests carrying
+  marram (native grass), heather on the settled ground behind (Links).
+- **prairie** (Midwest), **coral** (the Island's ironshore just above the
+  beach), **moor** (Haunted Hollow's dead heather).
+
+The relief is added to the raw landform and fades to nothing toward the
+corridors over the recipe's `reach` -- not with the tee area's returned relief,
+which stood crests in tee shots -- so the holes are never touched. Its ground
+types (rock, scree, hardpan, waste sand, heather, native grass, coral) are two
+channels and a floor, baked once onto the ground atlas's grid exactly as the
+Lakeshore blowouts are, and gated by distance outside the corridor; the lie
+(`surface`) and the ground shader read the same bytes and switch at 0.5.
+Fallen needles and leaves under the trees (`fallen`) are baked the same way
+after planting and play as pine straw or leaves. Rock is decided from the
+finished ground's steepness, so a crag the corridor fade has flattened is
+grass, not a flat rock decal.
+
+**Each ground type is a played surface** (`src/grounds.js`): its bounce,
+roll, skid, lie, relief rank, sound and map colour are one row there, and
+every table that asks what a ball lies on reads it. Trees, boulders, props
+and houses stand only on ground that allows them (`allows`): no tree on a
+rock face, no boulder in a wash. None is a hazard.
+
+The driving range has no recipe: its flatness is the instrument.
+
+## Shared links fairways (generator 38)
+
+Links only, from three entries in its biome record. Its fairways are cut 1.3
+times the width setting (`fairwayScale`). Routing (`routeParallel`) also
+offers each hole of 250 m or more a tee on the line beside an earlier long
+hole -- either direction, either side, at the least clearance the corridors
+allow, within a short walk of the last green -- and prefers a back-nine hole
+running home beside its front-nine partner, as the Old Course does; since
+generator 47 a hole running back is also offered its tee 60 m further past
+the last green's level, so its fairway lies beside the other's rather than
+beside its teeing ground. After routing and before anything measures a
+corridor (`shareFairways`), wherever two fairways run nearly parallel with
+under 85 m of rough between them, each widens to the middle, so the strip
+between becomes one fairway. Never across a pond; never at a tee end or
+green complex. A join is decided for the PAIR (generator 47): taken only
+where the two fairways run alongside for at least 100 m and, on average, two
+thirds of their shareable stretch -- a double fairway, never a crossbar --
+tapered over 36 m at the fairway's ends; it must actually touch -- a hole
+whose widening meets no other fairway gives it back -- and where two
+fairways come within 14 m without joining, each edge pulls back to leave a
+clear strip of rough rather than a sliver. On 18 holes two to six holes
+share. Along each join of 60 m or more lie one or two pot bunkers, 3.6-5.2 m
+across, near the seam between the two holes' lines and on the
+lower-numbered hole's side (generator 51), as on the Old Course's double
+fairways. The values are placed (RESEARCH, *Shared links fairways*).
+
+## Uncleared stands (generator 39)
+
+After the open scatter of trees, a biome's `stands` record plants the woods
+that were never cleared (`src/stands.js`): a ragged rim of dense forest,
+bosque or thicket round the property from a wandering line some 45-110 m
+outside the corridors, and patches between the holes where a broad noise
+field says so, never nearer play than 40-55 m. Each stand is planted from a
+jittered grid every 8-11 m, by the rules every tree obeys, with crowns
+allowed to close and trees 1.2 times the open scatter's size (generator 40). Hashed, not drawn: nothing else on the course is decided
+differently. Under each stand an understory of shrubs and ferns is planted from a grid of its own (generator 42). The Giant Redwood (already a grove) and the range have none.

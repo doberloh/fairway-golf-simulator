@@ -1,5 +1,9 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {GROUND_PLANTS} from '../src/species.js';
+import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
+import {allows} from '../src/grounds.js';
+import {farWoodSites, FAR_SHAPES} from '../src/far-woods.js';
+import {drawnGround} from '../src/landscape-edge.js';
 // What a generated course is measured on.
 //
 // EVERY METRIC IMPORTS ITS GEOMETRY FROM `src`. It never reimplements it.
@@ -65,7 +69,12 @@ export const METRICS = {
    // is and makes a surround look emptier than it is.
    const series = {teeSurround: [], greenBack: [], greenApproach: []};
    const counts = {holes: 0, tees: 0, greens: 0};
-   const trunked = w.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+   // The OPEN SCATTER only: an uncleared stand (src/stands.js, the cartoon
+   // overhaul) stands well back from every tee and green by design, and
+   // counted in the average it made every tee look clear-cut beside it --
+   // 35 courses broke this rule on the day stands arrived, with the tee
+   // surrounds unchanged.
+   const trunked = w.trees.filter(t => !GROUND_PLANTS.has(t.kind) && !t.stand);
    // THE STANDARD FIXTURES BUILD COURSES WITH `trees: 0`, because every other
    // metric measures terrain and routing, where planting is irrelevant and
    // costs time. So this one reports NOTHING rather than a shelf of zeros that
@@ -80,7 +89,7 @@ export const METRICS = {
    let n = 0, rough = 0;
    for (let i = 0; i < 20000; i++) {
     const x = (rnd() - .5) * w.halfX * 2, z = (rnd() - .5) * w.halfZ * 2;
-    n++; if (w.surface(x, z) === 'rough') rough++;
+    n++; if (allows(w.surface(x, z), 'trees')) rough++;
    }
    const roughHa = (w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4;
    const average = roughHa > 0 ? trunked.length / roughHa : 0;
@@ -92,7 +101,7 @@ export const METRICS = {
     for (const c of centres) for (let i = 0; i < 400; i++) {
      const a = rnd() * 6.283, r = Math.sqrt(rnd()) * radius;
      samples++;
-     if (w.surface(c.x + Math.cos(a) * r, c.z + Math.sin(a) * r) === 'rough') roughHits++;
+     if (allows(w.surface(c.x + Math.cos(a) * r, c.z + Math.sin(a) * r), 'trees')) roughHits++;
     }
     const area = centres.length * Math.PI * radius * radius / 1e4 * (roughHits / samples);
     if (!area) return null;
@@ -496,5 +505,71 @@ function ovalContains(p, x, z) {
  const a = Math.atan2(dz, x - p.x), e = ovalRadius(p, a);
  return Math.hypot(x - p.x, dz) < Math.hypot(e.x, e.z) && best > 0;
 }
+
+// TREES SEATED IN THE GROUND (the polish goal; src/tree-seat.js). Every plant
+// is drawn down by its seat; this asks, independently of the seat's own sum,
+// whether any part of its footprint still stands above the ground drawn under
+// it -- on a ring at the footprint's radius and on one at half of it, sixteen
+// points each, so a hump the seat's eight samples missed is caught too. It
+// also catches a plant whose `y` no longer matches the ground (a landform
+// changed after planting). Run with trees on: `--set trees=65`.
+METRICS.seated = {
+ describe: 'plants whose drawn foot stands above the ground anywhere under it -- NEEDS `--set trees=65`',
+ run(w) {
+  const counts = {plantsChecked: 0}, invariants = {floatingPlant: 0}, series = {seatDepth: [], gap: []};
+  for (const t of w.trees || []) {
+   counts.plantsChecked++;
+   const pose = plantPose(t, w.height), base = t.y - pose.depth, R = footprintRadius(t);
+   series.seatDepth.push(pose.depth);
+   // The foot is a plane through the seated base with the pose's slope; the
+   // lean can lift an edge by r x SEAT_LEAN. Checked on its own points, not
+   // the seat's: rings at 85% and 50% of the footprint, twelve each, turned
+   // off the seat's sixteen.
+   let worst = -Infinity;
+   for (const r of [R * .85, R * .5]) for (let k = 0; k < 12; k++) {
+    const a = (k + .37) * Math.PI / 6, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
+    worst = Math.max(worst, base + pose.gx * dx + pose.gz * dz + r * SEAT_LEAN - w.height(t.x + dx, t.z + dz));
+   }
+   series.gap.push(worst);
+   if (worst > .03) invariants.floatingPlant++;
+  }
+  return {series, counts, invariants};
+ },
+};
+
+// THE FAR WOODS ON THE GROUND AS DRAWN (the far-landscape goal; src/far-woods.js
+// seatOn). Every far crown and grove, in each shape it may be drawn as (a near
+// crown is a grove on Low and Medium), checked on its own points -- three rings
+// of twenty at 90%, 60% and 30% of its base, turned off the seat's -- against
+// `drawnGround`, the landscape's own triangles: its flat base must not stand
+// more than 2% of its radius (at least 30 cm) above the ground anywhere under
+// it (PLACED: under a pixel at the distance a crown that size stands), and no
+// point of its base may be in water -- the sea below its level, or a pond,
+// lake or creek inside the course's ground. Runs on every course; no setting.
+METRICS.farSeated = {
+ describe: 'far crowns and groves floating above the drawn ground, or reaching water',
+ run(w) {
+  const counts = {farCrowns: 0}, invariants = {farFloating: 0, farInWater: 0}, series = {farGap: []};
+  const at = drawnGround(w), sea = !!w.bio?.sea, gx = w.groundGrid.halfX, gz = w.groundGrid.halfZ;
+  const wet = (x, z, y) => (sea && y < (w.waterLevel ?? 0)) || (Math.abs(x) < gx && Math.abs(z) < gz && w.surface(x, z) === 'water');
+  for (const groves of [false, true]) for (const s of farWoodSites(w, {groves})) {
+   const seat = s.seat, r = s.r, shape = FAR_SHAPES[s.shape];
+   {
+    counts.farCrowns++;
+    let worst = -Infinity, inWater = false;
+    for (const q of [.9, .6, .3]) for (let k = 0; k < 20; k++) {
+     const a = (k + .53) * Math.PI / 10, dx = Math.cos(a) * r * shape.foot * q, dz = Math.sin(a) * r * shape.foot * q;
+     const g = at(s.x + dx, s.z + dz), base = seat.y - (seat.ux * dx + seat.uz * dz) / seat.uy;
+     worst = Math.max(worst, base - g);
+     if (wet(s.x + dx, s.z + dz, g)) inWater = true;
+    }
+    series.farGap.push(worst);
+    if (worst > Math.max(.3, .02 * r)) invariants.farFloating++;
+    if (inWater) invariants.farInWater++;
+   }
+  }
+  return {series, counts, invariants};
+ },
+};
 
 export const METRIC_NAMES = Object.keys(METRICS);

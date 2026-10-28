@@ -48,9 +48,32 @@ export function applyCloudFade(material) {
   // `begin_vertex` and `dithering_fragment` are the two chunks nothing else
   // claims on this material: mist holds common/fog in both stages, and cloud
   // shadows skip a cloud entirely.
-  shader.vertexShader = 'attribute float aFade;\nvarying float vFade;\n' + shader.vertexShader
-   .replace('#include <begin_vertex>', '#include <begin_vertex>\n vFade=aFade;');
-  shader.fragmentShader = 'varying float vFade;\n' + shader.fragmentShader
+  // A CLOUD LIGHTS AS ONE BODY (the cartoon overhaul's lighting, round 6).
+  // Each puff's normals lean toward the direction from its cloud's centre, as
+  // a painted crown's do, so the cloud has one lit side and one shaded side
+  // instead of a lit facet on every puff; the underside, below the cloud's
+  // base, takes a cool grey-blue; and the edge turned from the eye catches the
+  // sky, brighter where the sun stands behind -- the silver lining. Here, with
+  // the fade, because the cascade setup replaces anything installed earlier.
+  shader.vertexShader = 'attribute float aFade;\nattribute vec3 aCentre;\nattribute vec2 aBase;\nvarying float vFade;\nvarying float vCloudUp;\n' + shader.vertexShader
+   .replace('#include <begin_vertex>', '#include <begin_vertex>\n vFade=aFade;')
+   .replace('#include <defaultnormal_vertex>', `vec4 cloudAt=instanceMatrix*vec4(position,1.);
+ vCloudUp=clamp((cloudAt.y-aBase.x)/aBase.y,0.,1.);
+ vec3 cloudOut=normalize(cloudAt.xyz-aCentre),puffOut=normalize(mat3(instanceMatrix)*objectNormal);
+ vec3 transformedNormal=normalMatrix*normalize(mix(puffOut,cloudOut,.62));
+ #ifdef FLIP_SIDED
+ transformedNormal=-transformedNormal;
+ #endif`);
+  shader.fragmentShader = 'varying float vFade;\nvarying float vCloudUp;\n' + shader.fragmentShader
+   .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb*=mix(vec3(.66,.72,.86),vec3(1.03),smoothstep(0.,.7,vCloudUp));')
+   .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+ #if NUM_HEMI_LIGHTS>0
+ {vec3 toEye=normalize(vViewPosition);float edge=1.-clamp(dot(normal,toEye),0.,1.);edge*=edge*edge;edge*=edge;vec3 rim=hemisphereLights[0].skyColor*.4;
+  #if NUM_DIR_LIGHTS>0
+  float behind=clamp(dot(-toEye,directionalLights[0].direction),0.,1.);rim+=directionalLights[0].color*behind*behind*behind*.8;
+  #endif
+  reflectedLight.indirectDiffuse+=diffuseColor.rgb*rim*edge;}
+ #endif`)
    .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n gl_FragColor.a*=vFade;');
  };
  material.transparent = true;
@@ -73,9 +96,14 @@ export function makeClouds(view, seed) {
  const altitude = 640;
 
  const material = new T.MeshToonMaterial({color: '#ffffff'});
- // One blob geometry, instanced per puff. Low detail on purpose: the silhouette
- // is the whole point and a smooth sphere reads as a balloon.
- const blob = new T.IcosahedronGeometry(1, 1);
+ // One blob geometry, instanced per puff. Round 6 of the overhaul's light:
+ // finer (detail 2, 320 faces -- at 1 every puff's outline was a row of
+ // facets), and flat underneath, so the puffs of a cloud share a level base
+ // the way a fair-weather cumulus does; the puffs' own number and spread, not
+ // a coarse mesh, keep it from reading as a balloon.
+ const blob = new T.IcosahedronGeometry(1, 2);
+ {const p = blob.attributes.position;
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < -.25) p.setY(i, -.25 + (y + .25) * .2); }}
 
  const clouds = [];
  const dummy = new T.Object3D();
@@ -88,18 +116,25 @@ export function makeClouds(view, seed) {
    y: altitude + (rng() - .5) * 130,
    radius,
   };
-  // Four to seven blobs in a squat cluster: wider than tall, flat underneath,
-  // which is what makes a cloud read as a cloud rather than a lump.
-  const count = 4 + Math.floor(rng() * 4);
+  // Seven to twelve blobs in a squat cluster: wider than tall, flat
+  // underneath, which is what makes a cloud read as a cloud rather than a
+  // lump. (Four to seven before round 6: a few big balls.)
+  const count = 7 + Math.floor(rng() * 6);
   for (let p = 0; p < count; p++) {
    const angle = p / count * Math.PI * 2 + rng() * .8;
-   const reach = radius * (.18 + rng() * .46);
-   const size = radius * (.36 + rng() * .30);
+   const reach = radius * (.12 + rng() * .5);
+   // The middle ones taller, so the cloud domes up from its base.
+   const size = radius * (.26 + rng() * .24) * (1.25 - reach / radius * .6);
+   // The clouds' round 3: each puff's flat base sat at its own random height,
+   // so from below a near cloud showed a stack of flat bottoms -- a pile of
+   // discs. Every puff now stands on the cloud's one base (the blob is cut
+   // flat at -0.25 of its height); the big middle ones still dome highest.
+   const tall = size * (.62 + rng() * .22);
    dummy.position.set(
     cloud.x + Math.cos(angle) * reach,
-    cloud.y + (rng() - .3) * radius * .16,
+    cloud.y + tall * .25,
     cloud.z + Math.sin(angle) * reach * .7);
-   dummy.scale.set(size, size * (.62 + rng() * .22), size * (.86 + rng() * .28));
+   dummy.scale.set(size, tall, size * (.86 + rng() * .28));
    dummy.rotation.set(0, rng() * 6.28, 0);
    dummy.updateMatrix();
    puffs.push({cloud: i, offset: dummy.matrix.clone()});
@@ -114,6 +149,12 @@ export function makeClouds(view, seed) {
 
  const mesh = new T.InstancedMesh(blob, material, puffs.length);
  mesh.geometry.setAttribute('aFade', new T.InstancedBufferAttribute(puffFade, 1));
+ // Each puff's cloud: its centre (moved with the drift in `sync`), and its
+ // base and depth, for the shading above.
+ const puffCentre = new Float32Array(puffs.length * 3), puffBase = new Float32Array(puffs.length * 2);
+ puffs.forEach((puff, i) => { const c = clouds[puff.cloud]; puffBase[i * 2] = c.y - c.radius * .1; puffBase[i * 2 + 1] = c.radius * .45; });
+ mesh.geometry.setAttribute('aCentre', new T.InstancedBufferAttribute(puffCentre, 3));
+ mesh.geometry.setAttribute('aBase', new T.InstancedBufferAttribute(puffBase, 2));
  mesh.frustumCulled = false;
  // Their own shadow discs do the shading; casting into the shadow map as well
  // would double it, and at this altitude the cascade would only smear it.
@@ -133,9 +174,11 @@ export function makeClouds(view, seed) {
    matrix.multiplyMatrices(shift, puff.offset);
    mesh.setMatrixAt(i, matrix);
    puffFade[i] = fades[puff.cloud];
+   puffCentre[i * 3] = cloud.x + (cloud.driftX || 0); puffCentre[i * 3 + 1] = cloud.y + cloud.radius * .1; puffCentre[i * 3 + 2] = cloud.z + (cloud.driftZ || 0);
   });
   mesh.instanceMatrix.needsUpdate = true;
   mesh.geometry.getAttribute('aFade').needsUpdate = true;
+  mesh.geometry.getAttribute('aCentre').needsUpdate = true;
   clouds.forEach((cloud, i) => discs[i].set(
    cloud.x + (cloud.driftX || 0), cloud.y, cloud.z + (cloud.driftZ || 0), cloud.radius));
  }

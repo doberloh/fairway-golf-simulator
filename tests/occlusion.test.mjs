@@ -37,3 +37,17 @@ test('a real course bakes without error and shades somewhere, on the ownership a
  assert.ok(shaded > .005 && shaded < .8, `shaded share ${shaded}`);
  assert.ok(occ.every(v => v >= 0 && v < 1));
 });
+
+test('a house shades the ground at its walls, turned with it, and not the forest floor', () => {
+ const ex = 60, ez = 60, Sx = 240, Sz = 240;
+ // 12 m wide along its own x, 8 m deep, turned a quarter: its long walls run along world z.
+ const house = {x: 0, z: 0, width: 12, depth: 8, rotation: Math.PI / 2};
+ const occ = occlusionAtlas({trees: [], rocks: [], homes: [house]}, ex, ez, Sx, Sz);
+ const wall = at(occ, Sx, Sz, ex, ez, 4.6, 0), end = at(occ, Sx, Sz, ex, ez, 0, 6.6);
+ const out = at(occ, Sx, Sz, ex, ez, 7.5, 0), far = at(occ, Sx, Sz, ex, ez, 20, 0);
+ assert.ok(wall > .25, `just outside the long wall ${wall}`);
+ assert.ok(end > .25, `just outside the end wall ${end}`);
+ assert.ok(wall > out && out >= 0, `fades out: ${wall} then ${out}`);
+ assert.equal(far, 0);
+ assert.ok(occ.plants.every(v => v === 0), 'the forest floor never gathers at a wall');
+});
