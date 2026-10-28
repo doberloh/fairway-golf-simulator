@@ -276,6 +276,20 @@ graphics card is asked for again, and the High and Ultra frame gap stays
 accepted. A branch's rules are written to end, and naming that ending in the
 rule itself is what made the merge a short edit rather than a judgement call.
 
+**The 1.0 interface polish unlocks the computer, 27 October 2026.** The last
+goal before 1.0 polishes every screen at a dozen sizes, so it lives on smoke
+runs, captures and frame measurements; asking for each would stall it. The
+owner: "GPU and CPU usage are fully unlocked for this goal", and asked for
+the rule to say it must be removed, and the branch squashed, when the branch
+merges back -- the lesson of the overhaul's merge, written in from the start.
+Three precautions stay because they cost the work nothing and each answers a
+crash: no start while a game is running (5 and 14 October), one GPU job at a
+time (18 October, volume) and nothing left open after (16 October). Software
+rendering is unlocked too, against the 13 October crash; the owner was told
+and left it in. The same goal allows no performance cost on any tier ("There
+should be no performance hits for these changes allowed"), so every change
+that could move a frame is measured against main's build.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

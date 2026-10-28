@@ -50,6 +50,36 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
+## The 1.0 interface polish: the computer is unlocked (temporary)
+
+**On branch `ui-polish-1-0`, and only there, the graphics card and the
+processor need no asking** (the owner, 27 October 2026: "GPU and CPU usage
+are fully unlocked for this goal"). Smoke (every journey, `--software`
+included), Playwright captures, the game in the browser pane, `npm run
+profile` (full sweeps and the `weak` group included), Blender, the bench at
+any tier and long CPU jobs all run without asking, in any turn, inside the
+goal or not. While on this branch this replaces *Nothing runs on the
+graphics card unless the owner asks*, *A `/goal` that says "GPU allowed"*,
+*Ask before a graphics profile* and the ask in *Drive the built game*.
+
+- **Still kept, because they protect the owner's machine, not the work:**
+  read `nvidia-smi` before a GPU job and do not start while a game is in
+  its process list (the owner is playing; wait and say so); one GPU job at a
+  time; run them through `tools/gpu-run.mjs --goal ui-polish-1-0`, which
+  logs them; after each, close every browser, browser-pane tab and process
+  it started, and check the port is free. A hung run or a driver error is
+  written down before it is retried.
+- **When the branch merges back, this section goes.** The merge commit
+  deletes it (and every doc line that points to it -- grep "unlocked"), so
+  main is back under the ordinary GPU rules above.
+- **The branch is squashed before it merges**, as the cartoon overhaul was:
+  its commits squashed to a few, one per phase, each holding exactly the
+  files of a commit that was tested, on a branch
+  `ui-polish-1-0-squashed`; that branch is merged `--no-ff` (main takes
+  merge commits only). The unsquashed `ui-polish-1-0` stays local as the
+  round-by-round backup -- never merged, never pushed. Only when the owner
+  says "merge it back"; it is not a request to push or release.
+
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
