@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {BIOMES} from '../src/biomes.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 import {weeklyBiome} from '../src/weekly.js';
-import {PALETTE_KEYS, UNDER_PAR, screenBiome, screenPalette, paletteVars, parseColour, contrast, contrastProblems} from '../src/ui-palette.js';
+import {PALETTE_KEYS, UNDER_PAR, screenBiome, screenPalette, paletteVars, parseColour, contrast, contrastProblems, TEXT_END_MIN} from '../src/ui-palette.js';
 
 test('every biome carries a complete interface palette of real colours', () => {
  // A new biome without its own palette must fail here, not wear another's.
@@ -81,4 +81,12 @@ test('a palette becomes the kit\'s custom properties, with the one shared under-
  assert.equal(vars['--on-hot'], BIOMES.redwood.ui.onHot);
  assert.equal(vars['--under'], UNDER_PAR);
  for (const key of BIOME_KEYS) assert.equal(screenPalette({screen: 'round', course: {biome: key}}).under, UNDER_PAR);
+});
+
+test('a highlighted box ends where its words keep a margin over the line, on every landscape', () => {
+ assert.equal(TEXT_END_MIN, 6);
+ for (const biome of BIOME_KEYS) {
+  const p = screenPalette({screen: 'round', course: {biome}});
+  assert.ok(contrast(p.onHot, p.a2Text) >= TEXT_END_MIN - 0.01, `${biome}: ${contrast(p.onHot, p.a2Text).toFixed(2)}`);
+ }
 });

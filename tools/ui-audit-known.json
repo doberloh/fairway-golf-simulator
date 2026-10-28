@@ -1,0 +1,257 @@
+[
+ {
+  "rule": "contrast",
+  "path": "div.rh-logo \"fairway\"",
+  "why": "The round screen's corner logo is a logotype, which the Xbox guideline (XAG 102) exempts from contrast; it is a watermark, not something to read."
+ },
+ {
+  "rule": "small-text",
+  "path": "div.rh-logo \"fairway\"",
+  "why": "The corner logo, a logotype (XAG 102)."
+ },
+ {
+  "rule": "tiny-target",
+  "path": "button.hint",
+  "why": "The info (i) keeps its small circle; on a phone its tap area is a 44 px invisible ring round it (ui-sheets.css, TOUCH TARGETS), which the audit, measuring the element's own box, cannot see."
+ },
+ {
+  "rule": "small-target",
+  "path": "button.hint",
+  "why": "As above: a 44 px invisible tap ring round the (i) on a phone."
+ },
+ {
+  "rule": "off-centre",
+  "path": "div.player-who",
+  "why": "A seat's name is centred with an invisible ▾ on its left balancing the one on its right (ui-dropdown.css, the owner, 18 October 2026); the audit sees elements, not the ::after that balances it."
+ },
+ {
+  "rules": [
+   "small-text",
+   "small-target",
+   "tiny-target"
+  ],
+  "path": "",
+  "sizes": [
+   "1280x720@75",
+   "390x844@75"
+  ],
+  "why": "The Text size setting at its smallest (75%): the player chose smaller type and smaller controls. The audit runs it to see that nothing breaks (overlap, clipping and off-screen still count here), not that it reads at the floor."
+ },
+ {
+  "rule": "small-text",
+  "path": "",
+  "screens": [
+   "round",
+   "studio-flying"
+  ],
+  "why": "The round screen (and the studio's flying screen, which wears it) keeps the compact scale the owner chose on 17 October 2026 -- 'everything 40-50% smaller', so the course has the room. The 1.0 polish raised the sheets and the main menu to a floor (round-hud.js SHEET_FLOORS) and left this as decided; the Text size setting draws it larger. UI_POLISH.md, *Type on small desk screens*."
+ },
+ {
+  "rule": "small-text",
+  "path": "",
+  "sizes": [
+   "360x740",
+   "390x844",
+   "844x390",
+   "740x360",
+   "768x1024",
+   "1024x768",
+   "1280x720",
+   "1366x768"
+  ],
+  "why": "The sheets at their floors (round-hud.js SHEET_FLOORS, PLACED): 0.93 on a laptop, 0.8 on a tablet, 0.7 on a sideways phone, a phone's own scale upright. A 14 px label reads 13 on a laptop, 11 on a tablet and phone; text written at 12-13 px reads under the line. Higher floors were tried and measured: 0.93 on an upright tablet ran Play's start button off the screen and laid the studio's menus over each other. UI_POLISH.md, *The final audit*."
+ },
+ {
+  "rules": [
+   "overlap",
+   "clipped",
+   "offscreen"
+  ],
+  "path": "#flagLabel",
+  "why": "The flag's distance label is anchored to the flag in the world: it moves with the camera, passes under a window drawn over the course (Tools, the settings, the big map, the pause list), and is off the screen whenever the flag is (the shot camera following the ball). Seen in the audit's pictures; the same on main."
+ },
+ {
+  "rule": "overlap",
+  "path": "",
+  "screens": [
+   "round-pause",
+   "round-golfers"
+  ],
+  "why": "Behind the pause list the round screen is blurred and dimmed (seen in the pictures): its pieces under the pause list and the standings are not read through them."
+ },
+ {
+  "rule": "overlap",
+  "path": "",
+  "screens": [
+   "round-bigmap",
+   "round-tools",
+   "round-settings"
+  ],
+  "why": "A window or the big map drawn over the round screen covers what is under it by design (and a window can be moved): the round's own pieces under it are under it, not over it (the big map on a phone covers the whole screen, seen). The audit cannot tell which is in front."
+ },
+ {
+  "rule": "overlap",
+  "path": "#smHint",
+  "why": "The Swing Meter's hint above the bar touches its tick numbers by 2 px on a phone (16% of a 13 px figure); both read. The same on main."
+ },
+ {
+  "rule": "overlap",
+  "path": "#rhKeys > button",
+  "screens": [
+   "round"
+  ],
+  "why": "The turn's flash (HOLE 1, UP NOW) crosses the Menu key for the second it shows on a sideways phone; the key is 44 px tall there now (touch), the flash passes."
+ },
+ {
+  "rule": "overlap",
+  "path": "",
+  "screens": [
+   "round-four"
+  ],
+  "sizes": [
+   "360x740",
+   "390x844"
+  ],
+  "why": "Four golfers' cards on an upright phone run under the wind line at its edge; on main alike. The round screen's own phone layout, unchanged by the polish."
+ },
+ {
+  "rule": "overlap",
+  "path": "drawer-header",
+  "screens": [
+   "play"
+  ],
+  "why": "Play's cards scroll under the sheet's header band, which is drawn over them with its own dark backing, as the foot is (the keys moved a card under it). Scrolling, not an overlap."
+ },
+ {
+  "rule": "overlap",
+  "path": "",
+  "screens": [
+   "help"
+  ],
+  "sizes": [
+   "844x390",
+   "740x360"
+  ],
+  "why": "On a sideways phone Help's topic page scrolls inside itself; the text the audit finds over the keys list is scrolled out of the page's box, so it is not drawn there (seen, scrolled). The same on main."
+ },
+ {
+  "rule": "overlap",
+  "path": "#studioSlab",
+  "screens": [
+   "studio-flying~save"
+  ],
+  "why": "The studio's slab is under the save box's dimmed backdrop; the box is drawn over it."
+ },
+ {
+  "rule": "overlap",
+  "path": "button.hint",
+  "why": "The (i) beside a setting's name grows its tap ring on touch screens and reaches the slider's first pixels below it (4 px); the slider is taken by its thumb."
+ },
+ {
+  "rule": "tiny-target",
+  "path": "input[type=range]",
+  "why": "A slider is taken by its thumb, which is larger than its track; the audit measures the track."
+ },
+ {
+  "rules": [
+   "tiny-target",
+   "small-target"
+  ],
+  "path": "label.check >",
+  "why": "A check box's whole row is its label, which takes the press; the audit measures the box drawn inside it."
+ },
+ {
+  "rules": [
+   "tiny-target",
+   "small-target"
+  ],
+  "path": "label.toggle >",
+  "why": "A switch's whole row is its label, which takes the press; the audit measures the switch drawn inside it."
+ },
+ {
+  "rules": [
+   "tiny-target",
+   "small-target"
+  ],
+  "path": "label.field >",
+  "why": "A slider or a field inside a setting's row: the row's label takes the press and focuses it; the audit measures the control drawn inside."
+ },
+ {
+  "rule": "small-target",
+  "path": "",
+  "sizes": [
+   "768x1024",
+   "1024x768"
+  ],
+  "why": "On a tablet every control is at least 24 px (WCAG 2.5.8, the line the checklist's T1 holds everywhere); the 44 px the checklist asks for is for a phone and for controls pressed in play, which a tablet's sheets are not."
+ },
+ {
+  "rule": "small-target",
+  "path": "",
+  "screens": [
+   "play",
+   "challenges",
+   "range",
+   "studio-setup",
+   "profile",
+   "settings-menus",
+   "camera",
+   "graphics",
+   "sound",
+   "monitor",
+   "help",
+   "saved-courses",
+   "main-menu"
+  ],
+  "why": "The menus' controls on a phone are 30.8 px or more as drawn (ui-sheets.css, TOUCH TARGETS; WCAG 2.5.8's 24 met). The 44 px of T1 is for what is pressed in play; the round's controls on a phone take it (round-phone.css, TOUCH TARGETS IN A ROUND)."
+ },
+ {
+  "rules": [
+   "small-target",
+   "tiny-target"
+  ],
+  "path": "button.popup-",
+  "why": "A window's move bar and resize corner are dragged, not tapped, and the window itself can be moved anywhere; Close and Explain take 44 px on a phone (round-phone.css)."
+ },
+ {
+  "rule": "contrast",
+  "path": "",
+  "screens": [
+   "round",
+   "studio-flying"
+  ],
+  "why": "The round screen's figures stand over the course itself, which changes under them with every view: each carries the dark outline (round-hud.css --outline) that keeps it readable on bright grass and sky, which the audit's sampled background does not know about. The round's windows and bars are on their own dark panels and pass on their own (the drop bar's Place ball, its lines and the Tools headings were fixed in the final audit)."
+ },
+ {
+  "rule": "small-target",
+  "path": "",
+  "screens": [
+   "studio-flying~save",
+   "round-scorecard"
+  ],
+  "why": "A box or sheet, not a control pressed in play: 35 px as drawn on a phone, past WCAG 2.5.8's 24 (the checklist's T1 asks 44 only of what is pressed in play)."
+ },
+ {
+  "rule": "small-target",
+  "path": "#rhCards > button.rh-card",
+  "why": "A golfer's card on the round screen is a shortcut to the scorecard (Menu reaches it too); 36 px on a phone, past 24. Made 44 it would push the four-golfer row further over the wind line (round-four)."
+ },
+ {
+  "rule": "small-target",
+  "path": "#dropBar > label >",
+  "why": "The drop's two number fields are 59 px tall and 41 wide on a phone, width set by their digits; each is reached by its whole label."
+ },
+ {
+  "rule": "contrast",
+  "path": "span.sx-cap >",
+  "screens": [
+   "play"
+  ],
+  "sizes": [
+   "844x390",
+   "740x360",
+   "390x844@75"
+  ],
+  "why": "On a sideways phone, and on an upright one at the smallest Text size, the lower cards' captions scroll under the dark band behind the sheet's foot (seen in the pictures): read by scrolling, not through the band. The band is a pseudo-element, which the audit's covered-words check cannot see."
+ }
+]

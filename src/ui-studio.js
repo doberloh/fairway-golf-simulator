@@ -87,13 +87,13 @@ export function paintStudioHud({facts, changes, regenerate}, doc = globalThis.do
 // The studio's settings: ONE screen, the same from the main menu and in the
 // studio (round 13: "they look exactly the same ... only the picture behind
 // differs"). `changes()` is the current list; `facts()` is {holes, yards,
-// seed}; `landscapes` [{key, name, settings}] and `pictures` draw Surroundings
+// seed}; `landscapes` [{key, name, settings}] and `pictures` draw the landscapes
 // as a grid of pictures (frame c-studio-set). Returns {paint} for main.js to
 // call on every input.
 export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], pictures, doc = globalThis.document} = {}) {
  if (root.querySelector('.sd-side')) return null;
  const sections = [...root.querySelectorAll('.panel-section')];
- // Surroundings as pictures: each landscape button (main.js, `data-biome`)
+ // The landscapes as pictures: each landscape button (main.js, `data-biome`)
  // gets its drawn picture above its name.
  const queue = [];
  for (const b of root.querySelectorAll('.option-grid>[data-biome]')) {

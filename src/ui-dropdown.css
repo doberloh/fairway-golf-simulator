@@ -12,7 +12,7 @@
 .dd-field::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.32);transform:skewX(-12deg)}
 .dd-field:hover::before{background:color-mix(in srgb,var(--a1,#7a7) 22%,rgba(0,0,0,.32))}
 .dd-field:focus-visible{outline:none}
-.dd-field:focus-visible::before,.dd-open>.dd-field::before{box-shadow:inset 0 0 0 2px var(--hot,#fd5)}
+.dd-field:focus-visible::before,.dd-open>.dd-field::before{box-shadow:inset 0 0 0 2px var(--cursor)}
 .dd-k{font:700 .8em/1 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal;letter-spacing:.14em;color:var(--soft,#9ab)}
 /* Room after the last letter for its slant: the heavy italic leans past its
    box and overflow:hidden shaved it ("cut-off text", 18 October 2026). */
@@ -31,7 +31,7 @@
 .dd-t i{font-style:normal}
 .dd-r{margin-left:auto;padding-left:1em;font:700 .6em/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft,#9ab);text-align:right;text-transform:uppercase;white-space:nowrap}
 .dd-item.on{color:var(--on-hot,#111)}
-.dd-item.on::before{background:linear-gradient(135deg,var(--a1,#8c8),var(--a2,#5a5))}
+.dd-item.on::before{background:linear-gradient(135deg,var(--a1,#8c8),var(--a2-text,var(--a2,#5a5)))}
 .dd-item.on .dd-r{color:var(--on-hot,#111)}
 .dd-item.cur{filter:drop-shadow(2px 0 0 var(--hot,#fd5)) drop-shadow(-2px 0 0 var(--hot,#fd5)) drop-shadow(0 2px 0 var(--hot,#fd5)) drop-shadow(0 -2px 0 var(--hot,#fd5))}
 .dd-item.dd-locked{opacity:.45;cursor:default}

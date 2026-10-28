@@ -291,8 +291,8 @@ commercial-use pass above raised and did not fix ("There is no trademark
 disclaimer anywhere in the product or the docs"). It is in the root README, in the portable
 archive's README and at the foot of ATTRIBUTION.md: the marks named -- GSPro,
 Garmin, Rapsodo, SkyTrak, PiTrac, Foresight, Trackman, and since the V3 pass
-rēlā, FlightScope, Full Swing, Square, Nova and GolfJoy (the launch monitor
-screen lists the monitors rēlā connects) -- belong to their
+rēlā, FlightScope, Full Swing, Square, Nova and GolfJoy (the download's README lists the monitors rēlā
+connects; the game's screen listed them until the 1.0 polish) -- belong to their
 owners, and no affiliation, endorsement, certification or hardware-
 compatibility guarantee is claimed. Naming them to describe compatibility is
 nominative use and continues; the gap was that nothing said so out loud.
@@ -1542,3 +1542,23 @@ zip. **Not run, at the owner's word:** the smoke journeys on this build ("No
 smoke tests or anything needed for this"); they last ran on the overhaul
 branch, 35 of 37, with both failures followed up (TODO). **Not played by a
 person.**
+
+## Addendum, 27 October 2026: the 1.0 interface polish (branch, not released)
+
+Branch `ui-polish-1-0` (docs/UI_POLISH.md). What changes for distribution:
+
+- **The page is 13,787,532 bytes (6.95 MB gzipped; 28 October, the final
+  build)**, against 11,440,666 (5.26 MB) on main: the landscape pictures on the course cards, 45 WebP
+  files (1,709 KB; src/shots/, inlined like everything else), replacing the
+  tiny 3D course models, whose code is removed. The goal's budget for them
+  was 3 MB.
+- **A second browser store: IndexedDB** (database `fairway-course-pictures`),
+  for the picture a course is saved with (course-pictures.js); where a
+  browser refuses IndexedDB it falls back to its own localStorage entry, and
+  past that the course is kept without its picture. Still no network: the
+  pictures are taken from the game's own canvas and the course file
+  (`.fairway`) is written and read as a local download and a local file pick.
+  **Not yet checked from a file opened straight from disk** in Chrome,
+  Firefox and Safari (TODO).
+- No dependency added or removed; THIRD_PARTY_NOTICES and ATTRIBUTION are
+  unchanged (the pictures are the game's own renders).

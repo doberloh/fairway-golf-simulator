@@ -28,7 +28,7 @@
    values here are Pacific Northwest's, so a root built without one is still
    readable. font-synthesis: the old stylesheet turns it off for the whole
    page, and without it the italic numbers would come out upright. */
-.uk{--panel:rgba(9,30,28,.88);--a1:#5eead4;--a2:#0f766e;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--under:#6ee38c;
+.uk{--panel:rgba(9,30,28,.88);--a1:#5eead4;--a2:#0f766e;--a2-text:#249589;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--under:#6ee38c;
  font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;line-height:1.2}
 .uk.uk-canvas{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
 .uk .uk-abs{position:absolute}
@@ -41,7 +41,7 @@
 /* Panels: 16 top and bottom, 36 at the sides. */
 .uk .uk-p{position:relative;background:var(--panel);padding:16px 36px;transform:skewX(-12deg)}
 .uk .uk-pi{transform:skewX(12deg);min-width:0}
-.uk .uk-p.uk-hl{background:linear-gradient(135deg,var(--a1),var(--a2));color:var(--on-hot)}
+.uk .uk-p.uk-hl{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));color:var(--on-hot)}
 .uk .uk-p.uk-hl .uk-label,.uk .uk-p.uk-hl .uk-unit{color:var(--on-hot);opacity:.8}
 .uk .uk-p.uk-ghost{background:rgba(255,255,255,.05)}
 /* Selection: an outline that follows the slanted shape (drop shadows of the

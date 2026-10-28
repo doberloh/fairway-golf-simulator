@@ -15,11 +15,11 @@
 .w13-row small{font-size:13px;font-style:normal;letter-spacing:.12em;font-weight:700;color:var(--soft,#9ab)}
 .w13-row kbd{margin-left:auto;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal}
 .w13-row.hot{color:var(--on-hot,#111)}
-.w13-row.hot::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+.w13-row.hot::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
 .w13-row.hot small{color:var(--on-hot,#111);opacity:.8}
 .w13-row:hover:not(.hot)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
 .w13-row:focus-visible{outline:none}
-.w13-row:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
+.w13-row:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
 #world.studio-paused::after{content:"";position:absolute;inset:0;z-index:95;background:rgba(5,8,6,.55);pointer-events:none}
 
 /* ---------------------------------------------------------------- dialogs */
@@ -46,14 +46,27 @@
  body>.version-notice :is(.leave-options,.version-actions,form)>button strong{font:inherit}
  body>.version-notice :is(.leave-options,.version-actions,form)>button small{font-size:13px;font-style:normal;letter-spacing:.12em;font-weight:700;color:var(--soft,#9ab)}
  body>.version-notice :is(.leave-options,.version-actions,form)>button.primary{color:var(--on-hot,#111)}
- body>.version-notice :is(.leave-options,.version-actions,form)>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  body>.version-notice :is(.leave-options,.version-actions,form)>button.primary small{color:var(--on-hot,#111);opacity:.8}
  body>.version-notice :is(.leave-options,.version-actions,form)>button:focus-visible{outline:none}
- body>.version-notice :is(.leave-options,.version-actions,form)>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  body>.version-notice .welcome-card .menu-brand{padding:0 34px;font-size:30px}
  body>.version-notice .welcome-note{padding:0 34px;font-family:var(--font-ui);font-size:13px;color:var(--soft,#9ab)}
  body>.version-notice .welcome-card .welcome-restore{font-size:16px}
  body>.version-notice .field-error:empty{display:none}
+ /* THE STUDIO SAVE'S PICTURE (the 1.0 polish, main.js showSavePicture): the
+    picture in the box's lean, and the views as a row of slanted buttons --
+    the chosen one yellow, the cursor white, as everywhere. */
+ body>.version-notice .leave-pic{display:grid;gap:8px;padding:0 34px}
+ body>.version-notice .leave-pic-frame{width:min(100%,calc(30vh * 16 / 9));aspect-ratio:16/9;overflow:hidden;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);background:rgba(0,0,0,.35)}
+ body>.version-notice .leave-pic-frame>img{display:block;width:100%;height:100%;object-fit:cover}
+ body>.version-notice .leave-pic-views{display:flex;flex-wrap:wrap;gap:6px 10px}
+ body>.version-notice .leave-pic-views>button{position:relative;isolation:isolate;min-height:44px;padding:0 18px;border:0;border-radius:0;background:none;color:#fff;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase}
+ body>.version-notice .leave-pic-views>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);transform:skewX(-12deg)}
+ body>.version-notice .leave-pic-views>button.on::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
+ body>.version-notice .leave-pic-views>button:focus-visible{outline:none}
+ body>.version-notice .leave-pic-views>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
+ body>.version-notice .leave-pic-views>button.on:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5),0 0 0 3px var(--cursor)}
 }
 
 /* ---------------------------------------------- windows on the round screen */
@@ -74,13 +87,17 @@
  #world[data-mode=play] #reliefBar .relief-option em{font-style:normal;color:var(--hot)}
  #world[data-mode=play] #reliefBar .relief-option :is(small,span){font-size:13px;font-style:normal;letter-spacing:.12em;font-weight:700;color:var(--soft)}
  #world[data-mode=play] #reliefBar .relief-option.active{color:var(--on-hot)}
- #world[data-mode=play] #reliefBar .relief-option.active::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world[data-mode=play] #reliefBar .relief-option.active::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #world[data-mode=play] #reliefBar .relief-option.active :is(small,span,em){color:var(--on-hot)}
  #world[data-mode=play] #reliefBar .relief-back:not([hidden]){display:flex;align-items:center;gap:14px;min-height:48px;padding:0 34px}
  #world[data-mode=play] #reliefBar .relief-back button{height:34px;padding:0 12px;border:0;background:none;color:var(--a1);font:800 20px/1 "Saira Condensed",var(--font-ui),sans-serif}
  #world[data-mode=play] #reliefBar .relief-back span{flex:1;text-align:center;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase}
- #world[data-mode=play] :is(#reliefTake,#pickAccept,#confirmDrop){min-height:52px;padding:0 34px;color:var(--on-hot);font:800 italic 21px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
- #world[data-mode=play] :is(#reliefTake,#pickAccept,#confirmDrop)::before{background:linear-gradient(135deg,var(--a1),var(--a2))!important}
+ /* The main choice's dark words on its fill (the 1.0 polish, the final audit:
+    Place ball read white on yellow, 1.8:1 -- the bar's rule for every button,
+    `:is(#dropBar,#pickBar)>button`, out-ranked this one; main alike). Through
+    the bar's own id, so it ranks above that rule. */
+ #world[data-mode=play] :is(#reliefBar,#dropBar,#pickBar) :is(#reliefTake,#pickAccept,#confirmDrop){min-height:52px;padding:0 34px;color:var(--on-hot);font:800 italic 21px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+ #world[data-mode=play] :is(#reliefTake,#pickAccept,#confirmDrop)::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))!important}
  #world[data-mode=play] :is(#dropBar,#pickBar)>div{display:grid;gap:4px;padding:12px 34px}
  #world[data-mode=play] :is(#dropBar,#pickBar)>div :is(span,small){font-family:var(--font-ui);font-size:15px;color:var(--soft)}
  #world[data-mode=play] #dropBar>label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 34px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
@@ -123,7 +140,7 @@
 
  /* LEVEL UP (frame c-xp): a band across the whole screen in the gradient. */
  #world .level-up{left:-60px;right:-60px;top:40%;transform:translateY(-50%);zoom:var(--hud-z,1);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;height:136px;padding:0 120px;border:0;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;background:none;box-shadow:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
- #world .level-up::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #world .level-up::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
  #world .level-up small{order:1;font-size:17px;letter-spacing:.14em;color:var(--on-hot)}
  #world .level-up strong{order:2;font-size:90px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  #world .level-up>span{order:1;font-size:17px;letter-spacing:.12em;font-weight:700;color:var(--on-hot);text-transform:uppercase}
@@ -136,7 +153,7 @@
     ball. The bar's own box steps aside so its pieces sit on the screen. */
  #world .explore-bar{position:static;display:contents}
  #world .explore-bar>div:first-child{position:absolute;left:30px;top:28px;zoom:var(--hud-z,1);display:flex;flex-direction:row;white-space:nowrap;align-items:center;gap:12px;height:42px;padding:0 22px;color:var(--on-hot);isolation:isolate}
- #world .explore-bar>div:first-child::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #world .explore-bar>div:first-child::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
  #world .explore-bar>div:first-child .eyebrow{font-size:21px;font-weight:800;font-style:italic;letter-spacing:.02em;color:var(--on-hot)}
  #world .explore-bar>div:first-child .eyebrow::before{content:"";display:inline-block;width:11px;height:11px;margin-right:10px;border-radius:50%;background:var(--on-hot)}
  #world .explore-bar>div:first-child :is(strong,small){display:none}
@@ -172,7 +189,7 @@
  #app .clock-pop h4{margin:12px 0 6px;font-size:14px;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
  #app .clock-pop .time-chip{position:relative;isolation:isolate;height:34px;border:0;border-radius:0;background:none;color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase}
  #app .clock-pop .time-chip::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
- #app .clock-pop .time-chip:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #app .clock-pop .time-chip:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #app .clock-pop .time-chip:is(.active,[aria-pressed=true]){color:var(--on-hot)}
 }
 
@@ -213,7 +230,7 @@
  #world.aim-view .minimap .map-reading button{width:auto;height:31px;padding:0 16px;border:0;border-radius:0;background:none;color:#fff;position:relative;isolation:isolate;transform:none}
  #world.aim-view .minimap .map-reading button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
  #world.aim-view .minimap .map-reading button:is(.on,[aria-pressed=true]){background:none;color:var(--on-hot)}
- #world.aim-view .minimap .map-reading button:is(.on,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world.aim-view .minimap .map-reading button:is(.on,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #world.aim-view .minimap .map-reading button:disabled{opacity:.4}
  #world.aim-view .minimap .map-reading button>svg{display:none}
  #world.aim-view .minimap .map-reading button::after{font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em}
@@ -236,6 +253,23 @@
    at the round screen's scale without the compact step, as the sheets are. */
 @media (max-width:560px),(max-height:500px){
  body>.version-notice>:is(div,form),body>.shot-list .shot-list-inner{zoom:calc(var(--sheet-z,1) / .7)}
+ /* Its width against the zoom it is drawn at (the 1.0 polish: the card's
+    limit was worked out against --sheet-z alone, so a phone drew it wider
+    than the screen -- the studio's save box ran off both edges). */
+ body>.version-notice>:is(div,form){max-width:calc(100vw * .7 / var(--sheet-z,1) - 32px)}
+ /* A box taller than the screen scrolls, from its top (the 1.0 polish: on a
+    sideways phone the studio's save box, with its picture, ran past the foot
+    and its name and Save could not be reached). Auto margins centre it while
+    it fits and give way when it does not; place-items alone would cut its top
+    off out of reach. */
+ body>.version-notice{overflow-y:auto;overscroll-behavior:contain}
+ body>.version-notice>:is(div,form){margin-block:auto}
+}
+/* A short screen (a sideways phone): the save box's picture beside its view
+   buttons rather than above them, so the box is about a third shorter. */
+@media (max-height:500px){
+ body>.version-notice .leave-pic{grid-template-columns:minmax(0,46%) 1fr;align-items:start}
+ body>.version-notice .leave-pic-views{align-content:start}
 }
 
 /* GROWING THE LANDSCAPE (round 13, the sweep): the wait is a 1.0 window on
@@ -250,6 +284,8 @@
 #generating .generating-track{height:10px;border-radius:0;background:rgba(255,255,255,.12);transform:skewX(-12deg)}
 #generating .generating-track>i{border-radius:0;background:var(--a1,#8fc79c)}
 #generating .generating-phase{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:13px!important;font-weight:700;letter-spacing:.14em;color:var(--soft,#9ab)!important}
+/* A tip for the wait (the 1.0 polish, tips.js), under a hairline. */
+#generating .generating-tip{margin-top:4px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14);font-size:13px;line-height:1.4;color:var(--ink,#eef3e6)}
 
 /* THE TOOL WINDOWS AND THE TURN CARD (round 13, the sweep). The Tools list
    (#toolsTray, opened from the pause) and every tool window (popups.js:
@@ -265,11 +301,11 @@
  #world .tools-tray .tools-row>button{position:relative;isolation:isolate;min-height:34px;padding:0 16px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-transform:uppercase}
  #world .tools-tray .tools-row>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
  #world .tools-tray .tools-row>button:hover:not(:disabled)::before{background:color-mix(in srgb,var(--a1) 35%,transparent)}
- #world .tools-tray .tools-row>button:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world .tools-tray .tools-row>button:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #world .tools-tray .tools-row>button:is(.active,[aria-pressed=true]){color:var(--on-hot)}
  #world .tools-tray .tools-row>button:disabled{opacity:.4}
  #world .tools-tray .tools-row>button:focus-visible{outline:none}
- #world .tools-tray .tools-row>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #world .tools-tray .tools-row>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  #world .popup .control-card{border:0;border-radius:0;background:rgba(255,255,255,.05)}
  #world .turn-flash{border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;isolation:isolate;padding:14px 34px 16px;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #world .turn-flash::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);border-top:4px solid var(--a1);transform:skewX(-12deg)}
@@ -312,9 +348,9 @@
 .popup[data-popup=settings] .sw-tab{position:relative;isolation:isolate;height:30px;min-height:30px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft,#9ab);font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .popup[data-popup=settings] .sw-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.07);transform:skewX(-12deg)}
 .popup[data-popup=settings] .sw-tab.on{color:var(--on-hot,#111)}
-.popup[data-popup=settings] .sw-tab.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+.popup[data-popup=settings] .sw-tab.on::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
 .popup[data-popup=settings] .sw-tab:focus-visible{outline:none}
-.popup[data-popup=settings] .sw-tab:focus-visible::before{box-shadow:inset 0 0 0 2px var(--hot,#fd5)}
+.popup[data-popup=settings] .sw-tab:focus-visible::before{box-shadow:inset 0 0 0 2px var(--cursor)}
 .popup[data-popup=settings] .sw-body .clock-pop{position:static;display:block;width:auto;margin:0;box-shadow:none;border:0;background:none}
 .popup[data-popup=settings] .sw-choice{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
 .popup[data-popup=settings] .sw-choice>span{flex-basis:100%;font:700 12px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft,#9ab)}
@@ -327,3 +363,21 @@
 body>#toast.over-sheet{position:fixed;z-index:9000;top:24px;left:50%;transform:translateX(-50%);zoom:var(--sheet-z,1);display:flex;align-items:center;min-height:40px;max-width:900px;padding:0 26px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:600 17px/1.3 var(--font-ui);isolation:isolate;pointer-events:none}
 body>#toast.over-sheet::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);box-shadow:inset 3px 0 0 var(--hot,#fd5);transform:skewX(-12deg)}
 body>#toast[hidden]{display:none}
+
+/* An upright phone's boxes stand straight (the 1.0 polish): the rows lean as
+   one block (main.js watchWindows -> leanAsOne), each moved left by its height
+   down the box, and in a box as tall as the studio's save -- with its picture
+   -- the last rows went off the left edge ("O BACK"). */
+@media (max-width:560px){
+ body>.version-notice>:is(div,form)>*,body>.version-notice :is(.leave-options,.version-actions)>button{translate:none}
+}
+
+/* ON A PHONE TOO (the 1.0 polish, the final audit): the drop bar's lines and
+   the Tools window's headings took their colours inside the wide-screen block
+   above, so on a phone they fell back to the old light panels' -- dark green
+   and faint grey on the dark panel, 2.3-3.5:1. The palette's soft colour on
+   every screen now. */
+#world[data-mode=play] :is(#dropBar,#pickBar)>div :is(span,small),#world .tools-tray h4{color:var(--soft)}
+/* A setting's value in a round's window, outlined as the sheets' are: it can
+   sit over its slider's filled track (the final audit, 3.8-4.4:1). */
+#world .popup label.field>output{text-shadow:var(--outline)}

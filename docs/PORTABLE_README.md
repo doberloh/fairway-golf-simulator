@@ -51,6 +51,11 @@ with the connector software that already drives GSPro. The quickest route is
 **rēlā**, a free connector for Windows that talks to many launch monitors:
 [docs.rela.golf](https://docs.rela.golf/).
 
+**Launch monitors rēlā connects** (rēlā's own list, October 2026): Foresight
+GC2, SkyTrak, FlightScope Mevo+ and Mevo Gen2, FlightScope Xi and X2, Garmin
+R10, Full Swing KIT, Square, Nova and GolfJoy. Which monitors connect is
+rēlā's list; Fairway has not been tried on a mat with each one.
+
 1. **Install your launch monitor's own software, then rēlā**, on the computer
    running Fairway (rēlā's installation guide walks through it).
 2. **Connect your launch monitor in rēlā:** turn the monitor on, pick it under

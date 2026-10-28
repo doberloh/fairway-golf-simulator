@@ -3205,13 +3205,28 @@ for (const journey of chosen) {
    if (!fs.existsSync(exe)) { console.log(`   skipped: no ${path.relative(ROOT, exe)} (npm run server)
 `); await context.close(); continue; }
    bridgeProc = spawn(exe, [], {cwd: path.dirname(exe), stdio: ['ignore', 'pipe', 'pipe'], env: {...env, FAIRWAY_HTML: path.join(dir, path.basename(FILE ? path.resolve(FILE) : DIST))}});
-  } else bridgeProc = spawn(process.execPath, [path.join(dir, 'fairway-bridge.mjs')], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env});
+  } else {
+   // A bridge that is missing or will not start FAILS ITS JOURNEY and the run
+   // goes on (the 1.0 polish: a build made with a bare `vite build`, which
+   // does not bundle the bridge, threw here and ended the whole run, so the
+   // ten journeys after it never ran).
+   const bundle = path.join(dir, 'fairway-bridge.mjs');
+   if (!fs.existsSync(bundle)) {
+    console.log(`   ✗ no ${path.relative(ROOT, bundle)}: \`npm run build\` makes it, a bare \`vite build\` does not\n   FAILED in 0.0s\n`);
+    results.push({name: journey.name, ok: false, seconds: 0}); await context.close(); continue;
+   }
+   bridgeProc = spawn(process.execPath, [bundle], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env});
+  }
   let said = '';
   bridgeProc.stdout.on('data', d => { said += d; });
   bridgeProc.stderr.on('data', d => { said += d; });
   const until = Date.now() + 15000;
   while (!said.includes('Fairway bridge:') && Date.now() < until && bridgeProc.exitCode === null) await new Promise(r => setTimeout(r, 100));
-  if (!said.includes('Fairway bridge:')) { bridgeProc.kill(); throw new Error(`the bundled bridge did not start: ${said.trim() || 'no output'}`); }
+  if (!said.includes('Fairway bridge:')) {
+   bridgeProc.kill();
+   console.log(`   ✗ the bridge did not start: ${(said.trim() || 'no output').split('\n').slice(0, 3).join(' / ')}\n   FAILED in 0.0s\n`);
+   results.push({name: journey.name, ok: false, seconds: 0}); await context.close(); continue;
+  }
   home = `http://127.0.0.1:${bridgePorts.http}/`;
  }
  const trip = new Trip(page, journey.name, home);

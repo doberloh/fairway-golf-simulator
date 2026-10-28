@@ -22,6 +22,7 @@ import './ui-screens.css';
 import './ui-sheets.css';
 import './round-phone.css';
 import './ui-windows.css';
+import './ui-motion.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -53,17 +54,22 @@ import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
-import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
+import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,sheetScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
 import {buildLobby,buildRangeSetup,nameSize} from './ui-lobby.js';
-import {buildMonitorSetup,RELA_MONITORS,RELA_DOCS} from './ui-monitor-setup.js';
+import {buildMonitorSetup} from './ui-monitor-setup.js';
+import {TIPS} from './tips.js';
+import {rememberPlay,lastPlay,againLine} from './last-play.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {SETTINGS_TABS,WINDOW_SETTINGS,buildSettings} from './ui-settings.js';
 import {buildChallenges,buildLibrary,buildHelp} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
-import {createModelCards} from './model-cards.js';
+import {createPictureLoop} from './picture-loop.js';
+import {LANDSCAPE_SHOTS,EVERY_LANDSCAPE} from './landscape-shots.js';
+import {createPictureStore} from './course-pictures.js';
+import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
 import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
@@ -363,12 +369,27 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-// CARD PICTURES (round 14): the flat drawing at once (course-picture.js), then
-// the tiny 3D model over it when its turn comes (model-cards.js).
-let modelCards=null;
+// CARD PICTURES (the 1.0 polish; they were tiny turning 3D models, round 14):
+// each card shows real pictures of its landscape, one after another
+// (picture-loop.js, landscape-shots.js); a saved course's own picture, taken
+// when it was saved (course-pictures.js), comes first. A card for every
+// landscape (`biome:'*'`: Endless, Surprise me, a new course) runs through
+// one of each. A landscape with no pictures in this build keeps the flat
+// drawing from above (course-picture.js).
+const pictureStore=createPictureStore(),coursePics=new Map();
+const reduceMotion=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shotsFor=it=>{const b=it.settings?.biome;const shots=b==='*'?EVERY_LANDSCAPE:LANDSCAPE_SHOTS[b]||[];const own=it.id&&coursePics.get(it.id);return own?[own,...shots]:shots;};
+const pictureLoop=createPictureLoop({pictures:shotsFor,still:reduceMotion});
 // Each help page's keys (round 14, frame c-help); the essentials read their own list.
 const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
-const cardPictures=(items,w,h)=>{pictureQueue(items,w,h);modelCards?.queue(items);};
+const cardPictures=(items,w,h)=>{
+ const shown=items.filter(it=>shotsFor(it).length);
+ pictureLoop.queue(shown);
+ pictureQueue(items.filter(it=>!shown.includes(it)&&it.settings?.biome!=='*'),w,h);
+ // A saved course's own picture comes from storage, so it joins its card a
+ // moment later; asked once per course.
+ for(const it of items)if(it.id&&!coursePics.has(it.id)){coursePics.set(it.id,null);pictureStore.get(it.id).then(url=>{if(!url)return;coursePics.set(it.id,url);if(it.el?.isConnected)pictureLoop.queue([it]);});}
+};
 let challengeSheet=null,lobbySheet=null,lobbyCourse='',lobbyKeep=false,lobbyOpenStep=null;
 // WHAT PLAY IS SET UP FOR (UI/UX pass V2): the game type chosen on its first
 // step -- 'weekly', 'endless', 'saved', 'friend' or 'surprise' -- and, for
@@ -414,7 +435,11 @@ function toast(message){{const t=$('toast'),over=!$('drawer').hidden;const home=
 // had played, and the next launch offered Continue on it. It is also what
 // resurrected a round the player had just discarded: the slot was cleared, the
 // backdrop grew, and the backdrop wrote itself straight back into it.
-function save(){if(menuBackdrop||challenge||challengeStarting)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));}catch{}syncProfile();}
+// A FULL STORE SAYS SO (the 1.0 polish; TODO, *Saving: a full store says
+// nothing*): the error was swallowed and Continue quietly stopped following the
+// round. Now the player is told, once until a save works again.
+let saveWarned=false;
+function save(){if(menuBackdrop||challenge||challengeStarting)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));saveWarned=false;}catch{if(!saveWarned){saveWarned=true;toast('This browser has no room left to save the round. Delete saved rounds or courses to make room.');}}syncProfile();}
 // WHICH PROFILE A GOLFER IS. By the id the group editor gave them; a golfer
 // with none -- a save from before profiles -- by name, ignoring case. Null on
 // the menu's showcase hole, which is nobody's round.
@@ -1335,7 +1360,7 @@ function updateHUD(){
   const flat=rangeMode&&!shapes(activeGreen(course)?.setup);
   el.disabled=flat;
   if(rangeMode&&!el.dataset.readTitle)el.dataset.readTitle=el.title;
-  el.title=flat?'This green is flat -- give it a slope in Range controls to read it':(el.dataset.readTitle||el.title);
+  el.title=flat?'This green is flat: give it a slope in Range controls to read it':(el.dataset.readTitle||el.title);
   el.classList.toggle('on',!flat&&!!view.config[key]);
   el.setAttribute('aria-pressed',String(!flat&&!!view.config[key]));
  }
@@ -1426,7 +1451,7 @@ $('lieLabel').textContent=surfaceLabel(lie);
    :round.canMulligan()?'Take back your last shot on this hole':'Nothing to take back on this hole yet';}if($('simDrop')){$('simDrop').disabled=!playing||rangeMode||!!flight||round.holeComplete||round.scrambleSelection||!!round.relief;
   // Sim drop places a ball somewhere on a HOLE. The range has no hole to place
   // it on, so the control was there doing nothing; now it says so.
-  $('simDrop').title=rangeMode?'Sim drop places a ball on a hole -- the range has none':'';}if($('labTool'))$('labTool').hidden=!rangeMode;
+  $('simDrop').title=rangeMode?'Sim drop places a ball on a hole, and the range has none':'';}if($('labTool'))$('labTool').hidden=!rangeMode;
  // The range controls open by themselves when the range does, and this is the
  // way back to them once closed -- there was none, so a closed window stayed
  // closed until the range was left and entered again.
@@ -1437,7 +1462,7 @@ $('lieLabel').textContent=surfaceLabel(lie);
  // On the range the button says WHY it is off. A disabled control with no
  // explanation reads as broken, and "putting" on a practice ground is a
  // reasonable thing to go looking for -- there is simply no putting there yet.
- if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'The range always holes out -- choose putts in Range controls':'Putting: '+{holeout:'hole out',dartboard:'dartboard',decimal:'decimal putting'}[round.putting.mode];}icon();
+ if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'The range always holes out: choose putts in Range controls':'Putting: '+{holeout:'hole out',dartboard:'dartboard',decimal:'decimal putting'}[round.putting.mode];}icon();
 }
 // A putt is previewed by running the shot, not by describing it. Everything else
 // keeps a straight target line, which is what an aim line means for a ball that
@@ -3137,7 +3162,7 @@ function followAimGreen(){
 }
 function rangeAfterShot(result){
  const st=rangeStation,holed=!!result.holed&&!result.hazard;
- if(holed)toast(st.mode==='putt'?'Holed.':`In the hole -- ${activeGreen(course)?.name??'the cup'}.`);
+ if(holed)toast(st.mode==='putt'?'Holed.':`In the hole · ${activeGreen(course)?.name??'the cup'}.`);
  if(st.mode==='mats')return;
  const end=result.end;
  if(st.playOut&&!holed&&!result.hazard&&Math.hypot(end.x-course.pin.x,end.z-course.pin.z)<40*YARD){st.next={x:end.x,z:end.z};return;}
@@ -3172,11 +3197,11 @@ function rangeGreensText(){
  return [one('Centre green',centreSetup(settings),` at ${Math.round(rangeGreenYards(settings))} yd`),one('Short-game green',shortSetup(settings)),'Targets at 50 to 300 yd: flat, each its number from the centre mat'];
 }
 function exportRangeCsv(){
- if(!rangeShots.length){toast('Hit a ball first -- there is nothing to export yet.');return;}
+ if(!rangeShots.length){toast('Hit a ball first: there is nothing to export yet.');return;}
  download(`fairway-range-${new Date().toISOString().slice(0,10)}.csv`,sessionCsv(rangeShots),'text/csv');
 }
 function exportRangeReport(){
- if(!rangeShots.length){toast('Hit a ball first -- there is nothing to report yet.');return;}
+ if(!rangeShots.length){toast('Hit a ball first: there is nothing to report yet.');return;}
  download(`fairway-range-${new Date().toISOString().slice(0,10)}.pdf`,sessionReport({shots:rangeShots,when:new Date(),place:course?.bio?.name,greens:rangeGreensText()}),'application/pdf');
 }
 // THE RANGE CONTROLS. Everything the range has: where you hit from, both
@@ -3356,7 +3381,7 @@ async function buildEndless(group,replaySeed){
  // and enters play immediately -- an overlay over work that is not happening is
  // a lie, and a progress bar over it would be a more elaborate one.
  if(adopt){begin();loadCourse();setMode('play');}
- else await whileGenerating('Growing your first hole…',async report=>{
+ else await whileGenerating('Growing the first hole…',async report=>{
   begin();await prepareWorld(report);loadCourse();setMode('play');
  });
 }
@@ -3368,7 +3393,7 @@ async function buildRoundOn(courseSettings,group,name){
  next.courseName=String(name||'').trim()||suggestCourseName(next);
  // Build the Round first: an invalid group must fail before the overlay appears.
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
- await whileGenerating('Building your course…',async report=>{
+ await whileGenerating('Building the course…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;
   lightsOffForRound();clockForRound();
   challenge=null;round=fresh;settings=next;closePanel();
@@ -3549,7 +3574,8 @@ async function generateProgressively(next,onProgress){
 // gets the message on its own, exactly as before.
 async function whileGenerating(label,work,quiet=false){
  const box=$('generating');
- if(!quiet){$('generatingLabel').textContent=label;setProgress(null);box.hidden=false;}
+ // A tip for the wait (tips.js; the splash shows them too).
+ if(!quiet){$('generatingLabel').textContent=label;setProgress(null);$('generatingTip').textContent=`Tip: ${TIPS[Math.floor(Math.random()*TIPS.length)].text}`;box.hidden=false;}
  // Whatever is on screen is about to be replaced: it must not spend the wait
  // re-photographing its ponds for a clock that only changed because the round
  // is starting (GolfView.updateDaylight).
@@ -3683,13 +3709,18 @@ function openMenu(){
  $('menuNote').textContent='';
  // One lit row: Play is the main button only when there is no round to continue.
  $('menuPlay').classList.toggle('primary',$('menuContinue').hidden);
+ // PLAY AGAIN (the 1.0 polish, last-play.js): the last setup Play started, in
+ // one press, when there is one.
+ const last=lastPlay(localStorage,{hasCourse:id=>!!findCourse(id)});
+ $('menuAgain').hidden=!last;
+ if(last)$('menuAgainNote').textContent=againLine(last,{name:last.kind==='saved'?findCourse(last.courseId)?.name:last.kind==='weekly'?suggestCourseName(weeklySettings()):''});
  // XP IS NEW (Phase 4): the main golfer is told once, here; everyone else on
  // their own My profile page.
  {const m=mainProfile(profiles);if(m?.xpNew){delete m.xpNew;storeProfiles(profiles);toast('New: XP and levels. '+XP_NEW_TEXT);}}
  setMode('menu');icon();$('menuContinue').hidden?$('menuPlay').focus():$('menuContinue').focus();
 }
 async function continueRound(){
- if(menuBackdrop)await whileGenerating('Rebuilding your course…',async report=>{
+ if(menuBackdrop)await whileGenerating('Rebuilding the course…',async report=>{
   leaveBackdrop();
   if(pendingRound){challenge=null;round=pendingRound;pendingRound=null;if(round.endless)settings=endlessFor(round.seed,round.hole,settings);}
   else{challenge=null;round=new Round({players:round.players,mode:round.mode,holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});}
@@ -3822,6 +3853,8 @@ function savableCourse(){
 // 2026): Save or Go back, the name typed first.
 function askBeforeLeaving({title,body,nameLabel,defaultName,saveLabel='Save and leave',saveHint,discardHint,stayLabel='Stay here',stayHint='Carry on where you were',onSave,onDiscard,next}){
  const box=$('leaveNotice'),name=$('leaveName'),error=$('leaveError');
+ // The picture step is the studio save's alone (askCourseName shows it).
+ $('leavePic').hidden=true;
  $('leaveNoticeTitle').textContent=title;
  $('leaveNoticeBody').textContent=body;
  $('leaveNameLabel').textContent=nameLabel;
@@ -3843,31 +3876,118 @@ function askBeforeLeaving({title,body,nameLabel,defaultName,saveLabel='Save and 
  name.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('leaveSave').click();}};
  name.focus();name.select();
 }
+// THE CAMERA, PUT EXACTLY SOMEWHERE (lab.camera; since the 1.0 polish also the
+// studio save's picture step, course-file.js `pictureViews`). The pose forms are
+// lab.camera's, described there.
+function placePose(o={}){
+ let x=o.x??0,z=o.z??0,yaw=(o.yaw??0)*Math.PI/180;
+ // `fromPin`: that many metres from the pin, on the line back toward the tee
+ // turned `around` degrees about the pin, looking at it -- a green seen from
+ // wherever a putt is read, whatever shape the hole is.
+ // `fromGreen` is the same about the green's centre, which stays put when the
+ // cup moves -- for comparing two versions of a green whose cups differ.
+ if(o.fromPin!==undefined||o.fromGreen!==undefined){const h=world.holes[o.hole??round.hole],pin=o.fromGreen!==undefined?h.worldGreen:h.worldPin,tee=h.worldTee,far=o.fromGreen??o.fromPin;
+  const a=Math.atan2(tee.x-pin.x,tee.z-pin.z)+(o.around??0)*Math.PI/180;
+  x=pin.x+Math.sin(a)*far;z=pin.z+Math.cos(a)*far;yaw=Math.atan2(pin.x-x,pin.z-z);}
+ else if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
+  const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
+  yaw=aim?Math.atan2(aim.x-x,aim.z-z):o.look==='sun'?yaw:(o.look??0)*Math.PI/180;}
+ const sun=view.sunDir;
+ if(o.look==='sun'||o.yaw==='sun')yaw=Math.atan2(sun.x,sun.z);
+ const y=world.height(x,z)+(o.height??2);
+ const pitchDeg=o.pitch==='sun'?Math.asin(Math.max(-1,Math.min(1,sun.y/sun.length())))*180/Math.PI-12:(o.pitch??-10);
+ const pitch=pitchDeg*Math.PI/180;
+ view.placeCamera({x,y,z},yaw,pitch);
+ return {x:+x.toFixed(1),y:+y.toFixed(1),z:+z.toFixed(1),yaw:+(yaw*180/Math.PI).toFixed(1),pitch:+pitchDeg.toFixed(1)};
+}
+// A PICTURE OF THE COURSE (the 1.0 polish; docs/UI_POLISH.md, *A picture for
+// every saved course*): the frame on screen now, drawn at once and read back
+// in the same task -- the WebGL canvas keeps its picture until it is shown, so
+// no copy of every frame is needed -- cropped to 16:9 and scaled to
+// course-file.js `PICTURE`. The ball and the aim line are left out. Only the
+// 3D picture: nothing on the page (the box, the bar) is in it.
+function takeCoursePicture(){
+ const hide=[view.aimLine,view.aimRing,view.ballRing,view.ball,view.ballHalo,view.aimPath,view.shotTrail].filter(o=>o&&o.visible);
+ for(const o of hide)o.visible=false;
+ try{
+  view.render(0);
+  const src=view.renderer.domElement,{width:W,height:H,quality}=PICTURE,a=W/H;
+  let cw=src.width,ch=cw/a;if(ch>src.height){ch=src.height;cw=ch*a;}
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const g=c.getContext('2d');g.imageSmoothingQuality='high';
+  g.drawImage(src,(src.width-cw)/2,(src.height-ch)/2,cw,ch,0,0,W,H);
+  const url=c.toDataURL('image/webp',quality);
+  return pictureOk(url)?url:c.toDataURL('image/jpeg',.8);
+ }finally{for(const o of hide)o.visible=true;}
+}
+// The save box's picture step: the view as it is taken at once (so one press
+// still saves, with a picture), then the suggested views, This view again,
+// and Frame it yourself -- the box steps aside, the player flies, Enter takes
+// it and the box comes back; Esc comes back without one.
+let savePicture=null,savePictureView='here',framingPicture=null;
+function showSavePicture(){
+ const box=$('leavePic'),img=$('leavePicImg'),views=$('leavePicViews');
+ box.hidden=false;
+ const set=(url,id)=>{savePicture=url;savePictureView=id;img.src=url||'';img.hidden=!url;for(const b of views.children)b.classList.toggle('on',b.dataset.view===id);};
+ const choices=[...pictureViews(world).map(v=>({...v,take:()=>{placePose(v.pose);return takeCoursePicture();}})),
+  {id:'here',label:'This view',take:()=>takeCoursePicture()}];
+ views.innerHTML='';
+ for(const v of choices){const b=document.createElement('button');b.type='button';b.dataset.view=v.id;b.textContent=v.label;b.onclick=()=>set(v.take(),v.id);views.append(b);}
+ const own=document.createElement('button');own.type='button';own.dataset.view='own';own.textContent='Frame it yourself';
+ own.onclick=()=>{
+  const name=$('leaveName').value;$('leaveNotice').hidden=true;
+  toast('Fly to the view you want, then press Enter to take it. Esc goes back.');
+  framingPicture=take=>{framingPicture=null;if(take){savePicture=takeCoursePicture();savePictureView='own';}askCourseName(name,true);};
+ };
+ views.append(own);
+ if(savePicture)set(savePicture,savePictureView);else set(takeCoursePicture(),'here');
+}
+// Enter or Esc while framing your own picture, before anything else hears them.
+window.addEventListener('keydown',e=>{
+ if(!framingPicture||e.repeat)return;
+ if(e.code==='Enter'||e.code==='NumpadEnter'){e.preventDefault();e.stopImmediatePropagation();framingPicture(true);}
+ else if(e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();framingPicture(false);}
+},true);
+// Saving keeps the picture beside the course (course-pictures.js), and the
+// course's cards show it from then on.
+function saveWithPicture(value){
+ const rec=saveCourse({name:value,settings});
+ const pic=savePicture;savePicture=null;
+ if(pic){coursePics.set(rec.id,pic);pictureStore.put(rec.id,pic);}
+ toast(`Saved “${rec.name}”.`);
+ return rec;
+}
 // SAVE COURSE IN THE STUDIO asks for the name in a box over the landscape
-// rather than opening the whole Saved courses screen (owner, 20 October 2026).
-function askCourseName(){
+// rather than opening the whole Saved courses screen (owner, 20 October 2026),
+// and since the 1.0 polish takes its picture there too.
+function askCourseName(name,keepPicture=false){
+ // A fresh save starts with the view as it is; back from framing one's own,
+ // the picture just taken stays.
+ if(!keepPicture){savePicture=null;savePictureView='here';}
  askBeforeLeaving({
   title:'Save this course',
-  body:'It keeps the landscape only: players, format and tees are chosen when you play it.',
-  nameLabel:'Name this course',defaultName:playingCourseName(),
-  saveLabel:'Save',saveHint:'Keep it in your course library',
+  body:'It keeps the landscape and a picture: players, format and tees are chosen when you play it.',
+  nameLabel:'Name this course',defaultName:name??playingCourseName(),
+  saveLabel:'Save',saveHint:'Keep it in Saved courses',
   discardHint:null,
   stayLabel:'Go back',stayHint:'Carry on shaping it',
-  onSave:value=>{const rec=saveCourse({name:value,settings});toast(`Saved “${rec.name}” to your library.`);},
+  onSave:value=>{saveWithPicture(value);},
   next:()=>{},
  });
+ showSavePicture();
 }
 
-// A studio landscape lives only in memory until it is saved.
+// A studio landscape lives only in memory until it is saved. Saved from here,
+// it keeps a picture of the view as it is.
 function guardStudio(next){
  if(appMode!=='studio'||studioSaved())return next();
  askBeforeLeaving({
   title:'Leave the studio without saving?',
   body:'This landscape only exists while you are shaping it. Save it to your library to come back to it later, or leave and let it go.',
   nameLabel:'Name this course',defaultName:playingCourseName(),
-  saveHint:'Keep this landscape in your course library',
+  saveHint:'Keep it in Saved courses',
   discardHint:'This landscape is gone for good',
-  onSave:value=>{const rec=saveCourse({name:value,settings});toast(`Saved “${rec.name}” to your library.`);},
+  onSave:value=>{savePicture=takeCoursePicture();saveWithPicture(value);},
   next,
  });
 }
@@ -3996,7 +4116,7 @@ async function enterStudio(){
  // showcase hole. Skipping the rebuild when entering from play meant the studio
  // opened on the exact course you had been playing -- the shared-world problem
  // the mode split exists to remove, just in the other direction.
- await whileGenerating('Growing your landscape…',async report=>{
+ await whileGenerating('Growing the landscape…',async report=>{
   // The studio opens at midday too, like a round built in it. Without this a
   // player whose clock had never been set -- anyone opening the studio before
   // their first round, which is most people trying the demo -- landed in it at
@@ -4015,7 +4135,7 @@ async function enterStudio(){
 }
 async function regenerateStudio(){
  if(!applyStudioSettings())return;
- await whileGenerating('Growing your landscape…',async report=>{
+ await whileGenerating('Growing the landscape…',async report=>{
   challenge=null;round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
   loadCourse();studioDirty=false;studioChangeList=[];setMode('studio');updateStudioState();
@@ -4052,7 +4172,7 @@ function resumeRound(id){
  const go=async()=>{
   try{
    const next=Round.restore(rec.round);
-   await whileGenerating('Rebuilding your course…',async report=>{
+   await whileGenerating('Rebuilding the course…',async report=>{
     leaveBackdrop();pendingRound=null;staleGenerator=false;
     challenge=null;round=next;shotLog={uid:next.uid,list:normaliseShots(rec.shots)};settings=next.endless?endlessFor(next.seed,next.hole,rec.settings):{...settings,...rec.settings};
     applyPlaySettings();
@@ -4462,7 +4582,19 @@ function panelBack(){
  if(sheet?.back()){gameAudio?.ui?.('back');return;}
  closePanel();
 }
-function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup||rivalSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;rivalSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
+function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup||rivalSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;rivalSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();returnMenuFocus();}
+// BACK ON THE MAIN MENU, THE CURSOR IS WHERE IT WAS (the 1.0 polish, the
+// controller check; main alike): a sheet closed by B, Esc or Back left the
+// focus on a button inside the hidden sheet, so the next d-pad press started
+// from nowhere and landed on Course studio. The tile that opened the sheet
+// takes it back, else the first tile.
+let menuOpener=null;
+$('mainMenu')?.addEventListener('click',e=>{const b=e.target.closest?.('button');if(b)menuOpener=b;},true);
+function returnMenuFocus(){
+ const m=$('mainMenu');if(!m||m.hidden||m.contains(document.activeElement))return;
+ const b=menuOpener?.isConnected&&!menuOpener.hidden&&menuOpener.offsetParent?menuOpener:m.querySelector('.menu-tile:not([hidden])');
+ b?.focus({preventScroll:true});
+}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
 // to feel like a pause. Putts are excluded: one is over before the hold would be.
@@ -4698,9 +4830,19 @@ function applyHudPalette(screen=(panel==='round'||panel==='course')&&lobbyBiome?
 }
 // The pieces' size: the 1280 canvas's scale inside #app (round-hud.js hudScale).
 // --sheet-z is the same size for what sits outside #app and its Text size zoom
-// (the sheets): the round screen's scale times the Text size. Both at the
-// compact size (round-hud.js COMPACT).
-function applyHudScale(){const t=currentTextSize()/100,z=compactScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
+// (the sheets): the round screen's scale times the Text size, at the compact
+// size (round-hud.js COMPACT) -- but on a desk screen never below the sheets'
+// floor (round-hud.js sheetScale, the 1.0 polish: at 1280 x 720 the compact
+// scale drew the menus' labels under 10 px).
+function applyHudScale(){const t=currentTextSize()/100,z=compactScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(sheetScale(innerWidth,innerHeight,t)*1e4)/1e4));
+ // THE MAIN MENU: the round screen's scale (which the Text size barely moves)
+ // raised to the sheets' floor -- not the sheets' scale, which multiplies by
+ // the Text size and at 150% on 1080p laid the week's card over the tiles
+ // (the 1.0 polish, the final audit).
+ // Inside #app, which the Text size zooms itself (--ui-zoom), so the floor is
+ // divided by that zoom: drawn, the menu is the larger of the round's size and
+ // the floor (at 200% on 1440p it had come out twice main's size).
+ $('app').style.setProperty('--menu-z',String(Math.round(Math.max(z,sheetScale(innerWidth,innerHeight,1)/(uiZoom()||1))*1e4)/1e4));}
 const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
 const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
 // WRITTEN ONLY WHEN IT CHANGES (the frame-rate goal, 22 October 2026). The
@@ -4874,6 +5016,11 @@ function setPause(on){
 // one, and B (or Escape) backs out of the Esc list. A text box, a slider or a
 // drop-down keeps its own arrows.
 function focusScope(){
+ // A box over the screen first (save, leave, the version notice, the welcome:
+ // the 1.0 polish, studio round 5): the arrows and a d-pad left it alone, so a
+ // controller could not reach the save box's picture views or its Save.
+ const box=[...document.querySelectorAll('body>.version-notice')].find(b=>!b.hidden);
+ if(box)return box;
  if(document.getElementById('app').classList.contains('rh-paused'))return document.querySelector('.topbar');
  // An open sheet (the lobby, My profile, saved courses...) is a 1.0 screen too.
  if(panel&&!$('drawer').hidden&&$('welcome').hidden&&$('leaveNotice').hidden)return $('drawer');
@@ -4882,7 +5029,12 @@ function focusScope(){
 }
 function moveFocus(dir){
  const scope=focusScope();if(!scope)return false;
- const els=[...scope.querySelectorAll('button,select,a[href]')].filter(el=>!el.disabled&&el.offsetParent!==null&&el.getBoundingClientRect().width>0);
+ // Never what is taken out of the keys' way (tabindex -1, aria-hidden): a 1.0
+ // drop-down hides its native select so, behind its own button, and the
+ // arrows used to land on that select, which then kept them -- changing its
+ // value -- so a keyboard or a d-pad could not leave it (the 1.0 polish: found
+ // by tools/ui-flows.mjs on the range's Slope; XAG 112).
+ const els=[...scope.querySelectorAll('button,select,a[href],summary')].filter(el=>!el.disabled&&el.tabIndex!==-1&&!el.closest('[aria-hidden="true"]')&&el.offsetParent!==null&&el.getBoundingClientRect().width>0);
  if(!els.length)return false;
  const rects=els.map(el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};});
  const from=els.indexOf(document.activeElement);
@@ -5034,9 +5186,49 @@ function openSheet(name){stopTour();
  const fromTop=panel!==name||$('drawer').hidden;
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;if(fromTop)$('drawerContent').scrollTop=0;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
+ // Over the title, where the sheet was opened from (the 1.0 polish, W4; it read
+ // "MAKE IT YOURS" on every sheet).
+ $('drawerEyebrow').textContent=appMode==='studio'?'Course studio':appMode==='play'&&!menuBackdrop?(rangeMode?'Driving range':round?.endless?'Endless run':challenge?'Challenge':'In a round'):'Main menu';
  syncNav();updateStudioState();
  renderPanel(name,$('drawerContent'));
- $('closeDrawer').focus();
+ focusSheetStart();
+}
+// THE KEYS START WHERE THE EYE DOES (the 1.0 polish, UI_POLISH.md W2): on the
+// open step's chosen card, else its first button or drop-down; the close button
+// only when the sheet has neither. Every sheet used to open on the close button
+// in the far top corner, so the first arrow went to whatever lay below that
+// corner. A text box is never the start: typed keys would land in it.
+// CHOSEN BY THE KEYS, THE KEYS GO TO START (the 1.0 polish, the way in round
+// 4): after the LAST choice a screen asks -- a game that needs nothing more,
+// a saved course, a landscape, a format, a challenge -- is made with Enter or a
+// pad's A, the keys land on the screen's start button, so the next press
+// plays (not after Saved course or Friend challenge, which ask for the course
+// or the code next: the jump went past that choice); the arrows still go back to the choices. A click with no pointer
+// behind it (`detail` 0) is how Enter and the pad press a button here; a
+// mouse's own click moves nothing.
+const START_BUTTONS='#startRound,#challengeGo,#rangeGo,#growStudio';
+const KEY_CHOICES='.sx-card[data-game]:not([data-game=studio]):not([data-game=saved]):not([data-game=friend]),.sx-card[data-course],.sx-land,.sd-lands>.option,.sx-format-card,.chal-card';
+let keyChoice=false;
+function focusStartButton(){
+ const b=[...document.querySelectorAll(START_BUTTONS)].find(e=>!e.disabled&&e.offsetParent!==null&&e.getBoundingClientRect().width>0);
+ if(b)b.focus({preventScroll:true});
+ return !!b;
+}
+document.addEventListener('click',e=>{
+ if(e.detail!==0||!e.target.closest?.('#drawer')||!e.target.closest(KEY_CHOICES))return;
+ keyChoice=true;
+ // The same sheet may redraw (Play goes to the game's own step) or not (a
+ // landscape in the studio): either way, once it has settled.
+ setTimeout(()=>{if(keyChoice&&focusStartButton())keyChoice=false;},0);
+},true);
+function focusSheetStart(){
+ if(keyChoice){keyChoice=false;if(focusStartButton())return;}
+ const root=$('drawerContent'),page=root.querySelector('.sx-page:not([hidden])')||root;
+ const usable=e=>!e.disabled&&e.offsetParent!==null&&e.getBoundingClientRect().width>0;
+ const pick=[...page.querySelectorAll('button.on,button[aria-pressed=true]')].find(usable)||[...page.querySelectorAll('button,select')].find(usable);
+ // Without scrolling: a sheet opens at its top (audit 6, *A different sheet
+ // opens at its top*); the first arrow brings the cursor into view.
+ (pick||$('closeDrawer')).focus({preventScroll:true});
 }
 
 // Panels you consult while deciding what to hit. These open as floating windows
@@ -5045,7 +5237,7 @@ function openSheet(name){stopTour();
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
 const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:720,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
+const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Play',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -5093,7 +5285,11 @@ function roundCards(){
 const roundFileName=name=>'fairway-'+(String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'round')+'.json';
 function wireRoundCards(content){
  content.querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>resumeRound(b.dataset.resume));
- content.querySelectorAll('[data-forget]').forEach(b=>b.onclick=()=>{deleteRound(b.dataset.forget);openPanel('round');toast('Saved round deleted.');});
+ // Asks twice, as deleting a saved course does (the 1.0 polish; TODO had one
+ // click for a round and two for a course: "pick one").
+ content.querySelectorAll('[data-forget]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.armed!=='1'){b.dataset.armed='1';b.title='Press again to delete';toast(`Press delete again to remove “${findRound(b.dataset.forget)?.name||'this round'}”.`);setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.title='Delete';}},DELETE_ARM_MS);return;}
+  deleteRound(b.dataset.forget);openPanel('round');toast('Saved round deleted.');});
  content.querySelectorAll('[data-export-round]').forEach(b=>b.onclick=()=>{
   const rec=findRound(b.dataset.exportRound);
   if(!rec){toast('That round is no longer saved.');return openPanel('round');}
@@ -5169,7 +5365,7 @@ function lookPicker(profile){
  let body;
  if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,tracerPreview(r.id))).join('')}</div><p class="research-label">Your shots fly in your tracer, and at the end of a hole your lines are drawn in it too.</p>`;
  else if(lookTab==='frame')body=`<div class="look-grid balls">${rewardsOf('frame').map(r=>item(r,framedPicture(look.ball,r.id))).join('')}</div><p class="research-label">Plain colours from the start, a frame with every badge, and moving ones further up. Until you choose one, you wear your newest badge's.</p>`;
- else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').filter(r=>!SECRET_FLOURISHES.has(r.id)||profile.achievements?.ace).map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
+ else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').filter(r=>!SECRET_FLOURISHES.has(r.id)||profile.achievements?.ace).map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned: the rarest that fits the hole. They make no sound.</p>`;
  else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
   // Round 14: the 1.0 drop-down (ui-dropdown.js) reads the level or the
@@ -5417,7 +5613,7 @@ function renderPanel(name,content){
   // is how every other list action here works; the tab you were on is kept.
   const card=c=>renamingCourse===c.id
    ?`<div class="course-card"><label class="field course-rename">Rename this course<input id="renameCourseInput" maxlength="${MAX_NAME}" value="${escape(c.name)}"></label><div class="course-actions"><button class="secondary" data-rename-save="${c.id}">Save name</button><button class="secondary" data-rename-cancel="1">Cancel</button></div></div>`
-   :`<div class="course-card">${coursePic(c.settings.biome,c.id)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions">${[['play','play','Play'],['rename','pencil','Rename'],['share','copy','Copy code'],['remove','trash-2','Delete']].map(([k,ic,w])=>`<button type="button" data-${k}="${c.id}" title="${w}" aria-label="${w} ${escape(c.name)}"><i data-lucide="${ic}"></i><span>${w}</span></button>`).join('')}</div></div>`;
+   :`<div class="course-card">${coursePic(c.settings.biome,c.id)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions">${[['play','play','Play'],['rename','pencil','Rename'],['share','copy','Copy code'],['file','file-down','Save as file'],['remove','trash-2','Delete']].map(([k,ic,w])=>`<button type="button" data-${k}="${c.id}" title="${w}" aria-label="${w} ${escape(c.name)}"><i data-lucide="${ic}"></i><span>${w}</span></button>`).join('')}</div></div>`;
   content.innerHTML=`<p>A course keeps only its landscape: who plays, the format and the tees are chosen when you play.</p>
   <p class="field-error" id="libraryError"></p>
   <h3>Your courses</h3>
@@ -5433,12 +5629,12 @@ function renderPanel(name,content){
    <label class="field">Course code<textarea id="courseCode" rows="3" placeholder="FW1.…"></textarea></label>
    <button class="secondary" id="importCourseCode">Import this code</button>
   </div>
-  <p class="note">A code is one course as text — short enough to paste into a message. A file is your whole library at once, which is what you want for a backup or a move to another machine.</p>
+  <p class="note">A code is one course as text, short enough to paste into a message. Save as file, on a course, keeps its picture too: send the file, and open it here or drop it on this screen. Export every course makes one file of your whole library, for a backup or another computer.</p>
   <button class="secondary" id="exportCourses"><i data-lucide="download"></i> Export every course to a file</button>
   <button class="secondary" id="importCourses"><i data-lucide="upload"></i> Import courses from a file</button>
-  <input id="courseFile" type="file" accept="application/json" hidden>`;
+  <input id="courseFile" type="file" accept=".fairway,.json,application/json" hidden>`;
   const fail=e=>{$('libraryError').textContent=e.message;};
-  if($('saveCourse'))$('saveCourse').onclick=()=>{try{$('libraryError').textContent='';const rec=saveCourse({name:$('courseName').value,settings});openPanel('library');toast(`Saved “${rec.name}” to your library.`);}catch(e){fail(e);}};
+  if($('saveCourse'))$('saveCourse').onclick=()=>{try{$('libraryError').textContent='';const rec=saveCourse({name:$('courseName').value,settings});openPanel('library');toast(`Saved “${rec.name}”.`);}catch(e){fail(e);}};
   if($('libraryStudio'))$('libraryStudio').onclick=()=>{closePanel();openStudioSetup();};
   // Renaming. The input is focused and selected because the only reason to be
   // here is to replace what is in it.
@@ -5462,7 +5658,11 @@ function renderPanel(name,content){
   // press arms it for DELETE_ARM_MS (PLACED), the second deletes.
   content.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{
    if(b.dataset.armed!=='1'){b.dataset.armed='1';b.title='Press again to delete';toast(`Press delete again to remove “${findCourse(b.dataset.remove)?.name||'this course'}”.`);setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.title='Delete';}},DELETE_ARM_MS);return;}
-   deleteCourse(b.dataset.remove);openPanel('library');toast('Course deleted.');});
+   deleteCourse(b.dataset.remove);pictureStore.remove(b.dataset.remove);coursePics.delete(b.dataset.remove);openPanel('library');toast('Course deleted.');});
+  // ONE COURSE AS A FILE, WITH ITS PICTURE (the 1.0 polish, course-file.js):
+  // `<name>.fairway`, opened by Import courses from a file or dropped here.
+  content.querySelectorAll('[data-file]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.file);if(!c)return;
+   const pic=coursePics.get(c.id)??await pictureStore.get(c.id);download(courseFileName(c.name),courseFile(c,pic),'application/json');toast(`Saved “${c.name}” as a file${pic?', with its picture':''}.`);});
   content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
   content.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{
    const c=findCourse(b.dataset.play);if(!c)return;
@@ -5479,12 +5679,19 @@ function renderPanel(name,content){
    toast(`Exported ${all.length} course${all.length===1?'':'s'}.`);
   };
   $('importCourses').onclick=()=>$('courseFile').click();
+  // A course file dropped anywhere on this screen opens as if chosen.
+  content.ondragover=e=>{if([...(e.dataTransfer?.types||[])].includes('Files'))e.preventDefault();};
+  content.ondrop=e=>{const files=e.dataTransfer?.files;if(!files?.length)return;e.preventDefault();$('courseFile').files=files;$('courseFile').onchange();};
   $('courseFile').onchange=async()=>{
    try{
     $('libraryError').textContent='';
     const f=$('courseFile').files[0];
     if(!f||f.size>2000000)throw Error('Choose a Fairway course file smaller than 2 MB.');
-    const d=JSON.parse(await f.text());
+    const text=await f.text();
+    // One course with its picture (course-file.js) rather than a library.
+    if(/"kind"[ \t\r\n]*:[ \t\r\n]*"fairway-course"/.test(text)){const r=readCourseFile(text);const saved=saveCourse({name:r.name,settings:r.settings,generator:r.generator});
+     if(r.picture){coursePics.set(saved.id,r.picture);pictureStore.put(saved.id,r.picture);}openPanel('library');toast(`Opened “${saved.name}”${r.picture?' with its picture':''}.`);return;}
+    let d;try{d=JSON.parse(text);}catch{throw Error('That file does not hold Fairway courses.');}
     const list=Array.isArray(d)?d:Array.isArray(d?.courses)?d.courses:null;
     if(!list)throw Error('That file does not hold Fairway courses.');
     // ADDED, never replacing. An import that wiped the library would be an
@@ -5605,11 +5812,11 @@ function renderPanel(name,content){
   const FIELD_GROUPS=[
    // A label only where the box needs naming. "Houses" earns one: it holds a
    // toggle, two sliders and a second toggle whose labels do not otherwise say
-   // they belong together. Wind does not -- a box headed WIND, under a heading
-   // already saying Weather, containing "Wind speed" and "Wind direction", says
-   // the word four times and adds nothing the fields do not.
+   // they belong together. Wind went without one while it sat under its own
+   // Weather heading; since the 1.0 polish it shares Course with the landscape,
+   // holes and length, and its box says WIND.
    {category:'scenery',label:'Houses',keys:['homes','homeDensity','homeSetback','residentialOB']},
-   {category:'weather',keys:['wind','windDirection']},
+   {category:'course',label:'Wind',keys:['wind','windDirection']},
    // One box per water feature. Two of these boxes hold settings that serve
    // TWO features rather than one, and they are separate for that reason: the
    // depth range is read identically by ponds and by lakes, and the channel
@@ -5624,16 +5831,36 @@ function renderPanel(name,content){
    {category:'water',label:'Rivers and creeks shape',keys:['streamDepth','streamBends']},
   ];
   const one=(k,short)=>(custom[k]?custom[k]():control(k,short))+tip(k);
+  // THE FINE SETTINGS (the 1.0 polish, studio round 3; PLACED): what shapes a
+  // course's detail rather than its character, folded under More settings in
+  // their menu. A group folds whole, by its first member (the depth of ponds
+  // and lakes; the rivers' and creeks' shape). The landscape, holes, length,
+  // seed and wind, the land's character, fairways, greens, bunkers, water and
+  // trees stay in view.
+  const STUDIO_MORE=new Set(['spacing','doglegAngle','doglegPosition','blindTees','falseFronts','raisedGreens','sunkenGreens','pinDay','bunkerGap','waterMin','streamDepth','fairwayFeature','greenTrees']);
   const group=([key,label,note])=>{
    const boxes=FIELD_GROUPS.filter(g=>g.category===key),taken=new Set(boxes.flatMap(g=>g.keys));
-   const body=SETTINGS.filter(f=>f.category===key).map(f=>{
-    if(!taken.has(f.key))return one(f.key);
-    // A group is drawn at the position of its FIRST member, so the order the
-    // schema states is still the order on screen and nothing jumps about.
-    const box=boxes.find(g=>g.keys[0]===f.key);
-    return box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(k=>one(k,!!box.label)).join('')}</div>`:'';
-   }).join('');
-   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
+   // THE LANDSCAPE FIRST (the 1.0 polish, studio round 1): the studio says
+   // "choose the landscape you want, then grow it", so its pictures lead the
+   // first menu; the rest keep the schema's order.
+   const lead=key==='course'?['biome']:[];
+   const members=SETTINGS.filter(f=>f.category===key).sort((a,b)=>(lead.includes(b.key)-lead.includes(a.key)));
+   const main=[],more=[];
+   for(const f of members){
+    let html;
+    if(!taken.has(f.key))html=one(f.key);
+    else{
+     // A group is drawn at the position of its FIRST member, so the order the
+     // schema states is still the order on screen and nothing jumps about.
+     const box=boxes.find(g=>g.keys[0]===f.key);
+     html=box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(k=>one(k,!!box.label)).join('')}</div>`:'';
+    }
+    if(html)(STUDIO_MORE.has(f.key)?more:main).push(html);
+   }
+   // The fine settings folded under More settings (the 1.0 polish, studio
+   // round 3, G3): still one press away, never removed.
+   const fold=more.length?`<details class="sd-more"><summary>More settings · ${more.length}</summary>${more.join('')}</details>`:'';
+   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${main.join('')}${fold}`;
   };
   // ONE SCREEN, from the menu or in the studio (round 13): the same words and
   // the same Grow this landscape (R) -- in the studio it regrows this one.
@@ -5869,7 +6096,7 @@ function renderPanel(name,content){
    try{
     const fresh=surpriseSettings(),name=suggestCourseName(fresh);
     await startRoundOn(fresh,readGroup(),name);
-    toast(`“${name}”, built just now. Play well.`);
+    toast(`“${name}”, built just now.`);
    }catch(e){$('roundError').textContent=e.message;}
   };
   // APPLY TO A ROUND ALREADY IN PROGRESS, without restarting it. Golfers who
@@ -5928,13 +6155,16 @@ function renderPanel(name,content){
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    const kind=$('roundCourse').value;
+   // What Play again will start next time (last-play.js); a friend's
+   // challenge is not kept.
+   {const k=['weekly','endless','friend','surprise'].includes(kind)?kind:'saved';rememberPlay(localStorage,{kind:k,courseId:k==='saved'?kind:null,group:readGroup()});}
    if(kind==='surprise'){const s=lobbySurprise||surpriseSettings(),name=suggestCourseName(s);
-    try{await startRoundOn(s,readGroup(),name);lobbySurprise=null;toast(`“${name}”, built just now. Play well.`);}catch(e){$('roundError').textContent=e.message;}return;}
+    try{await startRoundOn(s,readGroup(),name);lobbySurprise=null;toast(`“${name}”, built just now.`);}catch(e){$('roundError').textContent=e.message;}return;}
    if(kind==='weekly'||kind==='endless'||kind==='friend'){try{await (kind==='weekly'?startWeeklyRound:kind==='endless'?startEndlessRun:startRivalRound)(readGroup());}catch(e){$('roundError').textContent=e.message;if(kind==='friend')lobbySheet?.go(1);}return;}
    const chosen=findCourse($('roundCourse').value);
    // Said where it is seen (the foot, beside Tee off), and back to step 1.
    if(!chosen){$('roundError').textContent='Choose a course first, or import a code.';lobbySheet?.go(1);return;}
-   try{await startRoundOn(chosen.settings,readGroup(),chosen.name);toast(`Your round on “${chosen.name}” is ready.`);}catch(e){$('roundError').textContent=e.message;}
+   try{await startRoundOn(chosen.settings,readGroup(),chosen.name);toast(`“${chosen.name}” is ready.`);}catch(e){$('roundError').textContent=e.message;}
   };
   wireRoundCards(content);
   // EXPORTING "THE ROUND YOU ARE PLAYING" NEEDS ONE. At the menu `round` is the
@@ -6284,10 +6514,10 @@ function renderPanel(name,content){
    content.querySelectorAll('[data-rival-seat]').forEach(b=>b.onclick=()=>sendCard(Number(b.dataset.rivalSeat)));}
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']]),...(sk?[['Skins','',...allPars.map((_,h)=>{const e=sk.perHole[h];return !e?'':e.winner===null?'carried':`${round.players[e.winner].name} ${e.value}`;}),sk.won.reduce((a,b)=>a+b,0),sk.carry?`${sk.carry} carried`:'']]:[])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
-  content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">Run <b>run_fairway_server</b> from the download and keep its window open: your connector sends shots to it on port 1921, and it passes them to this page (the address below, port 1922).</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><div class="lm-works"><h3 class="lm-head">Launch monitors that work through rēlā</h3><ul>${RELA_MONITORS.map(m=>`<li>${escape(m)}</li>`).join('')}</ul><p class="note">In <a href="${RELA_DOCS}" target="_blank" rel="noopener">rēlā</a> (Windows) pick your monitor, set the simulator to GSPro, the address to 127.0.0.1 and the port to 1921. Any other Open Connect connector works the same way. Which monitors connect is rēlā's list; Fairway has not been tried with each one.</p></div><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
+  content.innerHTML=`<p>Play with a launch monitor, through any Open Connect v1 connector.</p><p class="note">Run <b>run_fairway_server</b> from the download and keep its window open: your connector sends shots to it on port 1921, and it passes them to this page (the address below, port 1922).</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><p class="note lm-docs">Which launch monitors work, and how to set up rēlā: README.md in the download.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
   $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();monitorSetup?.paint();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
-  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><p>Aim, choose a club, swing. Click anywhere on the course or the map to aim there, or turn the aim with the arrow keys; the floating marker says how far the spot is and what it leaves to the hole.</p><p>The Swing Meter is three taps of <kbd>Space</kbd> (or clicks on the bar): the first starts the swing, the second stops the marker at the distance you want, and the third, back on the strike line, decides how straight it goes. A putt is two taps.</p><p>Every key is on the right, and in a round <kbd>?</kbd> shows them over the course. <kbd>Esc</kbd> pauses.</p><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p><strong>Fairway.html</strong>, the file in the download, holds its scripts, styles and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
+  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><p>Aim, choose a club, swing. Click anywhere on the course or the map to aim there, or turn the aim with the arrow keys; the floating marker says how far the spot is and what it leaves to the hole.</p><p>The Swing Meter is three taps of <kbd>Space</kbd> (or clicks on the bar): the first starts the swing, the second stops the marker at the distance you want, and the third, back on the strike line, decides how straight it goes. A putt is two taps.</p><p>Every key is listed with this page, and in a round <kbd>?</kbd> shows them over the course. <kbd>Esc</kbd> pauses.</p><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p><strong>Fairway.html</strong>, the file in the download, holds its scripts, styles and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
   // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
   //
   // It sits in Help because that is where a person goes when something is
@@ -6343,7 +6573,7 @@ function renderPanel(name,content){
    step:challengeStep,onStep:i=>{challengeStep=i;}});
   else if(name==='library')buildLibrary(content,{onNew:()=>{closePanel();openStudioSetup();}});
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
-  if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
+  if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,id:el.dataset.course,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
  }
  // Keys & help: topics, the page, its keys (round 14, ui-menu-screens.js).
  if(name==='help'&&content.id==='drawerContent')buildHelp(content,{keys:HELP_KEYS});
@@ -6512,6 +6742,12 @@ function groupPanelContent(root,tabAlways=false,panelName=null){
    tab.classList.toggle('active',i===index);
    tab.setAttribute('aria-selected',String(i===index));
   });
+  // A row of tabs wider than the screen scrolls sideways; the chosen one is
+  // brought into it (the 1.0 polish: on a sideways phone the studio's last
+  // menu, Trees & scenery, sat half off the screen when chosen). `nearest`
+  // leaves a row already in view where it is.
+  const on=tabs.children[index];
+  if(on&&tabs.scrollWidth>tabs.clientWidth+1)on.scrollIntoView({block:'nearest',inline:'nearest'});
  };
  sections.forEach((section,i)=>{
   const tab=document.createElement('button');
@@ -6684,6 +6920,16 @@ function bind(){
  $('menuNav').onclick=()=>guardStudio(openMenu);
  $('menuContinue').onclick=continueRound;
  $('menuPlay').onclick=()=>openPanel('round');
+ $('menuAgain').onclick=async()=>{
+  const last=lastPlay(localStorage,{hasCourse:id=>!!findCourse(id)});
+  if(!last){openPanel('round');return;}
+  try{
+   if(last.kind==='weekly')await startWeeklyRound(last.group);
+   else if(last.kind==='endless')await startEndlessRun(last.group);
+   else if(last.kind==='saved'){const c=findCourse(last.courseId);await startRoundOn(c.settings,last.group,c.name);}
+   else{const s=surpriseSettings(),name=suggestCourseName(s);await startRoundOn(s,last.group,name);toast(`“${name}”, built just now.`);}
+  }catch(e){toast(e.message);openPanel('round');}
+ };
  $('menuStudio').onclick=()=>openStudioSetup();
  $('menuCourses').onclick=()=>openPanel('library');
  $('menuProfile').onclick=()=>{renamingProfile=false;viewingProfile=profiles?.main??null;openPanel('profile');};
@@ -6850,27 +7096,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // `pitch: 'sun'` tilts to 12 degrees under it, so the sun sits in the top of
   // the frame with the land below -- the view the god rays cost the most in,
   // and the one the profiler's `sun` group measures.
-  camera:(o={})=>{
-   let x=o.x??0,z=o.z??0,yaw=(o.yaw??0)*Math.PI/180;
-   // `fromPin`: that many metres from the pin, on the line back toward the tee
-   // turned `around` degrees about the pin, looking at it -- a green seen from
-   // wherever a putt is read, whatever shape the hole is.
-   // `fromGreen` is the same about the green's centre, which stays put when the
-   // cup moves -- for comparing two versions of a green whose cups differ.
-   if(o.fromPin!==undefined||o.fromGreen!==undefined){const h=world.holes[o.hole??round.hole],pin=o.fromGreen!==undefined?h.worldGreen:h.worldPin,tee=h.worldTee,far=o.fromGreen??o.fromPin;
-    const a=Math.atan2(tee.x-pin.x,tee.z-pin.z)+(o.around??0)*Math.PI/180;
-    x=pin.x+Math.sin(a)*far;z=pin.z+Math.cos(a)*far;yaw=Math.atan2(pin.x-x,pin.z-z);}
-   else if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
-    const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
-    yaw=aim?Math.atan2(aim.x-x,aim.z-z):o.look==='sun'?yaw:(o.look??0)*Math.PI/180;}
-   const sun=view.sunDir;
-   if(o.look==='sun'||o.yaw==='sun')yaw=Math.atan2(sun.x,sun.z);
-   const y=world.height(x,z)+(o.height??2);
-   const pitchDeg=o.pitch==='sun'?Math.asin(Math.max(-1,Math.min(1,sun.y/sun.length())))*180/Math.PI-12:(o.pitch??-10);
-   const pitch=pitchDeg*Math.PI/180;
-   view.placeCamera({x,y,z},yaw,pitch);
-   return {x:+x.toFixed(1),y:+y.toFixed(1),z:+z.toFixed(1),yaw:+(yaw*180/Math.PI).toFixed(1),pitch:+pitchDeg.toFixed(1)};
-  },
+  camera:(o={})=>placePose(o),
   // Straight to a hole's tee (0-based), for measuring from more than the first.
   hole:(n)=>{if(flight||round.endless||!world?.holes[n])return round.hole;round.hole=n;loadCourse();return round.hole;},
   // null on any field hands it back to the previous value.
@@ -7518,8 +7744,17 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // Enter and Space press the focused button there. The game's own handler
   // cancels both (they swing and finish a shot), which left a menu driven by
   // arrows with no way to choose (seen 17 October 2026).
-  if(!dir&&['Enter','NumpadEnter','Space'].includes(e.code)){const s=focusScope(),b=document.activeElement;if(s&&b?.tagName==='BUTTON'&&s.contains(b)){e.preventDefault();e.stopPropagation();b.click();}return;}
-  if(!dir)return;const t=document.activeElement;if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
+  if(!dir&&['Enter','NumpadEnter','Space'].includes(e.code)){const s=focusScope(),b=document.activeElement;if(s&&(b?.tagName==='BUTTON'||b?.tagName==='SUMMARY')&&s.contains(b)){e.preventDefault();e.stopPropagation();b.click();}return;}
+  if(!dir)return;const t=document.activeElement;
+  // A plain drop-down on a menu row (a seat's Plays with, say) answers as a
+  // console's option row does: left and right step its value, up and down
+  // move on. A select keeps all four arrows natively, so a d-pad that
+  // arrived on one could not leave it (the 1.0 polish; XAG 112).
+  if(t?.tagName==='SELECT'&&focusScope()?.contains(t)){
+   if(dir==='left'||dir==='right'){const i=Math.max(0,Math.min(t.options.length-1,t.selectedIndex+(dir==='right'?1:-1)));if(i!==t.selectedIndex){t.selectedIndex=i;t.dispatchEvent(new Event('input',{bubbles:true}));t.dispatchEvent(new Event('change',{bubbles:true}));}e.preventDefault();e.stopPropagation();return;}
+   if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}return;
+  }
+  if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
@@ -7835,7 +8070,7 @@ try{
  globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
  globalThis.__splashStep?.('Growing the first hole',.3);
- modelCards=createModelCards({renderer:()=>view?.renderer,hot:()=>getComputedStyle(document.documentElement).getPropertyValue('--hot').trim()});addEventListener('resize',()=>modelCards?.refit());
+
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.

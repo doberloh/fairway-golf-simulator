@@ -26,6 +26,12 @@ The website has its own repository and its own commands.
 | `npm run smoke` | Builds, then plays the built game in a real browser at nine screen sizes; fails on any error | ~3.5 min |
 | `node tools/smoke.mjs --only endless-round` | One smoke journey, against the current build | |
 | `node tools/smoke.mjs --list` / `--headed` | Lists the journeys / runs them in a visible window | |
+| `node tools/ui-audit.mjs` | Every screen at sixteen sizes, checked for layout bugs (overlaps, cut-off text, off-centre, two highlights, small targets, contrast, small text); pictures and a report in `bench/shots/ui-audit/<out>/`. Needs the capture build (`node tools/capture/build-hooked.mjs`); `--quick` four sizes, `--sizes`, `--screens`, `--game`, `--out`, `--list`. Uses the graphics card | ~1.5 h all, minutes for a few |
+| `node tools/ui-motion-check.mjs` / `ui-motion-frames.mjs` | The menus' animations: lengths, cheap properties, interrupted ends whole, nothing under reduced motion / each stopped at six moments and pictured | ~1 min |
+| `node tools/capture/ui-polish-showcase.mjs` | The 1.0 polish's before-and-after page for the owner, from the audit's pictures (local) | seconds |
+| `node tools/ui-pad-check.mjs [--only 390x844] [--game f]` | A pretend controller at six sizes: the d-pad through the menus and the pause list, A into a round, B and Start | ~3 min |
+| `node tools/ui-movable-check.mjs [--only 390x844]` | The map and the shot numbers dragged in a round at six sizes: they move, stay on screen, and a double click puts them back | ~2 min |
+| `node tools/ui-flows.mjs [--game f] [--paths before|after]` | Presses from the main menu into each mode, by mouse and by keys (the game's own focus rule); fails a path the keys cannot finish | ~2 min |
 | `node tools/biome-fingerprint.mjs --check` | Did course generation change for the same seed? If yes, `GENERATOR_VERSION` needs a bump | ~30 s |
 
 The first time, `npx playwright install chromium` fetches the browser the
@@ -84,6 +90,7 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | `node tools/capture/clips.mjs [clip…]` | The clips, recorded frame by frame at 3840x2160 and 60 fps: an 80 Mbit/s MP4 master and the website's 1080p WebM, each checked to play |
 | `node tools/capture/angles.mjs <biome> <seed> [holes]` | Small test pictures from many views, for choosing a camera |
 | `node tools/capture/showcase.mjs <biome> <seed> [holes]` | A one-page showcase of a landscape for the owner (`docs/reports/<biome>-showcase.html`, local): holes at noon and golden hour, the coast, a close look at its ground, an overview, its 4K stills and Blender sheet if made, and any page error seen while capturing |
+| `node tools/capture/biome-shots.mjs take` / `encode` | The landscape pictures on the cards: candidates at Ultra, then the picks as WebP into `src/shots/` (docs/CAPTURE.md) |
 | `node tools/capture/contact-sheet.mjs <folder>` / `frame-grab.mjs <video> <s>` | One image of a whole set; one frame of a clip |
 | `node tools/capture/motion.mjs <video.webm> [74-130]` | How much a clip's camera shakes, measured from its frames (CPU only); under about 0.012 is smooth |
 | `node tools/capture/gallery.mjs` / `features.mjs [name…]` | The 0.x website's pictures (superseded by times and screens) |

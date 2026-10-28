@@ -595,7 +595,7 @@ Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds every fiel
 
 To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry, a traits entry and an interface palette (`INTERFACE`: the six colours the 1.0 interface wears on that biome's courses; `tests/ui-palette.test.mjs` refuses a biome without one, or one whose text is unreadable -- *The 1.0 interface: layout rules*), and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
 
-**Per-biome tables still live outside the record** -- three were known when Haunted Hollow (9 October) touched them, and Lakeshore Dunes (23 October) found four more. The course-name word lists in `src/course-names.js` (a test fails if a biome has none, and every word is searched with "golf" first -- see the denylist test); the fog profile in `src/mist.js` `PROFILES` (**no test: a biome missing from it silently takes Midwest's fog**); `tools/fixtures.mjs` / `tools/profile.mjs`, which list biomes by hand so a new one is not measured until it is added; and, missed by the old list: the tiny course models' tables in `src/course-model.js` (`MODEL_COLOURS`, `MODEL_TREES`, `RELIEF`, `DENSITY`, each falling back silently), the ambience in `src/sound.js` `SCENES`, the 4K capture list in `tools/capture/times.mjs` `LANDSCAPES`, and **the course of the week's rotation** (`WEEKLY_ROTATION` in weekly.js: a new biome joins on a debut week, never by being appended to the rotation -- *The course of the week is the date*). The per-biome grass texture density in `textures.js` falls back to 1, which is fine.
+**Per-biome tables still live outside the record** -- three were known when Haunted Hollow (9 October) touched them, and Lakeshore Dunes (23 October) found four more. The course-name word lists in `src/course-names.js` (a test fails if a biome has none, and every word is searched with "golf" first -- see the denylist test); the fog profile in `src/mist.js` `PROFILES` (**no test: a biome missing from it silently takes Midwest's fog**); `tools/fixtures.mjs` / `tools/profile.mjs`, which list biomes by hand so a new one is not measured until it is added; and, missed by the old list: the landscape pictures on the course cards (`src/shots/<biome>-*.webp`, taken by `tools/capture/biome-shots.mjs` with its `SEEDS` and `PICKS` per biome; a biome with none falls back silently to the flat drawing -- the tiny course models' tables in `course-model.js` stood here until the 1.0 polish removed them), the ambience in `src/sound.js` `SCENES`, the 4K capture list in `tools/capture/times.mjs` `LANDSCAPES`, and **the course of the week's rotation** (`WEEKLY_ROTATION` in weekly.js: a new biome joins on a debut week, never by being appended to the rotation -- *The course of the week is the date*). The per-biome grass texture density in `textures.js` falls back to 1, which is fine.
 
 **What else a biome can ask for (23 October, Lakeshore Dunes).** `blowouts` -- how much of the open dune rough is wind-torn sand (src/blowouts.js; see *BLOWOUTS ARE ONE BAKED FIELD* below); `driftwood` -- bleached logs per hole on the beach band, drawn by vegetation.js `addDriftwood`, decoration that nothing collides with; `woods` -- `{from, to, floor}`, the chance a TREE is kept rising from `floor` at `from` metres outside the corridor to certain at `to`, so the ground beside play stays open and the trees mass farther back. Ground plants are exempt, and the draw is taken only when a biome sets it, which is why no other biome's planting moved. The species can also carry an accent colour of its own (`accents` in `addModelSpecies`; the dune grass's straw tips) -- otherwise the accent role is painted the leaf colour, as it always was.
 
@@ -1101,7 +1101,17 @@ each `updateHUD`). A phone keeps today's round screen until phase 5.
 
 **Size.** Every piece is laid out in design pixels and zoomed by `--hud-z`
 (`compactScale`: `hudScale` times `COMPACT`, 0.7, round 13), and the sheets by
-`--sheet-z` (the same times the Text size). `hudScale` is the 1280 canvas's scale, but never wider than the screen over
+`--sheet-z` (the same times the Text size, but since the 1.0 polish never below
+the sheets' floor for the screen's width -- round-hud.js `sheetScale`,
+`SHEET_FLOORS`: 0.93 from 1200, 0.8 from 1024, 0.8 from 700 wide AND 900 tall
+(an upright tablet), 0.7 from 700, 0.55 below -- because at 0.7 a laptop's
+menus read under 10 px; the round screen keeps 0.7). **The main menu is
+never below the floor either** (ui-screens.css `--menu-z`, main.js
+`applyHudScale`: `--hud-z` raised to `sheetScale` at Text size 100% divided
+by `--ui-zoom`, since the menu sits inside #app, which the Text size zooms; since the
+1.0 polish's final audit, when at `--hud-z` a tablet drew its tiles 22 px
+tall and their words about 8 px). Not `--sheet-z` itself: that multiplies by
+the Text size, and at 150% on 1080p the week's card covered the tiles. `hudScale` is the 1280 canvas's scale, but never wider than the screen over
 `ROUND_MIN_WIDTH` (1160, PLACED: the room the club panel and the meter need
 side by side), never below 0.75. **The Text size barely enlarges the round
 screen on 16:9** -- the pieces already span it at 100%, so it can add about a
@@ -1322,8 +1332,8 @@ version notices) are children of body. So nothing keyed on #app reaches them:
 not the app's container queries, not the palette (now set on the page root,
 `applyHudPalette`), not #app's Text size zoom, and not `--hud-z`. Their 1.0
 rules are in `src/ui-sheets.css`, matched by `@media` on the screen's size,
-scaled by `--sheet-z` (the round screen's scale times the Text size, on the
-root), with the old variables mapped to the palette there. Found by the first
+scaled by `--sheet-z` (the round screen's scale times the Text size, floored
+by `sheetScale` since the 1.0 polish, on the root), with the old variables mapped to the palette there. Found by the first
 look on 17 October 2026: the sheets were still green, and the phase 2
 scorecard and round-complete styles, written under the app's query, had never
 applied at all (moved to ui-sheets.css).
@@ -1344,7 +1354,7 @@ course studio, whose sheet takes the play area. An open sheet is in
 
 **POLISH FROM AUDIT 3** (UI/UX pass V3, category 5). **A step sheet's content starts from the top** (`.sx-pages` `align-content:start` with up to 56 px under the steps): centred, a short page sat low with empty space above it, in every audit. **`.sx-emptied` hides anywhere in a sheet** (it was only honoured in a step sheet's root, so the studio's put-away pieces still drew). The studio's opening sentence is put away (`buildStudioSheet`, found by its words); the friend step's explanation is three short rows (`.fr-how`); Reset camera is a slanted row (`#resetCamera` in a sheet or a window); Round complete's result rows run across the card (no 820 px cap). After audit 4: Saved courses' file buttons (`#exportCourses`, `#importCourses`) are slanted rows like Reset camera -- at least 48 px and taller when the words wrap (audit 5: a fixed 48 px let the words run out of the box on an upright phone; the saved rounds list's `#exportRound`/`#importRound` the same; since audit 5 Save a course's `#libraryStudio` and My profile's `#profilesExport`, `#profilesImport` and `#profileBag` share the rule, two to a line where they fit, and History's handicap paragraph is a `.note` like the others there, not small research print; since audit 6 a second golfer's *Make main profile* and *Remove <name>* beside the name are small slanted outlines too, Remove in the remove red `#ff8a7a` the shelf and the saved rounds use), the two columns stacking under 560 px -- and its intro is one line (`.lib-root>.panel-lead>p.panel-intro` -- it needs the `body:has(#app[data-mode])` prefix and an !important size to beat the sheets' general `.panel-intro` rule).
 
-**THE MONITORS rēlā CONNECTS, ONE BOX** (UI/UX pass V3, category 4): `RELA_MONITORS` (ui-monitor-setup.js, tested) feeds `.lm-works` in the monitor panel's markup; `buildMonitorSetup` moves the panel's paragraphs and that box into the steps column under the Arm switch, which closed the gap left where the steps column ended short of the status column, and drops the foot when it is empty. The four connector rows (PiTrac and the rest) are gone from the screen; RESEARCH keeps them.
+**THE MONITORS rēlā CONNECTS ARE NOT LISTED IN THE GAME** (the 1.0 polish, 27 October 2026; the owner: they are in the instructions, not the game). Until then (UI/UX pass V3, category 4) `RELA_MONITORS` fed a box `.lm-works` under the Arm switch; now one line, `.lm-docs`, points to the download's README.md, which lists them (PLAYING.md too). `buildMonitorSetup` moves the panel's paragraphs, that line included, into the steps column under the Arm switch, which closed the gap left where the steps column ended short of the status column, and drops the foot when it is empty. The four connector rows (PiTrac and the rest) are gone from the screen; RESEARCH keeps them.
 
 **A ROW OF THE PAUSE LIST NEEDS THREE LISTS** (UI/UX pass V3, category 2): its grid row (round-hud.css, SIX ROWS), the size rule (`:is(.rh-resume,#scoreNav,...)` 52 px, 21 px type) and main.js's `leanAsOne` list that steps each row along the slant. `#pauseSettings` was in the first only, so it stood 18 px out of line, 4 px taller and in 24 px type. **A seat leans as a whole** (ui-sheets.css `.sx-golfers .seat`): the seat is skewed and each child skewed back, so the ball, name, title and level follow the lean -- set on the panel's middle line they sat left of its centre at the top; the seat's panel (::before) is then not skewed again.
 
@@ -1438,6 +1448,14 @@ sheets, windows and dialogues are drawn in the 1.0 style with a dark list
 **On an upright phone the step bar and the settings categories wrap** (audit 5, 22 October 2026; the last block of ui-sheets.css, under 560 px wide). In one sideways-scrolling row Play showed steps 1 to 4 with 5 Rules cut off at the edge and Settings showed "LAUNC", with nothing to say the row moved. Two rows, as My profile's tabs already did. A sideways phone keeps one row: it fits. The same block puts a one-section settings page (Camera & bay, whose `:only-child` rule asks for two columns) in one column: found while looking at the wrap, its rows had squeezed to six lines. And the challenge of the week's banner (`.chal-week`) reads top to bottom there: in its one row the three parts squeezed into columns of five short lines.
 
 **A different sheet opens at its top** (audit 6, 22 October 2026; main.js `openSheet`). `#drawerContent` holds every sheet and its scroll outlived the one scrolled: after a Help topic brought its page up on a sideways phone, My profile opened 328 px down with its tabs above the screen (any sheet scrolled by hand did the same). The reset happens once the drawer is shown -- a hidden element takes no scroll, and the first try, before it, did nothing. The same sheet redrawn keeps its place (the range controls keep theirs on purpose).
+
+**ONE LOOK FOR CHOSEN, ONE FOR THE CURSOR** (the 1.0 polish, 27 October 2026; docs/UI_POLISH.md W1). Yellow (`--hot`) means chosen; white (`--cursor`, style.css `:root`) means where the keys are. Every `:focus-visible` rule draws in `--cursor` (or `--trace-cursor`, the white twin of `--trace`, on #drawer); a chosen-and-focused item shows both, yellow inside white. **The double yellow boxes** the owner saw were one rule, `#drawer .sx-card:is(.on,:focus-visible)::after`, giving the chosen card and the cursor the same yellow ring: on Play, Right then Down left one card chosen and another under the keys, both ringed alike. A new focus rule in the hot colour brings them back -- `tools/ui-audit.mjs` (*play-keys*, *main-menu-keys*) flags two controls in one list outlined alike. **A sheet closed back to the main menu gives the cursor back to the tile that opened it** (main.js `returnMenuFocus`, called by `closePanel`; the 1.0 polish's controller check): before, the focus stayed on a button in the hidden sheet and the next d-pad press landed on Course studio. **A sheet opens with the keys on its chosen card** (main.js `focusSheetStart`: the open step's `.on`/pressed button, else its first button or drop-down, never a text box; the close button only when there is neither) -- it opened on the close button in the far top corner, so the first arrow went to whatever lay below that corner.
+
+**A HIGHLIGHTED BOX'S GRADIENT ENDS ON `--a2-text`, NOT `--a2`** (the 1.0 polish). Dark text (`--on-hot`) sits on the a1-to-a2 gradient, and a2 is deep: 2.28:1 on Giant Redwood. `textEnd` (ui-palette.js) gives the deepest mix of a1 toward a2 that keeps 4.5:1, and `paletteVars` sets it; every `linear-gradient(135deg,var(--a1),...)` under text ends on `var(--a2-text,var(--a2))`. A new highlighted box written with plain `var(--a2)` brings the weak text back on most landscapes; the palette test (`CONTRAST_RULES`, *dark end*) checks the colour, not the stylesheet.
+
+**MOTION IN THE MENUS** (the 1.0 polish, `src/ui-motion.css`): all of it inside `prefers-reduced-motion:no-preference`, transform and opacity only, nothing on the way out, nothing on the round screen. **Never a transform on `#drawer` itself**: it would become the box its `position:fixed` pieces (the steps, the foot, the main button, the profile chips) are placed in, and they would move with it -- the sheet fades (`opacity`) and its `.sx-page` rises. A press uses the `scale` property, not `transform`, so it adds to a button's own skew (`.field-action`) instead of straightening it.
+
+**THE STUDIO HAS A PHONE VERSION, AND ITS BAR IS OUTSIDE #app** (the 1.0 polish, round-phone.css, end). The 1.0 studio rules in round-hud.css sit in `@container app (min-width:561px)...`, so on a phone the studio showed the old interface until the 1.0 polish added a phone set. `#studioBar` is not inside `#app` (the size container), so its rules are `@media` screen queries -- a container rule never reaches it; the slab and the map are inside and use the container. **A box over the screen (save, leave, version, welcome) is drawn at `--sheet-z / 0.7` on a phone**, so its width limit is worked out against that (ui-windows.css), and on an upright phone its rows stand straight -- the shared lean carried a tall box's last rows off the left edge.
 
 **A picked page comes into view on a phone** (audit 5, 22 October 2026; ui-menu-screens.js `bringIntoView`): stacked on a sideways phone, Help's seven topics filled the first screen and the topic's text began 3 px below it, so a tap lit a row and nothing else moved. After a topic is picked, a page that starts in the bottom 80 px of the window or lower is scrolled to the top (no animation under reduced motion). It moves nothing on a big screen, where the page is beside the list.
 
@@ -1709,34 +1727,30 @@ own numbers -- and `recordRangeShot` refreshes it in place
 (`updateRangeSession`) rather than redrawing the window, so a slider being
 dragged keeps its place.
 
-**Card pictures are tiny 3D models** (round 14; `course-model.js`,
-`model-framing.js`, `model-cards.js`). Every card picture -- Play, the
-Endless landscapes, saved courses, the course of the week and its earlier
-weeks, the studio's landscapes -- gets the flat drawing at once
-(`pictureQueue`) and then a low-detail model of the whole course over it
-(`cardPictures` in main.js does both). The holes are the real ones
-(`layoutFor`); the ground relief and trees are a seeded per-landscape rule
-(PLACED, RESEARCH *The tiny course models*). **One renderer:** the game's
-(`view.renderer`) draws each model into one multisampled render target,
-read back into a 2D canvas in the card -- never a WebGL context per card
-(browsers drop the oldest past about sixteen: that would be the game's). The
-game's render target, clear colour and autoClear are put back after each
-draw. **Colours are display values:** three converts colour space and tone
-maps only when drawing to the screen, so the model's colours are set raw
-(`LinearSRGBColorSpace` with sRGB numbers) and the pixels copied as they
-are. **The models are unlit** (`MeshBasicMaterial`; every face shaded once by a
-sky and a sun when the model is made, course-model.js `shadeOf`): lit
-materials drawn on the game's renderer while the menu is up compiled five
-Lambert programs in view as the Endless sheet opened -- a stutter the
-`ball-light-shaders` journey caught. (Before that, lights at the mockup's
-strength came out dark: three r128's lights carried a hidden pi.) The canvas sits
-under the card's leaning shape, cut by the same clip-path (`.model-pic`).
-Only the selected card (`.on`, `.active` or `aria-pressed`) sways, at up
-to 30 frames a second; models are made one per timer tick (about 50-100 ms
-each, on the main thread: the relief is a formula, so there is no worker).
-**Not built: the B flyover** for the big pictures (the course of the week,
-the course about to play): those show the tiny model, as the brief allows
-until a capture exists.
+**Card pictures are pictures of the landscape** (the 1.0 polish, 27 October
+2026; until then tiny 3D models, round 14 -- `course-model.js`,
+`model-framing.js`, `model-cards.js`, removed). Every card picture -- Play's
+game cards, the Endless landscapes, saved courses, the course of the week and
+its earlier weeks, the studio's landscapes -- shows real pictures of its
+landscape taken from the game at Ultra (`tools/capture/biome-shots.mjs`,
+committed under `src/shots/` as WebP and inlined by the build;
+`src/landscape-shots.js` reads them), one after another with a slow
+cross-fade (`src/picture-loop.js`). A saved course's own picture, taken when
+it was saved, comes first (`course-pictures.js`). A card that stands for
+every landscape (Endless, Surprise me before a roll, a new course in the
+studio: `settings.biome === '*'`) runs through one of each. **What it costs:**
+no WebGL and no canvas -- the models drew on the game's renderer while the menu
+was up; an `<img>` per picture faded by opacity, one timer for the whole page
+that stops when no card is left, two pictures held per card at most, and **one card changing at a
+time** -- the next one on screen, in turn, at least 3 s apart (`TICK_MIN_MS`):
+the studio's ten landscapes changing together read slower than main on Ultra's
+processor. Measured against main's build in docs/UI_POLISH.md, *What it costs*. Reduced
+motion holds each card on its first picture. The pictures sit under the card's
+leaning shape, cut by the same clip-path (`.pic-loop`, the models' canvas's
+old place). **They show the look of the build they were taken from:** a change
+to how a landscape looks owes a recapture (`biome-shots.mjs take`, then
+`encode`). A landscape with no pictures in the build falls back to the flat
+drawing below.
 
 **Course pictures are drawn from the plan** (`src/course-picture.js`, round
 13): the holes come from `generateCourse` and are routed by `routeHoles`, as
@@ -1942,7 +1956,7 @@ The CSS has to undo `.drawer .primary`, which sets `width:100%` and `margin-top:
 
 **Tabs come from heading count, and the endless panel had to ask.** `groupPanelContent` tabs a panel at `TAB_THRESHOLD` (3) `<h3>` sections and lays fewer out as columns. Endless has two, each a full sheet on its own, so it arrived as one long scroll. The function takes a `tabAlways` argument — passed as `endlessSetup&&name==='round'` at the single call site — which lowers the threshold to 2 for that render only. It is an argument rather than a flag on the element because the same `content` node is reused by every panel and a stale dataset value would silently tab the next one.
 
-**The panel title follows the variant, not the key.** `panelTitle(name)` reads *Driving range*, *Endless run* or *Your next round* for the one `round` key. All four used to read "Your next round", which was wrong on three of them.
+**The panel title follows the variant, not the key.** `panelTitle(name)` reads *Driving range*, *Endless run* or *Play* for the one `round` key (*Play* since the 1.0 polish: the button the player pressed; it was *Your next round*). All four used to read "Your next round", which was wrong on three of them. The eyebrow over it (`#drawerEyebrow`) says where the sheet was opened from -- *Main menu*, *In a round*, *Course studio*, *Driving range*, *Endless run*, *Challenge* (openPanel) -- since the 1.0 polish; it read "MAKE IT YOURS" on every sheet.
 
 **One putting setting, two surfaces, and a copy held apart from practice rounds.** The round panel's *Format & tees* section renders the mode select and the 1/2/3-putt distance fields inline — it used to be a button in *Your group* that opened the putting panel, which was a second click to reach one setting and put it under the wrong heading. `PUTTING_MODES`, `puttingFields(id,p)`, `readPutting(id)`, `applyPutting(cfg)` and `puttingGuard()` in `main.js` are the shared pieces; the round panel and the tools-tray *Putting options* panel both build from them, so the option list has one definition. (The explanatory notes, `PUTTING_NOTES`, are gone: "the putting description is not needed anywhere", the owner, 18 October 2026; each option's own words say it.) The round-panel fields apply on change with no save button of their own; the tray panel keeps its *Apply putting mode* button because it is a popup the player dismisses.
 
@@ -2726,7 +2740,7 @@ in model-cards.js made it keep ALL of three.js -- about 147 KB of page, and
 three's file loaders, whose three `fetch(` calls are dead code in a file that
 must make no request (DISTRIBUTION_REVIEW counts them). Found by counting
 `fetch(` in the 0.9 build against 0.8.3's. Pass a named object instead
-(model-cards.js `PARTS`); the same test refuses `T` as an argument, entry,
+(as model-cards.js's `PARTS` did, until the 1.0 polish removed that file); the same test refuses `T` as an argument, entry,
 spread or assignment.
 
 ## Escape closes what is in front; an arrow tap is owed to the next frame

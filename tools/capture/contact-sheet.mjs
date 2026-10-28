@@ -12,6 +12,8 @@ const cols = Number(process.argv[3] || 4);
 const out = path.resolve(process.argv[4] || path.join(dir, '_contact.jpg'));
 let files = fs.readdirSync(dir).filter(f => f.endsWith('-thumb.jpg'));
 if (!files.length) files = fs.readdirSync(dir).filter(f => f.endsWith('.jpg') && !f.startsWith('_'));
+// PNG masters (tools/capture/biome-shots.mjs) when there are no JPEGs.
+if (!files.length) files = fs.readdirSync(dir).filter(f => f.endsWith('.png') && !f.startsWith('_'));
 files.sort();
 const html = `<!doctype html><style>body{margin:0;background:#111;font:12px sans-serif;color:#ddd}
 .g{display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;padding:4px}figure{margin:0}img{width:100%;display:block}

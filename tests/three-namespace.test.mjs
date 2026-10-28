@@ -79,7 +79,8 @@ test('no module that imports three as T declares anything else called T', () => 
 // longer tell, and keeps ALL of three.js. model-cards.js did that (18 October
 // 2026, found in the 0.9 release check): about 147 KB more page, and three's
 // file loaders with three dead fetch() calls in a file that must make no
-// request. Pass a named object instead (model-cards.js `PARTS`).
+// request. Pass a named object instead (as model-cards.js's `PARTS` did, until
+// the 1.0 polish replaced the tiny models with pictures and removed it).
 const T_AS_VALUE = /(?:[(,[]\s*|\.\.\.|[=:]\s*)T\s*(?=[,)\]};]|$)/gm;
 
 test('no module that imports three as T hands T itself on as a value', () => {

@@ -152,6 +152,30 @@ export const MIN_HUD_SCALE = .75, ROUND_MIN_WIDTH = 1160;
 // course gets the room back. The Text size still multiplies it.
 export const COMPACT = 0.7;
 export const compactScale = (width, height, zoom = 1) => hudScale(width, height, zoom) * COMPACT;
+// THE SHEETS' SCALE ON A DESK SCREEN (the 1.0 polish; docs/UI_POLISH.md, *Type
+// on small desk screens*). The menus' sheets were drawn at the round screen's
+// compact scale too (main.js applyHudScale, --sheet-z), which at 1280 x 720 is
+// 0.7: their 14 px labels came out under 10 px, the size the Xbox guideline
+// and the kit's own label size (13) put below readable (RESEARCH.md, *Game
+// interface practice*). The compact rule was for the round screen, where the
+// course needs the room; a sheet covers the course anyway. So on a desk
+// screen a sheet is never drawn below its floor; the round screen keeps
+// COMPACT.
+// PLACED, from the audit's rounds: 0.93 from 1200 wide (a 14 px label reads
+// 13, the kit's label size; 1280 x 720 and 1366 x 768 fit it), 0.8 from 1024
+// (a sideways tablet: at 0.93 the profile's stats, Help's keys and the
+// studio's fields ran out of their boxes there), 0.7 from 700 (a sideways
+// phone) and 0.55 below (an upright phone: labels about 11 px, the audit's
+// phone floor). An entry's third number is a height the screen must also
+// have: an upright tablet (768 x 1024 and up) takes 0.93 like a laptop -- at
+// 0.7 its labels read under 10 px (the final audit, 28 October 2026).
+export const SHEET_FLOORS = [[1200, 0.93], [1024, 0.8], [700, 0.8, 900], [700, 0.7], [0, 0.55]];
+export const SHEET_FLOOR = SHEET_FLOORS[0][1];
+export const sheetScale = (width, height, zoom = 1) => {
+ const z = zoom > 0 ? zoom : 1, c = compactScale(width, height, z) * z;
+ const floor = SHEET_FLOORS.find(([w, , h = 0]) => width >= w && height >= h)?.[1];
+ return floor ? Math.max(c, floor * z) : c;
+};
 export function hudScale(width, height, zoom = 1) {
  const z = zoom > 0 ? zoom : 1, f = canvasFrame({width, height, zoom: z});
  const across = width > 0 ? width / ROUND_MIN_WIDTH / z : f.scale;

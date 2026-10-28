@@ -12,7 +12,12 @@ changes what it covers.
 | **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
-| **Frame comparison** | `node tools/frame-ab.mjs --goal <name>` (two builds, alternately), `node tools/frame-variants.mjs` (ideas live in one page) | **the graphics card**, about a minute a run, through `tools/gpu-gate.mjs` | a change's frame time, draws and triangles against noise; pixels changed against two loads of one build; with `--device`, a phone or laptop's screen and processor and an ESTIMATE of its graphics; `tools/frame-look.mjs`: two hooked builds with the renderer's clock stopped, so wind, clouds and water stand still and every changed pixel is the code, plus the pin label, wind arrows, map and page errors; `tools/frame-motion.mjs`: the same round in both builds on a virtual clock (a driver, the TV cameras, the overview), each frame read inside the frame it shows | whether a person would notice; real devices; the menus and panels (the smoke test's job) |
+| **Interface audit** | `node tools/ui-audit.mjs` (UI_POLISH.md) | **the graphics card**, about 1.5 hours for every screen at sixteen sizes, minutes for a few | every screen's layout at phone to 4K and both Text size ends: overlapping or cut-off text, things off screen or off-centre, two highlights alike, touch targets under 44 px, contrast read from the picture, text under the kit's floor; a picture of each | whether it works (the smoke test's job), whether it is pleasant |
+| **Menu motion** | `node tools/ui-motion-check.mjs` (UI_POLISH.md) | **the graphics card**, under a minute | each animation in ui-motion.css runs 100-300 ms on opacity and transforms only, ends whole when interrupted (Esc while arriving, two presses on Next), lets the keys answer at once, and does not run under reduced motion | how it feels |
+| **A controller alone** | `node tools/ui-pad-check.mjs` (UI_POLISH.md T2) | **the graphics card**, about three minutes | a pretend standard pad in `navigator.getGamepads`, at six sizes: the d-pad moves the main menu, Play and the pause list; A opens and presses; B closes a sheet with the cursor back on its tile; A alone starts the course of the week; Start pauses and B resumes | a real pad's own quirks (non-standard mappings, stick drift) |
+| **The pieces a player moves** | `node tools/ui-movable-check.mjs` (UI_POLISH.md T3) | **the graphics card**, about two minutes | in a round at six sizes, the map (by its header) and the shot numbers (Tab) follow a drag, stop inside the playing area when dragged past it, stay inside when the window shrinks, and go back on a double click; on a phone the map stays in its own place (by design) |  a finger's drag on a real phone |
+| **Presses into each mode** | `node tools/ui-flows.mjs` (UI_POLISH.md) | **the graphics card**, about two minutes | from the main menu to a swing ready, per mode: clicks, and arrows plus Enter by the game's own focus rule, actually pressed; a path the keys cannot finish fails | whether the screens look right |
+| **Frame comparison** | `node tools/frame-ab.mjs --goal <name>` (two builds, alternately; spots `menu`, `lobby`, `courses`, `studio` measure the menus, and every run reports the wait from start to the main menu, and `page ms`: the browser's whole main-thread time per frame, which the probe's CPU figure misses -- styles, layout, painting, timers), `node tools/frame-variants.mjs` (ideas live in one page) | **the graphics card**, about a minute a run, through `tools/gpu-gate.mjs` | a change's frame time, draws and triangles against noise; pixels changed against two loads of one build; with `--device`, a phone or laptop's screen and processor and an ESTIMATE of its graphics; `tools/frame-look.mjs`: two hooked builds with the renderer's clock stopped, so wind, clouds and water stand still and every changed pixel is the code, plus the pin label, wind arrows, map and page errors; `tools/frame-motion.mjs`: the same round in both builds on a virtual clock (a driver, the TV cameras, the overview), each frame read inside the frame it shows | whether a person would notice; real devices; the menus and panels (the smoke test's job) |
 
 **The graphics card rule** (AGENTS.md): the smoke test and the profile run only
 when the owner asks in that turn, and never while `nvidia-smi` shows the card
@@ -162,6 +167,21 @@ the courses several suites share.
   recorder writes hold together: boxes and elements fill the file, the frame
   tables name every frame, key frames marked; docs/CAPTURE.md). Whether a clip
   plays is checked in a browser at the end of every recording.
+- **The interface audit's rules** -- `ui-audit-rules` (tools/ui-audit-rules.mjs,
+  the 1.0 polish): each rule shown a made-up layout that breaks it and one
+  that keeps to it -- overlapping controls, leaning neighbours compared at
+  their middle, tight lines of text, covered things skipped, clipped text and
+  ellipses, off-screen with and without a scroll box, off-centre content,
+  the double yellow boxes against chosen-yellow-beside-white-cursor, two
+  cursors, touch targets, contrast and small text, and the known list.
+- **Words and pictures on the menus** (the 1.0 polish) -- `tips` (every key a
+  loading tip names is in keys.js, a tip naming a key lists it, 10-15 short
+  plain tips, the splash reads the build's list), `picture-loop` (the
+  landscape pictures' schedule, one picture loaded until the next fades in,
+  reduced motion holds still, no card no timer, a card redrawn does not stack),
+  `last-play` (Play again: kept as started, a friend's challenge never, a
+  deleted course not offered, a damaged entry or refusing store harmless, at
+  most four golfers, its line in plain words).
 - **The 1.0 interface** (branch `ui-1-0`, from phase 0) -- `ui-layout` (the
   canvas for 16:9, 16:10, 4:3 and 21:9, the bands, the leaning sheet's corners
   on the 60 px margins at every height, columns that never overlap, the canvas
@@ -230,10 +250,14 @@ the courses several suites share.
   settings screen). `ui-studio` (what counts as a changed studio setting, how
   a change reads, and the schema reading clean against itself).
   `ui-range-controls` (the range window's session table reads the report's
-  club table: balls, average carry, spread). `ui-dropdown` (round 14: the 1.0 drop-down's rows -- groups, locked choices, notes -- and its cursor). `model-framing` (round 14: the tiny course models -- five landscapes x four
-  box shapes, the box always full of ground and every tee and green in view at
-  both ends of the sway; each landscape's trees; the same course, the same
-  model). `course-picture` (a course's
+  club table: balls, average carry, spread). `ui-dropdown` (round 14: the 1.0 drop-down's rows -- groups, locked choices, notes -- and its cursor). (`model-framing`, which held the tiny course models to their boxes, went with
+  the models in the 1.0 polish.) `course-file` (the 1.0 polish: a course and its
+  picture round-trip through a `.fairway` file, play settings never travel, the
+  course code is unchanged, anything else refused in plain words, a bad or
+  oversized picture dropped and the course kept, an old file migrated, safe
+  file names, the save step's views). `course-pictures` (where those pictures
+  are kept: IndexedDB first, its own localStorage entry when that fails, a
+  full or refusing store never throwing). `course-picture` (a course's
   picture lays out every hole, the same course the same way, fills its frame
   and draws inside it). `endless` also checks a run pinned to a landscape (every hole in it, the
   plain seed unchanged). `round-tees` (each golfer starts from their own tee,
@@ -282,7 +306,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
 | `friend-challenge` | a friend's challenge made in Node with the page's version (`window.lab.version`), pasted on Play's card and read, its nine-hole round started, the save remembering it and logging a shot, and the scorecard showing the friend's row. Passed on the real GPU on 20 October 2026, in 16 s |
 | `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows a course and saves it through the name box (20 October 2026), and it is listed in Saved courses from the menu |
-| `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
+| `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs. A bridge that is missing (a bare `vite build` does not bundle it; `npm run build` does) or will not start fails `bridge-bundle` alone and the run goes on (the 1.0 polish: it used to end the run) |
 | `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |
 | (round 14) every journey | `press(name)` goes to an open step sheet's last step first when the button is not on screen -- the start buttons (Start an endless run, Play the course of the week) are on the Golfers step now, as a player would find them |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch (since round 13 the menu journeys on a phone open the 1.0 sheets, laid out for a phone) |

@@ -25,7 +25,10 @@
 
  /* ---------------------------------------------------------------- main menu */
  .main-menu:not(.menu-behind){display:block;background:linear-gradient(90deg,rgba(4,8,12,.72) 0%,rgba(4,8,12,.42) 42%,rgba(4,8,12,0) 70%)}
- .main-menu :is(.menu-masthead,.menu-deck,.rh-menu-card,.rh-menu-keys){zoom:var(--hud-z,1);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ /* The main menu never below the sheets' floor (the 1.0 polish, the final
+    audit: at the round screen's compact scale a tablet drew its tiles 22 px
+    tall and their words about 8 px). --menu-z is main.js applyHudScale's. */
+ .main-menu :is(.menu-masthead,.menu-deck,.rh-menu-card,.rh-menu-keys){zoom:var(--menu-z,var(--hud-z,1));font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  /* Up 20 so the "y" of the wordmark clears PLAY (the owner, 18 October 2026). */
  .main-menu .menu-masthead{position:absolute;left:60px;top:16px;padding:0;text-align:left}
  .main-menu .menu-brand{justify-content:flex-start;font-size:88px;font-weight:800;font-style:italic;letter-spacing:-.02em}
@@ -41,13 +44,16 @@
  /* ONE LIT ROW (UI/UX pass, 21 October 2026): the focused one. A row under the
     pointer takes the focus (main.js), so hover and focus never light two rows;
     the main button lights only while nothing in the list is focused. */
- .main-menu .menu-tile:focus::before,.main-menu .menu-modes:not(:focus-within) .menu-tile.primary:not([hidden])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ .main-menu .menu-tile:focus::before,.main-menu .menu-modes:not(:focus-within) .menu-tile.primary:not([hidden])::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  .main-menu .menu-tile:focus :is(strong,small),.main-menu .menu-modes:not(:focus-within) .menu-tile.primary:not([hidden]) :is(strong,small){color:var(--on-hot)}
- .main-menu .menu-tile:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ .main-menu .menu-tile:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--cursor)) drop-shadow(-3px 0 0 var(--cursor)) drop-shadow(0 3px 0 var(--cursor)) drop-shadow(0 -3px 0 var(--cursor))}
  .main-menu .menu-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
  /* Three links since 21 October 2026: Settings, Launch monitor, Help. */
  .main-menu .menu-link[hidden]{display:none}
- .main-menu .menu-link{position:relative;isolation:isolate;height:32px;padding:0 14px;border-radius:0;opacity:1;color:#fff;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+ /* With the round's dark outline (round-hud.css --outline): the links stand
+    over the course behind the menu, 3.9-4.5:1 on its brightest holes (the
+    1.0 polish, the final audit). */
+ .main-menu .menu-link{position:relative;isolation:isolate;height:32px;padding:0 14px;border-radius:0;opacity:1;color:#fff;text-shadow:var(--outline);font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
  .main-menu .menu-link::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
  .main-menu .menu-link:is(:hover,:focus-visible)::before{background:var(--a1)}
  .main-menu .menu-link:is(:hover,:focus-visible){color:var(--on-hot);outline:none}
@@ -69,7 +75,7 @@
  .rh-menu-card>button.rh-mc-week{position:relative;isolation:isolate;display:block;width:100%;padding:16px 28px;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer;font-family:inherit}
  .rh-menu-card>button.rh-mc-week::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  .rh-menu-card>button.rh-mc-week:is(:hover,:focus-visible){outline:none}
- .rh-menu-card>button.rh-mc-week:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ .rh-menu-card>button.rh-mc-week:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  .rh-menu-card .rh-mc-week small{display:block;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700}
  .rh-menu-card .rh-mc-week strong{font-size:26px;font-weight:800;font-style:italic}
  .rh-menu-keys{position:absolute;left:60px;bottom:24px;display:flex!important;gap:14px;font-size:16px;font-weight:700;color:#e6e8ff;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.6)}
@@ -109,10 +115,10 @@
  .drawer{border-top:4px solid var(--a1)}
  /* The main button leans in the biome's gradient; the others lean plain. */
  :is(#drawer,.popup,.version-notice) button.primary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
- :is(#drawer,.popup,.version-notice) button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ :is(#drawer,.popup,.version-notice) button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
  :is(#drawer,.popup,.version-notice) button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
  :is(#drawer,.popup,.version-notice) button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
- :is(#drawer,.popup,.version-notice) button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ :is(#drawer,.popup,.version-notice) button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--cursor)) drop-shadow(-3px 0 0 var(--cursor)) drop-shadow(0 3px 0 var(--cursor)) drop-shadow(0 -3px 0 var(--cursor))}
  /* Tabs: slanted, the current one filled. */
  .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
  .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}

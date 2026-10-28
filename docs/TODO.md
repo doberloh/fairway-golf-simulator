@@ -31,6 +31,82 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **The drop bar and the Tools window: three lines low on their own
+  panels; the near-miss contrasts; the map's switches and Done on a tablet**
+  (found by the final audit, 28 October 2026; the first three the same on
+  main). Fixed at the cause: Place ball's dark words were out-ranked by the
+  bar's rule for every button; the lines and headings were coloured only on
+  wide screens; the highlight's end colour aims at 6:1; words over pictures
+  carry the outline; the switches are 25 px and Done takes its touch size.
+  UI_POLISH.md, *Third look*.
+The checklist, the rounds and the decisions are in docs/UI_POLISH.md. The
+computer is unlocked on this branch only (AGENTS.md); the section goes, and
+the branch is squashed, when it merges back.
+
+### Playing it by hand, screen by screen (the owner's)
+
+Everything below was built and seen in the audit's pictures and the smoke
+journeys, and none of it has been played by hand. Each line is what to do
+and what should happen. With a keyboard first, then a controller, then a
+phone.
+
+- [ ] **The splash and a course growing.** The tips are the fourteen in
+  src/tips.js, each true of the game today; one shows while a course grows
+  ("Growing the landscape...", "Shaping the landscape").
+- [ ] **The main menu.** The arrows move a white cursor and slide the tile a
+  little; the eyebrow reads Main menu. After any round, **Play again** shows
+  what it will start (the line under it) and starts it in one press.
+- [ ] **Play.** Titled Play, with Main menu above the title. Opens with the
+  keys on the chosen card. Right then Down: one yellow card (chosen) and one
+  white (the keys), never two yellow. The cards show landscape pictures that
+  fade from one to the next, one card at a time; with reduced motion (the
+  system's setting) they hold still. Tee off is on every step. Course of the
+  week by Enter alone: three presses.
+- [ ] **Endless, Surprise me, the earlier weeks.** Endless's landscapes and
+  the weeks show their pictures; Surprise me, before a roll, runs through
+  every landscape.
+- [ ] **Saved courses.** Each card shows the picture the course was saved
+  with, then its landscape's. **Save as file**, delete the course (it asks
+  twice), then open the file with the button and again by dropping it on the
+  screen: it comes back with its picture. A saved round's delete asks twice
+  too.
+- [ ] **Challenges.** Opens on the chosen challenge; a challenge by Enter
+  alone in four presses.
+- [ ] **The driving range.** Its setup's drop-downs: the arrows go into and
+  out of each (they were trapped on main).
+- [ ] **The course studio, from the main menu.** Five menus -- Course (the
+  landscapes first, as pictures), Land & routing, Fairways, greens &
+  bunkers, Water, Trees & scenery -- every setting still there, More settings
+  folded at the foot. Choosing a landscape by keys lands on Grow this
+  landscape.
+- [ ] **The course studio, saving.** Save course shows a picture of the
+  course; each view button changes it; Frame it yourself lets you fly, and
+  Enter takes it. The arrows (or a d-pad) move between the box's buttons.
+  The saved course's card then shows that picture. On a phone the box fits
+  and its rows are straight.
+- [ ] **Settings, Launch monitor, Help, My profile.** Each opens with the keys
+  on the chosen item. Launch monitor no longer lists which monitors work; one
+  line points to README.md in the download. Help's line about the keys reads
+  "listed with this page".
+- [ ] **The round.** The score, the meter and the flag's distance read on
+  bright ground and sky (a dark outline on the text). The pause list, the
+  scorecard, the big map, Tools, Golfers & rules and the shot box: one white
+  cursor, the chosen item yellow.
+- [ ] **The pieces you move.** Drag the map by its header and the shot numbers
+  (Tab); each stays inside the screen, keeps its place, and a double click
+  puts it back. (`tools/ui-movable-check.mjs` drags both at six sizes.)
+- [ ] **Sizes.** At 1280 x 720 and 1366 x 768 the sheets' labels read about
+  13 px and nothing runs out of its box; at 4K nothing is tiny.
+- [ ] **Phones, upright and sideways.** Back is on screen on the last step of
+  Play; the start button has a row of its own and wraps; every button is
+  easy to hit; the studio's bar is the 1.0 look.
+- [ ] **Course pictures from a file opened straight from disk** (no web
+  server) in Chrome, Firefox and Safari: save a course with its picture,
+  close the browser, open the file again -- the picture is still there
+  (IndexedDB; DISTRIBUTION_REVIEW).
+
 ## The cartoon overhaul (branch `cartoon-overhaul`, 25-27 October 2026; merged)
 
 The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
@@ -344,9 +420,6 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   mouse or a finger on a touch screen, the range (its tiles start top right),
   the big map (M) after a move, the Tools window's Reset. PLACED: only those
   two move; no resizing.
-- [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
-  5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
-  screens keep text on the light end, or the gradient changes.
 - [ ] **Phase 1 (the round screen): seen at 1280 x 720 and 1920 x 1080, not
   on the projector** (17 October 2026, overnight, the owner having allowed
   the graphics card for the night). Seen in the browser pane and the smoke
@@ -723,11 +796,6 @@ are in the archived section of the same name.
   only, so a resumed round shows dashes mid-hole. Decide first whether a shot
   from an earlier session should look as though it just happened. (was: *The
   card forgets its numbers on a reload*)
-
-- [ ] **Saving: a full store says nothing.** `save()` in main.js swallows the
-  error, so Continue silently stops updating. Also, a saved round deletes in one
-  click and a saved course needs two taps; pick one. (was: *Save/import/export,
-  what is left*)
 
 - [ ] **The rest of the penalty rules**: an unplayable ball (Rule 19), a
   provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
@@ -1335,6 +1403,19 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **Text on the dark end of a highlighted box is weak** -- confirmed on
+  main first (onHot on a2: 2.28:1 on Giant Redwood, under 4.5 on eight of ten
+  landscapes). Fixed in the palette: a highlighted box's gradient ends on
+  `--a2-text` (ui-palette.js `textEnd`), the deepest mix of a1 toward a2
+  that still gives 4.5:1, a2 itself where it already passes (Links, Desert,
+  Island); a contrast rule holds every palette to it. (Was open since phase 1.)
+- [x] **Saving: a full store says nothing** -- confirmed (`save()` swallowed
+  the error). Now the player is told once, until a save works again; and a
+  saved round's delete asks twice, as a saved course's does. (Was: "a saved
+  round deletes in one click and a saved course needs two taps; pick one".)
 
 ## Release 0.9.5 (27 October)
 

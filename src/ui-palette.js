@@ -47,12 +47,36 @@ export function screenBiome({screen, course, chosen, date = new Date()} = {}) {
 // The palette itself, with the biome it came from and the shared under-par red.
 export function screenPalette(opts = {}) {
  const biome = screenBiome(opts);
- return {biome, ...biomeOf(biome).ui, under: UNDER_PAR};
+ const ui = biomeOf(biome).ui;
+ return {biome, ...ui, a2Text: textEnd(ui, TEXT_END_MIN), under: UNDER_PAR};
+}
+
+// THE DARK END OF A HIGHLIGHTED BOX, FOR TEXT (the 1.0 polish; TODO had it
+// open since phase 1: "Text on the dark end of a highlighted box is weak",
+// 2.3:1 on Giant Redwood). A highlighted box is a gradient from a1 to a2 with
+// onHot text on it, and a2 is a deep colour: onHot read 2.3-5.5:1 against it.
+// The gradient ends instead on the deepest mix of a1 toward a2 that still
+// gives onHot `min` against it -- a2 itself where that already passes (Links),
+// most of the way where it nearly does. Mixed in sRGB, as CSS color-mix does.
+// The line it aims at: 6:1, not 4.5 (PLACED; the final audit). Small text near
+// the gradient's end -- a key cap, a tab's count -- read 4.0-4.4 at 4.5 and
+// still 4.2-4.5 at 5: by the box's slanted edge its fill blends with the dark
+// panel, so the ground under the words is darker than the gradient's own end.
+// The contrast rule below still holds every palette to 4.5; the margin is the
+// end's.
+export const TEXT_END_MIN = 6;
+export function textEnd(p, min = 4.5) {
+ const a = parseColour(p.a1), b = parseColour(p.a2);
+ const mix = t => '#' + [0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * t).toString(16).padStart(2, '0')).join('');
+ if (contrast(p.onHot, mix(1)) >= min) return mix(1);
+ let lo = 0, hi = 1;
+ for (let k = 0; k < 20; k++) { const t = (lo + hi) / 2; if (contrast(p.onHot, mix(t)) >= min) lo = t; else hi = t; }
+ return mix(lo);
 }
 
 // The palette as CSS custom properties, for the kit's root element.
 export function paletteVars(p) {
- return {'--panel': p.panel, '--a1': p.a1, '--a2': p.a2, '--hot': p.hot, '--soft': p.soft, '--on-hot': p.onHot, '--under': p.under ?? UNDER_PAR};
+ return {'--panel': p.panel, '--a1': p.a1, '--a2': p.a2, '--a2-text': p.a2Text ?? textEnd(p, TEXT_END_MIN), '--hot': p.hot, '--soft': p.soft, '--on-hot': p.onHot, '--under': p.under ?? UNDER_PAR};
 }
 
 // ---------------------------------------------------------------- contrast
@@ -107,11 +131,12 @@ export const CONTRAST_RULES = [
  {text: 'under', on: 'panel', min: 3, what: 'an under-par score on a panel'},
  {text: 'onHot', on: 'hot', min: 4.5, what: 'text on the hot colour'},
  {text: 'onHot', on: 'a1', min: 4.5, what: 'text on a highlighted box (light end)'},
+ {text: 'onHot', on: 'a2Text', min: 4.5, what: 'text on a highlighted box (dark end)'},
 ];
 
 // Every rule a palette breaks, with the ratio it reached. Empty means readable.
 export function contrastProblems(p, backdrops = ['#ffffff', '#000000']) {
- const pick = k => (k.startsWith('#') ? k : k === 'under' ? (p.under ?? UNDER_PAR) : p[k]);
+ const pick = k => (k.startsWith('#') ? k : k === 'under' ? (p.under ?? UNDER_PAR) : k === 'a2Text' ? (p.a2Text ?? textEnd(p, TEXT_END_MIN)) : p[k]);
  const out = [];
  for (const r of CONTRAST_RULES) for (const back of backdrops) {
   const ratio = contrast(pick(r.text), pick(r.on), back);

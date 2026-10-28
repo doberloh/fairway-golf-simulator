@@ -33,7 +33,7 @@
 
  /* The hole slab, small. */
  .rh-hole{position:absolute;left:16px;top:12px;display:flex;height:52px}
- .rh-hole .rh-n{width:56px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ .rh-hole .rh-n{width:56px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
  .rh-hole .rh-n>span{transform:skewX(12deg);font-size:34px;font-weight:800;font-style:italic;line-height:1;color:var(--on-hot)}
  .rh-hole .rh-f{display:grid;align-content:center;padding:4px 18px;background:var(--panel);transform:skewX(-12deg)}
  .rh-hole .rh-f>div{transform:skewX(12deg)}
@@ -127,7 +127,7 @@
 
  /* The Swing Meter: narrow, its bar tall enough to tap. */
  #world[data-mode=play] .swing-meter{left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:300px!important;transform:translateX(-50%);padding:0!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff}
- #world[data-mode=play] .swing-meter .sm-head{margin-bottom:14px;font-size:12px;font-weight:800;font-style:italic;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+ #world[data-mode=play] .swing-meter .sm-head{margin-bottom:14px;font-size:12px;font-weight:800;font-style:italic;text-shadow:var(--outline)}
  #world[data-mode=play] .swing-meter .sm-title{font-size:12px;color:#fff;text-transform:uppercase}
  #world[data-mode=play] .swing-meter .sm-hint{color:var(--hot);text-transform:uppercase}
  #world[data-mode=play] .swing-meter .sm-bar{height:40px;border:0;border-radius:0;transform:skewX(-12deg);pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 3px var(--panel)}
@@ -146,7 +146,7 @@
  #world[data-mode=play] .aim-pad button{position:relative;isolation:isolate;width:44px!important;height:44px!important;border:0!important;border-radius:0!important;background:none!important;color:var(--a1)!important;box-shadow:none!important}
  #world[data-mode=play] .aim-pad button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play] .aim-pad .pad-pin{color:var(--on-hot)!important}
- #world[data-mode=play] .aim-pad .pad-pin::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world[data-mode=play] .aim-pad .pad-pin::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
 
  /* The ball light, with a monitor armed: across the foot. */
  #world[data-mode=play] .monitor-panel:not([hidden]){left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:auto!important;max-width:300px;transform:translateX(-50%);isolation:isolate;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 18px!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;animation:none}
@@ -201,7 +201,7 @@
  #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice){position:relative;isolation:isolate;display:flex!important;align-items:center;gap:10px;width:100%;min-height:44px;height:auto;margin:0;padding:6px 22px;border:0;border-radius:0;background:none!important;box-shadow:none;color:#fff!important;font:800 italic 17px/1.1 "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;text-align:left;filter:none}
  #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #app.rh-paused .topbar .rh-resume{order:-1;color:var(--on-hot)!important}
- #app.rh-paused .topbar .rh-resume::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #app.rh-paused .topbar .rh-resume::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #app.rh-paused .topbar .rh-resume kbd{display:none}
  #app.rh-paused .topbar #barTools::after{content:"Tools"}
  #app.rh-paused .topbar .avatar{font-size:0!important}
@@ -273,7 +273,7 @@
  /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
  .main-menu .menu-tile[hidden]{display:none!important}
  .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  .main-menu .menu-tile.primary :is(strong,small),.main-menu .menu-tile:is(:hover,:focus) :is(strong,small){color:var(--on-hot)}
  .main-menu .menu-tile :is(i,svg){display:none}
  .main-menu .menu-tile strong{font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
@@ -315,4 +315,61 @@
 /* Upright, the XP popup sits under the golfers, not over the hole. */
 @container app (max-width:560px) and (min-height:501px){
  #world .xp-gain{top:128px}
+}
+
+/* THE COURSE STUDIO ON A PHONE (the 1.0 polish, 27 October 2026). The 1.0
+   studio (round-hud.css) was written for screens 561 wide and up, so on a
+   phone the studio still wore the old interface -- a rounded glass panel, the
+   old top bar, the system font, "Fly around with W A S D" on a screen with no
+   keys -- and its slab sat off the bottom of the screen (found by the
+   interface audit). The same pieces at a phone's size: the slab top left,
+   the bar's four buttons as slanted rows two by two along the foot (44 px,
+   T1), no keyboard keys, the map top right clear of the bar. */
+@container app (max-width:560px) or (max-height:500px){
+ #app[data-mode=studio] .topbar{display:none}
+ #world[data-mode=studio] #studioSlab{position:absolute;left:12px;top:12px;bottom:auto;right:auto;z-index:8;display:flex;height:48px;pointer-events:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #world[data-mode=studio] #studioSlab>b{width:48px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg);font-size:26px;font-weight:800;font-style:italic;color:var(--on-hot)}
+ #world[data-mode=studio] #studioSlab>span{display:grid;align-content:center;gap:2px;padding:0 18px 0 14px;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=studio] #studioSlab strong{transform:skewX(12deg);font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap;color:var(--soft)}
+ #world[data-mode=studio] #studioSlab small{transform:skewX(12deg);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap;color:#fff}
+ #world[data-mode=studio] #studioKeys{display:none!important}
+ #world[data-mode=studio]:not(.aim-view) .minimap{left:auto;right:12px;top:72px;bottom:auto;width:120px;height:170px;border-radius:0}
+}
+
+/* The studio bar is outside #app, so it is matched on the screen's size, not
+   the app container's. */
+@media (max-width:560px),(max-height:500px){
+ body:has(#world[data-mode=studio]) #studioBar{left:12px;right:12px;bottom:12px;width:auto;max-width:none;transform:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;padding:0 6px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ body:has(#world[data-mode=studio]) #studioBar>div{display:none}
+ body:has(#world[data-mode=studio]) #studioBar>button{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;height:auto;padding:0 12px;border:0;border-radius:0;background:none;color:#fff;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
+ body:has(#world[data-mode=studio]) #studioBar>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#world[data-mode=studio]) #studioBar>button.primary{color:var(--on-hot)}
+ body:has(#world[data-mode=studio]) #studioBar>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
+ body:has(#world[data-mode=studio]) #studioBar>button svg{width:18px;height:18px}
+ body:has(#world[data-mode=studio]) #studioBar>button:focus-visible{outline:none}
+ body:has(#world[data-mode=studio]) #studioBar>button:focus-visible::before{box-shadow:0 0 0 3px var(--cursor)}
+}
+
+/* TOUCH TARGETS IN A ROUND, ON A PHONE (the 1.0 polish, T1; the final audit).
+   The round's windows and bars were sized for a mouse: on a phone the Tools
+   window's buttons drew 34 px tall, the drop bar's 37, the settings tabs 30,
+   a window's close 27, the keys along the foot 36. Each is at least 44 px as
+   drawn now; they are drawn at the round screen's scale (--hud-z), so the
+   size written is 44 px divided by it. A phone only, by its touch pointer. */
+@media (pointer:coarse) and (max-width:560px),(pointer:coarse) and (max-height:500px){
+ #world :is(.popup .tools-row>button,.popup .sw-tab,.popup-close,.popup-explain,#dropBar>button,#reliefBar>button,#pickBar>button),#rhKeys>button,#app .dd-field,body #app #world.aim-view #aimViewDone{min-height:calc(44px / var(--hud-z,1))}
+ #world .popup-close{min-width:calc(44px / var(--hud-z,1))}
+}
+/* On any touch screen (a tablet too) nothing in a round is under 24 px: the
+   studio's and the round's tool columns drew 18 px tall, the drop's two
+   fields 18, the pause list's clock 22 (the final audit). 30.8 px as drawn,
+   the sheets' touch size. The map's three reading switches (15 px) take
+   25 px, past the 24 every control must reach (24 drew 23.9): at 30.8 they pushed the
+   map's elevation line out of its box. */
+@media (pointer:coarse){
+ #studioTools>button,#roundHud #rhTools>button,#app #world.aim-view #aimViewDone,#app #clockButton,#dropBar>label>input{min-height:calc(30.8px / var(--hud-z,1))}
+ #app #clockButton{min-width:calc(30.8px / var(--hud-z,1))}
+}
+@media (pointer:coarse){
+ #world .minimap .map-reading>button{min-width:calc(25px / var(--hud-z,1));min-height:calc(25px / var(--hud-z,1))}
 }
