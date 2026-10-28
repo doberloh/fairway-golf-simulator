@@ -1,6 +1,8 @@
 # Reference photographs
 
-The coast redwood models in `vendor/grown-redwood-forest/` were shaped against 315
+The coast redwood models once grown in `vendor/grown-redwood-forest/` (by
+`tools/grow.mjs`; both removed 27 October 2026, the cartoon overhaul having
+remade the grove in Blender) were shaped against 315
 photographs of redwood and Pacific-Northwest forest, gathered from Wikimedia
 Commons. This file is the record of what was looked at.
 

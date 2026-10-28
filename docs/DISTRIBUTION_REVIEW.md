@@ -13,7 +13,7 @@ This is suitable packaging for an experimental public preview, with the outstand
 ## What was checked
 
 - Project source/imports, optional bridge, asset inventory, research documents, package manifest and all 50 package entries in the lockfile, including platform-specific optional packages.
-- Third-party 3D geometry: Fairway now ships mesh data derived from six **CC0 1.0** model packs (Kenney Nature Kit, Kenney City Kit Suburban, Kenney Building Kit, Quaternius Ultimate Nature Pack, Quaternius Ultimate Stylized Nature, Quaternius Stylized Nature MegaKit). Each licence was verified from the licence file inside the distributed pack, not from a web page. CC0 requires no attribution; **ATTRIBUTION.md** credits them anyway and records exactly what is and is not shipped. Only geometry ships — all source materials and colours are discarded at ingestion and replaced by biome-palette roles — and only 96 of 729 available models are used. The full packs sit in `vendor/` as provenance and are excluded from both the build and the release archives.
+- Third-party 3D geometry: **none since 27 October 2026** -- every model is built by this project's own Blender scripts and the packs were removed (*Addendum, 27 October 2026*, at the foot). Until then: Fairway shipped mesh data derived from six **CC0 1.0** model packs (Kenney Nature Kit, Kenney City Kit Suburban, Kenney Building Kit, Quaternius Ultimate Nature Pack, Quaternius Ultimate Stylized Nature, Quaternius Stylized Nature MegaKit). Each licence was verified from the licence file inside the distributed pack, not from a web page. CC0 requires no attribution; **ATTRIBUTION.md** credits them anyway and records exactly what is and is not shipped. Only geometry ships — all source materials and colours are discarded at ingestion and replaced by biome-palette roles — and only 96 of 729 available models are used. The full packs sit in `vendor/` as provenance and are excluded from both the build and the release archives.
 - Copyright/license/source-reference patterns and recognizable reused algorithms; installed dependency license files and selected upstream primary sources.
 - `src/water.js` has been removed. It was a lightly modified copy of Three.js's `Water`, used for the single planar reflector; with the reflector gone there is no vendored Three.js source in the tree, and water is drawn by an ordinary `MeshStandardMaterial` the renderer patches.
 - The course random-number routine against the published Mulberry32 implementation. Its integer mixing sequence matches the JavaScript variant published by bryc. The missing credit is now in source and the notices; the generation algorithm was left unchanged to preserve seeds.
@@ -34,7 +34,7 @@ There is no complete authorship history or universal source-code comparison data
 | Mulberry32 | `src/course.js` | Tommy Ettinger's CC0 algorithm; bryc's JavaScript variant offers a public-domain dedication and MIT fallback. MIT fallback and credits retained |
 | Mapbox Earcut 3.0.2 | Embedded by Three.js polygon triangulation | ISC; Mapbox notice added, independent of Three's MIT notice |
 | Vite 8.3.3 / Rolldown 1.2.15 helpers | Small generated helpers in browser output | MIT; core helper notices added |
-| ez-tree 1.1.0 | Build tool only; **its output geometry ships** | MIT. Runs at bake time in `tools/bake-trees.mjs`, never in the game. The trees it generates from our parameters go into `vendor/` and through the same ingest as the CC0 packs; credited in ATTRIBUTION.md with its notice vendored beside the output |
+| ez-tree 1.1.0 | **Removed 27 October 2026**; until then a build tool whose output geometry shipped | MIT. Ran at bake time in `tools/bake-trees.mjs` (removed with it), never in the game; nothing it made ships since the cartoon overhaul. The trees it generates from our parameters go into `vendor/` and through the same ingest as the CC0 packs; credited in ATTRIBUTION.md with its notice vendored beside the output |
 | Playwright 1.63.0 (and playwright-core) | Build/measurement tool only | Apache-2.0. Drives a headless browser for `tools/profile.mjs` and `tools/gpu-probe.mjs`. Touches nothing that ships and is in neither archive |
 | Minimal AgX contrast approximation | Three.js shader chunk | Benjamin Wrensch / Missing Deadlines, MIT; notice added |
 | Filament AgX implementation attribution | Three.js shader chunk credits Filament | Apache-2.0 text and Android Open Source Project credit retained conservatively; this upstream Three adaptation is unchanged by Fairway |
@@ -152,7 +152,9 @@ check 1 above. Result on this date: **0 vulnerabilities** across 53 packages
 
 #### What actually ships, byte by byte
 
-The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
+(Superseded: since the cartoon overhaul no house atlas ships and since 27
+October 2026 no pack is in the repository -- *Addendum, 27 October 2026*.)
+The imported-material footprint of the shipped HTML was **four PNGs, 12 KB each,
 64 KB in total**: Kenney house colour atlases (`colormap` plus three
 variations), CC0. Kenney's licence text states the content is free to use in
 personal, educational **and commercial** projects, with credit appreciated and
@@ -1480,3 +1482,34 @@ The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md), merged into main on
   than main's last measured page before the overhaul (16.9 MB, *Addendum*
   above). Still one offline file; nothing fetched. Not released: a release
   waits for the owner, from main.
+
+## Addendum, 27 October 2026: the old asset packs removed
+
+After the cartoon overhaul was merged, the owner asked for every asset it had
+replaced to be removed, with the credits for packs no longer used. Removed
+from the repository on the `asset-cleanup` branch:
+
+- **The six CC0 model packs** (Kenney Nature Kit, City Kit Suburban, Building
+  Kit; Quaternius Ultimate Nature, Ultimate Stylized Nature, Stylized Nature
+  MegaKit) and `vendor/blender-lakeshore/` (the first Blender pack, replaced by
+  `blender-cartoon_lakeshore`). `vendor/` went from 240 MB to 11 MB.
+- **The tools that only read or made them**: `tools/bake-assets.mjs`,
+  `tools/bake-trees.mjs`, `tools/grow.mjs`, `tools/grow-lib.mjs`,
+  `tools/blender/lakeshore.py`, and `npm run grove`.
+- **ez-tree**, the devDependency the bake used: out of `package.json`, the
+  lockfile and `DEPENDENCY_INVENTORY.json` (65 packages, was 66), and its
+  notice out of THIRD_PARTY_NOTICES.txt, since nothing it made ships.
+- **The credits**: ATTRIBUTION.md no longer lists the packs; it says every
+  model is this project's own Blender work, and that releases up to 0.9.4
+  carry their own ATTRIBUTION.md for what they shipped.
+
+**What ships did not change**: rebuilt without the packs, `src/asset-meshes.js`
+is byte-identical apart from its header comment (232 models, every one
+`Blender_*`), and the built page differs from main's only by the ez-tree
+notice (1,315 bytes shorter: 11,439,829 bytes) and its build stamp. No
+imported image, model, sprite, font beyond Saira Condensed, or sound ships.
+
+**The website may still credit them**: on 1 October its footer named Kenney,
+Quaternius and ez-tree (*Addendum, 1 October 2026: the website*), and its
+pictures from before the overhaul show the pack models. The website is
+another repository, not checked here; that is for the owner to change there.

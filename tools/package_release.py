@@ -23,9 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # None of that is anything somebody who paid for a golf game needs, and a
 # defect list is an odd thing to hand over unasked.
 #
-# ATTRIBUTION.md IS NOT OPTIONAL in either archive. It carries the CC0
-# model-pack credits and the baked-tree provenance, and the MIT notice for
-# ez-tree's output has to travel with the geometry it produced.
+# ATTRIBUTION.md IS NOT OPTIONAL in either archive. It says where every model
+# comes from (this project's own Blender scripts since the cartoon overhaul)
+# and names the trade marks the game mentions.
 #
 # LICENSE and THIRD_PARTY_NOTICES.txt are the obligations. They are also
 # embedded inside the HTML itself, under Help, so copying just the file keeps

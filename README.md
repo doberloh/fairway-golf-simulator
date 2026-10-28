@@ -113,7 +113,7 @@ checked by hand.
 | `tools/` | Measurement, asset ingest, profiling, release packaging, capturing pictures and clips of the game (`tools/capture/`), and the synthesised sounds being designed for it (`tools/sound-lab/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
-| `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |
+| `vendor/` | The models built in Blender by `tools/blender/cartoon_*.py`, one `blender-cartoon_<pack>/` folder per pack, that the tree, plant, rock and house geometry is ingested from; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |
@@ -150,9 +150,9 @@ Third-party components keep their own terms; all of them permit commercial
 use. The notices are also embedded in the built HTML under **Help → Open
 source & credits**, so a copy of that one file carries its own licences.
 
-[docs/ATTRIBUTION.md](docs/ATTRIBUTION.md) credits the imported artwork —
-Kenney and Quaternius model packs, all CC0 — and records what was taken from
-each. [docs/DISTRIBUTION_REVIEW.md](docs/DISTRIBUTION_REVIEW.md) is the dated
+[docs/ATTRIBUTION.md](docs/ATTRIBUTION.md) says where every model comes from —
+this project's own Blender scripts; no third-party artwork ships — and names
+the trade marks the game mentions. [docs/DISTRIBUTION_REVIEW.md](docs/DISTRIBUTION_REVIEW.md) is the dated
 provenance audit, including the commercial-use pass.
 
 GSPro, rēlā, Garmin, Rapsodo, PiTrac, Foresight, SkyTrak, FlightScope, Full Swing, Square, Nova and GolfJoy are named in this project only to describe
