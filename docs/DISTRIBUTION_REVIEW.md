@@ -1513,3 +1513,32 @@ imported image, model, sprite, font beyond Saira Condensed, or sound ships.
 Quaternius and ez-tree (*Addendum, 1 October 2026: the website*), and its
 pictures from before the overhaul show the pack models. The website is
 another repository, not checked here; that is for the owner to change there.
+
+## Addendum, 27 October 2026: v0.9.5
+
+**v0.9.5** is published at the owner's request ("Merge all to main, Build the
+binaries, release notes, and push a new release to github as well as the live
+website v0.9.5"), as "Fairway 0.9.5 (beta)", tag `v0.9.5`, not a pre-release,
+the same six files as 0.9.4, from the merge of `release-0.9.5` into `main`,
+with its notes in `docs/releases/v0.9.5.md` in that commit. It carries
+Lakeshore Dunes (merged 24 October, not released until now), the cartoon
+overhaul and the asset cleanup (the addenda above). **`GENERATOR_VERSION` is
+52** (36 in 0.9.4), so a saved 0.9.4 round is told its course was rebuilt;
+**`SCHEMA_VERSION` 11 and `PROFILE_VERSION` 3 are unchanged**. **The package
+version is 0.9.5**, so 0.9.4's friend-challenge codes do not play on it (said
+in the notes). The website is redeployed after the release, so its demo moves
+to 0.9.5.
+
+The built page is **11,440,666 bytes (5.53 MB gzipped)**, 6.3 MB under 0.9.4:
+every model is the cartoon overhaul's, far lighter than the grown redwoods and
+pack models it replaced, and no image but the turf atlas and the two font
+files is inlined. The zips: Windows 46.5 MB, macOS Apple silicon 32.4 MB,
+macOS Intel 34.8 MB, Linux 43.1 MB, each 8 verified files; the source zip
+7.7 MB, 404 files.
+
+**Checked:** `npm test` (1101) on the merged code; the dependency inventory
+against the lockfile (65 packages); the packager's own verification of every
+zip. **Not run, at the owner's word:** the smoke journeys on this build ("No
+smoke tests or anything needed for this"); they last ran on the overhaul
+branch, 35 of 37, with both failures followed up (TODO). **Not played by a
+person.**

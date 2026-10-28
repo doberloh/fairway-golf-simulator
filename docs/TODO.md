@@ -1221,6 +1221,17 @@ green everywhere, and every mode but the range under one Play.
   the cup), the popup's new place in a real round, a level-up crossing inside
   the grouped popup.
 
+## Release 0.9.5 (27 October)
+
+- [ ] **Owner: play 0.9.5 before calling it good.** Released at the owner's
+  word with **no smoke run on its build** ("No smoke tests or anything needed
+  for this. I'll be performing a final one after another goal"). It carries
+  the cartoon overhaul (Lakeshore Dunes, every model, landscape, mowing, water
+  and light new) and the asset cleanup. What to look at in play is in the
+  open *cartoon overhaul* entries above; the smoke journeys last ran on the
+  overhaul branch (35 of 37, then the two failures followed up: TODO there).
+  Website redeployed with it.
+
 ## Release 0.9.4 (23 October)
 
 - [ ] **Owner: play 0.9.4 on Ultra and Low.** Released from the merge of
@@ -1324,6 +1335,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Release 0.9.5 (27 October)
+
+- [x] **v0.9.5 published**, "Fairway 0.9.5 (beta)", at the owner's request:
+  the cartoon overhaul (squashed to 13 commits under its merge) and the asset
+  cleanup. Generator 52 (was 36 in 0.9.4), schema 11 and profile 3
+  unchanged; package 0.9.5. Notes: `docs/releases/v0.9.5.md`. `npm test`
+  1101; no smoke run, at the owner's word. Website redeployed.
 
 ## The old assets removed (branch `asset-cleanup`, 27 October 2026)
 
