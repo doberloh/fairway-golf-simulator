@@ -1,17 +1,7 @@
 {
- "reviewed": "2026-10-23",
- "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive; ez-tree is build-scope but the geometry it bakes does ship, and is credited in ATTRIBUTION.md. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt.",
+ "reviewed": "2026-10-27",
+ "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt.",
  "packages": [
-  {
-   "path": "node_modules/@dgreenheck/ez-tree",
-   "name": "@dgreenheck/ez-tree",
-   "version": "1.1.0",
-   "declaredLicense": "MIT",
-   "scope": "build",
-   "optional": false,
-   "integrity": "sha512-6pvS6hD6B6h00dm0SnkgYeT4ABU5Y1Z9M44p1tXiV5C0eKrQy2sKECXshoaUv0qAOqYVL68w/PwadUxDFDiHUg==",
-   "resolved": "https://registry.npmjs.org/@dgreenheck/ez-tree/-/ez-tree-1.1.0.tgz"
-  },
   {
    "path": "node_modules/@oven/bun-darwin-aarch64",
    "name": "@oven/bun-darwin-aarch64",

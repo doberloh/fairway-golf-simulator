@@ -1,147 +1,53 @@
 # Attribution
 
-Fairway ships geometry derived from third-party 3D model packs. Every pack below
-is **CC0 1.0 Universal (Public Domain Dedication)**, verified from the licence
-file distributed inside the pack itself rather than from a web page. CC0 imposes
-no attribution requirement; these creators ask for credit as a courtesy and this
-file gives it.
+Every model Fairway draws is this project's own work, made by its own scripts
+in Blender (*Built in Blender*, below). No third-party model pack, texture,
+sprite or sound ships. What does come from elsewhere is code and one
+typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms
+-- and their licences are in `docs/THIRD_PARTY_NOTICES.txt`, which travels
+with every distribution and is shown in the game under Help.
 
-| Pack | Author | Licence | Source |
-|---|---|---|---|
-| Nature Kit (2.1) — 329 models | [Kenney](https://kenney.nl) | CC0 1.0 | https://kenney.nl/assets/nature-kit |
-| City Kit Suburban (2.0) — 40 models | [Kenney](https://kenney.nl) | CC0 1.0 | https://kenney.nl/assets/city-kit-suburban |
-| Building Kit (1.0) — 79 models | [Kenney](https://kenney.nl) | CC0 1.0 | https://kenney.nl/assets/building-kit |
-| Ultimate Nature Pack (Jun 2019) — 150 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/ultimatenature.html |
-| Ultimate Stylized Nature (May 2022) — 63 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/ultimatestylizednature.html |
-| Stylized Nature MegaKit (Standard) — 68 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/stylizednaturemegakit.html |
-
-Licence text: https://creativecommons.org/publicdomain/zero/1.0/
-
-Since the cartoon overhaul (merged 27 October 2026) most of what these packs supplied is remade in
-Blender by this project's own scripts (*Built in Blender*, below): every
-broadleaf, conifer, shrub, boulder, desert plant, palm, Haunted Hollow tree
-and house. What the game still draws from them is the Nature Kit's
-remaining scenery (rocks, grass and flowers where still used), the
-Ultimate Nature Pack's models in `tools/bake-assets.mjs`'s grown trees, and
-the pumpkins, toadstools and deadfall -- each named in
-`tools/build-meshes.mjs` PICK. The table stays until a pack ships nothing.
-
-## Grown geometry, which is nobody else's at all
-
-Since the cartoon overhaul that folder no longer ships: the grove is remade in Blender (tools/blender/cartoon_redwood.py). Before it, the redwood biome drew **only** from that folder -- no pack model, no
-imported texture, nothing borrowed -- and the other biomes used the CC0 packs above.
-
-
-`vendor/grown-redwood-forest/` contains no imported vertex and no texture. Every
-triangle is produced by `tools/grow.mjs` and `tools/grow-lib.mjs`, which are
-this project's own code, so nothing in that folder carries a third-party
-licence of any kind.
-
-Its shapes and colours were measured from 315 photographs on Wikimedia
-Commons, all CC0, public domain, or CC BY / CC BY-SA. **None of those images
-is in this repository and none was copied into a model** -- they were read
-and measured, and the numbers that came out are facts about redwoods rather
-than anybody's expression. REFERENCES.md lists every one of them anyway.
-
-## Generated geometry, which is not CC0
-
-`vendor/baked_assets/` is **generated, not vendored**. `node tools/bake-trees.mjs`
-produces it from [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel
-Greenheck, which is **MIT**, a devDependency, and never ships -- what ships is
-the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
-kept, so the notice is in `docs/THIRD_PARTY_NOTICES.txt`, which travels with
-every distribution. (A copy also sits in `vendor/baked_assets/`, which since 30
-September is kept on the owner's machine and not committed -- until then that
-copy was the only one, so a repository without the folder would have shipped
-the geometry with no notice.)
-
-Two textures come with it, and they are the only imported images in the project
-besides the house atlases:
-
-- `needles.png` and `broadleaf.png` are ez-tree's own leaf sprite sheets (its
-  pine and ash), copied unchanged and covered by its MIT licence. They are here
-  because a leaf billboard is a cut-out: without an alpha mask it is a solid
-  rectangle.
-`vendor/baked_assets/stylized_needles.png` is a copy of Ultimate Stylized
-Nature's `PineTree_Leaves.png`, sitting beside the generated models that use
-it. Same pack, same CC0 licence, copied so the folder is self-contained.
-
-**Verified 25 September 2026 against the built file**: the only imported images that ship are four Kenney house atlases at 12 KB each. No leaf sprite ships -- `broadleaf` appears in the build as a species family name, not as a file -- and no texturecan asset is present anywhere in the tree. No fonts and no audio files ship. The game's sounds (13 October 2026) are synthesised by its own code (`src/sound.js`), so there is no sound asset to credit.
-
-**No bark images are taken.** Trunks are painted: the generated models state a
-bark colour and the game paints every surface from the biome palette anyway, so
-ez-tree's bark maps -- two of them Poly Haven CC0, two from texturecan whose
-terms were never checked -- are all left where they are.
-
-Everything else imported is still stripped of its materials and repainted from
-the biome palette.
-
-Kenney's licence files state: *"You can use this content for personal,
-educational, and commercial purposes. Support by crediting 'Kenney' or
-'www.kenney.nl' (this is not a requirement)."* Quaternius ships the CC0 1.0
-Universal dedication and asks that support go through
-[Patreon](https://www.patreon.com/quaternius).
+Until the cartoon overhaul (merged 27 October 2026) the game also carried
+geometry from CC0 model packs and from trees generated with ez-tree (MIT).
+The overhaul remade every one of those models, and the packs and the tools
+that read them were removed from the repository on 27 October 2026. Releases
+up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 
 ## Built in Blender, which is this project's own work
 
-`vendor/blender-lakeshore/` (Lakeshore Dunes' dune grass, cottonwoods, black
-oaks, sugar maples, junipers and driftwood, 23 October 2026) is written by
-`tools/blender/lakeshore.py` and `tools/blender/fairway_blender.py`, this
-project's own scripts, run in Blender. Since the cartoon overhaul the
-same holds for every `vendor/blender-cartoon_*/` folder (the painted
-broadleaves, conifers, boulders, shrubs and desert plants, and their far
-twins), written by `tools/blender/cartoon_*.py` and `tools/blender/cartoon.py`. Every vertex comes from those scripts;
-nothing is imported, no texture is used, and no Blender asset library is
-touched. Blender itself (GPL) is a tool here, not a dependency: it is not in
-the game, the build or the tests, and what a GPL program outputs is not
-covered by its licence. So these models are under this repository's MIT
-licence like the rest of its code. Every such model is named `Blender_*`
-(docs/BLENDER_ASSETS.md).
+Every `vendor/blender-cartoon_*/` folder (the painted broadleaves, conifers,
+redwoods, boulders, shrubs, grasses, brush, desert and island plants,
+Haunted Hollow's trees and props, Lakeshore's plants, the deadfall, the
+houses and their gardens, the wildflowers and the course furniture, and the
+far twins) is written by `tools/blender/cartoon_*.py`, `tools/blender/cartoon.py`
+and `tools/blender/fairway_blender.py`, this project's own scripts, run in
+Blender. Every vertex comes from those scripts; nothing is imported, no
+texture is used, and no Blender asset library is touched. Blender itself
+(GPL) is a tool here, not a dependency: it is not in the game, the build or
+the tests, and what a GPL program outputs is not covered by its licence. So
+these models are under this repository's MIT licence like the rest of its
+code. Every such model is named `Blender_*` (docs/BLENDER_ASSETS.md).
+
+The turf detail atlas (`src/turf-detail.js`) is painted by
+`tools/turf-detail.mjs`, this project's own code: nothing to license.
 
 ## What actually ships
 
-Not the packs. `tools/build-meshes.mjs` reads the vendored `.glb` files and
-emits `src/asset-meshes.js`, which carries **geometry only**:
+Not the `.glb` files. `tools/build-meshes.mjs` reads them and emits
+`src/asset-meshes.js`, which carries **geometry and vertex paint only**:
 
-- Every source material is discarded. The packs colour surfaces with a
-  `baseColorFactor` per material; each is classified by name into a role —
-  bark, leaf, stone, dirt, accent — and the running game paints those roles from
-  the biome palette. That is what lets one imported pine serve every biome
-  instead of importing somebody else's art direction along with the mesh.
-- Positions are quantised to int16 against a model normalised to unit height and
-  centred on x/z; normals to int8.
-- 161 models are used (`node tools/build-meshes.mjs`, 23 October 2026): the 144 of 938 under `vendor/` that `npm run assets` counted before, and the 17 of the Blender-built Lakeshore pack. (This line said 152 of 733 until 9 October, which no longer matched.) The rest are not shipped. A family may
-  keep only part of a model: the redwood and fir crowns ship as leaf geometry with
-  their trunks dropped, because the trunk under them is drawn rather than imported.
-- The **house models are the one exception to materials being discarded**: unlike
-  the nature kits they carry a shared texture atlas rather than a colour per
-  material, so their UVs survive and `colormap.png` (11 KB) ships with them.
-  Tinting them by role alone would flatten a whole house to a single colour.
-  Kenney's three recoloured variations ship alongside the default atlas (four
-  files, 12 KB each): each is a palette grid, so every roof drawn from one atlas
-  is the same swatch, and spreading houses across all four is what varies roof
-  and wall colour down a street.
+- Every source material is discarded. Each surface is classified by its
+  material name into a role -- bark, leaf, stone, dirt, accent -- and the
+  running game paints those roles from the biome palette, scaled by the
+  model's own vertex paint.
+- Positions are quantised to int16 against a model normalised to unit height
+  and centred on x/z; normals to int8.
+- 232 models are used (`node tools/build-meshes.mjs`, 27 October 2026), every
+  one of them from a `vendor/blender-cartoon_*/` folder.
 
-Kenney supplies the bulk. Quaternius is drawn on **only where Kenney has no
-counterpart** — five cacti and three dead trees for the desert biome, for the
-redwood forest floor seven mossy boulders, five leafy ground plants and four logs
-and stumps with moss on them, and for Haunted Hollow nine dead trees: three gnarled
-oaks from the Stylized Nature MegaKit (`DeadTree_1`, `_2`, `_4`), three tall snags
-from Ultimate Stylized Nature (`DeadTree_3`, `_6`, `_8`) and three dead willows from
-the Ultimate Nature Pack (`Willow_Dead_1`, `_2`, `_4`). Its pumpkin
-(`crop_pumpkin`) and toadstools (`mushroom_redGroup`, `mushroom_redTall`,
-`mushroom_tanGroup`) are Kenney's Nature Kit. Its models carry several times the vertices, so
-taking coverage we already had cost about a megabyte of packed geometry for no
-visible gain, and was reverted.
-
-Three of the four Quaternius/Kenney nature packs share model names — `Plant_1`
-exists in three of them and means something different in each — so a name the
-ingest cannot resolve to one pack is an error rather than first-match-wins.
-
-The complete packs live in `vendor/` as the provenance record and the input to
-the ingestion step. **`vendor/` is not part of the build and not part of the
-release archives** — `tools/package_release.py` packages `src`, `tests`,
-`bridge` and `tools` only, and nothing in `src/` imports from it.
+**`vendor/` is not part of the build and not part of the release archives**
+-- `tools/package_release.py` packages `src`, `tests`, `bridge` and `tools`
+only, and nothing in `src/` imports from it.
 
 **The portable archive ships the bridge bundled**: `Launch monitor/fairway-bridge.mjs`
 carries the bridge, the game's own physics and **ws** (MIT) in one file, with
@@ -154,8 +60,13 @@ licence and ships beside it.
 node tools/build-meshes.mjs
 ```
 
-Reads `vendor/<pack>/*.glb` and `*.obj`, writes `src/asset-meshes.js`. Re-run
-after changing the model selection in `PICK`.
+Reads `vendor/<pack>/*.glb`, writes `src/asset-meshes.js`. Re-run after
+changing the model selection in `PICK` or rebuilding a pack in Blender
+(`npm run blender -- <pack>`).
+
+No fonts beyond the one below and no audio files ship. The game's sounds (13
+October 2026) are synthesised by its own code (`src/sound.js`), so there is no
+sound asset to credit.
 
 ## Icons
 

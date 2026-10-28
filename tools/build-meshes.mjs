@@ -1,24 +1,26 @@
-// Turns the vendored CC0 model packs into one compact binary that the single
-// file build can carry.
+// Turns the models built in Blender (vendor/blender-cartoon_*/, written by
+// tools/blender/cartoon_*.py) into one compact binary that the single file
+// build can carry.
 //
 // Run: node tools/build-meshes.mjs
 // Reads:  vendor/<pack>/*.glb
 //
-// A PICK entry is a model's file name. Three of the vendored packs are
-// Quaternius nature packs and 31 names appear in more than one of them --
-// `Plant_1` is in all three and means something different in each. A bare name
-// that is ambiguous is an ERROR rather than first-pack-wins, because the
-// silent version of that bug swaps the model under an existing biome and
-// nothing tells you. Write `megakit:Pine_1` to say which pack you meant; the
-// part before the colon just has to appear in the directory name.
+// A PICK entry is a model's file name. A bare name found in more than one
+// pack is an ERROR rather than first-pack-wins, because the silent version of
+// that bug swaps the model under an existing biome and nothing tells you.
+// Write `blender:Blender_Pine_1` to say which pack you meant; the part before
+// the colon just has to appear in the directory name.
 // Writes: src/asset-meshes.js
 //
-// Nothing from the packs ships as-is. Textures are irrelevant (Kenney's models
-// carry none -- colour is a baseColorFactor per material), and the material
-// colours themselves are dropped too: every surface is classified into a role
+// The third-party CC0 packs (Kenney, Quaternius) this once read were removed
+// on 27 October 2026, once the cartoon overhaul had remade everything they
+// supplied; the OBJ path and the house atlases below are kept for any model
+// that needs them again.
+//
+// The material colours are dropped: every surface is classified into a role
 // (bark, leaf, stone, dirt, accent) by its material name, and the running game
-// paints those roles from the biome palette. That is what lets one imported
-// mesh serve seven biomes instead of dragging its own art direction in.
+// paints those roles from the biome palette, scaled by the model's own vertex
+// paint. That is what lets one model serve every biome.
 //
 // Positions are quantised to int16 against each model's own bounds and normals
 // to int8, which is roughly a third of the float encoding and visually free at
@@ -105,39 +107,16 @@ const PICK = {
  naupakabush: ['blender:Blender_Naupaka_1', 'blender:Blender_Naupaka_2', 'blender:Blender_Naupaka_3'],
  fernbush: ['blender:Blender_Fern_1', 'blender:Blender_Fern_2', 'blender:Blender_Fern_3'],
  bramblebush: ['blender:Blender_Bramble_1', 'blender:Blender_Bramble_2', 'blender:Blender_Bramble_3'],
- // Quaternius (OBJ). Taken only where the Kenney kit has no counterpart: its
- // models carry several times the vertices, so duplicating coverage we already
- // have costs about a megabyte of packed geometry for no visible gain. The
- // desert is the gap -- Kenney has two cacti and nothing arid.
- // Houses. Unlike the nature kits these carry a texture atlas rather than a
- // colour per material, so they keep their UVs and ship the atlas with them --
- // role tinting alone would flatten a whole house to one colour.
- // THE FOREST FLOOR, and all of it was already vendored. Old-growth reads from
- // what has fallen as much as from what is standing -- mossy logs, stumps and
- // boulders -- and none of it was being shipped because PICK only ever took
- // what the biomes of the day asked for. No new pack, no new licence: Kenney's
- // Nature Kit and Quaternius's Ultimate Nature Pack are both already credited.
- // The forest floor is grown too, and the pack logs and mossy rocks that used
- // to fill it are no longer taken -- a nurse log with moss only along its
- // upper flank, a stump with root buttresses and a springboard notch, and a
- // boulder that is a boulder rather than a sphere, all beat what was there.
- // The cartoon overhaul's deadfall (tools/blender/cartoon_deadfall.py) replaces
- // the grown logs, stumps and mossy stones: one hand with the rest.
+ // THE FOREST FLOOR (tools/blender/cartoon_deadfall.py): old-growth reads from
+ // what has fallen as much as from what is standing -- logs, stumps and mossy
+ // stones, in one hand with the rest.
  log: ['blender:Blender_Log_1', 'blender:Blender_Log_2', 'blender:Blender_Log_3'],
  stump: ['blender:Blender_Stump_1', 'blender:Blender_Stump_2', 'blender:Blender_Stump_3'],
  mossrock: ['blender:Blender_MossRock_1', 'blender:Blender_MossRock_2', 'blender:Blender_MossRock_3'],
- // The MegaKit fern is no longer taken: `swordfern` above is a grown
- // shuttlecock of once-pinnate fronds, which is what the plant actually is.
- // THE REDWOOD GROVE IS GROWN, NOT IMPORTED. Everything below comes out of
- // tools/grow.mjs: whole trees with their own fluted, buttressed trunks, so
- // there is no borrowed crown to balance on a drawn cylinder any more.
- //
- // The `_Far` twins tools/grow.mjs also bakes are NOT taken. Swapping by
- // distance was measured to save half a millisecond a frame and to cost the
- // look entirely -- see the note at the top of src/vegetation.js.
  // THE CARTOON REDWOOD GROVE (tools/blender/cartoon_redwood.py, the cartoon
- // overhaul) replaces the grown grove: one hand with every other landscape,
- // and 1,000-1,900 faces a tree where the grown ones were 13,000-53,000.
+ // overhaul), which replaced a grove grown by this project's own code: one
+ // hand with every other landscape, and 1,000-1,900 faces a tree where the
+ // grown ones were 13,000-53,000.
  redwood: ['blender:Blender_Redwood_1', 'blender:Blender_Redwood_2', 'blender:Blender_Redwood_3'],
  dougfir: ['blender:Blender_Fir_1', 'blender:Blender_Fir_2'],
  hemlock: ['blender:Blender_Hemlock_1', 'blender:Blender_Hemlock_2'],
@@ -159,12 +138,10 @@ const PICK = {
  // THE CARTOON PROPS (tools/blender/cartoon_props.py), replacing Kenney's.
  pumpkin: ['blender:Blender_Pumpkin_1', 'blender:Blender_Pumpkin_2', 'blender:Blender_Pumpkin_3'],
  toadstool: ['blender:Blender_Toadstool_RedGroup', 'blender:Blender_Toadstool_RedTall', 'blender:Blender_Toadstool_TanGroup'],
- // LAKESHORE DUNES, BUILT IN BLENDER. Every name starting `Blender_` comes
- // out of a script in tools/blender/ (here tools/blender/lakeshore.py) and
- // lives in a `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how
- // to remake or extend them. Material names are already roles, so no override.
- // Since the cartoon overhaul: tools/blender/cartoon_lakeshore.py's remakes
- // (`Blender_Lake*`), in the overhaul's hand; lakeshore.py's stay for main.
+ // LAKESHORE DUNES (tools/blender/cartoon_lakeshore.py). Every name starting
+ // `Blender_` comes out of a script in tools/blender/ and lives in a
+ // `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how to remake
+ // or extend them. Material names are already roles, so no override.
  dunegrass: ['blender:Blender_LakeDuneGrass_1', 'blender:Blender_LakeDuneGrass_2', 'blender:Blender_LakeDuneGrass_3'],
  cottonwood: ['blender:Blender_LakeCottonwood_1', 'blender:Blender_LakeCottonwood_2', 'blender:Blender_LakeCottonwood_3'],
  blackoak: ['blender:Blender_LakeBlackOak_1', 'blender:Blender_LakeBlackOak_2', 'blender:Blender_LakeBlackOak_3'],
@@ -230,11 +207,6 @@ const push = typed => {
 // find Quaternius's `Grass.obj` on one machine and not the other -- a build
 // that differs by operating system, which is the worst kind.
 const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
-// vendor/grown-redwood-forest is gitignored -- 94 MB this repo's own code
-// reproduces in seconds -- so on a fresh clone it is simply absent, and the
-// error for that should say what to run rather than 'no pack matching'.
-if (!PACKS.some(p => p.pack.includes('grown')))
- throw Error('vendor/grown-redwood-forest is missing. Run: node tools/grow.mjs');
 
 // Every pack holding this model, so an ambiguous name can say so rather than
 // quietly taking whichever the filesystem listed first.
@@ -345,7 +317,7 @@ if (textured) for (const pack of readdirSync(VENDOR))
  }
 const binary = Buffer.concat(chunks);
 const out = `// GENERATED by tools/build-meshes.mjs -- do not edit by hand.
-// Geometry distilled from the CC0 packs in vendor/, stripped of all materials:
+// Geometry from the Blender-built models in vendor/, stripped of all materials:
 // each part carries only a role that the biome palette paints at runtime.
 // Positions are int16 against a unit-height model, normals int8. See
 // ATTRIBUTION.md for the sources and their licences.

@@ -2,13 +2,14 @@
 // rather than guessing.
 //
 // Run:  node tools/asset-preview.mjs                 every pack
-//       node tools/asset-preview.mjs megakit         one pack
+//       node tools/asset-preview.mjs cartoon_desert  one pack
 //       node tools/asset-preview.mjs pine fern       anything matching
 // Writes: preview/assets-data.js, then `npm run assets` builds dist/assets.html
 // -- one self-contained file. Open it in a browser directly: no server, no
 // network.
 //
-// Why this exists: the packs hold 729 models and 96 ship. Picking the wrong one
+// Why this exists: when vendor/ held third-party packs (removed 27 October
+// 2026), they held 729 models and 96 shipped. Picking the wrong one
 // costs a build, a look and a round trip, and it has already cost several --
 // the tiered "wedding cake" pines went in and had to come out again. The page
 // shows each model at a stated size beside a 1.8 m human, painted with the same

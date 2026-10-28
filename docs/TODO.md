@@ -1325,6 +1325,24 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 # Done
 
+## The old assets removed (branch `asset-cleanup`, 27 October 2026)
+
+- [x] **Every asset the cartoon overhaul replaced, removed, with its credits**
+  (the owner, 27 October 2026). Gone: the six Kenney and Quaternius CC0
+  packs, `vendor/blender-lakeshore/` and `tools/blender/lakeshore.py`, the
+  tree bake tools (`bake-assets.mjs`, `bake-trees.mjs`) with their ez-tree
+  devDependency, the redwood grower (`grow.mjs`, `grow-lib.mjs`, `npm run
+  grove`) and its local output; `vendor/` from 240 MB to 11 MB.
+  `build-meshes.mjs` no longer demands the grown folder (a fresh clone had to
+  grow 173 MB of unused trees before it could ingest). ATTRIBUTION.md says
+  every model is this project's Blender work; ez-tree's notice left
+  THIRD_PARTY_NOTICES.txt and DEPENDENCY_INVENTORY.json (65 packages).
+  Checked: `src/asset-meshes.js` rebuilt byte-identical but for its header
+  comment, 232 models; the built page differs from main's only by the
+  removed notice and its stamp; npm test 1101 pass. The website's footer may
+  still name the packs (DISTRIBUTION_REVIEW, *Addendum, 27 October 2026*) --
+  the owner's, in the website repository.
+
 ## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
 
 - [x] **`endless-round` failed once on the cartoon-overhaul branch** (26

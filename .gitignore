@@ -41,29 +41,6 @@ docs/sources/
 # (preview/assets.html, preview/assets.js) IS source and is checked in.
 preview/assets-data.js
 
-# Grown, not vendored: 173 MB of OBJ across 418 files that
-# `node tools/grow.mjs` reproduces EXACTLY from this repository's own code in
-# a few seconds, depending on nothing outside it. Verified by hashing the
-# folder, regenerating it and hashing again: byte-identical.
-#
-# Deliberately not committed. Every tuning pass on grow.mjs rewrites all 418
-# files, so each one would add another ~173 MB to history permanently -- git
-# cannot shed that later without rewriting history, and .git is already 81 MB.
-# Nothing depends on the folder at build time: `npm run build` reads only
-# src/, and the ingested result (src/asset-meshes.js) IS committed. Only
-# `npm run assets` and `npm run grove` need it.
-#
-vendor/grown-redwood-forest/
-
-# vendor/baked_assets: the composed and generated tree models (bake-assets.mjs,
-# bake-trees.mjs) that `npm run assets` ingests. Kept on the owner's machine,
-# no longer committed (30 September): 106 MB that nothing reads at build time,
-# since the ingested result, src/asset-meshes.js, IS committed. Rebuilding it
-# needs the model packs and the ez-tree devDependency. Its MIT notice, which
-# must travel with the geometry that ships, is in docs/THIRD_PARTY_NOTICES.txt.
-# The copies already in history stay there; nothing was rewritten.
-vendor/baked_assets/
-
 # run_fairway_server for each platform (tools/build-server.mjs) and the per-platform
 # download ZIPs (tools/package_release.py): built, never committed.
 /release/

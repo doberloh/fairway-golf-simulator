@@ -1,8 +1,10 @@
 # Models built in Blender
 
-Since 23 October 2026 some of Fairway's models are built in **Blender**, from
-scripts in this repository, rather than taken from a CC0 pack or grown by
-`tools/grow.mjs`. This page is how to recognise them, remake them and add more.
+Since 23 October 2026 Fairway's models are built in **Blender**, from scripts
+in this repository, rather than taken from a CC0 pack or grown by a script --
+and since 27 October 2026 every model is: the packs, the grown redwoods and
+the tools that made them were removed once the cartoon overhaul had remade
+all of it. This page is how to recognise them, remake them and add more.
 The first set is the Lakeshore Dunes pack (RESEARCH.md, *Lakeshore Dunes, the
 tenth biome*). The owner expects to rework other biomes' assets this way, so
 the layout below is meant to be copied.
@@ -17,9 +19,9 @@ Everything about a Blender model says so, three times over:
 | The files it writes | `vendor/blender-<pack>/Blender_<Model>_<n>.glb` |
 | Its key in the game (`MESH_MODELS`, `PICK`) | `Blender_<Model>_<n>`, picked as `'blender:Blender_<Model>_<n>'` in `tools/build-meshes.mjs` |
 
-Anything not named `Blender_...` came from somewhere else: the Kenney and
-Quaternius packs (ATTRIBUTION.md), the grown redwood forest
-(`tools/grow.mjs`), or the baked trees (`tools/bake-*.mjs`).
+Every model the game ships is named `Blender_...`. Until 27 October 2026
+others came from somewhere else -- the Kenney and Quaternius packs, the grown
+redwood forest, the baked trees -- and were removed then.
 
 ## The pipeline
 
@@ -80,7 +82,8 @@ Rules the game imposes, learnt the hard way:
   a node's scale and translation but not its rotation, so nothing may rely on
   an object transform.
 - **The game's materials are single-sided.** A flat blade or leaf card needs a
-  second face pointing the other way (`_blade_two_sided` in lakeshore.py).
+  second face pointing the other way (`fb.blade` in fairway_blender.py, and
+  `cartoon.py`'s grass blades, are two-sided).
 - **Under 65,536 vertices a part** (the indices are 16-bit). Low poly is the
   point anyway: one instance of a cottonwood is about 3,000 vertices after
   export and a course plants hundreds.
@@ -100,9 +103,11 @@ it).
 
 ## The packs
 
-### lakeshore (23 October 2026)
+### lakeshore (23 October 2026; removed 27 October 2026)
 
-`tools/blender/lakeshore.py`, 17 models, for Lakeshore Dunes:
+The first pack, kept here as its record: replaced by `cartoon_lakeshore`
+(below) in the cartoon overhaul, and its script and folder removed on 27
+October 2026. `tools/blender/lakeshore.py`, 17 models, for Lakeshore Dunes:
 
 | Model | Species (family) | What it is | Vertices after export |
 | --- | --- | --- | --- |

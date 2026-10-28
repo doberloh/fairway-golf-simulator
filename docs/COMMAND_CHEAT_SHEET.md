@@ -100,7 +100,6 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | Command | What it does |
 | --- | --- |
 | `npm run assets` | Rebuilds the asset contact sheet from `vendor/` |
-| `npm run grove` | Regrows the redwood forest models and rebuilds the preview pages |
-| `npm run blender -- <pack> [--render]` | Rebuilds a Blender-built model pack (`tools/blender/<pack>.py`, e.g. `lakeshore`) into `vendor/blender-<pack>/`; `--render` adds a contact sheet in `bench/shots/blender/`. Needs Blender installed. Then `node tools/build-meshes.mjs`. docs/BLENDER_ASSETS.md |
+| `npm run blender -- <pack> [--render]` | Rebuilds a Blender-built model pack (`tools/blender/<pack>.py`, e.g. `cartoon_lakeshore`) into `vendor/blender-<pack>/`; `--render` adds a contact sheet in `bench/shots/blender/`. Needs Blender installed. Then `node tools/build-meshes.mjs`. docs/BLENDER_ASSETS.md |
 | `node tools/build-meshes.mjs` | Ingests every picked model in `vendor/` into `src/asset-meshes.js` |
 | `npm run sheet` | Builds the model-gallery page only |
