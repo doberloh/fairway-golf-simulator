@@ -458,7 +458,10 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-section>h3{display:none}
  body:has(#drawerContent.sd-root) #drawer .sd-root .control-card,body:has(#drawerContent.sd-root) #drawer .sd-root .control-group{position:relative;isolation:isolate;margin:0 0 6px;padding:4px 24px 4px 30px;border:0;border-radius:0;background:none;box-shadow:none;break-inside:avoid}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
- body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* The ring on the innermost box holding the focus only: a group sits inside
+    a card (Water's Rivers and Creeks), and both took the ring -- two rings
+    (the owner, 28 October 2026). */
+ body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group):focus-within:not(:has(:is(.control-card,.control-group):focus-within))::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group).sd-changed::after{content:"";position:absolute;left:12px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--hot)}
  /* A slider row: the name with its i, the segment bar, the value. */
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range]){display:grid;grid-template-columns:minmax(0,1fr) 200px 104px;align-items:center;gap:4px 12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}

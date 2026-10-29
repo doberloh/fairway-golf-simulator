@@ -1107,7 +1107,7 @@ up the game's keys are ignored; the round itself does not stop. **Smoke
 journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
 which open the list where the round screen hides the bar.
 
-**On a phone the yards marker draws over the folded shot line** (round-phone.css `.flag-label{z-index:8}`, the shot panel is 7; audit 5, 22 October 2026: upright, the line hid the top half of the yards after a shot). The marker takes no taps, so the line under it still opens. Audit 6 found it then sat over the line's open arrow, so on an upright phone the folded line is 150 px between shots (`:not(.in-flight)`; its caption ellipsed), clear of the marker and of the aim line, which both stand in the middle of the screen; in flight it keeps 220 px for Skip.
+**On a phone the yards marker drew over the folded shot line** (round-phone.css `.flag-label{z-index:8}`, the shot panel is 7; audit 5, 22 October 2026: upright, the line hid the top half of the yards after a shot; since 29 October 2026 the marker is 6, under the round's boxes, because a phone draws no shot line any more -- *The pin's marker keeps under the hole card*). The marker takes no taps, so the line under it still opens. Audit 6 found it then sat over the line's open arrow, so on an upright phone the folded line is 150 px between shots (`:not(.in-flight)`; its caption ellipsed), clear of the marker and of the aim line, which both stand in the middle of the screen; in flight it keeps 220 px for Skip.
 
 **Phones (phase 5, 17 October 2026) have their own round screen** (`src/round-phone.css`, the phone query): the same pieces at the phone's real size, sideways and upright as the round-12 mockups place them -- the hole top left, golfer chips top right, a small straight map, the slanted three-by-three aim pad (the old pad's buttons, so their names and the hold-to-sweep still work), the club bottom left, a narrow Swing Meter you tap to swing (no Swing button), a MENU chip in place of Escape that opens the same pause list as one scrolling column. #world carries `--hud1` in the phone query too, so main.js treats a phone as the round screen; `phoneScreen()` still says it is a phone. Touch targets are 44 px (the phone journeys check it: the club picker was 36 tall until they did). On a phone the main menu's rows lean one by one, one height, two columns sideways. **Since round 13 the sheets and dialogs are the 1.0 ones on a phone too** (the owner: "the old UI still shows on phone screens"): ui-sheets.css's big-screen gate became `@media all`, and its PHONES block at the end lays them out for a phone -- drawn at `--sheet-z / .7` (the round screen's scale without the compact step: 0.525 made rows too small to tap), the step chips under the title and scrolling sideways, no keyboard keys, every side-by-side layout one column, tiles two to a row, the studio's settings a plain flex column (as a grid its tab row sized to nothing and the tabs sat over the text). ui-windows.css does the same for Leave, the version notice, the welcome and the shot list. **A new sheet layout needs a line in that PHONES block**, or it arrives on a phone at its desktop width. In the phone pause, Tools and Players & round are words in `::after`, which the touch rule (style.css, a bigger tap area) positions over the whole button -- round-phone.css puts them back with `position:static`. **Only in play and off a phone.** Every rule sits inside the inverse of the
 phone query (`min-width:561px and min-height:501px` on `#app`), and #world
@@ -1150,6 +1150,44 @@ where the design puts them without moving them in the markup -- ids, handlers
 and the phone's layout untouched. The trap: **any new child of `.shot-controls`
 lands loose at the top left of the course** unless round-hud.css gives it a
 place or hides it.
+
+**THE FOOT, COMPACTED: THE LIE IS IN THE CLUB BOX, THE PICKS AND SKIP IN THE
+METER'S ROW** (the owner, 28 October 2026). At boot main.js moves
+`#lieReadout` into `.club-control` and `#shapeControl` and `#smSkip` into
+`#smResult`; drawMeterResult writes only that row's `[data-field]` cells, so
+the moved children survive it. On every screen: the lie is the club box's top
+band (absolute, `bottom:100%`, `min-width:100%`, never wrapping -- a short
+club name made the box narrower and the line broke into it), and the whole
+club control is ONE panel (`.club-control` carries the background; the code
+square, the name and the keys draw none; the code is accent letters). The
+meter's row is a grid flowing in columns sized by content: carry, total, apex,
+then the three picks at rest (`.shape-control` is `display:contents` there,
+and only when not in flight, not armed and not a putt -- written so, or its
+`!important` would outrank the rules that hide it) or Skip spanning three
+columns in flight. Traps: a piece moved inside the zoomed club box or meter
+takes `zoom:1`, or it is scaled twice; round-hud.css hides every `.sm-skip`
+on a phone with `!important`, so the row's Skip needs `!important` and more
+weight. On a phone the old shot panel is gone; off the Swing Meter (a monitor
+or a typed shot) its `#skipFlight` stands alone bottom right. **A phone's map
+is behind `#rhMap`**: it toggles `#world.map-open`, and without it the
+minimap is `display:none`. `#rhMap` is one of the four buttons of
+`#rhBar` (Menu, Map, Views, Fly), a phone's only bar -- `.rh-keys` is not
+drawn there; Views and Fly dispatch G and V (as the tool column does), so the
+keys' guards hold; Fly is `aria-pressed` while the camera is free (set where
+`exploring` is). `.rh-bar` is `display:none` everywhere else. On a phone,
+free flight's bar is `display:contents` too, its pill, keys and Return to
+ball hidden (Fly takes you back), its fly pad a 3 x 2 grid of 44 px buttons.
+Flying on a phone puts the shot's pieces away (club box, meter, aim pad,
+launch strip) as ui-windows.css does from 561 px up -- that rule's container
+leaves phones out, and without the phone's own the aim pad showed over the
+fly pad. Big screens draw no bar and always show the map.
+
+**The pin's marker keeps under the hole card** (main.js `holeCardRect`,
+read twice a second): projected anywhere within 40 px of the card's sides
+and above its foot, it is drawn just below the card. On an upright phone the
+card spans the middle of the top, where a far pin seen from a long hole's
+tee lands. On a phone the marker is under the round's boxes (z-index 6 to
+#roundHud's 7), no longer over a shot line a phone does not draw.
 
 **A LABEL THE FRAME LOOP POSITIONS IS SCALED BY `transform`/`scale`, NEVER
 `zoom`.** The flag and aim labels get inline `left`/`top` every frame;
@@ -1437,9 +1475,9 @@ above the meter (`.sm-head` hidden: the title line and the out-of-reach words
 went; the bar's hatch still shows the reach); the meter is 543 wide, 80 up;
 curve, height and spin are `#shapeControl` as three boxes under it, 29 up,
 each label, value and key (the small labels are `display:contents` so their
-kbd can be ordered after the value); in flight `#smSkip` stands there instead
--- **moved out of the meter's head into #world at boot**, because the head is
-hidden; with the monitor panel showing (`:has(.monitor-panel:not([hidden]))`)
+kbd can be ordered after the value); in flight `#smSkip` stood there instead
+-- moved out of the meter's head into #world at boot, because the head is
+hidden (all of this until 28 October 2026: *THE FOOT, COMPACTED*); with the monitor panel showing (`:has(.monitor-panel:not([hidden]))`)
 the boxes hide, PLACED (the monitor measures the shape). The club box shows
 Q and E with CLUB (`.club-keys`) and the club's name as the 1.0 drop-down's
 value (`.club-select .dd-v`, refreshed in drawRoundHud, since Q/E set

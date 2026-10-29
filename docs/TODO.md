@@ -62,6 +62,27 @@ phone.
   landscapes scroll down only. The Save box fits a 1280 x 720 screen, its
   picture beside the view buttons. On a sideways phone the band under Back /
   Next is solid. Seen in the audit's pictures at sixteen sizes; not played.
+- [ ] **The foot, compacted, and the phone's map** (the owner's second list,
+  28 October 2026; UI_POLISH.md). The club is one box: the lie along its top,
+  the code in the accent's letters, the name, carry and Q E, no seams; the
+  bag opens over everything, on a phone too. Under the meter one row: carry,
+  total and apex, then curve, height and spin (S W X, or taps); in flight
+  Skip takes their place, on a phone too -- no shot box anywhere. Upright on a
+  phone the golfers are top right and the wind under the hole; MAP beside
+  MENU shows and hides the map (sideways MAP is under the golfers). With a
+  launch monitor on a phone, Skip stands alone bottom right in flight. The
+  phone's one bar -- MENU, MAP, VIEWS, FLY, thin lines between: VIEWS steps
+  aim point, green, back (drag turns the camera in the first two); FLY flies
+  with the pad bottom right and a drag, FLY again comes back; flying, the
+  club box, meter and aim pad are away and Jump to green is one chip (upright,
+  on its own row above the bar). From a long hole's tee on an upright phone
+  the pin's yards sit just under the hole card, not over it. The
+  course studio's Water menu rings Rivers once. Ponds: gust patches drift
+  slowly downwind, nothing flashes across. Seen in the audit's pictures (the
+  bar, VIEWS and FLY at four phone sizes, 29 October 2026), passed by smoke's
+  phone journeys and the drag check, the water measured in frames, no slower
+  than main on Low or Ultra; **not played by hand** -- try VIEWS, FLY and the
+  fly pad with a thumb.
 - [ ] **The splash and a course growing.** The tips are the fourteen in
   src/tips.js, each true of the game today; one shows while a course grows
   ("Growing the landscape...", "Shaping the landscape").
@@ -1036,9 +1057,6 @@ work since.
 - [ ] **A second golfer's Make main profile and Remove as outlines (square since 28 October 2026)**
   (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
   390x844.
-- [ ] **Upright, the folded shot line clear of the yards marker** (audit 6:
-  the marker sat over its arrow). 150 px between shots. Built; **seen** at
-  390x844 after a drive (line 12-162 px, marker from 171 px).
 - [ ] **Tool windows open clear of the HUD** (audit 6: the range controls over
   the shot numbers and tool column). Built; **seen** on the range at
   1920x1080 (left of the marker, under the golfer card) and 1366x768, the
@@ -1107,9 +1125,6 @@ comes back, note which frame the tap lands on.
   wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
 - [ ] **The challenge of the week's banner stacks on an upright phone**
   (audit 5: three columns of five short lines). Built; **seen** at 390x844.
-- [ ] **On a phone the yards marker draws over the folded shot line** (audit
-  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
-  after a drive.
 - [ ] **The meter's Out of reach words follow the aim** (found looking at the
   marker: after a drive the sand wedge at 47 yd said Out of reach, left over
   from the old aim). Built; **seen** in the capture build after the same drive.
@@ -1479,6 +1494,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   Website redeployed.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+- [x] **Upright, the folded shot line clear of the yards marker** (audit 6:
+  the marker sat over its arrow). 150 px between shots. Built; **seen** at
+  390x844 after a drive (line 12-162 px, marker from 171 px).
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
+- [x] **On a phone the yards marker draws over the folded shot line** (audit
+  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
+  after a drive.
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
 
 - [x] **The round matrix plays the course of the week and a friend's challenge**
   (the owner asked for every mode in the simulated rounds): 36 weekly rounds of

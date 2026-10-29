@@ -128,6 +128,8 @@ try {
   await p.waitForFunction(() => window.lab.state().canSwing && document.getElementById('mainMenu').hidden, null, {timeout: 90000});
   await wait(p, 1500);
   const row = {size: p.sizeName, pieces: []};
+  // A phone's map is behind the MAP chip (28 October 2026): show it first.
+  if (size.phone) { await p.evaluate(() => { const b = document.getElementById('rhMap'); if (b?.checkVisibility() && b.getAttribute('aria-pressed') !== 'true') b.click(); }); await wait(p, 400); }
   row.pieces.push(await check(p, 'map', '#world .minimap', '#world .minimap .map-header', {fixed: !!size.phone}));
   // The shot numbers: Tab shows every number as tiles.
   await p.keyboard.press('Tab');

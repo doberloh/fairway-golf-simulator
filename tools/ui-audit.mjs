@@ -205,6 +205,25 @@ const SCREENS = [
   await p.evaluate(() => window.__takeShot({speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}));
   await p.waitForFunction(() => !window.lab.state?.().inFlight, null, {timeout: 30000}).catch(() => {}); await hold(p, 1200);
  }},
+ // THE FOOT, COMPACTED (the owner, 28 October 2026). The club's bag open (on a
+ // phone it opened under everything), the phone's map chip on (the map is
+ // behind it there; elsewhere the chip is not drawn and this is the round),
+ // and a Swing Meter shot in the air (the meter's row holds the numbers and
+ // Skip). Each leaves the round changed, so the next starts fresh.
+ {name: 'round-club', round: 1, leaves: true, go: async p => { await p.evaluate(() => document.querySelector('.club-control .club-select')?.click()); await wait(p, 600); }},
+ {name: 'round-map', round: 1, leaves: true, go: async p => { await p.evaluate(() => { const b = document.getElementById('rhMap'); if (b?.checkVisibility()) b.click(); }); await wait(p, 600); }},
+ // A phone's bar: Views (the next camera, as G) and Fly (free flight, as V);
+ // where the bar is not drawn, the keys themselves.
+ ...[['round-views', 'rhViews', 'KeyG'], ['round-fly', 'rhFly', 'KeyV']].map(([name, id, key]) => ({name, round: 1, leaves: true, go: async p => {
+  const pressed = await p.evaluate(id => { const b = document.getElementById(id); if (!b?.checkVisibility()) return false; b.click(); return true; }, id);
+  if (!pressed) await p.keyboard.press(key);
+  await hold(p, 1800);
+ }})),
+ {name: 'round-flight', round: 1, leaves: true, go: async p => {
+  for (const ms of [700, 650, 0]) { await p.keyboard.press('Space'); if (ms) await hold(p, ms); }
+  await p.waitForFunction(() => document.getElementById('world').classList.contains('in-flight'), null, {timeout: 8000});
+  await hold(p, 900);
+ }},
 ];
 const SCREEN_NAMES = SCREENS.map(s => s.name);
 

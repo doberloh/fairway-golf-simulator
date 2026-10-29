@@ -1625,20 +1625,25 @@ export class GolfView{
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
    if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};}
    if(kind==='still'&&this.mirrorUniforms)Object.assign(shader.uniforms,this.mirrorUniforms);
-   if(kind==='still'){shader.uniforms.waterWind=this.windVec;shader.uniforms.pawK={value:.35+.65*Math.min(1,(this.world.settings.wind||0)/12)};}
+   if(kind==='still'){shader.uniforms.waterWind=this.windVec;shader.uniforms.pawK={value:.35+.65*Math.min(1,(this.world.settings.wind||0)/12)};
+    // The paws travel at the wind's own speed, as gusts do: metres per
+    // water-clock second, the clock running WATER_SPEED times real time.
+    // (Until 28 October 2026 they moved 16 m a clock second -- 160 m/s in
+    // any wind -- and flashed across a pond in under half a second.)
+    shader.uniforms.pawDrift={value:Math.max(1,(this.world.settings.wind||0)*.447)/(this.waterSpeed||WATER_SPEED)};}
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
     .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;attribute float chanEnd;varying vec2 vFlow;varying vec2 vChan;varying float vChanEnd;')
     .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;vChanEnd=chanEnd;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
-    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK;':''))
+    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK,pawDrift;':''))
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
      // CAT'S PAWS (the far-landscape goal's waves, round 18): gusts ruffle
      // patches of a pond that drift downwind; in them the ripples bite and the
      // reflection breaks, between them the water lies glassy. Still water only;
      // stronger with the wind (pawK, 0.35 calm to 1 at 12 mph). PLACED.
      float paw=0.;
-     ${kind==='still'?'paw=smoothstep(.55,.85,wNoise(vWaterWorld.xz*.05-waterWind*waterTime*.8))*pawK;':''}
+     ${kind==='still'?'paw=smoothstep(.55,.85,wNoise((vWaterWorld.xz-waterWind*waterTime*pawDrift)*.05))*pawK;':''}
      {
       vec3 r=wRipple(vWaterWorld.xz,waterTime);
       normal=normalize(normal+vec3(r.xy*(${calm?'.17':'.5'}+paw*.45),0.));
@@ -1672,7 +1677,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v28-'+kind+(calm?'-calm':'');
+  material.customProgramCacheKey=()=>'fairway-water-v29-'+kind+(calm?'-calm':'');
   material.needsUpdate=true;
  }
 

@@ -84,10 +84,12 @@
 
  /* The pin tag. */
  #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(.66);transform-origin:50% 100%;text-shadow:none}
- /* Over the folded shot line (z-index 7), not under it (audit 5: upright,
-    the line hid the top half of the yards). The marker takes no taps, so
-    the line under it still opens. */
- #world[data-mode=play] .flag-label{z-index:8}
+ /* Under the round's own boxes (#roundHud, z-index 7): a far pin seen from
+    a long hole's tee sits under the hole card on an upright phone, and drawn
+    over it hid the card's yards (the phone's bar, 29 October 2026). It was
+    raised over the folded shot line once (audit 5); a phone draws no shot
+    line since the foot was compacted. */
+ #world[data-mode=play] .flag-label{z-index:6}
  #world[data-mode=play] .flag-label:not(.edge)>span,#world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
  #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
  #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
@@ -374,4 +376,115 @@
 }
 @media (pointer:coarse){
  #world .minimap .map-reading>button{min-width:calc(25px / var(--hud-z,1));min-height:calc(25px / var(--hud-z,1))}
+}
+
+/* THE FOOT, COMPACTED, AND THE MAP BEHIND A BUTTON (the owner, 28 October
+   2026). As on a big screen (round-hud.css, *THE FOOT, COMPACTED*): the lie is
+   the club box's top band, and the meter's row under the bar holds carry,
+   total and apex beside curve, height and spin, or beside Skip in flight. The
+   old shot panel goes: with the Swing Meter Skip is in that row; with a
+   monitor or a typed shot, where there is no meter, Skip stands alone in the
+   corner the aim pad leaves in flight. The club's bag opens over everything
+   (it opened under the meter and the aim pad). The map shows only when the
+   MAP chip beside MENU is on. */
+@container app (max-width:560px) or (max-height:500px){
+ /* THE LIE AS THE BOX'S FIRST ROW (round 5b): pinned on top of the box it
+    overhung it whenever its line was wider than the club's name; as the
+    grid's first row the box takes the wider of the two rows, one rectangle. */
+ #world[data-mode=play] .club-control{display:grid!important;grid-template-columns:52px auto auto;grid-template-rows:auto 52px;height:auto;align-items:stretch}
+ #world[data-mode=play] .club-control::before{grid-row:2;grid-column:1;width:auto}
+ #world[data-mode=play] .club-control::after{top:auto;bottom:0}
+ #world[data-mode=play] .club-control>.club-select{grid-row:2;grid-column:2}
+ #world[data-mode=play] .club-control>.club-keys{grid-row:2;grid-column:3}
+ #world[data-mode=play] .club-control>.lie-readout{position:relative;left:auto;bottom:auto;width:auto;min-width:0;grid-row:1;grid-column:1/-1;zoom:1;z-index:0;display:flex;flex-wrap:nowrap;white-space:nowrap;align-items:center;gap:6px;height:24px;padding:0 10px!important;font-size:11px;pointer-events:none}
+ #world[data-mode=play] .club-control>.lie-readout::before{display:none}
+ #world[data-mode=play] .club-control>.lie-readout>span{font-size:10px}
+ #world[data-mode=play] .club-control.dd-open{z-index:36}
+ #world .club-control>.dd-list{bottom:calc(100% + 8px)}
+ #world[data-mode=play] .swing-meter{width:380px!important}
+ #world[data-mode=play] .swing-meter .sm-result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr);gap:4px;margin-top:6px;align-items:stretch}
+ #world[data-mode=play] .swing-meter .sm-result>span{justify-content:center}
+ #world[data-mode=play]:not(.in-flight):not(.monitor-armed) .swing-meter .sm-result>.shape-control:not(.putt){display:contents!important}
+ #world[data-mode=play] .sm-result .shape-pick{position:relative;isolation:isolate;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:auto;min-height:44px;min-width:0;padding:2px 4px!important;border:0;background:none;color:#fff;font-size:14px;text-shadow:none}
+ #world[data-mode=play] .sm-result .shape-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
+ #world[data-mode=play] .sm-result .shape-pick:disabled{opacity:.55}
+ #world[data-mode=play] .sm-result .shape-pick strong{order:-1;max-width:none;overflow:visible;font-size:14px;line-height:1.05}
+ #world[data-mode=play] .sm-result .shape-pick small{order:0;font-size:10px}
+ #world[data-mode=play] .sm-result>.sm-skip{grid-column:span 3;position:relative;isolation:isolate;display:flex!important;white-space:nowrap;align-items:center;justify-content:center;min-height:44px;margin:0;padding:0 12px;border:0;background:none;color:var(--on-hot);font:800 italic 16px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-shadow:none;pointer-events:auto}
+ #world[data-mode=play] .sm-result>.sm-skip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
+ #world[data-mode=play] .sm-result>.sm-skip[hidden]{display:none!important}
+ #world[data-mode=play] .sm-result>.sm-skip kbd{display:none}
+ /* No shot panel; off the meter, its Skip alone. */
+ #world[data-mode=play] .shot-controls>.shot-panel{display:none!important}
+ #world[data-mode=play]:not(.meter-mode).in-flight .shot-controls>.shot-panel:has(#skipFlight:not([hidden])){display:block!important;visibility:visible;left:auto;right:16px;top:auto;bottom:16px;width:auto;max-height:none;padding:0;overflow:visible}
+ #world[data-mode=play] .shot-controls>.shot-panel:has(#skipFlight:not([hidden]))::before{display:none}
+ #world[data-mode=play] .shot-panel .sp-head>:not(#skipFlight){display:none!important}
+ #world[data-mode=play] .shot-panel #skipFlight{min-height:44px;padding:0 22px}
+ /* THE BAR (the owner, 28 October 2026: "combine them all into one box with
+    divider lines"): Menu, Map, Views and Fly in one small panel, thin lines
+    between, in place of the MENU chip and the map chip of the rounds above.
+    Small words, but each a thumb tall (44 px, T1). A pressed one -- the map
+    on, free flight -- is lit. In flight only Menu stays (the camera keys do
+    nothing then, and the map follows the ball by itself). The map shows only
+    while Map is on. */
+ #world[data-mode=play] .rh-keys{display:none!important}
+ #world[data-mode=play] .rh-bar{pointer-events:auto;position:absolute;left:auto;right:16px;top:62px;z-index:8;display:flex;background:var(--panel)}
+ #world[data-mode=play] .rh-bar>button{display:flex;align-items:center;justify-content:center;min-width:48px;height:44px;margin:0;padding:0 10px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase}
+ #world[data-mode=play] .rh-bar>button+button{border-left:1px solid rgba(255,255,255,.22)}
+ #world[data-mode=play] .rh-bar>button[aria-pressed=true]{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));color:var(--on-hot)}
+ #world[data-mode=play] .rh-bar>button:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--cursor)}
+ #world[data-mode=play].in-flight .rh-bar>:not(#rhMenu){display:none}
+ #world[data-mode=play]:not(.map-open):not(.aim-view) .minimap{display:none!important}
+ /* FREE FLIGHT ON A PHONE, in the 1.0 look (it fell back to the old rounded
+    bar, its fly buttons 30 px). Fly in the bar is lit while it lasts and
+    takes you back; a drag looks round; the fly pad is six thumb-sized
+    buttons in the aim pad's corner -- up, forward, down over left, back,
+    right; Jump to green a chip at the foot on the left. The shot's pieces
+    go, as on a big screen (ui-windows.css), or the aim pad shows above the
+    fly pad and the club box under the chip; the hole, the wind and camera
+    and the bar stay -- Fly is the way back. */
+ #world[data-mode=play].exploring :is(.rh-launch,.club-control,.lie-readout,.shape-control,.swing-meter,.monitor-panel,.flag-label,.aim-label,.rh-shot-card,.aim-pad){display:none!important}
+ #world[data-mode=play] .explore-bar{position:static;display:contents}
+ #world[data-mode=play] .explore-bar>div:first-child,#world[data-mode=play] .explore-bar .flight-instructions,#world[data-mode=play] .explore-bar #exitExplorer{display:none!important}
+ #world[data-mode=play] .explore-bar>label{position:absolute;left:16px;bottom:16px;z-index:8;display:flex;flex-direction:row;white-space:nowrap;align-items:center;gap:8px;height:44px;margin:0;padding:0 0 0 12px;background:var(--panel);color:var(--soft);font:700 11px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase}
+ #world[data-mode=play] .explore-bar>label .dd{min-width:0}
+ #world[data-mode=play] .explore-bar>label .dd-field{height:44px;min-height:0;padding:0 12px;gap:8px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;white-space:nowrap}
+ #world[data-mode=play] .explore-bar>label select{height:32px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 14px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #world[data-mode=play] .explore-bar .fly-pad{position:absolute;right:16px;bottom:12px;z-index:8;display:grid!important;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);grid-template-areas:"up fwd down" "left back right";gap:4px}
+ #world[data-mode=play] .explore-bar .fly-pad button{width:44px;height:44px;padding:0;border:0;border-radius:0;background:var(--panel);color:var(--a1);font:800 20px/1 "Saira Condensed",var(--font-ui),sans-serif;touch-action:none}
+ #world[data-mode=play] .fly-pad [data-fly=KeyR]{grid-area:up}
+ #world[data-mode=play] .fly-pad [data-fly=KeyW]{grid-area:fwd}
+ #world[data-mode=play] .fly-pad [data-fly=KeyF]{grid-area:down}
+ #world[data-mode=play] .fly-pad [data-fly=KeyA]{grid-area:left}
+ #world[data-mode=play] .fly-pad [data-fly=KeyS]{grid-area:back}
+ #world[data-mode=play] .fly-pad [data-fly=KeyD]{grid-area:right}
+ /* ONE CONTINUOUS BOX (the owner, 28 October 2026: "the club/lie can ALL be
+    one continuous box instead of separation between the pieces"): one panel
+    behind the lie, the code, the name and the keys, none of them drawing its
+    own; the code is the accent's letters on it, no longer a filled square. */
+ #world[data-mode=play] .club-control{background:var(--panel)}
+ #world[data-mode=play] .club-control::before,#world[data-mode=play] .club-control .club-select::before{background:none}
+ #world[data-mode=play] .club-control::after{color:var(--hot)}
+ #world[data-mode=play] .club-control .club-keys{background:none}
+}
+@container app (max-height:500px){
+ /* Sideways the bar stands under the golfers, the map under it -- off the
+    top centre, where MENU sat on the pin's yards (round 2). */
+ #world[data-mode=play]:not(.aim-view) .minimap{top:112px!important;height:118px!important}
+}
+@container app (max-width:560px) and (min-height:501px){
+ /* Upright: the golfers top right, as on every other screen, and the wind
+    under the hole; the bar at the foot on the left, under the club; in free
+    flight Jump to green stands above it. */
+ .rh-cards{left:auto;right:12px;top:12px;flex-direction:row-reverse;flex-wrap:wrap;justify-content:flex-start;max-width:150px}
+ .rh-subs{left:12px;right:auto;top:72px}
+ #world[data-mode=play] .rh-bar{left:12px;right:auto;top:auto;bottom:12px}
+ /* Jump to green on a row of its own above the bar and the fly pad: beside
+    the bar it ran 14 px into the pad on a 360-wide phone. */
+ #world[data-mode=play] .explore-bar>label{left:12px;bottom:112px}
+ #world[data-mode=play] .explore-bar .fly-pad{right:12px}
+ #world[data-mode=play]:not(.aim-view) .minimap{top:72px!important}
+ /* As wide as the screen allows, at most 366 (round 5: 366 ran 3 px off
+    each side of a 360-wide phone). */
+ #world[data-mode=play] .swing-meter{width:min(366px,calc(100% - 24px))!important}
 }

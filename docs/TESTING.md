@@ -222,7 +222,13 @@ the courses several suites share.
   drop-down (`.dd-native`: its field is the control) and measure the whole
   club box (`.club-control`, which opens the bag) rather than `#club`.
   On a big screen the flight check now expects no flight panel, Skip in the
-  meter's title (`#smSkip`) and the launch strip; the range journey opens
+  meter (`#smSkip`) and the launch strip; since 28 October 2026 (the foot
+  compacted) it expects `#smSkip` whenever the Swing Meter is in use, on a
+  phone too, and the phone journeys tap whichever Skip shows (the meter's,
+  or `#skipFlight` alone off the meter), press MAP before the map, and
+  check VIEWS steps aim point, green and back and FLY reaches free flight,
+  its fly pad a thumb wide, and comes back; in flight a phone (known by
+  its bar, `#rhBar`) is expected to show no flight panel; the range journey opens
   Range controls from the tool column (`#rhTools [data-hud=range]`).
   `hud-places` (the map and the shot numbers once dragged: a place is a
   fraction of the playing area and comes back the same, a drag past the edge

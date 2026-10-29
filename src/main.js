@@ -1217,7 +1217,7 @@ function loadCourse(){
  round.placeTee(course.tees);view.setPutting(round.putting);latest=null;showStandingResult();setUpTurn();if(activeRival())view.setShotHistory?.(visibleTrails());updateExplorer();requestAnimationFrame(updateExplorer);save();
 }
 function updateExplorer(){
- const free=view.config.mode==='free';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;
+ const free=view.config.mode==='free';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('rhFly')?.setAttribute('aria-pressed',String(free));$('exploreBar').hidden=!free;
  $('mapTitle').textContent=round.endless?`HOLE ${round.hole+1} OVERVIEW`:['free','overview'].includes(view.config.mode)?`${world.holes.length} HOLE COURSE`:`HOLE ${(flight?.replay?view.course.hole:round.hole)+1} OVERVIEW`;
  // The title says when the map is not showing the whole thing. Without it a
  // zoomed map that was left zoomed reads as a generation bug -- half a hole.
@@ -4522,6 +4522,19 @@ function drawFlightOnMap(){
 // table of constants would be wrong the moment anyone moved one. Re-measured
 // twice a second rather than per frame: `getBoundingClientRect` forces layout,
 // and a panel that has just been dragged can wait 500 ms to be noticed.
+// The hole card's box on the scene, for the pin's marker to keep under: on an
+// upright phone the card spans the middle of the top, and a far pin seen from
+// a long hole's tee sits under it (the phone's bar, 29 October 2026). Read
+// twice a second, as hudInsets is.
+let holeCardAt=-1e9,holeCardBox=null;
+function holeCardRect(now){
+ if(now-holeCardAt<500)return holeCardBox;
+ holeCardAt=now;
+ const el=$('rhHole'),scene=$('scene');
+ if(!el||!scene||!el.offsetParent)return holeCardBox=null;
+ const r=el.getBoundingClientRect(),s=scene.getBoundingClientRect();
+ return holeCardBox=r.width?{left:r.left-s.left,right:r.right-s.left,bottom:r.bottom-s.top}:null;
+}
 let hudInsetsAt=-1e9,hudInsetsCache={top:70,right:30,bottom:30,left:30};
 function hudInsets(now){
  if(now-hudInsetsAt<500)return hudInsetsCache;
@@ -7544,10 +7557,30 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // THE PAUSE LIST'S SETTINGS ROW: the one window in a round, the screen elsewhere.
  $('pauseSettings').onclick=()=>{setPause(false);closeMenuDrop();if(appMode==='play'&&popups)openSettingsWindow();else openPanel('camera');};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
- // ROUND 14 (frames c-aim2, c-club, c-flight2): Skip stands where curve,
- // height and spin were, at the bottom centre, not above the meter; and the
- // club box opens the bag, upwards, as the 1.0 drop-down.
- if($('smSkip'))$('world').append($('smSkip'));
+ // THE FOOT, COMPACTED (the owner, 28 October 2026: "the lie should be part
+ // of the club selection box ... combine the swing options into the meter").
+ // Until then Skip floated at the bottom centre (round 14), the lie was a strip
+ // of its own above the club and curve, height and spin a row of their own.
+ // Now the lie is the club box's top band, and the meter's number row
+ // (drawMeterResult only writes its [data-field] cells) holds carry, total
+ // and apex beside curve, height and spin at rest, or beside Skip in flight --
+ // the title row above the bar is the launch strip's then. round-hud.css /
+ // round-phone.css place them.
+ document.querySelector('.club-control')?.append($('lieReadout'));
+ if($('smResult'))$('smResult').append($('shapeControl'),$('smSkip'));
+ // A PHONE'S BAR (the owner, 28 October 2026): Menu, Map, Views and Fly as
+ // one box, in place of the MENU chip. Map shows and hides the map (a big
+ // screen has no bar and always shows it). Views and Fly press G and V for
+ // you, as the tool column does on a big screen, so they keep every rule the
+ // keys keep (not in flight, not on a tour); a phone had no way to change
+ // the camera at all.
+ if($('rhBar'))$('rhBar').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code.slice(3).toLowerCase(),bubbles:true}));
+  if(b.id==='rhMenu')setPause(true);
+  else if(b.id==='rhMap'){const open=$('world').classList.toggle('map-open');b.setAttribute('aria-pressed',String(open));}
+  else if(b.id==='rhViews')key('KeyG');
+  else if(b.id==='rhFly')key('KeyV');};
+ // The club box opens the bag, upwards, as the 1.0 drop-down (round 14).
  dropdown($('club'),{field:document.querySelector('.club-control .club-select'),up:true,head:'Your bag · Q E or click'});
  // The whole club box opens it (its code, name, carry and keys), not only the name.
  document.querySelector('.club-control')?.addEventListener('click',e=>{if(!e.target.closest('.club-select,.dd-list'))$('club').__dd?.open();});
@@ -7963,7 +7996,11 @@ function tick(now){
   setStyle(flagEl,'--point',m.angle.toFixed(1)+'deg');
  }else{
   const label=view.project(pinTop);
-  setStyle(flagEl,'left',label.x+'px');setStyle(flagEl,'top',label.y+'px');
+  // The marker hangs above its point (about 46 px drawn); under the hole card
+  // it is pushed down to just below the card.
+  const card=label.visible&&holeCardRect(now);
+  const y=card&&label.x>card.left-40&&label.x<card.right+40&&label.y<card.bottom+50?card.bottom+50:label.y;
+  setStyle(flagEl,'left',label.x+'px');setStyle(flagEl,'top',y+'px');
   setStyle(flagEl,'visibility',label.visible&&worldLabels?'visible':'hidden');
   setClass(flagEl,'edge',false);
  }

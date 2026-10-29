@@ -83,7 +83,8 @@ the main menu, every step of Play for every game type, Challenges, the
 range's setup, the studio's setup, Saved courses, My profile's tabs, the
 three settings screens, the launch monitor, Help, and in a round the round
 screen with one and four golfers, the pause list, the scorecard, the big
-map and a shot -- at sixteen sizes (phones both ways, tablets both ways,
+map, a shot, and (since 28 October 2026) the bag open, a phone's map chip on
+and a Swing Meter shot in the air -- at sixteen sizes (phones both ways, tablets both ways,
 laptops, 1080p, 1440p, 4K, ultrawide, and the Text size at its ends), and
 reads from the page what it drew. Rules (the checklist line each serves):
 overlap, clipped, offscreen (R3); off-centre (R3); two-highlights,
@@ -942,3 +943,104 @@ hold the square: nothing in the kit leans or rounds, selection is a square
 ring.
 
 Then `sq5b`, the fixed build at sixteen sizes: **0 findings**, 846 s.
+
+## The owner's second list: the foot, the phone, the water (28 October 2026)
+
+After playing again the owner sent nine findings; four of them asked for five
+rounds each (the foot's two halves and the phone's map), and mid-way: "the
+club/lie can ALL be one continuous box instead of separation between the
+pieces." What each was, and what was done:
+
+1. **The course studio rang Rivers and Creeks twice.** A group inside a card
+   (Water's Rivers and Creeks): both took the focus-within ring. The ring is on
+   the innermost box holding the focus now (`:not(:has(...:focus-within))`).
+2. **Light shapes flashing across ponds.** The cat's paws (the cartoon
+   overhaul's waves, round 18) drifted 160 m/s in any wind -- a unit slip,
+   noise units for metres, times the water clock's 10. They drift at the
+   wind's own speed now (RESEARCH.md, *cat's paws*: the pond's area changing a
+   frame 3.2% -> 0.6%, measured from hole 1's bank in frames 0.22 s apart).
+3. **The in-flight shot box ("Dustin · Driver", SKIP) was back** -- on phones,
+   which still drew the old shot panel to carry Skip. Gone on every screen;
+   Skip is in the meter's row (below), and off the meter a phone shows Skip
+   alone bottom right.
+4. **The club menu opened under everything on a phone**: the club box was
+   layer 7 under the meter and the aim pad (8); open, it is 36, over the XP
+   popup (34) too.
+5. **The golfers back top right on an upright phone** (they were under the
+   hole), wrapping into a second row with four; **6. the wind under the hole
+   card** (it was top right).
+7. **The map behind a button on a phone**, and **8. the lie in the club box**
+   and **9. curve, height and spin in the meter, compacted**, five rounds each
+   -- *THE FOOT, COMPACTED* in PROJECT_HANDOFF says how it is built.
+
+The rounds, each audited at the round's screens (rest, four golfers, after a
+shot, the bag open, the map chip on, a Swing Meter shot in the air -- the
+audit's new `round-club`, `round-map` and `round-flight`), five sizes for the
+first three and eight (both small phones and 4K added) for the last two:
+
+- **Round 1** (`foot1`): the lie moved into the club box as a band on its top;
+  curve, height and spin moved into the meter's row beside carry, total and
+  apex; Skip into the same row in flight; MAP beside MENU. Found: the phone's
+  Skip missing (an old rule hides every `.sm-skip` on a phone with
+  `!important`), STRAIGHT cut to "STRAI..." (the six cells split evenly),
+  MAP under the 44 px touch size and over the pin's yards at the top centre.
+- **Round 2** (`foot2`, 0 findings): Skip shown on phones; the row's cells
+  sized by their content; MAP 44 px, sideways under the golfers with the map
+  under it. Found in the pictures: the sideways map ran behind the aim pad.
+- **Round 3** (`foot3`, 0): the sideways map 118 tall; MENU as tall as MAP; Q
+  and E inside the club box's panel (the lie band overhung it by their width).
+- **Round 4** (`foot4`, 15 findings, all one cause): the lie line never wraps
+  (a short club name had made the band too narrow and it broke into the box);
+  the open bag over the XP popup. The 360-wide phone found the upright meter,
+  366 wide, running 3 px off each side.
+- **Round 5** (`foot5`, `foot5b`, 0 at eight sizes): the meter as wide as the
+  screen allows; **one continuous box** -- one panel behind the lie, the code,
+  the name and the keys, the code in the accent's letters, no filled square;
+  and the lie as the box's first grid row, so the box takes the wider of its
+  two rows (pinned on top, the band overhung the box whenever the lie's line
+  was wider than the club's name).
+
+The map's own changes were in rounds 1-3; rounds 4 and 5 audited it unchanged.
+**Not played by hand**: seen in the audit's pictures only.
+
+**The phone's bar** (the owner, asked what a phone's touch did to the
+camera: "Add the views button that cycles the camera like the g button ...
+also add a free flight button ... combine them all into one box with divider
+lines"). A phone could not change the camera at all: the tool column is not
+drawn there and the pause list hides its cameras. MENU, MAP, VIEWS and FLY are
+one small panel now, thin lines between (12 px words, each 44 px tall): VIEWS
+and FLY press G and V for you. Free flight on a phone had fallen back to the
+old rounded bar with 30 px fly buttons; it is the 1.0 look now -- the fly pad
+six 44 px buttons in the aim pad's corner, Jump to green a chip at the foot,
+FLY lit and taking you back.
+
+*Checked when the card was free* (29 October 2026). Smoke's phone journeys
+passed their new VIEWS / FLY step, then failed the next one: it still
+expected the old flight panel, which a phone has not drawn since the foot
+was compacted -- the harness was wrong, not the game (the step had never run
+on a phone before, both journeys stopping at the map), and now knows a phone
+by its bar. The audit's pictures at four phone sizes (`bar1`-`bar5`) found
+three faults, all fixed: flying, the club box, meter and aim pad stayed (a
+big screen puts them away from 561 px up only), the aim pad's top arrow
+showing over the fly pad and the club box under the chip; Jump to green's
+picker hung below its chip (the chip stacked its words over an 84 px field;
+now one 44 px row), and upright the chip beside the bar ran 14 px into the
+fly pad on a 360-wide phone, so it has its own row above them; and from a
+long hole's tee on an upright phone the pin's yards stood on the hole card
+(its middle is under the card). Drawing the marker under the card hid half
+the yards, so main.js keeps it just below the card instead (`holeCardRect`),
+at every size. Then: 0 findings at six sizes; the phone journeys and the drag
+check pass; frame against main (`polish-bar-low` / `-ultra`, the play
+camera on tees 1, 5, 9 of autumn) -- Low the graphics card equal to 1%,
+Ultra mean of spots +2.2% and p95 -0.7%, each tee's gap inside one build's
+two runs. **Judged: not slower. Not played by hand.**
+
+**Checked, and owed.** npm test 1138 of 1138; the fingerprint silent; the
+controller, press-count and motion checks pass (22 of 22); smoke 36 of 38 --
+`phone-portrait` and `phone-landscape` failed on their step that tapped the
+map thumbnail, which is now behind MAP: the step presses MAP first now (and
+checks the map is hidden before), **not yet re-run**. Also owed, stopped when
+the owner started a game (the card was 97-99% busy): the drag check
+(`ui-movable-check`, taught to press MAP on a phone) and a frame comparison
+against main for the water shader's new uniform and the round screen's new
+foot -- expected to cost nothing (one more uniform; fewer boxes), not measured.

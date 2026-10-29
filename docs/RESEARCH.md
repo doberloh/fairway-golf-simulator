@@ -10571,9 +10571,22 @@ the wave, 0.8 and 0.35 a metre, gate 0.3-0.55, 0.7 strong. Round 14: wet
 sand -- below 0.05 m over the sea fully, fading out by 0.45 m, the colour x
 (0.74, 0.76, 0.8) at 0.85, where red - green > -0.06. Round 16: a pond's
 wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). Round 18: cat's paws --
-smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting 0.8 m a clock
-second downwind, x (0.35 + 0.65 min(1, wind / 12 mph)); the ripple slope
-+0.45 x it, the mirror x (1 - 0.6 x it). PLACED.
+smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting downwind, x (0.35 +
+0.65 min(1, wind / 12 mph)); the ripple slope +0.45 x it, the mirror x (1 -
+0.6 x it). PLACED. **The drift was wrong until 28 October 2026**: written as
+0.8 a clock second it was 0.8 NOISE units (16 m) a water-clock second, and
+the clock runs WATER_SPEED (10) times real time -- 160 m/s in any wind, so a
+patch crossed a 60 m pond in under half a second. The owner, playing: "light
+colored shapes passing VERY QUICKLY across the surface of ponds". Gusts
+travel at about the wind's own speed (real cat's paws drift with the mean
+wind), so the patches now move at the course's wind, at least 1 m/s (renderer
+uniform pawDrift = max(1, wind mph x 0.447) / WATER_SPEED m a clock second).
+Measured from hole 1's pond bank (autumn, 4 mph; 20 frames 0.22 s apart, a
+pixel counted when its brightness moved more than 30 of 765): the pond's area
+changing a frame fell from 3.2% to 0.6% on average, frames over 2% from 8 of
+19 to 3, the worst from 9.8% to 4.1%; the grass beside it, the control,
+under 0.2% in both. What is left is the ripples and the clouds' shadows
+(9 + 1.6 x wind mph m/s, about 15 today), both meant.
 
 Mowing that shades with the view (ground.js; the diamonds' round 7, the
 tee's round 5): cut grass reads light where it is laid away from the eye
