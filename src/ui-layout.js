@@ -1,6 +1,11 @@
 // THE 1.0 INTERFACE'S LAYOUT RULES (approved 17 October 2026, after twelve
 // rounds of mockups; docs/PROJECT_HANDOFF.md, *The 1.0 interface: layout rules*).
 //
+// SQUARE SINCE 28 OCTOBER 2026 (the owner; PROJECT_HANDOFF "SQUARE, NOT
+// SLANTED"): nothing on screen leans any more. Where this file speaks of the
+// sheet leaning, that is the design as it was; the bands, the canvas and the
+// heights still hold, and gridFor's columns are its geometry, not a style.
+//
 // Every screen is drawn on a design canvas 1280 wide and as tall as the
 // screen's shape needs -- 720 on 16:9, 800 on 16:10, 960 on 4:3 -- scaled to
 // fill the screen. Taller screens get more room, never black bars. On it:

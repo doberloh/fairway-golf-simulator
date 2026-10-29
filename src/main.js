@@ -72,7 +72,7 @@ import {createPictureStore} from './course-pictures.js';
 import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
-import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
+import {makeWindow} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
@@ -3747,7 +3747,7 @@ function toggleStudioPause(show){
   {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
  ]});
  $('world').append(w);$('world').classList.add('studio-paused');
- requestAnimationFrame(()=>{leanAsOne([...w.children]);w.querySelector('button')?.focus();});
+ requestAnimationFrame(()=>w.querySelector('button')?.focus());
 }
 function updateStudioState(){
  if(appMode!=='studio')return;
@@ -4283,8 +4283,7 @@ function groupEditor(hostId,start,onChange){
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
    +`</div>`;}).join('')
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
-  icon();leanSeatRows(host);
-  if(!host.leanWatch){host.leanWatch=new ResizeObserver(()=>leanSeatRows(host));host.leanWatch.observe(host);}
+  icon();
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
@@ -5006,8 +5005,7 @@ function setPause(on){
  if(on&&(!hud1||appMode!=='play'))return;
  app.classList.toggle('rh-paused',!!on);
  if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();
-  // One leaning block each (round 13, ui-windows.js): the list and the round.
-  requestAnimationFrame(()=>{const tb=document.querySelector('.topbar');leanAsOne(['#pauseHead','#pauseResume','#scoreNav','#barTools','.avatar','#pauseSettings','#dropHelp','#dropMenu','#dropGraphics','#dropSound','#dropLibrary','.connection','.sim-time'].map(q=>tb.querySelector(q)));leanAsOne([...tb.querySelectorAll('.rh-pause-stand>div,.rh-pause-extra .tee-control,.rh-pause-extra .meter-button,.rh-pause-choice,.rh-pause-cond')]);});}
+}
  else toggleClockPop(false);
 }
 // ARROWS AND A CONTROLLER IN THE MENUS (phase 3; ui-focus.js). On the main menu
@@ -5160,19 +5158,6 @@ function toggleRangeBox(){if(popups?.isOpen('range'))closeRangeBox();else openPa
 // fullscreen at all, so its tool button hides there (#app.no-fullscreen); added
 // to the home screen the game already opens without Safari's bars.
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}}
-// THE PICKERS FOLLOW THE SEAT'S LEAN (the owner, 18 October 2026). A seat is a
-// tall panel leaning 12 degrees about its middle, so a full-width row low in it
-// slides left with the panel's edge and one high in it slides right -- the way
-// the round 14 frames lean the whole sheet. Measured in layout pixels (offsets
-// ignore the Text size zoom and the slide itself), again whenever the seats
-// resize or first appear.
-const SEAT_LEAN=Math.tan(12*Math.PI/180);
-function leanSeatRows(root){
- for(const seat of root.querySelectorAll('.seat'))for(const el of seat.querySelectorAll('.seat-pick')){
-  let y=el.offsetHeight/2,n=el;while(n&&n!==seat){y+=n.offsetTop;n=n.offsetParent;}
-  el.style.translate=n===seat&&seat.clientHeight?`${(-(y-seat.clientHeight/2)*SEAT_LEAN).toFixed(1)}px 0`:'';
- }
-}
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
  if(name==='round'&&panel!=='round'){challengeStep=0;lobbyStep=lobbyOpenStep??(appMode==='play'?1:0);lobbyOpenStep=null;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
@@ -8054,16 +8039,6 @@ function tick(now){
  {const nb=$('nextHoleBar');if(nb){const on=appMode==='play'&&!menuBackdrop&&!rangeMode&&!!round.holeComplete&&!completionTimer&&!panel&&!flight&&!tour&&!dropState;
   if(nb.hidden===on){nb.hidden=!on;if(on)$('nextHoleLabel').textContent=round.finished?'FINAL SCORECARD':`NEXT HOLE · ${round.hole+2}`;}}}
 }
-// The old windows, dressed as 1.0 windows by ui-windows.css, lean as one block
-// whenever they open or redraw (ui-windows.js).
-watchWindows([
- {el:$('leaveNotice'),rows:()=>[...document.querySelectorAll('#leaveNotice .leave-card>:not(.leave-options),#leaveNotice .leave-options>button')]},
- {el:$('versionNotice'),rows:()=>[...document.querySelectorAll('#versionNotice>div>:not(.version-actions),#versionNotice .version-actions>button')]},
- {el:$('welcome'),rows:()=>[...document.querySelectorAll('#welcomeForm>*')]},
- {el:$('reliefBar'),rows:()=>[...document.querySelectorAll('#reliefBar>:not(.relief-options),#reliefOptions>button')]},
- {el:$('dropBar'),rows:()=>[...document.querySelectorAll('#dropBar>*')]},
- {el:$('pickBar'),rows:()=>[...document.querySelectorAll('#pickBar>*')]},
-]);
 try{
  // Text size first: the view measures its canvas as it is built.
  applyUiScale();addEventListener('resize',applyUiScale);

@@ -1547,8 +1547,9 @@ person.**
 
 Branch `ui-polish-1-0` (docs/UI_POLISH.md). What changes for distribution:
 
-- **The page is 13,787,532 bytes (6.95 MB gzipped; 28 October, the final
-  build)**, against 11,440,666 (5.26 MB) on main: the landscape pictures on the course cards, 45 WebP
+- **The page is 13,784,067 bytes (6.95 MB gzipped; 28 October, the build
+  with square boxes -- 3.5 KB under the final audit's, the slant's rules
+  gone)**, against 11,440,666 (5.26 MB) on main: the landscape pictures on the course cards, 45 WebP
   files (1,709 KB; src/shots/, inlined like everything else), replacing the
   tiny 3D course models, whose code is removed. The goal's budget for them
   was 3 MB.

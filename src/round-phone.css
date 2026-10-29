@@ -33,10 +33,10 @@
 
  /* The hole slab, small. */
  .rh-hole{position:absolute;left:16px;top:12px;display:flex;height:52px}
- .rh-hole .rh-n{width:56px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
- .rh-hole .rh-n>span{transform:skewX(12deg);font-size:34px;font-weight:800;font-style:italic;line-height:1;color:var(--on-hot)}
- .rh-hole .rh-f{display:grid;align-content:center;padding:4px 18px;background:var(--panel);transform:skewX(-12deg)}
- .rh-hole .rh-f>div{transform:skewX(12deg)}
+ .rh-hole .rh-n{width:56px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:none}
+ .rh-hole .rh-n>span{transform:none;font-size:34px;font-weight:800;font-style:italic;line-height:1;color:var(--on-hot)}
+ .rh-hole .rh-f{display:grid;align-content:center;padding:4px 18px;background:var(--panel);transform:none}
+ .rh-hole .rh-f>div{transform:none}
  .rh-hole .rh-a{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
  .rh-hole .rh-a i{display:none}
  .rh-hole .rh-b{font-size:20px;font-weight:800;font-style:italic;line-height:1.05;white-space:nowrap}
@@ -44,19 +44,19 @@
 
  /* The conditions: wind and plays like, as chips. */
  .rh-subs{position:absolute;left:28px;top:72px;display:flex;gap:6px}
- .rh-sub{height:32px;display:flex;align-items:center;padding:0 12px;background:var(--panel);transform:skewX(-12deg)}
+ .rh-sub{height:32px;display:flex;align-items:center;padding:0 12px;background:var(--panel);transform:none}
  .rh-sub[data-sub=rise]{display:none}
  .rh-sub[data-sub=cam]{height:26px;padding:0 9px}
  .rh-sub[data-sub=cam]>span{font-size:13px;gap:4px}
  .rh-sub[data-sub=cam] small{font-size:10px}
- .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:5px;font-size:16px;font-weight:800;font-style:italic}
+ .rh-sub>span{transform:none;display:flex;align-items:center;gap:5px;font-size:16px;font-weight:800;font-style:italic}
  .rh-sub small{font-size:11px;letter-spacing:.1em;color:var(--soft);font-style:normal;font-weight:700}
  .rh-sub svg{width:16px;height:16px;stroke:var(--a1);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;transform:rotate(var(--wind,0deg))}
 
  /* The golfers: a row of chips, the one up with name and level. */
  .rh-cards{position:absolute;right:16px;top:12px;display:flex;flex-direction:row-reverse;align-items:center;gap:6px}
- .rh-card{pointer-events:auto;position:relative;display:flex;align-items:center;min-width:44px;height:36px;padding:0 12px;border:0;color:#fff;background:var(--panel);transform:skewX(-12deg);cursor:pointer}
- .rh-card>span{transform:skewX(12deg);display:flex;align-items:center;gap:6px}
+ .rh-card{pointer-events:auto;position:relative;display:flex;align-items:center;min-width:44px;height:36px;padding:0 12px;border:0;color:#fff;background:var(--panel);transform:none;cursor:pointer}
+ .rh-card>span{transform:none;display:flex;align-items:center;gap:6px}
  .rh-card .rh-pic{display:grid;place-items:center}
  .rh-card .rh-pic :is(img,.chip-dot){width:22px;height:22px}
  .rh-card .rh-pic .chip-dot{display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800}
@@ -73,7 +73,7 @@
  #world[data-mode=play] .rh-keys{display:block;position:absolute;left:50%;top:12px;transform:translateX(-50%)}
  #world[data-mode=play] .rh-keys>:not([data-hud=pause]){display:none}
  #world[data-mode=play] .rh-keys [data-hud=pause]{pointer-events:auto;position:relative;isolation:isolate;display:flex;align-items:center;height:36px;min-width:72px;padding:0 14px;border:0;background:none;color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em}
- #world[data-mode=play] .rh-keys [data-hud=pause]::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .rh-keys [data-hud=pause]::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .rh-keys [data-hud=pause] kbd{display:none}
 
  /* The map, small and straight. */
@@ -90,12 +90,12 @@
  #world[data-mode=play] .flag-label{z-index:8}
  #world[data-mode=play] .flag-label:not(.edge)>span,#world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
  #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
- #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .flag-label:not(.edge) #pinUnit{font-size:0}
 
  /* The last shot, one line under the conditions, with Skip. */
  #world[data-mode=play] .shot-controls>.shot-panel{position:absolute;left:16px;top:112px;z-index:7;isolation:isolate;width:250px;max-height:80px;overflow:hidden;padding:6px 18px;color:#fff;font-size:12px}
- #world[data-mode=play] .shot-controls>.shot-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-controls>.shot-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .shot-panel .shot-result{display:none}
  /* No "Nothing hit yet" box (the owner, V3): no shot, no panel; during a flight it still carries Skip. round-hud.css has the same for bigger screens. */
  #world[data-mode=play].rh-no-shot .shot-controls>.shot-panel:not(:has(#skipFlight:not([hidden]))){display:none!important}
@@ -103,19 +103,21 @@
 
  /* The lie, the shot's shape, the club. */
  #world[data-mode=play] .shot-controls .lie-readout{position:absolute;left:16px;bottom:156px;z-index:7;isolation:isolate;display:flex;align-items:center;gap:6px;height:28px;padding:0 12px!important;font-size:12px;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;white-space:nowrap}
- #world[data-mode=play] .shot-controls .lie-readout::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-controls .lie-readout::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .shape-control{position:absolute;left:16px;bottom:112px;z-index:8;display:flex!important;gap:6px;padding:0!important;border:0;flex:none}
  #world[data-mode=play] .shape-control.putt,#world[data-mode=play].monitor-armed .shape-control{display:none!important}
  #world[data-mode=play] .shape-pick{position:relative;isolation:isolate;display:flex!important;align-items:center;gap:5px;height:36px;min-width:44px;padding:0 10px!important;border:0;background:none;color:#fff;font-size:14px;font-weight:800;font-style:italic;flex-direction:row}
- #world[data-mode=play] .shape-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shape-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .shape-pick small{order:-1;font-size:10px;font-style:normal;color:var(--soft);letter-spacing:.12em;font-weight:700}
  #world[data-mode=play] .shape-pick small kbd{display:none}
- #world[data-mode=play] .shape-pick strong{text-transform:uppercase;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ /* The italic's last letter leans past its box; the padding keeps it inside
+    the clip (square-box round 5: STRAIGHT read STRAIGH, the spin 0 cut). */
+ #world[data-mode=play] .shape-pick strong{text-transform:uppercase;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:3px}
  #world[data-mode=play] .club-control{position:absolute;left:16px;bottom:16px;z-index:7;display:flex!important;align-items:stretch;height:52px;min-width:0;padding:0!important;border:0;flex:none}
- #world[data-mode=play] .club-control::before{content:"";width:52px;flex:none;background:var(--hot);transform:skewX(-12deg)}
+ #world[data-mode=play] .club-control::before{content:"";width:52px;flex:none;background:var(--hot);transform:none}
  #world[data-mode=play] .club-control::after{content:attr(data-code);position:absolute;left:0;top:0;width:52px;height:52px;display:grid;place-items:center;color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;pointer-events:none}
  #world[data-mode=play] .club-control .club-select{position:relative;isolation:isolate;display:grid;align-content:start;margin:0!important;padding:0 18px 0 14px;border:0;background:none}
- #world[data-mode=play] .club-control .club-select::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .club-control .club-select::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .club-control select{appearance:none;-webkit-appearance:none;width:auto;max-width:150px;min-width:64px;min-height:44px;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
  #world[data-mode=play] .club-control option{font:16px var(--font-ui);text-transform:none;color:#111;background:#fff}
  /* Round 14: the club's name is the 1.0 drop-down's value (ui-dropdown.js), a
@@ -130,8 +132,8 @@
  #world[data-mode=play] .swing-meter .sm-head{margin-bottom:14px;font-size:12px;font-weight:800;font-style:italic;text-shadow:var(--outline)}
  #world[data-mode=play] .swing-meter .sm-title{font-size:12px;color:#fff;text-transform:uppercase}
  #world[data-mode=play] .swing-meter .sm-hint{color:var(--hot);text-transform:uppercase}
- #world[data-mode=play] .swing-meter .sm-bar{height:40px;border:0;border-radius:0;transform:skewX(-12deg);pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 3px var(--panel)}
- #world[data-mode=play] .swing-meter .sm-ticks span b{bottom:calc(100% + 5px);transform:translateX(-50%) skewX(12deg);font-size:11px;font-weight:700;color:#e8ecff}
+ #world[data-mode=play] .swing-meter .sm-bar{height:40px;border:0;border-radius:0;transform:none;pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 3px var(--panel)}
+ #world[data-mode=play] .swing-meter .sm-ticks span b{bottom:calc(100% + 5px);transform:translateX(-50%);font-size:11px;font-weight:700;color:#e8ecff}
  #world[data-mode=play] .swing-meter .sm-ticks span small{display:none}
  #world[data-mode=play] .swing-meter .sm-ticks span.full{border-left:3px solid var(--hot)}
  #world[data-mode=play] .swing-meter .sm-ticks span.strike{display:none}
@@ -144,13 +146,13 @@
  /* The aim pad: three by three, slanted, the flag in the middle. */
  #world[data-mode=play] .aim-pad{display:grid!important;position:absolute;left:auto!important;right:16px!important;top:auto!important;bottom:12px!important;z-index:8;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important}
  #world[data-mode=play] .aim-pad button{position:relative;isolation:isolate;width:44px!important;height:44px!important;border:0!important;border-radius:0!important;background:none!important;color:var(--a1)!important;box-shadow:none!important}
- #world[data-mode=play] .aim-pad button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .aim-pad button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .aim-pad .pad-pin{color:var(--on-hot)!important}
  #world[data-mode=play] .aim-pad .pad-pin::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
 
  /* The ball light, with a monitor armed: across the foot. */
  #world[data-mode=play] .monitor-panel:not([hidden]){left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:auto!important;max-width:300px;transform:translateX(-50%);isolation:isolate;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 18px!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;animation:none}
- #world[data-mode=play] .monitor-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px var(--light,var(--a1))}
+ #world[data-mode=play] .monitor-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none;box-shadow:inset 0 0 0 2px var(--light,var(--a1))}
  #world[data-mode=play] .monitor-panel[data-monitor=green]{--light:#4ade80}
  #world[data-mode=play] .monitor-panel[data-monitor=amber]{--light:#fbbf24}
  #world[data-mode=play] .monitor-panel[data-monitor=red]{--light:#f87171}
@@ -162,8 +164,8 @@
  #world[data-mode=play] .rh-shot-card{position:absolute;z-index:9;width:430px;display:grid;pointer-events:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:translate(-50%,calc(-100% - 30px)) scale(.62);transform-origin:50% 100%;transition:opacity .2s linear}
  #world[data-mode=play] .rh-shot-card.below{transform:translate(-50%,30px) scale(.62);transform-origin:50% 0}
  #world[data-mode=play] .rh-shot-card[hidden]{display:none}
- .rh-shot-card .rh-sc-tab{justify-self:start;margin-left:14px;padding:2px 16px;background:var(--hot);transform:skewX(-12deg)}
- .rh-shot-card .rh-sc-tab>span{display:block;transform:skewX(12deg);font-size:18px;font-weight:800;font-style:italic;color:var(--on-hot);white-space:nowrap}
+ .rh-shot-card .rh-sc-tab{justify-self:start;margin-left:14px;padding:2px 16px;background:var(--hot);transform:none}
+ .rh-shot-card .rh-sc-tab>span{display:block;transform:none;font-size:18px;font-weight:800;font-style:italic;color:var(--on-hot);white-space:nowrap}
  .rh-shot-card .rh-sc-body{position:relative;isolation:isolate}
 
  /* The arrow to the apex (main.js *THE CARD POINTS AT THE APEX*): from the card's foot, under the point as
@@ -171,7 +173,7 @@
     so it reaches the point wherever the card had to sit. */
  .rh-shot-card .rh-sc-ptr{position:absolute;left:var(--px,50%);top:var(--py,100%);width:var(--pl,36px);height:3px;margin-top:-1.5px;background:var(--hot);transform-origin:0 50%;transform:rotate(var(--pa,90deg));pointer-events:none}
  .rh-shot-card .rh-sc-ptr::after{content:"";position:absolute;right:-3px;top:50%;transform:translateY(-50%);border-left:12px solid var(--hot);border-top:7px solid transparent;border-bottom:7px solid transparent}
- .rh-shot-card .rh-sc-body::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-shot-card .rh-sc-body::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  .rh-shot-card .rh-sc-main{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:8px 26px 4px}
  /* Two big numbers: the total, and what is left to the pin. */
  .rh-shot-card .rh-sc-big{display:flex;align-items:baseline;gap:8px;min-width:0}
@@ -199,7 +201,7 @@
  #app.rh-paused .topbar #menuDrop{position:static;display:grid!important;gap:6px;padding:0;margin:0;border:0;background:none;box-shadow:none;backdrop-filter:none;min-width:0;transform:none}
  #app.rh-paused .topbar .menu-drop-line{display:none}
  #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice){position:relative;isolation:isolate;display:flex!important;align-items:center;gap:10px;width:100%;min-height:44px;height:auto;margin:0;padding:6px 22px;border:0;border-radius:0;background:none!important;box-shadow:none;color:#fff!important;font:800 italic 17px/1.1 "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;text-align:left;filter:none}
- #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #app.rh-paused .topbar .rh-resume{order:-1;color:var(--on-hot)!important}
  #app.rh-paused .topbar .rh-resume::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #app.rh-paused .topbar .rh-resume kbd{display:none}
@@ -208,7 +210,7 @@
  #app.rh-paused .topbar .avatar::after{content:"Golfers & rules";font-size:17px}
  #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:17px!important}
  #app.rh-paused .topbar .rh-pause-stand>div{position:relative;isolation:isolate;display:flex;gap:10px;align-items:center;min-height:36px;padding:0 18px;font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase}
- #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #app.rh-paused .topbar .rh-pause-stand small{font-size:11px;color:var(--soft);font-style:normal}
  #app.rh-paused .topbar .rh-pause-cond{font-size:11px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #app.rh-paused .topbar :is(.tee-control,.meter-button) :is(svg,i,label,small){font-size:11px}
@@ -272,14 +274,14 @@
  .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
  /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
  .main-menu .menu-tile[hidden]{display:none!important}
- .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  .main-menu .menu-tile.primary :is(strong,small),.main-menu .menu-tile:is(:hover,:focus) :is(strong,small){color:var(--on-hot)}
  .main-menu .menu-tile :is(i,svg){display:none}
  .main-menu .menu-tile strong{font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
  .main-menu .menu-tile small{font-size:11px;letter-spacing:.1em;color:var(--soft);opacity:1;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .main-menu .menu-link{position:relative;isolation:isolate;min-height:44px;padding:0 12px;border-radius:0;opacity:1;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
- .main-menu .menu-link::before{content:"";position:absolute;inset:4px 0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ .main-menu .menu-link::before{content:"";position:absolute;inset:4px 0;z-index:-1;background:rgba(255,255,255,.1);transform:none}
 }
 @container app (max-height:500px){
  /* Sideways the XP popup sat over the hole slab and the wind (audit 3): it goes
@@ -300,12 +302,12 @@
    the in-flight Skip were the old rounded pieces on a phone. */
 @container app (max-width:560px) or (max-height:500px){
  #world .xp-gain{top:auto;bottom:auto;left:12px;right:auto;top:56px;transform:none;width:min(320px,calc(100% - 24px));padding:10px 22px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
- #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world .xp-gain .xp-top b{font-size:24px;font-weight:800;font-style:italic;color:var(--hot)}
  #world .xp-gain .xp-items li{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
  #world .xp-gain .xp-bar,#world .xp-gain .xp-bar b,#world .xp-gain .level-badge{border-radius:0}
- #world[data-mode=play] .shot-panel #skipFlight{border-radius:0;border:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:skewX(-12deg)}
- #world[data-mode=play] .shot-panel #skipFlight>*{transform:skewX(12deg)}
+ #world[data-mode=play] .shot-panel #skipFlight{border-radius:0;border:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:none}
+ #world[data-mode=play] .shot-panel #skipFlight>*{transform:none}
 }
 
 /* The swing strip on a phone: its first key only, so it clears the yard marks. */
@@ -328,10 +330,10 @@
 @container app (max-width:560px) or (max-height:500px){
  #app[data-mode=studio] .topbar{display:none}
  #world[data-mode=studio] #studioSlab{position:absolute;left:12px;top:12px;bottom:auto;right:auto;z-index:8;display:flex;height:48px;pointer-events:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
- #world[data-mode=studio] #studioSlab>b{width:48px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg);font-size:26px;font-weight:800;font-style:italic;color:var(--on-hot)}
- #world[data-mode=studio] #studioSlab>span{display:grid;align-content:center;gap:2px;padding:0 18px 0 14px;background:var(--panel);transform:skewX(-12deg)}
- #world[data-mode=studio] #studioSlab strong{transform:skewX(12deg);font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap;color:var(--soft)}
- #world[data-mode=studio] #studioSlab small{transform:skewX(12deg);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap;color:#fff}
+ #world[data-mode=studio] #studioSlab>b{width:48px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:none;font-size:26px;font-weight:800;font-style:italic;color:var(--on-hot)}
+ #world[data-mode=studio] #studioSlab>span{display:grid;align-content:center;gap:2px;padding:0 18px 0 14px;background:var(--panel);transform:none}
+ #world[data-mode=studio] #studioSlab strong{transform:none;font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap;color:var(--soft)}
+ #world[data-mode=studio] #studioSlab small{transform:none;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap;color:#fff}
  #world[data-mode=studio] #studioKeys{display:none!important}
  #world[data-mode=studio]:not(.aim-view) .minimap{left:auto;right:12px;top:72px;bottom:auto;width:120px;height:170px;border-radius:0}
 }
@@ -342,7 +344,7 @@
  body:has(#world[data-mode=studio]) #studioBar{left:12px;right:12px;bottom:12px;width:auto;max-width:none;transform:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;padding:0 6px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  body:has(#world[data-mode=studio]) #studioBar>div{display:none}
  body:has(#world[data-mode=studio]) #studioBar>button{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;height:auto;padding:0 12px;border:0;border-radius:0;background:none;color:#fff;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
- body:has(#world[data-mode=studio]) #studioBar>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#world[data-mode=studio]) #studioBar>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#world[data-mode=studio]) #studioBar>button.primary{color:var(--on-hot)}
  body:has(#world[data-mode=studio]) #studioBar>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  body:has(#world[data-mode=studio]) #studioBar>button svg{width:18px;height:18px}

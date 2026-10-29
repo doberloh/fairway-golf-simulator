@@ -12,7 +12,7 @@ changes what it covers.
 | **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
-| **Interface audit** | `node tools/ui-audit.mjs` (UI_POLISH.md) | **the graphics card**, about 1.5 hours for every screen at sixteen sizes, minutes for a few | every screen's layout at phone to 4K and both Text size ends: overlapping or cut-off text, things off screen or off-centre, two highlights alike, touch targets under 44 px, contrast read from the picture, text under the kit's floor; a picture of each | whether it works (the smoke test's job), whether it is pleasant |
+| **Interface audit** | `node tools/ui-audit.mjs` (UI_POLISH.md) | **the graphics card**, about 14 minutes for every screen at sixteen sizes (four side by side), about 5 for `--quick` | every screen's layout at phone to 4K and both Text size ends: overlapping or cut-off text, things off screen or off-centre, two highlights alike, touch targets under 44 px, contrast read from the picture, text under the kit's floor; a picture of each | whether it works (the smoke test's job), whether it is pleasant |
 | **Menu motion** | `node tools/ui-motion-check.mjs` (UI_POLISH.md) | **the graphics card**, under a minute | each animation in ui-motion.css runs 100-300 ms on opacity and transforms only, ends whole when interrupted (Esc while arriving, two presses on Next), lets the keys answer at once, and does not run under reduced motion | how it feels |
 | **A controller alone** | `node tools/ui-pad-check.mjs` (UI_POLISH.md T2) | **the graphics card**, about three minutes | a pretend standard pad in `navigator.getGamepads`, at six sizes: the d-pad moves the main menu, Play and the pause list; A opens and presses; B closes a sheet with the cursor back on its tile; A alone starts the course of the week; Start pauses and B resumes | a real pad's own quirks (non-standard mappings, stick drift) |
 | **The pieces a player moves** | `node tools/ui-movable-check.mjs` (UI_POLISH.md T3) | **the graphics card**, about two minutes | in a round at six sizes, the map (by its header) and the shot numbers (Tab) follow a drag, stop inside the playing area when dragged past it, stay inside when the window shrinks, and go back on a double click; on a phone the map stays in its own place (by design) |  a finger's drag on a real phone |
@@ -189,8 +189,10 @@ the courses several suites share.
   (every biome has a complete palette and no two share one, readable text over
   a light and a dark picture, which biome each screen wears, the menus
   following the week), `ui-kit` (every class `uk-` and every rule scoped to
-  `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
-  rules, the two font files are local woff2 with their licence, text escaped).
+  `.uk`, no colour on a straightening wrapper, nothing leaning and no rounded
+  corners (square since 28 October 2026), selection a square ring, the
+  stylesheet's sizes match the rules, the two font files are local woff2
+  with their licence, text escaped).
   `ui-settings` also checks every in-round setting is a tab of the one
   Settings window and only the monitor opens a screen. The smoke harness reaches
   settings through `t.settings(tab)` (pause → Settings → the tab), Tools with T

@@ -90,12 +90,13 @@ try {
  const focusMoved = await p.evaluate(() => document.activeElement?.closest?.('#drawer') != null);
  check('the arrows answer while the sheet is still arriving', focusMoved, '');
  await p.waitForTimeout(400);
- // The main menu's cursor slide and a press.
+ // The main menu's cursor: since the square look (28 October 2026) it lights
+ // the tile in place -- no slide, so nothing moves the tile out of its column.
  for (let i = 0; i < 4; i++) { await p.keyboard.press('Escape'); await p.waitForTimeout(150); }
  await p.focus('#menuPlay'); await p.keyboard.press('ArrowDown');
  const a3 = await p.evaluate(() => document.getAnimations().filter(a => a.playState === 'running').map(a => ({name: a.transitionProperty || a.animationName, d: a.effect.getTiming().duration, el: a.effect.target?.id || a.effect.target?.className})));
  const slide = a3.find(a => a.name === 'transform' && /menu/.test(String(a.el)));
- check('the main menu cursor slides', !!slide && slide.d >= 100 && slide.d <= 300, JSON.stringify(slide || a3.slice(0, 3)));
+ check('the main menu cursor lights its tile in place', !slide, JSON.stringify(slide || ''));
  // A box settling in: the studio's leave notice is hard to reach here; the
  // version notice shares the rule, so the welcome box stands in.
  const boxRule = await p.evaluate(() => [...document.styleSheets].flatMap(s => { try { return [...s.cssRules]; } catch { return []; } }).flatMap(r => r.cssRules ? [...r.cssRules] : [r]).some(r => /version-notice/.test(r.selectorText || '') && /ui-settle-in/.test(r.cssText)));

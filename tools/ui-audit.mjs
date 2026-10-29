@@ -5,9 +5,19 @@
 //   node tools/capture/build-hooked.mjs        the capture build it opens
 //   node tools/ui-audit.mjs                     every screen, every size
 //   node tools/ui-audit.mjs --sizes 390x844,1920x1080 --screens play,main-menu
-//   node tools/ui-audit.mjs --quick             four sizes: phone both ways, laptop, 4K
+//   node tools/ui-audit.mjs --quick             five sizes: phone both ways, tablet, 1080p, 4K
 //   node tools/ui-audit.mjs --game bench/ab/main-ui/index.html --out before
+//   node tools/ui-audit.mjs --jobs 1            one size at a time (default 4 side by side)
 //   node tools/ui-audit.mjs --list              the screens and sizes
+//
+// SPEED (28 October 2026). A full run was about 50 minutes, one size after
+// another with a fixed pause before every picture. Now four sizes run side by
+// side in one browser (`--jobs`), and a pause ends as soon as the screen's
+// animations have finished (`wait`; `hold` is the fixed pause, kept where the
+// game is building something no animation shows). A round of fixes is checked
+// on `--quick`; the sixteen sizes are for the last round. A screen that has
+// not finished in SCREEN_MS is written down as `walk-failed` and its size goes
+// on from a fresh page, so no screen can stall a run.
 //
 // WHY. Nothing else checks layout: `npm test` cannot see the page and the smoke
 // test proves the buttons work, not that they sit right. The audits of the
@@ -25,8 +35,9 @@
 // tablets) gets a touch device, so the phone layout is the real one.
 //
 // OUTPUT: bench/shots/ui-audit/<out>/ -- a picture of every screen at every
-// size (<size>/<screen>.png), findings.json, and report.md (the list, grouped
-// by rule). Findings explained in tools/ui-audit-known.json are listed apart
+// size (<size>/<screen>.png), a contact sheet per screen with every size side
+// by side (sheets/<screen>.png, the pictures to look at), findings.json, and
+// report.md (the list, grouped by rule). Findings explained in tools/ui-audit-known.json are listed apart
 // and do not fail the run; anything else exits non-zero.
 import {chromium} from 'playwright';
 import fs from 'node:fs';
@@ -56,9 +67,22 @@ const SIZES = [
 ].map(s => ({...s, text: s.text === 'max' ? maxTextSize(s.w, s.h) : (s.text ?? 100)}))
  .map(s => ({...s, name: `${s.w}x${s.h}${s.text !== 100 ? `@${s.text}` : ''}`}))
  .filter((s, i, all) => all.findIndex(o => o.name === s.name) === i);
-const QUICK = ['390x844', '844x390', '1280x720', '3840x2160'];
+// The round-by-round set: phone upright and sideways, an upright tablet (the
+// studio's stack), 1080p and 4K (the scale at its largest).
+const QUICK = ['390x844', '844x390', '768x1024', '1920x1080', '3840x2160'];
 
-const wait = (p, ms) => p.waitForTimeout(ms);
+// A PAUSE THAT ENDS WHEN THE SCREEN HAS SETTLED, at most `ms`: a short floor so
+// what a click starts has begun, then until no animation or transition with an
+// end is running (a looping one -- the flame, a pulse -- never ends), then two
+// frames for the last layout. `hold` is the plain fixed pause.
+const hold = (p, ms) => p.waitForTimeout(ms);
+async function wait(p, ms) {
+ const floor = Math.min(ms, 150), t = Date.now();
+ await hold(p, floor);
+ if (ms > floor) await p.waitForFunction(() => !document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity),
+  null, {timeout: ms - floor, polling: 50}).catch(() => {});
+ if (Date.now() - t < ms) await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+}
 const byId = (p, id) => p.evaluate(i => { const e = document.getElementById(i); if (!e) throw Error('no #' + i); e.click(); }, id);
 // Back to the main menu from anywhere, as a player would: Escape closes what
 // is in front first; a round is left through the pause list's Main menu.
@@ -85,7 +109,7 @@ async function round(p, n = 1, biome = 'autumn') {
  await p.evaluate(([g, b]) => window.lab.course({biome: b, holes: 9, seed: 'AUDIT'}, g), [GOLFERS(n), biome]);
  // The opening flyover ends on its own; wait until a swing can start.
  await p.waitForFunction(() => window.lab.state().canSwing, null, {timeout: 60000}).catch(() => {});
- await wait(p, 1500);
+ await hold(p, 1500);
 }
 
 // THE SCREENS. Each `go` starts at the main menu and ends on the screen; a
@@ -133,7 +157,7 @@ const SCREENS = [
  {name: 'studio-flying', walk: true, leaves: true, go: async (p, shot) => {
   await byId(p, 'menuStudio'); await wait(p, 1200); await byId(p, 'growStudio');
   await p.waitForFunction(() => document.getElementById('world')?.dataset.mode === 'studio' && document.getElementById('generating')?.hidden !== false, null, {timeout: 120000});
-  await wait(p, 2500); await shot('');
+  await hold(p, 2500); await shot('');
   await byId(p, 'studioSave'); await wait(p, 1200); await shot('save');
  }},
  {name: 'settings-menus', walk: true, go: async (p, shot) => {
@@ -162,7 +186,7 @@ const SCREENS = [
  {name: 'round-four', round: 4, go: async p => {}},
  {name: 'round-pause', round: 1, go: async p => { await p.keyboard.press('Escape'); await wait(p, 700); }},
  {name: 'round-scorecard', round: 4, go: async p => { await p.keyboard.press('Escape'); await wait(p, 600); await byId(p, 'scoreNav').catch(() => {}); await wait(p, 1200); }},
- {name: 'round-bigmap', round: 1, go: async p => { await p.keyboard.press('KeyM'); await wait(p, 1200); }},
+ {name: 'round-bigmap', round: 1, go: async p => { await p.keyboard.press('KeyM'); await hold(p, 1200); }},
  // The tool windows from the tray (TODO: "the floating tool windows are not
  // swept for layout"): T opens the tray, each of its rows opens a window.
  {name: 'round-tools', round: 1, walk: true, go: async (p, shot) => {
@@ -179,7 +203,7 @@ const SCREENS = [
  {name: 'round-golfers', round: 4, go: async p => { await p.keyboard.press('Escape'); await wait(p, 600); await p.evaluate(() => [...document.querySelectorAll('.topbar button')].find(b => /golfers/i.test(b.textContent) && b.checkVisibility())?.click()); await wait(p, 1200); }},
  {name: 'round-shot', round: 1, go: async p => {
   await p.evaluate(() => window.__takeShot({speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}));
-  await p.waitForFunction(() => !window.lab.state?.().inFlight, null, {timeout: 30000}).catch(() => {}); await wait(p, 1200);
+  await p.waitForFunction(() => !window.lab.state?.().inFlight, null, {timeout: 30000}).catch(() => {}); await hold(p, 1200);
  }},
 ];
 const SCREEN_NAMES = SCREENS.map(s => s.name);
@@ -398,45 +422,93 @@ async function openAt(size) {
  await page.addInitScript(() => { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pa', profiles: [{id: 'pa', name: 'Alex', created: Date.now(), xp: 9400, counters: {}, bests: {}, rounds: []}]})); });
  await page.goto(pathToFileURL(GAME).href);
  await page.waitForFunction(() => window.lab && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
- await wait(page, 800);
+ await hold(page, 800);
  return page;
 }
 const t0 = Date.now();
-try {
- for (const size of sizes) {
-  // `stale`: the last screen left the game somewhere home() cannot leave
-  // (the studio asks about saving), so the next starts on a fresh page.
-  let page = await openAt(size), inRound = 0, stale = false;
-  const dir = path.join(OUT, size.name);
-  fs.mkdirSync(dir, {recursive: true});
-  for (const s of screens) {
-   const shot = async label => {
-    const name = label ? `${s.name}~${label.replace(/[^\w-]+/g, '-').toLowerCase()}` : s.name;
-    const got = await page.evaluate(collect);
-    const png = await behind(page, got.recs);
-    const found = audit(got.recs, got.view, {touch: !!size.touch}).map(f => ({...f, screen: name, size: size.name}));
-    fs.writeFileSync(path.join(dir, `${name}.png`), Buffer.from(png, 'base64'));
-    all.push(...found);
-    for (const r of got.recs) if (r.text) (texts[name] ??= new Set()).add(r.text);
-    process.stdout.write(`${size.name} ${name}: ${found.filter(f => !SOFT.has(f.rule)).length}\n`);
-   };
-   try {
+const JOBS = Math.max(1, Number(opt('jobs') || 4));
+// The longest a screen may take, its walk included (the longest walks, the
+// play sheet's steps at 4K, take about a minute). 28 October 2026: a studio
+// left holding its save box, then a round asked of that same page, waited for
+// an answer for two and a half hours.
+const SCREEN_MS = 180000;
+const within = (ms, work, what) => {
+ let t;
+ const w = work.finally(() => clearTimeout(t));
+ w.catch(() => {});
+ return Promise.race([w, new Promise((_, no) => { t = setTimeout(() => no(Error(`${what}: not done in ${ms / 1000} s`)), ms); })]);
+};
+const closePage = p => within(20000, p.context().close(), 'closing the page').catch(() => {});
+async function auditSize(size) {
+ // `stale`: the last screen left the game somewhere home() cannot leave
+ // (the studio asks about saving), or failed part way, so the next starts on a
+ // fresh page -- a round screen too.
+ let page = await openAt(size), inRound = 0, stale = false;
+ const dir = path.join(OUT, size.name);
+ fs.mkdirSync(dir, {recursive: true});
+ for (const s of screens) {
+  // A walk that ran out of time keeps going on its closed page; `run.over`
+  // stops it writing a picture under the next screen's name.
+  const run = {over: false};
+  const shot = async label => {
+   if (run.over) throw Error('ran out of time');
+   const name = label ? `${s.name}~${label.replace(/[^\w-]+/g, '-').toLowerCase()}` : s.name;
+   const got = await page.evaluate(collect);
+   const png = await behind(page, got.recs);
+   if (run.over) throw Error('ran out of time');
+   const found = audit(got.recs, got.view, {touch: !!size.touch}).map(f => ({...f, screen: name, size: size.name}));
+   fs.writeFileSync(path.join(dir, `${name}.png`), Buffer.from(png, 'base64'));
+   all.push(...found);
+   for (const r of got.recs) if (r.text) (texts[name] ??= new Set()).add(r.text);
+   process.stdout.write(`${size.name} ${name}: ${found.filter(f => !SOFT.has(f.rule)).length}\n`);
+  };
+  const reopen = async () => { await closePage(page); page = await openAt(size); };
+  try {
+   await within(SCREEN_MS, (async () => {
     // A round screen starts from the plain round: a fresh page for a new group
     // (lab.course from inside a round would ask about leaving it), else
     // whatever the last screen opened closed with Escape until nothing is in
     // front -- never one Escape more, which would pause.
-    const reopen = async () => { await page.context().close(); page = await openAt(size); };
     if (s.round) {
-     if (inRound !== s.round) { if (inRound) await reopen(); await round(page, s.round); inRound = s.round; }
+     if (inRound !== s.round || stale) { if (inRound || stale) await reopen(); stale = false; inRound = 0; await round(page, s.round); inRound = s.round; }
      else for (let i = 0; i < 6 && await page.evaluate(() => document.getElementById('drawer').checkVisibility() || document.getElementById('app').classList.contains('rh-paused') || document.getElementById('world').classList.contains('aim-view')); i++) { await page.keyboard.press('Escape'); await wait(page, 400); }
     } else { if (inRound || stale) { await reopen(); inRound = 0; stale = false; } await home(page); }
     if (s.leaves) stale = true;
     if (s.walk) await s.go(page, shot); else { await s.go(page); await shot(''); }
-   } catch (e) { all.push({rule: 'walk-failed', screen: s.name, size: size.name, path: '-', detail: e.message.split('\n')[0]}); console.log(`${size.name} ${s.name}: FAILED ${e.message.split('\n')[0]}`); }
-   for (const e of page.errors.splice(0)) all.push({rule: 'page-error', screen: s.name, size: size.name, path: '-', detail: e});
+   })(), s.name);
+  } catch (e) {
+   run.over = true; stale = true;
+   all.push({rule: 'walk-failed', screen: s.name, size: size.name, path: '-', detail: e.message.split('\n')[0]});
+   console.log(`${size.name} ${s.name}: FAILED ${e.message.split('\n')[0]}`);
   }
-  await page.context().close();
+  for (const e of page.errors.splice(0)) all.push({rule: 'page-error', screen: s.name, size: size.name, path: '-', detail: e});
  }
+ await closePage(page);
+}
+try {
+ // JOBS sizes at once, each on its own page; the next size starts when one ends.
+ const queue = [...sizes];
+ await Promise.all(Array.from({length: Math.min(JOBS, queue.length)}, async () => {
+  for (let size; (size = queue.shift());) await auditSize(size).catch(e => all.push({rule: 'walk-failed', screen: '-', size: size.name, path: '-', detail: e.message.split('\n')[0]}));
+ }));
+ // THE CONTACT SHEETS: per screen, its picture at every size side by side, all
+ // the same height, named -- one picture to look at instead of sixteen.
+ const names = [...new Set(sizes.flatMap(z => fs.existsSync(path.join(OUT, z.name)) ? fs.readdirSync(path.join(OUT, z.name)).filter(f => f.endsWith('.png')) : []))].sort();
+ const sheets = path.join(OUT, 'sheets');
+ fs.mkdirSync(sheets, {recursive: true});
+ const ctx = await browser.newContext({viewport: {width: 2400, height: 800}, deviceScaleFactor: 1});
+ const page = await ctx.newPage();
+ for (const n of names) {
+  const tiles = sizes.filter(z => fs.existsSync(path.join(OUT, z.name, n)))
+   .map(z => `<figure><img src="../${z.name}/${n}"><figcaption>${z.name}</figcaption></figure>`).join('');
+  const html = path.join(sheets, '_sheet.html');
+  fs.writeFileSync(html, `<!doctype html><meta charset=utf-8><style>body{margin:0;padding:8px;background:#222;color:#eee;font:16px sans-serif;display:flex;flex-wrap:wrap;gap:8px;width:2384px}figure{margin:0}img{height:360px;display:block;outline:1px solid #555}figcaption{padding:2px 0}</style><h3 style="width:100%;margin:0">${n.replace('.png', '')}</h3>${tiles}`);
+  await page.goto(pathToFileURL(html).href);
+  await page.evaluate(() => Promise.all([...document.images].map(i => i.decode().catch(() => {}))));
+  await page.screenshot({path: path.join(sheets, n), fullPage: true});
+ }
+ fs.rmSync(path.join(sheets, '_sheet.html'), {force: true});
+ await ctx.close();
 } finally { await browser.close(); }
 
 // THE REPORT. A finding that recurs at several sizes on the same element is one

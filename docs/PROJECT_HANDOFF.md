@@ -954,8 +954,23 @@ layout arithmetic and the kit. The rules below are what every rebuilt screen
 keeps; `src/ui-layout.js` holds them as numbers and its test holds every
 screen shape to them.
 
-- **One slant, 12 degrees.** The coloured box leans; text and pictures inside
-  it stand straight (`uk-p` is skewed -12, its wrapper `uk-pi` +12).
+- **SQUARE, NOT SLANTED (since 28 October 2026).** Every box is a plain
+  rectangle. The 1.0 look leaned every coloured box 12 degrees (a `::before`
+  skewed -12 behind upright text, `uk-p` -12 with `uk-pi` +12) and leaned
+  whole columns and windows as one sheet; the owner, after playing the 1.0
+  polish: "the slanted box style is a problem ... remove our slanted box style
+  for just regular squares everywhere". The skews are `transform:none`, the
+  lean code is gone (ui-windows.js `leanAsOne`/`watchWindows`, main.js
+  `leanSeatRows`), pictures are no longer cut to a slant (`--lean` is 0), and
+  rings are square box-shadows (the traced drop-shadow outline, `--trace`,
+  drew each edge twice on a square). Corners are square too: every rounded
+  corner left in the styles (the old base style's tiles, cards, chips and
+  fields, and the 1.0 key plates) is 0, kept round only where a circle or pill
+  is the point -- a % radius, a 99 px one, a small badge or dot whose radius is
+  half its size (square-box round 5). **A new box is a rectangle with square
+  corners; do not bring a skew or a rounding back for one piece.** The rules below that speak of the slant are
+  history, kept so the old decisions read right; UI_POLISH.md, *Square boxes*,
+  has the rounds.
 - **A design canvas 1280 wide, as tall as the screen's shape needs**: 720 on
   16:9, 800 on 16:10, 960 on 4:3, scaled to fill the screen. Wider than 16:9 the
   canvas widens (21:9 is 1680 x 720); taller screens get room, never bars.
@@ -963,9 +978,8 @@ screen shape to them.
   row by row and are phase 5.
 - **Bands:** header 24 to 64, content 96 to 104 above the bottom, footer 80
   from the bottom and 56 tall.
-- **The content leans as one sheet** about its middle line; the boxes in it
-  never lean on their own. So every left edge in a column lies on one slanted
-  line and every gap is the same from top to bottom.
+- **(Until 28 October 2026) the content leaned as one sheet** about its middle
+  line. Square now: every left edge in a column lies on one vertical line.
 - **Twelve columns, 14 apart, measured along the middle line.** The column
   width comes from the sheet's height so the leaning corners land exactly on
   60 px margins: the middle-line margin is 60 + half the sheet height x tan 12
@@ -979,9 +993,10 @@ screen shape to them.
   owner: "everything 40-50% smaller"; `COMPACT` in round-hud.js): margins
   about 40, rows 34, text 10 / 13 / 17 / 25 / 39, against the round-13
   mockups' 40, 32, 10 / 13 / 16 / 24 / 36. A label above its value.
-- **Selection** is an outline that follows the slanted shape (drop shadows of
-  the box), and the current tab is filled. No inner boxes.
-- **A full-width row inside a tall leaning box follows the box's lean** (the
+- **Selection** is a square ring (a box-shadow: yellow for chosen, white for
+  the cursor, both when they meet), and the current tab is filled. No inner
+  boxes. (Until 28 October 2026 it was drop shadows tracing the slanted shape.)
+- **(Removed 28 October 2026, with the slant.) A full-width row inside a tall leaning box followed the box's lean** (the
   owner, 18 October 2026: the seats' Plays with / Swings bars sat upright in a
   leaning seat). A row is slid sideways by its height above or below the box's
   middle x tan 12 degrees -- left below the middle, right above -- so its ends

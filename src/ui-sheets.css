@@ -28,7 +28,6 @@
     (the round screen's scale times the Text size, set on the root by main.js),
     and given the old variables here. Found on 17 October 2026, when the first
     look showed the sheets in the old green. */
- #drawer{--trace:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot));--trace-cursor:drop-shadow(3px 0 0 var(--cursor)) drop-shadow(-3px 0 0 var(--cursor)) drop-shadow(0 3px 0 var(--cursor)) drop-shadow(0 -3px 0 var(--cursor));--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
  body:has(#app[data-mode]) #drawer:not([hidden]){left:0;right:0;top:0;bottom:0;width:auto;height:auto;min-height:0;max-height:none;padding:24px 60px 88px;zoom:var(--sheet-z,1);border:0;border-radius:0;background:linear-gradient(90deg,rgba(4,8,12,.9),rgba(4,8,12,.8));backdrop-filter:blur(6px);box-shadow:none;animation:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
 
  /* The header band: the screen's name, its eyebrow, and Esc. */
@@ -36,7 +35,7 @@
  body:has(#app[data-mode]) #drawer .drawer-header h2{font-size:36px;font-weight:800;font-style:italic;letter-spacing:.02em;line-height:1;text-transform:uppercase}
  body:has(#app[data-mode]) #drawer .drawer-header .eyebrow{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  body:has(#app[data-mode]) #drawer #closeDrawer{position:relative;width:auto;height:36px;padding:0 16px 0 52px;border:0;border-radius:0;background:none;color:#e6e8ff}
- body:has(#app[data-mode]) #drawer #closeDrawer::before{content:"ESC";position:absolute;left:8px;top:6px;padding:2px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ body:has(#app[data-mode]) #drawer #closeDrawer::before{content:"ESC";position:absolute;left:8px;top:6px;padding:2px 6px;border:2px solid currentColor;border-radius:0;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  body:has(#app[data-mode]) #drawer #closeDrawer::after{content:"BACK";font:700 16px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
  body:has(#app[data-mode]) #drawer #closeDrawer svg{display:none}
 
@@ -44,7 +43,11 @@
  /* Room at both sides for the slant: a leaning panel's corners reach past its
     box, and the scrolling content clipped them ("cut-off edges" in the
     owner's review, 17 October 2026). */
- body:has(#app[data-mode]) #drawer #drawerContent{max-width:none;padding:0 26px;font-size:15px;color:#fff}
+ /* One left edge (28 October 2026, the square look): the content starts where
+    the sheet's title does. The 26 px (and the 20 px inside Play's cards, and
+    the seats') was room for the slant's overhang. 6 px stays inside each box
+    that scrolls, for a ring to draw in, and a -6 px margin takes it back. */
+ body:has(#app[data-mode]) #drawer #drawerContent{max-width:none;padding:0 6px;margin:0 -6px;font-size:15px;color:#fff}
  body:has(#app[data-mode]) #drawer :is(.panel-intro,.note,.tip,.research-label){font-family:var(--font-ui);font-size:13px!important;line-height:1.5;color:var(--soft)!important}
  /* A note is words under a thin bar, not the old rounded field box (the
     owner's "rounded edge" calls, 17 and 18 October 2026). */
@@ -55,7 +58,7 @@
 
  /* Each control is a slanted panel; its contents stand straight. */
  body:has(#app[data-mode]) #drawer .control-card{position:relative;isolation:isolate;margin:0 0 8px;padding:14px 30px;border:0;border-radius:0;background:none}
- body:has(#app[data-mode]) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode]) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#app[data-mode]) #drawer .control-card:focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:has(#app[data-mode]) #drawer .control-card>label.field{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
  body:has(#app[data-mode]) #drawer .control-card>label.check{font-size:16px;color:#fff;font-weight:700}
@@ -105,7 +108,7 @@
  /* RESET CAMERA (audit 3): a slanted row in the sheet's style, its words in
     the accent, where it was an old grey button among the rows. */
  :is(#drawer,.popup) #resetCamera{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;width:100%;height:44px;min-height:44px;margin:0;padding:0 20px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
- :is(#drawer,.popup) #resetCamera::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ :is(#drawer,.popup) #resetCamera::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
  :is(#drawer,.popup) #resetCamera:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  /* THE MONITORS rēlā CONNECTS, ONE BOX (UI/UX pass V3, the owner): the names in
     two columns in one slanted panel, how to set rēlā up under them; the box
@@ -114,9 +117,9 @@
  #drawer .lm-foot>*{break-inside:avoid}
  #drawer .lm .lm-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}
- #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .lm-step{display:flex;align-items:center;gap:18px;min-height:88px;padding:8px 32px}
- #drawer .lm-n{flex:none;display:grid;place-items:center;min-width:40px;height:40px;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:28px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .lm-n{flex:none;display:grid;place-items:center;min-width:40px;height:40px;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:28px;font-weight:800;font-style:italic;transform:none}
  #drawer .lm-step:not(.done) .lm-n{background:rgba(255,255,255,.14);color:#fff}
  #drawer .lm-what{display:grid;gap:4px;flex:1;min-width:0}
  #drawer .lm-what strong{font-size:22px;font-weight:800;font-style:italic;line-height:1.1;color:#fff}
@@ -127,8 +130,8 @@
  #drawer .lm-arm.on::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .lm-arm>label{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;gap:16px;width:100%;margin:0;font-family:var(--font-ui);font-size:17px;font-weight:600;color:#fff}
  /* Arm is a switch like every other ON / OFF in the settings (UI/UX pass). */
- #drawer .lm-arm input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
- #drawer .lm-arm input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:#fff;transform:skewX(12deg)}
+ #drawer .lm-arm input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:none;cursor:pointer}
+ #drawer .lm-arm input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:#fff;transform:none}
  #drawer .lm-arm input[type=checkbox]:checked{background:var(--a1)}
  #drawer .lm-arm input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
  #drawer .lm-arm input:disabled{opacity:.4}
@@ -171,7 +174,7 @@
  #drawer .ph .ph-chips small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.75}
  #drawer .ph-side,#drawer .ph-main{display:grid;gap:8px;align-content:start;min-width:0}
  #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
- #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  /* The left stack. */
  #drawer .ph .profile-id{display:flex;align-items:center;gap:16px;min-height:104px;padding:12px 32px}
  #drawer .ph .profile-id .profile-avatar{width:68px;height:68px}
@@ -182,17 +185,17 @@
     slanted outlines in the accent like the other rows, Remove in the warning
     red (audit 6: the last old grey buttons). */
  #drawer .ph .profile-id .profile-actions button{position:relative;isolation:isolate;height:32px;min-height:32px;padding:0 14px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
- #drawer .ph .profile-id .profile-actions button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}
+ #drawer .ph .profile-id .profile-actions button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}
  #drawer .ph .profile-id .profile-actions button:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px currentColor}
  #drawer .ph .profile-id .profile-actions #profileDelete{color:#ff8a7a}
  #drawer .ph .profile-level{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:88px;padding:12px 32px}
  #drawer .ph .profile-level small{grid-column:1/-1;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
- #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:none}
  #drawer .ph .profile-level strong::before{content:"LV "}
  #drawer .ph .profile-level span{font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft);text-align:right}
  #drawer .ph .level-bar{grid-column:1/-1;display:block;height:8px;background:rgba(255,255,255,.14);border-radius:0}
  #drawer .ph .level-bar b{display:block;height:100%;background:var(--hot);border-radius:0}
- #drawer .ph .profile-hcp{display:grid;gap:4px;min-height:88px;align-content:center;padding:12px 32px}
+ #drawer .ph .profile-hcp{display:grid;gap:4px;min-height:88px;align-content:center;justify-content:start;padding:12px 32px}
  #drawer .ph .profile-hcp small,#drawer .ph .ph-since small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .profile-hcp strong{font-size:48px;font-weight:800;font-style:italic;line-height:1;color:#fff}
  #drawer .ph .profile-hcp span{font-family:var(--font-ui);font-size:14px;color:var(--soft)}
@@ -223,7 +226,7 @@
  #drawer .ph .ph-tile span{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .ph .ph-rounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  #drawer .ph .ph-round{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:6px}
- #drawer .ph .ph-round-pic{height:72px;background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 45%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 45%);transform:skewX(-12deg)}
+ #drawer .ph .ph-round-pic{height:72px;background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 45%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 45%);transform:none}
  #drawer .ph .ph-round-what{grid-column:2/-1;grid-row:1;display:grid;align-content:center;min-height:72px;padding:8px 64px 8px 24px}
  #drawer .ph .ph-round-what strong{font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .ph .ph-round>b{grid-column:3;grid-row:1;z-index:1;padding-right:24px;font-size:24px;font-weight:800;font-style:italic;color:#fff}
@@ -241,15 +244,18 @@
  #drawer .ph .ph-kinds>.panel-tab{justify-content:flex-start;height:48px;padding:0 20px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.04em}
  #drawer .ph .look-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
  #drawer .ph .look-item{position:relative;isolation:isolate;min-height:96px;border:0;border-radius:0;background:none;color:#fff;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
- #drawer .ph .look-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .ph .look-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  /* ONE HIGHLIGHT (round 14, frame c-locker): what you wear is traced in
     yellow round its own leaning edge (a drop-shadow on the skewed shape), its
     name in yellow with a tick; no second fill. Keyboard focus traces in white. */
- #drawer .ph .look-item.on{filter:var(--trace)}
+ /* Square rings (28 October 2026): the traced outline (--trace, drop-shadows
+    that follow a shape's edge) was made for slanted shapes; on a square it drew
+    each edge it found twice -- the extra boxes the owner saw on the locker. */
+ #drawer .ph .look-item.on{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .ph .look-item.on>span{color:var(--hot)}
  #drawer .ph .look-item.on>span::before{content:"\2713\00a0"}
- #drawer .ph .look-item:focus-visible{outline:none;filter:var(--trace-cursor)}
- #drawer .ph .look-item.on:focus-visible{filter:var(--trace) var(--trace-cursor)}
+ #drawer .ph .look-item:focus-visible{outline:none;box-shadow:0 0 0 3px var(--cursor)}
+ #drawer .ph .look-item.on:focus-visible{box-shadow:inset 0 0 0 3px var(--hot),0 0 0 3px var(--cursor)}
  /* Stats, achievements, bag, history: the old blocks as panels. */
  #drawer .ph .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
  /* The scoring box's tiles, beside its list: as many to a row as are 9 em wide
@@ -285,7 +291,7 @@
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-tabs{display:none!important}
  #drawer .st-cats{display:grid;gap:8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .st-cat{position:relative;isolation:isolate;display:flex;align-items:center;height:48px;min-height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-align:left}
- #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .st-cat.on{color:var(--on-hot)}
  #drawer .st-cat.on::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #drawer .st-cat:hover:not(.on)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
@@ -305,7 +311,7 @@
  body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field:has(input[type=range]){display:grid;grid-template-columns:1fr auto;grid-template-areas:"what value" "bar bar";gap:6px 12px}
  body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field>output{grid-area:value;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
  body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field>input[type=range]{grid-area:bar;width:100%;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
- #drawer :is(.st-groups,.rs-col) input[type=range]::-webkit-slider-runnable-track{height:20px;background:linear-gradient(90deg,var(--a1) var(--fill,0%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);transform:skewX(-12deg)}
+ #drawer :is(.st-groups,.rs-col) input[type=range]::-webkit-slider-runnable-track{height:20px;background:linear-gradient(90deg,var(--a1) var(--fill,0%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);transform:none}
  #drawer :is(.st-groups,.rs-col) input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:20px;background:var(--hot)}
  #drawer :is(.st-groups,.rs-col) input[type=range]:focus-visible{outline:3px solid var(--cursor);outline-offset:3px}
  #drawer :is(.st-groups,.rs-col) input[type=range]::-moz-range-track{height:20px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 12px,transparent 12px 15px)}
@@ -313,8 +319,8 @@
  #drawer .st-groups input[type=range]::-moz-range-thumb{width:12px;height:24px;border:0;border-radius:0;background:var(--hot)}
  /* A tick box as an ON/OFF switch, on the right of its words. */
  body:has(#app[data-mode]) #drawer .st-groups .control-card>label.check{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff}
- #drawer .st-groups label.check>input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
- #drawer .st-groups label.check>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
+ #drawer .st-groups label.check>input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:none;cursor:pointer}
+ #drawer .st-groups label.check>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:none}
  #drawer .st-groups label.check>input[type=checkbox]:checked{background:var(--a1)}
  #drawer .st-groups label.check>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
  #drawer .st-groups label.check>input[type=checkbox]:disabled{opacity:.4;cursor:default}
@@ -329,7 +335,7 @@
     covers nothing; on a phone it comes after the rows (below). Solid, as it
     was: the panel colour is see-through (18 October 2026). */
  #drawer .st-help{position:relative;z-index:2;display:grid;gap:6px;padding:16px 28px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
- #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;transform:skewX(-12deg)}
+ #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;transform:none}
  #drawer .st-help-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
  #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
 
@@ -339,7 +345,7 @@
  body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>.panel-lead{display:none}
  body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>[data-panel-action]{width:auto;left:auto}
  #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-hero,.wk-week,.course-card,.lib-new,.lib-name,.lib-code){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
- #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  /* Challenges: the week's banner; categories (3), cards (5), detail (4). */
  #drawer .ch{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);grid-template-areas:"week week week" "cats cards detail";gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .ch>.chal-week-row{grid-area:week;display:block;margin:0}
@@ -374,7 +380,7 @@
  #drawer .ch-golfers .seat :is(.seat-tees,select[id^=team],.dd:has(>select[id^=team])){display:none}
  /* A fixed rule on Challenges' Rules step: the value, no arrows. */
  #drawer .lb-fixed .lb-v{padding:0 10px}
- #drawer .ch-page>.ch{padding:0 24px}
+ #drawer .ch-page>.ch{padding:0}
  /* The course of the week: the picture and earlier weeks (7), the facts (5). */
  /* Saved courses: the shelf across the sheet. The chosen course's column went
     on 20 October 2026; each card carries its own buttons as icons along its
@@ -391,7 +397,7 @@
     head (transform-origin at its top), so the two edges are one straight line
     and the card reads as one button. */
  #drawer .lib-shelf>.course-card:has(>.course-pic)::before{top:96px;transform-origin:0 0}
- #drawer .lib-shelf>.course-card .course-pic{--lean:20.4px;display:block;position:relative;isolation:isolate;height:96px;margin:0}
+ #drawer .lib-shelf>.course-card .course-pic{--lean:0px;display:block;position:relative;isolation:isolate;height:96px;margin:0}
  #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -1) 0 0;z-index:-1;clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%)}
  #drawer .lib-shelf>.course-card .course-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .lib-shelf>.course-card .course-pic>.pic-loop{left:0}
@@ -405,7 +411,7 @@
     for a screen reader and the tooltip. */
  #drawer .lib-shelf>.course-card>.course-actions{display:flex;align-items:center;gap:8px;padding:0 22px 12px 8px}
  #drawer .lib-shelf>.course-card>.course-actions>button{position:relative;isolation:isolate;display:grid;place-items:center;width:42px;height:32px;min-height:32px;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer}
- #drawer .lib-shelf>.course-card>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:none}
  #drawer .lib-shelf>.course-card>.course-actions>button>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
  #drawer .lib-shelf>.course-card>.course-actions>button svg{width:17px;height:17px}
  #drawer .lib-shelf>.course-card>.course-actions>button[data-play]{width:62px;color:var(--on-hot)}
@@ -440,7 +446,7 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-lead>.panel-intro{flex-basis:100%;margin:0;font-size:14px;color:var(--soft)}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs{grid-area:tabs;display:grid;gap:8px;margin:0;padding:0;border:0;position:sticky;top:0}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 22px;border:0;border-radius:0;background:none;color:#fff;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase}
- body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab.active{color:var(--on-hot)}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab.active::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  /* The chosen tab's count sits by the fill's slanted end, where it blends with
@@ -451,7 +457,7 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-section{grid-area:body;min-width:0;columns:auto!important}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-section>h3{display:none}
  body:has(#drawerContent.sd-root) #drawer .sd-root .control-card,body:has(#drawerContent.sd-root) #drawer .sd-root .control-group{position:relative;isolation:isolate;margin:0 0 6px;padding:4px 24px 4px 30px;border:0;border-radius:0;background:none;box-shadow:none;break-inside:avoid}
- body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group).sd-changed::after{content:"";position:absolute;left:12px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--hot)}
  /* A slider row: the name with its i, the segment bar, the value. */
@@ -461,7 +467,7 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>.warn-note{order:4;grid-column:1/-1}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{grid-column:2}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:3}
- #drawer .sd-root input[type=range]::-webkit-slider-runnable-track{height:18px;background:linear-gradient(90deg,var(--a1) var(--fill,50%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);transform:skewX(-12deg)}
+ #drawer .sd-root input[type=range]::-webkit-slider-runnable-track{height:18px;background:linear-gradient(90deg,var(--a1) var(--fill,50%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);transform:none}
  #drawer .sd-root input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:18px;background:var(--hot)}
  #drawer .sd-root :is(input,select):focus-visible{outline:none}
  #drawer .sd-root label.field.danger>output{color:#ff8a7a}
@@ -469,8 +475,8 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>select){display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>select{max-width:55%;height:34px;min-height:34px;padding:0 28px 0 10px;line-height:normal;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.toggle{display:inline-flex;flex-direction:row-reverse;align-items:center;gap:12px;min-height:36px;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff}
- #drawer .sd-root label.toggle>input[type=checkbox]{position:relative;width:60px;height:24px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
- #drawer .sd-root label.toggle>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
+ #drawer .sd-root label.toggle>input[type=checkbox]{position:relative;width:60px;height:24px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:none;cursor:pointer}
+ #drawer .sd-root label.toggle>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:none}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked{background:var(--a1)}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
  body:has(#drawerContent.sd-root) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;margin:0;border-radius:50%;font-size:14px;flex:none}
@@ -481,7 +487,7 @@
  /* The right-hand column. */
  #drawer .sd-side{grid-area:side;display:grid;gap:8px;align-content:start;position:sticky;top:0;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sd-side :is(.sd-state,.sd-row,.sd-help){position:relative;isolation:isolate}
- #drawer .sd-side :is(.sd-state,.sd-row,.sd-help)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sd-side :is(.sd-state,.sd-row,.sd-help)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sd-state{display:grid;gap:6px;padding:14px 26px}
  #drawer .sd-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .sd-state.stale .sd-k{color:var(--hot)}
@@ -489,7 +495,7 @@
  #drawer .sd-list{display:grid;gap:3px;font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft)}
  /* Saved courses as the column's last row, and Show all descriptions as a key in the foot (UI/UX pass V2). */
  #drawer .sd-link{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;margin:0;padding:0 26px;border:0;background:none;color:#fff;cursor:pointer}
- #drawer .sd-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sd-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sd-link span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .sd-link b{font-size:16px;font-weight:800;font-style:italic;color:var(--hot)}
  #drawer .sd-link:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--cursor)}
@@ -508,20 +514,22 @@
  #drawer .sd-root .option-grid.sd-lands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
  #drawer .sd-root .sd-lands>.option{display:grid;gap:4px;height:auto;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase;text-align:left;cursor:pointer}
  #drawer .sd-root .sd-lands>.option>.swatch{display:none}
- #drawer .sd-root .sd-pic{--lean:12.1px;position:relative;isolation:isolate;display:block;height:57px}
+ #drawer .sd-root .sd-pic{--lean:0px;position:relative;isolation:isolate;display:block;height:57px}
  #drawer .sd-root .sd-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.06);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .sd-root .sd-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .sd-root .sd-lands>.option{position:relative;isolation:isolate}
- #drawer .sd-root .sd-lands>.option.active .sd-pic{filter:drop-shadow(3px 0 0 var(--a1)) drop-shadow(-3px 0 0 var(--a1)) drop-shadow(0 3px 0 var(--a1)) drop-shadow(0 -3px 0 var(--a1))}
+ #drawer .sd-root .sd-lands>.option.active .sd-pic{box-shadow:0 0 0 3px var(--hot)}
  /* Chosen is yellow (W1): the a1 teal it had read 4.0:1 on its dark ground. */
  #drawer .sd-root .sd-lands>.option.active{color:var(--hot)}
+ /* The names by their pictures, outlined (4.50:1 at the smallest Text size). */
+ #drawer .sd-root .sd-lands>.option{text-shadow:var(--outline)}
  #drawer .sd-root .sd-lands>.option:focus-visible{outline:none}
- #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic{filter:var(--trace-cursor)}
+ #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic{outline:3px solid var(--cursor);outline-offset:-3px}
  #drawer .sd-root .control-label{margin:6px 0 2px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
  #drawer .sd-root label.field:has(>select#footprint){display:none}
  #drawer .sd-root .footprint-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}
  #drawer .sd-root .footprint-icons button{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:0;border-radius:0;background:none;color:#fff;font:700 12px/1.1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase}
- #drawer .sd-root .footprint-icons button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sd-root .footprint-icons button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:none}
  #drawer .sd-root .footprint-icons button[aria-pressed=true]{color:var(--on-hot)}
  #drawer .sd-root .footprint-icons button[aria-pressed=true]::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #drawer .sd-root .footprint-icons button svg{stroke:currentColor}
@@ -536,9 +544,9 @@
  #drawer .sd-root label.plan-exact>input{width:120px;height:34px;padding:0 10px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sd-root label.field:has(>input#seed){display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font:600 15px var(--font-ui);color:#fff;text-transform:none;letter-spacing:0}
  #drawer .sd-root label.field>input#seed{flex:1;max-width:55%;height:34px;padding:0 10px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .sd-root .field-action{display:inline-flex;align-items:center;gap:6px;margin:4px 0 6px auto;height:30px;padding:0 14px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;transform:skewX(-12deg)}
- #drawer .sd-root .field-action>*{transform:skewX(12deg)}
- #drawer [data-panel-action] kbd{margin-left:10px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal}
+ #drawer .sd-root .field-action{display:inline-flex;align-items:center;gap:6px;margin:4px 0 6px auto;height:30px;padding:0 14px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;transform:none}
+ #drawer .sd-root .field-action>*{transform:none}
+ #drawer [data-panel-action] kbd{margin-left:10px;padding:1px 6px;border:2px solid currentColor;border-radius:0;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal}
 
  /* ------------------------------------------------- step-by-step setups */
  /* STEP SHEETS (ui-steps.js; round 13): the steps across the top of the
@@ -553,7 +561,7 @@
  #drawer .sx{flex:1;display:flex;flex-direction:column;min-height:0;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .sx-steps{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px}
  #drawer .sx-step{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;height:36px;min-height:36px;padding:0 20px;border:0;border-radius:0;background:none;color:var(--soft);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;white-space:nowrap}
- #drawer .sx-step::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sx-step::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:none}
  #drawer .sx-step.done{color:#fff}
  #drawer .sx-step.done::before{background:var(--panel)}
  /* Passed without what it needs (ui-steps.js stepMarks): numbered, edged in the warning colour. */
@@ -575,14 +583,14 @@
  /* The screen's error line, in the foot beside the buttons, where it is seen
     (UI/UX pass, 21 October 2026: it was a grey line under the rules). */
  #drawer .sx-foot .sx-alert{margin:0 0 0 auto;max-width:520px;padding:8px 22px;color:#fff;font:700 16px/1.25 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;position:relative;isolation:isolate}
- #drawer .sx-foot .sx-alert::before{content:"";position:absolute;inset:0;z-index:-1;background:#9a3412;transform:skewX(-12deg)}
+ #drawer .sx-foot .sx-alert::before{content:"";position:absolute;inset:0;z-index:-1;background:#9a3412;transform:none}
  #drawer .sx-foot .sx-alert:empty{display:none}
  #drawer .sx-keys{display:flex;gap:16px;font-size:14px;letter-spacing:.1em;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase}
- #drawer .sx-keys kbd{margin-right:6px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sx-keys kbd{margin-right:6px;padding:1px 6px;border:2px solid currentColor;border-radius:0;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sx-btns{display:flex;gap:12px}
  #drawer .sx-btns>button{position:relative!important;inset:auto!important;isolation:isolate;display:flex;align-items:baseline;gap:10px;height:44px;min-height:44px;min-width:0;margin:0;padding:0 30px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 20px/44px "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;white-space:nowrap}
  #drawer .sx-btns>button[hidden]{display:none!important}
- #drawer .sx-btns>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .sx-btns>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:none}
  #drawer .sx-btns>:is(.sx-next,[data-panel-action]){color:var(--on-hot)}
  #drawer .sx-btns>:is(.sx-next,[data-panel-action])::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #drawer .sx-btns small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.8}
@@ -590,10 +598,10 @@
  #drawer .sx-btns>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  /* Every block in a step is a slanted panel. */
  #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
- #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sx :is(.lb-pick,.seat):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  /* A picture: the course from above, under a slanted window. */
- #drawer .sx-pic{--lean:27.6px;position:relative;isolation:isolate;display:block;height:130px}
+ #drawer .sx-pic{--lean:0px;position:relative;isolation:isolate;display:block;height:130px}
  #drawer .sx-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.05);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .sx-pic.has-picture::before{background:var(--pic) center/cover}
  /* The tiny 3D model (round 14, model-cards.js): a canvas over the flat
@@ -602,7 +610,7 @@
     shape the tiny turning models' canvas had. The pictures stack in the
     card's shape and cross-fade by opacity alone; reduced motion holds the
     first (the loop does not advance) and drops the fade. */
- #drawer .pic-loop{position:absolute;top:0;left:calc(var(--lean,0px) * -.5);width:calc(100% + var(--lean,0px));height:100%;z-index:-1;overflow:hidden;clip-path:polygon(var(--lean,0px) 0,100% 0,calc(100% - var(--lean,0px)) 100%,0 100%);pointer-events:none}
+ #drawer .pic-loop{position:absolute;top:0;left:calc(var(--lean,0px) * -.5);width:calc(100% + var(--lean,0px));height:100%;z-index:-1;overflow:hidden;clip-path:none;pointer-events:none}
  #drawer .pic-loop>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease-in-out;will-change:opacity}
  #drawer .pic-loop>img.on{opacity:1}
  @media (prefers-reduced-motion:reduce){#drawer .pic-loop>img{transition:none}}
@@ -621,7 +629,7 @@
  #drawer :is(.sx-card,.sx-land)>.sx-pic::before{inset:0 calc(var(--lean) * -1) 0 0}
  #drawer :is(.sx-card,.sx-land)>.sx-pic>.pic-loop{left:0}
  #drawer .sx-card>.sx-cap::before,#drawer .sx-land>.sx-pic+.sx-land-name::before{transform-origin:0 0}
- #drawer .sx-card::after{content:"";position:absolute;inset:0;transform-origin:0 130px;transform:skewX(-12deg);pointer-events:none}
+ #drawer .sx-card::after{content:"";position:absolute;inset:0;transform-origin:0 130px;transform:none;pointer-events:none}
  /* ONE LOOK FOR CHOSEN, ONE FOR THE CURSOR (the 1.0 polish, UI_POLISH.md W1): the
     chosen card is ringed in yellow, the card the keys are on in white, and a
     chosen card under the keys in both, yellow inside white. One rule gave both
@@ -631,17 +639,17 @@
  #drawer .sx-card:focus-visible::after{box-shadow:0 0 0 3px var(--cursor)}
  #drawer .sx-card.on:focus-visible::after{box-shadow:0 0 0 3px var(--hot),0 0 0 6px var(--cursor)}
  /* 1 · Course: five cards across, scrolling; the line along the foot. */
- #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 30px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px;margin:0 -6px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
  #drawer .sx-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 12px}
  #drawer .sx-card{position:relative;isolation:isolate;display:grid;grid-template-rows:auto 1fr;gap:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
  #drawer .sx-cap{display:grid;gap:3px;align-content:center;min-height:64px;padding:8px 24px}
- #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:skewX(-12deg)}
+ #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:none}
  /* A card's name and line wrap rather than end in "..." (the owner, 18
     October 2026: "cut off text"); the row grows to the tallest. */
  #drawer .sx-cap strong{padding-right:.16em;font-size:21px;font-weight:800;font-style:italic;line-height:1.05;text-transform:uppercase}
  #drawer .sx-cap small{font-size:13px;line-height:1.25;letter-spacing:.1em;font-weight:700;color:var(--soft)}
  #drawer .sx-cap small i{font-style:normal;color:var(--hot)}
- #drawer .sx-land.on .sx-pic{filter:var(--trace)}
+ #drawer .sx-land.on .sx-pic{outline:3px solid var(--hot);outline-offset:-3px}
  #drawer .sx-card:focus-visible{outline:none}
  #drawer .sx-line{display:flex;align-items:center;gap:24px;min-height:48px;margin-top:14px;padding:0 30px}
  #drawer .sx-facts{display:flex;align-items:baseline;gap:20px;min-width:0;flex:1}
@@ -663,9 +671,9 @@
  /* The friend step's explanation, three short lines rather than one long one (audit 3). */
  #drawer .fr-how{max-width:900px;margin-top:14px}
  #drawer .fr-how>li{position:relative;isolation:isolate;display:flex;align-items:center;min-height:42px;padding:0 28px;font:600 15px var(--font-ui);color:#fff}
- #drawer .fr-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .fr-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sx-run-how>li{position:relative;isolation:isolate;display:flex;align-items:center;min-height:44px;padding:0 28px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:#fff}
- #drawer .sx-run-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-run-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sx-shelf>.code-import{margin:6px 30px 0 20px}
  #drawer .sx-shelf>.code-import textarea{min-height:52px}
  #drawer .sx-shelf>.sx-line+.sx-head{margin-top:22px}
@@ -682,12 +690,12 @@
     buttons and Reset camera (they were the old grey buttons). Export is dimmed
     when there is no round being played to export. */
  #drawer .sx-saved>:is(#exportRound,#importRound){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;justify-self:stretch;width:100%;max-width:560px;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
- #drawer .sx-saved>:is(#exportRound,#importRound)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer .sx-saved>:is(#exportRound,#importRound)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
  #drawer .sx-saved>:is(#exportRound,#importRound):not(:disabled):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  #drawer .sx-saved>:is(#exportRound,#importRound):disabled{color:var(--soft);opacity:.55;cursor:default}
  #drawer .sx-saved>:is(#exportRound,#importRound) svg{width:16px;height:16px}
  /* 2 · Golfers: four seats. */
- #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
+ #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0}
  #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
  #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
  /* ON CENTRE ON THE SLANT (the owner, UI/UX pass V3): a seat is a leaning panel, and
@@ -695,9 +703,9 @@
     panel's own centre at the top, right of it at the foot. The seat itself leans
     now, so each piece is carried along the lean, and each piece is stood back
     upright; the panel behind it no longer leans twice. */
- #drawer .sx-golfers .seat{transform:skewX(-12deg)}
+ #drawer .sx-golfers .seat{transform:none}
  #drawer .sx-golfers .seat::before{transform:none!important}
- #drawer .sx-golfers .seat>*{transform:skewX(12deg)}
+ #drawer .sx-golfers .seat>*{transform:none}
  #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
  #drawer .sx-golfers .seat .player-dot{width:56px;height:6px;border-radius:0}
  #drawer .sx-golfers .seat .player-mark :is(img,.seat-guest){width:86px;height:86px;border-radius:50%}
@@ -709,7 +717,7 @@
  #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .seat-tees{display:flex;gap:6px}
  #drawer .seat-tee{position:relative;isolation:isolate;display:flex;align-items:center;gap:5px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft);font:800 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
- #drawer .seat-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .seat-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:none}
  #drawer .seat-tee[aria-pressed=true]{color:#111}
  #drawer .seat-tee[aria-pressed=true]::before{background:#fff}
  #drawer .seat-tee i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
@@ -722,7 +730,7 @@
     own line and ends in ... too. */
  #drawer .seat-pick{display:grid;gap:4px;width:100%;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase;text-align:left}
  #drawer .seat-line{position:relative;isolation:isolate;display:grid;grid-template-columns:30px minmax(0,1fr) 30px;align-items:center;height:36px}
- #drawer .seat-line::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.28);transform:skewX(-12deg)}
+ #drawer .seat-line::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.28);transform:none}
  #drawer .seat-arrow{height:36px;min-height:0;padding:0;border:0;background:none;color:var(--a1);font-size:13px;cursor:pointer}
  #drawer .seat-val{position:relative;min-width:0;text-align:center}
  #drawer .seat-val>b{display:block;padding:0 .16em;font:800 italic 17px/36px "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -737,7 +745,7 @@
  #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .sx-golfers .seat .drop-player{width:36px;height:36px;min-height:36px;margin-top:auto;border:0;background:none;color:var(--soft)}
  #drawer .sx-golfers .add-player{position:relative;isolation:isolate;display:grid;place-items:center;align-content:center;gap:10px;min-height:400px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 22px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .sx-golfers .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
+ #drawer .sx-golfers .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:none}
  #drawer .sx-golfers .add-player svg{width:44px;height:44px;padding:16px;border:3px dashed rgba(255,255,255,.35);border-radius:50%;box-sizing:content-box;color:rgba(255,255,255,.6)}
  #drawer .sx-golfers>#applyGroup{justify-self:start;width:auto;margin-top:14px}
  /* 3 · Format: four cards, the teams under them. */
@@ -767,7 +775,7 @@
  #drawer .sx-rules .lb-pick{min-height:56px;padding:6px 28px}
  #drawer .sx-rules #roundPutting-distances{padding:0 8px}
  #drawer .sx-help-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
- #drawer .sx-sum-pic{--lean:39.5px;height:186px}
+ #drawer .sx-sum-pic{--lean:0px;height:186px}
  #drawer .sx-sum-name{display:grid;gap:6px;padding:14px 30px}
  #drawer .sx-sum-name strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
  #drawer .sx-sum-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
@@ -789,11 +797,11 @@
  #drawer .sx-lands{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
  /* And the column scrolls in its own room, as Play's cards do (.sx-scroll):
     at 1366 x 768 three to a row still reached the foot. */
- #drawer .sx-lands-col{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-lands-col{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:hidden auto;padding:6px;margin:-6px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
  #drawer .sx-land{display:grid;gap:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer;text-align:left}
- #drawer .sx-land .sx-pic{--lean:20px;height:94px}
+ #drawer .sx-land .sx-pic{--lean:0px;height:94px}
  #drawer .sx-land-name{position:relative;isolation:isolate;display:flex;align-items:center;height:38px;padding:0 22px;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
- #drawer .sx-land-name::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-land-name::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sx-land.on .sx-land-name{color:var(--on-hot)}
  #drawer .sx-land.on .sx-land-name::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #drawer .sx-land.sx-any{grid-column:1/-1}
@@ -802,7 +810,7 @@
  #drawer .sx-land:focus-visible .sx-land-name::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  #drawer .sx-endless-side{display:grid;gap:8px;align-content:start}
  #drawer .sx-best{position:relative;isolation:isolate;display:grid;gap:6px;margin-top:14px;padding:14px 30px}
- #drawer .sx-best::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-best::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .sx-best strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
  #drawer .sx-best small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .sx-endless-rules .sx-formats{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -810,15 +818,15 @@
 
  /* The course of the week on one screen (round 13, frame c-cotw): the picture
     (7 columns) and eight fact tiles (5), the earlier weeks along the foot. */
- #drawer .wk{padding:0 24px;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:'hero facts' 'weeks weeks';gap:14px 30px;align-items:start}
- #drawer .wk-hero{--lean:91.4px;grid-area:hero;position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:430px;padding:26px 48px}
+ #drawer .wk{padding:0;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:'hero facts' 'weeks weeks';gap:14px 30px;align-items:start}
+ #drawer .wk-hero{--lean:0px;grid-area:hero;position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:430px;padding:26px 48px}
  #drawer .wk-hero::before{content:'';position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:var(--panel);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .wk-hero.has-picture::before{background:var(--pic) center/cover}
- #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.14em;transform:skewX(-12deg)}
+ #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.14em;transform:none}
  #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:var(--outline),0 3px 14px rgba(0,0,0,.6)}
  #drawer .wk-facts{grid-area:facts;display:grid;grid-template-columns:1fr 1fr;gap:10px}
  #drawer .wk-tile{position:relative;isolation:isolate;display:grid;gap:4px;align-content:center;min-height:98px;padding:10px 30px}
- #drawer .wk-tile::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .wk-tile::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .wk-tile.hot::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #drawer .wk-tile span{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .wk-tile b{font-size:27px;font-weight:800;font-style:italic;line-height:1.05;color:#fff}
@@ -828,12 +836,12 @@
  #drawer .wk h4{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
  #drawer .wk-week{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;align-items:stretch}
- #drawer .wk-week .wk-week-pic{--lean:13.6px;height:64px}
+ #drawer .wk-week .wk-week-pic{--lean:0px;height:64px}
  /* Each earlier week is its picture and its caption, each its own whole
     leaning shape (round 14, frame c-cotw1): no panel behind the pair. */
  #drawer .wk .wk-week::before{display:none}
  #drawer .wk-week-cap{position:relative;isolation:isolate;display:grid;gap:2px;align-content:center;padding:6px 18px}
- #drawer .wk-week-cap::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .wk-week-cap::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .wk-week-cap strong{font-size:18px;font-weight:800;font-style:italic;color:#fff;text-shadow:var(--outline)}
  #drawer .wk-week-cap small{font-size:13px;line-height:1.2;letter-spacing:.1em;font-weight:700;color:var(--soft)}
  #drawer .wk-group .wk-rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px;margin-top:16px}
@@ -845,7 +853,7 @@
     code and Saved courses' import were the old rounded box with small buttons.
     Now a slanted panel holding a dark well, the buttons in a row under it. */
  #drawer .code-import{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,max-content));gap:10px;margin:0;padding:16px 30px;border:0;border-radius:0;background:none;overflow:visible}
- #drawer .code-import::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .code-import::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .code-import>.field{grid-column:1/-1;margin:0;padding:0;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
  #drawer .code-import textarea{display:block;width:100%;min-height:72px;margin-top:8px;padding:10px 12px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#e8ecff;font:14px "IBM Plex Mono",ui-monospace,monospace;text-transform:none;letter-spacing:0}
  #drawer .code-import>button{width:auto;height:40px;min-height:40px;margin:0;padding:0 22px;border-radius:0}
@@ -863,7 +871,7 @@
     saved rounds list's two rows (.sx-saved) are the same. On a narrow screen
     the two columns stack, code first. */
  #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
- #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
  #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag) svg{width:16px;height:16px}
  /* Save a course's Open course studio too (audit 5: an old grey button). */
@@ -894,23 +902,23 @@
  body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab::before{background:var(--panel)}
  body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab.active{color:var(--on-hot)}
  body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab.active::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
- #drawer .hp-page{display:grid;gap:8px;align-content:start;max-height:calc(100vh / var(--sheet-z,1) - 230px);overflow:auto;padding:0 26px 0 22px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .hp-page{display:grid;gap:8px;align-content:start;max-height:calc(100vh / var(--sheet-z,1) - 230px);overflow:auto;padding:0 6px;margin:0 -6px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
  #drawer .hp-head{position:relative;isolation:isolate;display:grid;gap:4px;padding:12px 30px}
- #drawer .hp-head::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .hp-head::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .hp-head small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .hp-head strong{font-size:36px;font-weight:800;font-style:italic;line-height:1}
  body:has(#app[data-mode]) #drawer .hp-page>.panel-section{display:grid;gap:8px;columns:auto!important}
  body:has(#app[data-mode]) #drawer .hp-page>.panel-section[hidden]{display:none!important}
  body:has(#app[data-mode]) #drawer .hp-page>.panel-section>h3{display:none}
  body:has(#app[data-mode]) #drawer .hp-page>.panel-section>:is(p,ul,.control-card,.note){position:relative;isolation:isolate;margin:0;padding:12px 30px;font:600 17px/1.45 var(--font-ui);color:#fff}
- body:has(#app[data-mode]) #drawer .hp-page>.panel-section>:is(p,ul,.control-card,.note)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section>:is(p,ul,.control-card,.note)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#app[data-mode]) #drawer .hp-page>.panel-section>.note{font-size:15px!important;color:var(--soft)!important}
  #drawer .hp-page a{color:var(--a1)}
  #drawer .hp-keys{display:grid;gap:6px;align-content:start}
  #drawer .hp-keys h4{margin:0 0 4px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .hp-key{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-height:40px;padding:0 24px}
- #drawer .hp-key::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #drawer .hp-key kbd{flex:none;padding:1px 7px;border:2px solid currentColor;border-radius:4px;font:700 14px/1.3 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap}
+ #drawer .hp-key::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
+ #drawer .hp-key kbd{flex:none;padding:1px 7px;border:2px solid currentColor;border-radius:0;font:700 14px/1.3 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap}
  #drawer .hp-key span{font-size:13px;letter-spacing:.12em;font-weight:700;color:#fff}
 
  /* THE DRIVING RANGE SET-UP, STEP 2 (round 14, frame c-range2): where to hit
@@ -920,7 +928,7 @@
  #drawer .rs-col>h3{margin:0 0 2px;font-size:14px;letter-spacing:.16em;color:var(--soft)}
  #drawer .rs-hit{display:grid;gap:8px}
  #drawer .rs-hit-pick{position:relative;isolation:isolate;display:grid;gap:4px;justify-items:start;min-height:68px;padding:10px 30px;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
- #drawer .rs-hit-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-hit-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .rs-hit-pick strong{font:800 italic 24px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  #drawer .rs-hit-pick small{font:600 15px/1.3 var(--font-ui);color:var(--soft)}
  #drawer .rs-hit-pick.on{color:var(--on-hot)}
@@ -929,7 +937,7 @@
  #drawer .rs-hit-pick:focus-visible{outline:none}
  #drawer .rs-hit-pick:focus-visible::before{box-shadow:inset 0 0 0 3px var(--cursor)}
  #drawer .rs-note{position:relative;isolation:isolate;display:grid;gap:4px;margin-top:8px;padding:12px 30px}
- #drawer .rs-note::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-note::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .rs-note>span{font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
  #drawer .rs-note>p{margin:0;font:600 15px/1.35 var(--font-ui);color:#fff}
  #drawer .rs-col>label.field{position:relative;isolation:isolate;margin:0;padding:6px 28px}
@@ -940,9 +948,9 @@
  #drawer .rs-col>label.field>output{grid-area:value;padding-right:.12em;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:0;color:#fff;text-transform:none}
  #drawer .rs-col>label.field>input[type=range]{grid-area:bar;width:100%;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
  #drawer .rs-col>label.field>.dd{grid-row:1;grid-column:2;max-width:none}
- #drawer .rs-col>label.field::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-col>label.field::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .rs-club{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 50px 90px 56px;align-items:center;height:42px;padding:0 28px;font:700 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.06em}
- #drawer .rs-club::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-club::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #drawer .rs-club b{font-size:18px;font-weight:800;font-style:italic}
  #drawer .rs-club>:not(:first-child){text-align:right}
  #drawer .rs-club span{color:var(--soft)}
@@ -977,7 +985,7 @@
     as slanted panels, not the old rounded boxes (the owner, 18 October 2026). */
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .drawer-header .eyebrow{display:none}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] :is(.hole-advance,.match-status){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
- body:has(#app[data-mode=play]) #drawer[data-panel=score] :is(.hole-advance,.match-status)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] :is(.hole-advance,.match-status)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance{padding:12px 30px}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance p{font-size:17px;letter-spacing:.06em;color:#fff}
  /* ROUND COMPLETE, at the head of the final card. */
@@ -994,7 +1002,7 @@
  /* Across the card (audit 3: at 820 px the rows left its right half empty). */
  .rh-res-stand{display:grid;gap:8px}
  .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;min-height:64px;padding:8px 26px}
- .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  .rh-res-row.win{min-height:80px;color:var(--on-hot)}
  .rh-res-row.win::before{background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));box-shadow:0 0 0 3px var(--hot)}
  .rh-res-pos{width:28px;font-size:34px;font-weight:800;font-style:italic}
@@ -1052,9 +1060,9 @@
  .drawer{border-top:4px solid var(--a1)}
  /* The main button leans in the biome's gradient; the others lean plain. */
  #drawer button.primary,body>.version-notice button.primary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
- #drawer button.primary::before,body>.version-notice button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:skewX(-12deg)}
+ #drawer button.primary::before,body>.version-notice button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)));transform:none}
  #drawer button.secondary,body>.version-notice button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
- #drawer button.secondary::before,body>.version-notice button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #drawer button.secondary::before,body>.version-notice button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:none}
  /* Focus outlines the button's own slanted panel; it used to outline every
     letter too (a filter), which left a small label unreadable. */
  #drawer button:is(.primary,.secondary):focus-visible,body>.version-notice button:is(.primary,.secondary):focus-visible{outline:none}
@@ -1065,7 +1073,7 @@
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table .yardage-row :is(th,td){font-size:14px}
  /* Tabs: slanted, the current one filled. */
  #drawer .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
- #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:none}
  #drawer .panel-tab.active{background:none;color:var(--on-hot)}
  #drawer .panel-tab.active::before{background:var(--a1)}
 }
@@ -1092,11 +1100,11 @@
 }
 @media (max-width:560px),(max-height:500px){
  body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 2px 84px;zoom:calc(var(--sheet-z,1) / .7)}
- body:has(#app[data-mode]) #drawer #drawerContent{padding:0 22px}
+ body:has(#app[data-mode]) #drawer #drawerContent{padding:0 28px}
  body:has(#app[data-mode]) #drawer .drawer-header{margin:0 0 12px}
  /* Steps: under the title, scrolling sideways when they will not fit; the
     content starts at the top; no keyboard keys on a touch screen. */
- body:has(#app[data-mode]) #drawer .sx-steps{position:static;transform:none;margin:0 0 14px;max-width:100%;overflow-x:auto;padding:2px 10px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer .sx-steps{position:static;transform:none;margin:0 -4px 14px;max-width:calc(100% + 8px);overflow-x:auto;padding:4px;scrollbar-width:none}
  body:has(#app[data-mode]) #drawer .sx-steps>*{flex:none}
  body:has(#app[data-mode]) #drawer .sx-pages{align-content:start}
  /* The cards scroll with the sheet on a phone, which keeps room for the foot
@@ -1107,8 +1115,10 @@
  body:has(#app[data-mode]) #drawer .sx-foot{left:16px;right:16px;bottom:12px;justify-content:flex-end}
  /* A BAND UNDER THE BUTTONS (UI/UX pass V3: on a sideways phone Start sat over
     the lie penalty's value): the page scrolls under a solid strip, and the
-    padding below lets its last row come clear of it. */
- body:has(#app[data-mode]) #drawer:not([hidden]):has(.sx-foot)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:72px;z-index:2;pointer-events:none;background:linear-gradient(to top,rgba(5,9,13,.97) 78%,rgba(5,9,13,0))}
+    padding below lets its last row come clear of it. Solid to its top edge
+    since square-box round 5 (28 October 2026): its fade let the next row of
+    cards show half through beside the buttons. */
+ body:has(#app[data-mode]) #drawer:not([hidden]):has(.sx-foot)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:72px;z-index:2;pointer-events:none;background:rgb(5,9,13)}
  body:has(#app[data-mode]) #drawer:not([hidden]):has([data-panel-action]:not(.sx-foot *):not([hidden]))::after{height:136px}
  body:has(#app[data-mode]) #drawer [data-panel-action]:not(.sx-foot *){z-index:3}
  body:has(#app[data-mode]) #drawer [data-panel-action]{right:16px;bottom:12px;min-width:0}
@@ -1125,7 +1135,7 @@
  body:has(#app[data-mode]) #drawer .wk-hero{height:170px;padding:14px 34px}
  body:has(#app[data-mode]) #drawer .wk-hero strong{font-size:36px}
  body:has(#app[data-mode]) #drawer .wk-earlier{max-width:none}
- body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0 26px}
+ body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0}
  body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
  /* Tiles two to a row. */
  body:has(#app[data-mode]) #drawer :is(.sx-formats,.sx-lands,.wk-facts,.wk-weeks,.ph-tiles,.ph-rounds,.stat-grid,.profile-bag,.lib-shelf,.chal-cards,.wk-rules,.achievement-list,.lm-buttons,.sd-lands,.footprint-icons){grid-template-columns:repeat(2,minmax(0,1fr))!important}
@@ -1174,7 +1184,7 @@
 #drawer details{position:relative;isolation:isolate;margin:6px 0;padding:0}
 #drawer details>summary{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 26px;cursor:pointer;list-style:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
 #drawer details>summary::-webkit-details-marker{display:none}
-#drawer details>summary::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer details>summary::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
 #drawer details>summary::after{content:"▸";margin-left:auto;color:var(--hot)}
 #drawer details[open]>summary::after{content:"▾"}
 #drawer details>summary:focus-visible{outline:none}
@@ -1187,13 +1197,13 @@
 /* The launch monitor's connector list as rows, not a bullet list. */
 #drawer .lm ul{display:grid;gap:6px;margin:6px 0;padding:0;list-style:none}
 #drawer .lm li{position:relative;isolation:isolate;padding:10px 26px;font-size:15px;color:var(--soft)}
-#drawer .lm li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer .lm li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
 #drawer .lm li a{color:#fff;font-weight:700;text-decoration:none}
 #drawer .lm li a:is(:hover,:focus-visible){color:var(--hot)}
 
 /* My profile: the scoring box as a slanted panel, its words readable. */
 #drawer .score-types{position:relative;isolation:isolate;gap:8px;padding:16px 30px;border:0;border-radius:0;background:none}
-#drawer .score-types::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer .score-types::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
 #drawer .score-type{grid-template-columns:130px 1fr 34px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
 #drawer .score-type i{height:8px;border-radius:0;background:linear-gradient(90deg,var(--hot) var(--w),rgba(255,255,255,.1) var(--w))}
 #drawer .score-type strong{color:#fff;font-size:16px}
@@ -1304,4 +1314,15 @@
 @media (max-width:560px){
  body:has(#app[data-mode]) #drawer .sx-btns.with-finish>*{min-width:0}
  body:has(#app[data-mode]) #drawer .sx-btns.with-finish>:not(.sx-back):not(.sx-next){white-space:normal;text-align:center}
+}
+
+/* THE STUDIO ON AN UPRIGHT TABLET (28 October 2026, the square look's third
+   round): three columns left the settings' names wrapping into their sliders
+   and the menus' tabs running under the settings. Under 960 px wide (and not a
+   phone, which has its own layout) it stacks: the menus as a row of tabs on
+   top, the settings the full width, the course's facts under them. */
+@media (min-width:561px) and (max-width:960px) and (min-height:501px){
+ body:has(#drawerContent.sd-root) #drawer #drawerContent.sd-root{grid-template-columns:minmax(0,1fr);grid-template-areas:"tabs" "lead" "body" "side";grid-template-rows:auto}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs{position:static;display:flex;flex-wrap:wrap}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab{flex:1 1 auto}
 }

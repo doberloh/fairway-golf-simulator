@@ -52,11 +52,21 @@ journeys, and none of it has been played by hand. Each line is what to do
 and what should happen. With a keyboard first, then a controller, then a
 phone.
 
+- [ ] **Square boxes everywhere** (the owner's eight findings, 28 October
+  2026; UI_POLISH.md, *Square boxes*). No box, tile, field, key plate or ring
+  leans or has rounded corners (balls, dots and round badges stay round); no
+  second box behind the loading, Leave or Save box; one ring on a chosen ball
+  in the locker; every stack straight down, nothing over its neighbour. The
+  main menu's Settings / Launch monitor / Help line up with the menu. Saved
+  courses with nothing saved says Build a course or import a code. Endless's
+  landscapes scroll down only. The Save box fits a 1280 x 720 screen, its
+  picture beside the view buttons. On a sideways phone the band under Back /
+  Next is solid. Seen in the audit's pictures at sixteen sizes; not played.
 - [ ] **The splash and a course growing.** The tips are the fourteen in
   src/tips.js, each true of the game today; one shows while a course grows
   ("Growing the landscape...", "Shaping the landscape").
-- [ ] **The main menu.** The arrows move a white cursor and slide the tile a
-  little; the eyebrow reads Main menu. After any round, **Play again** shows
+- [ ] **The main menu.** The arrows move a white cursor; the tile lights in
+  place (no slide since the boxes went square); the eyebrow reads Main menu. After any round, **Play again** shows
   what it will start (the line under it) and starts it in one press.
 - [ ] **Play.** Titled Play, with Main menu above the title. Opens with the
   keys on the chosen card. Right then Down: one yellow card (chosen) and one
@@ -651,8 +661,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Phase 5 (phones and screen shapes): built, seen in the browser pane at
   844 x 390 and 390 x 844, not on a real phone** (17 October 2026, overnight).
   The phone round screen sideways and upright (src/round-phone.css), the
-  slanted aim pad, swinging by tapping the bar, the MENU chip and the pause
-  list as one column, the phone main menu with rows leaning one by one. The
+  aim pad (slanted then, square since 28 October 2026), swinging by tapping the bar, the MENU chip and the pause
+  list as one column, the phone main menu (its rows leaned one by one until 28 October 2026). The
   phone smoke journeys pass (they tap the bar now). Not seen: a real iPhone's
   Safari and safe areas, a phone with two or more golfers, the ball light on a
   phone, the sheets on a phone (unchanged, old layout).
@@ -1023,7 +1033,7 @@ work since.
   phone** (the owner: much skinnier). It took the saved rounds list's class.
   Built; **seen** at 390x844 (measured: picture and words 154 px like the
   others).
-- [ ] **A second golfer's Make main profile and Remove as slanted outlines**
+- [ ] **A second golfer's Make main profile and Remove as outlines (square since 28 October 2026)**
   (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
   390x844.
 - [ ] **Upright, the folded shot line clear of the yards marker** (audit 6:
@@ -1105,10 +1115,10 @@ comes back, note which frame the tap lands on.
   from the old aim). Built; **seen** in the capture build after the same drive.
 - [ ] **My profile's golfer chips on an upright phone** (found fixing the
   tabs: no room in the header band, not shown). Built; **seen** at 390x844.
-- [ ] **My profile's backup and bag buttons as slanted rows** (audit 5: old
+- [ ] **My profile's backup and bag buttons as rows (square since 28 October 2026)** (audit 5: old
   grey buttons; History's handicap paragraph a note). Built; **seen** at
   1920x1080.
-- [ ] **Save a course's Open course studio as a slanted row** (audit 5).
+- [ ] **Save a course's Open course studio as a row (square since 28 October 2026)** (audit 5).
   Built; **seen** at 1920x1080.
 - [ ] **A challenge's results laid out like Round complete** (audit 5).
   Built; **seen** in the capture build after closest to the pin for two, and
@@ -1170,14 +1180,14 @@ commit per category.
   October: with no saved rounds the button hid, and with it Import a round from
   a file). Built, tested and **seen** in a fresh browser (21 October): SAVED
   ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
-  from a file. That list's Export and Import buttons are now slanted rows too
+  from a file. That list's Export and Import buttons are now rows too (square since 28 October 2026)
   (seen in a fresh browser, 21 October: Import lit, Export dimmed with no round
   to export). While the list is open the heading reads SAVED ROUNDS (seen
   in a fresh browser, 21 October).
-- [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
+- [ ] **Saved courses: the file buttons as rows (square since 28 October 2026), the intro one line**
   (audit 4's leftovers): built, tested and **seen** in the capture build
   (21 October, once the card was free): the intro one line over the tabs, the
-  two file buttons as slanted rows in the accent.
+  two file buttons as rows (square since 28 October 2026) in the accent.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a

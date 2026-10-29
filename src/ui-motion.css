@@ -23,12 +23,10 @@
  /* A BOX OVER THE SCREEN (save, leave, the version notice, the welcome):
     its card fades in and settles from 98%. */
  body>.version-notice:not([hidden])>:is(div,form){animation:ui-settle-in 200ms cubic-bezier(.2,.7,.3,1)}
- /* THE CURSOR ON THE MAIN MENU slides its tile 6 px right as it arrives,
-    so the eye follows the arrows; the fill and the white edge are instant. */
- /* Both the slide and the press (the press rule below is stronger, by its
-    #drawer, and alone it replaced this transition: the slide jumped). */
- #mainMenu .menu-tile:not(:disabled){transition:transform 120ms cubic-bezier(.2,.7,.3,1),scale 120ms cubic-bezier(.2,.7,.3,1)}
- .main-menu .menu-tile:focus{transform:translateX(6px)}
+ /* THE CURSOR ON THE MAIN MENU: the fill and the white edge, instant. Its
+    6 px slide went with the slant (28 October 2026): on square tiles a tile
+    standing 6 px out of the column read as misaligned. The press below. */
+ #mainMenu .menu-tile:not(:disabled){transition:scale 120ms cubic-bezier(.2,.7,.3,1)}
  /* A PRESS answers at once: the button gives 3% under the finger or the
     pointer, and springs back in 120 ms. The `scale` property, not
     `transform`, so it adds to a button's own lean (.field-action is skewed

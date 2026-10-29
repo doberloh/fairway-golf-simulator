@@ -228,7 +228,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  };
  if (weekly) typeCard('weekly', {name: 'COURSE OF THE WEEK', line: weekly.name.toUpperCase(), tag: weekly.tag, label: 'Course of the week', settings: weekly.settings});
  if (opts.endless) typeCard('endless', {name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', tag: 'A RUN', cls: 'run', label: 'Endless'});
- typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} SAVED · OR IMPORT A CODE` : 'IMPORT A CODE A FRIEND SENT', tag: 'SAVED', cls: courses.length ? '' : 'empty-shelf', label: 'Saved course', settings: courses[0]?.settings});
+ typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} SAVED · OR IMPORT A CODE` : 'BUILD A COURSE OR IMPORT A CODE', tag: 'SAVED', cls: courses.length ? '' : 'empty-shelf', label: 'Saved course', settings: courses[0]?.settings});
  if (opts.friend) typeCard('friend', {name: 'FRIEND CHALLENGE', line: opts.friend.line, tag: opts.friend.name, cls: 'friend', label: 'Friend challenge'});
  typeCard('surprise', {name: 'SURPRISE ME', line: 'A NEW NINE FROM RANDOM SETTINGS', tag: 'NEW', cls: 'surprise', label: 'Surprise me', settings: opts.surprise?.settings});
  const studio = q('roundStudio'), surprise = q('roundSurprise');

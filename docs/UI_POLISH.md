@@ -92,6 +92,28 @@ contrast (R2); small-text (R1). What text sits on is read from the picture
 itself, since the panels are leaning layers, gradients and glass over the
 course. Findings explained in `tools/ui-audit-known.json` are listed apart.
 
+**Faster, and unable to stall** (28 October 2026, during the square boxes).
+A full run was about 50 minutes: sixteen sizes one after another, a fixed
+pause before every picture, then pictures looked at one by one. Now four sizes
+run side by side in one browser (`--jobs`, default 4); a pause ends once the
+screen's animations have finished (fixed pauses are kept where the game is
+building something no animation shows: a round starting, the studio growing,
+the big map, a shot landing); and each screen has a contact sheet with every
+size side by side (`sheets/<screen>.png`). Measured on the same build and the
+same four sizes: the old tool 840 s, the new 276 s; every picture and finding
+on the menus and sheets the same, the only differences in rounds -- the
+flag's label and the turn banner over the moving course, which change with
+the moment of the picture under either tool (all explained, none open). The
+sixteen sizes: about 14 minutes. `--quick` (phone both ways, an upright
+tablet, 1080p, 4K) is for a round of fixes; sixteen for the last.
+
+The same day it hung for two and a half hours: the studio's save step leaves
+the page holding its Save box, which marks the page stale so the next screen
+starts fresh -- but a round screen ignored the mark and asked that page to
+start a round, which waited for an answer to the box. A round now honours the
+mark, and every screen has three minutes (`SCREEN_MS`) before it is written
+down as `walk-failed` and its size goes on from a fresh page.
+
 **Text past a box that scrolls is not cut off** (fixed in the audit, 28
 October 2026). On a phone, Play's lower cards sit under the sheet's foot
 until the player scrolls down to them; the audit measured them against the
@@ -109,6 +131,19 @@ which gives the chosen state and the cursor the same ring.
 
 (Each round: what was wrong, what changed, the pictures' folder under
 `bench/shots/ui-audit/` or `bench/shots/ui-polish/`.)
+
+**The rounds, item by item** (the goal asked five each; counted from the
+sections below, not claimed). The sweeps after them -- the final audit, the
+third look, and the five square-box rounds -- walked every screen at sixteen
+sizes, these included.
+
+| Item | Rounds written up | Where |
+| --- | --- | --- |
+| The way into every mode | 2 of its own (Tee off on every step; Play again), then every audit sweep | *The way into every mode* |
+| The course studio | 1 of its own (five menus), then the tablet stack in square round 3 | *The course studio's settings*, *Square boxes* |
+| Animation | 5 | *Animation* |
+| The save-picture step | 1 of its own (box takes the arrows), then square rounds 1, 4 and 5 | *A picture for every saved course*, *Animation*, *Square boxes* |
+| Square boxes (the owner's) | 5 | *Square boxes* |
 
 ### Before (main, 0.9.5)
 
@@ -158,7 +193,8 @@ line says "choose the landscape you want, then grow it". Bunker shape sat
 under Fairways & greens while the other three bunker settings had a menu of
 their own.
 
-**Round 1 (built; to be judged in pictures).** Five menus: **Course** (the
+**Round 1 (built; seen in the audit's pictures at sixteen sizes, not played
+by hand).** Five menus: **Course** (the
 landscape as pictures first, then holes, length, seed, and wind in a box of
 its own), **Land & routing** (landform, elevation, blind tees, footprint,
 spacing, doglegs), **Fairways, greens & bunkers** (all fourteen), **Water**,
@@ -454,7 +490,8 @@ scroller that goes the right way).
 What moves (src/ui-motion.css, all inside `prefers-reduced-motion:
 no-preference`): a sheet fades in (180 ms) and its page rises 10 px (220
 ms, replayed when a step changes); a box over the screen settles in from 98%
-(200 ms); the main menu's cursor slides its tile 6 px (120 ms); a press
+(200 ms); the main menu's cursor slid its tile 6 px (120 ms; removed with the
+slant, 28 October 2026 -- the tile now lights in place); a press
 gives 3% (40 ms in, 120 ms back). Nothing on the way out; nothing on the
 round screen. Checked by `tools/ui-motion-check.mjs` and
 `tools/ui-motion-frames.mjs`.
@@ -573,6 +610,18 @@ against 0.84 (-37%), every frame the graphics card's within 3%; Ultra -- main
 menu 4.07 against 3.69 (-10%), Play 10.69 against 3.68 (-66%), Saved courses
 4.88 against 4.42 (-10%), the studio 6.63 against 3.79 (-43%); frame, mean of
 spots, -9%.
+
+**The square boxes, measured** (28 October 2026, four rounds, by the whole
+page; `polish-square-low` / `-ultra`): Low -- every menu's frame equal (the
+graphics time 0.49-0.50 against 0.50-0.52 ms, under the 0.7 ms the frame
+callback takes), the page lower everywhere: Play's first step 2.77 against
+1.00 (-64%), Saved courses -25%, the studio -51%, the main menu equal.
+Ultra -- frame, mean of spots, -9.5%; its slowest frames (p95) 14.6 against
+8.2 ms (-44%). The frame callback's two modes showed again in both builds
+(main's Saved courses 4.8 then 1.8, the branch's studio 3.0 then 1.7);
+start-up to the main menu split the same way, the branch's four runs 12.8,
+13.0, 14.7 and 14.9 s against main's 13.1-13.2 -- styles alone changed, and
+no start-up work. **Judged: not slower.**
 
 **The pictures' schedule was changed by the measurements.** At first every
 card changed at once, every 6.6 s: the studio's ten landscapes decoded and
@@ -794,3 +843,102 @@ course; it stops at a start button now.
   rounds twice before (0.79/0.78, 0.76/0.75); frame, mean of spots, equal.
   The Ultra run of this last build was stopped when the owner started
   playing it by hand; Ultra's figures are the run before (r7, -9%).
+
+## Square boxes (the owner's hand-play, 28 October 2026)
+
+The owner played the branch and sent eight findings, then: "Its clear to me
+that the slanted box style is a problem. Please iterate 5 times over all of
+our UI and remove our slanted box style for just regular squares everywhere.
+Test on all of our screen size options." The findings, and what each was:
+
+1. **The main menu's Settings / Launch monitor / Help boxes not square with
+   the menu.** The tiles' column was sized to its widest tile and centred in
+   the menu, 47 px in from the logo and the links -- hidden by the slant.
+2. **Saved course, with nothing saved, said "Import a code a friend sent".**
+   Now "Build a course or import a code".
+3. **A sideways scroll bar under Endless's landscapes.** The column that
+   scrolls them (the final audit's fix) scrolled both ways; down only now.
+4. **A square box behind the loading box**, and 5. **behind the Leave box**,
+   and part of 8. **behind the Save box.** Two causes: the boxes' backing was
+   a slanted layer over a square box, which showed past the slant; and the old
+   pre-1.0 window's frosted blur (`backdrop-filter`) was never switched off
+   under the 1.0 rows. The override had been written, but the build's CSS
+   minifier kept only its `-webkit-` copy and dropped the standard one -- so
+   it is written unprefixed.
+6. **Extra box outlines on a chosen ball in the locker.** The highlight was a
+   traced outline (drop shadows following the shape's edge), made for slanted
+   shapes; it drew every edge it found. Every traced ring (eight rules) is a
+   square box-shadow now.
+7. **Vertical stacks and not.** The leaning stacks (each row slid sideways to
+   lie on a slanted edge) are gone with the slant: every stack is vertical, the
+   scoring box no longer runs into the tiles beside it.
+8. **The Save box out of line and half slanted, half square.** Its rows were
+   slid by the window lean (ui-windows.js `leanAsOne`), its picture cut to a
+   slant; all gone.
+
+**Round 1: the slant out at its source.** 191 skews (`transform:skewX(±12deg)`
+on every coloured box's `::before` and its counter-skewed contents) set to
+none; the lean code removed (ui-windows.js `leanAsOne` and `watchWindows`,
+main.js `leanSeatRows` -- the seats' pickers slid with the seat's lean); the
+pictures' slanted cut (`--lean`) set to 0; the eight traced rings made square.
+The main menu's cursor no longer slides its tile 6 px (on square tiles it read
+as out of line; the motion check now holds that it lights in place). The
+handicap block on My profile, centred by an old rule, starts at the left.
+The fire effect's flicker keeps its 5-degree skew: a flame, not a box.
+
+**Round 2** (`--out sq2`, every screen at sixteen sizes): 3 findings. On an
+upright tablet the golfer card now covered the main menu's tiles (full width
+since round 1); under 960 px wide the card goes under the menu, bottom left.
+The studio's landscape names took the outline (4.50:1 at the smallest Text
+size). In the pictures: the sheets' content stood 25-50 px in from their
+titles -- Play's cards, the seats, the steps -- room the slant's overhang had
+needed. **Round 3:** every sheet's content starts on its title's edge; a box
+that scrolls keeps 6 px inside for a ring and takes it back with a -6 px
+margin. Measured, not by eye: every sheet's drawn boxes against its title at
+1080p, 1280 x 720 and a phone (the remaining offsets are things inside boxes:
+a golfer's ball, a number in a panel). It found Challenges and the course of
+the week padded 24 px and Help's page 26, and a phone's content 22 px where
+its title is 28. The full audit then found the studio's three columns too
+narrow on an upright tablet (names wrapped into their sliders, the tabs ran
+under the settings): under 960 px wide it stacks -- the menus as a row of
+tabs, the settings full width, the facts under them.
+
+**Round 4** (`--out sq4`, every screen at sixteen sizes): **0 findings.** In
+the pictures, at the sizes not yet looked at: the turn flash on a sideways
+phone was still the old rounded glass -- its square panel was set only in the
+wide-screen block; a phone has it now. Every text field, select and text box
+was rounded 5-9 px by the old base style, whose selector outranked the 1.0
+override (`.field input:not(...):not(...)`): squared at the source, seven
+rules (the arm switch's knob stays round). On a phone the studio's map read
+through the save box: without the old frosted backing, the scene behind
+showed in the gaps around the description and the picture. The line and the
+picture have panels of their own now, and a box over the screen has one solid
+backing exactly behind its square rows -- not the old misfitting box, which
+stood out past slanted rows.
+
+**Round 5** (the faster audit: `--out sq5`, every screen at sixteen sizes in
+14 minutes; then `sq5b` on the fixed build). The audit found one thing: at
+the largest Text sizes the studio's key hints stood in the Save box's name
+field -- behind the box, but on a layer above it; a box asking a question
+hides them now, as an open sheet already did. The contact sheets found the
+rest. At 1280 x 720 the Save box ran past the foot of the screen, Go back cut
+in half: its view buttons wrapped under the picture; beside it now on every
+screen but an upright phone (a sideways phone's layout until now), about a
+third shorter. On a sideways phone the next row of landscape cards showed
+half through the band under Back / Next: the band faded in from clear; it is
+solid now, a hard edge. And rounded corners were still everywhere the slant
+had hidden them: the name field, every key plate (W A S D, ESC), and the old
+base style's tiles, cards, chips and fields that phones and some boxes fall
+back to -- 110 corners squared by one script that changed nothing but the
+radius (checked against a copy taken before). Kept round, on purpose: the
+balls, dots and toggles (`50%`), the score chips, skip pill, bag tags and
+the turn banner's pill (999 px), and small bars and badges whose radius is
+half their size (the XP and level bars, the level badge, the meter's marker,
+the growing bar). Last, on an upright phone the shot chips read CURVE
+STRAIGH and SPIN 0 cut: the italic value's last letter leans past its
+clipped box (on main already); it has 3 px of room now. The kit's tests held
+the slant (the panel leaning -12, selection traced in drop shadows) and now
+hold the square: nothing in the kit leans or rounds, selection is a square
+ring.
+
+Then `sq5b`, the fixed build at sixteen sizes: **0 findings**, 846 s.
