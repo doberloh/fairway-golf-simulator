@@ -132,6 +132,13 @@ export const VIEWS = [
   if (!best) return {x: g.x, z: g.z - 60, yaw: 0, height: 20, pitch: -15};
   const d = Math.hypot(best.x - g.x, best.z - g.z) || 1, cx = best.x + (g.x - best.x) / d * 14, cz = best.z + (g.z - best.z) / d * 14;
   return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.8, pitch: -12}; }`},
+ // ARCHITECT COURSES' VIEWS (architect-courses, phase 2): the markings close
+ // to -- the first 150-yard post and the first rake, from 4 m at eye height.
+ {name: 'arch-post', hole: 0, when: 'afternoon', caption: 'An Architect course\'s 150-yard post close to', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'post150') || {x: 0, z: 0};
+  return {x: m.x - 3.2, z: m.z - 2.4, yaw: Math.atan2(3.2, 2.4) * 180 / Math.PI, height: 1.4, pitch: -10}; }`},
+ {name: 'arch-rake', hole: 0, when: 'afternoon', caption: 'An Architect course\'s rake beside a bunker', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'rake') || {x: 0, z: 0};
+  const px = Math.cos(m.rot), pz = -Math.sin(m.rot);
+  return {x: m.x + px * 3.5, z: m.z + pz * 3.5, yaw: Math.atan2(-px, -pz) * 180 / Math.PI, height: 1.6, pitch: -22}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).
  // The far scenery from the course's edge: the band between the course's own
  // ground and the far woods or hills, looking out from 25 m up.

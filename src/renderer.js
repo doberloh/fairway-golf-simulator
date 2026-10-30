@@ -47,6 +47,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
 import {modelParts} from './mesh-assets.js';
+import {MESH_MODELS} from './asset-meshes.js';
 // THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
 // round 3). The sky's flat fill was 1.15 against a sun of 2.8: a third of
 // every surface's light came from no direction, and a dune turned from a noon
@@ -1111,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1948,6 +1949,44 @@ export class GolfView{
    const y=Math.max(...ends,w.height(b.x,b.z))+.45,deck=new T.Mesh(new T.BoxGeometry(b.width,.22,b.span),wood);
    deck.position.set(b.x,y,b.z);deck.rotation.y=b.angle;deck.castShadow=deck.receiveShadow=true;this.group.add(deck);this.resources.push(deck.geometry);
    for(const s of [-1,1]){const r=new T.Mesh(new T.BoxGeometry(.14,.75,b.span),rail);r.position.set(b.x+Math.cos(b.angle)*s*b.width/2,y+.45,b.z-Math.sin(b.angle)*s*b.width/2);r.rotation.y=b.angle;r.castShadow=true;this.group.add(r);this.resources.push(r.geometry);}
+  }
+ }
+ // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,
+ // tools/blender/architect_people.py): stakes, yardage posts and rakes, a few
+ // hundred a course, so drawn instanced -- one InstancedMesh per model part per
+ // colour -- and uninked (the furniture's ink is a handful of pieces a hole).
+ // Decoration: nothing a ball hits.
+ addMarkings(w){
+  if(!w?.markers?.length||this.style!=='cartoon')return;
+  const KINDS={
+   stake:{model:'Blender_Stake_1',height:.92,colours:{accent:'#e64a34',bark:'#4b3a2a'}},
+   obstake:{model:'Blender_ObStake_1',height:1.05,colours:{stone:'#f6f3ea',bark:'#4b3a2a'}},
+   post100:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#d63c30',stone:'#2f4a35',bark:'#3a2e22'}},
+   post150:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#f8f6ef',stone:'#2f4a35',bark:'#3a2e22'}},
+   post200:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#2f62c4',stone:'#2f4a35',bark:'#3a2e22'}},
+   rake:{model:'Blender_Rake_1',height:.12,length:2.3,colours:{accent:'#e8b84a',bark:'#a9845a'}},
+  };
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  for(const [kind,spec] of Object.entries(KINDS)){
+   const list=w.markers.filter(m=>m.kind===kind);if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   const info=MESH_MODELS[spec.model];
+   for(const p of parts){
+    const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted});
+    const mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((m,i)=>{
+     // The ingest makes a model one unit tall; a rake is scaled back by its
+     // length instead, since it lies flat.
+     const k=spec.length?spec.length/Math.max(info?.rz??1,info?.rx??1)/2:spec.height;
+     q.setFromAxisAngle(up,m.rot||0);pos.set(m.x,w.height(m.x,m.z),m.z);sc.setScalar(k);
+     mesh.setMatrixAt(i,m4.compose(pos,q,sc));
+    });
+    mesh.castShadow=kind!=='rake';mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+    this.group.add(mesh);this.resources.push(mat);
+    // Iteration 6: the furniture's ink, instanced, on what stands up (not a
+    // rake lying in the grass), so a stake keeps its outline at a distance.
+    if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
   }
  }
  addHoleDetails(h){

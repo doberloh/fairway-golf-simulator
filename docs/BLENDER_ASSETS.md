@@ -406,3 +406,31 @@ has it: cottonwood (a furrowed trunk forking into great limbs, each carrying a
 cloud), black oak, sugar maple (with far twins), creeping and vase junipers,
 dune grass patches of splayed tussocks, and bleached driftwood (now drawn
 painted).
+
+## The Architect packs (architect-courses, from 30 October 2026)
+
+Models an Architect course places (docs/ARCHITECT_COURSES.md). Each model is
+iterated at least ten times, on the contact sheet and in the game, and every
+iteration is logged in ARCHITECT_COURSES.md, *Blender iteration log*.
+
+**A model longer than two of its own heights** -- a rake lying on the grass
+-- does not fit the ingest's int16 box (positions are stored at 16384 a
+model height, two heights each way) and wraps round to the far side. The
+Architect's families carry their own scale, `q`, written beside the model
+and read by mesh-assets.js (`OWN_SCALE` in build-meshes.mjs). Eleven models
+shipped before this wrap the same way and are left as they are, for the
+owner (TODO, *Eleven models wrap in the ingest*). **A pack script must not
+import another pack's script**: importing runs that script's own export, into
+this pack's folder (architect_people copies cartoon_course.py's `block`).
+
+### architect_people
+
+`tools/blender/architect_people.py`: what a club puts out on a course it looks
+after -- a penalty-area stake (0.92 m, painted to a dark earth collar, a
+pyramid cap; red in the game), the boundary's white stake (1.05 m), a
+yardage post (0.64 m, a dark plinth, a coloured band, a chamfered cap; dark
+green in the game with a red, white or blue band) and a bunker rake (1.6 m
+built, drawn 2.3 m: true size was nothing from a fairway). Ingested as the
+`coursemarkings` family, never planted; renderer.js `addMarkings` draws them
+instanced from markings.js, the standing ones inked. The sheet uses a 0.4 m
+scale post: the default 1.8 m post is wider than a stake and hid all four.

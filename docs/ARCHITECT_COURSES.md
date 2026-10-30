@@ -270,7 +270,31 @@ is above about 30%).
 | 30 Oct, phase 0 | smoke `architect-studio` (journey fixed; the designer moved to the head of Course) | 4%, 39 °C | passed |
 | 30 Oct, phase 2 | capture `arch-p2a`: an Architect Midwest course, four views (overhaul.mjs, `--course designer=architect`) | 6%, 41 °C | built in 13.8 s, no errors; paths, the pull-offs and a white middle flag seen |
 | 30 Oct, phase 2 | smoke `architect-studio`, `studio`, `surprise-round`, `hud-reachable`, `no-swallowed-errors` | 6%, 40 °C | 5 of 5 passed |
+| 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
 
 ## Blender iteration log
 
-None yet.
+The goal asks for at least ten iterations on every asset: render it, judge it
+against the cartoon look and its neighbours, revise. An iteration is judged on
+the pack's contact sheet (`bench/shots/blender/<pack>.png`) or in the game
+(a capture named beside it), and says what changed.
+
+### architect_people (stakes, yardage post, rake)
+
+| # | Judged on | Stake / OB stake | Yardage post | Rake |
+| --- | --- | --- | --- | --- |
+| 1 | sheet | a 5 cm square timber stake, top two thirds painted, pyramid cap: reads as a stake, but a thread for a cartoon world, and the unpainted third looks like dirt. The sheet's 1 m scale post hid all four models (its radius scales with its height); the pack's sheet uses a 0.4 m post | a plain block with a red band: reads, but plain | a 1.6 cm handle and a 48 cm head: the handle is a thread |
+| 2 | sheet | 7 cm (6 cm for OB), painted down to a 12% earth collar | a dark plinth, a chamfered cap | handle 2.2 cm |
+| 3 | game (`arch-p2c`, Midwest, Parkland): pond stakes, the first 150-yd post, the first rake | stakes read clearly round a pond from its bank; in shade the red went maroon, so the game's red is brighter (#e64a34) | the white 150 band vanished on a white post: the body is dark green in the game, as many clubs paint them, so every band reads | the yellow head reads, but at true size it is nothing from a fairway: drawn a third larger (2.3 m), handle 3 cm |
+| 4 | sheet | a steeper cap (its lit face catches the eye) | the band deeper (10 -> 14 cm) and proud of the post | twelve stouter teeth |
+| 5 | game (`arch-p2d`, Links) | -- | dark green with its white band reads well in fescue | seen end-on: the camera and the rake both lay along the line out of the sand |
+| 6 | game (`arch-p2e`, Desert) | stakes and posts take the furniture's ink, instanced: crisp cartoon stakes round a desert pond | inked | laid along the bunker's edge (markings.js), a dark grip; side-on it was **a stub**: the ingest's int16 box (two model heights) wrapped a model 27 heights long. Found and fixed with a per-model scale, `q`, for the Architect's families (build-meshes.mjs `OWN_SCALE`); eleven shipped models wrap the same way (TODO, *Eleven models wrap*) |
+| 7 | game (`arch-p2f`, Desert) | -- | inked, reads on mown ground | full length at last, a yellow toothed head: reads as a rake beside the sand; the handle read as a dark stick |
+| 8 | sheet | -- | -- | the handle lighter timber (#a9845a) and thinner (2.6 cm) |
+| 9 | game (`arch-p2g`, Haunted Hollow) | red stakes along a creek's banks read against the purple | -- | reads clearly on the purple rough |
+| 10 | game, **Low tier** (`arch-p2h`, Midwest) | bright and crisp round the pond on Low | -- | -- | 
+
+Cost: a nine-hole course carries about 300 markings, drawn as twelve
+instanced meshes (six kinds, two parts each, and the ink of the standing
+ones) -- a dozen draw calls and a few thousand triangles. Measured with the
+rest of phase 2 on Low (*Measures*).

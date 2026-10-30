@@ -253,6 +253,11 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   green to a pull-off and on to the next tee, smoothed; pushed sideways off any
   green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
   one is `path`, and houses and trees keep off it.
+- **Markings** (markings.js), placed on the finished ground: red stakes
+  every 11 m round each pond and along creeks within 60 m of play, white
+  stakes every 13 m where the boundary comes within 120 m of a corridor,
+  yardage posts both sides at 100, 150 and 200 yd from the green, a rake on
+  the far side of each bunker laid along its edge. Decoration, never solid.
 - **The trees** are cleared to a scalloped line, not faded by chance; avenues
   line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
   inside corner gets a cluster.

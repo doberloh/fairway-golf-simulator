@@ -102,6 +102,7 @@ function fingerprint(biome) {
  // Empty on Classic, so this moved no Classic hash.
  for (const p of w.paths || []) { h.update(`L${p.kind},${n(p.width)},${p.points.length};`); for (const q of p.points) h.update(`${n(q.x)},${n(q.z)};`); }
  for (const b of w.bridges || []) h.update(`G${n(b.x)},${n(b.z)},${n(b.angle)},${n(b.span)};`);
+ for (const m of w.markers || []) h.update(`M${m.kind},${n(m.x)},${n(m.z)};`);
  // Lakeshore Dunes' blowouts: the baked sand field itself, every byte. Null
  // everywhere else, so this moved no other biome's hash either.
  if (w.blowouts) h.update(`B${w.blowouts.Sx}x${w.blowouts.Sz}:${crypto.createHash('sha1').update(w.blowouts.data).digest('hex')};`);

@@ -279,7 +279,9 @@ export const GENERATOR_VERSION=52;
 // 3: phase 2, people: cart paths down every hole and on to the next tee,
 //    with bridges over creeks (paths.js) -- a lie of their own that trees and
 //    houses keep off.
-export const ARCHITECT_VERSION=3;
+// 4: phase 2, people: red stakes round water, white ones by the boundary,
+//    yardage posts and a rake by every bunker (markings.js).
+export const ARCHITECT_VERSION=4;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

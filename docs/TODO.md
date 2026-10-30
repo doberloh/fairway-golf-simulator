@@ -58,6 +58,20 @@ quality measures*, which it absorbs.
   not seen), the crest and founding line on the final scorecard (not seen),
   flags by pin position (seen: a white middle flag).
 - [ ] Phases 2 (rest) to 7 (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
+  Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
+  stores positions as int16 in a box two model-heights each way; a model
+  wider than that wraps round to the other side. Eleven shipped models do:
+  Blender_Tussock_1 and _2 (2.7 and 2.9 heights out), Blender_Log_1 to _3
+  (2.1-2.9), Blender_Sorrel_1 (2.9), Blender_LakeDuneGrass_3 (2.0),
+  Blender_LakeJuniper_1 and _2 (4.8 and 5.9) and Blender_LakeDriftwood_1 and
+  _2 (4.9 and 3.8) -- their outermost parts have been drawn folded back
+  through the model since they were ingested. The fix is built and used for
+  the Architect's own families: a per-model scale `q` (build-meshes.mjs
+  `OWN_SCALE`, read in mesh-assets.js). Adding those eleven models' families to
+  `OWN_SCALE` fixes them, and changes how they look on every course, Classic
+  included -- so it waits for the owner (the goal gives Classic only its free
+  extras). Rendering only: no fingerprint or version moves.
 
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
