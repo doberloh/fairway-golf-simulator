@@ -19,13 +19,16 @@ export const YARD = .9144, FOOT = .3048;
 // The hole slab: the number in the coloured block, the course's name over
 // "PAR 4 / 412 YDS". The range has no number and no par: "R", and the green
 // being played to. An endless run has no total.
-export function holeSlab({range = false, hole = 0, par = 4, yards = 0, course = '', pin = '', green = ''} = {}) {
+// `title` is the hole's own name (hole-names.js), shown in place of the
+// course's when there is one; the course's name stays as `name`.
+export function holeSlab({range = false, hole = 0, par = 4, yards = 0, course = '', pin = '', green = '', title = ''} = {}) {
  if (range) return {number: 'R', name: 'DRIVING RANGE', line: [green ? String(green).toUpperCase() : 'RANGE', `${Math.round(yards)} YDS`]};
  return {
   number: String(hole + 1),
   name: String(course).toUpperCase(),
   line: [`PAR ${par}`, `${Math.round(yards)} YDS`],
   pin: pin ? `PIN ${String(pin).toUpperCase()}` : '',
+  title: title ? String(title).toUpperCase() : '',
  };
 }
 

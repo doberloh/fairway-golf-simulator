@@ -421,6 +421,16 @@ The seams so far, each listed here as it is built:
   to a scalloped line instead of a fade of chance, taking no draw for it; then
   `designedPlanting` (architect.js) adds avenues and dogleg corners.
 
+- `surface` (course.js) -- an Architect course's cart paths (paths.js), routed
+  at the start of planting so houses and trees, which ask `surface`, keep off
+  them; a path takes rough, semi-rough, fairway or any ground type, never a
+  green, fringe, tee, sand or water. The renderer lays its strip on the same
+  polyline (`addPaths`). A ball at rest on one gets free relief
+  (relief.js `pathRelief`, main.js `takePathRelief`).
+- Free extras both designers get, read from built holes and never in the world
+  (so never fingerprinted): flags by pin band (course.js `PIN_FLAGS`,
+  `pinBandOf`), hole names (hole-names.js), the crest (crest.js).
+
 **A TRAP: a tuck is a width, not a hole in the fairway.** The fairway tucks
 round a side bunker by narrowing that side's half-width over the bunker's
 length (`tucks` in `designHole`); a bunker INSIDE the fairway (a centreline

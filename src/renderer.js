@@ -56,7 +56,7 @@ const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
-import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
+import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
 import {addVegetation,farWoodGeometry} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {cullInstances} from './instance-cull.js';
@@ -1111,7 +1111,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1907,19 +1907,48 @@ export class GolfView{
  // white figures on the flag's colour, as most clubs print them, where the
  // cloth was a plain rectangle. `number` absent (the range): plain, as before.
  // The stick and cup are untouched -- the ball plays against them.
- flagCloth(color,number){
+ flagCloth(color,number,ink='#fffaf0'){
   const c=document.createElement('canvas');c.width=128;c.height=88;const ctx=c.getContext('2d');
   ctx.fillStyle=color;ctx.fillRect(0,0,128,88);
   ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(0,0,128,6);ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(0,82,128,6);
-  ctx.fillStyle='#fffaf0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
+  ctx.fillStyle=ink;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
   const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;this.resources.push(tex);return tex;
  }
- addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null}={}){
+ addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null,ink=undefined}={}){
   const group=this.group,blue=this.style==='blueprint',white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
+  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number,ink)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
   return {assembly,pole,flag,cup,liner,floor};
+ }
+ // CART PATHS AND THEIR BRIDGES (architect-courses, phase 2; paths.js): a strip
+ // laid on the ground along each path, a hair above it, in the landscape's
+ // material, and a plank bridge where one crosses a creek. Only an Architect
+ // course has any. The strip follows the ground AS DRAWN -- the lie reads the
+ // same polyline (course.js `surface`), so paint and play agree.
+ addPaths(w){
+  if(!w?.paths?.length)return;
+  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f'};
+  for(const path of w.paths){
+   const p=path.points;if(p.length<2)continue;
+   const pos=[],uv=[],idx=[],half=path.width/2;let run=0;
+   for(let i=0;i<p.length;i++){
+    const a=p[Math.max(0,i-1)],b=p[Math.min(p.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
+    if(i)run+=Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z);
+    for(const s of [-1,1]){const x=p[i].x+nx*half*s,z=p[i].z+nz*half*s;pos.push(x,w.height(x,z)+.035,z);uv.push(s<0?0:1,run/4);}
+    if(i){const k=(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
+   }
+   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+   const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+   const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;mesh.userData.path=true;this.group.add(mesh);this.resources.push(g,mat);
+  }
+  const wood=this.surfaceMaterial('#8a6440'),rail=this.surfaceMaterial('#6d4c30');this.resources.push(wood,rail);
+  for(const b of w.bridges||[]){
+   const ca=Math.sin(b.angle),cb=Math.cos(b.angle),ends=[-1,1].map(s=>w.height(b.x+ca*b.span/2*s,b.z+cb*b.span/2*s));
+   const y=Math.max(...ends,w.height(b.x,b.z))+.45,deck=new T.Mesh(new T.BoxGeometry(b.width,.22,b.span),wood);
+   deck.position.set(b.x,y,b.z);deck.rotation.y=b.angle;deck.castShadow=deck.receiveShadow=true;this.group.add(deck);this.resources.push(deck.geometry);
+   for(const s of [-1,1]){const r=new T.Mesh(new T.BoxGeometry(.14,.75,b.span),rail);r.position.set(b.x+Math.cos(b.angle)*s*b.width/2,y+.45,b.z-Math.sin(b.angle)*s*b.width/2);r.rotation.y=b.angle;r.castShadow=true;this.group.add(r);this.resources.push(r.geometry);}
+  }
  }
  addHoleDetails(h){
   const group=this.group;
@@ -1928,7 +1957,7 @@ export class GolfView{
   // two parts live in an assembly whose own y is driven by the hole-out lift
   // animation -- so they are moved individually rather than by shifting a parent.
   if(h.greens)this.addRangeGreens(h);
-  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
+  else{const flag=PIN_FLAGS[pinBandOf(h)],props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1,color:flag.cloth,ink:flag.ink});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.

@@ -999,6 +999,11 @@
  .rh-results h2{margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  .rh-res-head strong{font-size:22px;font-weight:800;font-style:italic;color:var(--hot);letter-spacing:.04em}
  .rh-res-head small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ /* The course's crest (architect-courses, phase 2; crest.js), to the left of
+    the headline, the rows of the head beside it. */
+ .rh-res-head:has(.rh-res-crest){grid-template-columns:auto 1fr;column-gap:16px}
+ .rh-res-head:has(.rh-res-crest)>:not(.rh-res-crest){grid-column:2}
+ .rh-res-crest{grid-row:1 / span 3;align-self:center;display:block;line-height:0}
  .rh-res-row.tie::before{box-shadow:inset 0 0 0 3px var(--hot)}
  .rh-res-name i{margin-left:8px;font-size:15px;font-style:normal;letter-spacing:.12em;color:var(--soft)}
  .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}

@@ -169,3 +169,40 @@ export function reliefOptions(ground, trouble, pin, {outRule = 'stroke', back = 
  }
  return options;
 }
+
+// FREE RELIEF FROM A CART PATH (architect-courses, phase 2; Rule 16.1b, an
+// immovable obstruction in the general area). The nearest point of complete
+// relief -- where neither the ball nor the golfer's stance is on the path --
+// no nearer the hole, then a drop inside one club-length of it, also no nearer
+// the hole and in the general area (not water, a green or sand). No penalty.
+// `surface(x, z)` is the course's (the hole's local frame, as a lie is kept).
+// The game takes this relief for the golfer, as almost every golfer would
+// (PLACED: playing it off the path, which the Rules also allow, is not
+// offered); the stance is half a metre either side of the ball.
+export const STANCE = .5;
+export function pathRelief(surface, ball, pin, {step = .1, reach = 15} = {}) {
+ const toPin = dist(ball, pin), playable = s => s !== 'path' && s !== 'water' && s !== 'green' && s !== 'sand';
+ const clearAt = (x, z) => {
+  if (!playable(surface(x, z))) return false;
+  // The stance, across the line to the hole.
+  const dx = pin.x - x, dz = pin.z - z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
+  return surface(x + nx * STANCE, z + nz * STANCE) !== 'path' && surface(x - nx * STANCE, z - nz * STANCE) !== 'path';
+ };
+ for (let r = step; r <= reach; r += step) {
+  let best = null;
+  for (let k = 0; k < 48; k++) {
+   const a = k * Math.PI / 24, x = ball.x + Math.cos(a) * r, z = ball.z + Math.sin(a) * r;
+   if (dist({x, z}, pin) < toPin - 1e-6 || !clearAt(x, z)) continue;
+   const d = dist({x, z}, pin);
+   if (!best || d > best.d) best = {x, z, d};
+  }
+  if (best) {
+   // The drop: a ball's width further from the path than the reference point,
+   // still inside the club-length and no nearer the hole.
+   const ux = (best.x - ball.x) / r, uz = (best.z - ball.z) / r, push = Math.min(.15, CLUB_LENGTH);
+   const drop = {x: best.x + ux * push, z: best.z + uz * push};
+   return {reference: {x: best.x, z: best.z}, spot: clearAt(drop.x, drop.z) && dist(drop, pin) >= toPin - 1e-6 ? drop : {x: best.x, z: best.z}, penalty: 0};
+  }
+ }
+ return null;
+}

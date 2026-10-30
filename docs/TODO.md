@@ -45,7 +45,19 @@ quality measures*, which it absorbs.
   again and everything returns. Save the course and export its code: both
   should come back as Architect. (Phase 0: Node tests, and the
   `architect-studio` smoke journey drives all of it but the code export.)
-- [ ] Phases 1-7 (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Not yet played by a person: phase 1, holes designed against the
+  shots.** Seen from above (CPU maps) and from four GPU views of one Midwest
+  course: bunkers where drives land, fairways that tuck round them, avenues.
+  To check: a few Architect rounds in different styles -- do the holes read as
+  designed, and do they play fairly (the virtual golfer says 0.15 strokes
+  easier than Classic overall, harder on Island, Mountain and Haunted)?
+- [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
+  their bridges (seen in GPU captures), free relief when a ball stops on a
+  path (Node only: no ball was played onto one in the game), the hole's name
+  in the hole panel and the architect's note as a hole is arrived at (built,
+  not seen), the crest and founding line on the final scorecard (not seen),
+  flags by pin position (seen: a white middle flag).
+- [ ] Phases 2 (rest) to 7 (ARCHITECT_COURSES.md, *Status*).
 
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 

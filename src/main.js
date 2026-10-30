@@ -55,6 +55,8 @@ import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js'
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
 import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,sheetScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
+import {holeNames} from './hole-names.js';
+import {crestSvg,courseIdentity} from './crest.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
@@ -92,7 +94,7 @@ import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRange
 import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
-import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
+import {reliefOptions,crossingPoint,OB_RULES,pathRelief} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor,shownFor,isArchitect} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
@@ -1981,7 +1983,7 @@ function finishShot(){
  // never crossed the boundary line; the house is the edge, and it is where it
  // stopped.
  if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded,{chipIn:!!result.holed&&!result.hazard&&before.lie!=='green'&&before.stroke>1});recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);takePathRelief(result);announceHoleOut(carded,{chipIn:!!result.holed&&!result.hazard&&before.lie!=='green'&&before.stroke>1});recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -2230,9 +2232,37 @@ function freshHole(){
  return !settings.range&&!round.finished&&!round.holeComplete&&
   !round.scrambleSelection&&round.strokes?.every(n=>n===0);
 }
+// FREE RELIEF FROM A CART PATH (architect-courses, phase 2; relief.js
+// `pathRelief`): a ball at rest on a path is lifted to the nearest point of
+// complete relief and dropped, no penalty, and the golfer is told. Not in a
+// scramble, whose balls are chosen between rather than played.
+function takePathRelief(result){
+ if(result.hazard||result.holed||round.holeComplete||round.mode==='scramble'||rangeMode)return;
+ if(course.surface(result.end.x,result.end.z)!=='path')return;
+ const r=pathRelief((x,z)=>course.surface(x,z),result.end,course.pin);if(!r)return;
+ const i=round.positions.findIndex(p=>Math.abs(p.x-result.end.x)<1e-6&&Math.abs(p.z-result.end.z)<1e-6);if(i<0)return;
+ round.positions[i]={...round.positions[i],x:r.spot.x,z:r.spot.z};
+ toast('On the cart path: free relief, dropped beside it (no penalty).');
+}
 function arriveAtHole(){
- if(freshHole())view.arriveAtHole(round.position,aim);
+ if(freshHole()){view.arriveAtHole(round.position,aim);architectNote();}
  else view.flyCamera(round.position,aim);
+}
+// THE HOLE'S NAMES AND THE ARCHITECT'S NOTE (architect-courses, phase 2;
+// hole-names.js). Names are read from the built holes, once a world, for both
+// designers; an endless run grows one hole at a time and has none. The note
+// is an Architect hole's own (architect.js `designHole`), said once as the
+// hole is arrived at.
+let namedWorld=null,courseHoleNames=[];
+function holeNameOf(hole){
+ if(!world||round?.endless||rangeMode)return '';
+ if(namedWorld!==world){courseHoleNames=holeNames(world.holes,settings);namedWorld=world;}
+ return courseHoleNames[worldHole(hole)]||'';
+}
+function architectNote(){
+ const note=course?.design?.note;
+ if(!note||round.endless||rangeMode)return;
+ toast(`${holeNameOf(round.hole)||`Hole ${round.hole+1}`}: ${note}`);
 }
 function advanceHole(){
  cancelAdvance();endHoleSummary();
@@ -4876,8 +4906,10 @@ function drawRoundHud(){
  const c=clubs[$('club').value],putt=c?.code==='PT'||!!ballOnGreen;
  // The hole slab.
  const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
-  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
- setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
+  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole),title:holeNameOf(round.hole)});
+ // The hole's own name in place of the course's (architect-courses, phase 2);
+ // the course's stays as the slab's tooltip.
+ setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a" title="${escape(s.name)}">${escape(s.title||s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
  // The big map's header: the hole's line, the aim and the pin (frame c-bigmap).
  setHtml($('mapFacts'),aimViewOpen?escape([...s.line,!flight&&aimPoint?`AIM ${Math.round(aimRange/YARD)}`:'',`PIN ${Math.round(distance()/YARD)}`].filter(Boolean).join(' · ')):'');
  // THE WIND, alone at the top centre (round 13: the hole panel stands alone at
@@ -4993,7 +5025,10 @@ function roundCompleteHtml(){
   const big=round.mode==='skins'?r.measure:strokes;
   return `<div class="rh-res-row${r.win?' win':''}${r.tie?' tie':''}"><span class="rh-res-pos">${r.place??'—'}</span><span class="rh-res-pic">${pic(r.seat)}</span><span class="rh-res-who"><span class="rh-res-name">${escape(r.name.toUpperCase())}${r.win?' \u00b7 WINS':r.tie?' \u00b7 TIED':''}${round.mode==='match'?` <i>${escape(r.measure)}</i>`:''}</span>${seats.map(i=>gain(i,scramble)).join('')}</span><span class="rh-res-score">${escape(big)}<small class="${sc.under?'under':''}">${round.mode==='skins'?`${escape(strokes)} · `:''}${escape(sc.text)}</small></span></div>`;}).join('');
  const share=canSendCards();
- return `<section class="rh-results"><div class="rh-res-head"><h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></div>`
+ // The course's crest beside the title, and an Architect course's founding
+ // (crest.js; architect-courses, phase 2).
+ const id=round.endless?{}:courseIdentity(settings),crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
+ return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes${id.year?` \u00b7 founded ${id.year}, laid out by ${escape(id.architect)}`:''}</small></div>`
   +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')

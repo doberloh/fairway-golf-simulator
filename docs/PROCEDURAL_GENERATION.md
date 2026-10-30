@@ -248,6 +248,11 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   tucks round a bunker on its edge.
 - **The green** drains off a front corner, higher at the back; a template
   asks for its own (the Redan's fall away, the Biarritz swale, a punchbowl).
+- **Cart paths** (paths.js): routed when planting begins, down each hole on
+  its bail-out side 14 m beyond the rough and round its hazards, past the
+  green to a pull-off and on to the next tee, smoothed; pushed sideways off any
+  green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
+  one is `path`, and houses and trees keep off it.
 - **The trees** are cleared to a scalloped line, not faded by chance; avenues
   line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
   inside corner gets a cluster.

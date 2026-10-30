@@ -10817,3 +10817,39 @@ Classic's chance fade. All PLACED.
 **How much harder it plays** (`tools/architect-difficulty.mjs`; the owner's
 limit is 1.5 strokes per 18 for the virtual golfer): see
 docs/ARCHITECT_COURSES.md, *Measures*, for each run.
+
+## Architect courses: people (30 October 2026)
+
+What phase 2 of Architect courses (docs/ARCHITECT_COURSES.md) rests on.
+
+**Flags by pin position** (both designers): red front, white middle, blue (or
+black) back is the scheme most clubs use, with many variations (MSU archive,
+a superintendent's column, 2003; parkerflags.com; forums note blue is hard to
+see, and some clubs use yellow or a sliding ball instead). Taken: red, white,
+blue, with dark numbers on the white so they read. PLACED: the exact colours.
+
+**Cart paths** (Architect): about 8 ft wide, near where shots land but out of
+play, close to tees, with a pull-off by greens (USGA *Cart paths* PDF; golf
+course industry, *Design conceptions: cart path design*; MSU archive 1983);
+accessible routes 48 in (US Access Board). Taken: 2.1-3.0 m by club
+(municipal narrowest, resort widest), 14 m beyond the rough's edge on the
+hole's bail-out side, pushed out round its hazards. PLACED: every distance.
+The surface (`grounds.js` path) is PLACED against rock just below it: cor
+0.235, the hardest in play, roll 0.85, a hop of 16 cm.
+
+**Free relief from a path** (`relief.js` `pathRelief`): Rule 16.1b, an
+immovable obstruction in the general area -- the nearest point of complete
+relief (neither the ball nor the stance on the path), no nearer the hole, a
+drop within one club-length of it, no penalty. PLACED: the stance half a
+metre either side of the ball; the game takes the relief for the player
+rather than offering to play it off the path, as almost every golfer would.
+
+**Hole names and the crest** (both designers): names from what a hole is (its
+template, water, bend, length) or the land's words; template names (Redan,
+Eden, Biarritz, Cape, Road) are the generic names architects use, and no
+single famous hole's nickname is used. **The made-up architects** (Architect
+only): thirty-six names, searched with "golf course architect" in three
+batches (29-30 October 2026); none returned a real architect (search
+summaries, which listed only Wikipedia's *List of golf course architects*
+and directories). Founding years by age, PLACED: new 2005-2024, mature
+1955-1995, old 1895-1932, restored 1898-1930.

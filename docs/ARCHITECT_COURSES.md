@@ -22,7 +22,7 @@ number of holes.
 | --- | --- |
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
 | 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
-| 2. People | not started |
+| 2. People | first half built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note. Still to come: stakes and posts, a clubhouse, the colliders they need |
 | 3. The field | not started |
 | 4. Home | not started |
 | 5. Built | not started |
@@ -158,6 +158,33 @@ ARCHITECT_VERSION 2. Classic's fingerprint unchanged throughout.
   courses.
 - Tests: tests/architect.test.mjs.
 
+### Phase 2: people, first half (30 October 2026)
+
+ARCHITECT_VERSION 3. Classic's fingerprint unchanged.
+
+- **Cart paths** (paths.js; absorbs IDEAS *Cart paths*): one path a course,
+  down each hole on its bail-out side 14 m past the rough, round the hole's
+  hazards, past the green to a pull-off and behind it, then straight on to the
+  next tee; smoothed twice; pushed sideways off greens, tees, sand and water;
+  2.1-3.0 m wide by club; made of asphalt, bark, granite, shell, gravel or
+  boardwalk by landscape. About 4.3 km for nine holes. A new ground type,
+  `path` (grounds.js), the hardest surface in play; not natural ground, so
+  nothing is planted or built on it. The renderer lays a strip on the same
+  polyline. Free relief (relief.js `pathRelief`), taken for the player.
+- **Bridges** (absorbs IDEAS *Bridges over creeks*): wherever the path crosses
+  a creek or river, a plank deck with rails, drawn procedurally until the
+  Blender bridge kit replaces it (phase 2's second half).
+- **Free extras for both designers**, read from the built course and never in
+  the world, so Classic's fingerprint cannot see them: **flags by pin
+  position** (red front, white middle, blue back; course.js `PIN_FLAGS`),
+  **hole names** (hole-names.js) in the hole panel, and the **crest**
+  (crest.js) on the final scorecard.
+- **Architect only**: the founding year and made-up architect (crest.js
+  `courseIdentity`) on the final scorecard; the architect's note said as each
+  hole is arrived at (main.js `architectNote`).
+- Tests: tests/paths.test.mjs, tests/hole-names.test.mjs; smoke unchanged
+  (no journey plays a ball onto a path).
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -241,6 +268,8 @@ is above about 30%).
 | --- | --- | --- | --- |
 | 30 Oct, phase 0 | smoke `architect-studio`, `studio` | 4%, 38 °C, no game | studio passed; architect-studio failed -- the dials are on their own tab of the sheet, which the journey had not opened (the harness, not the game) |
 | 30 Oct, phase 0 | smoke `architect-studio` (journey fixed; the designer moved to the head of Course) | 4%, 39 °C | passed |
+| 30 Oct, phase 2 | capture `arch-p2a`: an Architect Midwest course, four views (overhaul.mjs, `--course designer=architect`) | 6%, 41 °C | built in 13.8 s, no errors; paths, the pull-offs and a white middle flag seen |
+| 30 Oct, phase 2 | smoke `architect-studio`, `studio`, `surprise-round`, `hud-reachable`, `no-swallowed-errors` | 6%, 40 °C | 5 of 5 passed |
 
 ## Blender iteration log
 

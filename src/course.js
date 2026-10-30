@@ -10,6 +10,7 @@ import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
 import {designSettings} from './designer.js';
 import {isArchitect} from './settings-schema.js';
 import {designHole,designedPlanting} from './architect.js';
+import {routePaths,pathIndex} from './paths.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -20,7 +21,7 @@ import {BIOMES, biomeOf} from './biomes.js';
 import {blowoutField,isBlowout,BLOWOUT_WATER} from './blowouts.js';
 import {landformOf,wildField,wildGround,fallenBake,fallenAt,WILD_WATER,fbm,saltOf} from './landforms.js';
 import {standsOf,standSites,choose} from './stands.js';
-import {allows} from './grounds.js';
+import {allows,isNatural} from './grounds.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
 // JavaScript variant published by bryc (MIT fallback). See THIRD_PARTY_NOTICES.txt.
 // Seeded generation lives in course-plan.js so the scorecard and the course
@@ -73,6 +74,18 @@ export const pinDayOf = settings => PIN_DAYS[settings?.pinDay] ? settings.pinDay
 // works its way around the greens instead of playing the same spot every time.
 export const PIN_BANDS = ['front', 'middle', 'back'];
 export const pinBandFor = index => PIN_BANDS[((index % 3) + 3) % 3];
+// THE FLAG SAYS WHERE THE CUP IS (architect-courses, phase 2; a free extra both
+// designers get, since it moves nothing generated): red at the front, white in
+// the middle, blue at the back -- the commonest scheme at real clubs (RESEARCH
+// *Architect courses: people*). White cloth takes dark numbers so they read.
+export const PIN_FLAGS = {
+ front: {cloth: '#d4443a', ink: '#fffaf0', name: 'red'},
+ middle: {cloth: '#f2eee1', ink: '#23342a', name: 'white'},
+ back: {cloth: '#2c5cb6', ink: '#fffaf0', name: 'blue'},
+};
+// The band a hole's cup was actually cut in, by the same rule `choosePin` uses.
+export const pinBandOf = h => h?.settings?.pinBand === 'centre' ? 'middle'
+ : BAND_WINDOW[h?.settings?.pinBand] ? h.settings.pinBand : pinBandFor(h?.hole ?? 0);
 // The lab sets pinBand to 'centre' so its cup sits in the middle of a
 // flat green with the same reach in every direction. It is a bench, not a round:
 // a front hole location would leave a preset with no green to roll out on.
@@ -2223,6 +2236,9 @@ export function* generateWorldSteps(settings={},options={}){
   if(lakeOwner(x,z,collar))return true;
   return n.h.ponds.some(p=>cut(pondReach(p),ovalDistance(n.p.x,n.p.z,p)));
  };
+ // An Architect course's cart paths (paths.js), set once the holes are built
+ // and before anything is planted; null on a Classic course, which has none.
+ let pathIdx=null,paths=[],bridges=[];
  function surface(x,z){
   if(lakeOwner(x,z))return 'water';
   const st=streams.at(x,z);
@@ -2242,6 +2258,9 @@ export function* generateWorldSteps(settings={},options={}){
   const y=height(x,z);
   if(bio.sea&&y<waterLevel)return 'water';
   const found=localSurface(n.h,n.p.x,n.p.z);
+  // A CART PATH (architect-courses, phase 2): over rough, semi-rough, fairway
+  // or any ground type, never a green, its fringe, a tee, sand or water.
+  if(pathIdx&&(found==='rough'||found==='semi'||found==='fairway'||isNatural(found))&&pathIdx.onPath(x,z))return 'path';
   // The beach, on the two biomes that have a coast. `height` rather than `land`
   // because that is the field the ground mesh is actually built from, and the
   // shader keys its own copy off exactly the same number.
@@ -2267,6 +2286,9 @@ export function* generateWorldSteps(settings={},options={}){
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  yield phaseAt(4);
+ // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
+ // that follow ask `surface`, which now knows where the paths run.
+ if(isArchitect(s)&&!s.range){({paths,bridges}=routePaths({holes,s,surface,streams}));pathIdx=pathIndex(paths);}
  // The tees are sited by now, so their corridors are final; built before the
  // houses because a house may not stand in what a tee sees either.
  const launch=launchCorridors(holes,height);
@@ -2706,7 +2728,7 @@ export function* generateWorldSteps(settings={},options={}){
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
  if(straw.length)fallenField=fallenBake((x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p)),groundGrid.halfX,groundGrid.halfZ);
  const groundCover=(x,z)=>fallenField&&fallenAt(fallenField,x,z)?'straw':bio.cover;
- const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,paths,bridges,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }
