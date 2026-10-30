@@ -174,11 +174,15 @@ const PICK = {
  // AN ARCHITECT COURSE'S BUILT WATER (tools/blender/architect_water.py;
  // architect-courses, phase 5): bridge bays (renderer.js addPaths), rip-rap,
  // tie walls and fountains (waterworks.js, renderer.js addWaterworks).
+ // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
+ // walls, the farmstead, ruins and landmarks (story.js, renderer.js
+ // addBuildings and addStory).
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Lantern_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1', 'Fountain_1'].map(k => `blender:Blender_${k}`),
 };
 
 // Families whose models may carry their own scale (`q`, below).
-const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks']);
+const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks', 'storypieces']);
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and

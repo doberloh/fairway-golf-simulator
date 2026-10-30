@@ -10929,3 +10929,35 @@ Phase 5 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 5*).
   and down when it touches the planks) is PLACED.
 - **The deck's height** -- 0.45 m over the higher of its two ends and its
   middle -- is PLACED (phase 2's drawn deck, kept).
+
+## Architect courses: the land's story (30 October 2026)
+
+Phase 6 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 6*), from
+the study's workstreams A (*pass 7* templates) and L, and its sources:
+
+- **Dell** -- Lahinch's 5th, about 154 yd, blind between dunes, a white
+  aiming stone on the dune
+  (https://www.top100golfcourses.com/news-item/d-is-for-dell-blind-par-threes-template-holes,
+  https://thefriedegg.com/courses/lahinch-golf-club-old-course). Taken: a
+  dune across the line before a sunken green, a white stone. The dune's 3.6 m
+  and 15 m short of the green are PLACED.
+- **Pit** -- North Berwick's 13th, a green behind an old dry-stone wall
+  (https://thefriedegg.com/eclectic-18-uk-hole-no-13-north-berwick/,
+  https://www.yourgolftravel.com/best-golf-holes/north-berwick-13th). Taken:
+  a solid wall across the green's front, the green sunk. 7 m short of the
+  green and 6 m past its sides: PLACED.
+- **Barranca** -- Pasatiempo's back nine crossing MacKenzie's ravines, a
+  footbridge on the 11th (https://www.planetgolf.com/courses/usa/pasatiempo-golf-club,
+  https://golfcoursenerd.substack.com/p/pasatiempo-golf-club-new-back-nine).
+  Taken: a ravine across the hole to carry, bridged for the path. Its 4.5 m
+  depth, 24 m width and its place between the drive and the green are
+  PLACED; it crosses square, not at the study's angle.
+- **Alps** -- the study's template list (a blind approach over a hill;
+  Prestwick's 17th by name). Its 5.5 m ridge 42 m short of the green is
+  PLACED.
+- **The land's story** -- the study's workstream L (field walls, North
+  Berwick's walls in play; a farm, ruins, a mine head; a lighthouse or spire
+  to aim at). Every count (three wall lines a little, six a lot; one or two
+  ruins; a landmark a lot) and clearance (38 m for a building, 14 m for a
+  wall, 150 m beyond a green for a landmark, seen from 120 m short) is
+  PLACED.

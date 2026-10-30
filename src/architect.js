@@ -53,7 +53,14 @@ export const TEMPLATES={
  nose:{name:"Principal's Nose",par:[4,5],note:'A pair of bunkers in the middle of the fairway; choose your side of them from the tee.'},
  leven:{name:'Leven',par:[4],note:'A short hole with trouble on the direct line; the long way round is the safe one.'},
  long:{name:'Long',par:[5],note:'Cross bunkers at the lay-up: decide how far to go with the second.'},
+ // The land's templates (phase 6): a landform makes the hole.
+ dell:{name:'Dell',par:[3],note:'Blind: the green hides in a hollow behind the dune. Aim over the white stone on the ridge.'},
+ alps:{name:'Alps',par:[4],note:'The approach is blind over a great ridge, with a bunker waiting beyond it: trust the line.'},
+ barranca:{name:'Barranca',par:[4],note:'A ravine crosses the hole short of the green: the approach must carry it, or lay up short.'},
+ pit:{name:'Pit',par:[4],note:'A stone wall crosses the front of the green, which sits sunk behind it: carry the wall, and stop the ball quickly.'},
 };
+
+const DUNE_STYLES=new Set(['links','sandhills','heathland','golden','raynor']),CLASSIC_STYLES=new Set(['golden','raynor','links']);
 
 // Where one golfer's tee shot comes to rest along the playing line, from a tee
 // at local z = `from`: arc length measured down the hole's own centre line.
@@ -104,11 +111,11 @@ export function designHole({s,hole,par,line,bio,geo}){
  let concept,template=null;
  if(par===3){
   concept=rnd()<.15?'penal':'short';
-  if(rnd()<A.template)template=pick(rnd,{redan:2,eden:1.5,biarritz:1,punchbowl:1,plateau:1});
+  if(rnd()<A.template)template=pick(rnd,{redan:2,eden:1.5,biarritz:1,punchbowl:1,plateau:1,dell:DUNE_STYLES.has(styleKey)?1.4:.3});
  }else if(par===4){
   const drivable=yards<345;
   concept=drivable&&rnd()<.7?'risk':pick(rnd,concepts);
-  if(rnd()<A.template)template=pick(rnd,{road:1.2,cape:isDogleg&&wet?2:0,nose:1,leven:drivable?1.5:0,punchbowl:.6,plateau:.6});
+  if(rnd()<A.template)template=pick(rnd,{road:1.2,cape:isDogleg&&wet?2:0,nose:1,leven:drivable?1.5:0,punchbowl:.6,plateau:.6,alps:CLASSIC_STYLES.has(styleKey)?1.2:.3,barranca:drivable?0:.9,pit:DUNE_STYLES.has(styleKey)?.9:0});
  }else{
   concept=rnd()<A.cross?'threeShot':pick(rnd,{strategic:concepts.strategic,risk:concepts.risk*1.5,heroic:concepts.heroic*.5});
   if(rnd()<A.template)template=pick(rnd,{long:concept==='threeShot'?2:.5,nose:1});
@@ -291,6 +298,38 @@ export function designHole({s,hole,par,line,bio,geo}){
   greenBunker(FRONT+preferred*.3,'The Road bunker: it eats into the front of the green on the near side; come in from the far side of the fairway.',{rx:size(3.5,5),rz:size(4,5)});
  }
 
+ // THE LAND'S TEMPLATES (phase 6; the study, workstreams A and L): holes whose
+ // character is a landform, recorded as earthworks in the hole's frame, which
+ // course.js adds to the ground with the mounds (`earthField`).
+ //   Dell      a dune across the line short of the green, the green sunk in
+ //             the hollow behind it: blind, aimed over a white stone
+ //   Alps      a great ridge across the fairway short of the green, a bunker
+ //             waiting beyond it: the approach is blind
+ //   Barranca  a ravine across the hole between the drive and the green; the
+ //             fairway stops at its lips (`gaps`), the cart path bridges it
+ //   Pit       a dry-stone wall across the front of a sunken green (North
+ //             Berwick's 13th), solid and in play (`walls`; story.js draws
+ //             and physics.js stops a ball against it)
+ // All sizes PLACED.
+ const earthworks=[],gaps=[],walls=[];
+ const across=z=>Math.max(leftWidth(z),rightWidth(z));
+ if(template==='dell'){
+  const z=length-greenSize-15;
+  earthworks.push({kind:'ridge',z,half:across(z)+greenSize+18,r:9,h:3.6,aim:true,why:'The Dell\'s dune: it hides the green in the hollow behind it. A white stone on its crest gives the line.'});
+ }else if(template==='alps'){
+  const z=length-greenSize-42;
+  earthworks.push({kind:'ridge',z,half:across(z)+30,r:13,h:5.5,why:'The Alps: a great ridge across the fairway short of the green, so the approach is played blind over it.'});
+  greenBunker(FRONT,'Beyond the Alps, a bunker across the front of the green for the approach that does not quite carry.',{rx:size(7,10),rz:size(3,4.5)});
+ }else if(template==='barranca'){
+  const r=12,z=clamp(goodZ+35,fairwayStart+45,length-greenSize-45);
+  earthworks.push({kind:'ravine',z,half:across(z)+45,r,depth:4.5,floor:4,why:'The barranca: a ravine across the hole between the drive and the green. Carry it with the approach, or lay up short of it.'});
+  gaps.push([z-r*.8,z+r*.8]);
+ }else if(template==='pit'){
+  walls.push({z:length-greenSize-7,half:greenSize*greenAspect+6,why:'The Pit: a stone wall across the front of the green, which sits sunk behind it. Carry the wall.'});
+ }
+ for(const w of walls)reasons.push({kind:'wall',i:walls.indexOf(w),why:w.why});
+ for(const e of earthworks)reasons.push({kind:'earthwork',i:earthworks.indexOf(e),why:e.why});
+
  // ------------------------------------------------------------ the design
  const t=template?TEMPLATES[template]:null;
  const note=t?t.note:par===3?'A short hole: the green is the target, and its bunkers decide where to miss.'
@@ -301,7 +340,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  const design={style:styleKey,concept,template,preferred:sideName(preferred),note,reasons,
   zones:{good:goodZ,average:avgZ,layup:layZ},
   // Green overrides read by course-plan.js greenRecipe (Architect holes only).
-  green:greenPlan(template,rnd,preferred)};
+  green:greenPlan(template,rnd,preferred),earthworks,walls};
  // A COLLECTION AREA (phase 3; the study, workstream D; USGA: short grass that
  // carries a miss away from the green): on a style that plays along the
  // ground, mown fairway beyond the fringe off the front corner the green
@@ -326,7 +365,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  for(let k=0;k<N;k++){const z=Z0+k*STEP;L[k]=leftWidth(z);R[k]=rightWidth(z);}
  const lookup=T=>z=>{const u=(z-Z0)/STEP;if(u<=0)return T[0];if(u>=N-1)return T[N-1];const k=Math.floor(u),f=u-k;return T[k]+(T[k+1]-T[k])*f;};
  const fastLeft=lookup(L),fastRight=lookup(R);
- return {leftWidth:fastLeft,rightWidth:fastRight,width:z=>Math.max(fastLeft(z),fastRight(z)),fairwayStart,mowStart,bunkers,ponds,collections,design};
+ return {leftWidth:fastLeft,rightWidth:fastRight,width:z=>Math.max(fastLeft(z),fastRight(z)),fairwayStart,mowStart,bunkers,ponds,collections,design,gaps};
 }
 
 // What a template asks of its green. Undefined fields keep the green's own
@@ -334,7 +373,7 @@ export function designHole({s,hole,par,line,bio,geo}){
 function greenPlan(template,rnd,preferred){
  if(template==='redan')return {character:'tilted',tiltAway:true,tiltSide:-preferred};
  if(template==='biarritz')return {character:'ridged',ridgeAmp:-.26,ridgeAngle:Math.PI/2,ridgeAt:0,ridgeHalf:3.2};
- if(template==='punchbowl')return {pedestal:'sunken'};
+ if(template==='punchbowl'||template==='dell'||template==='pit')return {pedestal:'sunken'};
  if(template==='plateau')return {character:'tiered'};
  // Every Architect green drains off two sides at least, never all off the
  // front: the tilt falls toward a front corner (the study, *The green,
@@ -479,21 +518,46 @@ export function designMounds(holes, s) {
  }
  return out;
 }
-// The height a set of mounds adds at (x, z): a smooth round bump each, its
-// shoulder easing to nothing at its radius. `index` is a grid built once.
-export function moundField(mounds, cell = 24) {
- const grid = new Map(), key = (i, j) => i + ',' + j;
- for (const m of mounds) {
-  for (let i = Math.floor((m.x - m.r) / cell); i <= Math.floor((m.x + m.r) / cell); i++)
-   for (let j = Math.floor((m.z - m.r) / cell); j <= Math.floor((m.z + m.r) / cell); j++) {
-    const k = key(i, j); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(m);
-   }
+// The height a hole's template earthworks are, in the world: each a segment
+// across the hole at its z, from one end to the other, with its profile.
+export function worldEarthworks(holes) {
+ const out = [];
+ for (const h of holes) for (const e of h.design?.earthworks || []) {
+  const c = h.center(e.z), a = h.toWorld({x: c - e.half, z: e.z}), b = h.toWorld({x: c + e.half, z: e.z});
+  out.push({kind: e.kind, ax: a.x, az: a.z, bx: b.x, bz: b.z, r: e.r, h: e.h ?? 0, depth: e.depth ?? 0, floor: e.floor ?? 0, aim: !!e.aim, hole: h.hole});
  }
+ return out;
+}
+// The height the earthworks add at (x, z). A mound is a smooth round bump,
+// its shoulder easing to nothing at its radius; a ridge the same profile
+// along a segment (its ends round); a ravine a trench along one, its floor
+// `floor` m wide and flat, its walls easing to the lip at `r`. `cell` is
+// the grid built once.
+export function earthField(mounds, works = [], cell = 24) {
+ const grid = new Map(), key = (i, j) => i + ',' + j;
+ const file = (o, x0, x1, z0, z1) => {
+  for (let i = Math.floor(x0 / cell); i <= Math.floor(x1 / cell); i++)
+   for (let j = Math.floor(z0 / cell); j <= Math.floor(z1 / cell); j++) {
+    const k = key(i, j); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(o);
+   }
+ };
+ for (const m of mounds) file(m, m.x - m.r, m.x + m.r, m.z - m.r, m.z + m.r);
+ for (const w of works) file(w, Math.min(w.ax, w.bx) - w.r, Math.max(w.ax, w.bx) + w.r, Math.min(w.az, w.bz) - w.r, Math.max(w.az, w.bz) + w.r);
+ const bump = d => { const c = Math.cos(Math.min(1, d) * Math.PI / 2); return c * c; };
  return (x, z) => {
   const list = grid.get(key(Math.floor(x / cell), Math.floor(z / cell)));
   if (!list) return 0;
   let y = 0;
-  for (const m of list) { const d = Math.hypot(x - m.x, z - m.z) / m.r; if (d < 1) { const c = Math.cos(d * Math.PI / 2); y += m.h * c * c; } }
+  for (const o of list) {
+   if (o.ax === undefined) { const d = Math.hypot(x - o.x, z - o.z) / o.r; if (d < 1) y += o.h * bump(d); continue; }
+   const dx = o.bx - o.ax, dz = o.bz - o.az, t = Math.max(0, Math.min(1, ((x - o.ax) * dx + (z - o.az) * dz) / (dx * dx + dz * dz)));
+   const d = Math.hypot(x - o.ax - dx * t, z - o.az - dz * t);
+   if (d >= o.r) continue;
+   if (o.kind === 'ravine') { const f = o.floor / 2, u = d <= f ? 0 : (d - f) / (o.r - f); y -= o.depth * (1 - u * u * (3 - 2 * u)); }
+   else y += o.h * bump(d / o.r);
+  }
   return y;
  };
 }
+// The mounds alone (phase 5's field; kept for the tools that ask for it).
+export const moundField = (mounds, cell = 24) => earthField(mounds, [], cell);

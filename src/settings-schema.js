@@ -298,7 +298,12 @@ export const GENERATOR_VERSION=52;
 //    rather than running along the bank; and the fairway tucks on the right
 //    side (left/right had been swapped since phase 1: 2 of 23 side bunkers
 //    were tucked, now 22).
-export const ARCHITECT_VERSION=8;
+// 9: phase 6, the land's story: field walls, a farmstead, ruins, a landmark,
+//    a stone circle and lanterns by The land's story (story.js), solid where
+//    they stand; the land's templates -- the Dell's dune, the Alps' ridge,
+//    the Barranca's ravine (bridged, no fairway across it, no trees in it),
+//    the Pit's wall before a sunken green.
+export const ARCHITECT_VERSION=9;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

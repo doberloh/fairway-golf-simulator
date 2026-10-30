@@ -452,6 +452,16 @@ The seams so far, each listed here as it is built:
   step ago lands on top, however far in from the edge). A ball at rest on a
   deck ends in the water (Rule 17.1a). Classic has no bridges.
 
+- `fairwayWidth` (course.js) -- an Architect hole's `gaps` (a Barranca) take
+  the fairway out over the ravine and keep the semi-rough's margin, so the
+  shader's curves and the lie read the same thing. Classic holes have none.
+- The open tree scatter (course.js) -- near a green the corridor gate gives
+  way to the green's own rule; **an Architect hole's gap is still its
+  corridor**, or the ravine is planted across the line of play.
+- `buildings` and the houses' box routine -- the land's story's buildings
+  join the clubhouse (solid, never out of bounds) and its walls are boxes
+  (`wallBoxes`). Trees keep 20 m off a story building and a stride off a wall.
+
 **A TRAP: `leftWidth` is the -x side.** `fairwayWidth(h,z,0,side)` reads
 `leftWidth` for side < 0, and so does every surface query and the shader's
 hole table. Architect code had it the other way from phase 1 to phase 5 --

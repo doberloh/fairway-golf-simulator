@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -2051,11 +2051,25 @@ export class GolfView{
    lakeshore:{stone:'#c4ab84',bark:'#6d6a63',accent:'#f4f1ea',dirt:'#2c3a46'},
   };
   const look=LOOK[w.bio?.key]||LOOK[w.settings?.biome]||LOOK.midwest;
+  // THE LAND'S STORY'S BUILDINGS (phase 6; story.js, tools/blender/architect_story.py):
+  // fitted to their boxes the same way, coloured by piece and landscape.
+  const key=w.bio?.key||w.settings?.biome,ruinStone={links:'#bdb7a8',haunted:'#6f6878',desert:'#cfa27a',mountain:'#a49c90',lakeshore:'#c4b9a2',pnw:'#8f8c7e',redwood:'#948a7a',autumn:'#b5ab98',island:'#b3a48c'}[key]||'#b5ab98';
+  const STORY={
+   barn:{bark:'#b8463a',stone:'#7a7470',dirt:'#4d4a50',accent:'#f4f1ea'},
+   silo:{stone:'#d9d4c8',accent:'#9aa0a6',dirt:'#7d8a96'},
+   windpump:{stone:'#a7aaad',bark:'#6b5a48',dirt:'#4a4a4a',accent:'#e8e4da'},
+   chapel:{stone:ruinStone},cottage:{stone:ruinStone},
+   minehead:{bark:'#6b4f36',dirt:'#3a3a3e'},
+   sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
+   lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
+   church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
+  };
   for(const b of w.buildings){
-   const name='Blender_Clubhouse_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const tone=club?look:(STORY[b.kind]||{});
    const g=new T.Group();
    for(const p of parts){
-    const m=new T.Mesh(p.geometry,this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
+    const m=new T.Mesh(p.geometry,this.surfaceMaterial(tone[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
     const ink=new T.Mesh(p.geometry,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);
    }
    // The model's front is glTF +z (its Blender -y); the building's front is
@@ -2066,12 +2080,46 @@ export class GolfView{
    // THE TERRACE: on sloping ground the floor is level with the high side
    // (clubhouse.js), so a stone wall runs down to the lowest ground under it.
    const drop=b.y-(b.base??b.y)+.6;
-   if(drop>.8){
+   if(club&&drop>.8){
     const wall=new T.Mesh(new T.BoxGeometry(b.width+1.2,drop,b.depth+1.2),this.surfaceMaterial('#c9bea9'));
     wall.position.set(b.x,b.y-drop/2+.2,b.z);wall.rotation.y=b.rotation;wall.castShadow=wall.receiveShadow=true;
     this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
+ }
+ // THE LAND'S STORY'S WALLS AND PROPS (phase 6; story.js): a wall is 2 m
+ // sections laid end to end along each run, stone or hedge, a moor wall's
+ // sections leaning; the props -- a stone circle, the Dell's white aiming
+ // stone, lanterns -- one by one. Instanced; the stone inked like the
+ // furniture. The walls are solid (physics.js reads `wallBoxes`), the props
+ // decoration.
+ addStory(w){
+  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length))return;
+  const key=w.bio?.key||w.settings?.biome;
+  const STONE={links:'#cfc8b6',autumn:'#c2b8a4',mountain:'#b4ac9f',haunted:'#857c90',lakeshore:'#c9bfa8'}[key]||'#c2b8a4';
+  const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
+  const draw=(model,list,colours,inked,place)=>{
+   if(!list.length)return;
+   const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info)return;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((it,i)=>{place(it,info);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();this.group.add(mesh);this.resources.push(mat);
+    if(inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(1.2),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
+  };
+  // Each run cut into sections of about 2 m; a section sits at the lower of
+  // the ground under its ends, sunk a little so a slope shows no gap.
+  const sections=kind=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='hedge')===(kind==='hedge'))){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/2)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot,len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
+  const wallPlace=h=>(s,info)=>{q.setFromAxisAngle(up,s.rot);if(s.lean){q2.setFromAxisAngle(fwd,s.lean);q.multiply(q2);}pos.set(s.x,s.y,s.z);sc.set(h,h,s.len/(2*info.rz));};
+  // Iteration 4: uninked -- inked, a wall's small stones went black.
+  draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
+  draw('Blender_StoryWall_Hedge',sections('hedge'),{leaf:'#4f7a3a'},false,wallPlace(1.6));
+  const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
+  draw('Blender_StandingStone_1',props.filter(p=>p.kind==='stone'),{stone:key==='haunted'?'#7b7486':'#9d968a'},true,at(2.0));
+  // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
+  draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
+  draw('Blender_Lantern_1',props.filter(p=>p.kind==='lantern'),{bark:'#2b2630',leaf:'#ffcc66'},false,at(2.12));
  }
  // WEAR (architect-courses, phase 3; markings.js placeWear): divots on the
  // tees and in the landing zones, one instanced mesh of small flat patches a

@@ -65,7 +65,14 @@ quality measures*, which it absorbs.
   called in the water) and a round's nines coming home (measured, not seen).
   To check: play an Architect Parkland or Stadium course with water and
   creeks (story "A lot"); hit one at a bridge.
-- [ ] Phases 6 and 7 (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Not yet played by a person: phase 6's first half.** Seen in GPU
+  captures: the farmstead, the walls, the ruins, the lighthouse on its line,
+  the stone circle; the Dell, the Alps, the Barranca and the Pit. Not seen:
+  a ball against a wall or the Pit's wall in a round (Node only), a carry
+  over a barranca. To check: an Architect Links or Golden Age course with a
+  lot of story.
+- [ ] Phase 6's second half (history, animals and people) and phase 7
+  (ARCHITECT_COURSES.md, *Status*).
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

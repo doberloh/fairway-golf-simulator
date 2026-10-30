@@ -281,6 +281,12 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   Parkland, Tropical), spectator banks behind greens (Stadium), chocolate
   drops near greens (Golden Age, Raynor); clear of every hole's play, the sea
   and the creeks.
+- **The land's templates** (architect.js), in the ground with the mounds:
+  the Dell's dune before a sunken green, the Alps' ridge across the fairway,
+  the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
+- **The land's story** (story.js), after the clubhouse and before the
+  houses and trees: field walls, a farmstead, ruins, a landmark on a hole's
+  line, a stone circle and lanterns, by The land's story.
 - **Built water** (waterworks.js), on the finished ground: rip-rap or a tie
   wall along the side of each pond that faces play, by style, and a fountain
   in a big pond on a dressed club. A bridge's deck height is fixed where the

@@ -26,7 +26,7 @@ number of holes.
 | 3. The field | built, without the study's baked field (*Deviations*): collection areas (a hazard-slot kind the shader paints and the lie reads), lobed bunker complexes, thin collars where fairways run into greens, divot wear. Not done: greens turned to the approach, per-band mowing heights, native mower lines (*Deviations*) |
 | 4. Home | built: routed from the clubhouse -- each nine pulled home toward its turn, the 10th tee at the clubhouse, every hole within walking reach of home. 10 of 12 nines home on the bench (Classic 7), 19 of 24 on eighteen-hole courses (Classic 10); Links the hard case. Not done: double greens (*Deviations*) |
 | 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
-| 6. Story | not started |
+| 6. Story | first half built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations) and the land's templates (Dell, Alps, Barranca, Pit). Still to build: the history layers the age dial draws, and the animals and distant people |
 | 7. Occasion | not started |
 
 ## The owner's decisions (the goal text, 30 October 2026)
@@ -337,6 +337,63 @@ ARCHITECT_VERSION 8. Classic's fingerprint unchanged.
   now runs on a course that has one -- PATHS-T crosses no creek, so it had
   passed on nothing).
 
+### Phase 6: the land's story, first half (30 October 2026)
+
+ARCHITECT_VERSION 9. Classic's fingerprint unchanged.
+
+- **The land's story** (story.js; the study, workstream L), by The land's
+  story -- none, a little, a lot -- and each landscape its own remains:
+  - **field walls**: dry-stone on Links, Autumn and Mountain, a leaning moor
+    wall on Haunted Hollow, hedgerows on Midwest and PNW; three lines a
+    little, six a lot, walked straight across the open ground between holes
+    and broken wherever they would reach play, a path, water or a building;
+  - **a farmstead** on Midwest and Autumn: a gambrel barn, its silo, and a
+    windpump a lot;
+  - **ruins**: a roofless chapel and cottage (Links, Haunted Hollow), a
+    cottage (Lakeshore, Desert in adobe, PNW, Redwood, Autumn), a mine head
+    (Mountain), a sugar-mill tower (Island);
+  - **a landmark**, a lot of story only: a lighthouse (Links, Lakeshore) or a
+    church spire (Autumn) about 150 m beyond a green, on its hole's line --
+    placed only where its top half shows over the land from 120 m short of
+    the green;
+  - **a stone circle** in a clearing on the moor, and **lanterns** along
+    Haunted Hollow's paths (the owner: ruins and lanterns, never graves).
+  Everything stands out of play: buildings 38 m outside every corridor and
+  walls 14 m, off every played surface, paths and water, clear of the
+  clubhouse, never in front of a tee. Houses and trees keep off it (a story
+  building keeps 20 m clear, a wall a stride either side, the circle its
+  clearing). All counts and sizes PLACED.
+- **Solid**: a story building is a box in `world.buildings` like the
+  clubhouse; a wall is a box a straight run (`wallBoxes`, physics.js's
+  houses' grid); never out of bounds. The props are decoration.
+- **The land's templates** (architect.js; the study, workstream A's *pass 7*
+  templates): holes whose character is a landform, recorded in the hole's
+  design and added to the ground with the mounds (`earthField`):
+  - **Dell** (par 3; Lahinch's 5th): a 3.6 m dune across the line 15 m
+    short of a sunken green, a white aiming stone on its crest;
+  - **Alps** (par 4; Prestwick's 17th): a 5.5 m ridge across the fairway 42 m
+    short of the green, a bunker across the green's front beyond it;
+  - **Barranca** (par 4; Pasatiempo's back nine): a ravine 4.5 m deep and 24
+    m across between the drive and the green; the fairway stops at its lips
+    (a hole's `gaps`, read by `fairwayWidth` so the shader and the lie
+    agree), the cart path bridges it, and no tree grows in it across the
+    line of play;
+  - **Pit** (par 4; North Berwick's 13th): a dry-stone wall across the front
+    of a sunken green, solid and in play, built whatever the story.
+  Dune courses (Links, Sandhills, Heathland, Golden Age, Raynor) draw the
+  Dell and the Pit; Golden Age, Raynor and Links the Alps; any par four that
+  is not drivable may draw a Barranca. All sizes PLACED.
+- **The trees kept out of a Barranca** were a bug found in the capture: near
+  a green, the planting's corridor gate gives way to the green's own rule,
+  which knew nothing of a ravine across the line; three trees stood in it.
+  An Architect hole's gap is now still its corridor.
+- **The story kit** (Blender pack architect_story, ten iterations, below).
+- Tests: tests/story.test.mjs (Classic and None bare; every landscape's own
+  pieces; everything out of play and nothing grown inside a building; a wall
+  stops a ball and is not out of bounds; each template's landform, the
+  Barranca's gap, bridge and treeless line, and the Pit's wall before its
+  green).
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -367,6 +424,12 @@ ARCHITECT_VERSION 8. Classic's fingerprint unchanged.
 - **A creek's bank counted as wet** for a bridge (phase 2's rule, a point
   within 1.2 m of the water): along a creek it made a 30 m bridge lying beside
   the water.
+
+- **A landmark placed by distance alone** (iteration 3): 220 m beyond a
+  green it was a speck, and behind a dune it was not seen at all. It is
+  placed where it shows from the fairway.
+- **Inked field walls**: the furniture's outline, drawn round stones a few
+  pixels high, turned every wall black.
 
 ## Deviations from the study
 
@@ -410,6 +473,19 @@ ARCHITECT_VERSION 8. Classic's fingerprint unchanged.
   reaches them is in the water either way, so a solid face would only change
   where a ball already in the penalty area stops.
 - **Fountains are still** -- a static model, no moving spray or sound.
+- **The land's story is placed after the routing, not before it** (the
+  study: on the base landform, so the router can use it -- "a wall here
+  makes a Pit green"). The holes are routed first and the story fills the
+  ground between them; the templates that need a landform (Dell, Alps,
+  Barranca, Pit) build it themselves, on the hole the architect chose. A
+  router that reads the land's remains is left for later.
+- **A barranca crosses square**, not at an angle (the study: "a ravine
+  crossing the hole at an angle"), and its floor is rough, not sand or rock;
+  it is played as it lies, not a penalty area (the desert-as-penalty-area
+  local rule is not built).
+- **No quarry, no road across a hole, no railway bank** (the study's
+  workstream L): the walls, farm, ruins, landmarks and the four templates
+  carry the story; those three wait.
 - **Rulings so far**: free relief from a cart path (relief.js `pathRelief`);
   a building is solid and never out of bounds. The rest of the study's table
   (ground under repair, no-play zones, the desert as a penalty area, drop
@@ -497,6 +573,7 @@ is above about 30%).
 | 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
 | 30 Oct, phase 3 | capture `arch-p3a` (Midwest, Links; Heathland, Municipal): a hole from behind, a green, the first tee | 5%, 38 °C | no errors; divots on the tee, a collection area beside a green, lobed bunkers seen |
 | 30 Oct, phase 4 | none: routing measured on the CPU (bench, builds) | -- | -- |
+| 30 Oct, phase 6 | captures `arch-s3` to `arch-s10` (sixteen runs of one to three landscapes, one at a time): the story pack's iterations on Midwest, Links, Haunted Hollow, Autumn, Mountain, Island, Desert and PNW, the last on Low | 2-5%, 38-40 °C each | every course built in 5-18 s with no errors |
 | 30 Oct, phase 5 | captures `arch-w3` to `arch-w10` (fourteen runs of one landscape, one at a time): the water pack's iterations on Midwest (Parkland, Stadium), Redwood, Autumn and Desert, the last on Low | 2-5%, 38-40 °C each | every course built in 13-17 s with no errors |
 | 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
 | 30 Oct, phase 2 | captures `arch-c1` to `arch-c11` (sixteen runs of one to three landscapes): the clubhouses' iterations, all ten landscapes, the last on Low | 1-7%, 38-41 °C each | every course built in 4-17 s with no errors |
@@ -566,3 +643,25 @@ instanced meshes, a Stadium one about 170 tie sections in two (and their
 ink); a fountain is about 1,700 triangles, two a course at most; a bridge is a
 handful of bays at about 100 faces each. Measured with the rest of phase 5 on
 Low (*Measures*).
+
+### architect_story (walls, a hedge, standing stone, lantern, farm, ruins, landmarks)
+
+Each iteration was made on the whole pack; "game" names the captures.
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | sheet | thirteen models, drawn to story.js's footprints: the silo, windpump, ruined cottage, mine head, sugar mill, lighthouse, church, standing stone and lantern read at once; the barn showed only its roof slope from the front, and the chapel's gable stood whole |
+| 2 | sheet | the barn turned: its gambrel gable with the big cross-braced doors and the hay door is its face, white trim along the gable (11 x 15 m); the chapel's front gable broken, its apex fallen |
+| 3 | game (`arch-s3`: Midwest, Links, Haunted Hollow, a lot of story) | the farmstead reads at once; hedgerows read; the chapel reads on the dunes; **the stone walls drew near black** (the furniture's ink swamped their small stones); Haunted Hollow's ruins hidden in its wood |
+| 4 | game (`arch-s4`: Links, Haunted Hollow) | walls uninked and their stone lighter: a grey dry-stone line on Links, a pale leaning wall on the moor; a story building keeps 20 m of trees off, and the chapel stands in its clearing; the landmark brought in from 220 to 150 m; the chapel's back gable broken too (whole, it read through the front as a house end) |
+| 5 | game (`arch-s5`: Links, Autumn, Mountain, Island, Desert) | **the lighthouse floated** over a dune's slope and **a dune hid it** from the fairway: seated on the lowest ground under it, and placed only where its top half shows from 120 m short of the green -- then it stands on the line behind the green; Autumn's farmstead and stone wall, Island's sugar mill by the sea and Desert's adobe ruin read; the Mountain view stood inside a crag (the camera) |
+| 6 | game (`arch-s6`: the Dell and Barranca on Autumn, the Alps on PNW; Mountain's mine head) | the Dell reads as a blind par three -- the mown approach climbs a dune, the green hidden beyond -- but its aiming stone was a speck; the Alps a great ridge between bunkers; the mine head and its wheel on the mountainside; the barranca unseen from eye height |
+| 7 | game (`arch-s7`) | the aiming stone drawn 2.4 m; the barranca from 14 m up: a dip of rough across the hole between two fairways, the path beside -- and **three trees in the ravine across the line of play** (fixed in course.js: a gap is still the corridor) |
+| 8 | game (`arch-s8`: the Pit on Links; the stone circle at dusk) | the Pit's wall a thin line from 150 m; the circle's stones crowded by the wood and lost in the dusk |
+| 9 | game (`arch-s9`) | **the Pit**: a dry-stone wall across the front of the sunken green, seen from 70 m; **the stone circle** in its own 16 m clearing |
+| 10 | game, **Low tier** (`arch-s10`: Midwest, Links, Haunted Hollow) | the farmstead, the chapel, the walls, the lighthouse on the line and the moor's ruins all read on Low |
+
+Cost: a course with a lot of story carries three to five buildings (one
+mesh each, inked), a few hundred wall sections in two instanced meshes, and
+on Haunted Hollow about 150 lanterns and nine stones in three more.
+Measured with the rest of phase 6 on Low (*Measures*).

@@ -65,7 +65,7 @@ const hazardClear = (h, x, z) => !h.ponds.some(p => Math.hypot(x - p.x, z - p.z)
 
 // The paths of a course. `holes` are routed (they have `toWorld`); `surface`
 // is the world's surface without paths; `streams` its creeks and rivers.
-export function routePaths({holes, s, surface, streams}) {
+export function routePaths({holes, s, surface, streams, ravines = []}) {
  if (!holes?.length) return {paths: [], bridges: []};
  const width = WIDTH[s.archClub] ?? WIDTH.members, semi = s.semiRough ?? 6;
  const sideOf = h => h.design?.preferred === 'left' ? -1 : 1;
@@ -112,7 +112,10 @@ export function routePaths({holes, s, surface, streams}) {
  let start = -1;
  // In the water itself; the deck runs 3 m onto each bank (iteration 6: a
  // bank within 1.2 m counted as wet, and bridges ran along creeks).
- const wet = p => { const st = streams?.at?.(p.x, p.z); return !!st && st.edge <= 0; };
+ // A barranca's ravine (phase 6) is bridged the same way, where it is more
+ // than about a metre and a half deep.
+ const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r * .62; });
+ const wet = p => { const st = streams?.at?.(p.x, p.z); return (!!st && st.edge <= 0) || inRavine(p); };
  for (let i = 0; i <= points.length; i++) {
   const w = i < points.length && wet(points[i]);
   if (w && start < 0) start = i;

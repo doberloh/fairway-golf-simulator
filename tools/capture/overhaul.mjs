@@ -158,6 +158,46 @@ export const VIEWS = [
  {name: 'arch-bridge', hole: 0, when: 'afternoon', caption: 'A cart-path bridge over a creek', cam: `w => { const b = (w.bridges || [])[0] || {x: 0, z: 0, angle: 0};
   const ca = Math.sin(b.angle), cb = Math.cos(b.angle), x = b.x + cb * 13 + ca * 4, z = b.z - ca * 13 + cb * 4;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 2.6, pitch: -8}; }`},
+ // PHASE 6'S VIEWS (architect-courses): the land's story -- a building, a
+ // wall, a template landform from down its hole, a landmark from its green.
+ {name: 'arch-story', hole: 0, when: 'afternoon', caption: 'A piece of the land story', cam: `w => { const b = (w.buildings || []).find(k => k.story && k.kind !== 'lighthouse' && k.kind !== 'church') || (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};
+  const s = Math.sin(b.rotation), c = Math.cos(b.rotation), d = b.depth / 2 + 30, x = b.x - s * d + c * 12, z = b.z - c * d - s * 12;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 4, pitch: -4}; }`},
+ {name: 'arch-wall', hole: 0, when: 'afternoon', caption: 'A field wall', cam: `w => { const l = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0] || {ax: 0, az: 0, bx: 1, bz: 1};
+  const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz) || 1, x = mx + dz / n * 9 - dx / n * 6, z = mz - dx / n * 9 - dz / n * 6;
+  return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: 2, pitch: -6}; }`},
+ {name: 'arch-template', hole: 0, when: 'afternoon', caption: 'A hole shaped by the land', cam: `w => { const h = w.holes.find(k => k.design && ['dell', 'alps', 'barranca'].includes(k.design.template)) || w.holes[0], e = h.design?.earthworks?.[0] || {z: h.length * .6};
+  const z0 = Math.max(0, e.z - 70), a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(Math.min(h.length, e.z + 40)), z: Math.min(h.length, e.z + 40)});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ // A named template's hole: from 70 m short of its landform, or from the
+ // back tee (a par three, a Cape), looking toward the green.
+ {name: 'arch-tpl-dell', hole: 0, when: 'afternoon', caption: 'The Dell', cam: `w => { const h = w.holes.find(k => k.design?.template === 'dell') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-alps', hole: 0, when: 'afternoon', caption: 'The Alps', cam: `w => { const h = w.holes.find(k => k.design?.template === 'alps') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-barranca', hole: 0, when: 'afternoon', caption: 'The Barranca', cam: `w => { const h = w.holes.find(k => k.design?.template === 'barranca') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 45) : Math.max(0, h.length - 150), z1 = e ? e.z + 10 : h.length, a = h.toWorld({x: h.center(z0) + 14, z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 14, pitch: -16}; }`},
+ {name: 'arch-tpl-redan', hole: 0, when: 'afternoon', caption: 'The Redan', cam: `w => { const h = w.holes.find(k => k.design?.template === 'redan') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-cape', hole: 0, when: 'afternoon', caption: 'The Cape', cam: `w => { const h = w.holes.find(k => k.design?.template === 'cape') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : 0, z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 9, pitch: -5}; }`},
+ {name: 'arch-tpl-pit', hole: 0, when: 'afternoon', caption: 'The Pit', cam: `w => { const h = w.holes.find(k => k.design?.template === 'pit') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 70), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-circle', hole: 0, when: 'afternoon', caption: 'A stone circle and lanterns', cam: `w => { const p = (w.storyProps || []).filter(k => k.kind === 'stone'), c = p.length ? {x: p.reduce((s, k) => s + k.x, 0) / p.length, z: p.reduce((s, k) => s + k.z, 0) / p.length} : {x: 0, z: 0};
+  const x = c.x + 16, z = c.z + 10;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 2.4, pitch: -6}; }`},
+ {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
+  const x = b.x + 45, z = b.z + 30;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},
+ {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
+  const g = h.toWorld({x: h.center(h.length - 120), z: Math.max(0, h.length - 120)});
+  return {x: g.x, z: g.z, yaw: Math.atan2(b.x - g.x, b.z - g.z) * 180 / Math.PI, height: 2, pitch: 1}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).
  // The far scenery from the course's edge: the band between the course's own
  // ground and the far woods or hills, looking out from 25 m up.

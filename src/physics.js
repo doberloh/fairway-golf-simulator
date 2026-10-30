@@ -665,7 +665,9 @@ export function simulateShot(shot,course,options={}){
  // A BRIDGE'S DECK (architect-courses, phase 5) is one more box, 22 cm deep
  // under its top, with a floor: a ball can pass beneath it.
  const decks=(course.world?.bridges||[]).filter(b=>b.deck!=null).map(b=>({x:b.x,z:b.z,y:b.deck-.22,height:.22,width:b.width,depth:b.span,rotation:b.angle,club:true,deck:true}));
- for(const source of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[]),...decks]){
+ // An Architect course's field walls (story.js `wallBoxes`; phase 6): a box a
+ // straight run, solid, never out of bounds.
+ for(const source of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[]),...(course.world?.wallBoxes||[]),...decks]){
   // A HOUSE'S ROTATION IS A WORLD ANGLE. toLocal moves its centre into the
   // hole's frame and leaves `rotation` alone, and the box test below then
   // turned every house on a rotated hole by that hole's own angle. Measured 13

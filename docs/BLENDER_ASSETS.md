@@ -453,6 +453,21 @@ is each model's height for its width, measured off the ingested model; a
 test holds it to the models, so **re-measure it whenever a clubhouse changes
 shape**.
 
+### architect_story
+
+`tools/blender/architect_story.py`: the land's story, each model drawn to
+the footprint story.js gives it (front at -Y) so the game fits it to its
+solid box undistorted: a 2 m dry-stone wall section (1.1 m, coursed stones and
+a coping) and a hedge section (1.6 m), a standing stone (2 m; painted white
+it is the Dell's aiming stone), a post lantern, a gambrel barn (11 x 15 m, its
+doors in the gable), a silo, a windpump, a roofless chapel and cottage, a
+timber mine head, a round sugar-mill tower, a banded lighthouse and a church
+with a spire. Ingested as the `storypieces` family with its own scale;
+renderer.js `addBuildings` fits the buildings to their boxes (coloured by piece
+and landscape) and `addStory` instances the walls in 2 m sections, the
+stones and the lanterns. The walls are drawn uninked (inked, their small
+stones went black).
+
 ### architect_water
 
 `tools/blender/architect_water.py`: what a builder puts at an Architect
