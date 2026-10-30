@@ -91,7 +91,8 @@ quality measures*, which it absorbs.
   only: rakes in the sand, divots toward the green, scattered stumps, trees
   by age, a path bridging a barranca. Not seen at all: the dials'
   sentences in the studio, the paths on the map, the walkers' bob in
-  motion. To check: the owner's own courses -- Links ST-1 (Links style,
+  motion, the scoreboard following a played round (seen at a round's start
+  and set by hand). To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
 - [ ] **The creek's flow arrows (the owner's screenshot 2) -- the owner's
   call.** They are main's stream ripples (water-bodies.js `STREAM_FLOW`),

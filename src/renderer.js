@@ -1038,7 +1038,7 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
+ disposeCourse(){this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
   this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
@@ -2169,6 +2169,7 @@ export class GolfView{
    g.scale.set(b.width/(2*info.rx),b.height,b.depth/(2*info.rz));
    g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);
    this.group.add(g);
+   if(b.kind==='scoreboard')this.addBoardFace(b);
    // THE TERRACE: on sloping ground the floor is level with the high side
    // (clubhouse.js), so a stone wall runs down to the lowest ground under it.
    const drop=b.y-(b.base??b.y)+.6;
@@ -2178,6 +2179,42 @@ export class GolfView{
     this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
+ }
+ // THE SCOREBOARD'S FACE, LIVE (the owner's review: "actually show the
+ // players score"; leaderboard.js says what is on it, main.js feeds it). A
+ // canvas over the model's white face -- 11.2 x 3.3 m, 3.3-6.6 m up, its
+ // front 1 m out from the board's centre (occasion.js FOOTPRINT, depth 2) --
+ // in an unscaled group turned as the building is. Redrawn only when what it
+ // says changes. The model's painted bars stay behind it, unseen.
+ addBoardFace(b){
+  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=302;
+  const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;
+  const mat=new T.MeshBasicMaterial({map:tex,toneMapped:false}),face=new T.Mesh(new T.PlaneGeometry(11.2,3.3),mat);
+  const g=new T.Group();g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);face.position.set(0,4.95,b.depth/2+.04);g.add(face);
+  this.group.add(g);this.resources.push(mat,face.geometry,tex);
+  this.board={canvas,tex,said:''};
+  this.setLeaderboard(this.pendingBoard||{title:'LEADERS',rows:[]});
+ }
+ hasBoard(){return !!this.board;}
+ setLeaderboard(board){
+  this.pendingBoard=board;
+  const B=this.board;if(!B)return;
+  const said=JSON.stringify(board);if(said===B.said)return;B.said=said;
+  const c=B.canvas.getContext('2d'),W=B.canvas.width,H=B.canvas.height;
+  c.fillStyle='#f8f8f4';c.fillRect(0,0,W,H);
+  c.fillStyle='#1f5a3a';c.fillRect(0,0,W,46);
+  c.fillStyle='#f8f8f4';c.font='700 30px Arial, sans-serif';c.textBaseline='middle';c.textAlign='left';c.fillText(board.title||'LEADERS',18,24);
+  c.textAlign='right';c.font='700 22px Arial, sans-serif';c.fillText('TODAY',W-150,25);c.fillText('THRU',W-24,25);
+  const rows=board.rows||[],rh=(H-52)/Math.max(8,rows.length);
+  rows.forEach((r,i)=>{
+   const y=52+rh*(i+.5);
+   if(r.you){c.fillStyle='#fff1b8';c.fillRect(0,y-rh/2,W,rh);}
+   c.fillStyle='#2a2f38';c.font='700 26px Arial, sans-serif';c.textAlign='left';c.fillText(r.pos,18,y);
+   c.font=(r.you?'700 ':'600 ')+'27px Arial, sans-serif';c.fillText(String(r.name).toUpperCase().slice(0,22),110,y);
+   c.textAlign='right';c.fillStyle=r.under?'#c8281e':'#2a2f38';c.font='700 28px Arial, sans-serif';c.fillText(r.score,W-150,y);
+   c.fillStyle='#2a2f38';c.font='600 26px Arial, sans-serif';c.fillText(r.thru,W-24,y);
+  });
+  B.tex.needsUpdate=true;
  }
  // TOURNAMENT WEEK'S ROPES AND CROWD (phase 7; occasion.js): gallery ropes in
  // 6 m sections, and spectators -- in three shirt colours, by turns -- behind

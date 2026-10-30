@@ -172,6 +172,20 @@ fenders over the front tyres and spiral blades on the reels -- side-on every
 part reads, **but it was in Midwest's prairie**; 10 (`arch-m10`), its run
 on mown rough only: working the rough by the trees.
 
+**The scoreboard, live** (the owner: "Can we make the scoreboard on
+championship day actually show the players score?"). leaderboard.js makes
+the board from the round -- the golfers' scores to par today and holes
+played, ranked among an invented field of seven (made-up initials and
+surnames, one surname a board) whose scores advance hole by hole a hole or
+two either side of the golfers; ties shared, under par in red, F for a
+finished round, the golfers highlighted and never pushed off the board.
+main.js feeds it whenever the scores change (`updateBoard`, from
+`drawScoreChips`, and when a course is built); the renderer paints it on a
+canvas over the model's white face, redrawn only when it changes. Seen in
+the game (`arch-board1`: at the start of a round, everyone level; `arch-board2`:
+a board set by hand mid-round, to see red numbers and ties). Not seen in a
+played round. The field's spread of scores is PLACED.
+
 Cost: walkers and spectators are one instanced mesh per body part per body,
 coloured per instance (no extra draws for the colours); the crowd five
 bodies (was one), so five times the crowd's draw calls on Medium and up

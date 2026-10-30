@@ -11048,6 +11048,10 @@ All PLACED, judged by eye in the game, none from a source:
 - The fountain (fountain.js): apex 3.0-4.2 m, landing 0.3-3.2 m out, 480
   drops, the jet 3.7 m breathing 0.18 m, rings from 1 to 4 m over 2.6 s.
   Read from makers' pictures of 1-2 hp floating pond aerators, not measured.
+- The live scoreboard's invented field: seven players, each a hole or two
+  either side of the golfers, scoring each hole from about 18% birdies, 64%
+  pars, 16% bogeys and 2% doubles -- a tour pro's spread read loosely from
+  scoring averages, not taken from one source.
 - Walkers and the mower drawn a twentieth larger than life (as the earlier
   life was, so a figure is not a dot at 30 m); spectators at their own size.
 - A links joins each fairway to one neighbour at most on an Architect
