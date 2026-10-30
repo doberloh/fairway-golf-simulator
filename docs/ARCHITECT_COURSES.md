@@ -22,7 +22,7 @@ number of holes.
 | --- | --- |
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
 | 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
-| 2. People | first half built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note. Still to come: stakes and posts, a clubhouse, the colliders they need |
+| 2. People | built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note; stakes, yardage posts and rakes (ten iterations); the clubhouse, solid, one per landscape (ten iterations). The bridge deck is still drawn, not solid (*Deviations*) |
 | 3. The field | not started |
 | 4. Home | not started |
 | 5. Built | not started |
@@ -185,6 +185,23 @@ ARCHITECT_VERSION 3. Classic's fingerprint unchanged.
 - Tests: tests/paths.test.mjs, tests/hole-names.test.mjs; smoke unchanged
   (no journey plays a ball onto a path).
 
+### Phase 2: people, second half (30 October 2026)
+
+ARCHITECT_VERSION 4 (markings), 5 (the clubhouse). Classic unchanged.
+
+- **Markings** (markings.js; Blender pack architect_people, ten iterations):
+  red stakes round ponds and along creeks near play, white stakes where the
+  boundary nears play, yardage posts at 100, 150 and 200 yd, a rake along
+  every bunker's edge; instanced, standing ones inked.
+- **The clubhouse** (clubhouse.js; Blender pack architect_clubhouses, ten
+  iterations): sited near the first tee and the last green, facing the tee,
+  sized by club, terraced on a slope, a 40 m lawn kept clear, the path
+  linked to its door. Solid: `world.buildings` boxes join the houses' box
+  routine in physics.js, never out of bounds; drops avoid it (main.js).
+- **The ingest's int16 box** (found on the rake): a per-model scale for the
+  Architect's families; eleven shipped models wrap the same way (TODO).
+- Tests: tests/markings.test.mjs, tests/clubhouse.test.mjs.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -217,6 +234,20 @@ ARCHITECT_VERSION 3. Classic's fingerprint unchanged.
   said, from three golfers; the "course built for your game" idea would add a
   fourth from the player's own shots.
 - **The version stamp** (above): one integer, not a second field.
+- **A clubhouse on a slope stands on a terrace** -- its floor level with the
+  high side and a stone wall down to the low -- rather than on levelled
+  ground: levelling is earthworks (phase 5). On Mountain, where nowhere falls
+  less than 4.4 m across a members' footprint, it falls back to a municipal
+  footprint on up to 6.5 m.
+- **The bridge deck is drawn, not yet solid**: a plank deck and rails over a
+  creek, procedural, which a ball flies through into the water. IDEAS' note
+  stands (a height override failed: a ball under the deck landed on it); the
+  solid deck comes with the bridge kit in phase 5 (water made by people).
+- **Rulings so far**: free relief from a cart path (relief.js `pathRelief`);
+  a building is solid and never out of bounds. The rest of the study's table
+  (ground under repair, no-play zones, the desert as a penalty area, drop
+  zones, walls and roads played as they lie, the electric fence) comes with
+  the features that need them.
 - **Bridge decks** (study, *Collisions*: "a height override in its footprint").
   IDEAS.md's *Bridges over creeks* recorded that a height override was tried
   and removed -- a ball flying under the deck landed on it. A bridge is built
@@ -271,6 +302,7 @@ is above about 30%).
 | 30 Oct, phase 2 | capture `arch-p2a`: an Architect Midwest course, four views (overhaul.mjs, `--course designer=architect`) | 6%, 41 °C | built in 13.8 s, no errors; paths, the pull-offs and a white middle flag seen |
 | 30 Oct, phase 2 | smoke `architect-studio`, `studio`, `surprise-round`, `hud-reachable`, `no-swallowed-errors` | 6%, 40 °C | 5 of 5 passed |
 | 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
+| 30 Oct, phase 2 | captures `arch-c1` to `arch-c11` (sixteen runs of one to three landscapes): the clubhouses' iterations, all ten landscapes, the last on Low | 1-7%, 38-41 °C each | every course built in 4-17 s with no errors |
 
 ## Blender iteration log
 
@@ -293,6 +325,24 @@ the pack's contact sheet (`bench/shots/blender/<pack>.png`) or in the game
 | 8 | sheet | -- | -- | the handle lighter timber (#a9845a) and thinner (2.6 cm) |
 | 9 | game (`arch-p2g`, Haunted Hollow) | red stakes along a creek's banks read against the purple | -- | reads clearly on the purple rough |
 | 10 | game, **Low tier** (`arch-p2h`, Midwest) | bright and crisp round the pond on Low | -- | -- | 
+
+### architect_clubhouses (ten clubhouses, one per landscape)
+
+Each iteration was made on all ten together; "game" is a capture of every
+landscape named.
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | sheet | ten distinct silhouettes; the chalet's gable, the stonehouse's twin gables and chimneys, the manor's turret, the clapboard's cupola and the shingle's dormers read at once; the lodge and farmhouse were one big brown roof plane, the pavilion's overhang hid its posts, the adobe's vigas were too short to see |
+| 2 | sheet | a fascia board along every eave and a ridge cap; cross gables over the lodge's entrance and the farmhouse's middle bay; the pavilion's posts 4.8 m and its overhang 1.1 m; vigas 1 m long |
+| 3 | game, all ten (`arch-c1` to `arch-c4`) | Midwest's white farmhouse and red roof, the Island pavilion, the Links stonehouse and Autumn's clapboard read well in their landscapes; the manor came out squat (every building drawn at the club's one height); the Mountain chalet stood hidden in its wood; Lakeshore's shingle was dull |
+| 4 | game: Haunted, Mountain, Lakeshore (`arch-c5`) | each building as tall as its own model for its width (clubhouse.js `CLUBHOUSE_ASPECT`): the manor tall and crooked with lit windows; 15 m clear of trees round every clubhouse; Lakeshore's walls lighter. The chalet still hidden |
+| 5 | game: Mountain, Redwood, PNW (`arch-c6`, `arch-c7`) | a 40 m lawn in front of every clubhouse, toward the first tee (clubhouse.js `inForecourt`): the PNW and Redwood lodges stand open on their lawns with the path to the door. Mountain had **no clubhouse at all**: its flattest site fell 4.4 m |
+| 6 | game: Mountain, Links, Autumn (`arch-c8`) | a terrace: the floor level with the high side and a stone wall down to the low (renderer.js), a site may fall 4.5 m, and on steep land a municipal footprint on ground falling 6.5 m. The chalet stands on its terrace; the terrace walls and the Links stone read too dark. (A 6.8 m plinth in the model was tried first and dropped: the ingest stands a model on its lowest point, so it raised the whole building.) |
+| 7 | game: Mountain, Links, Midwest (`arch-c9`) | the terrace a warm pale stone, the Links stone and slate lighter; the Links front still in shade (it faces its tee, away from the afternoon sun: honest) |
+| 8 | sheet | a flagpole and flag by every door (inside the footprint's width: outside it, it widened every model and the game drew each building narrower), dark shutters on the farmhouse and clapboard; the height table re-measured (a test now holds it to the models) |
+| 9 | game, all ten (`arch-c10`) | every clubhouse its landscape's own, a flag by the door, a lawn and the path in front: adobe on a terrace with its vigas, the manor's lit windows, the pavilion by the sea |
+| 10 | game, **Low tier**: Midwest, Haunted, Island, close to and from the first tee (`arch-c11`) | all read on Low; from the tee the farmhouse sits behind the hole's sign as a clubhouse should |
 
 Cost: a nine-hole course carries about 300 markings, drawn as twelve
 instanced meshes (six kinds, two parts each, and the ink of the standing

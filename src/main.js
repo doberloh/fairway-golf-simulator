@@ -2979,7 +2979,8 @@ function reliefGround(){
   const cells=new Map(),add=(x,z,r)=>{const k=Math.floor(x/10)+','+Math.floor(z/10);if(!cells.has(k))cells.set(k,[]);cells.get(k).push({x,z,r});};
   const local=s=>course.world?course.toLocal(s):s;
   for(const t of course.world?.trees||course.trees||[]){const r=trunkRadius(t);if(r>0){const p=local(t);add(p.x,p.z,r+BALL_R+.2);}}
-  for(const h of course.world?.homes||course.homes||[]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
+  // An Architect course's clubhouse too (clubhouse.js): no drop inside its walls.
+  for(const h of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[])]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
   // The hole's own ground, for Local Rule E-5's "fairway of the hole being
   // played": its corridor runs up the z axis from the tee to beyond the green.
   const len=course.length||Math.hypot(course.pin.x,course.pin.z)+60;

@@ -660,7 +660,9 @@ export function simulateShot(shot,course,options={}){
  // extra height. Indexed like trunks so a long shot does not test every home on
  // the course at every step.
  const homeCells=new Map();
- for(const source of course.world?.homes||course.homes||[]){
+ // An Architect course's buildings (the clubhouse; clubhouse.js) are boxes
+ // in this same grid -- one routine for every box -- and never out of bounds.
+ for(const source of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[])]){
   // A HOUSE'S ROTATION IS A WORLD ANGLE. toLocal moves its centre into the
   // hole's frame and leaves `rotation` alone, and the box test below then
   // turned every house on a rotated hole by that hole's own angle. Measured 13
@@ -876,7 +878,7 @@ export function simulateShot(shot,course,options={}){
    const incoming=v[0]*wx+v[1]*ny+v[2]*wz;
    if(incoming<0){touch('house',-incoming);const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];homeHits++;}
    if(ny>0&&rolling)p[1]=Math.max(p[1],top);
-   if(course.residentialOB){hazard='Out of bounds';}
+   if(course.residentialOB&&!home.club){hazard='Out of bounds';}
    break;
   }
   if(hazard)break;

@@ -434,3 +434,21 @@ built, drawn 2.3 m: true size was nothing from a fairway). Ingested as the
 `coursemarkings` family, never planted; renderer.js `addMarkings` draws them
 instanced from markings.js, the standing ones inked. The sheet uses a 0.4 m
 scale post: the default 1.8 m post is wider than a stake and hid all four.
+
+### architect_clubhouses
+
+`tools/blender/architect_clubhouses.py`: one clubhouse a landscape (the
+study's landscape table): a timber lodge (PNW), an adobe with a tower and
+vigas (Desert), a chalet (Mountain), a twin-gabled stone links house (Links),
+a two-storey farmhouse with a porch (Midwest), an open hipped pavilion
+(Island), a log lodge (Giant Redwood), a clapboard house with a cupola
+(Autumn), a crooked manor with a turret (Haunted Hollow) and a shingled house
+with dormers (Lakeshore Dunes); each with fascia and ridge trim, a flag by
+the door. Built round a 26 x 16 m footprint, front at -Y; ingested as the
+`clubhouse` family with its own scale (`OWN_SCALE`); renderer.js
+`addBuildings` fits each to its building's box and inks it, coloured per
+landscape (walls, roof, trim, glass -- Haunted Hollow's windows lit), and
+draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
+is each model's height for its width, measured off the ingested model; a
+test holds it to the models, so **re-measure it whenever a clubhouse changes
+shape**.

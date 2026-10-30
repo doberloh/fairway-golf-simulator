@@ -10,8 +10,9 @@ import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
 import {designSettings} from './designer.js';
 import {isArchitect} from './settings-schema.js';
 import {designHole,designedPlanting} from './architect.js';
-import {routePaths,pathIndex} from './paths.js';
+import {routePaths,pathIndex,linkBuilding} from './paths.js';
 import {placeMarkings} from './markings.js';
+import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -2293,7 +2294,21 @@ export function* generateWorldSteps(settings={},options={}){
  // The tees are sited by now, so their corridors are final; built before the
  // houses because a house may not stand in what a tee sees either.
  const launch=launchCorridors(holes,height);
- const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad));
+ // THE CLUBHOUSE (clubhouse.js; architect-courses, phase 2): sited once the
+ // tee shots are known, before the houses and the trees, which keep off it;
+ // the path runs from its door to the first tee and back from the last green.
+ // None on Classic, so `buildings` is empty and nothing below moves.
+ const buildings=[];
+ if(isArchitect(s)&&!s.range){
+  const fans0=teeFans(holes);
+  const club=siteClubhouse({holes,s,surface,nearest,height,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans0,x,z,pad)});
+  if(club){buildings.push(club);if(paths.length){linkBuilding(paths[0],club);pathIdx=pathIndex(paths);}}
+ }
+ const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14)));
+ // Built on already: a house or (Architect) a building, with a margin.
+ // A building keeps a clear forecourt: 15 m round it for trees (iteration 4: a
+ // chalet stood hidden in its own wood).
+ const builtOn=(x,z,m=5)=>homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+m)||buildings.some(b=>inBuilding(b,x,z,m+10)||inForecourt(b,x,z));
  const trees=[];
  // An Architect course's tree line: where between EDGE.floor and EDGE.soft
  // outside the corridor the wood begins, as a share of that band -- a smooth
@@ -2366,7 +2381,7 @@ export function* generateWorldSteps(settings={},options={}){
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
  // 0.7-1.6 m, the teddy bear's real height (RESEARCH, *The overhaul's desert pack*).
  const treeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
- for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
+ for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the
   // trees mass up farther back. Ground plants are exempt. The draw is taken
@@ -2440,7 +2455,7 @@ export function* generateWorldSteps(settings={},options={}){
  // rules every tree obeys; its own stream. Classic never reaches this.
  if(arch)for(const t of designedPlanting({holes,s,bio,treeSize,random})){
   const {x,z,kind,h,r}=t,small=GROUND_PLANTS.has(kind);
-  if(small||!allows(surface(x,z),'trees')||homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+  if(small||!allows(surface(x,z),'trees')||builtOn(x,z))continue;
   const keep=greenKeepOut(guards,x,z,closeness);
   if(keep>0&&Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)))<keep+GREEN.ramp*.5)continue;
   const tree={x,z,y:height(x,z),h,r,shade:t.shade,kind,hole:t.hole,[t.why]:true};
@@ -2469,7 +2484,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(++visited%300===0)yield phaseAt(4,.25+.5*visited/sites.length);
    const {x,z}=p,n=nearest(x,z);
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'trees'))continue;
-   if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+   if(builtOn(x,z))continue;
    if(bio.landform&&p.shade>landform.treeKeep(x,z))continue;
    // Trees in a closed wood grow taller than in the open, reaching for light
    // (`grow`, 1.2 unless the stand says: PLACED); ground plants do not.
@@ -2495,7 +2510,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(p.shade>.55)continue;
    const n=nearest(x,z);
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'shrubs'))continue;
-   if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+   if(builtOn(x,z))continue;
    const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
    if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r))continue;
    trees.push(tree);
@@ -2732,7 +2747,7 @@ export function* generateWorldSteps(settings={},options={}){
  // AN ARCHITECT COURSE'S MARKINGS (markings.js): stakes, yardage posts and
  // rakes, decoration placed on the finished ground. None on Classic.
  const markers=isArchitect(s)&&!s.range?placeMarkings({holes,surface,nearest,halfX,halfZ,streams}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,paths,bridges,markers,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,rocks,props,paths,bridges,markers,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

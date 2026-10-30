@@ -139,6 +139,13 @@ export const VIEWS = [
  {name: 'arch-rake', hole: 0, when: 'afternoon', caption: 'An Architect course\'s rake beside a bunker', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'rake') || {x: 0, z: 0};
   const px = Math.cos(m.rot), pz = -Math.sin(m.rot);
   return {x: m.x + px * 3.5, z: m.z + pz * 3.5, yaw: Math.atan2(-px, -pz) * 180 / Math.PI, height: 1.6, pitch: -22}; }`},
+ // The clubhouse: from 42 m in front of it, a little off-centre, at 7 m; and
+ // from the first tee, where a player first sees it.
+ {name: 'arch-club', hole: 0, when: 'afternoon', caption: 'An Architect course\'s clubhouse', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};
+  const s = Math.sin(b.rotation), c = Math.cos(b.rotation), x = b.x - s * 34 + c * 10, z = b.z - c * 34 - s * 10;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 7, pitch: -6}; }`},
+ {name: 'arch-club-tee', hole: 0, when: 'afternoon', caption: 'The clubhouse from the first tee', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0}, h = w.holes[0], t = h.toWorld(h.tees.blue || h.tee);
+  return {x: t.x, z: t.z, yaw: Math.atan2(b.x - t.x, b.z - t.z) * 180 / Math.PI, height: 1.8, pitch: -1}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).
  // The far scenery from the course's edge: the band between the course's own
  // ground and the far woods or hills, looking out from 25 m up.

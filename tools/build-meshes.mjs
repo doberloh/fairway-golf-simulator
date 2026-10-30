@@ -168,10 +168,13 @@ const PICK = {
  // architect-courses, phase 2): stakes, yardage posts and rakes, placed by
  // markings.js and drawn instanced by renderer.js addMarkings, never planted.
  coursemarkings: ['blender:Blender_Stake_1', 'blender:Blender_ObStake_1', 'blender:Blender_YardagePost_1', 'blender:Blender_Rake_1'],
+ // AN ARCHITECT COURSE'S CLUBHOUSE (tools/blender/architect_clubhouses.py), one
+ // per landscape, fitted to its box by renderer.js addBuildings.
+ clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'manor', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
 };
 
 // Families whose models may carry their own scale (`q`, below).
-const OWN_SCALE = new Set(['coursemarkings']);
+const OWN_SCALE = new Set(['coursemarkings', 'clubhouse']);
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and

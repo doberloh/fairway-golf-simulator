@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addBuildings(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1986,6 +1986,48 @@ export class GolfView{
     // Iteration 6: the furniture's ink, instanced, on what stands up (not a
     // rake lying in the grass), so a stake keeps its outline at a distance.
     if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
+  }
+ }
+ // AN ARCHITECT COURSE'S BUILDINGS (architect-courses, phase 2; clubhouse.js):
+ // the landscape's clubhouse (tools/blender/architect_clubhouses.py), its
+ // model fitted to the box physics stops the ball against -- width, depth and
+ // height -- and inked like the furniture. Colours by landscape: walls, roof,
+ // trim and glass (Haunted Hollow's windows are lit).
+ addBuildings(w){
+  if(!w?.buildings?.length||this.style!=='cartoon')return;
+  const LOOK={
+   pnw:{stone:'#8b6a4a',bark:'#4f5b46',accent:'#ddd2bb',dirt:'#2c3438'},
+   desert:{stone:'#d7a77a',bark:'#7d5a3c',accent:'#8a5a36',dirt:'#3a2c26'},
+   mountain:{stone:'#b88d5e',bark:'#5a4436',accent:'#efe6d2',dirt:'#2b3036'},
+   links:{stone:'#c3bfb2',bark:'#5b6168',accent:'#ece8de',dirt:'#2a3036'},
+   midwest:{stone:'#f2efe6',bark:'#7a3d32',accent:'#ffffff',dirt:'#2e3a44'},
+   island:{stone:'#e8d7b5',bark:'#c7a35f',accent:'#9b7048',dirt:'#2b3a3a'},
+   redwood:{stone:'#9a6342',bark:'#3f4a3a',accent:'#d8c7a8',dirt:'#2a2e2c'},
+   autumn:{stone:'#f1ede2',bark:'#3d4044',accent:'#ffffff',dirt:'#2d3640'},
+   haunted:{stone:'#6b6274',bark:'#2f2838',accent:'#b9b2a6',dirt:'#e9a640'},
+   lakeshore:{stone:'#c4ab84',bark:'#6d6a63',accent:'#f4f1ea',dirt:'#2c3a46'},
+  };
+  const look=LOOK[w.bio?.key]||LOOK[w.settings?.biome]||LOOK.midwest;
+  for(const b of w.buildings){
+   const name='Blender_Clubhouse_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const g=new T.Group();
+   for(const p of parts){
+    const m=new T.Mesh(p.geometry,this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
+    const ink=new T.Mesh(p.geometry,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);
+   }
+   // The model's front is glTF +z (its Blender -y); the building's front is
+   // its local -z, toward the first tee -- hence the half turn.
+   g.scale.set(b.width/(2*info.rx),b.height,b.depth/(2*info.rz));
+   g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);
+   this.group.add(g);
+   // THE TERRACE: on sloping ground the floor is level with the high side
+   // (clubhouse.js), so a stone wall runs down to the lowest ground under it.
+   const drop=b.y-(b.base??b.y)+.6;
+   if(drop>.8){
+    const wall=new T.Mesh(new T.BoxGeometry(b.width+1.2,drop,b.depth+1.2),this.surfaceMaterial('#c9bea9'));
+    wall.position.set(b.x,b.y-drop/2+.2,b.z);wall.rotation.y=b.rotation;wall.castShadow=wall.receiveShadow=true;
+    this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
  }

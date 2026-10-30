@@ -253,6 +253,13 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   green to a pull-off and on to the next tee, smoothed; pushed sideways off any
   green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
   one is `path`, and houses and trees keep off it.
+- **The clubhouse** (clubhouse.js), sited when planting begins, after the
+  tee shots are known: on rings 40-150 m (on steep land up to 270 m) round the
+  first tee and the last green, on ground clear of every corridor by 14 m,
+  of every tee shot and its view, falling no more than 4.5 m across its
+  footprint (a terrace; on steep land a municipal footprint on up to 6.5 m),
+  nearest the two; facing the first tee; sized by club. Houses and trees keep
+  off it and its 40 m lawn; the path is linked to its door.
 - **Markings** (markings.js), placed on the finished ground: red stakes
   every 11 m round each pond and along creeks within 60 m of play, white
   stakes every 13 m where the boundary comes within 120 m of a corridor,

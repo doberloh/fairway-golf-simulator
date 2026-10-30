@@ -135,3 +135,24 @@ export function pathIndex(paths, cell = 16) {
  };
  return {at, onPath: (x, z) => { const q = at(x, z); return !!q && q.d <= q.path.width / 2; }, segments: segs.length};
 }
+
+// THE PATH TO THE CLUBHOUSE (clubhouse.js): from its door -- the middle of its
+// front, a few metres out -- to where the course's path begins at the first
+// tee, and back from the last green to the door. Straight, sampled every STEP
+// and softened where it meets the course's path.
+export function linkBuilding(path, b) {
+ const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), out = b.depth / 2 + 5;
+ // The front is the building's local -z (clubhouse.js faces it to the tee).
+ const door = {x: b.x - sn * out, z: b.z - cs * out};
+ const run = (a, c) => {
+  const d = Math.hypot(c.x - a.x, c.z - a.z), n = Math.max(1, Math.round(d / STEP)), pts = [];
+  for (let k = 0; k <= n; k++) pts.push({x: a.x + (c.x - a.x) * k / n, z: a.z + (c.z - a.z) * k / n});
+  return pts;
+ };
+ const p = path.points;
+ if (!p.length) return path;
+ const head = smoothLine(run(door, p[0]).slice(0, -1), 1), tail = smoothLine(run(p[p.length - 1], door).slice(1), 1);
+ path.points = [...head, ...p, ...tail];
+ path.door = door;
+ return path;
+}
