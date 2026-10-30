@@ -9,7 +9,17 @@ brief is local (`docs/reports/ui-polish-goal.md`); this is the record: the
 checklist every change names, the rounds, the decisions and the rejected
 alternatives.
 
-**Rules of this goal** (AGENTS.md, *The 1.0 interface polish*): interface
+**Merged into main on 29 October 2026** at the owner's word ("Lets do a
+merge right now"), `--no-ff`, its 35 commits squashed to five on
+`ui-polish-1-0-squashed`, each holding exactly the files of a commit that was
+tested (the rules; the polish to the hand-over, 69b3407; square boxes,
+2f90fb0; the owner's second list, 425e867; the merge's doc edits). The
+round-by-round history stays on the local branch `ui-polish-1-0`. AGENTS.md's
+section that unlocked the graphics card for this branch was deleted in the
+merge, so main is back under the ordinary GPU rules. Not released; not
+played by hand beyond the owner's one round of 28 October.
+
+**Rules of this goal** (AGENTS.md's section for it, deleted at the merge): interface
 only -- physics, scoring, formats, challenges and generation unchanged, the
 fingerprint silent; **no performance cost on any tier** (the owner: "There
 should be no performance hits for these changes allowed"), each change that

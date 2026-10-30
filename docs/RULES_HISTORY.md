@@ -288,7 +288,10 @@ time (18 October, volume) and nothing left open after (16 October). Software
 rendering is unlocked too, against the 13 October crash; the owner was told
 and left it in. The same goal allows no performance cost on any tier ("There
 should be no performance hits for these changes allowed"), so every change
-that could move a frame is measured against main's build.
+that could move a frame is measured against main's build. **Ended at the
+merge, 29 October 2026**: the section and its pointers were deleted in the
+branch's last commit, as the rule asked, and the branch was squashed to five
+commits before it merged.
 
 ## The graphics profile
 

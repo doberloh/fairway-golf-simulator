@@ -41,9 +41,10 @@ check.
   wide screens; the highlight's end colour aims at 6:1; words over pictures
   carry the outline; the switches are 25 px and Done takes its touch size.
   UI_POLISH.md, *Third look*.
-The checklist, the rounds and the decisions are in docs/UI_POLISH.md. The
-computer is unlocked on this branch only (AGENTS.md); the section goes, and
-the branch is squashed, when it merges back.
+The checklist, the rounds and the decisions are in docs/UI_POLISH.md.
+Merged into main on 29 October 2026, squashed to five commits; the branch's
+no-ask GPU terms ended with it. Not released, and not yet played by hand
+beyond the owner's one round of 28 October -- the list below is what to play.
 
 ### Playing it by hand, screen by screen (the owner's)
 
