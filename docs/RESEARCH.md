@@ -10751,3 +10751,69 @@ anything (a four-round +9% on Low's main menu was equal in six, twice); and
 the menu's backdrop camera circles, so a spot opened a moment later sees
 more or fewer triangles -- check the triangle count before reading a
 graphics difference. Figures: docs/UI_POLISH.md, *What it costs*.
+
+## Architect courses: designing a hole (30 October 2026)
+
+The second designer (docs/ARCHITECT_COURSES.md, branch `architect-courses`)
+places each hazard against a shot rather than by chance. What its numbers
+rest on; the study behind it is local (`docs/studies/HUMAN_BUILT_COURSES_SPEC.md`).
+
+**Why Classic reads as generated.** Classic's fairway bunker lands at a
+uniform distance between 18 m past the fairway's start and 55 m short of the
+green, on a random side (`generateCourse`). Its sizes and counts already match
+real courses -- about 2,200 sq ft a bunker against a surveyed ~2,120 (17 clubs,
+1986), about 58 on 18 holes against a reported average of 49 (2005) and 66 a
+club (1986). Placement, not size, was the fault.
+
+**The golfer table** (`tools/golfer-table.mjs`, written to
+`src/golfer-table.js`): three golfers flown once through the ball model on a
+flat fairway at default turf. Driver carry PLACED at 255, 200 and 170 yd; the
+other clubs keep the stock bag's gaps scaled by the same factor. The ball model
+gives drives of **277, 224 and 195 yd in total**. Against the study's sources:
+a good player's drive about 250-280 yd (PLACED in the study), an average
+golfer's 175-225 yd and landing zones 20-40 yd wide (Pitchcare, a single older
+source). Sideways spread, one standard deviation, PLACED at 12, 20 and 28 yd --
+the landing-zone widths read as two to three spreads.
+
+**Where the architect puts things** (architect.js `designHole`; every figure
+PLACED unless named):
+- A drive bunker at the good player's landing zone on the preferred side (the
+  inside of a dogleg, else the seed's), and, on the other side, one at the
+  average golfer's distance, shorter -- the tactic of opposite-side bunkers at
+  different distances (golfclubatlas forum, *bunkers beyond reach of weaker
+  players*; a forum, weak).
+- A greenside bunker always guards the front corner on the wrong side, so the
+  green opens from the preferred side (the strategic school: the fried egg,
+  golf.com, *three schools*).
+- A par five's cross bunkers at the average golfer's lay-up: their drive plus
+  a fairway wood (176/196 yd in the table).
+- Templates: the Redan's diagonal fall-away behind a deep front bunker, the
+  Eden's three bunkers, the Biarritz swale, the punchbowl, the double plateau,
+  the Road bunker, the Cape's water, the Principal's Nose (a pair of centreline
+  bunkers with a grass nose between, the Old Course's 16th), Leven and Long
+  (golf.com, linksmagazine, evalu18, *template holes*; the Redan at 170-200 yd).
+- Greens drain off a front corner, higher at the back: water leaves at least
+  two ways, never all off the front (1956, MSU archive; Jeffrey Brauer: drainage
+  split unevenly, 60/40, looks better than even).
+- The fairway swells by about a third at the landing zones, necks to about four
+  fifths 75 m short of the green, and tucks in round a bunker on its edge,
+  leaving 2.2 m of rough between turf and sand. All PLACED, by eye.
+
+**Styles, clubs and ages** (architect-styles.js) are the study's descriptions
+of each architect's hand turned into the generator's own settings -- PLACED,
+by eye and by the bench, not from a source -- except the clubs' lengths:
+6,250 yd (municipal), 6,650 (members' club), 6,850 (resort), 7,250
+(championship venue) from the back tees for eighteen, the usual spread from a
+public course to a championship one (general knowledge; no single source read).
+
+**Planting by design.** An avenue of one species lines a par 4 or 5 on a
+Parkland, Golden Age or Raynor course -- about three holes in five on an old
+course, one in three on a mature one -- as clubs planted them in the
+mid-century and many later removed (Oakmont took out more than 12,600 trees:
+USGA, *Oakmont restored*). A dogleg's inside corner gets three to five trees.
+The corridor is cleared to a scalloped line about 35 m across rather than
+Classic's chance fade. All PLACED.
+
+**How much harder it plays** (`tools/architect-difficulty.mjs`; the owner's
+limit is 1.5 strokes per 18 for the virtual golfer): see
+docs/ARCHITECT_COURSES.md, *Measures*, for each run.

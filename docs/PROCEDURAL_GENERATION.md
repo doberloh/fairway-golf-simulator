@@ -223,7 +223,31 @@ differently. Under each stand an understory of shrubs and ferns is planted from 
 What an Architect course does differently from the Classic pipeline above,
 seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
 
-- **Its settings** (designer.js `designSettings`): everything but the designer,
-  holes, seed, landscape, the four dials, wind and pin day is the architect's.
-  Phase 0: Classic's defaults, so an Architect course is still the default
-  Classic course for its seed.
+- **Its settings** (designer.js `designSettings`, architect-styles.js
+  `architectChoices`): everything but the designer, holes, seed, landscape, the
+  four dials, wind and pin day is the architect's. The **style** (chosen, or By
+  landscape from the seed) sets fairway width, bunker count and raggedness,
+  green size, shape and slope, raised and punchbowl greens, water, trees and
+  doglegs; the **club** sets the length (6,250-7,250 yd for eighteen) and
+  scales width, bunkers and water; the **age** scales the trees; the **story**
+  adds a creek.
+- **The plan per hole** (architect.js `designHole`, after the shared skeleton,
+  so the card holds): a concept -- strategic, heroic carry, penal, risk and
+  reward, short, three-shot par five -- and sometimes a named template
+  (Redan, Eden, Biarritz, Punchbowl, Double plateau, Road, Cape, Principal's
+  Nose, Leven, Long), and a preferred side (a dogleg's inside, else the
+  seed's).
+- **Where the hazards go**: a drive bunker where a good player's drive lands
+  (277 yd from the back tee, the golfer table), on the preferred side; one on
+  the other side at the average golfer's distance (224 yd from the middle tee);
+  sometimes a centreline bunker; cross bunkers at a par five's lay-up; the
+  green's front corner on the wrong side always guarded, then the style's
+  count round the green; water placed for a carry, a cape, a go-for-it second
+  or a short side. Every hazard records why; at most twelve a hole.
+- **The fairway** swells at the landing zones, necks before the green and
+  tucks round a bunker on its edge.
+- **The green** drains off a front corner, higher at the back; a template
+  asks for its own (the Redan's fall away, the Biarritz swale, a punchbowl).
+- **The trees** are cleared to a scalloped line, not faded by chance; avenues
+  line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
+  inside corner gets a cluster.

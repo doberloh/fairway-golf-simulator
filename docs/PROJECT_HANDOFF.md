@@ -405,8 +405,28 @@ only at named seams. Rules that keep the two honest:
   (`biome-fingerprint.mjs --check`, then with `--designer architect`). A change
   for Architect alone that moves Classic's has reached a shared path.
 
-The seams so far: `designSettings` (the architect's settings, phase 0: Classic's
-defaults). Each later seam is listed here as it is built.
+The seams so far, each listed here as it is built:
+
+- `designSettings` (designer.js) -- the architect's settings from the dials
+  (architect-styles.js `architectChoices`).
+- `generateCourse` -> `architectCourse` (course.js), straight after
+  `holeLine`: the skeleton is shared, so the card before the course holds;
+  everything after it -- the fairway's widths, bunkers, ponds, the hole's own
+  trees -- is architect.js `designHole`, on the architect's stream. The hole
+  object is the same shape Classic's is, plus `design`.
+- `greenRecipe` (course-plan.js) -- a hole's `design.green` overrides the
+  green after all its draws are made (drainage off a front corner, a Redan's
+  fall, a Biarritz swale, a punchbowl); a Classic hole has no `design`.
+- The open tree scatter's soft edge (course.js) -- an Architect course clears
+  to a scalloped line instead of a fade of chance, taking no draw for it; then
+  `designedPlanting` (architect.js) adds avenues and dogleg corners.
+
+**A TRAP: a tuck is a width, not a hole in the fairway.** The fairway tucks
+round a side bunker by narrowing that side's half-width over the bunker's
+length (`tucks` in `designHole`); a bunker INSIDE the fairway (a centreline
+bunker, the Principal's Nose) is not tucked and the turf runs round it as the
+shader paints any bunker. Tucking a centreline bunker would cut the fairway in
+two.
 
 ### Invariants a generated course must satisfy
 

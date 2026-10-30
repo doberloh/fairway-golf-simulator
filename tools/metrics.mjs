@@ -1,4 +1,5 @@
 import {greenApproaches, GREEN} from '../src/course.js';
+import {landingZones} from '../src/architect.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
@@ -567,6 +568,52 @@ METRICS.farSeated = {
     if (worst > Math.max(.3, .02 * r)) invariants.farFloating++;
     if (inWater) invariants.farInWater++;
    }
+  }
+  return {series, counts, invariants};
+ },
+};
+
+// THE ARCHITECT'S MEASURES (architect-courses; docs/ARCHITECT_COURSES.md), on
+// either designer, so Classic is the baseline Architect has to beat:
+//   - fairway bunkers within 30 m (along the hole) of where a good or an
+//     average drive comes down (architect.js `landingZones`, the same
+//     function the architect places them with);
+//   - the walk from each green to the next hole's back tee, in metres;
+//   - nines that return: the 9th green (and the 18th) within 200 m of the 1st
+//     tee, PLACED as "in sight of the clubhouse" until phase 4 builds one;
+//   - variety: how many different concepts and templates a course uses
+//     (Architect only; Classic has none).
+// One invariant: an Architect hazard without a recorded reason.
+METRICS.design = {
+ describe: 'bunkers where drives land, green-to-tee walks, returning nines, and the variety of an Architect course',
+ run(w) {
+  const counts = {fairwayBunkers: 0, nearLanding: 0, nines: 0, returning: 0}, invariants = {hazardWithoutReason: 0};
+  const series = {walk: [], concepts: [], templates: []};
+  for (const h of w.holes) {
+   const zones = landingZones(h);
+   for (const b of h.bunkers) if (!b.greenSide) {
+    counts.fairwayBunkers++;
+    if (Math.min(Math.abs(b.z - zones.good), Math.abs(b.z - zones.average)) <= 30) counts.nearLanding++;
+   }
+   if (h.design) {
+    const why = h.design.reasons || [];
+    h.bunkers.forEach((_, i) => { if (!why.some(r => r.kind === 'bunker' && r.i === i)) invariants.hazardWithoutReason++; });
+    h.ponds.forEach((_, i) => { if (!why.some(r => r.kind === 'pond' && r.i === i)) invariants.hazardWithoutReason++; });
+   }
+  }
+  for (let i = 0; i + 1 < w.holes.length; i++) {
+   const g = w.holes[i].worldGreen, t = w.holes[i + 1].toWorld(w.holes[i + 1].tees.blue || w.holes[i + 1].tee);
+   series.walk.push(Math.hypot(g.x - t.x, g.z - t.z));
+  }
+  const first = w.holes[0], home = first.toWorld(first.tees.blue || first.tee);
+  for (const last of [8, 17]) if (w.holes[last]) {
+   counts.nines++;
+   const g = w.holes[last].worldGreen;
+   if (Math.hypot(g.x - home.x, g.z - home.z) <= 200) counts.returning++;
+  }
+  if (w.holes.some(h => h.design)) {
+   series.concepts.push(new Set(w.holes.map(h => h.design?.concept)).size);
+   series.templates.push(new Set(w.holes.map(h => h.design?.template).filter(Boolean)).size);
   }
   return {series, counts, invariants};
  },

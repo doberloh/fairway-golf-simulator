@@ -21,7 +21,7 @@ number of holes.
 | Phase | State |
 | --- | --- |
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
-| 1. Purpose | not started |
+| 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
 | 2. People | not started |
 | 3. The field | not started |
 | 4. Home | not started |
@@ -113,6 +113,51 @@ choose by it.
   the designer changes.
 - Tests: tests/designer.test.mjs.
 
+### Phase 1: purpose (30 October 2026)
+
+ARCHITECT_VERSION 2. Classic's fingerprint unchanged throughout.
+
+- **The golfer table** (`tools/golfer-table.mjs` -> `src/golfer-table.js`):
+  three golfers flown once through the ball model. Drives of 277, 224 and
+  195 yd in total (RESEARCH *Architect courses: designing a hole*).
+- **The dials as settings** (architect-styles.js `architectChoices`): each
+  style's settings and its architect's own figures (`arch`: share of bunkers
+  at the drive, bunker size, centreline and cross-bunker chances, template
+  chance, concept weights); the club's length (6,250 to 7,250 yd for
+  eighteen) and multipliers; the age's trees; the story's creek. Each style's
+  bunker count was lowered once after the first count came out at 72-110 a
+  course against a real 49-66 (now 44-80; Links about 107, as the Old Course's
+  112).
+- **The plan per hole** (architect.js `designHole`, through the seam
+  `architectCourse` in course.js): a concept and, by the style's chance, a
+  template; the preferred side; the landing zones from the golfer table; water
+  first (a cape, a heroic carry, a go-for-it second, a par three's short side,
+  a bail-out's price), then the drive bunkers, the lay-up's cross bunkers, the
+  green's guard -- the front corner on the wrong side always -- and the
+  templates' own sand. Every hazard records its reason; at most twelve a hole
+  (the shader's limit). A heroic hole or a Cape needs water to carry, so
+  without inland water neither is chosen.
+- **The fairway** swells at the landing zones, necks before the green, and
+  tucks round a bunker on its edge (a collar of 2.2 m of rough between turf and
+  sand); a centreline bunker is not tucked (PROJECT_HANDOFF, the trap under
+  *TWO DESIGNERS, ONE WORLD*).
+- **The green** (course-plan.js `greenRecipe`, the seam): drains off a front
+  corner, higher at the back; a Redan falls away on a diagonal; a Biarritz
+  gets its swale; a punchbowl is sunken; a double plateau is tiered.
+- **The sequence** (architect.js `sequenceCourse`, in `planCourse` so the card
+  holds): a gentle opener, a strong finish, a short par four on the back nine,
+  the par threes spread across their band.
+- **The trees**: the open scatter cleared to a scalloped line instead of a fade
+  of chance; avenues on Parkland, Golden Age and Raynor courses (more the
+  older the course); a cluster at a dogleg's inside corner
+  (architect.js `designedPlanting`).
+- **The bench** learned `design` (tools/metrics.mjs): drive bunkers by a
+  landing zone, green-to-tee walks, returning nines, concept and template
+  variety, and the invariant *hazardWithoutReason*.
+- **The surface map** tool takes `--set key=value`, so it draws Architect
+  courses.
+- Tests: tests/architect.test.mjs.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -126,8 +171,24 @@ choose by it.
   main.js, so each would have had to remember; resolving at every entry, and
   idempotently, cannot be forgotten.
 
+- **Bunkers placed before the water** (phase 1's first order). The ponds were
+  then refused wherever a bunker already stood -- a Modern course, water 60%,
+  came out with one pond in eighteen holes. Water is placed first and the sand
+  round it.
+- **Classic's pond code reused for Architect** by refactoring it into a
+  function both call. It would have touched Classic's draws; Architect has its
+  own `pondAt` with the same shapes and refusals instead.
+
 ## Deviations from the study
 
+- **Greens turned to the approach** (the study, workstream A) is deferred to
+  phase 3. A green's outline is an oval aligned to the hole in the shader's
+  hole table; turning it needs a rotation the shader does not read, which is
+  the surface field's job. Phase 1 turns what the green does instead -- its
+  drainage, the Redan's fall.
+- **The study's "golfer simulated or tabled"**: tabled, as the study's pass 4
+  said, from three golfers; the "course built for your game" idea would add a
+  fourth from the player's own shots.
 - **The version stamp** (above): one integer, not a second field.
 - **Bridge decks** (study, *Collisions*: "a height override in its footprint").
   IDEAS.md's *Bridges over creeks* recorded that a height override was tried
@@ -146,6 +207,30 @@ choose by it.
   placement is the baseline the landing-zone measure has to beat (phase 1).
 - **The fingerprints**: Classic unchanged at generator 52; Architect stored at
   52 / architect 1.
+
+### Phase 1 (30 October 2026, ARCHITECT_VERSION 2)
+
+- **How much harder** (`tools/architect-difficulty.mjs --seeds 3`: ten
+  landscapes, three seeds, a steady and a looser virtual golfer, eighteen
+  holes, 60 rounds a designer): Classic 1.98 over par, Architect 1.83 --
+  **Architect 0.15 strokes per 18 easier**, inside the owner's limit. By
+  landscape (six rounds each, so about ±2 strokes of noise): Island +4.5,
+  Mountain +3.8, Haunted +3.3, Autumn +0.8, Links +0.5, Midwest +1.5,
+  Lakeshore -2.2, Redwood -4.3, Desert -4.3, PNW -5.2. The three harder
+  landscapes are re-measured with more seeds before the goal ends.
+  An earlier run, on a build where the bunkers were placed before the water,
+  showed one Island round at +73 -- not reproduced on the build after (the
+  courses had changed); the tool now names any hole the golfer cannot finish
+  in 40 strokes rather than hiding it.
+- **The bench** (`design`, standard tier, 12 courses of 9): drive bunkers by a
+  landing zone, **175 of 206 (85%) Architect against 24 of 89 (27%)
+  Classic**; green-to-tee walks unchanged (median 98 m both; routing is phase
+  4); returning nines 6 and 7 of 12; Architect uses 4-6 concepts and 0-4
+  templates a nine; no hazard without a reason.
+- **Bunkers per 18 holes** (three Midwest seeds a style): Golden Age 62, Raynor
+  64, Links 107, Heathland 80, Sandhills 51, Parkland 48, Modern 47, Stadium
+  65, Minimalist 52, Desert target 44, Mountain 45, Tropical 55; Classic 42.
+  Ponds per 18: none on Links to about 15 on Stadium.
 
 ## GPU run log
 

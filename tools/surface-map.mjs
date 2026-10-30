@@ -13,7 +13,12 @@ const [seed = 'overhaul', n = '18', out = 'map.png', biome = 'links'] = process.
 // map only, to judge a rule before writing it (the far-landscape goal).
 const shareAt = process.argv.indexOf('--share');
 if (shareAt > 0) Object.assign(BIOMES[biome].sharedFairways, JSON.parse(process.argv[shareAt + 1]));
-const w = generateWorld({seed, biome, holes: +n, trees: 60, homes: true});
+// `--set key=value` (repeatable): any setting, for this map -- `--set
+// designer=architect --set archStyle=links` draws an Architect course
+// (architect-courses), whose own dials then decide the trees and houses.
+const extra = {};
+process.argv.forEach((a, i) => { if (a === '--set') { const [k, v] = process.argv[i + 1].split('='); extra[k] = isNaN(Number(v)) ? v : Number(v); } });
+const w = generateWorld({seed, biome, holes: +n, trees: 60, homes: true, ...extra});
 const res = 2, W = Math.ceil(2 * w.halfX / res), H = Math.ceil(2 * w.halfZ / res);
 const col = {fairway: [80, 170, 70], green: [60, 210, 90], fringe: [70, 190, 80], tee: [90, 200, 120], rough: [40, 110, 45], semiRough: [55, 140, 55], semirough: [55, 140, 55], bunker: [230, 210, 150], sand: [230, 210, 150], water: [40, 90, 200], path: [150, 140, 120]};
 const px = Buffer.alloc((W * 3 + 1) * H);

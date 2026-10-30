@@ -271,7 +271,12 @@ export const GENERATOR_VERSION=52;
 // decides, beside the Classic check, which must stay silent.
 // 1: Architect exists (phase 0): a course chosen by style, club, age, story and
 //    seed, built for now exactly as Classic builds its defaults.
-export const ARCHITECT_VERSION=1;
+// 2: phase 1, purpose: the dials become settings (twelve styles, four clubs,
+//    four ages, the story's creek); a plan per hole with every bunker and pond
+//    placed against a shot from the golfer table, the fairway swelling,
+//    necking and tucking round them, templates, greens draining off a front
+//    corner; the sequence of holes; the tree line, avenues and dogleg corners.
+export const ARCHITECT_VERSION=2;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both
