@@ -721,6 +721,15 @@ designer:
 The longest walks stay longer than Classic's: a course that comes home has
 a hole or two that walk back to the turn.
 
+### The wait to build at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
+
+`node tools/gen-time.mjs` and `--designer architect`, eighteen holes, three
+seeds, median, Classic / Architect: PNW 4.06 / 4.19 s, Desert 4.40 / 3.84,
+Mountain 3.61 / 3.83, Links 4.04 / 4.34, Midwest 3.69 / 3.01, Island 6.80 /
+4.67, Redwood 3.24 / 3.41, Autumn 4.48 / 3.80, Haunted 3.78 / 3.52,
+Lakeshore 3.39 / 3.03. **The worst, Links, +0.30 s**; five landscapes build
+faster on Architect (Island by 2.1 s). Inside the goal's 2 s everywhere.
+
 ### The wait to build (30 October 2026, after phase 4)
 
 `node tools/gen-time.mjs` and `--designer architect` (a new flag), eighteen
