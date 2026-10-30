@@ -186,6 +186,14 @@ the game (`arch-board1`: at the start of a round, everyone level; `arch-board2`:
 a board set by hand mid-round, to see red numbers and ties). Not seen in a
 played round. The field's spread of scores is PLACED.
 
+**The yardage book in the studio** (the owner: "Need to be able to see the
+yardage book in the course builder"): a *Yardage book* button in the
+studio's bar and a row in its pause menu, for an Architect course, giving the
+book of the course on screen -- the built one, not settings changed and not
+yet regenerated (main.js `downloadYardageBook`, shared with the round's
+menu). The `architect-studio` smoke journey presses it and checks a PDF
+comes back, and checks the dials' sentences: passed on the GPU.
+
 Cost: walkers and spectators are one instanced mesh per body part per body,
 coloured per instance (no extra draws for the colours); the crowd five
 bodies (was one), so five times the crowd's draw calls on Medium and up

@@ -1981,6 +1981,9 @@ const JOURNEYS = [
     await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
     await t.page.selectOption('#archStyle', 'links');
     await t.page.selectOption('#archClub', 'championship');
+    // Each dial says what its choice does, and follows the choice.
+    await t.until(() => t.page.evaluate(() => /pot bunkers/.test(document.getElementById('archStyleNote')?.textContent || '')
+     && /Tournament week/.test(document.getElementById('archClubNote')?.textContent || '')), 'the dials\' sentences', 5 * SLOW);
    });
    await t.step('Classic again brings the sliders back', async () => {
     await t.page.locator('.panel-tab', {hasText: 'Course'}).first().click();
@@ -1995,6 +1998,14 @@ const JOURNEYS = [
     await t.press('Grow this landscape');
     await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
      && document.getElementById('generating')?.hidden !== false), 'the Architect landscape', 120 * SLOW);
+   });
+   // The owner's review: the yardage book from the studio, and a sentence
+   // under each dial saying what it does.
+   await t.step('the yardage book from the studio', async () => {
+    await t.until(() => t.page.locator('#studioBook').isVisible(), 'the Yardage book button', 5 * SLOW);
+    const [pdf] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#studioBook')]);
+    const file = await pdf.path(), head = fs.readFileSync(file).subarray(0, 5).toString();
+    if (head !== '%PDF-') throw new Error(`the book is not a PDF (${JSON.stringify(head)})`);
    });
    let name = '';
    await t.step('save it, and it is Architect in Saved courses', async () => {

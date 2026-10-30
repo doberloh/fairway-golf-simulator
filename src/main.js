@@ -3777,6 +3777,7 @@ function toggleStudioPause(show){
   {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
   {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
   {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
+  ...(world&&isArchitect(world.settings)?[{id:'book',label:'Yardage book',sub:'A PDF, a page a hole',act:()=>{toggleStudioPause(false);downloadYardageBook();}}]:[]),
   {id:'graphics',label:'Graphics & sound',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
   {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
  ]});
@@ -3786,6 +3787,7 @@ function toggleStudioPause(show){
 function updateStudioState(){
  if(appMode!=='studio')return;
  const el=$('studioState');el.classList.toggle('dirty',studioDirty);
+ if($('studioBook'))$('studioBook').hidden=!world||!isArchitect(world.settings);
  studioHud($('world'));
  paintStudioHud({facts:{biome:BIOMES[settings.biome]?.name||settings.biome,holes:settings.holes},changes:studioDirty?studioChanges():[],regenerate:()=>$('studioRegenerate').click()});
  el.textContent=studioDirty?'Settings changed — regenerate to see them.':panel?'Close the settings panel to fly around with W A S D.':'Fly around with W A S D. Drag to look.';
@@ -5066,6 +5068,12 @@ function drawPauseInfo(){
  // Architect course's page a hole, from the menu while a round is paused.
  if($('pauseBook'))$('pauseBook').hidden=rangeMode||!isArchitect(settings);
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
+}
+// The yardage book of the course on screen, as a PDF (an Architect course's
+// page a hole: yardage-book.js), from the round's menu or the studio.
+function downloadYardageBook(){
+ // The BUILT course's settings: the studio's may have changed unbuilt.
+ if(world&&isArchitect(world.settings))download(`fairway-yardage-book-${String(world.settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');
 }
 function setPause(on){
  const app=$('app');
@@ -7625,7 +7633,10 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
   else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);else if(t==='tools')openToolsBox();};
  // THE PAUSE LIST'S SETTINGS ROW: the one window in a round, the screen elsewhere.
- $('pauseBook').onclick=()=>{closeMenuDrop();if(world&&isArchitect(settings))download(`fairway-yardage-book-${String(settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');};
+ $('pauseBook').onclick=()=>{closeMenuDrop();downloadYardageBook();};
+ // In the studio too (the owner's review: "need to be able to see the
+ // yardage book in the course builder"), for the course on screen.
+ $('studioBook').onclick=()=>{if(panel)closePanel();downloadYardageBook();};
  $('pauseSettings').onclick=()=>{setPause(false);closeMenuDrop();if(appMode==='play'&&popups)openSettingsWindow();else openPanel('camera');};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
  // THE FOOT, COMPACTED (the owner, 28 October 2026: "the lie should be part

@@ -89,8 +89,9 @@ quality measures*, which it absorbs.
   (five; a drop measured rising), the people, crowd and mower (ten each), the
   Alps as a broad hill, Links ST-1's fairways in two pairs. Seen in Node
   only: rakes in the sand, divots toward the green, scattered stumps, trees
-  by age, a path bridging a barranca. Not seen at all: the dials'
-  sentences in the studio, the paths on the map, the walkers' bob in
+  by age, a path bridging a barranca. Driven by the smoke journey: the
+  dials' sentences and the studio's yardage book. Not seen at all: the paths
+  on the map, the walkers' bob in
   motion, the scoreboard following a played round (seen at a round's start
   and set by hand). To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
