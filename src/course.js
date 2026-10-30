@@ -14,6 +14,7 @@ import {routePaths,pathIndex,linkBuilding} from './paths.js';
 import {placeMarkings,placeWear} from './markings.js';
 import {placeWaterworks} from './waterworks.js';
 import {placeStory,wallBoxes,segDist} from './story.js';
+import {placeLife} from './life.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -33,6 +34,7 @@ import {allows,isNatural} from './grounds.js';
 // have always found it.
 export const random=rng;
 const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+const PLAYED_STUMP=new Set(['fairway','semi','green','fringe','tee','sand','water','path']);
 // Defaults, bounds and validation all live in the settings schema; re-exported
 // here because course.js has long been the import site for them.
 export {DEFAULT_COURSE} from './settings-schema.js';
@@ -2496,6 +2498,8 @@ export function* generateWorldSteps(settings={},options={}){
  // inside corner, where a tree stops the shot that cuts too much. The same
  // rules every tree obeys; its own stream. Classic never reaches this.
  if(arch)for(const t of designedPlanting({holes,s,bio,treeSize,random})){
+  // A felled avenue (Restored) leaves its stumps (story props), not trees.
+  if(t.why==='stump'){if(!PLAYED_STUMP.has(surface(t.x,t.z)))storyProps.push({kind:'stump',x:t.x,z:t.z,rot:t.shade*6.28,size:.8+t.shade*.5});continue;}
   const {x,z,kind,h,r}=t,small=GROUND_PLANTS.has(kind);
   if(small||!allows(surface(x,z),'trees')||builtOn(x,z))continue;
   const keep=greenKeepOut(guards,x,z,closeness);
@@ -2790,9 +2794,11 @@ export function* generateWorldSteps(settings={},options={}){
  // rakes, decoration placed on the finished ground. None on Classic.
  const markers=isArchitect(s)&&!s.range?placeMarkings({holes,surface,nearest,halfX,halfZ,streams}):[];
  const wear=isArchitect(s)&&!s.range?placeWear({holes,s,surface}):[];
+ // Animals and distant people (life.js; phase 6): rendering only.
+ const life=isArchitect(s)&&!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=isArchitect(s)&&!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

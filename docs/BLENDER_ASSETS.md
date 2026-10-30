@@ -468,6 +468,16 @@ and landscape) and `addStory` instances the walls in 2 m sections, the
 stones and the lanterns. The walls are drawn uninked (inked, their small
 stones went black).
 
+### architect_life
+
+`tools/blender/architect_life.py`: life on an Architect course, each
+facing -Y at its real size -- a sheep (a fleece of lumps on short legs, a dark
+face), a goose, a doe and a bull elk (inset coat-coloured legs, a full body),
+a heron, a roadrunner, a gliding bird (a gull white, a raven black), a walking
+golfer with a bag and a greenkeeper on a ride-on mower. Ingested as the
+`lifeforms` family with its own scale; renderer.js `addLife` draws them
+instanced a quarter to a half larger than life and moves them, never on Low.
+
 ### architect_water
 
 `tools/blender/architect_water.py`: what a builder puts at an Architect

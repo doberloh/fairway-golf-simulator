@@ -462,6 +462,11 @@ The seams so far, each listed here as it is built:
   join the clubhouse (solid, never out of bounds) and its walls are boxes
   (`wallBoxes`). Trees keep 20 m off a story building and a stride off a wall.
 
+- The frame loop (renderer.js) -- an Architect course's life (`addLife`) is
+  moved thirty times a second and hidden whenever the tier is Low; it is
+  world data only so a course always has the same animals, never solid and
+  never read by the lie.
+
 **A TRAP: `leftWidth` is the -x side.** `fairwayWidth(h,z,0,side)` reads
 `leftWidth` for side < 0, and so does every surface query and the shader's
 hole table. Architect code had it the other way from phase 1 to phase 5 --

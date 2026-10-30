@@ -1018,7 +1018,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -2120,6 +2120,69 @@ export class GolfView{
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
   draw('Blender_Lantern_1',props.filter(p=>p.kind==='lantern'),{bark:'#2b2630',leaf:'#ffcc66'},false,at(2.12));
+  // A Restored course's felled avenue (phase 6's history): the shipped stumps.
+  draw('Blender_Stump_1',props.filter(p=>p.kind==='stump'),{bark:'#6b5440',leaf:'#8a6e52',stone:'#8a6e52',dirt:'#4a3a2e',accent:'#c9a77c'},true,at(.7));
+ }
+ // LIFE ON AN ARCHITECT COURSE (phase 6; life.js, tools/blender/architect_life.py):
+ // grazers turning slowly where they stand, birds circling, walkers along
+ // the path and a mower going out and back along their stretch. One instanced mesh per model
+ // part, their matrices rewritten thirty times a second; the group is hidden
+ // on Low (the frame loop). Decoration: nothing here is solid.
+ addLife(w){
+  if(!w?.life?.length||this.style!=='cartoon')return null;
+  // Iteration 4: drawn a quarter to a half larger than life, a cartoon's
+  // exaggeration (at true size a sheep was a dot in the marram at 22 m).
+  const SPEC={
+   sheep:{model:'Blender_Sheep_1',h:1.15,colours:{stone:'#f4f1e8',dirt:'#2e2a2a'}},
+   // Iteration 8: a lighter body (it read as a dark lump on the bank).
+   goose:{model:'Blender_Goose_1',h:1.0,colours:{stone:'#b9ad9a',bark:'#2b2a28',accent:'#f7f3ea'}},
+   deer:{model:'Blender_Deer_1',h:1.8,colours:{stone:'#a2724a',dirt:'#2e2622',accent:'#efe6d6'}},
+   elk:{model:'Blender_Elk_1',h:3.0,colours:{stone:'#9a7350',dirt:'#4a3a2e',accent:'#d9c9a8',bark:'#4f3a2a'}},
+   heron:{model:'Blender_Heron_1',h:1.35,colours:{stone:'#a9b0b6',bark:'#3b3f45',dirt:'#5b5248',accent:'#e5b54a'}},
+   roadrunner:{model:'Blender_Roadrunner_1',h:.7,colours:{stone:'#8a7a62',bark:'#3a332c',dirt:'#2a2522',accent:'#5a6a8a'}},
+   gull:{model:'Blender_Bird_1',h:.42,colours:{stone:'#f6f6f2',bark:'#3a3d42',accent:'#e5b54a'}},
+   raven:{model:'Blender_Bird_1',h:.45,colours:{stone:'#24242c',bark:'#141418',accent:'#2a2a30'}},
+   walker:{model:'Blender_Walker_1',h:1.85,colours:{bark:'#3d4a5c',dirt:'#2e2a28',accent:'#e8e2d0',stone:'#e0b48e',leaf:'#2f5d48'}},
+   mower:{model:'Blender_Mower_1',h:1.6,colours:{dirt:'#2a2a2a',leaf:'#3f7a3a',bark:'#3d4a5c',accent:'#e9c44a',stone:'#e0b48e'}},
+  };
+  const group=new T.Group();group.name='Life';this.group.add(group);
+  const sets=[];
+  for(const [kind,spec] of Object.entries(SPEC)){
+   const list=w.life.filter(l=>l.kind===kind);if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
+    // *ANYTHING INSTANCED THAT MOVES MUST SET userData.noCull*).
+    m.userData.noCull=true;group.add(m);this.resources.push(mat);return m;});
+   sets.push({spec,list,meshes});
+  }
+  const m4=new T.Matrix4(),q=new T.Quaternion(),e=new T.Euler(0,0,0,'YXZ'),pos=new T.Vector3(),sc=new T.Vector3();
+  const place=t=>{for(const set of sets){set.list.forEach((l,i)=>{
+   if(l.line){
+    // Out and back along the path's own points, facing the way it goes.
+    if(!l.run){l.run=[0];for(let k=1;k<l.line.length;k++)l.run.push(l.run[k-1]+Math.hypot(l.line[k].x-l.line[k-1].x,l.line[k].z-l.line[k-1].z));}
+    const len=l.run[l.run.length-1]||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),d=s<len?s:2*len-s,dir=s<len?1:-1;
+    let k=1;while(k<l.run.length-1&&l.run[k]<d)k++;
+    const p0=l.line[k-1],p1=l.line[k],seg=(l.run[k]-l.run[k-1])||1,u=(d-l.run[k-1])/seg,dx=(p1.x-p0.x)/seg,dz=(p1.z-p0.z)/seg;
+    const x=p0.x+(p1.x-p0.x)*u-dz*l.side,z=p0.z+(p1.z-p0.z)*u+dx*l.side;
+    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
+   }else if(l.ax!==undefined){
+    // Out and back along a stretch, facing the way it goes.
+    const len=Math.hypot(l.bx-l.ax,l.bz-l.az)||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),u=(s<len?s:2*len-s)/len,dir=s<len?1:-1,dx=(l.bx-l.ax)/len,dz=(l.bz-l.az)/len;
+    const x=l.ax+(l.bx-l.ax)*u-dz*l.side,z=l.az+(l.bz-l.az)*u+dx*l.side;
+    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
+   }else if(l.r!==undefined){
+    // Circling, banked into the turn.
+    const g=Math.sign(l.speed)||1,a=l.phase+t*l.speed,x=l.x+Math.cos(a)*l.r,z=l.z+Math.sin(a)*l.r;
+    pos.set(x,w.height(x,z)+l.up,z);e.set(0,Math.atan2(-Math.sin(a)*g,Math.cos(a)*g),-.35*g);
+   }else{
+    // Grazing: a slow turn where it stands.
+    pos.set(l.x,w.height(l.x,l.z),l.z);e.set(0,l.rot+Math.sin(t*.3+l.phase)*.35,0);
+   }
+   q.setFromEuler(e);sc.setScalar(set.spec.h);m4.compose(pos,q,sc);for(const m of set.meshes)m.setMatrixAt(i,m4);
+  });for(const m of set.meshes)m.instanceMatrix.needsUpdate=true;}};
+  place(0);
+  let since=0;
+  return {group,update(dt,t){since+=dt;if(since<1/30)return;since=0;place(t);}};
  }
  // WEAR (architect-courses, phase 3; markings.js placeWear): divots on the
  // tees and in the landing zones, one instanced mesh of small flat patches a
@@ -3198,6 +3261,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.stepWaterProbes();
   // Haunted Hollow: ghosts on their rounds, lanterns lit by the same dusk.
   this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
+  // Life on an Architect course (phase 6): never on Low.
+  if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and

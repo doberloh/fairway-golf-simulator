@@ -192,6 +192,43 @@ export const VIEWS = [
  {name: 'arch-circle', hole: 0, when: 'afternoon', caption: 'A stone circle and lanterns', cam: `w => { const p = (w.storyProps || []).filter(k => k.kind === 'stone'), c = p.length ? {x: p.reduce((s, k) => s + k.x, 0) / p.length, z: p.reduce((s, k) => s + k.z, 0) / p.length} : {x: 0, z: 0};
   const x = c.x + 16, z = c.z + 10;
   return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 2.4, pitch: -6}; }`},
+ // Phase 6's life and history: the first grazers or water birds from 22 m,
+ // the walkers on their path, a felled avenue's stumps.
+ {name: 'arch-life', hole: 0, when: 'afternoon', caption: 'Animals on the course', cam: `w => { const a = (w.life || []).find(k => k.x !== undefined && k.r === undefined) || {x: 0, z: 0};
+  const x = a.x + 7, z = a.z + 6;
+  return {x, z, yaw: Math.atan2(a.x - x, a.z - z) * 180 / Math.PI, height: 3, pitch: -14}; }`},
+ {name: 'arch-walkers', hole: 0, when: 'afternoon', caption: 'Golfers walking the path', cam: `w => { const a = (w.life || []).find(k => k.kind === 'walker') || {ax: 0, az: 0, bx: 1, bz: 1};
+  const mx = (a.ax + a.bx) / 2, mz = (a.az + a.bz) / 2, dx = a.bx - a.ax, dz = a.bz - a.az, n = Math.hypot(dx, dz) || 1, x = mx + dz / n * 10, z = mz - dx / n * 10;
+  return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: 3.2, pitch: -8}; }`},
+ {name: 'arch-stumps', hole: 0, when: 'afternoon', caption: 'A felled avenue', cam: `w => { const s = (w.storyProps || []).find(k => k.kind === 'stump') || {x: 0, z: 0};
+  const x = s.x + 10, z = s.z + 8;
+  return {x, z, yaw: Math.atan2(s.x - x, s.z - z) * 180 / Math.PI, height: 2.2, pitch: -10}; }`},
+ // One view an animal kind: standing ones from 9 m, fliers from below their
+ // circle, the mower from beside its run.
+ {name: 'arch-life-goose', hole: 0, when: 'afternoon', caption: 'Life: goose', cam: `w => { const a = (w.life || []).find(k => k.kind === 'goose') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 4, z = cz + 3;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-heron', hole: 0, when: 'afternoon', caption: 'Life: heron', cam: `w => { const a = (w.life || []).find(k => k.kind === 'heron') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-roadrunner', hole: 0, when: 'afternoon', caption: 'Life: roadrunner', cam: `w => { const a = (w.life || []).find(k => k.kind === 'roadrunner') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-mower', hole: 0, when: 'afternoon', caption: 'Life: mower', cam: `w => { const a = (w.life || []).find(k => k.kind === 'mower') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-sheep', hole: 0, when: 'afternoon', caption: 'Life: sheep', cam: `w => { const a = (w.life || []).find(k => k.kind === 'sheep') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-elk', hole: 0, when: 'afternoon', caption: 'Life: elk', cam: `w => { const a = (w.life || []).find(k => k.kind === 'elk') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-gull', hole: 0, when: 'afternoon', caption: 'Life: gull', cam: `w => { const a = (w.life || []).find(k => k.kind === 'gull') || {x: 0, z: 0, r: 30, up: 30};
+  const x = a.x + a.r + 12, z = a.z;
+  return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
+ {name: 'arch-life-raven', hole: 0, when: 'afternoon', caption: 'Life: raven', cam: `w => { const a = (w.life || []).find(k => k.kind === 'raven') || {x: 0, z: 0, r: 30, up: 30};
+  const x = a.x + a.r + 12, z = a.z;
+  return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
  {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
   const x = b.x + 45, z = b.z + 30;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},

@@ -71,8 +71,13 @@ quality measures*, which it absorbs.
   a ball against a wall or the Pit's wall in a round (Node only), a carry
   over a barranca. To check: an Architect Links or Golden Age course with a
   lot of story.
-- [ ] Phase 6's second half (history, animals and people) and phase 7
-  (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Not yet played by a person: phase 6's second half.** Seen in GPU
+  captures: sheep, deer, elk, geese, a heron, a roadrunner, a raven, the
+  walkers and the mower; none on Low; hollows and stumps. Not seen: the
+  animals moving in a round (they turn and circle; the captures are stills),
+  gulls (Lakeshore's flew out of frame). To check: a round on an Architect
+  Links course on High, watching the flock and the gulls.
+- [ ] Phase 7 (ARCHITECT_COURSES.md, *Status*).
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

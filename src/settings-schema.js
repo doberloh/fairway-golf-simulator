@@ -303,7 +303,10 @@ export const GENERATOR_VERSION=52;
 //    they stand; the land's templates -- the Dell's dune, the Alps' ridge,
 //    the Barranca's ravine (bridged, no fairway across it, no trees in it),
 //    the Pit's wall before a sunken green.
-export const ARCHITECT_VERSION=9;
+// 10: phase 6, history and life: grassed-over bunkers (hollows) on municipal,
+//    old and restored courses; a Restored course's felled avenue left as
+//    stumps, not trees; animals and distant people (life.js; drawn only).
+export const ARCHITECT_VERSION=10;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

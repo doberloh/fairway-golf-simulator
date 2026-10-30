@@ -10961,3 +10961,18 @@ the study's workstreams A (*pass 7* templates) and L, and its sources:
   ruins; a landmark a lot) and clearance (38 m for a building, 14 m for a
   wall, 150 m beyond a green for a landmark, seen from 120 m short) is
   PLACED.
+
+## Architect courses: history and life (30 October 2026)
+
+Phase 6, second half (docs/ARCHITECT_COURSES.md, *Phase 6: history and
+life*), from the study's workstreams M and O: sheep grazing links (the
+study: Machrihanish Dunes keeps 50 Hebridean sheep as mowers), geese at
+ponds, deer at the wood's edge, elk, roadrunners, a heron, gulls, ravens; a
+greenkeeper mowing, a group walking off far away; grassed-over bunkers,
+"cheaper to mow than rake", most on a Municipal course; a Restored course's
+felled avenue as stumps. **Every count and size is PLACED**: nine sheep, six
+geese, three deer or elk, two roadrunners, three or four birds 25-40 m up on
+a 30-70 m circle, three walkers on 40 m of path at 1.2 m/s, a mower on a 30 m
+run at 1.8 m/s; hollows 0.8 m deep, 5-7.5 m across, on half the par fours and
+fives of a Municipal course and a third of an Old or Restored one; animals
+drawn 1.25-1.5 times life size.

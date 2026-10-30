@@ -284,6 +284,11 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
 - **The land's templates** (architect.js), in the ground with the mounds:
   the Dell's dune before a sunken green, the Alps' ridge across the fairway,
   the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
+- **History by age** (architect.js): grassed-over bunkers as hollows on
+  municipal, old and restored courses; a restored course's felled avenue
+  left as stumps.
+- **Life** (life.js), after the planting: animals and distant people, out
+  of play and clear of the trees, drawn only.
 - **The land's story** (story.js), after the clubhouse and before the
   houses and trees: field walls, a farmstead, ruins, a landmark on a hole's
   line, a stone circle and lanterns, by The land's story.

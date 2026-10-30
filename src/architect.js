@@ -397,7 +397,9 @@ export function designedPlanting({holes,s,bio,treeSize}){
  const main=(bio.plants||[]).filter(([k])=>!GROUND_PLANTS.has(k)).sort((a,b)=>b[1]-a[1])[0]?.[0];
  if(!main||(s.trees??0)<=0)return out;
  const avenueStyles=new Set(['parkland','golden','raynor']),age=s.archAge||'mature';
- const avenueShare=age==='old'?.6:age==='mature'?.35:0;
+ // A Restored course felled the mid-century avenue (the study, workstream
+ // O): its line is drawn as before and left as stumps.
+ const avenueShare=age==='old'?.6:age==='mature'?.35:age==='restored'?.4:0,felled=age==='restored';
  for(const h of holes){
   const d=h.design;if(!d||h.par===3)continue;
   const rnd=archStream(s.seed||'EVERGREEN','arch','planting',s.biome||'',h.hole);
@@ -406,7 +408,7 @@ export function designedPlanting({holes,s,bio,treeSize}){
    const sides=rnd()<.6?[1,-1]:[rnd()<.5?1:-1],step=13+rnd()*5,size=treeSize(main,.55+rnd()*.2,.5),stop=h.length-70;
    for(const side of sides)for(let z=h.fairwayStart+15;z<stop;z+=step){
     const w=side<0?h.leftWidth(z):h.rightWidth(z),p=h.toWorld({x:h.center(z)+side*(w+semi+11),z});
-    out.push({x:p.x,z:p.z,kind:main,h:size.h,r:size.r,shade:rnd(),hole:h.hole,why:'avenue'});
+    out.push({x:p.x,z:p.z,kind:main,h:size.h,r:size.r,shade:rnd(),hole:h.hole,why:felled?'stump':'avenue'});
    }
   }
   const turn=h.doglegAngle||0;
@@ -471,12 +473,19 @@ export function sequenceCourse(holes,rnd,PAR_YARDS){
 // Every mound is kept clear of tees, greens, the fairway and semi-rough,
 // bunkers and ponds, so nothing flattened or carved is disturbed.
 const MOUND_STYLE = {modern: 'framing', parkland: 'framing', tropical: 'framing', stadium: 'spectator', golden: 'drops', raynor: 'drops'};
+// GRASSED-OVER BUNKERS (phase 6; the study, workstream O): a hollow where a
+// bunker was, kept its shape and grassed -- a cheaper thing to mow than to
+// rake, so most on a Municipal course and an Old or Restored one. A shallow
+// bowl (0.8 m, PLACED) beside the fairway past the semi-rough, on their own
+// stream, clear of play like a mound.
+const HOLLOW_SHARE = {municipal: .5, old: .35, restored: .3};
 export function designMounds(holes, s) {
- const kind = MOUND_STYLE[styleOf(s)];
- if (!kind) return [];
+ const kind = MOUND_STYLE[styleOf(s)], hollows = Math.max(HOLLOW_SHARE[s.archClub] ?? 0, HOLLOW_SHARE[s.archAge] ?? 0);
+ if (!kind && !hollows) return [];
  const out = [], semi = s.semiRough ?? 6;
  for (const h of holes) {
   const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'mounds', s.biome || '', h.hole);
+  const old = archStream(s.seed || 'EVERGREEN', 'arch', 'hollows', s.biome || '', h.hole);
   const gr = (h.greenSize ?? 14) * (h.greenAspect ?? 1.1) + (s.fringe ?? 2) + semi;
   // Clear of every hole, not only its own: a mound in one hole's rough can
   // stand on the next one's fairway.
@@ -495,7 +504,12 @@ export function designMounds(holes, s) {
    }
    return true;
   };
-  const add = (x, z, r, ht) => { if (clear(x, z, r)) { const p = h.toWorld({x, z}); out.push({x: p.x, z: p.z, r, h: ht}); } };
+  const add = (x, z, r, ht, why) => { if (clear(x, z, r)) { const p = h.toWorld({x, z}); out.push({x: p.x, z: p.z, r, h: ht, ...(why ? {why} : {})}); } };
+  if (hollows && h.par > 3 && old() < hollows) {
+   const z = h.length * (.4 + old() * .25), side = old() < .5 ? -1 : 1, half = side < 0 ? h.leftWidth(z) : h.rightWidth(z), r = 5 + old() * 2.5;
+   add(h.center(z) + side * (half + semi + r + 5), z, r, -.8, 'hollow');
+  }
+  if (!kind) continue;
   if (kind === 'framing') {
    const zones = [h.length * .45, h.length * .7, h.length - 20];
    for (const z of zones) for (const side of [1, -1]) {

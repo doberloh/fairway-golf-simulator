@@ -26,7 +26,7 @@ number of holes.
 | 3. The field | built, without the study's baked field (*Deviations*): collection areas (a hazard-slot kind the shader paints and the lie reads), lobed bunker complexes, thin collars where fairways run into greens, divot wear. Not done: greens turned to the approach, per-band mowing heights, native mower lines (*Deviations*) |
 | 4. Home | built: routed from the clubhouse -- each nine pulled home toward its turn, the 10th tee at the clubhouse, every hole within walking reach of home. 10 of 12 nines home on the bench (Classic 7), 19 of 24 on eighteen-hole courses (Classic 10); Links the hard case. Not done: double greens (*Deviations*) |
 | 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
-| 6. Story | first half built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations) and the land's templates (Dell, Alps, Barranca, Pit). Still to build: the history layers the age dial draws, and the animals and distant people |
+| 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
 | 7. Occasion | not started |
 
 ## The owner's decisions (the goal text, 30 October 2026)
@@ -394,6 +394,48 @@ ARCHITECT_VERSION 9. Classic's fingerprint unchanged.
   Barranca's gap, bridge and treeless line, and the Pit's wall before its
   green).
 
+### Phase 6: history and life, second half (30 October 2026)
+
+ARCHITECT_VERSION 10. Classic's fingerprint unchanged.
+
+- **The age dial's history** (the study, workstream O):
+  - **grassed-over bunkers**: a 0.8 m hollow beside the fairway past the
+    semi-rough, where sand was and is now mown -- on half the par fours and
+    fives of a Municipal course, a third of an Old or Restored one (PLACED);
+    in the ground with the mounds, on their own stream;
+  - **a felled avenue**: a Restored course draws the mid-century avenue's
+    line as an Old or Mature one would plant it, and leaves stumps there
+    (the shipped stump model), not trees.
+- **Life** (life.js; the study, workstream M): animals, cartoon and calm --
+  sheep on Links, deer at the wood's edge (Midwest, Autumn, PNW), elk
+  (Redwood, Mountain), a roadrunner in the Desert, geese on a pond's far
+  bank, a heron by a pond, gulls circling over Links, Lakeshore and Island,
+  ravens over Haunted Hollow -- and people far off: three golfers walking a
+  stretch of the cart path, abreast, along its own points, and a greenkeeper
+  on a ride-on mower working the rough between holes. Everything out of play
+  (grazers and the mower 24-30 m outside every corridor and clear of trunks,
+  birds 25-40 m up, walkers on the path), decoration only, drawn a quarter
+  to a half larger than life, moved thirty times a second, **never on Low**
+  (the frame loop hides the group). Rendering only: no version for it.
+- **The life kit** (Blender pack architect_life, ten iterations, below).
+- **Not built, and why**:
+  - **tiger tees** -- a back tee standing alone behind the others. A tee is
+    the card's: blue, white and red are fixed before the course is built
+    (*the card before the course*), and a fourth, or the blue moved back,
+    would change every yardage the card shows. Left for a change that can
+    carry a fourth tee through the card, the rules and the round;
+  - **a pond added later**, **a green rebuilt**, **plaques and memorial
+    benches** -- each a small rule with no piece in the world yet to carry
+    it (the shader has no per-green colour; the benches by the tees are
+    Classic's furniture);
+  - **animals that move off when a ball lands near** -- they stand out of
+    play by placement, so a ball rarely comes near; the reaction would need
+    the frame loop to hear of every landing.
+- Tests: tests/life.test.mjs (Classic bare, every landscape its own life;
+  nothing on a played surface or inside a tree, the walkers on the path, the
+  birds up; hollows on an old municipal course, none on a new members' one;
+  stumps on a restored course, none on an old one).
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -430,6 +472,11 @@ ARCHITECT_VERSION 9. Classic's fingerprint unchanged.
   placed where it shows from the fairway.
 - **Inked field walls**: the furniture's outline, drawn round stones a few
   pixels high, turned every wall black.
+
+- **Animals at true size** (iteration 3): a sheep in the marram 22 m off was
+  a dot. They are drawn larger than life, as the rake is.
+- **Walkers on a straight line between two path points**: on a bend they
+  walked off the path. They follow its points.
 
 ## Deviations from the study
 
@@ -573,6 +620,8 @@ is above about 30%).
 | 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
 | 30 Oct, phase 3 | capture `arch-p3a` (Midwest, Links; Heathland, Municipal): a hole from behind, a green, the first tee | 5%, 38 °C | no errors; divots on the tee, a collection area beside a green, lobed bunkers seen |
 | 30 Oct, phase 4 | none: routing measured on the CPU (bench, builds) | -- | -- |
+| 30 Oct, phase 6 | captures `arch-l3` to `arch-l10` (twelve runs of one to three landscapes): the life pack's iterations on Links, Redwood, Autumn, Midwest, PNW, Desert, Haunted Hollow and Lakeshore, one on Low | 3-5%, 38-40 °C each | every course built in 5-23 s with no errors |
+| 30 Oct, phase 7 | the yardage book opened in the browser pane (a PDF, no game) | 4% | read as drawn: the plan, carries, notes |
 | 30 Oct, phase 6 | captures `arch-s3` to `arch-s10` (sixteen runs of one to three landscapes, one at a time): the story pack's iterations on Midwest, Links, Haunted Hollow, Autumn, Mountain, Island, Desert and PNW, the last on Low | 2-5%, 38-40 °C each | every course built in 5-18 s with no errors |
 | 30 Oct, phase 5 | captures `arch-w3` to `arch-w10` (fourteen runs of one landscape, one at a time): the water pack's iterations on Midwest (Parkland, Stadium), Redwood, Autumn and Desert, the last on Low | 2-5%, 38-40 °C each | every course built in 13-17 s with no errors |
 | 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
@@ -665,3 +714,22 @@ Cost: a course with a lot of story carries three to five buildings (one
 mesh each, inked), a few hundred wall sections in two instanced meshes, and
 on Haunted Hollow about 150 lanterns and nine stones in three more.
 Measured with the rest of phase 6 on Low (*Measures*).
+
+### architect_life (sheep, goose, deer, elk, heron, roadrunner, bird, walker, mower)
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | sheet (face on) | the sheep (a fleece and a dark face), the walker with his bag, the elk's rack and the mower read; the sheep and deer stood high on their legs |
+| 2 | sheet | the sheep lower on short legs; the deer's legs stouter and shorter |
+| 3 | game (`arch-l3`: Links, Redwood, Autumn) | **at true size everything was a dot**: sheep specks in the marram at 22 m, the walkers small figures on Redwood's path; one stump of Autumn's felled avenue on its old line |
+| 4 | game (`arch-l4`: Links, Redwood, Midwest) | drawn a quarter to a half larger than life (the rake's lesson), views at 10 m: **black-faced sheep in the marram**, **three golfers with their bags on Midwest's path**; the elk **read as a table** -- stick legs at its body's corners, a slab body, a pale belly plank under it |
+| 5 | game (`arch-l5`: Redwood, Midwest) | legs inset, stout and coat-coloured to a dark hoof, a full body, no belly: the elk reads, and Midwest's doe stands at the wood's edge with her white tail |
+| 6 | game (`arch-l6`: six landscapes) | the roadrunner running in the desert, a raven over Haunted Hollow, a heron by PNW's pond read; the geese were dark lumps; **the mower was in a wood** (placed before anyone asked where the trees were) |
+| 7 | game (`arch-l7`) | life placed after the planting, clear of trunks; the mower tried at up to forty spots for a clear 30 m run: out in the open on Midwest and on a Links dune |
+| 8 | game (`arch-l8`, Midwest) | the goose a lighter grey-brown with a wider white chin strap: **a Canada goose on the bank** |
+| 9 | game, **Low tier** (`arch-l9`, Links) | no animals drawn on Low, as the goal asks |
+| 10 | game (`arch-l10`: Links, Midwest) | the flock on Links; the golfers along the path's own points on both (a chord between two path points had walked them off it on a bend: found by the test) |
+
+Cost: under forty animals and people a course, each kind one instanced mesh
+per part, their matrices rewritten thirty times a second (a few dozen
+matrices); none of it on Low. Measured with the rest of phase 6 (*Measures*).
