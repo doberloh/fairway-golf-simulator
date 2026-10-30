@@ -39,6 +39,22 @@ often has the how-to already worked out.
   first. Large. (Claude, 16 October 2026)
 - **Tees per golfer.** Each golfer plays their own tee, with mixed-tee scoring
   and the CSVs to match. Medium. (was: *Per-player tee choice*)
+- **A course built for your game.** The generator lays out holes around the
+  golfer's own launch-monitor misses: bunkers where their driver's miss
+  lands, par 3s at the carries they like least ("test me"), or holes that
+  suit their stock shape ("flatter me"). The course tightens as their spread
+  does, so it shows progress, and a challenge code carrying the pattern lets
+  a friend play "the course my slice built". No sim we know of does this, and
+  nothing leaves the machine. The pieces: `dispersion.js` already turns a
+  club's shots into an ellipse (`groupEllipse`), and the profile keeps the
+  bag's distances -- but not shots kept by club across sessions, so a
+  per-club pattern has to be stored first. Then a pure module from pattern
+  to landing zones, with Node tests, and hazard placement and hole lengths
+  in `course-plan.js` / `course.js` reading it. Opt-in, so existing seeds
+  keep their courses; a saved round stores the pattern it was built from,
+  or it rebuilds differently; too few shots falls back to an ordinary
+  course. Large: it is generation (fingerprint, bench, old saves).
+  (Claude, asked by the owner for one standout feature, 29 October 2026)
 
 ## Practice
 
