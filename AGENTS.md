@@ -332,7 +332,8 @@ ask as above.
 anything else uses the GPU. **Ask first, quoting the cost** (a "GPU allowed"
 `/goal` is the only exception, above): about 10 minutes
 for a full sweep, about a minute for one group (`--only tiers`, `views`,
-`biomes`, `ablation`, `pixels`, `water`, `sun` or `weak`).
+`biomes`, `ablation`, `pixels`, `water`, `sun`, `weak` or `architect` -- Classic
+against Architect on Low).
 
 - **Ask whenever a change could move a frame:** `renderer.js`, `graphics.js`,
   `vegetation.js`, `textures.js`, shaders, materials; a render pass, post

@@ -10853,3 +10853,36 @@ batches (29-30 October 2026); none returned a real architect (search
 summaries, which listed only Wikipedia's *List of golf course architects*
 and directories). Founding years by age, PLACED: new 2005-2024, mature
 1955-1995, old 1895-1932, restored 1898-1930.
+
+## Architect courses: the hand (30 October 2026)
+
+Phase 3 of Architect courses (docs/ARCHITECT_COURSES.md).
+
+**Collection areas**: short grass beside a green, mown low enough that a
+miss rolls away from it (USGA Green Section Record 61, *Establishing and
+maintaining closely mown green surrounds*). Taken: fairway height, off the
+front corner a green drains toward (its low side), on the styles that play
+along the ground. PLACED: the size (a half to three quarters of the green
+across) and which styles.
+
+**Mowing heights** read for this phase and not yet used (the per-band
+heights need the surface field; ARCHITECT_COURSES *Deviations*): greens to
+about 0.187 in, one new course 0.100 in; fairways and tees 0.350-0.500 in;
+rough 2-3 in, 2.5 the commonest; a first cut about 1.5 in (USGA *Understanding
+mowing heights*, 2018; golfcourseindustry.com, *First cut at Bella Ridge*).
+
+**Thin collars**: a links fairway is mown to the green's edge, so a running
+shot can be played in (the study, *Links run in*). PLACED: 0.75-1.0 m.
+
+**Divots**: a par 3's tee takes more wear than any other because players hit
+irons there, and the USGA's guideline doubles its area for it: about 100 sq
+ft of tee per 1,000 rounds a year, about 200 on a par 3 (MSU archive 1991
+and 1974, quoting USGA specifications; a 2002 USGA analysis argues the
+simple rule is too simple). Taken: about three times the divots on a par 3's
+tees as on a par 4's back tee. PLACED: every count and size, scaled by club
+(municipal 1.5, members 1, resort 0.8, championship 0.7) and age (new 0.4 to
+old 1.1).
+
+**Lobes** (bunker complexes with capes and bays, the sandbelt and heathland
+look; the study's sources, *Bunker styles*): PLACED: one lobe of 38-58% of
+the bunker, on about half the bunkers over 7 m, on five styles.

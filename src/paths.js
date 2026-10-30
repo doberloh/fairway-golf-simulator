@@ -92,7 +92,15 @@ export function routePaths({holes, s, surface, streams}) {
   }
   if (found) kept.push(found);
  }
- const points = smoothLine(kept, 2);
+ // Smoothing can carry a point back over the edge it was pushed off (a
+ // bunker's lobe reaching toward the path: phase 3), so the same push runs
+ // again on the smoothed line.
+ const points = smoothLine(kept, 2).map((p, i, all) => {
+  if (!KEEP_OFF.has(surface(p.x, p.z)) || (surface(p.x, p.z) === 'water' && streams?.at?.(p.x, p.z))) return p;
+  const q = all[Math.min(all.length - 1, i + 1)], o = all[Math.max(0, i - 1)], dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1;
+  for (const k of [2, -2, 4, -4, 7, -7, 11, -11]) { const x = p.x - dz / l * k, z = p.z + dx / l * k; if (!KEEP_OFF.has(surface(x, z))) return {x, z}; }
+  return p;
+ });
  // Bridges: a run of points over a creek or river becomes one bridge.
  const bridges = [];
  let start = -1;

@@ -58,6 +58,7 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
   // A rake beside each bunker, on its far side from the green, lying along
   // the line out of the sand.
   for (const b of h.bunkers) {
+   if (b.lobe) continue;   // a complex has one rake, by its main bunker
    const g = h.green, dx = b.x - g.x, dz = b.z - g.z, l = Math.hypot(dx, dz) || 1, a = Math.atan2(dz / l, dx / l);
    const e = ovalRadius(b, a), r = Math.hypot(e.x, e.z) + 1.3;
    const q = h.toWorld({x: b.x + dx / l * r, z: b.z + dz / l * r});
@@ -89,5 +90,36 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
  for (let x = -halfX; x <= halfX; x += BOUNDARY_GAP) edge.push({x, z: -halfZ + 1}, {x, z: halfZ - 1});
  for (let z = -halfZ; z <= halfZ; z += BOUNDARY_GAP) edge.push({x: -halfX + 1, z}, {x: halfX - 1, z});
  for (const q of edge) if (nearest(q.x, q.z).d < 120 && dry(q.x, q.z)) out.push({kind: 'obstake', x: q.x, z: q.z, rot: 0});
+ return out;
+}
+
+// WEAR (architect-courses, phase 3; the study, workstream N): divots where
+// golf is played -- thickest on par-3 tees, where irons dig (USGA: a par 3's
+// tee wants twice the area per round for that reason), a few on every back
+// tee, and scattered where drives land (architect.js `landingZones`). A busy
+// municipal course is worn most and a new or restored course least. Each is
+// a small dark patch on the ground; decoration, it changes no lie. PLACED: the
+// counts and sizes.
+import {landingZones} from './architect.js';
+const WEAR = {municipal: 1.5, members: 1, resort: .8, championship: .7};
+const AGE_WEAR = {new: .4, mature: 1, old: 1.1, restored: .7};
+function stream(seed) { let a = 2166136261; for (const c of String(seed)) { a ^= c.charCodeAt(0); a = Math.imul(a, 16777619); } return () => { a += 0x6D2B79F5; let t = Math.imul(a ^ a >>> 15, a | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+export function placeWear({holes, s, surface}) {
+ const out = [], k = (WEAR[s.archClub] ?? 1) * (AGE_WEAR[s.archAge] ?? 1);
+ for (const h of holes) {
+  const r = stream(`${s.seed}|arch|wear|${s.biome}|${h.hole}`);
+  const put = (lx, lz, size) => { const p = h.toWorld({x: lx, z: lz}), sf = surface(p.x, p.z); if (sf === 'tee' || sf === 'fairway' || sf === 'semi') out.push({x: p.x, z: p.z, r: size, rot: r() * Math.PI}); };
+  for (const [name, t] of Object.entries(h.tees)) {
+   const n = Math.round((h.par === 3 ? 14 : name === 'blue' ? 5 : 3) * k);
+   for (let i = 0; i < n; i++) put(t.x + (r() - .5) * 4.2, t.z + (r() - .5) * 5, .07 + r() * .05);
+  }
+  if (h.par > 3) {
+   const z = landingZones(h);
+   for (const zz of [z.good, z.average]) for (let i = 0, n = Math.round(9 * k); i < n; i++) {
+    const at = zz + (r() - .5) * 45, half = Math.min(h.leftWidth(at), h.rightWidth(at)) * .7;
+    put(h.center(at) + (r() - .5) * 2 * half, at, .08 + r() * .06);
+   }
+  }
+ }
  return out;
 }

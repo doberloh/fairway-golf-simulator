@@ -23,7 +23,7 @@ number of holes.
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
 | 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
 | 2. People | built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note; stakes, yardage posts and rakes (ten iterations); the clubhouse, solid, one per landscape (ten iterations). The bridge deck is still drawn, not solid (*Deviations*) |
-| 3. The field | not started |
+| 3. The field | built, without the study's baked field (*Deviations*): collection areas (a hazard-slot kind the shader paints and the lie reads), lobed bunker complexes, thin collars where fairways run into greens, divot wear. Not done: greens turned to the approach, per-band mowing heights, native mower lines (*Deviations*) |
 | 4. Home | not started |
 | 5. Built | not started |
 | 6. Story | not started |
@@ -202,6 +202,35 @@ ARCHITECT_VERSION 4 (markings), 5 (the clubhouse). Classic unchanged.
   Architect's families; eleven shipped models wrap the same way (TODO).
 - Tests: tests/markings.test.mjs, tests/clubhouse.test.mjs.
 
+### Phase 3: the hand (30 October 2026)
+
+ARCHITECT_VERSION 6. Classic's fingerprint unchanged.
+
+- **Collection areas** (architect.js; the study, workstream D): on the styles
+  that play along the ground -- Links, Sandhills, Minimalist, Golden Age,
+  Heathland, Raynor -- an oval of fairway-height grass off the front corner
+  the green drains toward (the other front corner when a bunker sits
+  there). A hazard slot of a new kind: renderer.js writes it with meta.y -1,
+  the ground shader paints it fairway over rough or semi-rough only, and
+  course.js `localSurface` plays it the same way. It takes one of the hole's
+  twelve slots.
+- **Bunker complexes** (the study, workstream C): on Heathland & Sandbelt,
+  Sandhills, Golden Age, Modern and Minimalist, about half the bunkers over
+  7 m grow one lobe over their rim -- a smaller oval, a hazard of its own --
+  so the sand has capes and bays. A fairway bunker's lobe grows away from
+  the fairway. (The first count, two lobes on any bunker over 5.5 m, put 51
+  on nine Heathland holes and doubled the sand.)
+- **Thin collars** on Links (0.75 m), Sandhills (0.9 m) and Minimalist
+  (1.0 m): the fairway runs on into the green, whatever the club mows
+  elsewhere.
+- **Wear** (markings.js `placeWear`; the study, workstream N): divots on the
+  tees, thickest on par 3s (irons; USGA's par-3 tee area doubled for that
+  reason), a few on every back tee and scattered in the landing zones, by
+  club and age; one instanced mesh of small dark patches.
+- **The profiler** learned a group, `architect` (Classic against Architect
+  on Low, three landscapes).
+- Tests: two more in tests/architect.test.mjs.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -234,6 +263,18 @@ ARCHITECT_VERSION 4 (markings), 5 (the clubhouse). Classic unchanged.
   said, from three golfers; the "course built for your game" idea would add a
   fourth from the player's own shots.
 - **The version stamp** (above): one integer, not a second field.
+- **The surface field is not built** (the study's engine piece: a baked
+  texture of distances to every surface edge, read by the lie and the
+  shader). The ground shader is at its sixteen-texture limit, and a new
+  texture meant replacing a data texture both designers share -- a change
+  Classic's look would ride on. Phase 3's pieces went into what exists
+  instead: a hazard-slot kind (collection areas), more hazards (lobes), a
+  setting (collars) and a decal mesh (wear). What that leaves undone:
+  **greens turned to the approach** (a rotation the hole table has no free
+  channel for), **per-band mowing heights** read as heights, and **native
+  mower lines** where mown rough meets native grass. The sculpting and
+  real-courses studies still need the field; it stays the first piece of
+  either.
 - **A clubhouse on a slope stands on a terrace** -- its floor level with the
   high side and a stone wall down to the low -- rather than on levelled
   ground: levelling is earthworks (phase 5). On Mountain, where nowhere falls
@@ -290,6 +331,22 @@ ARCHITECT_VERSION 4 (markings), 5 (the clubhouse). Classic unchanged.
   65, Minimalist 52, Desert target 44, Mountain 45, Tropical 55; Classic 42.
   Ponds per 18: none on Links to about 15 on Stadium.
 
+### Frame time on Low (30 October 2026, after phase 3)
+
+`node tools/profile.mjs --only architect`, one run, seed PROFILE, nine holes,
+on this machine's RTX 4090 (so the real-GPU arm: headroom, not a weak card).
+Frame = CPU + GPU medians.
+
+| Landscape | Classic | Architect | Change | Draw calls |
+| --- | --- | --- | --- | --- |
+| Midwest | 1.70 + 1.22 = 2.92 ms | 1.60 + 0.83 = 2.43 ms | -17% (fewer trees in play) | 414 -> 426 |
+| PNW | 1.20 + 1.18 = 2.38 ms | 1.50 + 1.05 = 2.55 ms | +7% | 376 -> 440 |
+| Links | 1.20 + 1.07 = 2.27 ms | 1.40 + 1.06 = 2.46 ms | +8% | 347 -> 354 |
+
+Inside the goal's 10% on all three. The added draws are the paths, the
+markings (instanced, twelve meshes), the clubhouse, its ink and the wear.
+Re-measured at the end of the goal.
+
 ## GPU run log
 
 Every run reads `nvidia-smi` first (the goal: wait if a game runs or the card
@@ -302,6 +359,8 @@ is above about 30%).
 | 30 Oct, phase 2 | capture `arch-p2a`: an Architect Midwest course, four views (overhaul.mjs, `--course designer=architect`) | 6%, 41 °C | built in 13.8 s, no errors; paths, the pull-offs and a white middle flag seen |
 | 30 Oct, phase 2 | smoke `architect-studio`, `studio`, `surprise-round`, `hud-reachable`, `no-swallowed-errors` | 6%, 40 °C | 5 of 5 passed |
 | 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
+| 30 Oct, phase 3 | capture `arch-p3a` (Midwest, Links; Heathland, Municipal): a hole from behind, a green, the first tee | 5%, 38 °C | no errors; divots on the tee, a collection area beside a green, lobed bunkers seen |
+| 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
 | 30 Oct, phase 2 | captures `arch-c1` to `arch-c11` (sixteen runs of one to three landscapes): the clubhouses' iterations, all ten landscapes, the last on Low | 1-7%, 38-41 °C each | every course built in 4-17 s with no errors |
 
 ## Blender iteration log

@@ -431,6 +431,13 @@ The seams so far, each listed here as it is built:
   (so never fingerprinted): flags by pin band (course.js `PIN_FLAGS`,
   `pinBandOf`), hole names (hole-names.js), the crest (crest.js).
 
+- The hazard slots (renderer.js, ground.js) carry a third kind for an
+  Architect hole: a **collection area**, meta.y -1, written before the
+  bunkers so a bunker over one stays sand; the shader paints it fairway over
+  rough or semi-rough only, and `localSurface` returns fairway by the same
+  rule. Its slots are the hole's twelve, shared with bunkers (lobes count)
+  and ponds: `MAX_HAZARDS` in architect.js counts all three.
+
 **A TRAP: a tuck is a width, not a hole in the fairway.** The fairway tucks
 round a side bunker by narrowing that side's half-width over the bunker's
 length (`tucks` in `designHole`); a bunker INSIDE the fairway (a centreline

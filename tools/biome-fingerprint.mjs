@@ -103,6 +103,8 @@ function fingerprint(biome) {
  for (const p of w.paths || []) { h.update(`L${p.kind},${n(p.width)},${p.points.length};`); for (const q of p.points) h.update(`${n(q.x)},${n(q.z)};`); }
  for (const b of w.bridges || []) h.update(`G${n(b.x)},${n(b.z)},${n(b.angle)},${n(b.span)};`);
  for (const m of w.markers || []) h.update(`M${m.kind},${n(m.x)},${n(m.z)};`);
+ for (const d of w.wear || []) h.update(`D${n(d.x)},${n(d.z)};`);
+ for (const hole of w.holes) for (const c of hole.collections || []) h.update(`C${n(c.x)},${n(c.z)},${n(c.rx)},${n(c.rz)};`);
  for (const k of w.buildings || []) h.update(`K${k.model},${n(k.x)},${n(k.z)},${n(k.y)},${n(k.rotation)},${n(k.width)},${n(k.depth)},${n(k.height)};`);
  // Lakeshore Dunes' blowouts: the baked sand field itself, every byte. Null
  // everywhere else, so this moved no other biome's hash either.

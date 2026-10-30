@@ -135,7 +135,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  const guide={fairwayStart,length,greenSize,greenAspect,leftWidth,rightWidth,width};
 
  // --------------------------------------------------------------- hazards
- const bunkers=[],ponds=[],reasons=[];
+ const bunkers=[],ponds=[],reasons=[],collections=[];
  const greenGuide={green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5};
  const size=(lo,hi)=>(lo+rnd()*(hi-lo))*A.size;
  const waves=b=>{b.phase=rnd()*6.28;b.wave2=(rnd()-.5)*.1;b.wave3=.025+rnd()*.08;
@@ -146,10 +146,11 @@ export function designHole({s,hole,par,line,bio,geo}){
   const k=1+t*2.4,cap=.30,use=Math.min(k,cap/Math.max(1e-6,Math.abs(w2)+Math.abs(w3)));b.wave2=w2*use;b.wave3=w3*use;return b;};
  const clearOfTees=(x,z,r)=>!Object.values(tees).some(t=>Math.hypot(t.x-x,t.z-z)<r+11);
  const clearOfOthers=(x,z,r)=>!ponds.some(p=>geo.insideOval(x,z,p,r+3))&&!bunkers.some(b=>geo.insideOval(x,z,b,r+2));
- const room=()=>bunkers.length+ponds.length<MAX_HAZARDS;
+ const room=()=>bunkers.length+ponds.length+collections.length<MAX_HAZARDS;
  const addBunker=(b,why,{tuck=0}={})=>{
   if(!room()||!clearOfTees(b.x,b.z,Math.max(b.rx,b.rz))||!clearOfOthers(b.x,b.z,Math.max(b.rx,b.rz)))return false;
   bunkers.push(waves(b));reasons.push({kind:'bunker',i:bunkers.length-1,why});
+  lobes(b);
   // Fairway tucks round a bunker on its edge: the mown line steps in to
   // leave a collar of rough between the turf and the sand.
   if(tuck){const off=Math.abs(b.x-center(b.z));tucks[tuck].push({z:b.z,edge:Math.max(base*.38,off-b.rx-2.2),reach:b.rz+16});}
@@ -162,6 +163,29 @@ export function designHole({s,hole,par,line,bio,geo}){
   const edge=side(sign)(z),x=center(z)+sign*(edge-bite*rx+rx);
   return addBunker({x,z,rx,rz,greenSide:false},why,{tuck:sign});
  };
+ // A BUNKER COMPLEX (phase 3; the study, workstream C): on a style of big
+ // ragged bunkers -- Heathland & Sandbelt, Sandhills, Golden Age, Modern,
+ // Minimalist -- a large bunker grows one or two lobes, smaller ovals over its
+ // rim, so the sand has capes and bays rather than one oval's outline. Each is
+ // a hazard of its own (a slot of the shader's twelve) with its reason.
+ const lobeStyles=new Set(['heathland','sandhills','golden','modern','minimalist']);
+ const lobes=b=>{
+  // One lobe, on about half the bigger bunkers (51 on nine holes was the
+  // first count: it doubled the sand).
+  if(!lobeStyles.has(styleKey)||Math.max(b.rx,b.rz)<7||rnd()>.5)return;
+  const n=1;
+  for(let k=0;k<n&&room();k++){
+   // A fairway bunker's lobe grows away from the fairway, so the mown edge
+   // tucked round the bunker still clears its sand; a greenside one's anywhere.
+   const out=Math.sign(b.x-center(b.z))||1,wild=rnd();
+   const a=b.greenSide||Math.abs(b.x-center(b.z))<6?wild*Math.PI*2:(out>0?0:Math.PI)+(wild-.5)*1.6;
+   const e=geo.ovalRadius(b,a),r=Math.hypot(e.x,e.z)*.78,sc=.38+rnd()*.2;
+   const l={x:b.x+Math.cos(a)*r,z:b.z+Math.sin(a)*r,rx:b.rx*sc,rz:b.rz*sc,greenSide:b.greenSide,lobe:true};
+   if(!clearOfTees(l.x,l.z,Math.max(l.rx,l.rz))||ponds.some(p=>geo.insideOval(l.x,l.z,p,Math.max(l.rx,l.rz)+3)))continue;
+   if(b.greenSide&&geo.greenDistance(greenGuide,l.x,l.z)<(s.fringe??2)+Math.max(l.rx,l.rz)+.5)continue;
+   bunkers.push(waves(l));reasons.push({kind:'bunker',i:bunkers.length-1,why:'A lobe of the bunker beside it: the complex has capes and bays, not one oval.'});
+  }
+ };
  // Greenside: at an angle round the green, fitted to the fringe plus the gap
  // (Classic's binary search, so the turf between keeps its width).
  const greenBunker=(a,why,{rx=size(4,7.5),rz=size(4,8)}={})=>{
@@ -172,7 +196,7 @@ export function designHole({s,hole,par,line,bio,geo}){
    if(gap<target)lo=r;else hi=r;}
   const r=hi;b.x=green.x+Math.cos(a)*r*greenAspect;b.z=green.z+Math.sin(a)*r;
   if(!room()||!clearOfTees(b.x,b.z,Math.max(rx,rz))||!clearOfOthers(b.x,b.z,Math.max(rx,rz)))return false;
-  bunkers.push(b);reasons.push({kind:'bunker',i:bunkers.length-1,why});return true;
+  bunkers.push(b);reasons.push({kind:'bunker',i:bunkers.length-1,why});lobes(b);return true;
  };
  // Angles round the green (local frame: -z toward the tee, +x the player's
  // left). Front is -PI/2.
@@ -278,7 +302,23 @@ export function designHole({s,hole,par,line,bio,geo}){
   zones:{good:goodZ,average:avgZ,layup:layZ},
   // Green overrides read by course-plan.js greenRecipe (Architect holes only).
   green:greenPlan(template,rnd,preferred)};
- return {leftWidth,rightWidth,width,fairwayStart,mowStart,bunkers,ponds,design};
+ // A COLLECTION AREA (phase 3; the study, workstream D; USGA: short grass that
+ // carries a miss away from the green): on a style that plays along the
+ // ground, mown fairway beyond the fringe off the front corner the green
+ // drains toward. The shader paints it from a hazard slot (kind -1) and the lie
+ // reads it (course.js localSurface). Bunkers already there paint over it.
+ const groundGame=new Set(['links','sandhills','minimalist','golden','heathland','raynor']);
+ const c=design.green.drainCorner;
+ if(c&&groundGame.has(styleKey)&&room()){
+  const gr=greenSize*greenAspect,rx=greenSize*(.55+rnd()*.2),rz=greenSize*(.4+rnd()*.15);
+  const off=gr+(s.fringe??2)+Math.max(rx,rz)*.55,ph=rnd()*6.28,w2=(rnd()-.5)*.08,w3=.03+rnd()*.05;
+  // The low front corner; the other front corner if a bunker already sits there.
+  const at=k=>({x:green.x+.56*k*off,z:green.z-.83*off,rx,rz,phase:ph,wave2:w2,wave3:w3,collection:true});
+  const sandy=q=>bunkers.some(b=>Math.hypot(b.x-q.x,b.z-q.z)<Math.max(b.rx,b.rz)+Math.max(rx,rz)*.6);
+  const col=sandy(at(c))?at(-c):at(c);
+  if(!sandy(col)&&clearOfTees(col.x,col.z,Math.max(rx,rz))&&!ponds.some(p=>geo.insideOval(col.x,col.z,p,Math.max(rx,rz)+2))){collections.push(col);reasons.push({kind:'collection',i:0,why:'A collection area on the low side: a miss there runs away from the green, down short grass.'});}
+ }
+ return {leftWidth,rightWidth,width,fairwayStart,mowStart,bunkers,ponds,collections,design};
 }
 
 // What a template asks of its green. Undefined fields keep the green's own

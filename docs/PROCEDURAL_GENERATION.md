@@ -245,7 +245,14 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   count round the green; water placed for a carry, a cape, a go-for-it second
   or a short side. Every hazard records why; at most twelve a hole.
 - **The fairway** swells at the landing zones, necks before the green and
-  tucks round a bunker on its edge.
+  tucks round a bunker on its edge; on Links, Sandhills and Minimalist it runs
+  into the green on a collar under a metre wide.
+- **Collection areas**: on the ground-game styles, an oval of fairway-height
+  grass off the front corner the green drains toward.
+- **Bunker complexes**: on the big-bunker styles, about half the bunkers
+  over 7 m grow a lobe over their rim (outward, on a fairway bunker).
+- **Wear**: divots on the tees (most on par 3s) and in the landing zones,
+  by club and age; decoration.
 - **The green** drains off a front corner, higher at the back; a template
   asks for its own (the Redan's fall away, the Biarritz swale, a punchbowl).
 - **Cart paths** (paths.js): routed when planting begins, down each hole on

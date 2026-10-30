@@ -31,8 +31,9 @@ test('every pond is staked round, and every bunker has a rake', () => {
    const near = arch.markers.filter(m => m.kind === 'stake' && (() => { const q = h.toLocal(m); return Math.hypot(q.x - p.x, q.z - p.z) < Math.max(p.rx, p.rz) + 20; })());
    assert.ok(near.length >= 4, `hole ${h.hole + 1}: a pond with ${near.length} stakes`);
   }
-  const rakes = arch.markers.filter(m => m.kind === 'rake' && arch.nearest(m.x, m.z).h === h).length;
-  assert.ok(rakes >= h.bunkers.length * .6, `hole ${h.hole + 1}: ${rakes} rakes for ${h.bunkers.length} bunkers`);
+  // One rake a complex: a lobe shares its main bunker's.
+  const rakes = arch.markers.filter(m => m.kind === 'rake' && arch.nearest(m.x, m.z).h === h).length, main = h.bunkers.filter(b => !b.lobe).length;
+  assert.ok(rakes >= main * .6, `hole ${h.hole + 1}: ${rakes} rakes for ${main} bunkers`);
  }
 });
 
@@ -50,8 +51,8 @@ test('yardage posts stand at their distance from the green, beside the fairway',
 test('a rake lies beside its bunker, not in it', () => {
  for (const m of arch.markers.filter(m => m.kind === 'rake')) {
   const h = arch.nearest(m.x, m.z).h, q = h.toLocal(m);
-  const b = h.bunkers.reduce((best, b) => Math.hypot(q.x - b.x, q.z - b.z) < Math.hypot(q.x - best.x, q.z - best.z) ? b : best, h.bunkers[0]);
-  const a = Math.atan2(q.z - b.z, q.x - b.x), e = ovalRadius(b, a), r = Math.hypot(e.x, e.z), d = Math.hypot(q.x - b.x, q.z - b.z);
-  assert.ok(d > r && d < r + 3, `a rake ${(d - r).toFixed(1)} m from its bunker's edge`);
+  // The nearest sand edge, over every bunker and lobe of the hole.
+  const gap = Math.min(...h.bunkers.map(b => { const a = Math.atan2(q.z - b.z, q.x - b.x), e = ovalRadius(b, a); return Math.hypot(q.x - b.x, q.z - b.z) - Math.hypot(e.x, e.z); }));
+  assert.ok(gap > 0 && gap < 3, `a rake ${gap.toFixed(1)} m from the nearest sand`);
  }
 });

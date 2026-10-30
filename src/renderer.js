@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addBuildings(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1484,7 +1484,9 @@ export class GolfView{
   for(const h of this.world.holes){
    if(h.greens)writeRangeGreens(h,(col,v)=>put(h.hole,col,v),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
    else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);}
-   [...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
+   // An Architect hole's collection areas first (marked -1; architect.js), so a
+   // bunker over one is painted after it and stays sand.
+   [...(h.collections||[]),...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,b.collection?-1:h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
   }
   this.holeAtlas=new T.DataTexture(holeData,W,rows,T.RGBAFormat,T.FloatType);this.holeAtlas.minFilter=this.holeAtlas.magFilter=T.NearestFilter;this.holeAtlas.needsUpdate=true;this.resources.push(this.holeAtlas);
   const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas=new T.DataTexture(bankData,512,rows*4,T.RGBAFormat,T.FloatType);this.bankAtlas.minFilter=this.bankAtlas.magFilter=T.LinearFilter;this.bankAtlas.needsUpdate=true;this.resources.push(this.bankAtlas);
@@ -2030,6 +2032,18 @@ export class GolfView{
     this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
+ }
+ // WEAR (architect-courses, phase 3; markings.js placeWear): divots on the
+ // tees and in the landing zones, one instanced mesh of small flat patches a
+ // hair above the ground, the soil showing through. Decoration.
+ addWear(w){
+  if(!w?.wear?.length)return;
+  const g=new T.CircleGeometry(1,7);g.rotateX(-Math.PI/2);
+  const mat=this.surfaceMaterial('#6a5638',{polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
+  const mesh=new T.InstancedMesh(g,mat,w.wear.length),m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  w.wear.forEach((d,i)=>{q.setFromAxisAngle(up,d.rot);pos.set(d.x,w.height(d.x,d.z)+.025,d.z);sc.set(d.r*1.7,1,d.r);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+  mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+  this.group.add(mesh);this.resources.push(g,mat);
  }
  addHoleDetails(h){
   const group=this.group;

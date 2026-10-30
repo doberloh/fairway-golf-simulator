@@ -583,7 +583,11 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // fairway stops behind it. The margin uniform is the hole's own semi-rough
  // width, the same number course.js uses, so the painted edge and the lie the
  // ball gets agree -- what goes wrong every time these two are set apart.
- if(meta.y>.5){waterNear=min(waterNear,hd);float ps=min(min(hz.z,hz.w),10.);vec3 pb=shoreBands(ps,mownTaper,16.);
+ // A COLLECTION AREA (architect-courses, phase 3; renderer.js writes it with
+ // meta.y -1): mown at fairway height over the semi-rough and rough only, the
+ // rule course.js localSurface plays by.
+ if(meta.y<-.5){if(hd<0.&&kind<1.5){turf=tint_fairway;kind=2.;}}
+ else if(meta.y>.5){waterNear=min(waterNear,hd);float ps=min(min(hz.z,hz.w),10.);vec3 pb=shoreBands(ps,mownTaper,16.);
   // OUTSIDE the shore band, not under it. Measured from the water edge the band
   // was mostly hidden beneath the wet and damp soil painted over it, so only
   // whatever was left of it showed -- which reads as the semi-rough butting

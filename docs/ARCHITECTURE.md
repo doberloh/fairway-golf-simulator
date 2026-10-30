@@ -258,7 +258,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A uniform can be fully plumbed and still dead; keep cue uniforms on the wiring test. [A UNIFORM CAN BE FULLY PLUMBED]
 - The toon ramp flattens lighting at midday; a shape cue must change colour, not the lighting normal. [THE TOON RAMP]
 - textures.js patches three's ramp and tone-mapping chunks at import (coloured ramp, `GRADE`). [THE RAMP IS COLOURED]
-- Every lit fragment shader gets at most 16 texture units, and the ground is the hungriest. [HOLE_ATLAS]
+- Every lit fragment shader gets at most 16 texture units, and the ground is the hungriest. [HOLE_ATLAS] A hole's twelve hazard slots hold three kinds: bunkers, ponds (meta.y the pond's index) and an Architect collection area (meta.y -1); architect.js `MAX_HAZARDS` counts them all.
 - Shaders compile before play, under the loading cover, against the render target actually drawn into -- the probes' cube target too (`asProbe`). [Shaders are compiled before play]
 - Rendering the scene a second time redraws every shadow map unless `shadowMap.autoUpdate` is off around it; the god rays and the pond probes switch it off. [A SECOND RENDER REDRAWS EVERY SHADOW MAP]
 - The god rays draw through their own override material and only with the sun in shot; the loading screen's frame warms them, and only solid things go in their mask. [THE GOD RAYS ARE WARMED]

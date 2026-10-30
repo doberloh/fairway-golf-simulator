@@ -11,7 +11,7 @@ import {designSettings} from './designer.js';
 import {isArchitect} from './settings-schema.js';
 import {designHole,designedPlanting} from './architect.js';
 import {routePaths,pathIndex,linkBuilding} from './paths.js';
-import {placeMarkings} from './markings.js';
+import {placeMarkings,placeWear} from './markings.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -639,7 +639,7 @@ function architectCourse(s,hole,planned,line,bio){
  const tee={x:0,z:0},green={x:center(length),z:length},bounds={x:Math.max(220,s.doglegAngle*3+100),minZ:-180,maxZ:length+150};
  let routeLength=0;for(let z=0;z<length;z+=1){const next=Math.min(length,z+1);routeLength+=Math.hypot(center(next)-center(z),next-z);}
  const h={greenSize,greenAspect,greenWave2,greenWave3,greenWave5,fairwayStart:plan.fairwayStart,mowStart:plan.mowStart,tees,turnFraction,routeLength,settings:s,bio,par,length,tee,green,bounds,center,
-  width:plan.width,leftWidth:plan.leftWidth,rightWidth:plan.rightWidth,ponds:plan.ponds,bunkers:plan.bunkers,seed:s.seed,hole,phase,doglegAngle:angle,design:plan.design};
+  width:plan.width,leftWidth:plan.leftWidth,rightWidth:plan.rightWidth,ponds:plan.ponds,bunkers:plan.bunkers,collections:plan.collections,seed:s.seed,hole,phase,doglegAngle:angle,design:plan.design};
  h.toWorld=p=>({...p});h.toLocal=p=>({...p});h.rotation=0;
  h.pin=choosePin(h,hole,random(`${s.seed}-pin-${hole}`));
  h.surface=(x,z)=>localSurface(h,x,z);
@@ -1147,6 +1147,11 @@ export function localSurface(h,x,z){
  // a hole -- the apron short of every green -- and invisible until the driving
  // range put a green inside a full-width corridor and made it 1.4%.
  if(Math.abs(x-h.center(z))<fairwayWidth(h,z,0,x-h.center(z)))return 'fairway';
+ // A COLLECTION AREA (architect-courses, phase 3; architect.js): short grass
+ // on a green's low side, mown at fairway height, over the semi-rough and the
+ // rough only -- the rule the ground shader paints by (its hazard slots, kind
+ // -1). Only an Architect hole has any.
+ if(h.collections?.some(c=>insideOval(x,z,c)))return 'fairway';
  if(d<=s.fringe+s.semiRough||Math.abs(x-h.center(z))<fairwayWidth(h,z,s.semiRough,x-h.center(z)))return 'semi';
  // Last, so anything already maintained keeps the better surface and a bunker
  // or pond beside a tee still plays as itself.
@@ -2747,7 +2752,8 @@ export function* generateWorldSteps(settings={},options={}){
  // AN ARCHITECT COURSE'S MARKINGS (markings.js): stakes, yardage posts and
  // rakes, decoration placed on the finished ground. None on Classic.
  const markers=isArchitect(s)&&!s.range?placeMarkings({holes,surface,nearest,halfX,halfZ,streams}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,rocks,props,paths,bridges,markers,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const wear=isArchitect(s)&&!s.range?placeWear({holes,s,surface}):[];
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

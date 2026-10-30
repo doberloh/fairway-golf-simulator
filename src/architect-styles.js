@@ -37,13 +37,13 @@ export const STYLES={
   set:{width:44,bunkerCount:4,bunkerShape:5,greenScale:120,greenShape:5,greenDifficulty:50,raisedGreens:50,sunkenGreens:8,falseFronts:35,water:20,trees:45,greenTrees:30,doglegs:55,fairwayFeature:10,landform:55,elevation:30},
   arch:{lz:.45,size:1.1,centre:.1,cross:.6,template:.6,concepts:{strategic:5,heroic:2,penal:1,risk:1}}},
  links:{name:'Links',hand:'Revetted pot bunkers, shared fairways and double greens, no ponds, walls, burns, feeder slopes',
-  set:{width:60,bunkerCount:6,bunkerShape:15,greenScale:135,greenShape:40,greenDifficulty:45,raisedGreens:10,sunkenGreens:20,falseFronts:30,water:0,trees:5,greenTrees:10,doglegs:45,fairwayFeature:5,landform:80,elevation:25},
+  set:{fringe:.75,width:60,bunkerCount:6,bunkerShape:15,greenScale:135,greenShape:40,greenDifficulty:45,raisedGreens:10,sunkenGreens:20,falseFronts:30,water:0,trees:5,greenTrees:10,doglegs:45,fairwayFeature:5,landform:80,elevation:25},
   arch:{lz:.6,size:.5,centre:.3,cross:.5,template:.3,concepts:{strategic:6,heroic:1,penal:1,risk:1}}},
  heathland:{name:'Heathland & Sandbelt',hand:'Large ragged bunker complexes flashed to the green edge, heather, pines',
   set:{width:46,bunkerCount:5,bunkerShape:80,greenScale:110,greenShape:50,greenDifficulty:40,raisedGreens:15,sunkenGreens:10,falseFronts:20,water:15,trees:65,greenTrees:45,doglegs:60,fairwayFeature:15,landform:65,elevation:30},
   arch:{lz:.45,size:1.35,centre:.15,cross:.4,template:.2,concepts:{strategic:6,heroic:2,penal:.5,risk:1}}},
  sandhills:{name:'Sandhills',hand:'Blowout bunkers found rather than built, huge greens, almost no trees, fescue',
-  set:{width:70,bunkerCount:3,bunkerShape:90,greenScale:150,greenShape:55,greenDifficulty:50,raisedGreens:10,sunkenGreens:20,falseFronts:15,water:5,trees:10,greenTrees:10,doglegs:55,fairwayFeature:20,landform:80,elevation:45},
+  set:{fringe:.9,width:70,bunkerCount:3,bunkerShape:90,greenScale:150,greenShape:55,greenDifficulty:50,raisedGreens:10,sunkenGreens:20,falseFronts:15,water:5,trees:10,greenTrees:10,doglegs:55,fairwayFeature:20,landform:80,elevation:45},
   arch:{lz:.55,size:1.45,centre:.25,cross:.3,template:.2,concepts:{strategic:7,heroic:1.5,penal:.3,risk:1.5}}},
  parkland:{name:'Parkland',hand:'Tree-lined corridors, small crowned greens, round bunkers, avenues',
   set:{width:36,bunkerCount:3,bunkerShape:15,greenScale:85,greenShape:20,greenDifficulty:40,raisedGreens:35,sunkenGreens:5,falseFronts:25,water:35,trees:85,greenTrees:60,doglegs:65,fairwayFeature:25,landform:55,elevation:35},
@@ -55,7 +55,7 @@ export const STYLES={
   set:{width:40,bunkerCount:5,bunkerShape:30,greenScale:90,greenShape:35,greenDifficulty:55,raisedGreens:40,sunkenGreens:5,falseFronts:25,water:70,pondSize:150,trees:45,greenTrees:35,doglegs:65,fairwayFeature:10,landform:60,elevation:30},
   arch:{lz:.5,size:.85,centre:.1,cross:.3,template:.25,concepts:{strategic:3,heroic:3,penal:2,risk:2}}},
  minimalist:{name:'Minimalist',hand:'Very wide fairways, rugged native-edged bunkers, little dirt moved',
-  set:{width:75,bunkerCount:3,bunkerShape:85,greenScale:125,greenShape:50,greenDifficulty:40,raisedGreens:10,sunkenGreens:20,falseFronts:15,water:10,trees:25,greenTrees:20,doglegs:55,fairwayFeature:25,landform:75,elevation:40},
+  set:{fringe:1,width:75,bunkerCount:3,bunkerShape:85,greenScale:125,greenShape:50,greenDifficulty:40,raisedGreens:10,sunkenGreens:20,falseFronts:15,water:10,trees:25,greenTrees:20,doglegs:55,fairwayFeature:25,landform:75,elevation:40},
   arch:{lz:.55,size:1.2,centre:.25,cross:.35,template:.2,concepts:{strategic:7,heroic:1.5,penal:.3,risk:1.5}}},
  desert:{name:'Desert target',hand:'Turf ribbons in native desert, arroyos, boulder walls',
   set:{width:34,bunkerCount:3,bunkerShape:50,greenScale:100,greenShape:40,greenDifficulty:40,raisedGreens:30,sunkenGreens:10,falseFronts:20,water:30,trees:40,greenTrees:30,doglegs:65,fairwayFeature:20,landform:70,elevation:35},
@@ -137,6 +137,9 @@ export function architectChoices(s){
   for(const [k,m] of Object.entries(layer.mul||{}))out[k]=fit(k,out[k]*m);
   for(const [k,v] of Object.entries(layer.set||{}))out[k]=typeof v==='number'&&typeof DEFAULT_COURSE[k]==='number'&&['greenTrees','fairwayFeature','greenDifficulty'].includes(k)?fit(k,out[k]+v):v;
  }
+ // A style that runs its fairways into the greens keeps its thin collar,
+ // whatever the club mows elsewhere (phase 3: Links, Sandhills, Minimalist).
+ if(style.set.fringe!==undefined)out.fringe=Math.min(out.fringe,style.set.fringe);
  Object.assign(out,story.set||{});
  for(const [k,v] of Object.entries(story.add||{}))out[k]=fit(k,(out[k]??0)+v);
  // Links land has no ponds (the style says so); an island has no inland water

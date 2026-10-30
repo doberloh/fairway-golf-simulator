@@ -120,3 +120,31 @@ test('the style a landscape leans toward, and its settings, reach the hole', () 
  assert.ok(['links', 'minimalist', 'heathland'].includes(style));
  assert.equal(generateCourse(s, 0).design.style, style);
 });
+
+import {world} from './worlds.mjs';
+// PHASE 3: the hand (architect-courses). Collection areas play as fairway and
+// only off rough or semi-rough; a style that plays along the ground has them,
+// one that does not has none; big-bunker styles grow lobes, others none;
+// wear sits on tees and short grass only.
+test('collection areas play as fairway, on the styles that run along the ground', () => {
+ const links = world({seed: 'P3-A', holes: 9, biome: 'links', designer: 'architect', archStyle: 'links'});
+ const park = world({seed: 'P3-A', holes: 9, biome: 'midwest', designer: 'architect', archStyle: 'parkland'});
+ const cols = links.holes.flatMap(h => (h.collections || []).map(c => ({h, c})));
+ assert.ok(cols.length >= 4, `links: ${cols.length} collection areas`);
+ for (const {h, c} of cols) {
+  const p = h.toWorld(c);
+  assert.equal(links.surface(p.x, p.z), 'fairway', 'a collection area\'s middle plays as fairway');
+ }
+ assert.equal(park.holes.flatMap(h => h.collections || []).length, 0, 'parkland greens have collars, not collection areas');
+ assert.ok(links.settings.fringe <= .8, 'links fairways run into the greens on a thin collar');
+});
+
+test('lobes on the big-bunker styles only, and wear only on tees and short grass', () => {
+ const heath = world({seed: 'P3-B', holes: 9, biome: 'pnw', designer: 'architect', archStyle: 'heathland'});
+ const park = world({seed: 'P3-B', holes: 9, biome: 'midwest', designer: 'architect', archStyle: 'parkland'});
+ const lobes = w => w.holes.reduce((n, h) => n + h.bunkers.filter(b => b.lobe).length, 0);
+ assert.ok(lobes(heath) > 0 && lobes(heath) <= heath.holes.reduce((n, h) => n + h.bunkers.length, 0) * .4, `heathland: ${lobes(heath)} lobes`);
+ assert.equal(lobes(park), 0);
+ assert.ok(heath.wear.length > 50);
+ for (const d of heath.wear) assert.ok(['tee', 'fairway', 'semi'].includes(heath.surface(d.x, d.z)), 'a divot on ' + heath.surface(d.x, d.z));
+});

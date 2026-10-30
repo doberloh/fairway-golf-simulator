@@ -3,7 +3,8 @@
 //
 //   node tools/profile.mjs                 the default sweep
 //   node tools/profile.mjs --only tiers    one group (tiers, views, biomes,
-//                                          ablation, water, pixels, sun, weak)
+//                                          ablation, water, pixels, sun, weak,
+//                                          architect: Classic against Architect on Low)
 //   node tools/profile.mjs --save          store the run as the baseline
 //   node tools/profile.mjs --since         compare against the stored baseline
 //   node tools/profile.mjs --frames 600    longer samples, steadier numbers
@@ -101,6 +102,12 @@ function matrix() {
                               ['water course, no reflections', {reflections: false}]])
   cases.push({group: 'water', name, arm: 'gpu', quality: 'ultra', prefs,
    biome: 'midwest', holes: 9, seed: 'PROFILE', course: {water: 100, lakes: 3, rivers: 2, creeks: 3}});
+ // ARCHITECT COURSES (architect-courses, 30 October 2026): the same landscape
+ // and seed on Low, Classic against Architect -- paths, markings, the
+ // clubhouse, wear and the hazard kinds all drawn. The goal's limit: Architect
+ // within 10% of Classic's frame time on Low.
+ for (const biome of ['midwest', 'pnw', 'links']) for (const designer of ['classic', 'architect'])
+  cases.push({group: 'architect', name: `${biome} · ${designer}`, arm: 'gpu', quality: 'low', biome, holes: 9, seed: 'PROFILE', course: {designer}});
  // FACING THE SUN. The god rays draw only with the sun in shot, so every other
  // case -- the tee looking down the hole -- usually measures them as free. A
  // player turning toward the sun pays for a second pass over the whole scene;

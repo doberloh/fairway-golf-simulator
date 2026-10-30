@@ -283,7 +283,11 @@ export const GENERATOR_VERSION=52;
 //    yardage posts and a rake by every bunker (markings.js).
 // 5: phase 2, people: the clubhouse (clubhouse.js), sited near the first tee
 //    and last green, solid, its lawn kept clear, the path linked to its door.
-export const ARCHITECT_VERSION=5;
+// 6: phase 3, the hand: collection areas off a green's low front corner
+//    (styles that play along the ground), lobed bunker complexes on the
+//    big-bunker styles, thin collars on Links, Sandhills and Minimalist, and
+//    divot wear on the tees and in the landing zones.
+export const ARCHITECT_VERSION=6;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both
