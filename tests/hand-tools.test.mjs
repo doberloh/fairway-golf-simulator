@@ -82,3 +82,10 @@ test('the generator uses the same tools: signatures by style, the same for a see
  const w = world({...base, holes: 18, seed: 'HAND-2', archStyle: 'golden'});
  assert.ok(w.holes.some(h => h.design.reasons.some(r => /architect's own shape/.test(r.why)) || h.handMounds?.length || h.design.hand), 'no hand-made signature on eighteen holes');
 });
+
+// Every hazard has its reason (the bench's invariant `hazardWithoutReason`):
+// the hand tools' lobes had none.
+test('every hand-made bunker, lobes included, has its reason', () => {
+ const w = world({...base, archHand: [{kind: 'bunker', hole: 1, at: 200, off: 0, size: 9, shape: .8, lobes: 3}]});
+ for (const h of w.holes) h.bunkers.forEach((b, i) => assert.ok(h.design.reasons.some(r => r.kind === 'bunker' && r.i === i), `hole ${h.hole + 1}: bunker ${i} without a reason`));
+});

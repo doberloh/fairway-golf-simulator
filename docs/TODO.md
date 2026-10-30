@@ -109,10 +109,10 @@ quality measures*, which it absorbs.
   2026, "build no lit shader" at a hole-out on a Classic Surprise me round)
   and passed three times alone and in the next full run. Not explained; if
   it returns, its picture in bench/shots/smoke/ says which program compiled.
-- [ ] **The crowd's cost not measured.** Five spectator bodies instead of one
-  is five times the crowd's draw calls on Medium and up (none on Low). Run
-  `node tools/profile.mjs --only architect` with the rest of the goal's
-  profile.
+- [ ] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
+  than its Classic course (ARCHITECT_COURSES.md, *The crowd's cost*); every
+  other case measured is within 4% or cheaper. Low draws no crowd. The
+  owner's call whether Medium should thin the crowd.
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

@@ -955,6 +955,45 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
   65, Minimalist 52, Desert target 44, Mountain 45, Tropical 55; Classic 42.
   Ponds per 18: none on Links to about 15 on Stadium.
 
+### The bench after the owner's review (30 October 2026, ARCHITECT_VERSION 16)
+
+`node tools/bench.mjs design --tier standard`, and `--set designer=architect`:
+
+| Measure | Classic | Architect |
+| --- | --- | --- |
+| Fairway bunkers by a landing zone | 24 of 89 (27%) | 179 of 224 (80%) |
+| Nines home | 7 of 12 | 11 of 12 |
+| Green-to-next-tee walk, median | 98 m | 93 m |
+| ... p95 | 191 m | 225 m |
+| Concepts a nine (variety) | -- | 4 to 6, median 5 |
+| Templates a nine | -- | 0 to 4, median 2 |
+| A hazard without a reason (invariant) | 0 | 0 |
+
+**The first run broke the invariant: nine hazards without a reason**, all on
+PNW -- the hand tools' lobes (hand-tools.js) had none. Each now has its
+reason; a test holds it (tests/hand-tools.test.mjs). Only the reasons moved:
+both fingerprints silent, no version.
+
+### The crowd's cost, Medium and High (30 October 2026)
+
+`node tools/profile.mjs --only architect --landscapes midwest,links,pnw
+--arch-tier medium --arch-course '{"archClub":"championship","pinDay":"Sunday"}'
+--frames 1200 --json <file>` (the two options added for this), and `high`:
+a Championship venue on Sunday -- 1,102 spectators, the stands, the board,
+the walkers -- against the Classic course of the same seed, mean processor
+ms and median graphics ms:
+
+| | Midwest | Links | PNW |
+| --- | --- | --- | --- |
+| Medium, CPU | 1.286 / 1.232 (-4.2%) | 1.459 / 1.518 (+4.0%) | 1.586 / 1.785 (+12.5%) |
+| Medium, GPU | 1.57 / 1.44 (-8.5%) | 1.86 / 1.73 (-6.7%) | 1.98 / 2.00 (+0.9%) |
+| High, CPU | 4.705 / 3.328 (-29.3%) | 3.386 / 2.738 (-19.1%) | 4.532 / 4.317 (-4.7%) |
+| High, GPU | 4.28 / 2.99 (-30.0%) | 3.42 / 2.81 (-17.7%) | 4.54 / 4.28 (-5.7%) |
+
+The goal's limit is for Low (no crowd drawn there); a tournament Sunday costs
+PNW 12.5% more processor time on Medium than its Classic course, and nothing
+like that anywhere else measured. Not acted on.
+
 ### The bench at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
 
 `node tools/bench.mjs design --tier standard`, twelve courses of nine holes, each

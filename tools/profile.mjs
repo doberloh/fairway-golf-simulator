@@ -111,7 +111,9 @@ function matrix() {
  // the goal asks for every landscape.
  const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['midwest', 'pnw', 'links'];
  for (const biome of archBiomes) for (const designer of ['classic', 'architect'])
-  cases.push({group: 'architect', name: `${biome} · ${designer}`, arm: 'gpu', quality: 'low', biome, holes: 9, seed: 'PROFILE', course: {designer}});
+  // `--arch-tier medium` and `--arch-course '{"archClub":"championship","pinDay":"Sunday"}'`:
+  // another tier, and Architect dials (Classic ignores them) -- a crowd, say.
+  cases.push({group: 'architect', name: `${biome} · ${designer}`, arm: 'gpu', quality: flag('arch-tier', 'low'), biome, holes: 9, seed: 'PROFILE', course: {designer, ...(designer === 'architect' ? JSON.parse(flag('arch-course', '{}')) : {})}});
  // FACING THE SUN. The god rays draw only with the sun in shot, so every other
  // case -- the tee looking down the hole -- usually measures them as free. A
  // player turning toward the sun pays for a second pass over the whole scene;

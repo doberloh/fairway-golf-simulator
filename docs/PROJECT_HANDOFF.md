@@ -847,6 +847,12 @@ of strategic, heroic, penal and risk holes).
 
 ### Adding a template
 
+(A shape smaller than a hole -- a waste area, a hogsback, a punchbowl -- is a
+hand-made SIGNATURE instead: a branch in hand-tools.js `designerHand` and
+its style list in `SIGNATURES`, built from the hand tools' records, so the
+studio's tools and the generator stay one vocabulary. `ARCHITECT_VERSION` up,
+both fingerprints, the bench's `design` rule.)
+
 A template is a hole built to a known pattern. Three places:
 
 1. `TEMPLATES` (architect.js): `name`, the pars it fits, and the `note` the

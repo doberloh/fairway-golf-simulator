@@ -117,7 +117,9 @@ export function applyHand(h, list, {insideOval, who = 'hand'} = {}) {
   for (let k = 0; k < f.lobes; k++) {
    const a = (k + 1) * 2.1 + f.off * .05, d = rz * .85;
    const l = {x: x + Math.cos(a) * d * f.shape, z: z + Math.sin(a) * d, rx: rx * .55, rz: rz * .55, phase: wave(6.28), wave2: 0, wave3: .05, lobe: true, hand: true};
-   if (clearOfPlay(l.x, l.z, Math.max(l.rx, l.rz))) h.bunkers.push(l);
+   // Every hazard has its reason (the bench's invariant: the lobes had none,
+   // nine of them on PNW).
+   if (clearOfPlay(l.x, l.z, Math.max(l.rx, l.rz))) { h.bunkers.push(l); say('bunker', h.bunkers.length - 1, 'A lobe of the bunker beside it, shaped with it.'); }
   }
  }
  h.handMounds = h.handMounds || [];
