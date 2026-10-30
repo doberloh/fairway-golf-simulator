@@ -472,6 +472,15 @@ The seams so far, each listed here as it is built:
   world data only so a course always has the same animals, never solid and
   never read by the lie.
 
+**A TRAP: greens shaped in turn drag each other** (course.js `shapedNoTees`).
+Each green blends the land to its height over a shoulder up to 100 m wide, and
+Classic applies them one after another, so a later, lower green pulls an
+earlier one's edge toward it. An Architect course routes its nines home, the
+9th and 18th greens 60-80 m apart, and one pin stood on 8.7% where its contour
+said 0.9% (the golfer chipped forty times). Architect blends them together,
+weighted as pond shelves are (`archGreens`); Classic keeps its order, and
+changing it would move every Classic course.
+
 **A TRAP: `leftWidth` is the -x side.** `fairwayWidth(h,z,0,side)` reads
 `leftWidth` for side < 0, and so does every surface query and the shader's
 hole table. Architect code had it the other way from phase 1 to phase 5 --

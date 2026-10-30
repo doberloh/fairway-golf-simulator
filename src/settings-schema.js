@@ -313,7 +313,11 @@ export const GENERATOR_VERSION=52;
 //    move alone changed nothing), and its signature templates -- the Dell on
 //    Links, the Alps on PNW, the Barranca in the Desert ... -- at 2.5 times
 //    their odds there.
-export const ARCHITECT_VERSION=12;
+// 13: an Architect course's greens blended together, weighted as ponds are,
+//    not one after another: a lower green's wide shoulder had been dragging a
+//    neighbour's edge down under its pin (8.7% where the contour said 0.9%),
+//    and the virtual golfer could not finish three holes.
+export const ARCHITECT_VERSION=13;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

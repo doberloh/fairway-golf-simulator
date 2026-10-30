@@ -211,6 +211,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 **Generation**
 - Two designers share one pipeline: Classic must never reach Architect code (`designSettings` returns a Classic object untouched), Architect draws only from its own named streams, a course's stamp is `generatorFor(settings)`, never `GENERATOR_VERSION`, and both fingerprints run on every generation change. [TWO DESIGNERS, ONE WORLD]
 - `leftWidth` is a hole's -x side everywhere; Architect had it swapped until phase 5 and its test agreed (PROJECT_HANDOFF *leftWidth is the -x side*).
+- Greens shaped one after another drag each other; Architect blends them together (PROJECT_HANDOFF *greens shaped in turn drag each other*).
 - A new landscape is not done until its Architect side is: an `ARCHITECT` block in biomes.js (tests/biome-architect.test.mjs fails without one), its clubhouse and kit, both fingerprints (PROJECT_HANDOFF *Adding a biome: the Architect side*; a new style or template: *Adding a style*, *Adding a template*).
 - The order of seeded draws inside a hole is load-bearing; one added or moved shifts every pond, bunker and contour on that hole. One RNG, in course-plan.js. [A HOLE'S SKELETON]
 - `generateWorld` must stay synchronous; only `generateWorldSteps` yields, and only between rows, or fingerprints move. [GENERATION YIELDS]

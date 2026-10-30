@@ -10989,3 +10989,15 @@ the crowd's share by day (Thursday 0.35, Friday 0.5, Saturday 0.75, Sunday
 1), five spectators a 6 m rope section on Sunday, seats every 0.9 m in six
 rows; carries in the book to a hazard's near and far edge along the hole
 from the back tee. No new source was fetched.
+
+## Architect courses: how much harder, at the end (30 October 2026)
+
+The owner's limit: Architect at most 1.5 strokes per 18 harder than Classic
+for the virtual golfer (tests/virtual-golfer.mjs). `tools/architect-difficulty.mjs --seeds 4`:
+ten landscapes x four seeds x a steady and a looser golfer, 18 holes, 80
+rounds a designer. **Before the greens fix: 4.90 harder**, three holes
+unfinished in 40 strokes (a green tilted 8.7% under its pin by a neighbour's
+shoulder); **after: 1.32 harder** (Classic 0.89 over par, Architect 2.21).
+Per landscape over eight rounds the spread is about +-4 strokes, so only the
+overall figure is held to the limit. The golfer's rule for a stroke that left
+the ball where it was (try the other shot) is PLACED.

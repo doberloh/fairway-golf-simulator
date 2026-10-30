@@ -497,6 +497,44 @@ ARCHITECT_VERSION 12. Classic's fingerprint unchanged.
   golfer), *Adding a style* and *Adding a template*; ARCHITECTURE one line
   pointing at them.
 
+### The end of the goal: greens that trapped the golfer (30 October 2026)
+
+ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
+
+- **What it looked like**: the virtual golfer measured Architect **4.9 strokes
+  per 18 harder** than Classic, three rounds 32-41 over on one hole each.
+  Traced (hole 9 of Midwest DIFFICULTY-3): from the semi-rough 6 m off the
+  back of the green, every chip landed on the green and ran back to the
+  golfer's feet, forty times; putting instead could not climb the bank. The
+  green fell **8.7% under its pin where its own contour said 0.9%**.
+- **The cause**: each green blends the land toward its own height over a
+  shoulder up to 100 m wide when it sits lower, and the greens were applied
+  one after another (course.js `shapedNoTees`) -- so a later, lower green
+  dragged an earlier green's far edge down toward it. Routing the nines home
+  (phase 4) puts the 9th and 18th greens 60-80 m apart and several metres
+  apart in height; the 9th's back edge was the casualty. The steep pins had
+  been there since phase 4 (the same three at every commit since), while
+  the phase 1 measure ran on courses that did not yet route home.
+- **The fix**: an Architect course's greens are blended together, weighted
+  as overlapping pond shelves are (a weight that runs away as a green
+  reaches full strength), so the green you stand on decides its own height
+  and the ground stays continuous. Classic keeps its order exactly (its
+  fingerprint is silent). Afterward: **every Architect pin at most 1.6%**
+  (it was up to 20.7%), the ground near a pin over 6% on 0.3% of it
+  (Classic 0.4%; it was 2.3%).
+- **The measure** (`tools/architect-difficulty.mjs --seeds 4`, ten landscapes,
+  four seeds, two golfers, 80 rounds a designer): **Architect 1.32 strokes
+  per 18 harder than Classic** (Classic 0.89 over par, Architect 2.21) --
+  inside the owner's 1.5. By landscape (eight rounds each, noisy): Haunted
+  Hollow +4.0, PNW +4.0, Midwest +3.4, Autumn +1.6, Island +1.0, Lakeshore
+  +1.0, Links +0.8, Mountain +0.1, Redwood -1.1, Desert -1.5. No hole left
+  unfinished.
+- **The tool learned two things**: an unfinished hole is named with its
+  landscape, seed, plan and the lie it was left on; and a golfer whose last
+  stroke left the ball where it was tries the other shot (a putt after a
+  chip, a chip after a putt), as a real one would -- putting from every
+  fringe instead stranded it below other banks on both designers.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -528,6 +566,11 @@ ARCHITECT_VERSION 12. Classic's fingerprint unchanged.
   within 1.2 m of the water): along a creek it made a 30 m bridge lying beside
   the water.
 
+- **Greens blended in turn on an Architect course** (Classic's way, kept for
+  Classic): a lower neighbour's shoulder tilted a green under its pin.
+- **Putting from every fringe and every close semi-rough lie** in the
+  difficulty tool: it fixed the stuck chips and stranded the golfer below
+  other banks.
 - **A landmark placed by distance alone** (iteration 3): 220 m beyond a
   green it was a speck, and behind a dune it was not seen at all. It is
   placed where it shows from the fairway.
@@ -632,8 +675,9 @@ ARCHITECT_VERSION 12. Classic's fingerprint unchanged.
   **Architect 0.15 strokes per 18 easier**, inside the owner's limit. By
   landscape (six rounds each, so about ±2 strokes of noise): Island +4.5,
   Mountain +3.8, Haunted +3.3, Autumn +0.8, Links +0.5, Midwest +1.5,
-  Lakeshore -2.2, Redwood -4.3, Desert -4.3, PNW -5.2. The three harder
-  landscapes are re-measured with more seeds before the goal ends.
+  Lakeshore -2.2, Redwood -4.3, Desert -4.3, PNW -5.2. Re-measured at the
+  end of the goal with four seeds: 1.32 harder (*greens that trapped the
+  golfer*).
   An earlier run, on a build where the bunkers were placed before the water,
   showed one Island round at +73 -- not reproduced on the build after (the
   courses had changed); the tool now names any hole the golfer cannot finish

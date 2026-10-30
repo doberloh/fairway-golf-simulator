@@ -1579,6 +1579,7 @@ export function* generateWorldSteps(settings={},options={}){
   }
   if(!merged)break;
  }
+ const archGreens=isArchitect(s)&&!s.range;
  function shapedNoTees(x,z){let y=land(x,z);
  // Overlapping pond shelves are averaged with a weight that runs away as a site
  // reaches full strength, so the pond you are standing beside decides the level
@@ -1595,7 +1596,17 @@ export function* generateWorldSteps(settings={},options={}){
   const weight=b/(1.001-b);
   pondBlend=Math.max(pondBlend,b);weightSum+=weight;targetSum+=weight*s.target;
  }
- if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z});if(h.greens){y=rangeGreensShape(h,p,y,base,s.fringe);continue;}const d=greenDistance(h,p.x,p.z);
+ if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;
+ // AN ARCHITECT COURSE'S GREENS ARE BLENDED TOGETHER, NOT IN TURN (the end of
+ // the goal: the virtual golfer stuck on three holes). Applied one after
+ // another, a later green's shoulder -- up to 100 m wide when it sits lower --
+ // dragged an earlier green's far edge toward its own height: routing the
+ // nines home puts the 9th and 18th greens 60-80 m apart and metres apart in
+ // height, and one 9th green fell 8.7% under its pin where its own contour
+ // said 0.9%. Weighted as the ponds are, the green you stand on decides.
+ // Classic keeps its order exactly (`archGreens` false).
+ const y0=y;let gMax=0,gW=0,gT=0;
+ for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z});if(h.greens){y=rangeGreensShape(h,p,y,base,s.fringe);continue;}const d=greenDistance(h,p.x,p.z);
  // The shoulder is never wider than 100 m, so past it the blend below is
  // exactly nothing (smooth clamps at 1) whatever the green's height. Asking for
  // the green's contour first, as this did, was a third of what shaping an
@@ -1604,7 +1615,9 @@ export function* generateWorldSteps(settings={},options={}){
  // Raised and sunken greens (greenPedestal in course-plan.js): the green and its
  // collar lifted or dropped as one, with banks beyond the collar. Inside the
  // blend, so the shoulder still carries the terrain back to the land around it.
- const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
+ const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs((archGreens?y0:y)-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);
+ if(blend>0){if(archGreens){gMax=Math.max(gMax,blend);const wt=blend/(1.001-blend);gW+=wt;gT+=wt*greenY;}else y=y*(1-blend)+greenY*blend;}}
+ if(gMax>0)y=y0*(1-gMax)+gT/gW*gMax;
  return y;}
  // A tee is a terrace cut into whatever the rest of the shaping already
  // decided, so its height is sampled from shapedNoTees rather than from the

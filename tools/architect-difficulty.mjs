@@ -27,16 +27,29 @@ const SKILLS = {steady: .010, loose: .018};
 const TEE = 'white';
 
 const stuck = [];
+let where = '';
 function playHole(r, h, golfer) {
  r.pars[r.hole] = h.par;
  if (!r.teePlaced) r.placeTee(h.tees);
+ let last = null;
  for (let guard = 0; !r.holeComplete; guard++) {
   // A hole the golfer cannot finish in 40 strokes is reported, not hidden:
   // the count goes on the card as it stands and the round carries on.
-  if (guard > 40) { stuck.push(`hole ${r.hole + 1}`); r.cards[0][r.hole] = 40; r.holeComplete = true; return; }
+  // Named with where the golfer was left and on what, so it can be found.
+  if (guard > 40) { const p = r.position, w = h.toWorld ? h.toWorld(p) : p; stuck.push(`${where} hole ${r.hole + 1} (${h.design?.template || h.design?.concept || 'classic'}; on ${h.surface(p.x, p.z)} at ${w.x.toFixed(0)},${w.z.toFixed(0)})`); r.cards[0][r.hole] = 40; r.holeComplete = true; return; }
   if (r.relief) { r.takeRelief({spot: {...r.relief.from}, penalty: 1}, h.pin); continue; }
-  const s = golfer.shot({hole: h, from: {...r.position}});
-  const lie = h.surface(r.position.x, r.position.z);
+  // A golfer whose last stroke left the ball where it was tries the other
+  // shot -- a putt after a chip, a chip after a putt -- as a real one would.
+  // Chipping every time, it sat below a raised green's back edge chipping
+  // onto the slope and watching the ball run back to its feet (40 strokes on
+  // three Architect holes); putting from every fringe instead stranded it
+  // below other banks, on both designers. Only a stroke that did nothing
+  // changes the club.
+  const lie = h.surface(r.position.x, r.position.z), here = {...r.position};
+  const stuckHere = last && Math.hypot(last.x - here.x, last.z - here.z) < 1;
+  const club = lie === 'green' ? null : stuckHere ? (last.putt ? null : 'putter') : null;
+  const s = golfer.shot({hole: h, from: here, club});
+  last = {...here, putt: club === 'putter'};
   r.takeShot({...s.result, puttStroke: lie === 'green', onGreen: s.result.onGreen}, h.pin);
  }
 }
@@ -56,6 +69,7 @@ for (const biome of biomes) {
   for (const designer of ['classic', 'architect']) {
    const s = {seed, biome, holes, designer, ...(designer === 'architect' ? set : {})};
    const w = generateWorld(s);
+   where = `${biome} ${seed} ${designer}`;
    const par = w.holes.reduce((a, h) => a + h.par, 0);
    out[designer] = Object.fromEntries(Object.entries(SKILLS).map(([name, skill]) => [name, round(w, s, skill, `${seed}:${name}`) - par]));
   }
@@ -68,4 +82,4 @@ for (const biome of biomes) {
  }
 }
 console.log(`\nper 18, over ${n} rounds each: classic ${(sumC / n).toFixed(2)} over par, architect ${(sumA / n).toFixed(2)}; architect is ${((sumA - sumC) / n).toFixed(2)} strokes harder (the limit is 1.5)`);
-if (stuck.length) console.log(`NOT FINISHED in 40 strokes: ${stuck.length} holes (${stuck.join(", ")})`);
+if (stuck.length) console.log(`NOT FINISHED in 40 strokes: ${stuck.length} holes:\n  ${stuck.join('\n  ')}`);
