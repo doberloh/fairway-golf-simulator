@@ -1,3 +1,4 @@
+import {designSettings} from './designer.js';
 // Yardages are measured along the playing line; the blue tee is the reference.
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // THE ONE SEEDED GENERATOR. course.js re-exports this as `random` rather than
@@ -116,6 +117,7 @@ function orderPars(counts,n,random){
 }
 
 export function planCourse(s={}){
+ s=designSettings(s);
  // One hole is the menu backdrop, not a playable course: it is fast to grow and
  // enough to look at. Nine and eighteen remain the only choices a player sees.
  const n=s.holes===18?18:s.holes===1?1:9,random=rng((s.seed||'EVERGREEN')+':plan');
@@ -278,6 +280,7 @@ export function holeLine(s,planned,rng){
 // The full card, before anything is built. Same seed, same numbers as the
 // course that will be grown from it.
 export function planScorecard(s={}){
+ s=designSettings(s);
  const plan=planCourse(s),seed=s.seed||'EVERGREEN';
  const holes=plan.holes.map((h,i)=>{
   const line=holeLine(s,h,rng(seed+':'+i));

@@ -7,6 +7,7 @@ import {routeHoles} from './routing.js';
 import {buildRange,rangeContour} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
+import {designSettings} from './designer.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -463,6 +464,7 @@ export function fitPondBasin(h,p,shapedLand){
 
 export function insideOval(x,z,o,margin=0){return hazardMetric(x,z,o,margin)<1;}
 export function generateCourse(settings={},hole=0){
+ settings=designSettings(settings);
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=BIOMES[s.biome]||BIOMES.pnw;
  const planned=planCourse(s).holes[hole%s.holes],par=planned.par;
  // THE SKELETON COMES FROM course-plan.js, so the scorecard shown before a
@@ -1254,6 +1256,7 @@ export function generateWorld(settings={}){
 // makeGroundGridPooled); the grid is the same either way. `options.capture`: a
 // worker's run, which stops at the grid and yields `{capture: {sample, refine}}`.
 export function* generateWorldSteps(settings={},options={}){
+ settings=designSettings(settings);
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)};s.holes=s.holes===18?18:s.holes===1?1:9;s.waterMin=clamp(s.waterMin,.2,8);s.waterMax=clamp(s.waterMax,s.waterMin,12);
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground

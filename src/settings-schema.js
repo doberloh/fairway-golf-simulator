@@ -10,7 +10,14 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=11;
+//   ARCHITECT_VERSION the behaviour of the Architect designer alone (the
+//                     architect-courses branch, 30 October 2026). Classic
+//                     courses never read it. See `generatorFor` below and
+//                     PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*.
+export const SCHEMA_VERSION=12;
+// 12: `designer` (Classic or Architect) and the Architect's four dials --
+//     `archStyle`, `archClub`, `archAge`, `archStory`. A save from before has
+//     none, takes the defaults, and so is Classic, exactly as it was built.
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -257,9 +264,41 @@ export const SCHEMA_VERSION=11;
 //     along a straight line through every green's end; every landscape moved.
 export const GENERATOR_VERSION=52;
 
+// THE ARCHITECT'S OWN VERSION. Bump it whenever an ARCHITECT course changes
+// for an unchanged seed and Classic does not; a change that moves both (shared
+// code: terrain, water, the mesh) bumps GENERATOR_VERSION instead, which moves
+// both. `node tools/biome-fingerprint.mjs --check --designer architect`
+// decides, beside the Classic check, which must stay silent.
+// 1: Architect exists (phase 0): a course chosen by style, club, age, story and
+//    seed, built for now exactly as Classic builds its defaults.
+export const ARCHITECT_VERSION=1;
+// ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
+// `generator`, and has since long before there were two designers; every
+// reader checks `Number.isInteger`. So an Architect course's stamp folds both
+// versions into that one integer -- GENERATOR_VERSION*1000 + ARCHITECT_VERSION
+// -- rather than adding a second field that every format would have to learn.
+// A Classic course's stamp is GENERATOR_VERSION exactly, as it always was, so
+// nothing a Classic player has saved changes. A shared change moves both
+// stamps; an Architect-only change moves Architect's alone.
+export const isArchitect=s=>s?.designer==='architect';
+export const generatorFor=s=>isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
+// How a stamp reads to a person: "52" or "52 · Architect 1".
+export const stampLabel=g=>Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
+
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
 export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','haunted','lakeshore'];
+// The Architect's dials. Held here for the same reason as the biome keys;
+// tests/architect.test.mjs asserts STYLE_KEYS matches architect-styles.js.
+export const DESIGNER_KEYS=['classic','architect'];
+export const STYLE_KEYS=['auto','golden','raynor','links','heathland','sandhills','parkland','modern','stadium','minimalist','desert','mountain','tropical'];
+export const CLUB_KEYS=['municipal','members','resort','championship'];
+export const AGE_KEYS=['new','mature','old','restored'];
+export const STORY_KEYS=['none','some','lots'];
+// What an Architect course is chosen by. Everything else the architect
+// decides; Classic's other controls are hidden while Architect is chosen, and
+// ignored by its generation (`designSettings` in designer.js).
+export const ARCHITECT_KEEPS=['designer','holes','seed','biome','archStyle','archClub','archAge','archStory','wind','windDirection','pinDay'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -268,6 +307,7 @@ export const CATEGORIES=[
  // No note (the 1.0 polish, studio round 2): it was about yardage and sat
  // over the landscapes; the length's own help says the same.
  ['course','Course'],
+ ['architect','Architect (beta)','The architect designs every hole from these four and the seed: where each hazard goes and why, the greens, the length, the trees and the water.'],
  ['landscape','Land & routing','Left and right turns are balanced across the course, and each turning point varies up to 22 points either side of your setting.'],
  ['turf','Fairways, greens & bunkers'],
  ['water','Water','The depths set each pond and lake at its deepest; every shore still slopes to nothing at the bank. Rivers and creeks are new: they may cross fairways but go round tees, greens, ponds and bunkers, and a course with no room for one gets fewer.'],
@@ -286,6 +326,13 @@ export const SETTINGS=[
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
  {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
+ // THE DESIGNER (architect-courses, 30 October 2026). `names` are what a
+ // player reads; the option values are what saves and codes carry.
+ {key:'designer',category:'course',kind:'choice',options:DESIGNER_KEYS,def:'classic',names:{classic:'Classic',architect:'Architect (beta)'},label:'How the course is made',tip:'Classic grows every course from the sliders below, as Fairway always has. Architect (beta) designs it: each hole gets a plan, every bunker and pond is placed against the shots golfers play, and the style, club, age and story you choose decide the rest. Classic courses never change when Architect does.'},
+ {key:'archStyle',category:'architect',kind:'choice',options:STYLE_KEYS,def:'auto',architect:true,names:{auto:'By landscape',golden:'Golden Age',raynor:'Raynor & Macdonald',links:'Links',heathland:'Heathland & Sandbelt',sandhills:'Sandhills',parkland:'Parkland',modern:'Modern championship',stadium:'Stadium',minimalist:'Minimalist',desert:'Desert target',mountain:'Mountain',tropical:'Tropical resort'},label:'Style',tip:'Whose hand designed it. By landscape picks one that suits the land from the seed. Each style has its own bunkers, greens, fairways and planting.'},
+ {key:'archClub',category:'architect',kind:'choice',options:CLUB_KEYS,def:'members',architect:true,names:{municipal:'Municipal',members:"Members' club",resort:'Resort',championship:'Championship venue'},label:'Club',tip:'Who runs it, and so how long it plays and how much is spent on it: a municipal course is shorter, plainer and well worn; a championship venue is long, tight and dressed for a tournament on its pin days.'},
+ {key:'archAge',category:'architect',kind:'choice',options:AGE_KEYS,def:'mature',architect:true,names:{new:'New',mature:'Mature',old:'Old',restored:'Restored'},label:'Age',tip:'How long it has been there. New courses have young trees and crisp edges; old ones have grown trees, added back tees and bunkers grassed over; a restored course has its mid-century trees felled and its old bunkers back.'},
+ {key:'archStory',category:'architect',kind:'choice',options:STORY_KEYS,def:'some',architect:true,names:{none:'None',some:'A little',lots:'A lot'},label:'The land’s story',tip:'What was there before the course: stone walls, an old farm, a ruin, a ravine, a landmark to aim at. Some of it comes into play.'},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
@@ -429,7 +476,15 @@ const MIGRATIONS={
  // 10 -> 11: `greenScale` added (the owner, 15 October 2026). 100 is the size
  // every green was drawn at before, so a saved course keeps its greens.
  10:s=>({...s,greenScale:100}),
+ // 11 -> 12: the designer and the Architect's dials. Nothing to write: a save
+ // from before has no designer, takes the default -- Classic -- and is built
+ // exactly as it was (tests/designer.test.mjs loads one to prove it).
+ 11:s=>s,
 };
+// Whether a control belongs on screen for this course: Architect shows only
+// what it is chosen by (ARCHITECT_KEEPS); Classic shows everything but the
+// Architect's own dials.
+export const shownFor=(f,s)=>isArchitect(s)?ARCHITECT_KEEPS.includes(f.key):!f.architect;
 
 // Play-scope keys (turf, club yardages, art style) ride along in
 // the same object and are validated by their own modules, so they are preserved

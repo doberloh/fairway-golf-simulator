@@ -1,5 +1,6 @@
 import {FOOTPRINTS,footprintCurve} from './footprints.js';
 import {biomeOf} from './biomes.js';
+import {designSettings} from './designer.js';
 // Seeded corridor packing: successive tees follow greens, with a compact,
 // collision-checked routing instead of rows of parallel holes.
 export function placeHole(h,origin,rotation){
@@ -15,6 +16,7 @@ export function footprintGuide(holes,s,random){
  return {kind,points,distance};
 }
 export function routeHoles(holes,s,random){
+ s=designSettings(s);
  const footprint=footprintGuide(holes,s,random);let best=null;
  for(let trial=0;trial<5;trial++){
   const rng=random(s.seed+':routing:'+trial),placed=[],samples=[];let penalty=0;

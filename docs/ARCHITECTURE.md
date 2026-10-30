@@ -70,6 +70,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/stands.js` -- uncleared forest and thicket round the property and between the holes (the cartoon overhaul): where a stand grows and the hashed grid it is planted from; tests/stands.test.mjs
 - `src/grounds.js` -- the ground types a ball plays from besides turf (rock, scree, hardpan, waste sand, pine straw, leaves, heather, native grass, coral): one row each that every surface table reads, and what may stand on each; tests/grounds.test.mjs
 - `src/course-names.js` -- seeded course names
+- `src/designer.js` -- who designs a course, Classic or Architect: `designSettings` hands a Classic course back untouched and gives an Architect course the architect's settings, at every entry into generation; `designerScope`, what a saved Architect course carries; tests/designer.test.mjs. `src/architect-styles.js` -- the Architect's dials as records: twelve styles, the styles each landscape leans toward (`BIOME_STYLES`), `styleOf`, `architectChoices`. The record is docs/ARCHITECT_COURSES.md
 
 **Moving a ball**
 - `src/physics.js` -- flight and contact, cup capture, monitor shot normalisation; `AERO`, `CONTACT`
@@ -190,7 +191,8 @@ PROCEDURAL_GENERATION.md has the why):
 
 **Anything that changes generated ground for an unchanged seed bumps
 `GENERATOR_VERSION`** -- the fingerprint check is the arbiter (AGENTS.md,
-*Two version numbers*).
+*Three version numbers*). An Architect course owes `ARCHITECT_VERSION` instead
+when Classic does not move.
 
 Rules every generated course keeps, checked by `npm run bench` as invariants
 that must be zero: no tee below the tee in front of it, no tee pad on a green,
@@ -205,6 +207,7 @@ and lie are decided separately but from the same shared numbers.
 Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 
 **Generation**
+- Two designers share one pipeline: Classic must never reach Architect code (`designSettings` returns a Classic object untouched), Architect draws only from its own named streams, a course's stamp is `generatorFor(settings)`, never `GENERATOR_VERSION`, and both fingerprints run on every generation change. [TWO DESIGNERS, ONE WORLD]
 - The order of seeded draws inside a hole is load-bearing; one added or moved shifts every pond, bunker and contour on that hole. One RNG, in course-plan.js. [A HOLE'S SKELETON]
 - `generateWorld` must stay synchronous; only `generateWorldSteps` yields, and only between rows, or fingerprints move. [GENERATION YIELDS]
 - `prepareWorld` and `loadCourse` must compute the same cache key (`settleSettings`), or a different course appears than the one chosen. [MUST KEY ON THE SAME THING]

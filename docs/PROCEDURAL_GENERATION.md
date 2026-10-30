@@ -2,6 +2,15 @@
 
 Fully procedural generation is a good fit for this simulator. It needs constraints to create playable golf, but it does not need a catalogue of prebuilt holes. The same seed and settings reproduce the same course within this generator version. Changing the generator can change what an older seed produces.
 
+**Two designers (since 30 October 2026).** Everything below describes
+**Classic**, the generator Fairway has always had, which stays the default.
+**Architect (beta)** shares this pipeline and replaces its decisions at named
+seams -- its own plan per hole, hazards placed against shots, routing from a
+clubhouse, and the rest of docs/ARCHITECT_COURSES.md. *Architect, as built*
+at the end of this file says what it does differently so far; until a seam is
+built, an Architect course is generated exactly as Classic generates its
+defaults.
+
 ## What is generated
 
 1. **Plan the round.** Requested yardage determines total par within 68–72 for eighteen holes or 34–36 for nine. A seeded choice selects a valid mix of par 3s, 4s and 5s, then shuffles their order. Independently varied hole distances are scaled to the requested total. Beyond the par bounds, lengths continue scaling. Very short or long requests can therefore fall outside conventional par-specific yardage ranges, as requested.
@@ -208,3 +217,13 @@ field says so, never nearer play than 40-55 m. Each stand is planted from a
 jittered grid every 8-11 m, by the rules every tree obeys, with crowns
 allowed to close and trees 1.2 times the open scatter's size (generator 40). Hashed, not drawn: nothing else on the course is decided
 differently. Under each stand an understory of shrubs and ferns is planted from a grid of its own (generator 42). The Giant Redwood (already a grove) and the range have none.
+
+## Architect, as built
+
+What an Architect course does differently from the Classic pipeline above,
+seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
+
+- **Its settings** (designer.js `designSettings`): everything but the designer,
+  holes, seed, landscape, the four dials, wind and pin day is the architect's.
+  Phase 0: Classic's defaults, so an Architect course is still the default
+  Classic course for its seed.

@@ -1,4 +1,4 @@
-import {SCHEMA_VERSION, GENERATOR_VERSION, validateSettings, migrateSettings} from './settings-schema.js';
+import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from './settings-schema.js';
 import {Round} from './game.js';
 import {normaliseShots} from './rival.js';
 
@@ -100,7 +100,7 @@ export function listRounds() {
 export function findRound(id) { return listRounds().find(r => r.id === id) || null; }
 
 // `record` is main.js's own save record: {settings, round, camera, generator}.
-export function saveRound({id, name, settings, round, camera, shots, generator = GENERATOR_VERSION} = {}) {
+export function saveRound({id, name, settings, round, camera, shots, generator = round?.endless ? generatorFor({}) : generatorFor(settings)} = {}) {
  if (!round) throw Error('There is no round to save.');
  const entry = {
   id: id || newId(),

@@ -31,6 +31,22 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Architect courses (branch `architect-courses`, from 30 October 2026)
+
+The owner's goal: build the whole local study, phases 0-7; the record is
+[ARCHITECT_COURSES.md](ARCHITECT_COURSES.md). Picked from IDEAS.md, with
+*Cart paths*, *Bridges over creeks*, *Scalloped bunker edges* and *Routing
+quality measures*, which it absorbs.
+
+- [ ] **Not yet played by a person: the studio's *How the course is made*.**
+  Choose Architect (beta): the sliders the architect decides should go, the
+  *Architect (beta)* heading with Style, Club, Age and The land's story should
+  appear, and the card should stay without its length slider; choose Classic
+  again and everything returns. Save the course and export its code: both
+  should come back as Architect. (Phase 0: Node tests, and the
+  `architect-studio` smoke journey drives all of it but the code export.)
+- [ ] Phases 1-7 (ARCHITECT_COURSES.md, *Status*).
+
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
 - [x] **The drop bar and the Tools window: three lines low on their own

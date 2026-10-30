@@ -374,6 +374,40 @@ Aim keyboard directions account for that handedness. Course-wide wind is transfo
 
 Current housing controls: enabled flag, density and setback from semi-rough. River controls: river count 0–2, creek count 0–3, independent widths, depth, meandering. Creek depth is 60% of selected channel depth. Large-lake controls: count 0–3 (`lakes`) and typical diameter 60–460 m (`lakeSize`, default 160); use the existing pond depth range. Ordinary ponds span roughly 90 m on average, so lakes exist for genuinely large water rather than for merely bigger ponds. Pond banks sit a fixed gap outside the fairway edge and grow outward, so enlarging a pond moves it away from play; enlarging `rz` instead extends it along the hole and is limited by hole length. At the top of the lake range, corridor clearance leaves room for well under half the requested lakes on a nine-hole course. Homes, streams and large lakes default off to preserve an ordinary course until selected. Counts are upper targets: terrain constraints can produce fewer.
 
+### TWO DESIGNERS, ONE WORLD
+
+Since 30 October 2026 (branch `architect-courses`; docs/ARCHITECT_COURSES.md)
+a course has a designer: **Classic**, the generator above, or **Architect
+(beta)**, which designs a course from four dials (style, club, age, the land's
+story) plus the seed, landscape and holes. They share one pipeline -- the
+terrain, water, mesh, physics, drawing and scoring are one copy -- and differ
+only at named seams. Rules that keep the two honest:
+
+- **Classic cannot reach Architect code.** `designSettings` (designer.js) is
+  called at every entry into generation and returns a Classic settings object
+  as the same object, untouched. Every Architect branch hangs off
+  `isArchitect(s)`; a Classic course never takes one.
+- **Architect never draws from Classic's stream.** Its decisions use named
+  streams per step and per hole (`seed|arch|<what>|<hole>`), so adding a
+  decision to one hole moves nothing on another, and Classic's draw order --
+  load-bearing, *A HOLE'S SKELETON* -- is untouched.
+- **A course's stamp is `generatorFor(settings)`**, never `GENERATOR_VERSION`:
+  Classic's is GENERATOR_VERSION, Architect's GENERATOR_VERSION*1000 +
+  ARCHITECT_VERSION, one integer so every existing reader of `generator` keeps
+  working. Saves, saved courses, course files, course codes, challenge codes,
+  the world cache key and the stale notices all use it. Endless runs, the course
+  of the week, the Challenge Course and Surprise me are Classic.
+- **What an Architect course is chosen by is `ARCHITECT_KEEPS`**; everything
+  else is decided (`DECIDED_KEYS`), hidden in the studio (`shownFor`), and not
+  carried in a saved course or a code (`designerScope`) -- it is recomputed on
+  load from the kept keys.
+- **Both fingerprints run on every generation change**
+  (`biome-fingerprint.mjs --check`, then with `--designer architect`). A change
+  for Architect alone that moves Classic's has reached a shared path.
+
+The seams so far: `designSettings` (the architect's settings, phase 0: Classic's
+defaults). Each later seam is listed here as it is built.
+
 ### Invariants a generated course must satisfy
 
 These are asserted by `npm run bench`, which prints each as a rule that has to stay at zero and names the offending course when one does not. They are not preferences.

@@ -1,7 +1,8 @@
 // Named courses kept on this device, plus the portable code that moves one to
 // another device. A course record is settings and a name — never a round, a lie
 // or a score — so the same course can be played as any format with any group.
-import {SCHEMA_VERSION,GENERATOR_VERSION,DEFAULT_COURSE,generationKeys,validateSettings,migrateSettings} from './settings-schema.js';
+import {SCHEMA_VERSION,DEFAULT_COURSE,generationKeys,validateSettings,migrateSettings,generatorFor} from './settings-schema.js';
+import {designerScope} from './designer.js';
 
 const KEY='fairway-courses-v1';
 const PREFIX='FW1';
@@ -11,10 +12,12 @@ export const MAX_NAME=40;
 // Play-scope settings (turf, club yardages, flight profile) share one object
 // with generation settings at runtime. A shared course must not carry the
 // author's club distances, so records keep generation keys only.
-export function courseSettings(settings={}){const out={};for(const k of generationKeys())if(settings[k]!==undefined)out[k]=settings[k];return out;}
+// An Architect course keeps only what it is chosen by (designer.js
+// `designerScope`): the rest is the architect's, recomputed on every load.
+export function courseSettings(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(s[k]!==undefined)out[k]=s[k];return out;}
 // Codes carry only what differs from the defaults, which keeps a typical course
 // a couple of hundred characters instead of eight hundred.
-export function settingsDiff(settings={}){const out={};for(const k of generationKeys())if(settings[k]!==DEFAULT_COURSE[k])out[k]=settings[k];return out;}
+export function settingsDiff(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(k in s&&s[k]!==DEFAULT_COURSE[k])out[k]=s[k];return out;}
 
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function validName(name){const n=String(name??'').trim();if(!n.length||n.length>MAX_NAME)throw Error(`Give the course a name of 1–${MAX_NAME} characters.`);return n;}
@@ -38,7 +41,7 @@ function normalise(raw){
 export function listCourses(){const out=[];for(const raw of readStore()){try{out.push(normalise(raw));}catch{}}return out;}
 export function findCourse(id){return listCourses().find(c=>c.id===id)||null;}
 
-export function saveCourse({id,name,settings,generator=GENERATOR_VERSION}={}){
+export function saveCourse({id,name,settings,generator=generatorFor(settings)}={}){
  const record={id:id||newId(),name:validName(name),created:Date.now(),generator,schema:SCHEMA_VERSION,settings:courseSettings(validateSettings(settings))};
  const courses=readStore().filter(c=>c&&c.id!==record.id);
  if(courses.length>=MAX_COURSES)throw Error(`The library holds at most ${MAX_COURSES} courses. Delete one first.`);
@@ -60,7 +63,7 @@ export const checksum=s=>{let a=2166136261;for(let i=0;i<s.length;i++){a^=s.char
 
 export function exportCourse(record){
  const settings=validateSettings(record?.settings||{});
- const body=toB64(JSON.stringify({v:SCHEMA_VERSION,g:record?.generator??GENERATOR_VERSION,n:validName(record?.name),d:settingsDiff(settings)}));
+ const body=toB64(JSON.stringify({v:SCHEMA_VERSION,g:record?.generator??generatorFor(settings),n:validName(record?.name),d:settingsDiff(settings)}));
  return `${PREFIX}.${body}.${checksum(body)}`;
 }
 

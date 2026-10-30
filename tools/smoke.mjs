@@ -1961,6 +1961,62 @@ const JOURNEYS = [
   },
  },
 
+ // ARCHITECT COURSES (architect-courses, 30 October 2026): the studio's
+ // second designer. Choosing Architect swaps the sliders it decides for its
+ // four dials, the card stays without its length slider, an Architect course
+ // grows, and it is saved as Architect.
+ {
+  name: 'architect-studio',
+  what: 'Course studio grows and saves an Architect course',
+  async run(t) {
+   await menuReady(t);
+   await t.step('Course studio → How the course is made: Architect', async () => {
+    await fromMenu(t, 'Course studio');
+    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
+    await t.page.selectOption('#designer', 'architect');
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('archStyle') && !document.getElementById('width')
+     && !document.getElementById('courseYards') && !!document.getElementById('planCard')),
+     'the Architect dials in place of the sliders it decides', 10 * SLOW);
+    // The dials are under their own heading, a tab of the sheet.
+    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
+    await t.page.selectOption('#archStyle', 'links');
+    await t.page.selectOption('#archClub', 'championship');
+   });
+   await t.step('Classic again brings the sliders back', async () => {
+    await t.page.locator('.panel-tab', {hasText: 'Course'}).first().click();
+    await t.page.selectOption('#designer', 'classic');
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('width') && !document.getElementById('archStyle')),
+     'the Classic sliders', 10 * SLOW);
+    await t.page.selectOption('#designer', 'architect');
+    await t.until(() => t.page.evaluate(() => document.getElementById('archStyle')?.value === 'links'),
+     'the dials kept through the switch', 10 * SLOW);
+   });
+   await t.step('grow it', async () => {
+    await t.press('Grow this landscape');
+    await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
+     && document.getElementById('generating')?.hidden !== false), 'the Architect landscape', 120 * SLOW);
+   });
+   let name = '';
+   await t.step('save it, and it is Architect in Saved courses', async () => {
+    await t.page.click('#studioSave');
+    await t.until(() => t.page.locator('#leaveNotice').isVisible(), 'the name box', 5 * SLOW);
+    name = await t.page.inputValue('#leaveName');
+    await t.page.click('#leaveSave');
+    await t.until(async () => !await t.page.locator('#leaveNotice').isVisible(), 'the name box to close', 5 * SLOW);
+    const saved = await t.page.evaluate(n => {
+     const d = JSON.parse(localStorage.getItem('fairway-courses-v1') || '{}');
+     return (d.courses || []).find(c => c.name === n) || null;
+    }, name);
+    if (!saved) throw new Error(`"${name}" was not saved`);
+    if (saved.settings.designer !== 'architect' || saved.settings.archStyle !== 'links' || saved.settings.archClub !== 'championship')
+     throw new Error(`saved as ${JSON.stringify({designer: saved.settings.designer, style: saved.settings.archStyle, club: saved.settings.archClub})}`);
+    if (!(saved.generator >= 1000)) throw new Error(`saved with the stamp ${saved.generator}, not an Architect one`);
+    await t.page.click('#studioExit');
+    await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
+   });
+  },
+ },
+
  {
   name: 'hud-reachable',
   what: 'every play-screen control can be clicked, nothing scrolls, and the course shows -- desktop to phone',

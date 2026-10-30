@@ -55,29 +55,6 @@ often has the how-to already worked out.
   or it rebuilds differently; too few shots falls back to an ordinary
   course. Large: it is generation (fingerprint, bench, old saves).
   (Claude, asked by the owner for one standout feature, 29 October 2026)
-- **Architect courses: a second way to build a course.** A Course studio
-  choice beside today's generator ("Classic"): courses that look designed,
-  built and lived in. An architect gives each hole a concept or a template
-  (Redan, Cape, Dell...) and puts every hazard where a shot lands; greens
-  are designed round their hole locations; holes route from a clubhouse with
-  returning nines; then paths, bridges, stakes, walls, old farm remains,
-  animals and a course history (an added back tee, grassed-over bunkers).
-  Three dials set the character -- style, club, age -- and each hole
-  explains itself in an architect's note. Why it is good: Fairway's holes
-  read as generated mainly because features are placed by chance. Why a
-  separate mode: Classic seeds, saves, codes and the course of the week
-  never change, and Architect ships phase by phase as a beta. The pieces:
-  one pipeline with a switch at each decision (not a copied generator), its
-  own named random streams, an `ARCHITECT_VERSION` beside
-  `GENERATOR_VERSION` with a fingerprint per designer, a pure `architect.js`,
-  and the baked surface field the sculpting and real-courses studies also
-  need. It would absorb *Scalloped bunker edges*, *Bridges over creeks*,
-  *Routing quality measures* and *Cart paths* below, and is the natural home
-  for *A course built for your game*. Very large: eight phases, the first
-  an Architect identical to Classic to prove the plumbing; forty-plus
-  Blender pieces is the long pole. The full study, with sources, phases and
-  the owner's decisions, is the local `docs/studies/HUMAN_BUILT_COURSES_SPEC.md`
-  (not committed). (Claude, asked by the owner, 29 October 2026)
 
 ## Practice
 
@@ -139,23 +116,12 @@ often has the how-to already worked out.
   heading)
 - **A third crown shape for the trees** -- a single-mass conifer, or a plume
   built from overlapping foliage. Medium. (was: *Only two crown shapes*)
-- **Scalloped bunker edges**: the fingers of grass that reach into sandbelt
-  bunkers. Needs a third outline harmonic and a new hazard-texture layout. Only
-  if the current shaping is not enough on screen. Medium. (was: *True scalloped
-  edges need a data channel that does not exist*)
-- **Bridges over creeks.** Channels cross walking routes with no deck. A height
-  override was tried and removed (a ball flying under the deck landed on it);
-  a real one needs a solid with an underside. Medium. (was: *Bridges and
-  crossings*)
 
 ## Under the hood
 
 - **Spin at the rim.** A putt reaches the lip carrying only rolling spin; one
   with sidespin should take the lip differently. Medium. (was: *Spin-dependent
   rim behaviour*)
-- **Routing quality measures** in the bench: forced carries, recovery space,
-  green-to-tee walks, the finishing hole's return. Medium. (was: *Routing
-  quality metrics*)
 - **A camera that frames one tee complex from above**, to show the tee stagger
   rather than argue it from numbers. Small. (was: *No picture of a tee complex
   from above*)
@@ -173,14 +139,6 @@ often has the how-to already worked out.
   a headless pipeline exists (`tools/blender/`, docs/BLENDER_ASSETS.md), built
   for Lakeshore Dunes. A redwood remake would be a new pack script there;
   Blender may use the graphics card without asking (AGENTS.md).
-
-- **Cart paths.** A paved path winding from each green to the next tee
-  through the rough, as in the owner's Harbor Shores photograph: a ribbon
-  painted in the ground shader with its own lie (a path is "cart path" relief
-  under the Rules), routed with the green-to-tee walk the router already
-  measures. Medium: it is generation (a new surface, the fingerprint, old
-  saves) and a new relief rule. Kept out of the Lakeshore Dunes goal on
-  purpose. Claude, from the owner's goal text, 23 October 2026.
 
 ## New biomes (9 October)
 
