@@ -55,6 +55,29 @@ often has the how-to already worked out.
   or it rebuilds differently; too few shots falls back to an ordinary
   course. Large: it is generation (fingerprint, bench, old saves).
   (Claude, asked by the owner for one standout feature, 29 October 2026)
+- **Architect courses: a second way to build a course.** A Course studio
+  choice beside today's generator ("Classic"): courses that look designed,
+  built and lived in. An architect gives each hole a concept or a template
+  (Redan, Cape, Dell...) and puts every hazard where a shot lands; greens
+  are designed round their hole locations; holes route from a clubhouse with
+  returning nines; then paths, bridges, stakes, walls, old farm remains,
+  animals and a course history (an added back tee, grassed-over bunkers).
+  Three dials set the character -- style, club, age -- and each hole
+  explains itself in an architect's note. Why it is good: Fairway's holes
+  read as generated mainly because features are placed by chance. Why a
+  separate mode: Classic seeds, saves, codes and the course of the week
+  never change, and Architect ships phase by phase as a beta. The pieces:
+  one pipeline with a switch at each decision (not a copied generator), its
+  own named random streams, an `ARCHITECT_VERSION` beside
+  `GENERATOR_VERSION` with a fingerprint per designer, a pure `architect.js`,
+  and the baked surface field the sculpting and real-courses studies also
+  need. It would absorb *Scalloped bunker edges*, *Bridges over creeks*,
+  *Routing quality measures* and *Cart paths* below, and is the natural home
+  for *A course built for your game*. Very large: eight phases, the first
+  an Architect identical to Classic to prove the plumbing; forty-plus
+  Blender pieces is the long pole. The full study, with sources, phases and
+  the owner's decisions, is the local `docs/studies/HUMAN_BUILT_COURSES_SPEC.md`
+  (not committed). (Claude, asked by the owner, 29 October 2026)
 
 ## Practice
 
