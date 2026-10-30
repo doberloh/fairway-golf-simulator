@@ -29,6 +29,39 @@ number of holes.
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
 | 7. Occasion | built: tournament week on a Championship venue -- stands, a scoreboard, TV towers and marquees (solid), gallery ropes and a crowd that fills from Thursday to Sunday, never on Low (ten iterations); the yardage book, a PDF a page a hole from the pause menu |
 
+### Where the goal stands (30 October 2026)
+
+**Met**: every phase built and documented; npm test (1,197) and the build
+pass; the round matrix (rules with no course) and the virtual golfer run on
+both designers -- **Architect 0.82 strokes per 18 harder** (limit 1.5);
+Classic's fingerprint unchanged from the start; the bench moved (bunkers by a
+landing zone 83% against 27%, nines home 11 of 12 against 7, the median walk
+93 m against 98, four to six concepts a nine); **an eighteen builds at most
+0.30 s slower** on Architect (Links; limit 2 s); the showcase saved
+(docs/reports/architect-showcase/, local, 24 pictures).
+
+**Not met yet -- all on the graphics card, waiting for the owner** (who
+stopped the profile run at the end, the card then 20-31% busy):
+- **Frame time on Low** at the end of the goal (Classic against Architect,
+  `node tools/profile.mjs --only architect`); last measured after phase 3, within 10% on three landscapes.
+  Phases 5-7 added instanced pieces (rip-rap, walls, the story's buildings,
+  life and crowds -- the last two never on Low) not yet measured.
+- **Every smoke journey**: last run in phase 2 (five journeys green). Since
+  then main.js (the yardage book's menu item, drops off walls), index.html
+  and renderer.js have changed with no journey driven.
+- **The showcase's hero hole per landscape, the four Classic-against-
+  Architect pairs on one seed, and pictures of the Redan and the Cape.**
+
+**Seen working in the game** (GPU captures, stills): every Blender kit in
+its landscapes and on Low; paths and bridges; markings; clubhouses; mounds,
+pond edges, fountains; walls, farms, ruins, landmarks, the stone circle; the
+Dell, the Alps, the Barranca, the Pit; animals and people (none on Low);
+tournament week Thursday to Sunday (no crowd on Low). As a PDF: the yardage
+book. **Not seen by anyone**: anything played by a person; anything moving
+(animals, birds, walkers, the mower -- stills only); the *Yardage book* menu
+item clicked; a ball against a wall, a stand or a bridge deck in a round (Node
+tests only); a carry over a barranca.
+
 ## The owner's decisions (the goal text, 30 October 2026)
 
 - Name "Architect", an option labelled beta. **Classic always exists and stays
