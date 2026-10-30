@@ -77,7 +77,11 @@ quality measures*, which it absorbs.
   animals moving in a round (they turn and circle; the captures are stills),
   gulls (Lakeshore's flew out of frame). To check: a round on an Architect
   Links course on High, watching the flock and the gulls.
-- [ ] Phase 7 (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Not yet played by a person: phase 7.** Seen in GPU captures:
+  tournament week on Midwest, Links and PNW, Thursday to Sunday, none of the
+  crowd on Low. Seen as a PDF: the yardage book. Not seen: the pause menu's
+  *Yardage book* item clicked in the game, a ball hit at a stand in a round.
+  To check: an Architect Championship course on Sunday; pause, Yardage book.
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

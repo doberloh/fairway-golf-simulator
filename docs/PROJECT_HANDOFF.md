@@ -462,6 +462,11 @@ The seams so far, each listed here as it is built:
   join the clubhouse (solid, never out of bounds) and its walls are boxes
   (`wallBoxes`). Trees keep 20 m off a story building and a stride off a wall.
 
+- `buildings` -- tournament week's stands, scoreboard, towers and marquees
+  (occasion.js) join the story's, solid; its crowd is hidden on Low by the
+  frame loop. The stand's footprint height is its model's (8.6 m with the
+  pennants): the game fits a model to its box, and a shorter box squashes
+  the rows under the seated crowd (`STAND_ROWS`).
 - The frame loop (renderer.js) -- an Architect course's life (`addLife`) is
   moved thirty times a second and hidden whenever the tier is Low; it is
   world data only so a course always has the same animals, never solid and

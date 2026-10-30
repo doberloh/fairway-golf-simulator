@@ -27,7 +27,7 @@ number of holes.
 | 4. Home | built: routed from the clubhouse -- each nine pulled home toward its turn, the 10th tee at the clubhouse, every hole within walking reach of home. 10 of 12 nines home on the bench (Classic 7), 19 of 24 on eighteen-hole courses (Classic 10); Links the hard case. Not done: double greens (*Deviations*) |
 | 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
-| 7. Occasion | not started |
+| 7. Occasion | built: tournament week on a Championship venue -- stands, a scoreboard, TV towers and marquees (solid), gallery ropes and a crowd that fills from Thursday to Sunday, never on Low (ten iterations); the yardage book, a PDF a page a hole from the pause menu |
 
 ## The owner's decisions (the goal text, 30 October 2026)
 
@@ -436,6 +436,41 @@ ARCHITECT_VERSION 10. Classic's fingerprint unchanged.
   birds up; hollows on an old municipal course, none on a new members' one;
   stumps on a restored course, none on an old one).
 
+### Phase 7: the occasion (30 October 2026)
+
+ARCHITECT_VERSION 11. Classic's fingerprint unchanged.
+
+- **Tournament week** (occasion.js; the study, workstream Q), on a
+  Championship venue only (the goal): grandstands behind and beside the
+  last green and beside the signature par three (one with water, else the
+  first), a scoreboard by the last green, TV towers behind it and by the par
+  three, three hospitality marquees beside the clubhouse, gallery ropes down
+  both sides of the last two holes from the landing zone to the green, and a
+  crowd behind the ropes and in the stands. **The pin day says which day of
+  the week it is**: about a third of the places filled on Thursday, half on
+  Friday, three quarters on Saturday, every seat on Sunday (PLACED). Every
+  day is a pin day here (the setting always has one), so the study's "off
+  the pin days, the stands are empty frames" has no day to show; Thursday's
+  thin crowd stands in for it.
+- **Solid**: the stands, the scoreboard, the towers and the marquees are
+  boxes in `world.buildings`, never out of bounds; a ball that reaches one
+  bounces off and is played from where it ends. The ropes and the crowd are
+  decoration, and the crowd is not drawn on Low.
+- **The yardage book** (yardage-book.js; the study, workstream P): a
+  printable PDF, a page a hole of an Architect course -- the hole drawn tee
+  to green with its fairway and semi-rough edges, the green and its fall, the
+  bunkers and ponds labelled with their carries from the back tee, the tees,
+  both landing zones and what is left from each, the architect's note and
+  each hazard's reason. From the menu while a round is paused (*Yardage
+  book*, Architect courses only), written by the game's own PDF writer.
+- **The tournament kit** (Blender pack architect_occasion, ten iterations,
+  below).
+- Tests: tests/occasion.test.mjs (only a Championship venue dressed; nothing
+  on a played surface; a stand behind the last green facing it; the crowd
+  more than doubling from Thursday to Sunday; a stand stops a ball and is
+  not out of bounds); tests/yardage-book.test.mjs (a page a hole, the PDF
+  well formed, every hole's name, par, note, carries and what is left).
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -520,6 +555,13 @@ ARCHITECT_VERSION 10. Classic's fingerprint unchanged.
   reaches them is in the water either way, so a solid face would only change
   where a ball already in the penalty area stops.
 - **Fountains are still** -- a static model, no moving spray or sound.
+- **No relief from tournament week's structures** (the study's rulings:
+  relief from a temporary immovable obstruction). A ball that reaches a
+  stand, the scoreboard, a tower or a marquee bounces off it and is played
+  from where it ends.
+- **No TV tower pads off the pin days and no rough grown up for the week**:
+  the setting always names a day, and the rough is the club's (a
+  Championship venue already plays its rough long).
 - **The land's story is placed after the routing, not before it** (the
   study: on the base landform, so the router can use it -- "a wall here
   makes a Pit green"). The holes are routed first and the story fills the
@@ -622,6 +664,7 @@ is above about 30%).
 | 30 Oct, phase 4 | none: routing measured on the CPU (bench, builds) | -- | -- |
 | 30 Oct, phase 6 | captures `arch-l3` to `arch-l10` (twelve runs of one to three landscapes): the life pack's iterations on Links, Redwood, Autumn, Midwest, PNW, Desert, Haunted Hollow and Lakeshore, one on Low | 3-5%, 38-40 °C each | every course built in 5-23 s with no errors |
 | 30 Oct, phase 7 | the yardage book opened in the browser pane (a PDF, no game) | 4% | read as drawn: the plan, carries, notes |
+| 30 Oct, phase 7 | captures `arch-w3` (week views), `arch-o4` to `arch-o10` (eight runs of one or two landscapes): the tournament kit's iterations on Midwest, Links and PNW, Thursday to Sunday, two on Low | 4-5%, 38-40 °C each | every course built in 8-18 s with no errors |
 | 30 Oct, phase 6 | captures `arch-s3` to `arch-s10` (sixteen runs of one to three landscapes, one at a time): the story pack's iterations on Midwest, Links, Haunted Hollow, Autumn, Mountain, Island, Desert and PNW, the last on Low | 2-5%, 38-40 °C each | every course built in 5-18 s with no errors |
 | 30 Oct, phase 5 | captures `arch-w3` to `arch-w10` (fourteen runs of one landscape, one at a time): the water pack's iterations on Midwest (Parkland, Stadium), Redwood, Autumn and Desert, the last on Low | 2-5%, 38-40 °C each | every course built in 13-17 s with no errors |
 | 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
@@ -733,3 +776,23 @@ Measured with the rest of phase 6 on Low (*Measures*).
 Cost: under forty animals and people a course, each kind one instanced mesh
 per part, their matrices rewritten thirty times a second (a few dozen
 matrices); none of it on Low. Measured with the rest of phase 6 (*Measures*).
+
+### architect_occasion (grandstand, scoreboard, TV tower, marquee, rope, spectator)
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | sheet | all six read at once: the stepped stand with its event-green skirt and canopy, the scoreboard's names and numbers, the scaffold tower and its hooded camera, the peaked marquee, the rope's sag, a spectator in a sun hat |
+| 2 | sheet | pennants on poles along the stand's canopy, so it reads as tournament week from down a fairway (the stand's footprint height becomes 8.6 m, or the game would squash its rows under the crowd) |
+| 3 | game (`arch-w3` labels, Midwest, Sunday) | the scoreboard, the marquee by the clubhouse and a gallery in three shirt colours behind the rope read; **Sunday's crowd was a few strollers** (three a 6 m section); the stand behind the green small and dark from 95 m |
+| 4 | game (`arch-o4`, Midwest, Sunday) | five a section; from 60 m out: **the full stand behind the last green, its pennants, a second stand, the scoreboard and the ropes** -- Sunday reads as Sunday |
+| 5 | game (`arch-o5`, Thursday) | the stands nearly empty frames, the ropes thinly lined: the week has a beginning |
+| 6 | game, **Low tier** (`arch-o6`, Sunday) | no crowd drawn; the stands, board and ropes stay |
+| 7 | game (`arch-o7`, Links, Saturday) | the stands frame the last green in the dunes; **the scoreboard sank into the marram** on its 2.4 m legs |
+| 8 | game (`arch-o7`, PNW, Saturday) | stands and a lined gallery along the closing hole in the forest |
+| 9 | game (`arch-o9`, Links) | the board on 3 m legs (7.6 m overall): clear of the marram |
+| 10 | game, **Low tier** (`arch-o10`, Links, Sunday) | stands, board and ropes on Low, no crowd |
+
+Cost: three or four stands (one mesh each, inked), a scoreboard, two towers
+and three marquees on a Championship venue only; about 70 rope sections and
+up to about 1,100 spectators on Sunday (three instanced meshes of about 100
+faces each), none of the crowd on Low.

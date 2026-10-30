@@ -1018,7 +1018,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.occasion=this.addOccasion(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -2063,6 +2063,11 @@ export class GolfView{
    sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
    lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
+   // Tournament week (phase 7; occasion.js): the event's green.
+   stand:{stone:'#b9bec4',accent:'#1f5a3a',leaf:'#f6f6f2',bark:'#3c4a63'},
+   scoreboard:{stone:'#8d949b',accent:'#1f5a3a',leaf:'#f8f8f4',bark:'#2a2f38',dirt:'#c0503a'},
+   tower:{stone:'#a9afb6',accent:'#1f5a3a',leaf:'#f2f2ee',dirt:'#2a2d33'},
+   marquee:{leaf:'#fbfbf8',accent:'#1f5a3a',bark:'#3a3f47',stone:'#b9bec4'},
   };
   for(const b of w.buildings){
    const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
@@ -2086,6 +2091,27 @@ export class GolfView{
     this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
+ }
+ // TOURNAMENT WEEK'S ROPES AND CROWD (phase 7; occasion.js): gallery ropes in
+ // 6 m sections, and spectators -- in three shirt colours, by turns -- behind
+ // them and in the stands. The crowd is hidden on Low (the frame loop).
+ addOccasion(w){
+  const o=w?.occasion;if(!o||this.style!=='cartoon'||(!o.ropes.length&&!o.crowd.length))return null;
+  const group=new T.Group();group.name='Occasion';this.group.add(group);
+  const crowd=new T.Group();crowd.name='Crowd';group.add(crowd);
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  const draw=(parent,model,list,colours,h,len)=>{
+   const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info||!list.length)return;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((it,i)=>{q.setFromAxisAngle(up,it.rot||0);pos.set(it.x,it.y??w.height(it.x,it.z),it.z);if(len)sc.set(h,h,len/(2*info.rz));else sc.setScalar(h);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();parent.add(mesh);this.resources.push(mat);
+   }
+  };
+  draw(group,'Blender_GalleryRope_1',o.ropes,{stone:'#e9e6dc',accent:'#1f5a3a',dirt:'#f2d34a'},1.0,6);
+  const SHIRTS=['#e5e1d4','#c0503a','#3f6fb0'];
+  SHIRTS.forEach((shirt,k)=>draw(crowd,'Blender_Spectator_1',o.crowd.filter((c,i)=>i%3===k),{accent:shirt,bark:'#3c4a63',dirt:'#e0b48e',leaf:'#f4f1e6'},1.75));
+  return {group,crowd};
  }
  // THE LAND'S STORY'S WALLS AND PROPS (phase 6; story.js): a wall is 2 m
  // sections laid end to end along each run, stone or hedge, a moor wall's
@@ -3263,6 +3289,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
   // Life on an Architect course (phase 6): never on Low.
   if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
+  // Tournament week's crowd (phase 7): never on Low either.
+  if(this.occasion)this.occasion.crowd.visible=this.quality!==tierOf('low');
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and

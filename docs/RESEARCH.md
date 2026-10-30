@@ -10976,3 +10976,16 @@ a 30-70 m circle, three walkers on 40 m of path at 1.2 m/s, a mower on a 30 m
 run at 1.8 m/s; hollows 0.8 m deep, 5-7.5 m across, on half the par fours and
 fives of a Municipal course and a third of an Old or Restored one; animals
 drawn 1.25-1.5 times life size.
+
+## Architect courses: the occasion (30 October 2026)
+
+Phase 7 (docs/ARCHITECT_COURSES.md, *Phase 7*), from the study's workstreams
+Q and P: on a Championship venue the pin day dresses the course for that day
+of the event -- grandstands round the 18th green and the signature par 3, a
+scoreboard, gallery ropes, TV towers, hospitality, crowds; a printable
+yardage book with carries and the architect's notes. **Every number is
+PLACED**: two stands at the last green and one at the par three (20 x 9 m),
+the crowd's share by day (Thursday 0.35, Friday 0.5, Saturday 0.75, Sunday
+1), five spectators a 6 m rope section on Sunday, seats every 0.9 m in six
+rows; carries in the book to a hazard's near and far edge along the hole
+from the back tee. No new source was fetched.

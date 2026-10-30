@@ -57,6 +57,7 @@ import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
 import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,sheetScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
 import {holeNames} from './hole-names.js';
 import {crestSvg,courseIdentity} from './crest.js';
+import {yardageBook} from './yardage-book.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
@@ -2980,7 +2981,8 @@ function reliefGround(){
   const local=s=>course.world?course.toLocal(s):s;
   for(const t of course.world?.trees||course.trees||[]){const r=trunkRadius(t);if(r>0){const p=local(t);add(p.x,p.z,r+BALL_R+.2);}}
   // An Architect course's clubhouse too (clubhouse.js): no drop inside its walls.
-  for(const h of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[])]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
+  // An Architect course's field walls (phase 6) are kept clear like a building.
+  for(const h of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[]),...(course.world?.wallBoxes||[])]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
   // The hole's own ground, for Local Rule E-5's "fairway of the hole being
   // played": its corridor runs up the z axis from the tee to beyond the green.
   const len=course.length||Math.hypot(course.pin.x,course.pin.z)+60;
@@ -5047,6 +5049,9 @@ function drawPauseInfo(){
  const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
  setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
   return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
+ // THE YARDAGE BOOK (architect-courses, phase 7; yardage-book.js): an
+ // Architect course's page a hole, from the menu while a round is paused.
+ if($('pauseBook'))$('pauseBook').hidden=rangeMode||!isArchitect(settings);
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
 function setPause(on){
@@ -7604,6 +7609,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
   else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);else if(t==='tools')openToolsBox();};
  // THE PAUSE LIST'S SETTINGS ROW: the one window in a round, the screen elsewhere.
+ $('pauseBook').onclick=()=>{closeMenuDrop();if(world&&isArchitect(settings))download(`fairway-yardage-book-${String(settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');};
  $('pauseSettings').onclick=()=>{setPause(false);closeMenuDrop();if(appMode==='play'&&popups)openSettingsWindow();else openPanel('camera');};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
  // THE FOOT, COMPACTED (the owner, 28 October 2026: "the lie should be part

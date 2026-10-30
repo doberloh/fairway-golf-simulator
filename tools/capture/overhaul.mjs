@@ -229,6 +229,19 @@ export const VIEWS = [
  {name: 'arch-life-raven', hole: 0, when: 'afternoon', caption: 'Life: raven', cam: `w => { const a = (w.life || []).find(k => k.kind === 'raven') || {x: 0, z: 0, r: 30, up: 30};
   const x = a.x + a.r + 12, z = a.z;
   return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
+ // PHASE 7: tournament week -- the last green from down its fairway, a piece
+ // from in front of it, the crowd at the ropes.
+ {name: 'arch-week-green', hole: 0, when: 'afternoon', caption: 'The last green in tournament week', cam: `w => { const h = w.holes[w.holes.length - 1], z0 = Math.max(0, h.length - 60), a = h.toWorld({x: h.center(z0), z: z0}), g = h.toWorld(h.green);
+  return {x: a.x, z: a.z, yaw: Math.atan2(g.x - a.x, g.z - a.z) * 180 / Math.PI, height: 6, pitch: -3}; }`},
+ {name: 'arch-week-board', hole: 0, when: 'afternoon', caption: 'The scoreboard and a tower', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'scoreboard') || {x: 0, z: 0, rotation: 0};
+  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 22 + fz * 6, z = b.z + fz * 22 - fx * 6;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 2}; }`},
+ {name: 'arch-week-tents', hole: 0, when: 'afternoon', caption: 'Hospitality by the clubhouse', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'marquee') || {x: 0, z: 0, rotation: 0};
+  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 24 + fz * 8, z = b.z + fz * 24 - fx * 8;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 0}; }`},
+ {name: 'arch-week-crowd', hole: 0, when: 'afternoon', caption: 'The gallery at the ropes', cam: `w => { const r = (w.occasion?.ropes || [])[Math.floor((w.occasion?.ropes || []).length * .3)] || {x: 0, z: 0, rot: 0};
+  const x = r.x + Math.cos(r.rot) * 14 - Math.sin(r.rot) * 10, z = r.z - Math.sin(r.rot) * 14 - Math.cos(r.rot) * 10;
+  return {x, z, yaw: Math.atan2(r.x - x, r.z - z) * 180 / Math.PI, height: 2, pitch: -2}; }`},
  {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
   const x = b.x + 45, z = b.z + 30;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},

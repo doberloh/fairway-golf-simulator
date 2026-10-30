@@ -284,6 +284,9 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
 - **The land's templates** (architect.js), in the ground with the mounds:
   the Dell's dune before a sunken green, the Alps' ridge across the fairway,
   the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
+- **Tournament week** (occasion.js), on a Championship venue, with the
+  story's buildings: stands round the last green and a par three, a
+  scoreboard, towers, marquees, gallery ropes and the crowd by the pin day.
 - **History by age** (architect.js): grassed-over bunkers as hollows on
   municipal, old and restored courses; a restored course's felled avenue
   left as stumps.

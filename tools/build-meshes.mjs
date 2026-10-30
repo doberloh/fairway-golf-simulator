@@ -181,11 +181,14 @@ const PICK = {
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals and distant people, placed by life.js, moved by renderer.js addLife.
  lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Mower_1'].map(k => `blender:Blender_${k}`),
+ // TOURNAMENT WEEK (tools/blender/architect_occasion.py; phase 7): a
+ // Championship venue's stands, scoreboard, towers, marquees, ropes and crowd.
+ occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1'].map(k => `blender:Blender_${k}`),
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1', 'Fountain_1'].map(k => `blender:Blender_${k}`),
 };
 
 // Families whose models may carry their own scale (`q`, below).
-const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks', 'storypieces', 'lifeforms']);
+const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks', 'storypieces', 'lifeforms', 'occasionpieces']);
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and

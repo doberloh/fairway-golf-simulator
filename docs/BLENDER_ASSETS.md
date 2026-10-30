@@ -468,6 +468,17 @@ and landscape) and `addStory` instances the walls in 2 m sections, the
 stones and the lanterns. The walls are drawn uninked (inked, their small
 stones went black).
 
+### architect_occasion
+
+`tools/blender/architect_occasion.py`: tournament week, each drawn to
+occasion.js's footprint (front, toward play, at -Y): a grandstand (20 x 9 m,
+six stepped rows, an event-green skirt, a canopy and pennants: 8.6 m), a
+scoreboard on 3 m legs (12 x 2, 7.6 m), a scaffold TV tower with a hooded
+camera (4 x 4, 12 m), a peaked marquee (10 x 10, 5.5 m), 6 m of gallery rope
+and a spectator in a sun hat. Ingested as `occasionpieces` with its own scale;
+renderer.js fits the buildings to their boxes and `addOccasion` instances the
+ropes and the crowd (three shirt colours by turns).
+
 ### architect_life
 
 `tools/blender/architect_life.py`: life on an Architect course, each
