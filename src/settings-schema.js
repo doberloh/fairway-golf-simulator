@@ -291,7 +291,14 @@ export const GENERATOR_VERSION=52;
 //    its turn, the 10th tee started at the clubhouse, every hole kept within
 //    walking reach of home; the fairway widths as tables (faster, the same
 //    shape within a centimetre).
-export const ARCHITECT_VERSION=7;
+// 8: phase 5, built ground and water: mounds by style (framing, spectator
+//    banks, chocolate drops) as real ground; rip-rap or tie walls along a
+//    pond's faced edge and fountains in big ponds (waterworks.js); a bridge's
+//    deck solid; paths take dry ground before a creek, so a bridge crosses
+//    rather than running along the bank; and the fairway tucks on the right
+//    side (left/right had been swapped since phase 1: 2 of 23 side bunkers
+//    were tucked, now 22).
+export const ARCHITECT_VERSION=8;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

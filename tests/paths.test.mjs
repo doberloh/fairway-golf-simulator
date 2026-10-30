@@ -76,7 +76,10 @@ test('free relief from a path: off it, stance and all, no nearer the hole, no pe
 });
 
 test('a creek the path crosses gets a bridge', () => {
- for (const b of arch.bridges) {
+ // PATHS-T crosses no creek; BR-1 on Redwood with a lot of story crosses two.
+ const bridged = world({seed: 'BR-1', holes: 9, biome: 'redwood', designer: 'architect', archStory: 'lots'});
+ assert.ok(bridged.bridges.length >= 1, 'no bridge where the path crosses a creek');
+ for (const b of [...arch.bridges, ...bridged.bridges]) {
   assert.ok(b.span > 3 && b.span < 60, `bridge span ${b.span}`);
   assert.ok(Number.isFinite(b.angle));
  }
@@ -92,4 +95,19 @@ test('every clubhouse keeps its model\'s own proportions (clubhouse.js CLUBHOUSE
   assert.ok(m, `no model for ${k}`);
   assert.ok(Math.abs(a - 1 / (2 * m.rx)) < .002, `${k}: the table says ${a}, the model ${(1 / (2 * m.rx)).toFixed(3)}`);
  }
+});
+
+// PHASE 5: A BRIDGE'S DECK IS SOLID (physics.js, the houses' box routine with
+// a floor). A ball dropped onto it stops on the planks, not in the creek bed
+// under them, and is in the penalty area there (Rule 17.1a: a penalty area's
+// edge runs straight up). Classic has no bridges, so nothing changes there.
+import {simulateShot} from '../src/physics.js';
+test('a ball dropped on a bridge stops on its deck, in the penalty area', () => {
+ const w = world({seed: 'BR-1', holes: 9, biome: 'redwood', designer: 'architect', archStory: 'lots'});
+ assert.ok(w.bridges.length, 'this course has a bridge');
+ const b = w.bridges[0], h = w.nearest(b.x, b.z).h, at = h.toLocal({x: b.x, z: b.z});
+ assert.ok(b.deck > w.height(b.x, b.z) + .3, 'the deck stands over the water');
+ const r = simulateShot({origin: {...at}, height: b.deck - w.height(b.x, b.z) + 2, aim: 0, speed: 2, vla: -70, spin: 0, hla: 0, spinAxis: 0}, h, {});
+ assert.equal(r.hazard, 'Water');
+ assert.ok(Math.abs(r.end.y - (b.deck + .02135)) < .1, `the ball ends at ${r.end.y.toFixed(2)}, the deck at ${b.deck.toFixed(2)}`);
 });

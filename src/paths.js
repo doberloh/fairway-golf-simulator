@@ -45,7 +45,7 @@ function smoothLine(points, passes = 2) {
 // pull-off and round the back of the green.
 function holeRun(h, side, semi, clear) {
  const pts = [], tees = Object.values(h.tees), minTee = Math.min(...tees.map(t => t.z));
- const half = z => side > 0 ? h.leftWidth(z) : h.rightWidth(z);
+ const half = z => side < 0 ? h.leftWidth(z) : h.rightWidth(z);
  const gr = (h.greenSize ?? 15) * (h.greenAspect ?? 1.1);
  const end = h.length - gr - 18;
  for (let z = minTee - 10; z <= end; z += STEP) {
@@ -86,10 +86,16 @@ export function routePaths({holes, s, surface, streams}) {
   const p = raw[i], q = raw[Math.min(raw.length - 1, i + 1)], o = raw[Math.max(0, i - 1)];
   const dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
   let found = null;
-  for (const k of [0, 3, -3, 6, -6, 10, -10, 15, -15, 20, -20]) {
-   const x = p.x + nx * k, z = p.z + nz * k, s0 = surface(x, z);
-   if (!KEEP_OFF.has(s0) || (s0 === 'water' && streams?.at?.(x, z))) { found = {x, z}; break; }
+  // Dry ground first. A creek's water is taken only when none lies across
+  // the line within 20 m -- where the path really crosses it. Taking it as
+  // readily as dry ground ran paths, and their bridges, 30 m along creek
+  // banks (phase 5's first bridge capture).
+  const OFFSETS = [0, 3, -3, 6, -6, 10, -10, 15, -15, 20, -20];
+  for (const k of OFFSETS) {
+   const x = p.x + nx * k, z = p.z + nz * k;
+   if (!KEEP_OFF.has(surface(x, z))) { found = {x, z}; break; }
   }
+  if (!found && surface(p.x, p.z) === 'water' && streams?.at?.(p.x, p.z)) found = {x: p.x, z: p.z};
   if (found) kept.push(found);
  }
  // Smoothing can carry a point back over the edge it was pushed off (a
@@ -104,13 +110,15 @@ export function routePaths({holes, s, surface, streams}) {
  // Bridges: a run of points over a creek or river becomes one bridge.
  const bridges = [];
  let start = -1;
- const wet = p => { const st = streams?.at?.(p.x, p.z); return !!st && st.edge <= 1.2; };
+ // In the water itself; the deck runs 3 m onto each bank (iteration 6: a
+ // bank within 1.2 m counted as wet, and bridges ran along creeks).
+ const wet = p => { const st = streams?.at?.(p.x, p.z); return !!st && st.edge <= 0; };
  for (let i = 0; i <= points.length; i++) {
   const w = i < points.length && wet(points[i]);
   if (w && start < 0) start = i;
   if (!w && start >= 0) {
    const a = points[Math.max(0, start - 1)], b = points[Math.min(points.length - 1, i)];
-   bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 4, width: width + 1});
+   bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
    start = -1;
   }
  }

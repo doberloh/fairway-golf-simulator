@@ -107,7 +107,7 @@ test('a fairway tucks round the bunker beside it', () => {
  for (const {holes} of built) for (const h of holes) for (const b of h.bunkers) {
   if (b.greenSide || Math.abs(b.x - h.center(b.z)) < 8) continue;
   n++;
-  const sign = Math.sign(b.x - h.center(b.z)), half = sign > 0 ? h.leftWidth(b.z) : h.rightWidth(b.z);
+  const sign = Math.sign(b.x - h.center(b.z)), half = sign < 0 ? h.leftWidth(b.z) : h.rightWidth(b.z);
   const inner = Math.abs(b.x - h.center(b.z)) - b.rx;
   if (half <= inner) tucked++;
  }

@@ -43,7 +43,7 @@ test('yardage posts stand at their distance from the green, beside the fairway',
   // Measured along the hole's line, so the straight distance can only be shorter.
   const straight = Math.hypot(q.z - h.green.z, h.center(q.z) - h.green.x) / YARD;
   assert.ok(straight <= yd + 2 && straight >= yd * .8, `a ${yd}-yd post ${straight.toFixed(0)} yd from the green`);
-  const off = Math.abs(q.x - h.center(q.z)), half = Math.sign(q.x - h.center(q.z)) > 0 ? h.leftWidth(q.z) : h.rightWidth(q.z);
+  const off = Math.abs(q.x - h.center(q.z)), half = Math.sign(q.x - h.center(q.z)) < 0 ? h.leftWidth(q.z) : h.rightWidth(q.z);
   assert.ok(off > half && off < half + 6, 'just off the fairway');
  }
 });

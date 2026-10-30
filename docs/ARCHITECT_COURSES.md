@@ -22,10 +22,10 @@ number of holes.
 | --- | --- |
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
 | 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
-| 2. People | built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note; stakes, yardage posts and rakes (ten iterations); the clubhouse, solid, one per landscape (ten iterations). The bridge deck is still drawn, not solid (*Deviations*) |
+| 2. People | built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note; stakes, yardage posts and rakes (ten iterations); the clubhouse, solid, one per landscape (ten iterations). The bridge deck became solid in phase 5 |
 | 3. The field | built, without the study's baked field (*Deviations*): collection areas (a hazard-slot kind the shader paints and the lie reads), lobed bunker complexes, thin collars where fairways run into greens, divot wear. Not done: greens turned to the approach, per-band mowing heights, native mower lines (*Deviations*) |
 | 4. Home | built: routed from the clubhouse -- each nine pulled home toward its turn, the 10th tee at the clubhouse, every hole within walking reach of home. 10 of 12 nines home on the bench (Classic 7), 19 of 24 on eighteen-hole courses (Classic 10); Links the hard case. Not done: double greens (*Deviations*) |
-| 5. Built | not started |
+| 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
 | 6. Story | not started |
 | 7. Occasion | not started |
 
@@ -263,6 +263,80 @@ ARCHITECT_VERSION 7. Classic's fingerprint unchanged.
   on Low, three landscapes).
 - Tests: two more in tests/architect.test.mjs.
 
+### Phase 5: built ground and built water (30 October 2026)
+
+ARCHITECT_VERSION 8. Classic's fingerprint unchanged.
+
+- **Mounds by style** (architect.js `designMounds`, `moundField`; the study,
+  workstream E): real ground, added at the end of `analyticHeight` before the
+  creeks cut it, so the mesh, the collision heights and the surface queries
+  are the one expression they always were. Framing mounds on Modern, Parkland
+  and Tropical (long, low, 1-2.2 m, beyond the rough at the landing zones and
+  by the green); spectator banks on Stadium (2.5-4 m, behind and beside the
+  greens); chocolate drops on Golden Age and Raynor (small and steep, 1.4-2.4
+  m, clustered near the greens); none on Links, Sandhills, Minimalist,
+  Desert, Heathland or Mountain -- the land as found. Every mound is kept clear
+  of every hole's tees, green, fairway and semi-rough, bunkers and ponds (not
+  only its own hole's: a mound in one hole's rough can stand on the next
+  one's fairway), and course.js drops any a creek or the sea would meet. All
+  sizes PLACED. A nine-hole Midwest course carries about 25 (Parkland,
+  Golden Age, Modern) or 7 (Stadium: big banks find less room).
+- **Pond edges by style** (waterworks.js): rip-rap -- rough stones along the
+  waterline, a second smaller row behind every other -- on Modern, Parkland,
+  Tropical, Desert and Mountain, each in its landscape's own stone;
+  railway-tie walls (Dye's sleepers) on Stadium; soft grass banks, which is
+  to say nothing built, on Golden Age and Raynor (the study's pond edges by
+  style), Links, Sandhills, Minimalist and Heathland. A first cut had Golden
+  Age in stone and Modern in ties, against the study; corrected before commit. Only the side of a pond that
+  faces play is dressed: the arc of the edge within 75 degrees of the nearest
+  point of the hole's line, or of the green for a pond near it (PLACED).
+  About 800 stones or 170 tie sections on a nine-hole course, instanced.
+- **Fountains**: one in a big open pond (over 700 m2) on a resort or members'
+  club of a dressed style (Parkland, Tropical, Stadium, Modern), two a course
+  at most. Static: no animation.
+- **A bridge's deck is solid** (physics.js). Its top is decided once in
+  course.js (`b.deck`, 0.45 m over the higher of its ends and its middle), so
+  the drawn deck and the solid one are the same plank; it is a box in the
+  houses' grid with a floor, so a ball can pass beneath it, and one that comes
+  down on it bounces off the planks. **A ball that comes to rest on a bridge
+  is in the penalty area under it** (Rule 17.1a: a penalty area's edge runs
+  straight up), so the game calls it in the water and the player takes
+  relief as for any water.
+- **Bridges cross creeks rather than running along them.** The first bridge
+  capture showed a 30 m deck lying along a creek's bank: the path accepted a
+  creek's water as readily as dry ground, and any point within 1.2 m of the
+  water counted as wet. A path now takes dry ground first, and creek water only
+  where none lies across its line within 20 m -- a real crossing; a bridge is
+  the run of points in the water itself plus 3 m onto each bank. Bridges
+  stay uncommon (about one course in four with creeks).
+- **The bridge kit** (Blender pack architect_water, ten iterations): 2 m bays
+  laid end to end, timber (posts, two rails, planks with gaps) or, on Links,
+  Autumn and Haunted Hollow, stone (a slab and parapets with a coping),
+  replacing phase 2's procedural deck.
+- **A subtle bug found on the way: the fairway tucked on the wrong side.**
+  Everywhere else in the game a hole's `leftWidth` is the -x side
+  (`fairwayWidth(h,z,0,side)` reads it for side < 0); architect.js built
+  `leftWidth` from the +x side's tucks. So the fairway narrowed opposite every
+  side bunker, and the test asked the same swapped question and passed. What
+  it looked like: measured on the real surface (scanning out from the centre
+  line toward each side bunker), **the mown fairway stopped short of the sand
+  on 4 of 23 side bunkers; after the fix, 22 of 23**. The posts (markings.js),
+  the path's side (paths.js), the tree line and the mounds used the same
+  swapped reading and are fixed with it, and the tests now read the game's
+  convention.
+- Not built in this phase, and why: **levelled ground under the clubhouse**
+  (the terrace stands -- it reads well, and levelling would move the ground
+  every other site test was tuned on); **feeder slopes and arroyos** (they
+  belong with phase 6's ravines and barrancas, the land's story). The tie walls
+  and the rip-rap are decoration: a ball that reaches them is in the water
+  either way.
+- Tests: tests/waterworks.test.mjs (Classic and Links bare, mounds in the
+  rough and risen, rip-rap at the water, tie walls facing it, fountains in
+  open water and none on a municipal course); tests/paths.test.mjs (a ball
+  dropped on a bridge stops on its deck, in the penalty area; the bridge test
+  now runs on a course that has one -- PATHS-T crosses no creek, so it had
+  passed on nothing).
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -283,6 +357,16 @@ ARCHITECT_VERSION 7. Classic's fingerprint unchanged.
 - **Classic's pond code reused for Architect** by refactoring it into a
   function both call. It would have touched Classic's draws; Architect has its
   own `pondAt` with the same shapes and refusals instead.
+
+- **One bridge model stretched to its span.** Its posts would stretch with
+  it, from 2 m apart on a short bridge to 10 on a long one; 2 m bays laid end
+  to end keep the timber's rhythm on every span.
+- **A fountain as tiers of falling spray** (iterations 4-6): read in the game
+  as a snowy pine, then a white tent. A jet, a cloud of spray and falling
+  streams reads as a fountain.
+- **A creek's bank counted as wet** for a bridge (phase 2's rule, a point
+  within 1.2 m of the water): along a creek it made a 30 m bridge lying beside
+  the water.
 
 ## Deviations from the study
 
@@ -317,10 +401,15 @@ ARCHITECT_VERSION 7. Classic's fingerprint unchanged.
   ground: levelling is earthworks (phase 5). On Mountain, where nowhere falls
   less than 4.4 m across a members' footprint, it falls back to a municipal
   footprint on up to 6.5 m.
-- **The bridge deck is drawn, not yet solid**: a plank deck and rails over a
-  creek, procedural, which a ball flies through into the water. IDEAS' note
-  stands (a height override failed: a ball under the deck landed on it); the
-  solid deck comes with the bridge kit in phase 5 (water made by people).
+- **The bridge deck is solid since phase 5** (it was drawn only, in phase 2):
+  a box with a floor in the houses' grid (physics.js), not a height
+  override -- IDEAS' note stands (a height override failed: a ball under the
+  deck landed on it).
+- **Rip-rap and tie walls are decoration, not solid** (the goal: walls are
+  solid). They stand at the waterline, below the bank's top; a ball that
+  reaches them is in the water either way, so a solid face would only change
+  where a ball already in the penalty area stops.
+- **Fountains are still** -- a static model, no moving spray or sound.
 - **Rulings so far**: free relief from a cart path (relief.js `pathRelief`);
   a building is solid and never out of bounds. The rest of the study's table
   (ground under repair, no-play zones, the desert as a penalty area, drop
@@ -329,7 +418,7 @@ ARCHITECT_VERSION 7. Classic's fingerprint unchanged.
 - **Bridge decks** (study, *Collisions*: "a height override in its footprint").
   IDEAS.md's *Bridges over creeks* recorded that a height override was tried
   and removed -- a ball flying under the deck landed on it. A bridge is built
-  as a solid with an underside instead (phase 2).
+  as a solid with an underside instead (phase 5).
 
 ## Measures
 
@@ -408,6 +497,7 @@ is above about 30%).
 | 30 Oct, phase 2 | captures `arch-p2b` to `arch-p2h` (seven runs, one at a time): the markings' iterations on Midwest, Links, Desert, Haunted Hollow and Midwest on Low | 4-7%, 39-40 °C each | every course built in 13-18 s with no errors |
 | 30 Oct, phase 3 | capture `arch-p3a` (Midwest, Links; Heathland, Municipal): a hole from behind, a green, the first tee | 5%, 38 °C | no errors; divots on the tee, a collection area beside a green, lobed bunkers seen |
 | 30 Oct, phase 4 | none: routing measured on the CPU (bench, builds) | -- | -- |
+| 30 Oct, phase 5 | captures `arch-w3` to `arch-w10` (fourteen runs of one landscape, one at a time): the water pack's iterations on Midwest (Parkland, Stadium), Redwood, Autumn and Desert, the last on Low | 2-5%, 38-40 °C each | every course built in 13-17 s with no errors |
 | 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
 | 30 Oct, phase 2 | captures `arch-c1` to `arch-c11` (sixteen runs of one to three landscapes): the clubhouses' iterations, all ten landscapes, the last on Low | 1-7%, 38-41 °C each | every course built in 4-17 s with no errors |
 
@@ -455,3 +545,24 @@ Cost: a nine-hole course carries about 300 markings, drawn as twelve
 instanced meshes (six kinds, two parts each, and the ink of the standing
 ones) -- a dozen draw calls and a few thousand triangles. Measured with the
 rest of phase 2 on Low (*Measures*).
+
+### architect_water (bridge bays, rip-rap, tie wall, fountain)
+
+| # | Judged on | Bridge bays | Rip-rap | Tie wall | Fountain |
+| --- | --- | --- | --- | --- | --- |
+| 1 | sheet | a timber bay (stringers, nine planks, posts, two rails) and a stone bay (slab, parapets, coping) read; the timber rails were threads | smooth pebbles: a river stone, not a quarried one | ten ties and a waler read edge-on | a spike with a tiny umbrella: the arcs were stunted (cause found at 9) |
+| 2 | sheet | the rails a cartoon's thickness, posts stouter | ten hull points and a small bevel: angular, quarried | -- | a bell of separate lumps: confetti, not water |
+| 3 | game (`arch-w3`, Midwest Parkland) | -- | a stone line along the waterline reads; pale and sparse | -- | inked and shaded like pebbles, **a grey stone mushroom** |
+| 4 | game (`arch-w4`, Midwest; Redwood bridge) | the timber bridge reads strongly -- and **ran 30 m along the creek's bank** (paths.js: a bank within 1.2 m counted as wet) | darker per-landscape stone (pale stone went pink-white in the sun), 0.6 m apart, larger | -- | two tiers of drooping spray (the conifers' skirt), uninked, near white: reads as spray |
+| 5 | game (`arch-w5`, Midwest Stadium; Redwood) | the path takes dry ground first; still along the bank | -- | **the tie walls read as Dye's sleepers**; too black, gaps on curves | wider raggeder tiers: **a snowy pine tree** |
+| 6 | game (`arch-w6`) | bridges only over water itself, plus 3 m of bank: **crosses the creek's bend**, 12 m | -- | sections 2.2 m apart overlap round curves; a browner creosote | one wide bell: **a white tent** -- worse |
+| 7 | game (`arch-w7`, Midwest Parkland) | -- | reads along both shores | -- | a jet and a cloud of spray (the trees' crown, white, lit as one body): **reads as a plume**, but its falling streams invisible |
+| 8 | game (`arch-w8`; Autumn's stone bridge) | **the stone bridge crosses its creek squarely** and reads at once | -- | -- | twelve thicker streams, pure white: still no streams |
+| 9 | sheet | -- | -- | -- | **the cause**: the tube helper draws one ring a radius, and two radii for five points drew only the first stretch of every stream (iteration 1's arcs too). One radius a point: a crown with twelve streams falling into a ring of foam |
+| 10 | game, **Low tier** (`arch-w10`, Midwest Parkland; Desert) | -- | Desert's red stone edge reads as built | -- | reads as a fountain across its pond on Low |
+
+Cost: a nine-hole Parkland course carries about 800 stones in three
+instanced meshes, a Stadium one about 170 tie sections in two (and their
+ink); a fountain is about 1,700 triangles, two a course at most; a bridge is a
+handful of bays at about 100 faces each. Measured with the rest of phase 5 on
+Low (*Measures*).

@@ -443,6 +443,23 @@ The seams so far, each listed here as it is built:
   rule. Its slots are the hole's twelve, shared with bunkers (lobes count)
   and ponds: `MAX_HAZARDS` in architect.js counts all three.
 
+- `analyticHeight` (course.js) -- an Architect course's mounds
+  (architect.js `moundField`) are added last, before `streams.carve`; with none,
+  the expression is Classic's exactly. The mesh, the collision heights and
+  the surface queries all sample it, so they stay one ground.
+- The houses' box routine (physics.js) -- a bridge's deck joins it as a box
+  with a floor (`deck`: a ball below its underside passes; one above it a
+  step ago lands on top, however far in from the edge). A ball at rest on a
+  deck ends in the water (Rule 17.1a). Classic has no bridges.
+
+**A TRAP: `leftWidth` is the -x side.** `fairwayWidth(h,z,0,side)` reads
+`leftWidth` for side < 0, and so does every surface query and the shader's
+hole table. Architect code had it the other way from phase 1 to phase 5 --
+the fairway tucked opposite every side bunker, and the test asked the same
+swapped question and passed (*Phase 5* in docs/ARCHITECT_COURSES.md). A new
+side-dependent rule reads `side < 0 ? h.leftWidth(z) : h.rightWidth(z)`, and
+its test measures the drawn surface, not the width function.
+
 **A TRAP: a tuck is a width, not a hole in the fairway.** The fairway tucks
 round a side bunker by narrowing that side's half-width over the bunker's
 length (`tucks` in `designHole`); a bunker INSIDE the fairway (a centreline

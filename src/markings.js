@@ -51,7 +51,7 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
    const z = backFromGreen(h, yd);
    if (z < h.fairwayStart + 10) continue;
    for (const side of [1, -1]) {
-    const w = side > 0 ? h.leftWidth(z) : h.rightWidth(z), q = h.toWorld({x: h.center(z) + side * (w + 2.5), z});
+    const w = side < 0 ? h.leftWidth(z) : h.rightWidth(z), q = h.toWorld({x: h.center(z) + side * (w + 2.5), z});
     if (dry(q.x, q.z)) out.push({kind: `post${yd}`, x: q.x, z: q.z, rot: h.rotation || 0});
    }
   }

@@ -9,9 +9,10 @@ import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
 import {designSettings} from './designer.js';
 import {isArchitect} from './settings-schema.js';
-import {designHole,designedPlanting} from './architect.js';
+import {designHole,designedPlanting,designMounds,moundField} from './architect.js';
 import {routePaths,pathIndex,linkBuilding} from './paths.js';
 import {placeMarkings,placeWear} from './markings.js';
+import {placeWaterworks} from './waterworks.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -2062,6 +2063,13 @@ export function* generateWorldSteps(settings={},options={}){
    protect:{...world,pond:true,r:Math.max(p.reachX,p.rz)+p.shoreWidth+12,keep:Math.max(p.reachX,p.rz)+p.shoreWidth+12}};
  }
  const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea,corridorClearance,sinkPond);
+ // EARTHWORKS (architect-courses, phase 5; architect.js `designMounds`): an
+ // Architect course's mounds by style -- framing, spectator banks, chocolate
+ // drops -- added to the ground last, before the creeks cut it. Kept clear of
+ // every hole by the design, and here of the sea and the creeks. Classic: none,
+ // and `analyticHeight` is the expression it always was.
+ const mounds=isArchitect(s)&&!s.range?designMounds(holes,s).filter(m=>{for(let k=0;k<9;k++){const a=k*Math.PI/4,x=m.x+(k?Math.cos(a)*m.r:0),z=m.z+(k?Math.sin(a)*m.r:0);if(isSea(x,z))return false;const q=streams.at(x,z);if(q&&q.edge<10)return false;}return true;}):[];
+ const moundAt=mounds.length?moundField(mounds):null;
  // Channel routing avoids bunkers, but a tightly packed course can force a
  // crossing. Water standing in sand is neither a playable bunker nor a readable
  // hazard, so the channel washes that bunker out. Bunker count is already an
@@ -2121,7 +2129,7 @@ export function* generateWorldSteps(settings={},options={}){
   else if(shore<shelf)y=rim+(y-rim)*smooth((shore-WATER_LIP)/(shelf-WATER_LIP));
  }}
  else if(d<1.15){const blend=1-smooth((d-.62)/.53);y=y*(1-blend)+(b.floor+.08*(d*d))*blend;}}
- return streams.carve(x,z,y);}
+ return streams.carve(x,z,moundAt?y+moundAt(x,z):y);}
  // THE SHORELINE IS REFINED LIKE ANY OTHER FEATURE.
  //
  // The mesh is 3 m of countryside subdivided six ways to half a metre near
@@ -2295,7 +2303,11 @@ export function* generateWorldSteps(settings={},options={}){
  yield phaseAt(4);
  // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
  // that follow ask `surface`, which now knows where the paths run.
- if(isArchitect(s)&&!s.range){({paths,bridges}=routePaths({holes,s,surface,streams}));pathIdx=pathIndex(paths);}
+ if(isArchitect(s)&&!s.range){({paths,bridges}=routePaths({holes,s,surface,streams}));pathIdx=pathIndex(paths);
+  // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
+  // and its middle, decided here once so the drawn deck and the solid one
+  // (physics.js) are the same plank.
+  for(const b of bridges){const ca=Math.sin(b.angle),cb=Math.cos(b.angle);b.deck=Math.max(height(b.x+ca*b.span/2,b.z+cb*b.span/2),height(b.x-ca*b.span/2,b.z-cb*b.span/2),height(b.x,b.z))+.45;}}
  // The tees are sited by now, so their corridors are final; built before the
  // houses because a house may not stand in what a tee sees either.
  const launch=launchCorridors(holes,height);
@@ -2753,7 +2765,9 @@ export function* generateWorldSteps(settings={},options={}){
  // rakes, decoration placed on the finished ground. None on Classic.
  const markers=isArchitect(s)&&!s.range?placeMarkings({holes,surface,nearest,halfX,halfZ,streams}):[];
  const wear=isArchitect(s)&&!s.range?placeWear({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
+ const waterworks=isArchitect(s)&&!s.range?placeWaterworks({holes,s,surface}):[];
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,mounds,waterworks,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

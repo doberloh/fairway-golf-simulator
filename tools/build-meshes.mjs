@@ -171,10 +171,14 @@ const PICK = {
  // AN ARCHITECT COURSE'S CLUBHOUSE (tools/blender/architect_clubhouses.py), one
  // per landscape, fitted to its box by renderer.js addBuildings.
  clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'manor', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
+ // AN ARCHITECT COURSE'S BUILT WATER (tools/blender/architect_water.py;
+ // architect-courses, phase 5): bridge bays (renderer.js addPaths), rip-rap,
+ // tie walls and fountains (waterworks.js, renderer.js addWaterworks).
+ waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1', 'Fountain_1'].map(k => `blender:Blender_${k}`),
 };
 
 // Families whose models may carry their own scale (`q`, below).
-const OWN_SCALE = new Set(['coursemarkings', 'clubhouse']);
+const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks']);
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and

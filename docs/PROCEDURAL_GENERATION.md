@@ -276,6 +276,15 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   stakes every 13 m where the boundary comes within 120 m of a corridor,
   yardage posts both sides at 100, 150 and 200 yd from the green, a rake on
   the far side of each bunker laid along its edge. Decoration, never solid.
+- **Mounds** (architect.js `designMounds`), by style, in the ground itself
+  before the creeks are cut: framing mounds beyond the rough (Modern,
+  Parkland, Tropical), spectator banks behind greens (Stadium), chocolate
+  drops near greens (Golden Age, Raynor); clear of every hole's play, the sea
+  and the creeks.
+- **Built water** (waterworks.js), on the finished ground: rip-rap or a tie
+  wall along the side of each pond that faces play, by style, and a fountain
+  in a big pond on a dressed club. A bridge's deck height is fixed where the
+  paths are routed, so the drawn deck and the solid one agree.
 - **The trees** are cleared to a scalloped line, not faded by chance; avenues
   line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
   inside corner gets a cluster.

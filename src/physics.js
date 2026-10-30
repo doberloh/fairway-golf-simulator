@@ -662,7 +662,10 @@ export function simulateShot(shot,course,options={}){
  const homeCells=new Map();
  // An Architect course's buildings (the clubhouse; clubhouse.js) are boxes
  // in this same grid -- one routine for every box -- and never out of bounds.
- for(const source of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[])]){
+ // A BRIDGE'S DECK (architect-courses, phase 5) is one more box, 22 cm deep
+ // under its top, with a floor: a ball can pass beneath it.
+ const decks=(course.world?.bridges||[]).filter(b=>b.deck!=null).map(b=>({x:b.x,z:b.z,y:b.deck-.22,height:.22,width:b.width,depth:b.span,rotation:b.angle,club:true,deck:true}));
+ for(const source of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[]),...decks]){
   // A HOUSE'S ROTATION IS A WORLD ANGLE. toLocal moves its centre into the
   // hole's frame and leaves `rotation` alone, and the box test below then
   // turned every house on a rotated hole by that hole's own angle. Measured 13
@@ -868,9 +871,12 @@ export function simulateShot(shot,course,options={}){
    // was bouncing off the air over every roof.
    const hx=home.width/2+R,hz=home.depth/2+R,top=home.y+home.height+R;
    if(Math.abs(lx)>hx||Math.abs(lz)>hz||p[1]>top||p[1]<course.height(p[0],p[2])-1)continue;
+   if(home.deck&&p[1]<home.y-R)continue;
    const px=hx-Math.abs(lx),pz=hz-Math.abs(lz),py=top-p[1];
    let nx=0,ny=0,nz=0,push=0;
-   if(py<=px&&py<=pz){ny=1;push=py;}
+   // A ball that was above the deck a step ago came down on it, however far
+   // in from its edge it now is.
+   if(py<=px&&py<=pz||home.deck&&old[1]>=top-.02){ny=1;push=py;}
    else if(px<=pz){nx=Math.sign(lx)||1;push=px;}
    else{nz=Math.sign(lz)||1;push=pz;}
    const wx=nx*c+nz*s,wz=-nx*s+nz*c;
@@ -879,6 +885,10 @@ export function simulateShot(shot,course,options={}){
    if(incoming<0){touch('house',-incoming);const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];homeHits++;}
    if(ny>0&&rolling)p[1]=Math.max(p[1],top);
    if(course.residentialOB&&!home.club){hazard='Out of bounds';}
+   // A ball come to rest on a bridge is in the penalty area under it: the
+   // Rules carry a penalty area's edge straight up (Rule 17.1a; R&A,
+   // *Definitions: Penalty Area*).
+   if(home.deck&&ny>0&&hypot(v[0],v[2])<1.2&&Math.abs(v[1])<1.2){hazard='Water';}
    break;
   }
   if(hazard)break;

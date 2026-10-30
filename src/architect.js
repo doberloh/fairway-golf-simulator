@@ -131,7 +131,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  const tucks={1:[],[-1]:[]};
  const tuckAt=(sign,z)=>{let w=Infinity;for(const t of tucks[sign]){const k=smooth(1-Math.abs(z-t.z)/(t.reach));if(k>0)w=Math.min(w,t.edge+(1-k)*60);}return w;};
  const half=sign=>{const raw=side(sign);return z=>{const w=raw(z),t=tuckAt(sign,z);return Math.max(base*.38,Math.min(w,t===Infinity?w:w-(w-Math.min(w,t))*1));};};
- const leftWidth=half(1),rightWidth=half(-1),width=z=>Math.max(leftWidth(z),rightWidth(z));
+ const leftWidth=half(-1),rightWidth=half(1),width=z=>Math.max(leftWidth(z),rightWidth(z));
  const guide={fairwayStart,length,greenSize,greenAspect,leftWidth,rightWidth,width};
 
  // --------------------------------------------------------------- hazards
@@ -366,14 +366,14 @@ export function designedPlanting({holes,s,bio,treeSize}){
   if(avenueStyles.has(d.style)&&rnd()<avenueShare){
    const sides=rnd()<.6?[1,-1]:[rnd()<.5?1:-1],step=13+rnd()*5,size=treeSize(main,.55+rnd()*.2,.5),stop=h.length-70;
    for(const side of sides)for(let z=h.fairwayStart+15;z<stop;z+=step){
-    const w=side>0?h.leftWidth(z):h.rightWidth(z),p=h.toWorld({x:h.center(z)+side*(w+semi+11),z});
+    const w=side<0?h.leftWidth(z):h.rightWidth(z),p=h.toWorld({x:h.center(z)+side*(w+semi+11),z});
     out.push({x:p.x,z:p.z,kind:main,h:size.h,r:size.r,shade:rnd(),hole:h.hole,why:'avenue'});
    }
   }
   const turn=h.doglegAngle||0;
   if(Math.abs(turn)>8){
    const side=Math.sign(turn),pivot=h.length*(h.turnFraction??.55),n=3+Math.floor(rnd()*3);
-   const w=side>0?h.leftWidth(pivot):h.rightWidth(pivot);
+   const w=side<0?h.leftWidth(pivot):h.rightWidth(pivot);
    for(let i=0;i<n;i++){
     const zz=pivot+(rnd()-.5)*24,x=h.center(zz)+side*(w+semi+9+rnd()*10),p=h.toWorld({x,z:zz}),sz=treeSize(main,.6+rnd()*.3,rnd());
     out.push({x:p.x,z:p.z,kind:main,h:sz.h,r:sz.r,shade:rnd(),hole:h.hole,why:'corner'});
@@ -416,4 +416,84 @@ export function sequenceCourse(holes,rnd,PAR_YARDS){
   holes.forEach((h,i)=>{if(fixed.has(i))return;const b=PAR_YARDS[h.par];h.yards=clamp(h.yards+gap*free[i]/pool,b.min,b.max);});
  }
  return holes;
+}
+
+// EARTHWORKS: MOUNDS BY STYLE (phase 5; the study, workstream E). What a
+// construction crew shapes beside play, in world coordinates, as smooth bumps
+// course.js adds to the ground at the end of `analyticHeight` (Architect
+// only). Each style its own (PLACED, all sizes):
+//   framing      Modern, Parkland, Tropical: long low mounds beyond the rough
+//                along the landing zones and beside the green, 1-2.2 m
+//   spectator    Stadium: big grassy banks behind and beside the greens, 2.5-4 m
+//   drops        Golden Age, Raynor: "chocolate drops", small steep round
+//                mounds in clusters near the greens, 1.4-2.4 m
+//   none         Links, Sandhills, Minimalist, Desert, Heathland, Mountain:
+//                the land as found
+// Every mound is kept clear of tees, greens, the fairway and semi-rough,
+// bunkers and ponds, so nothing flattened or carved is disturbed.
+const MOUND_STYLE = {modern: 'framing', parkland: 'framing', tropical: 'framing', stadium: 'spectator', golden: 'drops', raynor: 'drops'};
+export function designMounds(holes, s) {
+ const kind = MOUND_STYLE[styleOf(s)];
+ if (!kind) return [];
+ const out = [], semi = s.semiRough ?? 6;
+ for (const h of holes) {
+  const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'mounds', s.biome || '', h.hole);
+  const gr = (h.greenSize ?? 14) * (h.greenAspect ?? 1.1) + (s.fringe ?? 2) + semi;
+  // Clear of every hole, not only its own: a mound in one hole's rough can
+  // stand on the next one's fairway.
+  const clear = (x0, z0, r) => {
+   const w = h.toWorld({x: x0, z: z0});
+   for (const o of holes) {
+    const {x, z} = o.toLocal(w), og = (o.greenSize ?? 14) * (o.greenAspect ?? 1.1) + (s.fringe ?? 2) + semi;
+    if (Object.values(o.tees).some(t => Math.hypot(t.x - x, t.z - z) < r + 24)) return false;
+    if (Math.hypot(x - o.green.x, z - o.green.z) < og + r + 5) return false;
+    if (z > -r - 10 && z < o.length + r + 10) {
+     const zc = Math.max(0, Math.min(o.length, z)), half = Math.max(o.leftWidth(zc), o.rightWidth(zc));
+     if (Math.abs(x - o.center(zc)) < half + semi + r + 4) return false;
+    }
+    if (o.bunkers.some(b => Math.hypot(b.x - x, b.z - z) < Math.max(b.rx, b.rz) + r + 5)) return false;
+    if (o.ponds.some(p => Math.hypot(p.x - x, p.z - z) < Math.max(p.rx, p.rz) + r + 14)) return false;
+   }
+   return true;
+  };
+  const add = (x, z, r, ht) => { if (clear(x, z, r)) { const p = h.toWorld({x, z}); out.push({x: p.x, z: p.z, r, h: ht}); } };
+  if (kind === 'framing') {
+   const zones = [h.length * .45, h.length * .7, h.length - 20];
+   for (const z of zones) for (const side of [1, -1]) {
+    if (rnd() < .3) continue;
+    const half = side < 0 ? h.leftWidth(z) : h.rightWidth(z), r = 9 + rnd() * 7;
+    add(h.center(z) + side * (half + semi + r + 6 + rnd() * 6), z + (rnd() - .5) * 20, r, 1 + rnd() * 1.2);
+   }
+  } else if (kind === 'spectator') {
+   for (const a of [Math.PI * .5, Math.PI * .15, Math.PI * .85]) {
+    const r = 12 + rnd() * 6, d = gr + r + 8;
+    add(h.green.x + Math.cos(a) * d, h.green.z + Math.sin(a) * d, r, 2.5 + rnd() * 1.5);
+   }
+  } else if (kind === 'drops') {
+   const n = 2 + Math.floor(rnd() * 4), a0 = rnd() * Math.PI * 2;
+   for (let i = 0; i < n; i++) {
+    const a = a0 + (rnd() - .5) * 1.4, d = gr + 12 + rnd() * 14, r = 5 + rnd() * 2.5;
+    add(h.green.x + Math.cos(a) * d, h.green.z + Math.sin(a) * d, r, 1.4 + rnd());
+   }
+  }
+ }
+ return out;
+}
+// The height a set of mounds adds at (x, z): a smooth round bump each, its
+// shoulder easing to nothing at its radius. `index` is a grid built once.
+export function moundField(mounds, cell = 24) {
+ const grid = new Map(), key = (i, j) => i + ',' + j;
+ for (const m of mounds) {
+  for (let i = Math.floor((m.x - m.r) / cell); i <= Math.floor((m.x + m.r) / cell); i++)
+   for (let j = Math.floor((m.z - m.r) / cell); j <= Math.floor((m.z + m.r) / cell); j++) {
+    const k = key(i, j); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(m);
+   }
+ }
+ return (x, z) => {
+  const list = grid.get(key(Math.floor(x / cell), Math.floor(z / cell)));
+  if (!list) return 0;
+  let y = 0;
+  for (const m of list) { const d = Math.hypot(x - m.x, z - m.z) / m.r; if (d < 1) { const c = Math.cos(d * Math.PI / 2); y += m.h * c * c; } }
+  return y;
+ };
 }

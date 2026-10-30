@@ -10898,3 +10898,34 @@ clubhouse". The router's weights (the pull per metre, 300 m a hole of walking
 reach, the penultimate green one last hole out) are PLACED, tuned against the
 bench: 7 -> 10 of 12 nines home on nine-hole courses, 10 -> 19 of 24 on
 eighteen.
+
+## Architect courses: built ground and water (30 October 2026)
+
+Phase 5 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 5*).
+
+- **Mounds by style** -- framing mounds (Modern), chocolate drops (Golden
+  Age, Raynor), spectator mounds (Stadium, championship venues): the study's
+  workstream E and style table, from its own sources (Pete Dye:
+  https://en.wikipedia.org/wiki/Pete_Dye). The study itself lists "a
+  definition of chocolate drop mounds" as not found. **Every size here is
+  PLACED**: framing 9-16 m across the radius, 1-2.2 m high, 4 m beyond the
+  semi-rough at 45%, 70% and the end of the hole; spectator banks 12-18 m,
+  2.5-4 m high, 8 m behind the green's collar; drops 5-7.5 m, 1.4-2.4 m high,
+  12-26 m off the green, two to five a cluster. A mound is a smooth bump
+  (cos squared of distance over radius), added to the ground.
+- **Pond edges by style** -- the study: soft grass banks (Golden Age),
+  rip-rap stone (Modern), timber bulkheads (Stadium; Dye's railroad ties,
+  same source). Parkland, Tropical, Desert and Mountain in stone is PLACED.
+  The faced arc (within 75 degrees of the nearest point of play), a stone
+  every 0.6 m, a tie section every 2.2 m are PLACED.
+- **Fountains** -- the study: aerators in ponds on resort and members'
+  clubs. Over 700 m2 of pond, two a course: PLACED.
+- **A ball at rest on a bridge is in the penalty area** -- R&A, Rules of Golf,
+  Rule 17.1a: a ball is in a penalty area when any part of it "is above the
+  edge or any other part of the penalty area"
+  (https://www.randa.org/en/rog/the-rules-of-golf/rule-17); the definition
+  of *penalty area* extends its edge upward. So the game calls a ball at rest
+  on a deck over a creek in the water. Its speed test (under 1.2 m/s across
+  and down when it touches the planks) is PLACED.
+- **The deck's height** -- 0.45 m over the higher of its two ends and its
+  middle -- is PLACED (phase 2's drawn deck, kept).

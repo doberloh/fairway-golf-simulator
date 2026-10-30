@@ -1112,7 +1112,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1945,12 +1945,52 @@ export class GolfView{
    const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
    const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;mesh.userData.path=true;this.group.add(mesh);this.resources.push(g,mat);
   }
-  const wood=this.surfaceMaterial('#8a6440'),rail=this.surfaceMaterial('#6d4c30');this.resources.push(wood,rail);
+  // THE BRIDGES (phase 5; tools/blender/architect_water.py): 2 m bays laid
+  // end to end across the span, timber or stone by landscape, each fitted to
+  // the deck physics stands the ball on (course.js `b.deck`, its top) and to
+  // the path's width, inked like the furniture.
+  const STONE_BRIDGE=new Set(['links','autumn','haunted']),stoneLook={links:'#bdb6a6',autumn:'#c4b9a6',haunted:'#7d7584'};
   for(const b of w.bridges||[]){
-   const ca=Math.sin(b.angle),cb=Math.cos(b.angle),ends=[-1,1].map(s=>w.height(b.x+ca*b.span/2*s,b.z+cb*b.span/2*s));
-   const y=Math.max(...ends,w.height(b.x,b.z))+.45,deck=new T.Mesh(new T.BoxGeometry(b.width,.22,b.span),wood);
-   deck.position.set(b.x,y,b.z);deck.rotation.y=b.angle;deck.castShadow=deck.receiveShadow=true;this.group.add(deck);this.resources.push(deck.geometry);
-   for(const s of [-1,1]){const r=new T.Mesh(new T.BoxGeometry(.14,.75,b.span),rail);r.position.set(b.x+Math.cos(b.angle)*s*b.width/2,y+.45,b.z-Math.sin(b.angle)*s*b.width/2);r.rotation.y=b.angle;r.castShadow=true;this.group.add(r);this.resources.push(r.geometry);}
+   const key=w.bio?.key||w.settings?.biome,stone=STONE_BRIDGE.has(key),name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+   const parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:stoneLook[key]||'#bdb6a6'}:{bark:'#8f6a45',stone:'#6b4a2f'};
+   const mats=parts.map(p=>this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted})),ink=this.inkMaterial(H);
+   const y=b.deck??Math.max(w.height(b.x,b.z),0)+.45,n=Math.max(1,Math.ceil(b.span/2)),bay=b.span/n,ca=Math.sin(b.angle),cb=Math.cos(b.angle);
+   for(let i=0;i<n;i++){
+    const t=(i+.5)/n-.5,g=new T.Group();
+    parts.forEach((p,j)=>{const m=new T.Mesh(p.geometry,mats[j]);m.castShadow=m.receiveShadow=true;g.add(m);const k=new T.Mesh(p.geometry,ink);k.castShadow=k.receiveShadow=false;g.add(k);});
+    g.scale.set(b.width/(2*info.rx),H,bay/(2*info.rz));g.rotation.y=b.angle;g.position.set(b.x+ca*b.span*t,y-DECK_TOP,b.z+cb*b.span*t);
+    this.group.add(g);
+   }
+   this.resources.push(...mats);
+  }
+ }
+ // WATER MADE BY PEOPLE (phase 5; waterworks.js, tools/blender/architect_water.py):
+ // rip-rap stones and railway-tie walls along a pond's faced edge, a fountain
+ // in a big pond; instanced, the ties and the fountain inked. Decoration.
+ addWaterworks(w){
+  if(!w?.waterworks?.length||this.style!=='cartoon')return;
+  const key=w.bio?.key||w.settings?.biome;
+  // Iteration 4: a shade darker than the sheet's -- pale stone went pink-white in the afternoon sun.
+  const ROCK={midwest:'#8f897e',desert:'#b5865c',mountain:'#87817a',island:'#4d4744',pnw:'#7d7972',redwood:'#837767',autumn:'#928b80',lakeshore:'#9c937f',haunted:'#5f5868',links:'#99948a'};
+  const KINDS=[
+   ...[1,2,3].map(v=>({kind:'riprap',variant:v-1,model:'Blender_RipRap_'+v,height:.34,colours:{stone:ROCK[key]||'#a8a298'}})),
+   {kind:'bulkhead',model:'Blender_Bulkhead_1',height:.9,inked:true,colours:{bark:'#5e4733',stone:'#8b8a85'}},
+   // Iteration 4: uninked and painted near white; inked, its spray read as pebbles.
+   {kind:'fountain',model:'Blender_Fountain_1',height:4.0,colours:{stone:'#ffffff',accent:'#ffffff'}},
+  ];
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  for(const spec of KINDS){
+   const list=w.waterworks.filter(m=>m.kind===spec.kind&&(spec.variant==null||m.variant===spec.variant));if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted});
+    const mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((m,i)=>{q.setFromAxisAngle(up,m.rot||0);pos.set(m.x,m.y,m.z);sc.setScalar(spec.height*(m.size||1));mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=spec.kind!=='riprap';mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+    this.group.add(mesh);this.resources.push(mat);
+    if(spec.inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
   }
  }
  // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,

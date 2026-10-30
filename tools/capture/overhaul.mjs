@@ -146,6 +146,18 @@ export const VIEWS = [
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 7, pitch: -6}; }`},
  {name: 'arch-club-tee', hole: 0, when: 'afternoon', caption: 'The clubhouse from the first tee', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0}, h = w.holes[0], t = h.toWorld(h.tees.blue || h.tee);
   return {x: t.x, z: t.z, yaw: Math.atan2(b.x - t.x, b.z - t.z) * 180 / Math.PI, height: 1.8, pitch: -1}; }`},
+ // PHASE 5'S VIEWS (architect-courses): a pond's dressed edge from the bank
+ // behind it, a fountain from across its pond, a bridge from beside its creek.
+ {name: 'arch-edge', hole: 0, when: 'afternoon', caption: 'A dressed pond edge on an Architect course', cam: `w => { const m = (w.waterworks || []).find(k => k.kind !== 'fountain') || {x: 0, z: 0};
+  const ponds = w.holes.flatMap(h => h.ponds.map(p => h.toWorld(p))), c = ponds.sort((a, b) => Math.hypot(a.x - m.x, a.z - m.z) - Math.hypot(b.x - m.x, b.z - m.z))[0] || {x: m.x + 1, z: m.z};
+  const dx = m.x - c.x, dz = m.z - c.z, l = Math.hypot(dx, dz) || 1, x = m.x + dx / l * 9 + dz / l * 5, z = m.z + dz / l * 9 - dx / l * 5;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 2.4, pitch: -12}; }`},
+ {name: 'arch-fountain', hole: 0, when: 'afternoon', caption: 'A fountain on an Architect course', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
+  const x = m.x + 26, z = m.z + 10;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 3, pitch: -2}; }`},
+ {name: 'arch-bridge', hole: 0, when: 'afternoon', caption: 'A cart-path bridge over a creek', cam: `w => { const b = (w.bridges || [])[0] || {x: 0, z: 0, angle: 0};
+  const ca = Math.sin(b.angle), cb = Math.cos(b.angle), x = b.x + cb * 13 + ca * 4, z = b.z - ca * 13 + cb * 4;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 2.6, pitch: -8}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).
  // The far scenery from the course's edge: the band between the course's own
  // ground and the far woods or hills, looking out from 25 m up.

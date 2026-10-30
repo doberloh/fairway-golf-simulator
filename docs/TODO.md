@@ -57,7 +57,15 @@ quality measures*, which it absorbs.
   in the hole panel and the architect's note as a hole is arrived at (built,
   not seen), the crest and founding line on the final scorecard (not seen),
   flags by pin position (seen: a white middle flag).
-- [ ] Phases 2 (rest) to 7 (ARCHITECT_COURSES.md, *Status*).
+- [ ] **Not yet played by a person: phases 2 (rest) to 5.** Seen in GPU
+  captures only: stakes, posts and rakes; the clubhouse in every landscape;
+  collection areas, lobes and divots; mounds, rip-rap, tie walls, fountains
+  and the bridge kit (timber and stone). Not seen at all: a ball landing on a
+  bridge in a round (Node only: one dropped on a deck stops there and is
+  called in the water) and a round's nines coming home (measured, not seen).
+  To check: play an Architect Parkland or Stadium course with water and
+  creeks (story "A lot"); hit one at a bridge.
+- [ ] Phases 6 and 7 (ARCHITECT_COURSES.md, *Status*).
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

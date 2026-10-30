@@ -452,3 +452,21 @@ draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
 is each model's height for its width, measured off the ingested model; a
 test holds it to the models, so **re-measure it whenever a clubhouse changes
 shape**.
+
+### architect_water
+
+`tools/blender/architect_water.py`: what a builder puts at an Architect
+course's water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
+stringers, nine planks, a post each corner, two rails) and stone (3.1 m, 1.08
+m: a slab, parapets with a coping) -- the deck's top 0.30 m up both; renderer.js
+`addPaths` lays as many as a span needs, fitted to the path's width and to
+the solid deck (`b.deck`), inked. Three **rip-rap** stones (about 0.7 x 0.35
+m, angular), a **tie wall** section (2.4 m of ten ties, 0.9 m tall, a waler on
+its +X face, which turns to the water) and a **fountain** (4.0 m: a jet, a
+cloud of spray, twelve falling streams, a ring of foam; drawn uninked and
+white, since inked it read as pebbles). Ingested as the `waterworks` family
+with its own scale (`OWN_SCALE`: the tie wall is 2.7 heights long);
+renderer.js `addWaterworks` draws them instanced. **The tube helper draws one
+ring a radius** (`add_tube`): give it a radius for every point, or the tube
+stops after the first stretch -- the fountain's streams were invisible for
+eight iterations.
