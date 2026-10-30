@@ -257,8 +257,13 @@ Architect (PNW; limit 2 s); **frame time on Low within 10%** of Classic on
 Midwest, PNW and Links (+6.7%, -6.7%, -7.7%; GPU, *Frame time on Low at the
 end of the owner's review*); **every smoke journey green** (39 of 39, on the
 graphics card, after the review); the showcase saved
-(docs/reports/architect-showcase/, local, 30 pictures, with the Redan, the
-Cape and two Classic-beside-Architect pairs).
+(docs/reports/architect-showcase/, local, 32 pictures): a hero hole in every
+landscape (seed SC-3, each landscape's own style), four Classic-beside-
+Architect pairs on that seed (Midwest, Autumn, Links, PNW), the Redan, Dell,
+Cape, Pit, Barranca and Alps, a contact sheet for each of the six kits, first
+against final for the fountain, the mower and the gallery, and ten course
+codes to paste into the game (made by the game's own exporter; each checked
+to import back as an Architect course).
 
 **Seen working in the game** (GPU captures, stills, and the smoke journeys'
 clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
