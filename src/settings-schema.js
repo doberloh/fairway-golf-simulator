@@ -317,7 +317,10 @@ export const GENERATOR_VERSION=52;
 //    not one after another: a lower green's wide shoulder had been dragging a
 //    neighbour's edge down under its pin (8.7% where the contour said 0.9%),
 //    and the virtual golfer could not finish three holes.
-export const ARCHITECT_VERSION=13;
+// 14: an Architect routing pays for the walk to the next tee three times
+//    over: the median walk 100 -> 93 m (Classic 98), the longest twentieth
+//    283 -> 234 m, nines home 10 -> 11 of 12.
+export const ARCHITECT_VERSION=14;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

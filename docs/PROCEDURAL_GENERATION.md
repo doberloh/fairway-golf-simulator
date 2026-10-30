@@ -258,7 +258,7 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
 - **Routing from the clubhouse** (routing.js): the first tee at home, each
   nine pulled home toward its turn, every hole kept within walking reach of
   home, the green before the last about a last hole's length out, the 10th tee
-  at home; twelve routings tried.
+  at home, the walk to each next tee priced high; twelve routings tried.
 - **Cart paths** (paths.js): routed when planting begins, down each hole on
   its bail-out side 14 m beyond the rough and round its hazards, past the
   green to a pull-off and on to the next tee, smoothed; pushed sideways off any

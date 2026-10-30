@@ -10999,5 +10999,6 @@ rounds a designer. **Before the greens fix: 4.90 harder**, three holes
 unfinished in 40 strokes (a green tilted 8.7% under its pin by a neighbour's
 shoulder); **after: 1.32 harder** (Classic 0.89 over par, Architect 2.21).
 Per landscape over eight rounds the spread is about +-4 strokes, so only the
-overall figure is held to the limit. The golfer's rule for a stroke that left
+overall figure is held to the limit. After the walk change (ARCHITECT_VERSION
+14): **0.82 harder** (Classic 1.09, Architect 1.91). The golfer's rule for a stroke that left
 the ball where it was (try the other shot) is PLACED.

@@ -125,7 +125,10 @@ export function routeHoles(holes,s,random){
       if(near<pull.gap){score-=pull.weight;break;}
      }
     }
-    score+=homeArch(i,end,origin);
+    // An Architect course pays for the walk to the tee three times over (the end of
+    // the goal: routing home had lengthened the longest walks, p95 191 ->
+    // 283 m, the late holes' extra tries all made at the longest walk).
+    score+=homeArch(i,end,origin)+(arch?walk*1.8:0);
     if(!chosen||score<chosen.score)chosen={origin,rot,points,pin:end,score,walk};
    }
    if(!chosen){const previous=placed.at(-1),origin={x:Math.max(...samples.map(p=>p.x+p.r))+Math.max(...local.map(p=>Math.abs(p.x)+p.r))+s.spacing+25,z:(previous.green??previous.pin).z-h.length/2},rot=0;chosen={origin,rot,points:local.map(p=>({...p,x:p.x+origin.x,z:p.z+origin.z})),pin:{x:origin.x+h.pin.x,z:origin.z+h.pin.z},score:1e6,walk:350};penalty+=1e6;}

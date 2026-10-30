@@ -31,10 +31,11 @@ test('every pond is staked round, and every bunker has a rake', () => {
    const near = arch.markers.filter(m => m.kind === 'stake' && (() => { const q = h.toLocal(m); return Math.hypot(q.x - p.x, q.z - p.z) < Math.max(p.rx, p.rz) + 20; })());
    assert.ok(near.length >= 4, `hole ${h.hole + 1}: a pond with ${near.length} stakes`);
   }
-  // One rake a complex: a lobe shares its main bunker's.
-  const rakes = arch.markers.filter(m => m.kind === 'rake' && arch.nearest(m.x, m.z).h === h).length, main = h.bunkers.filter(b => !b.lobe).length;
-  assert.ok(rakes >= main * .6, `hole ${h.hole + 1}: ${rakes} rakes for ${main} bunkers`);
  }
+ // One rake a complex: a lobe shares its main bunker's. Counted over the
+ // course: a rake can lie nearer the next hole's corridor than its own.
+ const rakes = arch.markers.filter(m => m.kind === 'rake').length, main = arch.holes.reduce((n, h) => n + h.bunkers.filter(b => !b.lobe).length, 0);
+ assert.ok(rakes >= main * .75, `${rakes} rakes for ${main} bunkers`);
 });
 
 test('yardage posts stand at their distance from the green, beside the fairway', () => {

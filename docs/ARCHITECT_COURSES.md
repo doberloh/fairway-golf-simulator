@@ -535,6 +535,17 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
   chip, a chip after a putt), as a real one would -- putting from every
   fringe instead stranded it below other banks on both designers.
 
+- **The walk to the next tee, priced three times over** (routing.js, Architect
+  only; ARCHITECT_VERSION 14). Routing home had lengthened the longest walks:
+  the late holes' extra tries (450, not 150) were all made at the longest
+  walk the search allows, about 290 m. Paying walk*0.9 again, then twice
+  again: the median walk 100 -> 93 m (Classic 98), the longest twentieth
+  283 -> 245 -> 234 m (Classic 191), nines home 10 -> 11 of 12. At walk*0.9
+  extra the median had not moved; the stronger price is kept. **The virtual
+  golfer after it: Architect 0.82 strokes per 18 harder than Classic**
+  (Classic 1.09 over par, Architect 1.91; four seeds, 80 rounds a
+  designer) -- shorter walks, shorter holes to come home.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`
@@ -691,6 +702,24 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
   64, Links 107, Heathland 80, Sandhills 51, Parkland 48, Modern 47, Stadium
   65, Minimalist 52, Desert target 44, Mountain 45, Tropical 55; Classic 42.
   Ponds per 18: none on Links to about 15 on Stadium.
+
+### The bench at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
+
+`node tools/bench.mjs design --tier standard`, twelve courses of nine holes, each
+designer:
+
+| Measure | Classic | Architect |
+| --- | --- | --- |
+| Fairway bunkers by a landing zone | 24 of 89 (27%) | 156 of 189 (83%) |
+| Nines home (9th green within 200 m of the 1st tee) | 7 of 12 | 11 of 12 |
+| Green-to-next-tee walk, median | 98 m | 93 m |
+| ... the longest twentieth (p95) | 191 m | 234 m |
+| Concepts a nine (variety) | -- | 4 to 6, median 5 |
+| Templates a nine | -- | 0 to 4, median 2 |
+| A hazard without a reason (an invariant) | 0 | 0 |
+
+The longest walks stay longer than Classic's: a course that comes home has
+a hole or two that walk back to the turn.
 
 ### The wait to build (30 October 2026, after phase 4)
 

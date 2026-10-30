@@ -50,7 +50,7 @@ quality measures*, which it absorbs.
   course: bunkers where drives land, fairways that tuck round them, avenues.
   To check: a few Architect rounds in different styles -- do the holes read as
   designed, and do they play fairly (the virtual golfer, at the end of the
-  goal: 1.32 strokes per 18 harder than Classic, hardest on Haunted Hollow
+  goal: 0.82 strokes per 18 harder than Classic, hardest on Haunted Hollow
   and PNW; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
 - [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
   their bridges (seen in GPU captures), free relief when a ball stops on a

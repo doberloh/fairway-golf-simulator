@@ -433,7 +433,9 @@ The seams so far, each listed here as it is built:
 
 - `routeHoles` (routing.js) -- `homeArch` adds an Architect course's pull
   home to each placement's score, and `arch` raises the trials (5 -> 12) and
-  the late holes' tries (150 -> 450). Classic's numbers are untouched; **the
+  the late holes' tries (150 -> 450), and the walk to the next tee is paid
+  three times over on an Architect course (its late tries otherwise all walked
+  the longest). Classic's numbers are untouched; **the
   walk formula's `Math.min(k,150)` keeps a Classic placement's walk exactly
   what it was** while an Architect one searches past 150.
 - The hazard slots (renderer.js, ground.js) carry a third kind for an

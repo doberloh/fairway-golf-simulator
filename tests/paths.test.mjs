@@ -76,8 +76,8 @@ test('free relief from a path: off it, stance and all, no nearer the hole, no pe
 });
 
 test('a creek the path crosses gets a bridge', () => {
- // PATHS-T crosses no creek; BR-1 on Redwood with a lot of story crosses two.
- const bridged = world({seed: 'BR-1', holes: 9, biome: 'redwood', designer: 'architect', archStory: 'lots'});
+ // PATHS-T crosses no creek; BR-7 on Midwest with a lot of story crosses one.
+ const bridged = world({seed: 'BR-7', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
  assert.ok(bridged.bridges.length >= 1, 'no bridge where the path crosses a creek');
  for (const b of [...arch.bridges, ...bridged.bridges]) {
   assert.ok(b.span > 3 && b.span < 60, `bridge span ${b.span}`);
@@ -103,7 +103,7 @@ test('every clubhouse keeps its model\'s own proportions (clubhouse.js CLUBHOUSE
 // edge runs straight up). Classic has no bridges, so nothing changes there.
 import {simulateShot} from '../src/physics.js';
 test('a ball dropped on a bridge stops on its deck, in the penalty area', () => {
- const w = world({seed: 'BR-1', holes: 9, biome: 'redwood', designer: 'architect', archStory: 'lots'});
+ const w = world({seed: 'BR-7', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
  assert.ok(w.bridges.length, 'this course has a bridge');
  const b = w.bridges[0], h = w.nearest(b.x, b.z).h, at = h.toLocal({x: b.x, z: b.z});
  assert.ok(b.deck > w.height(b.x, b.z) + .3, 'the deck stands over the water');
