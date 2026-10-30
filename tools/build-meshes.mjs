@@ -180,14 +180,15 @@ const PICK = {
  storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Lantern_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals and distant people, placed by life.js, moved by renderer.js addLife.
- lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Mower_1'].map(k => `blender:Blender_${k}`),
+ lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1'].map(k => `blender:Blender_${k}`),
  // TOURNAMENT WEEK (tools/blender/architect_occasion.py; phase 7): a
  // Championship venue's stands, scoreboard, towers, marquees, ropes and crowd.
- occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1'].map(k => `blender:Blender_${k}`),
- waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1', 'Fountain_1'].map(k => `blender:Blender_${k}`),
+ occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `blender:Blender_${k}`),
+ waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
 
 // Families whose models may carry their own scale (`q`, below).
+const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `Blender_${k}`));
 const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks', 'storypieces', 'lifeforms', 'occasionpieces']);
 
 // Families that use only part of a model. A crown is foliage only, so the
@@ -334,7 +335,12 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    parts.push(part);
   }
-  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), parts};
+  // `tall`: the model's own height in metres, for the people (the owner's
+  // review): a child and someone under an umbrella were both stretched to
+  // the one height the game drew every spectator at. Recorded for the
+  // figure families only, so every other entry is written as before.
+  const tall = PEOPLE.has(name) ? {tall: +height.toFixed(3)} : {};
+  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), ...tall, parts};
   taken++;
  }
 }

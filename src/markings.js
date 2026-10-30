@@ -55,16 +55,16 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
     if (dry(q.x, q.z)) out.push({kind: `post${yd}`, x: q.x, z: q.z, rot: h.rotation || 0});
    }
   }
-  // A rake beside each bunker, on its far side from the green, lying along
-  // the line out of the sand.
+  // A rake IN each bunker (the owner, 30 October 2026: "I'm a rakes go in
+  // the bunker kind of person"): halfway in from the edge on the side away
+  // from the green, laid across the sand, as a greenkeeper drops one where
+  // the next player will find it. It was on the grass beside the sand.
   for (const b of h.bunkers) {
-   if (b.lobe) continue;   // a complex has one rake, by its main bunker
+   if (b.lobe) continue;   // a complex has one rake, in its main bunker
    const g = h.green, dx = b.x - g.x, dz = b.z - g.z, l = Math.hypot(dx, dz) || 1, a = Math.atan2(dz / l, dx / l);
-   const e = ovalRadius(b, a), r = Math.hypot(e.x, e.z) + 1.3;
+   const e = ovalRadius(b, a), r = Math.hypot(e.x, e.z) * .5;
    const q = h.toWorld({x: b.x + dx / l * r, z: b.z + dz / l * r});
-   // Laid along the bunker's edge, as a greenkeeper leaves one (iteration 6:
-   // pointing out of the sand it was seen end-on from play).
-   if (dry(q.x, q.z)) out.push({kind: 'rake', x: q.x, z: q.z, rot: Math.atan2(dx / l, dz / l) + Math.PI / 2 + (h.rotation || 0)});
+   if (surface(q.x, q.z) === 'sand') out.push({kind: 'rake', x: q.x, z: q.z, rot: Math.atan2(dx / l, dz / l) + Math.PI / 2 + (h.rotation || 0)});
   }
  }
  // Creeks near play: red stakes on each bank, every STAKE_GAP * 1.4 m, only
@@ -108,7 +108,12 @@ export function placeWear({holes, s, surface}) {
  const out = [], k = (WEAR[s.archClub] ?? 1) * (AGE_WEAR[s.archAge] ?? 1);
  for (const h of holes) {
   const r = stream(`${s.seed}|arch|wear|${s.biome}|${h.hole}`);
-  const put = (lx, lz, size) => { const p = h.toWorld({x: lx, z: lz}), sf = surface(p.x, p.z); if (sf === 'tee' || sf === 'fairway' || sf === 'semi') out.push({x: p.x, z: p.z, r: size, rot: r() * Math.PI}); };
+  // Each divot points where the shot went -- at the green (the owner's
+  // review: they pointed all over the place). A divot is drawn long along its
+  // own x, which a turn of `rot` carries to (cos rot, -sin rot); a few
+  // degrees of spread, as real swings give.
+  const g = h.toWorld(h.green);
+  const put = (lx, lz, size) => { const p = h.toWorld({x: lx, z: lz}), sf = surface(p.x, p.z); if (sf === 'tee' || sf === 'fairway' || sf === 'semi') out.push({x: p.x, z: p.z, r: size, rot: Math.atan2(-(g.z - p.z), g.x - p.x) + (r() - .5) * .3}); };
   for (const [name, t] of Object.entries(h.tees)) {
    const n = Math.round((h.par === 3 ? 14 : name === 'blue' ? 5 : 3) * k);
    for (let i = 0; i < n; i++) put(t.x + (r() - .5) * 4.2, t.z + (r() - .5) * 5, .07 + r() * .05);

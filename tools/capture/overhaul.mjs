@@ -155,6 +155,9 @@ export const VIEWS = [
  {name: 'arch-fountain', hole: 0, when: 'afternoon', caption: 'A fountain on an Architect course', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
   const x = m.x + 26, z = m.z + 10;
   return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 3, pitch: -2}; }`},
+ {name: 'arch-fountain-near', hole: 0, when: 'afternoon', caption: 'A fountain close to, the water in motion', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
+  const x = m.x + 11, z = m.z + 4;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 2.2, pitch: 6}; }`},
  {name: 'arch-bridge', hole: 0, when: 'afternoon', caption: 'A cart-path bridge over a creek', cam: `w => { const b = (w.bridges || [])[0] || {x: 0, z: 0, angle: 0};
   const ca = Math.sin(b.angle), cb = Math.cos(b.angle), x = b.x + cb * 13 + ca * 4, z = b.z - ca * 13 + cb * 4;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 2.6, pitch: -8}; }`},
@@ -177,6 +180,9 @@ export const VIEWS = [
  {name: 'arch-tpl-alps', hole: 0, when: 'afternoon', caption: 'The Alps', cam: `w => { const h = w.holes.find(k => k.design?.template === 'alps') || w.holes[0], e = h.design?.earthworks?.[0];
   const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
   return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-alps-side', hole: 0, when: 'afternoon', caption: 'The Alps from above and to the side', cam: `w => { const h = w.holes.find(k => k.design?.template === 'alps') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z = e ? e.z : h.length - 60, a = h.toWorld({x: h.center(z - 40) + 55, z: z - 40}), b = h.toWorld({x: h.center(z + 15), z: z + 15});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 22, pitch: -16}; }`},
  {name: 'arch-tpl-barranca', hole: 0, when: 'afternoon', caption: 'The Barranca', cam: `w => { const h = w.holes.find(k => k.design?.template === 'barranca') || w.holes[0], e = h.design?.earthworks?.[0];
   const z0 = e ? Math.max(0, e.z - 45) : Math.max(0, h.length - 150), z1 = e ? e.z + 10 : h.length, a = h.toWorld({x: h.center(z0) + 14, z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
   return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 14, pitch: -16}; }`},
@@ -197,9 +203,16 @@ export const VIEWS = [
  {name: 'arch-life', hole: 0, when: 'afternoon', caption: 'Animals on the course', cam: `w => { const a = (w.life || []).find(k => k.x !== undefined && k.r === undefined) || {x: 0, z: 0};
   const x = a.x + 7, z = a.z + 6;
   return {x, z, yaw: Math.atan2(a.x - x, a.z - z) * 180 / Math.PI, height: 3, pitch: -14}; }`},
- {name: 'arch-walkers', hole: 0, when: 'afternoon', caption: 'Golfers walking the path', cam: `w => { const a = (w.life || []).find(k => k.kind === 'walker') || {ax: 0, az: 0, bx: 1, bz: 1};
-  const mx = (a.ax + a.bx) / 2, mz = (a.az + a.bz) / 2, dx = a.bx - a.ax, dz = a.bz - a.az, n = Math.hypot(dx, dz) || 1, x = mx + dz / n * 10, z = mz - dx / n * 10;
-  return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: 3.2, pitch: -8}; }`},
+ // The walkers and the mower move: the camera is put beside where the figure
+  // is at the moment of the picture (the renderer's own formula, addLife).
+ {name: 'arch-walkers', hole: 0, when: 'afternoon', caption: 'Golfers walking the path', cam: `w => { const v = window.__view, t = v.elapsed || 0, k = Number(window.__walker || 0), a = (w.life || []).filter(q => q.kind === 'walker')[k];
+  if (!a || !a.line) return {x: 0, z: 0, yaw: 0, height: 3, pitch: -8};
+  const run = [0]; for (let i = 1; i < a.line.length; i++) run.push(run[i - 1] + Math.hypot(a.line[i].x - a.line[i - 1].x, a.line[i].z - a.line[i - 1].z));
+  const len = run[run.length - 1] || 1, s = (((t + a.phase) * a.speed - a.lag) % (2 * len) + 2 * len) % (2 * len), d = a.loop ? s % len : (s < len ? s : 2 * len - s);
+  let i = 1; while (i < run.length - 1 && run[i] < d) i++;
+  const p0 = a.line[i - 1], p1 = a.line[i], u = (d - run[i - 1]) / ((run[i] - run[i - 1]) || 1), px = p0.x + (p1.x - p0.x) * u, pz = p0.z + (p1.z - p0.z) * u, dx = p1.x - p0.x, dz = p1.z - p0.z, n = Math.hypot(dx, dz) || 1;
+  const ahead = 3.5, cx = px + dx / n * ahead, cz = pz + dz / n * ahead, x = cx + dz / n * 6.5, z = cz - dx / n * 6.5;
+  return {x, z, yaw: Math.atan2(px - x, pz - z) * 180 / Math.PI, height: 1.9, pitch: -6}; }`},
  {name: 'arch-stumps', hole: 0, when: 'afternoon', caption: 'A felled avenue', cam: `w => { const s = (w.storyProps || []).find(k => k.kind === 'stump') || {x: 0, z: 0};
   const x = s.x + 10, z = s.z + 8;
   return {x, z, yaw: Math.atan2(s.x - x, s.z - z) * 180 / Math.PI, height: 2.2, pitch: -10}; }`},
@@ -214,9 +227,12 @@ export const VIEWS = [
  {name: 'arch-life-roadrunner', hole: 0, when: 'afternoon', caption: 'Life: roadrunner', cam: `w => { const a = (w.life || []).find(k => k.kind === 'roadrunner') || {x: 0, z: 0};
   const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
   return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
- {name: 'arch-life-mower', hole: 0, when: 'afternoon', caption: 'Life: mower', cam: `w => { const a = (w.life || []).find(k => k.kind === 'mower') || {x: 0, z: 0};
-  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
-  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-mower', hole: 0, when: 'afternoon', caption: 'Life: mower', cam: `w => { const v = window.__view, t = v.elapsed || 0, a = (w.life || []).find(k => k.kind === 'mower');
+  if (!a) return {x: 0, z: 0, yaw: 0, height: 3, pitch: -8};
+  const len = Math.hypot(a.bx - a.ax, a.bz - a.az) || 1, s = (((t + a.phase) * a.speed - a.lag) % (2 * len) + 2 * len) % (2 * len), u = (s < len ? s : 2 * len - s) / len;
+  const dx = (a.bx - a.ax) / len, dz = (a.bz - a.az) / len, px = a.ax + (a.bx - a.ax) * u - dz * a.side, pz = a.az + (a.bz - a.az) * u + dx * a.side;
+  const turn = Number(window.__around || 50) * Math.PI / 180, x = px + Math.cos(turn) * 7.5, z = pz + Math.sin(turn) * 7.5;
+  return {x, z, yaw: Math.atan2(px - x, pz - z) * 180 / Math.PI, height: 2.6, pitch: -12}; }`},
  {name: 'arch-life-sheep', hole: 0, when: 'afternoon', caption: 'Life: sheep', cam: `w => { const a = (w.life || []).find(k => k.kind === 'sheep') || {x: 0, z: 0};
   const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
   return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
@@ -242,6 +258,9 @@ export const VIEWS = [
  {name: 'arch-week-crowd', hole: 0, when: 'afternoon', caption: 'The gallery at the ropes', cam: `w => { const r = (w.occasion?.ropes || [])[Math.floor((w.occasion?.ropes || []).length * .3)] || {x: 0, z: 0, rot: 0};
   const x = r.x + Math.cos(r.rot) * 14 - Math.sin(r.rot) * 10, z = r.z - Math.sin(r.rot) * 14 - Math.cos(r.rot) * 10;
   return {x, z, yaw: Math.atan2(r.x - x, r.z - z) * 180 / Math.PI, height: 2, pitch: -2}; }`},
+ {name: 'arch-week-crowd-near', hole: 0, when: 'afternoon', caption: 'The gallery close to', cam: `w => { const c = (w.occasion?.crowd || [])[Math.floor((w.occasion?.crowd || []).length * .3)] || {x: 0, z: 0, rot: 0};
+  const x = c.x + Math.sin(c.rot) * 7 + Math.cos(c.rot) * 2, z = c.z + Math.cos(c.rot) * 7 - Math.sin(c.rot) * 2;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 1.8, pitch: -3}; }`},
  {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
   const x = b.x + 45, z = b.z + 30;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},

@@ -42,7 +42,7 @@ test('it stands on clear ground, faces the first tee, and nothing grows on it or
 });
 
 test('the path runs to its door', () => {
- const w = A('midwest'), b = w.buildings[0], door = w.paths[0].door;
+ const w = A('midwest'), b = w.buildings[0], door = w.paths.find(p => p.door)?.door;
  assert.ok(door, 'the path knows the door');
  assert.ok(pathIndex(w.paths).onPath(door.x, door.z), 'the path reaches it');
  assert.ok(Math.hypot(door.x - b.x, door.z - b.z) < b.depth / 2 + 8);

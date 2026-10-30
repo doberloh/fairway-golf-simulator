@@ -14,118 +14,246 @@
 
 import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
 
-const STEP = 8;           // metres between path points, before smoothing
 // Width by club (PLACED within the study's 8 ft norm and the 48 in accessible
 // route): a municipal course's narrower, a resort's wide enough for two carts.
 const WIDTH = {municipal: 2.1, members: 2.4, resort: 3.0, championship: 2.6};
 // What the path is made of, by landscape (PLACED): the study's paths table.
 // Each landscape's path surface is its architect block's (biomes.js).
 export const PATH_KINDS = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.path]));
-// Surfaces a path may never take (it bends round them): greens, tees, sand,
-// water and the fringe round a green.
-const KEEP_OFF = new Set(['green', 'fringe', 'tee', 'sand', 'water']);
+// THE PATH NETWORK, ROUTED (the owner's review, 30 October 2026: "spaghetti",
+// paths across greens, tees and fairways, unnatural turns, unwalkable
+// slopes). A cost grid over the course, CELL metres a side, and A* across it:
+//
+//   blocked   greens, fringes, tees, sand, ponds, ground steeper than MAX_GRADE
+//   dear      fairway (x9) and semi-rough (x5) -- crossed only where a leg
+//             must, and then the short way; a creek (x30, bridged); the 22 m
+//             round every green's collar (up to +8) and the 10 m round a tee
+//   cheap     ground a path already takes (x0.3), so later legs join the
+//             network rather than lay a second line beside it
+//   slope     every step pays for its grade above 8%
+//
+// Then the cells become a line: pulled straight wherever a straight segment
+// is no dearer than the cells it replaces, rounded (Chaikin), and checked
+// again -- a rounding that touches anything blocked keeps the pulled line.
+// All weights PLACED.
 
-// Chaikin's corner cutting: smooth the polyline, keeping its ends.
-function smoothLine(points, passes = 2) {
- let p = points;
- for (let k = 0; k < passes; k++) {
-  if (p.length < 3) return p;
-  const out = [p[0]];
-  for (let i = 0; i < p.length - 1; i++) {
-   const a = p[i], b = p[i + 1];
-   out.push({x: a.x * .75 + b.x * .25, z: a.z * .75 + b.z * .25}, {x: a.x * .25 + b.x * .75, z: a.z * .25 + b.z * .75});
+export const CELL = 6;
+export const MAX_GRADE = .22;
+const BLOCKED = new Set(['green', 'fringe', 'tee', 'sand']);
+const DEAR = {fairway: 9, semi: 5};
+
+// A binary heap on f, over cell indices.
+function heap() {
+ const idx = [], f = [];
+ return {
+  size: () => idx.length,
+  push(i, v) { idx.push(i); f.push(v); let k = idx.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (f[p] <= f[k]) break; [idx[p], idx[k]] = [idx[k], idx[p]]; [f[p], f[k]] = [f[k], f[p]]; k = p; } },
+  pop() { const top = idx[0], li = idx.pop(), lf = f.pop(); if (idx.length) { idx[0] = li; f[0] = lf; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < idx.length && f[l] < f[m]) m = l; if (r < idx.length && f[r] < f[m]) m = r; if (m === k) break; [idx[m], idx[k]] = [idx[k], idx[m]]; [f[m], f[k]] = [f[k], f[m]]; k = m; } } return top; },
+ };
+}
+
+export function costGrid({holes, s, surface, streams, height, ravines = []}) {
+ let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+ const greens = [], tees = [];
+ for (const h of holes) {
+  const g = h.worldGreen ?? h.toWorld(h.green);
+  greens.push({x: g.x, z: g.z, r: (h.greenSize ?? 15) * (h.greenAspect ?? 1.1) + (s.fringe ?? 2) + (s.semiRough ?? 6)});
+  for (const t of Object.values(h.tees)) { const w = h.toWorld(t); tees.push(w); }
+  for (const p of [g, ...tees.slice(-3)]) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
+ }
+ x0 -= 140; x1 += 140; z0 -= 140; z1 += 140;
+ const nx = Math.ceil((x1 - x0) / CELL) + 1, nz = Math.ceil((z1 - z0) / CELL) + 1;
+ const cost = new Float32Array(nx * nz), y = new Float32Array(nx * nz), used = new Uint8Array(nx * nz);
+ const inRavine = (x, z) => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((x - r.ax) * dx + (z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(x - r.ax - dx * t, z - r.az - dz * t) < r.r; });
+ // Cells a bridge spans: the whole width of a ravine, wall to wall. The
+ // grade rule does not apply there -- the deck is level (the template test:
+ // the walls are steeper than MAX_GRADE, so the path always walked round the
+ // ravine's end and no bridge was ever built).
+ const span = new Uint8Array(nx * nz);
+ for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+  const k = j * nx + i, x = x0 + i * CELL, z = z0 + j * CELL, sf = surface(x, z);
+  y[k] = height ? height(x, z) : 0;
+  if (BLOCKED.has(sf)) { cost[k] = Infinity; continue; }
+  let c = DEAR[sf] ?? 1;
+  if (sf === 'water') { const st = streams?.at?.(x, z); c = st ? 30 : Infinity; }
+  else if (inRavine(x, z)) { c = Math.max(c, 30); span[k] = 1; }
+  for (const g of greens) { const d = Math.hypot(x - g.x, z - g.z) - g.r; if (d < 22) c += 8 * (1 - Math.max(0, d) / 22); }
+  for (const t of tees) { const d = Math.hypot(x - t.x, z - t.z); if (d < 10) c += 4 * (1 - d / 10); }
+  cost[k] = c;
+ }
+ // A margin a cell wide round everything blocked (iteration 4: a cell knows
+ // only its centre, and a line between two open cells clipped a bunker edge).
+ const margin = [];
+ for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+  if (Number.isFinite(cost[j * nx + i])) continue;
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < nx && jj < nz && Number.isFinite(cost[jj * nx + ii])) margin.push(jj * nx + ii); }
+ }
+ for (const k of margin) cost[k] = Math.max(cost[k], 15);
+ const cellOf = p => [Math.round((p.x - x0) / CELL), Math.round((p.z - z0) / CELL)];
+ const at = (i, j) => ({x: x0 + i * CELL, z: z0 + j * CELL});
+ const costAt = (x, z) => { const [i, j] = cellOf({x, z}); return i < 0 || j < 0 || i >= nx || j >= nz ? Infinity : cost[j * nx + i]; };
+ // The nearest open cell to a point, within 40 m.
+ const snap = p => {
+  const [ci, cj] = cellOf(p);
+  let best = null;
+  for (let r = 0; r <= 7 && !best; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
+   if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+   const i = ci + di, j = cj + dj;
+   if (i < 0 || j < 0 || i >= nx || j >= nz || !Number.isFinite(cost[j * nx + i]) || cost[j * nx + i] > 4) continue;
+   const d = di * di + dj * dj;
+   if (!best || d < best.d) best = {i, j, d};
   }
-  out.push(p[p.length - 1]);
-  p = out;
- }
- return p;
+  return best && [best.i, best.j];
+ };
+ const N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+ // A* from a to b; the cells, or null.
+ const route = (a, b) => {
+  const A = snap(a), B = snap(b);
+  if (!A || !B) return null;
+  const start = A[1] * nx + A[0], goal = B[1] * nx + B[0];
+  const g = new Float32Array(nx * nz).fill(Infinity), from = new Int32Array(nx * nz).fill(-1), done = new Uint8Array(nx * nz);
+  const H = k => Math.hypot((k % nx) - B[0], Math.floor(k / nx) - B[1]) * CELL * .3;
+  const open = heap();
+  g[start] = 0; open.push(start, H(start));
+  while (open.size()) {
+   const k = open.pop();
+   if (done[k]) continue;
+   if (k === goal) break;
+   done[k] = 1;
+   const i = k % nx, j = Math.floor(k / nx);
+   for (const [di, dj] of N8) {
+    const ii = i + di, jj = j + dj;
+    if (ii < 0 || jj < 0 || ii >= nx || jj >= nz) continue;
+    const n = jj * nx + ii;
+    if (done[n] || !Number.isFinite(cost[n])) continue;
+    const step = Math.hypot(di, dj) * CELL;
+    // The grade end to end and through the midpoint (iteration 5: a crag edge
+    // between two cell centres put a 30% step on a Redwood path).
+    let grade = Math.abs(y[n] - y[k]) / step;
+    if (height) { const mx = x0 + (i + di / 2) * CELL, mz = z0 + (j + dj / 2) * CELL, ym = height(mx, mz); grade = Math.max(grade, Math.abs(ym - y[k]) / (step / 2), Math.abs(y[n] - ym) / (step / 2)); }
+    if (grade > MAX_GRADE && !span[k] && !span[n]) continue;
+    const c = ((used[k] ? .3 : cost[k]) + (used[n] ? .3 : cost[n])) / 2 * (span[k] || span[n] ? 1 : 1 + 25 * Math.max(0, grade - .08));
+    const v = g[k] + step * c;
+    if (v < g[n]) { g[n] = v; from[n] = k; open.push(n, v + H(n)); }
+   }
+  }
+  if (from[goal] < 0 && goal !== start) return null;
+  const cells = [];
+  for (let k = goal; k >= 0; k = from[k]) { cells.push(k); if (k === start) break; }
+  return cells.reverse();
+ };
+ // The ground between cells, bilinear, for the grade a straightened line climbs.
+ const heightAt = height || ((x, z) => { const u = (x - x0) / CELL, v = (z - z0) / CELL, i = Math.max(0, Math.min(nx - 2, Math.floor(u))), j = Math.max(0, Math.min(nz - 2, Math.floor(v))), fu = Math.min(1, Math.max(0, u - i)), fv = Math.min(1, Math.max(0, v - j)); const k = j * nx + i; return (y[k] * (1 - fu) + y[k + 1] * fu) * (1 - fv) + (y[k + nx] * (1 - fu) + y[k + nx + 1] * fu) * fv; });
+ const spanAt = (x, z) => { const [i, j] = cellOf({x, z}); return i >= 0 && j >= 0 && i < nx && j < nz && span[j * nx + i] === 1; };
+ return {nx, nz, cost, used, route, at, costAt, cellOf, x0, z0, heightAt, spanAt};
 }
 
-// One hole's run, in its own local frame: tee to green on `side`, then the
-// pull-off and round the back of the green.
-function holeRun(h, side, semi, clear) {
- const pts = [], tees = Object.values(h.tees), minTee = Math.min(...tees.map(t => t.z));
- const half = z => side < 0 ? h.leftWidth(z) : h.rightWidth(z);
- const gr = (h.greenSize ?? 15) * (h.greenAspect ?? 1.1);
- const end = h.length - gr - 18;
- for (let z = minTee - 10; z <= end; z += STEP) {
-  let off = Math.max(half(Math.max(0, z)), 9) + semi + 14;
-  // Out of play round the hole's own hazards: step outward until clear.
-  for (let k = 0; k < 8 && !clear(h, h.center(Math.max(0, z)) + side * off, z); k++) off += 4;
-  pts.push({x: h.center(Math.max(0, Math.min(h.length, z))) + side * off, z});
+// Cells to a line: pulled straight where it is no dearer, then rounded.
+export function lineOf(grid, cells) {
+ const pts = cells.map(k => grid.at(k % grid.nx, Math.floor(k / grid.nx)));
+ if (pts.length < 3) return pts;
+ // Its dearest ground, or Infinity where it climbs steeper than MAX_GRADE
+ // (iteration 2: a straightened line checked only the ground it crossed, and
+ // took a few steps steeper than 25%).
+ const segmentCost = (a, b) => { let worst = 0; const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 2)); let prev = grid.heightAt(a.x, a.z); for (let t = 0; t <= n; t++) { const x = a.x + (b.x - a.x) * t / n, z = a.z + (b.z - a.z) * t / n, c = grid.costAt(x, z); worst = Math.max(worst, c); if (t) { const h = grid.heightAt(x, z); if (Math.abs(h - prev) / (d / n) > MAX_GRADE && !grid.spanAt?.(x, z)) return Infinity; prev = h; } } return worst; };
+ const pulled = [pts[0]];
+ let i = 0;
+ while (i < pts.length - 1) {
+  let j = i + 1, own = 0;
+  for (let k = i + 1; k < pts.length; k++) {
+   own = Math.max(own, grid.costAt(pts[k].x, pts[k].z));
+   // Up to 24 cells, and a little dearer than the cells it replaces
+   // (iteration 6: at +0.5 and 12 cells, a straight run was refused for
+   // brushing a green's wider berth, and the line jogged round it).
+   if (k - i > 24) break;
+   if (segmentCost(pts[i], pts[k]) <= own + 2) j = k;
+  }
+  pulled.push(pts[j]);
+  i = j;
  }
- const g = h.green;
- pts.push({x: g.x + side * (gr + 13), z: h.length - gr * .3});
- pts.push({x: g.x + side * (gr + 11), z: h.length + gr * .6});
- pts.push({x: g.x + side * (gr * .4), z: h.length + gr + 13});
- return pts;
+ // Rounded corner by corner (Chaikin, three passes): a corner is cut only
+ // where both new segments touch nothing blocked and climb nothing too steep,
+ // and kept sharp otherwise (iteration 3: rounding the whole line or none
+ // left whole lines with stair-step corners).
+ let round = pulled;
+ for (let pass = 0; pass < 3; pass++) {
+  if (round.length < 3) break;
+  const out = [round[0]];
+  for (let k = 1; k < round.length - 1; k++) {
+   const o = round[k - 1], p = round[k], n = round[k + 1];
+   const c1 = {x: o.x * .25 + p.x * .75, z: o.z * .25 + p.z * .75}, c2 = {x: p.x * .75 + n.x * .25, z: p.z * .75 + n.z * .25};
+   if (Number.isFinite(segmentCost(out[out.length - 1], c1)) && Number.isFinite(segmentCost(c1, c2)) && Number.isFinite(segmentCost(c2, n))) out.push(c1, c2);
+   else out.push(p);
+  }
+  out.push(round[round.length - 1]);
+  round = out;
+ }
+ return round;
 }
-const hazardClear = (h, x, z) => !h.ponds.some(p => Math.hypot(x - p.x, z - p.z) < Math.max(p.rx, p.rz) + 10)
- && !h.bunkers.some(b => Math.hypot(x - b.x, z - b.z) < Math.max(b.rx, b.rz) + 6);
+
+// Where a hole's leg starts and ends, in the world: beside its tees on its
+// preferred side, out past the tee boxes' collar; and a pull-off beside the
+// green, well off its collar, a little short of its middle.
+function waypoints(h, s) {
+ const side = h.design?.preferred === 'left' ? -1 : 1, semi = s.semiRough ?? 6;
+ const tees = Object.values(h.tees), zt = tees.reduce((a, t) => a + t.z, 0) / tees.length;
+ const half = Math.max(h.leftWidth(Math.max(0, zt)), h.rightWidth(Math.max(0, zt)), 12);
+ const gr = (h.greenSize ?? 15) * (h.greenAspect ?? 1.1) + (s.fringe ?? 2) + semi;
+ return {
+  tee: h.toWorld({x: h.center(Math.max(0, zt)) + side * (half * .6 + 16), z: zt}),
+  green: h.toWorld({x: h.green.x + side * (gr + 18), z: h.green.z - gr * .4}),
+ };
+}
 
 // The paths of a course. `holes` are routed (they have `toWorld`); `surface`
-// is the world's surface without paths; `streams` its creeks and rivers.
-export function routePaths({holes, s, surface, streams, ravines = []}) {
- if (!holes?.length) return {paths: [], bridges: []};
- const width = WIDTH[s.archClub] ?? WIDTH.members, semi = s.semiRough ?? 6;
- const sideOf = h => h.design?.preferred === 'left' ? -1 : 1;
- const runs = holes.map(h => holeRun(h, sideOf(h), semi, hazardClear).map(p => h.toWorld(p)));
- const raw = [];
- runs.forEach((run, i) => {
-  raw.push(...run);
-  const next = runs[i + 1];
-  if (!next) return;
-  // The connector to the next tee: straight, sampled every STEP.
-  const a = run[run.length - 1], b = next[0], d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.round(d / STEP));
-  for (let k = 1; k < n; k++) raw.push({x: a.x + (b.x - a.x) * k / n, z: a.z + (b.z - a.z) * k / n});
+// is the world's surface without paths; `streams` its creeks and rivers;
+// `height` the ground. Returns the network as pieces (each a path), the
+// bridges, and `connect` -- the same router, for the clubhouse's link.
+export function routePaths({holes, s, surface, streams, ravines = [], height = null}) {
+ if (!holes?.length) return {paths: [], bridges: [], connect: () => null};
+ const width = WIDTH[s.archClub] ?? WIDTH.members, kind = PATH_KINDS[s.biome] || ARCHITECT_GENERIC.path;
+ const grid = costGrid({holes, s, surface, streams, height, ravines});
+ const pieces = [];
+ // A leg's cells become pieces: runs of cells no earlier leg took, each with
+ // a cell of overlap at either end so the network stays joined.
+ const lay = cells => {
+  if (!cells?.length) return;
+  let run = [];
+  const flush = () => { if (run.length >= 2) pieces.push(lineOf(grid, run)); run = []; };
+  cells.forEach((k, n) => {
+   if (grid.used[k] && run.length) { run.push(k); flush(); }
+   else if (!grid.used[k]) { if (!run.length && n > 0) run.push(cells[n - 1]); run.push(k); }
+  });
+  flush();
+  for (const k of cells) grid.used[k] = 1;
+ };
+ const ends = holes.map(h => waypoints(h, s));
+ holes.forEach((h, i) => {
+  lay(grid.route(ends[i].tee, ends[i].green));
+  if (ends[i + 1]) lay(grid.route(ends[i].green, ends[i + 1].tee));
  });
- // Off greens, tees, sand and water: push a point sideways, across the line,
- // until it is clear, or drop it.
- const kept = [];
- for (let i = 0; i < raw.length; i++) {
-  const p = raw[i], q = raw[Math.min(raw.length - 1, i + 1)], o = raw[Math.max(0, i - 1)];
-  const dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
-  let found = null;
-  // Dry ground first. A creek's water is taken only when none lies across
-  // the line within 20 m -- where the path really crosses it. Taking it as
-  // readily as dry ground ran paths, and their bridges, 30 m along creek
-  // banks (phase 5's first bridge capture).
-  const OFFSETS = [0, 3, -3, 6, -6, 10, -10, 15, -15, 20, -20];
-  for (const k of OFFSETS) {
-   const x = p.x + nx * k, z = p.z + nz * k;
-   if (!KEEP_OFF.has(surface(x, z))) { found = {x, z}; break; }
-  }
-  if (!found && surface(p.x, p.z) === 'water' && streams?.at?.(p.x, p.z)) found = {x: p.x, z: p.z};
-  if (found) kept.push(found);
- }
- // Smoothing can carry a point back over the edge it was pushed off (a
- // bunker's lobe reaching toward the path: phase 3), so the same push runs
- // again on the smoothed line.
- const points = smoothLine(kept, 2).map((p, i, all) => {
-  if (!KEEP_OFF.has(surface(p.x, p.z)) || (surface(p.x, p.z) === 'water' && streams?.at?.(p.x, p.z))) return p;
-  const q = all[Math.min(all.length - 1, i + 1)], o = all[Math.max(0, i - 1)], dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1;
-  for (const k of [2, -2, 4, -4, 7, -7, 11, -11]) { const x = p.x - dz / l * k, z = p.z + dx / l * k; if (!KEEP_OFF.has(surface(x, z))) return {x, z}; }
-  return p;
- });
- // Bridges: a run of points over a creek or river becomes one bridge.
- const bridges = [];
- let start = -1;
- // In the water itself; the deck runs 3 m onto each bank (iteration 6: a
- // bank within 1.2 m counted as wet, and bridges ran along creeks).
- // A barranca's ravine (phase 6) is bridged the same way, where it is more
- // than about a metre and a half deep.
- const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r * .62; });
+ const paths = pieces.filter(p => p.length >= 2).map(points => ({points, width, kind}));
+ // Bridges: a run of points over a creek or a ravine, on each piece.
+ const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r; });
  const wet = p => { const st = streams?.at?.(p.x, p.z); return (!!st && st.edge <= 0) || inRavine(p); };
- for (let i = 0; i <= points.length; i++) {
-  const w = i < points.length && wet(points[i]);
-  if (w && start < 0) start = i;
-  if (!w && start >= 0) {
-   const a = points[Math.max(0, start - 1)], b = points[Math.min(points.length - 1, i)];
-   bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
-   start = -1;
+ const bridges = [];
+ for (const path of paths) {
+  // Resampled every 2 m so a narrow creek between two points is not missed.
+  const pts = [];
+  path.points.forEach((p, k) => { if (k) { const o = path.points[k - 1], n = Math.max(1, Math.ceil(Math.hypot(p.x - o.x, p.z - o.z) / 2)); for (let t = 1; t <= n; t++) pts.push({x: o.x + (p.x - o.x) * t / n, z: o.z + (p.z - o.z) * t / n}); } else pts.push(p); });
+  let start = -1;
+  for (let i = 0; i <= pts.length; i++) {
+   const w = i < pts.length && wet(pts[i]);
+   if (w && start < 0) start = i;
+   if (!w && start >= 0) {
+    const a = pts[Math.max(0, start - 1)], b = pts[Math.min(pts.length - 1, i)];
+    bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
+    start = -1;
+   }
   }
  }
- return {paths: [{points, width, kind: PATH_KINDS[s.biome] || ARCHITECT_GENERIC.path}], bridges};
+ const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); for (const k of cells) grid.used[k] = 1; return line; };
+ return {paths, bridges, connect};
 }
 
 // Nearest-path queries on a grid of segments, as quick as the lie needs.
@@ -156,22 +284,18 @@ export function pathIndex(paths, cell = 16) {
 }
 
 // THE PATH TO THE CLUBHOUSE (clubhouse.js): from its door -- the middle of its
-// front, a few metres out -- to where the course's path begins at the first
-// tee, and back from the last green to the door. Straight, sampled every STEP
-// and softened where it meets the course's path.
-export function linkBuilding(path, b) {
+// front, a few metres out -- to the nearest point of the network, routed like
+// the rest (a straight line from the door crossed whatever lay between). A
+// piece of its own; `door` marks it.
+export function linkBuilding(paths, b, connect) {
  const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), out = b.depth / 2 + 5;
  // The front is the building's local -z (clubhouse.js faces it to the tee).
  const door = {x: b.x - sn * out, z: b.z - cs * out};
- const run = (a, c) => {
-  const d = Math.hypot(c.x - a.x, c.z - a.z), n = Math.max(1, Math.round(d / STEP)), pts = [];
-  for (let k = 0; k <= n; k++) pts.push({x: a.x + (c.x - a.x) * k / n, z: a.z + (c.z - a.z) * k / n});
-  return pts;
- };
- const p = path.points;
- if (!p.length) return path;
- const head = smoothLine(run(door, p[0]).slice(0, -1), 1), tail = smoothLine(run(p[p.length - 1], door).slice(1), 1);
- path.points = [...head, ...p, ...tail];
- path.door = door;
- return path;
+ let near = null;
+ for (const p of paths) for (const q of p.points) { const d = Math.hypot(q.x - door.x, q.z - door.z); if (!near || d < near.d) near = {d, q}; }
+ if (!near) return null;
+ const line = connect?.(door, near.q) || [door, near.q];
+ const piece = {points: [door, ...line.slice(1)], width: paths[0].width, kind: paths[0].kind, door};
+ paths.push(piece);
+ return piece;
 }

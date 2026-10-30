@@ -13,7 +13,7 @@ default and never changes. **Architect (beta)** designs a course the way people
 build one -- a plan for every hole, every hazard placed against the shots
 golfers play, greens designed round their hole locations, holes routed from a
 clubhouse, then paths, stakes, walls, a history and some life -- from four
-dials (style, club, age, the land's story), the seed, the landscape and the
+dials (style, club, age, heritage -- named the land's story until the owner's review), the seed, the landscape and the
 number of holes.
 
 ## Status
@@ -28,6 +28,154 @@ number of holes.
 | 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
 | 7. Occasion | built: tournament week on a Championship venue -- stands, a scoreboard, TV towers and marquees (solid), gallery ropes and a crowd that fills from Thursday to Sunday, never on Low (ten iterations); the yardage book, a PDF a page a hole from the pause menu |
+
+### The owner's review (30 October 2026)
+
+The owner played Architect courses and sent a list (screenshots of paths
+through greens and "spaghetti", fountains standing still, rakes beside rather
+than in bunkers, divots pointing anywhere, stumps in lines, Links' merged
+fairways, the Alps' look, setting names and explanations, the people, mower
+and crowd models, a live scoreboard, the yardage book in the studio, and
+hand tools the generator uses too). Worked through in order; each below.
+
+**Cart paths, rebuilt** (ARCHITECT_VERSION 15; six iterations, the owner
+asked for five). The old router pushed each point sideways off whatever it
+landed on and joined holes with straight connectors -- zigzags, paths over
+greens and tees, connectors across every hole between. Now a cost grid
+(6 m) and A* (paths.js `costGrid`, `lineOf`):
+greens, fringes, tees, sand and ponds blocked, with a dear margin a cell
+wide; fairway x9 and semi-rough x5; up to +8 within 22 m of a green's
+collar; ground steeper than 22% barred (end to end and through each step's
+midpoint); ground already paved cheap (x0.3), so legs join one network.
+Each hole: a leg from beside its tees to a pull-off well off its green, and
+on to the next tee. The cells pulled straight wherever a run of up to 24
+cells is no more than a little dearer, then rounded corner by corner.
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | numbers, four courses | nothing on any played surface, nothing within 10 m of a green; 1-6 sharp turns; 4-12 steps steeper than 25% (the straightening checked ground, not grade) |
+| 2 | numbers | grade checked on straightened runs: steep steps 0-4; sharp turns 6-19 (a whole line fell back to its corners when any rounding failed) |
+| 3 | numbers | rounded corner by corner: sharp turns 2-9; one sample brushed a bunker's edge |
+| 4 | numbers | a margin round everything blocked: nothing touched; steep steps only on Redwood |
+| 5 | game (`arch-pv5`: Redwood, Midwest, Links) | **Links: a gravel path sweeping round behind the green**, well clear of it and its bunkers; Midwest clear of green and fairways but with hard jogs where a straight run was refused for brushing a green's berth; a 30% step on a Redwood crag edge (the midpoint now checked against the real ground) |
+| 6 | game (`arch-pv6`) | runs up to 24 cells and a little dearer: Midwest's path one smooth sweep round its green; steep steps 0 on every course, sharp turns 3-11 an eighteen |
+
+Also: **paths on the map** (renderer.js `drawMap`, under the holes, at
+their width) and **painted surfaces** (`pathTexture`: asphalt's chips and
+edge lines, concrete's joints, gravel, shell, bark chips, granite, a
+boardwalk's planks). The clubhouse's link is routed the same way. The walkers
+go one way along the longest piece and round again (the owner: "no reason
+they would be walking reverse"). **A path bridges a ravine wall to wall**:
+the ravine's cells are exempt from the grade rule (the deck is level), so
+the router no longer always walked round a Barranca's end and never built
+its bridge (found by the template test, `tests/story.test.mjs`).
+
+**Rakes in the bunkers** (the owner: "I'm a rakes go in the bunker kind of
+person"): halfway in from the edge on the side away from the green, laid
+across the sand (markings.js). **Divots point at the green**, with about
+nine degrees of spread either way (they pointed anywhere). Tests: every rake
+on sand at least a metre in; nine in ten divots within 16 degrees of the line
+to the green.
+
+**Trees sized by the course's age** (the owner: "can course maturity also
+determine tree size?"): New 0.68 of full height, Mature 1, Old 1.18,
+Restored 1.08, the crown's spread following at 70% of the change; ground
+plants, brush and cholla unchanged. PLACED. **A restored course's stumps
+scattered** (they stood in a line down the fairway, where the felled avenue
+had been): 3-7 a hole, 6-40 m out past the semi-rough, a third in pairs.
+
+**The dials explained**: each Architect choice shows a sentence under its
+list saying what it does to the course, kept current as the choice changes
+(settings-schema.js `describe`, main.js). **"The land's story" is now
+"Heritage"** (the owner did not like the name).
+
+**The arrows on the water** (screenshot 2) are the creek's flow ripples,
+main's since the first commit (water-bodies.js `STREAM_FLOW`), on Classic
+too. Left as they are; the owner's call whether to tone them down.
+
+**Links: fairways joined in pairs only** (the owner, Links style, Members',
+Old, A lot, 9 holes, ST-1: "one massive hole with 4 combined fairways ... I
+do really like it"). Kept, but on an Architect course each fairway joins one
+neighbour at most -- the longest joins first (course.js `shareFairways`,
+`pairs`). On the owner's course holes 2, 3, 7 and 8 were one field; now 2+3
+and 7+8, more than 20 m of rough between the pairs. Classic is unchanged.
+Measured on six more seeds: never more than two holes to a fairway.
+
+**The Alps, a broad hill** (the owner, PNW: "a really weird look"): the
+ridge was 13 m wide for 5.5 m high -- a 66% face, a crease at its crest, and
+round caps standing up either side of the fairway. Now 24 m for 5 m (about
+a third), and every ridge (the Dell's dune too) fades into the land over the
+outer quarter of its length at each end (architect.js `earthField`). Seen in
+the game (`arch-alps1`, PNW P-2 hole 11): a rolling hill across the approach.
+PLACED.
+
+**The fountain, animated** (the owner: "it's probably not a Blender static
+model, right?" -- it was). The renderer now draws moving water
+(fountain.js, `Renderer.addFountains`): 480 drops flying parabolas from the
+nozzle, apex 3.0-4.2 m, landing 0.3-3.2 m out, each stretched along its
+flight; a jet core that breathes; a foam boil; three rings spreading; a
+flickering skirt of foam where the crown lands. On every tier, at 30 updates
+a second on Low; at most two a course. The Blender plume is gone (52 KB
+off the bundle). Sizes PLACED from makers' pictures of 1-2 hp pond
+aerators.
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | game (`arch-f1`, Midwest resort) | it rises and falls and the rings spread; the drops read as **popcorn**, the plume a narrow column |
+| 2 | game (`arch-f2`) | smaller drops stretched along their flight, the crown landing wider: reads as spray, but a loose cloud from 30 m |
+| 3 | game (`arch-f3`) | a translucent veil round the plume: **read as a glass dome**, dropped |
+| 4 | game (`arch-f4`) | no veil; 480 drops and the jet up to the crown: a fountain from 11 m and from across the pond. Checked moving: one drop rose 3.1 m in 0.7 s, the jet's height changed |
+| 5 | game (`arch-f5`) | a flickering skirt of foam where the crown lands: the plume stands on white water |
+
+**The people, the mower and the crowd** (the owner: "need more iteration and
+variety", "the mower does not look like a mower ... research as well",
+"crowds need more variety"). One cartoon body for every figure
+(tools/blender/figures.py): poses (walk, stand, clap, cheer, push, pull,
+umbrella, seated), hats (cap, visor, sun hat, bucket), a skirt and
+ponytail, eyes, a belt, a carry bag, push and pull trolleys, a golf
+umbrella. Four walker bodies (bag, push trolley, pull trolley, bucket hat
+and bag) and five spectators (cap; sun hat and skirt; umbrella; clapping in
+a visor; a child cheering). The game dresses each figure from palettes --
+six skin tones, eleven shirts, seven trousers, eight hats with matching
+bags or umbrellas, six hair colours -- by a hash of figure, body and role
+(renderer.js `PEOPLE_PALETTE`). Each body is drawn at its own measured
+height (the ingest records `tall` for the people), a twentieth larger than
+life for the walkers. Walkers bob and sway a little as they step; a fourball
+now, not three. Spectators turn a little each; umbrellas only in the
+standing gallery. **The mower** is a five-unit fairway reel mower from the
+makers' figures (RESEARCH.md, *A fairway mower*): 2.58 m long, 2.59 m wide,
+2.32 m to its canopy; three reels in front, two between the wheels, big
+lugged front tyres under fenders, small rear ones, a seat, a column and
+wheel, a roll bar with a sunshade, headlights, a greenkeeper in a hi-vis
+shirt. It runs only on mown rough, and there is none on a landscape whose
+rough all grows tall (Links, Lakeshore) -- it had waded through Midwest's
+prairie and Links' marram.
+
+### Blender and game iterations: people, mower, crowd (the owner's review)
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | sheets | walkers read as golfers (cap, bag with club heads, trolleys), the crowd as five people; the mower reads face-on (roll bar, tyres, reels). The umbrella's shaft ran in front of the face; a blob in front of the seat hid the driver's legs |
+| 2 | sheets | stouter legs; the umbrella held to the side, smaller; a footplate for the blob |
+| 3 | game (`arch-p3`, Midwest, Sunday) | the walkers' colours vary; the mower reads as a fairway mower; **the driver's shins showed under the mower**; the child and the umbrella were stretched to one height |
+| 4 | game (`arch-p4`) | every body at its own measured height; the driver's feet on the footplate; the pull trolley's bag full size |
+| 5 | game (`arch-p5`) | eyes, belts, ponytails; a sunshade canopy and headlights on the mower; walkers bob as they step. The push-trolley golfer reads side-on |
+| 6 | game (`arch-p6`) | a fourball; spectators turned a little each. **Too many neighbours in the same navy shirt** |
+| 7 | game (`arch-p7`) | colours by a hash (the stride had lined up across the five bodies): neighbours match as often as chance, 47 in 499. Stands full of colour -- and **a fifth of each stand under umbrellas** |
+| 8 | game (`arch-p8`, and `arch-p8low` on Low) | umbrellas only in the standing gallery; Low draws no crowd and no walkers, as before |
+| 9 | game (`arch-p9`, Links, Saturday) | the people read in Links' light; **the mower waded through marram** |
+| 10 | game (`arch-p10`, PNW) | the people read in PNW's darker light |
+
+The mower's own last three: 8, lugged turf tyres with grey rims and painted
+hubs (plain discs read as black plates); 9 (`arch-m9-80`, `arch-m9-200`),
+fenders over the front tyres and spiral blades on the reels -- side-on every
+part reads, **but it was in Midwest's prairie**; 10 (`arch-m10`), its run
+on mown rough only: working the rough by the trees.
+
+Cost: walkers and spectators are one instanced mesh per body part per body,
+coloured per instance (no extra draws for the colours); the crowd five
+bodies (was one), so five times the crowd's draw calls on Medium and up
+(none on Low, where no crowd is drawn). Not profiled.
 
 ### Where the goal stands (30 October 2026)
 

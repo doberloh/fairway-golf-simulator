@@ -12,8 +12,7 @@
 #   rip-rap      three rough stones for a pond's waterline (waterworks.js)
 #   bulkhead     a 2.4 m section of railway ties standing at the waterline,
 #                with a waler bolted along its face
-#   fountain     an aerating fountain: a jet, a crown of falling water and a
-#                ring of foam
+#   (the fountain is drawn by the renderer: src/fountain.js)
 #
 # Measured in metres; each model's real height is noted beside it (the ingest
 # scales every model to one unit tall and the game scales back). Every model's
@@ -116,38 +115,10 @@ def bulkhead():
     return build
 
 
-# A FOUNTAIN: a jet 3.0 m tall, a crown of eight falling arcs and a ring of
-# foam 2.6 m across on the water.
-def fountain():
-    def build(mesh, rng):
-        # Iteration 4: in the game the bell of lumps read as a grey stone
-        # mushroom -- each lump shaded and inked like a pebble. Now the shape
-        # an aerating fountain makes: a jet, a white crown, and two tiers of
-        # falling water (the conifers' drooping skirt, scalloped like spray),
-        # 4.0 m tall, painted bright; the game draws it uninked.
-        bright = lambda p, n: 1.1 + .1 * max(0.0, n.z)
-        mesh.add_tube([Vector((0, 0, 0)), Vector((0, 0, 2.0)), Vector((0, 0, 3.7))], [.32, .2, .1], 8, 'stone', rng,
-                      shade=lambda co, t: 1.1)
-        mesh.add_lump(Vector((0, 0, 3.7)), (.38, .38, .32), 'stone', rng, subdiv=1, jitter=.1)
-        # Iteration 7: the bell read as a tent. A cloud of spray on the jet
-        # (the cartoon trees' crown, white and lit as one body) with thick
-        # streams falling from it to the pond, like a plume breaking.
-        ct.cloud_crown(mesh, rng, Vector((0, 0, 3.25)), (1.1, 1.1, .75), lobes=12, lobe_size=(.36, .5), role='stone',
-                       subdiv=2, low=.95, high=1.2, flat_bottom=.2, shell=.75)
-        # Iteration 8: from the bank the streams vanished inside the crown.
-        # Twelve, thicker, leaving the crown's rim and landing wider.
-        for k in range(12):
-            a = k * 2 * math.pi / 12 + rng.uniform(-.12, .12)
-            pts = [Vector((math.cos(a) * (.95 + 1.3 * u), math.sin(a) * (.95 + 1.3 * u), 3.0 - 2.85 * u * u)) for u in (0, .25, .5, .75, 1)]
-            # Iteration 9: one radius a point -- the helper draws one ring a
-            # radius, so two radii drew only the first stretch of each stream.
-            mesh.add_tube(pts, [.24, .21, .18, .15, .12], 6, 'stone', rng, shade=lambda co, t: 1.15 - .08 * t)
-        for k in range(14):
-            a = k * 2 * math.pi / 14
-            mesh.add_lump(Vector((math.cos(a) * 2.1, math.sin(a) * 2.1, .06)), (.5, .4, .12), 'accent', rng,
-                          subdiv=1, jitter=.12)
-        mesh.add_lump(Vector((0, 0, .08)), (.9, .9, .18), 'accent', rng, subdiv=1, jitter=.1)
-    return build
+# THE FOUNTAIN is no longer a model here (the owner's review, 30 October
+# 2026: "fountains need to be animated ... it's probably not a Blender static
+# model, right?"). Nine iterations made a frozen plume; the renderer now draws
+# moving water instead -- src/fountain.js and Renderer.addFountains.
 
 
 MODELS = [
@@ -157,7 +128,6 @@ MODELS = [
     ('Blender_RipRap_2', riprap(2)),
     ('Blender_RipRap_3', riprap(3)),
     ('Blender_Bulkhead_1', bulkhead()),
-    ('Blender_Fountain_1', fountain()),
 ]
 
 ct.export(MODELS, colours={'accent': (0.95, 0.97, 1.0), 'bark': (0.36, 0.27, 0.2), 'stone': (0.72, 0.7, 0.66)}, figure=1.0)

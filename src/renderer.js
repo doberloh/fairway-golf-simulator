@@ -56,6 +56,29 @@ import {MESH_MODELS} from './asset-meshes.js';
 const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
+import {fountainDrops,dropAt,ringAt,jetAt} from './fountain.js';
+// PEOPLE IN THEIR OWN CLOTHES (the owner's review: "more variety"). One body
+// model makes many people: each part is one role (tools/blender/figures.py),
+// drawn white and coloured per figure from these -- skin, shirt, trousers or
+// skirt, a hat with its bag or umbrella, hair with the shoes. Each role is
+// picked by a hash of the figure, its body and the role (iteration 7: a
+// stride per role lined up across the five bodies, and a gallery stood in
+// the same navy shirt side by side).
+const PEOPLE_PALETTE={
+ stone:['#f1c9a5','#e0b48e','#c99470','#a8704a','#7d5236','#5c3a27'],
+ accent:['#f2efe6','#c0503a','#3f6fb0','#2f7a55','#e8c84a','#d8789a','#7a5aa8','#2e3440','#e88a3a','#8fc0e0','#b9d36a'],
+ bark:['#3d4a5c','#2e2e33','#c9b48a','#7a7f88','#ece8de','#4a5a3a','#5a4636'],
+ leaf:['#f4f1e6','#1f3550','#b03a2e','#e8c84a','#2e2e33','#5b8fc9','#2f5d48','#e07a9a'],
+ dirt:['#2a2522','#4a3426','#1a1a1c','#6b4a2e','#9a9590','#7a5530'],
+};
+const ROLE_SEED={stone:101,accent:211,bark:307,leaf:401,dirt:503};
+function dressPeople(mesh,role,n,salt){
+ const list=PEOPLE_PALETTE[role];if(!list)return;
+ const c=new T.Color();
+ for(let i=0;i<n;i++){let h=Math.imul(i+1,2654435761)^Math.imul(salt+7,40503)^Math.imul(ROLE_SEED[role],2246822519);h^=h>>>15;h=Math.imul(h,2246822519);h^=h>>>13;c.set(list[(h>>>0)%list.length]);mesh.setColorAt(i,c);}
+ mesh.instanceColor.needsUpdate=true;
+}
+
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
 import {addVegetation,farWoodGeometry} from './vegetation.js';
@@ -1018,7 +1041,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1929,6 +1952,30 @@ export class GolfView{
  // material, and a plank bridge where one crosses a creek. Only an Architect
  // course has any. The strip follows the ground AS DRAWN -- the lie reads the
  // same polyline (course.js `surface`), so paint and play agree.
+ // A CART PATH'S SURFACE, painted on a canvas once per kind: the pattern a
+ // player reads at a glance -- asphalt's chips and its two edge lines,
+ // concrete's joints, gravel, shell and bark scattered, granite's fines, a
+ // boardwalk's planks. Light on mid-grey, so the material's colour sets the
+ // tone and the tile only modulates it. Across the path is u (0-1), along it
+ // v (a tile per 4 m). PLACED.
+ pathTexture(kind){
+  this.pathTextures=this.pathTextures||{};
+  if(this.pathTextures[kind])return this.pathTextures[kind];
+  if(typeof document==='undefined')return null;
+  const c=document.createElement('canvas');c.width=64;c.height=128;const g=c.getContext('2d');
+  let seed=[...kind].reduce((a,ch)=>a*31+ch.charCodeAt(0),7)>>>0;const r=()=>(seed=(seed*1664525+1013904223)>>>0)/4294967296;
+  g.fillStyle='#e6e6e6';g.fillRect(0,0,64,128);
+  const dots=(n,size,light,dark)=>{for(let i=0;i<n;i++){g.fillStyle=r()<.5?light:dark;const s=size*(.5+r());g.fillRect(r()*64,r()*128,s,s);}};
+  if(kind==='boardwalk'){for(let y=0;y<128;y+=8){g.fillStyle=r()<.5?'#f2f2f2':'#dcdcdc';g.fillRect(0,y,64,7);g.fillStyle='#9a9a9a';g.fillRect(0,y+7,64,1);}g.fillStyle='#b0b0b0';g.fillRect(6,0,2,128);g.fillRect(56,0,2,128);}
+  else if(kind==='concrete'){dots(160,1.2,'#f4f4f4','#d2d2d2');g.fillStyle='#b8b8b8';g.fillRect(0,0,64,1.5);g.fillRect(0,64,64,1.5);}
+  else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
+  else if(kind==='bark'){for(let i=0;i<220;i++){g.save();g.translate(r()*64,r()*128);g.rotate(r()*Math.PI);g.fillStyle=r()<.5?'#f0f0f0':'#c8c8c8';g.fillRect(-3,-1,6,2);g.restore();}}
+  else dots(kind==='shell'?520:460,kind==='granite'?1:1.8,'#fafafa',kind==='shell'?'#d9d9d9':'#bdbdbd');
+  // Darker at the edges, so the path's sides read against the grass.
+  const e=g.createLinearGradient(0,0,64,0);e.addColorStop(0,'rgba(0,0,0,.18)');e.addColorStop(.12,'rgba(0,0,0,0)');e.addColorStop(.88,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.18)');g.fillStyle=e;g.fillRect(0,0,64,128);
+  const tex=new T.CanvasTexture(c);tex.wrapS=T.ClampToEdgeWrapping;tex.wrapT=T.RepeatWrapping;tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;
+  this.pathTextures[kind]=tex;this.resources.push(tex);return tex;
+ }
  addPaths(w){
   if(!w?.paths?.length)return;
   const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f'};
@@ -1942,7 +1989,10 @@ export class GolfView{
     if(i){const k=(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
    }
    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
-   const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+   // Painted, not flat (the owner's review: "a better texture"): the surface's
+   // own pattern, a tile per 4 m (`pathTexture`), white in the tile so the
+   // material's colour still sets the tone.
+   const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,map:this.pathTexture(path.kind)});
    const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;mesh.userData.path=true;this.group.add(mesh);this.resources.push(g,mat);
   }
   // THE BRIDGES (phase 5; tools/blender/architect_water.py): 2 m bays laid
@@ -1970,6 +2020,7 @@ export class GolfView{
  // rip-rap stones and railway-tie walls along a pond's faced edge, a fountain
  // in a big pond; instanced, the ties and the fountain inked. Decoration.
  addWaterworks(w){
+  this.fountains=null;
   if(!w?.waterworks?.length||this.style!=='cartoon')return;
   const key=w.bio?.key||w.settings?.biome;
   // Iteration 4: a shade darker than the sheet's -- pale stone went pink-white in the afternoon sun.
@@ -1977,9 +2028,11 @@ export class GolfView{
   const KINDS=[
    ...[1,2,3].map(v=>({kind:'riprap',variant:v-1,model:'Blender_RipRap_'+v,height:.34,colours:{stone:ROCK[key]||'#a8a298'}})),
    {kind:'bulkhead',model:'Blender_Bulkhead_1',height:.9,inked:true,colours:{bark:'#5e4733',stone:'#8b8a85'}},
-   // Iteration 4: uninked and painted near white; inked, its spray read as pebbles.
-   {kind:'fountain',model:'Blender_Fountain_1',height:4.0,colours:{stone:'#ffffff',accent:'#ffffff'}},
   ];
+  // The fountain is drawn here and moves (addFountains, fountain.js): the
+  // Blender plume was frozen (the owner's review: "fountains need to be
+  // animated").
+  this.fountains=this.addFountains(w.waterworks.filter(m=>m.kind==='fountain'));
   const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
   for(const spec of KINDS){
    const list=w.waterworks.filter(m=>m.kind===spec.kind&&(spec.variant==null||m.variant===spec.variant));if(!list.length)continue;
@@ -1993,6 +2046,50 @@ export class GolfView{
     if(spec.inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
    }
   }
+ }
+ // A FOUNTAIN IN MOTION (the owner's review; fountain.js says where the
+ // water is). Per fountain: a foam boil on the water, a jet core that
+ // breathes, a few hundred drops flying up and falling back, and rings
+ // spreading where they land. All the fountains' drops are one InstancedMesh
+ // that moves, so noCull. Two fountains a course at most, so a few hundred
+ // matrices a frame: on every tier, at 30 a second on Low.
+ addFountains(list){
+  if(!list.length)return null;
+  // Iteration 2: smaller drops, each a rounder body stretched along its
+  // flight (were 240 faceted ones, which read as popcorn); iteration 4: 480.
+  const N=480,group=new T.Group(),white='#f4fbff';
+  const dropMat=this.surfaceMaterial(white),drops=new T.InstancedMesh(new T.IcosahedronGeometry(1,1),dropMat,N*list.length);
+  drops.castShadow=false;drops.receiveShadow=false;drops.frustumCulled=false;drops.userData.noCull=true;group.add(drops);this.resources.push(dropMat);
+  const ringGeo=new T.RingGeometry(.86,1,40).rotateX(-Math.PI/2),boilGeo=new T.CircleGeometry(1.25,24).rotateX(-Math.PI/2),skirtGeo=new T.RingGeometry(1.5,3.3,40).rotateX(-Math.PI/2);
+  const jetGeo=new T.CylinderGeometry(.09,.22,1,10,1,true).translate(0,.5,0);
+  const each=list.map((f,i)=>{
+   const at=new T.Group();at.position.set(f.x,f.y,f.z);group.add(at);
+   const boilMat=new T.MeshBasicMaterial({color:white,transparent:true,opacity:.8,depthWrite:false});
+   const boil=new T.Mesh(boilGeo,boilMat);boil.position.y=.03;boil.renderOrder=2;at.add(boil);
+   // Iteration 5: a faint skirt of foam where the crown lands, flickering,
+   // so from across the pond the plume stands on white water.
+   const skirtMat=new T.MeshBasicMaterial({color:white,transparent:true,opacity:.22,depthWrite:false}),skirt=new T.Mesh(skirtGeo,skirtMat);skirt.position.y=.035;skirt.renderOrder=2;at.add(skirt);this.resources.push(skirtMat);
+   const jetMat=this.surfaceMaterial(white);jetMat.transparent=true;jetMat.opacity=.88;
+   const jet=new T.Mesh(jetGeo,jetMat);at.add(jet);
+   const rings=[0,1,2].map(()=>{const m=new T.MeshBasicMaterial({color:white,transparent:true,opacity:0,depthWrite:false}),r=new T.Mesh(ringGeo,m);r.position.y=.04;r.renderOrder=2;at.add(r);this.resources.push(m);return r;});
+   this.resources.push(boilMat,jetMat);
+   return {f,at,boil,skirt,jet,rings,list:fountainDrops(N,i*7919+Math.round(f.x*13+f.z*7)),phase:i*1.9};
+  });
+  const m4=new T.Matrix4(),q=new T.Quaternion(),pos=new T.Vector3(),sc=new T.Vector3(),up=new T.Vector3(0,1,0),v=new T.Vector3();
+  const place=t=>{
+   each.forEach((e,i)=>{
+    e.list.forEach((d,k)=>{const p=dropAt(d,t);pos.set(e.f.x+p.x,e.f.y+p.y,e.f.z+p.z);v.set(p.vx,p.vy,p.vz);const speed=v.length()||1;q.setFromUnitVectors(up,v.multiplyScalar(1/speed));const s=Math.max(1e-4,p.s);sc.set(s,s*(1+speed*.45),s);drops.setMatrixAt(i*N+k,m4.compose(pos,q,sc));});
+    e.jet.scale.set(1,jetAt(t,e.phase),1);
+    e.boil.scale.setScalar(1+.08*Math.sin(t*5.1+e.phase));
+    e.skirt.material.opacity=.2+.06*Math.sin(t*7.3+e.phase)+.03*Math.sin(t*13.1);
+    e.rings.forEach((r,k)=>{const g=ringAt(k,e.rings.length,t);r.scale.setScalar(g.r);r.material.opacity=g.o;});
+   });
+   drops.instanceMatrix.needsUpdate=true;
+  };
+  place(0);
+  this.group.add(group);
+  let since=0;
+  return {group,update:(dt,t)=>{since+=dt;if(this.quality===tierOf('low')&&since<1/30)return;since=0;place(t);}};
  }
  // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,
  // tools/blender/architect_people.py): stakes, yardage posts and rakes, a few
@@ -2090,17 +2187,28 @@ export class GolfView{
   const group=new T.Group();group.name='Occasion';this.group.add(group);
   const crowd=new T.Group();crowd.name='Crowd';group.add(crowd);
   const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
-  const draw=(parent,model,list,colours,h,len)=>{
+  // A spectator turns a little on their own (iteration 6: a gallery all
+  // facing one exact way read as soldiers); by index, so it never moves.
+  const turn=(it,i,dress)=>dress==null?0:Math.sin(i*12.9898+dress*78.233)*.25;
+  const draw=(parent,model,list,colours,h,len,dress)=>{
    const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info||!list.length)return;
    for(const p of parts){
-    const mat=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);
-    list.forEach((it,i)=>{q.setFromAxisAngle(up,it.rot||0);pos.set(it.x,it.y??w.height(it.x,it.z),it.z);if(len)sc.set(h,h,len/(2*info.rz));else sc.setScalar(h);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    const mat=this.surfaceMaterial(colours?colours[p.role]??'#ffffff':'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);if(!colours)dressPeople(mesh,p.role,list.length,dress);
+    list.forEach((it,i)=>{q.setFromAxisAngle(up,(it.rot||0)+turn(it,i,colours?null:dress));pos.set(it.x,it.y??w.height(it.x,it.z),it.z);if(len)sc.set(h,h,len/(2*info.rz));else sc.setScalar(h);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
     mesh.castShadow=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();parent.add(mesh);this.resources.push(mat);
    }
   };
   draw(group,'Blender_GalleryRope_1',o.ropes,{stone:'#e9e6dc',accent:'#1f5a3a',dirt:'#f2d34a'},1.0,6);
-  const SHIRTS=['#e5e1d4','#c0503a','#3f6fb0'];
-  SHIRTS.forEach((shirt,k)=>draw(crowd,'Blender_Spectator_1',o.crowd.filter((c,i)=>i%3===k),{accent:shirt,bark:'#3c4a63',dirt:'#e0b48e',leaf:'#f4f1e6'},1.75));
+  // Five bodies taken in turn, every spectator dressed from the palette
+  // (the owner's review: "crowds need more variety"; were one body in
+  // three shirts).
+  // Each at its own height: a child is a child, an umbrella stands over
+  // its holder (all five had been stretched to 1.75 m).
+  // Umbrellas only in the standing gallery (iteration 8: a fifth of a stand
+  // under umbrellas hid the rows behind); in a stand (`seated`) that body
+  // is a spectator in a cap.
+  const body=(c,i)=>{const v=i%5;return v===2&&c.seated?0:v;};
+  for(let v=0;v<5;v++){const model='Blender_Spectator_'+(v+1);draw(crowd,model,o.crowd.filter((c,i)=>body(c,i)===v),null,MESH_MODELS[model]?.tall??1.75,0,v*11+1);}
   return {group,crowd};
  }
  // THE LAND'S STORY'S WALLS AND PROPS (phase 6; story.js): a wall is 2 m
@@ -2158,15 +2266,27 @@ export class GolfView{
    roadrunner:{model:'Blender_Roadrunner_1',h:.7,colours:{stone:'#8a7a62',bark:'#3a332c',dirt:'#2a2522',accent:'#5a6a8a'}},
    gull:{model:'Blender_Bird_1',h:.42,colours:{stone:'#f6f6f2',bark:'#3a3d42',accent:'#e5b54a'}},
    raven:{model:'Blender_Bird_1',h:.45,colours:{stone:'#24242c',bark:'#141418',accent:'#2a2a30'}},
-   walker:{model:'Blender_Walker_1',h:1.85,colours:{bark:'#3d4a5c',dirt:'#2e2a28',accent:'#e8e2d0',stone:'#e0b48e',leaf:'#2f5d48'}},
-   mower:{model:'Blender_Mower_1',h:1.6,colours:{dirt:'#2a2a2a',leaf:'#3f7a3a',bark:'#3d4a5c',accent:'#e9c44a',stone:'#e0b48e'}},
+   walker:{model:'Blender_Walker_1',h:1.85},
+   // A five-unit fairway mower, 2.3 m to its roll bar, drawn a little large
+   // as the rest; green paint, grey reels, a hi-vis shirt.
+   mower:{model:'Blender_Mower_1',h:(MESH_MODELS.Blender_Mower_1?.tall??2.32)*1.05,colours:{dirt:'#26272a',leaf:'#3f7f3a',bark:'#8d939a',accent:'#d9ee4a',stone:'#d9a982'}},
   };
   const group=new T.Group();group.name='Life';this.group.add(group);
   const sets=[];
+  // The walkers in four bodies, taken in turn, each dressed from the
+  // palette (the owner's review: "more variety"); the rest one body a kind.
+  const jobs=[];
   for(const [kind,spec] of Object.entries(SPEC)){
    const list=w.life.filter(l=>l.kind===kind);if(!list.length)continue;
+   // Each at its own height, a twentieth larger than life as the rest (a
+   // body pushing a trolley stands lower than one with a bag on its back).
+   if(kind==='walker')for(let v=0;v<4;v++){const model='Blender_Walker_'+(v+1);jobs.push({kind,spec:{...spec,model,h:(MESH_MODELS[model]?.tall??1.78)*1.05},list:list.filter((l,i)=>i%4===v),dress:v});}
+   else jobs.push({kind,spec,list});
+  }
+  for(const {kind,spec,list,dress} of jobs){
+   if(!list.length)continue;
    const parts=modelParts(spec.model);if(!parts)continue;
-   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
+   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(dress!=null?'#ffffff':spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);if(dress!=null)dressPeople(m,p.role,list.length,dress*7+3);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
     // *ANYTHING INSTANCED THAT MOVES MUST SET userData.noCull*).
     m.userData.noCull=true;group.add(m);this.resources.push(mat);return m;});
    sets.push({spec,list,meshes});
@@ -2176,7 +2296,8 @@ export class GolfView{
    if(l.line){
     // Out and back along the path's own points, facing the way it goes.
     if(!l.run){l.run=[0];for(let k=1;k<l.line.length;k++)l.run.push(l.run[k-1]+Math.hypot(l.line[k].x-l.line[k-1].x,l.line[k].z-l.line[k-1].z));}
-    const len=l.run[l.run.length-1]||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),d=s<len?s:2*len-s,dir=s<len?1:-1;
+    // One way round and back to the start on a loop (the owner: walking backwards had no reason); out and back otherwise.
+    const len=l.run[l.run.length-1]||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),d=l.loop?s%len:(s<len?s:2*len-s),dir=l.loop||s<len?1:-1;
     let k=1;while(k<l.run.length-1&&l.run[k]<d)k++;
     const p0=l.line[k-1],p1=l.line[k],seg=(l.run[k]-l.run[k-1])||1,u=(d-l.run[k-1])/seg,dx=(p1.x-p0.x)/seg,dz=(p1.z-p0.z)/seg;
     const x=p0.x+(p1.x-p0.x)*u-dz*l.side,z=p0.z+(p1.z-p0.z)*u+dx*l.side;
@@ -2194,6 +2315,9 @@ export class GolfView{
     // Grazing: a slow turn where it stands.
     pos.set(l.x,w.height(l.x,l.z),l.z);e.set(0,l.rot+Math.sin(t*.3+l.phase)*.35,0);
    }
+   // A walker's step: a bob of a few centimetres twice a stride and a
+   // little sway (iteration 5; they glided like statues).
+   if(l.line){const ph=(t+l.phase)*l.speed*2.6;pos.y+=Math.abs(Math.sin(ph))*.045*set.spec.h/1.85;e.z=Math.sin(ph)*.035;}
    q.setFromEuler(e);sc.setScalar(set.spec.h);m4.compose(pos,q,sc);for(const m of set.meshes)m.setMatrixAt(i,m4);
   });for(const m of set.meshes)m.instanceMatrix.needsUpdate=true;}};
   place(0);
@@ -3279,6 +3403,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
   // Life on an Architect course (phase 6): never on Low.
   if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
+  this.fountains?.update(dt,this.elapsed);
   // Tournament week's crowd (phase 7): never on Low either.
   if(this.occasion)this.occasion.crowd.visible=this.quality!==tierOf('low');
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
@@ -3465,6 +3590,14 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   const bg=tilePlacement(transform,{x:0,z:0,rx:world.halfX,rz:world.halfZ},world.mapBackground.width,world.mapBackground.height);
   ctx.save();ctx.translate(bg.x,bg.y);ctx.scale(bg.sx,bg.sy);ctx.drawImage(world.mapBackground,0,0);ctx.restore();}
 
+ // AN ARCHITECT COURSE'S CART PATHS on the map (the owner's review, 30
+ // October 2026), under the holes, at their width (never thinner than a line).
+ if(world.paths?.length){
+  const wp=p=>full?mapPoint(transform,p):mapPoint(transform,course.toLocal(p));
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=world.bio.mapTurf?.path??'#a69a86';
+  for(const path of world.paths){if(path.points.length<2)continue;ctx.lineWidth=Math.max(1.2,path.width*scale);ctx.beginPath();path.points.forEach((p,i)=>{const q=wp(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}
+  ctx.restore();
+ }
  for(const hole of full?world.holes:[course]){
   ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,world.bio.mapTurf?.semi??'#a1b481'],[0,world.bio.mapTurf?.fairway??'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
   for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}

@@ -11002,3 +11002,54 @@ Per landscape over eight rounds the spread is about +-4 strokes, so only the
 overall figure is held to the limit. After the walk change (ARCHITECT_VERSION
 14): **0.82 harder** (Classic 1.09, Architect 1.91). The golfer's rule for a stroke that left
 the ball where it was (try the other shot) is PLACED.
+
+## Architect courses: the owner's review (30 October 2026)
+
+### A fairway mower
+
+The mower on an Architect course was rebuilt from the makers' published
+figures for five-unit fairway reel mowers (searched 30 October 2026):
+
+- Toro Reelmaster 3575-D: five 7-inch cutting units; overall width 112 in
+  (274 cm), length 105 in (266 cm), height with ROPS 81 in (206 cm);
+  transport width 91 in (231 cm).
+  https://turfnet.com/directory/equipment/2020-toro-3575-fairway-mower/
+- Jacobsen LF550: cutting width 100 in (2.54 m), length without catchers
+  108 in (2.74 m), height with ROPS 88 in (2.23 m), transport width 87 in.
+  https://www.turfnet.com/classifieds/item/56907-jacobsen-lf550
+- Jacobsen F305: five 26-inch units, 116 in cut, length 116 in (2.95 m),
+  height 85 in (2.15 m). https://nuturf.com.au/images/product-tech-sds/F305.pdf
+- Kubota LM551: transport width 220 cm, height with ROPS 239 cm, 1,530 kg,
+  cutting width 2,940 mm. https://www.kubota.com.au/product/lm551-5-unit-fairway-mower
+- John Deere 6500A: width of cut 80 in (five 18-in units) or 100 in (five
+  22-in units); ROPS standard on the 6700A.
+  https://deere.com/en/mowers/fairway-mowers/6500a-precisioncut-fairway-mower
+
+Taken: about 2.6-2.7 m long, 2.5-2.9 m wide cutting, 2.1-2.4 m to the top
+of the roll bar; three reel units in front and two behind them between the
+wheels; ROPS standard. The model measures 2.58 m long, 2.59 m wide and 2.32 m
+to its canopy. The layout (big driving front tyres, small steering rear
+ones, the seat between, the engine hood behind) and the sunshade on the bar
+are from the makers' pictures, not measured. Green paint and grey reels are
+the game's own, not any maker's livery.
+
+### Placed numbers in the review's changes
+
+All PLACED, judged by eye in the game, none from a source:
+
+- Trees by the course's age: New 0.68 of full height, Mature 1, Old 1.18,
+  Restored 1.08; the crown's spread follows at 70% of the height's change.
+- A restored course's stumps: 3-7 a hole, 6-40 m out past the semi-rough, a
+  third in pairs.
+- Rakes halfway in from a bunker's edge; divots within about 9 degrees
+  either way of the line to the green.
+- The Alps: a ridge 24 m wide for 5 m high (was 13 m for 5.5 m); every ridge
+  fades in over the outer quarter of its length at each end.
+- The fountain (fountain.js): apex 3.0-4.2 m, landing 0.3-3.2 m out, 480
+  drops, the jet 3.7 m breathing 0.18 m, rings from 1 to 4 m over 2.6 s.
+  Read from makers' pictures of 1-2 hp floating pond aerators, not measured.
+- Walkers and the mower drawn a twentieth larger than life (as the earlier
+  life was, so a figure is not a dot at 30 m); spectators at their own size.
+- A links joins each fairway to one neighbour at most on an Architect
+  course: a rule the owner's report asked for in spirit ("is there a way to
+  fix it? I do really like it"), not a number.

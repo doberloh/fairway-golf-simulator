@@ -1334,3 +1334,7 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs{position:static;display:flex;flex-wrap:wrap}
  body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab{flex:1 1 auto}
 }
+
+/* An Architect dial's sentence: what the chosen style, club, age or heritage
+   does to the course (the owner's review, 30 October 2026), under its list. */
+.choice-note{margin:-4px 0 12px;padding:0 4px;font:400 13px/1.45 var(--font-ui);color:var(--soft);max-width:72ch}

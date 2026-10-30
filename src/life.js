@@ -18,7 +18,7 @@
 // rendering only, so no version moves for it (the fingerprint reads ground).
 // Pure: tests/life.test.mjs.
 import {archStream} from './architect-styles.js';
-import {ARCHITECT} from './biomes.js';
+import {ARCHITECT, biomeOf} from './biomes.js';
 import {ovalRadius} from './course.js';
 
 // Each landscape's animals are its architect block's (biomes.js).
@@ -70,23 +70,25 @@ export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [],
   const [kind, n] = set.fliers;
   for (let k = 0; k < n; k++) out.push({kind, x: (rnd() * 2 - 1) * halfX * .6, z: (rnd() * 2 - 1) * halfZ * .6, r: 30 + rnd() * 40, up: 25 + rnd() * 15, speed: (.12 + rnd() * .08) * (rnd() < .5 ? -1 : 1), phase: rnd() * Math.PI * 2});
  }
- // People: three walking a 40 m stretch of the path, out and back.
- const path = paths[0]?.points;
- if (path?.length > 40) {
-  const i = 10 + Math.floor(rnd() * (path.length - 30)), a = path[i];
-  let j = i, run = 0;
-  while (j < path.length - 1 && run < 40) { run += Math.hypot(path[j + 1].x - path[j].x, path[j + 1].z - path[j].z); j++; }
-  // Along the path's own points (a chord between its ends left the path on a
-  // bend), abreast within its width.
-  const line = path.slice(i, j + 1).map(p => ({x: p.x, z: p.z})), w = paths[0].width ?? 2.5;
-  for (let k = 0; k < 3; k++) out.push({kind: 'walker', line, side: (k - 1) * Math.min(1.1, w * .3), lag: k * .9, speed: 1.2, phase: rnd() * 30});
+ // People: three walking one way along the longest piece of the path, from
+ // its start to its end and round again (the owner: "no reason they would be
+ // walking reverse"; out and back, they turned and walked home).
+ const piece = paths.slice().sort((p, q) => q.points.length - p.points.length)[0];
+ if (piece?.points.length > 6) {
+  const line = piece.points.map(p => ({x: p.x, z: p.z})), w = piece.width ?? 2.5;
+  // A fourball (the owner's review: four bodies to show, was three).
+  for (let k = 0; k < 4; k++) out.push({kind: 'walker', line, loop: true, side: (k - 1.5) * Math.min(.8, w * .22), lag: k * .9, speed: 1.2, phase: rnd() * 30});
  }
  // A greenkeeper mowing the rough between holes, back and forth.
  // Iteration 7: tried at up to forty spots, each run clear of trees and of
- // play all along (one try left most wooded courses without one).
- for (let k = 0; k < 40; k++) {
+ // play all along (one try left most wooded courses without one). The
+ // owner's review, iteration 10: its whole run on mown rough -- it waded
+ // through native prairie on Midwest and marram on Links -- and none on a
+ // landscape whose rough all grows tall (`scatter.tallGrass`).
+ const mown = (x, z) => surface(x, z) === 'rough';
+ for (let k = 0; k < (biomeOf(s.biome).scatter?.tallGrass ? 0 : 80); k++) {
   const m = spot(28, 60), a = rnd() * Math.PI;
-  if (m && [.25, .5, .75, 1].every(u => open(m.x + Math.sin(a) * 30 * u, m.z + Math.cos(a) * 30 * u, 24, 4))) { out.push({kind: 'mower', ax: m.x, az: m.z, bx: m.x + Math.sin(a) * 30, bz: m.z + Math.cos(a) * 30, side: 0, lag: 0, speed: 1.8, phase: rnd() * 30}); break; }
+  if (m && Array.from({length: 11}, (_, i) => i / 10).every(u => { const x = m.x + Math.sin(a) * 30 * u, z = m.z + Math.cos(a) * 30 * u; return open(x, z, 24, 4) && mown(x, z); })) { out.push({kind: 'mower', ax: m.x, az: m.z, bx: m.x + Math.sin(a) * 30, bz: m.z + Math.cos(a) * 30, side: 0, lag: 0, speed: 1.8, phase: rnd() * 30}); break; }
  }
  return out;
 }

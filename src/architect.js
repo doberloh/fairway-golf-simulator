@@ -324,7 +324,10 @@ export function designHole({s,hole,par,line,bio,geo}){
   earthworks.push({kind:'ridge',z,half:across(z)+greenSize+18,r:9,h:3.6,aim:true,why:'The Dell\'s dune: it hides the green in the hollow behind it. A white stone on its crest gives the line.'});
  }else if(template==='alps'){
   const z=length-greenSize-42;
-  earthworks.push({kind:'ridge',z,half:across(z)+30,r:13,h:5.5,why:'The Alps: a great ridge across the fairway short of the green, so the approach is played blind over it.'});
+  // A broad hill, not a bank (the owner's review, PNW: "a really weird look"
+  // -- it was 13 m wide for 5.5 m high, a 66% face and a crease at the
+  // crest): 24 m for 5 m, about a third. PLACED.
+  earthworks.push({kind:'ridge',z,half:across(z)+30,r:24,h:5,why:'The Alps: a great ridge across the fairway short of the green, so the approach is played blind over it.'});
   greenBunker(FRONT,'Beyond the Alps, a bunker across the front of the green for the approach that does not quite carry.',{rx:size(7,10),rz:size(3,4.5)});
  }else if(template==='barranca'){
   const r=12,z=clamp(goodZ+35,fairwayStart+45,length-greenSize-45);
@@ -410,11 +413,24 @@ export function designedPlanting({holes,s,bio,treeSize}){
   const d=h.design;if(!d||h.par===3)continue;
   const rnd=archStream(s.seed||'EVERGREEN','arch','planting',s.biome||'',h.hole);
   const semi=s.semiRough??6;
-  if(avenueStyles.has(d.style)&&rnd()<avenueShare){
+  // A FELLED AVENUE'S STUMPS, SCATTERED (the owner's review: stumps in a line
+  // down the fairway "is not right"; they stand where trees were taken out
+  // to open the views -- here and there in the rough, a few in a group, not
+  // an avenue's even row). Three to seven a hole, 6 to 40 m past the
+  // semi-rough, either side; a third in pairs. PLACED.
+  if(felled&&avenueStyles.has(d.style)&&rnd()<.75){
+   const n=3+Math.floor(rnd()*5),stop=h.length-50;
+   for(let i=0;i<n;i++){
+    const z=h.fairwayStart+rnd()*Math.max(10,stop-h.fairwayStart),side=rnd()<.5?-1:1,w=side<0?h.leftWidth(z):h.rightWidth(z),off=w+semi+6+rnd()*34;
+    const p=h.toWorld({x:h.center(z)+side*off,z});
+    out.push({x:p.x,z:p.z,kind:main,h:1,r:1,shade:rnd(),hole:h.hole,why:'stump'});
+    if(rnd()<.33){const q=h.toWorld({x:h.center(z)+side*(off+2+rnd()*4),z:z+(rnd()-.5)*8});out.push({x:q.x,z:q.z,kind:main,h:1,r:1,shade:rnd(),hole:h.hole,why:'stump'});}
+   }
+  }else if(avenueStyles.has(d.style)&&rnd()<avenueShare){
    const sides=rnd()<.6?[1,-1]:[rnd()<.5?1:-1],step=13+rnd()*5,size=treeSize(main,.55+rnd()*.2,.5),stop=h.length-70;
    for(const side of sides)for(let z=h.fairwayStart+15;z<stop;z+=step){
     const w=side<0?h.leftWidth(z):h.rightWidth(z),p=h.toWorld({x:h.center(z)+side*(w+semi+11),z});
-    out.push({x:p.x,z:p.z,kind:main,h:size.h,r:size.r,shade:rnd(),hole:h.hole,why:felled?'stump':'avenue'});
+    out.push({x:p.x,z:p.z,kind:main,h:size.h,r:size.r,shade:rnd(),hole:h.hole,why:'avenue'});
    }
   }
   const turn=h.doglegAngle||0;
@@ -574,7 +590,10 @@ export function earthField(mounds, works = [], cell = 24) {
    const d = Math.hypot(x - o.ax - dx * t, z - o.az - dz * t);
    if (d >= o.r) continue;
    if (o.kind === 'ravine') { const f = o.floor / 2, u = d <= f ? 0 : (d - f) / (o.r - f); y -= o.depth * (1 - u * u * (3 - 2 * u)); }
-   else y += o.h * bump(d / o.r);
+   // A ridge dies into the land over the outer quarter of its length at
+   // each end, as a dune does (the owner's review: the Alps stood up in
+   // round caps either side of the fairway).
+   else { const u = Math.min(1, Math.min(t, 1 - t) / .25), end = u * u * (3 - 2 * u); y += o.h * end * bump(d / o.r); }
   }
   return y;
  };

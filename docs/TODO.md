@@ -40,8 +40,9 @@ quality measures*, which it absorbs.
 
 - [ ] **Not yet played by a person: the studio's *How the course is made*.**
   Choose Architect (beta): the sliders the architect decides should go, the
-  *Architect (beta)* heading with Style, Club, Age and The land's story should
-  appear, and the card should stay without its length slider; choose Classic
+  *Architect (beta)* heading with Style, Club, Age and Heritage should
+  appear, each with its sentence under it changing as the choice changes
+  (built in the owner's review; not seen), and the card should stay without its length slider; choose Classic
   again and everything returns. Save the course and export its code: both
   should come back as Architect. (Phase 0: Node tests, and the
   `architect-studio` smoke journey drives all of it but the code export.)
@@ -83,6 +84,23 @@ quality measures*, which it absorbs.
   crowd on Low. Seen as a PDF: the yardage book. Not seen: the pause menu's
   *Yardage book* item clicked in the game, a ball hit at a stand in a round.
   To check: an Architect Championship course on Sunday; pause, Yardage book.
+- [ ] **Not yet played by a person: the owner's review (30 October 2026).**
+  Seen in GPU captures: the cart paths (six iterations), the fountain moving
+  (five; a drop measured rising), the people, crowd and mower (ten each), the
+  Alps as a broad hill, Links ST-1's fairways in two pairs. Seen in Node
+  only: rakes in the sand, divots toward the green, scattered stumps, trees
+  by age, a path bridging a barranca. Not seen at all: the dials'
+  sentences in the studio, the paths on the map, the walkers' bob in
+  motion. To check: the owner's own courses -- Links ST-1 (Links style,
+  Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
+- [ ] **The creek's flow arrows (the owner's screenshot 2) -- the owner's
+  call.** They are main's stream ripples (water-bodies.js `STREAM_FLOW`),
+  on Classic too, not something the Architect work added; left as they are
+  until the owner says whether to soften or drop them.
+- [ ] **The crowd's cost not measured.** Five spectator bodies instead of one
+  is five times the crowd's draw calls on Medium and up (none on Low). Run
+  `node tools/profile.mjs --only architect` with the rest of the goal's
+  profile.
 - [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
   Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
   stores positions as int16 in a box two model-heights each way; a model

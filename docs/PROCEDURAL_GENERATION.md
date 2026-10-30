@@ -194,7 +194,8 @@ the last green's level, so its fairway lies beside the other's rather than
 beside its teeing ground. After routing and before anything measures a
 corridor (`shareFairways`), wherever two fairways run nearly parallel with
 under 85 m of rough between them, each widens to the middle, so the strip
-between becomes one fairway. Never across a pond; never at a tee end or
+between becomes one fairway (on an Architect course each fairway joins one
+neighbour at most, the longest joins first: `pairs`). Never across a pond; never at a tee end or
 green complex. A join is decided for the PAIR (generator 47): taken only
 where the two fairways run alongside for at least 100 m and, on average, two
 thirds of their shareable stretch -- a double fairway, never a crossbar --
@@ -259,7 +260,7 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   nine pulled home toward its turn, every hole kept within walking reach of
   home, the green before the last about a last hole's length out, the 10th tee
   at home, the walk to each next tee priced high; twelve routings tried.
-- **Cart paths** (paths.js): routed when planting begins, down each hole on
+- **Cart paths** (paths.js): routed across a cost grid (A*) when planting begins, off greens, tees, sand and water, round the fairways, on walkable grades, joined into one network; down each hole on
   its bail-out side 14 m beyond the rough and round its hazards, past the
   green to a pull-off and on to the next tee, smoothed; pushed sideways off any
   green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
@@ -288,16 +289,19 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   story's buildings: stands round the last green and a par three, a
   scoreboard, towers, marquees, gallery ropes and the crowd by the pin day.
 - **History by age** (architect.js): grassed-over bunkers as hollows on
-  municipal, old and restored courses; a restored course's felled avenue
-  left as stumps.
+  municipal, old and restored courses; a restored course's felled trees
+  left as stumps scattered in the rough (3-7 a hole). Trees sized by age:
+  New 0.68, Mature 1, Old 1.18, Restored 1.08 of full height.
 - **Life** (life.js), after the planting: animals and distant people, out
-  of play and clear of the trees, drawn only.
-- **The land's story** (story.js), after the clubhouse and before the
-  houses and trees: field walls, a farmstead, ruins, a landmark on a hole's
-  line, a stone circle and lanterns, by The land's story.
+  of play and clear of the trees, drawn only -- a fourball on the longest
+  path piece, a mower only on a run of mown rough (none where the rough
+  grows tall).
+- **Heritage** (story.js; the setting was The land's story), after the
+  clubhouse and before the houses and trees: field walls, a farmstead,
+  ruins, a landmark on a hole's line, a stone circle and lanterns.
 - **Built water** (waterworks.js), on the finished ground: rip-rap or a tie
   wall along the side of each pond that faces play, by style, and a fountain
-  in a big pond on a dressed club. A bridge's deck height is fixed where the
+  in a big pond on a dressed club (its water drawn moving by the renderer). A bridge's deck height is fixed where the
   paths are routed, so the drawn deck and the solid one agree.
 - **The trees** are cleared to a scalloped line, not faded by chance; avenues
   line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's

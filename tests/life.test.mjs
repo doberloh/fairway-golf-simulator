@@ -50,3 +50,27 @@ test('the age dial: grassed-over bunkers on a municipal course, a felled avenue\
  assert.equal(old.storyProps.filter(p => p.kind === 'stump').length, 0, 'stumps on a course that kept its avenue');
  assert.equal(arch('autumn', {archStyle: 'parkland', archAge: 'new'}).mounds.filter(m => m.why === 'hollow').length, 0, 'hollows on a new members\' course');
 });
+
+// THE OWNER'S REVIEW: a felled avenue's stumps stood in a row down the
+// fairway; they are scattered now -- their distances off the fairway's line
+// spread over tens of metres. And trees grow with the course: a New course's
+// stand well short of an Old one's.
+test('stumps stand scattered, and trees grow with the course', () => {
+ const w = arch('autumn', {archStyle: 'parkland', archAge: 'restored'}), offs = [];
+ for (const p of w.storyProps.filter(p => p.kind === 'stump')) { const n = w.nearest(p.x, p.z); offs.push(Math.abs(n.p.x - n.h.center(Math.max(0, Math.min(n.h.length, n.p.z))))); }
+ const mean = offs.reduce((a, b) => a + b, 0) / offs.length, sd = Math.sqrt(offs.reduce((a, b) => a + (b - mean) ** 2, 0) / offs.length);
+ assert.ok(offs.length >= 8 && sd > 6, `${offs.length} stumps, their offsets spread ${sd.toFixed(1)} m`);
+ const tall = w => { const t = w.trees.filter(t => !t.under && t.h > 4); return t.reduce((a, b) => a + b.h, 0) / t.length; };
+ const young = tall(arch('midwest', {archAge: 'new'})), old = tall(arch('midwest', {archAge: 'old'}));
+ assert.ok(young < old * .8, `trees ${young.toFixed(1)} m on a new course, ${old.toFixed(1)} m on an old one`);
+});
+
+// THE MOWER ON MOWN ROUGH (the owner's review, iteration 10): its whole run
+// on rough -- it waded through Midwest's prairie and Links' marram -- and no
+// mower where all the rough grows tall.
+test('the mower runs on mown rough, and a links has none', () => {
+ const mid = world({seed: 'M-1', holes: 9, biome: 'midwest', designer: 'architect'}), m = mid.life.find(l => l.kind === 'mower');
+ assert.ok(m, 'no mower on Midwest');
+ for (let u = 0; u <= 1.0001; u += .05) assert.equal(mid.surface(m.ax + (m.bx - m.ax) * u, m.az + (m.bz - m.az) * u), 'rough', 'the mower off the rough');
+ assert.ok(!world({seed: 'M-1', holes: 9, biome: 'links', designer: 'architect'}).life.some(l => l.kind === 'mower'), 'a mower in the marram');
+});

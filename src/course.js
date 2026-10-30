@@ -228,7 +228,7 @@ const heading=(h,z)=>{const a=h.toWorld({x:h.center(z-6),z:z-6}),b=h.toWorld({x:
 // the join must run along -- a pair that only crosses in the middle (the
 // staggered out-and-back, whose fairways each lie beside the other's tee
 // ground) is refused rather than joined by a crossbar.
-export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,seam=0,debug=null}={}){
+export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,seam=0,pairs=false,debug=null}={}){
  const shareStretch=stretch;
  const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set()),per=holes.map(()=>({}));
  // A pond drawn nearer another hole's centre line than its own is dropped
@@ -307,10 +307,24 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
  // lines), and how much the rough between them changes along it.
  const shape=(i,j)=>{let c=0,s=0,lo=1e9,hi=0;for(const side of [-1,1]){const p=per[i][side];for(const r of p?.runs||[])if(r.j===j)for(let m=r.k0;m<r.k1;m++){if(!p.par[m])continue;c++;s+=p.par[m];lo=Math.min(lo,p.rough[m]);hi=Math.max(hi,p.rough[m]);}}return {par:c?s/c:0,spread:c?hi-lo:0};};
  const takes=(i,j)=>{const a=joined(i,j),b=joined(j,i);if(a<run||b<run)return false;const f=shape(i,j),ok=(a/Math.max(1,span(i))+b/Math.max(1,span(j)))/2>=cover;if(debug)debug.push({hole:holes[i].hole,why:`pair with ${holes[j].hole+1} covers ${(a/span(i)*100).toFixed(0)}% / ${(b/span(j)*100).toFixed(0)}%, parallel ${f.par.toFixed(3)}, rough spread ${f.spread.toFixed(0)} m${ok?'':' REFUSED'}`});return ok;};
+ // PAIRS ONLY (`pairs`, an Architect course; the owner's review, 30 October
+ // 2026, Links ST-1: four fairways ran together into one field). Each hole
+ // joins one neighbour at most -- the pairs that would join, longest join
+ // first, each taken while neither hole has a partner yet. Classic joins
+ // every pair `takes` allows, as before.
+ let chosen=takes;
+ if(pairs){
+  const cand=[];
+  for(let i=0;i<holes.length;i++)for(let j=i+1;j<holes.length;j++)if(takes(i,j))cand.push({i,j,L:joined(i,j)+joined(j,i)});
+  cand.sort((a,b)=>b.L-a.L||a.i-b.i||a.j-b.j);
+  const mate=new Map();
+  for(const c of cand)if(!mate.has(c.i)&&!mate.has(c.j)){mate.set(c.i,c.j);mate.set(c.j,c.i);}
+  chosen=(i,j)=>mate.get(i)===j;
+ }
  for(const [i,h] of holes.entries())for(const side of [-1,1]){
   const s=per[i][side];if(!s)continue;
   const {z0,z1,n,want,own}=s,keep=new Float32Array(n+1);
-  for(const r of s.runs)if(takes(i,r.j))for(let m=r.k0;m<r.k1;m++)keep[m]=want[m];
+  for(const r of s.runs)if(chosen(i,r.j))for(let m=r.k0;m<r.k1;m++)keep[m]=want[m];
   if(!keep.some(Boolean))continue;
    // Blur the joined reach along its length (`blur`), inside each run only.
    if(blur){
@@ -1385,7 +1399,7 @@ export function* generateWorldSteps(settings={},options={}){
  // SHARED FAIRWAYS on a links (the cartoon overhaul; `sharedFairways`).
  // Before anything measures a corridor, so ownership, the ground and every
  // surface question see the widened holes.
- if(bio.sharedFairways&&!s.range)shareFairways(holes,bio.sharedFairways);
+ if(bio.sharedFairways&&!s.range)shareFairways(holes,isArchitect(s)?{...bio.sharedFairways,pairs:true}:bio.sharedFairways);
  const holeBoxes = holes.map(h => {
   const greenEnd = 25 + s.fringe + s.semiRough;
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, reach = greenEnd;
@@ -2277,7 +2291,7 @@ export function* generateWorldSteps(settings={},options={}){
  };
  // An Architect course's cart paths (paths.js), set once the holes are built
  // and before anything is planted; null on a Classic course, which has none.
- let pathIdx=null,paths=[],bridges=[];
+ let pathIdx=null,paths=[],bridges=[],pathConnect=null;
  function surface(x,z){
   if(lakeOwner(x,z))return 'water';
   const st=streams.at(x,z);
@@ -2327,7 +2341,7 @@ export function* generateWorldSteps(settings={},options={}){
  yield phaseAt(4);
  // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
  // that follow ask `surface`, which now knows where the paths run.
- if(isArchitect(s)&&!s.range){({paths,bridges}=routePaths({holes,s,surface,streams,ravines:earthworks.filter(e=>e.kind==='ravine')}));pathIdx=pathIndex(paths);
+ if(isArchitect(s)&&!s.range){({paths,bridges,connect:pathConnect}=routePaths({holes,s,surface,streams,height,ravines:earthworks.filter(e=>e.kind==='ravine')}));pathIdx=pathIndex(paths);
   // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
   // and its middle, decided here once so the drawn deck and the solid one
   // (physics.js) are the same plank.
@@ -2343,7 +2357,7 @@ export function* generateWorldSteps(settings={},options={}){
  if(isArchitect(s)&&!s.range){
   const fans0=teeFans(holes);
   const club=siteClubhouse({holes,s,surface,nearest,height,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans0,x,z,pad)});
-  if(club){buildings.push(club);if(paths.length){linkBuilding(paths[0],club);pathIdx=pathIndex(paths);}}
+  if(club){buildings.push(club);if(paths.length){linkBuilding(paths,club,pathConnect);pathIdx=pathIndex(paths);}}
  }
  // THE LAND'S STORY (story.js; architect-courses, phase 6): field walls, a
  // farmstead, ruins, a landmark, a stone circle and lanterns, by The land's
@@ -2439,7 +2453,14 @@ export function* generateWorldSteps(settings={},options={}){
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
  // 0.7-1.6 m, the teddy bear's real height (RESEARCH, *The overhaul's desert pack*).
- const treeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
+ // TREES BY THE COURSE'S AGE (an Architect course; the owner's review: "can
+ // course maturity also determine tree size?"): a New course's trees about
+ // two thirds grown, an Old one's a fifth taller, a Restored one's between;
+ // their spread follows at seven tenths. Shrubs and ground plants are as they
+ // are. PLACED. Classic never comes through here.
+ const AGE_TREES={new:.68,mature:1,old:1.18,restored:1.08},ageK=arch?(AGE_TREES[s.archAge]??1):1;
+ const treeSize=(kind,a,b)=>{const t=baseTreeSize(kind,a,b);if(ageK===1||GROUND_PLANTS.has(kind)||BRUSH_SIZE[kind]||kind==='cholla')return t;return {h:t.h*ageK,r:t.r*(1+(ageK-1)*.7)};};
+ const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the

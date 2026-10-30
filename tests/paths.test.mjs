@@ -13,20 +13,22 @@ import {GROUNDS, allows, isNatural} from '../src/grounds.js';
 const arch = world({seed: 'PATHS-T', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
 const classic = world({seed: 'PATHS-T', holes: 9, biome: 'midwest'});
 
-test('an Architect course has a path the length of a course; Classic has none', () => {
+// The network's points, every piece.
+const allPoints = w => w.paths.flatMap(p => p.points);
+
+test('an Architect course has a network of paths a course long; Classic has none', () => {
  assert.equal(classic.paths.length, 0);
  assert.equal(classic.bridges.length, 0);
- assert.equal(arch.paths.length, 1);
- const p = arch.paths[0].points;
+ assert.ok(arch.paths.length >= 9, `${arch.paths.length} pieces`);
  let len = 0;
- for (let i = 1; i < p.length; i++) len += Math.hypot(p[i].x - p[i - 1].x, p[i].z - p[i - 1].z);
+ for (const path of arch.paths) for (let i = 1; i < path.points.length; i++) len += Math.hypot(path.points[i].x - path.points[i - 1].x, path.points[i].z - path.points[i - 1].z);
  assert.ok(len > 2500 && len < 9000, `nine holes of path: ${Math.round(len)} m`);
- assert.ok(arch.paths[0].width >= 2 && arch.paths[0].width <= 3.2, 'about 8 ft wide');
+ for (const path of arch.paths) assert.ok(path.width >= 2 && path.width <= 3.2, 'about 8 ft wide');
 });
 
 test('the path is its own lie, never over a green, a tee, sand or water', () => {
  let on = 0, n = 0;
- for (const q of arch.paths[0].points) {
+ for (const q of allPoints(arch)) {
   n++;
   const s = arch.surface(q.x, q.z);
   if (s === 'path') on++;
@@ -48,11 +50,32 @@ test('the path stays out of play beside the hole it runs down', () => {
  // Off the mown fairway for nearly all its run beside the holes; it crosses
  // fairways only on the way from a green to the next tee.
  let fairway = 0;
- for (const q of arch.paths[0].points) {
+ const pts = allPoints(arch);
+ for (const q of pts) {
   const n = arch.nearest(q.x, q.z);
   if (n.h.localSurface?.(n.p.x, n.p.z) === 'fairway' || n.h.surface(n.p.x, n.p.z) === 'fairway') fairway++;
  }
- assert.ok(fairway / arch.paths[0].points.length < .12, `${fairway} path points on fairway`);
+ assert.ok(fairway / pts.length < .02, `${fairway} of ${pts.length} path points on fairway`);
+});
+
+// THE OWNER'S REVIEW (30 October 2026): paths through greens and tees, on
+// unwalkable slopes, in sharp zigzags. The routed network keeps 10 m off every
+// green's edge, climbs nothing steeper than 25% between points, and turns
+// gently -- at most a few corners of more than 35 degrees a course.
+test('the path keeps off the greens, climbs walkable grades and turns gently', () => {
+ for (const w of [arch, world({seed: 'ST-1', holes: 9, biome: 'redwood', designer: 'architect'})]) {
+  let sharp = 0;
+  for (const path of w.paths) {
+   const p = path.points;
+   for (let i = 1; i < p.length; i++) {
+    const a = p[i - 1], b = p[i], d = Math.hypot(b.x - a.x, b.z - a.z);
+    for (const h of w.holes) { const g = h.worldGreen; assert.ok(Math.hypot(b.x - g.x, b.z - g.z) > (h.greenSize ?? 15) * (h.greenAspect ?? 1.1) + 10, `a path point by hole ${h.hole + 1}'s green`); }
+    if (d > 1) assert.ok(Math.abs(w.height(b.x, b.z) - w.height(a.x, a.z)) / d < .3, `a path step of ${(Math.abs(w.height(b.x, b.z) - w.height(a.x, a.z)) / d * 100).toFixed(0)}%`);
+    if (i > 1) { const o = p[i - 2]; let dh = Math.abs(Math.atan2(b.x - a.x, b.z - a.z) - Math.atan2(a.x - o.x, a.z - o.z)); if (dh > Math.PI) dh = 2 * Math.PI - dh; if (dh > .6) sharp++; }
+   }
+  }
+  assert.ok(sharp <= 12, `${sharp} sharp corners`);
+ }
 });
 
 test('free relief from a path: off it, stance and all, no nearer the hole, no penalty', () => {

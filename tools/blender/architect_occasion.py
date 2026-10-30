@@ -14,7 +14,8 @@
 #   tv tower     4 x 4, 12 m: scaffold, a platform, a camera under a hood
 #   marquee      10 x 10, 5.5 m: a peaked white hospitality tent
 #   rope         6 m of gallery rope on two stakes
-#   spectator    1.7 m: a figure in a sun hat
+#   spectator 1-5 1.3-2.3 m: five bodies from figures.py (cap, sun hat, umbrella,
+#                clapping, a child), dressed per spectator by the game
 #
 # Roles: frames and stakes `stone`, the event's colour `accent`, canvas and
 # boards `leaf` (white in the game), seats and the crowd's clothes `bark`,
@@ -24,6 +25,7 @@ import math, os, sys, random
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
 import cartoon as ct
+import figures as fig
 fb = ct.fb
 V = lambda x, y, z: Vector((x, y, z))
 
@@ -154,17 +156,22 @@ def rope():
     return build
 
 
-def spectator():
+# THE CROWD (the owner's review: "crowds need more variety"): five bodies
+# from figures.py -- a man in a cap, a woman in a sun hat and skirt, someone
+# under a golf umbrella, someone clapping in a visor, a child -- each coloured
+# per spectator by the game (renderer.js, PEOPLE_PALETTE).
+def spectator(kind):
     def build(mesh, rng):
-        for x in (-.1, .1):
-            mesh.add_tube([V(x, 0, .85), V(x, 0, .05)], [.075, .065], 5, 'bark', rng)
-        mesh.add_lump(V(0, 0, 1.18), (.2, .13, .34), 'accent', rng, subdiv=1, jitter=.02,
-                      shade=lambda p, n: .8 + .25 * max(0.0, n.z))
-        for x in (-1, 1):
-            mesh.add_tube([V(x * .22, 0, 1.4), V(x * .25, -.04, 1.0)], [.05, .045], 5, 'accent', rng)
-        mesh.add_lump(V(0, 0, 1.56), (.11, .12, .13), 'dirt', rng, subdiv=1, jitter=.02)
-        mesh.add_lump(V(0, 0, 1.66), (.2, .2, .04), 'leaf', rng, subdiv=1, jitter=0)
-        mesh.add_lump(V(0, 0, 1.7), (.1, .1, .07), 'leaf', rng, subdiv=1, jitter=0)
+        if kind == 1:
+            fig.person(mesh, rng, pose='stand', hat='cap')
+        elif kind == 2:
+            fig.person(mesh, rng, pose='stand', hat='sunhat', skirt=True)
+        elif kind == 3:
+            fig.person(mesh, rng, pose='umbrella', hat='none')
+        elif kind == 4:
+            fig.person(mesh, rng, pose='clap', hat='visor')
+        else:
+            fig.person(mesh, rng, pose='cheer', hat='cap', size=.62, head=1.25)
     return build
 
 
@@ -174,7 +181,11 @@ MODELS = [
     ('Blender_TVTower_1', tv_tower()),
     ('Blender_Marquee_1', marquee()),
     ('Blender_GalleryRope_1', rope()),
-    ('Blender_Spectator_1', spectator()),
+    ('Blender_Spectator_1', spectator(1)),
+    ('Blender_Spectator_2', spectator(2)),
+    ('Blender_Spectator_3', spectator(3)),
+    ('Blender_Spectator_4', spectator(4)),
+    ('Blender_Spectator_5', spectator(5)),
 ]
 
 ct.export(MODELS, colours={'stone': (0.7, 0.72, 0.74), 'accent': (0.15, 0.35, 0.25), 'leaf': (0.97, 0.97, 0.95),

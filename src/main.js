@@ -5801,7 +5801,10 @@ function renderPanel(name,content){
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${escape(String(f.names?.[o]??o))}</option>`).join('')}</select></label>`;
+   // An Architect dial says what its choice does to the course, under the
+   // list (the owner's review: "what's changing?"), and keeps saying it as
+   // the choice changes (`describeChoice`, below).
+   if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${escape(String(f.names?.[o]??o))}</option>`).join('')}</select></label>${f.describe?`<p class="choice-note" id="${k}Note" aria-live="polite">${escape(f.describe[settings[k]]||'')}</p>`:''}`;
    // A field with `warn` in the schema turns red past its threshold, and says
    // why in a bubble that pops out over the panel when the slider is let go
    // (wired below, after the panel is drawn). Opening the panel on a value
@@ -8163,3 +8166,7 @@ try{
  globalThis.__splashStep?.('Ready',1);
  dismissSplash();
 }catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}
+
+// THE ARCHITECT'S DIALS SAY WHAT THEY DO (the owner's review): when a choice
+// with a `describe` changes, its sentence under the list follows.
+document.addEventListener('change',e=>{const k=e.target?.id,f=FIELD[k];if(!f?.describe)return;const note=document.getElementById(k+'Note');if(note)note.textContent=f.describe[e.target.value]||'';});

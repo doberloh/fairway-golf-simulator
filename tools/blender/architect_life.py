@@ -16,8 +16,9 @@
 #   roadrunner   0.5 m: streaked, a crest and a long tail, running
 #   bird         0.2 m tall, 1.2 m across: wings spread, gliding (a gull
 #                white, a raven black, by colour)
-#   golfer       1.75 m: walking, cap, shirt, trousers, a bag on the back
-#   mower        1.6 m: a greenkeeper on a ride-on mower
+#   walker 1-4   1.75 m: golfers walking (figures.py) -- a bag carried,
+#                a push trolley, a pull trolley, a bag and a bucket hat
+#   mower        2.3 m: a greenkeeper on a five-unit fairway reel mower
 #
 # Roles (the game colours each per animal): body `stone`, darker parts
 # `bark`, faces and legs `dirt`, a mark or a shirt `accent`, a bag or a cap
@@ -27,6 +28,7 @@ import math, os, sys, random
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
 import cartoon as ct
+import figures as fig
 fb = ct.fb
 V = lambda x, y, z: Vector((x, y, z))
 soft = lambda lo, hi: (lambda p, n: lo + (hi - lo) * max(0.0, n.z))
@@ -146,41 +148,88 @@ def bird():
     return build
 
 
-def person(on_mower=False):
+# THE PEOPLE (the owner's review: more iteration and variety): one body,
+# figures.py, in four walkers -- a bag carried on the back, a push trolley, a
+# pull trolley, a caddie-style carry with a bucket hat -- each coloured per
+# figure by the game.
+def walker(kind):
     def build(mesh, rng):
-        z0 = .45 if on_mower else 0
-        if on_mower:
-            # The mower: a deck, a body with a seat, four wheels.
-            for x in (-.42, .42):
-                for y in (-.5, .5):
-                    mesh.add_tube([V(x - .06, y, .18), V(x + .06, y, .18)], [.18, .18], 8, 'dirt', rng)
-            mesh.add_lump(V(0, 0, .42), (.42, .7, .2), 'leaf', rng, subdiv=1, jitter=0, shade=soft(.75, 1.1))
-            mesh.add_lump(V(0, .22, .65), (.2, .16, .12), 'dirt', rng, subdiv=1, jitter=0)
-            mesh.add_tube([V(0, -.4, .55), V(0, -.25, .95)], [.025, .025], 4, 'dirt', rng)
-            mesh.add_tube([V(-.18, -.25, .95), V(.18, -.25, .95)], [.025, .025], 4, 'dirt', rng)
-            # Seated: thighs forward, shins down.
-            for x in (-.09, .09):
-                mesh.add_tube([V(x, .15, z0 + .3), V(x, -.12, z0 + .32), V(x, -.18, .3)], [.06, .055, .05], 6, 'bark', rng)
-            hip = z0 + .3
+        if kind == 1:
+            fig.person(mesh, rng, pose='walk', hat='cap', bag='back')
+        elif kind == 2:
+            fig.person(mesh, rng, pose='push', hat='visor', skirt=True)
+        elif kind == 3:
+            fig.person(mesh, rng, pose='pull', hat='none')
         else:
-            # Walking: one leg forward, one back.
-            for x, swing in ((-.09, .18), (.09, -.18)):
-                mesh.add_tube([V(x, 0, .9), V(x, swing * .5, .45), V(x, swing, .05)], [.07, .06, .05], 6, 'bark', rng)
-                mesh.add_lump(V(x, swing - .04, .04), (.05, .11, .04), 'dirt', rng, subdiv=1, jitter=0)
-            hip = .9
-        mesh.add_lump(V(0, 0, hip + .32), (.2, .13, .34), 'accent', rng, subdiv=1, jitter=.02, shade=soft(.8, 1.08))
-        for x, swing in ((-1, -.16), (1, .16)):
-            mesh.add_tube([V(x * .22, 0, hip + .55), V(x * .25, swing * .6, hip + .3), V(x * .24, swing, hip + .08)],
-                          [.05, .045, .04], 5, 'accent', rng)
-            mesh.add_lump(V(x * .24, swing, hip + .06), (.04, .04, .04), 'stone', rng, subdiv=1, jitter=0)
-        mesh.add_lump(V(0, 0, hip + .78), (.11, .12, .13), 'stone', rng, subdiv=1, jitter=.02, shade=soft(.85, 1.05))
-        mesh.add_lump(V(0, .01, hip + .86), (.12, .13, .07), 'leaf', rng, subdiv=1, jitter=0)
-        mesh.add_lump(V(0, -.1, hip + .84), (.08, .07, .015), 'leaf', rng, subdiv=1, jitter=0)
-        if not on_mower:
-            # The bag on the back, its clubs' heads showing.
-            mesh.add_tube([V(.1, .2, hip - .2), V(-.08, .24, hip + .55)], [.1, .1], 7, 'leaf', rng, shade=lambda co, t: .85 + .15 * t)
-            for k in range(3):
-                mesh.add_tube([V(-.08 + k * .03, .24, hip + .55), V(-.1 + k * .04, .26, hip + .72)], [.015, .015], 4, 'dirt', rng)
+            fig.person(mesh, rng, pose='walk', hat='bucket', bag='back')
+    return build
+
+
+# THE MOWER (the owner's review: "the mower does not look like a mower").
+# A five-unit fairway reel mower, from the makers' figures (RESEARCH.md,
+# *A fairway mower*): about 2.7 m long, 2.5 m wide cutting, 2.2 m to the top
+# of the roll bar; three reel units in front, two between the wheels, big
+# front tyres that drive, small rear ones that steer, the seat between them,
+# a steering column, an engine hood behind, a roll-over bar. A greenkeeper
+# drives it in a hi-vis shirt. Roles: paint `leaf`, the driver's shirt
+# `accent`, reels and frames `bark` (as the driver's trousers), tyres,
+# seat and bar `dirt`, skin `stone`.
+def mower():
+    def build(mesh, rng):
+        # The chassis: a low body between the wheels, the hood behind the seat.
+        mesh.add_lump(V(0, .05, .5), (.46, .92, .16), 'leaf', rng, subdiv=2, jitter=0, shade=soft(.7, 1.1))
+        mesh.add_lump(V(0, .72, .86), (.5, .42, .32), 'leaf', rng, subdiv=2, jitter=0, shade=soft(.75, 1.15))
+        # Iteration 2: a flat footplate where a blob hid the driver's legs.
+        mesh.add_lump(V(0, -.38, .64), (.3, .26, .04), 'dirt', rng, subdiv=1, jitter=0)
+        # Wheels: big tyres in front, small ones behind, each with a painted hub.
+        # Iteration 8: turf tyres with chunky lugs round the tread and a grey
+        # rim inside the painted hub (plain discs read as black plates).
+        def tyre(x0, x1, y, z, r, lugs):
+            mesh.add_tube([V(x0, y, z), V(x1, y, z)], [r * .93, r * .93], 16, 'dirt', rng)
+            for k in range(lugs):
+                a = k * 2 * math.pi / lugs
+                mesh.add_lump(V((x0 + x1) / 2, y + math.cos(a) * r * .95, z + math.sin(a) * r * .95), (abs(x1 - x0) / 2 + .01, r * .1, r * .1),
+                              'dirt', rng, subdiv=1, jitter=0)
+            xo = x1 if abs(x1) > abs(x0) else x0
+            mesh.add_lump(V(xo, y, z), (.03, r * .62, r * .62), 'bark', rng, subdiv=2, jitter=0)
+            mesh.add_lump(V(xo + math.copysign(.02, xo), y, z), (.03, r * .38, r * .38), 'leaf', rng, subdiv=1, jitter=0)
+        for x in (-1, 1):
+            # Iteration 9: a painted fender over each front tyre.
+            arc = [V(x * .65, -.55 + math.cos(a) * .44, .36 + math.sin(a) * .44) for a in [math.pi * (.15 + .7 * k / 6) for k in range(7)]]
+            mesh.add_tube(arc, [.13] * 7, 6, 'leaf', rng)
+            tyre(x * .52, x * .78, -.55, .36, .36, 14)
+            tyre(x * .44, x * .62, .82, .24, .24, 10)
+        # The reels: three across the front, two between the wheels behind
+        # them, each a grey cylinder with a roller and a painted hood.
+        def unit(x, y, w):
+            mesh.add_tube([V(x - w / 2, y, .15), V(x + w / 2, y, .15)], [.13, .13], 10, 'bark', rng)
+            # Iteration 9: the reel's blades, three dark spirals round it.
+            for b in range(3):
+                pts = [V(x - w / 2 + w * u, y + math.cos(b * 2.1 + u * 3.0) * .135, .15 + math.sin(b * 2.1 + u * 3.0) * .135) for u in (0, .25, .5, .75, 1)]
+                mesh.add_tube(pts, [.018] * 5, 4, 'dirt', rng)
+            mesh.add_tube([V(x - w / 2, y + .2, .07), V(x + w / 2, y + .2, .07)], [.06, .06], 8, 'bark', rng)
+            mesh.add_lump(V(x, y + .08, .27), (w / 2 + .02, .18, .07), 'leaf', rng, subdiv=1, jitter=0, shade=soft(.8, 1.1))
+            mesh.add_tube([V(x, y + .05, .3), V(x * .6, y * .55 - .1, .5)], [.035, .035], 5, 'bark', rng)
+        for x in (-.9, 0, .9):
+            unit(x, -1.32, .78)
+        for x in (-.48, .48):
+            unit(x, .2, .74)
+        # The seat and the column with its wheel.
+        mesh.add_lump(V(0, .3, 1.02), (.26, .22, .08), 'dirt', rng, subdiv=2, jitter=0)
+        mesh.add_lump(V(0, .48, 1.3), (.25, .07, .26), 'dirt', rng, subdiv=2, jitter=0)
+        mesh.add_tube([V(0, -.42, .7), V(0, -.25, 1.28)], [.04, .035], 6, 'dirt', rng)
+        ring = [V(math.cos(a) * .2, -.25 + math.sin(a) * .07, 1.3 + math.sin(a) * .05) for a in [k * math.pi / 6 for k in range(13)]]
+        mesh.add_tube(ring, [.022] * len(ring), 5, 'dirt', rng)
+        # Iteration 5: a sunshade canopy on the bar, as most fairway mowers
+        # carry, and two headlights in the front of the body.
+        mesh.add_lump(V(0, .5, 2.32), (.62, .62, .05), 'leaf', rng, subdiv=2, jitter=0, shade=soft(.7, 1.1))
+        for x in (-.2, .2):
+            mesh.add_lump(V(x, -.92, .58), (.06, .03, .045), 'stone', rng, subdiv=1, jitter=0)
+        # The roll-over bar: two posts and a bar over the driver's head.
+        mesh.add_tube([V(-.5, .62, .7), V(-.5, .62, 2.15), V(-.38, .62, 2.27), V(.38, .62, 2.27), V(.5, .62, 2.15), V(.5, .62, .7)],
+                      [.05] * 6, 8, 'dirt', rng)
+        # The greenkeeper, seated, both hands on the wheel.
+        fig.person(mesh, rng, pose='seated', hat='cap', at=(0, .28, 0), hip=1.08)
     return build
 
 
@@ -192,8 +241,11 @@ MODELS = [
     ('Blender_Heron_1', heron()),
     ('Blender_Roadrunner_1', roadrunner()),
     ('Blender_Bird_1', bird()),
-    ('Blender_Walker_1', person()),
-    ('Blender_Mower_1', person(on_mower=True)),
+    ('Blender_Walker_1', walker(1)),
+    ('Blender_Walker_2', walker(2)),
+    ('Blender_Walker_3', walker(3)),
+    ('Blender_Walker_4', walker(4)),
+    ('Blender_Mower_1', mower()),
 ]
 
 ct.export(MODELS, colours={'stone': (0.92, 0.9, 0.85), 'bark': (0.35, 0.3, 0.26), 'dirt': (0.2, 0.18, 0.17),
