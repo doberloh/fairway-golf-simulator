@@ -105,6 +105,17 @@ quality measures*, which it absorbs.
   call.** They are main's stream ripples (water-bodies.js `STREAM_FLOW`),
   on Classic too, not something the Architect work added; left as they are
   until the owner says whether to soften or drop them.
+- [ ] **Autumn's Architect course is 25% over Classic's frame time on Low
+  -- the owner's call on the fix.** Traced (ARCHITECT_COURSES.md, *Frame time
+  on Low, every landscape*) to the tee furniture -- benches, ball washers,
+  signs, 54 groups of separate meshes on both designers -- more of which falls
+  inside the view and shadow on that course's routing. Instancing them would
+  cut draws on Classic too, so it changes how Classic is drawn (not its
+  ground). The other nine landscapes are at or below Classic.
+- [ ] **`ball-light-hole-out` failed once in a full smoke run** (30 October
+  2026, "build no lit shader" at a hole-out on a Classic Surprise me round)
+  and passed three times alone and in the next full run. Not explained; if
+  it returns, its picture in bench/shots/smoke/ says which program compiled.
 - [ ] **The crowd's cost not measured.** Five spectator bodies instead of one
   is five times the crowd's draw calls on Medium and up (none on Low). Run
   `node tools/profile.mjs --only architect` with the rest of the goal's

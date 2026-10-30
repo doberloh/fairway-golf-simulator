@@ -254,9 +254,11 @@ strokes per 18 harder** (limit 1.5); Classic's fingerprint unchanged from the
 start; the bench moved (bunkers by a landing zone 83% against 27%, nines home
 11 of 12 against 7); **an eighteen builds at most 1.66 s slower** on
 Architect (PNW; limit 2 s); **frame time on Low within 10%** of Classic on
-Midwest, PNW and Links (+6.7%, -6.7%, -7.7%; GPU, *Frame time on Low at the
-end of the owner's review*); **every smoke journey green** (39 of 39, on the
-graphics card, after the review); the showcase saved
+nine of ten landscapes, all ten measured; **every smoke journey green** (39 of 39, on the
+graphics card, after the draw changes too -- the run before failed
+`ball-light-hole-out` once, a Classic Surprise me round the changes do not
+draw; it passed three times alone and in the full rerun: logged as a flake,
+not explained); the showcase saved
 (docs/reports/architect-showcase/, local, 32 pictures): a hero hole in every
 landscape (seed SC-3, each landscape's own style), four Classic-beside-
 Architect pairs on that seed (Midwest, Autumn, Links, PNW), the Redan, Dell,
@@ -264,6 +266,12 @@ Cape, Pit, Barranca and Alps, a contact sheet for each of the six kits, first
 against final for the fountain, the mower and the gallery, and ten course
 codes to paste into the game (made by the game's own exporter; each checked
 to import back as an Architect course).
+
+**Not met: Autumn's frame time on Low**, +25% processor and +28% graphics
+over Classic on the profile course, traced to the tee furniture both
+designers draw falling more into view on Architect's routing; the fix
+(instancing it) changes Classic's drawing and waits for the owner (*Frame
+time on Low, every landscape*; TODO).
 
 **Seen working in the game** (GPU captures, stills, and the smoke journeys'
 clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
@@ -981,6 +989,11 @@ version 14) -- inside the goal's 2 s, but closer to it. The ranges overlap
 (Classic 3.16-4.87, Architect 4.32-5.53 on PNW), and the likeliest cost is
 the cart paths' cost grid and search (paths.js), which reads the real ground
 at every step; not profiled. Four landscapes build faster on Architect.
+**Profiled since** (`node --cpu-prof`, three PNW eighteens a designer): of
+Architect's extra, most is `routeHoles` -- the routing from the clubhouse
+with the walk to each next tee priced in, about 0.54 s a course -- and the
+cart-path grid reading the real ground (`analyticHeight`), about 0.3 s a
+course.
 
 ### The wait to build at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
 
@@ -1000,6 +1013,51 @@ Island 6.66 / 4.75, Redwood 3.21 / 3.17, Autumn 4.51 / 4.73, Haunted 3.44 /
 4.33, Lakeshore 3.50 / 4.01 (Classic / Architect). The worst, Mountain, +0.9 s;
 inside the goal's 2 s everywhere. (Before the width tables Island was 11.03 s,
 +4.4 s.) Re-measured at the end of the goal.
+
+### Frame time on Low, every landscape (30 October 2026, after the review)
+
+`node tools/profile.mjs --only architect --landscapes all` (the flag added
+for this: the group had measured three landscapes), the real card, Low, the
+profile course on each landscape. **First run: over 10% on four landscapes**
+-- processor time +15% PNW, +13% Midwest and Redwood, +37.5% Autumn, and
+Autumn drawing 589 calls against Classic's 426. Traced, piece by piece, by
+hiding each part of the scene and counting the draws it saved:
+
+- **Cart paths were a mesh a piece** (twenty-odd, some two points long):
+  now one mesh a surface.
+- **Buildings were a mesh a part**, each inked and in the shadow pass: now
+  each building's parts merged, its colours baked into the vertices -- one
+  mesh and one ink a building. Seen in the game: unchanged to look at.
+- **Bridges were a group of meshes a 2 m bay** (a Barranca's bridge, spanned
+  wall to wall, some 60 meshes): now instanced across every bay.
+- **Stakes, posts and rakes, some forty draws, are not drawn on Low** -- Low
+  already leaves out the animals and the crowd.
+
+**Last run** (processor ms median, Classic / Architect; graphics ms; draws):
+
+| Landscape | CPU | GPU | Draws |
+| --- | --- | --- | --- |
+| PNW | 1.30 / 1.30 | 1.24 / 0.82 | 376 / 315 |
+| Desert | 1.60 / 1.40 | 1.49 / 0.99 | 407 / 329 |
+| Mountain | 1.40 / 1.10 | 1.08 / 0.66 | 406 / 333 |
+| Links | 1.40 / 1.10 | 1.07 / 0.67 | 347 / 245 |
+| Midwest | 1.60 / 1.40 | 1.13 / 0.72 | 414 / 349 |
+| Island | 1.40 / 1.30 | 0.94 / 0.93 | 381 / 321 |
+| Redwood | 1.80 / 1.50 | 1.13 / 0.66 | 443 / 371 |
+| Autumn | 1.60 / 2.00 | 1.30 / 1.66 | 426 / 533 |
+| Haunted | 2.10 / 1.60 | 1.95 / 1.06 | 460 / 386 |
+| Lakeshore | 1.60 / 1.40 | 1.33 / 0.66 | 426 / 328 |
+
+**Nine landscapes at or below Classic on both. Autumn is not: +25% processor,
++28% graphics** (over four runs its processor median was 1.6-2.0 ms on
+Classic and 2.0-2.4 on Architect; the timer steps by 0.1 ms and a case swings
+by up to 0.4 ms run to run). Traced: Architect's own pieces now cost less than
+the gap; the extra draws are the course's TEE FURNITURE -- the benches, ball
+washers and signs main draws for every hole, 54 groups of separate meshes,
+on both designers -- of which Architect's routing on that seed puts more
+inside the profile camera's view and shadow (196 draws against 148, the
+same groups). The fix is instancing the tee furniture: shared code, so it
+would change Classic's drawing too, and waits for the owner (TODO).
 
 ### Frame time on Low at the end of the owner's review (30 October 2026, ARCHITECT_VERSION 16)
 

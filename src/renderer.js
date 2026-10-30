@@ -89,6 +89,7 @@ import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {makeGodRays} from './godrays.js';
 import {applyCloudShadows,cloudShadowUniforms,packCloudShadows,allCloudShadows} from './cloud-shadows.js';
 import {makeClouds,applyCloudFade} from './clouds.js';
@@ -1979,15 +1980,22 @@ export class GolfView{
  addPaths(w){
   if(!w?.paths?.length)return;
   const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f'};
+  // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
+  // twenty-odd draws on a course whose paths are many short pieces).
+  const byKind=new Map();
   for(const path of w.paths){
    const p=path.points;if(p.length<2)continue;
-   const pos=[],uv=[],idx=[],half=path.width/2;let run=0;
+   const kind=path.kind||'concrete';if(!byKind.has(kind))byKind.set(kind,{pos:[],uv:[],idx:[]});
+   const {pos,uv,idx}=byKind.get(kind),base=pos.length/3,half=path.width/2;let run=0;
    for(let i=0;i<p.length;i++){
     const a=p[Math.max(0,i-1)],b=p[Math.min(p.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
     if(i)run+=Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z);
     for(const s of [-1,1]){const x=p[i].x+nx*half*s,z=p[i].z+nz*half*s;pos.push(x,w.height(x,z)+.035,z);uv.push(s<0?0:1,run/4);}
-    if(i){const k=(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
+    if(i){const k=base+(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
    }
+  }
+  for(const [kind,{pos,uv,idx}] of byKind){
+   const path={kind};
    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
    // Painted, not flat (the owner's review: "a better texture"): the surface's
    // own pattern, a tile per 4 m (`pathTexture`), white in the tile so the
@@ -2000,20 +2008,29 @@ export class GolfView{
   // the deck physics stands the ball on (course.js `b.deck`, its top) and to
   // the path's width, inked like the furniture.
   // Timber or stone, and the stone's colour, by the landscape's architect block.
-  const bridgeOf=k=>architectOf(k);
-  for(const b of w.bridges||[]){
-   const key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
-   const parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+  // INSTANCED (the owner's review, measured: each bay was its own group of
+  // meshes, every part twice for its ink, so a 30 m bridge -- a Barranca's,
+  // spanned wall to wall -- was some 60 meshes and Autumn's Architect course
+  // drew 163 more calls than Classic on Low). Now one InstancedMesh per part,
+  // and one for its ink, for every bay of every bridge.
+  const bridgeOf=k=>architectOf(k),key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+  const parts=modelParts(name),info=MESH_MODELS[name];
+  if(parts&&info&&w.bridges?.length){
    const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:bridgeOf(key).colours.bridgeStone}:{bark:'#8f6a45',stone:'#6b4a2f'};
-   const mats=parts.map(p=>this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted})),ink=this.inkMaterial(H);
-   const y=b.deck??Math.max(w.height(b.x,b.z),0)+.45,n=Math.max(1,Math.ceil(b.span/2)),bay=b.span/n,ca=Math.sin(b.angle),cb=Math.cos(b.angle);
-   for(let i=0;i<n;i++){
-    const t=(i+.5)/n-.5,g=new T.Group();
-    parts.forEach((p,j)=>{const m=new T.Mesh(p.geometry,mats[j]);m.castShadow=m.receiveShadow=true;g.add(m);const k=new T.Mesh(p.geometry,ink);k.castShadow=k.receiveShadow=false;g.add(k);});
-    g.scale.set(b.width/(2*info.rx),H,bay/(2*info.rz));g.rotation.y=b.angle;g.position.set(b.x+ca*b.span*t,y-DECK_TOP,b.z+cb*b.span*t);
-    this.group.add(g);
+   const bays=[];
+   for(const b of w.bridges){
+    const y=b.deck??Math.max(w.height(b.x,b.z),0)+.45,n=Math.max(1,Math.ceil(b.span/2)),bay=b.span/n,ca=Math.sin(b.angle),cb=Math.cos(b.angle);
+    for(let i=0;i<n;i++){const t=(i+.5)/n-.5;bays.push({x:b.x+ca*b.span*t,y:y-DECK_TOP,z:b.z+cb*b.span*t,angle:b.angle,sx:b.width/(2*info.rx),sz:bay/(2*info.rz)});}
    }
-   this.resources.push(...mats);
+   const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3(),ink=this.inkMaterial(H);
+   parts.forEach(p=>{
+    const mat=this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted});
+    const m=new T.InstancedMesh(p.geometry,mat,bays.length),k=new T.InstancedMesh(p.geometry,ink,bays.length);
+    bays.forEach((b,i)=>{q.setFromAxisAngle(up,b.angle);pos.set(b.x,b.y,b.z);sc.set(b.sx,H,b.sz);m4.compose(pos,q,sc);m.setMatrixAt(i,m4);k.setMatrixAt(i,m4);});
+    m.castShadow=m.receiveShadow=true;k.castShadow=k.receiveShadow=false;
+    for(const x of [m,k]){x.instanceMatrix.needsUpdate=true;x.computeBoundingSphere();this.group.add(x);}
+    this.resources.push(mat);
+   });
   }
  }
  // WATER MADE BY PEOPLE (phase 5; waterworks.js, tools/blender/architect_water.py):
@@ -2097,7 +2114,13 @@ export class GolfView{
  // colour -- and uninked (the furniture's ink is a handful of pieces a hole).
  // Decoration: nothing a ball hits.
  addMarkings(w){
+  this.markings=null;
   if(!w?.markers?.length||this.style!=='cartoon')return;
+  // Grouped, and not drawn on Low (the owner's review, measured: some forty
+  // draws of stakes, posts and rakes were most of what an Architect course
+  // cost over Classic on Low -- Low already leaves out the animals and the
+  // crowd). The frame loop sets the group's visibility by tier.
+  const marks=new T.Group();marks.name='Markings';this.group.add(marks);this.markings=marks;
   const KINDS={
    stake:{model:'Blender_Stake_1',height:.92,colours:{accent:'#e64a34',bark:'#4b3a2a'}},
    obstake:{model:'Blender_ObStake_1',height:1.05,colours:{stone:'#f6f3ea',bark:'#4b3a2a'}},
@@ -2122,10 +2145,10 @@ export class GolfView{
      mesh.setMatrixAt(i,m4.compose(pos,q,sc));
     });
     mesh.castShadow=kind!=='rake';mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
-    this.group.add(mesh);this.resources.push(mat);
+    marks.add(mesh);this.resources.push(mat);
     // Iteration 6: the furniture's ink, instanced, on what stands up (not a
     // rake lying in the grass), so a stake keeps its outline at a distance.
-    if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+    if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();marks.add(ink);}
    }
   }
  }
@@ -2159,11 +2182,19 @@ export class GolfView{
   for(const b of w.buildings){
    const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
    const tone=club?look:(STORY[b.kind]||{});
+   // ONE MESH A BUILDING (the owner's review, measured: a part a mesh, each
+   // inked and in the shadow pass, made Autumn's Architect course on Low draw
+   // a third more than Classic). Each part's role colour is baked into its
+   // vertices -- times the paint where it has one (mesh-assets.js: 1.0 is
+   // "as painted") -- and the parts merged: one mesh and one ink a building.
    const g=new T.Group();
-   for(const p of parts){
-    const m=new T.Mesh(p.geometry,this.surfaceMaterial(tone[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
-    const ink=new T.Mesh(p.geometry,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);
-   }
+   {const geos=parts.map(p=>{
+     const src=p.geometry.index?p.geometry.toNonIndexed():p.geometry.clone(),n=src.attributes.position.count,c=new T.Color(tone[p.role]??'#ffffff'),col=new Float32Array(n*3),paint=p.painted?src.attributes.color:null;
+     for(let i=0;i<n;i++){col[i*3]=c.r*(paint?paint.getX(i):1);col[i*3+1]=c.g*(paint?paint.getY(i):1);col[i*3+2]=c.b*(paint?paint.getZ(i):1);}
+     const out=new T.BufferGeometry();out.setAttribute('position',src.attributes.position);out.setAttribute('normal',src.attributes.normal);out.setAttribute('color',new T.BufferAttribute(col,3));return out;});
+    const merged=mergeGeometries(geos);for(const x of geos)x.dispose();
+    const m=new T.Mesh(merged,this.surfaceMaterial('#ffffff',{vertexColors:true}));m.castShadow=m.receiveShadow=true;g.add(m);
+    const ink=new T.Mesh(merged,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);}
    // The model's front is glTF +z (its Blender -y); the building's front is
    // its local -z, toward the first tee -- hence the half turn.
    g.scale.set(b.width/(2*info.rx),b.height,b.depth/(2*info.rz));
@@ -3454,6 +3485,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // Life on an Architect course (phase 6): never on Low.
   if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   this.fountains?.update(dt,this.elapsed);
+  if(this.markings)this.markings.visible=this.quality!==tierOf('low');
   // Tournament week's crowd (phase 7): never on Low either.
   if(this.occasion)this.occasion.crowd.visible=this.quality!==tierOf('low');
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;

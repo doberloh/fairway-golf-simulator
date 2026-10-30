@@ -234,6 +234,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - An Architect links joins fairways in pairs only; Classic's sharing must not move -- PROJECT_HANDOFF *AN ARCHITECT LINKS JOINS IN PAIRS*
 - A person model is many people: true height from `tall`, colours by hash -- PROJECT_HANDOFF *A PERSON IS ONE MODEL, MANY PEOPLE*
 - The fountain is moving water the renderer draws, reset per course -- PROJECT_HANDOFF *THE FOUNTAIN MOVES, SO IT IS NOT A MODEL*
+- An Architect piece is one draw (merged or instanced), and markings are off on Low -- PROJECT_HANDOFF *AN ARCHITECT PIECE IS ONE DRAW, NOT ONE PER PART*
 - A hand record lives in its hole's frame and is applied in architectCourse only; `archHand` is the schema's one list -- PROJECT_HANDOFF *HAND TOOLS: ONE RECORD, TWO HANDS*
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.
