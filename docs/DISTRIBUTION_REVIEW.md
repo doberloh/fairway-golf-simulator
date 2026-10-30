@@ -1584,3 +1584,10 @@ distribution:
   scripts).
 - **Not yet checked from a file opened straight from disk** (the yardage
   book's download from file://): to check with the TODO entries.
+- **After the owner's review** (30 October 2026): the page is 14,797,078 bytes
+  (7.60 MB gzipped). The fountain model left the bundle (52 KB; the renderer
+  draws the water); four walker and five spectator bodies replaced one of
+  each, and the mower was rebuilt. The yardage book can now also be
+  downloaded from the course studio -- the same local PDF download. Course codes may now
+  carry the hand tools' list (`archHand`), JSON in the same code; an empty
+  list is left out, so codes without hand features are unchanged.

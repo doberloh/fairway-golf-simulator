@@ -245,39 +245,33 @@ coloured per instance (no extra draws for the colours); the crowd five
 bodies (was one), so five times the crowd's draw calls on Medium and up
 (none on Low, where no crowd is drawn). Not profiled.
 
-### Where the goal stands (30 October 2026)
+### Where the goal stands (30 October 2026, after the owner's review)
 
-**Met**: every phase built and documented; npm test (1,197) and the build
-pass; the round matrix (rules with no course) and the virtual golfer run on
-both designers -- **Architect 0.17 strokes per 18 harder** after the owner's
-review (ARCHITECT_VERSION 16; was 0.82 at 14; limit 1.5);
-Classic's fingerprint unchanged from the start; the bench moved (bunkers by a
-landing zone 83% against 27%, nines home 11 of 12 against 7, the median walk
-93 m against 98, four to six concepts a nine); **an eighteen builds at most
-0.30 s slower** on Architect (Links; limit 2 s); the showcase saved
-(docs/reports/architect-showcase/, local, 24 pictures).
+**Met**: every phase built and documented, and the owner's review list
+worked through (above); npm test (1,216) and the build pass; the round
+matrix and the virtual golfer run on both designers -- **Architect 0.17
+strokes per 18 harder** (limit 1.5); Classic's fingerprint unchanged from the
+start; the bench moved (bunkers by a landing zone 83% against 27%, nines home
+11 of 12 against 7); **an eighteen builds at most 1.66 s slower** on
+Architect (PNW; limit 2 s); **frame time on Low within 10%** of Classic on
+Midwest, PNW and Links (+6.7%, -6.7%, -7.7%; GPU, *Frame time on Low at the
+end of the owner's review*); **every smoke journey green** (39 of 39, on the
+graphics card, after the review); the showcase saved
+(docs/reports/architect-showcase/, local, 30 pictures, with the Redan, the
+Cape and two Classic-beside-Architect pairs).
 
-**Not met yet -- all on the graphics card, waiting for the owner** (who
-stopped the profile run at the end, the card then 20-31% busy):
-- **Frame time on Low** at the end of the goal (Classic against Architect,
-  `node tools/profile.mjs --only architect`); last measured after phase 3, within 10% on three landscapes.
-  Phases 5-7 added instanced pieces (rip-rap, walls, the story's buildings,
-  life and crowds -- the last two never on Low) not yet measured.
-- **Every smoke journey**: last run in phase 2 (five journeys green). Since
-  then main.js (the yardage book's menu item, drops off walls), index.html
-  and renderer.js have changed with no journey driven.
-- **The showcase's hero hole per landscape, the four Classic-against-
-  Architect pairs on one seed, and pictures of the Redan and the Cape.**
-
-**Seen working in the game** (GPU captures, stills): every Blender kit in
-its landscapes and on Low; paths and bridges; markings; clubhouses; mounds,
-pond edges, fountains; walls, farms, ruins, landmarks, the stone circle; the
-Dell, the Alps, the Barranca, the Pit; animals and people (none on Low);
-tournament week Thursday to Sunday (no crowd on Low). As a PDF: the yardage
-book. **Not seen by anyone**: anything played by a person; anything moving
-(animals, birds, walkers, the mower -- stills only); the *Yardage book* menu
-item clicked; a ball against a wall, a stand or a bridge deck in a round (Node
-tests only); a carry over a barranca.
+**Seen working in the game** (GPU captures, stills, and the smoke journeys'
+clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
+bridges, markings, clubhouses, mounds, pond edges; the fountain moving
+(measured, a drop rising); walls, farms, ruins, landmarks, the stone circle;
+the Dell, the Alps as a hill, the Barranca, the Pit, the Redan, the Cape;
+the new people, crowd and mower; tournament week with the live board; the
+hand tools driven in the studio (Aim, Add, Grow, saved) and their shapes on
+the ground; the studio's yardage book downloaded. **Not seen by anyone**:
+anything played by a person; the walkers' bob and the animals in motion
+(stills only); a ball against a wall, a stand or a bridge deck in a round
+(Node tests only); the scoreboard following a played round; a round on
+hand-shaped ground.
 
 ## The owner's decisions (the goal text, 30 October 2026)
 
@@ -971,6 +965,18 @@ designer:
 The longest walks stay longer than Classic's: a course that comes home has
 a hole or two that walk back to the turn.
 
+### The wait to build after the owner's review (30 October 2026, ARCHITECT_VERSION 16)
+
+`node tools/gen-time.mjs` and `--designer architect`, eighteen holes, three
+seeds, median, Classic / Architect: PNW 3.81 / 5.47 s, Desert 4.00 / 4.61,
+Mountain 3.73 / 4.37, Links 4.34 / 4.42, Midwest 3.99 / 3.49, Island 6.79 /
+5.07, Redwood 3.34 / 3.65, Autumn 4.72 / 4.17, Haunted 4.30 / 3.69,
+Lakeshore 4.39 / 3.51. **The worst, PNW, +1.66 s** (was Links +0.30 at
+version 14) -- inside the goal's 2 s, but closer to it. The ranges overlap
+(Classic 3.16-4.87, Architect 4.32-5.53 on PNW), and the likeliest cost is
+the cart paths' cost grid and search (paths.js), which reads the real ground
+at every step; not profiled. Four landscapes build faster on Architect.
+
 ### The wait to build at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
 
 `node tools/gen-time.mjs` and `--designer architect`, eighteen holes, three
@@ -989,6 +995,23 @@ Island 6.66 / 4.75, Redwood 3.21 / 3.17, Autumn 4.51 / 4.73, Haunted 3.44 /
 4.33, Lakeshore 3.50 / 4.01 (Classic / Architect). The worst, Mountain, +0.9 s;
 inside the goal's 2 s everywhere. (Before the width tables Island was 11.03 s,
 +4.4 s.) Re-measured at the end of the goal.
+
+### Frame time on Low at the end of the owner's review (30 October 2026, ARCHITECT_VERSION 16)
+
+`node tools/profile.mjs --only architect`, the real graphics card (an RTX
+4090, idle at 3% and 38 C for 30 s before), Low tier, default dials:
+
+| Landscape | Classic CPU ms (median) | Architect | Change | Classic GPU ms | Architect |
+| --- | --- | --- | --- | --- | --- |
+| Midwest | 1.50 | 1.60 | +6.7% | 1.17 | 0.84 |
+| PNW | 1.50 | 1.40 | -6.7% | 1.23 | 0.88 |
+| Links | 1.30 | 1.20 | -7.7% | 1.05 | 0.70 |
+
+Within the goal's 10% on every landscape measured; the graphics time is
+lower on Architect (about half the triangles: 4.3-5.4 million against
+8.3-10.6). On Low no crowd, walkers or animals are drawn; a fountain, the
+live scoreboard and the hand-made shapes are. The crowd's five bodies were
+not measured on Medium and up (TODO).
 
 ### Frame time on Low (30 October 2026, after phase 3)
 
