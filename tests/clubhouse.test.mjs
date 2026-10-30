@@ -63,3 +63,17 @@ test('a ball hit at the clubhouse stops against it, and is never out of bounds f
   assert.ok(!inBuilding(b, end.x, end.z), 'it did not finish inside the walls');
  }
 });
+
+// PHASE 4: ROUTED FROM THE CLUBHOUSE (routing.js `homeArch`). An Architect
+// nine comes home: most of its last greens within 200 m of the first tee,
+// where the clubhouse is, and far more than Classic's.
+test('an Architect course\'s nines come home, far more often than Classic\'s', () => {
+ const home = (w, k) => { const t = w.holes[0].toWorld(w.holes[0].tees.blue), g = w.holes[k].worldGreen; return Math.hypot(g.x - t.x, g.z - t.z) <= 200; };
+ let a = 0, c = 0, n = 0;
+ for (const biome of ['pnw', 'desert', 'midwest', 'autumn']) for (const seed of ['HOME-1', 'HOME-2']) {
+  const arch = world({seed, biome, holes: 9, designer: 'architect'}), classic = world({seed, biome, holes: 9});
+  n++; a += home(arch, 8); c += home(classic, 8);
+ }
+ assert.ok(a >= n * .75, `Architect: ${a} of ${n} nines home`);
+ assert.ok(a > c, `Architect ${a} against Classic ${c}`);
+});

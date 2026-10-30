@@ -318,7 +318,15 @@ export function designHole({s,hole,par,line,bio,geo}){
   const col=sandy(at(c))?at(-c):at(c);
   if(!sandy(col)&&clearOfTees(col.x,col.z,Math.max(rx,rz))&&!ponds.some(p=>geo.insideOval(col.x,col.z,p,Math.max(rx,rz)+2))){collections.push(col);reasons.push({kind:'collection',i:0,why:'A collection area on the low side: a miss there runs away from the green, down short grass.'});}
  }
- return {leftWidth,rightWidth,width,fairwayStart,mowStart,bunkers,ponds,collections,design};
+ // THE WIDTHS AS TABLES (phase 4: the closures above, swell and tucks, were
+ // 2.5 s of an Island course's build, asked millions of times by `nearest`).
+ // Sampled every half metre from 60 m behind the tee to 60 m past the green,
+ // linearly between, held at the ends: the curves are smooth at that scale.
+ const STEP=.5,Z0=-60,N=Math.ceil((length+120)/STEP)+1,L=new Float32Array(N),R=new Float32Array(N);
+ for(let k=0;k<N;k++){const z=Z0+k*STEP;L[k]=leftWidth(z);R[k]=rightWidth(z);}
+ const lookup=T=>z=>{const u=(z-Z0)/STEP;if(u<=0)return T[0];if(u>=N-1)return T[N-1];const k=Math.floor(u),f=u-k;return T[k]+(T[k+1]-T[k])*f;};
+ const fastLeft=lookup(L),fastRight=lookup(R);
+ return {leftWidth:fastLeft,rightWidth:fastRight,width:z=>Math.max(fastLeft(z),fastRight(z)),fairwayStart,mowStart,bunkers,ponds,collections,design};
 }
 
 // What a template asks of its green. Undefined fields keep the green's own

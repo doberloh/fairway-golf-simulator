@@ -287,7 +287,11 @@ export const GENERATOR_VERSION=52;
 //    (styles that play along the ground), lobed bunker complexes on the
 //    big-bunker styles, thin collars on Links, Sandhills and Minimalist, and
 //    divot wear on the tees and in the landing zones.
-export const ARCHITECT_VERSION=6;
+// 7: phase 4, home: routed from the clubhouse -- each nine pulled home toward
+//    its turn, the 10th tee started at the clubhouse, every hole kept within
+//    walking reach of home; the fairway widths as tables (faster, the same
+//    shape within a centimetre).
+export const ARCHITECT_VERSION=7;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

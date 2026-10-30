@@ -18,16 +18,18 @@ import {BIOMES} from '../src/biomes.js';
 
 const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
-const holes = Number(opt('--holes', 18)), seeds = Number(opt('--seeds', 3)), json = opt('--json', null);
+// `--designer architect` (architect-courses): time an Architect course of the
+// same seed and landscape instead; the goal holds it to Classic's + 2 s.
+const holes = Number(opt('--holes', 18)), seeds = Number(opt('--seeds', 3)), json = opt('--json', null), designer = opt('--designer', 'classic');
 
 if (argv[0] === '--one') {
  // The child: one landscape, timed course by course.
  const {generateWorld} = await import('../src/course.js');
- const [, biome, h, n] = argv;
+ const [, biome, h, n, who = 'classic'] = argv;
  const times = [];
  for (let i = 0; i < Number(n); i++) {
   const t0 = performance.now();
-  generateWorld({seed: `gen-time-${i + 1}`, biome, holes: Number(h), trees: 60, homes: true});
+  generateWorld({seed: `gen-time-${i + 1}`, biome, holes: Number(h), trees: 60, homes: true, designer: who});
   times.push(performance.now() - t0);
  }
  process.stdout.write(JSON.stringify(times));
@@ -38,7 +40,7 @@ const biomes = argv.length ? argv : Object.keys(BIOMES);
 const self = fileURLToPath(import.meta.url), rows = {};
 for (const biome of biomes) {
  if (!BIOMES[biome]) throw Error(`unknown landscape "${biome}"`);
- const times = JSON.parse(execFileSync(process.execPath, [self, '--one', biome, String(holes), String(seeds)], {encoding: 'utf8', maxBuffer: 1 << 24}));
+ const times = JSON.parse(execFileSync(process.execPath, [self, '--one', biome, String(holes), String(seeds), designer], {encoding: 'utf8', maxBuffer: 1 << 24}));
  const sorted = [...times].sort((a, b) => a - b), median = sorted[Math.floor(sorted.length / 2)];
  rows[biome] = {median: +median.toFixed(0), min: +sorted[0].toFixed(0), max: +sorted.at(-1).toFixed(0)};
  console.log(`${biome.padEnd(10)} ${holes} holes  median ${(median / 1000).toFixed(2)} s  (${(sorted[0] / 1000).toFixed(2)}-${(sorted.at(-1) / 1000).toFixed(2)} s over ${seeds})`);

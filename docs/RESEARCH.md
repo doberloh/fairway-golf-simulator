@@ -10886,3 +10886,15 @@ old 1.1).
 **Lobes** (bunker complexes with capes and bays, the sandbelt and heathland
 look; the study's sources, *Bunker styles*): PLACED: one lobe of 38-58% of
 the bunker, on about half the bunkers over 7 m, on five styles.
+
+## Architect courses: routing home (30 October 2026)
+
+Phase 4 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 4*). The
+clubhouse first, the 1st and 10th tees and the 9th and 18th greens round it
+(ASGCA, *Solving the puzzle*, an architect's stated first step; linksmagazine,
+*Architecture 101: routing*). Taken: nines that return, measured as the 9th
+(and 18th) green within 200 m of the 1st tee -- PLACED, "in sight of the
+clubhouse". The router's weights (the pull per metre, 300 m a hole of walking
+reach, the penultimate green one last hole out) are PLACED, tuned against the
+bench: 7 -> 10 of 12 nines home on nine-hole courses, 10 -> 19 of 24 on
+eighteen.

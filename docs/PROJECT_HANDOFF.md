@@ -431,6 +431,11 @@ The seams so far, each listed here as it is built:
   (so never fingerprinted): flags by pin band (course.js `PIN_FLAGS`,
   `pinBandOf`), hole names (hole-names.js), the crest (crest.js).
 
+- `routeHoles` (routing.js) -- `homeArch` adds an Architect course's pull
+  home to each placement's score, and `arch` raises the trials (5 -> 12) and
+  the late holes' tries (150 -> 450). Classic's numbers are untouched; **the
+  walk formula's `Math.min(k,150)` keeps a Classic placement's walk exactly
+  what it was** while an Architect one searches past 150.
 - The hazard slots (renderer.js, ground.js) carry a third kind for an
   Architect hole: a **collection area**, meta.y -1, written before the
   bunkers so a bunker over one stays sand; the shader paints it fairway over
