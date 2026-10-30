@@ -70,7 +70,9 @@ export function buildChallenges(root, {rules = [], who = 'WHO’S PLAYING · 1 T
  root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
  return stepSheet(root, {
   steps: [{label: 'Challenge', page: p1}, {label: 'Golfers', page: p2}, {label: 'Rules', page: p3, onShow: paintSummary}],
-  index: step, finish: go, onStep, alert: err,
+  // The start button on every step (the 1.0 polish, the way in round 3): who
+  // plays is set already, and a challenge's rules are fixed.
+  index: step, finish: go, finishAlways: true, onStep, alert: err,
   hints: [['↑ ↓', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
 }

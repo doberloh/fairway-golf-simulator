@@ -59,6 +59,15 @@ const SPOTS = {
  play1: {hole: 0, view: 'player'},
  play5: {hole: 4, view: 'player'},
  play9: {hole: 8, view: 'player'},
+ // THE MENUS (the 1.0 polish, 27 October 2026: no cost anywhere, the menus
+ // included). Measured before any course is loaded, over the menu's own
+ // backdrop: the main menu, and the sheets that drew the tiny turning models
+ // (Play's game step, Saved courses) and the studio's setup. `menu` is the
+ // main menu button pressed, or null for the main menu itself.
+ menu: {menu: null},
+ lobby: {menu: 'menuPlay'},
+ courses: {menu: 'menuCourses'},
+ studio: {menu: 'menuStudio'},
 };
 const spotNames = String(flag('spots', 'tee1,tee5,tee9')).split(',');
 for (const s of spotNames) if (!SPOTS[s]) throw Error(`No spot ${s}; one of ${Object.keys(SPOTS).join(', ')}`);
@@ -87,6 +96,11 @@ async function measureBuild(file, tag, round) {
  const out = {};
  try {
   const page = await browser.newPage({viewport: {width: DEVICE.viewport[0], height: DEVICE.viewport[1]}, deviceScaleFactor: DEVICE.dpr});
+  // THE SAME RANDOM NUMBERS IN BOTH BUILDS (the 1.0 polish): the menu's
+  // backdrop is a random hole at a random hour, so two builds measured on the
+  // menu drew different scenes (208 draws against 136 on one run, the other
+  // way round on the next). A seeded Math.random makes both the same.
+  await page.addInitScript(() => { let a = 0x2545f491; Math.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; });
   await page.addInitScript(PROBE);
   await page.addInitScript(p => {
    try { localStorage.setItem('fairway-graphics-v1', JSON.stringify(p)); } catch {}
@@ -98,6 +112,44 @@ async function measureBuild(file, tag, round) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text().split('\n')[0]); });
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil: 'load'});
   await page.waitForFunction(() => window.lab && window.lab.course, null, {timeout: 60000});
+  // THE WAIT AT START: from the page's first moment to the main menu shown
+  // and the splash gone, on the page's own clock.
+  await page.waitForFunction(() => !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
+  out.startMs = await page.evaluate(() => performance.now());
+  // THE PAGE'S WHOLE MAIN THREAD (the 1.0 polish): the probe times the game's
+  // own frame callbacks, which leaves out the styles, layout and painting the
+  // interface costs -- the menus' pictures and fades among them. The browser's
+  // own busy time over the same frames, per frame, counts all of it.
+  const perf = await page.context().newCDPSession(page);
+  await perf.send('Performance.enable');
+  // Saved beside it, per frame: where that time went (styles, layout, script).
+  const PARTS = {pageMs: 'TaskDuration', styleMs: 'RecalcStyleDuration', layoutMs: 'LayoutDuration', scriptMs: 'ScriptDuration'};
+  const busy = async () => {
+   const m = Object.fromEntries((await perf.send('Performance.getMetrics')).metrics.map(x => [x.name, x.value]));
+   return Object.fromEntries(Object.entries(PARTS).map(([k, n]) => [k, (m[n] ?? 0) * 1000]));
+  };
+  const measure = async name => {
+   await frames(page, SETTLE);
+   await page.evaluate(() => window.__profStart());
+   const b0 = await busy();
+   await frames(page, FRAMES);
+   const b1 = await busy();
+   const st = {...await page.evaluate(() => window.__profStop()), ...Object.fromEntries(Object.keys(PARTS).map(k => [k, (b1[k] - b0[k]) / FRAMES]))};
+   let shot = null;
+   if (SHOTS) {
+    shot = path.join(OUT, 'shots', LABEL, `${tag}-${round}-${name}.png`);
+    fs.mkdirSync(path.dirname(shot), {recursive: true});
+    await page.screenshot({path: shot});
+   }
+   out[name] = {...st, shot};
+  };
+  for (const name of spotNames.filter(n => 'menu' in SPOTS[n])) {
+   const id = SPOTS[name].menu;
+   if (id) await page.evaluate(i => document.getElementById(i).click(), id);
+   await measure(name);
+   for (let i = 0; i < 4 && await page.evaluate(() => document.getElementById('mainMenu').hidden); i++) { await page.keyboard.press('Escape'); await frames(page, 10); }
+  }
+  if (spotNames.every(n => 'menu' in SPOTS[n])) { out.errors = errors; return out; }
   await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED});
   const renderer = await page.evaluate(() => {
    const gl = document.createElement('canvas').getContext('webgl2');
@@ -111,22 +163,12 @@ async function measureBuild(file, tag, round) {
    const cdp = await page.context().newCDPSession(page);
    await cdp.send('Emulation.setCPUThrottlingRate', {rate: throttle});
   }
-  for (const name of spotNames) {
+  for (const name of spotNames.filter(n => !('menu' in SPOTS[n]))) {
    const s = SPOTS[name];
    if (s.hole !== undefined) await page.evaluate(n => window.lab.hole(n), s.hole);
    if (s.view) await page.evaluate(v => window.lab.view(v), s.view);
    if (s.camera) await page.evaluate(o => window.lab.camera(o), s.camera);
-   await frames(page, SETTLE);
-   await page.evaluate(() => window.__profStart());
-   await frames(page, FRAMES);
-   const st = await page.evaluate(() => window.__profStop());
-   let shot = null;
-   if (SHOTS) {
-    shot = path.join(OUT, 'shots', LABEL, `${tag}-${round}-${name}.png`);
-    fs.mkdirSync(path.dirname(shot), {recursive: true});
-    await page.screenshot({path: shot});
-   }
-   out[name] = {...st, shot};
+   await measure(name);
   }
   out.errors = errors;
  } finally {
@@ -166,22 +208,26 @@ if (failed) process.exit(1);
 const scale = gpuScale(DEVICE);
 console.log(`\n${TIER} · ${BIOME} ${SEED} · ${DEVICE.label} · ${DEVICE.viewport.join('x')} @${DEVICE.dpr}` +
  (scale > 1.01 ? ` · CPU throttled ${cpuThrottle(DEVICE).toFixed(1)}x, GPU estimate = card ms x ${scale.toFixed(0)}` : ''));
-console.log('  spot      build   CPU ms   GPU ms   draws   triangles' + (scale > 1.01 ? '   est. device GPU ms' : ''));
+console.log('  spot      build   CPU ms   GPU ms   draws   triangles   page ms' + (scale > 1.01 ? '   est. device GPU ms' : ''));
 const summary = {};
 for (const name of spotNames) {
  for (const [tag] of builds) {
   const rs = results[tag].map(r => r[name]);
   const s = {cpu: med(rs.map(r => r.median)), gpu: med(rs.map(r => r.gpuMedian)), cpuP95: med(rs.map(r => r.p95)),
-   draws: med(rs.map(r => r.callsPerFrame)), tris: med(rs.map(r => r.trisPerFrame)),
+   draws: med(rs.map(r => r.callsPerFrame)), tris: med(rs.map(r => r.trisPerFrame)), page: med(rs.map(r => r.pageMs)),
    runs: rs.map(r => [+r.median.toFixed(2), +(r.gpuMedian ?? 0).toFixed(2)])};
   (summary[name] ??= {})[tag] = s;
-  console.log(`  ${name.padEnd(9)} ${tag}     ${s.cpu.toFixed(2).padStart(6)}   ${(s.gpu ?? 0).toFixed(2).padStart(6)}  ${Math.round(s.draws).toString().padStart(6)}  ${(s.tris / 1e6).toFixed(1).padStart(8)} M`
+  console.log(`  ${name.padEnd(9)} ${tag}     ${s.cpu.toFixed(2).padStart(6)}   ${(s.gpu ?? 0).toFixed(2).padStart(6)}  ${Math.round(s.draws).toString().padStart(6)}  ${(s.tris / 1e6).toFixed(1).padStart(8)} M   ${(s.page ?? 0).toFixed(2).padStart(7)}`
    + (scale > 1.01 ? `   ${((s.gpu ?? 0) * scale).toFixed(0).padStart(8)}` : '') + `   runs ${s.runs.map(r => r.join('/')).join(' ')}`);
  }
  if (B) {
   const a = summary[name].A, b = summary[name].B, pct = (x, y) => ((y - x) / x * 100).toFixed(1) + '%';
-  console.log(`  ${''.padEnd(9)} B vs A  ${pct(a.cpu, b.cpu).padStart(6)}   ${pct(a.gpu, b.gpu).padStart(6)}  ${pct(a.draws, b.draws).padStart(6)}  ${pct(a.tris, b.tris).padStart(9)}`);
+  console.log(`  ${''.padEnd(9)} B vs A  ${pct(a.cpu, b.cpu).padStart(6)}   ${pct(a.gpu, b.gpu).padStart(6)}  ${pct(a.draws, b.draws).padStart(6)}  ${pct(a.tris, b.tris).padStart(9)}   ${pct(a.page, b.page).padStart(7)}`);
  }
+}
+{
+ const starts = tag => results[tag].map(r => r.startMs).filter(Boolean);
+ for (const [tag] of builds) console.log(`  start to main menu, ${tag}: median ${(med(starts(tag)) / 1000).toFixed(2)} s  (runs ${starts(tag).map(v => (v / 1000).toFixed(2)).join(' ')})`);
 }
 if (B) {
  // The headline: the mean over the spots of each build's frame (the slower of

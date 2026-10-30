@@ -50,6 +50,10 @@ the change that made it stale, not a follow-up.
   lighting in the Cartoon style, its art direction, the baselines it is judged
   against, its rounds, every rule it has set aside, and how its rounds were worked (*Working on the branch*). Read it
   before more work on the look.
+- **[UI_POLISH.md](UI_POLISH.md)** — the 1.0 interface polish (from 27
+  October 2026): its checklist from the research, the interface audit tool,
+  the rounds, the decisions (one look for chosen, one for the cursor) and the
+  press counts into every mode.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and
   cannot see, which formats and groups the round tests play, every smoke

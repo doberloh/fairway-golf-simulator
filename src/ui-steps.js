@@ -69,6 +69,10 @@ export function stepSheet(root, {steps, index = 0, finish = null, finishAlways =
   next.hidden = last;
   if (!last) next.innerHTML = `Next <small>${esc(steps[i + 1].label.toUpperCase())}</small>`;
   if (finish) finish.hidden = !last && !finishAlways;
+  // With the main button showing, Next says only NEXT (its step name was cut
+  // off beside it: the 1.0 polish, "NEXT THE WEE"), and on an upright phone
+  // the main button takes a row of its own (ui-sheets.css).
+  btns.classList.toggle('with-finish', !!finish && !finish.hidden);
   steps[i].onShow?.();
   onStep?.(i);
  }

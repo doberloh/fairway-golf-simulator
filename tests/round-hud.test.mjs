@@ -132,6 +132,21 @@ test('the compact scale is seven tenths of the round screen scale', async () => 
  assert.ok(compactScale(1920, 1080, 1.25) * 1.25 > compactScale(1920, 1080), "the Text size still draws it larger");
 });
 
+test('the sheets never go below their floor on any screen; the round screen stays compact', async () => {
+ const {sheetScale, compactScale, SHEET_FLOOR, SHEET_FLOORS} = await import('../src/round-hud.js');
+ assert.equal(SHEET_FLOOR, 0.93);
+ assert.deepEqual(SHEET_FLOORS.map(([w]) => w), [1200, 1024, 700, 700, 0], 'widest first, and a floor for every width');
+ assert.ok(Math.abs(sheetScale(1280, 720) - 0.93) < 1e-9, '0.7 raised to the floor at 1280 x 720');
+ assert.ok(Math.abs(sheetScale(1024, 768) - 0.8) < 1e-9, 'a sideways tablet takes the lower floor');
+ assert.ok(Math.abs(sheetScale(1920, 1080) - 1.05) < 1e-9, 'above the floor it is the compact scale');
+ assert.ok(Math.abs(sheetScale(844, 390) - 0.7) < 1e-9, 'a sideways phone: 0.7');
+ assert.ok(Math.abs(sheetScale(768, 1024) - 0.8) < 1e-9, 'an upright tablet: as a sideways one');
+ assert.ok(Math.abs(sheetScale(390, 844) - 0.55) < 1e-9, 'an upright phone: 0.55, its labels about 11 px');
+ assert.ok(compactScale(390, 844) < 0.55, 'which is above the compact scale there');
+ assert.ok(Math.abs(sheetScale(1280, 720, 1.25) - 1.25 * Math.max(compactScale(1280, 720, 1.25), .93)) < 1e-9, 'the Text size multiplies it');
+ assert.ok(Math.abs(compactScale(1280, 720) - 0.7) < 1e-9, 'the round screen keeps 0.7');
+});
+
 test('the camera is named beside the wind: each view, the bay, a flyover', () => {
  assert.equal(cameraName({mode: 'player'}), 'BEHIND BALL');
  assert.equal(cameraName({mode: 'player', sim: true}), 'BAY VIEW');

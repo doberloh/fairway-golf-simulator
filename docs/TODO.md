@@ -31,6 +31,114 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **The drop bar and the Tools window: three lines low on their own
+  panels; the near-miss contrasts; the map's switches and Done on a tablet**
+  (found by the final audit, 28 October 2026; the first three the same on
+  main). Fixed at the cause: Place ball's dark words were out-ranked by the
+  bar's rule for every button; the lines and headings were coloured only on
+  wide screens; the highlight's end colour aims at 6:1; words over pictures
+  carry the outline; the switches are 25 px and Done takes its touch size.
+  UI_POLISH.md, *Third look*.
+The checklist, the rounds and the decisions are in docs/UI_POLISH.md.
+Merged into main on 29 October 2026, squashed to five commits; the branch's
+no-ask GPU terms ended with it. Not released, and not yet played by hand
+beyond the owner's one round of 28 October -- the list below is what to play.
+
+### Playing it by hand, screen by screen (the owner's)
+
+Everything below was built and seen in the audit's pictures and the smoke
+journeys, and none of it has been played by hand. Each line is what to do
+and what should happen. With a keyboard first, then a controller, then a
+phone.
+
+- [ ] **Square boxes everywhere** (the owner's eight findings, 28 October
+  2026; UI_POLISH.md, *Square boxes*). No box, tile, field, key plate or ring
+  leans or has rounded corners (balls, dots and round badges stay round); no
+  second box behind the loading, Leave or Save box; one ring on a chosen ball
+  in the locker; every stack straight down, nothing over its neighbour. The
+  main menu's Settings / Launch monitor / Help line up with the menu. Saved
+  courses with nothing saved says Build a course or import a code. Endless's
+  landscapes scroll down only. The Save box fits a 1280 x 720 screen, its
+  picture beside the view buttons. On a sideways phone the band under Back /
+  Next is solid. Seen in the audit's pictures at sixteen sizes; not played.
+- [ ] **The foot, compacted, and the phone's map** (the owner's second list,
+  28 October 2026; UI_POLISH.md). The club is one box: the lie along its top,
+  the code in the accent's letters, the name, carry and Q E, no seams; the
+  bag opens over everything, on a phone too. Under the meter one row: carry,
+  total and apex, then curve, height and spin (S W X, or taps); in flight
+  Skip takes their place, on a phone too -- no shot box anywhere. Upright on a
+  phone the golfers are top right and the wind under the hole; MAP beside
+  MENU shows and hides the map (sideways MAP is under the golfers). With a
+  launch monitor on a phone, Skip stands alone bottom right in flight. The
+  phone's one bar -- MENU, MAP, VIEWS, FLY, thin lines between: VIEWS steps
+  aim point, green, back (drag turns the camera in the first two); FLY flies
+  with the pad bottom right and a drag, FLY again comes back; flying, the
+  club box, meter and aim pad are away and Jump to green is one chip (upright,
+  on its own row above the bar). From a long hole's tee on an upright phone
+  the pin's yards sit just under the hole card, not over it. The
+  course studio's Water menu rings Rivers once. Ponds: gust patches drift
+  slowly downwind, nothing flashes across. Seen in the audit's pictures (the
+  bar, VIEWS and FLY at four phone sizes, 29 October 2026), passed by smoke's
+  phone journeys and the drag check, the water measured in frames, no slower
+  than main on Low or Ultra; **not played by hand** -- try VIEWS, FLY and the
+  fly pad with a thumb.
+- [ ] **The splash and a course growing.** The tips are the fourteen in
+  src/tips.js, each true of the game today; one shows while a course grows
+  ("Growing the landscape...", "Shaping the landscape").
+- [ ] **The main menu.** The arrows move a white cursor; the tile lights in
+  place (no slide since the boxes went square); the eyebrow reads Main menu. After any round, **Play again** shows
+  what it will start (the line under it) and starts it in one press.
+- [ ] **Play.** Titled Play, with Main menu above the title. Opens with the
+  keys on the chosen card. Right then Down: one yellow card (chosen) and one
+  white (the keys), never two yellow. The cards show landscape pictures that
+  fade from one to the next, one card at a time; with reduced motion (the
+  system's setting) they hold still. Tee off is on every step. Course of the
+  week by Enter alone: three presses.
+- [ ] **Endless, Surprise me, the earlier weeks.** Endless's landscapes and
+  the weeks show their pictures; Surprise me, before a roll, runs through
+  every landscape.
+- [ ] **Saved courses.** Each card shows the picture the course was saved
+  with, then its landscape's. **Save as file**, delete the course (it asks
+  twice), then open the file with the button and again by dropping it on the
+  screen: it comes back with its picture. A saved round's delete asks twice
+  too.
+- [ ] **Challenges.** Opens on the chosen challenge; a challenge by Enter
+  alone in four presses.
+- [ ] **The driving range.** Its setup's drop-downs: the arrows go into and
+  out of each (they were trapped on main).
+- [ ] **The course studio, from the main menu.** Five menus -- Course (the
+  landscapes first, as pictures), Land & routing, Fairways, greens &
+  bunkers, Water, Trees & scenery -- every setting still there, More settings
+  folded at the foot. Choosing a landscape by keys lands on Grow this
+  landscape.
+- [ ] **The course studio, saving.** Save course shows a picture of the
+  course; each view button changes it; Frame it yourself lets you fly, and
+  Enter takes it. The arrows (or a d-pad) move between the box's buttons.
+  The saved course's card then shows that picture. On a phone the box fits
+  and its rows are straight.
+- [ ] **Settings, Launch monitor, Help, My profile.** Each opens with the keys
+  on the chosen item. Launch monitor no longer lists which monitors work; one
+  line points to README.md in the download. Help's line about the keys reads
+  "listed with this page".
+- [ ] **The round.** The score, the meter and the flag's distance read on
+  bright ground and sky (a dark outline on the text). The pause list, the
+  scorecard, the big map, Tools, Golfers & rules and the shot box: one white
+  cursor, the chosen item yellow.
+- [ ] **The pieces you move.** Drag the map by its header and the shot numbers
+  (Tab); each stays inside the screen, keeps its place, and a double click
+  puts it back. (`tools/ui-movable-check.mjs` drags both at six sizes.)
+- [ ] **Sizes.** At 1280 x 720 and 1366 x 768 the sheets' labels read about
+  13 px and nothing runs out of its box; at 4K nothing is tiny.
+- [ ] **Phones, upright and sideways.** Back is on screen on the last step of
+  Play; the start button has a row of its own and wraps; every button is
+  easy to hit; the studio's bar is the 1.0 look.
+- [ ] **Course pictures from a file opened straight from disk** (no web
+  server) in Chrome, Firefox and Safari: save a course with its picture,
+  close the browser, open the file again -- the picture is still there
+  (IndexedDB; DISTRIBUTION_REVIEW).
+
 ## The cartoon overhaul (branch `cartoon-overhaul`, 25-27 October 2026; merged)
 
 The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
@@ -344,9 +452,6 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   mouse or a finger on a touch screen, the range (its tiles start top right),
   the big map (M) after a move, the Tools window's Reset. PLACED: only those
   two move; no resizing.
-- [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
-  5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
-  screens keep text on the light end, or the gradient changes.
 - [ ] **Phase 1 (the round screen): seen at 1280 x 720 and 1920 x 1080, not
   on the projector** (17 October 2026, overnight, the owner having allowed
   the graphics card for the night). Seen in the browser pane and the smoke
@@ -578,8 +683,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Phase 5 (phones and screen shapes): built, seen in the browser pane at
   844 x 390 and 390 x 844, not on a real phone** (17 October 2026, overnight).
   The phone round screen sideways and upright (src/round-phone.css), the
-  slanted aim pad, swinging by tapping the bar, the MENU chip and the pause
-  list as one column, the phone main menu with rows leaning one by one. The
+  aim pad (slanted then, square since 28 October 2026), swinging by tapping the bar, the MENU chip and the pause
+  list as one column, the phone main menu (its rows leaned one by one until 28 October 2026). The
   phone smoke journeys pass (they tap the bar now). Not seen: a real iPhone's
   Safari and safe areas, a phone with two or more golfers, the ball light on a
   phone, the sheets on a phone (unchanged, old layout).
@@ -723,11 +828,6 @@ are in the archived section of the same name.
   only, so a resumed round shows dashes mid-hole. Decide first whether a shot
   from an earlier session should look as though it just happened. (was: *The
   card forgets its numbers on a reload*)
-
-- [ ] **Saving: a full store says nothing.** `save()` in main.js swallows the
-  error, so Continue silently stops updating. Also, a saved round deletes in one
-  click and a saved course needs two taps; pick one. (was: *Save/import/export,
-  what is left*)
 
 - [ ] **The rest of the penalty rules**: an unplayable ball (Rule 19), a
   provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
@@ -955,12 +1055,9 @@ work since.
   phone** (the owner: much skinnier). It took the saved rounds list's class.
   Built; **seen** at 390x844 (measured: picture and words 154 px like the
   others).
-- [ ] **A second golfer's Make main profile and Remove as slanted outlines**
+- [ ] **A second golfer's Make main profile and Remove as outlines (square since 28 October 2026)**
   (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
   390x844.
-- [ ] **Upright, the folded shot line clear of the yards marker** (audit 6:
-  the marker sat over its arrow). 150 px between shots. Built; **seen** at
-  390x844 after a drive (line 12-162 px, marker from 171 px).
 - [ ] **Tool windows open clear of the HUD** (audit 6: the range controls over
   the shot numbers and tool column). Built; **seen** on the range at
   1920x1080 (left of the marker, under the golfer card) and 1366x768, the
@@ -1029,18 +1126,15 @@ comes back, note which frame the tap lands on.
   wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
 - [ ] **The challenge of the week's banner stacks on an upright phone**
   (audit 5: three columns of five short lines). Built; **seen** at 390x844.
-- [ ] **On a phone the yards marker draws over the folded shot line** (audit
-  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
-  after a drive.
 - [ ] **The meter's Out of reach words follow the aim** (found looking at the
   marker: after a drive the sand wedge at 47 yd said Out of reach, left over
   from the old aim). Built; **seen** in the capture build after the same drive.
 - [ ] **My profile's golfer chips on an upright phone** (found fixing the
   tabs: no room in the header band, not shown). Built; **seen** at 390x844.
-- [ ] **My profile's backup and bag buttons as slanted rows** (audit 5: old
+- [ ] **My profile's backup and bag buttons as rows (square since 28 October 2026)** (audit 5: old
   grey buttons; History's handicap paragraph a note). Built; **seen** at
   1920x1080.
-- [ ] **Save a course's Open course studio as a slanted row** (audit 5).
+- [ ] **Save a course's Open course studio as a row (square since 28 October 2026)** (audit 5).
   Built; **seen** at 1920x1080.
 - [ ] **A challenge's results laid out like Round complete** (audit 5).
   Built; **seen** in the capture build after closest to the pin for two, and
@@ -1102,14 +1196,14 @@ commit per category.
   October: with no saved rounds the button hid, and with it Import a round from
   a file). Built, tested and **seen** in a fresh browser (21 October): SAVED
   ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
-  from a file. That list's Export and Import buttons are now slanted rows too
+  from a file. That list's Export and Import buttons are now rows too (square since 28 October 2026)
   (seen in a fresh browser, 21 October: Import lit, Export dimmed with no round
   to export). While the list is open the heading reads SAVED ROUNDS (seen
   in a fresh browser, 21 October).
-- [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
+- [ ] **Saved courses: the file buttons as rows (square since 28 October 2026), the intro one line**
   (audit 4's leftovers): built, tested and **seen** in the capture build
   (21 October, once the card was free): the intro one line over the tabs, the
-  two file buttons as slanted rows in the accent.
+  two file buttons as rows (square since 28 October 2026) in the accent.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
@@ -1336,6 +1430,19 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 # Done
 
+## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **Text on the dark end of a highlighted box is weak** -- confirmed on
+  main first (onHot on a2: 2.28:1 on Giant Redwood, under 4.5 on eight of ten
+  landscapes). Fixed in the palette: a highlighted box's gradient ends on
+  `--a2-text` (ui-palette.js `textEnd`), the deepest mix of a1 toward a2
+  that still gives 4.5:1, a2 itself where it already passes (Links, Desert,
+  Island); a contrast rule holds every palette to it. (Was open since phase 1.)
+- [x] **Saving: a full store says nothing** -- confirmed (`save()` swallowed
+  the error). Now the player is told once, until a save works again; and a
+  saved round's delete asks twice, as a saved course's does. (Was: "a saved
+  round deletes in one click and a saved course needs two taps; pick one".)
+
 ## Release 0.9.5 (27 October)
 
 - [x] **v0.9.5 published**, "Fairway 0.9.5 (beta)", at the owner's request:
@@ -1388,6 +1495,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   Website redeployed.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+- [x] **Upright, the folded shot line clear of the yards marker** (audit 6:
+  the marker sat over its arrow). 150 px between shots. Built; **seen** at
+  390x844 after a drive (line 12-162 px, marker from 171 px).
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
+- [x] **On a phone the yards marker draws over the folded shot line** (audit
+  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
+  after a drive.
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
 
 - [x] **The round matrix plays the course of the week and a friend's challenge**
   (the owner asked for every mode in the simulated rounds): 36 weekly rounds of

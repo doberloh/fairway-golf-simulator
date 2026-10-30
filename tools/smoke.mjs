@@ -595,7 +595,12 @@ async function touchAiming(t) {
   await t.page.waitForTimeout(600);
   if ((await aimNow()).aim !== held) throw new Error('the aim kept turning after the finger lifted');
  });
- await t.step('a tap on the map thumbnail opens the big map', async () => {
+ await t.step('MAP shows the map, and a tap on it opens the big map', async () => {
+  // A phone's map is behind the MAP chip (the owner, 28 October 2026): hidden
+  // until it is pressed, shown after.
+  if (await t.page.evaluate(() => document.getElementById('map').checkVisibility())) throw new Error('the map shows before MAP is pressed');
+  await t.page.locator('#rhMap').tap();
+  await t.until(() => t.page.evaluate(() => document.getElementById('map').checkVisibility()), 'the map after MAP', 5 * SLOW);
   await t.page.locator('#map').tap();
   await t.until(() => t.page.evaluate(() => document.getElementById('world').classList.contains('aim-view')), 'the big map', 5 * SLOW);
   const box = await t.page.locator('#map').boundingBox();
@@ -627,10 +632,26 @@ async function touchAiming(t) {
   const zoom = await t.page.evaluate(() => document.getElementById('map').mapNav?.zoom ?? 1);
   if (zoom !== 1) throw new Error(`the thumbnail came back zoomed ${zoom}x`);
  });
+ // The phone's bar (the owner, 28 October 2026): before it a phone could not
+ // change the camera at all.
+ await t.step('VIEWS steps the camera round, FLY flies by touch and comes back', async () => {
+  const mode = () => t.page.evaluate(() => window.lab.view());
+  const seen = [];
+  for (let i = 0; i < 3; i++) { await t.page.locator('#rhViews').tap(); await t.page.waitForTimeout(400); seen.push(await mode()); }
+  if (seen.join() !== 'target,green,player') throw new Error(`VIEWS went ${seen.join(' -> ')}`);
+  await t.page.locator('#rhFly').tap();
+  await t.until(async () => (await mode()) === 'free', 'free flight after FLY', 5 * SLOW);
+  if (!await t.page.evaluate(() => document.querySelector('.fly-pad [data-fly=KeyW]')?.checkVisibility())) throw new Error('no fly pad in free flight');
+  const small = await t.page.evaluate(smallTargets, '.fly-pad button');
+  if (small.length) throw new Error(`fly pad under 44 px to a finger: ${small.join('; ')}`);
+  await t.page.locator('.fly-pad [data-fly=KeyW]').tap();
+  await t.page.locator('#rhFly').tap();
+  await t.until(async () => (await mode()) === 'player', 'back to the ball after FLY again', 5 * SLOW);
+ });
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #mapExpand, #rhBar button');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -754,6 +775,10 @@ async function flightScreenOnce(t, phone) {
    // launch numbers in a strip above it.
    roundScreen: getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' && !document.querySelector('.rh-launch')?.closest('[hidden]') && getComputedStyle(document.querySelector('.rh-tools') || document.body).display !== 'none',
    meterSkip: !gone('#smSkip'),
+   // A phone (its bar of Menu, Map, Views, Fly is drawn only there) has no
+   // flight panel since the foot was compacted (28 October 2026): the meter
+   // carries the flight, and off the meter a lone Skip stands bottom right.
+   phone: !gone('#rhBar'),
   };
  });
  const bad = [];
@@ -764,19 +789,20 @@ async function flightScreenOnce(t, phone) {
  // used to keep through a flight are in the shot panel, whose line is all that
  // is left of the window (13 October 2026).
  if (!state.panel) bad.push('the shot controls are still showing');
- if (state.numbers && !state.roundScreen) bad.push('the shot panel went, and it carries the flight');
+ if (state.numbers && !state.roundScreen && !state.phone) bad.push('the shot panel went, and it carries the flight');
  if (state.roundScreen && !state.numbers) bad.push('the old flight panel is back on the round screen');
  if (state.roundScreen && state.meterMode && !state.meterSkip) bad.push('Skip is not in the meter\'s title');
  if (state.map) bad.push('the map went, and it should follow the ball');
  if (state.wind) bad.push('the wind went');
- if (!state.roundScreen && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
+ if (!state.roundScreen && !state.phone && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
  if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
  if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
- // Round 13: on the round screen Skip is in the meter's title (with a monitor
- // there is no button: Enter skips).
- const skipSel = state.roundScreen ? (state.meterMode ? '#smSkip' : null) : '#skipFlight';
+ // Skip is in the meter's number row whenever the Swing Meter is in use, on a
+ // phone too (the foot compacted, 28 October 2026); off the meter, a big screen
+ // has no button (Enter skips) and a phone keeps the old Skip alone.
+ const skipSel = state.meterMode ? '#smSkip' : state.roundScreen ? null : '#skipFlight';
  const skip = skipSel ? await t.page.evaluate(unreachableControls, skipSel) : [];
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
 }
@@ -2121,7 +2147,7 @@ const JOURNEYS = [
     if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await t.page.tap('#swingCatcher', {timeout: 2000}).catch(() => {});
     await t.until(() => t.inFlight(), 'the Swing button and two taps to start a shot', 5 * SLOW);
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
-    await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});
+    await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);
     // The screen comes back a frame after the ball settles, and fades in.
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back after the shot', 5 * SLOW);
@@ -2144,7 +2170,7 @@ const JOURNEYS = [
      await tap('#smBar');
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
-     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
+     await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW}).catch(() => {});
      await t.until(async () => !(await t.inFlight()), 'the putt to finish', 30 * SLOW);
      // Holed or not from the game (`holed`); the card waits for the XP popup
      // (14 October 2026), so give it time.
@@ -3205,13 +3231,28 @@ for (const journey of chosen) {
    if (!fs.existsSync(exe)) { console.log(`   skipped: no ${path.relative(ROOT, exe)} (npm run server)
 `); await context.close(); continue; }
    bridgeProc = spawn(exe, [], {cwd: path.dirname(exe), stdio: ['ignore', 'pipe', 'pipe'], env: {...env, FAIRWAY_HTML: path.join(dir, path.basename(FILE ? path.resolve(FILE) : DIST))}});
-  } else bridgeProc = spawn(process.execPath, [path.join(dir, 'fairway-bridge.mjs')], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env});
+  } else {
+   // A bridge that is missing or will not start FAILS ITS JOURNEY and the run
+   // goes on (the 1.0 polish: a build made with a bare `vite build`, which
+   // does not bundle the bridge, threw here and ended the whole run, so the
+   // ten journeys after it never ran).
+   const bundle = path.join(dir, 'fairway-bridge.mjs');
+   if (!fs.existsSync(bundle)) {
+    console.log(`   ✗ no ${path.relative(ROOT, bundle)}: \`npm run build\` makes it, a bare \`vite build\` does not\n   FAILED in 0.0s\n`);
+    results.push({name: journey.name, ok: false, seconds: 0}); await context.close(); continue;
+   }
+   bridgeProc = spawn(process.execPath, [bundle], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env});
+  }
   let said = '';
   bridgeProc.stdout.on('data', d => { said += d; });
   bridgeProc.stderr.on('data', d => { said += d; });
   const until = Date.now() + 15000;
   while (!said.includes('Fairway bridge:') && Date.now() < until && bridgeProc.exitCode === null) await new Promise(r => setTimeout(r, 100));
-  if (!said.includes('Fairway bridge:')) { bridgeProc.kill(); throw new Error(`the bundled bridge did not start: ${said.trim() || 'no output'}`); }
+  if (!said.includes('Fairway bridge:')) {
+   bridgeProc.kill();
+   console.log(`   ✗ the bridge did not start: ${(said.trim() || 'no output').split('\n').slice(0, 3).join(' / ')}\n   FAILED in 0.0s\n`);
+   results.push({name: journey.name, ok: false, seconds: 0}); await context.close(); continue;
+  }
   home = `http://127.0.0.1:${bridgePorts.http}/`;
  }
  const trip = new Trip(page, journey.name, home);

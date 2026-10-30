@@ -223,16 +223,18 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   b.classList.toggle('on', k === game); b.setAttribute('aria-pressed', String(k === game));
   b.onclick = () => opts.onGame?.(k);
   grid.append(b);
-  if (settings) queue.push({el: pic, settings});
+  // A card with no one course stands for every landscape (picture-loop.js).
+  queue.push({el: pic, settings: settings || {biome: '*'}, key: k});
  };
  if (weekly) typeCard('weekly', {name: 'COURSE OF THE WEEK', line: weekly.name.toUpperCase(), tag: weekly.tag, label: 'Course of the week', settings: weekly.settings});
  if (opts.endless) typeCard('endless', {name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', tag: 'A RUN', cls: 'run', label: 'Endless'});
- typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} OF YOURS · OR IMPORT A CODE` : 'IMPORT A CODE A FRIEND SENT', tag: 'YOUR SHELF', cls: courses.length ? '' : 'empty-shelf', label: 'Saved course', settings: courses[0]?.settings});
+ typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} SAVED · OR IMPORT A CODE` : 'BUILD A COURSE OR IMPORT A CODE', tag: 'SAVED', cls: courses.length ? '' : 'empty-shelf', label: 'Saved course', settings: courses[0]?.settings});
  if (opts.friend) typeCard('friend', {name: 'FRIEND CHALLENGE', line: opts.friend.line, tag: opts.friend.name, cls: 'friend', label: 'Friend challenge'});
  typeCard('surprise', {name: 'SURPRISE ME', line: 'A NEW NINE FROM RANDOM SETTINGS', tag: 'NEW', cls: 'surprise', label: 'Surprise me', settings: opts.surprise?.settings});
  const studio = q('roundStudio'), surprise = q('roundSurprise');
  if (studio) {
-  const {b} = card(doc, {name: 'NEW COURSE IN STUDIO', line: 'SHAPE YOUR OWN, THEN PLAY IT', tag: 'COURSE STUDIO', kind: 'studio'});
+  const {b, pic} = card(doc, {name: 'NEW COURSE IN STUDIO', line: 'BUILD ONE, THEN PLAY IT', tag: 'COURSE STUDIO', kind: 'studio'});
+  queue.push({el: pic, settings: {biome: '*'}, key: 'studio'});
   b.setAttribute('aria-label', 'New course in studio'); b.dataset.game = 'studio';
   b.onclick = () => studio.click();
   studio.hidden = true; grid.append(b, studio);
@@ -272,7 +274,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   b.dataset.course = c.id;
   b.onclick = () => { course.value = c.id; fire(course); };
   sgrid.append(b); cardFor.set(c.id, b);
-  if (game === 'saved') queue.push({el: pic, settings: c.settings});
+  if (game === 'saved') queue.push({el: pic, settings: c.settings, id: c.id});
  }
  const facts = make(doc, 'span', 'sx-facts');
  const sline = make(doc, 'div', 'sx-line');
@@ -363,7 +365,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   sum.append(make(doc, 'h3', 'sx-head', 'YOU’RE ABOUT TO PLAY'));
   const pic = make(doc, 'span', 'sx-pic sx-sum-pic');
   sum.append(pic);
-  if (c) pictures?.([{el: pic, settings: c.settings}], 480, 150);
+  if (c) pictures?.([{el: pic, settings: c.settings || {biome: '*'}, id: c.id}], 480, 150);
   const fmt = mode.options[mode.selectedIndex]?.textContent.split(' · ')[0] || '';
   sum.append(make(doc, 'div', 'sx-sum-name', c ? `<strong>${esc(c.name.toUpperCase())}</strong><small>${esc(c.line)} · ${esc(fmt.toUpperCase())}</small>` : '<strong>CHOOSE A COURSE</strong><small>STEP 1</small>'));
   // Surprise me's course was rolled when it was chosen: another can be rolled here.
@@ -417,8 +419,12 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const steps = [{label: 'Game', page: p1}, ...(own ? [own] : []), {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}];
  // A step not in this game keeps its controls in the page, put away.
  if (own?.page !== pSaved) { const away = make(doc, 'div', 'sx-emptied'); away.hidden = true; away.append(pSaved); root.append(away); }
+ // TEE OFF ON EVERY STEP (the 1.0 polish, Play round 1; UI_POLISH.md G1): the
+ // steps after the first hold choices with defaults (who plays, the format,
+ // the rules), so a player happy with them starts from the first step. Tee off
+ // still checks what it needs and says what is missing (main.js).
  const sheet = stepSheet(root, {
-  steps,
+  steps, finishAlways: true,
   index: opts.step ?? 0, finish: start, onStep: opts.onStep, alert: err,
   hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
@@ -443,7 +449,9 @@ export function buildRangeSetup(root, {step = 0, onStep, doc = globalThis.docume
  }
  return stepSheet(root, {
   steps: [{label: 'Golfers', page: golfers}, {label: 'The range', page: range}],
-  index: step, finish: root.querySelector('#rangeGo'), onStep,
+  // Open the driving range on both steps (the 1.0 polish, the way in round 3):
+  // the golfers are set already, and the range opens on its last setup.
+  index: step, finish: root.querySelector('#rangeGo'), finishAlways: true, onStep,
   hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
 }

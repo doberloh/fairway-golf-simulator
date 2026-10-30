@@ -1,0 +1,39 @@
+/* MOTION IN THE MENUS (the 1.0 polish, 27 October 2026; docs/UI_POLISH.md,
+   *Animation*). Checklist M1-M4, from the research (RESEARCH.md, *Game
+   interface practice*): short -- about 120 ms for a press or the cursor, 180-
+   240 ms for a screen or a box coming in, nothing on the way out (exits are
+   instant: nothing waits for an animation, M3); eased out; transform and
+   opacity only, which the compositor does without layout or paint (M2); and
+   none at all when the system asks for reduced motion (M4) -- everything here
+   sits inside no-preference. Menus, sheets and boxes only: nothing on the
+   round screen, so nothing moves during a swing or a flight.
+
+   Each piece is in the rounds of UI_POLISH.md, which say what was tried. */
+@media (prefers-reduced-motion:no-preference){
+ /* A SHEET COMES IN: the whole sheet fades in, and its page rises 10 px.
+    Only opacity on #drawer itself: a transform there would make it the box
+    its fixed pieces (the steps, the foot, the main button) are placed in,
+    and they would slide with it. The page (.sx-page, a step's content, and
+    any sheet's content box) holds nothing fixed. A page replayed when the
+    step changes is the same movement: the new step's content arriving. */
+ /* As strong as ui-sheets.css's own open-sheet rule, which sets animation:none
+    (the old sliding drawer): equal, and later, so this wins. */
+ body:has(#app[data-mode]) #drawer:not([hidden]){animation:ui-fade-in 180ms cubic-bezier(.2,.7,.3,1)}
+ #drawer .sx-page:not([hidden]){animation:ui-rise-in 220ms cubic-bezier(.2,.7,.3,1)}
+ /* A BOX OVER THE SCREEN (save, leave, the version notice, the welcome):
+    its card fades in and settles from 98%. */
+ body>.version-notice:not([hidden])>:is(div,form){animation:ui-settle-in 200ms cubic-bezier(.2,.7,.3,1)}
+ /* THE CURSOR ON THE MAIN MENU: the fill and the white edge, instant. Its
+    6 px slide went with the slant (28 October 2026): on square tiles a tile
+    standing 6 px out of the column read as misaligned. The press below. */
+ #mainMenu .menu-tile:not(:disabled){transition:scale 120ms cubic-bezier(.2,.7,.3,1)}
+ /* A PRESS answers at once: the button gives 3% under the finger or the
+    pointer, and springs back in 120 ms. The `scale` property, not
+    `transform`, so it adds to a button's own lean (.field-action is skewed
+    by its transform) instead of straightening it. */
+ :is(#drawer,.main-menu,body>.version-notice) button:not(:disabled){transition:scale 120ms cubic-bezier(.2,.7,.3,1)}
+ :is(#drawer,.main-menu,body>.version-notice) button:not(:disabled):active{scale:.97;transition-duration:40ms}
+}
+@keyframes ui-fade-in{from{opacity:0}}
+@keyframes ui-rise-in{from{opacity:0;transform:translateY(10px)}}
+@keyframes ui-settle-in{from{opacity:0;transform:scale(.98)}}

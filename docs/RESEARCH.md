@@ -2817,7 +2817,8 @@ screen's list, the owner's request). [rēlā's FAQ](https://docs.rela.golf/rela/
 its Device Requirements table, names SkyTrak, GC2, FlightScope Xi/X2, GolfJoy,
 Mevo+/Gen2, Square, Nova, Garmin R10, Full Swing KIT and Other; some need the
 vendor's own app on the same PC (FlightScope Xi/X2, GolfJoy). Taken: the names
-(`RELA_MONITORS`, ui-monitor-setup.js), with the makers' names added where
+(`RELA_MONITORS`, ui-monitor-setup.js, until the 1.0 polish moved the list
+out of the game into the download's README.md and PLAYING.md), with the makers' names added where
 they are certain (Foresight GC2, FlightScope Mevo+); "Other" left out because
 rēlā calls it "not a promise that every launch monitor will work". Read and
 not used: [the docs' front page](https://docs.rela.golf/) and
@@ -10570,9 +10571,22 @@ the wave, 0.8 and 0.35 a metre, gate 0.3-0.55, 0.7 strong. Round 14: wet
 sand -- below 0.05 m over the sea fully, fading out by 0.45 m, the colour x
 (0.74, 0.76, 0.8) at 0.85, where red - green > -0.06. Round 16: a pond's
 wavelet lengths x clamp(shore / 300 m, 0.6, 1.2). Round 18: cat's paws --
-smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting 0.8 m a clock
-second downwind, x (0.35 + 0.65 min(1, wind / 12 mph)); the ripple slope
-+0.45 x it, the mirror x (1 - 0.6 x it). PLACED.
+smoothstep(0.55, 0.85) of noise at 0.05 a metre drifting downwind, x (0.35 +
+0.65 min(1, wind / 12 mph)); the ripple slope +0.45 x it, the mirror x (1 -
+0.6 x it). PLACED. **The drift was wrong until 28 October 2026**: written as
+0.8 a clock second it was 0.8 NOISE units (16 m) a water-clock second, and
+the clock runs WATER_SPEED (10) times real time -- 160 m/s in any wind, so a
+patch crossed a 60 m pond in under half a second. The owner, playing: "light
+colored shapes passing VERY QUICKLY across the surface of ponds". Gusts
+travel at about the wind's own speed (real cat's paws drift with the mean
+wind), so the patches now move at the course's wind, at least 1 m/s (renderer
+uniform pawDrift = max(1, wind mph x 0.447) / WATER_SPEED m a clock second).
+Measured from hole 1's pond bank (autumn, 4 mph; 20 frames 0.22 s apart, a
+pixel counted when its brightness moved more than 30 of 765): the pond's area
+changing a frame fell from 3.2% to 0.6% on average, frames over 2% from 8 of
+19 to 3, the worst from 9.8% to 4.1%; the grass beside it, the control,
+under 0.2% in both. What is left is the ripples and the clouds' shadows
+(9 + 1.6 x wind mph m/s, about 15 today), both meant.
 
 Mowing that shades with the view (ground.js; the diamonds' round 7, the
 tee's round 5): cut grass reads light where it is laid away from the eye
@@ -10620,3 +10634,120 @@ and 60 m 31; 25 and 50 m 31; 40 m 32; 60 m **38** (every course 2-6). Taken:
 ground.js `teeTurf`: the mean of the biome's fairway and fringe colours,
 15% of the way to its own grey (luminance 0.299/0.587/0.114), on the pad
 and its collar (was the semi-rough's colour). PLACED.
+
+## Game interface practice, for the 1.0 polish (27 October 2026)
+
+Read for the 1.0 interface polish (branch `ui-polish-1-0`; the record is
+docs/UI_POLISH.md, whose checklist turns these into lines every change
+names). Fetched and read unless marked.
+
+**Text size** -- Xbox Accessibility Guideline 101
+(https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/101):
+minimum default text, measured ascender to descender, **18 px at 1080p on
+PC (36 px at 4K)**, 26 px at 1080p on a console seen from a couch; on
+mobile **18 px at 100 DPI, scaled linearly** (a 5.5-inch 1080p phone is
+about 400 DPI). Text scalable to 200% with nothing lost and scrolling in
+one direction only; lines of a text block no more than 80 characters, line
+spacing at least 1.5; sentence case for lines of text (one- and two-word
+labels exempt). Taken: a font-size of 13 CSS px as the audit's floor for
+anything a player must read at the default Text size (PLACED: the 18 px
+body height is ascender to descender, about 1.3-1.4 times the font size,
+so 18 px body is about a 13-14 px font -- estimated, not measured from
+Saira Condensed). All caps stays for one- and two-word labels, the Console
+Arcade look; sentences are sentence case.
+
+**Contrast** -- Xbox Accessibility Guideline 102
+(https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/102):
+**4.5:1** for standard text and important visual elements, **3:1** for
+large text (36 px at 1080p on PC) and for inactive elements' text, 7:1 in a
+high-contrast mode; over a busy background, measure against its
+lowest-contrast patch; no text baked into pictures. Taken: 4.5:1 and 3:1
+as the audit's lines, using the palette's own check (`ui-palette.js`); a
+caption over a landscape picture sits on its own panel.
+
+**Navigation** -- Xbox Accessibility Guideline 112
+(https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/112):
+every screen navigable by keyboard and by a controller's digital input
+alone; focus order follows the layout; a linear list wraps from last to
+first, a grid does not; the same prompts in the same place on every screen
+(Back always in the same corner); always a way back to the previous screen
+or the main menu; text scaling never forces scrolling in two directions.
+Taken as checklist lines, all of them.
+
+**Getting into play** -- Game Accessibility Guidelines
+(https://gameaccessibilityguidelines.com/full-list/ and
+https://gameaccessibilityguidelines.com/allow-the-game-to-be-started-without-the-need-to-navigate-through-multiple-levels-of-menus/):
+"Allow the game to be started without the need to navigate through
+multiple levels of menus" (Basic, cognitive); a sports game's long setup
+chain (team, kit, country) is the guideline's own example, and a quick
+start its answer. No number of levels is given. Also from the full list:
+interactive elements that look interactive; elements chosen by touch or
+pointer kept stationary; large, well-spaced touch targets; an option to
+turn off background movement; no sudden, unexpected movement; simple,
+clear language. Sausage Sports Club's design write-up
+(https://www.gamedeveloper.com/design/designing-sausage-sports-club): get
+players playing in as few steps and with as little needless information as
+possible -- one press to start, defaults chosen for the player, advanced
+choices kept but tucked behind small buttons. Taken: count the presses
+from the main menu to the first shot per mode (UI_POLISH.md) and shorten
+them; defaults that can be passed straight through; a one-press start with
+the last setup. Read and not used: search summaries of opinion pieces on
+"time to fun" (Rovio's metric, sports-game menu complaints) -- design
+opinion, no measurement.
+
+**Touch targets** -- WCAG 2.2, 2.5.8 Target Size (Minimum)
+(https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html):
+**24 x 24 CSS px**, or a 24 px circle round a smaller target touching no
+other; web.dev, *Accessible tap targets*
+(https://web.dev/articles/accessible-tap-targets): **about 48 x 48 CSS px**
+(about 9 mm) with **about 8 px** between targets. Apple's 44 x 44 pt is
+widely cited, but its guideline page did not load as text (not read).
+Taken: 44 CSS px as the audit's line on phone and tablet sizes for
+anything pressed in normal play (PLACED: between the 24 px floor and the
+48 px recommendation); 24 px the hard floor for anything else.
+
+**Motion** -- Nielsen Norman Group, *Executing UX Animations: Duration and
+Motion Characteristics* (https://www.nngroup.com/articles/animation-duration/):
+**about 100 ms** for small feedback (a toggle), **200-300 ms** for a large
+change (a window coming in), **about 400 ms at most**; over 500 ms feels
+like a drag; exits shorter than entrances (300 in, 200-250 out); ease-out
+entering, ease-in leaving, never linear; animations seen often should be
+shorter and quieter; reduced-motion users get them removed. WCAG 2.2,
+2.3.3 Animation from Interactions
+(https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html):
+motion from an interaction can be switched off; colour and opacity changes
+that do not change size, shape or place are not motion; the
+`prefers-reduced-motion` query is the sufficient technique. MDN,
+*Animation performance and frame rate*
+(https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate):
+`transform` and `opacity` run on the compositor without layout or paint;
+`color` repaints; `left`, `margin`, `width`, `font-size` relayout every
+frame. Taken: interface animations 100-300 ms (PLACED: about 120 ms for a
+press or a focus move, 200-260 ms for a screen or window; the picture
+cross-fade is ambient and slow by design), transform and opacity only, a
+fade or nothing under reduced motion, none during a swing or a flight.
+
+**Not read:** Material Design's motion and accessibility pages
+(m3.material.io, m2.material.io) returned only their titles; Celia
+Hodent's *Gamer's Brain* article returned 404, so her usability pillars
+(signs and feedback, clarity, form follows function, consistency, minimum
+workload, error prevention, flexibility) come from memory of the book, not
+a page read -- the checklist uses them only as headings.
+
+### What the frame tool could not see (28 October 2026, the 1.0 polish)
+
+`tools/frame-ab.mjs` timed the game's own frame callback (CPU) and the WebGL
+work inside it (GPU). Work done anywhere else on the page was invisible to
+both: styles, layout, painting, timers -- and the tiny turning course models
+on main's menu cards, which main drew from a timer. Measured that way, Play's
+first step read 0.2-0.3 ms SLOWER on the branch than on main on Ultra, with
+the models' cost hidden. The browser's own busy time over the same frames
+(`Performance.getMetrics`, `TaskDuration`, now the tool's `page ms`) read
+main at 7.3 ms a frame on High and 10.7 on Ultra on that step, the branch
+2.2 and 3.7 (-62% to -71%). Two more lessons: the menus' figures are bimodal
+in both builds (1.1-4.8 ms run to run on Ultra with identical code), so four
+to six rounds, alternated, are needed before a 5-10% difference means
+anything (a four-round +9% on Low's main menu was equal in six, twice); and
+the menu's backdrop camera circles, so a spot opened a moment later sees
+more or fewer triangles -- check the triangle count before reading a
+graphics difference. Figures: docs/UI_POLISH.md, *What it costs*.

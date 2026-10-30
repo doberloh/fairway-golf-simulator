@@ -54,11 +54,17 @@ test('the straightening wrappers never carry a colour, or the boxes would stand 
   const last = sel.split(',').map(s => s.trim().split(/[ >]+/).pop());
   if (last.some(s => /\.uk-(pi|u)$/.test(s))) assert.doesNotMatch(body, /background/, `${sel} sets a background`);
  }
- // The panel leans -12 and its wrapper +12; inside the sheet the panel does not lean.
- assert.match(bodyOf('.uk .uk-p'), /skewX\(-12deg\)/);
- assert.match(bodyOf('.uk .uk-pi'), /skewX\(12deg\)/);
- assert.match(bodyOf('.uk .uk-sheet'), /skewX\(-12deg\).*transform-origin:0 50%/);
- assert.match(bodyOf('.uk .uk-sheet .uk-p'), /transform:none/);
+});
+
+// Square since 28 October 2026 (the owner: "remove our slanted box style for
+// just regular squares everywhere"): until then the panel leaned -12 degrees,
+// its wrapper +12 and the sheet as one. Nothing in the kit leans or rounds now.
+test('the kit is square: nothing leans, no rounded corners', () => {
+ for (const [sel, body] of RULES) {
+  assert.doesNotMatch(body, /skew/, `${sel} leans`);
+  for (const m of body.matchAll(/border-radius:([^;}]+)/g)) assert.match(m[1].trim(), /^0(px)?$|%/, `${sel} rounds its corners`);
+ }
+ for (const sel of ['.uk .uk-p', '.uk .uk-pi', '.uk .uk-sheet']) assert.match(bodyOf(sel), /transform:none/, sel);
 });
 
 test('the stylesheet keeps the layout rules\' sizes', () => {
@@ -67,9 +73,10 @@ test('the stylesheet keeps the layout rules\' sizes', () => {
  assert.match(bodyOf('.uk .uk-p.uk-row'), new RegExp(`height:${HEIGHTS.row}px`));
  assert.match(bodyOf('.uk .uk-p.uk-item'), new RegExp(`height:${HEIGHTS.item}px`));
  assert.match(bodyOf('.uk .uk-p.uk-tile'), new RegExp(`height:${HEIGHTS.tile}px`));
- // Selection follows the slanted shape: shadows of the box, not a border or inner box.
- assert.match(bodyOf('.uk .uk-p.uk-on'), /drop-shadow/);
- assert.doesNotMatch(bodyOf('.uk .uk-p.uk-on'), /border|outline/);
+ // Selection is a square ring round the box (a box-shadow; until 28 October
+ // 2026 drop shadows traced the slant), not a border or an inner box.
+ assert.match(bodyOf('.uk .uk-p.uk-on'), /box-shadow:0 0 0 3px/);
+ assert.doesNotMatch(bodyOf('.uk .uk-p.uk-on'), /border|outline|drop-shadow/);
  // The old stylesheet turns synthesis off page-wide; the kit needs the slant back.
  assert.match(bodyOf('.uk'), /font-synthesis:style/);
 });
