@@ -14,6 +14,9 @@
 
 // Footprint and height by club, metres (PLACED: a modest municipal clubhouse
 // to a championship venue's).
+import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
+const ARCHITECT_GENERIC_CLUBHOUSE = ARCHITECT_GENERIC.clubhouse;
+
 export const CLUBHOUSE_SIZE = {
  municipal: {width: 18, depth: 12, height: 7},
  members: {width: 26, depth: 16, height: 9},
@@ -26,10 +29,8 @@ export const CLUBHOUSE_SIZE = {
 // and a pavilion stays low (iteration 4: one height for all squashed the manor).
 export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, manor: .731, shingle: .414};
 // The landscape's build (the study's landscape table); the model's name.
-export const CLUBHOUSE_KIND = {
- pnw: 'lodge', desert: 'adobe', mountain: 'chalet', links: 'stonehouse', midwest: 'farmhouse',
- island: 'pavilion', redwood: 'loglodge', autumn: 'clapboard', haunted: 'manor', lakeshore: 'shingle',
-};
+// Each landscape's clubhouse is its architect block's (biomes.js).
+export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.clubhouse]));
 
 const corners = (c, w, d, rot) => {
  const cs = Math.cos(rot), sn = Math.sin(rot), out = [];
@@ -81,7 +82,7 @@ function siteOf({holes, s, surface, nearest, height, blocked, size, fall}) {
  }
  }
  if (!best) return null;
- const model = CLUBHOUSE_KIND[s.biome] || 'farmhouse';
+ const model = CLUBHOUSE_KIND[s.biome] || ARCHITECT_GENERIC_CLUBHOUSE;
  return {kind: 'clubhouse', model, club: true,
   x: best.c.x, z: best.c.z, y: best.hi - .3, base: best.lo, rotation: best.rot, ...size, height: +(size.width * (CLUBHOUSE_ASPECT[model] ?? .42)).toFixed(2)};
 }

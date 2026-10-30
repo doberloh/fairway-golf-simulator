@@ -21,6 +21,7 @@
 // (physics.js), never out of bounds. Props are decoration. All sizes and
 // counts PLACED. Architect only. Pure: tests/story.test.mjs.
 import {styleOf, archStream} from './architect-styles.js';
+import {ARCHITECT} from './biomes.js';
 
 // Each landscape's remains. Sizes are footprints in metres (width across
 // the front, depth, height to the ridge or top); the models
@@ -36,18 +37,8 @@ export const STORY_PIECES = {
  lighthouse: {model: 'Lighthouse', width: 6, depth: 6, height: 22},
  church: {model: 'Church', width: 9, depth: 16, height: 24},
 };
-export const STORY_SET = {
- links: {walls: 'stone', ruins: ['chapel', 'cottage'], landmark: 'lighthouse'},
- lakeshore: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'},
- midwest: {walls: 'hedge', farm: true},
- autumn: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'},
- haunted: {walls: 'leaning', ruins: ['chapel', 'cottage'], circle: true, lanterns: true},
- mountain: {walls: 'stone', ruins: ['minehead', 'cottage']},
- desert: {walls: null, ruins: ['cottage']},
- island: {walls: null, ruins: ['sugarmill']},
- pnw: {walls: 'hedge', ruins: ['cottage']},
- redwood: {walls: null, ruins: ['cottage']},
-};
+// Each landscape's story is its architect block's (biomes.js).
+export const STORY_SET = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.story]));
 const AMOUNT = {none: 0, some: 1, lots: 2};
 // Out of play: this far outside a hole's corridor (its raw half width) at least.
 const CLEAR_WALL = 14, CLEAR_BUILDING = 38;

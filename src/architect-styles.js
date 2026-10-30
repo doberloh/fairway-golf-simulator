@@ -17,6 +17,7 @@
 // about 6,200-7,300 yd from the back tees is the usual spread from a public
 // course to a championship one (RESEARCH.md *Architect courses*).
 import {STYLE_KEYS,DEFAULT_COURSE} from './settings-schema.js';
+import {ARCHITECT,ARCHITECT_GENERIC} from './biomes.js';
 
 // Every style. `set` is the generator settings the style decides; `arch` is
 // what only the architect reads (architect.js): bunker sizes, how many sit
@@ -91,21 +92,10 @@ export const STORIES={
 };
 // The styles each landscape leans toward, most likely first. The study's
 // landscape table (docs/ARCHITECT_COURSES.md, *Each landscape*).
-export const BIOME_STYLES={
- links:['links','minimalist','heathland'],
- lakeshore:['links','sandhills','minimalist'],
- island:['tropical','stadium'],
- desert:['desert','stadium','minimalist'],
- mountain:['mountain'],
- pnw:['heathland','golden','parkland'],
- redwood:['parkland','golden'],
- autumn:['raynor','golden','parkland'],
- midwest:['golden','raynor','parkland','sandhills'],
- haunted:['heathland','links'],
-};
-// A landscape added without a row here falls back to these (PROJECT_HANDOFF
-// *Adding a biome*, the Architect side).
-export const GENERIC_STYLES=['modern','parkland'];
+// The styles each landscape leans toward live in its architect block
+// (biomes.js ARCHITECT); these two names are kept for the tests and tools.
+export const BIOME_STYLES=Object.fromEntries(Object.entries(ARCHITECT).map(([k,a])=>[k,a.styles]));
+export const GENERIC_STYLES=ARCHITECT_GENERIC.styles;
 
 // FNV-1a and Mulberry32, as course-plan.js's `rng` -- repeated rather than
 // imported so this module stays free of the generator's imports. Every

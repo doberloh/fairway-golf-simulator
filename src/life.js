@@ -18,20 +18,11 @@
 // rendering only, so no version moves for it (the fingerprint reads ground).
 // Pure: tests/life.test.mjs.
 import {archStream} from './architect-styles.js';
+import {ARCHITECT} from './biomes.js';
 import {ovalRadius} from './course.js';
 
-export const LIFE_SET = {
- links: {grazers: ['sheep', 9], fliers: ['gull', 3]},
- lakeshore: {fliers: ['gull', 4], geese: 6},
- midwest: {grazers: ['deer', 3], geese: 6},
- autumn: {grazers: ['deer', 4], geese: 4},
- pnw: {grazers: ['deer', 3], heron: true},
- redwood: {grazers: ['elk', 3]},
- mountain: {grazers: ['elk', 2], heron: true},
- desert: {grazers: ['roadrunner', 2]},
- island: {fliers: ['gull', 3], heron: true},
- haunted: {fliers: ['raven', 4]},
-};
+// Each landscape's animals are its architect block's (biomes.js).
+export const LIFE_SET = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.life]));
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
 export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [], trees = []}) {

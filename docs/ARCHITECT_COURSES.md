@@ -471,6 +471,32 @@ ARCHITECT_VERSION 11. Classic's fingerprint unchanged.
   not out of bounds); tests/yardage-book.test.mjs (a page a hole, the PDF
   well formed, every hole's name, par, note, carries and what is left).
 
+### For the next landscape, style or template (30 October 2026)
+
+ARCHITECT_VERSION 12. Classic's fingerprint unchanged.
+
+- **One architect block per landscape** (biomes.js `ARCHITECT`): the styles
+  it leans toward, its signature templates, its clubhouse, path and bridge,
+  its story and its animals, and its colours -- gathered from the seven
+  tables they had grown in (architect-styles.js, clubhouse.js, paths.js,
+  story.js, life.js and three in renderer.js), which now read the block. The
+  move alone changed nothing: the Architect fingerprint before and after it
+  was the same. `ARCHITECT_GENERIC` sits under every block, so a landscape
+  without one still builds.
+- **Signature templates**: a landscape's block names the templates its land
+  suggests (the study's landscape table) -- a Dell and a Cape on Links, an
+  Alps on PNW, a Barranca in the Desert, a Redan on Mountain, a Redan or Road
+  on Autumn, a Pit on Haunted Hollow, flat-ground templates on Midwest, a
+  Cape on Island, a Dell on Lakeshore -- at two and a half times their odds
+  (PLACED). That moved Architect courses (the version).
+- **tests/biome-architect.test.mjs fails when a landscape has no block**, or
+  a block names a style, template, clubhouse, path, ruin, landmark or animal
+  that does not exist.
+- PROJECT_HANDOFF gains *Adding a biome: the Architect side* (the block, its
+  kit, what the ground does to the architect, both fingerprints, the virtual
+  golfer), *Adding a style* and *Adding a template*; ARCHITECTURE one line
+  pointing at them.
+
 ## Rejected
 
 - **A second field for Architect's version** in every record (`architect: n`

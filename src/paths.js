@@ -12,15 +12,15 @@
 //
 // Pure: no DOM, no three.js. tests/paths.test.mjs.
 
+import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
+
 const STEP = 8;           // metres between path points, before smoothing
 // Width by club (PLACED within the study's 8 ft norm and the 48 in accessible
 // route): a municipal course's narrower, a resort's wide enough for two carts.
 const WIDTH = {municipal: 2.1, members: 2.4, resort: 3.0, championship: 2.6};
 // What the path is made of, by landscape (PLACED): the study's paths table.
-export const PATH_KINDS = {
- pnw: 'bark', redwood: 'bark', desert: 'granite', island: 'shell', links: 'gravel', lakeshore: 'boardwalk',
- midwest: 'asphalt', autumn: 'asphalt', mountain: 'gravel', haunted: 'gravel',
-};
+// Each landscape's path surface is its architect block's (biomes.js).
+export const PATH_KINDS = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.path]));
 // Surfaces a path may never take (it bends round them): greens, tees, sand,
 // water and the fringe round a green.
 const KEEP_OFF = new Set(['green', 'fringe', 'tee', 'sand', 'water']);
@@ -125,7 +125,7 @@ export function routePaths({holes, s, surface, streams, ravines = []}) {
    start = -1;
   }
  }
- return {paths: [{points, width, kind: PATH_KINDS[s.biome] || 'asphalt'}], bridges};
+ return {paths: [{points, width, kind: PATH_KINDS[s.biome] || ARCHITECT_GENERIC.path}], bridges};
 }
 
 // Nearest-path queries on a grid of segments, as quick as the lie needs.

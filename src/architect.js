@@ -92,6 +92,12 @@ export function designHole({s,hole,par,line,bio,geo}){
  // every landscape.
  const rnd=archStream(s.seed||'EVERGREEN','arch',s.biome||'',hole);
  const styleKey=styleOf(s),style=STYLES[styleKey],A=style.arch;
+ // THE LAND'S SIGNATURE (biomes.js ARCHITECT, `signature`): the templates a
+ // landscape suggests -- a Dell between Links dunes, an Alps over a PNW crag, a
+ // Barranca between Desert mesas -- at two and a half times their odds there
+ // (PLACED). A template the style rules out (odds 0) stays out.
+ const signature=new Set(bio?.architect?.signature||[]);
+ const pickTemplate=w=>pick(rnd,Object.fromEntries(Object.entries(w).map(([k,v])=>[k,signature.has(k)?v*2.5:v])));
  const {length,center,tees,greenSize,greenAspect,greenWave2,greenWave3,greenWave5,phase,isDogleg,angle}=line;
  const green={x:center(length),z:length};
  const lean=z=>{const a=Math.max(0,z-.5),b=Math.min(length,z+.5);return b>a?(center(b)-center(a))/(b-a):0;};
@@ -111,14 +117,14 @@ export function designHole({s,hole,par,line,bio,geo}){
  let concept,template=null;
  if(par===3){
   concept=rnd()<.15?'penal':'short';
-  if(rnd()<A.template)template=pick(rnd,{redan:2,eden:1.5,biarritz:1,punchbowl:1,plateau:1,dell:DUNE_STYLES.has(styleKey)?1.4:.3});
+  if(rnd()<A.template)template=pickTemplate({redan:2,eden:1.5,biarritz:1,punchbowl:1,plateau:1,dell:DUNE_STYLES.has(styleKey)?1.4:.3});
  }else if(par===4){
   const drivable=yards<345;
   concept=drivable&&rnd()<.7?'risk':pick(rnd,concepts);
-  if(rnd()<A.template)template=pick(rnd,{road:1.2,cape:isDogleg&&wet?2:0,nose:1,leven:drivable?1.5:0,punchbowl:.6,plateau:.6,alps:CLASSIC_STYLES.has(styleKey)?1.2:.3,barranca:drivable?0:.9,pit:DUNE_STYLES.has(styleKey)?.9:0});
+  if(rnd()<A.template)template=pickTemplate({road:1.2,cape:isDogleg&&wet?2:0,nose:1,leven:drivable?1.5:0,punchbowl:.6,plateau:.6,alps:CLASSIC_STYLES.has(styleKey)?1.2:.3,barranca:drivable?0:.9,pit:DUNE_STYLES.has(styleKey)?.9:0});
  }else{
   concept=rnd()<A.cross?'threeShot':pick(rnd,{strategic:concepts.strategic,risk:concepts.risk*1.5,heroic:concepts.heroic*.5});
-  if(rnd()<A.template)template=pick(rnd,{long:concept==='threeShot'?2:.5,nose:1});
+  if(rnd()<A.template)template=pickTemplate({long:concept==='threeShot'?2:.5,nose:1});
  }
 
  // ------------------------------------------------------- where shots land

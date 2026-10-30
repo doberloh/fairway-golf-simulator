@@ -78,7 +78,7 @@ test('the land\'s templates: a Dell\'s dune, an Alps\' ridge, a Barranca\'s ravi
  assert.ok(dell.w.storyProps.some(p => p.kind === 'aimstone'), 'the Dell has its white stone');
  const alps = find('pnw', 'golden', ['T-1', 'T-3'], 'alps');
  assert.ok(alps && rise(alps) > 2.5, `the Alps' ridge rises ${alps && rise(alps).toFixed(1)} m`);
- const bar = find('pnw', 'golden', ['T-2'], 'barranca');
+ const bar = find('autumn', 'raynor', ['T-3', 'T-5'], 'barranca');
  assert.ok(bar, 'a Barranca');
  const e = bar.h.design.earthworks[0], c = bar.h.toWorld({x: bar.h.center(e.z), z: e.z});
  assert.ok(rise(bar) < -2.5, `the ravine falls ${rise(bar).toFixed(1)} m`);

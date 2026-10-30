@@ -752,6 +752,102 @@ If the biome wants props no other biome uses, build them in Blender from a commi
 
 This replaced seven tables and 48 conditionals across eight files. The one that mattered most took a biome as an INDEX into `['desert','mountain','links','island']`, so an unknown name silently became −1 in the ground shader.
 
+### Adding a biome: the Architect side
+
+A landscape is played by both designers, so a new one is not done until an
+Architect course on it is too. **Classic stays silent**: everything below is
+Architect's, and none of it may move a Classic course.
+
+1. **The architect block** -- one entry in `ARCHITECT` (src/biomes.js):
+   - `styles`: the styles the land leans toward, most likely first (By
+     landscape picks among them). Take them from the study's landscape table
+     or reason the same way: what would an architect build here?
+   - `signature`: the templates the land suggests (a Dell between dunes, an
+     Alps over a crag, a Barranca between mesas); their odds are raised on
+     its holes (architect.js `pick`). Only templates that exist (*Adding a
+     template*).
+   - `clubhouse`, `path`, `bridge`: the clubhouse model, the cart path's
+     surface, timber or stone bridges.
+   - `story`: its walls (`stone`, `leaning`, `hedge` or none), a farm, its
+     ruins, a landmark, a stone circle, lanterns (story.js reads it).
+   - `life`: its grazers, geese, a heron, its fliers (life.js reads it).
+   - `colours`: the clubhouse's four, and the rip-rap, wall, ruin and
+     stone-bridge stone.
+   **tests/biome-architect.test.mjs fails until the block exists** and every
+   name in it is real (a style, a template, a clubhouse model, a path kind, a
+   story piece, an animal). Without a block the landscape still builds, on
+   `ARCHITECT_GENERIC` -- a modern parkland course, a farmhouse, asphalt, no
+   story, no animals -- which reads as nowhere in particular.
+2. **The asset kit**: a clubhouse in tools/blender/architect_clubhouses.py
+   (its `CLUBHOUSE_ASPECT` re-measured: a test holds it to the model), and
+   any story piece or animal the land needs in architect_story.py or
+   architect_life.py -- ten iterations each, judged in the game on the new
+   landscape and on Low, logged in docs/ARCHITECT_COURSES.md. Reuse first:
+   a cottage ruin in the land's stone is a colour, not a model.
+3. **Check what the ground does to the architect**: does a clubhouse find a
+   site (tests/clubhouse.test.mjs runs every landscape; Mountain needed the
+   terrace), does the story find room (tests/story.test.mjs), do the nines
+   come home, does a bridge meet a creek?
+4. **Both fingerprints**: `node tools/biome-fingerprint.mjs --check` (Classic:
+   the new landscape shows as `new`, every other unchanged), then
+   `--designer architect --save`. The Architect store is per landscape too.
+5. **The bench and the virtual golfer on both designers**
+   (`tools/architect-difficulty.mjs`): the goal's limit is 1.5 strokes per
+   18 harder than Classic.
+
+### Adding a style
+
+A style is a record in `STYLES` (src/architect-styles.js): its `name` and
+`hand` (one line of what it looks like), `set` -- the Classic settings it
+decides (width, bunkers, greens, water, trees ...) -- and `arch`, the
+architect's own numbers (`lz`: the share of sand placed by landing zones;
+`size`: bunker size; `centre`: centreline bunkers; `cross`: cross bunkers;
+`template`: the share of holes built to a template; `concepts`: the weights
+of strategic, heroic, penal and risk holes).
+
+1. Add the record, and its key to `STYLE_KEYS` and the `archStyle` names in
+   src/settings-schema.js (a test holds the two lists together). A new
+   option re-ranges a setting: **`SCHEMA_VERSION` and a `MIGRATIONS` entry**,
+   with a test that an old save loads.
+2. Decide where its hand shows beyond the numbers -- each is a set keyed by
+   style: mounds (`MOUND_STYLE`, architect.js), pond edges (`EDGE_STYLE`,
+   waterworks.js), lobed bunkers (`lobeStyles`), avenues (`avenueStyles`),
+   fountains (`FOUNTAIN_STYLES`), the dune and classic template sets
+   (`DUNE_STYLES`, `CLASSIC_STYLES`). A style in none of them still builds.
+3. Lean a landscape toward it if one fits (its `styles` in the architect
+   block).
+4. `ARCHITECT_VERSION` up (any Architect course choosing By landscape may now
+   draw it), both fingerprints, the bench's `design` measure and the virtual
+   golfer: a style's bunkers per 18 and its strokes against Classic go in
+   docs/ARCHITECT_COURSES.md, *Measures*.
+
+### Adding a template
+
+A template is a hole built to a known pattern. Three places:
+
+1. `TEMPLATES` (architect.js): `name`, the pars it fits, and the `note` the
+   player is shown (the architect's note, the yardage book).
+2. Its odds in the `pick` for its par in `designHole`, gated by style where
+   it belongs (the Dell and the Pit on dune styles); a landscape can raise
+   them through its `signature`.
+3. What it builds, after the water and the sand, each piece with its reason
+   in `reasons`:
+   - **hazards**: `greenBunker` / `sideBunker` / `addBunker` (the Redan's
+     front bunker, the Eden's three);
+   - **the green**: `greenPlan` (a tilt away, a swale, a punchbowl's sunken
+     pedestal);
+   - **ground**: `earthworks` -- a `ridge` or `ravine` across the hole in its
+     own frame (z, half-length, profile radius, height or depth), which
+     course.js adds to the ground (`earthField`) for the mesh, the collisions
+     and the lie alike;
+   - **no fairway** over part of it: `gaps` (read by `fairwayWidth`, so the
+     shader and the lie agree; the planting keeps the gap's corridor clear);
+   - **a wall** in play: `walls` (solid; story.js draws it).
+4. A test that finds one on a seed and checks what it built
+   (tests/story.test.mjs holds the Dell, Alps, Barranca and Pit), a capture
+   view (`arch-tpl-<name>` in tools/capture/overhaul.mjs),
+   `ARCHITECT_VERSION` up, both fingerprints.
+
 ### Material flags say one thing each
 
 `userData.cloudMesh` means the material IS a cloud and must not be shaded by one. `userData.cloudShadowed` means cloud shadows have already been patched into it. `userData.mist` and `userData.cloudFaded` are the equivalent markers for their own patches.

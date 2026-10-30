@@ -309,7 +309,11 @@ export const GENERATOR_VERSION=52;
 // 11: phase 7, the occasion: a Championship venue's stands, scoreboard,
 //    towers and marquees (solid; the houses and trees keep off them), its
 //    ropes and its crowd by the pin day (occasion.js).
-export const ARCHITECT_VERSION=11;
+// 12: every landscape's Architect side in one block (biomes.js ARCHITECT; the
+//    move alone changed nothing), and its signature templates -- the Dell on
+//    Links, the Alps on PNW, the Barranca in the Desert ... -- at 2.5 times
+//    their odds there.
+export const ARCHITECT_VERSION=12;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

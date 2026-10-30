@@ -15,7 +15,7 @@ import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
-import {biomeOf} from './biomes.js';
+import {architectOf,biomeOf} from './biomes.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -1949,11 +1949,12 @@ export class GolfView{
   // end to end across the span, timber or stone by landscape, each fitted to
   // the deck physics stands the ball on (course.js `b.deck`, its top) and to
   // the path's width, inked like the furniture.
-  const STONE_BRIDGE=new Set(['links','autumn','haunted']),stoneLook={links:'#bdb6a6',autumn:'#c4b9a6',haunted:'#7d7584'};
+  // Timber or stone, and the stone's colour, by the landscape's architect block.
+  const bridgeOf=k=>architectOf(k);
   for(const b of w.bridges||[]){
-   const key=w.bio?.key||w.settings?.biome,stone=STONE_BRIDGE.has(key),name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+   const key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
    const parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
-   const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:stoneLook[key]||'#bdb6a6'}:{bark:'#8f6a45',stone:'#6b4a2f'};
+   const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:bridgeOf(key).colours.bridgeStone}:{bark:'#8f6a45',stone:'#6b4a2f'};
    const mats=parts.map(p=>this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted})),ink=this.inkMaterial(H);
    const y=b.deck??Math.max(w.height(b.x,b.z),0)+.45,n=Math.max(1,Math.ceil(b.span/2)),bay=b.span/n,ca=Math.sin(b.angle),cb=Math.cos(b.angle);
    for(let i=0;i<n;i++){
@@ -1972,7 +1973,7 @@ export class GolfView{
   if(!w?.waterworks?.length||this.style!=='cartoon')return;
   const key=w.bio?.key||w.settings?.biome;
   // Iteration 4: a shade darker than the sheet's -- pale stone went pink-white in the afternoon sun.
-  const ROCK={midwest:'#8f897e',desert:'#b5865c',mountain:'#87817a',island:'#4d4744',pnw:'#7d7972',redwood:'#837767',autumn:'#928b80',lakeshore:'#9c937f',haunted:'#5f5868',links:'#99948a'};
+  const ROCK={[key]:architectOf(key).colours.riprap};
   const KINDS=[
    ...[1,2,3].map(v=>({kind:'riprap',variant:v-1,model:'Blender_RipRap_'+v,height:.34,colours:{stone:ROCK[key]||'#a8a298'}})),
    {kind:'bulkhead',model:'Blender_Bulkhead_1',height:.9,inked:true,colours:{bark:'#5e4733',stone:'#8b8a85'}},
@@ -2038,22 +2039,11 @@ export class GolfView{
  // trim and glass (Haunted Hollow's windows are lit).
  addBuildings(w){
   if(!w?.buildings?.length||this.style!=='cartoon')return;
-  const LOOK={
-   pnw:{stone:'#8b6a4a',bark:'#4f5b46',accent:'#ddd2bb',dirt:'#2c3438'},
-   desert:{stone:'#d7a77a',bark:'#7d5a3c',accent:'#8a5a36',dirt:'#3a2c26'},
-   mountain:{stone:'#b88d5e',bark:'#5a4436',accent:'#efe6d2',dirt:'#2b3036'},
-   links:{stone:'#c3bfb2',bark:'#5b6168',accent:'#ece8de',dirt:'#2a3036'},
-   midwest:{stone:'#f2efe6',bark:'#7a3d32',accent:'#ffffff',dirt:'#2e3a44'},
-   island:{stone:'#e8d7b5',bark:'#c7a35f',accent:'#9b7048',dirt:'#2b3a3a'},
-   redwood:{stone:'#9a6342',bark:'#3f4a3a',accent:'#d8c7a8',dirt:'#2a2e2c'},
-   autumn:{stone:'#f1ede2',bark:'#3d4044',accent:'#ffffff',dirt:'#2d3640'},
-   haunted:{stone:'#6b6274',bark:'#2f2838',accent:'#b9b2a6',dirt:'#e9a640'},
-   lakeshore:{stone:'#c4ab84',bark:'#6d6a63',accent:'#f4f1ea',dirt:'#2c3a46'},
-  };
-  const look=LOOK[w.bio?.key]||LOOK[w.settings?.biome]||LOOK.midwest;
+  // The clubhouse's colours are its landscape's architect block's (biomes.js).
+  const look=architectOf(w.bio?.key||w.settings?.biome).colours.clubhouse;
   // THE LAND'S STORY'S BUILDINGS (phase 6; story.js, tools/blender/architect_story.py):
   // fitted to their boxes the same way, coloured by piece and landscape.
-  const key=w.bio?.key||w.settings?.biome,ruinStone={links:'#bdb7a8',haunted:'#6f6878',desert:'#cfa27a',mountain:'#a49c90',lakeshore:'#c4b9a2',pnw:'#8f8c7e',redwood:'#948a7a',autumn:'#b5ab98',island:'#b3a48c'}[key]||'#b5ab98';
+  const key=w.bio?.key||w.settings?.biome,ruinStone=architectOf(key).colours.ruin;
   const STORY={
    barn:{bark:'#b8463a',stone:'#7a7470',dirt:'#4d4a50',accent:'#f4f1ea'},
    silo:{stone:'#d9d4c8',accent:'#9aa0a6',dirt:'#7d8a96'},
@@ -2122,7 +2112,7 @@ export class GolfView{
  addStory(w){
   if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length))return;
   const key=w.bio?.key||w.settings?.biome;
-  const STONE={links:'#cfc8b6',autumn:'#c2b8a4',mountain:'#b4ac9f',haunted:'#857c90',lakeshore:'#c9bfa8'}[key]||'#c2b8a4';
+  const STONE=architectOf(key).colours.wall;
   const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
   const draw=(model,list,colours,inked,place)=>{
    if(!list.length)return;
