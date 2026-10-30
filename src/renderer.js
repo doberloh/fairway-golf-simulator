@@ -869,8 +869,18 @@ export class GolfView{
  // model at its real height in metres (the ingest makes every model one unit
  // tall), each role in its colour. Null where the build has none, so the
  // plain shapes stay as the fallback.
- furniture(name,height,colours){
+ // BATCHED FURNITURE (the goal's frame time on Low, measured on Autumn): the
+ // tee markers, signs, benches and ball washers were a group of meshes each,
+ // every part drawn again for its ink and in the shadow pass -- some 200 draws
+ // on a nine. With `batch`, furniture() hands back an empty placeholder for
+ // the caller to place as before, and flushFurniture() draws every placed
+ // piece as one InstancedMesh per model, colours and part (and one for its
+ // ink). The same pieces, in the same places and colours: only how they are
+ // drawn changes, Classic's as well as Architect's. A placeholder that takes
+ // a child (the sign's card) stays in the scene to carry it.
+ furniture(name,height,colours,{batch=false}={}){
   const parts=this.style==='cartoon'&&modelParts(name);if(!parts)return null;
+  if(batch){const o=new T.Object3D();o.scale.setScalar(height);(this.pendingFurniture=this.pendingFurniture||[]).push({name,height,colours,obj:o});return o;}
   const g=new T.Group();
   for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
    // INKED OUTLINES (the cartoon overhaul's edges, round 2): the model again,
@@ -880,6 +890,21 @@ export class GolfView{
    // hand beside the uninked trees; 0.8 cm is definition, not a new style).
    const ink=new T.Mesh(p.geometry,this.inkMaterial(height));ink.castShadow=false;ink.receiveShadow=false;g.add(ink);}
   g.scale.setScalar(height);return g;
+ }
+ flushFurniture(){
+  const list=this.pendingFurniture||[];this.pendingFurniture=[];if(!list.length)return;
+  const buckets=new Map();
+  for(const it of list){it.obj.updateMatrix();const key=it.name+'|'+JSON.stringify(it.colours);if(!buckets.has(key))buckets.set(key,{name:it.name,height:it.height,colours:it.colours,matrices:[]});buckets.get(key).matrices.push(it.obj.matrix.clone());}
+  for(const b of buckets.values()){
+   for(const p of modelParts(b.name)||[]){
+    const m=new T.InstancedMesh(p.geometry,this.surfaceMaterial(b.colours[p.role]??'#ffffff',{vertexColors:p.painted}),b.matrices.length);
+    const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(b.height),b.matrices.length);
+    b.matrices.forEach((x,i)=>{m.setMatrixAt(i,x);ink.setMatrixAt(i,x);});
+    m.castShadow=m.receiveShadow=true;ink.castShadow=ink.receiveShadow=false;
+    for(const x of [m,ink]){x.instanceMatrix.needsUpdate=true;x.computeBoundingSphere();this.group.add(x);}
+   }
+  }
+  for(const it of list)if(!it.obj.children.length)it.obj.parent?.remove(it.obj);
  }
  inkMaterial(height){
   this.inks=this.inks||new Map();
@@ -1039,7 +1064,7 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
+ disposeCourse(){this.pendingFurniture=[];this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
   this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
@@ -1104,7 +1129,7 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
-  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}this.flushFurniture();
   if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
@@ -2443,7 +2468,7 @@ export class GolfView{
     const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
     // A moulded marker, a squat dome on a collar 11 cm tall (the furniture);
     // a ball on the turf where the build has none.
-    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'});
+    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'},{batch:true});
     const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
     marker.position.set(q.x,h.height(x,z)+(made?0:.085),q.z);group.add(marker);
    }
@@ -2477,7 +2502,7 @@ export class GolfView{
    // The furniture's sign: two timber posts and a gable cap round the board,
    // the hole's card on a face 5 cm in front of it (cartoon_course.py says
    // where the board is). The old box-on-a-post where the build has none.
-   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
+   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'},{batch:true});
    const sign=frame??new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
    if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.52,1.25/2.52),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.52,.05/2.52);frame.add(face);}
    sign.position.set(q.x,ground+(frame?0:1.55),q.z);
@@ -2494,8 +2519,8 @@ export class GolfView{
    // ahead of the sign -- decoration, nothing a ball hits (the sign never was).
    const put=(m,along,out)=>{if(!m)return;const ax=lx+bux*along+buz*out,az=lz+buz*along-bux*out,w=h.toWorld({x:ax,z:az});
     m.position.set(w.x,h.height(ax,az),w.z);m.rotation.y=Math.atan2(bw.x-w.x,bw.z-w.z);group.add(m);};
-   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'}),-2.2,-1.6);
-   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
+   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'},{batch:true}),-2.2,-1.6);
+   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'},{batch:true}),1.6,-.2);
   }
  }
  // Move the range's green, without rebuilding anything.

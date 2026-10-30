@@ -254,7 +254,8 @@ strokes per 18 harder** (limit 1.5); Classic's fingerprint unchanged from the
 start; the bench moved (bunkers by a landing zone 83% against 27%, nines home
 11 of 12 against 7); **an eighteen builds at most 1.66 s slower** on
 Architect (PNW; limit 2 s); **frame time on Low within 10%** of Classic on
-nine of ten landscapes, all ten measured; **every smoke journey green** (39 of 39, on the
+all ten landscapes (the worst Redwood, +1.7%; *Frame time on Low, every
+landscape: met*); **every smoke journey green** (39 of 39, on the
 graphics card, after the draw changes too -- the run before failed
 `ball-light-hole-out` once, a Classic Surprise me round the changes do not
 draw; it passed three times alone and in the full rerun: logged as a flake,
@@ -266,12 +267,6 @@ Cape, Pit, Barranca and Alps, a contact sheet for each of the six kits, first
 against final for the fountain, the mower and the gallery, and ten course
 codes to paste into the game (made by the game's own exporter; each checked
 to import back as an Architect course).
-
-**Not met: Autumn's frame time on Low**, +25% processor and +28% graphics
-over Classic on the profile course, traced to the tee furniture both
-designers draw falling more into view on Architect's routing; the fix
-(instancing it) changes Classic's drawing and waits for the owner (*Frame
-time on Low, every landscape*; TODO).
 
 **Seen working in the game** (GPU captures, stills, and the smoke journeys'
 clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
@@ -1014,6 +1009,37 @@ Island 6.66 / 4.75, Redwood 3.21 / 3.17, Autumn 4.51 / 4.73, Haunted 3.44 /
 inside the goal's 2 s everywhere. (Before the width tables Island was 11.03 s,
 +4.4 s.) Re-measured at the end of the goal.
 
+### Frame time on Low, every landscape: met (30 October 2026, the last measure)
+
+After the tee furniture was batched (below) -- `node tools/profile.mjs
+--only architect --landscapes all --frames 1200 --json <file>`, read as the
+MEAN processor time a frame (the probe's `mean`: the median of a timer that
+steps by 0.1 ms swung by up to 0.4 ms run to run and had read Autumn at +25%
+to +28%) and the median graphics time; Chrome Remote Desktop's host was
+using the card at about 30% throughout, for both designers alike.
+
+| Landscape | CPU mean ms, Classic / Architect | Change | GPU ms | Change |
+| --- | --- | --- | --- | --- |
+| PNW | 0.862 / 0.602 | -30.1% | 1.19 / 0.77 | -35.0% |
+| Desert | 1.062 / 0.671 | -36.8% | 1.34 / 0.94 | -30.0% |
+| Mountain | 0.794 / 0.616 | -22.4% | 1.04 / 0.63 | -40.1% |
+| Links | 0.603 / 0.533 | -11.7% | 0.98 / 0.64 | -35.2% |
+| Midwest | 0.708 / 0.664 | -6.2% | 0.99 / 0.71 | -28.7% |
+| Island | 0.549 / 0.552 | +0.6% | 0.87 / 0.87 | +0.1% |
+| Redwood | 0.723 / 0.735 | +1.7% | 0.76 / 0.71 | -7.1% |
+| Autumn | 0.900 / 0.817 | -9.2% | 1.18 / 1.03 | -12.5% |
+| Haunted | 1.260 / 0.925 | -26.6% | 1.50 / 0.98 | -34.9% |
+| Lakeshore | 0.840 / 0.633 | -24.6% | 1.12 / 0.60 | -46.2% |
+
+**Every landscape within 10%; the worst Redwood, +1.7%.** **The tee furniture
+batched** (the owner, 30 October 2026: "go ahead on all of this"): the tee
+markers, signs, benches and ball washers -- main's, on both designers -- were
+a group of meshes each, every part again for its ink and in the shadow pass;
+now one InstancedMesh a model, colours and part. It halved every course's
+draws on Low, Classic's too (Autumn Classic 426 -> 232, Architect 533 ->
+259). Seen on a Classic course from three views, before and after: the same
+pieces in the same places and colours (`tee-before`, `tee-exp`).
+
 ### Frame time on Low, every landscape (30 October 2026, after the review)
 
 `node tools/profile.mjs --only architect --landscapes all` (the flag added
@@ -1048,7 +1074,9 @@ hiding each part of the scene and counting the draws it saved:
 | Haunted | 2.10 / 1.60 | 1.95 / 1.06 | 460 / 386 |
 | Lakeshore | 1.60 / 1.40 | 1.33 / 0.66 | 426 / 328 |
 
-**Nine landscapes at or below Classic on both. Autumn is not: +25% processor,
+(Superseded by *Frame time on Low, every landscape: met*, above: the tee
+furniture was batched and the means read.) **Nine landscapes at or below
+Classic on both. Autumn is not: +25% processor,
 +28% graphics** (over four runs its processor median was 1.6-2.0 ms on
 Classic and 2.0-2.4 on Architect; the timer steps by 0.1 ms and a case swings
 by up to 0.4 ms run to run). Traced: Architect's own pieces now cost less than
