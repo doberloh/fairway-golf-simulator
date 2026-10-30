@@ -16,7 +16,8 @@ const classic = world({seed: 'WW-1', holes: 9, biome: 'midwest'});
 test('Classic has no mounds and no waterworks; Links leaves its ponds as found', () => {
  assert.equal(classic.mounds.length, 0);
  assert.equal(classic.waterworks.length, 0);
- assert.equal(links.mounds.length, 0);
+ // No designed mounds on a Links course (the hand tools' mounds are their own).
+ assert.equal(links.mounds.filter(m => !m.hand).length, 0);
  assert.equal(links.waterworks.filter(w => w.kind !== 'fountain').length, 0);
 });
 

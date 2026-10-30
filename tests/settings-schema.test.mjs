@@ -12,7 +12,9 @@ test('the schema is the single source of defaults, and every entry is complete',
  for(const f of SETTINGS){
   assert(f.key&&f.label&&f.tip,`${f.key} needs a label and help text`);
   assert(categories.has(f.category),`${f.key} sits in an unknown category`);
-  assert(['range','int','choice','toggle','text'].includes(f.kind),`${f.key} has an unknown kind`);
+  // `hand`: the Architect's hand-shaped features, a list the studio's Hand
+  // tools edit (hand-tools.js; the owner's review).
+  assert(['range','int','choice','toggle','text','hand'].includes(f.kind),`${f.key} has an unknown kind`);
   assert(f.def!==undefined,`${f.key} needs a default`);
  }
  assert.equal(new Set(SETTINGS.map(f=>f.key)).size,SETTINGS.length,'duplicate setting key');
@@ -177,7 +179,9 @@ test('every setting can be rendered and read back by the studio', () => {
  // partial copy of these defaults holding eleven of the thirty-eight; the other
  // twenty-seven rendered as `undefined` captions over sliders the browser had
  // quietly parked at the midpoint of their range.
- const kinds = new Set(['range', 'int', 'choice', 'toggle', 'text']);
+ // `hand` is rendered by the Hand tools (main.js handToolsHtml), not as a
+ // control: an empty list by default, checked by isHandList.
+ const kinds = new Set(['range', 'int', 'choice', 'toggle', 'text', 'hand']);
  for (const f of SETTINGS) {
   assert.ok(kinds.has(f.kind), `${f.key} has an unrenderable kind: ${f.kind}`);
   assert.notEqual(f.def, undefined, `${f.key} has no default`);

@@ -2196,6 +2196,19 @@ export class GolfView{
   this.setLeaderboard(this.pendingBoard||{title:'LEADERS',rows:[]});
  }
  hasBoard(){return !!this.board;}
+ // THE GROUND AT THE MIDDLE OF THE VIEW (the hand tools' "Aim where I'm
+ // looking"): stepped out along the camera's line until it passes under the
+ // ground, then halved back to it. Null when the view looks at the sky.
+ groundAhead(){
+  const w=this.world;if(!w)return null;
+  const o=this.camera.position,d=new T.Vector3();this.camera.getWorldDirection(d);
+  const at=t=>({x:o.x+d.x*t,y:o.y+d.y*t,z:o.z+d.z*t}),under=t=>{const p=at(t);return p.y<w.height(p.x,p.z);};
+  let lo=0,hi=0;
+  for(let t=2;t<=2500;t*=1.25){if(under(t)){hi=t;break;}lo=t;}
+  if(!hi)return null;
+  for(let k=0;k<24;k++){const m=(lo+hi)/2;if(under(m))hi=m;else lo=m;}
+  const p=at(hi);return {x:p.x,z:p.z};
+ }
  setLeaderboard(board){
   this.pendingBoard=board;
   const B=this.board;if(!B)return;

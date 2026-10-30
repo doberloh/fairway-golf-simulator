@@ -2007,6 +2007,24 @@ const JOURNEYS = [
     const file = await pdf.path(), head = fs.readFileSync(file).subarray(0, 5).toString();
     if (head !== '%PDF-') throw new Error(`the book is not a PDF (${JSON.stringify(head)})`);
    });
+   // The hand tools (the owner's review): a bunker shaped by hand, the
+   // landscape grown again with it, and the saved course carrying it.
+   await t.step('shape a bunker by hand and grow again', async () => {
+    await t.page.click('#studioSettings');
+    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
+    await t.until(() => t.page.locator('#handTools').isVisible(), 'the Hand tools', 5 * SLOW);
+    await t.page.selectOption('#handHole', '0');
+    await t.page.selectOption('#handKind', 'bunker');
+    await t.page.click('#handAim');
+    await t.page.click('#handAdd');
+    await t.until(() => t.page.evaluate(() => /Bunker/.test(document.getElementById('handList')?.textContent || '')), 'the bunker in the hole\'s list', 5 * SLOW);
+    await t.page.locator('#handTools').scrollIntoViewIfNeeded();
+    fs.mkdirSync(path.join('bench', 'shots', 'smoke'), {recursive: true});
+    await t.page.screenshot({path: path.join('bench', 'shots', 'smoke', 'hand-tools.png')});
+    await t.press('Grow this landscape');
+    await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
+     && document.getElementById('generating')?.hidden !== false), 'the landscape grown again', 120 * SLOW);
+   });
    let name = '';
    await t.step('save it, and it is Architect in Saved courses', async () => {
     await t.page.click('#studioSave');
@@ -2022,6 +2040,7 @@ const JOURNEYS = [
     if (saved.settings.designer !== 'architect' || saved.settings.archStyle !== 'links' || saved.settings.archClub !== 'championship')
      throw new Error(`saved as ${JSON.stringify({designer: saved.settings.designer, style: saved.settings.archStyle, club: saved.settings.archClub})}`);
     if (!(saved.generator >= 1000)) throw new Error(`saved with the stamp ${saved.generator}, not an Architect one`);
+    if (!(saved.settings.archHand?.length === 1 && saved.settings.archHand[0].kind === 'bunker')) throw new Error(`saved without the hand-made bunker: ${JSON.stringify(saved.settings.archHand)}`);
     await t.page.click('#studioExit');
     await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
    });

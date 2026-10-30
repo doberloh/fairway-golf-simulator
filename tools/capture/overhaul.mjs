@@ -158,6 +158,16 @@ export const VIEWS = [
  {name: 'arch-fountain-near', hole: 0, when: 'afternoon', caption: 'A fountain close to, the water in motion', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
   const x = m.x + 11, z = m.z + 4;
   return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 2.2, pitch: 6}; }`},
+ // The hand tools (the owner's review): hole 2 from above and behind its
+ // drive zone, looking on to the green.
+ {name: 'h2-above', hole: 1, when: 'afternoon', caption: 'Hole 2 (or window.__hole) from above, down the hole', cam: `w => { const h = w.holes[window.__hole ?? 1], z0 = h.length * .3, z1 = h.length * .85, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 60, pitch: -32}; }`},
+ // A point on hole 2 (window.__look = {at, off, from, side, up}: metres from
+ // the tee, right of the line; the camera `from` m short of it, `side` m
+ // across, `up` m high).
+ {name: 'h2-look', hole: 1, when: 'afternoon', caption: 'A point on hole 2', cam: `w => { const L = window.__look || {}, h = w.holes[1], at = L.at ?? 200, off = L.off ?? 0, from = L.from ?? 40, side = L.side ?? 0;
+  const zc = Math.max(0, Math.min(h.length, at)), t = h.toWorld({x: h.center(zc) + off, z: at}), zb = Math.max(0, Math.min(h.length, at - from)), c = h.toWorld({x: h.center(zb) + off + side, z: at - from});
+  return {x: c.x, z: c.z, yaw: Math.atan2(t.x - c.x, t.z - c.z) * 180 / Math.PI, height: L.up ?? 3, pitch: L.pitch ?? -4}; }`},
  {name: 'arch-bridge', hole: 0, when: 'afternoon', caption: 'A cart-path bridge over a creek', cam: `w => { const b = (w.bridges || [])[0] || {x: 0, z: 0, angle: 0};
   const ca = Math.sin(b.angle), cb = Math.cos(b.angle), x = b.x + cb * 13 + ca * 4, z = b.z - ca * 13 + cb * 4;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 2.6, pitch: -8}; }`},

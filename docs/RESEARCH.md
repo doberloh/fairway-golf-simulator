@@ -11000,7 +11000,11 @@ unfinished in 40 strokes (a green tilted 8.7% under its pin by a neighbour's
 shoulder); **after: 1.32 harder** (Classic 0.89 over par, Architect 2.21).
 Per landscape over eight rounds the spread is about +-4 strokes, so only the
 overall figure is held to the limit. After the walk change (ARCHITECT_VERSION
-14): **0.82 harder** (Classic 1.09, Architect 1.91). The golfer's rule for a stroke that left
+14): **0.82 harder** (Classic 1.09, Architect 1.91). After the owner's
+review (ARCHITECT_VERSION 16: paths, pairs on Links, the Alps a hill, the
+hand-made signatures): **0.17 harder** (Classic 1.15, Architect 1.32; 40
+rounds each, every landscape, two seeds) -- the signatures made it no
+harder. The golfer's rule for a stroke that left
 the ball where it was (try the other shot) is PLACED.
 
 ## Architect courses: the owner's review (30 October 2026)
@@ -11052,6 +11056,14 @@ All PLACED, judged by eye in the game, none from a source:
   either side of the golfers, scoring each hole from about 18% birdies, 64%
   pars, 16% bogeys and 2% doubles -- a tour pro's spread read loosely from
   scoring averages, not taken from one source.
+- The hand tools' limits (hand-tools.js HAND_FIELDS): bunkers 2.5-30 m,
+  mounds 5-45 m across and -4 to +4 m, fairway widths -24 to +30 m over
+  20-160 m, greens 0.7-1.4 of their designed size; at most 80 a course. The
+  generator's signatures on a third of holes, which shapes by which style,
+  and their sizes (a waste area of three or four 11-16 m bunkers 24 m apart,
+  a hogsback of 1.0-1.3 m mounds, a saddle of 2.4 m mounds, spectacles of
+  6 m bunkers 9 m either side of the line 75 m short of the green, a
+  punchbowl's rim of four 1.8 m mounds): all by eye.
 - Walkers and the mower drawn a twentieth larger than life (as the earlier
   life was, so a figure is not a dot at 30 m); spectators at their own size.
 - A links joins each fairway to one neighbour at most on an Architect

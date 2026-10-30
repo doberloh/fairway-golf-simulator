@@ -17,7 +17,10 @@ export const MAX_NAME=40;
 export function courseSettings(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(s[k]!==undefined)out[k]=s[k];return out;}
 // Codes carry only what differs from the defaults, which keeps a typical course
 // a couple of hundred characters instead of eight hundred.
-export function settingsDiff(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(k in s&&s[k]!==DEFAULT_COURSE[k])out[k]=s[k];return out;}
+// A list (the hand tools' `archHand`) is compared by content: an empty one
+// is not a difference.
+const same=(a,b)=>a===b||Array.isArray(a)&&Array.isArray(b)&&JSON.stringify(a)===JSON.stringify(b);
+export function settingsDiff(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(k in s&&!same(s[k],DEFAULT_COURSE[k]))out[k]=s[k];return out;}
 
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function validName(name){const n=String(name??'').trim();if(!n.length||n.length>MAX_NAME)throw Error(`Give the course a name of 1–${MAX_NAME} characters.`);return n;}

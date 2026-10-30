@@ -51,8 +51,8 @@ quality measures*, which it absorbs.
   course: bunkers where drives land, fairways that tuck round them, avenues.
   To check: a few Architect rounds in different styles -- do the holes read as
   designed, and do they play fairly (the virtual golfer, at the end of the
-  goal: 0.82 strokes per 18 harder than Classic, hardest on Haunted Hollow
-  and PNW; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
+  goal: 0.82 strokes per 18 harder than Classic, 0.17 after the owner's
+  review; hardest on Haunted Hollow and PNW at the goal's end; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
 - [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
   their bridges (seen in GPU captures), free relief when a ball stops on a
   path (Node only: no ball was played onto one in the game), the hole's name
@@ -95,6 +95,12 @@ quality measures*, which it absorbs.
   motion, the scoreboard following a played round (seen at a round's start
   and set by hand). To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
+- [ ] **Not yet played by a person: the hand tools.** Driven by the smoke
+  journey (Aim, Add, Grow, saved) and seen in GPU captures (a hand bunker, a
+  mound, a wider landing area, a punchbowl; the generator's spectacles). Not
+  seen: a round played over hand-shaped ground, a green resized by hand under
+  a real putt, the hand tools on a phone. To check: shape a hole in the
+  studio, play it.
 - [ ] **The creek's flow arrows (the owner's screenshot 2) -- the owner's
   call.** They are main's stream ripples (water-bodies.js `STREAM_FLOW`),
   on Classic too, not something the Architect work added; left as they are

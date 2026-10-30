@@ -194,6 +194,52 @@ yet regenerated (main.js `downloadYardageBook`, shared with the round's
 menu). The `architect-studio` smoke journey presses it and checks a PDF
 comes back, and checks the dials' sentences: passed on the GPU.
 
+**The hand tools** (the owner: "Let it hand make bunkers, as well as greens,
+slopes, fairways ... Make sure we don't break classic mode", and "I want the
+generator to be able to use them as well"; ARCHITECT_VERSION 16,
+SCHEMA_VERSION 13). hand-tools.js holds four shapes as small records in a
+hole's own frame -- metres from the back tee, metres right of the line, so a
+feature stays put however the hole is routed: a **bunker** (size, roundness,
+0-3 lobes), the **green** (a scale on its size, its shape, a contour: as
+designed, tilted, tiered, ridged, crowned, bowl, punchbowl, raised), a
+**mound or hollow** (size and rise, -4 to +4 m) and a **fairway width**
+change over a stretch. `applyHand` lays them on an Architect hole in
+architectCourse, before the pin is chosen; mounds and hollows join the
+world's earth field. Two hands use the same records:
+
+- **The person**, in the studio's settings, Architect tab, *Hand tools*:
+  pick a hole and a tool, set its sliders, or fly to a spot and press *Aim
+  where I'm looking* (the hole and position under the middle of the view,
+  `Renderer.groundAhead`), then *Add to this hole*; the hole's list shows
+  each with a remove button; Grow applies them. Stored as the setting
+  `archHand` -- the schema's first list (`kind: 'hand'`) -- so a saved course
+  and a course code carry them (codes are JSON; an empty list is left out).
+- **The generator**, from the seed: a third of holes get a signature by
+  style (`designerHand`) -- a waste area of three or four bunkers run along
+  the fairway's edge, a hogsback of mounds down the drive zone, a saddle of
+  two framing mounds with the fairway narrowed between, spectacles (two
+  bunkers side by side short of the green), a punchbowl green with a rim of
+  mounds, or a tiered green with the approach widened. **Not on a landscape
+  whose fairways run together** (the North Sea Links): its shared fairways
+  are its signature, and a generated hogsback and punchbowl took both of the
+  owner's ST-1 pairs apart (found by the pairs test). The person's hand
+  tools still apply there.
+
+Classic never reaches `applyHand` (only architectCourse calls it): the
+Classic fingerprint is unchanged and a test builds a Classic course with
+hand features set and finds it identical.
+
+| # | Judged on | What it showed, what changed |
+| --- | --- | --- |
+| 1 | game (`arch-hand1`, Midwest HT-2 hole 2, with and without) | the hand bunker with two lobes reads as one cloverleaf of sand mid-fairway; the landing area visibly wider; **the 3 m mound invisible from above** (measured there: 2.96 m at its centre) |
+| 2 | game (`arch-hand2-1`, `-2`: eye level) | the mound reads as a grassy hill with its own shadow; the punchbowl green sits sunk below its surround |
+| 3 | smoke (`architect-studio`) | the interface driven: Hand tools shown, Aim, Add, the list, Grow, and the saved course carrying the bunker: passed |
+| 4 | smoke picture (`bench/shots/smoke/hand-tools.png`) | the panel reads, and the studio lists "Hand-shaped features 0 -> 1" as a change; **the list said 8 m for a 7 m slider** (it had snapped to 7.5 on a 2.5 start) and the Hole and Tool names were small |
+| 5 | game (`arch-hand5`, `-5b`: SIG-2) and numbers | labels follow each slider's real value; the generator's spectacles read across the fairway; **its waste areas sat 30-36 m off the line**, under the trees beyond a narrow fairway -- now laid along the fairway's own edge (four bunkers biting about 2 m into it, measured on two holes) |
+
+Cost: the generator's signatures add a few bunkers and mounds to a third of
+holes (no measurable wait); the hand list is applied once a hole.
+
 Cost: walkers and spectators are one instanced mesh per body part per body,
 coloured per instance (no extra draws for the colours); the crowd five
 bodies (was one), so five times the crowd's draw calls on Medium and up
@@ -203,7 +249,8 @@ bodies (was one), so five times the crowd's draw calls on Medium and up
 
 **Met**: every phase built and documented; npm test (1,197) and the build
 pass; the round matrix (rules with no course) and the virtual golfer run on
-both designers -- **Architect 0.82 strokes per 18 harder** (limit 1.5);
+both designers -- **Architect 0.17 strokes per 18 harder** after the owner's
+review (ARCHITECT_VERSION 16; was 0.82 at 14; limit 1.5);
 Classic's fingerprint unchanged from the start; the bench moved (bunkers by a
 landing zone 83% against 27%, nines home 11 of 12 against 7, the median walk
 93 m against 98, four to six concepts a nine); **an eighteen builds at most

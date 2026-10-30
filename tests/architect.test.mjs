@@ -105,7 +105,9 @@ test('templates do what they are named for', () => {
 test('a fairway tucks round the bunker beside it', () => {
  let tucked = 0, n = 0;
  for (const {holes} of built) for (const h of holes) for (const b of h.bunkers) {
-  if (b.greenSide || Math.abs(b.x - h.center(b.z)) < 8) continue;
+  // The architect's designed bunkers; a hand-made waste area (hand-tools.js)
+  // bites into the fairway's edge on purpose.
+  if (b.greenSide || b.hand || Math.abs(b.x - h.center(b.z)) < 8) continue;
   n++;
   const sign = Math.sign(b.x - h.center(b.z)), half = sign < 0 ? h.leftWidth(b.z) : h.rightWidth(b.z);
   const inner = Math.abs(b.x - h.center(b.z)) - b.rx;

@@ -15,6 +15,7 @@ import {placeMarkings,placeWear} from './markings.js';
 import {placeWaterworks} from './waterworks.js';
 import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
+import {applyHand,designerHand} from './hand-tools.js';
 import {placeOccasion} from './occasion.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
@@ -664,6 +665,18 @@ function architectCourse(s,hole,planned,line,bio){
  const h={greenSize,greenAspect,greenWave2,greenWave3,greenWave5,fairwayStart:plan.fairwayStart,mowStart:plan.mowStart,tees,turnFraction,routeLength,settings:s,bio,par,length,tee,green,bounds,center,
   width:plan.width,leftWidth:plan.leftWidth,rightWidth:plan.rightWidth,ponds:plan.ponds,bunkers:plan.bunkers,collections:plan.collections,gaps:plan.gaps,seed:s.seed,hole,phase,doglegAngle:angle,design:plan.design};
  h.toWorld=p=>({...p});h.toLocal=p=>({...p});h.rotation=0;
+ // THE HAND TOOLS (hand-tools.js; the owner's review): the architect's own
+ // hand-made signature for some holes, from its own stream, then whatever
+ // was shaped by hand in the studio (`archHand`), before the pin is chosen
+ // and anything reads the green or the fairway. Architect only: a Classic
+ // hole never comes here.
+ // Not on a landscape whose fairways run together (Links): those shared
+ // fairways are its signature, and the owner likes them -- a generated
+ // hogsback or punchbowl took both of Links ST-1's pairs apart. The
+ // person's own hand tools still apply there.
+ {const sideOf=plan.design?.preferred==='left'?1:-1;
+  if(!bio.sharedFairways)applyHand(h,designerHand(random(`${s.seed}|arch|hand|${hole}`),plan.design?.style,hole,{par,length,side:sideOf,edge:z=>sideOf>0?plan.leftWidth(z):plan.rightWidth(z)}),{who:'architect'});
+  applyHand(h,s.archHand,{who:'hand'});}
  h.pin=choosePin(h,hole,random(`${s.seed}-pin-${hole}`));
  h.surface=(x,z)=>localSurface(h,x,z);
  h.height=(x,z)=>s.elevation/100*(22*Math.sin(z/130)+12*Math.sin(x/100+z/170));
@@ -2103,7 +2116,11 @@ export function* generateWorldSteps(settings={},options={}){
  // drops -- added to the ground last, before the creeks cut it. Kept clear of
  // every hole by the design, and here of the sea and the creeks. Classic: none,
  // and `analyticHeight` is the expression it always was.
- const mounds=isArchitect(s)&&!s.range?designMounds(holes,s).filter(m=>{for(let k=0;k<9;k++){const a=k*Math.PI/4,x=m.x+(k?Math.cos(a)*m.r:0),z=m.z+(k?Math.sin(a)*m.r:0);if(isSea(x,z))return false;const q=streams.at(x,z);if(q&&q.edge<10)return false;}return true;}):[];
+ // The hand tools' mounds and hollows (hand-tools.js), each hole's own,
+ // from its frame into the world's -- with the designed mounds, through the
+ // same sea and stream test.
+ const handMounds=holes.flatMap(h=>(h.handMounds||[]).map(m=>({...h.toWorld(m),r:m.r,h:m.h,hand:true})));
+ const mounds=isArchitect(s)&&!s.range?[...designMounds(holes,s),...handMounds].filter(m=>{for(let k=0;k<9;k++){const a=k*Math.PI/4,x=m.x+(k?Math.cos(a)*m.r:0),z=m.z+(k?Math.sin(a)*m.r:0);if(isSea(x,z))return false;const q=streams.at(x,z);if(q&&q.edge<10)return false;}return true;}):[];
  // And a hole's template landforms (phase 6): the Dell's dune, the Alps'
  // ridge, the barranca's ravine -- in play by design, so no clearance.
  const earthworks=isArchitect(s)&&!s.range?worldEarthworks(holes):[];

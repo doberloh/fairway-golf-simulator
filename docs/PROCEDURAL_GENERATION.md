@@ -292,6 +292,10 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   municipal, old and restored courses; a restored course's felled trees
   left as stumps scattered in the rough (3-7 a hole). Trees sized by age:
   New 0.68, Mature 1, Old 1.18, Restored 1.08 of full height.
+- **Hand-made shapes** (hand-tools.js), on each Architect hole before its
+  pin is chosen: the architect's own signature on about a third of holes,
+  by style, then whatever the studio's Hand tools added (`archHand`);
+  their mounds and hollows join the earth field after routing.
 - **Life** (life.js), after the planting: animals and distant people, out
   of play and clear of the trees, drawn only -- a fourball on the longest
   path piece, a mower only on a run of mown rough (none where the rough
