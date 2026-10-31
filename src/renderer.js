@@ -2038,7 +2038,12 @@ export class GolfView{
   // twenty-odd draws on a course whose paths are many short pieces).
   const byKind=new Map();
   for(const path of w.paths){
-   const p=path.points;if(p.length<2)continue;
+   // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
+   // "clipping through hills"): a straightened run's corners can be a hundred
+   // metres apart, and a strip with points only there ran straight through
+   // the dune between them. A point every 2 m, each set on the ground.
+   const p=[];path.points.forEach((q,k)=>{if(!k){p.push(q);return;}const o=path.points[k-1],n=Math.max(1,Math.ceil(Math.hypot(q.x-o.x,q.z-o.z)/2));for(let t=1;t<=n;t++)p.push({x:o.x+(q.x-o.x)*t/n,z:o.z+(q.z-o.z)*t/n});});
+   if(p.length<2)continue;
    const kind=path.kind||'concrete';if(!byKind.has(kind))byKind.set(kind,{pos:[],uv:[],idx:[]});
    const {pos,uv,idx}=byKind.get(kind),base=pos.length/3,half=path.width/2;let run=0;
    for(let i=0;i<p.length;i++){
@@ -2281,19 +2286,6 @@ export class GolfView{
   this.setLeaderboard(this.pendingBoard||{title:'LEADERS',rows:[]});
  }
  hasBoard(){return !!this.board;}
- // THE GROUND AT THE MIDDLE OF THE VIEW (the hand tools' "Aim where I'm
- // looking"): stepped out along the camera's line until it passes under the
- // ground, then halved back to it. Null when the view looks at the sky.
- groundAhead(){
-  const w=this.world;if(!w)return null;
-  const o=this.camera.position,d=new T.Vector3();this.camera.getWorldDirection(d);
-  const at=t=>({x:o.x+d.x*t,y:o.y+d.y*t,z:o.z+d.z*t}),under=t=>{const p=at(t);return p.y<w.height(p.x,p.z);};
-  let lo=0,hi=0;
-  for(let t=2;t<=2500;t*=1.25){if(under(t)){hi=t;break;}lo=t;}
-  if(!hi)return null;
-  for(let k=0;k<24;k++){const m=(lo+hi)/2;if(under(m))hi=m;else lo=m;}
-  const p=at(hi);return {x:p.x,z:p.z};
- }
  setLeaderboard(board){
   this.pendingBoard=board;
   const B=this.board;if(!B)return;

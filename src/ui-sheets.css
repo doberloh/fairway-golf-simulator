@@ -1338,18 +1338,3 @@
 /* An Architect dial's sentence: what the chosen style, club, age or heritage
    does to the course (the owner's review, 30 October 2026), under its list. */
 .choice-note{margin:-4px 0 12px;padding:0 4px;font:400 13px/1.45 var(--font-ui);color:var(--soft);max-width:72ch}
-/* THE HAND TOOLS (the owner's review; main.js handToolsHtml): a block under
-   the Architect dials -- hole and tool, the tool's sliders with their values,
-   the actions, and the hole's list. */
-.hand-tools{margin-top:14px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--soft) 30%,transparent)}
-.hand-tools .hand-row{display:grid;grid-template-columns:1fr 2fr;gap:10px}
-.hand-tools .field{position:relative}
-.hand-tools .hand-value{float:right;font:600 13px/1.4 var(--font-ui);color:var(--a1)}
-.hand-actions{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
-.hand-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-.hand-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--soft) 10%,transparent);font:400 13px/1.4 var(--font-ui)}
-.hand-list li.hand-empty{opacity:.7}
-.hand-remove{min-width:32px;min-height:32px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
-.hand-remove:hover,.hand-remove:focus-visible{background:color-mix(in srgb,var(--hot) 30%,transparent)}
-/* Iteration 5: the hole and tool names as large as the dials' own. */
-.hand-tools .hand-row .field-name{font:700 13px/1.3 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}

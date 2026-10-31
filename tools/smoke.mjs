@@ -2060,34 +2060,32 @@ const JOURNEYS = [
   },
  },
 
- // A HAND-SHAPED HOLE PLAYED THROUGH (the hand tools; the owner's review): a
- // saved Architect course whose first hole carries every tool -- a lobed
- // bunker in the fairway, a mound, a widened landing area and a punchbowl
- // green -- played from Saved courses to the hole-out, with no error.
+ // AN ARCHITECT HOLE PLAYED THROUGH: a saved Architect course, played from
+ // Saved courses to the hole-out, with no error. (It was the hand tools'
+ // journey, `architect-hand-round`, until the owner withdrew them on 31
+ // October 2026; the architect's own signatures still shape holes.)
  {
-  name: 'architect-hand-round',
-  what: 'A hole reshaped with the hand tools, played through to the hole-out',
+  name: 'architect-round',
+  what: 'A saved Architect course, hole 1 played through to the hole-out',
   async run(t) {
    await menuReady(t);
    const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
-   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'HT-2', archStyle: 'parkland', archHand: [
-    {kind: 'bunker', hole: 0, at: 230, off: 0, size: 9, shape: .7, lobes: 2}, {kind: 'slope', hole: 0, at: 150, off: -32, size: 16, rise: 2.5},
-    {kind: 'fairway', hole: 0, at: 220, width: 18, length: 80}, {kind: 'green', hole: 0, size: 1.2, shape: 1, contour: 'punchbowl'}]};
-   await t.step('the hand-shaped course in Saved courses, played', async () => {
+   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'HT-2', archStyle: 'parkland'};
+   await t.step('the Architect course in Saved courses, played', async () => {
     await t.page.evaluate(([s, g, v]) => {
      const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');
-     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-hand');
-     d.courses.unshift({id: 'smoke-hand', name: 'Smoke hand-shaped', created: 1, generator: g, schema: v, settings: s});
+     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-architect');
+     d.courses.unshift({id: 'smoke-architect', name: 'Smoke Architect', created: 1, generator: g, schema: v, settings: s});
      localStorage.setItem(key, JSON.stringify(d));
     }, [settings, generatorFor(settings), SCHEMA_VERSION]);
     await fromMenu(t, 'Saved courses');
     await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
-    await t.page.click('[data-play="smoke-hand"]');
+    await t.page.click('[data-play="smoke-architect"]');
     await t.inPlay(150 * SLOW);
    });
-   await t.step('hole 1 played over the hand-made ground and holed out', async () => {
-    // Two full shots down the reshaped hole, then a drop by the pin of the
-    // punchbowl green and putts until it drops.
+   await t.step('hole 1 played and holed out', async () => {
+    // Two full shots down the hole, then a drop by the pin of the
+    // green and putts until it drops.
     for (let shot = 0; shot < 2; shot++) {
      await t.swing();
      await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
@@ -2104,7 +2102,7 @@ const JOURNEYS = [
      await t.putt();
      if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) return;
     }
-    throw new Error('eight putts on the punchbowl green and the ball never dropped');
+    throw new Error('eight putts on the green and the ball never dropped');
    });
   },
  },
@@ -2155,23 +2153,14 @@ const JOURNEYS = [
     const file = await pdf.path(), head = fs.readFileSync(file).subarray(0, 5).toString();
     if (head !== '%PDF-') throw new Error(`the book is not a PDF (${JSON.stringify(head)})`);
    });
-   // The hand tools (the owner's review): a bunker shaped by hand, the
-   // landscape grown again with it, and the saved course carrying it.
-   await t.step('shape a bunker by hand and grow again', async () => {
+   // No hand tools for the player (the owner, 31 October 2026: "leave those
+   // tools for the architect to use"): the Architect tab holds the dials only.
+   await t.step('the Architect tab has no hand tools', async () => {
     await t.page.click('#studioSettings');
     await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
-    await t.until(() => t.page.locator('#handTools').isVisible(), 'the Hand tools', 5 * SLOW);
-    await t.page.selectOption('#handHole', '0');
-    await t.page.selectOption('#handKind', 'bunker');
-    await t.page.click('#handAim');
-    await t.page.click('#handAdd');
-    await t.until(() => t.page.evaluate(() => /Bunker/.test(document.getElementById('handList')?.textContent || '')), 'the bunker in the hole\'s list', 5 * SLOW);
-    await t.page.locator('#handTools').scrollIntoViewIfNeeded();
-    fs.mkdirSync(path.join('bench', 'shots', 'smoke'), {recursive: true});
-    await t.page.screenshot({path: path.join('bench', 'shots', 'smoke', 'hand-tools.png')});
-    await t.press('Grow this landscape');
-    await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
-     && document.getElementById('generating')?.hidden !== false), 'the landscape grown again', 120 * SLOW);
+    await t.until(() => t.page.locator('#archStyle').isVisible(), 'the Architect dials', 5 * SLOW);
+    if (await t.page.locator('#handTools').count()) throw new Error('the Hand tools are back in the studio');
+    await t.closeDrawer();
    });
    let name = '';
    await t.step('save it, and it is Architect in Saved courses', async () => {
@@ -2188,9 +2177,17 @@ const JOURNEYS = [
     if (saved.settings.designer !== 'architect' || saved.settings.archStyle !== 'links' || saved.settings.archClub !== 'championship')
      throw new Error(`saved as ${JSON.stringify({designer: saved.settings.designer, style: saved.settings.archStyle, club: saved.settings.archClub})}`);
     if (!(saved.generator >= 1000)) throw new Error(`saved with the stamp ${saved.generator}, not an Architect one`);
-    if (!(saved.settings.archHand?.length === 1 && saved.settings.archHand[0].kind === 'bunker')) throw new Error(`saved without the hand-made bunker: ${JSON.stringify(saved.settings.archHand)}`);
+    if ('archHand' in saved.settings) throw new Error('saved with a hand-tools list; the setting is gone');
     await t.page.click('#studioExit');
     await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
+   });
+   // Never the default (the owner, 31 October 2026): back in the studio
+   // after growing an Architect course, it starts on Classic.
+   await t.step('a fresh visit to the studio starts on Classic', async () => {
+    await fromMenu(t, 'Course studio');
+    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
+    const chosen = await t.page.inputValue('#designer');
+    if (chosen !== 'classic') throw new Error(`the studio opened on ${chosen}`);
    });
   },
  },

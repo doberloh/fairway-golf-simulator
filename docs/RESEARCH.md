@@ -10834,6 +10834,18 @@ course industry, *Design conceptions: cart path design*; MSU archive 1983);
 accessible routes 48 in (US Access Board). Taken: 2.1-3.0 m by club
 (municipal narrowest, resort widest), 14 m beyond the rough's edge on the
 hole's bail-out side, pushed out round its hazards. PLACED: every distance.
+The network's joins (31 October 2026, the owner's screenshots): an end
+within 9 m (a cell and a half) of another path runs on to it; a piece under
+18 m joined at both ends is dropped as a jog; a waypoint in a pocket under
+400 cells is routed from outside it. Measured on 15 eighteen-hole Architect
+courses (Midwest, Links, PNW, Desert, Mountain; three seeds each; a lot of
+heritage): ends stopping within 8 m short of another path 211 of 1,046 ->
+3 of 1,144; separate bits of network 229 -> 22 (one per course but three
+Mountain courses, which the steep land splits); buildings over a path 8 of
+45 (all clubhouses) -> 0. Before the strip was laid every 2 m, the ground
+stood up to 7.3 m above a straightened run's strip between its corners.
+PLACED: the 9 m, 18 m and 400 cells, and the 3 m a clubhouse keeps from a
+path (2 m a stand, 3 m a story building, 4 m a house).
 The surface (`grounds.js` path) is PLACED against rock just below it: cor
 0.235, the hardest in play, roll 0.85, a hop of 16 cm.
 
@@ -10959,8 +10971,15 @@ the study's workstreams A (*pass 7* templates) and L, and its sources:
   aiming stone on the dune
   (https://www.top100golfcourses.com/news-item/d-is-for-dell-blind-par-threes-template-holes,
   https://thefriedegg.com/courses/lahinch-golf-club-old-course). Taken: a
-  dune across the line before a sunken green, a white stone. The dune's 3.6 m
-  and 15 m short of the green are PLACED.
+  dune across the line before a sunken green, a white stone. PLACED: the
+  dune 4 m high and 18 m to each side of its crest (a face of about a third),
+  its back foot 5 m short of the green. It was 3.6 m high and 9 m a side, a
+  63% face, until 31 October 2026: the ground's mesh drew that as a sharp
+  crease along the crest (the owner, Links: "that weird hole"), the fault
+  the Alps' 13 m ridge had before it was broadened to 24 m. Still blind, by
+  arithmetic on flat ground (not measured in the game): from 150 m out, the
+  eye 1.7 m up, the line to a green sunk a metre is about at ground level
+  where the crest stands 4 m.
 - **Pit** -- North Berwick's 13th, a green behind an old dry-stone wall
   (https://thefriedegg.com/eclectic-18-uk-hole-no-13-north-berwick/,
   https://www.yourgolftravel.com/best-golf-holes/north-berwick-13th). Taken:
@@ -11076,7 +11095,9 @@ All PLACED, judged by eye in the game, none from a source:
   either side of the golfers, scoring each hole from about 18% birdies, 64%
   pars, 16% bogeys and 2% doubles -- a tour pro's spread read loosely from
   scoring averages, not taken from one source.
-- The hand tools' limits (hand-tools.js HAND_FIELDS): bunkers 2.5-30 m,
+- The hand tools' limits (hand-tools.js HAND_FIELDS; since 31 October 2026
+  they clamp only the architect's own signatures, the studio's Hand tools
+  being withdrawn): bunkers 2.5-30 m,
   mounds 5-45 m across and -4 to +4 m, fairway widths -24 to +30 m over
   20-160 m, greens 0.7-1.4 of their designed size; at most 80 a course. The
   generator's signatures on a third of holes, which shapes by which style,

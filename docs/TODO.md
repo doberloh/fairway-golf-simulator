@@ -95,12 +95,16 @@ quality measures*, which it absorbs.
   motion. (The scoreboard following a played round is now driven by the
   smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
-- [ ] **Not yet played by a person: the hand tools.** Driven by the smoke
-  journey (Aim, Add, Grow, saved) and seen in GPU captures (a hand bunker, a
-  mound, a wider landing area, a punchbowl; the generator's spectacles). Not
-  seen: a round played over hand-shaped ground, a green resized by hand under
-  a real putt, the hand tools on a phone. To check: shape a hole in the
-  studio, play it.
+- [ ] **Not yet seen: the owner's second review** (31 October 2026,
+  ARCHITECT_VERSION 19, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
+  owner's second review*). Built and tested in Node only -- no capture or
+  smoke run: the cart paths joined into one network, nothing built on a
+  path, the clubhouse's path round it, the path strip on the ground over
+  Links dunes, the Dell's broader dune, the studio without Hand tools and
+  starting on Classic. The smoke journeys `architect-round` and
+  `architect-studio` were changed for it and not run (the studio step
+  closes the settings sheet with `closeDrawer`, unproven there). To check:
+  the owner's Midwest and Links views again; run those two journeys.
 - [ ] **Not yet played by a person: the surface field and the turned greens**
   (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
   in GPU captures only: a green turned to its approach from above, the
@@ -1528,6 +1532,13 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Architect courses: the owner's second review (31 October 2026)
+
+- [x] **Not yet played by a person: the hand tools** -- closed: the owner
+  withdrew the studio's Hand tools on 31 October 2026 ("leave those tools
+  for the architect to use"); the `archHand` setting went with them
+  (SCHEMA_VERSION 14). The architect's own signatures stay.
 
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 

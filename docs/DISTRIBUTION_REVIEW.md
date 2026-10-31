@@ -1588,6 +1588,7 @@ distribution:
   (7.60 MB gzipped). The fountain model left the bundle (52 KB; the renderer
   draws the water); four walker and five spectator bodies replaced one of
   each, and the mower was rebuilt. The yardage book can now also be
-  downloaded from the course studio -- the same local PDF download. Course codes may now
-  carry the hand tools' list (`archHand`), JSON in the same code; an empty
-  list is left out, so codes without hand features are unchanged.
+  downloaded from the course studio -- the same local PDF download. Course codes
+  carried the hand tools' list (`archHand`) for a day; the tools were
+  withdrawn on 31 October 2026 (SCHEMA_VERSION 14) and no code carries it
+  now -- an old code that does loads without it.

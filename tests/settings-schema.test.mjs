@@ -179,9 +179,7 @@ test('every setting can be rendered and read back by the studio', () => {
  // partial copy of these defaults holding eleven of the thirty-eight; the other
  // twenty-seven rendered as `undefined` captions over sliders the browser had
  // quietly parked at the midpoint of their range.
- // `hand` is rendered by the Hand tools (main.js handToolsHtml), not as a
- // control: an empty list by default, checked by isHandList.
- const kinds = new Set(['range', 'int', 'choice', 'toggle', 'text', 'hand']);
+ const kinds = new Set(['range', 'int', 'choice', 'toggle', 'text']);
  for (const f of SETTINGS) {
   assert.ok(kinds.has(f.kind), `${f.key} has an unrenderable kind: ${f.kind}`);
   assert.notEqual(f.def, undefined, `${f.key} has no default`);

@@ -43,9 +43,9 @@ test('the baked field reads sand inside a field bunker and grass outside it', ()
 });
 
 test('a world with field bunkers plays them as sand, as it paints them', () => {
- const many = Array.from({length: 16}, (_, k) => ({kind: 'bunker', hole: 1, at: 80 + k * 14, off: k % 2 ? 34 : -34, size: 4, lobes: 0}));
- const w = world({seed: 'FIELD-1', holes: 9, biome: 'midwest', designer: 'architect', archStyle: 'parkland', archHand: many});
- const h = w.holes[1], over = h.bunkers.filter(b => b.field);
+ // Sandhills HZ-2 overfills holes 3 and 8 by itself (tests/hand-tools.test.mjs).
+ const w = world({seed: 'HZ-2', holes: 18, biome: 'midwest', designer: 'architect', archStyle: 'sandhills'});
+ const h = w.holes.find(h => h.bunkers.some(b => b.field)), over = h.bunkers.filter(b => b.field);
  assert.ok(over.length > 0, 'the hole overflows its slots');
  assert.ok(w.surfaceField, 'and the world baked a field');
  let sand = 0, checked = 0;

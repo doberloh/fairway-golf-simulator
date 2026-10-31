@@ -82,3 +82,24 @@ test('Architect and Classic share the card before the course', () => {
  const built = Array.from({length: 18}, (_, i) => generateCourse(s, i));
  built.forEach((h, i) => assert.equal(h.par, card.holes[i].par, `hole ${i + 1}: the built par is the card's`));
 });
+
+// ARCHITECT ONLY IN THE STUDIO (the owner, 31 October 2026: "Architect should
+// not be the course generator for any main mode. It should only be accessible
+// in the course studio, and should not be the default"). Every course a play
+// mode grows by itself -- a surprise round, the course of the week, the
+// challenge course, an endless hole and the menu's showcase hole (one of an
+// endless run) -- is Classic. An Architect course is played only once someone
+// has made and saved it in the studio. (The studio starts each fresh visit on
+// Classic: main.js openStudioSetup.)
+test('every play mode grows Classic, and Classic is the default', async () => {
+ const {randomSettings} = await import('../src/settings-schema.js');
+ const {weeklySettings} = await import('../src/weekly.js');
+ const {challengeCourseSettings} = await import('../src/challenges.js');
+ const {endlessHole, endlessSettings} = await import('../src/endless.js');
+ assert.equal(DEFAULT_COURSE.designer, 'classic');
+ let r = 1;const rng = () => (r = (r * 16807) % 2147483647) / 2147483647;
+ for (let i = 0; i < 200; i++) assert.equal(randomSettings(rng).designer, 'classic', 'a surprise round');
+ for (let w = 0; w < 60; w++) assert.equal(weeklySettings(new Date(Date.UTC(2026, 0, 1 + w * 7))).designer, 'classic', 'the course of the week');
+ assert.equal(challengeCourseSettings().designer, 'classic', 'the challenge course');
+ for (let i = 0; i < 40; i++) assert.equal(endlessSettings(endlessHole(`RUN-${i}`, i % 5)).designer, 'classic', 'an endless hole');
+});

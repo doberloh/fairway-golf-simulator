@@ -34,7 +34,8 @@ export const CROWD_BY_DAY = {Thursday: .35, Friday: .5, Saturday: .75, Sunday: 1
 export const STAND_ROWS = Array.from({length: 6}, (_, i) => ({z: -4.5 + i * 1.5 + .55, y: 1.2 + i * .9}));
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
-export function placeOccasion({holes, s, surface, nearest, height, buildings = []}) {
+// `clear`: as siteClubhouse's -- a footprint clear of the cart paths.
+export function placeOccasion({holes, s, surface, nearest, height, buildings = [], clear = () => true}) {
  const out = {buildings: [], ropes: [], crowd: []};
  if (s.archClub !== 'championship' || !holes.length) return out;
  const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'occasion', s.biome || '');
@@ -48,7 +49,7 @@ export function placeOccasion({holes, s, surface, nearest, height, buildings = [
   const p = OCCASION_PIECES[kind], rot = Math.atan2(-(toward.x - x), -(toward.z - z));
   const cs = Math.cos(rot), sn = Math.sin(rot), at = (lx, lz) => ({x: x + lx * cs + lz * sn, z: z - lx * sn + lz * cs});
   const pts = [[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]].map(([u, v]) => at(u * p.width / 2, v * p.depth / 2));
-  if (pts.some(q => PLAYED.has(surface(q.x, q.z))) || taken.some(b => pts.some(q => inBox(b, q.x, q.z, 3)))) return null;
+  if (pts.some(q => PLAYED.has(surface(q.x, q.z))) || taken.some(b => pts.some(q => inBox(b, q.x, q.z, 3))) || !clear({x, z, rotation: rot, width: p.width, depth: p.depth})) return null;
   const ys = pts.map(q => height(q.x, q.z)), lo = Math.min(...ys);
   if (Math.max(...ys) - lo > 3) return null;
   const b = {kind, model: p.model, club: true, occasion: true, x, z, y: lo - .2, base: lo - .2, rotation: rot, width: p.width, depth: p.depth, height: p.height};

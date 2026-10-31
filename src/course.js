@@ -10,7 +10,7 @@ import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
 import {designSettings} from './designer.js';
 import {isArchitect} from './settings-schema.js';
 import {designHole,designedPlanting,designMounds,earthField,worldEarthworks} from './architect.js';
-import {routePaths,pathIndex,linkBuilding} from './paths.js';
+import {routePaths,pathIndex,linkBuilding,pathTouches,pathClearance} from './paths.js';
 import {placeMarkings,placeWear} from './markings.js';
 import {placeWaterworks} from './waterworks.js';
 import {placeStory,wallBoxes,segDist} from './story.js';
@@ -679,17 +679,17 @@ function architectCourse(s,hole,planned,line,bio){
   width:plan.width,leftWidth:plan.leftWidth,rightWidth:plan.rightWidth,ponds:plan.ponds,bunkers:plan.bunkers,collections:plan.collections,gaps:plan.gaps,seed:s.seed,hole,phase,doglegAngle:angle,design:plan.design,greenTurn:plan.greenTurn};
  h.toWorld=p=>({...p});h.toLocal=p=>({...p});h.rotation=0;
  // THE HAND TOOLS (hand-tools.js; the owner's review): the architect's own
- // hand-made signature for some holes, from its own stream, then whatever
- // was shaped by hand in the studio (`archHand`), before the pin is chosen
- // and anything reads the green or the fairway. Architect only: a Classic
+ // hand-made signature for some holes, from its own stream, before the pin
+ // is chosen and anything reads the green or the fairway. (The studio's own
+ // Hand tools were withdrawn on 31 October 2026, the owner: "leave those
+ // tools for the architect to use".) Architect only: a Classic
  // hole never comes here.
  // Not on a landscape whose fairways run together (Links): those shared
  // fairways are its signature, and the owner likes them -- a generated
- // hogsback or punchbowl took both of Links ST-1's pairs apart. The
- // person's own hand tools still apply there.
+ // hogsback or punchbowl took both of Links ST-1's pairs apart.
  {const sideOf=plan.design?.preferred==='left'?1:-1;
   if(!bio.sharedFairways)applyHand(h,designerHand(random(`${s.seed}|arch|hand|${hole}`),plan.design?.style,hole,{par,length,side:sideOf,edge:z=>sideOf>0?plan.leftWidth(z):plan.rightWidth(z)}),{who:'architect'});
-  applyHand(h,s.archHand,{who:'hand'});}
+}
  // Bunkers past the hole table's twelve slots go to the surface field
  // (surface-field.js), which the world bakes and both the paint and the lie read.
  markOverflow(h);
@@ -2329,7 +2329,7 @@ export function* generateWorldSteps(settings={},options={}){
  };
  // An Architect course's cart paths (paths.js), set once the holes are built
  // and before anything is planted; null on a Classic course, which has none.
- let pathIdx=null,paths=[],bridges=[],pathConnect=null;
+ let pathIdx=null,paths=[],bridges=[],pathConnect=null,pathBlock=null;
  function surface(x,z){
   if(lakeOwner(x,z))return 'water';
   const st=streams.at(x,z);
@@ -2383,7 +2383,7 @@ export function* generateWorldSteps(settings={},options={}){
  yield phaseAt(4);
  // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
  // that follow ask `surface`, which now knows where the paths run.
- if(isArchitect(s)&&!s.range){({paths,bridges,connect:pathConnect}=routePaths({holes,s,surface,streams,height,ravines:earthworks.filter(e=>e.kind==='ravine')}));pathIdx=pathIndex(paths);
+ if(isArchitect(s)&&!s.range){({paths,bridges,connect:pathConnect,block:pathBlock}=routePaths({holes,s,surface,streams,height,ravines:earthworks.filter(e=>e.kind==='ravine')}));pathIdx=pathIndex(paths);
   // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
   // and its middle, decided here once so the drawn deck and the solid one
   // (physics.js) are the same plank.
@@ -2398,8 +2398,11 @@ export function* generateWorldSteps(settings={},options={}){
  const buildings=[];
  if(isArchitect(s)&&!s.range){
   const fans0=teeFans(holes);
-  const club=siteClubhouse({holes,s,surface,nearest,height,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans0,x,z,pad)});
-  if(club){buildings.push(club);if(paths.length){linkBuilding(paths,club,pathConnect);pathIdx=pathIndex(paths);}}
+  // NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under
+  // the Midwest farmhouse): the whole footprint clear of the paths, and its
+  // own link routed round it (paths.js `pathTouches`, `block`).
+  const club=siteClubhouse({holes,s,surface,nearest,height,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans0,x,z,pad),clear:b=>!pathTouches(paths,b,3)});
+  if(club){buildings.push(club);if(paths.length){pathBlock(club);linkBuilding(paths,club,pathConnect);pathIdx=pathIndex(paths);}}
  }
  // THE LAND'S STORY (story.js; architect-courses, phase 6): field walls, a
  // farmstead, ruins, a landmark, a stone circle and lanterns, by The land's
@@ -2409,16 +2412,18 @@ export function* generateWorldSteps(settings={},options={}){
  let walls=[],storyProps=[],clearings=[],occasion={ropes:[],crowd:[]};
  if(isArchitect(s)&&!s.range){
   const fans1=teeFans(holes);
-  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,earthworks,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)});
+  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,earthworks,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3});
   buildings.push(...story.buildings);walls=story.walls;storyProps=story.props;clearings=story.clearings;
   // A template's own wall (the Pit): in play by design, whatever the story.
   // TOURNAMENT WEEK (occasion.js; phase 7): a Championship venue's stands,
   // scoreboard, towers and marquees (solid, never out of bounds), its ropes
   // and its crowd by the pin day.
-  const week=placeOccasion({holes,s,surface,nearest,height,buildings});buildings.push(...week.buildings);occasion={ropes:week.ropes,crowd:week.crowd};
+  const week=placeOccasion({holes,s,surface,nearest,height,buildings,clear:b=>!pathTouches(paths,b,2)});buildings.push(...week.buildings);occasion={ropes:week.ropes,crowd:week.crowd};
   for(const h of holes)for(const dw of h.design?.walls||[]){const c=h.center(dw.z),a=h.toWorld({x:c-dw.half,z:dw.z}),b=h.toWorld({x:c+dw.half,z:dw.z});walls.push({kind:'stone',ax:a.x,az:a.z,bx:b.x,bz:b.z,pit:true,hole:h.hole});}
  }
- const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8));
+ // A house keeps off the paths too (Architect only: Classic has none, and
+ // `pathClearance` of no paths is Infinity).
+ const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8)||paths.length>0&&pathClearance(paths,x,z)<(pad||0)+4);
  // Built on already: a house or (Architect) a building, with a margin.
  // A building keeps a clear forecourt: 15 m round it for trees (iteration 4: a
  // chalet stood hidden in its own wood).

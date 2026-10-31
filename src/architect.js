@@ -344,8 +344,15 @@ export function designHole({s,hole,par,line,bio,geo}){
  const earthworks=[],gaps=[],walls=[];
  const across=z=>Math.max(leftWidth(z),rightWidth(z));
  if(template==='dell'){
-  const z=length-greenSize-15;
-  earthworks.push({kind:'ridge',z,half:across(z)+greenSize+18,r:9,h:3.6,aim:true,why:'The Dell\'s dune: it hides the green in the hollow behind it. A white stone on its crest gives the line.'});
+  // A dune, not a fold (the owner, 31 October 2026, Links: "still have that
+  // weird hole"): it was 9 m to each side for 3.6 m high -- a 63% face, which
+  // the ground's mesh draws as a sharp crease along the crest, the Alps'
+  // fault before it was broadened. Now 18 m for 4 m, about a third, its
+  // back foot kept 5 m short of the green so the green stays in its hollow.
+  // Still blind: from 150 m out the line to the green passes under its
+  // crest. PLACED.
+  const r=18,z=Math.max(length*.4,length-greenSize*Math.max(1,greenAspect)-r-5);
+  earthworks.push({kind:'ridge',z,half:across(z)+greenSize+18,r,h:4,aim:true,why:'The Dell\'s dune: it hides the green in the hollow behind it. A white stone on its crest gives the line.'});
  }else if(template==='alps'){
   const z=length-greenSize-42;
   // A broad hill, not a bank (the owner's review, PNW: "a really weird look"

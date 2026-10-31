@@ -43,18 +43,21 @@ const corners = (c, w, d, rot) => {
 
 // Where the clubhouse goes. `blocked(x, z, pad)` says whether a point is in a
 // tee's shot or view. Returns null when nowhere fits.
-export function siteClubhouse({holes, s, surface, nearest, height, blocked}) {
+// `clear`: whether a footprint {x, z, rotation, width, depth} is clear of
+// everything the corners cannot see -- the cart paths (paths.js `pathTouches`;
+// the owner, 31 October 2026: a path ran under the Midwest farmhouse).
+export function siteClubhouse({holes, s, surface, nearest, height, blocked, clear = () => true}) {
  if (!holes?.length) return null;
  // The club's own size first; a steep landscape that finds nowhere for it
  // falls back to a municipal footprint on ground falling up to 6.5 m
  // (Mountain, iteration 6). Proper levelling is phase 5's earthworks.
  for (const [size, fall] of [[CLUBHOUSE_SIZE[s.archClub] || CLUBHOUSE_SIZE.members, 4.5], [CLUBHOUSE_SIZE.municipal, 6.5]]) {
-  const found = siteOf({holes, s, surface, nearest, height, blocked, size, fall});
+  const found = siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall});
   if (found) return found;
  }
  return null;
 }
-function siteOf({holes, s, surface, nearest, height, blocked, size, fall}) {
+function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}) {
  const first = holes[0], last = holes[holes.length - 1];
  const tee = first.toWorld(first.tees.blue || first.tee), home = last.worldGreen;
  const reach = Math.max(size.width, size.depth) / 2;
@@ -75,7 +78,7 @@ function siteOf({holes, s, surface, nearest, height, blocked, size, fall}) {
   // A slope is terraced: the floor level with the high side, a stone wall
   // down to the low side (renderer.js addBuildings). Iteration 5: Mountain
   // found nowhere within 3.5 m and had no clubhouse.
-  if (!ok || hi - lo > fall) continue;
+  if (!ok || hi - lo > fall || !clear({x: c.x, z: c.z, rotation: rot, width: size.width, depth: size.depth})) continue;
   // Near the first tee and the last green, on level ground.
   const score = Math.hypot(c.x - tee.x, c.z - tee.z) + Math.hypot(c.x - home.x, c.z - home.z) * .8 + (hi - lo) * 12;
   if (!best || score < best.score) best = {score, c, rot, lo, hi};

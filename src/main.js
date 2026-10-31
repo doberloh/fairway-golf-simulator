@@ -83,7 +83,6 @@ import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnos
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {leaderboard} from './leaderboard.js';
-import {HAND_KINDS,HAND_FIELDS,CONTOURS,MAX_HAND,HAZARD_CAP,cleanHand,cleanFeature} from './hand-tools.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
 import {hauntedInSeason,offered,markOffSeason} from './seasons.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
@@ -4098,82 +4097,6 @@ async function returnToMenu(){
 // screen.
 const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);openMenu();});
 function markStudioDirty(){if(appMode!=='studio')return;studioDirty=true;studioRepaint();}
-// THE HAND TOOLS (the owner's review; hand-tools.js): shape bunkers, greens,
-// slopes and fairway widths by hand on an Architect course, in the Architect
-// tab of the studio's settings. The list being edited is `handDraft`; Grow
-// writes it into the settings (`archHand`, applyStudioSettings) and the
-// course is rebuilt with it, as every other setting is. Each record is in
-// the hole's own frame -- metres from the back tee, metres right of the line
-// -- so it stays put however the hole is routed.
-let handDraft=null;
-const HAND_LABEL={bunker:'Bunker',green:'Green',slope:'Mound or hollow',fairway:'Fairway width'};
-const HAND_FIELD_LABEL={at:['From the tee','m'],off:['Left (-) or right (+)','m'],size:['Size','m'],shape:['Roundness',''],lobes:['Lobes',''],rise:['Rise (below 0: a hollow)','m'],width:['Wider (below 0: narrower)','m'],length:['Over','m']};
-const HAND_GREEN_LABEL={size:['Size','×'],shape:['Long (>1) or wide (<1)','']};
-function handToolsHtml(){
- handDraft=cleanHand(settings.archHand);
- const holes=settings.holes===18?18:settings.holes===1?1:9;
- return `<div class="hand-tools" id="handTools"><h3>Hand tools</h3>
-  <p class="research-label">Shape bunkers, greens, slopes and fairways by hand, on top of the architect's design. Fly to a spot in the studio and press <b>Aim where I'm looking</b>, or set the place here. Changes show when you grow the landscape again.</p>
-  <div class="hand-row"><label class="field"><span class="field-name">Hole</span><select id="handHole">${Array.from({length:holes},(_,i)=>`<option value="${i}">${i+1}</option>`).join('')}</select></label>
-  <label class="field"><span class="field-name">Tool</span><select id="handKind">${HAND_KINDS.map(k=>`<option value="${k}">${HAND_LABEL[k]}</option>`).join('')}</select></label></div>
-  <div id="handFields"></div>
-  <div class="hand-actions"><button type="button" id="handAim" class="secondary">Aim where I'm looking</button><button type="button" id="handAdd" class="primary">Add to this hole</button></div>
-  <ul class="hand-list" id="handList"></ul></div>`;
-}
-function handFieldsHtml(kind){
- const spec=HAND_FIELDS[kind],labels=kind==='green'?{...HAND_FIELD_LABEL,...HAND_GREEN_LABEL}:HAND_FIELD_LABEL;
- const rows=Object.entries(spec).filter(([k])=>k!=='hole').map(([k,[lo,hi,def]])=>{const [name,unit]=labels[k]||[k,''],step=k==='lobes'?1:hi-lo<=3?.05:.5;
-  return `<label class="field">${name}<span class="hand-value" id="handV-${k}">${def}${unit}</span><input type="range" id="hand-${k}" min="${lo}" max="${hi}" step="${step}" value="${def}" data-unit="${unit}"></label>`;});
- if(kind==='green')rows.push(`<label class="field"><span class="field-name">Contour</span><select id="hand-contour">${CONTOURS.map(c=>`<option value="${c}">${c==='designed'?'As designed':c[0].toUpperCase()+c.slice(1)}</option>`).join('')}</select></label>`);
- return rows.join('');
-}
-function handSummary(f){
- const m=v=>`${Math.round(v)} m`;
- if(f.kind==='bunker')return `Bunker ${m(f.size)}, ${m(f.at)} out, ${f.off<0?m(-f.off)+' left':f.off>0?m(f.off)+' right':'in the middle'}${f.lobes?`, ${f.lobes} lobe${f.lobes>1?'s':''}`:''}`;
- if(f.kind==='green')return `Green ×${f.size}, ${f.contour==='designed'?'contour as designed':f.contour}`;
- if(f.kind==='slope')return `${f.rise<0?'Hollow':'Mound'} ${Math.abs(f.rise)} m, ${m(f.size)} across, ${m(f.at)} out, ${f.off<0?m(-f.off)+' left':m(f.off)+' right'}`;
- return `Fairway ${f.width>0?'+':''}${f.width} m over ${m(f.length)}, ${m(f.at)} out`;
-}
-function wireHandTools(){
- if(!$('handTools'))return;
- const kindEl=$('handKind'),holeEl=$('handHole');
- const drawFields=()=>{$('handFields').innerHTML=handFieldsHtml(kindEl.value);
-  // Each label shows the slider's own value, snapped to its step (iteration
-  // 4: a 7 m default on a slider from 2.5 sat at 7.5 and was added as 8 m).
-  $('handFields').querySelectorAll('input[type=range]').forEach(el=>{el.oninput=()=>{$('handV-'+el.id.slice(5)).textContent=el.value+el.dataset.unit;};el.oninput();});};
- const drawList=()=>{
-  const hole=Number(holeEl.value),here=handDraft.map((f,i)=>({f,i})).filter(({f})=>f.hole===hole);
-  $('handList').innerHTML=here.length?here.map(({f,i})=>`<li>${escape(handSummary(f))}<button type="button" class="hand-remove" data-i="${i}" aria-label="Remove">✕</button></li>`).join('')
-   :`<li class="hand-empty">Nothing shaped by hand on hole ${hole+1}${handDraft.length?` (${handDraft.length} on the course)`:''}.</li>`;
-  $('handList').querySelectorAll('.hand-remove').forEach(b=>b.onclick=()=>{handDraft.splice(Number(b.dataset.i),1);drawList();markStudioDirty();});
- };
- kindEl.onchange=drawFields;holeEl.onchange=drawList;
- $('handAdd').onclick=()=>{
-  const kind=kindEl.value,f={kind,hole:Number(holeEl.value)};
-  for(const k of Object.keys(HAND_FIELDS[kind]))if(k!=='hole'&&$('hand-'+k))f[k]=Number($('hand-'+k).value);
-  if(kind==='green')f.contour=$('hand-contour').value;
-  const clean=cleanFeature(f);if(!clean)return;
-  // A hole holds at most HAZARD_CAP hazards (hand-tools.js; twelve in the hole
-  // table, the rest in the surface field); a bunker past them would never be
-  // laid, so say so now.
-  const built=world?.holes?.[clean.hole];
-  if(kind==='bunker'&&built&&built.bunkers.length+(built.ponds?.length||0)+(built.collections?.length||0)>=HAZARD_CAP){toast(`Hole ${clean.hole+1} already has the ${HAZARD_CAP} hazards a hole can hold; take one away first.`);return;}
-  if(handDraft.length>=MAX_HAND){toast(`At most ${MAX_HAND} hand-shaped features a course.`);return;}
-  handDraft.push(clean);drawList();markStudioDirty();toast(`${HAND_LABEL[kind]} added to hole ${clean.hole+1} -- grow the landscape again to see it.`);
- };
- // From the middle of the studio's view: the hole there, how far along it
- // and how far off its line.
- $('handAim').onclick=()=>{
-  const p=view.groundAhead?.(),n=p&&world?.nearest?.(p.x,p.z);
-  if(!n?.h){toast('Look at the ground on a hole first.');return;}
-  const h=n.h,q=h.toLocal(p),z=Math.max(0,Math.min(h.length,q.z));
-  holeEl.value=String(h.hole);drawList();
-  const set=(k,v)=>{const el=$('hand-'+k);if(el){el.value=String(Math.round(v));el.oninput?.();}};
-  set('at',q.z);set('off',q.x-h.center(z));
-  toast(`Aimed at hole ${h.hole+1}, ${Math.round(q.z)} m from the tee.`);
- };
- drawFields();drawList();
-}
 // The 1.0 studio's changed list, slab, chip and right-hand column, redrawn at
 // most once a frame however many inputs a slider fires (ui-studio.js).
 function studioRepaint(){if(studioRepaint.q)return;studioRepaint.q=requestAnimationFrame(()=>{studioRepaint.q=0;studioSheet?.paint();updateStudioState();});}
@@ -4189,7 +4112,6 @@ function studioChanges(){
  if($('seed'))add('seed','Seed',settings.seed,$('seed').value.trim()||'EVERGREEN');
  if(studioBiome)add('biome','Landscape',BIOMES[settings.biome]?.name||settings.biome,BIOMES[studioBiome]?.name||studioBiome);
  if($('footprint'))add('footprint','Footprint',settings.footprint,$('footprint').value);
- if(handDraft&&JSON.stringify(cleanHand(handDraft))!==JSON.stringify(cleanHand(settings.archHand)))list.push({key:'archHand',label:'Hand-shaped features',from:cleanHand(settings.archHand).length,to:handDraft.length,unit:''});
  studioChangeList=list;
  return list;
 }
@@ -4216,6 +4138,12 @@ function openStudioSetup(){
  // throw away the choices just made in the panel.
  rangeMode=false;closeRangeBox();restoreCourse();
  settings=courseOnly(settings);
+ // ARCHITECT IS NEVER THE DEFAULT (the owner, 31 October 2026: "only
+ // accessible in the course studio, and should not be the default"): a fresh
+ // visit starts on Classic, whatever was played or grown last. Choosing
+ // Architect lasts while the studio is open. The play modes never grow one
+ // (tests/designer.test.mjs, *every play mode grows Classic*).
+ if(isArchitect(settings))settings={...settings,designer:'classic'};
  studioSetup=true;
  openPanel('course');
 }
@@ -4270,7 +4198,6 @@ function applyStudioSettings(){
   for(const f of SETTINGS)if(f.kind==='toggle'){const el=$(f.key);if(el)next[f.key]=el.checked;}
   if($('seed'))next.seed=$('seed').value.trim()||'EVERGREEN';
   if(studioBiome)next.biome=studioBiome;
-  if(handDraft&&isArchitect(next))next.archHand=cleanHand(handDraft);
   settings={...settings,...validateSettings(next)};
   if(error)error.textContent='';
   return true;
@@ -5897,9 +5824,6 @@ function renderPanel(name,content){
   // appear underneath a heading that supplies its missing noun. Move a field
   // out of its box and it goes back to saying what it is.
   const control=(k,short)=>{const f=FIELD[k],text=short&&f.short?f.short:f.label;
-   // The hand-shaped features are not a control: the studio's Hand tools
-   // edit them (handToolsPanel).
-   if(f.kind==='hand')return '';
    if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${named(text,k)}</label>`;
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
@@ -6012,12 +5936,11 @@ function renderPanel(name,content){
    // round 3, G3): still one press away, never removed.
    const fold=more.length?`<details class="sd-more"><summary>More settings · ${more.length}</summary>${more.join('')}</details>`:'';
    if(!main.length&&!more.length)return '';
-   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${main.join('')}${key==='architect'&&isArchitect(settings)?handToolsHtml():''}${fold}`;
+   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${main.join('')}${fold}`;
   };
   // ONE SCREEN, from the menu or in the studio (round 13): the same words and
   // the same Grow this landscape (R) -- in the studio it regrows this one.
   content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape the landscape, then grow it again to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p><button class="primary" data-panel-action id="growStudio" aria-label="Grow this landscape"><i data-lucide="mountain"></i> Grow this landscape <kbd>R</kbd></button><div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
-  wireHandTools();
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   // Past a field's `warn.above` (the green slope slider, past 75%): red while
   // dragging, then a bubble saying why, and a toast once, when the slider is

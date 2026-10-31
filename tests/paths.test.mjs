@@ -134,3 +134,46 @@ test('a ball dropped on a bridge stops on its deck, in the penalty area', () => 
  assert.equal(r.hazard, 'Water');
  assert.ok(Math.abs(r.end.y - (b.deck + .02135)) < .1, `the ball ends at ${r.end.y.toFixed(2)}, the deck at ${b.deck.toFixed(2)}`);
 });
+
+// ONE NETWORK, JOINED WHERE IT MEETS (the owner, 31 October 2026: pieces of
+// path lying alone beside a green, a path ending in the grass short of the
+// one it met). Every end either lies on another piece or stands well clear of
+// every other one, no short jog is joined at both ends, and the pieces make
+// one network. Before: 211 ends of 1,046 stopped within 8 m of another path
+// in 15 eighteen-hole courses, and every course was in about 15 bits.
+import {pathTouches, SPUR} from '../src/paths.js';
+import {inBuilding} from '../src/clubhouse.js';
+const seg = (p, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)); return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t); };
+const toOthers = (w, p, e) => { let d = Infinity; for (const o of w.paths) if (o !== p) for (let k = 1; k < o.points.length; k++) d = Math.min(d, seg(e, o.points[k - 1], o.points[k])); return d; };
+const lengthOf = pts => pts.reduce((a, p, k) => a + (k ? Math.hypot(p.x - pts[k - 1].x, p.z - pts[k - 1].z) : 0), 0);
+test('the paths are one network, joined where they meet', () => {
+ // PA-2 Midwest came in two halves: hole 10's pull-off sat in a pocket.
+ for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'})]) {
+  const P = w.paths, par = P.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
+  P.forEach((p, i) => {
+   const ends = [p.points[0], p.points[p.points.length - 1]], d = ends.map(e => toOthers(w, p, e));
+   d.forEach((v, k) => assert.ok(v < .05 || v > 8, `piece ${i}: an end stops ${v.toFixed(1)} m short of another path`));
+   if (!p.door) assert.ok(!(d[0] < .05 && d[1] < .05 && lengthOf(p.points) < SPUR), `piece ${i}: a ${lengthOf(p.points).toFixed(0)} m jog between two paths`);
+   ends.forEach(e => P.forEach((o, j) => { if (j !== i) for (let k = 1; k < o.points.length; k++) if (seg(e, o.points[k - 1], o.points[k]) < .05) par[f(i)] = f(j); }));
+  });
+  assert.equal(new Set(P.map((_, i) => f(i))).size, 1, 'the network is in more than one piece');
+ }
+});
+
+// NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under the
+// Midwest farmhouse; 8 clubhouses in 15 courses had one under them).
+test('no building or house stands on a path, and the clubhouse\'s own path goes round it', () => {
+ for (const biome of ['midwest', 'mountain', 'desert']) {
+  const w = world({seed: 'PA-3', holes: 18, biome, designer: 'architect', archStory: 'lots', archClub: 'championship'});
+  for (const b of w.buildings) {
+   assert.ok(!pathTouches(w.paths, b, 0), `${biome}: a path under the ${b.kind}`);
+   for (const p of w.paths) for (let k = 1; k < p.points.length; k++) { const a = p.points[k - 1], c = p.points[k], n = Math.ceil(Math.hypot(c.x - a.x, c.z - a.z)); for (let t = 0; t <= n; t++) assert.ok(!inBuilding(b, a.x + (c.x - a.x) * t / n, a.z + (c.z - a.z) * t / n), `${biome}: a path through the ${b.kind}`); }
+  }
+  for (const h of w.homes) for (const p of w.paths) for (let k = 1; k < p.points.length; k++) assert.ok(seg(h, p.points[k - 1], p.points[k]) > Math.max(h.width, h.depth) / 2, `${biome}: a house on a path`);
+ }
+ // The footprint test itself: a path through a box's middle, past its corner, clear of it.
+ const box = {x: 0, z: 0, rotation: .5, width: 20, depth: 10};
+ assert.ok(pathTouches([{points: [{x: -40, z: 0}, {x: 40, z: 0}], width: 2.4}], box));
+ assert.ok(!pathTouches([{points: [{x: -40, z: 30}, {x: 40, z: 30}], width: 2.4}], box));
+ assert.ok(pathTouches([{points: [{x: -40, z: 30}, {x: 40, z: 30}], width: 2.4}], box, 30));
+});

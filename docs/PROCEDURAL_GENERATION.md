@@ -245,7 +245,7 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   green's front corner on the wrong side always guarded, then the style's
   count round the green; water placed for a carry, a cape, a go-for-it second
   or a short side. Every hazard records why; the architect places at most
-  twelve a hole, and with the signatures and the hand tools a hole holds up
+  twelve a hole, and with the signatures a hole holds up
   to 24 -- the bunkers past the shader's twelve slots baked into the surface
   field (surface-field.js) at the end, after the ground grid, and painted
   and played from it.
@@ -293,7 +293,8 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   drops near greens (Golden Age, Raynor); clear of every hole's play, the sea
   and the creeks.
 - **The land's templates** (architect.js), in the ground with the mounds:
-  the Dell's dune before a sunken green, the Alps' ridge across the fairway,
+  the Dell's dune (18 m to a side, 4 m high, its back foot 5 m short of
+  the green) before a sunken green, the Alps' ridge across the fairway,
   the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
 - **Tournament week** (occasion.js), on a Championship venue, with the
   story's buildings: stands round the last green and a par three, a
@@ -304,8 +305,8 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   New 0.68, Mature 1, Old 1.18, Restored 1.08 of full height.
 - **Hand-made shapes** (hand-tools.js), on each Architect hole before its
   pin is chosen: the architect's own signature on about a third of holes,
-  by style, then whatever the studio's Hand tools added (`archHand`);
-  their mounds and hollows join the earth field after routing.
+  by style (the studio's own Hand tools were withdrawn on 31 October
+  2026); their mounds and hollows join the earth field after routing.
 - **Life** (life.js), after the planting: animals and distant people, out
   of play and clear of the trees, drawn only -- a fourball on the longest
   path piece, a mower only on a run of mown rough (none where the rough

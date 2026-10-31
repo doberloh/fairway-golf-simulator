@@ -93,23 +93,44 @@ export function costGrid({holes, s, surface, streams, height, ravines = []}) {
  const at = (i, j) => ({x: x0 + i * CELL, z: z0 + j * CELL});
  const costAt = (x, z) => { const [i, j] = cellOf({x, z}); return i < 0 || j < 0 || i >= nx || j >= nz ? Infinity : cost[j * nx + i]; };
  // The nearest open cell to a point, within 40 m.
- const snap = p => {
+ // Failing that, the nearest walkable cell at all (the owner, 31 October
+ // 2026: a Midwest hole's pull-off sat in a sea of shared fairway and semi,
+ // nothing cheap within 40 m, and the hole had no path -- the network came
+ // in two halves).
+ const snap = (p, ok = () => true, tries = [[7, 4], [7, 40]]) => {
   const [ci, cj] = cellOf(p);
-  let best = null;
-  for (let r = 0; r <= 7 && !best; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
-   if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
-   const i = ci + di, j = cj + dj;
-   if (i < 0 || j < 0 || i >= nx || j >= nz || !Number.isFinite(cost[j * nx + i]) || cost[j * nx + i] > 4) continue;
-   const d = di * di + dj * dj;
-   if (!best || d < best.d) best = {i, j, d};
+  for (const [rings, dear] of tries) {
+   let best = null;
+   for (let r = 0; r <= rings && !best; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
+    if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+    const i = ci + di, j = cj + dj;
+    if (i < 0 || j < 0 || i >= nx || j >= nz || !Number.isFinite(cost[j * nx + i]) || cost[j * nx + i] > dear || !ok(j * nx + i)) continue;
+    const d = di * di + dj * dj;
+    if (!best || d < best.d) best = {i, j, d};
+   }
+   if (best) return [best.i, best.j];
   }
-  return best && [best.i, best.j];
+  return null;
  };
  const N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
  // A* from a to b; the cells, or null.
+ //
+ // A POCKET IS LEFT, NOT ROUTED FROM (the owner, 31 October 2026: a Midwest
+ // network in two halves). A waypoint's cell can sit in a pocket a few cells
+ // across, walled in by ground steeper than MAX_GRADE; the search from it
+ // ran out, and the hole had no path at all. A failed search has walked
+ // everything it can reach, so: when that is a pocket (under POCKET cells)
+ // the leg starts again from the nearest cell outside it; when it is the
+ // goal that is cut off, the leg ends at the nearest cell it does reach. One
+ // retry, within 72 m; past that the land is truly split (Mountain) and the
+ // leg is left out, as before.
+ const POCKET = 400, ringsOut = [[12, 40]];
  const route = (a, b) => {
   const A = snap(a), B = snap(b);
   if (!A || !B) return null;
+  return search(A, B, a, b, false);
+ };
+ const search = (A, B, a, b, retried) => {
   const start = A[1] * nx + A[0], goal = B[1] * nx + B[0];
   const g = new Float32Array(nx * nz).fill(Infinity), from = new Int32Array(nx * nz).fill(-1), done = new Uint8Array(nx * nz);
   const H = k => Math.hypot((k % nx) - B[0], Math.floor(k / nx) - B[1]) * CELL * .3;
@@ -137,7 +158,14 @@ export function costGrid({holes, s, surface, streams, height, ravines = []}) {
     if (v < g[n]) { g[n] = v; from[n] = k; open.push(n, v + H(n)); }
    }
   }
-  if (from[goal] < 0 && goal !== start) return null;
+  if (from[goal] < 0 && goal !== start) {
+   if (retried) return null;
+   let reached = 0;
+   for (const d of done) reached += d;
+   if (reached < POCKET) { const A2 = snap(a, k => !done[k], ringsOut); return A2 ? search(A2, B, a, b, true) : null; }
+   const B2 = snap(b, k => done[k] === 1, ringsOut);
+   return B2 ? search(A, B2, a, b, true) : null;
+  }
   const cells = [];
   for (let k = goal; k >= 0; k = from[k]) { cells.push(k); if (k === start) break; }
   return cells.reverse();
@@ -208,30 +236,91 @@ function waypoints(h, s) {
 // The paths of a course. `holes` are routed (they have `toWorld`); `surface`
 // is the world's surface without paths; `streams` its creeks and rivers;
 // `height` the ground. Returns the network as pieces (each a path), the
-// bridges, and `connect` -- the same router, for the clubhouse's link.
+// bridges, `connect` -- the same router, for the clubhouse's link -- and
+// `block`, which closes a building's ground to the router before its link
+// is laid.
+//
+// THE NETWORK IS WHAT IS DRAWN (the owner, 31 October 2026: pieces of path
+// lying alone beside a green, a path ending in the grass short of the one it
+// met). A later leg joins the network where its cells meet cells an earlier
+// leg took. Those were the cells the earlier leg's search WALKED; the line
+// drawn from them is pulled straight and rounded (`lineOf`) and can run
+// metres off them, so a join landed on a cell the drawn path had left: a gap
+// in the grass, and a jog of two or three cells drawn as a piece of its own.
+// Now `used` is the cells the DRAWN line crosses, a piece's joined end is
+// moved onto the nearest point of a line already drawn, and a piece joined
+// at both ends that is shorter than SPUR -- a jog between two points the
+// network already joins -- is not laid.
+export const SPUR = 3 * CELL;
 export function routePaths({holes, s, surface, streams, ravines = [], height = null}) {
- if (!holes?.length) return {paths: [], bridges: [], connect: () => null};
+ if (!holes?.length) return {paths: [], bridges: [], connect: () => null, block: () => {}};
  const width = WIDTH[s.archClub] ?? WIDTH.members, kind = PATH_KINDS[s.biome] || ARCHITECT_GENERIC.path;
  const grid = costGrid({holes, s, surface, streams, height, ravines});
  const pieces = [];
- // A leg's cells become pieces: runs of cells no earlier leg took, each with
- // a cell of overlap at either end so the network stays joined.
+ const cellAt = p => { const [i, j] = grid.cellOf(p); return i < 0 || j < 0 || i >= grid.nx || j >= grid.nz ? -1 : j * grid.nx + i; };
+ // Every cell a drawn line crosses, sampled at a third of a cell.
+ const mark = line => {
+  for (let k = 1; k < line.length; k++) {
+   const a = line[k - 1], b = line[k], n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / (CELL / 3)));
+   for (let t = 0; t <= n; t++) { const c = cellAt({x: a.x + (b.x - a.x) * t / n, z: a.z + (b.z - a.z) * t / n}); if (c >= 0) grid.used[c] = 1; }
+  }
+ };
+ // The nearest point of a line already drawn.
+ const onNetwork = p => {
+  let best = null;
+  for (const line of pieces) for (let k = 1; k < line.length; k++) {
+   const a = line[k - 1], b = line[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1;
+   const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}, d = Math.hypot(q.x - p.x, q.z - p.z);
+   if (!best || d < best.d) best = {d, q};
+  }
+  return best;
+ };
+ const join = (line, at) => { const n = onNetwork(line[at]); if (n && n.d < CELL * 1.5) line[at] = n.q; };
+ const length = line => line.reduce((a, p, k) => a + (k ? Math.hypot(p.x - line[k - 1].x, p.z - line[k - 1].z) : 0), 0);
+ // A leg's cells become pieces: runs of cells the drawn network does not
+ // cross, each with a cell of overlap at either end, joined onto the network
+ // there.
  const lay = cells => {
   if (!cells?.length) return;
-  let run = [];
-  const flush = () => { if (run.length >= 2) pieces.push(lineOf(grid, run)); run = []; };
+  const laid = [];
+  let run = [], joinStart = false;
+  const flush = joinEnd => {
+   if (run.length >= 2) {
+    const line = lineOf(grid, run);
+    if (joinStart) join(line, 0);
+    if (joinEnd) join(line, line.length - 1);
+    if (!(joinStart && joinEnd && length(line) < SPUR)) laid.push(line);
+   }
+   run = []; joinStart = false;
+  };
   cells.forEach((k, n) => {
-   if (grid.used[k] && run.length) { run.push(k); flush(); }
-   else if (!grid.used[k]) { if (!run.length && n > 0) run.push(cells[n - 1]); run.push(k); }
+   if (grid.used[k] && run.length) { run.push(k); flush(true); }
+   else if (!grid.used[k]) { if (!run.length && n > 0) { run.push(cells[n - 1]); joinStart = true; } run.push(k); }
   });
-  flush();
-  for (const k of cells) grid.used[k] = 1;
+  flush(false);
+  for (const line of laid) { pieces.push(line); mark(line); }
  };
  const ends = holes.map(h => waypoints(h, s));
  holes.forEach((h, i) => {
   lay(grid.route(ends[i].tee, ends[i].green));
   if (ends[i + 1]) lay(grid.route(ends[i].green, ends[i + 1].tee));
  });
+ // LOOSE ENDS CLOSED. A leg ends at its waypoint and the next starts there;
+ // where the next leg's first stretch was a jog not laid, or a waypoint fell
+ // a few metres off a path already drawn, the end stopped in the grass short
+ // of it (41 ends in 15 eighteen-hole courses still did, after the joins
+ // above). An end within a cell and a half of another piece runs on to it,
+ // where the ground between is open; then a short piece joined at both ends
+ // is a jog the network no longer needs.
+ const nearestOther = (p, own) => { let best = null; for (const line of pieces) { if (line === own) continue; for (let k = 1; k < line.length; k++) { const a = line[k - 1], b = line[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}, d = Math.hypot(q.x - p.x, q.z - p.z); if (!best || d < best.d) best = {d, q}; } } return best; };
+ const open = (a, b) => { const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 0; t <= n; t++) if (!Number.isFinite(grid.costAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n))) return false; return true; };
+ for (const line of pieces) for (const at of [0, line.length - 1]) {
+  const n = nearestOther(line[at], line);
+  if (!n || n.d < .05 || n.d > CELL * 1.5 || !open(line[at], n.q)) continue;
+  if (at) line.push(n.q); else line.unshift(n.q);
+ }
+ const joinedBoth = line => [line[0], line[line.length - 1]].every(p => (nearestOther(p, line)?.d ?? Infinity) < .05);
+ for (let k = pieces.length - 1; k >= 0; k--) if (length(pieces[k]) < SPUR && joinedBoth(pieces[k])) pieces.splice(k, 1);
  const paths = pieces.filter(p => p.length >= 2).map(points => ({points, width, kind}));
  // Bridges: a run of points over a creek or a ravine, on each piece.
  const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r; });
@@ -252,8 +341,71 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
    }
   }
  }
- const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); for (const k of cells) grid.used[k] = 1; return line; };
- return {paths, bridges, connect};
+ // The link ends ON the network (it ended on its last cell's centre, a few
+ // metres off it), and its own drawn cells join the network after it.
+ const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); join(line, line.length - 1); mark(line); return line; };
+ // A building's ground closed to the router, `pad` metres round it, with
+ // the cell-wide dear margin everything blocked has (the owner, 31 October
+ // 2026: the clubhouse's own path was routed straight under it, the router
+ // never having been told it was there).
+ const block = (b, pad = 1.5) => {
+  const r = Math.hypot(b.width, b.depth) / 2 + pad + CELL, [ci, cj] = grid.cellOf(b), n = Math.ceil(r / CELL);
+  for (let dj = -n; dj <= n; dj++) for (let di = -n; di <= n; di++) {
+   const i = ci + di, j = cj + dj;
+   if (i < 0 || j < 0 || i >= grid.nx || j >= grid.nz) continue;
+   const p = grid.at(i, j), k = j * grid.nx + i;
+   if (inBox(b, p.x, p.z, pad + CELL / 2)) grid.cost[k] = Infinity;
+   else if (inBox(b, p.x, p.z, pad + CELL * 1.5)) grid.cost[k] = Math.max(grid.cost[k], 15);
+  }
+ };
+ return {paths, bridges, connect, block};
+}
+
+// Inside a footprint {x, z, rotation, width, depth}, padded (clubhouse.js
+// `inBuilding`'s frame).
+const inBox = (b, x, z, pad = 0) => { const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), dx = x - b.x, dz = z - b.z; return Math.abs(dx * cs - dz * sn) <= b.width / 2 + pad && Math.abs(dx * sn + dz * cs) <= b.depth / 2 + pad; };
+
+// NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path running under
+// the clubhouse). The paths are laid first; the clubhouse, the story's
+// buildings, the tournament's stands and the houses are sited after, and
+// each asked only a few points of its footprint -- a 2.4 m path passes
+// between corners 20 m apart. These test the whole footprint.
+//
+// Whether any path comes within `pad` metres of a footprint: each segment,
+// in the footprint's frame, clipped against the box grown by the pad and
+// half the path's width (Liang-Barsky).
+export function pathTouches(paths, b, pad = 0) {
+ const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation);
+ const local = p => { const dx = p.x - b.x, dz = p.z - b.z; return [dx * cs - dz * sn, dx * sn + dz * cs]; };
+ for (const path of paths || []) {
+  const hx = b.width / 2 + pad + path.width / 2, hz = b.depth / 2 + pad + path.width / 2;
+  let prev = local(path.points[0]);
+  for (let k = 1; k < path.points.length; k++) {
+   const next = local(path.points[k]), [ax, az] = prev, dx = next[0] - ax, dz = next[1] - az;
+   prev = next;
+   let t0 = 0, t1 = 1, hit = true;
+   for (const [p, q] of [[-dx, ax + hx], [dx, hx - ax], [-dz, az + hz], [dz, hz - az]]) {
+    if (p === 0) { if (q < 0) { hit = false; break; } continue; }
+    const r = q / p;
+    if (p < 0) { if (r > t1) { hit = false; break; } if (r > t0) t0 = r; }
+    else { if (r < t0) { hit = false; break; } if (r < t1) t1 = r; }
+   }
+   if (hit) return true;
+  }
+ }
+ return false;
+}
+
+// How far (x, z) is from the nearest path's edge (negative on one), or
+// Infinity with no paths.
+export function pathClearance(paths, x, z) {
+ let best = Infinity;
+ for (const path of paths || []) for (let k = 1; k < path.points.length; k++) {
+  const a = path.points[k - 1], b = path.points[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / l2));
+  best = Math.min(best, Math.hypot(x - a.x - dx * t, z - a.z - dz * t) - path.width / 2);
+ }
+ return best;
 }
 
 // Nearest-path queries on a grid of segments, as quick as the lie needs.
@@ -288,13 +440,22 @@ export function pathIndex(paths, cell = 16) {
 // the rest (a straight line from the door crossed whatever lay between). A
 // piece of its own; `door` marks it.
 export function linkBuilding(paths, b, connect) {
- const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), out = b.depth / 2 + 5;
+ const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), out = b.depth / 2 + 6;
  // The front is the building's local -z (clubhouse.js faces it to the tee).
  const door = {x: b.x - sn * out, z: b.z - cs * out};
+ // The nearest point of the network, along its segments (a straightened
+ // run's corners can be a hundred metres apart).
  let near = null;
- for (const p of paths) for (const q of p.points) { const d = Math.hypot(q.x - door.x, q.z - door.z); if (!near || d < near.d) near = {d, q}; }
+ for (const p of paths) for (let k = 1; k < p.points.length; k++) {
+  const u = p.points[k - 1], v = p.points[k], dx = v.x - u.x, dz = v.z - u.z, l2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((door.x - u.x) * dx + (door.z - u.z) * dz) / l2)), q = {x: u.x + dx * t, z: u.z + dz * t}, d = Math.hypot(q.x - door.x, q.z - door.z);
+  if (!near || d < near.d) near = {d, q};
+ }
  if (!near) return null;
- const line = connect?.(door, near.q) || [door, near.q];
+ // Routed round the building (routePaths `block`). A straight line only
+ // where the router found nothing and the line misses the building.
+ let line = connect?.(door, near.q);
+ if (!line) { line = [door, near.q]; if (pathTouches([{points: line, width: paths[0].width}], b, .5)) return null; }
  const piece = {points: [door, ...line.slice(1)], width: paths[0].width, kind: paths[0].kind, door};
  paths.push(piece);
  return piece;

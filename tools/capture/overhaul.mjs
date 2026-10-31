@@ -143,7 +143,7 @@ export const VIEWS = [
  // most to its approach, from above; the mower's line where rough meets native
  // grass; the step of the mowing heights at the first fairway's edge, from the
  // first cut; and a bunker drawn from the surface field (needs one: pass
- // `--course` with an archHand that overflows a hole).
+ // `--course` with one that overflows a hole by itself, e.g. Sandhills HZ-2).
  {name: 'arch-turned', hole: 0, when: 'afternoon', caption: 'The green turned most to its approach, from above', cam: `w => { const h = w.holes.reduce((a, b) => Math.abs(b.greenTurn || 0) > Math.abs(a.greenTurn || 0) ? b : a), g = h.worldGreen;
   return {x: g.x, z: g.z - 2, yaw: 0, height: 60, pitch: -86}; }`},
  {name: 'arch-native', hole: 0, when: 'afternoon', caption: 'The mower\'s line where rough meets native grass', cam: `w => { let best = null;

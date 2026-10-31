@@ -1,4 +1,3 @@
-import {isHandList} from './hand-tools.js';
 // Single source of truth for every generated-course setting. Defaults, bounds,
 // categories, help text, validation and migration all derive from this list, so
 // a new control cannot drift out of step with its validator or its save format.
@@ -15,7 +14,11 @@ import {isHandList} from './hand-tools.js';
 //                     architect-courses branch, 30 October 2026). Classic
 //                     courses never read it. See `generatorFor` below and
 //                     PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*.
-export const SCHEMA_VERSION=13;
+export const SCHEMA_VERSION=14;
+// 14: `archHand` removed (the owner, 31 October 2026: "leave those tools for
+//     the architect to use"). The studio's Hand tools are gone; the architect
+//     still lays its own hand-made signatures from the seed. A save that
+//     carried hand-shaped features drops them.
 // 13: `archHand`, the Architect's hand-shaped features (hand-tools.js; the
 //     owner's review, 30 October 2026) -- a list, the schema's first. A save
 //     from before has none and takes the default, an empty list.
@@ -346,7 +349,15 @@ export const GENERATOR_VERSION=52;
 //    up to 24 hazards (hand-tools.js HAZARD_CAP), the bunkers past the
 //    shader's twelve slots baked into the field and played from it, so the
 //    lobes 17 trimmed are back.
-export const ARCHITECT_VERSION=18;
+// 19: the owner's review of 31 October 2026. The cart paths are one network
+//    joined where they meet (paths.js: the drawn line is the network, loose
+//    ends closed, short jogs dropped, a pull-off in a pocket routed from
+//    outside it); nothing is built on a path (the clubhouse, the story's
+//    buildings, the stands and the houses keep off; the clubhouse's own path
+//    routed round it); the Dell's dune broadened from 9 m to 18 m a side,
+//    3.6 m to 4 m high, set back short of the green. The studio's Hand tools
+//    went at the same time (SCHEMA_VERSION 14), moving no seed.
+export const ARCHITECT_VERSION=19;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both
@@ -373,7 +384,7 @@ export const STORY_KEYS=['none','some','lots'];
 // What an Architect course is chosen by. Everything else the architect
 // decides; Classic's other controls are hidden while Architect is chosen, and
 // ignored by its generation (`designSettings` in designer.js).
-export const ARCHITECT_KEEPS=['designer','holes','seed','biome','archStyle','archClub','archAge','archStory','archHand','wind','windDirection','pinDay'];
+export const ARCHITECT_KEEPS=['designer','holes','seed','biome','archStyle','archClub','archAge','archStory','wind','windDirection','pinDay'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -407,7 +418,6 @@ export const SETTINGS=[
  {key:'archStyle',category:'architect',kind:'choice',options:STYLE_KEYS,def:'auto',architect:true,names:{auto:'By landscape',golden:'Golden Age',raynor:'Raynor & Macdonald',links:'Links',heathland:'Heathland & Sandbelt',sandhills:'Sandhills',parkland:'Parkland',modern:'Modern championship',stadium:'Stadium',minimalist:'Minimalist',desert:'Desert target',mountain:'Mountain',tropical:'Tropical resort'},label:'Style',tip:'Whose hand designed it. By landscape picks one that suits the land from the seed. Each style has its own bunkers, greens, fairways and planting.',describe:{"auto":"Picks a style that suits this landscape, from the seed -- the styles it leans toward are listed in the landscape's own notes.","golden":"Golden Age (MacKenzie, Tillinghast): wide fairways, bold contoured greens, big ragged bunkers with flashed sand, chocolate-drop mounds, few trees in play.","raynor":"Raynor & Macdonald: template holes more than any other style (Redan, Eden, Biarritz, Road, Alps), geometric greens on steep straight banks, flat-bottomed bunkers.","links":"Seaside links: firm fairways that run into one another, small pot bunkers, no ponds, little planting, natural pond banks; Dells, Capes and the Pit.","heathland":"Heathland & Sandbelt: large ragged bunker complexes flashed up to the greens, heather and pine framing the holes.","sandhills":"Sandhills: holes laid on dunes inland, huge natural bunkers, wide fairways, hardly a tree, the land as found.","parkland":"Parkland: tree-lined holes and avenues in rolling ground, framing mounds, ponds edged in stone, a fountain on a members' or resort course.","modern":"Modern championship: long holes, framing mounds, big bunker complexes with capes and bays, water in play edged in stone.","stadium":"Stadium (Dye): railway-tie walls on the ponds, grassy spectator banks behind the greens, pot bunkers, heroic carries over water.","minimalist":"Minimalist: little earth moved, holes that follow the land, bunkers where the ground suggested them.","desert":"Desert target: islands of turf in native desert, carries over sand and arroyos, ponds edged in stone, the Barranca.","mountain":"Mountain: holes across steep ground, high tees and shelf greens, the land as found, a mine head in the woods.","tropical":"Tropical resort: palms and sea views, water features edged in stone, fountains, wide paths."}},
  {key:'archClub',category:'architect',kind:'choice',options:CLUB_KEYS,def:'members',architect:true,names:{municipal:'Municipal',members:"Members' club",resort:'Resort',championship:'Championship venue'},label:'Club',tip:'Who runs it, and so how long it plays and how much is spent on it: a municipal course is shorter, plainer and well worn; a championship venue is long, tight and dressed for a tournament on its pin days.',describe:{"municipal":"Public course: about 6,250 yards for eighteen, plainer bunkers, narrow paths, worn tees and more divots, bunkers grassed over to save the raking.","members":"Members' club: about 6,650 yards, well kept -- stakes and yardage posts, a rake in every bunker, a fountain in a big pond on the dressed styles.","resort":"Resort: about 6,850 yards, wide paths, fountains and dressed water, a pavilion of a clubhouse.","championship":"Championship venue: about 7,250 yards, long and tight. Tournament week: stands round the last green, a scoreboard and TV towers, ropes and a crowd that grows from Thursday to Sunday with the pin day."}},
  {key:'archAge',category:'architect',kind:'choice',options:AGE_KEYS,def:'mature',architect:true,names:{new:'New',mature:'Mature',old:'Old',restored:'Restored'},label:'Age',tip:'How long it has been there. New courses have young trees and crisp edges; old ones have grown trees, added back tees and bunkers grassed over; a restored course has its mid-century trees felled and its old bunkers back.',describe:{"new":"Built recently: trees about two thirds grown, crisp edges, few divots, no avenues.","mature":"Twenty or thirty years in: full-grown trees, avenues down some holes on the parkland styles.","old":"Generations old: tall trees and long avenues, well-worn tees, old bunkers grassed over into hollows.","restored":"An old course put back: the mid-century trees felled, their stumps scattered in the rough, the views opened, old bunkers grassed over."}},
- {key:'archHand',category:'architect',kind:'hand',def:[],architect:true,label:'Hand-shaped features',tip:'Bunkers, greens, slopes and fairway widths shaped by hand in the course studio’s Hand tools, laid on the architect’s design. Saved with the course and carried in its code.'},
  {key:'archStory',category:'architect',kind:'choice',options:STORY_KEYS,def:'some',architect:true,names:{none:'None',some:'A little',lots:'A lot'},label:'Heritage',tip:'What the land held before the course: stone walls, an old farm, a ruin, a landmark to aim at, a creek. (The setting was The land’s story; renamed in the owner’s review.)',describe:{"none":"Nothing before the course: no walls, ruins or farm, and no creek added.","some":"A little: a few field walls and a ruin or a farmstead, out of play.","lots":"A lot: more walls, a farmstead or ruins, a lighthouse or spire lined up behind a green, a creek through the land."}},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
@@ -508,7 +518,6 @@ export function validateSettings(input={}){
  const s={...DEFAULT_COURSE,...input};
  for(const f of SETTINGS){
   const v=s[f.key];
-  if(f.kind==='hand'){if(!isHandList(v))throw Error(`${f.label} could not be read.`);continue;}
   if(f.kind==='text'){if(typeof v!=='string'||!v.trim().length||v.length>f.max)throw Error(`${f.label} must be 1–${f.max} characters.`);continue;}
   if(f.kind==='toggle'){if(typeof v!=='boolean')throw Error(`${f.label} must be on or off.`);continue;}
   if(f.kind==='choice'){if(!f.options.includes(v))throw Error(`${f.label} is not a recognised option.`);continue;}
@@ -561,6 +570,9 @@ const MIGRATIONS={
  // has none and takes the default, an empty list (tests/hand-tools.test.mjs
  // loads one to prove it).
  12:s=>s,
+ // 13 -> 14: the studio's Hand tools withdrawn; whatever they shaped goes
+ // (tests/hand-tools.test.mjs loads a save that carried some).
+ 13:s=>{const {archHand,...rest}=s;return rest;},
 };
 // Whether a control belongs on screen for this course: Architect shows only
 // what it is chosen by (ARCHITECT_KEEPS); Classic shows everything but the

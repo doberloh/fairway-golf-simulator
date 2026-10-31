@@ -76,6 +76,12 @@ test('the land\'s templates: a Dell\'s dune, an Alps\' ridge, a Barranca\'s ravi
  assert.ok(dell, 'a Dell');
  assert.ok(rise(dell) > 1.5, `the Dell's dune rises ${rise(dell).toFixed(1)} m`);
  assert.ok(dell.w.storyProps.some(p => p.kind === 'aimstone'), 'the Dell has its white stone');
+ // A dune, not a fold (the owner, 31 October 2026, Links): no face steeper
+ // than about 45% along the line over it, and its back foot short of the green.
+ {const {w, h} = dell, e = h.design.earthworks[0];let steep = 0;
+  for (let z = e.z - e.r; z < e.z + e.r; z += 2) { const p = h.toWorld({x: h.center(z), z}), q = h.toWorld({x: h.center(z + 2), z: z + 2}); steep = Math.max(steep, Math.abs(w.height(q.x, q.z) - w.height(p.x, p.z)) / 2); }
+  assert.ok(steep < .45, `the Dell's dune has a ${(steep * 100).toFixed(0)}% face`);
+  assert.ok(e.z + e.r < h.length - h.greenSize, 'the dune runs into the green');}
  const alps = find('pnw', 'golden', ['T-1', 'T-3'], 'alps');
  assert.ok(alps && rise(alps) > 2.5, `the Alps' ridge rises ${alps && rise(alps).toFixed(1)} m`);
  const bar = find('autumn', 'raynor', ['T-3', 'T-5'], 'barranca');

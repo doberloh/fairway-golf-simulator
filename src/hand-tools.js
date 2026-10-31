@@ -18,10 +18,11 @@
 //   fairway  the fairway's width over a stretch: `width` metres more (or,
 //            negative, less) across the whole fairway, `length` m along it
 //
-// The SAME records come from two places: the person, in the course studio's
-// Hand tools (saved as the `archHand` setting, so a saved course, a course
-// code and a course file carry them), and the generator, which picks a
-// hand-made signature for some holes from the seed (`designerHand` below).
+// The records come from the generator, which picks a hand-made signature
+// for some holes from the seed (`designerHand` below). The person shaped
+// them too, in the course studio's Hand tools, until 31 October 2026 (the
+// owner: "leave those tools for the architect to use"); the setting that
+// carried theirs, `archHand`, is gone (SCHEMA_VERSION 14).
 // applyHand lays them on an Architect hole in architectCourse (course.js) --
 // a Classic hole never reaches it, so Classic cannot change.
 //

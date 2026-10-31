@@ -29,6 +29,70 @@ number of holes.
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
 | 7. Occasion | built: tournament week on a Championship venue -- stands, a scoreboard, TV towers and marquees (solid), gallery ropes and a crowd that fills from Thursday to Sunday, never on Low (ten iterations); the yardage book, a PDF a page a hole from the pause menu |
 
+### The owner's second review (31 October 2026, ARCHITECT_VERSION 19, SCHEMA_VERSION 14)
+
+The owner, after the goal: why Architect's frame rate is better, and five
+changes, with four screenshots from the course studio (Midwest twice,
+Links twice).
+
+- **Why Architect is faster** (answered again; the figures are in
+  *Measures*, *On Ultra too*): it plants about half the trees -- 6,889
+  on Midwest against Classic's 15,167, 6,953 against 17,524 on PNW --
+  because it plants by design, in stands and avenues with the corridors
+  kept open, where Classic scatters to its density. Fewer trees is fewer
+  triangles and less shadow work, on Low and Ultra alike. Bringing that to
+  Classic would move every Classic course (a GENERATOR_VERSION bump), so it
+  is the owner's call and has not been done.
+- **The hand tools withdrawn from the player** ("leave those tools for the
+  architect to use"). The studio's Hand tools panel, the `archHand`
+  setting (SCHEMA_VERSION 14; a save that carried some loads without them)
+  and the camera's *Aim where I'm looking* are gone. The architect's own
+  signatures stay, built from the same records. The surface field's tests
+  now use courses the architect overfills by itself (Sandhills HZ-2,
+  Heathland HZ-1).
+- **Architect only in the studio, never the default.** Every play mode
+  was already Classic (Surprise me, the course of the week, the Challenge
+  Course, Endless, the menu's hole); a test now holds them to it. What
+  made Architect look like the default was the studio remembering the last
+  designer chosen: a fresh visit to the studio now starts on Classic.
+- **Cart paths in pieces** (screenshots 1 and 2: a short piece lying alone
+  beside a green, a path ending short of another, a path running under the
+  Midwest farmhouse). Three causes, three fixes (PROJECT_HANDOFF *THE PATH
+  NETWORK IS THE LINE DRAWN*): later legs joined the network where its
+  search had walked rather than where its line was drawn; a pull-off point
+  walled in by steep ground left a hole without a path; and the clubhouse
+  was sited after the paths testing only its corners, its own path then
+  routed straight under it.
+- **A path through a hill** (screenshot 4, Links): the strip was laid only
+  at the corners of a straightened line, up to a hundred metres apart, so
+  it ran straight through the dune between them. It now has a point every
+  2 m, each on the ground. Drawing only; nothing moves for it.
+- **"That weird hole" on Links** (screenshot 3): the Dell's dune, 9 m to a
+  side for 3.6 m high, a face of 63% that the ground's mesh draws as a sharp
+  crease along its crest -- the Alps' fault before it was broadened. Now
+  18 m a side for 4 m, about a third, set back so its foot stops 5 m short
+  of the green. Still blind from the approach. (Identified from the white
+  aiming stone on the crest in the screenshot; the owner did not name the
+  seed.)
+
+| Measure (15 Architect eighteens: Midwest, Links, PNW, Desert, Mountain, three seeds each) | Before | After |
+| --- | --- | --- |
+| Path ends stopping within 8 m short of another path | 211 of 1,046 | 3 of 1,144 |
+| Separate bits of path network | 229 (every course split) | 22 (one per course, but three Mountain courses the steep land splits) |
+| Buildings with a path under them | 8 of 45 (all clubhouses) | 0 |
+| Houses on a path | 0 | 0 |
+| An Architect eighteen's build, median of 3, two runs each (`tools/gen-time.mjs`) | Midwest 3.86, 3.69 s; PNW 4.81, 5.02; Links 4.55, 4.54; Mountain 4.86, 4.51 | 3.72, 3.56; 4.73, 4.95; 4.75, 4.55; 4.31, 4.55 -- no change past the noise |
+
+Tests: tests/paths.test.mjs (*one network, joined where they meet*; *no
+building or house stands on a path*), tests/story.test.mjs (the Dell's
+face under 45% and short of the green), tests/designer.test.mjs (*every
+play mode grows Classic*), tests/hand-tools.test.mjs (no setting carries
+hand features; a save that did loads without them; smuggled ones change
+nothing). npm test 1,228 of 1,228; the build passes; Classic's fingerprint silent; Architect's re-saved at 19.
+**Not seen in the game**: none of this has been looked at on screen -- no
+capture or smoke run was made (the graphics card was not asked for). To
+check: the owner's two Midwest views and the Links hole and path, again.
+
 ### The owner's review (30 October 2026)
 
 The owner played Architect courses and sent a list (screenshots of paths
@@ -208,7 +272,8 @@ change over a stretch. `applyHand` lays them on an Architect hole in
 architectCourse, before the pin is chosen; mounds and hollows join the
 world's earth field. Two hands use the same records:
 
-- **The person**, in the studio's settings, Architect tab, *Hand tools*:
+- **The person** (withdrawn 31 October 2026, the owner: "leave those tools
+  for the architect to use"; *The owner's second review*), in the studio's settings, Architect tab, *Hand tools*:
   pick a hole and a tool, set its sliders, or fly to a spot and press *Aim
   where I'm looking* (the hole and position under the middle of the view,
   `Renderer.groundAhead`), then *Add to this hole*; the hole's list shows
@@ -223,8 +288,8 @@ world's earth field. Two hands use the same records:
   mounds, or a tiered green with the approach widened. **Not on a landscape
   whose fairways run together** (the North Sea Links): its shared fairways
   are its signature, and a generated hogsback and punchbowl took both of the
-  owner's ST-1 pairs apart (found by the pairs test). The person's hand
-  tools still apply there.
+  owner's ST-1 pairs apart (found by the pairs test). (The person's hand
+  tools applied there too, until they were withdrawn.)
 
 Classic never reaches `applyHand` (only architectCourse calls it): the
 Classic fingerprint is unchanged and a test builds a Classic course with
@@ -297,15 +362,16 @@ four to six concepts a nine, every invariant clear.
 clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
 bridges, markings, clubhouses, mounds, pond edges; the fountain moving
 (measured, a drop rising); walls, farms, ruins, landmarks, the stone circle;
-the Dell, the Alps as a hill, the Barranca, the Pit, the Redan, the Cape;
+the Dell (before its dune was broadened, 31 October), the Alps as a hill, the Barranca, the Pit, the Redan, the Cape;
 the new people, crowd and mower; tournament week with the live board; the
-hand tools driven in the studio (Aim, Add, Grow, saved) and their shapes on
+hand tools driven in the studio (Aim, Add, Grow, saved; since withdrawn) and their shapes on
 the ground; the studio's yardage book downloaded; **a round played on an
 Architect Championship course** (smoke journey `architect-tournament`:
 from Saved courses, hole 1 played and holed out) **with the scoreboard
 following it** -- before a shot the golfer on the board at "-", after the
 hole-out "E, thru 1", the same score as the golfer's chip in the top bar. And **a hand-shaped
-hole played through** (smoke journey `architect-hand-round`): every hand tool
+hole played through** (smoke journey `architect-hand-round`, since renamed
+`architect-round` and played on the plain course): every hand tool
 on hole 1, two full shots, a drop by the pin of the punchbowl green, putts to
 the hole-out, no error. After the surface field (GPU captures): a green turned
 to its approach, from above; the step of the mowing heights at a fairway's
@@ -736,8 +802,10 @@ ARCHITECT_VERSION 9. Classic's fingerprint unchanged.
 - **The land's templates** (architect.js; the study, workstream A's *pass 7*
   templates): holes whose character is a landform, recorded in the hole's
   design and added to the ground with the mounds (`earthField`):
-  - **Dell** (par 3; Lahinch's 5th): a 3.6 m dune across the line 15 m
-    short of a sunken green, a white aiming stone on its crest;
+  - **Dell** (par 3; Lahinch's 5th): a dune across the line short of a
+    sunken green, a white aiming stone on its crest -- 3.6 m high and 9 m a
+    side 15 m short of the green until 31 October 2026, now 4 m and 18 m a
+    side with its foot 5 m short (*The owner's second review*);
   - **Alps** (par 4; Prestwick's 17th): a 5.5 m ridge across the fairway 42 m
     short of the green, a bunker across the green's front beyond it;
   - **Barranca** (par 4; Pasatiempo's back nine): a ravine 4.5 m deep and 24
