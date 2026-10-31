@@ -99,6 +99,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Fairway includes src/water.js derived from Three.js r186 examples/jsm/objects/Water.js, under the Three.js MIT license above. Local modifications: expose render-target disposal so course changes release reflection resources; allow a local reflection-plane height for graded streams.
 
 
+## laz-perf 0.0.7 (inside Fairway Builder.html only)
+
+laz-perf, the LASzip point-cloud decompressor compiled to WebAssembly
+(https://github.com/hobuinc/laz-perf), ships inside the course builder's page,
+its WebAssembly inlined; the game's page does not carry it.
+
+Copyright (c) Hobu, Inc. and the laz-perf contributors.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. A copy of the License is
+in this file, under "Apache License" (Version 2.0, January 2004). Unless required by
+applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the specific language
+governing permissions and limitations under the License.
+
+
 ## Saira Condensed (typeface)
 
 Location: src/fonts/, inlined into the built page by src/ui-kit.css. Two files,

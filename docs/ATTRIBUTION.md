@@ -3,7 +3,8 @@
 Every model Fairway draws is this project's own work, made by its own scripts
 in Blender (*Built in Blender*, below). No third-party model pack, texture,
 sprite or sound ships. What does come from elsewhere is code and one
-typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms
+typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms,
+and in the course builder's page laz-perf (the LAZ decoder, Apache-2.0)
 -- and their licences are in `docs/THIRD_PARTY_NOTICES.txt`, which travels
 with every distribution and is shown in the game under Help.
 

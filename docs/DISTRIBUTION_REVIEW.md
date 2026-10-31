@@ -1640,7 +1640,7 @@ reads only the files a player gives it, writes `.fairway` files as downloads,
 and makes no request -- checked by its own smoke harness
 (`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it was
 107,941 bytes; at stage 3 906,624 (three.js and the course generator now
-ride in it, for door 1 and the editor), still no dependency of its own. The game's page is unchanged by stage 0.
+ride in it, for door 1 and the editor), still no dependency of its own. **Stage 6 adds laz-perf 0.0.7** (Apache-2.0; npm, `laz-perf`), the LASzip decoder compiled to WebAssembly, to the builder's page only, its 214 KB of WebAssembly inlined (laz.js hands it in, so the loader never fetches its .wasm). In DEPENDENCY_INVENTORY.json (runtime), THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md. The game's page does not import it. The game's page is unchanged by stage 0.
 Later stages will add the LIDAR decoders (laz-perf, Apache-2.0; geotiff.js,
 MIT; proj4js, MIT) to the builder's page only, each recorded here, in
 ATTRIBUTION.md and THIRD_PARTY_NOTICES.txt as it lands.

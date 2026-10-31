@@ -11247,3 +11247,33 @@ whose middle misses the land by more than 6 cm (PLACED); then 28.06 m in both.
 Refining every cell by that rule made a frozen Mountain worse (99th
 percentile 1.1 -> 14.5 cm, worst 1.35 m), so on a taken-over course it
 applies only where the land was shaped.
+
+## Course builder: LIDAR read, on a real course (31 October 2026)
+
+The owner's test course, GreatLIFE Golf & Fitness (Worthington Country Club),
+Worthington, Minnesota: four USGS 3DEP tiles as delivered (project
+MN_MissouriRiverBigSioux_2021_B21; QL1, flown 27 April - 23 May 2022; LAS 1.4
+point format 6, LAZ; EPSG 6344, metres both ways), 45,411,335 points. Read
+with Fairway's own readers (las.js, laz-perf in Node) in 23 s; gridded at
+0.5 m over the course's own box (819 x 734 m, from its longitude-latitude
+box converted by geo.js -- the conversion reproduced the other pipeline's grid
+origin, 287860.000 E, 4833411.500 N, to the millimetre).
+
+| Against | Where the survey saw ground | Where it was filled |
+| --- | --- | --- |
+| USGS's 1 m bare-earth DEM | median 0.7 cm, 95th 2.8 cm, 99th 5.3 cm | median 2.6 cm, 95th 24 cm |
+| Another pipeline's 0.5 m DTM | median 0.4 cm, 95th 1.5 cm, 99th 2.7 cm | median 2.2 cm, 95th 24 cm |
+
+Filled cells (6.3%: under dense evergreens, roofs and the ponds) differ
+because every pipeline fills them its own way; Fairway fills from the edges
+inward. **Canopy** against the other pipeline's canopy model where either is
+over 2 m: median 28 cm at 0.5 m cells (97 cm at 1 m -- crown edges), 95th
+percentile 8.9 m (an edge one calls tree and the other ground). **Trees**: of
+its 1,984 on the property, 1,405 within 3 m of one of Fairway's 1,839 (71%;
+76% of Fairway's), height median error 0.34-0.66 m, crown 0.9 m. Two changes
+moved them: tops from every return rather than first returns only (a
+leaf-out survey's top of a crown is often a second return), and peaks sought
+on the canopy smoothed once, the height then read off the raw canopy (61% and
+71% before, at 1 m). The study's PLACED expectation from a forum -- "a 2 m grid
+captures green contours" -- is not tested here: the greens' fine break at 12.6
+points per m² is the other pipeline's README's own caveat.

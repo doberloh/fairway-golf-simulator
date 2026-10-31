@@ -213,7 +213,7 @@ nor any built copy of the course (tests that need it skip when it is absent):
 | 3 | Builder shell and door 1 | **Built** (below); not played by a person |
 | 4 | Real-time ground shaping | **Built** (below); not played by a person |
 | 5 | The editor's tools, checks, test round | **Built** (below); not played by a person |
-| 6 | LIDAR readers; Worthington's ground and trees against the references | |
+| 6 | LIDAR readers; Worthington's ground and trees against the references | **Built** (below) |
 | 7 | Door 2 end to end on Worthington | |
 | 8 | Auto trace, LIDAR first, measured three ways | |
 | 9 | Release-ready: docs sweep, distribution review, notices | |
@@ -386,6 +386,57 @@ nor any built copy of the course (tests that need it skip when it is absent):
   drawn except by Undo; holes cannot be added or removed (a course stays 9 or
   18); green contour stamps beyond the brush. In TODO.
 
+### Stage 6 (31 October 2026): LIDAR read, Worthington's ground
+
+- **The readers** (`src/lidar/`): `las.js` (LAS 1.0-1.4, point formats 0-10,
+  read by hand; LAZ and COPC through laz-perf, the LASzip decoder compiled to
+  WebAssembly, Apache-2.0 -- the one dependency added, and only to the
+  builder's page, its WebAssembly inlined and handed in as `wasmBinary` so it
+  never fetches: `laz.js`), `geotiff.js` (GeoTIFF, BigTIFF, Cloud Optimized:
+  strips or tiles, none/LZW/Deflate/PackBits, both predictors, 8-64-bit,
+  GeoKeys and no-data, a window decoded alone -- read by hand rather than
+  through geotiff.js and its eight dependencies), `formats.js` (E57 with its
+  pages, packets and pose; PLY ASCII and binary; PTS; PTX; XYZ/TXT/CSV with or
+  without a header; Esri ASCII grid; Esri float grid and BIL with their .hdr;
+  SRTM HGT; the form told from name and first bytes), `geo.js` (UTM and
+  latitude-longitude both ways, Snyder's series on GRS80; which pairs of map
+  grids it can line up), `land.js` (points gridded a cell at a time, never
+  held whole: ground from classes 2 and 8, an unclassified cloud's ground from
+  a progressive morphological filter, tops of everything, the laser's
+  brightness, colour, water and building shares, cells with no return;
+  holes filled from their edges; trees found as canopy peaks).
+- **Not read, and said so with how to convert**: Esri zLAS and MrSID (closed
+  formats; Esri's free LAS Optimizer, rapidlasso's LASliberator, Extensis'
+  tools), ERDAS Imagine and the old USGS DEM (open; not read yet: GDAL to
+  GeoTIFF). **proj4js was not added**: Fairway converts UTM and degrees
+  itself, which covers most open data; another map grid lines up by matching
+  points by hand (stage 7). A departure from the study, which named proj4js.
+- **Units**: a file's units from its GeoKeys (3076 horizontal, 4099 vertical)
+  or its WKT, metres, international feet or US survey feet each way, shown
+  and converted; Worthington's tiles are EPSG 6344 in metres both ways.
+- **Worthington, measured** (`tools/lidar-compare.mjs`, the owner's local
+  copy, 0.5 m cells over the 819 x 734 m property): all four raw tiles,
+  45,411,335 points, read with Fairway's own readers in 23 s (about 5.5 s a
+  tile); the survey's own ground class kept 70% of points; 6.3% of cells had no
+  ground return and were filled.
+  **Ground against USGS's own 1 m bare-earth DEM** (downloaded, 266 MB, LZW
+  with the floating-point predictor -- also the real test of the LZW reader):
+  **median 0.7 cm, 95th percentile 2.8 cm, 99th 5.3 cm** where the survey saw
+  ground; filled cells median 2.6 cm, 95th 24 cm. **Against the other
+  simulator's 0.5 m terrain model**: median 0.4 cm, 95th 1.5 cm. **Canopy**
+  against its canopy model, where either is over 2 m: median 28 cm (the
+  95th percentile is 8.9 m: crown edges, one saying tree and the other ground).
+  **Trees**: theirs 1,984 on the property, Fairway's 1,839; 1,405 within 3 m
+  of each other (71% of theirs, 76% of ours), height error median 0.34-0.66 m,
+  crown 0.9 m. At 1 m cells the trees matched 61% and 84%.
+- **Tested**: tests/lidar-readers.test.mjs writes one small survey in every
+  form (LAS formats 0-3, 6-8 and 10; GeoTIFF plain, Deflate with the float
+  predictor, LZW, tiled; E57 across packets and pages with a pose; PLY both
+  ways; PTS; PTX with its transform; XYZ both ways; ASCII grid; float grid;
+  HGT), reads each back, grids it (classified and filtered ground, the tree at
+  its height), and reads a real Worthington LAZ when `FAIRWAY_LIDAR_TEST`
+  names the folder.
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the
@@ -410,6 +461,11 @@ owner can overrule them:
 - A drawn creek: width half the brush (1.5-12 m), water 0.4 m under the ground
   at its head, 0.7 m deep, banks graded 1 in 2; a dug bunker 0.6 m deep.
 - The test round: two golfers (steady, loose), stuck after 40 strokes.
+- LIDAR: 0.5 m cells to 2.25 km² of property, 1 m past it; the ground filter's
+  windows (1-10 m) and thresholds (0.3 m, slope 0.3, cap 3 m); a tree is a
+  canopy peak over 2 m within 2 m plus a tenth of its height, its crown out to
+  where the canopy falls under half, its height the highest raw canopy within
+  its window, peaks found on the canopy smoothed once (3 x 3).
 
 ## Graphics card log
 
@@ -440,6 +496,16 @@ minute apart; the card read before each), 31 October 2026:
   (https://github.com/proj4js/proj4js); another simulator's builders on a 2 m
   grid for green contours (https://www.linkscorner.org/phpBB/viewtopic.php?p=22916,
   a forum post: weak).
+- USGS 3DEP 1 m DEM for the test course, USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21
+  (https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/MN_MissouriRiverBigSioux_2021_B21/TIFF/USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21.tif,
+  found through https://tnmaccess.nationalmap.gov/api/v1/products), EPSG 26915,
+  LZW with the floating-point predictor. NAIP 2021 0.6 m, m_4309527_ne_15_060_20210821,
+  from Microsoft's Planetary Computer (https://planetarycomputer.microsoft.com/api/stac/v1,
+  collection naip; public domain). OpenStreetMap's golf features in the course
+  box through the Overpass API (https://overpass-api.de; ODbL; local only, as a
+  reference). All saved under bench/shots/lidar/ (ignored), none committed.
+- Snyder, J. P. (1987), *Map Projections: A Working Manual*, USGS Professional
+  Paper 1395, pp. 61-64: the UTM series in geo.js.
 - The test course's LIDAR: USGS 3DEP, MN_MissouriRiverBigSioux_2021_B21,
   work unit MN_MORiverBigSioux_1_B21
   (https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/MN_MissouriRiverBigSioux_2021_B21/MN_MORiverBigSioux_1_B21).

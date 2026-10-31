@@ -427,7 +427,7 @@ landscape, the field's ground codes equal to ground.js's), `tests/freeze.test.mj
 surfaces over 99% the same at every 3 m, the ground within 1 cm at the 95th
 percentile and greens within 0.5 cm at the median, every hole's par, tees,
 green and length, the trees and their species, the world contract) and
-`tests/contour.test.mjs` (outlines from a mask). Pins per round: `tests/built-pins.test.mjs`. The editor: `tests/builder-editing.test.mjs` (every brush, paint and fill, a drag as one undo, undo and redo, records, the document given back plays what was edited) and `tests/builder-checks.test.mjs` (each check found on a course built to break it). `tools/freeze-compare.mjs`
+`tests/contour.test.mjs` (outlines from a mask). Pins per round: `tests/built-pins.test.mjs`. LIDAR: `tests/lidar-readers.test.mjs` (every open form written small and read back; the land gridded, classified and filtered; the real Worthington LAZ when `FAIRWAY_LIDAR_TEST` names the owner's folder, else skipped); `tools/lidar-compare.mjs --data <folder> [--dem <usgs.tif>]` measures a real course. The editor: `tests/builder-editing.test.mjs` (every brush, paint and fill, a drag as one undo, undo and redo, records, the document given back plays what was edited) and `tests/builder-checks.test.mjs` (each check found on a course built to break it). `tools/freeze-compare.mjs`
 measures every landscape and plays eight virtual golfers on both;
 `tools/freeze-capture.mjs` photographs both in the built game (graphics card);
 `node tools/profile.mjs --only built` times both on Low.

@@ -39,6 +39,7 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   0-5 are built: the page and file format, the game playing a built file,
   pins per round, door 1, real-time shaping, the editor's tools, checks and a
   test round.
+- [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
 - [ ] **The editor cannot move or delete a pond or creek once drawn** (only
   Undo), add or remove holes, or stamp a green's contours beyond the brush.
 - [ ] **The owner plays the builder and a built course** at the end of the

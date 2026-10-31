@@ -24,6 +24,7 @@
     "blender": "node tools/blender/run.mjs"
   },
   "dependencies": {
+    "laz-perf": "^0.0.7",
     "lucide": "1.44.0",
     "three": "0.186.0",
     "ws": "8.21.3"

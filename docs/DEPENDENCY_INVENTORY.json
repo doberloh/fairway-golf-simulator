@@ -1,6 +1,6 @@
 {
- "reviewed": "2026-10-27",
- "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt.",
+ "reviewed": "2026-10-31",
+ "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt. laz-perf (runtime) ships inside the course builder's page only (Fairway Builder.html), its WebAssembly inlined; the game's page does not carry it.",
  "packages": [
   {
    "path": "node_modules/@oven/bun-darwin-aarch64",
@@ -361,6 +361,16 @@
    "optional": false,
    "integrity": "sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==",
    "resolved": "https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz"
+  },
+  {
+   "path": "node_modules/laz-perf",
+   "name": "laz-perf",
+   "version": "0.0.7",
+   "declaredLicense": "Apache-2.0",
+   "scope": "runtime",
+   "optional": false,
+   "integrity": "sha512-2xRqm/f/2UqDS5qqkjOyDb6uVIjkVw6SGmQlMoTQliVWkZhPfIbUJTubUl3mTloaWqKcjlS/urmP1CYoxelsEg==",
+   "resolved": "https://registry.npmjs.org/laz-perf/-/laz-perf-0.0.7.tgz"
   },
   {
    "path": "node_modules/lightningcss",
