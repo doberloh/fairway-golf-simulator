@@ -275,7 +275,25 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
   }
   return best;
  };
- const join = (line, at) => { const n = onNetwork(line[at]); if (n && n.d < CELL * 1.5) line[at] = n.q; };
+ // A straight line crossing only open ground; how sharply a line turns at b
+// (the cosine: -1 straight back).
+ const open = (a, b) => { const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 0; t <= n; t++) if (!Number.isFinite(grid.costAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n))) return false; return true; };
+ const segDistance = (p, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)); return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t); };
+ const turn = (a, b, c) => { const ux = b.x - a.x, uz = b.z - a.z, vx = c.x - b.x, vz = c.z - b.z; return (ux * vx + uz * vz) / ((Math.hypot(ux, uz) * Math.hypot(vx, vz)) || 1); };
+ const join = (line, at) => {
+  const n = onNetwork(line[at]);
+  if (!n || n.d >= CELL * 1.5) return;
+  line[at] = n.q;
+  // An end moved onto the network can land behind the point before it, and
+  // the strip doubled back on itself into a spike (*NO FOLD AT AN END*,
+  // below). That point goes now, while the piece is new and nothing has
+  // joined it.
+  while (line.length > 2) {
+   const e = at ? line.length - 1 : 0, k = at ? e - 1 : 1, c = line[at ? e - 2 : 2];
+   if (turn(line[e], line[k], c) >= -.17 || !open(line[e], c)) break;
+   line.splice(k, 1);
+  }
+ };
  const length = line => line.reduce((a, p, k) => a + (k ? Math.hypot(p.x - line[k - 1].x, p.z - line[k - 1].z) : 0), 0);
  // A leg's cells become pieces: runs of cells the drawn network does not
  // cross, each with a cell of overlap at either end, joined onto the network
@@ -305,6 +323,69 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
   lay(grid.route(ends[i].tee, ends[i].green));
   if (ends[i + 1]) lay(grid.route(ends[i].green, ends[i + 1].tee));
  });
+ // The nearest point of any other piece.
+ const nearestOther = (p, own) => { let best = null; for (const line of pieces) { if (line === own) continue; for (let k = 1; k < line.length; k++) { const a = line[k - 1], b = line[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}, d = Math.hypot(q.x - p.x, q.z - p.z); if (!best || d < best.d) best = {d, q}; } } return best; };
+ // NO STUB PAST A JUNCTION (the owner's second review, seen in the capture
+ // `rev-pulloff`: a pointed spur a few metres long stuck out where two paths
+ // met -- the pull-off a leg ended at, with the network passing right by
+ // it). A loose end within STUB metres, along its own piece, of a junction
+ // (another piece's end lying on it) is cut back to the junction -- before
+ // the loose ends are closed, or a stub whose tip lay near another piece is
+ // joined back to it and kept, a fold.
+ const STUB = 12;
+ // Where to cut a piece's end back to: the nearest junction within STUB of
+ // its tip along it -- another piece's end lying on it (only for a loose
+ // tip) or a piece it crosses (the capture `rev-club-above`: two legs met at
+ // a pull-off 5 m beyond the path they had both crossed, a wedge of path).
+ const cutOf = (line, end, ends) => {
+  const pts = end ? [...line].reverse() : line;
+  let run = 0, cut = null;
+  for (let k = 1; k < pts.length && run < STUB && !cut; k++) {
+   const a = pts[k - 1], b = pts[k], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1;
+   for (const o of pieces) if (o !== line) {
+    if (ends) for (const e of [o[0], o[o.length - 1]]) {
+     const t = Math.max(0, Math.min(1, ((e.x - a.x) * dx + (e.z - a.z) * dz) / (l * l))), q = {x: a.x + dx * t, z: a.z + dz * t};
+     if (Math.hypot(e.x - q.x, e.z - q.z) < .05 && run + t * l < STUB && (!cut || run + t * l < cut.at)) cut = {at: run + t * l, k, q};
+    }
+    for (let j = 1; j < o.length; j++) {
+     const u = o[j - 1], v = o[j], ex = v.x - u.x, ez = v.z - u.z, den = dx * ez - dz * ex;
+     if (Math.abs(den) < 1e-9) continue;
+     const t = ((u.x - a.x) * ez - (u.z - a.z) * ex) / den, w = ((u.x - a.x) * dz - (u.z - a.z) * dx) / den;
+     // (Not at the tip itself, where a piece that shares it "crosses".)
+     if (run + t * l < .1 || t > 1 || w < 0 || w > 1 || run + t * l >= STUB || (cut && run + t * l >= cut.at)) continue;
+     cut = {at: run + t * l, k, q: {x: a.x + dx * t, z: a.z + dz * t}};
+    }
+   }
+   run += l;
+  }
+  return cut && {...cut, pts};
+ };
+ const apply = (line, end, cut) => {
+  const rest = [cut.q, ...cut.pts.slice(cut.k)];
+  if (rest.length >= 2 && length(rest) >= 1) line.splice(0, line.length, ...(end ? rest.reverse() : rest));
+ };
+ for (const line of pieces) for (const end of [0, 1]) {
+  if (line.length < 2) continue;
+  const tip = end ? line[line.length - 1] : line[0];
+  if ((nearestOther(tip, line)?.d ?? Infinity) >= .05) { const cut = cutOf(line, end, true); if (cut) apply(line, end, cut); continue; }
+  // A joined tip: cut back only where every piece at the tip ends there
+  // (a pull-off where two legs meet, on nobody's line), so the network
+  // keeps its joins.
+  const at = pieces.filter(o => o !== line && o.length >= 2 && [o[0], o[o.length - 1]].some(e => Math.hypot(e.x - tip.x, e.z - tip.z) < .05));
+  if (!at.length || pieces.some(o => o !== line && !at.includes(o) && o.some((p, k) => k && segDistance(tip, o[k - 1], p) < .05))) continue;
+  const group = [[line, end], ...at.map(o => [o, Math.hypot(o[0].x - tip.x, o[0].z - tip.z) < .05 ? 0 : 1])];
+  const cuts = group.map(([o, e]) => cutOf(o, e, false)), q = cuts.find(Boolean)?.q;
+  // A leg that crosses nothing starts from the crossing the others are cut
+  // back to, where it is close and the ground between is open.
+  if (!q || Math.hypot(q.x - tip.x, q.z - tip.z) > CELL * 1.5 || !open(q, tip)) continue;
+  // Its tip moves there where the ground on to its next point is open (or it
+  // would fold back at the old tip), else the crossing goes before it.
+  group.forEach(([o, e], i) => {
+   if (cuts[i]) return apply(o, e, cuts[i]);
+   const next = o[e ? o.length - 2 : 1];
+   if (next && open(q, next)) o[e ? o.length - 1 : 0] = q; else if (e) o.push(q); else o.unshift(q);
+  });
+ }
  // LOOSE ENDS CLOSED. A leg ends at its waypoint and the next starts there;
  // where the next leg's first stretch was a jog not laid, or a waypoint fell
  // a few metres off a path already drawn, the end stopped in the grass short
@@ -312,15 +393,50 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  // above). An end within a cell and a half of another piece runs on to it,
  // where the ground between is open; then a short piece joined at both ends
  // is a jog the network no longer needs.
- const nearestOther = (p, own) => { let best = null; for (const line of pieces) { if (line === own) continue; for (let k = 1; k < line.length; k++) { const a = line[k - 1], b = line[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}, d = Math.hypot(q.x - p.x, q.z - p.z); if (!best || d < best.d) best = {d, q}; } } return best; };
- const open = (a, b) => { const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 0; t <= n; t++) if (!Number.isFinite(grid.costAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n))) return false; return true; };
  for (const line of pieces) for (const at of [0, line.length - 1]) {
   const n = nearestOther(line[at], line);
   if (!n || n.d < .05 || n.d > CELL * 1.5 || !open(line[at], n.q)) continue;
-  if (at) line.push(n.q); else line.unshift(n.q);
+  // Stopping at the first piece the run on crosses (the capture
+  // `rev-club-above`: it ran on across one path to reach another).
+  {const p = line[at], dx = n.q.x - p.x, dz = n.q.z - p.z;
+   let first = 1;
+   for (const o of pieces) if (o !== line) for (let j = 1; j < o.length; j++) {
+    const u = o[j - 1], v = o[j], ex = v.x - u.x, ez = v.z - u.z, den = dx * ez - dz * ex;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((u.x - p.x) * ez - (u.z - p.z) * ex) / den, w = ((u.x - p.x) * dz - (u.z - p.z) * dx) / den;
+    if (t > .001 && t < first && w >= 0 && w <= 1) first = t;
+   }
+   if (first < 1) n.q = {x: p.x + dx * first, z: p.z + dz * first};}
+  // Run on to it -- or, where it lies back the way the line came (a fold,
+  // *NO FOLD AT AN END*), end there instead, if nothing joins the stretch
+  // that moves and the ground straight to it is open.
+  const prev = line[at ? at - 1 : 1];
+  const joinsHere = pieces.some(o => o !== line && [o[0], o[o.length - 1]].some(e => segDistance(e, prev, line[at]) < .05 && Math.hypot(e.x - prev.x, e.z - prev.z) > .05));
+  if (line.length > 1 && turn(prev, line[at], n.q) < -.17 && !joinsHere && open(prev, n.q)) line[at] = n.q;
+  else if (at) line.push(n.q); else line.unshift(n.q);
  }
  const joinedBoth = line => [line[0], line[line.length - 1]].every(p => (nearestOther(p, line)?.d ?? Infinity) < .05);
  for (let k = pieces.length - 1; k >= 0; k--) if (length(pieces[k]) < SPUR && joinedBoth(pieces[k])) pieces.splice(k, 1);
+ // NO FOLD AT AN END (the same capture: the "spur" was a fold). An end moved
+ // onto the network can land behind the point before it, and the strip
+ // doubled back on itself into a point -- 17 of 228 ends on four eighteens.
+ // The point the line turns back at (more than 100 degrees) is dropped
+ // where the line straight past it crosses only open ground.
+ for (const line of pieces) for (const end of [0, 1]) {
+  for (let guard = 0; guard < 4 && line.length > 2; guard++) {
+   const [a, b, c] = end ? [line[line.length - 1], line[line.length - 2], line[line.length - 3]] : [line[0], line[1], line[2]];
+   // Not where another piece joins the stretch that would move (it would be
+   // left short of the line again).
+   const onIt = (u, v) => pieces.some(o => o !== line && [o[0], o[o.length - 1]].some(e => Math.hypot(e.x - a.x, e.z - a.z) > .05 && Math.hypot(e.x - c.x, e.z - c.z) > .05 && segDistance(e, u, v) < .05));
+   if (turn(a, b, c) >= -.17) break;
+   if (open(a, c) && !onIt(a, b) && !onIt(b, c)) { line.splice(end ? line.length - 2 : 1, 1); continue; }
+   // Or, where that stretch carries a join, the end joined afresh from the
+   // point before the fold -- unless another piece's end meets this one.
+   const n = nearestOther(b, line), shared = pieces.some(o => o !== line && [o[0], o[o.length - 1]].some(e => Math.hypot(e.x - a.x, e.z - a.z) < .05));
+   if (!shared && !onIt(a, b) && n && n.d < CELL * 1.5 && open(b, n.q) && turn(n.q, b, c) >= -.17) line[end ? line.length - 1 : 0] = n.q;
+   break;
+  }
+ }
  const paths = pieces.filter(p => p.length >= 2).map(points => ({points, width, kind}));
  // Bridges: a run of points over a creek or a ravine, on each piece.
  const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r; });
@@ -343,7 +459,10 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  }
  // The link ends ON the network (it ended on its last cell's centre, a few
  // metres off it), and its own drawn cells join the network after it.
- const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); join(line, line.length - 1); mark(line); return line; };
+ // Cut back, like the legs, to a path it crosses near its end (the capture
+ // `rev-club-above`: the clubhouse's path crossed the path it met, ran on
+ // 4 m and hooked back onto it -- a wedge).
+ const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); join(line, line.length - 1); const cut = cutOf(line, 1, false); if (cut) apply(line, 1, cut); mark(line); return line; };
  // A building's ground closed to the router, `pad` metres round it, with
  // the cell-wide dear margin everything blocked has (the owner, 31 October
  // 2026: the clubhouse's own path was routed straight under it, the router
@@ -456,7 +575,10 @@ export function linkBuilding(paths, b, connect) {
  // where the router found nothing and the line misses the building.
  let line = connect?.(door, near.q);
  if (!line) { line = [door, near.q]; if (pathTouches([{points: line, width: paths[0].width}], b, .5)) return null; }
- const piece = {points: [door, ...line.slice(1)], width: paths[0].width, kind: paths[0].kind, door};
+ // Up to the front itself (the capture `arch-club`: it stopped 6 m short,
+ // in the grass), then out to the routed line.
+ const face = {x: b.x - sn * (b.depth / 2 + .3), z: b.z - cs * (b.depth / 2 + .3)};
+ const piece = {points: [face, door, ...line.slice(1)], width: paths[0].width, kind: paths[0].kind, door};
  paths.push(piece);
  return piece;
 }

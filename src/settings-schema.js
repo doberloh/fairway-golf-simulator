@@ -357,7 +357,13 @@ export const GENERATOR_VERSION=52;
 //    routed round it); the Dell's dune broadened from 9 m to 18 m a side,
 //    3.6 m to 4 m high, set back short of the green. The studio's Hand tools
 //    went at the same time (SCHEMA_VERSION 14), moving no seed.
-export const ARCHITECT_VERSION=19;
+// 20: the same review, after its captures. The ground behind a tee fades out
+//    across the line where the nearest hole changes (course.js land, *NO
+//    SEAM*: a 2.4 m bank across Links ST-1's first fairway, the owner's
+//    "weird hole"); a path's stub past a junction cut back, its ends kept
+//    from folding back on themselves, and the clubhouse's path run up to its
+//    front.
+export const ARCHITECT_VERSION=20;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

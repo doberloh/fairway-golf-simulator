@@ -239,6 +239,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A hand record lives in its hole's frame and is applied in architectCourse only, from the architect's signatures; the player has no hand tools -- PROJECT_HANDOFF *HAND TOOLS: ONE RECORD, ONE HAND*
 - The cart paths are what is drawn: joins land on drawn lines, nothing is built on a path, the strip has a point every 2 m -- PROJECT_HANDOFF *THE PATH NETWORK IS THE LINE DRAWN*
 - Architect is only in Course studio and never the default; every play mode grows Classic -- PROJECT_HANDOFF *ARCHITECT ONLY IN THE STUDIO*
+- A per-hole term in `land` that is not zero inside a corridor makes a bank where the nearest hole changes -- PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]

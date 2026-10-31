@@ -155,6 +155,41 @@ export const VIEWS = [
   return {x: o.x, z: o.z, yaw: Math.atan2(e.x - o.x, e.z - o.z) * 180 / Math.PI, height: 1.7, pitch: -18}; }`},
  {name: 'arch-field', hole: 0, when: 'afternoon', caption: 'A bunker drawn from the surface field', cam: `w => { for (const h of w.holes) { const b = h.bunkers.find(k => k.field); if (b) { const c = h.toWorld({x: b.x, z: b.z}); return {x: c.x, z: c.z - 15, yaw: 0, height: 12, pitch: -36}; } }
   return {x: 0, z: 0, yaw: 0, height: 20, pitch: -15}; }`},
+ // THE OWNER'S SECOND REVIEW (31 October 2026): the clubhouse and its path
+ // from above; the path at the second green's pull-off from above; the path
+ // where the ground under it rises most above a straight line between its
+ // corners (where the old strip went through the hill); and the seam where
+ // two shared fairways meet, from the side.
+ {name: 'rev-club-above', hole: 0, when: 'noon', caption: 'The clubhouse and its path, from above', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'clubhouse') || {x: 0, z: 0};
+  return {x: b.x, z: b.z - 30, yaw: 0, height: 55, pitch: -62}; }`},
+ {name: 'rev-pulloff', hole: 1, when: 'noon', caption: 'The paths by the second green, from above', cam: `w => { const g = w.holes[1].worldPin; let best = null;
+  for (const p of w.paths || []) for (const q of [p.points[0], p.points[p.points.length - 1]]) { const d = Math.hypot(q.x - g.x, q.z - g.z); if (!best || d < best.d) best = {d, q}; }
+  const c = best ? {x: (best.q.x + g.x) / 2, z: (best.q.z + g.z) / 2} : g;
+  return {x: c.x, z: c.z - 25, yaw: 0, height: 70, pitch: -70}; }`},
+ {name: 'rev-dune-path', hole: 0, when: 'afternoon', caption: 'The path over the most relief', cam: `w => { let best = null;
+  for (const p of w.paths || []) for (let k = 1; k < p.points.length; k++) { const a = p.points[k - 1], b = p.points[k], ya = w.height(a.x, a.z), yb = w.height(b.x, b.z), n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2);
+   for (let t = 1; t < n; t++) { const u = t / n, x = a.x + (b.x - a.x) * u, z = a.z + (b.z - a.z) * u, off = w.height(x, z) - (ya + (yb - ya) * u); if (!best || off > best.off) best = {off, x, z, dx: b.x - a.x, dz: b.z - a.z}; } }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 30, pitch: -20};
+  const l = Math.hypot(best.dx, best.dz) || 1, nx = -best.dz / l, nz = best.dx / l, x = best.x + nx * 22 - best.dx / l * 18, z = best.z + nz * 22 - best.dz / l * 18;
+  return {x, z, yaw: Math.atan2(best.x - x, best.z - z) * 180 / Math.PI, height: 6, pitch: -12}; }`},
+ {name: 'rev-seam', hole: 0, when: 'afternoon', caption: 'Where two shared fairways meet, from the side', cam: `w => { let best = null;
+  for (const h of w.holes) for (let z = 40; z < h.length - 20; z += 6) for (const side of [-1, 1]) { const half = side < 0 ? h.leftWidth(z) : h.rightWidth(z);
+   for (let o = half - 6; o < half + 40; o += 2) { const p = h.toWorld({x: h.center(z) + side * o, z}); if (w.surface(p.x, p.z) !== 'fairway') continue; const n = w.nearest(p.x, p.z); if (n?.h && n.h !== h) { best = {p, h, z}; break; } } if (best) break; }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 60, pitch: -40};
+  const a = best.h.toWorld({x: best.h.center(best.z - 70), z: best.z - 70});
+  return {x: a.x, z: a.z, yaw: Math.atan2(best.p.x - a.x, best.p.z - a.z) * 180 / Math.PI, height: 22, pitch: -16}; }`},
+ // The sharpest bend left in the played ground (fairway, semi, fringe,
+ // green), away from sand, water and paths, from 40 m off and 12 m up: where
+ // Links ST-1's seam was (course.js land, *NO SEAM*).
+ {name: 'rev-crease', hole: 0, when: 'afternoon', caption: 'The sharpest bend left in the played ground', cam: `w => { let best = null; const P = new Set(['fairway', 'semi', 'fringe', 'green']);
+  for (const h of w.holes) for (let z = 0; z < h.length; z += 4) { const half = Math.max(h.leftWidth(z), h.rightWidth(z)) + 24;
+   for (let o = -half; o <= half; o += 4) { const p = h.toWorld({x: h.center(z) + o, z}); if (!P.has(w.surface(p.x, p.z))) continue;
+    let wet = false; for (let a = 0; a < 8 && !wet; a++) for (const r of [2, 4, 6]) { const k = w.surface(p.x + Math.cos(a * .785) * r, p.z + Math.sin(a * .785) * r); if (k === 'sand' || k === 'water' || k === 'path') wet = true; } if (wet) continue;
+    const y = w.height(p.x, p.z); let c = 0; for (const [ax, az] of [[1, 0], [0, 1], [.707, .707], [.707, -.707]]) c = Math.max(c, Math.abs(w.height(p.x + ax * 2, p.z + az * 2) + w.height(p.x - ax * 2, p.z - az * 2) - 2 * y) / 4);
+    if (!best || c > best.c) best = {c, p, h, z}; } }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 40, pitch: -30};
+  const a = best.h.toWorld({x: best.h.center(Math.max(0, best.z - 40)) + 25, z: Math.max(0, best.z - 40)});
+  return {x: a.x, z: a.z, yaw: Math.atan2(best.p.x - a.x, best.p.z - a.z) * 180 / Math.PI, height: 12, pitch: -14}; }`},
  // The clubhouse: from 42 m in front of it, a little off-centre, at 7 m; and
  // from the first tee, where a player first sees it.
  {name: 'arch-club', hole: 0, when: 'afternoon', caption: 'An Architect course\'s clubhouse', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};

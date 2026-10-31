@@ -166,7 +166,8 @@ test('no building or house stands on a path, and the clubhouse\'s own path goes 
  for (const biome of ['midwest', 'mountain', 'desert']) {
   const w = world({seed: 'PA-3', holes: 18, biome, designer: 'architect', archStory: 'lots', archClub: 'championship'});
   for (const b of w.buildings) {
-   assert.ok(!pathTouches(w.paths, b, 0), `${biome}: a path under the ${b.kind}`);
+   // The clubhouse's own path runs up to its front (`door`), and no further.
+   assert.ok(!pathTouches(w.paths.filter(p => !(p.door && b.kind === 'clubhouse')), b, 0), `${biome}: a path under the ${b.kind}`);
    for (const p of w.paths) for (let k = 1; k < p.points.length; k++) { const a = p.points[k - 1], c = p.points[k], n = Math.ceil(Math.hypot(c.x - a.x, c.z - a.z)); for (let t = 0; t <= n; t++) assert.ok(!inBuilding(b, a.x + (c.x - a.x) * t / n, a.z + (c.z - a.z) * t / n), `${biome}: a path through the ${b.kind}`); }
   }
   for (const h of w.homes) for (const p of w.paths) for (let k = 1; k < p.points.length; k++) assert.ok(seg(h, p.points[k - 1], p.points[k]) > Math.max(h.width, h.depth) / 2, `${biome}: a house on a path`);
@@ -176,4 +177,48 @@ test('no building or house stands on a path, and the clubhouse\'s own path goes 
  assert.ok(pathTouches([{points: [{x: -40, z: 0}, {x: 40, z: 0}], width: 2.4}], box));
  assert.ok(!pathTouches([{points: [{x: -40, z: 30}, {x: 40, z: 30}], width: 2.4}], box));
  assert.ok(pathTouches([{points: [{x: -40, z: 30}, {x: 40, z: 30}], width: 2.4}], box, 30));
+});
+
+// NO STUB PAST A JUNCTION (the owner's second review, seen in a capture: a
+// pointed spur a few metres long stuck out where two paths met). A loose end
+// runs at least 12 m along its own piece before any other piece joins it.
+test('no end stops just past a junction or a crossing', () => {
+ // `overhaul` Midwest is the capture's course, where the wedge was seen.
+ for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'}), world({seed: 'overhaul', holes: 18, biome: 'midwest', designer: 'architect'})]) for (const p of w.paths) for (const end of [0, 1]) {
+  const pts = end ? [...p.points].reverse() : p.points;
+  const loose = toOthers(w, p, pts[0]) >= .05;
+  let run = 0;
+  for (let k = 1; k < pts.length && run < 12; k++) {
+   const a = pts[k - 1], b = pts[k], l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+   for (const o of w.paths) if (o !== p) for (const e of [o.points[0], o.points[o.points.length - 1]]) {
+    const t = Math.max(0, Math.min(1, ((e.x - a.x) * (b.x - a.x) + (e.z - a.z) * (b.z - a.z)) / (l * l)));
+    if (loose && seg(e, a, b) < .05) assert.ok(run + t * l >= 12, `a ${(run + t * l).toFixed(1)} m stub past a junction`);
+   }
+   // Nor runs on a few metres across a path it crosses (the clubhouse capture: a wedge).
+   // (The clubhouse's path starts at its front, where a path may pass close.)
+   if (!(p.door && !end)) for (const o of w.paths) if (o !== p) for (let j = 1; j < o.points.length; j++) {
+    const u = o.points[j - 1], v = o.points[j], dx = b.x - a.x, dz = b.z - a.z, ex = v.x - u.x, ez = v.z - u.z, den = dx * ez - dz * ex;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((u.x - a.x) * ez - (u.z - a.z) * ex) / den, w2 = ((u.x - a.x) * dz - (u.z - a.z) * dx) / den;
+    if (t * l > .1 && t <= 1 && w2 >= 0 && w2 <= 1) assert.ok(run + t * l >= 8, `an end runs ${(run + t * l).toFixed(1)} m on past a path it crosses`);
+   }
+   run += l;
+  }
+ }
+});
+
+// NO FOLD AT AN END (the same capture): an end moved onto the network could
+// land behind the point before it and the strip doubled back into a spike
+// (17 of 228 ends on four eighteens; 3 now, where the line straight past
+// would cross closed ground).
+test('a path end does not fold back on itself', () => {
+ let folds = 0, ends = 0;
+ for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'})]) for (const p of w.paths) for (const end of [0, 1]) {
+  const q = end ? [...p.points].reverse() : p.points;
+  if (q.length < 3) continue;
+  ends++;
+  const [a, b, c] = q, ux = b.x - a.x, uz = b.z - a.z, vx = c.x - b.x, vz = c.z - b.z;
+  if ((ux * vx + uz * vz) / ((Math.hypot(ux, uz) * Math.hypot(vx, vz)) || 1) < -.17) folds++;
+ }
+ assert.ok(folds <= Math.ceil(ends * .02), `${folds} of ${ends} ends fold back`);
 });

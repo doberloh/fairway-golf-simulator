@@ -29,7 +29,7 @@ number of holes.
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
 | 7. Occasion | built: tournament week on a Championship venue -- stands, a scoreboard, TV towers and marquees (solid), gallery ropes and a crowd that fills from Thursday to Sunday, never on Low (ten iterations); the yardage book, a PDF a page a hole from the pause menu |
 
-### The owner's second review (31 October 2026, ARCHITECT_VERSION 19, SCHEMA_VERSION 14)
+### The owner's second review (31 October 2026, ARCHITECT_VERSION 19-20, SCHEMA_VERSION 14)
 
 The owner, after the goal: why Architect's frame rate is better, and five
 changes, with four screenshots from the course studio (Midwest twice,
@@ -67,31 +67,71 @@ Links twice).
   at the corners of a straightened line, up to a hundred metres apart, so
   it ran straight through the dune between them. It now has a point every
   2 m, each on the ground. Drawing only; nothing moves for it.
-- **"That weird hole" on Links** (screenshot 3): the Dell's dune, 9 m to a
-  side for 3.6 m high, a face of 63% that the ground's mesh draws as a sharp
-  crease along its crest -- the Alps' fault before it was broadened. Now
-  18 m a side for 4 m, about a third, set back so its foot stops 5 m short
-  of the green. Still blind from the approach. (Identified from the white
-  aiming stone on the crest in the screenshot; the owner did not name the
-  seed.)
+- **"That weird hole" on Links** (screenshot 3). **Misread first**: taken
+  for the Dell's dune (a white post on a crease looked like its aiming
+  stone), whose 63% face was broadened to a third (18 m a side for 4 m, its
+  foot 5 m short of the green) -- a real fault, kept, but not the one meant.
+  The owner's words point back to the first review's Links report (ST-1,
+  "one massive hole with 4 combined fairways"), and Dells are rare on Links
+  (none in nine Links-style courses tried). Found by measuring instead: the
+  sharpest bend in the played ground (fairway, semi, fringe, green, away from
+  sand, water and paths) of Links courses. On ST-1 hole 1 a **2.4 m bank
+  across 1.5 m** of semi and fairway, where the nearest hole changes from
+  hole 1's middle to another hole's tee area, both inside their corridors:
+  the relief kept behind a tee (`land`'s `unmown`) belongs to the nearest
+  hole, so it switched there (PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS
+  MEET*). Now faded out over 12 m either side of that line, Architect only
+  (ARCHITECT_VERSION 20). Sharpest bend, ST-1: 0.56 -> 0.18; EVERGREEN Links
+  eighteen: 0.39 -> 0.125. Classic's worst on the same seeds is 0.20 -- the
+  same seam, milder (its holes lie further apart), left alone so no Classic
+  course moves (TODO). (The first pass of the crease search also found pot
+  bunkers' 2 m faces, which are meant.) The owner's exact hole is not
+  known; this is the fault the measure found, not a match to the picture.
 
 | Measure (15 Architect eighteens: Midwest, Links, PNW, Desert, Mountain, three seeds each) | Before | After |
 | --- | --- | --- |
-| Path ends stopping within 8 m short of another path | 211 of 1,046 | 3 of 1,144 |
-| Separate bits of path network | 229 (every course split) | 22 (one per course, but three Mountain courses the steep land splits) |
-| Buildings with a path under them | 8 of 45 (all clubhouses) | 0 |
+| Path ends stopping within 8 m short of another path | 211 of 1,046 | 3 of 1,106 |
+| Separate bits of path network | 229 (every course split) | 30 (one per course, but three Mountain courses the steep land splits) |
+| Buildings with a path under them | 8 of 45 (all clubhouses) | 0 (each clubhouse's own path runs up to its front) |
+| Path ends folding back on themselves (four eighteens) | 17 of 228 | 1 of 224 |
+| Sharpest bend in Links played ground, ST-1 / EVERGREEN (m per m per m) | 0.56 / 0.39 | 0.18 / 0.125 (Classic: 0.20 / 0.14) |
 | Houses on a path | 0 | 0 |
 | An Architect eighteen's build, median of 3, two runs each (`tools/gen-time.mjs`) | Midwest 3.86, 3.69 s; PNW 4.81, 5.02; Links 4.55, 4.54; Mountain 4.86, 4.51 | 3.72, 3.56; 4.73, 4.95; 4.75, 4.55; 4.31, 4.55 -- no change past the noise |
 
-Tests: tests/paths.test.mjs (*one network, joined where they meet*; *no
-building or house stands on a path*), tests/story.test.mjs (the Dell's
-face under 45% and short of the green), tests/designer.test.mjs (*every
-play mode grows Classic*), tests/hand-tools.test.mjs (no setting carries
-hand features; a save that did loads without them; smuggled ones change
-nothing). npm test 1,228 of 1,228; the build passes; Classic's fingerprint silent; Architect's re-saved at 19.
-**Not seen in the game**: none of this has been looked at on screen -- no
-capture or smoke run was made (the graphics card was not asked for). To
-check: the owner's two Midwest views and the Links hole and path, again.
+**Seen, then fixed again** (the owner asked for the smoke journeys and the
+captures, 31 October; four capture runs, `rev2-mw`, `rev2-links`,
+`rev2b-mw`/`rev2c-mw`, `rev2d-mw`/`rev2d-links`, local under
+bench/shots/overhaul/). The first pictures showed the clubhouse clear and
+the path on the dunes, and three new faults, each fixed and seen fixed:
+
+- **A spike where two paths met** by the second green (`rev-pulloff`): an
+  end moved onto the network landed behind the point before it and the strip
+  doubled back -- 17 of 228 ends on four eighteens. Fixed where the end is
+  joined (`join`), at the loose ends, and in a last pass; 1 of 224 now.
+- **A wedge where the clubhouse's path met another** (`rev-club-above`): it
+  crossed the path, ran on 4 m and hooked back onto it; and two legs meeting
+  at a pull-off 5 m beyond a path both had crossed. A crossing is now a
+  junction: an end is cut back to one within 12 m (`cutOf`), the clubhouse's
+  path included. 2 ends of 224 still run on 11.7-11.8 m past a crossing.
+- **The clubhouse's path stopped 6 m short** of the building, in the grass
+  (`arch-club`): it now runs up to the front.
+- A short stub past a junction (a loose end within 12 m of one) is cut back
+  to it, before the loose ends are closed (or the stub was joined back and
+  kept as a fold).
+
+Smoke `architect-studio` and `architect-round` passed twice, on the first
+build and on the final one (the studio: no Hand tools, saved without a hand
+list, a fresh visit starting on Classic). Tests: tests/paths.test.mjs (*one
+network, joined where they meet*; *no building or house stands on a path*;
+*no end stops just past a junction or a crossing*; *a path end does not
+fold back on itself*), tests/story.test.mjs (the Dell's face under 45% and
+short of the green), tests/designer.test.mjs (*every play mode grows
+Classic*), tests/hand-tools.test.mjs (no setting carries hand features; a
+save that did loads without them; smuggled ones change nothing). npm test
+1,230 of 1,230; the build passes; Classic's fingerprint silent at every
+step; Architect's re-saved at 20. **Not seen**: anything played by a person;
+the owner's own Midwest and Links holes (their seeds are not known -- the
+captures are of the fixed views' courses and ST-1).
 
 ### The owner's review (30 October 2026)
 
@@ -1468,6 +1508,7 @@ read `nvidia-smi` first; no crash, hang or driver error in any:
 | 31 Oct, phase 3 finished | profile `--only architect --landscapes all` (twenty cases, Low) | 3%, 37 °C | 3.4 minutes, no errors |
 | 31 Oct, phase 3 finished | captures `arch-ff18a`, `arch-ff18b`, `arch-ff18c` (first-and-final, recaptured) | 4-7%, 37 °C | no errors |
 | 31 Oct, phase 3 finished | captures `arch-hero18` (ten landscapes, four runs), `arch-tpl18a`-`d` (the showcase refresh); profile `--only architect --arch-tier ultra` (the owner's question) | 3-7%, 38-40 °C | no errors |
+| 31 Oct, second review | smoke `architect-studio`, `architect-round` (twice); captures `rev2-mw`, `rev2-links`, `rev2b-mw`, `rev2c-mw`, `rev2d-mw`, `rev2d-links` (Midwest and Links ST-1: the clubhouse, a pull-off, the path over the most relief, the shared fairways, the sharpest bend) | 2-13% (once 35-37%, the gate waited), 38-41 °C | all passed, no errors; the pictures found the spike, the wedge and the short clubhouse path, fixed and recaptured |
 | review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
 ## Blender iteration log

@@ -10845,7 +10845,22 @@ Mountain courses, which the steep land splits); buildings over a path 8 of
 45 (all clubhouses) -> 0. Before the strip was laid every 2 m, the ground
 stood up to 7.3 m above a straightened run's strip between its corners.
 PLACED: the 9 m, 18 m and 400 cells, and the 3 m a clubhouse keeps from a
-path (2 m a stand, 3 m a story building, 4 m a house).
+path (2 m a stand, 3 m a story building, 4 m a house). After the captures:
+an end is cut back to a junction or a crossing within 12 m of it (PLACED),
+and an end does not fold back past 100 degrees (PLACED); final figures on
+the 15 courses: 3 of 1,106 ends short of another path, 30 bits of network
+(three Mountain courses split), folded ends 17 of 228 -> 1 of 224 on four
+eighteens.
+
+**The seam where two corridors meet** (Architect, 31 October 2026; course.js
+`land`). Measured as the sharpest bend of the played ground: the largest
+second difference of the height over 2 m in four directions, |h(+2) + h(-2)
+- 2 h| / 4, at points on fairway, semi, fringe or green at least 6 m from
+sand, water or a path, every 3 m. Links ST-1 (Links style, Members', Old, A
+lot; nine holes): 0.56 before (a 2.4 m bank across 1.5 m), 0.18 after;
+EVERGREEN Links eighteen 0.39 -> 0.125; overhaul Links eighteen 0.16 either
+way. Classic on the same seeds 0.20 and 0.14. PLACED: the fade, 12 m either
+side of the line where the nearest hole changes.
 The surface (`grounds.js` path) is PLACED against rock just below it: cor
 0.235, the hardest in play, roll 0.85, a hop of 16 cm.
 

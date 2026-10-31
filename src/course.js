@@ -1458,19 +1458,7 @@ export function* generateWorldSteps(settings={},options={}){
   // else it is simply not computed.
   const groups = coastal ? new Array(Math.ceil(holes.length / 3)).fill(Infinity) : null;
   const measure = i => {
-   const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
-   const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
-   // THE STRAIGHT TONE STEP, round 5 (the far-landscape goal). Past either end
-   // the centre line carries straight on along its end direction. It stopped
-   // dead there, so beside a green the distance turned at once from "across
-   // the bending centre line" to "from its end point", a kink along a straight
-   // line through the green's end, out across the rough on both sides; the
-   // hills fade in by this distance, so the ground creased there and the slope
-   // tint drew it (Midwest hole 2, seen from the approach). Carried on, the
-   // distance turns smoothly; behind the green it still rounds the end.
-   const e = ends[i], cx = p.z > h.length ? e.cL + e.tL * (p.z - h.length) : p.z < 0 ? e.c0 + e.t0 * p.z : h.center(zz);
-   const d = Math.hypot(p.x - cx, p.z - zz) -
-    (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
+   const {d, p} = corridorDistance(i, x, z);
    if (groups) {const g = holeBoxes[i].group; if (d < groups[g]) groups[g] = d;}
    if (d < distance) {best = i; distance = d; local = p;}
   };
@@ -1490,6 +1478,31 @@ export function* generateWorldSteps(settings={},options={}){
   return {h: holes[best], p: local, d: distance,
    other: groups ? Math.min(...groups.filter((_, i) => i !== holeBoxes[best].group)) : Infinity};
  }
+ // How far (x, z) is outside hole i's corridor (negative inside it), and the
+ // point in the hole's frame.
+ function corridorDistance(i, x, z) {
+   const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
+   const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
+   // THE STRAIGHT TONE STEP, round 5 (the far-landscape goal). Past either end
+   // the centre line carries straight on along its end direction. It stopped
+   // dead there, so beside a green the distance turned at once from "across
+   // the bending centre line" to "from its end point", a kink along a straight
+   // line through the green's end, out across the rough on both sides; the
+   // hills fade in by this distance, so the ground creased there and the slope
+   // tint drew it (Midwest hole 2, seen from the approach). Carried on, the
+   // distance turns smoothly; behind the green it still rounds the end.
+   const e = ends[i], cx = p.z > h.length ? e.cL + e.tL * (p.z - h.length) : p.z < 0 ? e.c0 + e.t0 * p.z : h.center(zz);
+   const d = Math.hypot(p.x - cx, p.z - zz) -
+    (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
+   return {d, p};
+ }
+ // How much nearer the nearest hole's corridor is than any other hole's: zero
+ // on the line where the nearest hole changes (land's seam, below).
+ function nearestMargin(x, z, n) {
+  let m = Infinity;
+  for (let i = 0; i < holes.length; i++) if (holes[i] !== n.h) m = Math.min(m, corridorDistance(i, x, z).d - n.d);
+  return m;
+ }
  const nearby=(x,z)=>nearest(x,z).h;
  const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:12)+severity*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
  // Hazards follow their local ground elevation instead of draining every lake
@@ -1507,6 +1520,9 @@ export function* generateWorldSteps(settings={},options={}){
  // fringe, and handing the ground to the bunker's hole instead would cut the
  // neighbour's corridor. No draw is taken, so nothing generated after shifts.
  for(const h of holes)h.bunkers=h.bunkers.filter(b=>Array.from({length:48},(_,i)=>{const e=ovalRadius(b,i*Math.PI/24),v=h.toWorld({x:b.x+e.x*1.15,z:b.z+e.z*1.15});return nearby(v.x,v.z)===h;}).every(Boolean));
+ // Architect fades the tee area's relief out across the line where the
+ // nearest hole changes (land, *NO SEAM*): over SEAM metres, PLACED.
+ const archSeams=isArchitect(s)&&!s.range,SEAM=12;
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
@@ -1537,7 +1553,17 @@ export function* generateWorldSteps(settings={},options={}){
   // The DRIVING RANGE is the one exception and keeps its own flag for it.
   // Flatness there is not a preference, it is the whole instrument: any tilt
   // is a variable the player did not set, quietly added to every carry.
-  const unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
+  let unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
+  // NO SEAM WHERE TWO CORRIDORS MEET (Architect; the owner, 31 October 2026,
+  // Links: "still have that weird hole"). The relief behind a tee is the
+  // nearest hole's, by how far along that hole the point is; where one hole's
+  // tee area lies against another's fairway, both inside their corridors, the
+  // nearest hole changes along a line and the relief switched with it -- a
+  // 2.4 m bank across 1.5 m of Links ST-1's first fairway. It now fades out
+  // over SEAM metres either side of that line, so both sides meet at the
+  // corridor's own ground. Classic keeps its seams (milder, its holes further
+  // apart; TODO) so that no Classic course moves.
+  if(archSeams&&unmown>0)unmown*=smooth(nearestMargin(x,z,n)/SEAM);
   const open=reach=>Math.max(smooth(n.d/reach),unmown);
   // Four hand-written branches, now three numbers the biome states outright.
   const hills=relief*(bio.hills.base+severity*bio.hills.severity)*rolling*open(bio.hills.reach);

@@ -95,16 +95,19 @@ quality measures*, which it absorbs.
   motion. (The scoreboard following a played round is now driven by the
   smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
-- [ ] **Not yet seen: the owner's second review** (31 October 2026,
-  ARCHITECT_VERSION 19, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
-  owner's second review*). Built and tested in Node only -- no capture or
-  smoke run: the cart paths joined into one network, nothing built on a
-  path, the clubhouse's path round it, the path strip on the ground over
-  Links dunes, the Dell's broader dune, the studio without Hand tools and
-  starting on Classic. The smoke journeys `architect-round` and
-  `architect-studio` were changed for it and not run (the studio step
-  closes the settings sheet with `closeDrawer`, unproven there). To check:
-  the owner's Midwest and Links views again; run those two journeys.
+- [ ] **Not yet played by a person: the owner's second review** (31 October
+  2026, ARCHITECT_VERSION 20, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
+  owner's second review*). Seen in captures (Midwest and Links ST-1: the
+  clubhouse and its path, a pull-off, the path over the dunes, the shared
+  fairways, the sharpest bend left) and driven by the smoke journeys
+  `architect-studio` and `architect-round`. Not seen: the owner's own
+  Midwest and Links holes (seeds unknown) -- to check, look at them again.
+- [ ] **Classic has the corridor seam too** (PROJECT_HANDOFF *NO SEAM WHERE
+  TWO CORRIDORS MEET*): a bank where the nearest hole changes inside both
+  corridors, milder than Architect's was (worst bend 0.20 on Links ST-1,
+  against 0.56). Fixed for Architect only; the same fix on Classic moves
+  every Classic course where corridors meet (a GENERATOR_VERSION bump) --
+  the owner's call.
 - [ ] **Not yet played by a person: the surface field and the turned greens**
   (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
   in GPU captures only: a green turned to its approach from above, the
