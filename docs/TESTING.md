@@ -24,7 +24,9 @@ when the owner asks in that turn, and never while `nvidia-smi` shows the card
 busy. The one exception: a `/goal` whose text says "GPU allowed" may run single
 profile groups (`--only`) without asking, within AGENTS.md's limits (*A `/goal`
 that says "GPU allowed"*); smoke runs are still asked for. The Node tests and
-generator checks can run any time.
+generator checks can run any time. **On the course-builder branch, until it
+merges, none of this is asked for** (AGENTS.md, *On the course-builder branch,
+the graphics card and processor are free*; delete this sentence in the merge).
 
 **GitHub** runs `npm test`, the ground check, and three smoke journeys (`boot`,
 `range`, `endless-round`) under a software renderer on every push

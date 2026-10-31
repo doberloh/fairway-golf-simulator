@@ -50,6 +50,42 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
+## On the course-builder branch, the graphics card and processor are free
+
+The course-builder goal (31 October 2026; the record is
+docs/COURSE_BUILDER.md once stage 0 writes it, the local study
+docs/studies/CUSTOM_COURSE_BUILDER_SPEC.md) runs without stopping for the
+owner, who plays the result at the end. The owner: "GPU and CPU are free for
+this goal until merged." So **on this branch, for that goal and every
+single-turn request on it, nothing below needs asking**: `npm run smoke`,
+captures (`tools/capture/`), the game and the builder in the browser pane,
+`npm run profile` (full sweeps too), Blender, long bench and test runs. This
+replaces *A `/goal` that says "GPU allowed"*'s limits here; the precautions
+from the crashes stay:
+
+- **Through the gate**: graphics-card jobs run through `node tools/gpu-run.mjs
+  --goal course-builder --util 30 --temp 80 --rest 1 -- <command>` (the
+  capture tools gate themselves), which reads `nvidia-smi` first and logs
+  every run (`bench/ab/gpu-runs.jsonl`). Above 30% busy, or a game, browser or
+  Blender we did not start on the card: the owner is using the machine --
+  wait, and say so.
+- **One graphics job at a time**, minutes rather than hours, at least a minute
+  apart; above 80 °C, stop and cool down 10 minutes.
+- **After every job, leave nothing running**: browsers, built-in browser tabs,
+  Blender and servers closed, the card checked (*Leave no processes running*
+  still holds).
+- **A hung run, driver reset or lost WebGL context**: write it down, wait 10
+  minutes, retry once; a second failure ends graphics-card use until the
+  owner is back.
+- **Software rendering is free too** (`smoke --software`, the profiler's
+  `weak` group) -- "CPU free", as the 1.0 polish goal had it -- though one took
+  the machine down on 13 October 2026: run it alone, nothing else heavy
+  beside it.
+- **This section is for this branch only. Delete it in the merge** (and the
+  pointers to it under *Nothing runs on the graphics card* and *A `/goal`
+  that says "GPU allowed"*, and TESTING.md's sentence), so main's rules are
+  as before. RULES_HISTORY.md keeps the story.
+
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -280,7 +316,9 @@ The owner plays games on this machine, and test runs on its GPU have crashed it
 twice while they did. **Nothing that draws on the graphics card runs unless the
 owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
 browser pane, `npm run profile`. Earlier permission does not carry over -- the
-exceptions are Blender (below) and a `/goal` that says so (next section).
+exceptions are Blender (below), a `/goal` that says so (next section), and
+the course-builder branch until it merges (*On the course-builder branch, the
+graphics card and processor are free*).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*).
 
@@ -325,6 +363,9 @@ ask as above.
   goal text.
 - The cartoon-overhaul goals (25-27 October 2026) had their own GPU limits,
   which ended with the branch's merge (*The cartoon look is main's*).
+- The course-builder goal (31 October 2026) has no limits but the crash
+  precautions, until its branch merges (*On the course-builder branch, the
+  graphics card and processor are free*).
 
 ## Ask before a graphics profile; never just run one
 
