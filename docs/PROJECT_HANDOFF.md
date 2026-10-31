@@ -873,7 +873,10 @@ A template is a hole built to a known pattern. Three places:
    - **hazards**: `greenBunker` / `sideBunker` / `addBunker` (the Redan's
      front bunker, the Eden's three);
    - **the green**: `greenPlan` (a tilt away, a swale, a punchbowl's sunken
-     pedestal);
+     pedestal), and its angle in `approachTurn` if the pattern sets the green
+     across the line (the Redan's 0.5 rad; ARCHITECT_VERSION 18) -- the
+     green's fall, the greenside bunkers and the maps turn with it
+     (*A GREEN TURNED TO ITS APPROACH*);
    - **ground**: `earthworks` -- a `ridge` or `ravine` across the hole in its
      own frame (z, half-length, profile radius, height or depth), which
      course.js adds to the ground (`earthField`) for the mesh, the collisions

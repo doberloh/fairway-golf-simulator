@@ -1238,8 +1238,9 @@ and occasion predated the review's last model commit, so both were
 re-rendered in Blender (`run.mjs architect_life --render`, then
 `architect_occasion`; card 1%, one at a time, closed after): each rebuilt
 its models byte-identical to the committed ones, and the sheets show the
-final mower, walkers and spectators. The other four sheets postdate their
-kits' last change.
+final mower, walkers and spectators. Then the other four (people,
+clubhouses, water, story) the same way, also byte-identical: all six sheets
+are from the final models.
 
 ### Frame time on Low, every landscape: met (30 October 2026, the last measure)
 
