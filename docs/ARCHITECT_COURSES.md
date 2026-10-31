@@ -308,8 +308,8 @@ on hole 1, two full shots, a drop by the pin of the punchbowl green, putts to
 the hole-out, no error. **Not seen by anyone**:
 anything played by a person; the walkers and animals in motion looked at
 (measured moving, above, but seen only in stills); a ball against a wall, a stand or a bridge deck in a round
-(Node tests only); a round played by a person (the journey's round is
-scripted); a round on hand-shaped ground.
+(Node tests only). The journeys' rounds, the hand-shaped one included, are
+scripted: no person has played one.
 
 ## The owner's decisions (the goal text, 30 October 2026)
 
