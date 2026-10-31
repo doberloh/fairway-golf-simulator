@@ -258,8 +258,9 @@ all ten landscapes (the worst Redwood, +1.7%; *Frame time on Low, every
 landscape: met*); **every smoke journey green** (39 of 39, on the
 graphics card, after the draw changes too -- the run before failed
 `ball-light-hole-out` once, a Classic Surprise me round the changes do not
-draw; it passed three times alone and in the full rerun: logged as a flake,
-not explained); the showcase saved
+draw; it passed three times alone and in the full rerun: since traced to main --
+main's own build fails it 3 runs in 8 (TODO), so it is not this branch's;
+the latest full run: 39 of 40, that journey the one failure); the showcase saved
 (docs/reports/architect-showcase/, local, 32 pictures): a hero hole in every
 landscape (seed SC-3, each landscape's own style), four Classic-beside-
 Architect pairs on that seed (Midwest, Autumn, Links, PNW), the Redan, Dell,

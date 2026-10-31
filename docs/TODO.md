@@ -105,10 +105,15 @@ quality measures*, which it absorbs.
   call.** They are main's stream ripples (water-bodies.js `STREAM_FLOW`),
   on Classic too, not something the Architect work added; left as they are
   until the owner says whether to soften or drop them.
-- [ ] **`ball-light-hole-out` failed once in a full smoke run** (30 October
-  2026, "build no lit shader" at a hole-out on a Classic Surprise me round)
-  and passed three times alone and in the next full run. Not explained; if
-  it returns, its picture in bench/shots/smoke/ says which program compiled.
+- [ ] **`ball-light-hole-out` is flaky -- on main too.** It plays a Surprise
+  me round (a random course each run) and fails when a lit shader (toon or
+  standard) is first built during the hole-out flyover. Measured 30 October
+  2026: **main's own build failed 3 of 8**; this branch failed 3 of 6, its
+  renderer from before the day's draw changes 2 of 6, and from before the
+  tee-furniture batching 0 of 6 -- samples too small to rank the branch
+  against main, large enough to say the fault predates it. Not fixed. To
+  find which object: log the material's owner (`window.__lateLit` holds only
+  the type) and run it until it fails.
 - [ ] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
   than its Classic course (ARCHITECT_COURSES.md, *The crowd's cost*); every
   other case measured is within 4% or cheaper. Low draws no crowd. The
