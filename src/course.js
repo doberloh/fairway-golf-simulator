@@ -1497,10 +1497,24 @@ export function* generateWorldSteps(settings={},options={}){
    return {d, p};
  }
  // How much nearer the nearest hole's corridor is than any other hole's: zero
- // on the line where the nearest hole changes (land's seam, below).
- function nearestMargin(x, z, n) {
-  let m = Infinity;
-  for (let i = 0; i < holes.length; i++) if (holes[i] !== n.h) m = Math.min(m, corridorDistance(i, x, z).d - n.d);
+ // on the line where the nearest hole changes (land's seam, below). Nothing
+ // past `cap` is wanted, so a hole that cannot come nearer is skipped, as in
+ // `nearest` -- measuring every hole made a Classic eighteen 15% slower to
+ // build. Its box bounds it only beside the centre line: past either end the
+ // line carries straight on (`corridorDistance`) and can leave the box, so
+ // there the bound is how far past the end the point lies. The box alone moved
+ // two Architect landscapes; with this the answer is the same.
+ function nearestMargin(x, z, n, cap = Infinity) {
+  let m = cap;
+  for (let i = 0; i < holes.length; i++) {
+   const h = holes[i];
+   if (h === n.h) continue;
+   const b = holeBoxes[i], p = h.toLocal({x, z});
+   const floor = p.z < 0 ? -p.z : p.z > h.length ? p.z - h.length :
+    Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ));
+   if (floor - b.reach - n.d >= m) continue;
+   m = Math.min(m, corridorDistance(i, x, z).d - n.d);
+  }
   return m;
  }
  const nearby=(x,z)=>nearest(x,z).h;
@@ -1520,9 +1534,9 @@ export function* generateWorldSteps(settings={},options={}){
  // fringe, and handing the ground to the bunker's hole instead would cut the
  // neighbour's corridor. No draw is taken, so nothing generated after shifts.
  for(const h of holes)h.bunkers=h.bunkers.filter(b=>Array.from({length:48},(_,i)=>{const e=ovalRadius(b,i*Math.PI/24),v=h.toWorld({x:b.x+e.x*1.15,z:b.z+e.z*1.15});return nearby(v.x,v.z)===h;}).every(Boolean));
- // Architect fades the tee area's relief out across the line where the
- // nearest hole changes (land, *NO SEAM*): over SEAM metres, PLACED.
- const archSeams=isArchitect(s)&&!s.range,SEAM=12;
+ // The tee area's relief fades out across the line where the nearest hole
+ // changes (land, *NO SEAM*): over SEAM metres, PLACED.
+ const seams=!s.range,SEAM=12;
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
@@ -1554,16 +1568,20 @@ export function* generateWorldSteps(settings={},options={}){
   // Flatness there is not a preference, it is the whole instrument: any tilt
   // is a variable the player did not set, quietly added to every carry.
   let unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
-  // NO SEAM WHERE TWO CORRIDORS MEET (Architect; the owner, 31 October 2026,
+  // NO SEAM WHERE TWO CORRIDORS MEET (the owner, 31 October 2026, Architect
   // Links: "still have that weird hole"). The relief behind a tee is the
   // nearest hole's, by how far along that hole the point is; where one hole's
   // tee area lies against another's fairway, both inside their corridors, the
   // nearest hole changes along a line and the relief switched with it -- a
   // 2.4 m bank across 1.5 m of Links ST-1's first fairway. It now fades out
   // over SEAM metres either side of that line, so both sides meet at the
-  // corridor's own ground. Classic keeps its seams (milder, its holes further
-  // apart; TODO) so that no Classic course moves.
-  if(archSeams&&unmown>0)unmown*=smooth(nearestMargin(x,z,n)/SEAM);
+  // corridor's own ground. Architect had it first (ARCHITECT_VERSION 20);
+  // Classic followed at the owner's word (GENERATOR_VERSION 53), its worst a
+  // 4 m wall in 3 m at a lakeshore fairway's edge. Measured only where the
+  // relief could still beat the hills' own fade-in below (`open` takes the
+  // larger), since nowhere else can the fade change the ground: everywhere,
+  // it cost a Classic eighteen 15% more build time for nothing.
+  if(seams&&unmown>smooth(n.d/bio.hills.reach))unmown*=smooth(nearestMargin(x,z,n,SEAM)/SEAM);
   const open=reach=>Math.max(smooth(n.d/reach),unmown);
   // Four hand-written branches, now three numbers the biome states outright.
   const hills=relief*(bio.hills.base+severity*bio.hills.severity)*rolling*open(bio.hills.reach);

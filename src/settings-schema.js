@@ -269,7 +269,16 @@ export const SCHEMA_VERSION=14;
 //     the width dropped 1.3 m), and past either end the distance from a hole
 //     follows its centre line carried straight on. Both creased the ground
 //     along a straight line through every green's end; every landscape moved.
-export const GENERATOR_VERSION=52;
+// 53: No seam where two corridors meet, on Classic too (the owner, 31
+//     October 2026, after Architect's ARCHITECT_VERSION 20 had it). The
+//     relief kept behind a tee fades out over 12 m either side of the line
+//     where the nearest hole changes (course.js land, *NO SEAM*); it switched
+//     there as a bank, worst a 4 m wall in 3 m at the edge of a lakeshore
+//     fairway (HZ-2 hole 5). Every landscape but the island moved, and tees
+//     sited on that ground with it.
+//     Architect's ground unchanged (it had the fade); its stamp moves with
+//     this number.
+export const GENERATOR_VERSION=53;
 
 // THE ARCHITECT'S OWN VERSION. Bump it whenever an ARCHITECT course changes
 // for an unchanged seed and Classic does not; a change that moves both (shared

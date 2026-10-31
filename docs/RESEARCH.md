@@ -10861,6 +10861,21 @@ lot; nine holes): 0.56 before (a 2.4 m bank across 1.5 m), 0.18 after;
 EVERGREEN Links eighteen 0.39 -> 0.125; overhaul Links eighteen 0.16 either
 way. Classic on the same seeds 0.20 and 0.14. PLACED: the fade, 12 m either
 side of the line where the nearest hole changes.
+
+Classic followed (GENERATOR_VERSION 53, the owner's word the same day). The
+same measure on thirteen Classic eighteens, one or two per landscape, tee pads
+left out as sand is (a tee moved by the change brought its own pad bank into
+the first pass, a 0.56 that was no seam): Lakeshore HZ-2 0.94 -> 0.19 (a 4 m
+wall in 3 m at hole 5's fairway edge, now spread over about 10 m), Links
+DUNE-7 0.63 -> 0.18; the other eleven unchanged or lower, the island
+untouched (a coast's ground skips this relief). Points bending more than 0.1:
+23 -> 12 on DUNE-7, 17 -> 6 on HZ-2. The cost, an 18-hole build on one
+thread, four landscapes twice each, alternated: measuring the margin wherever
+the relief was non-zero, Classic 4.91 -> 5.66 s (+15%); guarded to where it can
+change the ground and with far holes skipped, 5.14 -> 5.13 s, and Architect
+5.47 -> 5.02 s against the unguarded version it shipped with (-8%). Ground
+identical either way (both fingerprints). The bench's counts barely moved (tees
+sited 314 -> 315, bunkers 231 -> 230; every invariant zero).
 The surface (`grounds.js` path) is PLACED against rock just below it: cor
 0.235, the hardest in play, roll 0.85, a hop of 16 cm.
 

@@ -83,8 +83,9 @@ Links twice).
   MEET*). Now faded out over 12 m either side of that line, Architect only
   (ARCHITECT_VERSION 20). Sharpest bend, ST-1: 0.56 -> 0.18; EVERGREEN Links
   eighteen: 0.39 -> 0.125. Classic's worst on the same seeds is 0.20 -- the
-  same seam, milder (its holes lie further apart), left alone so no Classic
-  course moves (TODO). (The first pass of the crease search also found pot
+  same seam, rarer (its holes lie further apart). Left alone at first so no
+  Classic course moved; the owner then asked for Classic too (GENERATOR_VERSION
+  53): its worst was a 4 m wall in 3 m on Lakeshore HZ-2 (0.94 -> 0.19). (The first pass of the crease search also found pot
   bunkers' 2 m faces, which are meant.) The owner's exact hole is not
   known; this is the fault the measure found, not a match to the picture.
 

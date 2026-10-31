@@ -102,12 +102,17 @@ quality measures*, which it absorbs.
   fairways, the sharpest bend left) and driven by the smoke journeys
   `architect-studio` and `architect-round`. Not seen: the owner's own
   Midwest and Links holes (seeds unknown) -- to check, look at them again.
-- [ ] **Classic has the corridor seam too** (PROJECT_HANDOFF *NO SEAM WHERE
-  TWO CORRIDORS MEET*): a bank where the nearest hole changes inside both
-  corridors, milder than Architect's was (worst bend 0.20 on Links ST-1,
-  against 0.56). Fixed for Architect only; the same fix on Classic moves
-  every Classic course where corridors meet (a GENERATOR_VERSION bump) --
-  the owner's call.
+- [ ] **`nearest`'s box skip can name the wrong hole past a hole's end**
+  (found 31 October 2026 making the seam fade cheap; PROJECT_HANDOFF *NO SEAM
+  WHERE TWO CORRIDORS MEET*). It skips a hole when the distance to the hole's
+  box, less its widest corridor, is already worse than the best -- but past a
+  tee or green the centre line carries straight on and can leave the box.
+  Compared at every call: Classic Lakeshore HZ-2 3,355 wrong in 1.46 million,
+  none within 60 m of a corridor; Links DUNE-7 27, all within 60 m, by 0.05-0.7
+  m mostly (worst 11 m); Architect PNW 154, none near. Mostly far out in the
+  country, so small; fixing it (the bound `nearestMargin` uses) moves ground --
+  a GENERATOR_VERSION bump. To do: measure what it changes on the ground
+  first.
 - [ ] **Not yet played by a person: the surface field and the turned greens**
   (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
   in GPU captures only: a green turned to its approach from above, the
@@ -1538,6 +1543,13 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## Architect courses: the owner's second review (31 October 2026)
 
+- [x] **Classic has the corridor seam too** -- the owner: "Fix Classic too"
+  (31 October 2026). The tee area's relief fades out across the line where
+  the nearest hole changes on both designers (GENERATOR_VERSION 53; every
+  landscape but the island moved). Worst Classic bank: a 4 m wall in 3 m on
+  Lakeshore HZ-2, bend 0.94 -> 0.19; Links DUNE-7 0.63 -> 0.18. Build time
+  unchanged (measured only where it can change the ground). Test:
+  tests/corridor-seam.test.mjs. Not seen in the game: no capture or play.
 - [x] **Not yet played by a person: the hand tools** -- closed: the owner
   withdrew the studio's Hand tools on 31 October 2026 ("leave those tools
   for the architect to use"); the `archHand` setting went with them
