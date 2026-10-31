@@ -31,6 +31,19 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
+
+- [ ] **Stages 1-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stage 0
+  (the page, its build and packing, the file format) is built.
+- [ ] **The owner plays the builder and a built course** at the end of the
+  goal: the builder's doors and editor, a Worthington round in the game.
+  Nothing in the builder has been played by a person.
+- [ ] **Before a release carrying the builder**: check the website's demo
+  check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
+  game's does not confuse it (tell the owner).
+
 ## Architect courses (branch `architect-courses`, from 30 October 2026)
 
 The owner's goal: build the whole local study, phases 0-7; the record is

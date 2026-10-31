@@ -1623,3 +1623,29 @@ asked for; `architect-studio` and `architect-round` last passed on the
 branch on 31 October, before the far heath and the eleven models, and the
 whole set has not run since the overhaul branch. **Not played by a person**
 beyond the owner's rounds on the branches.
+
+## Addendum, 31 October 2026: Fairway Course Builder (branch, not released)
+
+The `course-builder` branch adds a **second page to every download**,
+`Fairway Builder.html` (docs/COURSE_BUILDER.md): built single-file by
+`vite.builder.config.js` after the game in `npm run build`, into
+`dist/builder.html`; the packager puts it in all four zips beside
+`Fairway.html` and adds its line to `RELEASE_SHA256.txt`. The zip names do not
+change, so the website's Download buttons are unaffected. **Owed before a
+release**: the website's demo checks `Fairway.html` against
+`RELEASE_SHA256.txt`, and must be confirmed to read it by name.
+
+The builder is offline on the same terms as the game: it opens by file://,
+reads only the files a player gives it, writes `.fairway` files as downloads,
+and makes no request -- checked by its own smoke harness
+(`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it is
+107,941 bytes and adds no dependency. The game's page is unchanged by stage 0.
+Later stages will add the LIDAR decoders (laz-perf, Apache-2.0; geotiff.js,
+MIT; proj4js, MIT) to the builder's page only, each recorded here, in
+ATTRIBUTION.md and THIRD_PARTY_NOTICES.txt as it lands.
+
+A built course file (`.fairway` version 2) is a ZIP written by hand
+(`src/zip.js`) and read only by Fairway's own code; it holds data, never
+code, and every part is checked against limits before use
+(`src/course-doc.js` `LIMITS`), so a file handed between players cannot ask
+the game for more memory than a 3 x 3 km course needs.

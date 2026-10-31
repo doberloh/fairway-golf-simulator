@@ -139,6 +139,20 @@ often has the how-to already worked out.
   a headless pipeline exists (`tools/blender/`, docs/BLENDER_ASSETS.md), built
   for Lakeshore Dunes. A redwood remake would be a new pack script there;
   Blender may use the graphics card without asking (AGENTS.md).
+- **OpenStreetMap import into the course builder.** Many real courses are
+  already traced in OpenStreetMap: `golf=green`, `fairway`, `bunker`, `tee`,
+  `rough`, `water_hazard`, `pin`, and `golf=hole` lines carrying the hole's
+  number (`ref`), `par` and `handicap`; `leisure=golf_course` for the
+  boundary; `natural=wood` and `natural=tree`. An OSM export the player saves
+  from the website would give door 2 of Fairway Course Builder its outlines
+  and hole order with no tracing -- the same importer as the auto trace's
+  outlines, a second front door. Quality varies course by course (some fully
+  drawn, many only a boundary). **ODbL** asks for a visible "© OpenStreetMap
+  contributors" credit naming the licence, and a database made from it and
+  shared must stay ODbL -- so a shared `.fairway` built from it carries that
+  licence. Medium; `src/builder/` beside the auto trace, the credit in
+  `course.json`. The owner, 31 October 2026: a future idea, not part of the
+  course builder goal (docs/COURSE_BUILDER.md).
 
 ## New biomes (9 October)
 

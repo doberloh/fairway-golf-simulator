@@ -397,6 +397,25 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 hole, match play, scramble selection, a three- or four-golfer group. The rules
 for all of those are covered in Node (above); the screens for them are not.
 
+### The builder's smoke journeys
+
+`tools/builder-smoke.mjs` drives Fairway Course Builder's built page
+(`dist/builder.html`) the same way and on the same terms: opened by file://,
+a fresh page per journey, and a journey fails on any uncaught error,
+`console.error` or network request; a failure leaves a screenshot in
+`bench/shots/builder-smoke/`. Journeys added by later stages register from
+`tools/builder-journeys/`. It uses the graphics card (docs/COURSE_BUILDER.md).
+
+| Journey | What it drives |
+| --- | --- |
+| `builder-opens` | the builder opens offline on its three doors with its version line; a door opens and Back returns |
+
+The builder's file format is tested in Node: `tests/zip.test.mjs` (the
+container, its CRC, the same bytes for the same parts, a damaged file refused,
+and Python's zipfile reading what it writes) and `tests/course-doc.test.mjs`
+(heights to the centimetre, relief over 655 m, a built course round-tripped,
+the same course making the same file, broken files refused in plain words).
+
 ## Checked only by a person
 
 Kept current in TODO.md, *The owner's hands-on checks*: a real launch monitor

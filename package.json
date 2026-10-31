@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && node tools/build-bridge.mjs",
+    "build": "vite build && vite build --config vite.builder.config.js && node tools/build-bridge.mjs",
     "release": "npm run build && node tools/build-server.mjs && node tools/release.mjs",
     "server": "node tools/build-server.mjs",
     "preview": "vite preview --host 127.0.0.1",

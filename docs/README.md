@@ -1,6 +1,6 @@
 # Fairway documentation
 
-Twenty documents, and the fastest way through them is to know which question
+About two dozen documents, and the fastest way through them is to know which question
 each one answers. Nothing here is an archive: every document is expected to
 describe the code as it stands today, and correcting a stale claim is part of
 the change that made it stale, not a follow-up.
@@ -50,6 +50,13 @@ the change that made it stale, not a follow-up.
   October 2026): what is built, the owner's and the study's decisions, what
   was rejected, where the build departed from its study, the measures, and the
   GPU and Blender logs. Read it first when working on Architect.
+- **[COURSE_BUILDER.md](COURSE_BUILDER.md)** — Fairway Course Builder,
+  the second program in every download (branch `course-builder`, begun 31
+  October 2026): generate a course and reshape it, or build one from LIDAR
+  and an aerial picture, saved as a `.fairway` file the game plays and players
+  share. The owner's decisions, the file format, the stages and what each was
+  measured against, the test course. Read it first when working on the
+  builder.
 - **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the cartoon
   overhaul, merged 27 October 2026: the record of remaking every model, texture, landscape and the
   lighting in the Cartoon style, its art direction, the baselines it is judged

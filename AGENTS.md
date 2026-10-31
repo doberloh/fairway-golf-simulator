@@ -198,7 +198,7 @@ owner:
   words and numbers. Media for the website goes to its repository, only when
   the owner picks it.
 
-## Three version numbers, and when to bump them
+## Three version numbers (and a fourth for built courses), and when to bump them
 
 All live in `src/settings-schema.js`, and no test catches getting them wrong --
 only old saves suffer. There are two designers (Classic and Architect, since 30
@@ -236,6 +236,11 @@ October 2026; docs/ARCHITECT_COURSES.md), so there are two generator numbers.
 - **No bump** for rendering, HUD, cameras, materials, audio, maps, the
   scorecard, tests or tooling. If the fingerprints are silent, leave them all
   alone.
+- **`BUILT_VERSION` (since 31 October 2026): bump whenever a BUILT course** --
+  a file from Fairway Course Builder, its land and outlines stored -- **would
+  play differently for an unchanged file** (how the game bakes its surfaces,
+  blends its greens, stands its trees). A built course never runs the
+  generator, so the two numbers above cannot move it. docs/COURSE_BUILDER.md.
 
 ## Documentation is part of the change
 

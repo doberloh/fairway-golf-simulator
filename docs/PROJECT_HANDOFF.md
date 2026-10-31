@@ -113,6 +113,10 @@ Rules, scoring, and the things that persist between sessions.
 | src/endless.js | Endless-run seeding, per-hole settings, and `endlessSettings` — the normalisation the menu backdrop and a run must share, and which must stay idempotent |
 | src/round-library.js | Rounds in progress, kept on this device. The sibling of course-library.js and deliberately the opposite kind of store. Each keeps its shot log (`shots`, rival.js) beside the round |
 | src/course-library.js | Named courses in localStorage, and the portable export/import code |
+| src/zip.js | A ZIP written and read by hand on the browser's CompressionStream: the container a built course file is (course builder, 31 October 2026) |
+| src/course-doc.js | A BUILT course (Fairway Course Builder) as a document and as a `.fairway` version-2 file: land and green patches as height grids, surfaces as outlines, holes, water, trees; limits checked on read. docs/COURSE_BUILDER.md |
+| builder.html, vite.builder.config.js, src/builder/ | Fairway Course Builder, the second page in every download, built single-file after the game; its shell, doors and editor |
+| tools/builder-smoke.mjs | The builder's page driven in a real browser by file://; fails on any error or request |
 | src/rival.js | A friend's challenge (20 October 2026): the grid every shot is flown on (`gridShot`), the round's shot log, the challenge code (card, course, rules, shots) made and read, `rivalProblem` (same version or refused), the card comparison, and the pasted challenges kept on the device. Pure |
 | src/profile.js | The player's profile: name, running stats, personal bests, round history and their own bag, one versioned record. COUNTERS / BESTS / SCORE_TYPES are the registry the page draws from |
 | src/handicap.js | The sim handicap: WHS differentials, hole caps and the best-8-of-20 table, with courses rated from length alone |

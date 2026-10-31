@@ -42,7 +42,7 @@ Node.js 22.12 or newer (developed on Node 26):
 npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the full regression suite, no external framework
-npm run build    # writes the single-file dist/index.html, and dist/fairway-bridge.mjs
+npm run build    # writes the single-file dist/index.html, the course builder's dist/builder.html, and dist/fairway-bridge.mjs
 ```
 
 Cutting the release archives is one more command, and it rebuilds first so

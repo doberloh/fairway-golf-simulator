@@ -381,6 +381,16 @@ export const ARCHITECT_VERSION=20;
 // A Classic course's stamp is GENERATOR_VERSION exactly, as it always was, so
 // nothing a Classic player has saved changes. A shared change moves both
 // stamps; an Architect-only change moves Architect's alone.
+// BUILT_VERSION: how the game turns a BUILT course -- a file from Fairway
+// Course Builder, its land, outlines and trees all stored (course-doc.js) --
+// into a world. A built course never runs the generator, so neither number
+// above can move it; this can (the field bake, the green patches' blend, how a
+// stored tree is drawn and stands). Bump it whenever a built course's ground,
+// lie or trees would change for an unchanged file, with a line here. Shown to
+// the player like a generator mismatch. (The course-builder branch, 31 October
+// 2026; docs/COURSE_BUILDER.md.)
+//  1: the first reader (stage 1).
+export const BUILT_VERSION=1;
 export const isArchitect=s=>s?.designer==='architect';
 export const generatorFor=s=>isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
 // How a stamp reads to a person: "52" or "52 · Architect 1".

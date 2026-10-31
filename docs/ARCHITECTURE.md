@@ -44,7 +44,7 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | --- | --- |
 | `npm run dev` | The game at http://127.0.0.1:5173 |
 | `npm test` | Every regression suite (`tools/test.mjs`: each file its own process, longest first); must pass before committing. `npm run test:changed` / `test:fast` while working (TESTING.md) |
-| `npm run build` | `dist/index.html`, the single-file game, plus the bridge bundle |
+| `npm run build` | `dist/index.html`, the single-file game, `dist/builder.html`, the course builder, plus the bridge bundle |
 | `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
@@ -146,6 +146,12 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/ui-movable-check.mjs` -- the map and the shot numbers dragged at six sizes: they follow the pointer, stop inside the playing area, stay inside after a resize, and a double click puts them back (UI_POLISH.md T3)
 - `tools/ui-flows.mjs` -- presses from the main menu into each mode, mouse and keys (by ui-focus.js's own rule); UI_POLISH.md *The way into every mode*
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API
+
+**Fairway Course Builder** (the second program in every download; docs/COURSE_BUILDER.md is the record)
+- `builder.html`, `vite.builder.config.js` -- the builder's page, built single-file after the game into `dist/builder.html` (`Fairway Builder.html` in the zips), with its own `fairway-builder-versions` line
+- `src/builder/` -- the builder: `builder.js` (the shell and its three doors), `door-generate.js`, `door-real.js`, `editor.js`, `builder.css`
+- `src/zip.js` -- a ZIP written and read by hand on the browser's own CompressionStream; `src/course-doc.js` -- a built course as a document and as a `.fairway` version-2 file (land, patches, outlines, holes, water, trees); `BUILT_VERSION` in settings-schema.js; tests of the same names
+- `tools/builder-smoke.mjs` -- the builder's page driven in a real browser by file://, failing on any error or network request (journeys in `tools/builder-journeys/`)
 
 **Outside the game**
 - `bridge/server.mjs` -- the launch-monitor bridge; `tools/build-server.mjs` compiles it per platform
