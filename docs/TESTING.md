@@ -8,7 +8,7 @@ changes what it covers.
 
 | Layer | Command | Runs on | What it can see | What it cannot |
 | --- | --- | --- | --- | --- |
-| **Node tests** | `npm test` | the processor, about 3-4 minutes | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
+| **Node tests** | `npm test` (whole suite); `npm run test:changed`, `npm run test:fast` (*Running the Node tests*) | the processor, about 3 1/2 minutes whole; seconds for the fast set | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
 | **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
@@ -30,6 +30,65 @@ generator checks can run any time.
 `range`, `endless-round`) under a software renderer on every push
 (`.github/workflows/test.yml`). The smoke step there is slow and has not yet
 gone green reliably -- TODO, *Found on GitHub*.
+
+## Running the Node tests
+
+`npm test` runs `tools/test.mjs`, which starts every test file in its own
+process, 31 at a time (cores less one), **longest first** by the times in
+`bench/test-times.json`, prints one line per passing file and the whole
+report of a failing one, and ends with the totals and the five slowest
+files. Three other ways to run it:
+
+| Command | Runs | About |
+| --- | --- | --- |
+| `npm run test:changed` (`node tools/test.mjs --changed [commit]`) | only the files that can see a change: every test whose imports (followed through every module) reach a file changed, staged or new since the last commit, or since the commit named. Docs alone run nothing | seconds to the whole suite, by what changed |
+| `npm run test:fast` (`--fast`) | the 81 files that build no course -- 621 of the 1,236 tests: the rules, the ball, scoring, saves, challenges, the interface's pure modules | 2 seconds |
+| `node tools/test.mjs paths water` | files whose names hold those words | |
+| `npm run test:times` (`--save-times`) | the whole suite, then stores each file's time for the ordering | 3 1/2 minutes |
+
+`--list` names what a run would start and stops; `--jobs N` sets how many at
+once (3 when memory is short -- the commit charge has run out before).
+`--changed` is a check while working, never the gate: a commit gets the
+whole suite.
+
+**Where the time goes** (the audit of 31 October 2026, the owner: "testing is
+taking a really long time"). 1,236 tests in 157 files. 81 files take under
+3 s together; everything else is **building courses**: 521 builds in a whole
+run, about three-quarters of each the ground grid every height is read from.
+A file's tests run one after another in one process, so a file that builds
+many courses on one thread is a queue however many cores sit idle, and the
+suite waited for its longest file: `water-keep-out` (48 courses) took 177 s
+by itself. Fixed in four ways:
+
+- **Built on worker threads** (`tests/worlds.mjs` `measured`): the file names
+  its courses and a measuring module under `tests/measure/` that runs on the
+  thread that built each course and returns only numbers (a world holds
+  functions and cannot cross a thread); the test asserts on the numbers,
+  word for word what it asserted on the worlds. `water-keep-out` 177 s ->
+  35 s, `fairway-features` 123 -> 20, `clubhouse` 100 -> 18 (and its
+  clear-ground check now covers all ten landscapes, not four).
+- **Split where the tests build different courses**: `water-terrain` into
+  `water-shore` and `water-lakes` beside it, `landscape` into
+  `landscape-water` and `landscape-biomes` -- tests that read the same
+  courses kept together, so nothing is built twice.
+- **The cache used**: `shared-fairways` built its 18-hole links afresh in
+  every test (95 -> 32 s).
+- **Longest first**: the plain runner sorts files by name, so a heavy file
+  named water-* started last.
+
+Whole suite: **285 s -> about 205 s** (273 and 286 before, 201 and 204
+after). What is left is the processor, not the order: 31 files at once on
+16 cores make every course build about two and a half times slower than
+alone (`tee-corridor` 74 s alone, 187 s in the crowd), and the whole run is
+about 4,700 file-seconds. Only less building makes it faster now: either a
+cheaper course build (which would also shorten the wait to start a round --
+TODO, *A course takes seconds to build*) or fewer courses in a test, which
+narrows what it checks and is the owner's call.
+
+**A new heavy test** (more than a few courses): build them with `measured`,
+or give it a file of its own; never a fresh `generateWorld` where the cache
+would do. A file over a minute alone (`bench/test-times.json`) is the next
+thing to look at.
 
 ## Playing a round, in every format and group
 
@@ -125,7 +184,8 @@ popup. That is wired code, checked only by the smoke test and by playing.
 ## The Node suites, by area
 
 All in `tests/`, one file per subject; `tests/worlds.mjs` builds and memoises
-the courses several suites share.
+the courses several suites share, and builds many at once on worker threads
+(`measured`, with the measuring modules in `tests/measure/`).
 
 - **A round and its records** -- `round-matrix`, `core`, `play`, `honours`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
@@ -138,7 +198,8 @@ the courses several suites share.
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
-- **Making a course** -- `world`, `landscape`, `landscape-edge`,
+- **Making a course** -- `world`, `landscape` (with `landscape-water` and
+  `landscape-biomes`), `landscape-edge`,
   `course-variety`, `course-living`, `course-names`, `atmosphere-routing`,
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
   `tee-corridor`, `water-*`, `waterways-tours`, `vegetation-variety`,
@@ -349,6 +410,6 @@ A feature nobody has seen working is reported as not seen (AGENTS.md).
   test that cannot fail has happened here more than once (RESEARCH.md, *A test
   that could not fail*).
 - **A measurement imports its geometry from `src`**, never a copy of it.
-- **Slow suites** are the ones that build courses; reuse `tests/worlds.mjs`.
-  The suite's wall time is set by its slowest file (TODO, *The test suite's
-  wall time*).
+- **Slow suites** are the ones that build courses; reuse `tests/worlds.mjs`,
+  and build many with `measured` (*Running the Node tests*). Run
+  `npm run test:times` after adding a heavy file, so it is started early.

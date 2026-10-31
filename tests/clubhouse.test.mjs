@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {world} from './worlds.mjs';
-import {inBuilding, inForecourt, CLUBHOUSE_SIZE} from '../src/clubhouse.js';
+import {world, measured} from './worlds.mjs';
+import {inBuilding, CLUBHOUSE_SIZE} from '../src/clubhouse.js';
 import {simulateShot} from '../src/physics.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 import {pathIndex} from '../src/paths.js';
@@ -14,10 +14,20 @@ import {pathIndex} from '../src/paths.js';
 
 const A = biome => world({seed: 'CLUB-T', holes: 9, biome, designer: 'architect'});
 
+// Twenty-seven courses, built on worker threads and measured there (worlds.mjs
+// `measured`; the testing audit, 31 October 2026 -- one thread, the file took
+// a minute and a half). What each test reads is in tests/measure/clubhouse.mjs.
+const EVERY = BIOME_KEYS.map(biome => ({seed: 'CLUB-T', holes: 9, biome, designer: 'architect'}));
+const HOME = ['pnw', 'desert', 'midwest', 'autumn'].flatMap(biome => ['HOME-1', 'HOME-2'].flatMap(seed =>
+ [{seed, biome, holes: 9, designer: 'architect'}, {seed, biome, holes: 9}]));
+const LIST = [{seed: 'CLUB-T', holes: 9, biome: 'midwest'}, ...EVERY, ...HOME];
+const M = await measured(LIST, './measure/clubhouse.mjs');
+const of = s => M[LIST.indexOf(s)];
+
 test('every landscape\'s Architect course has its clubhouse; Classic has none', () => {
- assert.equal(world({seed: 'CLUB-T', holes: 9, biome: 'midwest'}).buildings.length, 0);
- for (const biome of BIOME_KEYS) {
-  const w = A(biome), b = w.buildings[0];
+ assert.equal(M[0].buildings, 0);
+ for (const s of EVERY) {
+  const biome = s.biome, b = of(s).building;
   assert.ok(b, `${biome}: no clubhouse`);
   assert.equal(b.kind, 'clubhouse');
   assert.ok(b.club, 'a club building');
@@ -26,19 +36,11 @@ test('every landscape\'s Architect course has its clubhouse; Classic has none', 
 });
 
 test('it stands on clear ground, faces the first tee, and nothing grows on it or its lawn', () => {
- for (const biome of ['midwest', 'links', 'mountain', 'redwood']) {
-  const w = A(biome), b = w.buildings[0], h = w.holes[0], tee = h.toWorld(h.tees.blue);
-  for (const t of w.trees) if (!t.under) assert.ok(!inBuilding(b, t.x, t.z, 3) && !inForecourt(b, t.x, t.z), `${biome}: a ${t.kind} on the clubhouse or its lawn`);
-  for (const home of w.homes) assert.ok(!inBuilding(b, home.x, home.z, 10), `${biome}: a house on the clubhouse`);
-  // Its front (local -z) points at the tee.
-  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), tx = tee.x - b.x, tz = tee.z - b.z, l = Math.hypot(tx, tz);
-  assert.ok((fx * tx + fz * tz) / l > .99, `${biome}: facing the first tee`);
-  // Not on a green, tee, sand or water.
-  for (const [dx, dz] of [[0, 0], [b.width / 2, 0], [-b.width / 2, 0]]) {
-   const s = w.surface(b.x + dx * Math.cos(b.rotation), b.z - dx * Math.sin(b.rotation));
-   assert.ok(!['green', 'tee', 'sand', 'water'].includes(s), `${biome}: the clubhouse on ${s}`);
-  }
- }
+ // Its front (local -z) points at the tee; nothing grows or is built on it or
+ // its lawn; it is not on a green, tee, sand or water. Every landscape (was
+ // midwest, links, mountain and redwood: measured with the rest, the others
+ // cost nothing more).
+ assert.deepEqual(EVERY.flatMap(s => of(s).clear), []);
 });
 
 test('the path runs to its door', () => {
@@ -68,11 +70,9 @@ test('a ball hit at the clubhouse stops against it, and is never out of bounds f
 // nine comes home: most of its last greens within 200 m of the first tee,
 // where the clubhouse is, and far more than Classic's.
 test('an Architect course\'s nines come home, far more often than Classic\'s', () => {
- const home = (w, k) => { const t = w.holes[0].toWorld(w.holes[0].tees.blue), g = w.holes[k].worldGreen; return Math.hypot(g.x - t.x, g.z - t.z) <= 200; };
  let a = 0, c = 0, n = 0;
  for (const biome of ['pnw', 'desert', 'midwest', 'autumn']) for (const seed of ['HOME-1', 'HOME-2']) {
-  const arch = world({seed, biome, holes: 9, designer: 'architect'}), classic = world({seed, biome, holes: 9});
-  n++; a += home(arch, 8); c += home(classic, 8);
+  n++; a += of(HOME.find(s => s.seed === seed && s.biome === biome && s.designer)).home; c += of(HOME.find(s => s.seed === seed && s.biome === biome && !s.designer)).home;
  }
  assert.ok(a >= n * .75, `Architect: ${a} of ${n} nines home`);
  assert.ok(a > c, `Architect ${a} against Classic ${c}`);

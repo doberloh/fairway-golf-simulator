@@ -1101,12 +1101,17 @@ are in the archived section of the same name.
   pass; the owner left the smoke run for later and asked for 0.9.3, so no
   browser has played this build (DISTRIBUTION_REVIEW, *Vite 8.3.3*, *v0.9.3*).
 
-- [ ] **The test suite's wall time** is set by its slowest file, six over 100 s.
-  Underneath: `nearest` is 15% of a generation and walks all holes with no
-  spatial rejection; a bounding box per hole would speed the tests, the bench
-  and the game's loading at once -- and the ground grid, 81% of generation, is
-  where any real loading win is. (was: *The suite's wall time is one file at a
-  time*; *Generation is still ~24% slower*)
+- [ ] **A course takes seconds to build, and that is the test suite's whole
+  cost** (the testing audit, 31 October 2026; TESTING.md, *Running the Node
+  tests*). A whole run builds 521 courses; with the processor full the suite
+  is about 205 s, and only cheaper builds (or fewer) make it faster now. A
+  build is three-quarters "Building the ground"; profiled over an 18-hole
+  Links and a 9-hole PNW with water: routing 9%, `nearest` 8%, the shaped
+  height (`shapedNoTees`, `shapedLand`, `land`, `analyticHeight`) about 17%,
+  the hole's widths (`sideWidth`, `width`) 6% -- nothing on its own. A
+  faster build is also a shorter wait to start a round. Must leave both
+  fingerprints silent. (was: *The test suite's wall time*; *The suite's wall
+  time is one file at a time*; *Generation is still ~24% slower*)
 
 - [ ] **The per-hole tree list is dead code.** `h.trees` is built per hole in
   `generateCourse` and only test fixtures without a world read it; its 22 m
@@ -1529,6 +1534,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## Architect courses: the owner's third word (31 October 2026)
 
+- [x] **The test suite's wall time** -- the owner: "testing is taking a really
+  long time ... optimize our testing flows". 285 s -> about 205 s for the
+  whole suite: the four slowest files built on worker threads, split or
+  cached (`water-keep-out` 177 -> 35 s alone), and files started longest
+  first (`tools/test.mjs`). And two quicker ways in: `npm run test:changed`
+  (only the files a change can reach) and `npm run test:fast` (the 81 files
+  that build no course, 621 tests in 2 s). TESTING.md, *Running the Node
+  tests*. What is left is open above (*A course takes seconds to build*).
 - [x] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
   -- the owner: "crowd cost is fine". Left as measured (ARCHITECT_COURSES.md,
   *The crowd's cost*).

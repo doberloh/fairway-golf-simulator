@@ -277,8 +277,8 @@ not counted as a change. Typical loop:
 3. A rendering change that could move a frame: `node tools/gpu-run.mjs ...
    -- node tools/profile.mjs --only <group> --build <file> --json` against
    main's kept build (`bench/shots/overhaul/main-build/`).
-4. Before handing over: `npm test` (run with `--test-concurrency=3` when
-   memory is short), `node tools/biome-fingerprint.mjs --check` after any
+4. Before handing over: `npm test` (run with `npm test -- --jobs 3` when
+   memory is short; `--test-concurrency=3` before tools/test.mjs), `node tools/biome-fingerprint.mjs --check` after any
    generation-side file, `npm run build`, smoke through `gpu-run`, the
    `latest/` set recaptured in batches of at most three landscapes, and
    `node tools/capture/overhaul-showcase.mjs`.

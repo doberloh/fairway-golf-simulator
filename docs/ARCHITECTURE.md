@@ -43,7 +43,7 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | The game at http://127.0.0.1:5173 |
-| `npm test` | Every regression suite (Node test runner); must pass before committing |
+| `npm test` | Every regression suite (`tools/test.mjs`: each file its own process, longest first); must pass before committing. `npm run test:changed` / `test:fast` while working (TESTING.md) |
 | `npm run build` | `dist/index.html`, the single-file game, plus the bridge bundle |
 | `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
@@ -150,6 +150,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 **Outside the game**
 - `bridge/server.mjs` -- the launch-monitor bridge; `tools/build-server.mjs` compiles it per platform
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
+- `tools/test.mjs` -- the Node suite's runner: longest first by `bench/test-times.json`, `--changed`, `--fast`, `--save-times`; `tests/worlds.mjs` -- the course cache and `measured` (many courses built on worker threads, `tests/measure-worker.mjs`, measured by a module under `tests/measure/`)
 - `tools/build-meshes.mjs` -- model ingest: every picked `vendor/blender-cartoon_*/` model into `src/asset-meshes.js`
 - `tools/blender/` -- models built in Blender, headless, from committed scripts (`run.mjs <pack> --render`; shared helpers `fairway_blender.py`, `cartoon.py`, and `figures.py` for every person), written to `vendor/blender-<pack>/` as `Blender_*.glb` (docs/BLENDER_ASSETS.md); the cartoon overhaul's library `cartoon.py` (vertex paint, bent crown normals, a toon contact sheet) and its packs `cartoon_*.py`; `inspect.mjs <pack>` prints what a pack wrote
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
@@ -240,6 +241,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The cart paths are what is drawn: joins land on drawn lines, nothing is built on a path, the strip has a point every 2 m -- PROJECT_HANDOFF *THE PATH NETWORK IS THE LINE DRAWN*
 - Architect is only in Course studio and never the default; every play mode grows Classic -- PROJECT_HANDOFF *ARCHITECT ONLY IN THE STUDIO*
 - A per-hole term in `land` that is not zero inside a corridor makes a bank where the nearest hole changes -- PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*
+- A test file that builds many courses on one thread sets the whole suite's wait -- PROJECT_HANDOFF *A FILE IS ONE THREAD*
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]

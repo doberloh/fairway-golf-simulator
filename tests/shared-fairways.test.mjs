@@ -6,8 +6,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld, shareFairways} from '../src/course.js';
 import {BIOMES} from '../src/biomes.js';
+import {world} from './worlds.mjs';
 
-const links = seed => generateWorld({seed, biome: 'links', holes: 18, trees: 60, homes: true});
+// Cached (worlds.mjs): five tests read the same eighteen-hole links, and each
+// built its own -- the file was a minute and a half (the testing audit, 31
+// October 2026). Nothing here writes to a cached course.
+const links = seed => world({seed, biome: 'links', holes: 18, trees: 60, homes: true});
 
 test('an 18-hole links shares fairways between holes running side by side', () => {
  let total = 0;
@@ -81,9 +85,11 @@ test('a shared strip is fairway in the world, midway between the two holes', () 
 });
 
 test('sharing is reproducible and leaves a lone hole alone', () => {
- assert.deepEqual(links('S1').holes.map(h => !!h.sharedFairway), links('S1').holes.map(h => !!h.sharedFairway));
- // A single hole has nobody to share with.
+ // A second, uncached build against the cached one; this one is written to
+ // below, so it is never the cache's.
  const w = generateWorld({seed: 'S1', biome: 'links', holes: 18, trees: 60, homes: true});
+ assert.deepEqual(w.holes.map(h => !!h.sharedFairway), links('S1').holes.map(h => !!h.sharedFairway));
+ // A single hole has nobody to share with.
  const h = w.holes[0], before = h.leftWidth(h.length / 2);
  shareFairways([h], BIOMES.links.sharedFairways);
  assert.equal(h.leftWidth(h.length / 2), before);
