@@ -1592,3 +1592,34 @@ distribution:
   carried the hand tools' list (`archHand`) for a day; the tools were
   withdrawn on 31 October 2026 (SCHEMA_VERSION 14) and no code carries it
   now -- an old code that does loads without it.
+
+## Addendum, 31 October 2026: v0.9.6
+
+**v0.9.6** is published at the owner's request ("Lets merge this back into
+main. I think i want to keep this still 0.9 so lets make another path
+version and push the latest to both github as well as the live website"),
+as "Fairway 0.9.6 (beta)", tag `v0.9.6`, not a pre-release, the same six
+files as 0.9.5, from the merge of `release-0.9.6` into `main`, with its notes
+in `docs/releases/v0.9.6.md` in that commit. It carries the two branches the
+addenda above describe as not released: the 1.0 interface polish and
+Architect courses (beta). **`GENERATOR_VERSION` is 53** (52 in 0.9.5), so a
+saved 0.9.5 round is told its course changed; **`SCHEMA_VERSION` 14** (11,
+migrated: settings carry over); **`PROFILE_VERSION` 3** unchanged; an
+Architect course's stamp is 53020. **The package version is 0.9.6**, so
+0.9.5's friend-challenge codes do not play on it (said in the notes). The
+website is redeployed after the release, so its demo moves to 0.9.6.
+
+The built page is **14,820,197 bytes (7.60 MB gzipped)**, 3.4 MB over 0.9.5:
+the interface polish's landscape pictures and the Architect's models,
+clubhouses, people and kit. Still no network request: the yardage book and
+the range report are made in the page and downloaded locally. The zips:
+Windows 48.6 MB, macOS Apple silicon 34.5 MB, macOS Intel 36.8 MB, Linux
+45.2 MB, each 8 verified files; the source zip 8.3 MB, 476 files.
+
+**Checked:** `npm test` (1,236) on the release branch, whose tree the merge
+keeps; both biome fingerprints; the packager's own verification of every zip.
+**Not run:** the smoke journeys on this build -- the graphics card was not
+asked for; `architect-studio` and `architect-round` last passed on the
+branch on 31 October, before the far heath and the eleven models, and the
+whole set has not run since the overhaul branch. **Not played by a person**
+beyond the owner's rounds on the branches.
