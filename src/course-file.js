@@ -9,7 +9,7 @@
 // `<name>.fairway`, plain JSON. Pure: no DOM, no storage, tested in Node
 // (tests/course-file.test.mjs). The picture itself is kept beside the library
 // (course-pictures.js), not in it.
-import {SCHEMA_VERSION, GENERATOR_VERSION, validateSettings, migrateSettings} from './settings-schema.js';
+import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from './settings-schema.js';
 import {courseSettings, MAX_NAME} from './course-library.js';
 
 export const FILE_KIND = 'fairway-course';
@@ -30,7 +30,7 @@ const plainName = n => { const s = String(n ?? '').trim(); if (!s.length || s.le
 export function courseFile(record, picture = null) {
  const settings = courseSettings(validateSettings(record?.settings || {}));
  return JSON.stringify({kind: FILE_KIND, version: FILE_VERSION, name: plainName(record?.name), schema: SCHEMA_VERSION,
-  generator: record?.generator ?? GENERATOR_VERSION, settings, picture: pictureOk(picture) ? picture : null}, null, 1);
+  generator: record?.generator ?? generatorFor(settings), settings, picture: pictureOk(picture) ? picture : null}, null, 1);
 }
 
 // A course from a file's text: {name, settings, generator, picture} not yet

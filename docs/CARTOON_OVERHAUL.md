@@ -88,7 +88,7 @@ graphics rules may be set aside where they block the look; nothing else may.
 
 | Rule | Why it was set aside | What changed | How to restore |
 | --- | --- | --- | --- |
-| *Landscapes stay as they are for a seed* (the spirit of GENERATOR_VERSION discipline, AGENTS.md *Two version numbers*) | The overhaul exists to redesign every landscape | A seed makes a different course on this branch than on main. GENERATOR_VERSION is still bumped for each change, so an older save is flagged. AGENTS.md said so in *On the cartoon-overhaul branch, landscapes are meant to change* until the merge | Done at the merge (27 October 2026): AGENTS.md *The cartoon look is main's* -- a seed keeps its course again on main |
+| *Landscapes stay as they are for a seed* (the spirit of GENERATOR_VERSION discipline, AGENTS.md *Three version numbers*, then *Two version numbers*) | The overhaul exists to redesign every landscape | A seed makes a different course on this branch than on main. GENERATOR_VERSION is still bumped for each change, so an older save is flagged. AGENTS.md said so in *On the cartoon-overhaul branch, landscapes are meant to change* until the merge | Done at the merge (27 October 2026): AGENTS.md *The cartoon look is main's* -- a seed keeps its course again on main |
 
 | *Unmown ground is rough* -- every planting rule asked `surface === 'rough'` (trees, boulders, Haunted Hollow's props, houses, deadfall, grass), and the tests held it | Ground between the holes is now nine types of its own (rock, hardpan, heather...) | Each rule asks `allows(surface, what)` (grounds.js): rough allows everything, rock and scree no trees, a wash nothing tall. Tests updated to ask the same: course-living, homes, haunted-props, landscape | Make every ground type answer like rough in `ALLOWS`, or drop the recipes |
 | *A stream's faded end keeps its full channel's water level and narrows to 8% of its width* (streams.js `downhillProfile`) | The new dune crests stood a faded creek head 8.7 m under the ground: water lying on a dune | Across a fade the level rises toward the surveyed ground, and the channel narrows to no less than 1.2 m (the ground mesh's finest cells are 0.5 m). Every biome's creeks moved a little at their ends | Revert those two lines in `downhillProfile` |
@@ -277,8 +277,8 @@ not counted as a change. Typical loop:
 3. A rendering change that could move a frame: `node tools/gpu-run.mjs ...
    -- node tools/profile.mjs --only <group> --build <file> --json` against
    main's kept build (`bench/shots/overhaul/main-build/`).
-4. Before handing over: `npm test` (run with `--test-concurrency=3` when
-   memory is short), `node tools/biome-fingerprint.mjs --check` after any
+4. Before handing over: `npm test` (run with `npm test -- --jobs 3` when
+   memory is short; `--test-concurrency=3` before tools/test.mjs), `node tools/biome-fingerprint.mjs --check` after any
    generation-side file, `npm run build`, smoke through `gpu-run`, the
    `latest/` set recaptured in batches of at most three landscapes, and
    `node tools/capture/overhaul-showcase.mjs`.
@@ -867,6 +867,8 @@ sine wave on the edge. Be efficient with this as well." Twenty rounds.
 | 19 | Every pond's foam the same blue-white, whatever its water -- on Haunted Hollow's green-black water it stood out like paint | A quarter of the landscape's water colour in its foam. Captured (`g3-r12/`): the foam still reads white, a shade of its water in it |
 | 20 | The final judgement on every kind of water (`g3-final/*/shore-near`, `sea-near`, `h1-pond`; `g3-final-streams/`) | Judged, no change: ponds lapped by arriving wavelets with a wet line and drifting cat's paws; the sea's surf in uneven lace with breakers in stretches over wet sand; Lakeshore's lake shore a wet flat (left for the owner); creeks read as water, fading in at their start. The owner's words -- "not just reading as a sine wave on the edge" -- are judged in motion, which stills cannot show: in TODO for play. |
 
+**The riffles were removed afterwards** (the owner, 30 October 2026: "Remove the creek arrow texture. We don't need them."): the standing chevrons on creeks and rivers (rounds 5, 6, 13, 15) read as arrows painted on the water, on Classic as on Architect. The drifting flecks, the lace and the wet bank line stay, so the water still runs. Rendering only: no fingerprint moves.
+
 ### Links shared fairways, the far-landscape goal's rounds
 
 The owner: "10 more passes on making thoughtful fairway connections on
@@ -1304,6 +1306,7 @@ Pictures: `rounds/course-r1.png` .. `rounds/course-r3.png`; in the game
 | 6 | Still a burnt patch on Links | The hue at three-quarters where it blooms: a textured mauve heath. Not yet a heath: flat paint cannot give it volume; low heather clumps in the near field are the next round. One patch on Links ends in a straight soft edge, unexplained |
 
 | 7 | Flat paint has no volume | Near the camera (the 48 m ring of grass tiles) heather grows low cushions of the heather model, three in ten of the tiles' candidates, 30-55 cm: blooming purple on Links, dark brown with dusty flecks on Haunted's moor (vegetation.js; decoration, as the forest floor) |
+| 8 | (the owner, after the merge, 31 October 2026) "the purple bushes fade out completely leaving just weird looking purple ground": past the tiles' 48 m nothing stood on a heath | Low domes in the cushions' colours, growing in over 28-48 m as the cushions shrink and sinking at the tier's long-grass reach (vegetation.js addFarHeath; RESEARCH *Heather's paint*, round 8). Not yet captured |
 
 Pictures: in the game `heather-r4/` .. `heather-r7/` (Links, Haunted; view `h1-heath`).
 

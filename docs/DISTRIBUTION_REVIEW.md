@@ -1563,3 +1563,32 @@ Branch `ui-polish-1-0` (docs/UI_POLISH.md). What changes for distribution:
   Firefox and Safari (TODO).
 - No dependency added or removed; THIRD_PARTY_NOTICES and ATTRIBUTION are
   unchanged (the pictures are the game's own renders).
+
+## Addendum, 30 October 2026: Architect courses (branch, not released)
+
+Branch `architect-courses` (docs/ARCHITECT_COURSES.md). What changes for
+distribution:
+
+- **The page is 14,550,037 bytes (7.50 MB gzipped)**, against main's build
+  at the start of the branch: the asset meshes module grew from 7.22 MB to
+  7.82 MB with six Blender packs (architect_people, architect_clubhouses,
+  architect_water, architect_story, architect_life, architect_occasion; 57
+  models, low-poly, inlined like everything else), and the Architect code
+  (designer, styles, the architect, paths, markings, the clubhouse, built
+  water, the land's story, life, tournament week, the yardage book).
+- **A new download**: the yardage book, a PDF written by the game's own PDF
+  writer (pdf.js) and handed to the browser as a local download, like the
+  range report. No network, no new store.
+- No dependency added or removed; THIRD_PARTY_NOTICES and ATTRIBUTION are
+  unchanged (every new model is the project's own, from committed Blender
+  scripts).
+- **Not yet checked from a file opened straight from disk** (the yardage
+  book's download from file://): to check with the TODO entries.
+- **After the owner's review** (30 October 2026): the page is 14,797,078 bytes
+  (7.60 MB gzipped). The fountain model left the bundle (52 KB; the renderer
+  draws the water); four walker and five spectator bodies replaced one of
+  each, and the mower was rebuilt. The yardage book can now also be
+  downloaded from the course studio -- the same local PDF download. Course codes
+  carried the hand tools' list (`archHand`) for a day; the tools were
+  withdrawn on 31 October 2026 (SCHEMA_VERSION 14) and no code carries it
+  now -- an old code that does loads without it.

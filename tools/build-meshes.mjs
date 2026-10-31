@@ -164,7 +164,31 @@ const PICK = {
  // flowers (vegetation.js addGroundCover), coloured per landscape.
  wildflower: ['blender:Blender_Flower_Daisy', 'blender:Blender_Flower_Aster', 'blender:Blender_Flower_Cup'],
  coursefurniture: ['blender:Blender_TeeMarker_1', 'blender:Blender_TeeSign_1', 'blender:Blender_Bench_1', 'blender:Blender_BallWasher_1'],
+ // AN ARCHITECT COURSE'S MARKINGS (tools/blender/architect_people.py;
+ // architect-courses, phase 2): stakes, yardage posts and rakes, placed by
+ // markings.js and drawn instanced by renderer.js addMarkings, never planted.
+ coursemarkings: ['blender:Blender_Stake_1', 'blender:Blender_ObStake_1', 'blender:Blender_YardagePost_1', 'blender:Blender_Rake_1'],
+ // AN ARCHITECT COURSE'S CLUBHOUSE (tools/blender/architect_clubhouses.py), one
+ // per landscape, fitted to its box by renderer.js addBuildings.
+ clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'manor', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
+ // AN ARCHITECT COURSE'S BUILT WATER (tools/blender/architect_water.py;
+ // architect-courses, phase 5): bridge bays (renderer.js addPaths), rip-rap,
+ // tie walls and fountains (waterworks.js, renderer.js addWaterworks).
+ // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
+ // walls, the farmstead, ruins and landmarks (story.js, renderer.js
+ // addBuildings and addStory).
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Lantern_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
+ // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
+ // animals and distant people, placed by life.js, moved by renderer.js addLife.
+ lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1'].map(k => `blender:Blender_${k}`),
+ // TOURNAMENT WEEK (tools/blender/architect_occasion.py; phase 7): a
+ // Championship venue's stands, scoreboard, towers, marquees, ropes and crowd.
+ occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `blender:Blender_${k}`),
+ waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
+
+// People, whose real height the game keeps (`tall`, below).
+const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `Blender_${k}`));
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and
@@ -253,6 +277,21 @@ for (const [family, entries] of Object.entries(PICK)) {
   // width x height x depth box so the drawn building matches the oriented box
   // physics collides against; a single radius cannot express that.
   const rx = (maxX - minX) / 2 / height, rz = (maxZ - minZ) / 2 / height;
+  // A MODEL THAT DOES NOT FIT THE BOX gets its own, coarser scale (`q`,
+  // architect-courses): a rake 1.6 m long and 6 cm tall is 27 units long at
+  // unit height and wrapped round the int16 range. Every model that fits keeps
+  // 16384 and is written byte for byte as before; only an oversize one carries
+  // `q`, and mesh-assets.js reads it.
+  let reach = 0;
+  for (const g of byRole.values()) for (let i = 0; i < g.position.length; i += 3)
+   reach = Math.max(reach, Math.abs((g.position[i] - cx) / height), Math.abs((g.position[i + 1] - minY) / height), Math.abs((g.position[i + 2] - cz) / height));
+  // EVERY FAMILY, since 31 October 2026 (the owner: "back port the models to
+  // classic"). At first only the Architect's families had it; eleven models
+  // shipped before them (tussocks, logs, sorrel, Lakeshore's junipers, dune
+  // grass and driftwood) reached past the box too and had been drawn with
+  // their outermost parts folded back through the model since they were
+  // ingested.
+  const q = reach < 32767 / 16384 ? 16384 : Math.floor(32767 / reach);
   const parts = [];
   for (const [role, g] of byRole) {
    const count = g.position.length / 3;
@@ -260,9 +299,9 @@ for (const [family, entries] of Object.entries(PICK)) {
    for (let i = 0; i < count; i++) {
     // Quantised against a fixed +-2 unit box in normalised space, which every
     // one of these models sits inside once scaled to unit height.
-    position[i * 3] = Math.round(((g.position[i * 3] - cx) / height) * 16384);
-    position[i * 3 + 1] = Math.round(((g.position[i * 3 + 1] - minY) / height) * 16384);
-    position[i * 3 + 2] = Math.round(((g.position[i * 3 + 2] - cz) / height) * 16384);
+    position[i * 3] = Math.round(((g.position[i * 3] - cx) / height) * q);
+    position[i * 3 + 1] = Math.round(((g.position[i * 3 + 1] - minY) / height) * q);
+    position[i * 3 + 2] = Math.round(((g.position[i * 3 + 2] - cz) / height) * q);
     for (let k = 0; k < 3; k++) normal[i * 3 + k] = Math.max(-127, Math.min(127, Math.round(g.normal[i * 3 + k] * 127)));
    }
    const index = new Uint16Array(g.index);
@@ -296,7 +335,12 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    parts.push(part);
   }
-  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), parts};
+  // `tall`: the model's own height in metres, for the people (the owner's
+  // review): a child and someone under an umbrella were both stretched to
+  // the one height the game drew every spectator at. Recorded for the
+  // figure families only, so every other entry is written as before.
+  const tall = PEOPLE.has(name) ? {tall: +height.toFixed(3)} : {};
+  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), ...tall, parts};
   taken++;
  }
 }

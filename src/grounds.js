@@ -77,11 +77,22 @@ export const GROUNDS = {
  native: {label: 'Native grass', word: 'native grass', like: 'rough', sound: 'rough', map: '#b7a46a', relief: 4,
   contact: {cor: .06, tilt: .07, mu: .60, ground: .105, canopy: .320, spin: 2.5},
   roll: 6.0, slide: .85, lie: .82, hop: 0},
+ // A CART PATH (architect-courses, phase 2; paths.js): concrete, asphalt,
+ // gravel, shell or bark by landscape, all played as one hard surface -- the
+ // hardest in play, a long hop and a long run, a clean tight lie. Not natural
+ // ground: nothing grows or stands on it, and a ball at rest on one gets free
+ // relief (relief.js `pathRelief`). PLACED, against rock just below it.
+ path: {label: 'Cart path', word: 'cart path', like: 'fairway', sound: 'tee', map: '#d9d2c2', relief: 5,
+  contact: {cor: .235, tilt: .02, mu: .32, ground: .004, canopy: .000, spin: 2.5},
+  roll: .85, slide: .3, lie: .95, hop: .16},
 };
 
 export const GROUND_KINDS = Object.keys(GROUNDS);
-const WILD = new Set(GROUND_KINDS);
-export const isGround = s => WILD.has(s);
+// The natural ground types: every row but the man-made path.
+const WILD = new Set(GROUND_KINDS.filter(k => k !== 'path'));
+// Every row is a ground a ball can lie on; all but the path are natural.
+const ALL = new Set(GROUND_KINDS);
+export const isGround = s => ALL.has(s);
 // Natural, unmaintained ground: the rough and every ground type. Most
 // questions that used to be `surface === 'rough'` (may a bush grow here, may a
 // boulder sit here) are really this one; `allows` says which of them each
@@ -99,6 +110,7 @@ const ALLOWS = {
  litter: {trees: true, boulders: true, grass: false, shrubs: true},
  heather: {trees: true, boulders: true, grass: false, shrubs: true},
  native: {trees: true, boulders: true, grass: true, shrubs: true},
+ path: {trees: false, boulders: false, grass: false, shrubs: false},
 };
 export const allows = (surface, what) => surface === 'rough' || !!ALLOWS[surface]?.[what];
 

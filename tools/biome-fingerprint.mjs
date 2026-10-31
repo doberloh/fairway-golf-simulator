@@ -16,19 +16,34 @@
 // change, so it samples widely rather than cheaply: ground height and surface
 // on a grid, every hole's geometry, every tree, house, water body and channel,
 // and the biome's own palette and light.
+//
+// TWO DESIGNERS (architect-courses, 30 October 2026). `--designer architect`
+// fingerprints Architect courses into their own store; the default is Classic.
+// Run both on any generation change: Classic must stay silent on a change to
+// Architect alone, and the tool says which version a move owes.
 import crypto from 'node:crypto';
-import {GENERATOR_VERSION} from '../src/settings-schema.js';
+import {GENERATOR_VERSION, ARCHITECT_VERSION} from '../src/settings-schema.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {generateWorld, BIOMES} from '../src/course.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const STORE = path.join(here, '..', 'bench', 'biome-fingerprints.json');
+const argv = process.argv.slice(2);
+const designer = argv.includes('--designer') ? argv[argv.indexOf('--designer') + 1] : 'classic';
+if (!['classic', 'architect'].includes(designer)) {console.error(`unknown designer "${designer}"`); process.exit(2);}
+const ARCH = designer === 'architect';
+const STORE = path.join(here, '..', 'bench', ARCH ? 'biome-fingerprints-architect.json' : 'biome-fingerprints.json');
 
 // Two seeds per biome: one course can hide a difference that only shows when a
 // feature happens to be present.
 const SEEDS = ['FINGER-1', 'FINGER-2'];
+// What each seed is built with. Classic sets its sliders so every feature is
+// present; Architect decides those itself, so it varies the four dials
+// instead -- the defaults on one seed, the far end of each on the other.
+const settingsFor = (seed, biome) => ARCH
+ ? {seed, biome, holes: 9, designer: 'architect', ...(seed === SEEDS[1] ? {archClub: 'championship', archAge: 'old', archStory: 'lots'} : {})}
+ : {seed, biome, holes: 9, rivers: 1, creeks: 2, water: 60, lakes: 1, trees: 60, homes: true};
 
 const n = v => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(4) : String(v));
 
@@ -60,7 +75,7 @@ function recordHash(biome) {
 function fingerprint(biome) {
  const h = crypto.createHash('sha1');
  for (const seed of SEEDS) {
-  const w = generateWorld({seed, biome, holes: 9, rivers: 1, creeks: 2, water: 60, lakes: 1, trees: 60, homes: true});
+  const w = generateWorld(settingsFor(seed, biome));
   h.update(`|${seed}|${n(w.halfX)},${n(w.halfZ)},${n(w.waterLevel)}|`);
   // The ground itself, and what it plays as.
   for (let x = -900; x <= 900; x += 29)
@@ -83,6 +98,14 @@ function fingerprint(biome) {
  // Haunted Hollow's solid pumpkins and toadstools. Empty everywhere else, so
  // adding this line moved no other biome's hash.
  for (const p of w.props || []) h.update(`P${p.model},${n(p.x)},${n(p.z)},${n(p.h)},${n(p.reach)},${p.lantern};`);
+ // An Architect course's cart paths and bridges (architect-courses, phase 2).
+ // Empty on Classic, so this moved no Classic hash.
+ for (const p of w.paths || []) { h.update(`L${p.kind},${n(p.width)},${p.points.length};`); for (const q of p.points) h.update(`${n(q.x)},${n(q.z)};`); }
+ for (const b of w.bridges || []) h.update(`G${n(b.x)},${n(b.z)},${n(b.angle)},${n(b.span)};`);
+ for (const m of w.markers || []) h.update(`M${m.kind},${n(m.x)},${n(m.z)};`);
+ for (const d of w.wear || []) h.update(`D${n(d.x)},${n(d.z)};`);
+ for (const hole of w.holes) for (const c of hole.collections || []) h.update(`C${n(c.x)},${n(c.z)},${n(c.rx)},${n(c.rz)};`);
+ for (const k of w.buildings || []) h.update(`K${k.model},${n(k.x)},${n(k.z)},${n(k.y)},${n(k.rotation)},${n(k.width)},${n(k.depth)},${n(k.height)};`);
  // Lakeshore Dunes' blowouts: the baked sand field itself, every byte. Null
  // everywhere else, so this moved no other biome's hash either.
  if (w.blowouts) h.update(`B${w.blowouts.Sx}x${w.blowouts.Sz}:${crypto.createHash('sha1').update(w.blowouts.data).digest('hex')};`);
@@ -107,14 +130,13 @@ for (const b of biomes) {
  console.log(`${b.padEnd(10)} ${now[b]}  rec ${rec[b]}   ${((performance.now() - started) / 1000).toFixed(1)}s`);
 }
 
-const argv = process.argv.slice(2);
 if (argv.includes('--save')) {
  fs.mkdirSync(path.dirname(STORE), {recursive: true});
  // The generator version rides WITH the hashes, so `--check` can tell the two
  // reasons output moves apart: a refactor that should have changed nothing,
  // and a deliberate change that owes a version bump.
- fs.writeFileSync(STORE, JSON.stringify({generator: GENERATOR_VERSION, biomes: now, records: rec}, null, 1) + '\n');
- console.log(`\nstored ${biomes.length} fingerprints at generator ${GENERATOR_VERSION}`);
+ fs.writeFileSync(STORE, JSON.stringify({generator: GENERATOR_VERSION, ...(ARCH ? {architect: ARCHITECT_VERSION} : {}), biomes: now, records: rec}, null, 1) + '\n');
+ console.log(`\nstored ${biomes.length} ${designer} fingerprints at generator ${GENERATOR_VERSION}${ARCH ? `, architect ${ARCHITECT_VERSION}` : ''}`);
 } else if (argv.includes('--check')) {
  if (!fs.existsSync(STORE)) {console.error('\nnothing stored yet -- run with --save first'); process.exit(1);}
  const stored = JSON.parse(fs.readFileSync(STORE, 'utf8'));
@@ -148,7 +170,15 @@ if (argv.includes('--save')) {
   // know it was needed is exactly this: output moved for an unchanged seed.
   // It was documented in AGENTS.md and missed anyway, so it is enforced here
   // rather than remembered.
-  if (wasGen !== null && wasGen === GENERATOR_VERSION) {
+  // Architect: a move owes ARCHITECT_VERSION, unless GENERATOR_VERSION went up
+  // (a shared change, which Classic's own check will have shown).
+  if (ARCH && wasGen === GENERATOR_VERSION && stored.architect === ARCHITECT_VERSION) {
+   console.error(`\nARCHITECT_VERSION is still ${ARCHITECT_VERSION} (and GENERATOR_VERSION ${GENERATOR_VERSION}).`);
+   console.error('Architect output moved for an unchanged seed. If Classic is silent');
+   console.error('(run the check without --designer), ARCHITECT_VERSION goes up, with a');
+   console.error('line in the list above it; if Classic moved too, GENERATOR_VERSION does.');
+   console.error('Then re-run with --save.');
+  } else if (!ARCH && wasGen !== null && wasGen === GENERATOR_VERSION) {
    console.error(`\nGENERATOR_VERSION is still ${GENERATOR_VERSION}.`);
    console.error('Output moved for an unchanged seed, so it has to go up, with a');
    console.error('line describing the change in the list above the constant in');
@@ -158,5 +188,5 @@ if (argv.includes('--save')) {
  }
  if (wasGen !== null && wasGen !== GENERATOR_VERSION)
   console.log(`\nnote: GENERATOR_VERSION went ${wasGen} -> ${GENERATOR_VERSION} and nothing moved. If that bump was for terrain, it did not land.`);
- console.log(`\nevery existing biome is unchanged${added.length ? `, ${added.length} new` : ''}`);
+ console.log(`\nevery existing biome is unchanged (${designer})${added.length ? `, ${added.length} new` : ''}`);
 }

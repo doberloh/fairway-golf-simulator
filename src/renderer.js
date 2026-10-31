@@ -15,7 +15,7 @@ import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
-import {biomeOf} from './biomes.js';
+import {architectOf,biomeOf} from './biomes.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -47,6 +47,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
 import {modelParts} from './mesh-assets.js';
+import {MESH_MODELS} from './asset-meshes.js';
 // THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
 // round 3). The sky's flat fill was 1.15 against a sun of 2.8: a third of
 // every surface's light came from no direction, and a dune turned from a noon
@@ -55,8 +56,31 @@ import {modelParts} from './mesh-assets.js';
 const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
+import {fountainDrops,dropAt,ringAt,jetAt} from './fountain.js';
+// PEOPLE IN THEIR OWN CLOTHES (the owner's review: "more variety"). One body
+// model makes many people: each part is one role (tools/blender/figures.py),
+// drawn white and coloured per figure from these -- skin, shirt, trousers or
+// skirt, a hat with its bag or umbrella, hair with the shoes. Each role is
+// picked by a hash of the figure, its body and the role (iteration 7: a
+// stride per role lined up across the five bodies, and a gallery stood in
+// the same navy shirt side by side).
+const PEOPLE_PALETTE={
+ stone:['#f1c9a5','#e0b48e','#c99470','#a8704a','#7d5236','#5c3a27'],
+ accent:['#f2efe6','#c0503a','#3f6fb0','#2f7a55','#e8c84a','#d8789a','#7a5aa8','#2e3440','#e88a3a','#8fc0e0','#b9d36a'],
+ bark:['#3d4a5c','#2e2e33','#c9b48a','#7a7f88','#ece8de','#4a5a3a','#5a4636'],
+ leaf:['#f4f1e6','#1f3550','#b03a2e','#e8c84a','#2e2e33','#5b8fc9','#2f5d48','#e07a9a'],
+ dirt:['#2a2522','#4a3426','#1a1a1c','#6b4a2e','#9a9590','#7a5530'],
+};
+const ROLE_SEED={stone:101,accent:211,bark:307,leaf:401,dirt:503};
+function dressPeople(mesh,role,n,salt){
+ const list=PEOPLE_PALETTE[role];if(!list)return;
+ const c=new T.Color();
+ for(let i=0;i<n;i++){let h=Math.imul(i+1,2654435761)^Math.imul(salt+7,40503)^Math.imul(ROLE_SEED[role],2246822519);h^=h>>>15;h=Math.imul(h,2246822519);h^=h>>>13;c.set(list[(h>>>0)%list.length]);mesh.setColorAt(i,c);}
+ mesh.instanceColor.needsUpdate=true;
+}
+
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
-import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
+import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
 import {addVegetation,farWoodGeometry} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {cullInstances} from './instance-cull.js';
@@ -65,6 +89,7 @@ import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {makeGodRays} from './godrays.js';
 import {applyCloudShadows,cloudShadowUniforms,packCloudShadows,allCloudShadows} from './cloud-shadows.js';
 import {makeClouds,applyCloudFade} from './clouds.js';
@@ -294,8 +319,9 @@ const WATER_EDGES={
   // sign of running water. Chevrons pointing downstream, fixed to the bed (no
   // drift), in patches where the bed is rough, faint along the banks.
   // Round 6: crests 2 m apart (were 1.1 m: thinner than a pixel from the bank).
-  float riffle=smoothstep(.5,.92,sin((vChan.x*.5+abs(across)*.35)*6.2832))*smoothstep(.42,.68,wNoise(vChan*vec2(.05,.2)+7.3));
-  foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
+  // REMOVED (the owner, 30 October 2026: "Remove the creek arrow texture. We
+  // don't need them."): the chevrons read as arrows painted on the water. The
+  // flecks and lace still drift downstream, so the water still runs.
   // Round 9: the wet line where the water meets the bank, as a pond's (round 4).
   float wetEdge=smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore));
   // Round 15: faint and broken (at .35 and unbroken it ran down both banks as
@@ -319,9 +345,9 @@ const WATER_EDGES={
   // and stronger patches.
   // Round 13: broader crests (they read as white dashes) and an opener V, in
   // more of the bed, stronger.
-  float riffle=smoothstep(.3,.85,sin((vChan.x*.8+abs(across)*.35)*6.2832))*smoothstep(.3,.55,wNoise(vChan*vec2(.08,.3)+2.9));
   // Round 15: softer (.7 read as lane markings down the middle).
-  foam=max(foam,riffle*.4*(.6+.4*fleck));
+  // REMOVED (the owner, 30 October 2026: "Remove the creek arrow texture"):
+  // the chevrons read as arrows on the water; the drifting flecks stay.
   // Round 9: the wet line at the bank.
   // Round 15: faint and broken, as a river's.
   foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.14*smoothstep(.35,.75,wNoise(vec2(drift*.6,across*2.))));
@@ -844,8 +870,18 @@ export class GolfView{
  // model at its real height in metres (the ingest makes every model one unit
  // tall), each role in its colour. Null where the build has none, so the
  // plain shapes stay as the fallback.
- furniture(name,height,colours){
+ // BATCHED FURNITURE (the goal's frame time on Low, measured on Autumn): the
+ // tee markers, signs, benches and ball washers were a group of meshes each,
+ // every part drawn again for its ink and in the shadow pass -- some 200 draws
+ // on a nine. With `batch`, furniture() hands back an empty placeholder for
+ // the caller to place as before, and flushFurniture() draws every placed
+ // piece as one InstancedMesh per model, colours and part (and one for its
+ // ink). The same pieces, in the same places and colours: only how they are
+ // drawn changes, Classic's as well as Architect's. A placeholder that takes
+ // a child (the sign's card) stays in the scene to carry it.
+ furniture(name,height,colours,{batch=false}={}){
   const parts=this.style==='cartoon'&&modelParts(name);if(!parts)return null;
+  if(batch){const o=new T.Object3D();o.scale.setScalar(height);(this.pendingFurniture=this.pendingFurniture||[]).push({name,height,colours,obj:o});return o;}
   const g=new T.Group();
   for(const p of parts){const m=new T.Mesh(p.geometry,this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}));m.castShadow=m.receiveShadow=true;g.add(m);
    // INKED OUTLINES (the cartoon overhaul's edges, round 2): the model again,
@@ -855,6 +891,21 @@ export class GolfView{
    // hand beside the uninked trees; 0.8 cm is definition, not a new style).
    const ink=new T.Mesh(p.geometry,this.inkMaterial(height));ink.castShadow=false;ink.receiveShadow=false;g.add(ink);}
   g.scale.setScalar(height);return g;
+ }
+ flushFurniture(){
+  const list=this.pendingFurniture||[];this.pendingFurniture=[];if(!list.length)return;
+  const buckets=new Map();
+  for(const it of list){it.obj.updateMatrix();const key=it.name+'|'+JSON.stringify(it.colours);if(!buckets.has(key))buckets.set(key,{name:it.name,height:it.height,colours:it.colours,matrices:[]});buckets.get(key).matrices.push(it.obj.matrix.clone());}
+  for(const b of buckets.values()){
+   for(const p of modelParts(b.name)||[]){
+    const m=new T.InstancedMesh(p.geometry,this.surfaceMaterial(b.colours[p.role]??'#ffffff',{vertexColors:p.painted}),b.matrices.length);
+    const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(b.height),b.matrices.length);
+    b.matrices.forEach((x,i)=>{m.setMatrixAt(i,x);ink.setMatrixAt(i,x);});
+    m.castShadow=m.receiveShadow=true;ink.castShadow=ink.receiveShadow=false;
+    for(const x of [m,ink]){x.instanceMatrix.needsUpdate=true;x.computeBoundingSphere();this.group.add(x);}
+   }
+  }
+  for(const it of list)if(!it.obj.children.length)it.obj.parent?.remove(it.obj);
  }
  inkMaterial(height){
   this.inks=this.inks||new Map();
@@ -1014,10 +1065,10 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
+ disposeCourse(){this.pendingFurniture=[];this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1079,7 +1130,7 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
-  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}this.flushFurniture();
   if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
@@ -1111,7 +1162,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.occasion=this.addOccasion(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -1328,11 +1379,15 @@ export class GolfView{
  // compiled with the screen bound built versions no frame ever used -- and the
  // first time the floodlights came on, every lit program was built for real in
  // one frame: 12-16 s frozen on Ultra, nothing on High, which has no bloom.
+ // Every compile runs with every culled mesh visible (instance-cull.js
+ // `forCompile`): a hidden mesh is skipped, and was built mid-play when it
+ // first came into view (the hole-out flyover).
  asDrawn(fn){
-  if(!this.bloom)return fn();
+  const run=()=>this.cull?this.cull.forCompile(fn):fn();
+  if(!this.bloom)return run();
   const was=this.renderer.getRenderTarget();
   this.bloom.begin(this.renderer);
-  try{return fn();}
+  try{return run();}
   finally{this.renderer.setRenderTarget(was);}
  }
  async ready(){
@@ -1374,11 +1429,31 @@ export class GolfView{
   // above never sees them.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
   finally{this.showStandIns(false);}
+  this.drawEverythingOnce();
   // For the lab: how long each half took. The first is time the page stays
   // live; the second blocks it, so it is the one to keep small.
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
   this.readying=false;
   return this.readyTimes;
+ }
+ // EVERY PROGRAM DRAWN ONCE, BEHIND THE LOADING SCREEN. A program is built by
+ // the compile but on Windows only finished at its first real draw, and the
+ // first frame draws only what the tee's view and the cull let through: on a
+ // course whose ponds (or a planting) are out of view from the first tee,
+ // their programs were first drawn in play -- at the hole-out flyover, a
+ // frozen frame (the smoke journey ball-light-hole-out, 3 runs in 8 failing on
+ // main; a water body, then a tree, named by it). So, once: everything, the
+ // frustum cull off and every culled mesh shown, drawn into a single pixel --
+ // a vertex pass of the course with no shading cost, at the end of `ready`.
+ drawEverythingOnce(){
+  if(!this.group)return;
+  const r=this.renderer,off=[];
+  this.scene.traverse(o=>{if(o.frustumCulled&&(o.isMesh||o.isLine||o.isPoints||o.isSprite)){o.frustumCulled=false;off.push(o);}});
+  const scissorOn=r.getScissorTest(),box=r.getScissor(new T.Vector4());
+  this.showStandIns(true);
+  try{this.asDrawn(()=>{r.setScissorTest(true);r.setScissor(0,0,1,1);r.render(this.scene,this.camera);});}
+  catch(e){console.warn('Fairway: drawing everything once skipped',e);}
+  finally{r.setScissor(box);r.setScissorTest(scissorOn);for(const o of off)o.frustumCulled=true;this.showStandIns(false);}
  }
  // The probes `build` left for later (see the note where it sets `probeDue`).
  //
@@ -1400,7 +1475,7 @@ export class GolfView{
  asProbe(fn){
   const was=this.renderer.getRenderTarget();
   this.renderer.setRenderTarget(this.probeTarget());
-  try{return fn();}
+  try{return this.cull?this.cull.forCompile(fn):fn();}
   finally{this.renderer.setRenderTarget(was);}
  }
  // The cube every probe is photographed into, one for the course.
@@ -1482,11 +1557,17 @@ export class GolfView{
   const put=(hole,col,v)=>holeData.set(v,(hole*W+col)*4);
   for(const h of this.world.holes){
    if(h.greens)writeRangeGreens(h,(col,v)=>put(h.hole,col,v),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
-   else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);}
-   [...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
+   else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,h.greenTurn||0]);}
+   // An Architect hole's collection areas first (marked -1; architect.js), so a
+   // bunker over one is painted after it and stays sand.
+   // A bunker past the slots (`field`, surface-field.js) is painted from the
+   // surface field instead.
+   [...(h.collections||[]),...h.bunkers.filter(b=>!b.field),...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,b.collection?-1:h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
   }
-  this.holeAtlas=new T.DataTexture(holeData,W,rows,T.RGBAFormat,T.FloatType);this.holeAtlas.minFilter=this.holeAtlas.magFilter=T.NearestFilter;this.holeAtlas.needsUpdate=true;this.resources.push(this.holeAtlas);
-  const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas=new T.DataTexture(bankData,512,rows*4,T.RGBAFormat,T.FloatType);this.bankAtlas.minFilter=this.bankAtlas.magFilter=T.LinearFilter;this.bankAtlas.needsUpdate=true;this.resources.push(this.bankAtlas);
+  // Plain arrays: the ground packs them, with its curves and streams, into one
+  // texture (ground.js packTables) -- a sampler each was three too many.
+  this.holeAtlas={image:{data:holeData}};
+  const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas={image:{data:bankData}};
  }
  addWaterBody(geometry,level,depth,center,ocean=false,stream=false){
   const blue=this.style==='blueprint',toon=this.style==='cartoon',real=this.style==='realistic',tint=new T.Color(blue?'#398ca2':toon?new T.Color(this.world.bio.water).lerp(new T.Color('#8eb8b2'),.27):this.world.bio.water);if(real&&depth<2)tint.lerp(new T.Color('#9fba98'),.35*(1-depth/2));
@@ -1907,19 +1988,483 @@ export class GolfView{
  // white figures on the flag's colour, as most clubs print them, where the
  // cloth was a plain rectangle. `number` absent (the range): plain, as before.
  // The stick and cup are untouched -- the ball plays against them.
- flagCloth(color,number){
+ flagCloth(color,number,ink='#fffaf0'){
   const c=document.createElement('canvas');c.width=128;c.height=88;const ctx=c.getContext('2d');
   ctx.fillStyle=color;ctx.fillRect(0,0,128,88);
   ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(0,0,128,6);ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(0,82,128,6);
-  ctx.fillStyle='#fffaf0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
+  ctx.fillStyle=ink;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 58px '+UI_FONT;ctx.fillText(String(number),64,47);
   const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;this.resources.push(tex);return tex;
  }
- addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null}={}){
+ addCupAndFlag(p,y,{color=null,tall=1,cloth=1,number=null,ink=undefined}={}){
   const group=this.group,blue=this.style==='blueprint',white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
+  const printed=number!=null&&this.style==='cartoon',geo=printed?twoSidedCloth():new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flagColor=blue?'#8df1dd':color||'#dc7845',flag=new T.Mesh(geo,printed?this.surfaceMaterial('#ffffff',{map:this.flagCloth(flagColor,number,ink)}):this.surfaceMaterial(flagColor,{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
   return {assembly,pole,flag,cup,liner,floor};
+ }
+ // CART PATHS AND THEIR BRIDGES (architect-courses, phase 2; paths.js): a strip
+ // laid on the ground along each path, a hair above it, in the landscape's
+ // material, and a plank bridge where one crosses a creek. Only an Architect
+ // course has any. The strip follows the ground AS DRAWN -- the lie reads the
+ // same polyline (course.js `surface`), so paint and play agree.
+ // A CART PATH'S SURFACE, painted on a canvas once per kind: the pattern a
+ // player reads at a glance -- asphalt's chips and its two edge lines,
+ // concrete's joints, gravel, shell and bark scattered, granite's fines, a
+ // boardwalk's planks. Light on mid-grey, so the material's colour sets the
+ // tone and the tile only modulates it. Across the path is u (0-1), along it
+ // v (a tile per 4 m). PLACED.
+ pathTexture(kind){
+  this.pathTextures=this.pathTextures||{};
+  if(this.pathTextures[kind])return this.pathTextures[kind];
+  if(typeof document==='undefined')return null;
+  const c=document.createElement('canvas');c.width=64;c.height=128;const g=c.getContext('2d');
+  let seed=[...kind].reduce((a,ch)=>a*31+ch.charCodeAt(0),7)>>>0;const r=()=>(seed=(seed*1664525+1013904223)>>>0)/4294967296;
+  g.fillStyle='#e6e6e6';g.fillRect(0,0,64,128);
+  const dots=(n,size,light,dark)=>{for(let i=0;i<n;i++){g.fillStyle=r()<.5?light:dark;const s=size*(.5+r());g.fillRect(r()*64,r()*128,s,s);}};
+  if(kind==='boardwalk'){for(let y=0;y<128;y+=8){g.fillStyle=r()<.5?'#f2f2f2':'#dcdcdc';g.fillRect(0,y,64,7);g.fillStyle='#9a9a9a';g.fillRect(0,y+7,64,1);}g.fillStyle='#b0b0b0';g.fillRect(6,0,2,128);g.fillRect(56,0,2,128);}
+  else if(kind==='concrete'){dots(160,1.2,'#f4f4f4','#d2d2d2');g.fillStyle='#b8b8b8';g.fillRect(0,0,64,1.5);g.fillRect(0,64,64,1.5);}
+  else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
+  else if(kind==='bark'){for(let i=0;i<220;i++){g.save();g.translate(r()*64,r()*128);g.rotate(r()*Math.PI);g.fillStyle=r()<.5?'#f0f0f0':'#c8c8c8';g.fillRect(-3,-1,6,2);g.restore();}}
+  else dots(kind==='shell'?520:460,kind==='granite'?1:1.8,'#fafafa',kind==='shell'?'#d9d9d9':'#bdbdbd');
+  // Darker at the edges, so the path's sides read against the grass.
+  const e=g.createLinearGradient(0,0,64,0);e.addColorStop(0,'rgba(0,0,0,.18)');e.addColorStop(.12,'rgba(0,0,0,0)');e.addColorStop(.88,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.18)');g.fillStyle=e;g.fillRect(0,0,64,128);
+  const tex=new T.CanvasTexture(c);tex.wrapS=T.ClampToEdgeWrapping;tex.wrapT=T.RepeatWrapping;tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;
+  this.pathTextures[kind]=tex;this.resources.push(tex);return tex;
+ }
+ addPaths(w){
+  if(!w?.paths?.length)return;
+  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f'};
+  // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
+  // twenty-odd draws on a course whose paths are many short pieces).
+  const byKind=new Map();
+  for(const path of w.paths){
+   // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
+   // "clipping through hills"): a straightened run's corners can be a hundred
+   // metres apart, and a strip with points only there ran straight through
+   // the dune between them. A point every 2 m, each set on the ground.
+   const p=[];path.points.forEach((q,k)=>{if(!k){p.push(q);return;}const o=path.points[k-1],n=Math.max(1,Math.ceil(Math.hypot(q.x-o.x,q.z-o.z)/2));for(let t=1;t<=n;t++)p.push({x:o.x+(q.x-o.x)*t/n,z:o.z+(q.z-o.z)*t/n});});
+   if(p.length<2)continue;
+   const kind=path.kind||'concrete';if(!byKind.has(kind))byKind.set(kind,{pos:[],uv:[],idx:[]});
+   const {pos,uv,idx}=byKind.get(kind),base=pos.length/3,half=path.width/2;let run=0;
+   for(let i=0;i<p.length;i++){
+    const a=p[Math.max(0,i-1)],b=p[Math.min(p.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
+    if(i)run+=Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z);
+    for(const s of [-1,1]){const x=p[i].x+nx*half*s,z=p[i].z+nz*half*s;pos.push(x,w.height(x,z)+.035,z);uv.push(s<0?0:1,run/4);}
+    if(i){const k=base+(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
+   }
+  }
+  for(const [kind,{pos,uv,idx}] of byKind){
+   const path={kind};
+   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+   // Painted, not flat (the owner's review: "a better texture"): the surface's
+   // own pattern, a tile per 4 m (`pathTexture`), white in the tile so the
+   // material's colour still sets the tone.
+   const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,map:this.pathTexture(path.kind)});
+   const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;mesh.userData.path=true;this.group.add(mesh);this.resources.push(g,mat);
+  }
+  // THE BRIDGES (phase 5; tools/blender/architect_water.py): 2 m bays laid
+  // end to end across the span, timber or stone by landscape, each fitted to
+  // the deck physics stands the ball on (course.js `b.deck`, its top) and to
+  // the path's width, inked like the furniture.
+  // Timber or stone, and the stone's colour, by the landscape's architect block.
+  // INSTANCED (the owner's review, measured: each bay was its own group of
+  // meshes, every part twice for its ink, so a 30 m bridge -- a Barranca's,
+  // spanned wall to wall -- was some 60 meshes and Autumn's Architect course
+  // drew 163 more calls than Classic on Low). Now one InstancedMesh per part,
+  // and one for its ink, for every bay of every bridge.
+  const bridgeOf=k=>architectOf(k),key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+  const parts=modelParts(name),info=MESH_MODELS[name];
+  if(parts&&info&&w.bridges?.length){
+   const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:bridgeOf(key).colours.bridgeStone}:{bark:'#8f6a45',stone:'#6b4a2f'};
+   const bays=[];
+   for(const b of w.bridges){
+    const y=b.deck??Math.max(w.height(b.x,b.z),0)+.45,n=Math.max(1,Math.ceil(b.span/2)),bay=b.span/n,ca=Math.sin(b.angle),cb=Math.cos(b.angle);
+    for(let i=0;i<n;i++){const t=(i+.5)/n-.5;bays.push({x:b.x+ca*b.span*t,y:y-DECK_TOP,z:b.z+cb*b.span*t,angle:b.angle,sx:b.width/(2*info.rx),sz:bay/(2*info.rz)});}
+   }
+   const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3(),ink=this.inkMaterial(H);
+   parts.forEach(p=>{
+    const mat=this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted});
+    const m=new T.InstancedMesh(p.geometry,mat,bays.length),k=new T.InstancedMesh(p.geometry,ink,bays.length);
+    bays.forEach((b,i)=>{q.setFromAxisAngle(up,b.angle);pos.set(b.x,b.y,b.z);sc.set(b.sx,H,b.sz);m4.compose(pos,q,sc);m.setMatrixAt(i,m4);k.setMatrixAt(i,m4);});
+    m.castShadow=m.receiveShadow=true;k.castShadow=k.receiveShadow=false;
+    for(const x of [m,k]){x.instanceMatrix.needsUpdate=true;x.computeBoundingSphere();this.group.add(x);}
+    this.resources.push(mat);
+   });
+  }
+ }
+ // WATER MADE BY PEOPLE (phase 5; waterworks.js, tools/blender/architect_water.py):
+ // rip-rap stones and railway-tie walls along a pond's faced edge, a fountain
+ // in a big pond; instanced, the ties and the fountain inked. Decoration.
+ addWaterworks(w){
+  this.fountains=null;
+  if(!w?.waterworks?.length||this.style!=='cartoon')return;
+  const key=w.bio?.key||w.settings?.biome;
+  // Iteration 4: a shade darker than the sheet's -- pale stone went pink-white in the afternoon sun.
+  const ROCK={[key]:architectOf(key).colours.riprap};
+  const KINDS=[
+   ...[1,2,3].map(v=>({kind:'riprap',variant:v-1,model:'Blender_RipRap_'+v,height:.34,colours:{stone:ROCK[key]||'#a8a298'}})),
+   {kind:'bulkhead',model:'Blender_Bulkhead_1',height:.9,inked:true,colours:{bark:'#5e4733',stone:'#8b8a85'}},
+  ];
+  // The fountain is drawn here and moves (addFountains, fountain.js): the
+  // Blender plume was frozen (the owner's review: "fountains need to be
+  // animated").
+  this.fountains=this.addFountains(w.waterworks.filter(m=>m.kind==='fountain'));
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  for(const spec of KINDS){
+   const list=w.waterworks.filter(m=>m.kind===spec.kind&&(spec.variant==null||m.variant===spec.variant));if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted});
+    const mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((m,i)=>{q.setFromAxisAngle(up,m.rot||0);pos.set(m.x,m.y,m.z);sc.setScalar(spec.height*(m.size||1));mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=spec.kind!=='riprap';mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+    this.group.add(mesh);this.resources.push(mat);
+    if(spec.inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
+  }
+ }
+ // A FOUNTAIN IN MOTION (the owner's review; fountain.js says where the
+ // water is). Per fountain: a foam boil on the water, a jet core that
+ // breathes, a few hundred drops flying up and falling back, and rings
+ // spreading where they land. All the fountains' drops are one InstancedMesh
+ // that moves, so noCull. Two fountains a course at most, so a few hundred
+ // matrices a frame: on every tier, at 30 a second on Low.
+ addFountains(list){
+  if(!list.length)return null;
+  // Iteration 2: smaller drops, each a rounder body stretched along its
+  // flight (were 240 faceted ones, which read as popcorn); iteration 4: 480.
+  const N=480,group=new T.Group(),white='#f4fbff';
+  const dropMat=this.surfaceMaterial(white),drops=new T.InstancedMesh(new T.IcosahedronGeometry(1,1),dropMat,N*list.length);
+  drops.castShadow=false;drops.receiveShadow=false;drops.frustumCulled=false;drops.userData.noCull=true;group.add(drops);this.resources.push(dropMat);
+  const ringGeo=new T.RingGeometry(.86,1,40).rotateX(-Math.PI/2),boilGeo=new T.CircleGeometry(1.25,24).rotateX(-Math.PI/2),skirtGeo=new T.RingGeometry(1.5,3.3,40).rotateX(-Math.PI/2);
+  const jetGeo=new T.CylinderGeometry(.09,.22,1,10,1,true).translate(0,.5,0);
+  const each=list.map((f,i)=>{
+   const at=new T.Group();at.position.set(f.x,f.y,f.z);group.add(at);
+   const boilMat=new T.MeshBasicMaterial({color:white,transparent:true,opacity:.8,depthWrite:false});
+   const boil=new T.Mesh(boilGeo,boilMat);boil.position.y=.03;boil.renderOrder=2;at.add(boil);
+   // Iteration 5: a faint skirt of foam where the crown lands, flickering,
+   // so from across the pond the plume stands on white water.
+   const skirtMat=new T.MeshBasicMaterial({color:white,transparent:true,opacity:.22,depthWrite:false}),skirt=new T.Mesh(skirtGeo,skirtMat);skirt.position.y=.035;skirt.renderOrder=2;at.add(skirt);this.resources.push(skirtMat);
+   const jetMat=this.surfaceMaterial(white);jetMat.transparent=true;jetMat.opacity=.88;
+   const jet=new T.Mesh(jetGeo,jetMat);at.add(jet);
+   const rings=[0,1,2].map(()=>{const m=new T.MeshBasicMaterial({color:white,transparent:true,opacity:0,depthWrite:false}),r=new T.Mesh(ringGeo,m);r.position.y=.04;r.renderOrder=2;at.add(r);this.resources.push(m);return r;});
+   this.resources.push(boilMat,jetMat);
+   return {f,at,boil,skirt,jet,rings,list:fountainDrops(N,i*7919+Math.round(f.x*13+f.z*7)),phase:i*1.9};
+  });
+  const m4=new T.Matrix4(),q=new T.Quaternion(),pos=new T.Vector3(),sc=new T.Vector3(),up=new T.Vector3(0,1,0),v=new T.Vector3();
+  const place=t=>{
+   each.forEach((e,i)=>{
+    e.list.forEach((d,k)=>{const p=dropAt(d,t);pos.set(e.f.x+p.x,e.f.y+p.y,e.f.z+p.z);v.set(p.vx,p.vy,p.vz);const speed=v.length()||1;q.setFromUnitVectors(up,v.multiplyScalar(1/speed));const s=Math.max(1e-4,p.s);sc.set(s,s*(1+speed*.45),s);drops.setMatrixAt(i*N+k,m4.compose(pos,q,sc));});
+    e.jet.scale.set(1,jetAt(t,e.phase),1);
+    e.boil.scale.setScalar(1+.08*Math.sin(t*5.1+e.phase));
+    e.skirt.material.opacity=.2+.06*Math.sin(t*7.3+e.phase)+.03*Math.sin(t*13.1);
+    e.rings.forEach((r,k)=>{const g=ringAt(k,e.rings.length,t);r.scale.setScalar(g.r);r.material.opacity=g.o;});
+   });
+   drops.instanceMatrix.needsUpdate=true;
+  };
+  place(0);
+  this.group.add(group);
+  let since=0;
+  return {group,update:(dt,t)=>{since+=dt;if(this.quality===tierOf('low')&&since<1/30)return;since=0;place(t);}};
+ }
+ // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,
+ // tools/blender/architect_people.py): stakes, yardage posts and rakes, a few
+ // hundred a course, so drawn instanced -- one InstancedMesh per model part per
+ // colour -- and uninked (the furniture's ink is a handful of pieces a hole).
+ // Decoration: nothing a ball hits.
+ addMarkings(w){
+  this.markings=null;
+  if(!w?.markers?.length||this.style!=='cartoon')return;
+  // Grouped, and not drawn on Low (the owner's review, measured: some forty
+  // draws of stakes, posts and rakes were most of what an Architect course
+  // cost over Classic on Low -- Low already leaves out the animals and the
+  // crowd). The frame loop sets the group's visibility by tier.
+  const marks=new T.Group();marks.name='Markings';this.group.add(marks);this.markings=marks;
+  const KINDS={
+   stake:{model:'Blender_Stake_1',height:.92,colours:{accent:'#e64a34',bark:'#4b3a2a'}},
+   obstake:{model:'Blender_ObStake_1',height:1.05,colours:{stone:'#f6f3ea',bark:'#4b3a2a'}},
+   post100:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#d63c30',stone:'#2f4a35',bark:'#3a2e22'}},
+   post150:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#f8f6ef',stone:'#2f4a35',bark:'#3a2e22'}},
+   post200:{model:'Blender_YardagePost_1',height:.64,colours:{accent:'#2f62c4',stone:'#2f4a35',bark:'#3a2e22'}},
+   rake:{model:'Blender_Rake_1',height:.12,length:2.3,colours:{accent:'#e8b84a',bark:'#a9845a'}},
+  };
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  for(const [kind,spec] of Object.entries(KINDS)){
+   const list=w.markers.filter(m=>m.kind===kind);if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   const info=MESH_MODELS[spec.model];
+   for(const p of parts){
+    const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted});
+    const mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((m,i)=>{
+     // The ingest makes a model one unit tall; a rake is scaled back by its
+     // length instead, since it lies flat.
+     const k=spec.length?spec.length/Math.max(info?.rz??1,info?.rx??1)/2:spec.height;
+     q.setFromAxisAngle(up,m.rot||0);pos.set(m.x,w.height(m.x,m.z),m.z);sc.setScalar(k);
+     mesh.setMatrixAt(i,m4.compose(pos,q,sc));
+    });
+    mesh.castShadow=kind!=='rake';mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+    marks.add(mesh);this.resources.push(mat);
+    // Iteration 6: the furniture's ink, instanced, on what stands up (not a
+    // rake lying in the grass), so a stake keeps its outline at a distance.
+    if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();marks.add(ink);}
+   }
+  }
+ }
+ // AN ARCHITECT COURSE'S BUILDINGS (architect-courses, phase 2; clubhouse.js):
+ // the landscape's clubhouse (tools/blender/architect_clubhouses.py), its
+ // model fitted to the box physics stops the ball against -- width, depth and
+ // height -- and inked like the furniture. Colours by landscape: walls, roof,
+ // trim and glass (Haunted Hollow's windows are lit).
+ addBuildings(w){
+  if(!w?.buildings?.length||this.style!=='cartoon')return;
+  // The clubhouse's colours are its landscape's architect block's (biomes.js).
+  const look=architectOf(w.bio?.key||w.settings?.biome).colours.clubhouse;
+  // THE LAND'S STORY'S BUILDINGS (phase 6; story.js, tools/blender/architect_story.py):
+  // fitted to their boxes the same way, coloured by piece and landscape.
+  const key=w.bio?.key||w.settings?.biome,ruinStone=architectOf(key).colours.ruin;
+  const STORY={
+   barn:{bark:'#b8463a',stone:'#7a7470',dirt:'#4d4a50',accent:'#f4f1ea'},
+   silo:{stone:'#d9d4c8',accent:'#9aa0a6',dirt:'#7d8a96'},
+   windpump:{stone:'#a7aaad',bark:'#6b5a48',dirt:'#4a4a4a',accent:'#e8e4da'},
+   chapel:{stone:ruinStone},cottage:{stone:ruinStone},
+   minehead:{bark:'#6b4f36',dirt:'#3a3a3e'},
+   sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
+   lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
+   church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
+   // Tournament week (phase 7; occasion.js): the event's green.
+   stand:{stone:'#b9bec4',accent:'#1f5a3a',leaf:'#f6f6f2',bark:'#3c4a63'},
+   scoreboard:{stone:'#8d949b',accent:'#1f5a3a',leaf:'#f8f8f4',bark:'#2a2f38',dirt:'#c0503a'},
+   tower:{stone:'#a9afb6',accent:'#1f5a3a',leaf:'#f2f2ee',dirt:'#2a2d33'},
+   marquee:{leaf:'#fbfbf8',accent:'#1f5a3a',bark:'#3a3f47',stone:'#b9bec4'},
+  };
+  for(const b of w.buildings){
+   const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const tone=club?look:(STORY[b.kind]||{});
+   // ONE MESH A BUILDING (the owner's review, measured: a part a mesh, each
+   // inked and in the shadow pass, made Autumn's Architect course on Low draw
+   // a third more than Classic). Each part's role colour is baked into its
+   // vertices -- times the paint where it has one (mesh-assets.js: 1.0 is
+   // "as painted") -- and the parts merged: one mesh and one ink a building.
+   const g=new T.Group();
+   {const geos=parts.map(p=>{
+     const src=p.geometry.index?p.geometry.toNonIndexed():p.geometry.clone(),n=src.attributes.position.count,c=new T.Color(tone[p.role]??'#ffffff'),col=new Float32Array(n*3),paint=p.painted?src.attributes.color:null;
+     for(let i=0;i<n;i++){col[i*3]=c.r*(paint?paint.getX(i):1);col[i*3+1]=c.g*(paint?paint.getY(i):1);col[i*3+2]=c.b*(paint?paint.getZ(i):1);}
+     const out=new T.BufferGeometry();out.setAttribute('position',src.attributes.position);out.setAttribute('normal',src.attributes.normal);out.setAttribute('color',new T.BufferAttribute(col,3));return out;});
+    const merged=mergeGeometries(geos);for(const x of geos)x.dispose();
+    const m=new T.Mesh(merged,this.surfaceMaterial('#ffffff',{vertexColors:true}));m.castShadow=m.receiveShadow=true;g.add(m);
+    const ink=new T.Mesh(merged,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);}
+   // The model's front is glTF +z (its Blender -y); the building's front is
+   // its local -z, toward the first tee -- hence the half turn.
+   g.scale.set(b.width/(2*info.rx),b.height,b.depth/(2*info.rz));
+   g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);
+   this.group.add(g);
+   if(b.kind==='scoreboard')this.addBoardFace(b);
+   // THE TERRACE: on sloping ground the floor is level with the high side
+   // (clubhouse.js), so a stone wall runs down to the lowest ground under it.
+   const drop=b.y-(b.base??b.y)+.6;
+   if(club&&drop>.8){
+    const wall=new T.Mesh(new T.BoxGeometry(b.width+1.2,drop,b.depth+1.2),this.surfaceMaterial('#c9bea9'));
+    wall.position.set(b.x,b.y-drop/2+.2,b.z);wall.rotation.y=b.rotation;wall.castShadow=wall.receiveShadow=true;
+    this.group.add(wall);this.resources.push(wall.geometry,wall.material);
+   }
+  }
+ }
+ // THE SCOREBOARD'S FACE, LIVE (the owner's review: "actually show the
+ // players score"; leaderboard.js says what is on it, main.js feeds it). A
+ // canvas over the model's white face -- 11.2 x 3.3 m, 3.3-6.6 m up, its
+ // front 1 m out from the board's centre (occasion.js FOOTPRINT, depth 2) --
+ // in an unscaled group turned as the building is. Redrawn only when what it
+ // says changes. The model's painted bars stay behind it, unseen.
+ addBoardFace(b){
+  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=302;
+  const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;
+  const mat=new T.MeshBasicMaterial({map:tex,toneMapped:false}),face=new T.Mesh(new T.PlaneGeometry(11.2,3.3),mat);
+  const g=new T.Group();g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);face.position.set(0,4.95,b.depth/2+.04);g.add(face);
+  this.group.add(g);this.resources.push(mat,face.geometry,tex);
+  this.board={canvas,tex,said:''};
+  this.setLeaderboard(this.pendingBoard||{title:'LEADERS',rows:[]});
+ }
+ hasBoard(){return !!this.board;}
+ setLeaderboard(board){
+  this.pendingBoard=board;
+  const B=this.board;if(!B)return;
+  const said=JSON.stringify(board);if(said===B.said)return;B.said=said;
+  // What the board says, on the page too (the smoke journey
+  // `architect-tournament` reads it: the texture cannot be read back).
+  if(this.canvas?.dataset)this.canvas.dataset.leaderboard=said;
+  const c=B.canvas.getContext('2d'),W=B.canvas.width,H=B.canvas.height;
+  c.fillStyle='#f8f8f4';c.fillRect(0,0,W,H);
+  c.fillStyle='#1f5a3a';c.fillRect(0,0,W,46);
+  c.fillStyle='#f8f8f4';c.font='700 30px Arial, sans-serif';c.textBaseline='middle';c.textAlign='left';c.fillText(board.title||'LEADERS',18,24);
+  c.textAlign='right';c.font='700 22px Arial, sans-serif';c.fillText('TODAY',W-150,25);c.fillText('THRU',W-24,25);
+  const rows=board.rows||[],rh=(H-52)/Math.max(8,rows.length);
+  rows.forEach((r,i)=>{
+   const y=52+rh*(i+.5);
+   if(r.you){c.fillStyle='#fff1b8';c.fillRect(0,y-rh/2,W,rh);}
+   c.fillStyle='#2a2f38';c.font='700 26px Arial, sans-serif';c.textAlign='left';c.fillText(r.pos,18,y);
+   c.font=(r.you?'700 ':'600 ')+'27px Arial, sans-serif';c.fillText(String(r.name).toUpperCase().slice(0,22),110,y);
+   c.textAlign='right';c.fillStyle=r.under?'#c8281e':'#2a2f38';c.font='700 28px Arial, sans-serif';c.fillText(r.score,W-150,y);
+   c.fillStyle='#2a2f38';c.font='600 26px Arial, sans-serif';c.fillText(r.thru,W-24,y);
+  });
+  B.tex.needsUpdate=true;
+ }
+ // TOURNAMENT WEEK'S ROPES AND CROWD (phase 7; occasion.js): gallery ropes in
+ // 6 m sections, and spectators -- in three shirt colours, by turns -- behind
+ // them and in the stands. The crowd is hidden on Low (the frame loop).
+ addOccasion(w){
+  const o=w?.occasion;if(!o||this.style!=='cartoon'||(!o.ropes.length&&!o.crowd.length))return null;
+  const group=new T.Group();group.name='Occasion';this.group.add(group);
+  const crowd=new T.Group();crowd.name='Crowd';group.add(crowd);
+  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  // A spectator turns a little on their own (iteration 6: a gallery all
+  // facing one exact way read as soldiers); by index, so it never moves.
+  const turn=(it,i,dress)=>dress==null?0:Math.sin(i*12.9898+dress*78.233)*.25;
+  const draw=(parent,model,list,colours,h,len,dress)=>{
+   const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info||!list.length)return;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(colours?colours[p.role]??'#ffffff':'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);if(!colours)dressPeople(mesh,p.role,list.length,dress);
+    list.forEach((it,i)=>{q.setFromAxisAngle(up,(it.rot||0)+turn(it,i,colours?null:dress));pos.set(it.x,it.y??w.height(it.x,it.z),it.z);if(len)sc.set(h,h,len/(2*info.rz));else sc.setScalar(h);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();parent.add(mesh);this.resources.push(mat);
+   }
+  };
+  draw(group,'Blender_GalleryRope_1',o.ropes,{stone:'#e9e6dc',accent:'#1f5a3a',dirt:'#f2d34a'},1.0,6);
+  // Five bodies taken in turn, every spectator dressed from the palette
+  // (the owner's review: "crowds need more variety"; were one body in
+  // three shirts).
+  // Each at its own height: a child is a child, an umbrella stands over
+  // its holder (all five had been stretched to 1.75 m).
+  // Umbrellas only in the standing gallery (iteration 8: a fifth of a stand
+  // under umbrellas hid the rows behind); in a stand (`seated`) that body
+  // is a spectator in a cap.
+  const body=(c,i)=>{const v=i%5;return v===2&&c.seated?0:v;};
+  for(let v=0;v<5;v++){const model='Blender_Spectator_'+(v+1);draw(crowd,model,o.crowd.filter((c,i)=>body(c,i)===v),null,MESH_MODELS[model]?.tall??1.75,0,v*11+1);}
+  return {group,crowd};
+ }
+ // THE LAND'S STORY'S WALLS AND PROPS (phase 6; story.js): a wall is 2 m
+ // sections laid end to end along each run, stone or hedge, a moor wall's
+ // sections leaning; the props -- a stone circle, the Dell's white aiming
+ // stone, lanterns -- one by one. Instanced; the stone inked like the
+ // furniture. The walls are solid (physics.js reads `wallBoxes`), the props
+ // decoration.
+ addStory(w){
+  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length))return;
+  const key=w.bio?.key||w.settings?.biome;
+  const STONE=architectOf(key).colours.wall;
+  const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
+  const draw=(model,list,colours,inked,place)=>{
+   if(!list.length)return;
+   const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info)return;
+   for(const p of parts){
+    const mat=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    list.forEach((it,i)=>{place(it,info);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+    mesh.castShadow=mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();this.group.add(mesh);this.resources.push(mat);
+    if(inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(1.2),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
+   }
+  };
+  // Each run cut into sections of about 2 m; a section sits at the lower of
+  // the ground under its ends, sunk a little so a slope shows no gap.
+  const sections=kind=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='hedge')===(kind==='hedge'))){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/2)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot,len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
+  const wallPlace=h=>(s,info)=>{q.setFromAxisAngle(up,s.rot);if(s.lean){q2.setFromAxisAngle(fwd,s.lean);q.multiply(q2);}pos.set(s.x,s.y,s.z);sc.set(h,h,s.len/(2*info.rz));};
+  // Iteration 4: uninked -- inked, a wall's small stones went black.
+  draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
+  draw('Blender_StoryWall_Hedge',sections('hedge'),{leaf:'#4f7a3a'},false,wallPlace(1.6));
+  const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
+  draw('Blender_StandingStone_1',props.filter(p=>p.kind==='stone'),{stone:key==='haunted'?'#7b7486':'#9d968a'},true,at(2.0));
+  // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
+  draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
+  draw('Blender_Lantern_1',props.filter(p=>p.kind==='lantern'),{bark:'#2b2630',leaf:'#ffcc66'},false,at(2.12));
+  // A Restored course's felled avenue (phase 6's history): the shipped stumps.
+  draw('Blender_Stump_1',props.filter(p=>p.kind==='stump'),{bark:'#6b5440',leaf:'#8a6e52',stone:'#8a6e52',dirt:'#4a3a2e',accent:'#c9a77c'},true,at(.7));
+ }
+ // LIFE ON AN ARCHITECT COURSE (phase 6; life.js, tools/blender/architect_life.py):
+ // grazers turning slowly where they stand, birds circling, walkers along
+ // the path and a mower going out and back along their stretch. One instanced mesh per model
+ // part, their matrices rewritten thirty times a second; the group is hidden
+ // on Low (the frame loop). Decoration: nothing here is solid.
+ addLife(w){
+  if(!w?.life?.length||this.style!=='cartoon')return null;
+  // Iteration 4: drawn a quarter to a half larger than life, a cartoon's
+  // exaggeration (at true size a sheep was a dot in the marram at 22 m).
+  const SPEC={
+   sheep:{model:'Blender_Sheep_1',h:1.15,colours:{stone:'#f4f1e8',dirt:'#2e2a2a'}},
+   // Iteration 8: a lighter body (it read as a dark lump on the bank).
+   goose:{model:'Blender_Goose_1',h:1.0,colours:{stone:'#b9ad9a',bark:'#2b2a28',accent:'#f7f3ea'}},
+   deer:{model:'Blender_Deer_1',h:1.8,colours:{stone:'#a2724a',dirt:'#2e2622',accent:'#efe6d6'}},
+   elk:{model:'Blender_Elk_1',h:3.0,colours:{stone:'#9a7350',dirt:'#4a3a2e',accent:'#d9c9a8',bark:'#4f3a2a'}},
+   heron:{model:'Blender_Heron_1',h:1.35,colours:{stone:'#a9b0b6',bark:'#3b3f45',dirt:'#5b5248',accent:'#e5b54a'}},
+   roadrunner:{model:'Blender_Roadrunner_1',h:.7,colours:{stone:'#8a7a62',bark:'#3a332c',dirt:'#2a2522',accent:'#5a6a8a'}},
+   gull:{model:'Blender_Bird_1',h:.42,colours:{stone:'#f6f6f2',bark:'#3a3d42',accent:'#e5b54a'}},
+   raven:{model:'Blender_Bird_1',h:.45,colours:{stone:'#24242c',bark:'#141418',accent:'#2a2a30'}},
+   walker:{model:'Blender_Walker_1',h:1.85},
+   // A five-unit fairway mower, 2.3 m to its roll bar, drawn a little large
+   // as the rest; green paint, grey reels, a hi-vis shirt.
+   mower:{model:'Blender_Mower_1',h:(MESH_MODELS.Blender_Mower_1?.tall??2.32)*1.05,colours:{dirt:'#26272a',leaf:'#3f7f3a',bark:'#8d939a',accent:'#d9ee4a',stone:'#d9a982'}},
+  };
+  const group=new T.Group();group.name='Life';this.group.add(group);
+  const sets=[];
+  // The walkers in four bodies, taken in turn, each dressed from the
+  // palette (the owner's review: "more variety"); the rest one body a kind.
+  const jobs=[];
+  for(const [kind,spec] of Object.entries(SPEC)){
+   const list=w.life.filter(l=>l.kind===kind);if(!list.length)continue;
+   // Each at its own height, a twentieth larger than life as the rest (a
+   // body pushing a trolley stands lower than one with a bag on its back).
+   if(kind==='walker')for(let v=0;v<4;v++){const model='Blender_Walker_'+(v+1);jobs.push({kind,spec:{...spec,model,h:(MESH_MODELS[model]?.tall??1.78)*1.05},list:list.filter((l,i)=>i%4===v),dress:v});}
+   else jobs.push({kind,spec,list});
+  }
+  for(const {kind,spec,list,dress} of jobs){
+   if(!list.length)continue;
+   const parts=modelParts(spec.model);if(!parts)continue;
+   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(dress!=null?'#ffffff':spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);if(dress!=null)dressPeople(m,p.role,list.length,dress*7+3);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
+    // *ANYTHING INSTANCED THAT MOVES MUST SET userData.noCull*).
+    m.userData.noCull=true;group.add(m);this.resources.push(mat);return m;});
+   sets.push({spec,list,meshes});
+  }
+  const m4=new T.Matrix4(),q=new T.Quaternion(),e=new T.Euler(0,0,0,'YXZ'),pos=new T.Vector3(),sc=new T.Vector3();
+  const place=t=>{for(const set of sets){set.list.forEach((l,i)=>{
+   if(l.line){
+    // Out and back along the path's own points, facing the way it goes.
+    if(!l.run){l.run=[0];for(let k=1;k<l.line.length;k++)l.run.push(l.run[k-1]+Math.hypot(l.line[k].x-l.line[k-1].x,l.line[k].z-l.line[k-1].z));}
+    // One way round and back to the start on a loop (the owner: walking backwards had no reason); out and back otherwise.
+    const len=l.run[l.run.length-1]||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),d=l.loop?s%len:(s<len?s:2*len-s),dir=l.loop||s<len?1:-1;
+    let k=1;while(k<l.run.length-1&&l.run[k]<d)k++;
+    const p0=l.line[k-1],p1=l.line[k],seg=(l.run[k]-l.run[k-1])||1,u=(d-l.run[k-1])/seg,dx=(p1.x-p0.x)/seg,dz=(p1.z-p0.z)/seg;
+    const x=p0.x+(p1.x-p0.x)*u-dz*l.side,z=p0.z+(p1.z-p0.z)*u+dx*l.side;
+    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
+   }else if(l.ax!==undefined){
+    // Out and back along a stretch, facing the way it goes.
+    const len=Math.hypot(l.bx-l.ax,l.bz-l.az)||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),u=(s<len?s:2*len-s)/len,dir=s<len?1:-1,dx=(l.bx-l.ax)/len,dz=(l.bz-l.az)/len;
+    const x=l.ax+(l.bx-l.ax)*u-dz*l.side,z=l.az+(l.bz-l.az)*u+dx*l.side;
+    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
+   }else if(l.r!==undefined){
+    // Circling, banked into the turn.
+    const g=Math.sign(l.speed)||1,a=l.phase+t*l.speed,x=l.x+Math.cos(a)*l.r,z=l.z+Math.sin(a)*l.r;
+    pos.set(x,w.height(x,z)+l.up,z);e.set(0,Math.atan2(-Math.sin(a)*g,Math.cos(a)*g),-.35*g);
+   }else{
+    // Grazing: a slow turn where it stands.
+    pos.set(l.x,w.height(l.x,l.z),l.z);e.set(0,l.rot+Math.sin(t*.3+l.phase)*.35,0);
+   }
+   // A walker's step: a bob of a few centimetres twice a stride and a
+   // little sway (iteration 5; they glided like statues).
+   if(l.line){const ph=(t+l.phase)*l.speed*2.6;pos.y+=Math.abs(Math.sin(ph))*.045*set.spec.h/1.85;e.z=Math.sin(ph)*.035;}
+   q.setFromEuler(e);sc.setScalar(set.spec.h);m4.compose(pos,q,sc);for(const m of set.meshes)m.setMatrixAt(i,m4);
+  });for(const m of set.meshes)m.instanceMatrix.needsUpdate=true;}};
+  place(0);
+  let since=0;
+  return {group,update(dt,t){since+=dt;if(since<1/30)return;since=0;place(t);}};
+ }
+ // WEAR (architect-courses, phase 3; markings.js placeWear): divots on the
+ // tees and in the landing zones, one instanced mesh of small flat patches a
+ // hair above the ground, the soil showing through. Decoration.
+ addWear(w){
+  if(!w?.wear?.length)return;
+  const g=new T.CircleGeometry(1,7);g.rotateX(-Math.PI/2);
+  const mat=this.surfaceMaterial('#6a5638',{polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
+  const mesh=new T.InstancedMesh(g,mat,w.wear.length),m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
+  w.wear.forEach((d,i)=>{q.setFromAxisAngle(up,d.rot);pos.set(d.x,w.height(d.x,d.z)+.025,d.z);sc.set(d.r*1.7,1,d.r);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
+  mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+  this.group.add(mesh);this.resources.push(g,mat);
  }
  addHoleDetails(h){
   const group=this.group;
@@ -1928,7 +2473,7 @@ export class GolfView{
   // two parts live in an assembly whose own y is driven by the hole-out lift
   // animation -- so they are moved individually rather than by shifting a parent.
   if(h.greens)this.addRangeGreens(h);
-  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
+  else{const flag=PIN_FLAGS[pinBandOf(h)],props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z),{number:h.hole+1,color:flag.cloth,ink:flag.ink});this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
@@ -1947,7 +2492,7 @@ export class GolfView{
     const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
     // A moulded marker, a squat dome on a collar 11 cm tall (the furniture);
     // a ball on the turf where the build has none.
-    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'});
+    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'},{batch:true});
     const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
     marker.position.set(q.x,h.height(x,z)+(made?0:.085),q.z);group.add(marker);
    }
@@ -1981,7 +2526,7 @@ export class GolfView{
    // The furniture's sign: two timber posts and a gable cap round the board,
    // the hole's card on a face 5 cm in front of it (cartoon_course.py says
    // where the board is). The old box-on-a-post where the build has none.
-   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'});
+   const frame=this.furniture('Blender_TeeSign_1',2.52,{bark:'#7a5f45',stone:'#203f30',accent:'#8a4b3a'},{batch:true});
    const sign=frame??new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
    if(frame){const face=new T.Mesh(new T.PlaneGeometry(1.0/2.52,1.25/2.52),this.surfaceMaterial('#ffffff',{map:tex}));face.position.set(0,1.55/2.52,.05/2.52);frame.add(face);}
    sign.position.set(q.x,ground+(frame?0:1.55),q.z);
@@ -1998,8 +2543,8 @@ export class GolfView{
    // ahead of the sign -- decoration, nothing a ball hits (the sign never was).
    const put=(m,along,out)=>{if(!m)return;const ax=lx+bux*along+buz*out,az=lz+buz*along-bux*out,w=h.toWorld({x:ax,z:az});
     m.position.set(w.x,h.height(ax,az),w.z);m.rotation.y=Math.atan2(bw.x-w.x,bw.z-w.z);group.add(m);};
-   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'}),-2.2,-1.6);
-   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'}),1.6,-.2);
+   put(this.furniture('Blender_Bench_1',.9,{bark:'#6b5440',accent:'#a5825b'},{batch:true}),-2.2,-1.6);
+   put(this.furniture('Blender_BallWasher_1',1.27,{bark:'#4a4640',accent:'#2f6a4a',stone:'#efe9d8'},{batch:true}),1.6,-.2);
   }
  }
  // Move the range's green, without rebuilding anything.
@@ -2080,7 +2625,7 @@ export class GolfView{
   if(data){
    const W=HOLE_ATLAS.width;
    writeRangeGreens(h,(col,v)=>data.set(v,(h.hole*W+col)*4),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
-   this.holeAtlas.needsUpdate=true;
+   this.syncHoleTable?.(h.hole);
   }
   const live=activeGreen(h),others=[];
   for(const g of h.greens){
@@ -2986,6 +3531,12 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.stepWaterProbes();
   // Haunted Hollow: ghosts on their rounds, lanterns lit by the same dusk.
   this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
+  // Life on an Architect course (phase 6): never on Low.
+  if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
+  this.fountains?.update(dt,this.elapsed);
+  if(this.markings)this.markings.visible=this.quality!==tierOf('low');
+  // Tournament week's crowd (phase 7): never on Low either.
+  if(this.occasion)this.occasion.crowd.visible=this.quality!==tierOf('low');
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and
@@ -3170,6 +3721,14 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   const bg=tilePlacement(transform,{x:0,z:0,rx:world.halfX,rz:world.halfZ},world.mapBackground.width,world.mapBackground.height);
   ctx.save();ctx.translate(bg.x,bg.y);ctx.scale(bg.sx,bg.sy);ctx.drawImage(world.mapBackground,0,0);ctx.restore();}
 
+ // AN ARCHITECT COURSE'S CART PATHS on the map (the owner's review, 30
+ // October 2026), under the holes, at their width (never thinner than a line).
+ if(world.paths?.length){
+  const wp=p=>full?mapPoint(transform,p):mapPoint(transform,course.toLocal(p));
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=world.bio.mapTurf?.path??'#a69a86';
+  for(const path of world.paths){if(path.points.length<2)continue;ctx.lineWidth=Math.max(1.2,path.width*scale);ctx.beginPath();path.points.forEach((p,i)=>{const q=wp(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}
+  ctx.restore();
+ }
  for(const hole of full?world.holes:[course]){
   ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,world.bio.mapTurf?.semi??'#a1b481'],[0,world.bio.mapTurf?.fairway??'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
   for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
@@ -3178,7 +3737,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   // The disc is the green, so it is drawn around the green's centre; the number
   // that labels the hole goes with it.
   const centre=hole.green??hole.pin;
-  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
+  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,g=greenPoint(hole,a,greenRadius(hole,a)),q=to(g.x,g.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
  }
  }
  ctx.drawImage(layers.base,0,0);

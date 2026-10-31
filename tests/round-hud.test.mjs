@@ -7,7 +7,9 @@ const MINUS = '−';
 
 test('the hole slab: number, course, par and yards; the range says R and its green', () => {
  assert.deepEqual(holeSlab({hole: 6, par: 4, yards: 412.4, course: 'Hemlock Head', pin: 'front'}),
-  {number: '7', name: 'HEMLOCK HEAD', line: ['PAR 4', '412 YDS'], pin: 'PIN FRONT'});
+  {number: '7', name: 'HEMLOCK HEAD', line: ['PAR 4', '412 YDS'], pin: 'PIN FRONT', title: ''});
+ // The hole's own name (architect-courses, phase 2) rides beside the course's.
+ assert.equal(holeSlab({hole: 2, course: 'x', title: 'The Cape'}).title, 'THE CAPE');
  assert.deepEqual(holeSlab({range: true, yards: 152, green: 'Green 3'}), {number: 'R', name: 'DRIVING RANGE', line: ['GREEN 3', '152 YDS']});
  assert.equal(holeSlab({hole: 0, course: 'x'}).pin, '');
 });

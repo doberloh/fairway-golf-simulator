@@ -31,6 +31,103 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Architect courses (branch `architect-courses`, from 30 October 2026)
+
+The owner's goal: build the whole local study, phases 0-7; the record is
+[ARCHITECT_COURSES.md](ARCHITECT_COURSES.md). Picked from IDEAS.md, with
+*Cart paths*, *Bridges over creeks*, *Scalloped bunker edges* and *Routing
+quality measures*, which it absorbs.
+
+**The play checks below block nothing** (the owner, 31 October 2026): the
+owner plays them as and when, and the branch moves on without waiting.
+
+- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
+  October 2026, the owner's third word on the branch; rendering only, no
+  version moves). Built and tested in Node only -- no capture, no frame
+  measured. To check on Links (an 18-hole course, Medium and Low): from a
+  tee, looking across heather -- past about 48 m the cushions should give way
+  to low purple-and-olive domes rather than flat purple ground, with no ring
+  where one becomes the other, and the domes sinking away at the tier's
+  long-grass reach (Low 90 m, Medium 130 m); Haunted Hollow's moor the same in
+  dark brown, sparser. And the eleven models whole: tussocks and logs
+  (Haunted, Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
+  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
+  triangles in reach of a Links tee on Medium (32,000 on Haunted), against the
+  long grass's millions -- a `profile --only biomes` would settle it.
+- [ ] **Not yet played by a person: the studio's *How the course is made*.**
+  Choose Architect (beta): the sliders the architect decides should go, the
+  *Architect (beta)* heading with Style, Club, Age and Heritage should
+  appear, each with its sentence under it changing as the choice changes
+  (built in the owner's review; not seen), and the card should stay without its length slider; choose Classic
+  again and everything returns. Save the course and export its code: both
+  should come back as Architect. (Phase 0: Node tests, and the
+  `architect-studio` smoke journey drives all of it but the code export.)
+- [ ] **Not yet played by a person: phase 1, holes designed against the
+  shots.** Seen from above (CPU maps) and from four GPU views of one Midwest
+  course: bunkers where drives land, fairways that tuck round them, avenues.
+  To check: a few Architect rounds in different styles -- do the holes read as
+  designed, and do they play fairly (the virtual golfer, at the end of the
+  goal: 0.82 strokes per 18 harder than Classic, 0.17 after the owner's
+  review; hardest on Haunted Hollow and PNW at the goal's end; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
+- [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
+  their bridges (seen in GPU captures), free relief when a ball stops on a
+  path (Node only: no ball was played onto one in the game), the hole's name
+  in the hole panel and the architect's note as a hole is arrived at (built,
+  not seen), the crest and founding line on the final scorecard (not seen),
+  flags by pin position (seen: a white middle flag).
+- [ ] **Not yet played by a person: phases 2 (rest) to 5.** Seen in GPU
+  captures only: stakes, posts and rakes; the clubhouse in every landscape;
+  collection areas, lobes and divots; mounds, rip-rap, tie walls, fountains
+  and the bridge kit (timber and stone). Not seen at all: a ball landing on a
+  bridge in a round (Node only: one dropped on a deck stops there and is
+  called in the water) and a round's nines coming home (measured, not seen).
+  To check: play an Architect Parkland or Stadium course with water and
+  creeks (story "A lot"); hit one at a bridge.
+- [ ] **Not yet played by a person: phase 6's first half.** Seen in GPU
+  captures: the farmstead, the walls, the ruins, the lighthouse on its line,
+  the stone circle; the Dell, the Alps, the Barranca and the Pit. Not seen:
+  a ball against a wall or the Pit's wall in a round (Node only), a carry
+  over a barranca. To check: an Architect Links or Golden Age course with a
+  lot of story.
+- [ ] **Not yet played by a person: phase 6's second half.** Seen in GPU
+  captures: sheep, deer, elk, geese, a heron, a roadrunner, a raven, the
+  walkers and the mower; none on Low; hollows and stumps. Not seen: the
+  animals moving in a round (they turn and circle; the captures are stills),
+  gulls (Lakeshore's flew out of frame). To check: a round on an Architect
+  Links course on High, watching the flock and the gulls.
+- [ ] **Not yet played by a person: phase 7.** Seen in GPU captures:
+  tournament week on Midwest, Links and PNW, Thursday to Sunday, none of the
+  crowd on Low. Seen as a PDF: the yardage book. Not seen: the pause menu's
+  *Yardage book* item clicked in the game, a ball hit at a stand in a round.
+  To check: an Architect Championship course on Sunday; pause, Yardage book.
+- [ ] **Not yet played by a person: the owner's review (30 October 2026).**
+  Seen in GPU captures: the cart paths (six iterations), the fountain moving
+  (five; a drop measured rising), the people, crowd and mower (ten each), the
+  Alps as a broad hill, Links ST-1's fairways in two pairs. Seen in Node
+  only: rakes in the sand, divots toward the green, scattered stumps, trees
+  by age, a path bridging a barranca. Driven by the smoke journey: the
+  dials' sentences and the studio's yardage book. Not seen at all: the paths
+  on the map, the walkers' bob in
+  motion. (The scoreboard following a played round is now driven by the
+  smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
+  Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
+- [ ] **Not yet played by a person: the owner's second review** (31 October
+  2026, ARCHITECT_VERSION 20, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
+  owner's second review*). Seen in captures (Midwest and Links ST-1: the
+  clubhouse and its path, a pull-off, the path over the dunes, the shared
+  fairways, the sharpest bend left) and driven by the smoke journeys
+  `architect-studio` and `architect-round`. Not seen: the owner's own
+  Midwest and Links holes (seeds unknown) -- to check, look at them again.
+- [ ] **Not yet played by a person: the surface field and the turned greens**
+  (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
+  in GPU captures only: a green turned to its approach from above, the
+  mowing-height step at a fairway's edge, the mower's line at native grass
+  on Midwest, a bunker drawn from the field (sixteen hand bunkers on a hole).
+  Tested in Node: field bunkers play as sand. Not seen: a ball played out of
+  a field bunker, a putt on a turned green, the native line on Links and
+  Lakeshore (the capture view landed on a path). To check: put more than
+  twelve bunkers on a hole in the studio, play into the last ones; play a
+  dogleg's approach to its turned green.
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
 - [x] **The drop bar and the Tools window: three lines low on their own
@@ -1004,12 +1101,17 @@ are in the archived section of the same name.
   pass; the owner left the smoke run for later and asked for 0.9.3, so no
   browser has played this build (DISTRIBUTION_REVIEW, *Vite 8.3.3*, *v0.9.3*).
 
-- [ ] **The test suite's wall time** is set by its slowest file, six over 100 s.
-  Underneath: `nearest` is 15% of a generation and walks all holes with no
-  spatial rejection; a bounding box per hole would speed the tests, the bench
-  and the game's loading at once -- and the ground grid, 81% of generation, is
-  where any real loading win is. (was: *The suite's wall time is one file at a
-  time*; *Generation is still ~24% slower*)
+- [ ] **A course takes seconds to build, and that is the test suite's whole
+  cost** (the testing audit, 31 October 2026; TESTING.md, *Running the Node
+  tests*). A whole run builds 521 courses; with the processor full the suite
+  is about 205 s, and only cheaper builds (or fewer) make it faster now. A
+  build is three-quarters "Building the ground"; profiled over an 18-hole
+  Links and a 9-hole PNW with water: routing 9%, `nearest` 8%, the shaped
+  height (`shapedNoTees`, `shapedLand`, `land`, `analyticHeight`) about 17%,
+  the hole's widths (`sideWidth`, `width`) 6% -- nothing on its own. A
+  faster build is also a shorter wait to start a round. Must leave both
+  fingerprints silent. (was: *The test suite's wall time*; *The suite's wall
+  time is one file at a time*; *Generation is still ~24% slower*)
 
 - [ ] **The per-hole tree list is dead code.** `h.trees` is built per hole in
   `generateCourse` and only test fixtures without a world read it; its 22 m
@@ -1429,6 +1531,56 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Architect courses: the owner's third word (31 October 2026)
+
+- [x] **The test suite's wall time** -- the owner: "testing is taking a really
+  long time ... optimize our testing flows". 285 s -> about 205 s for the
+  whole suite: the four slowest files built on worker threads, split or
+  cached (`water-keep-out` 177 -> 35 s alone), and files started longest
+  first (`tools/test.mjs`). And two quicker ways in: `npm run test:changed`
+  (only the files a change can reach) and `npm run test:fast` (the 81 files
+  that build no course, 621 tests in 2 s). TESTING.md, *Running the Node
+  tests*. What is left is open above (*A course takes seconds to build*).
+- [x] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
+  -- the owner: "crowd cost is fine". Left as measured (ARCHITECT_COURSES.md,
+  *The crowd's cost*).
+- [x] **`nearest`'s box skip can name the wrong hole past a hole's end** --
+  the owner: "this is ok". Left as it is, so no ground moves. What was found:
+  it skips a hole when the distance to the hole's box, less its widest
+  corridor, is already worse than the best, but past a tee or green the
+  centre line carries straight on and can leave the box. Compared at every
+  call: Classic Lakeshore HZ-2 3,355 wrong in 1.46 million, none within 60 m
+  of a corridor; Links DUNE-7 27, all within 60 m, by 0.05-0.7 m mostly
+  (worst 11 m); Architect PNW 154, none near. `nearestMargin` uses the bound
+  that holds (PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*).
+- [x] **Eleven models wrap in the ingest** -- the owner: "back port the
+  models to classic as well". Every model too long for the int16 box now
+  carries its own scale (build-meshes.mjs, `q`), not only the Architect's
+  families: exactly the eleven changed (Tussock_1 and _2, Log_1 to _3,
+  Sorrel_1, LakeDuneGrass_3, LakeJuniper_1 and _2, LakeDriftwood_1 and _2),
+  every other model byte for byte as before. Their outermost parts had been
+  drawn folded back through the model since they were ingested. Not seen in
+  the game (above).
+- [x] **The Links heather's cushions vanish, leaving purple ground** -- the
+  owner: "the purple bushes fade out completely leaving just weird looking
+  purple ground". Past the near tiles' 48 m a heath is now low domes in the
+  cushions' colours to the tier's long-grass reach (vegetation.js
+  addFarHeath; tests/far-heath.test.mjs). Not seen in the game (above).
+
+## Architect courses: the owner's second review (31 October 2026)
+
+- [x] **Classic has the corridor seam too** -- the owner: "Fix Classic too"
+  (31 October 2026). The tee area's relief fades out across the line where
+  the nearest hole changes on both designers (GENERATOR_VERSION 53; every
+  landscape but the island moved). Worst Classic bank: a 4 m wall in 3 m on
+  Lakeshore HZ-2, bend 0.94 -> 0.19; Links DUNE-7 0.63 -> 0.18. Build time
+  unchanged (measured only where it can change the ground). Test:
+  tests/corridor-seam.test.mjs. Not seen in the game: no capture or play.
+- [x] **Not yet played by a person: the hand tools** -- closed: the owner
+  withdrew the studio's Hand tools on 31 October 2026 ("leave those tools
+  for the architect to use"); the `archHand` setting went with them
+  (SCHEMA_VERSION 14). The architect's own signatures stay.
 
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 

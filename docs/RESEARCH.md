@@ -1223,7 +1223,7 @@ That matters more than it sounds, because it is the exact argument a port usuall
 
 **The deliverable is the product.** `dist/index.html` is one file, 15.8 MB, that opens by double-clicking with no install, no account and no internet. That is not a packaging detail, it is the thing that makes it possible to hand the sim to somebody. No general-purpose engine produces that artefact. Web exports from the big engines ship a runtime alongside the content, want a server, and are markedly larger; native builds are a download and an installer. Whatever is gained in frames is paid for in "can you just try this".
 
-**446 tests run headless in about three minutes.** They cover physics, routing, water, greens, scoring and generation determinism, in a plain `node --test` with no display and no engine harness. Two of the most valuable tools in the repository -- the biome fingerprint and the bench -- exist because hashing what a generator produces and diffing it is trivial when the generator is a function you can import. Inside an engine, the same discipline is possible and is an order of magnitude more work to arrange. **A port does not carry the tests across; it carries the code across and leaves the tests to be rebuilt.**
+**446 tests run headless in about three minutes.** (1,236 in about three and a half by 31 October 2026, after the testing audit -- TESTING.md, *Running the Node tests*: 521 course builds in a whole run; 285 s before it, 201-204 s after; with 31 files at once on the 16-core Ryzen 9 7950X a course builds about 2.5 times slower than alone, `tee-corridor` 74 s alone and 187 s in the run; 81 files build no course and take 2 s together.) They cover physics, routing, water, greens, scoring and generation determinism, in a plain `node --test` with no display and no engine harness. Two of the most valuable tools in the repository -- the biome fingerprint and the bench -- exist because hashing what a generator produces and diffing it is trivial when the generator is a function you can import. Inside an engine, the same discipline is possible and is an order of magnitude more work to arrange. **A port does not carry the tests across; it carries the code across and leaves the tests to be rebuilt.**
 
 **Determinism is load-bearing here and is a hazard in engines.** Seeds reproduce byte-identically -- proven by delete-and-regenerate hashing, and by a fingerprint that has caught unintended cross-biome movement several times in this repository's short recorded history. Engines encourage using their physics, and engine physics is the usual place determinism goes to die. The ball flight model is a custom integrator validated against a launch monitor at under 2% carry error with zero mean descent bias; handing that to a middleware solver would throw away the one number this project has that is checked against the outside world.
 
@@ -10212,6 +10212,28 @@ whose blue is not over its green) takes no bloom.
 
 Round 7 (heather near the camera): on heather ground the near-field tiles draw the heather model (Blender_Heather_1) for three in ten of their candidates, 0.30-0.55 m tall, leaf #5a5a3c and bloom #a86aa8 (Haunted #4a403c and #6c5862) -- PLACED; fading with the tiles between 28 and 48 m.
 
+Round 8, the far heath (31 October 2026; the owner, Links: "the purple bushes
+fade out completely leaving just weird looking purple ground"). Past the
+tiles a heath was paint alone. vegetation.js addFarHeath: one dome a 2.6 m
+square of heather, jittered (one a 4.4 m square on Low, grass share .35), a
+half-sphere of 40 triangles (eight segments round), 1.7 times as wide as high, 0.30
+-0.55 m high, sunk 12% of its height; coloured leaf-to-bloom at 25-75% (the
+near cushions' own pair), lightness +-4%. It grows in over 28-48 m from the
+camera as the cushions shrink away, and sinks over the last 40% of the
+tier's long-grass reach, culled in squares beyond it. A course with more
+heath than 30,000 domes would cover is spaced out to that many: Haunted
+Hollow's moor (a fifth of HAU-9's 246 ha) 67,000 -> 29,400. All PLACED.
+Measured on the processor: DUNE-7 (Links eighteen, 12 ha of heather, 3.8%)
+17,800 domes; at most 503 in reach of a tee on Medium (20,000 triangles),
+1,247 on Ultra (50,000), 144 on Low (6,000); HAU-9 at most 796 on Medium
+(32,000), 3,002 on Ultra (120,000). Build time, median of five: DUNE-7 59 ms
+Low, 183 ms Medium; ST-1 (nine) 14 and 43 ms; HAU-9 136 and 143 ms. Placing
+it read the full surface at every 2.6 m first: 1.0 s on Links; then a 16 m
+coarse pass with a ring round each hit, 0.4 s, a fifth of the property
+scanned for 4% heather; now the baked field (heather only where its channel
+reads half or more) is read first and the surface asked only there. The
+frame cost on a graphics card is not measured.
+
 ## The overhaul's wildflowers (26 October 2026)
 
 The rough's flowers (vegetation.js addGroundCover; Midwest, Mountain, Links
@@ -10751,3 +10773,392 @@ anything (a four-round +9% on Low's main menu was equal in six, twice); and
 the menu's backdrop camera circles, so a spot opened a moment later sees
 more or fewer triangles -- check the triangle count before reading a
 graphics difference. Figures: docs/UI_POLISH.md, *What it costs*.
+
+## Architect courses: designing a hole (30 October 2026)
+
+The second designer (docs/ARCHITECT_COURSES.md, branch `architect-courses`)
+places each hazard against a shot rather than by chance. What its numbers
+rest on; the study behind it is local (`docs/studies/HUMAN_BUILT_COURSES_SPEC.md`).
+
+**Why Classic reads as generated.** Classic's fairway bunker lands at a
+uniform distance between 18 m past the fairway's start and 55 m short of the
+green, on a random side (`generateCourse`). Its sizes and counts already match
+real courses -- about 2,200 sq ft a bunker against a surveyed ~2,120 (17 clubs,
+1986), about 58 on 18 holes against a reported average of 49 (2005) and 66 a
+club (1986). Placement, not size, was the fault.
+
+**The golfer table** (`tools/golfer-table.mjs`, written to
+`src/golfer-table.js`): three golfers flown once through the ball model on a
+flat fairway at default turf. Driver carry PLACED at 255, 200 and 170 yd; the
+other clubs keep the stock bag's gaps scaled by the same factor. The ball model
+gives drives of **277, 224 and 195 yd in total**. Against the study's sources:
+a good player's drive about 250-280 yd (PLACED in the study), an average
+golfer's 175-225 yd and landing zones 20-40 yd wide (Pitchcare, a single older
+source). Sideways spread, one standard deviation, PLACED at 12, 20 and 28 yd --
+the landing-zone widths read as two to three spreads.
+
+**Where the architect puts things** (architect.js `designHole`; every figure
+PLACED unless named):
+- A drive bunker at the good player's landing zone on the preferred side (the
+  inside of a dogleg, else the seed's), and, on the other side, one at the
+  average golfer's distance, shorter -- the tactic of opposite-side bunkers at
+  different distances (golfclubatlas forum, *bunkers beyond reach of weaker
+  players*; a forum, weak).
+- A greenside bunker always guards the front corner on the wrong side, so the
+  green opens from the preferred side (the strategic school: the fried egg,
+  golf.com, *three schools*).
+- A par five's cross bunkers at the average golfer's lay-up: their drive plus
+  a fairway wood (176/196 yd in the table).
+- Templates: the Redan's diagonal fall-away behind a deep front bunker, the
+  Eden's three bunkers, the Biarritz swale, the punchbowl, the double plateau,
+  the Road bunker, the Cape's water, the Principal's Nose (a pair of centreline
+  bunkers with a grass nose between, the Old Course's 16th), Leven and Long
+  (golf.com, linksmagazine, evalu18, *template holes*; the Redan at 170-200 yd).
+- Greens drain off a front corner, higher at the back: water leaves at least
+  two ways, never all off the front (1956, MSU archive; Jeffrey Brauer: drainage
+  split unevenly, 60/40, looks better than even).
+- The fairway swells by about a third at the landing zones, necks to about four
+  fifths 75 m short of the green, and tucks in round a bunker on its edge,
+  leaving 2.2 m of rough between turf and sand. All PLACED, by eye.
+
+**Styles, clubs and ages** (architect-styles.js) are the study's descriptions
+of each architect's hand turned into the generator's own settings -- PLACED,
+by eye and by the bench, not from a source -- except the clubs' lengths:
+6,250 yd (municipal), 6,650 (members' club), 6,850 (resort), 7,250
+(championship venue) from the back tees for eighteen, the usual spread from a
+public course to a championship one (general knowledge; no single source read).
+
+**Planting by design.** An avenue of one species lines a par 4 or 5 on a
+Parkland, Golden Age or Raynor course -- about three holes in five on an old
+course, one in three on a mature one -- as clubs planted them in the
+mid-century and many later removed (Oakmont took out more than 12,600 trees:
+USGA, *Oakmont restored*). A dogleg's inside corner gets three to five trees.
+The corridor is cleared to a scalloped line about 35 m across rather than
+Classic's chance fade. All PLACED.
+
+**How much harder it plays** (`tools/architect-difficulty.mjs`; the owner's
+limit is 1.5 strokes per 18 for the virtual golfer): see
+docs/ARCHITECT_COURSES.md, *Measures*, for each run.
+
+## Architect courses: people (30 October 2026)
+
+What phase 2 of Architect courses (docs/ARCHITECT_COURSES.md) rests on.
+
+**Flags by pin position** (both designers): red front, white middle, blue (or
+black) back is the scheme most clubs use, with many variations (MSU archive,
+a superintendent's column, 2003; parkerflags.com; forums note blue is hard to
+see, and some clubs use yellow or a sliding ball instead). Taken: red, white,
+blue, with dark numbers on the white so they read. PLACED: the exact colours.
+
+**Cart paths** (Architect): about 8 ft wide, near where shots land but out of
+play, close to tees, with a pull-off by greens (USGA *Cart paths* PDF; golf
+course industry, *Design conceptions: cart path design*; MSU archive 1983);
+accessible routes 48 in (US Access Board). Taken: 2.1-3.0 m by club
+(municipal narrowest, resort widest), 14 m beyond the rough's edge on the
+hole's bail-out side, pushed out round its hazards. PLACED: every distance.
+The network's joins (31 October 2026, the owner's screenshots): an end
+within 9 m (a cell and a half) of another path runs on to it; a piece under
+18 m joined at both ends is dropped as a jog; a waypoint in a pocket under
+400 cells is routed from outside it. Measured on 15 eighteen-hole Architect
+courses (Midwest, Links, PNW, Desert, Mountain; three seeds each; a lot of
+heritage): ends stopping within 8 m short of another path 211 of 1,046 ->
+3 of 1,144; separate bits of network 229 -> 22 (one per course but three
+Mountain courses, which the steep land splits); buildings over a path 8 of
+45 (all clubhouses) -> 0. Before the strip was laid every 2 m, the ground
+stood up to 7.3 m above a straightened run's strip between its corners.
+PLACED: the 9 m, 18 m and 400 cells, and the 3 m a clubhouse keeps from a
+path (2 m a stand, 3 m a story building, 4 m a house). After the captures:
+an end is cut back to a junction or a crossing within 12 m of it (PLACED),
+and an end does not fold back past 100 degrees (PLACED); final figures on
+the 15 courses: 3 of 1,106 ends short of another path, 30 bits of network
+(three Mountain courses split), folded ends 17 of 228 -> 1 of 224 on four
+eighteens.
+
+**The seam where two corridors meet** (Architect, 31 October 2026; course.js
+`land`). Measured as the sharpest bend of the played ground: the largest
+second difference of the height over 2 m in four directions, |h(+2) + h(-2)
+- 2 h| / 4, at points on fairway, semi, fringe or green at least 6 m from
+sand, water or a path, every 3 m. Links ST-1 (Links style, Members', Old, A
+lot; nine holes): 0.56 before (a 2.4 m bank across 1.5 m), 0.18 after;
+EVERGREEN Links eighteen 0.39 -> 0.125; overhaul Links eighteen 0.16 either
+way. Classic on the same seeds 0.20 and 0.14. PLACED: the fade, 12 m either
+side of the line where the nearest hole changes.
+
+Classic followed (GENERATOR_VERSION 53, the owner's word the same day). The
+same measure on thirteen Classic eighteens, one or two per landscape, tee pads
+left out as sand is (a tee moved by the change brought its own pad bank into
+the first pass, a 0.56 that was no seam): Lakeshore HZ-2 0.94 -> 0.19 (a 4 m
+wall in 3 m at hole 5's fairway edge, now spread over about 10 m), Links
+DUNE-7 0.63 -> 0.18; the other eleven unchanged or lower, the island
+untouched (a coast's ground skips this relief). Points bending more than 0.1:
+23 -> 12 on DUNE-7, 17 -> 6 on HZ-2. The cost, an 18-hole build on one
+thread, four landscapes twice each, alternated: measuring the margin wherever
+the relief was non-zero, Classic 4.91 -> 5.66 s (+15%); guarded to where it can
+change the ground and with far holes skipped, 5.14 -> 5.13 s, and Architect
+5.47 -> 5.02 s against the unguarded version it shipped with (-8%). Ground
+identical either way (both fingerprints). The bench's counts barely moved (tees
+sited 314 -> 315, bunkers 231 -> 230; every invariant zero).
+The surface (`grounds.js` path) is PLACED against rock just below it: cor
+0.235, the hardest in play, roll 0.85, a hop of 16 cm.
+
+**Free relief from a path** (`relief.js` `pathRelief`): Rule 16.1b, an
+immovable obstruction in the general area -- the nearest point of complete
+relief (neither the ball nor the stance on the path), no nearer the hole, a
+drop within one club-length of it, no penalty. PLACED: the stance half a
+metre either side of the ball; the game takes the relief for the player
+rather than offering to play it off the path, as almost every golfer would.
+
+**Hole names and the crest** (both designers): names from what a hole is (its
+template, water, bend, length) or the land's words; template names (Redan,
+Eden, Biarritz, Cape, Road) are the generic names architects use, and no
+single famous hole's nickname is used. **The made-up architects** (Architect
+only): thirty-six names, searched with "golf course architect" in three
+batches (29-30 October 2026); none returned a real architect (search
+summaries, which listed only Wikipedia's *List of golf course architects*
+and directories). Founding years by age, PLACED: new 2005-2024, mature
+1955-1995, old 1895-1932, restored 1898-1930.
+
+## Architect courses: the hand (30 October 2026)
+
+Phase 3 of Architect courses (docs/ARCHITECT_COURSES.md).
+
+**Collection areas**: short grass beside a green, mown low enough that a
+miss rolls away from it (USGA Green Section Record 61, *Establishing and
+maintaining closely mown green surrounds*). Taken: fairway height, off the
+front corner a green drains toward (its low side), on the styles that play
+along the ground. PLACED: the size (a half to three quarters of the green
+across) and which styles.
+
+**Mowing heights** (used since ARCHITECT_VERSION 18, the ground shader's
+*Heights read as heights*): greens to about 0.187 in, one new course 0.100
+in; fairways and tees 0.350-0.500 in; rough 2-3 in, 2.5 the commonest; a
+first cut about 1.5 in (USGA *Understanding mowing heights*, 2018;
+golfcourseindustry.com, *First cut at Bella Ridge*). Taken as the ORDER and
+rough size of the steps: green to fringe small (about 0.15 to 0.4 in),
+fairway to first cut large (0.4 to 1.5), first cut to rough middling (1.5
+to 2.5), fringe to first cut large. PLACED: the paint is not a height --
+each edge is shaded on the short side by up to 30% and lit on the tall
+side by up to 20%, scaled 0.35, 0.75, 0.45 and 0.6 for those four steps,
+over about two pixels (at least 0.4 m) -- set by eye in captures
+(`arch-p3f-debug`, `arch-p3g`); round 1 at 16% could not be seen.
+
+**Greens turned to the approach** (ARCHITECT_VERSION 18; the study,
+*The green, designed*: "Turned to the approach the concept wants"). No
+source found gives an angle. PLACED: the oval's depth along the approach
+line (exact geometry), plus 0.35 rad (20 degrees) toward the preferred
+side on strategic and heroic holes and 0.5 (29) on a Redan, capped at
+0.6 (34) -- by eye from plans of angled greens the study names.
+
+**The surface field's range** (surface-field.js FIELD_RANGE): 4 m either
+side of an edge in 255 steps, about 3 cm a step; past it a byte is plainly
+in or out. PLACED. The field's texel is the owner atlas's, about 1.75 m:
+a 4 m field bunker spans about five texels and its edge is visibly
+faceted; a half-size texel would cost four times the memory.
+
+**Thin collars**: a links fairway is mown to the green's edge, so a running
+shot can be played in (the study, *Links run in*). PLACED: 0.75-1.0 m.
+
+**Divots**: a par 3's tee takes more wear than any other because players hit
+irons there, and the USGA's guideline doubles its area for it: about 100 sq
+ft of tee per 1,000 rounds a year, about 200 on a par 3 (MSU archive 1991
+and 1974, quoting USGA specifications; a 2002 USGA analysis argues the
+simple rule is too simple). Taken: about three times the divots on a par 3's
+tees as on a par 4's back tee. PLACED: every count and size, scaled by club
+(municipal 1.5, members 1, resort 0.8, championship 0.7) and age (new 0.4 to
+old 1.1).
+
+**Lobes** (bunker complexes with capes and bays, the sandbelt and heathland
+look; the study's sources, *Bunker styles*): PLACED: one lobe of 38-58% of
+the bunker, on about half the bunkers over 7 m, on five styles.
+
+## Architect courses: routing home (30 October 2026)
+
+Phase 4 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 4*). The
+clubhouse first, the 1st and 10th tees and the 9th and 18th greens round it
+(ASGCA, *Solving the puzzle*, an architect's stated first step; linksmagazine,
+*Architecture 101: routing*). Taken: nines that return, measured as the 9th
+(and 18th) green within 200 m of the 1st tee -- PLACED, "in sight of the
+clubhouse". The router's weights (the pull per metre, 300 m a hole of walking
+reach, the penultimate green one last hole out) are PLACED, tuned against the
+bench: 7 -> 10 of 12 nines home on nine-hole courses, 10 -> 19 of 24 on
+eighteen.
+
+## Architect courses: built ground and water (30 October 2026)
+
+Phase 5 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 5*).
+
+- **Mounds by style** -- framing mounds (Modern), chocolate drops (Golden
+  Age, Raynor), spectator mounds (Stadium, championship venues): the study's
+  workstream E and style table, from its own sources (Pete Dye:
+  https://en.wikipedia.org/wiki/Pete_Dye). The study itself lists "a
+  definition of chocolate drop mounds" as not found. **Every size here is
+  PLACED**: framing 9-16 m across the radius, 1-2.2 m high, 4 m beyond the
+  semi-rough at 45%, 70% and the end of the hole; spectator banks 12-18 m,
+  2.5-4 m high, 8 m behind the green's collar; drops 5-7.5 m, 1.4-2.4 m high,
+  12-26 m off the green, two to five a cluster. A mound is a smooth bump
+  (cos squared of distance over radius), added to the ground.
+- **Pond edges by style** -- the study: soft grass banks (Golden Age),
+  rip-rap stone (Modern), timber bulkheads (Stadium; Dye's railroad ties,
+  same source). Parkland, Tropical, Desert and Mountain in stone is PLACED.
+  The faced arc (within 75 degrees of the nearest point of play), a stone
+  every 0.6 m, a tie section every 2.2 m are PLACED.
+- **Fountains** -- the study: aerators in ponds on resort and members'
+  clubs. Over 700 m2 of pond, two a course: PLACED.
+- **A ball at rest on a bridge is in the penalty area** -- R&A, Rules of Golf,
+  Rule 17.1a: a ball is in a penalty area when any part of it "is above the
+  edge or any other part of the penalty area"
+  (https://www.randa.org/en/rog/the-rules-of-golf/rule-17); the definition
+  of *penalty area* extends its edge upward. So the game calls a ball at rest
+  on a deck over a creek in the water. Its speed test (under 1.2 m/s across
+  and down when it touches the planks) is PLACED.
+- **The deck's height** -- 0.45 m over the higher of its two ends and its
+  middle -- is PLACED (phase 2's drawn deck, kept).
+
+## Architect courses: the land's story (30 October 2026)
+
+Phase 6 of Architect courses (docs/ARCHITECT_COURSES.md, *Phase 6*), from
+the study's workstreams A (*pass 7* templates) and L, and its sources:
+
+- **Dell** -- Lahinch's 5th, about 154 yd, blind between dunes, a white
+  aiming stone on the dune
+  (https://www.top100golfcourses.com/news-item/d-is-for-dell-blind-par-threes-template-holes,
+  https://thefriedegg.com/courses/lahinch-golf-club-old-course). Taken: a
+  dune across the line before a sunken green, a white stone. PLACED: the
+  dune 4 m high and 18 m to each side of its crest (a face of about a third),
+  its back foot 5 m short of the green. It was 3.6 m high and 9 m a side, a
+  63% face, until 31 October 2026: the ground's mesh drew that as a sharp
+  crease along the crest (the owner, Links: "that weird hole"), the fault
+  the Alps' 13 m ridge had before it was broadened to 24 m. Still blind, by
+  arithmetic on flat ground (not measured in the game): from 150 m out, the
+  eye 1.7 m up, the line to a green sunk a metre is about at ground level
+  where the crest stands 4 m.
+- **Pit** -- North Berwick's 13th, a green behind an old dry-stone wall
+  (https://thefriedegg.com/eclectic-18-uk-hole-no-13-north-berwick/,
+  https://www.yourgolftravel.com/best-golf-holes/north-berwick-13th). Taken:
+  a solid wall across the green's front, the green sunk. 7 m short of the
+  green and 6 m past its sides: PLACED.
+- **Barranca** -- Pasatiempo's back nine crossing MacKenzie's ravines, a
+  footbridge on the 11th (https://www.planetgolf.com/courses/usa/pasatiempo-golf-club,
+  https://golfcoursenerd.substack.com/p/pasatiempo-golf-club-new-back-nine).
+  Taken: a ravine across the hole to carry, bridged for the path. Its 4.5 m
+  depth, 24 m width and its place between the drive and the green are
+  PLACED; it crosses square, not at the study's angle.
+- **Alps** -- the study's template list (a blind approach over a hill;
+  Prestwick's 17th by name). Its 5.5 m ridge 42 m short of the green is
+  PLACED.
+- **The land's story** -- the study's workstream L (field walls, North
+  Berwick's walls in play; a farm, ruins, a mine head; a lighthouse or spire
+  to aim at). Every count (three wall lines a little, six a lot; one or two
+  ruins; a landmark a lot) and clearance (38 m for a building, 14 m for a
+  wall, 150 m beyond a green for a landmark, seen from 120 m short) is
+  PLACED.
+
+## Architect courses: history and life (30 October 2026)
+
+Phase 6, second half (docs/ARCHITECT_COURSES.md, *Phase 6: history and
+life*), from the study's workstreams M and O: sheep grazing links (the
+study: Machrihanish Dunes keeps 50 Hebridean sheep as mowers), geese at
+ponds, deer at the wood's edge, elk, roadrunners, a heron, gulls, ravens; a
+greenkeeper mowing, a group walking off far away; grassed-over bunkers,
+"cheaper to mow than rake", most on a Municipal course; a Restored course's
+felled avenue as stumps. **Every count and size is PLACED**: nine sheep, six
+geese, three deer or elk, two roadrunners, three or four birds 25-40 m up on
+a 30-70 m circle, three walkers on 40 m of path at 1.2 m/s, a mower on a 30 m
+run at 1.8 m/s; hollows 0.8 m deep, 5-7.5 m across, on half the par fours and
+fives of a Municipal course and a third of an Old or Restored one; animals
+drawn 1.25-1.5 times life size.
+
+## Architect courses: the occasion (30 October 2026)
+
+Phase 7 (docs/ARCHITECT_COURSES.md, *Phase 7*), from the study's workstreams
+Q and P: on a Championship venue the pin day dresses the course for that day
+of the event -- grandstands round the 18th green and the signature par 3, a
+scoreboard, gallery ropes, TV towers, hospitality, crowds; a printable
+yardage book with carries and the architect's notes. **Every number is
+PLACED**: two stands at the last green and one at the par three (20 x 9 m),
+the crowd's share by day (Thursday 0.35, Friday 0.5, Saturday 0.75, Sunday
+1), five spectators a 6 m rope section on Sunday, seats every 0.9 m in six
+rows; carries in the book to a hazard's near and far edge along the hole
+from the back tee. No new source was fetched.
+
+## Architect courses: how much harder, at the end (30 October 2026)
+
+The owner's limit: Architect at most 1.5 strokes per 18 harder than Classic
+for the virtual golfer (tests/virtual-golfer.mjs). `tools/architect-difficulty.mjs --seeds 4`:
+ten landscapes x four seeds x a steady and a looser golfer, 18 holes, 80
+rounds a designer. **Before the greens fix: 4.90 harder**, three holes
+unfinished in 40 strokes (a green tilted 8.7% under its pin by a neighbour's
+shoulder); **after: 1.32 harder** (Classic 0.89 over par, Architect 2.21).
+Per landscape over eight rounds the spread is about +-4 strokes, so only the
+overall figure is held to the limit. After the walk change (ARCHITECT_VERSION
+14): **0.82 harder** (Classic 1.09, Architect 1.91). After the owner's
+review (ARCHITECT_VERSION 16: paths, pairs on Links, the Alps a hill, the
+hand-made signatures): **0.17 harder** (Classic 1.15, Architect 1.32; 40
+rounds each, every landscape, two seeds) -- the signatures made it no
+harder. The golfer's rule for a stroke that left
+the ball where it was (try the other shot) is PLACED.
+
+## Architect courses: the owner's review (30 October 2026)
+
+### A fairway mower
+
+The mower on an Architect course was rebuilt from the makers' published
+figures for five-unit fairway reel mowers (searched 30 October 2026):
+
+- Toro Reelmaster 3575-D: five 7-inch cutting units; overall width 112 in
+  (274 cm), length 105 in (266 cm), height with ROPS 81 in (206 cm);
+  transport width 91 in (231 cm).
+  https://turfnet.com/directory/equipment/2020-toro-3575-fairway-mower/
+- Jacobsen LF550: cutting width 100 in (2.54 m), length without catchers
+  108 in (2.74 m), height with ROPS 88 in (2.23 m), transport width 87 in.
+  https://www.turfnet.com/classifieds/item/56907-jacobsen-lf550
+- Jacobsen F305: five 26-inch units, 116 in cut, length 116 in (2.95 m),
+  height 85 in (2.15 m). https://nuturf.com.au/images/product-tech-sds/F305.pdf
+- Kubota LM551: transport width 220 cm, height with ROPS 239 cm, 1,530 kg,
+  cutting width 2,940 mm. https://www.kubota.com.au/product/lm551-5-unit-fairway-mower
+- John Deere 6500A: width of cut 80 in (five 18-in units) or 100 in (five
+  22-in units); ROPS standard on the 6700A.
+  https://deere.com/en/mowers/fairway-mowers/6500a-precisioncut-fairway-mower
+
+Taken: about 2.6-2.7 m long, 2.5-2.9 m wide cutting, 2.1-2.4 m to the top
+of the roll bar; three reel units in front and two behind them between the
+wheels; ROPS standard. The model measures 2.58 m long, 2.59 m wide and 2.32 m
+to its canopy. The layout (big driving front tyres, small steering rear
+ones, the seat between, the engine hood behind) and the sunshade on the bar
+are from the makers' pictures, not measured. Green paint and grey reels are
+the game's own, not any maker's livery.
+
+### Placed numbers in the review's changes
+
+All PLACED, judged by eye in the game, none from a source:
+
+- Trees by the course's age: New 0.68 of full height, Mature 1, Old 1.18,
+  Restored 1.08; the crown's spread follows at 70% of the height's change.
+- A restored course's stumps: 3-7 a hole, 6-40 m out past the semi-rough, a
+  third in pairs.
+- Rakes halfway in from a bunker's edge; divots within about 9 degrees
+  either way of the line to the green.
+- The Alps: a ridge 24 m wide for 5 m high (was 13 m for 5.5 m); every ridge
+  fades in over the outer quarter of its length at each end.
+- The fountain (fountain.js): apex 3.0-4.2 m, landing 0.3-3.2 m out, 480
+  drops, the jet 3.7 m breathing 0.18 m, rings from 1 to 4 m over 2.6 s.
+  Read from makers' pictures of 1-2 hp floating pond aerators, not measured.
+- The live scoreboard's invented field: seven players, each a hole or two
+  either side of the golfers, scoring each hole from about 18% birdies, 64%
+  pars, 16% bogeys and 2% doubles -- a tour pro's spread read loosely from
+  scoring averages, not taken from one source.
+- The hand tools' limits (hand-tools.js HAND_FIELDS; since 31 October 2026
+  they clamp only the architect's own signatures, the studio's Hand tools
+  being withdrawn): bunkers 2.5-30 m,
+  mounds 5-45 m across and -4 to +4 m, fairway widths -24 to +30 m over
+  20-160 m, greens 0.7-1.4 of their designed size; at most 80 a course. The
+  generator's signatures on a third of holes, which shapes by which style,
+  and their sizes (a waste area of three or four 11-16 m bunkers 24 m apart,
+  a hogsback of 1.0-1.3 m mounds, a saddle of 2.4 m mounds, spectacles of
+  6 m bunkers 9 m either side of the line 75 m short of the green, a
+  punchbowl's rim of four 1.8 m mounds): all by eye.
+- Walkers and the mower drawn a twentieth larger than life (as the earlier
+  life was, so a figure is not a dot at 30 m); spectators at their own size.
+- A links joins each fairway to one neighbour at most on an Architect
+  course: a rule the owner's report asked for in spirit ("is there a way to
+  fix it? I do really like it"), not a number.

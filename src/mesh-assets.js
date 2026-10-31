@@ -27,7 +27,7 @@ export function modelParts(name) {
   const packedNormal = new Int8Array(buffer, p.normalAt, p.count * 3);
   const position = new Float32Array(p.count * 3), normal = new Float32Array(p.count * 3);
   for (let i = 0; i < position.length; i++) {
-   position[i] = quantised[i] / SCALE;
+   position[i] = quantised[i] / (model.q ?? SCALE);
    normal[i] = packedNormal[i] / 127;
   }
   const geometry = new T.BufferGeometry();

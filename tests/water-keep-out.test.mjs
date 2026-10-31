@@ -9,8 +9,7 @@
 // therefore the suite's entire wall time.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ovalRadius, fairwayWidth} from '../src/course.js';
-import {world as buildWorld} from './worlds.mjs';
+import {measured} from './worlds.mjs';
 // ---------------------------------------------------------------------------
 // WHAT WATER IS NOT ALLOWED TO TOUCH.
 //
@@ -18,20 +17,23 @@ import {world as buildWorld} from './worlds.mjs';
 // before they were asked for, because every one of them was happening. They
 // share a fixture: generating twenty-four courses is the expensive part, and
 // asserting four things about each is nearly free.
-const KEEP_OUT = (() => {
- const worlds = [];
- for (const biome of ['pnw', 'desert', 'mountain', 'links', 'midwest', 'autumn'])
-  // EIGHT SEEDS, NOT FOUR. Several assertions here are rates across the whole
-  // fixture -- what fraction of ponds bite into a fairway, whether a channel
-  // terminating in a hollow turns up at all -- and four seeds was too small a
-  // sample to measure them stably. Changing hole lengths moved the pond bite
-  // rate from just over the 8% floor to just under it, with the invariant that
-  // actually matters (no pond crosses a fairway) untouched at zero. Measured
-  // over eight seeds it is 9.2%.
-  for (const seed of ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'])
-   worlds.push(buildWorld({seed, biome, holes: 9, rivers: 1, creeks: 2, water: 60, lakes: 1}));
- return worlds;
-})();
+// Built on worker threads and measured there (worlds.mjs `measured`; the
+// testing audit, 31 October 2026): one thread, these were three minutes and
+// the whole suite's wall. Each test's loop is in tests/measure/water-keep-out.mjs.
+const SETTINGS = [];
+for (const biome of ['pnw', 'desert', 'mountain', 'links', 'midwest', 'autumn'])
+ // EIGHT SEEDS, NOT FOUR. Several assertions here are rates across the whole
+ // fixture -- what fraction of ponds bite into a fairway, whether a channel
+ // terminating in a hollow turns up at all -- and four seeds was too small a
+ // sample to measure them stably. Changing hole lengths moved the pond bite
+ // rate from just over the 8% floor to just under it, with the invariant that
+ // actually matters (no pond crosses a fairway) untouched at zero. Measured
+ // over eight seeds it is 9.2%.
+ for (const seed of ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'])
+  SETTINGS.push({seed, biome, holes: 9, rivers: 1, creeks: 2, water: 60, lakes: 1});
+const KEEP_OUT = await measured(SETTINGS, './measure/water-keep-out.mjs');
+const sum = key => KEEP_OUT.reduce((n, m) => n + m[key], 0);
+const least = key => Math.min(...KEEP_OUT.map(m => m[key]));
 
 test('no channel runs over a green', () => {
  // The drainage model raises greens 60 m so the ROUTE goes round them, and
@@ -39,13 +41,7 @@ test('no channel runs over a green', () => {
  // offset and corner cutting pulls a path across the inside of its own bends.
  // Measured before the finished polyline was pushed clear: water on 3 greens in
  // 216, as much as 16.2 m inside one.
- let worst = Infinity, holes = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) {
-  holes++;
-  const g = h.worldGreen ?? h.worldPin, radius = h.greenSize * h.greenAspect;
-  for (const st of w.streams.streams) for (const p of st.points)
-   worst = Math.min(worst, Math.hypot(p.x - g.x, p.z - g.z) - p.width * .5 - radius);
- }
+ const holes = sum('holes'), worst = least('greenWorst');
  assert.ok(holes > 200, `only ${holes} holes in the fixture`);
  assert.ok(worst > 0, `channel water reaches ${worst.toFixed(1)} m past a green edge`);
 });
@@ -56,18 +52,9 @@ test('no channel crosses a playing corridor', () => {
  // raised in the drainage model the way greens are, so the route goes between
  // the holes rather than being steered across them -- and the point of doing it
  // that way is that the path stays a pure descent.
- let inside = 0, channels = 0;
- for (const w of KEEP_OUT) for (const st of w.streams.streams) {
-  channels++;
-  for (const p of st.points) for (const h of w.holes) {
-   const q = h.toLocal(p);
-   if (q.z < 0 || q.z > h.length) continue;
-   const off = q.x - h.center(q.z), half = fairwayWidth(h, q.z, 0, Math.sign(off) || 1);
-   if (half && Math.abs(off) < half + p.width * .5) inside++;
-  }
- }
- assert.equal(inside, 0, `${inside} channel stations inside a fairway`);
  // And the rule must not be kept by refusing to place channels.
+ const inside = sum('inside'), channels = sum('channels');
+ assert.equal(inside, 0, `${inside} channel stations inside a fairway`);
  assert.ok(channels >= 60, `only ${channels} channels placed across 24 courses`);
 });
 
@@ -76,20 +63,10 @@ test('no channel runs into standing water it did not create', () => {
  // lake-on-pond check was added for. A channel is kept a clear margin outside
  // any pond or lake -- its own terminal pond excepted, which is the one body it
  // is supposed to arrive at.
- let worst = Infinity, bodies = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) for (const p of h.ponds) {
-  if (p.sink) continue;
-  bodies++;
-  const edge = Array.from({length: 48}, (_, i) => {
-   const e = ovalRadius(p, i * Math.PI / 24);
-   return h.toWorld({x: p.x + e.x, z: p.z + e.z});
-  });
-  for (const st of w.streams.streams) for (const q of st.points) for (const v of edge)
-   worst = Math.min(worst, Math.hypot(q.x - v.x, q.z - v.z) - q.width * .5);
- }
- assert.ok(bodies > 100, `only ${bodies} water bodies in the fixture`);
  // Comfortably outside the shore band, which is 14 to 24 m wide, so the two
  // bodies do not share painted ground either.
+ const bodies = sum('bodies'), worst = least('pondWorst');
+ assert.ok(bodies > 100, `only ${bodies} water bodies in the fixture`);
  assert.ok(worst > 14, `channel water comes within ${worst.toFixed(1)} m of a pond`);
 });
 
@@ -99,27 +76,12 @@ test('a pond bites into a fairway but never crosses one', () => {
  // part that was wanted. `reach` is bounded at 0.70 of the half width and the
  // shore is measured inward from the SEMI-ROUGH edge, so the crossing is
  // impossible by construction rather than by a rejection test.
- let crossed = 0, bit = 0, total = 0, deepest = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) for (const p of h.ponds) {
-  if (p.sink) continue;
-  total++;
-  let reach = -Infinity, far = false;
-  for (let i = 0; i < 96; i++) {
-   const e = ovalRadius(p, i * Math.PI / 48), x = p.x + e.x, z = p.z + e.z;
-   if (z < 0 || z > h.length) continue;
-   const off = x - h.center(z), side = Math.sign(off) || 1, half = fairwayWidth(h, z, 0, side);
-   if (!half) continue;
-   reach = Math.max(reach, half - Math.abs(off));
-   if (Math.sign(off) !== Math.sign(p.x - h.center(z)) && Math.abs(off) > half * .5) far = true;
-  }
-  if (reach > 0) { bit++; deepest = Math.max(deepest, reach); }
-  if (far) crossed++;
- }
- assert.equal(crossed, 0, `${crossed} ponds cross a fairway`);
  // A bite nobody can see from the tee is not the feature that was asked for.
  // PLACED floor. Greens at real size (generator 36, 15 October 2026) took it
  // from 32 of 348 (9.2%) to 26 of 331 (7.9%): a par three's fairway now starts
  // later, leaving a pond less of it to bite. The floor moved from 8% to 7%.
+ const crossed = sum('crossed'), bit = sum('bit'), total = sum('total'), deepest = Math.max(...KEEP_OUT.map(m => m.deepest));
+ assert.equal(crossed, 0, `${crossed} ponds cross a fairway`);
  assert.ok(bit / total > .07, `only ${bit} of ${total} ponds reach into a fairway`);
  assert.ok(deepest > 6, `the deepest bite is only ${deepest.toFixed(1)} m`);
 });
@@ -129,20 +91,9 @@ test('a channel that ends in a hollow ends in a real pond', () => {
  // pond object, because that is what makes it inherit the cut bank, the shore
  // band, the mown collar, the map outline and the overlap rules instead of
  // being a second kind of water with its own copy of all of them.
- let sinks = 0, ponds = 0;
- for (const w of KEEP_OUT) {
-  const made = w.holes.flatMap(h => h.ponds.filter(p => p.sink).map(p => ({h, p})));
-  ponds += made.length;
-  sinks += w.streams.streams.filter(st => st.end === 'sink').length;
-  for (const {h, p} of made) {
    // Everything an ordinary pond carries, because it went through the same fit.
-   assert.ok(p.level !== undefined && p.shoreWidth > 0 && p.reachX > 0 && p.banks.length === 257);
-   const c = h.toWorld(p);
-   assert.equal(w.surface(c.x, c.z), 'water', 'a terminal pond must play as water');
-   assert.ok(w.height(c.x, c.z) < p.level - .2, 'a terminal pond must have a basin under it');
-   assert.ok(h.ponds.length <= 4, 'the per-hole atlas limit still holds');
-  }
- }
+ const sinks = sum('sinks'), ponds = sum('made'), faults = KEEP_OUT.flatMap(m => m.terminalFaults);
+ assert.deepEqual(faults, [], 'a terminal pond is not an ordinary pond');
  assert.ok(sinks > 0, 'no channel reached a hollow in the fixture');
  assert.ok(ponds > 0, `${sinks} channels ended in a hollow and none of them got a pond`);
 });

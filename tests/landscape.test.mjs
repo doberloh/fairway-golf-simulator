@@ -1,3 +1,5 @@
+// Split three ways (the testing audit, 31 October 2026): each test builds its
+// own courses, so landscape-water and landscape-biomes run beside this file.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateCourse, greenDistance, ovalRadius, BIOMES} from '../src/course.js';
@@ -16,32 +18,7 @@ test('compact routing varies headings and keeps playable corridors separate',()=
   const walks=w.holes.slice(1).map((h,i)=>Math.hypot(h.worldTee.x-w.holes[i].worldPin.x,h.worldTee.z-w.holes[i].worldPin.z));assert(walks.reduce((a,b)=>a+b,0)/walks.length<150);
  }
 });
-test('water depths match actual lake bottoms and are independent of water elevation',()=>{
- // NOT island: that biome carries no inland water at all, so it has no pond
- // whose depth could be checked. What this test is actually about -- a pond's
- // depth matching the setting and not drifting with the water's elevation --
- // is unchanged, and mountain and desert still exercise it across the range.
- for(const biome of ['mountain','desert'])for(const depth of [.3,4]){const w=buildWorld({seed:'DEPTH',biome,water:100,waterMin:depth,waterMax:depth,trees:0});let count=0;
-  for(const h of w.holes)for(const p of h.ponds){count++;assert.equal(p.depth,depth);assert(Math.abs(p.level-h.height(p.x,p.z)-depth)<.01);assert.equal(h.surface(p.x,p.z),'water');}assert(count>0);
- }
-});
 test('greenside bunkers respect the requested fringe gap, including tight settings',()=>{
  for(const gap of [0,2,15]){const w=buildWorld({bunkerGap:gap,bunkerCount:8,water:0,trees:0});let count=0;for(const h of w.holes)for(const b of h.bunkers.filter(b=>b.greenSide)){let actual=Infinity;for(let i=0;i<256;i++){const p=ovalRadius(b,i*Math.PI/128);actual=Math.min(actual,greenDistance(h,b.x+p.x,b.z+p.z)-w.settings.fringe);}assert(actual>=gap-.01);assert(actual<gap+.12);count++;}assert(count>=9);}
  assert(buildWorld({bunkerCount:0,trees:0}).holes.every(h=>h.bunkers.length===0));
-});
-test('islands have substantial surrounding and interior water without flooding fairways',()=>{
- const w=buildWorld({biome:'island',seed:'HORIZON-5714',holes:18,elevation:100,landform:100,trees:0});let wet=0,total=0;for(let x=-w.halfX;x<w.halfX;x+=25)for(let z=-w.halfZ;z<w.halfZ;z+=25){total++;if(w.surface(x,z)==='water')wet++;assert(w.land(x,z)>=-w.settings.waterMax-1e-8);}assert(wet/total>.35);for(const h of w.holes){assert.equal(h.surface(Object.values(h.tees)[0].x,Object.values(h.tees)[0].z),'tee');assert.equal(h.surface(h.pin.x,h.pin.z),'green');for(let z=25;z<h.length-25;z+=15)assert.notEqual(h.surface(h.center(z),z),'water');}
-});
-test('mountains and dunes grow between holes, and every biome has mixed vegetation',()=>{
- for(const biome of Object.keys(BIOMES)){const w=buildWorld({biome,trees:45,elevation:70,landform:100});assert(new Set(w.trees.map(t=>t.kind)).size>=3);// SCATTER planting only. A SPECIMEN tree is deliberately in the short grass --
-  // the lone cypress, the oak in the middle of the fairway -- and is marked
-  // `feature` for exactly this reason. Dropping the assertion rather than
-  // narrowing it would stop it catching the thing it was written for, which is
-  // scatter planting wandering onto a corridor.
-  // Natural ground a tree may stand on (grounds.js `allows`): rough, or since
-  // the cartoon overhaul hardpan, native grass, heather or its own straw.
-  assert(w.trees.filter(t=>!t.feature).every(t=>allows(w.surface(t.x,t.z),'trees')));
-  assert(w.trees.some(t=>!t.feature),'no scatter trees at all -- the assertion above is vacuous');
-  if(['mountain','links'].includes(biome)){let peak=0;for(let x=-w.halfX;x<w.halfX;x+=40)for(let z=-w.halfZ;z<w.halfZ;z+=40)peak=Math.max(peak,w.height(x,z));assert(peak>(biome==='mountain'?80:30));}
- }
 });

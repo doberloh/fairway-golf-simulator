@@ -406,3 +406,124 @@ has it: cottonwood (a furrowed trunk forking into great limbs, each carrying a
 cloud), black oak, sugar maple (with far twins), creeping and vase junipers,
 dune grass patches of splayed tussocks, and bleached driftwood (now drawn
 painted).
+
+## The Architect packs (architect-courses, from 30 October 2026)
+
+Models an Architect course places (docs/ARCHITECT_COURSES.md). Each model is
+iterated at least ten times, on the contact sheet and in the game, and every
+iteration is logged in ARCHITECT_COURSES.md, *Blender iteration log*.
+
+**A model longer than two of its own heights** -- a rake lying on the grass
+-- does not fit the ingest's int16 box (positions are stored at 16384 a
+model height, two heights each way) and wraps round to the far side. Such
+a model carries its own scale, `q`, written beside it and read by
+mesh-assets.js (build-meshes.mjs). At first only the Architect's families had
+it; since 31 October 2026 every family does (the owner), which unwrapped
+eleven models drawn folded since they were ingested: Tussock_1 and _2 (q
+12248, 11202), Log_1 to _3 (13645, 15347, 11307), Sorrel_1 (11162),
+LakeDuneGrass_3 (16335), LakeJuniper_1 and _2 (6789, 5541), LakeDriftwood_1
+and _2 (6673, 8727). A model that fits keeps 16384 and its bytes. **A pack script must not
+import another pack's script**: importing runs that script's own export, into
+this pack's folder (architect_people copies cartoon_course.py's `block`).
+
+### architect_people
+
+`tools/blender/architect_people.py`: what a club puts out on a course it looks
+after -- a penalty-area stake (0.92 m, painted to a dark earth collar, a
+pyramid cap; red in the game), the boundary's white stake (1.05 m), a
+yardage post (0.64 m, a dark plinth, a coloured band, a chamfered cap; dark
+green in the game with a red, white or blue band) and a bunker rake (1.6 m
+built, drawn 2.3 m: true size was nothing from a fairway). Ingested as the
+`coursemarkings` family, never planted; renderer.js `addMarkings` draws them
+instanced from markings.js, the standing ones inked. The sheet uses a 0.4 m
+scale post: the default 1.8 m post is wider than a stake and hid all four.
+
+### architect_clubhouses
+
+`tools/blender/architect_clubhouses.py`: one clubhouse a landscape (the
+study's landscape table): a timber lodge (PNW), an adobe with a tower and
+vigas (Desert), a chalet (Mountain), a twin-gabled stone links house (Links),
+a two-storey farmhouse with a porch (Midwest), an open hipped pavilion
+(Island), a log lodge (Giant Redwood), a clapboard house with a cupola
+(Autumn), a crooked manor with a turret (Haunted Hollow) and a shingled house
+with dormers (Lakeshore Dunes); each with fascia and ridge trim, a flag by
+the door. Built round a 26 x 16 m footprint, front at -Y; ingested as the
+`clubhouse` family with its own scale (`q`); renderer.js
+`addBuildings` fits each to its building's box and inks it, coloured per
+landscape (walls, roof, trim, glass -- Haunted Hollow's windows lit), and
+draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
+is each model's height for its width, measured off the ingested model; a
+test holds it to the models, so **re-measure it whenever a clubhouse changes
+shape**.
+
+### architect_story
+
+`tools/blender/architect_story.py`: the land's story, each model drawn to
+the footprint story.js gives it (front at -Y) so the game fits it to its
+solid box undistorted: a 2 m dry-stone wall section (1.1 m, coursed stones and
+a coping) and a hedge section (1.6 m), a standing stone (2 m; painted white
+it is the Dell's aiming stone), a post lantern, a gambrel barn (11 x 15 m, its
+doors in the gable), a silo, a windpump, a roofless chapel and cottage, a
+timber mine head, a round sugar-mill tower, a banded lighthouse and a church
+with a spire. Ingested as the `storypieces` family with its own scale;
+renderer.js `addBuildings` fits the buildings to their boxes (coloured by piece
+and landscape) and `addStory` instances the walls in 2 m sections, the
+stones and the lanterns. The walls are drawn uninked (inked, their small
+stones went black).
+
+### architect_occasion
+
+`tools/blender/architect_occasion.py`: tournament week, each drawn to
+occasion.js's footprint (front, toward play, at -Y): a grandstand (20 x 9 m,
+six stepped rows, an event-green skirt, a canopy and pennants: 8.6 m), a
+scoreboard on 3 m legs (12 x 2, 7.6 m), a scaffold TV tower with a hooded
+camera (4 x 4, 12 m), a peaked marquee (10 x 10, 5.5 m), 6 m of gallery rope
+and five spectators from the shared body (`figures.py`, below): a cap, a sun
+hat and skirt, a golf umbrella, clapping in a visor, a child cheering.
+Ingested as `occasionpieces` with its own scale; renderer.js fits the
+buildings to their boxes and `addOccasion` instances the ropes and the crowd,
+each spectator dressed from `PEOPLE_PALETTE` and drawn at its own height.
+
+### figures.py: one body for every person
+
+`tools/blender/figures.py` (the owner's review, 30 October 2026) builds a
+cartoon person into a mesh -- poses walk, stand, clap, cheer, push, pull,
+umbrella and seated; hats cap, visor, sun hat and bucket; a skirt and
+ponytail; a carry bag, push and pull trolleys, an umbrella. Each part is one
+role -- skin `stone`, shirt `accent`, trousers `bark`, shoes and hair `dirt`,
+hat with its bag or umbrella `leaf` -- because the game colours each role per
+figure (instance colours), so one model is many people. The ingest records a
+person's true height (`tall`, build-meshes.mjs `PEOPLE`): every model is
+normalised to one unit tall, and a child and someone under an umbrella were
+stretched to the same height until it did.
+
+### architect_life
+
+`tools/blender/architect_life.py`: life on an Architect course, each
+facing -Y at its real size -- a sheep (a fleece of lumps on short legs, a dark
+face), a goose, a doe and a bull elk (inset coat-coloured legs, a full body),
+a heron, a roadrunner, a gliding bird (a gull white, a raven black), four
+walking golfers from `figures.py` (a bag, a push trolley, a pull trolley, a
+bucket hat and bag) and a five-unit fairway reel mower (2.58 x 2.59 m, 2.32 m
+to its sunshade; RESEARCH, *A fairway mower*) with a greenkeeper aboard.
+Ingested as the `lifeforms` family with its own scale; renderer.js `addLife`
+draws them instanced, the animals a quarter to a half larger than life and
+the people a twentieth, and moves them, never on Low.
+
+### architect_water
+
+`tools/blender/architect_water.py`: what a builder puts at an Architect
+course's water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
+stringers, nine planks, a post each corner, two rails) and stone (3.1 m, 1.08
+m: a slab, parapets with a coping) -- the deck's top 0.30 m up both; renderer.js
+`addPaths` lays as many as a span needs, fitted to the path's width and to
+the solid deck (`b.deck`), inked. Three **rip-rap** stones (about 0.7 x 0.35
+m, angular), a **tie wall** section (2.4 m of ten ties, 0.9 m tall, a waler on
+its +X face, which turns to the water). The **fountain** was a model here
+(4.0 m, nine iterations) until the owner's review asked for it to move; the
+renderer now draws its water (src/fountain.js). Ingested as the `waterworks` family
+with its own scale (`q`: the tie wall is 2.7 heights long);
+renderer.js `addWaterworks` draws them instanced. **The tube helper draws one
+ring a radius** (`add_tube`): give it a radius for every point, or the tube
+stops after the first stretch -- the old fountain's streams were invisible
+for eight iterations.

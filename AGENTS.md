@@ -162,32 +162,44 @@ owner:
   words and numbers. Media for the website goes to its repository, only when
   the owner picks it.
 
-## Two version numbers, and when to bump them
+## Three version numbers, and when to bump them
 
-Both live in `src/settings-schema.js`, and no test catches getting them wrong --
-only old saves suffer.
+All live in `src/settings-schema.js`, and no test catches getting them wrong --
+only old saves suffer. There are two designers (Classic and Architect, since 30
+October 2026; docs/ARCHITECT_COURSES.md), so there are two generator numbers.
 
 - **`GENERATOR_VERSION`: bump whenever generated output changes for an
   unchanged seed**, however small -- terrain, routing, hazards, planting, water.
   Otherwise a saved round silently rebuilds different ground under a ball that
   has not moved. It is never migrated; the mismatch is shown to the player
-  (`showVersionNotice`).
+  (`showVersionNotice`). It covers Classic and everything both designers
+  share, so a bump moves both.
+- **`ARCHITECT_VERSION`: bump whenever an Architect course changes for an
+  unchanged seed and Classic does not.** A course keeps one stamp,
+  `generatorFor(settings)` -- Classic's is `GENERATOR_VERSION`, Architect's
+  `GENERATOR_VERSION*1000 + ARCHITECT_VERSION` -- so never write
+  `GENERATOR_VERSION` where a course's stamp is meant.
 - **`SCHEMA_VERSION`: bump whenever a settings object changes shape** (a
   control added, renamed, removed or re-ranged), with a `MIGRATIONS` entry and
   a test that a save from the old version loads. Silent; never shown.
 - **A new generation setting is one schema entry** (default, bounds, step, unit,
   category, help text) -- everything else derives from it; add no parallel
   default, slider or bounds list. It almost always bumps both numbers.
-- **`node tools/biome-fingerprint.mjs --check` decides.** If any biome's
-  GROUND moved, `GENERATOR_VERSION` goes up; a RECORD change (name, palette,
-  light) owes nothing. Run it on any change to `course.js`, `course-plan.js`,
-  `streams.js`, `lakes.js`, `homes.js` or `vegetation.js`, and on changes that
-  look unrelated.
+- **`node tools/biome-fingerprint.mjs --check` decides, run twice** -- once
+  as it is (Classic) and once with `--designer architect`. Classic's GROUND
+  moved: `GENERATOR_VERSION` goes up. Only Architect's moved:
+  `ARCHITECT_VERSION`. A RECORD change (name, palette, light) owes nothing. Run
+  both on any change to `course.js`, `course-plan.js`, `streams.js`,
+  `lakes.js`, `homes.js`, `vegetation.js`, `designer.js` or the architect's
+  modules, and on changes that look unrelated. **A change meant for Architect
+  alone must leave Classic's check silent**; if it does not, it reached a
+  shared path and the seam is wrong.
 - **A bump is two edits:** the number, and a line in the list above it saying
   what moved and why. **The entry's number is the version it produced**
   (`git log -S"GENERATOR_VERSION=<n>"` settles doubt).
 - **No bump** for rendering, HUD, cameras, materials, audio, maps, the
-  scorecard, tests or tooling. If the fingerprint is silent, leave both alone.
+  scorecard, tests or tooling. If the fingerprints are silent, leave them all
+  alone.
 
 ## Documentation is part of the change
 
@@ -320,7 +332,8 @@ ask as above.
 anything else uses the GPU. **Ask first, quoting the cost** (a "GPU allowed"
 `/goal` is the only exception, above): about 10 minutes
 for a full sweep, about a minute for one group (`--only tiers`, `views`,
-`biomes`, `ablation`, `pixels`, `water`, `sun` or `weak`).
+`biomes`, `ablation`, `pixels`, `water`, `sun`, `weak` or `architect` -- Classic
+against Architect on Low).
 
 - **Ask whenever a change could move a frame:** `renderer.js`, `graphics.js`,
   `vegetation.js`, `textures.js`, shaders, materials; a render pass, post

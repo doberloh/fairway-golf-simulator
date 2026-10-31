@@ -47,7 +47,7 @@
 // Pure: no DOM, no three.js. main.js records the shots, flies them again, draws
 // them and shows the comparison; tests/rival.test.mjs checks the rest.
 
-import {SCHEMA_VERSION, GENERATOR_VERSION, validateSettings, migrateSettings} from './settings-schema.js';
+import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from './settings-schema.js';
 import {courseSettings, settingsDiff, checksum} from './course-library.js';
 import {puttingConfig} from './putting.js';
 import {firmnessName} from './firmness.js';
@@ -205,7 +205,7 @@ export function rulesDiff(theirs, mine, name = 'They') {
 // is measured from nothing. `log` is the round's shot log, of which only this
 // golfer's entries are packed.
 const SAME_SPOT = 16;
-export function makeRivalCode({name, course, version, generator = GENERATOR_VERSION, settings, holes, pars, card, putts = [], rules, log = [], seat = 0, day = '', weekly = ''}) {
+export function makeRivalCode({name, course, version, settings, generator = generatorFor(settings), holes, pars, card, putts = [], rules, log = [], seat = 0, day = '', weekly = ''}) {
  if (![9, 18].includes(holes)) throw Error('Only a round of 9 or 18 holes can be sent.');
  if (!Array.isArray(card) || card.length !== holes || !card.every(v => Number.isFinite(v) && v > 0 && v < 100)) throw Error('Only a finished card can be sent.');
  if (typeof version !== 'string' || !version) throw Error('This build of Fairway has no version to put on a challenge.');
@@ -297,7 +297,7 @@ export function readRivalCode(code) {
 // Why this Fairway cannot play a challenge, or '' when it can. The version is
 // the rule (the owner, 20 October 2026); the generator is checked as well so a
 // build stamped with the wrong version still cannot grow other holes under it.
-export function rivalProblem(rival, {version, generator = GENERATOR_VERSION} = {}) {
+export function rivalProblem(rival, {version, generator = generatorFor(rival?.settings)} = {}) {
  if (!rival) return 'There is no challenge to play.';
  if (rival.version !== version || rival.generator !== generator)
   return `${rival.name} played this on Fairway ${rival.version || 'of an unknown version'}, and this is Fairway ${version}. A challenge is played on the same version it was made on, so the course and every shot come out the same. One of you needs to update.`;

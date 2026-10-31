@@ -76,7 +76,8 @@ class Page {
   const op = fill && stroke ? 'B' : fill ? 'f' : 'S';
   this.ops.push(`q ${fill ? rgb(fill) + ' rg ' : ''}${stroke ? rgb(stroke) + ' RG ' + num(width) + ' w ' : ''}${path} ${op} Q`);
  }
- // An ellipse turned by `angle` radians (counter-clockwise on the page).
+ // An ellipse turned by `angle` radians, clockwise on the page (the matrix
+ // turns by -angle in PDF space, whose y runs up).
  ellipse(cx, cy, rx, ry, angle = 0, style = {}) {
   const c = Math.cos(-angle), s = Math.sin(-angle);
   this.ops.push(`q 1 0 0 1 ${num(cx)} ${num(this.y(cy))} cm ${num(c)} ${num(s)} ${num(-s)} ${num(c)} 0 0 cm ${num(rx)} 0 0 ${num(ry)} 0 0 cm`);

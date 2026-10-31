@@ -8,7 +8,7 @@ changes what it covers.
 
 | Layer | Command | Runs on | What it can see | What it cannot |
 | --- | --- | --- | --- | --- |
-| **Node tests** | `npm test` | the processor, about 3-4 minutes | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
+| **Node tests** | `npm test` (whole suite); `npm run test:changed`, `npm run test:fast` (*Running the Node tests*) | the processor, about 3 1/2 minutes whole; seconds for the fast set | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
 | **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
@@ -31,6 +31,65 @@ generator checks can run any time.
 (`.github/workflows/test.yml`). The smoke step there is slow and has not yet
 gone green reliably -- TODO, *Found on GitHub*.
 
+## Running the Node tests
+
+`npm test` runs `tools/test.mjs`, which starts every test file in its own
+process, 31 at a time (cores less one), **longest first** by the times in
+`bench/test-times.json`, prints one line per passing file and the whole
+report of a failing one, and ends with the totals and the five slowest
+files. Three other ways to run it:
+
+| Command | Runs | About |
+| --- | --- | --- |
+| `npm run test:changed` (`node tools/test.mjs --changed [commit]`) | only the files that can see a change: every test whose imports (followed through every module) reach a file changed, staged or new since the last commit, or since the commit named. Docs alone run nothing | seconds to the whole suite, by what changed |
+| `npm run test:fast` (`--fast`) | the 81 files that build no course -- 621 of the 1,236 tests: the rules, the ball, scoring, saves, challenges, the interface's pure modules | 2 seconds |
+| `node tools/test.mjs paths water` | files whose names hold those words | |
+| `npm run test:times` (`--save-times`) | the whole suite, then stores each file's time for the ordering | 3 1/2 minutes |
+
+`--list` names what a run would start and stops; `--jobs N` sets how many at
+once (3 when memory is short -- the commit charge has run out before).
+`--changed` is a check while working, never the gate: a commit gets the
+whole suite.
+
+**Where the time goes** (the audit of 31 October 2026, the owner: "testing is
+taking a really long time"). 1,236 tests in 157 files. 81 files take under
+3 s together; everything else is **building courses**: 521 builds in a whole
+run, about three-quarters of each the ground grid every height is read from.
+A file's tests run one after another in one process, so a file that builds
+many courses on one thread is a queue however many cores sit idle, and the
+suite waited for its longest file: `water-keep-out` (48 courses) took 177 s
+by itself. Fixed in four ways:
+
+- **Built on worker threads** (`tests/worlds.mjs` `measured`): the file names
+  its courses and a measuring module under `tests/measure/` that runs on the
+  thread that built each course and returns only numbers (a world holds
+  functions and cannot cross a thread); the test asserts on the numbers,
+  word for word what it asserted on the worlds. `water-keep-out` 177 s ->
+  35 s, `fairway-features` 123 -> 20, `clubhouse` 100 -> 18 (and its
+  clear-ground check now covers all ten landscapes, not four).
+- **Split where the tests build different courses**: `water-terrain` into
+  `water-shore` and `water-lakes` beside it, `landscape` into
+  `landscape-water` and `landscape-biomes` -- tests that read the same
+  courses kept together, so nothing is built twice.
+- **The cache used**: `shared-fairways` built its 18-hole links afresh in
+  every test (95 -> 32 s).
+- **Longest first**: the plain runner sorts files by name, so a heavy file
+  named water-* started last.
+
+Whole suite: **285 s -> about 205 s** (273 and 286 before, 201 and 204
+after). What is left is the processor, not the order: 31 files at once on
+16 cores make every course build about two and a half times slower than
+alone (`tee-corridor` 74 s alone, 187 s in the crowd), and the whole run is
+about 4,700 file-seconds. Only less building makes it faster now: either a
+cheaper course build (which would also shorten the wait to start a round --
+TODO, *A course takes seconds to build*) or fewer courses in a test, which
+narrows what it checks and is the owner's call.
+
+**A new heavy test** (more than a few courses): build them with `measured`,
+or give it a file of its own; never a fresh `generateWorld` where the cache
+would do. A file over a minute alone (`bench/test-times.json`) is the next
+thing to look at.
+
 ## Playing a round, in every format and group
 
 The rules of a round live in `src/game.js` (`Round`) and `src/skins.js`, with no
@@ -46,7 +105,10 @@ skins and carries, when the round ends. Along the way it saves and restores the
 round mid-hole, while a ball waits for relief and between holes; takes
 mulligans and checks they put everything back; drops balls; and has golfers
 join and leave between holes. A failure names the format, group, putting mode
-and seed, so it can be replayed exactly.
+and seed, so it can be replayed exactly. **On both designers** (architect-courses):
+one test builds a real nine from Classic and from Architect, plays every format
+and group over it with each hole told its own par, and checks every golfer's
+score to par against that course's pars.
 
 | Format | 1 golfer | 2 | 3 | 4 | Teams | Endless |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -122,7 +184,8 @@ popup. That is wired code, checked only by the smoke test and by playing.
 ## The Node suites, by area
 
 All in `tests/`, one file per subject; `tests/worlds.mjs` builds and memoises
-the courses several suites share.
+the courses several suites share, and builds many at once on worker threads
+(`measured`, with the measuring modules in `tests/measure/`).
 
 - **A round and its records** -- `round-matrix`, `core`, `play`, `honours`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
@@ -135,20 +198,24 @@ the courses several suites share.
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
-- **Making a course** -- `world`, `landscape`, `landscape-edge`,
+- **Making a course** -- `world`, `landscape` (with `landscape-water` and
+  `landscape-biomes`), `landscape-edge`,
   `course-variety`, `course-living`, `course-names`, `atmosphere-routing`,
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
   `tee-corridor`, `water-*`, `waterways-tours`, `vegetation-variety`,
   `generation-steps`, `parallel-ground`, `settings-schema`, `haunted-props`,
+  `far-heath` (the heath past the near tiles: domes only on heather, at the ground, in the cushions' colours, no shadow; every patch found, one a 2.6 m square within 10% of a full scan; a moor spaced out to the cap; thinner on Low, none without heather or without a reach; the grow-in and sink really in the compiled toon shader),
+  `corridor-seam` (no bank where two holes' corridors meet: on played ground where the nearest hole changes, clear of sand, water, paths and tee pads, the sharpest bend under 0.3 -- Classic Lakeshore HZ-2 and Architect Links ST-1, which bend 0.94 and 0.56 with the fade off),
   `blowouts` (Lakeshore Dunes' sand: the field baked on the atlas grid and read back as a linear filter reads it, the gate off the playing lines, water clearance, about a tenth of the dune rough, nothing planted on it, no other biome building a field, and the ground shader asking the same questions in the same order -- a structure check, since no test runs the shader),
   `landforms` (the cartoon overhaul's country between the holes: every recipe names real ground types, the field baked and read back as the blowouts' is, a seed's own bytes, every gate keeping its ground off the playing lines, the range flat and plain, each landscape getting the ground it asks for -- off the corridor, clear of creeks, no tree on what will not hold one -- pine straw played from the bytes it is painted with, and the shader painting in the lie's order),
-  `shared-fairways` (the overhaul's links: an 18-hole links shares fairways on at least two holes a course and six across three seeds, never a par 3; no other landscape asks for it or gets it; a widened edge is fairway in the world; sharing is reproducible and a lone hole is left alone; a join carries pot bunkers on its seam, sand at the centre and ringed by fairway),
+  `shared-fairways` (the overhaul's links: an 18-hole links shares fairways on at least two holes a course and six across three seeds, never a par 3; no other landscape asks for it or gets it; a widened edge is fairway in the world; sharing is reproducible and a lone hole is left alone; a join carries pot bunkers on its seam, sand at the centre and ringed by fairway; an Architect links -- the owner's course, Links ST-1 -- joins fairways in pairs, never a field of three or more),
   `stands` (the overhaul's uncleared woods and thickets: every record whole and never reaching within 25 m of a corridor, a stand planted thicker than the open scatter, back from play and on ground that holds a tree, none on the Redwood or the range, the sites and field the seed's alone, and every landscape's far-forest record one the ground shader can take, and its long-grass record naming families the model module carries; the understory trunkless and inside stands only). `tee-corridor` counts the open scatter alone against its target and its tee surrounds, per hectare of ground that can hold a tree (a stand stands back from every tee by design). `instance-cull` holds that a painted crown swaps only to the far twin it ships, by `farPainted`, and that one without a twin is never thinned.
+- **Two designers** -- `designer` (Classic and Architect, architect-courses: a save from before the switch is Classic and its settings come back untouched; the stamps `generatorFor` gives each kind of course; an Architect course decided by its dials and idempotent; a course code carrying only what an Architect course is chosen by; the studio showing each designer its own controls; every style a record and every landscape leaning toward real styles; the card before the course agreeing on Architect; every play mode -- Surprise me, the course of the week, the Challenge Course, an endless hole -- growing Classic, which is the default). `hand-tools` (the architect's hand: records cleaned and clamped; no setting carries hand features, a save from schema 13 that did loads without them, and ones smuggled into the settings change nothing and go in no code; signatures by style, the same for a seed; every bunker its reason; no hole past the cap and no slot over-filled, on courses the architect overfills by itself). The round matrix needs no second designer: it plays the rules with no course at all. `architect` (the architect, phase 1: the golfer table within the study's ranges and longest club furthest; every style, club and age valid settings, a championship venue longer than a municipal course, links without ponds; every hole a plan and every hazard a reason, at most twelve a hole; drive bunkers by a landing zone on at least 70% and well above Classic's share; the front corner on the wrong side guarded; the Eden's three bunkers and the Nose's centreline pair; side bunkers clear of the mown fairway; the landscape's style reaching the hole). `architect` also holds phase 3: collection areas playing as fairway on the ground-game styles and none on Parkland, thin links collars, lobes on the big-bunker styles only and within reason, and divots only on tees and short grass. `paths` (cart paths: a network a course long on Architect and none on Classic, never within 10 m of a green, no step steeper than 30%, a dozen sharp corners at most, the path its own lie and never on a green, tee, sand or water, nothing planted or built on it, out of play beside its hole, free relief off it stance and all and no nearer the hole, bridges over creeks on a course that has some, and a ball dropped on a bridge stopping on its deck, in the penalty area; one network, every end on another piece or well clear of it, no short jog joined at both ends -- PA-2 Midwest, whose hole 10 pull-off sat in a pocket, included; no building or house on a path or with one through it, and the footprint test itself; no end stopping within 12 m past a junction or running on 8 m past a path it crosses -- on the captures' Midwest course too, where the wedge was seen; no more than 2% of ends folding back on themselves). `waterworks` (phase 5: Classic and Links bare; mounds in the rough and risen from the ground round them on Parkland, Golden Age and Stadium; rip-rap at the water and never on a green, tee, sand or path; tie walls facing their pond, and none on Parkland; fountains in open water, two at most, none on a municipal course). `story` (phase 6: Classic and a story of None bare but for a Dell's stone; every landscape its own walls, farm, ruins and circle; everything out of play, nothing grown inside a building; a wall stops a rolled ball and is never out of bounds; the Dell's dune and stone, its face under 45% and its foot short of the green, the Alps' ridge, the Barranca's ravine with its fairway gap, bridge (the path bridges it wall to wall) and treeless line, the Pit's wall before its green). `life` (phase 6: Classic bare and every landscape its own animals; nothing on a played surface or inside a tree, the walkers on the path, the birds up; hollows on an old municipal course and none on a new members' one; stumps on a restored course and none on an old one, scattered rather than in a line; a new course's trees under 0.8 of an old one's; the mower's whole run on mown rough and none on a links). `occasion` (phase 7: only a Championship venue dressed; nothing on a played surface; a stand behind the last green facing it; the crowd more than doubling from Thursday to Sunday; a stand stops a ball and is not out of bounds). `yardage-book` (a page a hole, the PDF well formed by the range report's check, every hole's number, name, par, the architect's note, carries and what is left). The pause menu's *Yardage book* item is not driven by a smoke journey. `biome-architect` (every landscape has an architect block and every name in it is real -- a style, a template, a clubhouse, a path, a ruin, an animal, a colour; no block for a landscape that does not exist). `clubhouse` (an Architect course's nines come home, three in four at least and more than Classic's; every landscape's Architect course has one and Classic none; clear ground, facing the first tee, nothing grown or built on it or its lawn; the path reaching its door; a ball fired at it stops against it and is never out of bounds for it, with residential out of bounds on or off; and `paths` holds the clubhouses' height table to the models). `markings` (stakes, posts and rakes on Architect only and every kind present; none in water, on a path, green, tee or sand; every pond staked and every bunker raked; posts at their distance just off the fairway; every rake in its bunker's sand at least a metre in; nine divots in ten within 16 degrees of the line to the green). `hand-tools` (the owner's review: records clamped, unknown ones dropped, at most 80, a bad list refused; a save from before loads with none; Classic built with hand features is identical; a bunker, a mound, a fairway width and a punchbowl green each land where put; a course code carries them and leaves out an empty list; the generator's signatures by style, a third of holes or so, the same for a seed; twenty hand bunkers on a hole stay within the cap, at most twelve in the slots, the rest marked for the surface field and a field baked), `surface-field` (Architect phase 3: bunkers past the slots and only those marked; no field without one; the baked field's 0.5 line on the bunker's edge within 15 cm; a world plays its field bunkers as sand, and a Classic world bakes none; the packed table texture keeps each table where the shader reads it; a turned green is one shape to `greenDistance` and `greenPoint`, and an unturned one is Classic's formula to the bit; `approachTurn` lays the depth along the approach, opens a strategic green to its side, and stops at the cap). `leaderboard` (the owner's review: the golfers on the board with their own score and holes played; best first, ties shared, a finished round F; a golfer far down the field still shown and the board never longer than asked; the field the same for a seed, one surname each, playing on as the golfers do). `fountain` (the owner's review: every drop a parabola from the nozzle, apex 2.9-4.3 m, landing within 3.5 m; the plume filled from the water to the top at any moment; it moves; the same seed draws the same fountain; rings spread and fade, the jet breathes about 3.7 m). `hole-names` (every hole named, all different, Home last, seeded; a Redan named for its template; no famous hole's nickname; the crest an escaped SVG and only Architect founded, its year by age; the flag red front, white middle, blue back where the cup actually is). How much harder an Architect course plays is measured, not tested: `tools/architect-difficulty.mjs` (the virtual golfer, both designers, the same seeds).
 - **The ground a ball plays from** -- `grounds` (the overhaul's ground types: a row in every table -- bounce, roll, skid, lie, relief rank, roll hop, sound, map colour, HUD label -- no restitution a dropped ball could gain height from, the orderings that make each one itself, what may stand on each, a pitch running further on rock than in heather, the shot card naming the ground).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
   `ground-shader-structure`, `green-cue-wiring` (also: the ground-reading
   choice writes every cue, and an old record adopts it once), `glsl-reserved`,
-  `three-namespace`, `flood-shadows`, `instance-cull` (also: a mesh with a reach drops
+  `three-namespace`, `flood-shadows` (five samplers since the tables were packed), `instance-cull` (also: a mesh with a reach drops
   whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`, `toon-ramp` (the overhaul's coloured
@@ -314,6 +381,10 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
 | `friend-challenge` | a friend's challenge made in Node with the page's version (`window.lab.version`), pasted on Play's card and read, its nine-hole round started, the save remembering it and logging a shot, and the scorecard showing the friend's row. Passed on the real GPU on 20 October 2026, in 16 s |
 | `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows a course and saves it through the name box (20 October 2026), and it is listed in Saved courses from the menu |
+| (note) `ball-light-hole-out`, 30 October 2026 | On a failure it now writes each late program's switches, and -- run with `--file bench/shots/dist-exp/index.html`, the capture build -- the mesh using it, to bench/shots/smoke/late-shaders.txt. That is what found the pond and the hidden planting first drawn in the hole-out flyover (PROJECT_HANDOFF *EVERY PROGRAM IS DRAWN ONCE BEHIND THE LOADING SCREEN*). |
+| `architect-round` (was `architect-hand-round`, the hand tools, 30 October 2026; renamed when they were withdrawn, 31 October) | A saved Architect course played from Saved courses: two full shots down hole 1, a drop by the pin, putts to the hole-out, with no error |
+| `architect-tournament` (the owner's review, 30 October 2026) | A saved Architect course, Championship venue, Sunday, played from Saved courses: the scoreboard (read from the game canvas's `data-leaderboard`, which the renderer writes as it paints the board) lists the golfer at "-" before a shot, and after hole 1 is played and holed out shows them thru 1 with the same score to par as their chip in the top bar |
+| `architect-studio` (architect-courses, 30 October 2026) | Course studio's *How the course is made* set to Architect: the sliders it decides go and its four dials appear under their own heading, each with a sentence saying what its choice does (the owner's review), the card stays without its length slider, Classic again brings the sliders back and Architect again keeps the dials, an Architect course grows, the studio's *Yardage book* button gives a PDF, the Architect tab has no Hand tools (withdrawn 31 October 2026), and it is saved with the designer, the dials and an Architect stamp and no hand list; back from the menu, a fresh visit to the studio starts on Classic |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs. A bridge that is missing (a bare `vite build` does not bundle it; `npm run build` does) or will not start fails `bridge-bundle` alone and the run goes on (the 1.0 polish: it used to end the run) |
 | `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |
 | (round 14) every journey | `press(name)` goes to an open step sheet's last step first when the button is not on screen -- the start buttons (Start an endless run, Play the course of the week) are on the Golfers step now, as a player would find them |
@@ -339,6 +410,6 @@ A feature nobody has seen working is reported as not seen (AGENTS.md).
   test that cannot fail has happened here more than once (RESEARCH.md, *A test
   that could not fail*).
 - **A measurement imports its geometry from `src`**, never a copy of it.
-- **Slow suites** are the ones that build courses; reuse `tests/worlds.mjs`.
-  The suite's wall time is set by its slowest file (TODO, *The test suite's
-  wall time*).
+- **Slow suites** are the ones that build courses; reuse `tests/worlds.mjs`,
+  and build many with `measured` (*Running the Node tests*). Run
+  `npm run test:times` after adding a heavy file, so it is started early.

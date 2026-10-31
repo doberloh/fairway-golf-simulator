@@ -1194,7 +1194,14 @@ const JOURNEYS = [
        const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
        const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1] || 'ShaderMaterial';
        window.__lateAny.push(type);
-       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(type);
+       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) {
+        window.__lateLit.push(type);
+        (window.__latePrograms = window.__latePrograms || []).push(program);
+        // Its switches, so a failure says WHICH variant arrived late (the
+        // type alone left ball-light-hole-out unexplained for a day).
+        const defs = [...new Set((text.match(/#define [A-Z_][A-Z0-9_]*( [^\n]*)?/g) || []).map(d => d.slice(8)).filter(d => !/^(SHADER_TYPE|SHADER_NAME|STANDARD|PHYSICAL|TOON|PI|RECIPROCAL_PI|EPSILON|LOG2|saturate|whiteComplement|PI2|PI_HALF|LINE_DISTANCE|HIGH_PRECISION|GAMMA_FACTOR|LOW_PRECISION|MEDIUM_PRECISION|varying|texture2D|attribute|gl_FragColor|DITHERING|OPAQUE)/.test(d)))];
+        (window.__lateWhy = window.__lateWhy || []).push(type + ': ' + defs.join(', '));
+       }
       }
      }
      return use.call(this, program);
@@ -1255,7 +1262,30 @@ const JOURNEYS = [
       // The flyover orbits while the scorecard is up.
       await t.page.waitForTimeout(3000);
       const late = await t.page.evaluate(() => window.__lateLit);
-      if (late.length) throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}`);
+      if (late.length) {
+       const why = await t.page.evaluate(() => window.__lateWhy || []);
+       // With the capture build (`--file bench/shots/dist-exp/index.html`,
+       // window.__view): which meshes in the scene use the late programs.
+       const who = await t.page.evaluate(() => {
+        const v = window.__view, late = new Set(window.__latePrograms || []), out = [];
+        if (!v) return ['(no window.__view: run against the capture build to name the mesh)'];
+        v.scene.traverse(o => {
+         if (!o.material) return;
+         for (const m of [].concat(o.material)) {
+          const p = v.renderer.properties.get(m)?.currentProgram;
+          if (p && late.has(p.program)) {
+           const path = []; for (let q = o; q && q !== v.scene; q = q.parent) path.push(q.name || q.type);
+           out.push(`${path.join(' < ')} | ${o.isInstancedMesh ? 'instanced ' + o.count : 'mesh'} | ${o.geometry?.attributes?.position?.count} verts | colour #${m.color?.getHexString?.()} | visible ${o.visible} | userData ${JSON.stringify(o.userData).slice(0, 80)}`);
+          }
+         }
+        });
+        return out.length ? out : ['(no mesh holds the late program now)'];
+       });
+       why.push('--- meshes:', ...who);
+       fs.mkdirSync(path.join('bench', 'shots', 'smoke'), {recursive: true});
+       fs.writeFileSync(path.join('bench', 'shots', 'smoke', 'late-shaders.txt'), why.join('\n'));
+       throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}\n         ${why.join('\n         ')}`);
+      }
       return;
      }
     }
@@ -1957,6 +1987,207 @@ const JOURNEYS = [
     await t.until(() => t.page.locator('#drawerContent').getByText(name, {exact: true}).first().isVisible().catch(() => false),
      `"${name}" to be listed in Your courses`, 5 * SLOW);
     await t.closeDrawer();
+   });
+  },
+ },
+
+ // A ROUND PLAYED ON AN ARCHITECT CHAMPIONSHIP VENUE (the owner's review: "make
+ // the scoreboard on championship day actually show the players score"). A
+ // saved Architect course, Championship, Sunday, played from Saved courses:
+ // the board by the last green lists the golfer before a shot, and after the
+ // first hole is holed out it shows the score the card shows, thru 1. The
+ // board is a texture, so the renderer writes what it says on the game's
+ // canvas as `data-leaderboard`, and that is read here.
+ {
+  name: 'architect-tournament',
+  what: 'A round on an Architect Championship course: the scoreboard follows the real score',
+  async run(t) {
+   await menuReady(t);
+   const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
+   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'WW-1', archStyle: 'parkland', archClub: 'championship', pinDay: 'Sunday'};
+   await t.step('a Championship course in Saved courses, played', async () => {
+    await t.page.evaluate(([s, g, v]) => {
+     const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');
+     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-tournament');
+     d.courses.unshift({id: 'smoke-tournament', name: 'Smoke tournament', created: 1, generator: g, schema: v, settings: s});
+     localStorage.setItem(key, JSON.stringify(d));
+    }, [settings, generatorFor(settings), SCHEMA_VERSION]);
+    await fromMenu(t, 'Saved courses');
+    await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
+    await t.page.click('[data-play="smoke-tournament"]');
+    await t.inPlay(150 * SLOW);
+   });
+   const board = () => t.page.evaluate(() => { const c = [...document.querySelectorAll('canvas')].find(x => x.dataset.leaderboard); return c ? JSON.parse(c.dataset.leaderboard) : null; });
+   let me = null;
+   await t.step('the board lists the golfer before a shot', async () => {
+    await t.until(async () => !!(await board()), 'the scoreboard to be painted', 20 * SLOW);
+    const b = await board();
+    me = b.rows.find(r => r.you);
+    if (!me) throw new Error(`the golfer is not on the board: ${JSON.stringify(b.rows.map(r => r.name))}`);
+    if (me.thru !== '-') throw new Error(`before a shot the board says thru ${me.thru}`);
+    if (!/SUNDAY/.test(b.title)) throw new Error(`the board's title: ${b.title}`);
+   });
+   await t.step('hole 1 played and holed out', async () => {
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; putt <= 8; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) return;
+    }
+    throw new Error('eight putts from beside the pin and the ball never dropped');
+   });
+   await t.step('the board shows the score the card shows, thru 1', async () => {
+    await t.until(async () => (await board())?.rows.find(r => r.you)?.thru === '1', 'the board to show thru 1', 10 * SLOW);
+    const b = await board(), row = b.rows.find(r => r.you);
+    // The golfer's own score to par, as the top bar's chip shows it.
+    const card = await t.page.evaluate(() => document.querySelector('#scoreChips .score-chip b')?.textContent || '');
+    fs.mkdirSync(path.join('bench', 'shots', 'smoke'), {recursive: true});
+    fs.writeFileSync(path.join('bench', 'shots', 'smoke', 'architect-tournament.json'), JSON.stringify({card, board: b}, null, 1));
+    if (!row || row.name !== me.name) throw new Error(`the golfer's row: ${JSON.stringify(row)}`);
+    if (!/^(E|[+-]\d+)$/.test(row.score)) throw new Error(`the board's score: ${row.score}`);
+    const chip = card.trim();
+    if (!chip) throw new Error(`no score to par in the chip: ${card.trim()}`);
+    if (chip !== row.score) throw new Error(`the board says ${row.score}, the golfer's chip ${chip} (${card.trim()})`);
+   });
+  },
+ },
+
+ // AN ARCHITECT HOLE PLAYED THROUGH: a saved Architect course, played from
+ // Saved courses to the hole-out, with no error. (It was the hand tools'
+ // journey, `architect-hand-round`, until the owner withdrew them on 31
+ // October 2026; the architect's own signatures still shape holes.)
+ {
+  name: 'architect-round',
+  what: 'A saved Architect course, hole 1 played through to the hole-out',
+  async run(t) {
+   await menuReady(t);
+   const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
+   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'HT-2', archStyle: 'parkland'};
+   await t.step('the Architect course in Saved courses, played', async () => {
+    await t.page.evaluate(([s, g, v]) => {
+     const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');
+     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-architect');
+     d.courses.unshift({id: 'smoke-architect', name: 'Smoke Architect', created: 1, generator: g, schema: v, settings: s});
+     localStorage.setItem(key, JSON.stringify(d));
+    }, [settings, generatorFor(settings), SCHEMA_VERSION]);
+    await fromMenu(t, 'Saved courses');
+    await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
+    await t.page.click('[data-play="smoke-architect"]');
+    await t.inPlay(150 * SLOW);
+   });
+   await t.step('hole 1 played and holed out', async () => {
+    // Two full shots down the hole, then a drop by the pin of the
+    // green and putts until it drops.
+    for (let shot = 0; shot < 2; shot++) {
+     await t.swing();
+     await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+     await t.key('Enter');
+     await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+     await reliefFirst(t);
+    }
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; putt <= 8; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) return;
+    }
+    throw new Error('eight putts on the green and the ball never dropped');
+   });
+  },
+ },
+
+ // ARCHITECT COURSES (architect-courses, 30 October 2026): the studio's
+ // second designer. Choosing Architect swaps the sliders it decides for its
+ // four dials, the card stays without its length slider, an Architect course
+ // grows, and it is saved as Architect.
+ {
+  name: 'architect-studio',
+  what: 'Course studio grows and saves an Architect course',
+  async run(t) {
+   await menuReady(t);
+   await t.step('Course studio → How the course is made: Architect', async () => {
+    await fromMenu(t, 'Course studio');
+    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
+    await t.page.selectOption('#designer', 'architect');
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('archStyle') && !document.getElementById('width')
+     && !document.getElementById('courseYards') && !!document.getElementById('planCard')),
+     'the Architect dials in place of the sliders it decides', 10 * SLOW);
+    // The dials are under their own heading, a tab of the sheet.
+    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
+    await t.page.selectOption('#archStyle', 'links');
+    await t.page.selectOption('#archClub', 'championship');
+    // Each dial says what its choice does, and follows the choice.
+    await t.until(() => t.page.evaluate(() => /pot bunkers/.test(document.getElementById('archStyleNote')?.textContent || '')
+     && /Tournament week/.test(document.getElementById('archClubNote')?.textContent || '')), 'the dials\' sentences', 5 * SLOW);
+   });
+   await t.step('Classic again brings the sliders back', async () => {
+    await t.page.locator('.panel-tab', {hasText: 'Course'}).first().click();
+    await t.page.selectOption('#designer', 'classic');
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('width') && !document.getElementById('archStyle')),
+     'the Classic sliders', 10 * SLOW);
+    await t.page.selectOption('#designer', 'architect');
+    await t.until(() => t.page.evaluate(() => document.getElementById('archStyle')?.value === 'links'),
+     'the dials kept through the switch', 10 * SLOW);
+   });
+   await t.step('grow it', async () => {
+    await t.press('Grow this landscape');
+    await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
+     && document.getElementById('generating')?.hidden !== false), 'the Architect landscape', 120 * SLOW);
+   });
+   // The owner's review: the yardage book from the studio, and a sentence
+   // under each dial saying what it does.
+   await t.step('the yardage book from the studio', async () => {
+    await t.until(() => t.page.locator('#studioBook').isVisible(), 'the Yardage book button', 5 * SLOW);
+    const [pdf] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#studioBook')]);
+    const file = await pdf.path(), head = fs.readFileSync(file).subarray(0, 5).toString();
+    if (head !== '%PDF-') throw new Error(`the book is not a PDF (${JSON.stringify(head)})`);
+   });
+   // No hand tools for the player (the owner, 31 October 2026: "leave those
+   // tools for the architect to use"): the Architect tab holds the dials only.
+   await t.step('the Architect tab has no hand tools', async () => {
+    await t.page.click('#studioSettings');
+    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
+    await t.until(() => t.page.locator('#archStyle').isVisible(), 'the Architect dials', 5 * SLOW);
+    if (await t.page.locator('#handTools').count()) throw new Error('the Hand tools are back in the studio');
+    await t.closeDrawer();
+   });
+   let name = '';
+   await t.step('save it, and it is Architect in Saved courses', async () => {
+    await t.page.click('#studioSave');
+    await t.until(() => t.page.locator('#leaveNotice').isVisible(), 'the name box', 5 * SLOW);
+    name = await t.page.inputValue('#leaveName');
+    await t.page.click('#leaveSave');
+    await t.until(async () => !await t.page.locator('#leaveNotice').isVisible(), 'the name box to close', 5 * SLOW);
+    const saved = await t.page.evaluate(n => {
+     const d = JSON.parse(localStorage.getItem('fairway-courses-v1') || '{}');
+     return (d.courses || []).find(c => c.name === n) || null;
+    }, name);
+    if (!saved) throw new Error(`"${name}" was not saved`);
+    if (saved.settings.designer !== 'architect' || saved.settings.archStyle !== 'links' || saved.settings.archClub !== 'championship')
+     throw new Error(`saved as ${JSON.stringify({designer: saved.settings.designer, style: saved.settings.archStyle, club: saved.settings.archClub})}`);
+    if (!(saved.generator >= 1000)) throw new Error(`saved with the stamp ${saved.generator}, not an Architect one`);
+    if ('archHand' in saved.settings) throw new Error('saved with a hand-tools list; the setting is gone');
+    await t.page.click('#studioExit');
+    await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
+   });
+   // Never the default (the owner, 31 October 2026): back in the studio
+   // after growing an Architect course, it starts on Classic.
+   await t.step('a fresh visit to the studio starts on Classic', async () => {
+    await fromMenu(t, 'Course studio');
+    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
+    const chosen = await t.page.inputValue('#designer');
+    if (chosen !== 'classic') throw new Error(`the studio opened on ${chosen}`);
    });
   },
  },

@@ -2,6 +2,15 @@
 
 Fully procedural generation is a good fit for this simulator. It needs constraints to create playable golf, but it does not need a catalogue of prebuilt holes. The same seed and settings reproduce the same course within this generator version. Changing the generator can change what an older seed produces.
 
+**Two designers (since 30 October 2026).** Everything below describes
+**Classic**, the generator Fairway has always had, which stays the default.
+**Architect (beta)** shares this pipeline and replaces its decisions at named
+seams -- its own plan per hole, hazards placed against shots, routing from a
+clubhouse, and the rest of docs/ARCHITECT_COURSES.md. *Architect, as built*
+at the end of this file says what it does differently so far; until a seam is
+built, an Architect course is generated exactly as Classic generates its
+defaults.
+
 ## What is generated
 
 1. **Plan the round.** Requested yardage determines total par within 68–72 for eighteen holes or 34–36 for nine. A seeded choice selects a valid mix of par 3s, 4s and 5s, then shuffles their order. Independently varied hole distances are scaled to the requested total. Beyond the par bounds, lengths continue scaling. Very short or long requests can therefore fall outside conventional par-specific yardage ranges, as requested.
@@ -41,7 +50,7 @@ Once the ball is on the putting surface the map reframes on the green alone and 
 
 Green-to-surround transitions extend 40–100 metres according to the height difference, rather than blending abruptly into distant ridges. The modifier bounds include the full transition support. This softens shoulders without changing the green difficulty control.
 
-The ground is settled to a level shelf under each pond rather than hunting for a site that happens to be flat. Each pond reads a target elevation off the base landform around its rim and eases the surrounding ground toward it; green and tee shaping is applied afterwards and still wins, so a pond can never flatten a green complex. The shelf margin scales with the pond, so shrinking a pond to fit steep ground actually reduces the footprint it is judged over. A tee pad is a 6 by 9 metre rectangle with rounded corners, squared to the same aim the markers are -- as far down the hole as a straight line from that tee stays in the corridor, which is the dogleg corner where there is one and the landing area where there is not -- with a mown collar at 1.45 times its size. Pads prefer to stagger across the hole rather than sit in line, since a tee directly in front is a tee you have to look over. The pad -- the piece of ground -- is separate from the tee marker that stands on it, so a marker can carry a pad of its own size and position or none at all; at 6 by 9 metres three pads fit down a par three at honest spacing, so short holes use three ordinary tees and the levelling rule gives them a stepped form. Tee earthworks reach about half as far as they did and fade out before reaching a green, which previously they overwrote. The ground behind the start of mown turf keeps a quarter of the relief the surrounding country has, rather than being flattened to the corridor's base level, so a tee has real ground to be cut into instead of a saucer to be perched in. That holds whatever the elevation setting says -- elevation raises the corridor from there, and zero is a baseline rather than a promise of dead level. The driving range is exempt and stays perfectly flat, because any tilt there is a variable the player did not set. Each tee pad is sited rather than placed: once the land exists, a pad tries forty-odd nearby positions and takes the one the ground already suits, scoring flat ground, a clear shot line, sitting above the tee in front of it and a sensible angle to the fairway, and refusing any site that puts the pad on a green, in water, in sand or on another hole. It may move freely across the hole and up to 20 m along it, which keeps the hole's ponds, bunkers and fairway start where they were; yardage is recomputed from where the tee ends up. Ground falls away from a pad over a short rounded shoulder rather than a long ramp, so the disturbed area no longer grows with how far the tee was raised. A tee complex is levelled as one thing rather than as three independent pads. The three natural heights are pulled toward their mean and then ordered, so the back tee always sits at or above the one in front of it -- previously each pad read its own height off the ground and any hole that climbed off the tee inverted them, on 34% of holes. The step is scaled by the spread the ground already has, so flat land keeps flat tees and the driving range's three side-by-side mats stay identical. The whole complex is then lifted until the tee shot clears the ground in front of it, sampled along the centreline out to three quarters of the way to the landing area and capped at 3.5 m: the tee is raised rather than the hillside shaved, so the terrain the hole was generated around is untouched. Tee shots blocked by more than a metre fell from 23% to 3% off the back tee. Pads read their height from the shaped field rather than the raw landform, and ramp off it over a distance that grows with the drop, so a tee on a hillside becomes a terrace instead of a pad with a wall around it. The flattened ground is an oval matching the painted tee and reaches the whole mown collar, so the collar is flat rather than tilting on the ramp; it was previously a box, which left flat corners jutting past the paint and broke the shading along a rectangle nothing on screen agreed with. `blindTees` is the share of holes allowed to keep a blind tee shot rather than being raised to clear it, drawn per hole and defaulting to none; only holes the land makes blind can be chosen. Each pad carries a mown collar about 1.7 times its own size, classified as semi-rough and claimed only where the ground is otherwise rough, so a fairway, green or bunker beside a tee keeps its own surface. Pad and collar are sized from one pair of exported constants that both the lie classifier and the ground shader read, so the painted surface and the played lie cannot drift apart. Rim elevations on the finished terrain typically vary by a few centimetres. The remaining rim sampling, shrinking and removal stay as a safety net for sites that other features distort. The flat water level sits below the lowest sampled rim and outer-bank terrain rather than following the height at the pond centre, and the selected minimum/maximum depth still measures from the water surface to the excavated floor.
+The ground is settled to a level shelf under each pond rather than hunting for a site that happens to be flat. Each pond reads a target elevation off the base landform around its rim and eases the surrounding ground toward it; green and tee shaping is applied afterwards and still wins, so a pond can never flatten a green complex. The shelf margin scales with the pond, so shrinking a pond to fit steep ground actually reduces the footprint it is judged over. A tee pad is a 6 by 9 metre rectangle with rounded corners, squared to the same aim the markers are -- as far down the hole as a straight line from that tee stays in the corridor, which is the dogleg corner where there is one and the landing area where there is not -- with a mown collar at 1.45 times its size. Pads prefer to stagger across the hole rather than sit in line, since a tee directly in front is a tee you have to look over. The pad -- the piece of ground -- is separate from the tee marker that stands on it, so a marker can carry a pad of its own size and position or none at all; at 6 by 9 metres three pads fit down a par three at honest spacing, so short holes use three ordinary tees and the levelling rule gives them a stepped form. Tee earthworks reach about half as far as they did and fade out before reaching a green, which previously they overwrote. The ground behind the start of mown turf keeps a quarter of the relief the surrounding country has, rather than being flattened to the corridor's base level, so a tee has real ground to be cut into instead of a saucer to be perched in. That relief fades out over 12 m either side of the line where the nearest hole changes, where one hole's tee area meets another's corridor -- it belonged to whichever hole was nearest, so it switched there and left a bank across the played ground (2.4 m on an Architect Links course, a 4 m wall on a Classic Lakeshore one). That holds whatever the elevation setting says -- elevation raises the corridor from there, and zero is a baseline rather than a promise of dead level. The driving range is exempt and stays perfectly flat, because any tilt there is a variable the player did not set. Each tee pad is sited rather than placed: once the land exists, a pad tries forty-odd nearby positions and takes the one the ground already suits, scoring flat ground, a clear shot line, sitting above the tee in front of it and a sensible angle to the fairway, and refusing any site that puts the pad on a green, in water, in sand or on another hole. It may move freely across the hole and up to 20 m along it, which keeps the hole's ponds, bunkers and fairway start where they were; yardage is recomputed from where the tee ends up. Ground falls away from a pad over a short rounded shoulder rather than a long ramp, so the disturbed area no longer grows with how far the tee was raised. A tee complex is levelled as one thing rather than as three independent pads. The three natural heights are pulled toward their mean and then ordered, so the back tee always sits at or above the one in front of it -- previously each pad read its own height off the ground and any hole that climbed off the tee inverted them, on 34% of holes. The step is scaled by the spread the ground already has, so flat land keeps flat tees and the driving range's three side-by-side mats stay identical. The whole complex is then lifted until the tee shot clears the ground in front of it, sampled along the centreline out to three quarters of the way to the landing area and capped at 3.5 m: the tee is raised rather than the hillside shaved, so the terrain the hole was generated around is untouched. Tee shots blocked by more than a metre fell from 23% to 3% off the back tee. Pads read their height from the shaped field rather than the raw landform, and ramp off it over a distance that grows with the drop, so a tee on a hillside becomes a terrace instead of a pad with a wall around it. The flattened ground is an oval matching the painted tee and reaches the whole mown collar, so the collar is flat rather than tilting on the ramp; it was previously a box, which left flat corners jutting past the paint and broke the shading along a rectangle nothing on screen agreed with. `blindTees` is the share of holes allowed to keep a blind tee shot rather than being raised to clear it, drawn per hole and defaulting to none; only holes the land makes blind can be chosen. Each pad carries a mown collar about 1.7 times its own size, classified as semi-rough and claimed only where the ground is otherwise rough, so a fairway, green or bunker beside a tee keeps its own surface. Pad and collar are sized from one pair of exported constants that both the lie classifier and the ground shader read, so the painted surface and the played lie cannot drift apart. Rim elevations on the finished terrain typically vary by a few centimetres. The remaining rim sampling, shrinking and removal stay as a safety net for sites that other features distort. The flat water level sits below the lowest sampled rim and outer-bank terrain rather than following the height at the pond centre, and the selected minimum/maximum depth still measures from the water surface to the excavated floor.
 
 Ponds are generated against the fairway edge with a gap that may be negative, so water can sit well out in the rough, come right up to the playing corridor, or bite into it. About one pond in six reaches past the fairway edge, by a median of 5.7 m and at most 13 m, and the fairway is mown around the bite. None crosses: the inward reach is bounded at 0.70 of the corridor half width and measured from the semi-rough edge, so the near shore cannot arrive at the centreline for any value the generator can produce. Because a pond's banks are anchored outside the fairway edge, enlarging one moves it away from play rather than into it.
 
@@ -185,7 +194,8 @@ the last green's level, so its fairway lies beside the other's rather than
 beside its teeing ground. After routing and before anything measures a
 corridor (`shareFairways`), wherever two fairways run nearly parallel with
 under 85 m of rough between them, each widens to the middle, so the strip
-between becomes one fairway. Never across a pond; never at a tee end or
+between becomes one fairway (on an Architect course each fairway joins one
+neighbour at most, the longest joins first: `pairs`). Never across a pond; never at a tee end or
 green complex. A join is decided for the PAIR (generator 47): taken only
 where the two fairways run alongside for at least 100 m and, on average, two
 thirds of their shareable stretch -- a double fairway, never a crossbar --
@@ -208,3 +218,106 @@ field says so, never nearer play than 40-55 m. Each stand is planted from a
 jittered grid every 8-11 m, by the rules every tree obeys, with crowns
 allowed to close and trees 1.2 times the open scatter's size (generator 40). Hashed, not drawn: nothing else on the course is decided
 differently. Under each stand an understory of shrubs and ferns is planted from a grid of its own (generator 42). The Giant Redwood (already a grove) and the range have none.
+
+## Architect, as built
+
+What an Architect course does differently from the Classic pipeline above,
+seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
+
+- **Its settings** (designer.js `designSettings`, architect-styles.js
+  `architectChoices`): everything but the designer, holes, seed, landscape, the
+  four dials, wind and pin day is the architect's. The **style** (chosen, or By
+  landscape from the seed) sets fairway width, bunker count and raggedness,
+  green size, shape and slope, raised and punchbowl greens, water, trees and
+  doglegs; the **club** sets the length (6,250-7,250 yd for eighteen) and
+  scales width, bunkers and water; the **age** scales the trees; the **story**
+  adds a creek.
+- **The plan per hole** (architect.js `designHole`, after the shared skeleton,
+  so the card holds): a concept -- strategic, heroic carry, penal, risk and
+  reward, short, three-shot par five -- and sometimes a named template
+  (Redan, Eden, Biarritz, Punchbowl, Double plateau, Road, Cape, Principal's
+  Nose, Leven, Long), and a preferred side (a dogleg's inside, else the
+  seed's).
+- **Where the hazards go**: a drive bunker where a good player's drive lands
+  (277 yd from the back tee, the golfer table), on the preferred side; one on
+  the other side at the average golfer's distance (224 yd from the middle tee);
+  sometimes a centreline bunker; cross bunkers at a par five's lay-up; the
+  green's front corner on the wrong side always guarded, then the style's
+  count round the green; water placed for a carry, a cape, a go-for-it second
+  or a short side. Every hazard records why; the architect places at most
+  twelve a hole, and with the signatures a hole holds up
+  to 24 -- the bunkers past the shader's twelve slots baked into the surface
+  field (surface-field.js) at the end, after the ground grid, and painted
+  and played from it.
+- **The fairway** swells at the landing zones, necks before the green and
+  tucks round a bunker on its edge; on Links, Sandhills and Minimalist it runs
+  into the green on a collar under a metre wide.
+- **Collection areas**: on the ground-game styles, an oval of fairway-height
+  grass off the front corner the green drains toward.
+- **Bunker complexes**: on the big-bunker styles, about half the bunkers
+  over 7 m grow a lobe over their rim (outward, on a fairway bunker).
+- **Wear**: divots on the tees (most on par 3s) and in the landing zones,
+  by club and age; decoration.
+- **The green** is turned to its approach -- its depth along the line the
+  second shot comes from, opened to the preferred side on a strategic or
+  heroic hole -- and drains off a front corner, higher at the back; a
+  template asks for its own (the Redan's fall away, the Biarritz swale, a
+  punchbowl). The fall, ridge, tier and false front turn with the green.
+- **The ground's paint** (not generation, but Architect's only): a step of
+  shade where a shorter cut meets a taller one, and a mower's line where
+  rough meets native grass.
+- **Routing from the clubhouse** (routing.js): the first tee at home, each
+  nine pulled home toward its turn, every hole kept within walking reach of
+  home, the green before the last about a last hole's length out, the 10th tee
+  at home, the walk to each next tee priced high; twelve routings tried.
+- **Cart paths** (paths.js): routed across a cost grid (A*) when planting begins, off greens, tees, sand and water, round the fairways, on walkable grades, joined into one network; down each hole on
+  its bail-out side 14 m beyond the rough and round its hazards, past the
+  green to a pull-off and on to the next tee, smoothed; pushed sideways off any
+  green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
+  one is `path`, and houses and trees keep off it.
+- **The clubhouse** (clubhouse.js), sited when planting begins, after the
+  tee shots are known: on rings 40-150 m (on steep land up to 270 m) round the
+  first tee and the last green, on ground clear of every corridor by 14 m,
+  of every tee shot and its view, falling no more than 4.5 m across its
+  footprint (a terrace; on steep land a municipal footprint on up to 6.5 m),
+  nearest the two; facing the first tee; sized by club. Houses and trees keep
+  off it and its 40 m lawn; the path is linked to its door.
+- **Markings** (markings.js), placed on the finished ground: red stakes
+  every 11 m round each pond and along creeks within 60 m of play, white
+  stakes every 13 m where the boundary comes within 120 m of a corridor,
+  yardage posts both sides at 100, 150 and 200 yd from the green, a rake on
+  the far side of each bunker laid along its edge. Decoration, never solid.
+- **Mounds** (architect.js `designMounds`), by style, in the ground itself
+  before the creeks are cut: framing mounds beyond the rough (Modern,
+  Parkland, Tropical), spectator banks behind greens (Stadium), chocolate
+  drops near greens (Golden Age, Raynor); clear of every hole's play, the sea
+  and the creeks.
+- **The land's templates** (architect.js), in the ground with the mounds:
+  the Dell's dune (18 m to a side, 4 m high, its back foot 5 m short of
+  the green) before a sunken green, the Alps' ridge across the fairway,
+  the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
+- **Tournament week** (occasion.js), on a Championship venue, with the
+  story's buildings: stands round the last green and a par three, a
+  scoreboard, towers, marquees, gallery ropes and the crowd by the pin day.
+- **History by age** (architect.js): grassed-over bunkers as hollows on
+  municipal, old and restored courses; a restored course's felled trees
+  left as stumps scattered in the rough (3-7 a hole). Trees sized by age:
+  New 0.68, Mature 1, Old 1.18, Restored 1.08 of full height.
+- **Hand-made shapes** (hand-tools.js), on each Architect hole before its
+  pin is chosen: the architect's own signature on about a third of holes,
+  by style (the studio's own Hand tools were withdrawn on 31 October
+  2026); their mounds and hollows join the earth field after routing.
+- **Life** (life.js), after the planting: animals and distant people, out
+  of play and clear of the trees, drawn only -- a fourball on the longest
+  path piece, a mower only on a run of mown rough (none where the rough
+  grows tall).
+- **Heritage** (story.js; the setting was The land's story), after the
+  clubhouse and before the houses and trees: field walls, a farmstead,
+  ruins, a landmark on a hole's line, a stone circle and lanterns.
+- **Built water** (waterworks.js), on the finished ground: rip-rap or a tie
+  wall along the side of each pond that faces play, by style, and a fountain
+  in a big pond on a dressed club (its water drawn moving by the renderer). A bridge's deck height is fixed where the
+  paths are routed, so the drawn deck and the solid one agree.
+- **The trees** are cleared to a scalloped line, not faded by chance; avenues
+  line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
+  inside corner gets a cluster.

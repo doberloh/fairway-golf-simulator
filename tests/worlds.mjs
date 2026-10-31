@@ -31,3 +31,32 @@ export function worlds(list) {
 }
 
 export const cacheSize = () => cache.size;
+
+// MANY COURSES, BUILT AT ONCE (31 October 2026, the testing audit). A file
+// that builds dozens of courses is a serial queue on one thread however many
+// cores sit idle -- water-keep-out's 48 were three minutes, the whole suite's
+// wall. `measured` builds them on worker threads, up to `MEASURE_THREADS` at a
+// time, and runs `name` from `module` (a file under tests/measure/, which may
+// not import node:test) on each world where it was built; only what that
+// returns comes back -- plain data, since a world holds functions and cannot
+// cross a thread. The test then asserts on the numbers, as it did on the
+// worlds. Results come back in the order of `list`.
+export const MEASURE_THREADS = 6;
+export async function measured(list, module, name = 'measure') {
+ const {Worker} = await import('node:worker_threads');
+ const out = new Array(list.length);
+ let next = 0;
+ const run = () => new Promise((resolve, reject) => {
+  const worker = new Worker(new URL('./measure-worker.mjs', import.meta.url), {workerData: {module: new URL(module, import.meta.url).href, name}});
+  const take = () => {
+   if (next >= list.length) {worker.terminate().then(resolve); return;}
+   const i = next++;
+   worker.once('message', m => {if (m.error) {worker.terminate(); reject(new Error(`${JSON.stringify(list[i])}: ${m.error}`));} else {out[i] = m.result; take();}});
+   worker.postMessage(list[i]);
+  };
+  worker.once('error', reject);
+  take();
+ });
+ await Promise.all(Array.from({length: Math.min(MEASURE_THREADS, list.length)}, run));
+ return out;
+}

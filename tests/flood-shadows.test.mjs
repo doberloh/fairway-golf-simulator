@@ -24,11 +24,17 @@ const groundSamplers = () => {
 const OTHERS = 2;
 
 test('the ground shader declares the samplers this budget was measured with', () => {
- // owners, cover, holes, curves, banks, detail, streamSegments. If this number
+ // owners, cover, tables, detail, field. If this number
  // changes, re-measure (bench/shots/flood-samplers.mjs) before changing it.
  // (The cartoon overhaul packed `outer` into `curves` and spent the unit on
  // `detail`, the turf detail atlas, so the count and the budget held.)
- assert.equal(groundSamplers(), 7);
+ // (Architect phase 3 packed the curves, the hole table, the pond banks and
+ // the stream segments into one `tables` texture -- seven samplers to four --
+ // and spent one on the surface field: five. Fewer than the tiers were
+ // measured with, so every tier's floodlight count still links; the two
+ // freed are left for the next surface layers -- the owner's "leave room
+ // for more", 30 October 2026.)
+ assert.equal(groundSamplers(), 5);
 });
 
 test('no tier asks for more casting floodlights than its texture units allow, with one spare', () => {

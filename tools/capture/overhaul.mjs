@@ -132,6 +132,202 @@ export const VIEWS = [
   if (!best) return {x: g.x, z: g.z - 60, yaw: 0, height: 20, pitch: -15};
   const d = Math.hypot(best.x - g.x, best.z - g.z) || 1, cx = best.x + (g.x - best.x) / d * 14, cz = best.z + (g.z - best.z) / d * 14;
   return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.8, pitch: -12}; }`},
+ // ARCHITECT COURSES' VIEWS (architect-courses, phase 2): the markings close
+ // to -- the first 150-yard post and the first rake, from 4 m at eye height.
+ {name: 'arch-post', hole: 0, when: 'afternoon', caption: 'An Architect course\'s 150-yard post close to', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'post150') || {x: 0, z: 0};
+  return {x: m.x - 3.2, z: m.z - 2.4, yaw: Math.atan2(3.2, 2.4) * 180 / Math.PI, height: 1.4, pitch: -10}; }`},
+ {name: 'arch-rake', hole: 0, when: 'afternoon', caption: 'An Architect course\'s rake beside a bunker', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'rake') || {x: 0, z: 0};
+  const px = Math.cos(m.rot), pz = -Math.sin(m.rot);
+  return {x: m.x + px * 3.5, z: m.z + pz * 3.5, yaw: Math.atan2(-px, -pz) * 180 / Math.PI, height: 1.6, pitch: -22}; }`},
+ // PHASE 3'S GROUND (the surface field, 30-31 October 2026): the green turned
+ // most to its approach, from above; the mower's line where rough meets native
+ // grass; the step of the mowing heights at the first fairway's edge, from the
+ // first cut; and a bunker drawn from the surface field (needs one: pass
+ // `--course` with one that overflows a hole by itself, e.g. Sandhills HZ-2).
+ {name: 'arch-turned', hole: 0, when: 'afternoon', caption: 'The green turned most to its approach, from above', cam: `w => { const h = w.holes.reduce((a, b) => Math.abs(b.greenTurn || 0) > Math.abs(a.greenTurn || 0) ? b : a), g = h.worldGreen;
+  return {x: g.x, z: g.z - 2, yaw: 0, height: 60, pitch: -86}; }`},
+ {name: 'arch-native', hole: 0, when: 'afternoon', caption: 'The mower\'s line where rough meets native grass', cam: `w => { let best = null;
+  for (const h of w.holes) { const g = h.worldPin; for (let r = 25; r < 220 && !best; r += 6) for (let a = 0; a < 6.28 && !best; a += .15) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'native' && w.surface(x - Math.cos(a) * 1.5, z - Math.sin(a) * 1.5) === 'rough') best = {x, z, a}; } if (best) break; }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 20, pitch: -15};
+  const cx = best.x - Math.cos(best.a) * 7, cz = best.z - Math.sin(best.a) * 7;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.7, pitch: -14}; }`},
+ {name: 'arch-bands', hole: 0, when: 'afternoon', caption: 'The mowing heights stepping down at a fairway\'s edge', cam: `w => { const h = w.holes[0], z = h.length * .55, c = h.center(z), e = h.toWorld({x: c + h.leftWidth(z), z: z + 6}), o = h.toWorld({x: c + h.leftWidth(z) + 8, z: z - 4});
+  return {x: o.x, z: o.z, yaw: Math.atan2(e.x - o.x, e.z - o.z) * 180 / Math.PI, height: 1.7, pitch: -18}; }`},
+ {name: 'arch-field', hole: 0, when: 'afternoon', caption: 'A bunker drawn from the surface field', cam: `w => { for (const h of w.holes) { const b = h.bunkers.find(k => k.field); if (b) { const c = h.toWorld({x: b.x, z: b.z}); return {x: c.x, z: c.z - 15, yaw: 0, height: 12, pitch: -36}; } }
+  return {x: 0, z: 0, yaw: 0, height: 20, pitch: -15}; }`},
+ // THE OWNER'S SECOND REVIEW (31 October 2026): the clubhouse and its path
+ // from above; the path at the second green's pull-off from above; the path
+ // where the ground under it rises most above a straight line between its
+ // corners (where the old strip went through the hill); and the seam where
+ // two shared fairways meet, from the side.
+ {name: 'rev-club-above', hole: 0, when: 'noon', caption: 'The clubhouse and its path, from above', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'clubhouse') || {x: 0, z: 0};
+  return {x: b.x, z: b.z - 30, yaw: 0, height: 55, pitch: -62}; }`},
+ {name: 'rev-pulloff', hole: 1, when: 'noon', caption: 'The paths by the second green, from above', cam: `w => { const g = w.holes[1].worldPin; let best = null;
+  for (const p of w.paths || []) for (const q of [p.points[0], p.points[p.points.length - 1]]) { const d = Math.hypot(q.x - g.x, q.z - g.z); if (!best || d < best.d) best = {d, q}; }
+  const c = best ? {x: (best.q.x + g.x) / 2, z: (best.q.z + g.z) / 2} : g;
+  return {x: c.x, z: c.z - 25, yaw: 0, height: 70, pitch: -70}; }`},
+ {name: 'rev-dune-path', hole: 0, when: 'afternoon', caption: 'The path over the most relief', cam: `w => { let best = null;
+  for (const p of w.paths || []) for (let k = 1; k < p.points.length; k++) { const a = p.points[k - 1], b = p.points[k], ya = w.height(a.x, a.z), yb = w.height(b.x, b.z), n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2);
+   for (let t = 1; t < n; t++) { const u = t / n, x = a.x + (b.x - a.x) * u, z = a.z + (b.z - a.z) * u, off = w.height(x, z) - (ya + (yb - ya) * u); if (!best || off > best.off) best = {off, x, z, dx: b.x - a.x, dz: b.z - a.z}; } }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 30, pitch: -20};
+  const l = Math.hypot(best.dx, best.dz) || 1, nx = -best.dz / l, nz = best.dx / l, x = best.x + nx * 22 - best.dx / l * 18, z = best.z + nz * 22 - best.dz / l * 18;
+  return {x, z, yaw: Math.atan2(best.x - x, best.z - z) * 180 / Math.PI, height: 6, pitch: -12}; }`},
+ {name: 'rev-seam', hole: 0, when: 'afternoon', caption: 'Where two shared fairways meet, from the side', cam: `w => { let best = null;
+  for (const h of w.holes) for (let z = 40; z < h.length - 20; z += 6) for (const side of [-1, 1]) { const half = side < 0 ? h.leftWidth(z) : h.rightWidth(z);
+   for (let o = half - 6; o < half + 40; o += 2) { const p = h.toWorld({x: h.center(z) + side * o, z}); if (w.surface(p.x, p.z) !== 'fairway') continue; const n = w.nearest(p.x, p.z); if (n?.h && n.h !== h) { best = {p, h, z}; break; } } if (best) break; }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 60, pitch: -40};
+  const a = best.h.toWorld({x: best.h.center(best.z - 70), z: best.z - 70});
+  return {x: a.x, z: a.z, yaw: Math.atan2(best.p.x - a.x, best.p.z - a.z) * 180 / Math.PI, height: 22, pitch: -16}; }`},
+ // The sharpest bend left in the played ground (fairway, semi, fringe,
+ // green), away from sand, water and paths, from 40 m off and 12 m up: where
+ // Links ST-1's seam was (course.js land, *NO SEAM*).
+ {name: 'rev-crease', hole: 0, when: 'afternoon', caption: 'The sharpest bend left in the played ground', cam: `w => { let best = null; const P = new Set(['fairway', 'semi', 'fringe', 'green']);
+  for (const h of w.holes) for (let z = 0; z < h.length; z += 4) { const half = Math.max(h.leftWidth(z), h.rightWidth(z)) + 24;
+   for (let o = -half; o <= half; o += 4) { const p = h.toWorld({x: h.center(z) + o, z}); if (!P.has(w.surface(p.x, p.z))) continue;
+    let wet = false; for (let a = 0; a < 8 && !wet; a++) for (const r of [2, 4, 6]) { const k = w.surface(p.x + Math.cos(a * .785) * r, p.z + Math.sin(a * .785) * r); if (k === 'sand' || k === 'water' || k === 'path') wet = true; } if (wet) continue;
+    const y = w.height(p.x, p.z); let c = 0; for (const [ax, az] of [[1, 0], [0, 1], [.707, .707], [.707, -.707]]) c = Math.max(c, Math.abs(w.height(p.x + ax * 2, p.z + az * 2) + w.height(p.x - ax * 2, p.z - az * 2) - 2 * y) / 4);
+    if (!best || c > best.c) best = {c, p, h, z}; } }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 40, pitch: -30};
+  const a = best.h.toWorld({x: best.h.center(Math.max(0, best.z - 40)) + 25, z: Math.max(0, best.z - 40)});
+  return {x: a.x, z: a.z, yaw: Math.atan2(best.p.x - a.x, best.p.z - a.z) * 180 / Math.PI, height: 12, pitch: -14}; }`},
+ // The clubhouse: from 42 m in front of it, a little off-centre, at 7 m; and
+ // from the first tee, where a player first sees it.
+ {name: 'arch-club', hole: 0, when: 'afternoon', caption: 'An Architect course\'s clubhouse', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};
+  const s = Math.sin(b.rotation), c = Math.cos(b.rotation), x = b.x - s * 34 + c * 10, z = b.z - c * 34 - s * 10;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 7, pitch: -6}; }`},
+ {name: 'arch-club-tee', hole: 0, when: 'afternoon', caption: 'The clubhouse from the first tee', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0}, h = w.holes[0], t = h.toWorld(h.tees.blue || h.tee);
+  return {x: t.x, z: t.z, yaw: Math.atan2(b.x - t.x, b.z - t.z) * 180 / Math.PI, height: 1.8, pitch: -1}; }`},
+ // PHASE 5'S VIEWS (architect-courses): a pond's dressed edge from the bank
+ // behind it, a fountain from across its pond, a bridge from beside its creek.
+ {name: 'arch-edge', hole: 0, when: 'afternoon', caption: 'A dressed pond edge on an Architect course', cam: `w => { const m = (w.waterworks || []).find(k => k.kind !== 'fountain') || {x: 0, z: 0};
+  const ponds = w.holes.flatMap(h => h.ponds.map(p => h.toWorld(p))), c = ponds.sort((a, b) => Math.hypot(a.x - m.x, a.z - m.z) - Math.hypot(b.x - m.x, b.z - m.z))[0] || {x: m.x + 1, z: m.z};
+  const dx = m.x - c.x, dz = m.z - c.z, l = Math.hypot(dx, dz) || 1, x = m.x + dx / l * 9 + dz / l * 5, z = m.z + dz / l * 9 - dx / l * 5;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 2.4, pitch: -12}; }`},
+ {name: 'arch-fountain', hole: 0, when: 'afternoon', caption: 'A fountain on an Architect course', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
+  const x = m.x + 26, z = m.z + 10;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 3, pitch: -2}; }`},
+ {name: 'arch-fountain-near', hole: 0, when: 'afternoon', caption: 'A fountain close to, the water in motion', cam: `w => { const m = (w.waterworks || []).find(k => k.kind === 'fountain') || {x: 0, z: 0};
+  const x = m.x + 11, z = m.z + 4;
+  return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 2.2, pitch: 6}; }`},
+ // The hand tools (the owner's review): hole 2 from above and behind its
+ // drive zone, looking on to the green.
+ {name: 'h2-above', hole: 1, when: 'afternoon', caption: 'Hole 2 (or window.__hole) from above, down the hole', cam: `w => { const h = w.holes[window.__hole ?? 1], z0 = h.length * .3, z1 = h.length * .85, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 60, pitch: -32}; }`},
+ // A point on hole 2 (window.__look = {at, off, from, side, up}: metres from
+ // the tee, right of the line; the camera `from` m short of it, `side` m
+ // across, `up` m high).
+ {name: 'h2-look', hole: 1, when: 'afternoon', caption: 'A point on hole 2', cam: `w => { const L = window.__look || {}, h = w.holes[1], at = L.at ?? 200, off = L.off ?? 0, from = L.from ?? 40, side = L.side ?? 0;
+  const zc = Math.max(0, Math.min(h.length, at)), t = h.toWorld({x: h.center(zc) + off, z: at}), zb = Math.max(0, Math.min(h.length, at - from)), c = h.toWorld({x: h.center(zb) + off + side, z: at - from});
+  return {x: c.x, z: c.z, yaw: Math.atan2(t.x - c.x, t.z - c.z) * 180 / Math.PI, height: L.up ?? 3, pitch: L.pitch ?? -4}; }`},
+ {name: 'arch-bridge', hole: 0, when: 'afternoon', caption: 'A cart-path bridge over a creek', cam: `w => { const b = (w.bridges || [])[0] || {x: 0, z: 0, angle: 0};
+  const ca = Math.sin(b.angle), cb = Math.cos(b.angle), x = b.x + cb * 13 + ca * 4, z = b.z - ca * 13 + cb * 4;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 2.6, pitch: -8}; }`},
+ // PHASE 6'S VIEWS (architect-courses): the land's story -- a building, a
+ // wall, a template landform from down its hole, a landmark from its green.
+ {name: 'arch-story', hole: 0, when: 'afternoon', caption: 'A piece of the land story', cam: `w => { const b = (w.buildings || []).find(k => k.story && k.kind !== 'lighthouse' && k.kind !== 'church') || (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};
+  const s = Math.sin(b.rotation), c = Math.cos(b.rotation), d = b.depth / 2 + 30, x = b.x - s * d + c * 12, z = b.z - c * d - s * 12;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 4, pitch: -4}; }`},
+ {name: 'arch-wall', hole: 0, when: 'afternoon', caption: 'A field wall', cam: `w => { const l = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0] || {ax: 0, az: 0, bx: 1, bz: 1};
+  const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz) || 1, x = mx + dz / n * 9 - dx / n * 6, z = mz - dx / n * 9 - dz / n * 6;
+  return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: 2, pitch: -6}; }`},
+ {name: 'arch-template', hole: 0, when: 'afternoon', caption: 'A hole shaped by the land', cam: `w => { const h = w.holes.find(k => k.design && ['dell', 'alps', 'barranca'].includes(k.design.template)) || w.holes[0], e = h.design?.earthworks?.[0] || {z: h.length * .6};
+  const z0 = Math.max(0, e.z - 70), a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(Math.min(h.length, e.z + 40)), z: Math.min(h.length, e.z + 40)});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ // A named template's hole: from 70 m short of its landform, or from the
+ // back tee (a par three, a Cape), looking toward the green.
+ {name: 'arch-tpl-dell', hole: 0, when: 'afternoon', caption: 'The Dell', cam: `w => { const h = w.holes.find(k => k.design?.template === 'dell') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-alps', hole: 0, when: 'afternoon', caption: 'The Alps', cam: `w => { const h = w.holes.find(k => k.design?.template === 'alps') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-alps-side', hole: 0, when: 'afternoon', caption: 'The Alps from above and to the side', cam: `w => { const h = w.holes.find(k => k.design?.template === 'alps') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z = e ? e.z : h.length - 60, a = h.toWorld({x: h.center(z - 40) + 55, z: z - 40}), b = h.toWorld({x: h.center(z + 15), z: z + 15});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 22, pitch: -16}; }`},
+ {name: 'arch-tpl-barranca', hole: 0, when: 'afternoon', caption: 'The Barranca', cam: `w => { const h = w.holes.find(k => k.design?.template === 'barranca') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 45) : Math.max(0, h.length - 150), z1 = e ? e.z + 10 : h.length, a = h.toWorld({x: h.center(z0) + 14, z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 14, pitch: -16}; }`},
+ {name: 'arch-tpl-redan', hole: 0, when: 'afternoon', caption: 'The Redan', cam: `w => { const h = w.holes.find(k => k.design?.template === 'redan') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 150), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-tpl-cape', hole: 0, when: 'afternoon', caption: 'The Cape', cam: `w => { const h = w.holes.find(k => k.design?.template === 'cape') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : 0, z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 9, pitch: -5}; }`},
+ {name: 'arch-tpl-pit', hole: 0, when: 'afternoon', caption: 'The Pit', cam: `w => { const h = w.holes.find(k => k.design?.template === 'pit') || w.holes[0], e = h.design?.earthworks?.[0];
+  const z0 = e ? Math.max(0, e.z - 70) : Math.max(0, h.length - 70), z1 = h.length, a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(z1), z: z1});
+  return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
+ {name: 'arch-circle', hole: 0, when: 'afternoon', caption: 'A stone circle and lanterns', cam: `w => { const p = (w.storyProps || []).filter(k => k.kind === 'stone'), c = p.length ? {x: p.reduce((s, k) => s + k.x, 0) / p.length, z: p.reduce((s, k) => s + k.z, 0) / p.length} : {x: 0, z: 0};
+  const x = c.x + 16, z = c.z + 10;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 2.4, pitch: -6}; }`},
+ // Phase 6's life and history: the first grazers or water birds from 22 m,
+ // the walkers on their path, a felled avenue's stumps.
+ {name: 'arch-life', hole: 0, when: 'afternoon', caption: 'Animals on the course', cam: `w => { const a = (w.life || []).find(k => k.x !== undefined && k.r === undefined) || {x: 0, z: 0};
+  const x = a.x + 7, z = a.z + 6;
+  return {x, z, yaw: Math.atan2(a.x - x, a.z - z) * 180 / Math.PI, height: 3, pitch: -14}; }`},
+ // The walkers and the mower move: the camera is put beside where the figure
+  // is at the moment of the picture (the renderer's own formula, addLife).
+ {name: 'arch-walkers', hole: 0, when: 'afternoon', caption: 'Golfers walking the path', cam: `w => { const v = window.__view, t = v.elapsed || 0, k = Number(window.__walker || 0), a = (w.life || []).filter(q => q.kind === 'walker')[k];
+  if (!a || !a.line) return {x: 0, z: 0, yaw: 0, height: 3, pitch: -8};
+  const run = [0]; for (let i = 1; i < a.line.length; i++) run.push(run[i - 1] + Math.hypot(a.line[i].x - a.line[i - 1].x, a.line[i].z - a.line[i - 1].z));
+  const len = run[run.length - 1] || 1, s = (((t + a.phase) * a.speed - a.lag) % (2 * len) + 2 * len) % (2 * len), d = a.loop ? s % len : (s < len ? s : 2 * len - s);
+  let i = 1; while (i < run.length - 1 && run[i] < d) i++;
+  const p0 = a.line[i - 1], p1 = a.line[i], u = (d - run[i - 1]) / ((run[i] - run[i - 1]) || 1), px = p0.x + (p1.x - p0.x) * u, pz = p0.z + (p1.z - p0.z) * u, dx = p1.x - p0.x, dz = p1.z - p0.z, n = Math.hypot(dx, dz) || 1;
+  const ahead = 3.5, cx = px + dx / n * ahead, cz = pz + dz / n * ahead, x = cx + dz / n * 6.5, z = cz - dx / n * 6.5;
+  return {x, z, yaw: Math.atan2(px - x, pz - z) * 180 / Math.PI, height: 1.9, pitch: -6}; }`},
+ {name: 'arch-stumps', hole: 0, when: 'afternoon', caption: 'A felled avenue', cam: `w => { const s = (w.storyProps || []).find(k => k.kind === 'stump') || {x: 0, z: 0};
+  const x = s.x + 10, z = s.z + 8;
+  return {x, z, yaw: Math.atan2(s.x - x, s.z - z) * 180 / Math.PI, height: 2.2, pitch: -10}; }`},
+ // One view an animal kind: standing ones from 9 m, fliers from below their
+ // circle, the mower from beside its run.
+ {name: 'arch-life-goose', hole: 0, when: 'afternoon', caption: 'Life: goose', cam: `w => { const a = (w.life || []).find(k => k.kind === 'goose') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 4, z = cz + 3;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-heron', hole: 0, when: 'afternoon', caption: 'Life: heron', cam: `w => { const a = (w.life || []).find(k => k.kind === 'heron') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-roadrunner', hole: 0, when: 'afternoon', caption: 'Life: roadrunner', cam: `w => { const a = (w.life || []).find(k => k.kind === 'roadrunner') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-mower', hole: 0, when: 'afternoon', caption: 'Life: mower', cam: `w => { const v = window.__view, t = v.elapsed || 0, a = (w.life || []).find(k => k.kind === 'mower');
+  if (!a) return {x: 0, z: 0, yaw: 0, height: 3, pitch: -8};
+  const len = Math.hypot(a.bx - a.ax, a.bz - a.az) || 1, s = (((t + a.phase) * a.speed - a.lag) % (2 * len) + 2 * len) % (2 * len), u = (s < len ? s : 2 * len - s) / len;
+  const dx = (a.bx - a.ax) / len, dz = (a.bz - a.az) / len, px = a.ax + (a.bx - a.ax) * u - dz * a.side, pz = a.az + (a.bz - a.az) * u + dx * a.side;
+  const turn = Number(window.__around || 50) * Math.PI / 180, x = px + Math.cos(turn) * 7.5, z = pz + Math.sin(turn) * 7.5;
+  return {x, z, yaw: Math.atan2(px - x, pz - z) * 180 / Math.PI, height: 2.6, pitch: -12}; }`},
+ {name: 'arch-life-sheep', hole: 0, when: 'afternoon', caption: 'Life: sheep', cam: `w => { const a = (w.life || []).find(k => k.kind === 'sheep') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-elk', hole: 0, when: 'afternoon', caption: 'Life: elk', cam: `w => { const a = (w.life || []).find(k => k.kind === 'elk') || {x: 0, z: 0};
+  const cx = a.x ?? (a.ax + a.bx) / 2, cz = a.z ?? (a.az + a.bz) / 2, x = cx + 7, z = cz + 6;
+  return {x, z, yaw: Math.atan2(cx - x, cz - z) * 180 / Math.PI, height: 2.4, pitch: -10}; }`},
+ {name: 'arch-life-gull', hole: 0, when: 'afternoon', caption: 'Life: gull', cam: `w => { const a = (w.life || []).find(k => k.kind === 'gull') || {x: 0, z: 0, r: 30, up: 30};
+  const x = a.x + a.r + 12, z = a.z;
+  return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
+ {name: 'arch-life-raven', hole: 0, when: 'afternoon', caption: 'Life: raven', cam: `w => { const a = (w.life || []).find(k => k.kind === 'raven') || {x: 0, z: 0, r: 30, up: 30};
+  const x = a.x + a.r + 12, z = a.z;
+  return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
+ // PHASE 7: tournament week -- the last green from down its fairway, a piece
+ // from in front of it, the crowd at the ropes.
+ {name: 'arch-week-green', hole: 0, when: 'afternoon', caption: 'The last green in tournament week', cam: `w => { const h = w.holes[w.holes.length - 1], z0 = Math.max(0, h.length - 60), a = h.toWorld({x: h.center(z0), z: z0}), g = h.toWorld(h.green);
+  return {x: a.x, z: a.z, yaw: Math.atan2(g.x - a.x, g.z - a.z) * 180 / Math.PI, height: 6, pitch: -3}; }`},
+ {name: 'arch-week-board', hole: 0, when: 'afternoon', caption: 'The scoreboard and a tower', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'scoreboard') || {x: 0, z: 0, rotation: 0};
+  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 22 + fz * 6, z = b.z + fz * 22 - fx * 6;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 2}; }`},
+ {name: 'arch-week-tents', hole: 0, when: 'afternoon', caption: 'Hospitality by the clubhouse', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'marquee') || {x: 0, z: 0, rotation: 0};
+  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 24 + fz * 8, z = b.z + fz * 24 - fx * 8;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 0}; }`},
+ {name: 'arch-week-crowd', hole: 0, when: 'afternoon', caption: 'The gallery at the ropes', cam: `w => { const r = (w.occasion?.ropes || [])[Math.floor((w.occasion?.ropes || []).length * .3)] || {x: 0, z: 0, rot: 0};
+  const x = r.x + Math.cos(r.rot) * 14 - Math.sin(r.rot) * 10, z = r.z - Math.sin(r.rot) * 14 - Math.cos(r.rot) * 10;
+  return {x, z, yaw: Math.atan2(r.x - x, r.z - z) * 180 / Math.PI, height: 2, pitch: -2}; }`},
+ {name: 'arch-week-crowd-near', hole: 0, when: 'afternoon', caption: 'The gallery close to', cam: `w => { const c = (w.occasion?.crowd || [])[Math.floor((w.occasion?.crowd || []).length * .3)] || {x: 0, z: 0, rot: 0};
+  const x = c.x + Math.sin(c.rot) * 7 + Math.cos(c.rot) * 2, z = c.z + Math.cos(c.rot) * 7 - Math.sin(c.rot) * 2;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 1.8, pitch: -3}; }`},
+ {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
+  const x = b.x + 45, z = b.z + 30;
+  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},
+ {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
+  const g = h.toWorld({x: h.center(h.length - 120), z: Math.max(0, h.length - 120)});
+  return {x: g.x, z: g.z, yaw: Math.atan2(b.x - g.x, b.z - g.z) * 180 / Math.PI, height: 2, pitch: 1}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).
  // The far scenery from the course's edge: the band between the course's own
  // ground and the far woods or hills, looking out from 25 m up.
@@ -168,6 +364,19 @@ export const VIEWS = [
    const cx = mx - dz / L * off - dx / L * 5, cz = mz + dx / L * off - dz / L * 5;
    if (trees.some(t => Math.hypot(t.x - cx, t.z - cz) < (t.r || 4) + 6)) continue;
    return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 6 - cx, mz + dz / L * 6 - cz) * 180 / Math.PI, height: 4, pitch: -30};
+  }
+  return {x: 0, z: 0, height: 200, pitch: -40}; }`},
+ // A creek from above in the open (the owner's screenshot of its "arrows"):
+ // the first stretch with no tree within 12 m, from 10 m up, looking down it.
+ {name: 'stream-above', hole: 0, when: 'noon', caption: 'A creek from above, in the open', cam: `w => { const trees = w.trees || [];
+  // window.__seg: skip that many open stretches (to find one in particular).
+  let skip = Number(window.__seg || 0);
+  for (const s of (w.streams?.segments || [])) {
+   const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2;
+   if (trees.some(t => Math.hypot(t.x - mx, t.z - mz) < (t.r || 4) + 12)) continue;
+   if (skip-- > 0) continue;
+   const up = Number(window.__up || 10), back = up * .9;
+   return {x: mx - dx / L * back - dz / L * 4, z: mz - dz / L * back + dx / L * 4, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: up, pitch: -40};
   }
   return {x: 0, z: 0, height: 200, pitch: -40}; }`},
  // A pond from a tee (the trees-in-water item: "from the bank and a tee"):

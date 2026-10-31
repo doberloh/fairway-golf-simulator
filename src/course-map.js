@@ -1,4 +1,4 @@
-import {fairwayWidth,greenRadius,ovalRadius} from './course.js';
+import {fairwayWidth,greenRadius,greenPoint,ovalRadius} from './course.js';
 import {greenBounds} from './green-map.js';
 
 // Pan and zoom sit ON TOP of the auto-fit rather than replacing it. `mapLayout`
@@ -44,7 +44,7 @@ function holeBounds(course){
  const hit=boundsCache.get(course);if(hit?.key===key)return hit;
  const points=[...Object.values(course.tees)];
  for(let i=0;i<=160;i++){const mow=course.mowStart??course.fairwayStart,z=mow+(course.length+8-mow)*i/160;for(const side of [-1,1])points.push({x:course.center(z)+side*fairwayWidth(course,z,course.settings.semiRough,side),z});}
- for(let i=0;i<64;i++){const a=i*Math.PI/32,r=greenRadius(course,a)+course.settings.fringe+course.settings.semiRough;points.push({x:g.x+Math.cos(a)*r*course.greenAspect,z:g.z+Math.sin(a)*r});}
+ for(let i=0;i<64;i++){const a=i*Math.PI/32;points.push(greenPoint(course,a,greenRadius(course,a)+course.settings.fringe+course.settings.semiRough));}
  for(const o of [...course.bunkers,...course.ponds])for(let i=0;i<32;i++){const q=ovalRadius(o,i*Math.PI/16);points.push({x:o.x+q.x,z:o.z+q.z});}
  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
  for(const p of points){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.z<minZ)minZ=p.z;if(p.z>maxZ)maxZ=p.z;}

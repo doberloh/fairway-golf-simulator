@@ -129,10 +129,10 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/textures.js | Procedural textures and foliage animation shader hooks |
 | src/mesh-assets.js | Decodes that geometry and instances it under the biome palette. `farParts` derives a tree's thinned twin -- a third of its leaf sprays, each grown to keep the crown full -- at load, for shadows beyond the nearest cascade and for distant crowns; only crowns of `TWIN_MIN_TRIANGLES` or more use one |
 | src/gen-pool.js | The workers that compute the ground grid's heights while a course generates (B2). Every call resolves to null rather than failing, which sends the grid back to the main thread |
-| src/textures.js (windMaterial) | Everything that moves in the wind, in one vertex patch. **Trunks bend now, and that is safe only because the bend grows with the square of height**: under a centimetre at 3 m up a 60 m trunk, so the trunk the physics collides with and the one drawn agree wherever a ball can be. A lever that moved the base, or a much larger bend, would let a ball visibly pass through a trunk or bounce off air. Shadows do not sway (three's depth material does not carry the patch). A procedural tree's pieces carry a per-instance `treeRoot`; **any per-instance attribute a wind material reads must also be packed by `instance-cull.js`**, which reorders instance buffers as the view changes -- it packs matrices, colours and `treeRoot` and nothing else, and an unpacked attribute silently pairs one tree's leaves with another tree's root |
+| src/textures.js (windMaterial) | Everything that moves in the wind, in one vertex patch. **Trunks bend now, and that is safe only because the bend grows with the square of height**: under a centimetre at 3 m up a 60 m trunk, so the trunk the physics collides with and the one drawn agree wherever a ball can be. A lever that moved the base, or a much larger bend, would let a ball visibly pass through a trunk or bounce off air. Shadows do not sway (three's depth material does not carry the patch). A procedural tree's pieces carry a per-instance `treeRoot`; **any per-instance attribute a wind material reads must also be packed by `instance-cull.js`**, which reorders instance buffers as the view changes -- it packs matrices, colours and `treeRoot` and nothing else, and an unpacked attribute silently pairs one tree's leaves with another tree's root. **The line `mvPosition=modelViewMatrix*mvPosition;` exists only in a material windMaterial has patched** -- it writes out three's `project_vertex`; a plain material still holds the `#include`. So `sinkBeyond` and the near tiles' `fadeOut`, which replace that line, do nothing on a material without the wind, silently: the far heath (vegetation.js addFarHeath) writes its own projection, and tests/far-heath runs its patch on three's toon shader to prove it lands |
 | src/course-plan.js (greens) | `greenContour` is the putting surface: a per-green recipe (`greenRecipe`, drawn from the seed and the hole and cached per hole object in a WeakMap) of character, tilt and false front. **The recipe must depend only on the seed and the hole**, never on call order or on settings other than through the comparisons made at call time: the generation workers regenerate the world on their own and must build the same greens. `greenPedestal` (raised and punchbowl greens) is added to the green's height inside the terrain blend in `course.js`'s `height`, NOT into `greenContour` -- it is constant over the putting surface, so the pin chooser and the green-reading overlay, which read the contour, never see it |
 | src/auto-resolution.js | Automatic resolution (F4): which fraction of the tier's pixels to draw, from the frame intervals it is fed. Pure, so `tests/auto-resolution.test.mjs` drives it with a pretend machine. `main.js` feeds it and `GolfView.setResolutionScale` applies it; **`applyQuality` keeps the current scale, so anything else that sets the pixel ratio must go through `setResolutionScale`** or the two will fight. The scale is only ever at or below 1: it may draw fewer pixels than the tier, never more. **It judges play only**: the menus, an open sheet and the loading screen hold the step (`autoResolutionFrame`), because a menu drawing its course pictures and tiny models stutters for reasons that have nothing to do with what the course costs -- until 18 October 2026 that stepped the resolution down before a round even started, and the round began blurred (RESEARCH, *F4*, the 18 October note) |
-| src/ground.js (HOLE_ATLAS) and texture units | **Every lit fragment shader may use at most 16 texture units, and the ground's is the hungriest**: 7 textures (6 data textures and, since the cartoon overhaul, the turf detail atlas -- the route curves and the semi-rough edges were packed into one texture, `curveAt`/`outerAt`, to pay for it), the mist's water field, the toon ramp, the sun's shadow map(s) (3 on High and Ultra), and one per shadow-casting floodlight. Over 16 the program fails to link and THE GROUND DISAPPEARS -- shipped once, at night with the lights on. The four per-hole tables are one texture (`HOLE_ATLAS`, a 35-texel row per hole: route, tees, cups, hazards); add a per-hole value there, not as a new texture. `tests/flood-shadows.test.mjs` counts the ground's samplers and fails if a tier's `floodShadows` would leave no unit spare -- if it fails after you add a texture, lower that tier's count or pack something |
+| src/ground.js (HOLE_ATLAS) and texture units | **Every lit fragment shader may use at most 16 texture units, and the ground's is the hungriest**: 5 textures since Architect phase 3 (the ownership atlas, the cover bytes, the turf detail atlas, the surface field, and ONE table texture holding the route curves, the per-hole table, the pond banks and the stream segments -- *ONE TEXTURE FOR EVERY TABLE*; it was 7, two now free), the mist's water field, the toon ramp, the sun's shadow map(s) (3 on High and Ultra), and one per shadow-casting floodlight. Over 16 the program fails to link and THE GROUND DISAPPEARS -- shipped once, at night with the lights on. The four per-hole tables are one table (`HOLE_ATLAS`, a row per hole: route, tees, cups, hazards), itself rows of the table texture; add a per-hole value there, not as a new texture. `tests/flood-shadows.test.mjs` counts the ground's samplers and fails if a tier's `floodShadows` would leave no unit spare -- if it fails after you add a texture, lower that tier's count or pack something |
 | src/main.js (the first frames, behind a cover) | **What gets built is first drawn under a cover, never on screen.** The first real frames of a new scene carry one-off costs nothing earlier can reach (the first render with a moving camera, the cull's first sort, the grass ring): 117-217 ms on Ultra. So the splash fades only after `smoothFrames` (three frames under 40 ms, at most 2 s) with the menu already open beneath it, and `whileGenerating` holds its overlay the same way (at most 1 s). The menu reached from a round opens INSIDE that wait (`growBackdrop`). Anything new that opens a scene must do the same, or its first frames are a stutter on the first thing the player sees. The smoke harness's `menuReady` waits for the splash to be gone for the same reason |
 | src/renderer.js (compiled where it is drawn) | **Every pre-compile must bind the render target the frame really draws into (`asDrawn`)**, because three picks a program's version partly from it (tone mapping, colour space). Ultra draws the scene into bloom's target; every warm-up compiled with the screen bound, so on Ultra they built versions no frame used and the first switch of the floodlights built every lit program for real in one frame -- 12-16 s frozen on nine holes, 26 s on eighteen, nothing on High, which has no bloom. `withStandIns` and `ready` go through `asDrawn`; a new warm-up must too. The `floodlit-night` smoke journey fails if switching the lights on freezes for more than half a second |
 | src/renderer.js (state compiled ahead) | To build programs for a state the scene is not in yet (floodlights on, floodlight shadows switched), use `compilePrograms` while the state is held and `whenLinked` on what it returns. **Not `compileAsync`**: it waits on each material's CURRENT program, and once the state is put back the next frame makes the old ones current, so it resolves at once and the switch that follows freezes (2.3 s, measured) |
@@ -271,7 +271,7 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **A SPECIMEN IS THE ONE OBSTRUCTION ALLOWED ON THE LINE OF PLAY.** `blocksLaunch` takes a `within` argument for this: scatter planting is judged over the whole carry, a feature only over the near stretch (`FEATURE.standoff`). An oak in the middle of a fairway is supposed to be on the line -- what makes it fair is `FEATURE.gap` of open grass down one side, not an empty centre. The scatter tests run with `fairwayFeature: 0` deliberately; leaving features on would have them forbid the thing that feature exists to build. Feature trees ride in `world.trees` and feature stones in `world.rocks`, both marked `feature`, so they draw and collide through the paths everything else uses.
 
-**EVERYTHING SOLID IS A VERTICAL CYLINDER IN ONE INDEX.** Trunks, boulders and lit floodlight masts all go through the same swept-circle test in `simulateShot`; an obstacle supplies `radius` or falls back to `trunkRadius`. Do not add a second collision routine. **Haunted Hollow's pumpkins and toadstools are `world.props`, the same cylinder as wide as their model (`PROP_MODELS` in species.js, measured).** **Boulders are `world.rocks`, generated in course.js** -- they used to be placed by the renderer, which is exactly why nothing could collide with them, and the renderer now READS that list. **Masts are passed in through `options.poles`** and only when `view.floodlit`, because the floodlight group is hidden otherwise and colliding with an invisible mast is worse than not colliding with a visible one. **Flagsticks come in through `options.flagsticks`**: every hole's stick at its regulated base radius, this hole's only while it is in; a strike counts as `flagHits`. Deadfall is decorative by decision, not oversight. Houses are the one exception to the cylinder, an oriented box in the same loop, and **A HOUSE'S ROTATION IS A WORLD ANGLE**: `toLocal` moves a house's centre into the hole's frame but not its angle, so in that frame it is turned by its rotation less the hole's. Until 13 October 2026 it was not, and a third of every house on a turned hole disagreed with the drawing; the box also stood 2.6 m above the roof. `tests/solid-colliders.test.mjs` fires real shots at the drawn walls and roofs.
+**EVERYTHING SOLID IS A VERTICAL CYLINDER IN ONE INDEX.** Trunks, boulders and lit floodlight masts all go through the same swept-circle test in `simulateShot`; an obstacle supplies `radius` or falls back to `trunkRadius`. Do not add a second collision routine. **Haunted Hollow's pumpkins and toadstools are `world.props`, the same cylinder as wide as their model (`PROP_MODELS` in species.js, measured).** **Boulders are `world.rocks`, generated in course.js** -- they used to be placed by the renderer, which is exactly why nothing could collide with them, and the renderer now READS that list. **Masts are passed in through `options.poles`** and only when `view.floodlit`, because the floodlight group is hidden otherwise and colliding with an invisible mast is worse than not colliding with a visible one. **Flagsticks come in through `options.flagsticks`**: every hole's stick at its regulated base radius, this hole's only while it is in; a strike counts as `flagHits`. Deadfall is decorative by decision, not oversight. Houses are the one exception to the cylinder, an oriented box in the same loop -- **and since 30 October 2026 an Architect course's buildings join them there** (`world.buildings`, the clubhouse, clubhouse.js): one box routine for every building, marked `club` so a residential out-of-bounds rule never applies to it (architect-courses; the goal's "capsule or box in the one collision index"; walls and stands will join as boxes too), and **A HOUSE'S ROTATION IS A WORLD ANGLE**: `toLocal` moves a house's centre into the hole's frame but not its angle, so in that frame it is turned by its rotation less the hole's. Until 13 October 2026 it was not, and a third of every house on a turned hole disagreed with the drawing; the box also stood 2.6 m above the roof. `tests/solid-colliders.test.mjs` fires real shots at the drawn walls and roofs.
 
 **THE FINGERPRINT HASHES AN EXPLICIT LIST.** Anything new that a player can see and that generation decides has to be added to it, or a change to it goes unnoticed forever. Rocks were missed for exactly as long as they were a render-time invention.
 
@@ -373,6 +373,135 @@ Aim keyboard directions account for that handedness. Course-wide wind is transfo
 7. Place homes only on rough, dry, gently sloping sites away from tee/green complexes; space homes apart and exclude trees from their footprints. Populate biome vegetation and conifer straw patches. Ground cover is shared with vegetation generation.
 
 Current housing controls: enabled flag, density and setback from semi-rough. River controls: river count 0–2, creek count 0–3, independent widths, depth, meandering. Creek depth is 60% of selected channel depth. Large-lake controls: count 0–3 (`lakes`) and typical diameter 60–460 m (`lakeSize`, default 160); use the existing pond depth range. Ordinary ponds span roughly 90 m on average, so lakes exist for genuinely large water rather than for merely bigger ponds. Pond banks sit a fixed gap outside the fairway edge and grow outward, so enlarging a pond moves it away from play; enlarging `rz` instead extends it along the hole and is limited by hole length. At the top of the lake range, corridor clearance leaves room for well under half the requested lakes on a nine-hole course. Homes, streams and large lakes default off to preserve an ordinary course until selected. Counts are upper targets: terrain constraints can produce fewer.
+
+### TWO DESIGNERS, ONE WORLD
+
+Since 30 October 2026 (branch `architect-courses`; docs/ARCHITECT_COURSES.md)
+a course has a designer: **Classic**, the generator above, or **Architect
+(beta)**, which designs a course from four dials (style, club, age, the land's
+story) plus the seed, landscape and holes. They share one pipeline -- the
+terrain, water, mesh, physics, drawing and scoring are one copy -- and differ
+only at named seams. Rules that keep the two honest:
+
+- **Classic cannot reach Architect code.** `designSettings` (designer.js) is
+  called at every entry into generation and returns a Classic settings object
+  as the same object, untouched. Every Architect branch hangs off
+  `isArchitect(s)`; a Classic course never takes one.
+- **Architect never draws from Classic's stream.** Its decisions use named
+  streams per step and per hole (`seed|arch|<what>|<hole>`), so adding a
+  decision to one hole moves nothing on another, and Classic's draw order --
+  load-bearing, *A HOLE'S SKELETON* -- is untouched.
+- **A course's stamp is `generatorFor(settings)`**, never `GENERATOR_VERSION`:
+  Classic's is GENERATOR_VERSION, Architect's GENERATOR_VERSION*1000 +
+  ARCHITECT_VERSION, one integer so every existing reader of `generator` keeps
+  working. Saves, saved courses, course files, course codes, challenge codes,
+  the world cache key and the stale notices all use it. Endless runs, the course
+  of the week, the Challenge Course and Surprise me are Classic.
+- **What an Architect course is chosen by is `ARCHITECT_KEEPS`**; everything
+  else is decided (`DECIDED_KEYS`), hidden in the studio (`shownFor`), and not
+  carried in a saved course or a code (`designerScope`) -- it is recomputed on
+  load from the kept keys.
+- **Both fingerprints run on every generation change**
+  (`biome-fingerprint.mjs --check`, then with `--designer architect`). A change
+  for Architect alone that moves Classic's has reached a shared path.
+
+The seams so far, each listed here as it is built:
+
+- `designSettings` (designer.js) -- the architect's settings from the dials
+  (architect-styles.js `architectChoices`).
+- `generateCourse` -> `architectCourse` (course.js), straight after
+  `holeLine`: the skeleton is shared, so the card before the course holds;
+  everything after it -- the fairway's widths, bunkers, ponds, the hole's own
+  trees -- is architect.js `designHole`, on the architect's stream. The hole
+  object is the same shape Classic's is, plus `design`.
+- `greenRecipe` (course-plan.js) -- a hole's `design.green` overrides the
+  green after all its draws are made (drainage off a front corner, a Redan's
+  fall, a Biarritz swale, a punchbowl); a Classic hole has no `design`.
+- The open tree scatter's soft edge (course.js) -- an Architect course clears
+  to a scalloped line instead of a fade of chance, taking no draw for it; then
+  `designedPlanting` (architect.js) adds avenues and dogleg corners.
+
+- `routePaths` (paths.js) returns the network as **pieces** (`world.paths` is a
+  list; nothing may assume `paths[0]`), the bridges, `connect` -- the same
+  router -- which `linkBuilding` uses for the clubhouse's piece (its `door`),
+  and `block`, which closes the clubhouse's ground to the router before its
+  link is laid (*THE PATH NETWORK IS THE LINE DRAWN*).
+- `surface` (course.js) -- an Architect course's cart paths (paths.js), routed
+  at the start of planting so houses and trees, which ask `surface`, keep off
+  them; a path takes rough, semi-rough, fairway or any ground type, never a
+  green, fringe, tee, sand or water. The renderer lays its strip on the same
+  polyline (`addPaths`). A ball at rest on one gets free relief
+  (relief.js `pathRelief`, main.js `takePathRelief`).
+- Free extras both designers get, read from built holes and never in the world
+  (so never fingerprinted): flags by pin band (course.js `PIN_FLAGS`,
+  `pinBandOf`), hole names (hole-names.js), the crest (crest.js).
+
+- `routeHoles` (routing.js) -- `homeArch` adds an Architect course's pull
+  home to each placement's score, and `arch` raises the trials (5 -> 12) and
+  the late holes' tries (150 -> 450), and the walk to the next tee is paid
+  three times over on an Architect course (its late tries otherwise all walked
+  the longest). Classic's numbers are untouched; **the
+  walk formula's `Math.min(k,150)` keeps a Classic placement's walk exactly
+  what it was** while an Architect one searches past 150.
+- The hazard slots (renderer.js, ground.js) carry a third kind for an
+  Architect hole: a **collection area**, meta.y -1, written before the
+  bunkers so a bunker over one stays sand; the shader paints it fairway over
+  rough or semi-rough only, and `localSurface` returns fairway by the same
+  rule. Its slots are the hole's twelve, shared with bunkers (lobes count)
+  and ponds: `MAX_HAZARDS` in architect.js counts all three.
+
+- `analyticHeight` (course.js) -- an Architect course's mounds
+  (architect.js `moundField`) are added last, before `streams.carve`; with none,
+  the expression is Classic's exactly. The mesh, the collision heights and
+  the surface queries all sample it, so they stay one ground.
+- The houses' box routine (physics.js) -- a bridge's deck joins it as a box
+  with a floor (`deck`: a ball below its underside passes; one above it a
+  step ago lands on top, however far in from the edge). A ball at rest on a
+  deck ends in the water (Rule 17.1a). Classic has no bridges.
+
+- `fairwayWidth` (course.js) -- an Architect hole's `gaps` (a Barranca) take
+  the fairway out over the ravine and keep the semi-rough's margin, so the
+  shader's curves and the lie read the same thing. Classic holes have none.
+- The open tree scatter (course.js) -- near a green the corridor gate gives
+  way to the green's own rule; **an Architect hole's gap is still its
+  corridor**, or the ravine is planted across the line of play.
+- `buildings` and the houses' box routine -- the land's story's buildings
+  join the clubhouse (solid, never out of bounds) and its walls are boxes
+  (`wallBoxes`). Trees keep 20 m off a story building and a stride off a wall.
+
+- `buildings` -- tournament week's stands, scoreboard, towers and marquees
+  (occasion.js) join the story's, solid; its crowd is hidden on Low by the
+  frame loop. The stand's footprint height is its model's (8.6 m with the
+  pennants): the game fits a model to its box, and a shorter box squashes
+  the rows under the seated crowd (`STAND_ROWS`).
+- The frame loop (renderer.js) -- an Architect course's life (`addLife`) is
+  moved thirty times a second and hidden whenever the tier is Low; it is
+  world data only so a course always has the same animals, never solid and
+  never read by the lie.
+
+**A TRAP: greens shaped in turn drag each other** (course.js `shapedNoTees`).
+Each green blends the land to its height over a shoulder up to 100 m wide, and
+Classic applies them one after another, so a later, lower green pulls an
+earlier one's edge toward it. An Architect course routes its nines home, the
+9th and 18th greens 60-80 m apart, and one pin stood on 8.7% where its contour
+said 0.9% (the golfer chipped forty times). Architect blends them together,
+weighted as pond shelves are (`archGreens`); Classic keeps its order, and
+changing it would move every Classic course.
+
+**A TRAP: `leftWidth` is the -x side.** `fairwayWidth(h,z,0,side)` reads
+`leftWidth` for side < 0, and so does every surface query and the shader's
+hole table. Architect code had it the other way from phase 1 to phase 5 --
+the fairway tucked opposite every side bunker, and the test asked the same
+swapped question and passed (*Phase 5* in docs/ARCHITECT_COURSES.md). A new
+side-dependent rule reads `side < 0 ? h.leftWidth(z) : h.rightWidth(z)`, and
+its test measures the drawn surface, not the width function.
+
+**A TRAP: a tuck is a width, not a hole in the fairway.** The fairway tucks
+round a side bunker by narrowing that side's half-width over the bunker's
+length (`tucks` in `designHole`); a bunker INSIDE the fairway (a centreline
+bunker, the Principal's Nose) is not tucked and the turf runs round it as the
+shader paints any bunker. Tucking a centreline bunker would cut the fairway in
+two.
 
 ### Invariants a generated course must satisfy
 
@@ -605,6 +734,30 @@ To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry,
 
 **SHARED FAIRWAYS WIDEN BEFORE ANYTHING MEASURES A CORRIDOR** (the cartoon overhaul, generator 38; course.js `shareFairways`, routing.js `routeParallel`, Links only). It replaces holes' `leftWidth`/`rightWidth`/`width` with wider ones, so it must run after routing and before `holeBoxes`: ownership, the ground, the mown surfaces and every surface question then see the shared strip as the hole's own fairway. Moved later, a ball in the strip would lie as fairway on one grid and rough on another. Its pond test must count EVERY hole's pond in the strip (a neighbour's pond is as much in the way), but not a pond drawn nearer another hole's centre line than its own -- that one is dropped later (a pond keeps to its own ground), and counting it blocked the very strip it sat in. The parallel test is the two centre lines' directions at the point, never tee-to-green lines (every dogleg failed those). Since generator 46 it also narrows widths (`keepStrips`, a clear strip where fairways nearly touch) and gives back a widening that touches nothing -- both still before `holeBoxes`, so they obey the same rule. Diagnosing a join: `shareFairways` takes a `debug` array and fills it with each refused sample and why (stretch, angle, pond); four rounds of guessing at the H-shaped rungs ended when it showed most refusals were the tee and green ends of staggered pairs. The side-by-side routing candidates are built from geometry and draw nothing from the routing stream, so a biome without `routeParallel` routes exactly as before. Since generator 47 a join is decided for the PAIR (`cover`, the mean share of the two holes' shareable stretches the join runs along): measured per hole alone, staggered out-and-back pairs joined over their middles as crossbars; the debug sink now also names a run too short, a partner that did not reach back, a hole touching nothing, and each pair's coverage. Since generator 51 a join carries pot bunkers on its seam (`seamBunkers`, the `seam` count), added to the lower-numbered hole at 38% of the way to its partner's line so they lie on its own ground; a bunker that strays onto the partner's ground is dropped by the ordinary own-ground filter, never kept half-drawn. They take hazard slots, so they stop short of the twelve a hole has (renderer.js packs bunkers then ponds into twelve, and a pond pushed past the twelfth would vanish from the ground's paint).
 
+**AN ARCHITECT LINKS JOINS IN PAIRS** (the owner's review, ARCHITECT_VERSION 15; course.js `shareFairways` `pairs`). Every pair `takes` would allow is collected, longest join first, and taken only while neither hole has a partner; `chosen` replaces `takes` for the widening. Classic never passes `pairs`, so its sharing -- chains of three and four included -- is untouched; a change here meant for Architect must leave `biome-fingerprint --check` silent. The test is the owner's own course (Links style, Members', Old, A lot, 9 holes, ST-1).
+
+**A PERSON IS ONE MODEL, MANY PEOPLE** (the owner's review; tools/blender/figures.py, renderer.js `dressPeople`). Each body part is a single role, drawn white and given an instance colour per figure. Two traps: every model is normalised to one unit tall, so a person's true height comes from `MESH_MODELS[...].tall` (build-meshes.mjs `PEOPLE`) -- without it a child and someone under an umbrella were drawn the same height; and a per-role stride through a palette lines up across bodies drawn in turn (a gallery in the same navy shirt), so the pick is a hash of figure, body and role.
+
+**HAND TOOLS: ONE RECORD, ONE HAND** (the owner's review, ARCHITECT_VERSION 16, SCHEMA_VERSION 13; the player's hand withdrawn 31 October 2026, SCHEMA_VERSION 14 -- the owner: "leave those tools for the architect to use"; hand-tools.js). The studio's Hand tools panel, the `archHand` setting and `Renderer.groundAhead` are gone; the records come only from the generator's signatures. Migration 13 -> 14 drops a saved `archHand`, and course.js no longer reads one: a list smuggled into the settings changes nothing and no code carries it (tests/hand-tools.test.mjs). Re-adding a player's hand means a schema entry again, not a read of an unknown key. A record is in its hole's own frame (`at` from the back tee, `off` right of the line), so it survives routing. `applyHand` runs inside architectCourse, before `choosePin` -- a green resized after the pin was chosen could leave the cup off it -- and only there, so Classic cannot reach it. The generator's signatures (`designerHand`) draw from their own salted stream (`|arch|hand|`), never from a stream another feature reads, and not at all on a landscape with `sharedFairways` (they took Links ST-1's pairs apart). (While `archHand` existed it was the schema's only list: a list field needs its own validator, no control, a by-content comparison in `settingsDiff`, and a place in ARCHITECT_KEEPS.) **A hole holds at most 24 hazards** (`HAZARD_CAP`; ARCHITECT_VERSION 18): the shader's twelve slots take the collection areas, ponds and first bunkers, and every bunker past them is the surface field's (*THE SURFACE FIELD*); `applyHand` stops at the cap. The architect overfills a hole by itself on Sandhills and Heathland (11 holes in 36 eighteens scanned), which is what the field's tests use now that no player can. (17 capped at twelve, because a bunker past the slots played as sand and was not drawn.)
+
+**THE PATH NETWORK IS THE LINE DRAWN** (the owner's review, 31 October 2026, ARCHITECT_VERSION 19; paths.js). Three traps, each seen on the owner's screen. (1) **A join must be made against the drawn line, not the cells it came from.** A leg's search walks grid cells; `lineOf` pulls that walk straight (up to 24 cells) and rounds it, so the drawn line can run metres off its cells. Later legs joined where their cells met an earlier leg's cells -- a point the drawn path had left -- and every Architect course came out in about 15 disconnected bits, 211 of 1,046 ends stopping in the grass within 8 m of another path, short jogs lying alone beside greens. Now `used` is the cells the drawn line crosses, a joined end is moved onto the nearest drawn point, ends left within 9 m of another piece run on to it where the ground is open, and a piece under `SPUR` (18 m) joined at both ends is dropped. Seen in the captures after that: **an end must not fold back or run on past a junction** -- an end moved onto the network can land behind its previous point (the strip doubles into a spike; fixed as it is joined, and in a last pass that keeps any stretch another piece joins), and an end can cross a path and stop a few metres beyond it (a wedge; a crossing within `STUB`, 12 m, of an end is a junction the end is cut back to, `cutOf` -- before the loose ends are closed, and for the clubhouse's link too). (2) **A waypoint can sit in a pocket**: a few cells walled in by ground steeper than MAX_GRADE. A failed search has walked all it can reach, so under 400 cells the leg restarts from the nearest cell outside, otherwise it ends at the nearest cell it reaches (one retry, 72 m); Mountain's networks still split where the land really does. (3) **Nothing is built on a path, and a footprint is not its corners.** The paths are laid before the clubhouse, the story's buildings, the stands and the houses, which asked a few points of their footprints -- a 2.4 m path passes between corners 20 m apart, and 8 clubhouses in 15 eighteens stood on one (the owner's Midwest farmhouse). `pathTouches` clips every segment against the whole box; `pathClearance` serves the point-and-radius callers. The clubhouse's own link is routed after `block(club)`, or it went straight under the building to the nearest path. The renderer lays the strip with a point every 2 m (`addPaths`): with points only at the line's corners, a straightened run went straight through a Links dune between them (up to 7 m of ground above the strip). tests/paths.test.mjs (*one network*, *no building on a path*).
+
+**NO SEAM WHERE TWO CORRIDORS MEET** (Architect, ARCHITECT_VERSION 20; Classic, GENERATOR_VERSION 53; course.js `land`). Inside a corridor the hills are off, but a quarter of the relief comes back behind a tee (`unmown`), by how far along the NEAREST hole the point is. Where one hole's tee area lies against another hole's fairway, both inside their corridors, the nearest hole changes along a line and that relief switched with it: a 2.4 m bank across 1.5 m of Links ST-1's first fairway (the owner's "weird hole"). It now fades to nothing over `SEAM` (12 m) either side of that line, on both designers (the driving range has none). Classic's was rarer -- its holes lie further apart -- but no milder where it happened: a 4 m wall in 3 m at the edge of Lakeshore HZ-2's fifth fairway, Links DUNE-7's worst bend 0.63 -> 0.18. `nearestMargin` is how much nearer the nearest corridor is than any other's. It is COSTLY: measured at every point with `unmown` above zero it made a Classic eighteen 15% slower to build (4.9 to 5.7 s). So it is measured only where the faded relief could still beat the hills' own fade-in (`unmown > smooth(n.d/reach)` -- elsewhere `open` takes the hills' value whatever the fade says), and capped at `SEAM`, skipping a hole that cannot come nearer. **The skip's bound is not `nearest`'s**: a hole's box bounds it only beside its centre line; past either end the line carries straight on (*A CENTRE LINE READ PAST ITS END*) and can leave the box, so there the bound is how far past the end the point lies. With `nearest`'s box bound two Architect landscapes moved. With both guards the answer is exact (both fingerprints silent, a full measure compared at every call on 18 courses) and the build time is back to before; Architect's is 8% quicker than with the unguarded margin. tests/corridor-seam.test.mjs walks both seams; with the fade off it fails at 0.94 and 0.56. `nearest` itself still skips by the box bound, so past a hole's end it can, rarely, name the wrong hole -- measured and left as it is, the owner's call (TODO, *# Done*, *nearest's box skip*); fixing it moves ground. Any other per-hole term in `land` that is not zero inside a corridor has the same trap. A crease search (fairway, semi, fringe, green; the second difference of the height over 2 m) finds them; leave out ground within 6 m of sand, or every pot bunker's face is a hit.
+
+**ARCHITECT ONLY IN THE STUDIO** (the owner, 31 October 2026: "Architect should not be the course generator for any main mode. It should only be accessible in the course studio, and should not be the default"). `designer` defaults to Classic; Surprise me (`randomSettings`, which varies no `designer`), the course of the week, the Challenge Course, Endless and the menu's showcase hole (an endless hole) build from DEFAULT_COURSE and so are Classic -- tests/designer.test.mjs *every play mode grows Classic* holds them to it. The studio remembered the last designer through `settings`, so a fresh visit (`openStudioSetup`) now resets it to Classic; within the studio the choice lasts. A saved Architect course is played from Saved courses like any other.
+
+**ONE TEXTURE FOR EVERY TABLE** (Architect phase 3, 31 October 2026; ground.js `packTables`). The route curves, the per-hole table (`HOLE_ATLAS`), the pond banks and the stream segments are rows of one float texture 1024 wide -- curves in rows 0..N-1, the hole table N..2N-1, banks 2N..4N-1 (two ponds a row), streams from 4N (two texels a segment) -- which freed three of the ground's samplers. Traps: (1) **the hole table and the streams are read with `texelFetch`, never `texture2D`**: the texture filters linearly for the curves and banks, and a filtered read of every table texel cost Classic 5-10% of its ground on Low; (2) the renderer's `holeAtlas` and `bankAtlas` are plain arrays now, copied in when the ground material is built -- anything that rewrites the hole table after that (the range, `refreshRangeGreens`) must call `view.syncHoleTable(hole)` or the shader keeps the old row; (3) a table that grows past its rows (more than four ponds a hole, a wider hole table) needs its block moved in `packTables` and every read in the shader with it (tests/surface-field.test.mjs checks where each table lands).
+
+**THE SURFACE FIELD** (Architect phase 3; surface-field.js). A picture of the ground on the owner atlas's grid, one byte a channel, each a signed distance to an edge (0.5 on it), which the ground shader paints from and `surface` plays from -- the same bytes read the same way (`fieldAt` is the shader's linear filter written out, as `blowoutAt` is). R holds the sand of bunkers past the twelve slots (`markOverflow` marks them `field`; `localSurface` skips them and the world's `surface` asks the field, over rough, semi-rough and fairway, before a path); G, B and A are free for the next layers. Traps: a field layer must be decided in BOTH places in the same order as its slot or shape equivalent, or the paint and the lie part; a Classic course bakes none and the shader must never read the stand-in texel (`fieldOn`); a field bunker is drawn with the field's 1.75 m facets, and the lie has the same facets, which is the point.
+
+**A GREEN TURNED TO ITS APPROACH** (ARCHITECT_VERSION 18; architect.js `approachTurn`, `greenTurn` on the hole). The oval is turned about its centre in the hole's frame. Everything that measures or draws round a green must turn with it: `greenDistance` (the lie, the pin, the green's shaping), `greenPoint`/`greenOffset` (greenside bunkers, the collection area, the maps, the course picture, the yardage book), the green-reading heat map (its rotation folds the turn in), the ground shader (the pin texel's fourth channel) and the green's fall, ridge, tier and false front (course-plan.js). An outline drawn with `cos(a)*r*greenAspect` by hand comes out square to the hole on an Architect course. **Classic's turn is zero and skipped, not multiplied in**, so its arithmetic is the same to the bit -- keep every new use behind `if(t)`.
+
+**AN ARCHITECT PIECE IS ONE DRAW, NOT ONE PER PART** (the owner's review, measured on Low). Cart paths are one mesh a surface, a building its parts merged with their colours baked into the vertices (one mesh, one ink), bridge bays instanced across every bridge, and the markings grouped and hidden on Low. **The tee furniture too, Classic's included** (markers, signs, benches, ball washers: `furniture(..., {batch: true})` hands back an empty placeholder the caller places as before, and `flushFurniture()`, after the holes, draws every placed piece as one InstancedMesh per model, colours and part, and one for its ink). A placeholder that takes a child (the sign's card) stays in the scene to carry it; anything that moves (the flagstick, lifted at a hole-out) must NOT be batched. Before, Autumn's Architect course drew 589 calls to Classic's 426. A new Architect piece drawn a mesh a part, inked and in the shadow pass, costs three or four draws a part: measure it with `node tools/profile.mjs --only architect --landscapes all --frames 1200 --json <file>` and read the MEAN (`stats.mean`): the table's median is of a timer that steps by 0.1 ms, and swung a sub-millisecond comparison by 25% run to run.
+
+**EVERY PROGRAM IS DRAWN ONCE BEHIND THE LOADING SCREEN** (renderer.js `drawEverythingOnce`, instance-cull.js `forCompile`; 30 October 2026). On Windows a program is finished at its first real draw, and the first frame draws only what the tee's view and the cull let through. So a pond, or a planting the cull had hidden, first seen in the hole-out flyover froze that frame -- the smoke journey ball-light-hole-out failed about 3 runs in 8, **on main as on the architect branch**, the course decided by Surprise me's dice. Found by recording each late program's switches and the scene's mesh using it (the journey writes them to bench/shots/smoke/late-shaders.txt, and names the mesh when run with `--file` on the capture build): a water body's standard material with its probe, and an instanced two-sided toon planting. Now every compile runs with every culled mesh shown (`forCompile`), and `ready` ends by drawing the whole scene, frustum cull off and stand-ins shown, into one pixel. 20 runs of 20 passed after; the first frame behind the screen took 36 ms against 34. Anything new that is first drawn only in play -- added after `ready`, or hidden from both -- brings the stall back.
+
+**THE FOUNTAIN MOVES, SO IT IS NOT A MODEL** (the owner's review; fountain.js, renderer.js `addFountains`). Its drops are one InstancedMesh rewritten every frame (30 a second on Low): `userData.noCull` and `frustumCulled = false`, as everything instanced that moves. `this.fountains` is reset at the top of `addWaterworks`, or a course without water would keep updating the last course's disposed meshes.
+
 **A CENTRE LINE READ PAST ITS END** (the far-landscape goal's straight tone step, generator 52; course.js `lean`, `ends` in `nearest`). A hole's centre line stops at 0 and at its length. Anything that reads it a step beyond -- a slope from `center(z+.5)`, a distance from the clamped end point -- changes behaviour along a straight line square across the hole at its tee and its green, and every distance from the hole carries the change out across the rough. The hills fade in by that distance, so the ground creases along the line, and the slope tint (which yellows mown turf from a tangent of 0.015) draws it as a long straight tone step. The width read the slope between z-0.5 and z+0.5 and dropped 1.3 m in the green's last half metre; the distance ignored the line's end direction. Read slopes from points kept inside the hole, and past an end carry the line straight on. A straight colour line on mown ground is a crease until shown otherwise: map the slope alone (`bench/shots/overhaul/_slopemap2.mjs`-style), then probe the generator's own distance and height across it.
 
 **STAND ON THE GROUND AS DRAWN** (the far-landscape goal; landscape-edge.js `drawnGround`, far-woods.js `seatOn`). The far ring is drawn from vertices tens to hundreds of metres apart, so the fine relief (`ringRelief` sampled at a point) can be 150 m above or below what is on screen there; anything standing on the ring -- the far woods, and anything added there later -- asks `drawnGround` (the ring's own triangles; the course's grid inside its edge) and is let down under its whole footprint: rim samples spaced for the slope plus every drawn vertex under it (`drawnVertices`), since flat-faced ground dips lowest at a vertex or on the rim. The bench's `farSeated` checks it on its own points. `drawnGround` finds a point's triangle by its ring band and position round the ring; the rings are joined by straight chords, so a miss searches the neighbouring bands whole (1 lookup in 400 needed it).
@@ -638,6 +791,111 @@ If the biome wants props no other biome uses, build them in Blender from a commi
 **Then run `node tools/biome-fingerprint.mjs --check`.** It hashes what every biome generates and fails if an existing one moved. A new biome shows up as `new` and the others must be unchanged; re-save with `--save` once you are satisfied.
 
 This replaced seven tables and 48 conditionals across eight files. The one that mattered most took a biome as an INDEX into `['desert','mountain','links','island']`, so an unknown name silently became −1 in the ground shader.
+
+### Adding a biome: the Architect side
+
+A landscape is played by both designers, so a new one is not done until an
+Architect course on it is too. **Classic stays silent**: everything below is
+Architect's, and none of it may move a Classic course.
+
+1. **The architect block** -- one entry in `ARCHITECT` (src/biomes.js):
+   - `styles`: the styles the land leans toward, most likely first (By
+     landscape picks among them). Take them from the study's landscape table
+     or reason the same way: what would an architect build here?
+   - `signature`: the templates the land suggests (a Dell between dunes, an
+     Alps over a crag, a Barranca between mesas); their odds are raised on
+     its holes (architect.js `pick`). Only templates that exist (*Adding a
+     template*).
+   - `clubhouse`, `path`, `bridge`: the clubhouse model, the cart path's
+     surface, timber or stone bridges.
+   - `story`: its walls (`stone`, `leaning`, `hedge` or none), a farm, its
+     ruins, a landmark, a stone circle, lanterns (story.js reads it).
+   - `life`: its grazers, geese, a heron, its fliers (life.js reads it).
+   - `colours`: the clubhouse's four, and the rip-rap, wall, ruin and
+     stone-bridge stone.
+   **tests/biome-architect.test.mjs fails until the block exists** and every
+   name in it is real (a style, a template, a clubhouse model, a path kind, a
+   story piece, an animal). Without a block the landscape still builds, on
+   `ARCHITECT_GENERIC` -- a modern parkland course, a farmhouse, asphalt, no
+   story, no animals -- which reads as nowhere in particular.
+2. **The asset kit**: a clubhouse in tools/blender/architect_clubhouses.py
+   (its `CLUBHOUSE_ASPECT` re-measured: a test holds it to the model), and
+   any story piece or animal the land needs in architect_story.py or
+   architect_life.py -- ten iterations each, judged in the game on the new
+   landscape and on Low, logged in docs/ARCHITECT_COURSES.md. Reuse first:
+   a cottage ruin in the land's stone is a colour, not a model.
+3. **Check what the ground does to the architect**: does a clubhouse find a
+   site (tests/clubhouse.test.mjs runs every landscape; Mountain needed the
+   terrace), does the story find room (tests/story.test.mjs), do the nines
+   come home, does a bridge meet a creek?
+4. **Both fingerprints**: `node tools/biome-fingerprint.mjs --check` (Classic:
+   the new landscape shows as `new`, every other unchanged), then
+   `--designer architect --save`. The Architect store is per landscape too.
+5. **The bench and the virtual golfer on both designers**
+   (`tools/architect-difficulty.mjs`): the goal's limit is 1.5 strokes per
+   18 harder than Classic.
+
+### Adding a style
+
+A style is a record in `STYLES` (src/architect-styles.js): its `name` and
+`hand` (one line of what it looks like), `set` -- the Classic settings it
+decides (width, bunkers, greens, water, trees ...) -- and `arch`, the
+architect's own numbers (`lz`: the share of sand placed by landing zones;
+`size`: bunker size; `centre`: centreline bunkers; `cross`: cross bunkers;
+`template`: the share of holes built to a template; `concepts`: the weights
+of strategic, heroic, penal and risk holes).
+
+1. Add the record, and its key to `STYLE_KEYS` and the `archStyle` names in
+   src/settings-schema.js (a test holds the two lists together). A new
+   option re-ranges a setting: **`SCHEMA_VERSION` and a `MIGRATIONS` entry**,
+   with a test that an old save loads.
+2. Decide where its hand shows beyond the numbers -- each is a set keyed by
+   style: mounds (`MOUND_STYLE`, architect.js), pond edges (`EDGE_STYLE`,
+   waterworks.js), lobed bunkers (`lobeStyles`), avenues (`avenueStyles`),
+   fountains (`FOUNTAIN_STYLES`), the dune and classic template sets
+   (`DUNE_STYLES`, `CLASSIC_STYLES`). A style in none of them still builds.
+3. Lean a landscape toward it if one fits (its `styles` in the architect
+   block).
+4. `ARCHITECT_VERSION` up (any Architect course choosing By landscape may now
+   draw it), both fingerprints, the bench's `design` measure and the virtual
+   golfer: a style's bunkers per 18 and its strokes against Classic go in
+   docs/ARCHITECT_COURSES.md, *Measures*.
+
+### Adding a template
+
+(A shape smaller than a hole -- a waste area, a hogsback, a punchbowl -- is a
+hand-made SIGNATURE instead: a branch in hand-tools.js `designerHand` and
+its style list in `SIGNATURES`, built from the hand tools' records, so the
+studio's tools and the generator stay one vocabulary. `ARCHITECT_VERSION` up,
+both fingerprints, the bench's `design` rule.)
+
+A template is a hole built to a known pattern. Three places:
+
+1. `TEMPLATES` (architect.js): `name`, the pars it fits, and the `note` the
+   player is shown (the architect's note, the yardage book).
+2. Its odds in the `pick` for its par in `designHole`, gated by style where
+   it belongs (the Dell and the Pit on dune styles); a landscape can raise
+   them through its `signature`.
+3. What it builds, after the water and the sand, each piece with its reason
+   in `reasons`:
+   - **hazards**: `greenBunker` / `sideBunker` / `addBunker` (the Redan's
+     front bunker, the Eden's three);
+   - **the green**: `greenPlan` (a tilt away, a swale, a punchbowl's sunken
+     pedestal), and its angle in `approachTurn` if the pattern sets the green
+     across the line (the Redan's 0.5 rad; ARCHITECT_VERSION 18) -- the
+     green's fall, the greenside bunkers and the maps turn with it
+     (*A GREEN TURNED TO ITS APPROACH*);
+   - **ground**: `earthworks` -- a `ridge` or `ravine` across the hole in its
+     own frame (z, half-length, profile radius, height or depth), which
+     course.js adds to the ground (`earthField`) for the mesh, the collisions
+     and the lie alike;
+   - **no fairway** over part of it: `gaps` (read by `fairwayWidth`, so the
+     shader and the lie agree; the planting keeps the gap's corridor clear);
+   - **a wall** in play: `walls` (solid; story.js draws it).
+4. A test that finds one on a seed and checks what it built
+   (tests/story.test.mjs holds the Dell, Alps, Barranca and Pit), a capture
+   view (`arch-tpl-<name>` in tools/capture/overhaul.mjs),
+   `ARCHITECT_VERSION` up, both fingerprints.
 
 ### Material flags say one thing each
 
@@ -2442,11 +2700,13 @@ The bridge frames TCP messages, validates origins and shot payloads, handles dup
 
 ## Verification and release workflow
 
-Use targeted Node tests while editing, then the full relevant suites. `npm test` also includes the local bridge suite, which needs permission to bind local ports. The graphics/gameplay set can run without that suite:
+Use targeted Node tests while editing (`npm run test:changed`, or `node tools/test.mjs <words>`), then the whole suite (`npm test`; TESTING.md, *Running the Node tests*). `npm test` also includes the local bridge suite, which needs permission to bind local ports. The graphics/gameplay set can run without that suite:
 
 ```sh
 node --test tests/core.test.mjs tests/world.test.mjs tests/landscape.test.mjs tests/play.test.mjs tests/refinement.test.mjs tests/course-variety.test.mjs tests/green-refinement.test.mjs tests/atmosphere-routing.test.mjs tests/landscape-edge.test.mjs tests/course-living.test.mjs tests/waterways-tours.test.mjs
 ```
+
+**A FILE IS ONE THREAD, AND THE SUITE WAITS FOR THE LONGEST** (the testing audit, 31 October 2026; TESTING.md, *Running the Node tests*). The runner gives each test file its own process and runs a file's tests one after another, so a file that builds dozens of courses is a serial queue however many cores sit idle -- `water-keep-out`'s 48 courses were 177 s, the whole suite's wait. Build many courses with `measured` (tests/worlds.mjs): worker threads, each building a course and running a measuring module from `tests/measure/` on it, sending back only numbers -- a world holds functions and cannot cross a thread, and a measuring module must not import `node:test` (a worker that registered tests would run them). Two traps met on the way: **node:test's `run()` reports a file's result only once every file listed before it has reported**, so under load every file seemed to take the whole run -- tools/test.mjs starts its own `node --test` per file instead; and **the command-line runner sorts its files by name** whatever order they are given in, so a heavy file named water-* started last -- tools/test.mjs orders them longest first. With the processor full (31 files on 16 cores, each course build about 2.5 times slower than alone) the order no longer matters much; less building is the only lever left.
 
 The waterways-tours suite covers monotonic grades in both directions, above-facing channel geometry and matching levels, lake size/ownership/clearances, fairway aim, continuous rotated-hole tour poses and tree bounds. The course-living suite covers all 14 previews/routings, water below outer banks, submerged channel beds/protected tees/greens, housing exclusion, green shoulders and presentation timing helpers. Existing suites cover complete rounds, rollback, protocol normalization, deterministic worlds, procedural variety, mesh seams, ball contact, cup-edge capture, wind/flight convergence and maps. Timing helpers alone cannot prove browser presentation; also inspect the real UI.
 

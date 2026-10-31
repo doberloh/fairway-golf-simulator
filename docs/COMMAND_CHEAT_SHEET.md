@@ -22,7 +22,10 @@ The website has its own repository and its own commands.
 
 | Command | What it does | Time |
 | --- | --- | --- |
-| `npm test` | All regression tests (physics, generation, scoring) | ~2 min |
+| `npm test` | All regression tests (physics, generation, scoring), longest files first | ~3.5 min |
+| `npm run test:changed` | Only the test files a change since the last commit can reach (`node tools/test.mjs --changed main`: since main) | seconds to minutes |
+| `npm run test:fast` | The 81 test files that build no course (rules, ball, scoring, saves) | ~2 s |
+| `npm run test:times` | The whole suite, then stores each file's time for the ordering | ~3.5 min |
 | `npm run smoke` | Builds, then plays the built game in a real browser at nine screen sizes; fails on any error | ~3.5 min |
 | `node tools/smoke.mjs --only endless-round` | One smoke journey, against the current build | |
 | `node tools/smoke.mjs --list` / `--headed` | Lists the journeys / runs them in a visible window | |

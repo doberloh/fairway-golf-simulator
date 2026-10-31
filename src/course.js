@@ -7,6 +7,18 @@ import {routeHoles} from './routing.js';
 import {buildRange,rangeContour} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
+import {designSettings} from './designer.js';
+import {isArchitect} from './settings-schema.js';
+import {designHole,designedPlanting,designMounds,earthField,worldEarthworks} from './architect.js';
+import {routePaths,pathIndex,linkBuilding,pathTouches,pathClearance} from './paths.js';
+import {placeMarkings,placeWear} from './markings.js';
+import {placeWaterworks} from './waterworks.js';
+import {placeStory,wallBoxes,segDist} from './story.js';
+import {placeLife} from './life.js';
+import {applyHand,designerHand} from './hand-tools.js';
+import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
+import {placeOccasion} from './occasion.js';
+import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -15,9 +27,9 @@ import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from
 export {BIOMES, biomeOf} from './biomes.js';
 import {BIOMES, biomeOf} from './biomes.js';
 import {blowoutField,isBlowout,BLOWOUT_WATER} from './blowouts.js';
-import {landformOf,wildField,wildGround,fallenBake,fallenAt,WILD_WATER} from './landforms.js';
+import {landformOf,wildField,wildGround,fallenBake,fallenAt,WILD_WATER,fbm,saltOf} from './landforms.js';
 import {standsOf,standSites,choose} from './stands.js';
-import {allows} from './grounds.js';
+import {allows,isNatural} from './grounds.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
 // JavaScript variant published by bryc (MIT fallback). See THIRD_PARTY_NOTICES.txt.
 // Seeded generation lives in course-plan.js so the scorecard and the course
@@ -25,6 +37,7 @@ import {allows} from './grounds.js';
 // have always found it.
 export const random=rng;
 const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+const PLAYED_STUMP=new Set(['fairway','semi','green','fringe','tee','sand','water','path']);
 // Defaults, bounds and validation all live in the settings schema; re-exported
 // here because course.js has long been the import site for them.
 export {DEFAULT_COURSE} from './settings-schema.js';
@@ -36,7 +49,19 @@ export function greenRadius(hole,angle){return (hole.greenSize??17)*(1+(hole.gre
 // as its nearest one: the lie, the painted ground and the map all ask this, so
 // every green in the list plays as a green. A green hidden by the centre green
 // standing over it is not there.
-export function greenDistance(hole,x,z){if(hole.greens){let d=Infinity;for(const g of hole.greens)if(!g.hidden)d=Math.min(d,greenDistance(g,x,z));return d;}const c=hole.green??hole.pin,dx=(x-c.x)/(hole.greenAspect??1.17),dz=z-c.z,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
+// A GREEN TURNED TO ITS APPROACH (Architect, phase 3: `greenTurn`, radians,
+// architect.js `approachTurn`): the oval is laid in its own frame, turned by
+// that much about its centre. Classic has none, and takes the same arithmetic
+// it always did -- the turn is skipped, not multiplied by one -- so its lie and
+// its paint (ground.js, the same branch) are bit for bit what they were.
+export function greenDistance(hole,x,z){if(hole.greens){let d=Infinity;for(const g of hole.greens)if(!g.hidden)d=Math.min(d,greenDistance(g,x,z));return d;}const c=hole.green??hole.pin,t=hole.greenTurn;let ux=x-c.x,uz=z-c.z;if(t){const cs=Math.cos(t),sn=Math.sin(t),rx=ux*cs+uz*sn;uz=-ux*sn+uz*cs;ux=rx;}const dx=ux/(hole.greenAspect??1.17),dz=uz,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
+// The point at angle `a` round a green's own oval, `r` out in the oval's
+// stretched frame (r = greenRadius(hole,a) is the edge), turned with the green.
+// Everything that draws or places round a green asks this, so a turned green
+// is one shape on the ground, the maps and the yardage book.
+export function greenPoint(hole,a,r){const c=hole.green??hole.pin,o=greenOffset(hole,a,r);return {x:c.x+o.x,z:c.z+o.z};}
+// The same, from the green's centre.
+export function greenOffset(hole,a,r){const x=Math.cos(a)*r*(hole.greenAspect??1.17),z=Math.sin(a)*r,t=hole.greenTurn;if(!t)return {x,z};const cs=Math.cos(t),sn=Math.sin(t);return {x:x*cs-z*sn,z:x*sn+z*cs};}
 // Where the cup is cut, and why it moves.
 //
 // A tournament moves the hole around the green through the week, and the two
@@ -70,6 +95,18 @@ export const pinDayOf = settings => PIN_DAYS[settings?.pinDay] ? settings.pinDay
 // works its way around the greens instead of playing the same spot every time.
 export const PIN_BANDS = ['front', 'middle', 'back'];
 export const pinBandFor = index => PIN_BANDS[((index % 3) + 3) % 3];
+// THE FLAG SAYS WHERE THE CUP IS (architect-courses, phase 2; a free extra both
+// designers get, since it moves nothing generated): red at the front, white in
+// the middle, blue at the back -- the commonest scheme at real clubs (RESEARCH
+// *Architect courses: people*). White cloth takes dark numbers so they read.
+export const PIN_FLAGS = {
+ front: {cloth: '#d4443a', ink: '#fffaf0', name: 'red'},
+ middle: {cloth: '#f2eee1', ink: '#23342a', name: 'white'},
+ back: {cloth: '#2c5cb6', ink: '#fffaf0', name: 'blue'},
+};
+// The band a hole's cup was actually cut in, by the same rule `choosePin` uses.
+export const pinBandOf = h => h?.settings?.pinBand === 'centre' ? 'middle'
+ : BAND_WINDOW[h?.settings?.pinBand] ? h.settings.pinBand : pinBandFor(h?.hole ?? 0);
 // The lab sets pinBand to 'centre' so its cup sits in the middle of a
 // flat green with the same reach in every direction. It is a bench, not a round:
 // a front hole location would leave a preset with no green to roll out on.
@@ -158,7 +195,11 @@ export function fairwayWidth(h,z,margin=0,side=0){
  // shader's width texture and localSurface call this function -- putting it
  // anywhere else would let the painted corridor and the classified lie drift.
  const blend=h.noNeck?0:smooth((z-(h.length-28))/28),neck=Math.min(width,green*.65);
- return (width*(1-blend)+neck*blend+margin)*capFactor;
+ // A GAP (an Architect barranca, phase 6): no fairway across the ravine, its
+ // lips rounded over 6 m; the semi-rough's margin stays, so the shader's
+ // curves and this agree. A Classic hole has none.
+ let g=1;if(h.gaps)for(const [g0,g1] of h.gaps)g=Math.min(g,z<g0?smooth((g0-z)/6):z>g1?smooth((z-g1)/6):0);
+ return ((width*(1-blend)+neck*blend)*g+margin)*capFactor;
 }
 // SHARED FAIRWAYS (the cartoon overhaul, 25 October 2026; the owner's
 // addendum). On the Old Course the 1st and 18th share one fairway about 129
@@ -201,7 +242,7 @@ const heading=(h,z)=>{const a=h.toWorld({x:h.center(z-6),z:z-6}),b=h.toWorld({x:
 // the join must run along -- a pair that only crosses in the middle (the
 // staggered out-and-back, whose fairways each lie beside the other's tee
 // ground) is refused rather than joined by a crossbar.
-export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,seam=0,debug=null}={}){
+export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=0,blur=0,stretch=false,strip=0,cover=0,endEase=null,roundTip=true,seam=0,pairs=false,debug=null}={}){
  const shareStretch=stretch;
  const extra=holes.map(()=>({[-1]:null,[1]:null})),partners=holes.map(()=>new Set()),per=holes.map(()=>({}));
  // A pond drawn nearer another hole's centre line than its own is dropped
@@ -280,10 +321,24 @@ export function shareFairways(holes,{gap=55,step=4,cos=.75,run=40,ease=30,close=
  // lines), and how much the rough between them changes along it.
  const shape=(i,j)=>{let c=0,s=0,lo=1e9,hi=0;for(const side of [-1,1]){const p=per[i][side];for(const r of p?.runs||[])if(r.j===j)for(let m=r.k0;m<r.k1;m++){if(!p.par[m])continue;c++;s+=p.par[m];lo=Math.min(lo,p.rough[m]);hi=Math.max(hi,p.rough[m]);}}return {par:c?s/c:0,spread:c?hi-lo:0};};
  const takes=(i,j)=>{const a=joined(i,j),b=joined(j,i);if(a<run||b<run)return false;const f=shape(i,j),ok=(a/Math.max(1,span(i))+b/Math.max(1,span(j)))/2>=cover;if(debug)debug.push({hole:holes[i].hole,why:`pair with ${holes[j].hole+1} covers ${(a/span(i)*100).toFixed(0)}% / ${(b/span(j)*100).toFixed(0)}%, parallel ${f.par.toFixed(3)}, rough spread ${f.spread.toFixed(0)} m${ok?'':' REFUSED'}`});return ok;};
+ // PAIRS ONLY (`pairs`, an Architect course; the owner's review, 30 October
+ // 2026, Links ST-1: four fairways ran together into one field). Each hole
+ // joins one neighbour at most -- the pairs that would join, longest join
+ // first, each taken while neither hole has a partner yet. Classic joins
+ // every pair `takes` allows, as before.
+ let chosen=takes;
+ if(pairs){
+  const cand=[];
+  for(let i=0;i<holes.length;i++)for(let j=i+1;j<holes.length;j++)if(takes(i,j))cand.push({i,j,L:joined(i,j)+joined(j,i)});
+  cand.sort((a,b)=>b.L-a.L||a.i-b.i||a.j-b.j);
+  const mate=new Map();
+  for(const c of cand)if(!mate.has(c.i)&&!mate.has(c.j)){mate.set(c.i,c.j);mate.set(c.j,c.i);}
+  chosen=(i,j)=>mate.get(i)===j;
+ }
  for(const [i,h] of holes.entries())for(const side of [-1,1]){
   const s=per[i][side];if(!s)continue;
   const {z0,z1,n,want,own}=s,keep=new Float32Array(n+1);
-  for(const r of s.runs)if(takes(i,r.j))for(let m=r.k0;m<r.k1;m++)keep[m]=want[m];
+  for(const r of s.runs)if(chosen(i,r.j))for(let m=r.k0;m<r.k1;m++)keep[m]=want[m];
   if(!keep.some(Boolean))continue;
    // Blur the joined reach along its length (`blur`), inside each run only.
    if(blur){
@@ -463,14 +518,21 @@ export function fitPondBasin(h,p,shapedLand){
 
 export function insideOval(x,z,o,margin=0){return hazardMetric(x,z,o,margin)<1;}
 export function generateCourse(settings={},hole=0){
+ settings=designSettings(settings);
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=BIOMES[s.biome]||BIOMES.pnw;
  const planned=planCourse(s).holes[hole%s.holes],par=planned.par;
  // THE SKELETON COMES FROM course-plan.js, so the scorecard shown before a
  // course is built and the course that gets built cannot disagree: they run
  // the same function over the same seeded stream. It consumes a contiguous
  // prefix of `rng`, and everything below carries on from where it left off.
+ const line=holeLine(s,planned,rng);
  const {greenSize,greenAspect,greenWave2,greenWave3,greenWave5,phase,angle,isDogleg,
-  turnFraction,soft,slope,unitCenter,arc,length,pivot,center,tees}=holeLine(s,planned,rng);
+  turnFraction,soft,slope,unitCenter,arc,length,pivot,center,tees}=line;
+ // TWO DESIGNERS (PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*): an Architect
+ // hole takes the same skeleton -- so the card before the course holds -- and
+ // its own plan from here on. Nothing below this line runs for it, and nothing
+ // above draws differently, so a Classic hole is exactly what it was.
+ if(isArchitect(s))return architectCourse(s,hole,planned,line,bio);
  // Each edge is an independent, smooth random field. No outline/profile catalogue.
  const widthTrend=(rng()-.5)*1.8;
  const makeEdge=()=>{const count=4+Math.floor(rng()*5),knots=[0,...Array.from({length:count-2},(_,i)=>(i+1+(rng()-.5)*.65)/(count-1)),1],trend=widthTrend+(rng()-.5)*.65,base=.85+rng()*.35,values=knots.map(u=>clamp(base+trend*(u-.5)+(rng()-.5)*1.05,.42,1.85));return{knots,values};};
@@ -585,6 +647,58 @@ export function generateCourse(settings={},hole=0){
  h.height=(x,z)=>s.elevation/100*(22*Math.sin(z/130)+12*Math.sin(x/100+z/170));
  h.trees=[];const count=Math.round(s.trees*(bio.treeKind==='shrub'?.25:bio.treeKind==='cactus'?.5:2.2));
  for(let i=0;i<count*3&&h.trees.length<count;i++){const z=-25+rng()*(length+70),x=(rng()-.5)*215;if(h.surface(x,z)!=='rough'||Math.abs(x-center(z))<width(z)+s.semiRough+13||Math.hypot(x-green.x,z-green.z)<31+s.fringe+s.semiRough||Math.hypot(x,z)<22)continue;const small=bio.treeKind==='shrub';h.trees.push({x,z,y:h.height(x,z),h:small?1+rng()*2:bio.canopy.min+rng()*bio.canopy.range,r:small?1+rng():3+rng()*4,shade:rng()});}
+ return h;
+}
+// A pond built the way Classic builds one -- banks anchored a gap outside the
+// fairway edge, sampled down its length -- but at a place and side the
+// architect chose, with the bite it asked for. Null when it would touch the
+// green, a tee or another pond (the same refusals as Classic's).
+function pondAt({guide,center,z,side,rx,rz,reach,phase,variation,gapRand,depthRand,greenGuide,tees,ponds,fairwayStart,length,greenSize,s}){
+ const minZ=fairwayStart+rz+8,maxZ=length-greenSize*1.5-rz;if(minZ>maxZ)return null;z=clamp(z,minZ,maxZ);
+ const halfWay=fairwayWidth(guide,z,0,side),bite=halfWay*clamp(reach,0,.7);
+ const gap=-s.semiRough*.8-bite+gapRand*4,banks=[];
+ for(let j=0;j<=256;j++){const u=j/256,zz=z+(u*2-1)*rz,k=Math.min(2,Math.floor(u*3)),t=smooth(u*3-k),size=rx*(.65+.65*(variation[k]*(1-t)+variation[k+1]*t)),edge=center(zz)+side*fairwayWidth(guide,zz,s.semiRough,side);banks.push({x:edge+side*(gap+.75+size),rx:size});}
+ const p={x:banks[128].x,z,rx,rz,phase,banks,side,gap,depth:s.waterMin+depthRand*(s.waterMax-s.waterMin)};
+ p.reachX=Math.max(...banks.map(b=>Math.abs(b.x-p.x)+b.rx))+8;
+ const boundary=Array.from({length:64},(_,j)=>{const q=ovalRadius(p,j*Math.PI/32);return{x:p.x+q.x,z:p.z+q.z};});
+ if(boundary.some(q=>greenDistance(greenGuide,q.x,q.z)<s.fringe+5||Object.values(tees).some(t=>Math.hypot(q.x-t.x,q.z-t.z)<12)))return null;
+ if(ponds.some(q=>boundary.some(v=>insideOval(v.x,v.z,q,5))||insideOval(q.x,q.z,p,5)))return null;
+ return p;
+}
+// AN ARCHITECT'S HOLE (architect.js `designHole`): the skeleton Classic would
+// have built, the plan the architect drew, and everything after that a hole
+// needs -- the same shape `generateCourse` returns, so the pipeline downstream
+// cannot tell the two apart. Its own random stream throughout.
+function architectCourse(s,hole,planned,line,bio){
+ const {greenSize,greenAspect,greenWave2,greenWave3,greenWave5,phase,angle,turnFraction,length,center,tees}=line,par=planned.par;
+ const geo={greenDistance,greenPoint,ovalRadius,insideOval,pondAt,inlandWater:!NO_INLAND_WATER.has(s.biome)};
+ const plan=designHole({s,hole,par,line,bio,geo});
+ const tee={x:0,z:0},green={x:center(length),z:length},bounds={x:Math.max(220,s.doglegAngle*3+100),minZ:-180,maxZ:length+150};
+ let routeLength=0;for(let z=0;z<length;z+=1){const next=Math.min(length,z+1);routeLength+=Math.hypot(center(next)-center(z),next-z);}
+ const h={greenSize,greenAspect,greenWave2,greenWave3,greenWave5,fairwayStart:plan.fairwayStart,mowStart:plan.mowStart,tees,turnFraction,routeLength,settings:s,bio,par,length,tee,green,bounds,center,
+  width:plan.width,leftWidth:plan.leftWidth,rightWidth:plan.rightWidth,ponds:plan.ponds,bunkers:plan.bunkers,collections:plan.collections,gaps:plan.gaps,seed:s.seed,hole,phase,doglegAngle:angle,design:plan.design,greenTurn:plan.greenTurn};
+ h.toWorld=p=>({...p});h.toLocal=p=>({...p});h.rotation=0;
+ // THE HAND TOOLS (hand-tools.js; the owner's review): the architect's own
+ // hand-made signature for some holes, from its own stream, before the pin
+ // is chosen and anything reads the green or the fairway. (The studio's own
+ // Hand tools were withdrawn on 31 October 2026, the owner: "leave those
+ // tools for the architect to use".) Architect only: a Classic
+ // hole never comes here.
+ // Not on a landscape whose fairways run together (Links): those shared
+ // fairways are its signature, and the owner likes them -- a generated
+ // hogsback or punchbowl took both of Links ST-1's pairs apart.
+ {const sideOf=plan.design?.preferred==='left'?1:-1;
+  if(!bio.sharedFairways)applyHand(h,designerHand(random(`${s.seed}|arch|hand|${hole}`),plan.design?.style,hole,{par,length,side:sideOf,edge:z=>sideOf>0?plan.leftWidth(z):plan.rightWidth(z)}),{who:'architect'});
+}
+ // Bunkers past the hole table's twelve slots go to the surface field
+ // (surface-field.js), which the world bakes and both the paint and the lie read.
+ markOverflow(h);
+ h.pin=choosePin(h,hole,random(`${s.seed}-pin-${hole}`));
+ h.surface=(x,z)=>localSurface(h,x,z);
+ h.height=(x,z)=>s.elevation/100*(22*Math.sin(z/130)+12*Math.sin(x/100+z/170));
+ const r=random(`${s.seed}|arch|trees|${hole}`);
+ h.trees=[];const count=Math.round(s.trees*(bio.treeKind==='shrub'?.25:bio.treeKind==='cactus'?.5:2.2)),width=plan.width;
+ for(let i=0;i<count*3&&h.trees.length<count;i++){const z=-25+r()*(length+70),x=(r()-.5)*215;if(h.surface(x,z)!=='rough'||Math.abs(x-center(z))<width(z)+s.semiRough+13||Math.hypot(x-green.x,z-green.z)<31+s.fringe+s.semiRough||Math.hypot(x,z)<22)continue;const small=bio.treeKind==='shrub';h.trees.push({x,z,y:h.height(x,z),h:small?1+r()*2:bio.canopy.min+r()*bio.canopy.range,r:small?1+r():3+r()*4,shade:r()});}
  return h;
 }
 // Tee pad half-extents and the maintained collar around them. A pad on its own
@@ -1076,7 +1190,9 @@ export function localSurface(h,x,z){
  if(d<=0)return 'green';if(d<=s.fringe)return 'fringe';
  if(Object.values(h.tees).some(t=>{const p=teePad(t);if(!p)return false;const f=teeFrame(x-t.x,z-p.z,p.ux,p.uz);return teeBox(f.across,f.along,TEE_PAD.x,p.rz,TEE_ROUND)<0;}))return 'tee';
  if(h.ponds.some(p=>insideOval(x,z,p)))return 'water';
- if(h.bunkers.some(p=>insideOval(x,z,p)))return 'sand';
+ // A bunker past the hole table's slots (`field`) is the surface field's, and
+ // the world's surface reads it there (surface-field.js); never one of Classic's.
+ if(h.bunkers.some(p=>!p.field&&insideOval(x,z,p)))return 'sand';
  // The fairway is tested BEFORE the green's semi collar, and the order is the
  // whole point. The ground shader paints the mown corridor OVER that collar, so
  // an apron running up to the fringe is drawn as fairway; testing the collar
@@ -1085,6 +1201,11 @@ export function localSurface(h,x,z){
  // a hole -- the apron short of every green -- and invisible until the driving
  // range put a green inside a full-width corridor and made it 1.4%.
  if(Math.abs(x-h.center(z))<fairwayWidth(h,z,0,x-h.center(z)))return 'fairway';
+ // A COLLECTION AREA (architect-courses, phase 3; architect.js): short grass
+ // on a green's low side, mown at fairway height, over the semi-rough and the
+ // rough only -- the rule the ground shader paints by (its hazard slots, kind
+ // -1). Only an Architect hole has any.
+ if(h.collections?.some(c=>insideOval(x,z,c)))return 'fairway';
  if(d<=s.fringe+s.semiRough||Math.abs(x-h.center(z))<fairwayWidth(h,z,s.semiRough,x-h.center(z)))return 'semi';
  // Last, so anything already maintained keeps the better surface and a bunker
  // or pond beside a tee still plays as itself.
@@ -1254,6 +1375,7 @@ export function generateWorld(settings={}){
 // makeGroundGridPooled); the grid is the same either way. `options.capture`: a
 // worker's run, which stops at the grid and yields `{capture: {sample, refine}}`.
 export function* generateWorldSteps(settings={},options={}){
+ settings=designSettings(settings);
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)};s.holes=s.holes===18?18:s.holes===1?1:9;s.waterMin=clamp(s.waterMin,.2,8);s.waterMax=clamp(s.waterMax,s.waterMin,12);
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
@@ -1308,7 +1430,7 @@ export function* generateWorldSteps(settings={},options={}){
  // SHARED FAIRWAYS on a links (the cartoon overhaul; `sharedFairways`).
  // Before anything measures a corridor, so ownership, the ground and every
  // surface question see the widened holes.
- if(bio.sharedFairways&&!s.range)shareFairways(holes,bio.sharedFairways);
+ if(bio.sharedFairways&&!s.range)shareFairways(holes,isArchitect(s)?{...bio.sharedFairways,pairs:true}:bio.sharedFairways);
  const holeBoxes = holes.map(h => {
   const greenEnd = 25 + s.fringe + s.semiRough;
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, reach = greenEnd;
@@ -1336,19 +1458,7 @@ export function* generateWorldSteps(settings={},options={}){
   // else it is simply not computed.
   const groups = coastal ? new Array(Math.ceil(holes.length / 3)).fill(Infinity) : null;
   const measure = i => {
-   const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
-   const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
-   // THE STRAIGHT TONE STEP, round 5 (the far-landscape goal). Past either end
-   // the centre line carries straight on along its end direction. It stopped
-   // dead there, so beside a green the distance turned at once from "across
-   // the bending centre line" to "from its end point", a kink along a straight
-   // line through the green's end, out across the rough on both sides; the
-   // hills fade in by this distance, so the ground creased there and the slope
-   // tint drew it (Midwest hole 2, seen from the approach). Carried on, the
-   // distance turns smoothly; behind the green it still rounds the end.
-   const e = ends[i], cx = p.z > h.length ? e.cL + e.tL * (p.z - h.length) : p.z < 0 ? e.c0 + e.t0 * p.z : h.center(zz);
-   const d = Math.hypot(p.x - cx, p.z - zz) -
-    (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
+   const {d, p} = corridorDistance(i, x, z);
    if (groups) {const g = holeBoxes[i].group; if (d < groups[g]) groups[g] = d;}
    if (d < distance) {best = i; distance = d; local = p;}
   };
@@ -1368,6 +1478,45 @@ export function* generateWorldSteps(settings={},options={}){
   return {h: holes[best], p: local, d: distance,
    other: groups ? Math.min(...groups.filter((_, i) => i !== holeBoxes[best].group)) : Infinity};
  }
+ // How far (x, z) is outside hole i's corridor (negative inside it), and the
+ // point in the hole's frame.
+ function corridorDistance(i, x, z) {
+   const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
+   const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
+   // THE STRAIGHT TONE STEP, round 5 (the far-landscape goal). Past either end
+   // the centre line carries straight on along its end direction. It stopped
+   // dead there, so beside a green the distance turned at once from "across
+   // the bending centre line" to "from its end point", a kink along a straight
+   // line through the green's end, out across the rough on both sides; the
+   // hills fade in by this distance, so the ground creased there and the slope
+   // tint drew it (Midwest hole 2, seen from the approach). Carried on, the
+   // distance turns smoothly; behind the green it still rounds the end.
+   const e = ends[i], cx = p.z > h.length ? e.cL + e.tL * (p.z - h.length) : p.z < 0 ? e.c0 + e.t0 * p.z : h.center(zz);
+   const d = Math.hypot(p.x - cx, p.z - zz) -
+    (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
+   return {d, p};
+ }
+ // How much nearer the nearest hole's corridor is than any other hole's: zero
+ // on the line where the nearest hole changes (land's seam, below). Nothing
+ // past `cap` is wanted, so a hole that cannot come nearer is skipped, as in
+ // `nearest` -- measuring every hole made a Classic eighteen 15% slower to
+ // build. Its box bounds it only beside the centre line: past either end the
+ // line carries straight on (`corridorDistance`) and can leave the box, so
+ // there the bound is how far past the end the point lies. The box alone moved
+ // two Architect landscapes; with this the answer is the same.
+ function nearestMargin(x, z, n, cap = Infinity) {
+  let m = cap;
+  for (let i = 0; i < holes.length; i++) {
+   const h = holes[i];
+   if (h === n.h) continue;
+   const b = holeBoxes[i], p = h.toLocal({x, z});
+   const floor = p.z < 0 ? -p.z : p.z > h.length ? p.z - h.length :
+    Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ));
+   if (floor - b.reach - n.d >= m) continue;
+   m = Math.min(m, corridorDistance(i, x, z).d - n.d);
+  }
+  return m;
+ }
  const nearby=(x,z)=>nearest(x,z).h;
  const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:12)+severity*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
  // Hazards follow their local ground elevation instead of draining every lake
@@ -1385,6 +1534,9 @@ export function* generateWorldSteps(settings={},options={}){
  // fringe, and handing the ground to the bunker's hole instead would cut the
  // neighbour's corridor. No draw is taken, so nothing generated after shifts.
  for(const h of holes)h.bunkers=h.bunkers.filter(b=>Array.from({length:48},(_,i)=>{const e=ovalRadius(b,i*Math.PI/24),v=h.toWorld({x:b.x+e.x*1.15,z:b.z+e.z*1.15});return nearby(v.x,v.z)===h;}).every(Boolean));
+ // The tee area's relief fades out across the line where the nearest hole
+ // changes (land, *NO SEAM*): over SEAM metres, PLACED.
+ const seams=!s.range,SEAM=12;
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
@@ -1415,7 +1567,21 @@ export function* generateWorldSteps(settings={},options={}){
   // The DRIVING RANGE is the one exception and keeps its own flag for it.
   // Flatness there is not a preference, it is the whole instrument: any tilt
   // is a variable the player did not set, quietly added to every carry.
-  const unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
+  let unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
+  // NO SEAM WHERE TWO CORRIDORS MEET (the owner, 31 October 2026, Architect
+  // Links: "still have that weird hole"). The relief behind a tee is the
+  // nearest hole's, by how far along that hole the point is; where one hole's
+  // tee area lies against another's fairway, both inside their corridors, the
+  // nearest hole changes along a line and the relief switched with it -- a
+  // 2.4 m bank across 1.5 m of Links ST-1's first fairway. It now fades out
+  // over SEAM metres either side of that line, so both sides meet at the
+  // corridor's own ground. Architect had it first (ARCHITECT_VERSION 20);
+  // Classic followed at the owner's word (GENERATOR_VERSION 53), its worst a
+  // 4 m wall in 3 m at a lakeshore fairway's edge. Measured only where the
+  // relief could still beat the hills' own fade-in below (`open` takes the
+  // larger), since nowhere else can the fade change the ground: everywhere,
+  // it cost a Classic eighteen 15% more build time for nothing.
+  if(seams&&unmown>smooth(n.d/bio.hills.reach))unmown*=smooth(nearestMargin(x,z,n,SEAM)/SEAM);
   const open=reach=>Math.max(smooth(n.d/reach),unmown);
   // Four hand-written branches, now three numbers the biome states outright.
   const hills=relief*(bio.hills.base+severity*bio.hills.severity)*rolling*open(bio.hills.reach);
@@ -1502,6 +1668,7 @@ export function* generateWorldSteps(settings={},options={}){
   }
   if(!merged)break;
  }
+ const archGreens=isArchitect(s)&&!s.range;
  function shapedNoTees(x,z){let y=land(x,z);
  // Overlapping pond shelves are averaged with a weight that runs away as a site
  // reaches full strength, so the pond you are standing beside decides the level
@@ -1518,7 +1685,17 @@ export function* generateWorldSteps(settings={},options={}){
   const weight=b/(1.001-b);
   pondBlend=Math.max(pondBlend,b);weightSum+=weight;targetSum+=weight*s.target;
  }
- if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z});if(h.greens){y=rangeGreensShape(h,p,y,base,s.fringe);continue;}const d=greenDistance(h,p.x,p.z);
+ if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;
+ // AN ARCHITECT COURSE'S GREENS ARE BLENDED TOGETHER, NOT IN TURN (the end of
+ // the goal: the virtual golfer stuck on three holes). Applied one after
+ // another, a later green's shoulder -- up to 100 m wide when it sits lower --
+ // dragged an earlier green's far edge toward its own height: routing the
+ // nines home puts the 9th and 18th greens 60-80 m apart and metres apart in
+ // height, and one 9th green fell 8.7% under its pin where its own contour
+ // said 0.9%. Weighted as the ponds are, the green you stand on decides.
+ // Classic keeps its order exactly (`archGreens` false).
+ const y0=y;let gMax=0,gW=0,gT=0;
+ for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z});if(h.greens){y=rangeGreensShape(h,p,y,base,s.fringe);continue;}const d=greenDistance(h,p.x,p.z);
  // The shoulder is never wider than 100 m, so past it the blend below is
  // exactly nothing (smooth clamps at 1) whatever the green's height. Asking for
  // the green's contour first, as this did, was a third of what shaping an
@@ -1527,7 +1704,9 @@ export function* generateWorldSteps(settings={},options={}){
  // Raised and sunken greens (greenPedestal in course-plan.js): the green and its
  // collar lifted or dropped as one, with banks beyond the collar. Inside the
  // blend, so the shoulder still carries the terrain back to the land around it.
- const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
+ const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs((archGreens?y0:y)-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);
+ if(blend>0){if(archGreens){gMax=Math.max(gMax,blend);const wt=blend/(1.001-blend);gW+=wt;gT+=wt*greenY;}else y=y*(1-blend)+greenY*blend;}}
+ if(gMax>0)y=y0*(1-gMax)+gT/gW*gMax;
  return y;}
  // A tee is a terrace cut into whatever the rest of the shaping already
  // decided, so its height is sampled from shapedNoTees rather than from the
@@ -1994,6 +2173,20 @@ export function* generateWorldSteps(settings={},options={}){
    protect:{...world,pond:true,r:Math.max(p.reachX,p.rz)+p.shoreWidth+12,keep:Math.max(p.reachX,p.rz)+p.shoreWidth+12}};
  }
  const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea,corridorClearance,sinkPond);
+ // EARTHWORKS (architect-courses, phase 5; architect.js `designMounds`): an
+ // Architect course's mounds by style -- framing, spectator banks, chocolate
+ // drops -- added to the ground last, before the creeks cut it. Kept clear of
+ // every hole by the design, and here of the sea and the creeks. Classic: none,
+ // and `analyticHeight` is the expression it always was.
+ // The hand tools' mounds and hollows (hand-tools.js), each hole's own,
+ // from its frame into the world's -- with the designed mounds, through the
+ // same sea and stream test.
+ const handMounds=holes.flatMap(h=>(h.handMounds||[]).map(m=>({...h.toWorld(m),r:m.r,h:m.h,hand:true})));
+ const mounds=isArchitect(s)&&!s.range?[...designMounds(holes,s),...handMounds].filter(m=>{for(let k=0;k<9;k++){const a=k*Math.PI/4,x=m.x+(k?Math.cos(a)*m.r:0),z=m.z+(k?Math.sin(a)*m.r:0);if(isSea(x,z))return false;const q=streams.at(x,z);if(q&&q.edge<10)return false;}return true;}):[];
+ // And a hole's template landforms (phase 6): the Dell's dune, the Alps'
+ // ridge, the barranca's ravine -- in play by design, so no clearance.
+ const earthworks=isArchitect(s)&&!s.range?worldEarthworks(holes):[];
+ const moundAt=mounds.length||earthworks.length?earthField(mounds,earthworks):null;
  // Channel routing avoids bunkers, but a tightly packed course can force a
  // crossing. Water standing in sand is neither a playable bunker nor a readable
  // hazard, so the channel washes that bunker out. Bunker count is already an
@@ -2053,7 +2246,7 @@ export function* generateWorldSteps(settings={},options={}){
   else if(shore<shelf)y=rim+(y-rim)*smooth((shore-WATER_LIP)/(shelf-WATER_LIP));
  }}
  else if(d<1.15){const blend=1-smooth((d-.62)/.53);y=y*(1-blend)+(b.floor+.08*(d*d))*blend;}}
- return streams.carve(x,z,y);}
+ return streams.carve(x,z,moundAt?y+moundAt(x,z):y);}
  // THE SHORELINE IS REFINED LIKE ANY OTHER FEATURE.
  //
  // The mesh is 3 m of countryside subdivided six ways to half a metre near
@@ -2127,6 +2320,9 @@ export function* generateWorldSteps(settings={},options={}){
  // The recipe's ground types (rock, scree, waste sand...), baked on the same
  // grid for the same reason (landforms.js). Null where the biome has none.
  const wild=wildField(landform,groundGrid.halfX,groundGrid.halfZ,height);
+ // THE SURFACE FIELD (surface-field.js): an Architect hole's bunkers past the
+ // table's slots, baked on the same grid. Null for every Classic course.
+ const sandField=surfaceField(holes,groundGrid.halfX,groundGrid.halfZ);
  // Fallen needles and leaves (biomes.js `fallen`) are planted with the trees,
  // so their field is baked after planting below; until then nothing is litter.
  let fallenField=null;
@@ -2175,6 +2371,9 @@ export function* generateWorldSteps(settings={},options={}){
   if(lakeOwner(x,z,collar))return true;
   return n.h.ponds.some(p=>cut(pondReach(p),ovalDistance(n.p.x,n.p.z,p)));
  };
+ // An Architect course's cart paths (paths.js), set once the holes are built
+ // and before anything is planted; null on a Classic course, which has none.
+ let pathIdx=null,paths=[],bridges=[],pathConnect=null,pathBlock=null;
  function surface(x,z){
   if(lakeOwner(x,z))return 'water';
   const st=streams.at(x,z);
@@ -2194,6 +2393,13 @@ export function* generateWorldSteps(settings={},options={}){
   const y=height(x,z);
   if(bio.sea&&y<waterLevel)return 'water';
   const found=localSurface(n.h,n.p.x,n.p.z);
+  // The surface field's sand: where a slot bunker would be sand -- over the
+  // rough, semi-rough and fairway, before a path -- read from the bytes the
+  // shader paints (ground.js, after the hazard slots).
+  if(sandField&&(found==='rough'||found==='semi'||found==='fairway')&&isFieldSand(sandField,x,z))return 'sand';
+  // A CART PATH (architect-courses, phase 2): over rough, semi-rough, fairway
+  // or any ground type, never a green, its fringe, a tee, sand or water.
+  if(pathIdx&&(found==='rough'||found==='semi'||found==='fairway'||isNatural(found))&&pathIdx.onPath(x,z))return 'path';
   // The beach, on the two biomes that have a coast. `height` rather than `land`
   // because that is the field the ground mesh is actually built from, and the
   // shader keys its own copy off exactly the same number.
@@ -2219,11 +2425,60 @@ export function* generateWorldSteps(settings={},options={}){
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  yield phaseAt(4);
+ // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
+ // that follow ask `surface`, which now knows where the paths run.
+ if(isArchitect(s)&&!s.range){({paths,bridges,connect:pathConnect,block:pathBlock}=routePaths({holes,s,surface,streams,height,ravines:earthworks.filter(e=>e.kind==='ravine')}));pathIdx=pathIndex(paths);
+  // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
+  // and its middle, decided here once so the drawn deck and the solid one
+  // (physics.js) are the same plank.
+  for(const b of bridges){const ca=Math.sin(b.angle),cb=Math.cos(b.angle);b.deck=Math.max(height(b.x+ca*b.span/2,b.z+cb*b.span/2),height(b.x-ca*b.span/2,b.z-cb*b.span/2),height(b.x,b.z))+.45;}}
  // The tees are sited by now, so their corridors are final; built before the
  // houses because a house may not stand in what a tee sees either.
  const launch=launchCorridors(holes,height);
- const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad));
+ // THE CLUBHOUSE (clubhouse.js; architect-courses, phase 2): sited once the
+ // tee shots are known, before the houses and the trees, which keep off it;
+ // the path runs from its door to the first tee and back from the last green.
+ // None on Classic, so `buildings` is empty and nothing below moves.
+ const buildings=[];
+ if(isArchitect(s)&&!s.range){
+  const fans0=teeFans(holes);
+  // NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under
+  // the Midwest farmhouse): the whole footprint clear of the paths, and its
+  // own link routed round it (paths.js `pathTouches`, `block`).
+  const club=siteClubhouse({holes,s,surface,nearest,height,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans0,x,z,pad),clear:b=>!pathTouches(paths,b,3)});
+  if(club){buildings.push(club);if(paths.length){pathBlock(club);linkBuilding(paths,club,pathConnect);pathIdx=pathIndex(paths);}}
+ }
+ // THE LAND'S STORY (story.js; architect-courses, phase 6): field walls, a
+ // farmstead, ruins, a landmark, a stone circle and lanterns, by The land's
+ // story -- placed before the houses and the trees, which keep off them. Its
+ // buildings join `buildings` (solid, never out of bounds); its walls are
+ // solid too (`wallBoxes`, physics.js).
+ let walls=[],storyProps=[],clearings=[],occasion={ropes:[],crowd:[]};
+ if(isArchitect(s)&&!s.range){
+  const fans1=teeFans(holes);
+  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,earthworks,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3});
+  buildings.push(...story.buildings);walls=story.walls;storyProps=story.props;clearings=story.clearings;
+  // A template's own wall (the Pit): in play by design, whatever the story.
+  // TOURNAMENT WEEK (occasion.js; phase 7): a Championship venue's stands,
+  // scoreboard, towers and marquees (solid, never out of bounds), its ropes
+  // and its crowd by the pin day.
+  const week=placeOccasion({holes,s,surface,nearest,height,buildings,clear:b=>!pathTouches(paths,b,2)});buildings.push(...week.buildings);occasion={ropes:week.ropes,crowd:week.crowd};
+  for(const h of holes)for(const dw of h.design?.walls||[]){const c=h.center(dw.z),a=h.toWorld({x:c-dw.half,z:dw.z}),b=h.toWorld({x:c+dw.half,z:dw.z});walls.push({kind:'stone',ax:a.x,az:a.z,bx:b.x,bz:b.z,pit:true,hole:h.hole});}
+ }
+ // A house keeps off the paths too (Architect only: Classic has none, and
+ // `pathClearance` of no paths is Infinity).
+ const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8)||paths.length>0&&pathClearance(paths,x,z)<(pad||0)+4);
+ // Built on already: a house or (Architect) a building, with a margin.
+ // A building keeps a clear forecourt: 15 m round it for trees (iteration 4: a
+ // chalet stood hidden in its own wood).
+ // Only the clubhouse keeps a lawn; a wall keeps a stride clear either side.
+ const builtOn=(x,z,m=5)=>homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+m)||buildings.some(b=>inBuilding(b,x,z,m+(b.story?20:10))||(b.kind==='clubhouse'&&inForecourt(b,x,z)))||walls.some(w=>segDist(w,x,z)<m*.3+1.2)||clearings.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+m);
  const trees=[];
+ // An Architect course's tree line: where between EDGE.floor and EDGE.soft
+ // outside the corridor the wood begins, as a share of that band -- a smooth
+ // scallop about 35 m across (PLACED), from the course's own noise.
+ const arch=isArchitect(s),lineSalt=saltOf(s.seed,'arch-treeline');
+ const treeLine=(x,z)=>clamp(.15+.8*fbm(x/34,z/34,lineSalt,2),0,1);
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
  const fans=teeFans(holes);
  const guards=greenApproaches(holes),closeness=(s.greenTrees??0)/100;
@@ -2289,8 +2544,15 @@ export function* generateWorldSteps(settings={},options={}){
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
  // 0.7-1.6 m, the teddy bear's real height (RESEARCH, *The overhaul's desert pack*).
- const treeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
- for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
+ // TREES BY THE COURSE'S AGE (an Architect course; the owner's review: "can
+ // course maturity also determine tree size?"): a New course's trees about
+ // two thirds grown, an Old one's a fifth taller, a Restored one's between;
+ // their spread follows at seven tenths. Shrubs and ground plants are as they
+ // are. PLACED. Classic never comes through here.
+ const AGE_TREES={new:.68,mature:1,old:1.18,restored:1.08},ageK=arch?(AGE_TREES[s.archAge]??1):1;
+ const treeSize=(kind,a,b)=>{const t=baseTreeSize(kind,a,b);if(ageK===1||GROUND_PLANTS.has(kind)||BRUSH_SIZE[kind]||kind==='cholla')return t;return {h:t.h*ageK,r:t.r*(1+(ageK-1)*.7)};};
+ const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
+ for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the
   // trees mass up farther back. Ground plants are exempt. The draw is taken
@@ -2314,6 +2576,9 @@ export function* generateWorldSteps(settings={},options={}){
    // course -- measured at 129-160% of average, a thicket rather than a frame.
    const cover=GROUND_PLANTS.has(kind);
    if(!cover){
+    // A BARRANCA'S GAP (Architect, phase 6) is still the hole's corridor:
+    // the green's rule below would plant its ravine, across the line of play.
+    if(arch&&n.h?.gaps&&n.d<EDGE.floor&&n.h.gaps.some(([g0,g1])=>n.p.z>g0-8&&n.p.z<g1+8))continue;
     // Near a green the green's own rule replaces the corridor gate, for the
     // same reason it does near a tee: the corridor envelope there is far wider
     // than the mown surround, so the ordinary gate bans everything.
@@ -2329,7 +2594,11 @@ export function* generateWorldSteps(settings={},options={}){
      const floor=tee?Math.min(EDGE.teeFloorMin,EDGE.teeSpan*(n.h?.width?.(Math.max(0,n.p?.z??0))??EDGE.soft)):EDGE.floor;
      const soft=tee?EDGE.teeSoft:EDGE.soft;
      if(n.d<floor)continue;
-     if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
+     // AN ARCHITECT'S TREE LINE (architect-courses, phase 1): the corridor is
+     // cleared to a line -- scalloped, but a line a crew cut, not Classic's
+     // fade of chance -- so no draw is taken for it.
+     if(arch){if(n.d<floor+(soft-floor)*treeLine(x,z))continue;}
+     else if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
     }
    }
   }
@@ -2353,6 +2622,24 @@ export function* generateWorldSteps(settings={},options={}){
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
  }
+ // PLANTED BY DESIGN (architect-courses, phase 1; the study, workstream J):
+ // an Architect course's avenues -- one species in a row along a fairway, as
+ // clubs planted them in the mid-century -- and a cluster at each dogleg's
+ // inside corner, where a tree stops the shot that cuts too much. The same
+ // rules every tree obeys; its own stream. Classic never reaches this.
+ if(arch)for(const t of designedPlanting({holes,s,bio,treeSize,random})){
+  // A felled avenue (Restored) leaves its stumps (story props), not trees.
+  if(t.why==='stump'){if(!PLAYED_STUMP.has(surface(t.x,t.z)))storyProps.push({kind:'stump',x:t.x,z:t.z,rot:t.shade*6.28,size:.8+t.shade*.5});continue;}
+  const {x,z,kind,h,r}=t,small=GROUND_PLANTS.has(kind);
+  if(small||!allows(surface(x,z),'trees')||builtOn(x,z))continue;
+  const keep=greenKeepOut(guards,x,z,closeness);
+  if(keep>0&&Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)))<keep+GREEN.ramp*.5)continue;
+  const tree={x,z,y:height(x,z),h,r,shade:t.shade,kind,hole:t.hole,[t.why]:true};
+  if(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z,trunkGirth(tree)))continue;
+  if(!roomFor(tree,.9)||onLip(tree))continue;
+  const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);
+  trees.push(tree);
+ }
  // UNCLEARED STANDS (stands.js; the cartoon overhaul): the woods round the
  // property and between the holes that were never cut, planted densely from
  // a jittered grid after the open scatter, by the same rules every tree
@@ -2373,7 +2660,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(++visited%300===0)yield phaseAt(4,.25+.5*visited/sites.length);
    const {x,z}=p,n=nearest(x,z);
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'trees'))continue;
-   if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+   if(builtOn(x,z))continue;
    if(bio.landform&&p.shade>landform.treeKeep(x,z))continue;
    // Trees in a closed wood grow taller than in the open, reaching for light
    // (`grow`, 1.2 unless the stand says: PLACED); ground plants do not.
@@ -2399,7 +2686,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(p.shade>.55)continue;
    const n=nearest(x,z);
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'shrubs'))continue;
-   if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5))continue;
+   if(builtOn(x,z))continue;
    const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
    if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r))continue;
    trees.push(tree);
@@ -2633,7 +2920,15 @@ export function* generateWorldSteps(settings={},options={}){
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
  if(straw.length)fallenField=fallenBake((x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p)),groundGrid.halfX,groundGrid.halfZ);
  const groundCover=(x,z)=>fallenField&&fallenAt(fallenField,x,z)?'straw':bio.cover;
- const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ // AN ARCHITECT COURSE'S MARKINGS (markings.js): stakes, yardage posts and
+ // rakes, decoration placed on the finished ground. None on Classic.
+ const markers=isArchitect(s)&&!s.range?placeMarkings({holes,surface,nearest,halfX,halfZ,streams}):[];
+ const wear=isArchitect(s)&&!s.range?placeWear({holes,s,surface}):[];
+ // Animals and distant people (life.js; phase 6): rendering only.
+ const life=isArchitect(s)&&!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
+ // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
+ const waterworks=isArchitect(s)&&!s.range?placeWaterworks({holes,s,surface}):[];
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,occasion,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }
