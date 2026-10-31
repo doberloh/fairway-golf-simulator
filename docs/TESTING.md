@@ -46,7 +46,10 @@ skins and carries, when the round ends. Along the way it saves and restores the
 round mid-hole, while a ball waits for relief and between holes; takes
 mulligans and checks they put everything back; drops balls; and has golfers
 join and leave between holes. A failure names the format, group, putting mode
-and seed, so it can be replayed exactly.
+and seed, so it can be replayed exactly. **On both designers** (architect-courses):
+one test builds a real nine from Classic and from Architect, plays every format
+and group over it with each hole told its own par, and checks every golfer's
+score to par against that course's pars.
 
 | Format | 1 golfer | 2 | 3 | 4 | Teams | Endless |
 | --- | --- | --- | --- | --- | --- | --- |

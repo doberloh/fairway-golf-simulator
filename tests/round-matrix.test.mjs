@@ -298,6 +298,8 @@ function playRound(cfg, seed) {
  for (let h = 0; h < holes; h++) {
   // A round with a goal (round-goals.js) is told its par, as main.js does.
   if (cfg.goal) r.pars[r.hole] = 4;
+  // On a real course (the both-designers test below): its own par.
+  if (cfg.pars) r.pars[r.hole] = cfg.pars[r.hole % cfg.pars.length];
   r = playHole(r, ref, rand, cfg, why);
   if (cfg.goal) checkGoal(r, why, h);
   cfg.onHole?.(r, h, why);
@@ -516,4 +518,30 @@ test('a friend\'s challenge: every group against the friend\'s card, compared ho
   }
  }
  assert.equal(played, 2 * SEEDS.length * 4);
+});
+
+// BOTH DESIGNERS (architect-courses: the goal's "round matrix ... on both
+// designers"). The rules above are played against a stand-in pin, whatever
+// built the course. Here a real nine from each designer gives each hole its
+// par, every format plays over it with every group size, and each golfer's
+// score to par must add up against that course's own pars.
+test('every format plays a round on a Classic and an Architect course', async () => {
+ const {world} = await import('./worlds.mjs');
+ const {relativeToPar} = await import('../src/scoring.js');
+ for (const designer of ['classic', 'architect']) {
+  const w = world({seed: 'MATRIX-1', holes: 9, biome: 'midwest', ...(designer === 'architect' ? {designer} : {})});
+  const pars = w.holes.map(h => h.par);
+  assert.equal(pars.length, 9);
+  if (designer === 'architect') assert.ok(w.holes.every(h => h.design), 'not an Architect course');
+  for (const cfg of configs({holes: 9}).filter(c => !c.endless && c.putting === 'holeout')) {
+   const r = playRound({...cfg, pars}, 7);
+   for (const [i] of r.players.entries()) {
+    const card = r.mode === 'scramble' ? r.teamCards[r.players[i].team] : r.cards[i];
+    const {rel, played} = relativeToPar(card, r.pars.slice(0, 9));
+    const expect = card.slice(0, 9).reduce((s, v, h) => s + (Number.isFinite(v) ? v - pars[h] : 0), 0);
+    assert.equal(rel, Math.round(expect * 100) / 100, `${designer}, ${cfg.mode} ${cfg.teams.join('')}: golfer ${i + 1} to par`);
+    assert.equal(played, card.slice(0, 9).filter(Number.isFinite).length);
+   }
+  }
+ }
 });

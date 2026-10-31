@@ -248,22 +248,23 @@ bodies (was one), so five times the crowd's draw calls on Medium and up
 
 ### Where the goal stands (30 October 2026, after the owner's review)
 
-**Met**: every phase built and documented, and the owner's review list
-worked through (above); npm test (1,216) and the build pass; the round
-matrix and the virtual golfer run on both designers -- **Architect 0.17
-strokes per 18 harder** (limit 1.5); Classic's fingerprint unchanged from the
-start; the bench moved (bunkers by a landing zone 83% against 27%, nines home
-11 of 12 against 7); **an eighteen builds at most 0.75 s slower** on
-Architect (PNW, the last measure; limit 2 s); **frame time on Low within 10%** of Classic on
-all ten landscapes (the worst Redwood, +1.7%; *Frame time on Low, every
-landscape: met*); **every smoke journey green** (39 of 39, on the
-graphics card, after the draw changes too -- the run before failed
-`ball-light-hole-out` once, a Classic Surprise me round the changes do not
-draw; it passed three times alone and in the full rerun: since traced to main
-(main's own build failed it 3 runs in 8) and FIXED: programs first drawn only
-in play -- a pond out of view from the tee, a planting the cull had hidden --
-are now drawn once behind the loading screen (PROJECT_HANDOFF *EVERY PROGRAM
-IS DRAWN ONCE BEHIND THE LOADING SCREEN*); 20 runs of 20 passed after); the showcase saved
+**Met** (each figure re-measured on the final code, 30 October 2026, after the
+last change): every phase built and documented, and the owner's review list
+worked through (above); npm test (1,218) and the build pass; the round
+matrix (now on a real Classic and a real Architect nine too) and the virtual
+golfer run on both designers -- **Architect 0.17 strokes per 18 harder**
+(limit 1.5); Classic's fingerprint unchanged from the start; the bench moved
+(bunkers by a landing zone 80% against 27%, nines home 11 of 12 against 7);
+**frame time on Low at or below Classic's in every landscape** by mean and by
+median (the final run: processor -38% to +0.3%, graphics -48% to +0.4%);
+**an eighteen builds at most 0.75 s slower** on
+Architect (PNW, the last measure; limit 2 s); **every smoke journey green**
+(40 of 40 on the graphics card, on the final code, the played-round journey
+`architect-tournament` included -- `ball-light-hole-out`, which had failed
+about 3 runs in 8 on main too, FIXED: programs first drawn only in play, a
+pond out of view from the tee or a planting the cull had hidden, are now
+drawn once behind the loading screen, PROJECT_HANDOFF *EVERY PROGRAM IS DRAWN
+ONCE BEHIND THE LOADING SCREEN*; 20 runs of 20 passed after); the showcase saved
 (docs/reports/architect-showcase/, local, 32 pictures): a hero hole in every
 landscape (seed SC-3, each landscape's own style), four Classic-beside-
 Architect pairs on that seed (Midwest, Autumn, Links, PNW), the Redan, Dell,

@@ -318,10 +318,12 @@ export const VIEWS = [
  // A creek from above in the open (the owner's screenshot of its "arrows"):
  // the first stretch with no tree within 12 m, from 10 m up, looking down it.
  {name: 'stream-above', hole: 0, when: 'noon', caption: 'A creek from above, in the open', cam: `w => { const trees = w.trees || [];
+  // window.__seg: skip that many open stretches (to find one in particular).
+  let skip = Number(window.__seg || 0);
   for (const s of (w.streams?.segments || [])) {
    const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2;
    if (trees.some(t => Math.hypot(t.x - mx, t.z - mz) < (t.r || 4) + 12)) continue;
-   const cx = mx - dx / L * 9 - dz / L * 4, cz = mz - dz / L * 9 + dx / L * 4;
+   if (skip-- > 0) continue;
    const up = Number(window.__up || 10), back = up * .9;
    return {x: mx - dx / L * back - dz / L * 4, z: mz - dz / L * back + dx / L * 4, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: up, pitch: -40};
   }
