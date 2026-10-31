@@ -315,6 +315,17 @@ export const VIEWS = [
    return {x: cx, z: cz, yaw: Math.atan2(mx + dx / L * 6 - cx, mz + dz / L * 6 - cz) * 180 / Math.PI, height: 4, pitch: -30};
   }
   return {x: 0, z: 0, height: 200, pitch: -40}; }`},
+ // A creek from above in the open (the owner's screenshot of its "arrows"):
+ // the first stretch with no tree within 12 m, from 10 m up, looking down it.
+ {name: 'stream-above', hole: 0, when: 'noon', caption: 'A creek from above, in the open', cam: `w => { const trees = w.trees || [];
+  for (const s of (w.streams?.segments || [])) {
+   const dx = s.b.x - s.a.x, dz = s.b.z - s.a.z, L = Math.hypot(dx, dz) || 1, mx = (s.a.x + s.b.x) / 2, mz = (s.a.z + s.b.z) / 2;
+   if (trees.some(t => Math.hypot(t.x - mx, t.z - mz) < (t.r || 4) + 12)) continue;
+   const cx = mx - dx / L * 9 - dz / L * 4, cz = mz - dz / L * 9 + dx / L * 4;
+   const up = Number(window.__up || 10), back = up * .9;
+   return {x: mx - dx / L * back - dz / L * 4, z: mz - dz / L * back + dx / L * 4, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: up, pitch: -40};
+  }
+  return {x: 0, z: 0, height: 200, pitch: -40}; }`},
  // A pond from a tee (the trees-in-water item: "from the bank and a tee"):
  // the first hole with a pond 60-260 m down it, from its back tee at eye
  // height, looking at the pond. Hole 1's tee view where no hole has one.

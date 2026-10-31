@@ -319,8 +319,9 @@ const WATER_EDGES={
   // sign of running water. Chevrons pointing downstream, fixed to the bed (no
   // drift), in patches where the bed is rough, faint along the banks.
   // Round 6: crests 2 m apart (were 1.1 m: thinner than a pixel from the bank).
-  float riffle=smoothstep(.5,.92,sin((vChan.x*.5+abs(across)*.35)*6.2832))*smoothstep(.42,.68,wNoise(vChan*vec2(.05,.2)+7.3));
-  foam=max(foam,riffle*(.1+.2*smoothstep(.3,.9,vShore))*smoothstep(.3,.7,lace));
+  // REMOVED (the owner, 30 October 2026: "Remove the creek arrow texture. We
+  // don't need them."): the chevrons read as arrows painted on the water. The
+  // flecks and lace still drift downstream, so the water still runs.
   // Round 9: the wet line where the water meets the bank, as a pond's (round 4).
   float wetEdge=smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore));
   // Round 15: faint and broken (at .35 and unbroken it ran down both banks as
@@ -344,9 +345,9 @@ const WATER_EDGES={
   // and stronger patches.
   // Round 13: broader crests (they read as white dashes) and an opener V, in
   // more of the bed, stronger.
-  float riffle=smoothstep(.3,.85,sin((vChan.x*.8+abs(across)*.35)*6.2832))*smoothstep(.3,.55,wNoise(vChan*vec2(.08,.3)+2.9));
   // Round 15: softer (.7 read as lane markings down the middle).
-  foam=max(foam,riffle*.4*(.6+.4*fleck));
+  // REMOVED (the owner, 30 October 2026: "Remove the creek arrow texture"):
+  // the chevrons read as arrows on the water; the drifting flecks stay.
   // Round 9: the wet line at the bank.
   // Round 15: faint and broken, as a river's.
   foam=max(foam,smoothstep(.93,.985,vShore)*(1.-smoothstep(.985,1.,vShore))*.14*smoothstep(.35,.75,wNoise(vec2(drift*.6,across*2.))));
@@ -1378,11 +1379,15 @@ export class GolfView{
  // compiled with the screen bound built versions no frame ever used -- and the
  // first time the floodlights came on, every lit program was built for real in
  // one frame: 12-16 s frozen on Ultra, nothing on High, which has no bloom.
+ // Every compile runs with every culled mesh visible (instance-cull.js
+ // `forCompile`): a hidden mesh is skipped, and was built mid-play when it
+ // first came into view (the hole-out flyover).
  asDrawn(fn){
-  if(!this.bloom)return fn();
+  const run=()=>this.cull?this.cull.forCompile(fn):fn();
+  if(!this.bloom)return run();
   const was=this.renderer.getRenderTarget();
   this.bloom.begin(this.renderer);
-  try{return fn();}
+  try{return run();}
   finally{this.renderer.setRenderTarget(was);}
  }
  async ready(){
@@ -1424,11 +1429,31 @@ export class GolfView{
   // above never sees them.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
   finally{this.showStandIns(false);}
+  this.drawEverythingOnce();
   // For the lab: how long each half took. The first is time the page stays
   // live; the second blocks it, so it is the one to keep small.
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
   this.readying=false;
   return this.readyTimes;
+ }
+ // EVERY PROGRAM DRAWN ONCE, BEHIND THE LOADING SCREEN. A program is built by
+ // the compile but on Windows only finished at its first real draw, and the
+ // first frame draws only what the tee's view and the cull let through: on a
+ // course whose ponds (or a planting) are out of view from the first tee,
+ // their programs were first drawn in play -- at the hole-out flyover, a
+ // frozen frame (the smoke journey ball-light-hole-out, 3 runs in 8 failing on
+ // main; a water body, then a tree, named by it). So, once: everything, the
+ // frustum cull off and every culled mesh shown, drawn into a single pixel --
+ // a vertex pass of the course with no shading cost, at the end of `ready`.
+ drawEverythingOnce(){
+  if(!this.group)return;
+  const r=this.renderer,off=[];
+  this.scene.traverse(o=>{if(o.frustumCulled&&(o.isMesh||o.isLine||o.isPoints||o.isSprite)){o.frustumCulled=false;off.push(o);}});
+  const scissorOn=r.getScissorTest(),box=r.getScissor(new T.Vector4());
+  this.showStandIns(true);
+  try{this.asDrawn(()=>{r.setScissorTest(true);r.setScissor(0,0,1,1);r.render(this.scene,this.camera);});}
+  catch(e){console.warn('Fairway: drawing everything once skipped',e);}
+  finally{r.setScissor(box);r.setScissorTest(scissorOn);for(const o of off)o.frustumCulled=true;this.showStandIns(false);}
  }
  // The probes `build` left for later (see the note where it sets `probeDue`).
  //
@@ -1450,7 +1475,7 @@ export class GolfView{
  asProbe(fn){
   const was=this.renderer.getRenderTarget();
   this.renderer.setRenderTarget(this.probeTarget());
-  try{return fn();}
+  try{return this.cull?this.cull.forCompile(fn):fn();}
   finally{this.renderer.setRenderTarget(was);}
  }
  // The cube every probe is photographed into, one for the course.

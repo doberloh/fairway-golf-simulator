@@ -867,6 +867,8 @@ sine wave on the edge. Be efficient with this as well." Twenty rounds.
 | 19 | Every pond's foam the same blue-white, whatever its water -- on Haunted Hollow's green-black water it stood out like paint | A quarter of the landscape's water colour in its foam. Captured (`g3-r12/`): the foam still reads white, a shade of its water in it |
 | 20 | The final judgement on every kind of water (`g3-final/*/shore-near`, `sea-near`, `h1-pond`; `g3-final-streams/`) | Judged, no change: ponds lapped by arriving wavelets with a wet line and drifting cat's paws; the sea's surf in uneven lace with breakers in stretches over wet sand; Lakeshore's lake shore a wet flat (left for the owner); creeks read as water, fading in at their start. The owner's words -- "not just reading as a sine wave on the edge" -- are judged in motion, which stills cannot show: in TODO for play. |
 
+**The riffles were removed afterwards** (the owner, 30 October 2026: "Remove the creek arrow texture. We don't need them."): the standing chevrons on creeks and rivers (rounds 5, 6, 13, 15) read as arrows painted on the water, on Classic as on Architect. The drifting flecks, the lace and the wet bank line stay, so the water still runs. Rendering only: no fingerprint moves.
+
 ### Links shared fairways, the far-landscape goal's rounds
 
 The owner: "10 more passes on making thoughtful fairway connections on

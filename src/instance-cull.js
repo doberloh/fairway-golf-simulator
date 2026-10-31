@@ -284,6 +284,20 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   dirty() { stale = true; },
   // Everything back in the buffer, for a render from somewhere else.
   showAll() { all = true; write(); stale = true; },
+  // EVERY MESH VISIBLE FOR A SHADER COMPILE. three's compile skips a hidden
+  // object, and the cull hides any mesh with nothing in view -- and starts
+  // every far twin hidden -- so a tree first in view during the hole-out
+  // flyover had its program built mid-play, on some courses only (the smoke
+  // journey ball-light-hole-out: 3 runs in 8 failing, on main as on the
+  // architect branch; the late program instanced, two-sided, vertex-coloured
+  // toon). Every mesh shown for `fn`, then each put back as it was; the
+  // instance counts are untouched -- a compile needs only the object.
+  forCompile(fn) {
+   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null]);
+   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; }
+   try { return fn(); }
+   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; }); }
+  },
   // `lights`: the shadow-casting lights to sort for, nearest map first (the
   // cascades, or the one sun). Their shadow cameras must already be placed for
   // this frame -- the renderer calls this after the cascades have moved.

@@ -233,6 +233,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Shared links fairways widen before `holeBoxes`, count every hole's pond in the strip, and judge parallel where the fairways lie -- PROJECT_HANDOFF *SHARED FAIRWAYS WIDEN BEFORE ANYTHING MEASURES A CORRIDOR*.
 - An Architect links joins fairways in pairs only; Classic's sharing must not move -- PROJECT_HANDOFF *AN ARCHITECT LINKS JOINS IN PAIRS*
 - A person model is many people: true height from `tall`, colours by hash -- PROJECT_HANDOFF *A PERSON IS ONE MODEL, MANY PEOPLE*
+- Every program is drawn once behind the loading screen; a thing first drawn in play stalls a frame -- PROJECT_HANDOFF *EVERY PROGRAM IS DRAWN ONCE BEHIND THE LOADING SCREEN*
 - The fountain is moving water the renderer draws, reset per course -- PROJECT_HANDOFF *THE FOUNTAIN MOVES, SO IT IS NOT A MODEL*
 - An Architect piece is one draw (merged or instanced), and markings are off on Low -- PROJECT_HANDOFF *AN ARCHITECT PIECE IS ONE DRAW, NOT ONE PER PART*
 - A hand record lives in its hole's frame and is applied in architectCourse only; `archHand` is the schema's one list -- PROJECT_HANDOFF *HAND TOOLS: ONE RECORD, TWO HANDS*

@@ -91,7 +91,8 @@ list saying what it does to the course, kept current as the choice changes
 
 **The arrows on the water** (screenshot 2) are the creek's flow ripples,
 main's since the first commit (water-bodies.js `STREAM_FLOW`), on Classic
-too. Left as they are; the owner's call whether to tone them down.
+too. **Removed** at the owner's word ("We don't need them"): the chevrons on
+creeks and rivers, for both designers; the drifting foam stays.
 
 **Links: fairways joined in pairs only** (the owner, Links style, Members',
 Old, A lot, 9 holes, ST-1: "one massive hole with 4 combined fairways ... I
@@ -252,15 +253,17 @@ worked through (above); npm test (1,216) and the build pass; the round
 matrix and the virtual golfer run on both designers -- **Architect 0.17
 strokes per 18 harder** (limit 1.5); Classic's fingerprint unchanged from the
 start; the bench moved (bunkers by a landing zone 83% against 27%, nines home
-11 of 12 against 7); **an eighteen builds at most 1.66 s slower** on
-Architect (PNW; limit 2 s); **frame time on Low within 10%** of Classic on
+11 of 12 against 7); **an eighteen builds at most 0.75 s slower** on
+Architect (PNW, the last measure; limit 2 s); **frame time on Low within 10%** of Classic on
 all ten landscapes (the worst Redwood, +1.7%; *Frame time on Low, every
 landscape: met*); **every smoke journey green** (39 of 39, on the
 graphics card, after the draw changes too -- the run before failed
 `ball-light-hole-out` once, a Classic Surprise me round the changes do not
-draw; it passed three times alone and in the full rerun: since traced to main --
-main's own build fails it 3 runs in 8 (TODO), so it is not this branch's;
-the latest full run: 39 of 40, that journey the one failure); the showcase saved
+draw; it passed three times alone and in the full rerun: since traced to main
+(main's own build failed it 3 runs in 8) and FIXED: programs first drawn only
+in play -- a pond out of view from the tee, a planting the cull had hidden --
+are now drawn once behind the loading screen (PROJECT_HANDOFF *EVERY PROGRAM
+IS DRAWN ONCE BEHIND THE LOADING SCREEN*); 20 runs of 20 passed after); the showcase saved
 (docs/reports/architect-showcase/, local, 32 pictures): a hero hole in every
 landscape (seed SC-3, each landscape's own style), four Classic-beside-
 Architect pairs on that seed (Midwest, Autumn, Links, PNW), the Redan, Dell,
@@ -1031,6 +1034,15 @@ designer:
 
 The longest walks stay longer than Classic's: a course that comes home has
 a hole or two that walk back to the turn.
+
+### The wait to build at the end (30 October 2026, ARCHITECT_VERSION 16)
+
+`node tools/gen-time.mjs`, both designers, every landscape, the last code:
+PNW 3.47 / 4.22 s (+0.75), Desert 3.61 / 3.84 (+0.23), Mountain 3.23 / 3.77
+(+0.54), Links 3.60 / 3.69 (+0.09), Midwest 3.41 / 3.18 (-0.23), Island
+6.29 / 4.57 (-1.72), Redwood 3.01 / 3.30 (+0.29), Autumn 4.10 / 3.82 (-0.28),
+Haunted 3.13 / 3.44 (+0.31), Lakeshore 3.12 / 3.22 (+0.10). **The worst PNW,
++0.75 s**; the run below read it at +1.66 with overlapping ranges.
 
 ### The wait to build after the owner's review (30 October 2026, ARCHITECT_VERSION 16)
 

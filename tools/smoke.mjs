@@ -1194,7 +1194,14 @@ const JOURNEYS = [
        const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
        const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1] || 'ShaderMaterial';
        window.__lateAny.push(type);
-       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(type);
+       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) {
+        window.__lateLit.push(type);
+        (window.__latePrograms = window.__latePrograms || []).push(program);
+        // Its switches, so a failure says WHICH variant arrived late (the
+        // type alone left ball-light-hole-out unexplained for a day).
+        const defs = [...new Set((text.match(/#define [A-Z_][A-Z0-9_]*( [^\n]*)?/g) || []).map(d => d.slice(8)).filter(d => !/^(SHADER_TYPE|SHADER_NAME|STANDARD|PHYSICAL|TOON|PI|RECIPROCAL_PI|EPSILON|LOG2|saturate|whiteComplement|PI2|PI_HALF|LINE_DISTANCE|HIGH_PRECISION|GAMMA_FACTOR|LOW_PRECISION|MEDIUM_PRECISION|varying|texture2D|attribute|gl_FragColor|DITHERING|OPAQUE)/.test(d)))];
+        (window.__lateWhy = window.__lateWhy || []).push(type + ': ' + defs.join(', '));
+       }
       }
      }
      return use.call(this, program);
@@ -1255,7 +1262,30 @@ const JOURNEYS = [
       // The flyover orbits while the scorecard is up.
       await t.page.waitForTimeout(3000);
       const late = await t.page.evaluate(() => window.__lateLit);
-      if (late.length) throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}`);
+      if (late.length) {
+       const why = await t.page.evaluate(() => window.__lateWhy || []);
+       // With the capture build (`--file bench/shots/dist-exp/index.html`,
+       // window.__view): which meshes in the scene use the late programs.
+       const who = await t.page.evaluate(() => {
+        const v = window.__view, late = new Set(window.__latePrograms || []), out = [];
+        if (!v) return ['(no window.__view: run against the capture build to name the mesh)'];
+        v.scene.traverse(o => {
+         if (!o.material) return;
+         for (const m of [].concat(o.material)) {
+          const p = v.renderer.properties.get(m)?.currentProgram;
+          if (p && late.has(p.program)) {
+           const path = []; for (let q = o; q && q !== v.scene; q = q.parent) path.push(q.name || q.type);
+           out.push(`${path.join(' < ')} | ${o.isInstancedMesh ? 'instanced ' + o.count : 'mesh'} | ${o.geometry?.attributes?.position?.count} verts | colour #${m.color?.getHexString?.()} | visible ${o.visible} | userData ${JSON.stringify(o.userData).slice(0, 80)}`);
+          }
+         }
+        });
+        return out.length ? out : ['(no mesh holds the late program now)'];
+       });
+       why.push('--- meshes:', ...who);
+       fs.mkdirSync(path.join('bench', 'shots', 'smoke'), {recursive: true});
+       fs.writeFileSync(path.join('bench', 'shots', 'smoke', 'late-shaders.txt'), why.join('\n'));
+       throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}\n         ${why.join('\n         ')}`);
+      }
       return;
      }
     }
