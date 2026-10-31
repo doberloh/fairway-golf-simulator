@@ -1209,6 +1209,28 @@ Every measure re-run on the final code of phase 3, finished.
 npm test 1,226 of 1,226; smoke 41 of 41; Classic's fingerprint silent;
 every bench invariant clear.
 
+**On Ultra too** (the owner asked, 31 October 2026; `profile --only
+architect --arch-tier ultra`, means): processor 5.56, 5.60, 5.17 ms on
+Classic against 4.15, 3.76, 3.87 on Architect (-25%, -33%, -25%); graphics
+5.01, 4.78, 4.26 against 3.35, 3.00, 3.09 (-33%, -37%, -27%); triangles
+37.6, 29.8, 17.1 million against 17.2, 11.8, 8.1, though Architect makes
+75-100 more draw calls (its kits). **Why: the trees.** On the profile seed
+Architect plants 6,889 trees on Midwest against Classic's 15,167, 6,953 on
+PNW against 17,524, and 5,994 on Links against 7,947 -- planting by design,
+in stands, lines and avenues with the corridors open, where Classic
+scatters to its density. The renderer changes of the review (merged
+buildings, one path mesh a surface, batched furniture) serve both
+designers. Giving Classic the same would be a planting change: every
+Classic seed's trees move, a GENERATOR_VERSION bump, and the goal's
+"Classic gets only free extras" -- the owner's call, not taken.
+
+**The showcase refreshed on this code** (31 October): the ten Architect
+hero holes and the six named holes recaptured (`arch-hero18`,
+`arch-tpl18a`-`d`; the views and seeds as before), the ten course codes
+re-exported with the new stamp and checked to import back as Architect.
+The kits, the first-and-final pairs and the Classic halves of the pairs
+are unchanged code and kept.
+
 ### Frame time on Low, every landscape: met (30 October 2026, the last measure)
 
 After the tee furniture was batched (below) -- `node tools/profile.mjs
@@ -1359,6 +1381,7 @@ read `nvidia-smi` first; no crash, hang or driver error in any:
 | 31 Oct, phase 3 finished | `frame-ab --shots` Classic Low Midwest, old build against new: one round (Classic 5-10% slower on the graphics card: the filtered table reads), then two rounds after `texelFetch` | 3-4% | level; pictures within the noise floor |
 | 31 Oct, phase 3 finished | profile `--only architect` (six cases, Low) | 3%, 39 °C | 1.5 minutes, no errors; *Frame time on Low after the surface field* |
 | 31 Oct, phase 3 finished | smoke, all journeys | 3% | 41 of 41 |
+| 31 Oct, phase 3 finished | captures `arch-hero18` (ten landscapes, four runs), `arch-tpl18a`-`d` (the showcase refresh); profile `--only architect --arch-tier ultra` (the owner's question) | 3-7%, 38-40 °C | no errors |
 | review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
 ## Blender iteration log
