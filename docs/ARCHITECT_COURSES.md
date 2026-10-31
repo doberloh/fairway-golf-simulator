@@ -241,6 +241,15 @@ hand features set and finds it identical.
 Cost: the generator's signatures add a few bunkers and mounds to a third of
 holes (no measurable wait); the hand list is applied once a hole.
 
+**Twelve hazards a hole, found after** (ARCHITECT_VERSION 17): the ground
+shader draws at most twelve hazards a hole (ground.js `HOLE_ATLAS`), and the
+architect designs to that (`MAX_HAZARDS`), but the signatures and the hand
+tools were laid past it -- 9 holes in 432 had 13 or 14, the extra bunkers
+playing as sand and never drawn. Found counting hazards while writing the
+custom-course study. Now `applyHand` stops at `HAZARD_CAP` (a test holds it to
+`MAX_HAZARDS`, and builds courses with twenty hand bunkers on a hole), and the
+studio refuses a bunker on a full hole with a message.
+
 Cost: walkers and spectators are one instanced mesh per body part per body,
 coloured per instance (no extra draws for the colours); the crowd five
 bodies (was one), so five times the crowd's draw calls on Medium and up
@@ -250,7 +259,7 @@ bodies (was one), so five times the crowd's draw calls on Medium and up
 
 **Met** (each figure re-measured on the final code, 30 October 2026, after the
 last change): every phase built and documented, and the owner's review list
-worked through (above); npm test (1,218) and the build pass; the round
+worked through (above); npm test (1,219) and the build pass; the round
 matrix (now on a real Classic and a real Architect nine too) and the virtual
 golfer run on both designers -- **Architect 0.17 strokes per 18 harder**
 (limit 1.5); Classic's fingerprint unchanged from the start; the bench moved

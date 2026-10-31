@@ -89,3 +89,17 @@ test('every hand-made bunker, lobes included, has its reason', () => {
  const w = world({...base, archHand: [{kind: 'bunker', hole: 1, at: 200, off: 0, size: 9, shape: .8, lobes: 3}]});
  for (const h of w.holes) h.bunkers.forEach((b, i) => assert.ok(h.design.reasons.some(r => r.kind === 'bunker' && r.i === i), `hole ${h.hole + 1}: bunker ${i} without a reason`));
 });
+
+// THE TWELVE THE SHADER CAN DRAW (ground.js HOLE_ATLAS): hand-made and
+// generated bunkers stop there -- past it a bunker played as sand and was not
+// drawn (9 holes in 432, 30 October 2026).
+test('no hole has more hazards than the ground shader draws', async () => {
+ const {HAZARD_CAP} = await import('../src/hand-tools.js');
+ const {MAX_HAZARDS} = await import('../src/architect.js');
+ assert.equal(HAZARD_CAP, MAX_HAZARDS);
+ const many = Array.from({length: 20}, (_, k) => ({kind: 'bunker', hole: 1, at: 60 + k * 15, off: k % 2 ? 30 : -30, size: 4, lobes: 3}));
+ for (const [style, seed] of [['golden', 'HZ-2'], ['sandhills', 'HZ-1'], ['heathland', 'HZ-3'], ['parkland', 'HAND-1']]) {
+  const w = world({seed, holes: 18, biome: 'midwest', designer: 'architect', archStyle: style, archHand: many});
+  for (const h of w.holes) assert.ok((h.collections || []).length + h.bunkers.length + h.ponds.length <= HAZARD_CAP, `${style} ${seed} hole ${h.hole + 1}: ${(h.collections || []).length + h.bunkers.length + h.ponds.length} hazards`);
+ }
+});

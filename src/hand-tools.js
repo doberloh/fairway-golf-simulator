@@ -31,6 +31,12 @@
 export const HAND_KINDS = ['bunker', 'green', 'slope', 'fairway'];
 export const CONTOURS = ['designed', 'tilted', 'tiered', 'ridged', 'crowned', 'bowl', 'punchbowl', 'raised'];
 export const MAX_HAND = 80;
+// The most hazards one hole can have DRAWN: the ground shader reads twelve a
+// hole from HOLE_ATLAS (ground.js), and the architect designs to the same
+// limit (architect.js MAX_HAZARDS; a test holds the two equal). A hand-made
+// bunker past it would play as sand and not be drawn -- found on 9 holes in
+// 432 before this limit (30 October 2026) -- so it is not laid.
+export const HAZARD_CAP = 12;
 
 // Each field: [min, max, default]. Out-of-range values are clamped, unknown
 // fields dropped, a record of an unknown kind dropped.
@@ -109,7 +115,8 @@ export function applyHand(h, list, {insideOval, who = 'hand'} = {}) {
  for (const f of mine.filter(f => f.kind === 'bunker')) {
   const z = clamp(f.at, 20, h.length + 20), x = h.center(clamp(z, 0, h.length)) + f.off;
   const rz = f.size, rx = f.size * f.shape;
-  if (!clearOfPlay(x, z, Math.max(rx, rz))) continue;
+  const hazards = () => h.bunkers.length + (h.ponds?.length || 0) + (h.collections?.length || 0);
+  if (hazards() >= HAZARD_CAP || !clearOfPlay(x, z, Math.max(rx, rz))) continue;
   const wave = k => ((Math.sin((++seed) * 12.9898 + f.at * .1 + f.off) * 43758.5453) % 1 + 1) % 1 * k;
   const main = {x, z, rx, rz, phase: wave(6.28), wave2: wave(.1) - .05, wave3: .03 + wave(.07), hand: true};
   h.bunkers.push(main);
@@ -119,7 +126,7 @@ export function applyHand(h, list, {insideOval, who = 'hand'} = {}) {
    const l = {x: x + Math.cos(a) * d * f.shape, z: z + Math.sin(a) * d, rx: rx * .55, rz: rz * .55, phase: wave(6.28), wave2: 0, wave3: .05, lobe: true, hand: true};
    // Every hazard has its reason (the bench's invariant: the lobes had none,
    // nine of them on PNW).
-   if (clearOfPlay(l.x, l.z, Math.max(l.rx, l.rz))) { h.bunkers.push(l); say('bunker', h.bunkers.length - 1, 'A lobe of the bunker beside it, shaped with it.'); }
+   if (hazards() < HAZARD_CAP && clearOfPlay(l.x, l.z, Math.max(l.rx, l.rz))) { h.bunkers.push(l); say('bunker', h.bunkers.length - 1, 'A lobe of the bunker beside it, shaped with it.'); }
   }
  }
  h.handMounds = h.handMounds || [];

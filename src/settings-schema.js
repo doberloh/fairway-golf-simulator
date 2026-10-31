@@ -337,7 +337,10 @@ export const GENERATOR_VERSION=52;
 //    signature from the seed -- a waste area, a hogsback, a saddle,
 //    spectacles, a punchbowl or a tiered green, by style -- built from the
 //    same records the course studio's Hand tools make.
-export const ARCHITECT_VERSION=16;
+// 17: hand-made bunkers stop at the twelve hazards a hole can have drawn
+//    (hand-tools.js HAZARD_CAP): a signature's waste area had taken 9 holes
+//    in 432 to 13 or 14, the extra sand played but never drawn.
+export const ARCHITECT_VERSION=17;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both
