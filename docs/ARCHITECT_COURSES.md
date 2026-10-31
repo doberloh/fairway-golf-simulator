@@ -1409,6 +1409,16 @@ against the cartoon look and its neighbours, revise. An iteration is judged on
 the pack's contact sheet (`bench/shots/blender/<pack>.png`) or in the game
 (a capture named beside it), and says what changed.
 
+**An iteration covers every model in its pack**: the whole pack is rebuilt,
+rendered together and judged together, and the models that needed it are
+revised -- so each of the ten lines a pack logs is a render and a judgement
+of every model in it, and a model the line does not name was judged and
+kept. The owner's review reworked three models further on their own (the
+fountain, the mower, the gallery: *Blender and game iterations*, above).
+All six packs rebuilt byte-identical to the committed models on 31 October
+2026 (*After the surface field*): nothing has changed since the last line
+of each table.
+
 ### architect_people (stakes, yardage post, rake)
 
 | # | Judged on | Stake / OB stake | Yardage post | Rake |
