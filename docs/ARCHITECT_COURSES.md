@@ -282,6 +282,15 @@ against final for the fountain, the mower and the gallery, and ten course
 codes to paste into the game (made by the game's own exporter; each checked
 to import back as an Architect course).
 
+**Moving, measured** (30 October 2026, the final code, Medium tier): every
+animal and person's matrix read twice a second apart while the game ran --
+Midwest 52 of 52 instances moved (deer, geese, the fourball, the mower;
+longest step 1.8 m), Links 47 of 47 (sheep, gulls, the fourball; a circling
+gull 10.6 m). The fountain likewise (a drop rose 3.1 m in 0.7 s). The bench on
+the final code: bunkers by a landing zone 174 of 217 (80%) against Classic's
+24 of 89 (27%), nines home 11 of 12 against 7, median walk 93 m against 98,
+four to six concepts a nine, every invariant clear.
+
 **Seen working in the game** (GPU captures, stills, and the smoke journeys'
 clicks): every Blender kit in its landscapes and on Low; the rebuilt paths,
 bridges, markings, clubhouses, mounds, pond edges; the fountain moving
@@ -294,8 +303,8 @@ Architect Championship course** (smoke journey `architect-tournament`:
 from Saved courses, hole 1 played and holed out) **with the scoreboard
 following it** -- before a shot the golfer on the board at "-", after the
 hole-out "E, thru 1", the same score as the golfer's chip in the top bar. **Not seen by anyone**:
-anything played by a person; the walkers' bob and the animals in motion
-(stills only); a ball against a wall, a stand or a bridge deck in a round
+anything played by a person; the walkers and animals in motion looked at
+(measured moving, above, but seen only in stills); a ball against a wall, a stand or a bridge deck in a round
 (Node tests only); a round played by a person (the journey's round is
 scripted); a round on hand-shaped ground.
 
@@ -1222,6 +1231,21 @@ is above about 30%).
 | 30 Oct, phase 5 | captures `arch-w3` to `arch-w10` (fourteen runs of one landscape, one at a time): the water pack's iterations on Midwest (Parkland, Stadium), Redwood, Autumn and Desert, the last on Low | 2-5%, 38-40 °C each | every course built in 13-17 s with no errors |
 | 30 Oct, phase 3 | profile `--only architect` (six cases, Low) | 5%, 39 °C | 1.5 minutes, no errors; *Frame time on Low* |
 | 30 Oct, phase 2 | captures `arch-c1` to `arch-c11` (sixteen runs of one to three landscapes): the clubhouses' iterations, all ten landscapes, the last on Low | 1-7%, 38-41 °C each | every course built in 4-17 s with no errors |
+
+**The owner's review (30 October 2026, afternoon and evening)** -- every run
+read `nvidia-smi` first; no crash, hang or driver error in any:
+
+| When | What | Card before | Result |
+| --- | --- | --- | --- |
+| review | captures `arch-pv1` to `arch-pv6` (paths), `arch-f1` to `arch-f5` (fountain), `arch-fmove` (a drop measured moving) | 2-6%, 37-38 °C | no errors; the iterations in *The owner's review* |
+| review | Blender `architect_life`, `architect_occasion` (people, mower, crowd: one process at a time, ten times each pack), `architect_water` (the sheet without the fountain) | 1-4% | every pack written, Blender closed after each |
+| review | captures `arch-p3` to `arch-p10`, `arch-m9-*`, `arch-m10` (people, crowd, mower), `arch-alps1`, `arch-board1`, `arch-board2`, `arch-hand1` to `arch-hand5b` | 3-6% | no errors |
+| review | captures for the showcase: `arch-hero` (ten landscapes, in four runs of at most three), `arch-pairc`, `arch-sc-*` (Redan, Cape, pairs) | 4-6% | no errors |
+| review | smoke `architect-studio` (four runs as the yardage book and the hand tools were added), `architect-tournament` (three runs) | 3-4% | all passed in the end; the tournament journey's chip check corrected twice (the test, not the game) |
+| review | smoke, all journeys (seven full runs) | 1-6% | 39/39, 39/39, 38/39, 39/40, 39/40, 40/40, 40/40 -- the failures all `ball-light-hole-out`, traced to main and fixed (*EVERY PROGRAM IS DRAWN ONCE*) |
+| review | smoke `ball-light-hole-out` alone: about 80 runs across the bisect (main's build in a temporary worktree, removed after) | 3-5% | before the fix 3 in 8 failing on main; after it 20 of 20 |
+| review | profiles `--only architect`: three landscapes, then all ten (median, then 1,200-frame means), Medium and High with a Championship crowd, every kit at once on Low, the final run on the final code | 2-6%, then about 30% while Chrome Remote Desktop's host was encoding the owner's session (both designers alike) | *Frame time on Low, every landscape: met*; *The crowd's cost* |
+| review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
 ## Blender iteration log
 
