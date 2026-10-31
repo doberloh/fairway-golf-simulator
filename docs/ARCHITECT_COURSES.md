@@ -1209,6 +1209,10 @@ Every measure re-run on the final code of phase 3, finished.
 npm test 1,226 of 1,226; smoke 41 of 41; Classic's fingerprint silent;
 every bench invariant clear.
 
+**Every landscape on Low, re-run** (31 October, all ten, 1,200-frame
+means): Architect below Classic in every one -- processor -0.3% (Island) to
+-38.7% (Desert), graphics -0.7% (Island) to -47.3% (Lakeshore Dunes).
+
 **On Ultra too** (the owner asked, 31 October 2026; `profile --only
 architect --arch-tier ultra`, means): processor 5.56, 5.60, 5.17 ms on
 Classic against 4.15, 3.76, 3.87 on Architect (-25%, -33%, -25%); graphics
@@ -1381,6 +1385,7 @@ read `nvidia-smi` first; no crash, hang or driver error in any:
 | 31 Oct, phase 3 finished | `frame-ab --shots` Classic Low Midwest, old build against new: one round (Classic 5-10% slower on the graphics card: the filtered table reads), then two rounds after `texelFetch` | 3-4% | level; pictures within the noise floor |
 | 31 Oct, phase 3 finished | profile `--only architect` (six cases, Low) | 3%, 39 °C | 1.5 minutes, no errors; *Frame time on Low after the surface field* |
 | 31 Oct, phase 3 finished | smoke, all journeys | 3% | 41 of 41 |
+| 31 Oct, phase 3 finished | profile `--only architect --landscapes all` (twenty cases, Low) | 3%, 37 °C | 3.4 minutes, no errors |
 | 31 Oct, phase 3 finished | captures `arch-hero18` (ten landscapes, four runs), `arch-tpl18a`-`d` (the showcase refresh); profile `--only architect --arch-tier ultra` (the owner's question) | 3-7%, 38-40 °C | no errors |
 | review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
