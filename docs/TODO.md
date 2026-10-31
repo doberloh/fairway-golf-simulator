@@ -1417,6 +1417,20 @@ green everywhere, and every mode but the range under one Play.
   the cup), the popup's new place in a real round, a level-up crossing inside
   the grouped popup.
 
+## Release 0.9.6 (31 October)
+
+- [ ] **Owner: play 0.9.6 before calling it good.** Released at the owner's
+  word ("Lets merge this back into main. I think i want to keep this still
+  0.9 so lets make another path version and push the latest to both github
+  as well as the live website") with **no smoke run on its build** -- the
+  graphics card was not asked for. It carries the 1.0 interface polish
+  (merged 29 October, unreleased until now; hand-check list above, *Playing
+  it by hand, screen by screen*) and Architect courses (beta) with the
+  owner's three reviews; the smoke journeys `architect-studio` and
+  `architect-round` last ran on the branch on 31 October, before the far
+  heath and the models. Not seen in the game: the far heath, the eleven
+  unwrapped models (Architect section above). Website redeployed with it.
+
 ## Release 0.9.5 (27 October)
 
 - [ ] **Owner: play 0.9.5 before calling it good.** Released at the owner's
@@ -1531,6 +1545,15 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Release 0.9.6 (31 October)
+
+- [x] **v0.9.6 published**, "Fairway 0.9.6 (beta)", at the owner's request,
+  from the merge of `release-0.9.6` into main: the 1.0 interface polish and
+  Architect courses (beta). Generator 53 (52 in 0.9.5), architect 20,
+  schema 14 (11), profile 3 unchanged; package 0.9.6. Notes:
+  `docs/releases/v0.9.6.md`; DISTRIBUTION_REVIEW, *Addendum, 31 October
+  2026: v0.9.6*.
 
 ## Architect courses: the owner's third word (31 October 2026)
 
