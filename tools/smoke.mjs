@@ -2060,6 +2060,55 @@ const JOURNEYS = [
   },
  },
 
+ // A HAND-SHAPED HOLE PLAYED THROUGH (the hand tools; the owner's review): a
+ // saved Architect course whose first hole carries every tool -- a lobed
+ // bunker in the fairway, a mound, a widened landing area and a punchbowl
+ // green -- played from Saved courses to the hole-out, with no error.
+ {
+  name: 'architect-hand-round',
+  what: 'A hole reshaped with the hand tools, played through to the hole-out',
+  async run(t) {
+   await menuReady(t);
+   const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
+   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'HT-2', archStyle: 'parkland', archHand: [
+    {kind: 'bunker', hole: 0, at: 230, off: 0, size: 9, shape: .7, lobes: 2}, {kind: 'slope', hole: 0, at: 150, off: -32, size: 16, rise: 2.5},
+    {kind: 'fairway', hole: 0, at: 220, width: 18, length: 80}, {kind: 'green', hole: 0, size: 1.2, shape: 1, contour: 'punchbowl'}]};
+   await t.step('the hand-shaped course in Saved courses, played', async () => {
+    await t.page.evaluate(([s, g, v]) => {
+     const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');
+     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-hand');
+     d.courses.unshift({id: 'smoke-hand', name: 'Smoke hand-shaped', created: 1, generator: g, schema: v, settings: s});
+     localStorage.setItem(key, JSON.stringify(d));
+    }, [settings, generatorFor(settings), SCHEMA_VERSION]);
+    await fromMenu(t, 'Saved courses');
+    await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
+    await t.page.click('[data-play="smoke-hand"]');
+    await t.inPlay(150 * SLOW);
+   });
+   await t.step('hole 1 played over the hand-made ground and holed out', async () => {
+    // Two full shots down the reshaped hole, then a drop by the pin of the
+    // punchbowl green and putts until it drops.
+    for (let shot = 0; shot < 2; shot++) {
+     await t.swing();
+     await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+     await t.key('Enter');
+     await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+     await reliefFirst(t);
+    }
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; putt <= 8; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) return;
+    }
+    throw new Error('eight putts on the punchbowl green and the ball never dropped');
+   });
+  },
+ },
+
  // ARCHITECT COURSES (architect-courses, 30 October 2026): the studio's
  // second designer. Choosing Architect swaps the sliders it decides for its
  // four dials, the card stays without its length slider, an Architect course

@@ -302,7 +302,10 @@ the ground; the studio's yardage book downloaded; **a round played on an
 Architect Championship course** (smoke journey `architect-tournament`:
 from Saved courses, hole 1 played and holed out) **with the scoreboard
 following it** -- before a shot the golfer on the board at "-", after the
-hole-out "E, thru 1", the same score as the golfer's chip in the top bar. **Not seen by anyone**:
+hole-out "E, thru 1", the same score as the golfer's chip in the top bar. And **a hand-shaped
+hole played through** (smoke journey `architect-hand-round`): every hand tool
+on hole 1, two full shots, a drop by the pin of the punchbowl green, putts to
+the hole-out, no error. **Not seen by anyone**:
 anything played by a person; the walkers and animals in motion looked at
 (measured moving, above, but seen only in stills); a ball against a wall, a stand or a bridge deck in a round
 (Node tests only); a round played by a person (the journey's round is
