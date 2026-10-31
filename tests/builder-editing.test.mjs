@@ -95,6 +95,26 @@ test('holes, trees, water and the landscape are records with undo', () => {
  e.setLandscape('desert'); assert.equal(e.state.landscape, 'desert');
 });
 
+test('a dug bunker is sand in a hollow; a drawn creek is water in its channel, falling downstream; each one undo', () => {
+ const e = createEditor(doc());
+ e.digBunker({x: -80, z: 80, radius: 5});
+ assert.equal(e.surfaceAt(-80, 80), 'sand');
+ assert.ok(e.height(-80, 80) < 99.5, `the hollow (${e.height(-80, 80)})`);
+ e.undo();
+ assert.equal(e.surfaceAt(-80, 80), 'rough'); assert.ok(Math.abs(e.height(-80, 80) - 100) < 1e-4);
+ e.shape({op: 'ramp', a: {x: 70, z: -90, y: 103}, b: {x: 70, z: 90, y: 100}, radius: 12, strength: 1});
+ e.addCreek({points: [[70, -80], [72, 0], [70, 80]], width: 3});
+ const c = e.state.creeks.at(-1).points;
+ assert.ok(c.length > 60, 'a station every 2 m');
+ assert.ok(c.every((p, i) => i === 0 || p[3] <= c[i - 1][3] + 1e-9), 'the water never runs uphill');
+ assert.ok(e.height(72, 0) < c[Math.floor(c.length / 2)][3], 'the bed is under the water');
+ const w = worldFromDoc(validateDoc(e.toDoc()));
+ assert.equal(w.surface(72, 0), 'water', 'the game plays it as water');
+ assert.equal(w.surface(80, 0), 'heather', 'and the ground beside it as it was');
+ e.undo();
+ assert.equal(e.state.creeks.length, 0);
+});
+
 test('the document it gives back is a valid course that plays what was edited', () => {
  const e = createEditor(doc());
  e.paint({kind: 'sand', x: 0, z: 30, radius: 4});

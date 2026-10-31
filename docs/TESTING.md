@@ -409,6 +409,8 @@ a fresh page per journey, and a journey fails on any uncaught error,
 | Journey | What it drives |
 | --- | --- |
 | `builder-opens` | the builder opens offline on its three doors with its version line; a door opens and Back returns |
+| `builder-shaping` | a frozen nine opened from its file; forty raise dabs timed (the model and the view's redraw; fails over 33 ms a dab); one undo for the drag; saved, and the world the game builds from the file has the hill to the centimetre |
+| `builder-tools` | every editor tool by its button and the mouse (outline, pond, creek, bunker, plant and clear trees, a green moved), Undo, the checks and a test round reporting, saved; each change found in the file read back in Node |
 | `builder-door-1` | door 1 end to end: grow a nine, take it over, raise the ground with a drag and paint sand (two undo steps), undo and redo, save the file; the built game opens it (lab.built) and a tee shot is played on it with the Swing Meter |
 
 The builder's file format is tested in Node: `tests/zip.test.mjs` (the

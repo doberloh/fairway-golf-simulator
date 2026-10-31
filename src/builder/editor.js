@@ -13,6 +13,7 @@ import {BIOMES} from '../biomes.js';
 import {fileName} from '../course-file.js';
 import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
+import {testRound} from './test-round.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
@@ -46,6 +47,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
   paint: t => `Paint ${label(t.surface)}: drag over the ground.`,
   outline: t => `Outline ${label(t.surface)}: click its corners, double-click or press Enter to fill it.`,
   pond: () => 'Draw a pond: click its edge, double-click or press Enter. Its level is set just under its lowest bank.',
+  creek: () => 'Draw a creek from its head to its foot: click along it, double-click or press Enter. Its channel is cut and its water falls downstream.',
+  bunker: () => 'Click to dig a bunker the size of the brush.',
   tee: t => `Click where hole ${selected + 1}'s ${t.set} tee goes.`,
   green: () => `Click where hole ${selected + 1}'s green goes.`,
   bend: () => `Click to add a bend to hole ${selected + 1}'s line.`,
@@ -69,14 +72,23 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
-   button('Draw a pond', {kind: 'pond'}), button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}))),
+   button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}))),
  );
 
  // ---- the right: the course, its holes, the checks, Save.
  const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); }});
  const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); view.refreshAll(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
  const holeList = el('ul');
- const checkList = el('ul');
+ const checkList = el('ul'), roundList = el('ul');
+ async function runTest() {
+  roundList.replaceChildren(el('li', {}, 'The virtual golfers are playing\u2026'));
+  const lines = [];
+  try {
+   const r = await testRound(editor.toDoc(), {onHole: h => { lines.push(el('li', {onclick: () => h.stuck && view.controls.target.set(h.stuck.x, editor.height(h.stuck.x, h.stuck.z), h.stuck.z)}, `Hole ${h.number} (par ${h.par}): ${h.strokes.join(' and ')}${h.stuck ? ` -- stuck on ${h.stuck.on}` : ''}`)); roundList.replaceChildren(...lines); }, pause: () => new Promise(res => setTimeout(res, 0))});
+   lines.unshift(el('li', {style: 'color:var(--hot)'}, `${r.total.toFixed(1)} on average against par ${r.par}`)); roundList.replaceChildren(...lines);
+  } catch (e) { roundList.replaceChildren(el('li', {}, 'Could not play it: ' + e.message)); }
+ }
  const holeTools = el('div', {class: 'cb-btns'},
   button('Back tee', {kind: 'tee', set: 'back'}), button('Middle tee', {kind: 'tee', set: 'middle'}), button('Front tee', {kind: 'tee', set: 'front'}),
   button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}),
@@ -96,7 +108,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('h4', {}, 'The course'), el('div', {class: 'cb-field'}, el('label', {}, 'Name'), nameInput),
   el('div', {class: 'cb-field'}, el('label', {}, 'Landscape (the look; the land and lies stay)'), landscape),
   el('h4', {style: 'margin-top:10px'}, 'Holes'), holeList, holeTools,
-  el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList);
+  el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList,
+  el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);
  refreshHoles();
  topTools(
   el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (!s.changed || confirm('Leave this course? Anything not saved is lost.')) { current?.view.dispose(); current = null; home(); } }}, 'Close'),
@@ -120,6 +133,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
   const p = view.pick(e); if (!p) return;
   canvas.setPointerCapture(e.pointerId);
   if (tool.kind === 'outline' || tool.kind === 'pond') { draft.push([p.x, p.z]); view.draft([...draft, draft[0]]); return; }
+  if (tool.kind === 'creek') { draft.push([p.x, p.z]); view.draft(draft); return; }
+  if (tool.kind === 'bunker') { const b = editor.digBunker({x: p.x, z: p.z, radius: Math.max(2, radius)}); view.refreshLand(b); view.refreshSurface(b); return; }
   if (tool.kind === 'tee') { editor.setTee(selected, tool.set, p.x, p.z); refreshHoles(); return; }
   if (tool.kind === 'green') { editor.setGreen(selected, p.x, p.z); refreshHoles(); return; }
   if (tool.kind === 'bend') { editor.addBend(selected, p.x, p.z); refreshHoles(); return; }
@@ -140,14 +155,15 @@ export function openEditor(doc, {from = 'file'} = {}) {
  });
  canvas.addEventListener('pointerup', () => { if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } } });
  const finishOutline = () => {
-  if (draft.length < 3) return;
+  if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
+  if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
   if (tool.kind === 'pond') { editor.addPond({ring: draft}); view.refreshWater(); }
   else editor.fillOutline({kind: tool.surface, ring: draft});
   const xs = draft.map(q => q[0]), zs = draft.map(q => q[1]);
   view.refreshSurface([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]);
   draft = []; view.draft([]);
  };
- canvas.addEventListener('dblclick', () => { if (tool.kind === 'outline' || tool.kind === 'pond') { draft.pop(); finishOutline(); } });
+ canvas.addEventListener('dblclick', () => { if (tool.kind === 'outline' || tool.kind === 'pond' || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
  const onKey = e => {
   if (!current || current.editor !== editor || e.target.tagName === 'INPUT') return;
   if (e.key === 'Enter') finishOutline();
@@ -161,6 +177,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   if (step.parts) view.refreshLand(step.box);
   if (step.cells) view.refreshSurface(step.box);
   if (step.snapshot) { landscape.value = s.landscape; view.refreshAll(); refreshHoles(); }
+  else if (step.parts && step.cells) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }
  }
  function undo() { after(editor.undo()); }

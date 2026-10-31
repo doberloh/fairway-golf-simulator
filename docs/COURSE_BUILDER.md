@@ -211,8 +211,8 @@ nor any built copy of the course (tests that need it skip when it is absent):
 | 1 | The game plays a file: `worldFromDoc`, the field-only shader path, freezing, the frozen-against-generated comparison | **Built** (below); not played by a person |
 | 2 | Pins per round on built courses | **Built** (below) |
 | 3 | Builder shell and door 1 | **Built** (below); not played by a person |
-| 4 | Real-time ground shaping | |
-| 5 | The editor's tools, checks, test round | |
+| 4 | Real-time ground shaping | **Built** (below); not played by a person |
+| 5 | The editor's tools, checks, test round | **Built** (below); not played by a person |
 | 6 | LIDAR readers; Worthington's ground and trees against the references | |
 | 7 | Door 2 end to end on Worthington | |
 | 8 | Auto trace, LIDAR first, measured three ways | |
@@ -337,6 +337,55 @@ nor any built copy of the course (tests that need it skip when it is absent):
   and the generator now ride in it).
 - **Not played by a person.**
 
+### Stage 4 (31 October 2026): shaping the ground in real time
+
+- **Real time, measured** (`builder-shaping` journey, a frozen nine, RTX
+  4090): a brush dab -- the model's change and the view's redraw of the ground
+  it reached -- takes **3.8-4.0 ms at the median, 7.8-8.9 ms at worst**; the
+  frames after it stay at the display's 16.4 ms. A forty-dab drag is one undo.
+- **The game plays the ground as shaped.** The first shaped hill (9 m over
+  12 m) played 0.41 m low on its top: the game's ground mesh is 3 m apart away
+  from greens, tees and sand, and a coarse triangle cut the hill's crown. A
+  built world now refines any cell whose middle stands more than 6 cm (PLACED)
+  off its corners -- everywhere on land that did not come from the generator
+  (LIDAR), and inside the boxes the player shaped on a taken-over course (the
+  editor records them, `landEdits` in the file). After it: 28.06 m in the
+  builder, 28.06 m in the game. **Rejected: refining by that rule everywhere**,
+  which made a frozen Mountain worse (99th percentile 1.1 -> 14.5 cm, worst
+  1.35 m): there the stored land IS the generator's coarse triangles, and a
+  refined cell across a crag's crease swapped them for a smoother surface.
+- `BUILT_VERSION` stays 1: no built file has left the branch.
+
+### Stage 5 (31 October 2026): the editor's tools, checks and a test round
+
+- **The tools**: shape (raise, lower, smooth, flatten, ramp, roughen,
+  restore), paint every surface and ground type, fill an outline, draw a pond
+  (its level just under its lowest bank), **draw a creek** (stations every
+  2 m, the water never rising downstream, the channel cut into the land, the
+  same station record a generated creek has so the game draws and plays it;
+  drawn from either end, it runs from the higher one), **dig a bunker** (sand in
+  a disc and a hollow under it, 0.6 m at the middle, PLACED), plant and clear
+  trees, place each hole's tees, green and bends, par, the landscape, undo and
+  redo for every one.
+- **Checks** (`checks.js`): a tee off its pad or in water, a green mark off
+  its green, a green too small for a cup 3 m from the edge, a green steeper
+  than 6% on average, a green under a pond's level, a tree on a green -- each
+  with where it is.
+- **A test round** (`test-round.js`): the virtual golfer (tests/
+  virtual-golfer.mjs, unchanged) plays every hole twice -- a steady golfer and
+  a looser one -- with the round's own rules and pins, and reports strokes
+  against par and any hole not finished in 40 (where the ball was left). A
+  frozen nine plays in 1.9 s.
+- **Measured**: the `builder-tools` journey drives every tool by its button
+  and the mouse, undoes, runs the checks and a test round, saves, and finds
+  each change in the file read back in Node (passed, 11 s). Its test round
+  found holes 2 and 3 unplayable -- the journey's creek is drawn across both
+  landing areas and every drive ran down its banks into the water, back to the
+  tee each time under stroke and distance: the report working as meant.
+- **Not built in stage 5**: creeks and ponds cannot be moved or deleted once
+  drawn except by Undo; holes cannot be added or removed (a course stays 9 or
+  18); green contour stamps beyond the brush. In TODO.
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the
@@ -356,6 +405,11 @@ owner can overrule them:
   cell; a brush's raise or lower 0.5 m a dab at full strength.
 - The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%
   average slope is too steep to putt.
+- The game's mesh refined where it misses the land by over 6 cm (shaped or
+  LIDAR ground).
+- A drawn creek: width half the brush (1.5-12 m), water 0.4 m under the ground
+  at its head, 0.7 m deep, banks graded 1 in 2; a dug bunker 0.6 m deep.
+- The test round: two golfers (steady, loose), stuck after 40 strokes.
 
 ## Graphics card log
 
@@ -370,6 +424,8 @@ minute apart; the card read before each), 31 October 2026:
 | 6 | `profile --only built` | **stalled** on Links' frozen copy (a page error left the load waiting); stopped by hand after about 13 minutes at full load, 68 °C, its headless browsers closed by hand. A second run stalled at the same case and was stopped the same way; the cause was then found without the card and fixed |
 | 7 | `profile --only built` (after the fix) | all six cases |
 | 8-10 | `builder-smoke` | door 1 failed on the harness (a button name), then on the editor (its land drawn facing down), then passed |
+| 11-12 | `builder-smoke --only builder-shaping` | failed (the hill played 0.41 m low), then passed after the refinement |
+| 13 | `builder-smoke --only builder-tools` | passed |
 
 ## Sources
 

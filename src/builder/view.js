@@ -95,6 +95,13 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
    const m = new T.Mesh(geo, new T.MeshLambertMaterial({color: biomeOf(s.landscape).water || '#4a8fb0', transparent: true, opacity: .85}));
    m.position.y = w.level; layers.water.add(m);
   }
+  // Creeks: a ribbon along the stations at their own levels.
+  for (const c of s.creeks || []) {
+   const pos = [], idx = [];
+   c.points.forEach(([x, z, width, level, , nx, nz], i) => { const h = width / 2; pos.push(x + nx * h, level, z + nz * h, x - nx * h, level, z - nz * h); if (i) { const a = (i - 1) * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); } });
+   const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+   layers.water.add(new T.Mesh(geo, new T.MeshLambertMaterial({color: biomeOf(s.landscape).water || '#4a8fb0', side: T.DoubleSide})));
+  }
  }
  const crown = new T.ConeGeometry(1, 1, 7); crown.translate(0, .5, 0);
  function refreshTrees() {

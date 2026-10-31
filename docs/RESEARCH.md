@@ -11236,3 +11236,14 @@ and a little cheaper for carrying no houses or props. The first PNW reading
 was 1.50 against 1.20: the frozen trees had lost the generated forest's
 `stand` and `under` marks, which the lower tiers thin by (vegetation.js
 `understory`); with the marks carried in the stored role, the gap went.
+
+**Shaping in real time** (the builder's editor, a frozen nine, RTX 4090): a
+brush dab -- the model's change plus the view's redraw of the ground it
+reached, a 12 m brush on 1 m land -- 3.8-4.0 ms at the median, 7.8-8.9 ms at
+worst; the frames around it stay at the display's 16.4 ms. **A shaped hill in
+the game**: 9 m over 12 m, it played 0.41 m low on its top (the game's mesh is
+3 m apart off the greens, tees and sand) until a built world refined cells
+whose middle misses the land by more than 6 cm (PLACED); then 28.06 m in both.
+Refining every cell by that rule made a frozen Mountain worse (99th
+percentile 1.1 -> 14.5 cm, worst 1.35 m), so on a taken-over course it
+applies only where the land was shaped.

@@ -21,7 +21,7 @@
 import {GROUND_KINDS} from '../grounds.js';
 import {maskRings, simplify} from '../contour.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
-import {TREE_STRIDE} from '../course-doc.js';
+import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
@@ -70,10 +70,13 @@ export function createEditor(doc) {
  const original = {land: Float32Array.from(doc.land.heights), patches: patches.map(p => Float32Array.from(p.heights))};
  const state = {
   doc, raster: r, land, patches, ex, ez,
-  holes: structuredClone(doc.holes), water: structuredClone(doc.water || []),
+  holes: structuredClone(doc.holes), water: structuredClone(doc.water || []), creeks: structuredClone(doc.creeks || []),
   trees: Array.from({length: doc.trees.length / TREE_STRIDE}, (_, i) => Array.from(doc.trees.subarray(i * TREE_STRIDE, (i + 1) * TREE_STRIDE))),
   landscape: doc.landscape, name: doc.name,
   surfacesEdited: false, changed: false, undo: [], redo: [],
+  // Where the land has been shaped, merged into boxes: the game refines its
+  // mesh to the land there (built-world.js), so a hill plays as drawn.
+  landEdits: [...(doc.landEdits || [])],
  };
  let sample = landSampler({land, patches});
  const resample = () => { sample = landSampler({land, patches}); };
@@ -96,19 +99,20 @@ export function createEditor(doc) {
    const [i0, i1, j0, j1] = cellBox(x0, x1, z0, z1), rows = [];
    for (let j = j0; j <= j1; j++) rows.push(r.codes.slice(j * r.nx + i0, j * r.nx + i1 + 1));
    step.cells = {i0, i1, j0, j1, rows}; step.surfacesEdited = state.surfacesEdited;
-  } else step.snapshot = structuredClone({holes: state.holes, water: state.water, trees: state.trees, landscape: state.landscape});
+  } else step.snapshot = records();
   state.undo.push(step); state.redo.length = 0;
   if (state.undo.length > 200) state.undo.shift();
   state.changed = true;
   return step;
  };
+ const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, landscape: state.landscape});
  const cellBox = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)),
   Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
  // Swaps a step's stored state with the present (undo and redo are the same act).
  const swap = step => {
   if (step.parts) { for (const p of step.parts) p.rows = p.rows.map((row, k) => { const at = (p.j0 + k) * p.g.nx + p.i0, now = p.g.heights.slice(at, at + row.length); p.g.heights.set(row, at); return now; }); resample(); }
   if (step.cells) { const c = step.cells; c.rows = c.rows.map((row, k) => { const at = (c.j0 + k) * r.nx + c.i0, now = r.codes.slice(at, at + row.length); r.codes.set(row, at); return now; }); const was = state.surfacesEdited; state.surfacesEdited = step.surfacesEdited; step.surfacesEdited = was; }
-  if (step.snapshot) { const now = structuredClone({holes: state.holes, water: state.water, trees: state.trees, landscape: state.landscape}); Object.assign(state, step.snapshot); step.snapshot = now; }
+  if (step.snapshot) { const now = records(); Object.assign(state, step.snapshot); step.snapshot = now; }
   return step;
  };
 
@@ -129,6 +133,7 @@ export function createEditor(doc) {
     : [x - radius, x + radius, z - radius, z + radius];
    if (!group?.step) { const st = remember('land', ...box); if (group) group.step = st; }
    else extendLand(group.step, box);
+   noteEdit(box);
    const target = op === 'flatten' ? (level ?? sample(x, z)) : null;
    for (const [g, i0, i1, j0, j1] of gridsIn(...box)) {
     const cz = g.cellZ ?? g.cell, h = g.heights, orig = g === land ? original.land : original.patches[patches.indexOf(g)];
@@ -200,6 +205,69 @@ export function createEditor(doc) {
   },
   setLandscape(key) { remember('records', 0, 0, 0, 0); state.landscape = key; },
 
+  // A BUNKER DUG at a click: sand painted in a disc and the ground lowered
+  // under it, deepest at the middle with a lip at the edge -- one undo.
+  digBunker({x, z, radius = 5, depth = .6}) {
+   const box = [x - radius - 1, x + radius + 1, z - radius - 1, z + radius + 1];
+   const st = remember('land', ...box), pt = remember('paint', ...box); state.undo.pop(); st.cells = pt.cells; st.surfacesEdited = state.surfacesEdited;
+   state.surfacesEdited = true; noteEdit(box);
+   for (const [g, i0, i1, j0, j1] of gridsIn(...box)) {
+    const cz = g.cellZ ?? g.cell;
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+     const d = Math.hypot(g.x0 + i * g.cell - x, g.z0 + j * cz - z) / radius;
+     if (d < 1) g.heights[j * g.nx + i] -= depth * (1 - d * d * d * d);
+    }
+   }
+   resample();
+   const [i0, i1, j0, j1] = cellBox(...box);
+   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (Math.hypot(r.x0 + (i + .5) * r.cell - x, r.z0 + (j + .5) * r.cell - z) <= radius) r.codes[j * r.nx + i] = CODE.sand;
+   return box;
+  },
+
+  // A CREEK DRAWN as a line from its head to its foot: stations every 2 m,
+  // the water's level never rising downstream and kept under the ground, the
+  // channel cut into the land under it (a parabola across, the bank graded
+  // out over 3 m) -- the same station record a generated creek has
+  // (streams.js), so the game's channel code draws and plays it. One undo.
+  addCreek({points, width = 3, depth = .7}) {
+   if (points.length < 2) throw Error('A creek needs two points.');
+   // Water runs downhill: a creek drawn from its foot is turned round, or its
+   // level, kept from the top, would cut an ever deeper trench up the slope.
+   if (sample(...points.at(-1)) > sample(...points[0])) points = [...points].reverse();
+   const st = [];
+   for (let k = 1; k < points.length; k++) {
+    const [ax, az] = points[k - 1], [bx, bz] = points[k], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2));
+    for (let t = k === 1 ? 0 : 1; t <= n; t++) st.push([ax + (bx - ax) * t / n, az + (bz - az) * t / n]);
+   }
+   let level = Infinity;
+   const stations = st.map(([x, z], i) => {
+    level = Math.min(level, sample(x, z) - .4);
+    const [px, pz] = st[Math.max(0, i - 1)], [qx, qz] = st[Math.min(st.length - 1, i + 1)], len = Math.hypot(qx - px, qz - pz) || 1;
+    return {x, z, width, level, depth, nx: -(qz - pz) / len, nz: (qx - px) / len, miter: 1, bank: 14 + width * .6};
+   });
+   const xs = st.map(p => p[0]), zs = st.map(p => p[1]), reach = width / 2 + 4;
+   const box = [Math.min(...xs) - reach, Math.max(...xs) + reach, Math.min(...zs) - reach, Math.max(...zs) + reach];
+   const step = remember('land', ...box); step.snapshot = records(); noteEdit(box);
+   for (const [g, i0, i1, j0, j1] of gridsIn(...box)) {
+    const cz = g.cellZ ?? g.cell;
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+     const px = g.x0 + i * g.cell, pz = g.z0 + j * cz;
+     let best = null;
+     for (let k = 1; k < stations.length; k++) {
+      const a = stations[k - 1], b = stations[k], dx = b.x - a.x, dz = b.z - a.z, u = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      const d = Math.hypot(px - a.x - dx * u, pz - a.z - dz * u);
+      if (!best || d < best.d) best = {d, level: a.level + (b.level - a.level) * u};
+     }
+     if (best.d > reach) continue;
+     const half = width / 2, bed = best.d < half ? best.level - depth * (1 - (best.d / half) ** 2) : best.level + (best.d - half) * .5;
+     const k = j * g.nx + i; if (bed < g.heights[k]) g.heights[k] = bed;
+    }
+   }
+   resample();
+   state.creeks.push({kind: 'creek', points: stations.map(p => CREEK_FIELDS.map(f => p[f]))});
+   return box;
+  },
+
   undo() { const s = state.undo.pop(); if (!s) return null; state.redo.push(swap(s)); return s; },
   redo() { const s = state.redo.pop(); if (!s) return null; state.undo.push(swap(s)); return s; },
 
@@ -238,9 +306,17 @@ export function createEditor(doc) {
    const trees = new Float32Array(state.trees.length * TREE_STRIDE);
    state.trees.forEach((t, i) => trees.set(t, i * TREE_STRIDE));
    return {...doc, name: state.name, landscape: state.landscape, land: {...land, heights: Float32Array.from(land.heights)}, patches: patches.map(p => ({...p, heights: Float32Array.from(p.heights)})),
-    surfaces, water, holes: structuredClone(state.holes), trees};
+    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, landEdits: state.landEdits.map(b => [...b])};
   },
  };
+ // A shaped box joins the one it overlaps, else is added; past 400 boxes the
+ // two nearest are merged, so a long afternoon's shaping stays a short list.
+ function noteEdit([x0, x1, z0, z1]) {
+  const e = state.landEdits, hit = e.find(b => x0 <= b[1] + 2 && x1 >= b[0] - 2 && z0 <= b[3] + 2 && z1 >= b[2] - 2);
+  if (hit) { hit[0] = Math.min(hit[0], x0); hit[1] = Math.max(hit[1], x1); hit[2] = Math.min(hit[2], z0); hit[3] = Math.max(hit[3], z1); }
+  else e.push([x0, x1, z0, z1]);
+  while (e.length > 400) { const b = e.pop(); const a = e.at(-1); a[0] = Math.min(a[0], b[0]); a[1] = Math.max(a[1], b[1]); a[2] = Math.min(a[2], b[2]); a[3] = Math.max(a[3], b[3]); }
+ }
  // A drag is one undo: its box grows, and the grids' rows it now reaches are
  // remembered as they were before the drag touched them.
  function extendLand(step, box) {

@@ -35,9 +35,12 @@ check.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
-- [ ] **Stages 4-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stages
-  0-3 are built: the page and file format, the game playing a built file,
-  pins per round, door 1 and the editor's first tools.
+- [ ] **Stages 6-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stages
+  0-5 are built: the page and file format, the game playing a built file,
+  pins per round, door 1, real-time shaping, the editor's tools, checks and a
+  test round.
+- [ ] **The editor cannot move or delete a pond or creek once drawn** (only
+  Undo), add or remove holes, or stamp a green's contours beyond the brush.
 - [ ] **The owner plays the builder and a built course** at the end of the
   goal: the builder's doors and editor, a Worthington round in the game.
   Nothing in the builder has been played by a person.

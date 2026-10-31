@@ -58,6 +58,9 @@ export const BUILT_CHANNELS = ['sand', 'green', 'fairway', 'tee', 'water', 'semi
 export const BUILT_GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, pinestraw: 6, litter: 7, heather: 8, native: 9, path: 10};
 const GROUND_OF_CODE = Object.fromEntries(Object.entries(BUILT_GROUND_CODE).map(([k, c]) => [c, k]));
 export const GRID_MARGIN = 150;
+// How far the coarse ground mesh may miss the stored land in a cell before
+// the cell is refined (PLACED: 6 cm, a little over a ball's diameter).
+export const REFINE_ERROR = .06;
 
 // ---------------------------------------------------------------- the land
 export function gridSampler(g) {
@@ -345,7 +348,19 @@ export function worldFromDoc(doc, settings = {}) {
  // stations, so the lie, the ground shader's banks and the drawn water are
  // the generator's (streams.js, the owner atlas's stream channel).
  const streams = builtStreams(doc.creeks || []);
- const refineAll = (x, z, ...c) => refine(x, z, ...c) || (streams.at(x, z)?.edge ?? 99) < 3;
+ // AND WHEREVER THE COARSE MESH WOULD MISS THE LAND: a cell whose middle
+ // stands more than REFINE_ERROR off the plane of its corners is refined, so
+ // a hill shaped by hand (or real ground from LIDAR) is what the ball meets.
+ // The generator refines by feature, because its land is smooth between them;
+ // a built course's land need not be. (The first shaped hill, 9 m tall over
+ // 12 m, played 0.41 m low on its top without this.) NOT on land frozen from
+ // the generator outside what was shaped: there the stored land IS the
+ // generator's coarse triangles, and refining a cell across a crag's crease
+ // swapped those triangles for a smoother surface less like them (a frozen
+ // Mountain's 99th percentile went from 1.1 cm to 14.5).
+ const shaped = doc.source?.kind === 'generated' ? (x, z) => (doc.landEdits || []).some(([x0, x1, z0, z1]) => x >= x0 - 3 && x <= x1 + 3 && z >= z0 - 3 && z <= z1 + 3) : () => true;
+ const refineAll = (x, z, a, b, c, d) => refine(x, z) || (streams.at(x, z)?.edge ?? 99) < 3
+  || (a !== undefined && shaped(x, z) && Math.abs(sample(x, z) - (a + b + c + d) / 4) > REFINE_ERROR);
  const groundGrid = makeGroundGrid(sample, ex, ez, 3, refineAll);
  const height = (x, z) => groundHeight(groundGrid, x, z, sample);
  const seaLevel = doc.sea?.level ?? -Infinity;

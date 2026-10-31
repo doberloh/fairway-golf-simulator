@@ -23,6 +23,8 @@
 //    holes: [{number, par, index, tees: [{x, z, set}], green: {x, z}, line: [[x, z], ...]}],
 //    trees: Float32Array, TREE_STRIDE numbers a tree (TREE_FIELDS), treeKinds: [name],
 //    fringe, semiRough: metres (null: the defaults), sea: {level} | null (a coast),
+//    landEdits: [[x0, x1, z0, z1]] where the land was shaped by hand (built-world.js
+//      refines its mesh to the land there; on land from LIDAR, everywhere),
 //    credits: [string], source: {}, from: {seed, settings, generator} | null,
 //    picture: data URL | null}
 //
@@ -159,6 +161,7 @@ export function validateDoc(doc) {
   patches, surfaces, water, creeks, holes, trees,
   fringe: Number.isFinite(doc.fringe) ? Math.max(0, Math.min(6, doc.fringe)) : null, semiRough: Number.isFinite(doc.semiRough) ? Math.max(0, Math.min(20, doc.semiRough)) : null,
   sea: Number.isFinite(doc.sea?.level) ? {level: doc.sea.level} : null,
+  landEdits: (Array.isArray(doc.landEdits) ? doc.landEdits : []).filter(b => Array.isArray(b) && b.length === 4 && b.every(Number.isFinite)).slice(0, 2000).map(b => b.map(v => Math.round(v * 10) / 10)),
   treeKinds: (doc.treeKinds || []).map(String).slice(0, 200),
   credits: (doc.credits || []).map(String).slice(0, 20), source: doc.source && typeof doc.source === 'object' ? doc.source : {},
   from: doc.from ?? null, picture: typeof doc.picture === 'string' ? doc.picture : null, builtVersion: doc.builtVersion ?? null};
@@ -173,7 +176,7 @@ export async function writeBuiltFile(doc, builtVersion) {
  let at = 0;
  const patches = patchParts.map(({p, g}) => { patchBytes.set(g.bytes, at); const r = {x0: p.x0, z0: p.z0, cell: p.cell, nx: p.nx, nz: p.nz, base: g.base, step: g.step, offset: at}; at += g.bytes.length; return r; });
  const json = {kind: FILE_KIND, version: BUILT_FILE_VERSION, type: 'built', builtVersion, name: d.name, landscape: d.landscape, designer: d.designer,
-  halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
+  halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, landEdits: d.landEdits, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
   patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds,
   credits: d.credits, source: d.source, from: d.from, picture: d.picture};
  return writeZip([
