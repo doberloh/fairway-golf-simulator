@@ -1242,10 +1242,10 @@ final mower, walkers and spectators. Then the other four (people,
 clubhouses, water, story) the same way, also byte-identical: all six sheets
 are from the final models. The "final" halves of the first-and-final pairs
 recaptured on this build (`arch-ff18a`, `arch-ff18b`, Midwest WW-1,
-Medium): the fountain and the gallery replaced; the mower kept from the
-review, since the view is a fixed camera on a moving mower and this run
-caught it far off in shade -- the model byte-identical, so the kept
-picture is what the game draws.
+Medium): the fountain and the gallery replaced; the mower on a second
+run (`arch-ff18c`) -- the view follows the moving mower by the clock, and
+the first run caught it far off in shade. Every "final" picture is from
+this build.
 
 ### Frame time on Low, every landscape: met (30 October 2026, the last measure)
 
@@ -1398,7 +1398,7 @@ read `nvidia-smi` first; no crash, hang or driver error in any:
 | 31 Oct, phase 3 finished | profile `--only architect` (six cases, Low) | 3%, 39 °C | 1.5 minutes, no errors; *Frame time on Low after the surface field* |
 | 31 Oct, phase 3 finished | smoke, all journeys | 3% | 41 of 41 |
 | 31 Oct, phase 3 finished | profile `--only architect --landscapes all` (twenty cases, Low) | 3%, 37 °C | 3.4 minutes, no errors |
-| 31 Oct, phase 3 finished | captures `arch-ff18a`, `arch-ff18b` (first-and-final, recaptured) | 4-7%, 37 °C | no errors |
+| 31 Oct, phase 3 finished | captures `arch-ff18a`, `arch-ff18b`, `arch-ff18c` (first-and-final, recaptured) | 4-7%, 37 °C | no errors |
 | 31 Oct, phase 3 finished | captures `arch-hero18` (ten landscapes, four runs), `arch-tpl18a`-`d` (the showcase refresh); profile `--only architect --arch-tier ultra` (the owner's question) | 3-7%, 38-40 °C | no errors |
 | review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
