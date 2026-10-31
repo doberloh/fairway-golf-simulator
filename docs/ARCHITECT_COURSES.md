@@ -275,11 +275,15 @@ bridges, markings, clubhouses, mounds, pond edges; the fountain moving
 the Dell, the Alps as a hill, the Barranca, the Pit, the Redan, the Cape;
 the new people, crowd and mower; tournament week with the live board; the
 hand tools driven in the studio (Aim, Add, Grow, saved) and their shapes on
-the ground; the studio's yardage book downloaded. **Not seen by anyone**:
+the ground; the studio's yardage book downloaded; **a round played on an
+Architect Championship course** (smoke journey `architect-tournament`:
+from Saved courses, hole 1 played and holed out) **with the scoreboard
+following it** -- before a shot the golfer on the board at "-", after the
+hole-out "E, thru 1", the same score as the golfer's chip in the top bar. **Not seen by anyone**:
 anything played by a person; the walkers' bob and the animals in motion
 (stills only); a ball against a wall, a stand or a bridge deck in a round
-(Node tests only); the scoreboard following a played round; a round on
-hand-shaped ground.
+(Node tests only); a round played by a person (the journey's round is
+scripted); a round on hand-shaped ground.
 
 ## The owner's decisions (the goal text, 30 October 2026)
 
@@ -973,6 +977,21 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
 PNW -- the hand tools' lobes (hand-tools.js) had none. Each now has its
 reason; a test holds it (tests/hand-tools.test.mjs). Only the reasons moved:
 both fingerprints silent, no version.
+
+### Every kit at once, on Low (30 October 2026)
+
+The same tool, `--arch-tier low --arch-course
+'{"archClub":"championship","pinDay":"Sunday","archStory":"lots"}'`: the
+farm, ruins, landmark, walls, stands, scoreboard and towers all present
+(Low draws no crowd, animals or markings). Mean processor ms, median
+graphics ms, Classic / Architect:
+
+| | CPU | GPU |
+| --- | --- | --- |
+| Midwest | 0.708 / 0.694 (-2.0%) | 1.00 / 0.74 (-25.3%) |
+| Links | 0.635 / 0.603 (-5.0%) | 1.01 / 0.82 (-18.3%) |
+| Haunted | 1.261 / 1.135 (-10.0%) | 1.51 / 1.40 (-7.5%) |
+| Autumn | 0.869 / 0.710 (-18.3%) | 1.18 / 0.73 (-37.8%) |
 
 ### The crowd's cost, Medium and High (30 October 2026)
 

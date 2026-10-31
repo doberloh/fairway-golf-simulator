@@ -92,8 +92,8 @@ quality measures*, which it absorbs.
   by age, a path bridging a barranca. Driven by the smoke journey: the
   dials' sentences and the studio's yardage book. Not seen at all: the paths
   on the map, the walkers' bob in
-  motion, the scoreboard following a played round (seen at a round's start
-  and set by hand). To check: the owner's own courses -- Links ST-1 (Links style,
+  motion. (The scoreboard following a played round is now driven by the
+  smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
   Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
 - [ ] **Not yet played by a person: the hand tools.** Driven by the smoke
   journey (Aim, Add, Grow, saved) and seen in GPU captures (a hand bunker, a

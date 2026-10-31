@@ -2269,6 +2269,9 @@ export class GolfView{
   this.pendingBoard=board;
   const B=this.board;if(!B)return;
   const said=JSON.stringify(board);if(said===B.said)return;B.said=said;
+  // What the board says, on the page too (the smoke journey
+  // `architect-tournament` reads it: the texture cannot be read back).
+  if(this.canvas?.dataset)this.canvas.dataset.leaderboard=said;
   const c=B.canvas.getContext('2d'),W=B.canvas.width,H=B.canvas.height;
   c.fillStyle='#f8f8f4';c.fillRect(0,0,W,H);
   c.fillStyle='#1f5a3a';c.fillRect(0,0,W,46);
