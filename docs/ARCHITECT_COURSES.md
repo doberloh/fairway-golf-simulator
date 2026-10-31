@@ -1232,8 +1232,14 @@ Classic seed's trees move, a GENERATOR_VERSION bump, and the goal's
 hero holes and the six named holes recaptured (`arch-hero18`,
 `arch-tpl18a`-`d`; the views and seeds as before), the ten course codes
 re-exported with the new stamp and checked to import back as Architect.
-The kits, the first-and-final pairs and the Classic halves of the pairs
-are unchanged code and kept.
+The Classic halves of the pairs and the first-and-final pairs (pictures of
+earlier tries, by their nature) are kept. Of the kits' contact sheets, life
+and occasion predated the review's last model commit, so both were
+re-rendered in Blender (`run.mjs architect_life --render`, then
+`architect_occasion`; card 1%, one at a time, closed after): each rebuilt
+its models byte-identical to the committed ones, and the sheets show the
+final mower, walkers and spectators. The other four sheets postdate their
+kits' last change.
 
 ### Frame time on Low, every landscape: met (30 October 2026, the last measure)
 
