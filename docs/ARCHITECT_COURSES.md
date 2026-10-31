@@ -1236,7 +1236,8 @@ ms and median graphics ms:
 
 The goal's limit is for Low (no crowd drawn there); a tournament Sunday costs
 PNW 12.5% more processor time on Medium than its Classic course, and nothing
-like that anywhere else measured. Not acted on.
+like that anywhere else measured. Not acted on: the owner, 31 October 2026,
+"crowd cost is fine".
 
 ### The bench at the end of the goal (30 October 2026, ARCHITECT_VERSION 14)
 
@@ -1538,7 +1539,7 @@ of each table.
 | 3 | game (`arch-p2c`, Midwest, Parkland): pond stakes, the first 150-yd post, the first rake | stakes read clearly round a pond from its bank; in shade the red went maroon, so the game's red is brighter (#e64a34) | the white 150 band vanished on a white post: the body is dark green in the game, as many clubs paint them, so every band reads | the yellow head reads, but at true size it is nothing from a fairway: drawn a third larger (2.3 m), handle 3 cm |
 | 4 | sheet | a steeper cap (its lit face catches the eye) | the band deeper (10 -> 14 cm) and proud of the post | twelve stouter teeth |
 | 5 | game (`arch-p2d`, Links) | -- | dark green with its white band reads well in fescue | seen end-on: the camera and the rake both lay along the line out of the sand |
-| 6 | game (`arch-p2e`, Desert) | stakes and posts take the furniture's ink, instanced: crisp cartoon stakes round a desert pond | inked | laid along the bunker's edge (markings.js), a dark grip; side-on it was **a stub**: the ingest's int16 box (two model heights) wrapped a model 27 heights long. Found and fixed with a per-model scale, `q`, for the Architect's families (build-meshes.mjs `OWN_SCALE`); eleven shipped models wrap the same way (TODO, *Eleven models wrap*) |
+| 6 | game (`arch-p2e`, Desert) | stakes and posts take the furniture's ink, instanced: crisp cartoon stakes round a desert pond | inked | laid along the bunker's edge (markings.js), a dark grip; side-on it was **a stub**: the ingest's int16 box (two model heights) wrapped a model 27 heights long. Found and fixed with a per-model scale, `q`, for the Architect's families (build-meshes.mjs `OWN_SCALE`); eleven shipped models wrapped the same way (TODO, *Eleven models wrap*; since 31 October every family has the scale and they are whole) |
 | 7 | game (`arch-p2f`, Desert) | -- | inked, reads on mown ground | full length at last, a yellow toothed head: reads as a rake beside the sand; the handle read as a dark stick |
 | 8 | sheet | -- | -- | the handle lighter timber (#a9845a) and thinner (2.6 cm) |
 | 9 | game (`arch-p2g`, Haunted Hollow) | red stakes along a creek's banks read against the purple | -- | reads clearly on the purple rough |

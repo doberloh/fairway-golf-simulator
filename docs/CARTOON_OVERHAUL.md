@@ -1306,6 +1306,7 @@ Pictures: `rounds/course-r1.png` .. `rounds/course-r3.png`; in the game
 | 6 | Still a burnt patch on Links | The hue at three-quarters where it blooms: a textured mauve heath. Not yet a heath: flat paint cannot give it volume; low heather clumps in the near field are the next round. One patch on Links ends in a straight soft edge, unexplained |
 
 | 7 | Flat paint has no volume | Near the camera (the 48 m ring of grass tiles) heather grows low cushions of the heather model, three in ten of the tiles' candidates, 30-55 cm: blooming purple on Links, dark brown with dusty flecks on Haunted's moor (vegetation.js; decoration, as the forest floor) |
+| 8 | (the owner, after the merge, 31 October 2026) "the purple bushes fade out completely leaving just weird looking purple ground": past the tiles' 48 m nothing stood on a heath | Low domes in the cushions' colours, growing in over 28-48 m as the cushions shrink and sinking at the tier's long-grass reach (vegetation.js addFarHeath; RESEARCH *Heather's paint*, round 8). Not yet captured |
 
 Pictures: in the game `heather-r4/` .. `heather-r7/` (Links, Haunted; view `h1-heath`).
 

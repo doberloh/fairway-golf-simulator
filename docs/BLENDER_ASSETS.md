@@ -415,11 +415,14 @@ iteration is logged in ARCHITECT_COURSES.md, *Blender iteration log*.
 
 **A model longer than two of its own heights** -- a rake lying on the grass
 -- does not fit the ingest's int16 box (positions are stored at 16384 a
-model height, two heights each way) and wraps round to the far side. The
-Architect's families carry their own scale, `q`, written beside the model
-and read by mesh-assets.js (`OWN_SCALE` in build-meshes.mjs). Eleven models
-shipped before this wrap the same way and are left as they are, for the
-owner (TODO, *Eleven models wrap in the ingest*). **A pack script must not
+model height, two heights each way) and wraps round to the far side. Such
+a model carries its own scale, `q`, written beside it and read by
+mesh-assets.js (build-meshes.mjs). At first only the Architect's families had
+it; since 31 October 2026 every family does (the owner), which unwrapped
+eleven models drawn folded since they were ingested: Tussock_1 and _2 (q
+12248, 11202), Log_1 to _3 (13645, 15347, 11307), Sorrel_1 (11162),
+LakeDuneGrass_3 (16335), LakeJuniper_1 and _2 (6789, 5541), LakeDriftwood_1
+and _2 (6673, 8727). A model that fits keeps 16384 and its bytes. **A pack script must not
 import another pack's script**: importing runs that script's own export, into
 this pack's folder (architect_people copies cartoon_course.py's `block`).
 
@@ -445,7 +448,7 @@ a two-storey farmhouse with a porch (Midwest), an open hipped pavilion
 (Autumn), a crooked manor with a turret (Haunted Hollow) and a shingled house
 with dormers (Lakeshore Dunes); each with fascia and ridge trim, a flag by
 the door. Built round a 26 x 16 m footprint, front at -Y; ingested as the
-`clubhouse` family with its own scale (`OWN_SCALE`); renderer.js
+`clubhouse` family with its own scale (`q`); renderer.js
 `addBuildings` fits each to its building's box and inks it, coloured per
 landscape (walls, roof, trim, glass -- Haunted Hollow's windows lit), and
 draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
@@ -519,7 +522,7 @@ m, angular), a **tie wall** section (2.4 m of ten ties, 0.9 m tall, a waler on
 its +X face, which turns to the water). The **fountain** was a model here
 (4.0 m, nine iterations) until the owner's review asked for it to move; the
 renderer now draws its water (src/fountain.js). Ingested as the `waterworks` family
-with its own scale (`OWN_SCALE`: the tie wall is 2.7 heights long);
+with its own scale (`q`: the tie wall is 2.7 heights long);
 renderer.js `addWaterworks` draws them instanced. **The tube helper draws one
 ring a radius** (`add_tube`): give it a radius for every point, or the tube
 stops after the first stretch -- the old fountain's streams were invisible

@@ -10212,6 +10212,28 @@ whose blue is not over its green) takes no bloom.
 
 Round 7 (heather near the camera): on heather ground the near-field tiles draw the heather model (Blender_Heather_1) for three in ten of their candidates, 0.30-0.55 m tall, leaf #5a5a3c and bloom #a86aa8 (Haunted #4a403c and #6c5862) -- PLACED; fading with the tiles between 28 and 48 m.
 
+Round 8, the far heath (31 October 2026; the owner, Links: "the purple bushes
+fade out completely leaving just weird looking purple ground"). Past the
+tiles a heath was paint alone. vegetation.js addFarHeath: one dome a 2.6 m
+square of heather, jittered (one a 4.4 m square on Low, grass share .35), a
+half-sphere of 40 triangles (eight segments round), 1.7 times as wide as high, 0.30
+-0.55 m high, sunk 12% of its height; coloured leaf-to-bloom at 25-75% (the
+near cushions' own pair), lightness +-4%. It grows in over 28-48 m from the
+camera as the cushions shrink away, and sinks over the last 40% of the
+tier's long-grass reach, culled in squares beyond it. A course with more
+heath than 30,000 domes would cover is spaced out to that many: Haunted
+Hollow's moor (a fifth of HAU-9's 246 ha) 67,000 -> 29,400. All PLACED.
+Measured on the processor: DUNE-7 (Links eighteen, 12 ha of heather, 3.8%)
+17,800 domes; at most 503 in reach of a tee on Medium (20,000 triangles),
+1,247 on Ultra (50,000), 144 on Low (6,000); HAU-9 at most 796 on Medium
+(32,000), 3,002 on Ultra (120,000). Build time, median of five: DUNE-7 59 ms
+Low, 183 ms Medium; ST-1 (nine) 14 and 43 ms; HAU-9 136 and 143 ms. Placing
+it read the full surface at every 2.6 m first: 1.0 s on Links; then a 16 m
+coarse pass with a ring round each hit, 0.4 s, a fifth of the property
+scanned for 4% heather; now the baked field (heather only where its channel
+reads half or more) is read first and the surface asked only there. The
+frame cost on a graphics card is not measured.
+
 ## The overhaul's wildflowers (26 October 2026)
 
 The rough's flowers (vegetation.js addGroundCover; Midwest, Mountain, Links

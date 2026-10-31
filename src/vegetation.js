@@ -8,6 +8,7 @@ import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
 import {plantPose} from './tree-seat.js';
 import {allows} from './grounds.js';
+import {wildAt} from './landforms.js';
 import {launchCorridors,blocksLaunch,BEACH_RISE,teePad,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND} from './course.js';
 import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
@@ -383,6 +384,7 @@ export function addVegetation(view){
  addDeadfall(view);
  addDriftwood(view);
  addLongGrass(view);
+ addFarHeath(view);
  addFarWoods(view);
  addGroundCover(view);
  addNearbyGrass(view);
@@ -691,6 +693,78 @@ function addLongGrass(view){
  instanceModels(group,entries,materialFor,({mesh})=>{mesh.castShadow=false;if(reach)mesh.userData.cullReach=reach;});
 }
 
+// THE HEATHER'S COLOURS: a cushion's leaf and its bloom, purple where the
+// landscape's heather blooms, grey-brown on a dead moor. The near cushions
+// (addNearbyGrass) and the far heath (addFarHeath) both paint with them, so
+// one turns into the other without a change of colour.
+const heathColours=biome=>biome==='haunted'?{leaf:'#4a403c',accent:'#6c5862'}:{leaf:'#5a5a3c',accent:'#a86aa8'};
+const hasHeath=w=>!!(w.holes.length&&Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather'));
+// THE HEATH PAST THE NEAR TILES (the owner, 31 October 2026, Links: "the
+// purple bushes fade out completely leaving just weird looking purple
+// ground"). The heather's cushions are near-field decoration, shrinking away
+// between 28 and 48 m with the grass tiles, and nothing stood on heather past
+// them -- the long grass grows only where grass may, and heather allows none
+// -- so beyond 48 m a heath was flat purple paint, which the overhaul had
+// already found cannot give it volume (CARTOON_OVERHAUL.md, *Heather*, round
+// 6). Here each cushion far off is a low dome in the cushion's own colours,
+// as a far wood is a dome for its trees: growing in where the near cushions
+// shrink away, and sinking out at the tier's long-grass reach, where the
+// squares stop (instance-cull.js `cullReach`). Decoration only, from its own
+// stream: nothing collides with it and no ground moves. A dome is 40
+// triangles against the cushion model's 2,400. Placed one a `spacing` square,
+// jittered, wherever the ground is heather. PLACED: the spacing, sizes, bloom
+// share and cross-fade.
+const FAR_HEATH={spacing:2.6,most:30000,near:[28,48]};
+export function addFarHeath(view){
+ const {world}=view,reach=view.quality?.longGrassReach??0;
+ if(!hasHeath(world)||reach<=FAR_HEATH.near[1])return;
+ const rng=random(world.seed+':farheath'),dummy=new T.Object3D(),c=new T.Color();
+ const {leaf,accent}=heathColours(world.settings.biome),leafC=new T.Color(leaf),accentC=new T.Color(accent);
+ // Heather is only ever where its channel of the baked field reads half or
+ // more (landforms.js wildGround), and that read is a few array lookups; the
+ // whole surface question, about 3 microseconds, is asked only there.
+ const channel=Object.keys(world.landform.kinds).find(k=>world.landform.kinds[k]==='heather');
+ const field=(x,z)=>Math.abs(x)<world.wild.ex&&Math.abs(z)<world.wild.ez&&wildAt(world.wild,channel,x,z)>=.5;
+ // Thinner on a tier with less grass, as the long grass is; and on a course
+ // with more heath than `most` domes would cover at `spacing` (Haunted
+ // Hollow's moor, a fifth of the property: 67,000 domes added a third of a
+ // second to Medium's wait), spaced out to that many -- the heath counted
+ // every six steps. (Counted from the field alone it read two to three times
+ // the heath, the field running on into the corridors' gates, and thinned
+ // Links' too.)
+ let step=FAR_HEATH.spacing/Math.sqrt(Math.min(1,view.quality?.grass??1)),seen=0;
+ for(let x=-world.halfX;x<world.halfX;x+=step*6)for(let z=-world.halfZ;z<world.halfZ;z+=step*6)if(field(x,z)&&world.surface(x,z)==='heather')seen+=36;
+ if(seen>FAR_HEATH.most)step*=Math.sqrt(seen/FAR_HEATH.most);
+ const matrices=[],colors=[];
+ for(let x0=-world.halfX;x0<world.halfX;x0+=step)for(let z0=-world.halfZ;z0<world.halfZ;z0+=step){
+  const x=x0+rng()*step,z=z0+rng()*step,h=.3+rng()*.25,bloom=rng(),turn=rng(),shade=rng();
+  if(!field(x,z)||world.surface(x,z)!=='heather')continue;
+  dummy.position.set(x,world.height(x,z)-h*.12,z);dummy.rotation.set(0,turn*6.28,0);dummy.scale.set(h*1.7,h,h*1.7);dummy.updateMatrix();
+  matrices.push(dummy.matrix.clone());
+  colors.push(c.copy(leafC).lerp(accentC,.25+bloom*.5).offsetHSL(0,0,(shade-.5)*.08).clone());
+ }
+ if(!matrices.length)return;
+ // A dome: the top of a sphere, eight segments round and two down.
+ const geo=new T.SphereGeometry(1,8,3,0,Math.PI*2,0,Math.PI*.5);
+ const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
+ const [r0,r1]=FAR_HEATH.near,compile=mat.onBeforeCompile,key=mat.customProgramCacheKey;
+ mat.customProgramCacheKey=()=>key.call(mat)+'-farheath'+reach;
+ // Its own projection, written out: no wind here (windMaterial is what writes
+ // the line sinkBeyond and fadeOut patch, so patching that line on a plain
+ // material would change nothing, silently).
+ mat.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`vec4 mvPosition=vec4(transformed,1.0);
+  #ifdef USE_INSTANCING
+   mvPosition=instanceMatrix*mvPosition;
+   float heathD=distance(mvPosition.xz,cameraPosition.xz),heathStand=smoothstep(${r0.toFixed(1)},${r1.toFixed(1)},heathD)*(1.-smoothstep(${(reach*.6).toFixed(1)},${reach.toFixed(1)},heathD));
+   mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*heathStand;
+  #endif
+  mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);};
+ const mesh=new T.InstancedMesh(geo,mat,matrices.length);
+ matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);mesh.setColorAt(i,colors[i]);});
+ mesh.name='Far heath';mesh.castShadow=false;mesh.receiveShadow=true;mesh.userData.cullReach=reach;mesh.computeBoundingSphere();
+ view.group.add(mesh);view.resources?.push(geo);
+}
+
 function addDriftwood(view){
  const {world}=view,per=biomeOf(world.settings.biome).driftwood;
  if(!per||!world.bio.sea)return;
@@ -927,8 +1001,9 @@ function addNearbyGrass(view){
  // in the same tiles and fading with them -- decoration, as the forest floor.
  // Blooming where the landscape's heather is purple, grey-brown on a dead
  // moor. PLACED: the share and the sizes.
- const heathParts=w.holes.length&&biomeOf(w.settings.biome).landform?.kinds&&Object.values(biomeOf(w.settings.biome).landform.kinds).includes('heather')?modelParts(familyModels('heatherbush')[0]??''):null;
- const moor=w.settings.biome==='haunted',heathLeaf=new T.Color(moor?'#4a403c':'#5a5a3c'),heathAccent=new T.Color(moor?'#6c5862':'#a86aa8');
+ // Past the tiles, addFarHeath's domes take over in the same colours.
+ const heathParts=hasHeath(w)?modelParts(familyModels('heatherbush')[0]??''):null;
+ const heathLeaf=new T.Color(heathColours(w.settings.biome).leaf),heathAccent=new T.Color(heathColours(w.settings.biome).accent);
  if(heathParts&&!clumpMat){clumpMat=fadeOut(groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,4,false,true,true,false,true)));view.lazyMaterials?.push(clumpMat);}
  if(heathParts)for(const p of heathParts)standIn(p.geometry,clumpMat);
  const partsTile=(parts,matrices,leaf,accent)=>parts.map(p=>{

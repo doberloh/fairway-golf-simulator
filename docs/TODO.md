@@ -38,6 +38,22 @@ The owner's goal: build the whole local study, phases 0-7; the record is
 *Cart paths*, *Bridges over creeks*, *Scalloped bunker edges* and *Routing
 quality measures*, which it absorbs.
 
+**The play checks below block nothing** (the owner, 31 October 2026): the
+owner plays them as and when, and the branch moves on without waiting.
+
+- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
+  October 2026, the owner's third word on the branch; rendering only, no
+  version moves). Built and tested in Node only -- no capture, no frame
+  measured. To check on Links (an 18-hole course, Medium and Low): from a
+  tee, looking across heather -- past about 48 m the cushions should give way
+  to low purple-and-olive domes rather than flat purple ground, with no ring
+  where one becomes the other, and the domes sinking away at the tier's
+  long-grass reach (Low 90 m, Medium 130 m); Haunted Hollow's moor the same in
+  dark brown, sparser. And the eleven models whole: tussocks and logs
+  (Haunted, Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
+  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
+  triangles in reach of a Links tee on Medium (32,000 on Haunted), against the
+  long grass's millions -- a `profile --only biomes` would settle it.
 - [ ] **Not yet played by a person: the studio's *How the course is made*.**
   Choose Architect (beta): the sliders the architect decides should go, the
   *Architect (beta)* heading with Style, Club, Age and Heritage should
@@ -102,17 +118,6 @@ quality measures*, which it absorbs.
   fairways, the sharpest bend left) and driven by the smoke journeys
   `architect-studio` and `architect-round`. Not seen: the owner's own
   Midwest and Links holes (seeds unknown) -- to check, look at them again.
-- [ ] **`nearest`'s box skip can name the wrong hole past a hole's end**
-  (found 31 October 2026 making the seam fade cheap; PROJECT_HANDOFF *NO SEAM
-  WHERE TWO CORRIDORS MEET*). It skips a hole when the distance to the hole's
-  box, less its widest corridor, is already worse than the best -- but past a
-  tee or green the centre line carries straight on and can leave the box.
-  Compared at every call: Classic Lakeshore HZ-2 3,355 wrong in 1.46 million,
-  none within 60 m of a corridor; Links DUNE-7 27, all within 60 m, by 0.05-0.7
-  m mostly (worst 11 m); Architect PNW 154, none near. Mostly far out in the
-  country, so small; fixing it (the bound `nearestMargin` uses) moves ground --
-  a GENERATOR_VERSION bump. To do: measure what it changes on the ground
-  first.
 - [ ] **Not yet played by a person: the surface field and the turned greens**
   (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
   in GPU captures only: a green turned to its approach from above, the
@@ -123,25 +128,6 @@ quality measures*, which it absorbs.
   Lakeshore (the capture view landed on a path). To check: put more than
   twelve bunkers on a hole in the studio, play into the last ones; play a
   dogleg's approach to its turned green.
-- [ ] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
-  than its Classic course (ARCHITECT_COURSES.md, *The crowd's cost*); every
-  other case measured is within 4% or cheaper. Low draws no crowd. The
-  owner's call whether Medium should thin the crowd.
-- [ ] **Eleven models wrap in the ingest -- the owner's call whether to fix.**
-  Found 30 October 2026 building the Architect rake. `tools/build-meshes.mjs`
-  stores positions as int16 in a box two model-heights each way; a model
-  wider than that wraps round to the other side. Eleven shipped models do:
-  Blender_Tussock_1 and _2 (2.7 and 2.9 heights out), Blender_Log_1 to _3
-  (2.1-2.9), Blender_Sorrel_1 (2.9), Blender_LakeDuneGrass_3 (2.0),
-  Blender_LakeJuniper_1 and _2 (4.8 and 5.9) and Blender_LakeDriftwood_1 and
-  _2 (4.9 and 3.8) -- their outermost parts have been drawn folded back
-  through the model since they were ingested. The fix is built and used for
-  the Architect's own families: a per-model scale `q` (build-meshes.mjs
-  `OWN_SCALE`, read in mesh-assets.js). Adding those eleven models' families to
-  `OWN_SCALE` fixes them, and changes how they look on every course, Classic
-  included -- so it waits for the owner (the goal gives Classic only its free
-  extras). Rendering only: no fingerprint or version moves.
-
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
 - [x] **The drop bar and the Tools window: three lines low on their own
@@ -1540,6 +1526,34 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Architect courses: the owner's third word (31 October 2026)
+
+- [x] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
+  -- the owner: "crowd cost is fine". Left as measured (ARCHITECT_COURSES.md,
+  *The crowd's cost*).
+- [x] **`nearest`'s box skip can name the wrong hole past a hole's end** --
+  the owner: "this is ok". Left as it is, so no ground moves. What was found:
+  it skips a hole when the distance to the hole's box, less its widest
+  corridor, is already worse than the best, but past a tee or green the
+  centre line carries straight on and can leave the box. Compared at every
+  call: Classic Lakeshore HZ-2 3,355 wrong in 1.46 million, none within 60 m
+  of a corridor; Links DUNE-7 27, all within 60 m, by 0.05-0.7 m mostly
+  (worst 11 m); Architect PNW 154, none near. `nearestMargin` uses the bound
+  that holds (PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*).
+- [x] **Eleven models wrap in the ingest** -- the owner: "back port the
+  models to classic as well". Every model too long for the int16 box now
+  carries its own scale (build-meshes.mjs, `q`), not only the Architect's
+  families: exactly the eleven changed (Tussock_1 and _2, Log_1 to _3,
+  Sorrel_1, LakeDuneGrass_3, LakeJuniper_1 and _2, LakeDriftwood_1 and _2),
+  every other model byte for byte as before. Their outermost parts had been
+  drawn folded back through the model since they were ingested. Not seen in
+  the game (above).
+- [x] **The Links heather's cushions vanish, leaving purple ground** -- the
+  owner: "the purple bushes fade out completely leaving just weird looking
+  purple ground". Past the near tiles' 48 m a heath is now low domes in the
+  cushions' colours to the tier's long-grass reach (vegetation.js
+  addFarHeath; tests/far-heath.test.mjs). Not seen in the game (above).
 
 ## Architect courses: the owner's second review (31 October 2026)
 

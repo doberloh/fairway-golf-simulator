@@ -187,9 +187,8 @@ const PICK = {
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
 
-// Families whose models may carry their own scale (`q`, below).
+// People, whose real height the game keeps (`tall`, below).
 const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `Blender_${k}`));
-const OWN_SCALE = new Set(['coursemarkings', 'clubhouse', 'waterworks', 'storypieces', 'lifeforms', 'occasionpieces']);
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and
@@ -286,12 +285,13 @@ for (const [family, entries] of Object.entries(PICK)) {
   let reach = 0;
   for (const g of byRole.values()) for (let i = 0; i < g.position.length; i += 3)
    reach = Math.max(reach, Math.abs((g.position[i] - cx) / height), Math.abs((g.position[i + 1] - minY) / height), Math.abs((g.position[i + 2] - cz) / height));
-  // ONLY THE ARCHITECT'S FAMILIES, for now. Eleven models already shipped
-  // (tussocks, logs, sorrel, Lakeshore's junipers, dune grass and driftwood)
-  // reach past the box too and have wrapped since they were ingested; giving
-  // them `q` would change how they look on every course, Classic's included,
-  // which is the owner's call (TODO, *Eleven models wrap in the ingest*).
-  const q = reach < 32767 / 16384 || !OWN_SCALE.has(family) ? 16384 : Math.floor(32767 / reach);
+  // EVERY FAMILY, since 31 October 2026 (the owner: "back port the models to
+  // classic"). At first only the Architect's families had it; eleven models
+  // shipped before them (tussocks, logs, sorrel, Lakeshore's junipers, dune
+  // grass and driftwood) reached past the box too and had been drawn with
+  // their outermost parts folded back through the model since they were
+  // ingested.
+  const q = reach < 32767 / 16384 ? 16384 : Math.floor(32767 / reach);
   const parts = [];
   for (const [role, g] of byRole) {
    const count = g.position.length / 3;
