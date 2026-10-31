@@ -34,15 +34,19 @@ function normalise(raw){
  if(!raw||typeof raw.id!=='string'||typeof raw.name!=='string')throw Error('Invalid course record.');
  const schema=Number.isInteger(raw.schema)?raw.schema:1;
  const settings=validateSettings(migrateSettings(raw.settings||{},schema));
- return {id:raw.id,name:validName(raw.name),created:Number(raw.created)||0,generator:Number.isInteger(raw.generator)?raw.generator:0,schema:SCHEMA_VERSION,settings:courseSettings(settings)};
+ // A BUILT course (the course builder) keeps its file's hash beside its
+ // settings; its land is the file's, kept in IndexedDB (built-store.js), and
+ // the hash rides in its settings so a round started on it asks for that file.
+ const built=typeof raw.built==='string'&&/^[0-9a-f]{24}$/.test(raw.built)?raw.built:null;
+ return {id:raw.id,name:validName(raw.name),created:Number(raw.created)||0,generator:Number.isInteger(raw.generator)?raw.generator:0,schema:SCHEMA_VERSION,settings:built?{...courseSettings(settings),built}:courseSettings(settings),...(built?{built}:{})};
 }
 
 // One unreadable entry must not take the whole library down with it.
 export function listCourses(){const out=[];for(const raw of readStore()){try{out.push(normalise(raw));}catch{}}return out;}
 export function findCourse(id){return listCourses().find(c=>c.id===id)||null;}
 
-export function saveCourse({id,name,settings,generator=generatorFor(settings)}={}){
- const record={id:id||newId(),name:validName(name),created:Date.now(),generator,schema:SCHEMA_VERSION,settings:courseSettings(validateSettings(settings))};
+export function saveCourse({id,name,settings,built=null,generator=generatorFor({...settings,built})}={}){
+ const record={id:id||newId(),name:validName(name),created:Date.now(),generator,schema:SCHEMA_VERSION,settings:courseSettings(validateSettings(settings)),...(built?{built}:{})};
  const courses=readStore().filter(c=>c&&c.id!==record.id);
  if(courses.length>=MAX_COURSES)throw Error(`The library holds at most ${MAX_COURSES} courses. Delete one first.`);
  courses.unshift(record);writeStore(courses);return record;
@@ -62,6 +66,7 @@ const fromB64=c=>{const bin=atob(c.replace(/-/g,'+').replace(/_/g,'/'));return n
 export const checksum=s=>{let a=2166136261;for(let i=0;i<s.length;i++){a^=s.charCodeAt(i);a=Math.imul(a,16777619);}return (a>>>0).toString(36).padStart(7,'0').slice(-6);};
 
 export function exportCourse(record){
+ if(record?.built)throw Error('A built course travels as its .fairway file, not as a code: use Save as a file.');
  const settings=validateSettings(record?.settings||{});
  const body=toB64(JSON.stringify({v:SCHEMA_VERSION,g:record?.generator??generatorFor(settings),n:validName(record?.name),d:settingsDiff(settings)}));
  return `${PREFIX}.${body}.${checksum(body)}`;

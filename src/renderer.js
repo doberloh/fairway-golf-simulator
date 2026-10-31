@@ -1130,7 +1130,11 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
-  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}this.flushFurniture();
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
+  // A BUILT course's ponds and lakes (built-world.js): any outline, holes for
+  // its islands, at its stored level -- the same water body a pond is.
+  for(const b of world.builtWater||[]){const [outer,...islands]=b.rings,points=outer.map(([x,z])=>new T.Vector2(x,-z)),shape=new T.Shape(points);for(const ring of islands)shape.holes.push(new T.Path(ring.map(([x,z])=>new T.Vector2(x,-z))));let cx=0,cz=0;for(const [x,z] of outer){cx+=x;cz+=z;}this.addWaterBody(new T.ShapeGeometry(shape),b.level,2,{x:cx/outer.length,z:cz/outer.length});this.addShoreFoam(points,b.level,b.kind==='lake');}
+  this.flushFurniture();
   if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
@@ -3699,7 +3703,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // the rest in their map colours (grounds.js `map`), from the lie itself --
  // `surface` asked over a grid across the canvas -- so the map shows where a
  // ball would play from rock. Only the still layer, so only when it changes.
- if(!full&&(world.wild||world.fallenField)){
+ if(!full&&(world.wild||world.fallenField||world.built)){
   const N=96,tile=document.createElement('canvas');tile.width=tile.height=N;const tc=tile.getContext('2d'),img=tc.createImageData(N,N),col=new T.Color();
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const q=mapPosition(transform,(i+.5)/N*w,(j+.5)/N*h),p=course.toWorld(q),g=GROUNDS[world.surface(p.x,p.z)];if(!g)continue;col.set(g.map);img.data.set([col.r*255,col.g*255,col.b*255,255],(j*N+i)*4);}
   tc.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(tile,0,0,w,h);
@@ -3729,7 +3733,18 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   for(const path of world.paths){if(path.points.length<2)continue;ctx.lineWidth=Math.max(1.2,path.width*scale);ctx.beginPath();path.points.forEach((p,i)=>{const q=wp(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}
   ctx.restore();
  }
+ // A BUILT course's surfaces are outlines, not a hole's shapes: drawn from
+ // them, each polygon on its own (its rings even-odd, its islands left out),
+ // in the order the ground paints them.
+ if(world.built){
+  const wp=([x,z])=>full?mapPoint(transform,{x,z}):mapPoint(transform,course.toLocal({x,z})),o=world.builtOutlines||{},mt=world.bio.mapTurf||{};
+  const fill=(polys,col)=>{for(const poly of polys||[]){ctx.fillStyle=col;ctx.beginPath();for(const ring of poly){ring.forEach((q,i)=>{const m=wp(q);i?ctx.lineTo(...m):ctx.moveTo(...m);});ctx.closePath();}ctx.fill('evenodd');}};
+  fill(o.semi,mt.semi??'#a1b481');fill(o.fairway,mt.fairway??'#608449');fill(o.path,mt.path??'#a69a86');fill(o.tee,mt.fairway??'#608449');
+  fill((world.builtWater||[]).map(b=>b.rings),'#70a6aa');fill(o.sand,'#efe0b9');fill(o.green,mt.green??'#b3cc86');
+ }
  for(const hole of full?world.holes:[course]){
+  if(hole.built){for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLORS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
+   const[gx,gy]=to(hole.green.x,hole.green.z,hole);ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);continue;}
   ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,world.bio.mapTurf?.semi??'#a1b481'],[0,world.bio.mapTurf?.fairway??'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
   for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
   for(const p of hole.bunkers){ctx.fillStyle='#efe0b9';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}

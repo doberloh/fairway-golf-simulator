@@ -210,7 +210,10 @@ export function makeRivalCode({name, course, version, settings, generator = gene
  if (!Array.isArray(card) || card.length !== holes || !card.every(v => Number.isFinite(v) && v > 0 && v < 100)) throw Error('Only a finished card can be sent.');
  if (typeof version !== 'string' || !version) throw Error('This build of Fairway has no version to put on a challenge.');
  const head = {v: 1, s: SCHEMA_VERSION, g: generator, f: version.slice(0, 32), n: String(name || 'Golfer').slice(0, 24), c: String(course || 'A Fairway course').slice(0, 40),
-  d: settingsDiff(validateSettings({...settings, holes})), h: holes, r: pars, k: card, u: putts.slice(0, holes).map(v => Number.isFinite(v) ? v : null), q: rules, t: String(day).slice(0, 10), w: weekly || ''};
+  d: settingsDiff(validateSettings({...settings, holes})), h: holes, r: pars, k: card, u: putts.slice(0, holes).map(v => Number.isFinite(v) ? v : null), q: rules, t: String(day).slice(0, 10), w: weekly || '',
+  // A BUILT course (the course builder): its file's hash, and the seed its
+  // cups were cut from, so the challenge is played on the same file and cups.
+  ...(settings?.built ? {b: settings.built, p: settings.builtPins || ''} : {})};
  const bytes = [];
  for (let h = 0; h < holes; h++) {
   const mine = log.filter(f => f.hole === h && f.seat === seat && cleanShot(f.s)).slice(0, MAX_SHOTS_PER_HOLE);
@@ -292,7 +295,8 @@ export function readRivalCode(code) {
  try { shots = readShots(parts[2], holes); } catch { throw Error('This challenge code’s shots could not be read.'); }
  return {name: String(head.n || 'Golfer').slice(0, 24), course: String(head.c || 'A Fairway course').slice(0, 40), version: typeof head.f === 'string' ? head.f.slice(0, 32) : '',
   generator: Number.isInteger(head.g) ? head.g : 0, settings, holes, pars, card: head.k, putts, rules, shots, day: typeof head.t === 'string' ? head.t.slice(0, 10) : '',
-  weekly: typeof head.w === 'string' && /^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(head.w) ? head.w : ''};
+  weekly: typeof head.w === 'string' && /^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(head.w) ? head.w : '',
+  ...(typeof head.b === 'string' && /^[0-9a-f]{24}$/.test(head.b) ? {built: head.b, pinSeed: typeof head.p === 'string' && /^[a-z0-9-]{4,40}$/.test(head.p) ? head.p : ''} : {})};
 }
 // Why this Fairway cannot play a challenge, or '' when it can. The version is
 // the rule (the owner, 20 October 2026); the generator is checked as well so a

@@ -5,6 +5,7 @@
 //   node tools/profile.mjs --only tiers    one group (tiers, views, biomes,
 //                                          ablation, water, pixels, sun, weak,
 //                                          architect: Classic against Architect on Low;
+//                                          built: a seeded course against its frozen copy on Low;
 //                                          --landscapes all for every landscape)
 //   node tools/profile.mjs --save          store the run as the baseline
 //   node tools/profile.mjs --since         compare against the stored baseline
@@ -114,6 +115,12 @@ function matrix() {
   // `--arch-tier medium` and `--arch-course '{"archClub":"championship","pinDay":"Sunday"}'`:
   // another tier, and Architect dials (Classic ignores them) -- a crowd, say.
   cases.push({group: 'architect', name: `${biome} · ${designer}`, arm: 'gpu', quality: flag('arch-tier', 'low'), biome, holes: 9, seed: 'PROFILE', course: {designer, ...(designer === 'architect' ? JSON.parse(flag('arch-course', '{}')) : {})}});
+ // BUILT COURSES (the course builder, 31 October 2026; docs/COURSE_BUILDER.md):
+ // the same landscape and seed on Low, grown from its seed against its frozen
+ // copy played from a .fairway file (freeze.js, built-world.js). The goal's
+ // rule: a change that adds cost to Low is measured there before it is done.
+ for (const biome of archBiomes) for (const kind of ['generated', 'built'])
+  cases.push({group: 'built', name: `${biome} · ${kind}`, arm: 'gpu', quality: flag('built-tier', 'low'), biome, holes: 9, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {biome, holes: 9, seed: 'PROFILE'}} : {})});
  // FACING THE SUN. The god rays draw only with the sun in shot, so every other
  // case -- the tee looking down the hole -- usually measures them as free. A
  // player turning toward the sun pays for a second pass over the whole scene;
@@ -202,11 +209,26 @@ async function proveItCanSeeBelowVsync(page) {
  return {work: s.median ?? 0, interval: s.interval, ok: (s.median ?? 0) < 2};
 }
 
+// The frozen copy of a seeded course, as a built file's bytes, made once.
+const builtFiles = new Map();
+async function builtFile(o) {
+ const key = JSON.stringify(o);
+ if (!builtFiles.has(key)) {
+  const [{generateWorld, DEFAULT_COURSE}, {freezeWorld}, {writeBuiltFile}, {BUILT_VERSION}] = await Promise.all([
+   import('../src/course.js'), import('../src/freeze.js'), import('../src/course-doc.js'), import('../src/settings-schema.js')]);
+  builtFiles.set(key, await writeBuiltFile(freezeWorld(generateWorld({...DEFAULT_COURSE, ...o})), BUILT_VERSION));
+ }
+ return builtFiles.get(key);
+}
+
 async function runCase(page, port, c) {
  await page.goto(`http://127.0.0.1:${port}/`, {waitUntil: 'load'});
  await page.waitForFunction(() => window.lab && window.lab.course, null, {timeout: 60000});
+ // A built case hands the frozen course's file in first (lab.built), and
+ // plays it by its hash.
+ const built = c.builtFrom ? await page.evaluate(b => window.lab.built(b), [...await builtFile(c.builtFrom)]) : null;
  await page.evaluate(o => window.lab.course(o),
-  {biome: c.biome, holes: c.holes, seed: c.seed, ...(c.course || {})});
+  {biome: c.biome, holes: c.holes, seed: c.seed, ...(c.course || {}), ...(built ? {built} : {})});
  if (c.view) await page.evaluate(v => window.lab.view(v), c.view);
  if (c.camera) await page.evaluate(o => window.lab.camera(o), c.camera);
  // Let shaders compile and the first textures upload before anything counts.
@@ -311,6 +333,7 @@ for (const group of [...new Set(results.map(r => r.group))]) {
         ablation: 'ABLATION  (ultra, one thing switched off at a time)',
         pixels: 'PIXEL RATIO  (high tier, same scene, different resolutions)',
         water: 'WATER-HEAVY COURSE  (does turning reflections off save anything?)',
+        built: 'BUILT COURSES  (Low, a seeded course against its frozen copy from a file)',
         weak: 'NO GRAPHICS CARD  (software rasteriser, 30 fps = 33.3 ms budget)'}[group] || group,
        rows, budget);
 }

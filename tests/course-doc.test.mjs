@@ -14,7 +14,7 @@ function tinyDoc(over = {}) {
   patches: [{x0: -10, z0: 30, cell: .25, nx: 81, nz: 81, heights: new Float32Array(81 * 81).fill(472.5)}],
   surfaces: {green: [square(0, 40, 8)], fairway: [square(0, 0, 15)], tee: [square(0, -40, 3)], sand: [square(12, 30, 2.5)]},
   water: [{rings: square(-30, 0, 6), level: 469.2, kind: 'pond'}],
-  holes, trees: new Float32Array([10, 10, 15, 4, .3, 0, -20, 5, 8, 2.5, .2, 1]), credits: ['Test data'], from: null, picture: null, ...over};
+  holes, trees: new Float32Array([10, 10, 15, 4, .3, 0, 0, -20, 5, 8, 2.5, .2, 1, -1]), treeKinds: ['oak'], credits: ['Test data'], from: null, picture: null, ...over};
 }
 
 test('a height grid comes back to the centimetre', () => {

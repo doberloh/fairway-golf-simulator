@@ -392,9 +392,12 @@ export const ARCHITECT_VERSION=20;
 //  1: the first reader (stage 1).
 export const BUILT_VERSION=1;
 export const isArchitect=s=>s?.designer==='architect';
-export const generatorFor=s=>isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
-// How a stamp reads to a person: "52" or "52 · Architect 1".
-export const stampLabel=g=>Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
+// A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
+// it, so neither generator number may flag it, and only BUILT_VERSION can.
+export const BUILT_STAMP=1000000;
+export const generatorFor=s=>s?.built?BUILT_STAMP+BUILT_VERSION:isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
+// How a stamp reads to a person: "52", "52 · Architect 1" or "Built 1".
+export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_STAMP}`:Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

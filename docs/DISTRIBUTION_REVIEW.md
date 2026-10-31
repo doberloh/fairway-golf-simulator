@@ -1638,8 +1638,9 @@ release**: the website's demo checks `Fairway.html` against
 The builder is offline on the same terms as the game: it opens by file://,
 reads only the files a player gives it, writes `.fairway` files as downloads,
 and makes no request -- checked by its own smoke harness
-(`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it is
-107,941 bytes and adds no dependency. The game's page is unchanged by stage 0.
+(`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it was
+107,941 bytes; at stage 3 906,624 (three.js and the course generator now
+ride in it, for door 1 and the editor), still no dependency of its own. The game's page is unchanged by stage 0.
 Later stages will add the LIDAR decoders (laz-perf, Apache-2.0; geotiff.js,
 MIT; proj4js, MIT) to the builder's page only, each recorded here, in
 ATTRIBUTION.md and THIRD_PARTY_NOTICES.txt as it lands.

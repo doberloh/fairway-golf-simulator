@@ -409,12 +409,26 @@ a fresh page per journey, and a journey fails on any uncaught error,
 | Journey | What it drives |
 | --- | --- |
 | `builder-opens` | the builder opens offline on its three doors with its version line; a door opens and Back returns |
+| `builder-door-1` | door 1 end to end: grow a nine, take it over, raise the ground with a drag and paint sand (two undo steps), undo and redo, save the file; the built game opens it (lab.built) and a tee shot is played on it with the Swing Meter |
 
 The builder's file format is tested in Node: `tests/zip.test.mjs` (the
 container, its CRC, the same bytes for the same parts, a damaged file refused,
 and Python's zipfile reading what it writes) and `tests/course-doc.test.mjs`
 (heights to the centimetre, relief over 655 m, a built course round-tripped,
 the same course making the same file, broken files refused in plain words).
+
+A world from a built file: `tests/built-world.test.mjs` (a hand-made document's lie
+in the generator's order, field edges to a few centimetres, a patch fading
+into the land, holes from records, trees keeping their sizes in any
+landscape, the field's ground codes equal to ground.js's), `tests/freeze.test.mjs`
+(a generated nine with a creek and a lake, frozen, written, read and rebuilt:
+surfaces over 99% the same at every 3 m, the ground within 1 cm at the 95th
+percentile and greens within 0.5 cm at the median, every hole's par, tees,
+green and length, the trees and their species, the world contract) and
+`tests/contour.test.mjs` (outlines from a mask). Pins per round: `tests/built-pins.test.mjs`. The editor: `tests/builder-editing.test.mjs` (every brush, paint and fill, a drag as one undo, undo and redo, records, the document given back plays what was edited) and `tests/builder-checks.test.mjs` (each check found on a course built to break it). `tools/freeze-compare.mjs`
+measures every landscape and plays eight virtual golfers on both;
+`tools/freeze-capture.mjs` photographs both in the built game (graphics card);
+`node tools/profile.mjs --only built` times both on Low.
 
 ## Checked only by a person
 

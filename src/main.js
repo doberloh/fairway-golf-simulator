@@ -73,6 +73,9 @@ import {createPictureLoop} from './picture-loop.js';
 import {LANDSCAPE_SHOTS,EVERY_LANDSCAPE} from './landscape-shots.js';
 import {createPictureStore} from './course-pictures.js';
 import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
+import {createBuiltStore} from './built-store.js';
+import {worldFromDoc} from './built-world.js';
+import {isBuiltFile} from './course-doc.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
 import {makeWindow} from './ui-windows.js';
@@ -105,6 +108,17 @@ import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
+// BUILT COURSES (Fairway Course Builder; docs/COURSE_BUILDER.md): their files
+// kept in IndexedDB by hash, parsed when a round on one is about to start.
+const builtStore=createBuiltStore();
+// A world for these settings: a built course from its file (already loaded by
+// prepareWorld), else grown from its seed.
+function worldNow(s){
+ if(!s.built)return generateWorld(s);
+ const doc=builtStore.now(s.built);
+ if(!doc)throw Error('This built course is not loaded. Open it again from Saved courses.');
+ return worldFromDoc(doc,s);
+}
 let tour=null;
 let lastShot=null,priorShot=null,aimRange=null,aimPoint=null,lastMapFrame=0;
 // Which numbers the card shows, and in how many columns. A display
@@ -1168,7 +1182,7 @@ function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:round.en
 // still slides without a rebuild. A cup's place is never in it: recutting one
 // changes no ground.
 const rangeKey=s=>{if(!s.range)return '';const c=centreSetup(s),q=shortSetup(s),k=g=>[g.slope,g.tilt,g.contour,g.seed];return JSON.stringify(['range',k(c),k(q),shapes(c)?rangeGreenYards(s):null]);};
-const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),...generationKeys().map(k=>s[k])]);
+const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),s.built??null,s.builtPins??null,...generationKeys().map(k=>s[k])]);
 // Settling `settings` into the exact shape the world is keyed on.
 //
 // Pulled out of loadCourse so `prepareWorld` can key on the same thing without a
@@ -1179,6 +1193,12 @@ const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),...generationKe
 // this and then loadCourse calls it again on the way through.
 function settleSettings(){
  settings.style='cartoon';settings.turf=turfConfig(settings.turf);
+ // A built course is only ever the course a round was started on (buildRoundOn,
+ // a resumed round); the range, an endless run and the studio grow their own.
+ if(settings.built&&(settings.range||round.endless||appMode==='studio'))settings.built=null;
+ // Its cups are the round's (built-world.js placeBuiltPins), so a new round on
+ // it is a new world.
+ if(settings.built)settings.builtPins=round.pinSeed;else delete settings.builtPins;
  if(!settings.range&&!round.endless&&settings.holes&&settings.holes!==round.holes&&settings.courseYards)settings.courseYards*=round.holes/settings.holes;
  // No tee toggles: all three sets are always built and the playing tee is a round
  // setting. Re-adding them here would reinstate the keys migration just removed.
@@ -1210,7 +1230,7 @@ const worldHole=n=>round.endless?0:n;
 function loadCourse(){
  stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced){lastShot=null;priorShot=null;}
  const key=settleSettings();
- if(!world||key!==worldKey){lastShot=null;priorShot=null;world=generateWorld(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));updateBoard();}else view.setHole(worldHole(round.hole));
+ if(!world||key!==worldKey){lastShot=null;priorShot=null;world=worldNow(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));updateBoard();}else view.setHole(worldHole(round.hole));
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
  const holeIndex=worldHole(round.hole);
@@ -3421,6 +3441,8 @@ async function buildEndless(group,replaySeed){
 }
 async function buildRoundOn(courseSettings,group,name){
  const next={...settings,...courseSettings};
+ // A built course's file, or none: never one carried over from the last round.
+ next.built=courseSettings.built??null;
  // Not a generation setting: it is filtered out by `courseSettings()` before
  // anything is saved, and it is not in the world key, so naming a course can
  // never move a metre of its ground.
@@ -3562,6 +3584,14 @@ const nextFrame=()=>new Promise(r=>{let settled=false;const go=()=>{if(!settled)
 // the main thread waited on them per round, and the whole generation, for lab.ground.
 let lastGridWorkers=0,lastGridWait=[],lastGenerationMs=0;
 async function generateProgressively(next,onProgress){
+ // A BUILT course: no generator, its world from its file (built-world.js).
+ if(next.built){
+  onProgress?.(.2);
+  const doc=await builtStore.load(next.built);
+  if(!doc)throw Error('This built course is no longer on this device. Open its .fairway file again.');
+  builtStore.forget(next.built);
+  return worldFromDoc(doc,next);
+ }
  // The ground grid's heights on other cores (gen-pool.js). Not for one hole --
  // the range, an endless hole -- where starting the workers costs more than
  // the grid they would share.
@@ -4453,9 +4483,11 @@ async function startRivalRound(base){
  const pick=listRivals().find(r=>r.id===rivalPick);
  if(!pick)throw Error('Paste the code your friend sent first.');
  const problem=rivalProblem(pick,{version:GAME_VERSION});if(problem)throw Error(problem);
- const group={...base,mode:'stroke',rival:pick.id};new Round({...group,holes:pick.holes});
+ // A challenge on a built course: the same file, and the challenger's cups.
+ if(pick.built&&!await builtStore.load(pick.built))throw Error('This challenge was played on a course built in the course builder, which is not on this device. Ask for its .fairway file and open it in Saved courses.');
+ const group={...base,mode:'stroke',rival:pick.id,...(pick.built&&pick.pinSeed?{pinSeed:pick.pinSeed}:{})};new Round({...group,holes:pick.holes});
  rivalSetup=false;closePanel();
- await startRoundOn(pick.settings,group,pick.course);
+ await startRoundOn(pick.built?{...pick.settings,built:pick.built}:pick.settings,group,pick.course);
  toast(`${pick.name}’s challenge: ${scoreText(sumScores(pick.card))} to beat.`);
 }
 // THE COURSE OF THE WEEK'S PAGE, Play's step after choosing it (UI/UX pass V2,
@@ -5698,7 +5730,7 @@ function renderPanel(name,content){
   <p class="note">A code is one course as text, short enough to paste into a message. Save as file, on a course, keeps its picture too: send the file, and open it here or drop it on this screen. Export every course makes one file of your whole library, for a backup or another computer.</p>
   <button class="secondary" id="exportCourses"><i data-lucide="download"></i> Export every course to a file</button>
   <button class="secondary" id="importCourses"><i data-lucide="upload"></i> Import courses from a file</button>
-  <input id="courseFile" type="file" accept=".fairway,.json,application/json" hidden>`;
+  <input id="courseFile" type="file" accept=".fairway,.json,application/json,application/zip" hidden>`;
   const fail=e=>{$('libraryError').textContent=e.message;};
   if($('saveCourse'))$('saveCourse').onclick=()=>{try{$('libraryError').textContent='';const rec=saveCourse({name:$('courseName').value,settings});openPanel('library');toast(`Saved “${rec.name}”.`);}catch(e){fail(e);}};
   if($('libraryStudio'))$('libraryStudio').onclick=()=>{closePanel();openStudioSetup();};
@@ -5728,8 +5760,10 @@ function renderPanel(name,content){
   // ONE COURSE AS A FILE, WITH ITS PICTURE (the 1.0 polish, course-file.js):
   // `<name>.fairway`, opened by Import courses from a file or dropped here.
   content.querySelectorAll('[data-file]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.file);if(!c)return;
+   // A built course leaves as the file it came in as (its land, its outlines).
+   if(c.built){const bytes=await builtStore.bytes(c.built);if(!bytes){toast('This built course’s file is no longer on this device.');return;}download(courseFileName(c.name),bytes,'application/zip');toast(`Saved “${c.name}” as a file.`);return;}
    const pic=coursePics.get(c.id)??await pictureStore.get(c.id);download(courseFileName(c.name),courseFile(c,pic),'application/json');toast(`Saved “${c.name}” as a file${pic?', with its picture':''}.`);});
-  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
+  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;let code;try{code=exportCourse(c);}catch(e){toast(e.message);return;}$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
   content.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{
    const c=findCourse(b.dataset.play);if(!c)return;
    if(flight){toast('Finish the current shot first.');return;}
@@ -5752,6 +5786,13 @@ function renderPanel(name,content){
    try{
     $('libraryError').textContent='';
     const f=$('courseFile').files[0];
+    // A BUILT course (Fairway Course Builder): a ZIP of its land, outlines and
+    // trees, kept by its hash (built-store.js), its record in the library.
+    if(f&&f.size<=64000000){const head=new Uint8Array(await f.slice(0,4).arrayBuffer());if(isBuiltFile(head)){
+     const {hash,doc,kept}=await builtStore.put(new Uint8Array(await f.arrayBuffer()));
+     const saved=saveCourse({name:doc.name,settings:{biome:doc.landscape,holes:doc.holes.length},built:hash});
+     if(doc.picture&&pictureOk(doc.picture)){coursePics.set(saved.id,doc.picture);pictureStore.put(saved.id,doc.picture);}
+     openPanel('library');toast(`Opened “${saved.name}”, built in the course builder${kept?'':' (kept for this visit only: this browser will not store it)'}.`);return;}}
     if(!f||f.size>2000000)throw Error('Choose a Fairway course file smaller than 2 MB.');
     const text=await f.text();
     // One course with its picture (course-file.js) rather than a library.
@@ -7162,6 +7203,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The seed the next fresh Endless run takes (the smoke run's
   // --endless-seed): pin, then press Start an endless run as a player does.
   pinRun:seed=>{pinnedRun=String(seed);},
+  // A BUILT course's file handed in as bytes, kept as an import keeps it; the
+  // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
+  built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
   course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.

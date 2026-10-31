@@ -54,7 +54,8 @@ export function greenRadius(hole,angle){return (hole.greenSize??17)*(1+(hole.gre
 // that much about its centre. Classic has none, and takes the same arithmetic
 // it always did -- the turn is skipped, not multiplied by one -- so its lie and
 // its paint (ground.js, the same branch) are bit for bit what they were.
-export function greenDistance(hole,x,z){if(hole.greens){let d=Infinity;for(const g of hole.greens)if(!g.hidden)d=Math.min(d,greenDistance(g,x,z));return d;}const c=hole.green??hole.pin,t=hole.greenTurn;let ux=x-c.x,uz=z-c.z;if(t){const cs=Math.cos(t),sn=Math.sin(t),rx=ux*cs+uz*sn;uz=-ux*sn+uz*cs;ux=rx;}const dx=ux/(hole.greenAspect??1.17),dz=uz,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
+// A BUILT hole (built-world.js) answers from its stored outline, exactly.
+export function greenDistance(hole,x,z){if(hole.built)return hole.greenDist(x,z);if(hole.greens){let d=Infinity;for(const g of hole.greens)if(!g.hidden)d=Math.min(d,greenDistance(g,x,z));return d;}const c=hole.green??hole.pin,t=hole.greenTurn;let ux=x-c.x,uz=z-c.z;if(t){const cs=Math.cos(t),sn=Math.sin(t),rx=ux*cs+uz*sn;uz=-ux*sn+uz*cs;ux=rx;}const dx=ux/(hole.greenAspect??1.17),dz=uz,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
 // The point at angle `a` round a green's own oval, `r` out in the oval's
 // stretched frame (r = greenRadius(hole,a) is the edge), turned with the green.
 // Everything that draws or places round a green asks this, so a turned green
@@ -120,6 +121,9 @@ const ROOM_FLOOR = 3.0;
 // the cup is cut -- and inside the green the two are the same surface anyway.
 function greenSlopeAt(h, x, z) {
  const e = .4;
+ // A BUILT hole's green is stored ground, which exists when its cup is cut
+ // (per round, built-world.js), so the slope is read off that ground.
+ if (h.built) return Math.hypot((h.height(x + e, z) - h.height(x - e, z)) / (2 * e), (h.height(x, z + e) - h.height(x, z - e)) / (2 * e)) * 100;
  const gx = (greenContour(h, x + e, z) - greenContour(h, x - e, z)) / (2 * e);
  const gz = (greenContour(h, x, z + e) - greenContour(h, x, z - e)) / (2 * e);
  return Math.hypot(gx, gz) * 100;

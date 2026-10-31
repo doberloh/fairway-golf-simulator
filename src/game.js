@@ -36,7 +36,7 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival=''}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
@@ -64,6 +64,11 @@ export class Round{
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.
   this.uid=typeof uid==='string'&&/^[a-z0-9]{4,32}$/.test(uid)?uid:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  // WHERE A BUILT COURSE'S CUPS ARE CUT (the course builder, stage 2): a built
+  // course has no seed to fix its pins, so each round cuts its own from this
+  // (built-world.js placeBuiltPins); saved with the round, so a resumed round
+  // finds the same cups, and carried by a friend's challenge, so theirs does.
+  this.pinSeed=typeof pinSeed==='string'&&/^[a-z0-9-]{4,40}$/.test(pinSeed)?pinSeed:this.uid;
   this.players=players.map((p,i)=>({...p,id:i}));this.mode=mode;this.holes=holes;this.gimme=gimme;this.hole=0;this.finished=false;this.endless=!!endless;this.seed=seed;this.pars=[];
   this.putting=puttingConfig(putting);this.history=[];this.puttCards=players.map(()=>[]);this.cards=players.map(()=>[]);this.teamCards={A:[],B:[]};this.match={A:0,B:0};this.beginHole();
  }

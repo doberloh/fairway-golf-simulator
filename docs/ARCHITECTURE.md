@@ -149,9 +149,10 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **Fairway Course Builder** (the second program in every download; docs/COURSE_BUILDER.md is the record)
 - `builder.html`, `vite.builder.config.js` -- the builder's page, built single-file after the game into `dist/builder.html` (`Fairway Builder.html` in the zips), with its own `fairway-builder-versions` line
-- `src/builder/` -- the builder: `builder.js` (the shell and its three doors), `door-generate.js`, `door-real.js`, `editor.js`, `builder.css`
+- `src/builder/` -- the builder: `builder.js` (the shell and its three doors), `door-generate.js` (door 1: the settings, grow, take over), `door-real.js`, `editor.js` (the editor's screen), `view.js` (its working 3D view), `editing.js` (the editing model, pure: surfaces as a grid of codes, the land, holes, water, trees, undo; tests/builder-editing.test.mjs), `checks.js` (what breaks a rule; tests/builder-checks.test.mjs), `builder.css`
 - `src/zip.js` -- a ZIP written and read by hand on the browser's own CompressionStream; `src/course-doc.js` -- a built course as a document and as a `.fairway` version-2 file (land, patches, outlines, holes, water, trees); `BUILT_VERSION` in settings-schema.js; tests of the same names
-- `tools/builder-smoke.mjs` -- the builder's page driven in a real browser by file://, failing on any error or network request (journeys in `tools/builder-journeys/`)
+- `src/built-world.js` -- `worldFromDoc`: the generator's world contract from a built document (land sampler, the baked built field and `builtSurface`, built holes, trees, creeks); `src/freeze.js` -- `freezeWorld`: a generated world as a built document (door 1's Take it over); `src/contour.js` -- outlines from a mask (marching squares, Douglas-Peucker); `src/built-store.js` -- built files kept in IndexedDB by hash, parsed when a round on one starts
+- `tools/builder-smoke.mjs` -- the builder's page driven in a real browser by file://, failing on any error or network request (journeys in `tools/builder-journeys/`); `tools/freeze-compare.mjs` -- a generated course against its frozen copy (surfaces, ground, holes, trees, virtual-golfer strokes); `tools/freeze-capture.mjs` -- the two photographed from the same poses in the built game
 
 **Outside the game**
 - `bridge/server.mjs` -- the launch-monitor bridge; `tools/build-server.mjs` compiles it per platform
@@ -243,6 +244,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Every program is drawn once behind the loading screen; a thing first drawn in play stalls a frame -- PROJECT_HANDOFF *EVERY PROGRAM IS DRAWN ONCE BEHIND THE LOADING SCREEN*
 - The fountain is moving water the renderer draws, reset per course -- PROJECT_HANDOFF *THE FOUNTAIN MOVES, SO IT IS NOT A MODEL*
 - An Architect piece is one draw (merged or instanced), and markings are off on Low -- PROJECT_HANDOFF *AN ARCHITECT PIECE IS ONE DRAW, NOT ONE PER PART*
+- A built course (the course builder) is a world from a file: its lie and paint read one field in one order, its holes' frames face their greens, `settings.built` is its file's hash and must not leak into another round, and only `BUILT_VERSION` moves it -- PROJECT_HANDOFF *A BUILT COURSE IS A WORLD FROM A FILE*
 - A hand record lives in its hole's frame and is applied in architectCourse only, from the architect's signatures; the player has no hand tools -- PROJECT_HANDOFF *HAND TOOLS: ONE RECORD, ONE HAND*
 - The cart paths are what is drawn: joins land on drawn lines, nothing is built on a path, the strip has a point every 2 m -- PROJECT_HANDOFF *THE PATH NETWORK IS THE LINE DRAWN*
 - Architect is only in Course studio and never the default; every play mode grows Classic -- PROJECT_HANDOFF *ARCHITECT ONLY IN THE STUDIO*

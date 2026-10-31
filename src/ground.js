@@ -11,6 +11,8 @@ import {WILD_WATER} from './landforms.js';
 import {TURF_DETAIL} from './turf-detail.js';
 import {isArchitect} from './settings-schema.js';
 import {FIELD_RANGE} from './surface-field.js';
+import {BUILT_FIELD} from './built-world.js';
+import {GROUNDS} from './grounds.js';
 
 // The turf detail atlas (tools/turf-detail.mjs) as a texture: tiling, mip-
 // mapped and sharp at a glancing angle. Data, not colour, so no sRGB step.
@@ -300,8 +302,16 @@ export function groundMaterial(view,palette){
  // The surface field (surface-field.js), or one empty texel where there is
  // none -- every Classic course -- which fieldOn keeps the shader from reading.
  const sandField=w.surfaceField&&w.surfaceField.Sx===Sx&&w.surfaceField.Sz===Sz?w.surfaceField:null;
- const fieldTex=new T.DataTexture(sandField?sandField.data:new Uint8Array(4),sandField?Sx:1,sandField?Sz:1,T.RGBAFormat,T.UnsignedByteType);
+ // A BUILT course (built-world.js) binds its own two field textures in the
+ // field's place and one more (builtB), at its own finer grid; every other
+ // course binds one empty texel there, which builtOn keeps the shader from
+ // reading. (The ground had two samplers free for exactly this:
+ // PROJECT_HANDOFF *ONE TEXTURE FOR EVERY TABLE*.)
+ const built=w.builtField||null;
+ const fieldTex=new T.DataTexture(built?built.a:sandField?sandField.data:new Uint8Array(4),built?built.Sx:sandField?Sx:1,built?built.Sz:sandField?Sz:1,T.RGBAFormat,T.UnsignedByteType);
  fieldTex.minFilter=fieldTex.magFilter=T.LinearFilter;fieldTex.needsUpdate=true;view.resources.push(fieldTex);
+ const builtBTex=new T.DataTexture(built?built.b:new Uint8Array(4),built?built.Sx:1,built?built.Sz:1,T.RGBAFormat,T.UnsignedByteType);
+ builtBTex.minFilter=builtBTex.magFilter=T.LinearFilter;builtBTex.needsUpdate=true;view.resources.push(builtBTex);
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
@@ -310,7 +320,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),archGround:{value:isArchitect(w.settings)?1:0},field:{value:fieldTex},fieldOn:{value:sandField?1:0},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+   ...wildUniforms(w,!!wild,!!fallen),archGround:{value:isArchitect(w.settings)?1:0},field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -319,7 +329,7 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field;uniform float tableRows,fieldOn,rows;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtOn,builtFringe;uniform vec3 gt_path;
 // THE ROUTE CURVES AND THE SEMI-ROUGH EDGES SHARE ONE TEXTURE (the cartoon
 // overhaul): curves in texels 0-511 of a hole's row, the semi-rough's two
 // widths in 512-1023. They were two textures of the same grid, and the
@@ -662,6 +672,35 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float fd=(.5-texture2D(field,(wp/extent+1.)*.5).r)*${(2*FIELD_RANGE).toFixed(1)};
   if(fd<=0.){turf=tint_sand;kind=5.;}
   else if(fd<.35)turf=mix(turf,tint_sand,.20);
+ }
+ // A BUILT COURSE (built-world.js; the course builder, docs/COURSE_BUILDER.md):
+ // every surface from its baked field -- the same bytes, read the same way, in
+ // the same order as the lie (built-world.js builtSurface): water, sand, the
+ // green and its fringe, a tee, a cart path, fairway, semi-rough, a ground
+ // type, rough. It replaces whatever the hole table painted above, which for
+ // a built hole is only its skeleton (no shapes are stored in its row). The
+ // ground type is a code read texel by texel and painted by groundPaint, as
+ // the generator's ground types are; a cart path is code 10.
+ if(builtOn>.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
+  vec2 bu=(wp/extent+1.)*.5;vec4 ba=texture2D(field,bu),bb=texture2D(builtB,bu);
+  float bR=${(2*BUILT_FIELD.range).toFixed(1)};
+  float dSand=(.5-ba.r)*bR,dGreen=(.5-ba.g)*bR,dFair=(.5-ba.b)*bR,dTee=(.5-ba.a)*bR,dWater=(.5-bb.r)*bR,dSemi=(.5-bb.g)*bR,dGround=(.5-bb.a)*bR;
+  ivec2 bsz=textureSize(builtB,0);float gcode=floor(texelFetch(builtB,clamp(ivec2(bu*vec2(bsz)),ivec2(0),bsz-ivec2(1)),0).b*255.+.5);
+  turf=roughTint;kind=0.;teeGround=0.;teePadD=1e3;
+  if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
+  if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
+  if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
+  if(dGround<=0.&&gcode>9.5){turf=gt_path;kind=1.;wildTop=0.;}
+  if(dTee<=0.){turf=teeTurf;kind=1.;teeGround=1.;wildTop=0.;}
+  if(dGreen<=builtFringe){turf=tint_fringe;kind=3.;wildTop=0.;}
+  if(dGreen<=0.){turf=tint_green;kind=4.;}
+  if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
+  else if(dSand<.35&&kind<2.5)turf=mix(turf,tint_sand,.20);
+  // A pond's or lake's shore, as a generated pond's: a cut edge, the soil a
+  // lip at the waterline, the mown turf brought down to it.
+  waterNear=min(waterNear,dWater);
+  vec3 bpb=shoreBands(6.,dFair<=0.?-10.:30.,16.);
+  if(dWater<bpb.z){turf=shoreTint(turf,dWater,6.,bpb);if(dWater<bpb.y){kind=6.;wildTop=0.;}}
  }
  if(owner.b>.5){
   float sid=owner.b-1.;vec4 ch=channelInfo(wp,sid);

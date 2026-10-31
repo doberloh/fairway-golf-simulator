@@ -698,7 +698,9 @@ function addLongGrass(view){
 // (addNearbyGrass) and the far heath (addFarHeath) both paint with them, so
 // one turns into the other without a change of colour.
 const heathColours=biome=>biome==='haunted'?{leaf:'#4a403c',accent:'#6c5862'}:{leaf:'#5a5a3c',accent:'#a86aa8'};
-const hasHeath=w=>!!(w.holes.length&&Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather'));
+// A BUILT course (built-world.js) has no landform: its heather is its own
+// outlines, whatever the landscape (and so the lie the cushions stand on).
+const hasHeath=w=>!!(w.holes.length&&(w.built?w.builtOutlines?.heather?.length:Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather')));
 // THE HEATH PAST THE NEAR TILES (the owner, 31 October 2026, Links: "the
 // purple bushes fade out completely leaving just weird looking purple
 // ground"). The heather's cushions are near-field decoration, shrinking away
@@ -723,8 +725,8 @@ export function addFarHeath(view){
  // Heather is only ever where its channel of the baked field reads half or
  // more (landforms.js wildGround), and that read is a few array lookups; the
  // whole surface question, about 3 microseconds, is asked only there.
- const channel=Object.keys(world.landform.kinds).find(k=>world.landform.kinds[k]==='heather');
- const field=(x,z)=>Math.abs(x)<world.wild.ex&&Math.abs(z)<world.wild.ez&&wildAt(world.wild,channel,x,z)>=.5;
+ const channel=world.built?null:Object.keys(world.landform.kinds).find(k=>world.landform.kinds[k]==='heather');
+ const field=world.built?()=>true:(x,z)=>Math.abs(x)<world.wild.ex&&Math.abs(z)<world.wild.ez&&wildAt(world.wild,channel,x,z)>=.5;
  // Thinner on a tier with less grass, as the long grass is; and on a course
  // with more heath than `most` domes would cover at `spacing` (Haunted
  // Hollow's moor, a fifth of the property: 67,000 domes added a third of a

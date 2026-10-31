@@ -11162,3 +11162,77 @@ All PLACED, judged by eye in the game, none from a source:
 - A links joins each fairway to one neighbour at most on an Architect
   course: a rule the owner's report asked for in spirit ("is there a way to
   fix it? I do really like it"), not a number.
+
+## Course builder: a world from a file (31 October 2026)
+
+The course builder's stage 1 (docs/COURSE_BUILDER.md): a generated course
+frozen into a built `.fairway` file (freeze.js) and played from it with no
+generator (built-world.js), measured against the course it came from with
+tools/freeze-compare.mjs. One 9-hole seed per landscape unless said.
+
+**Surfaces, every 2 m over the property, the share that is the same:**
+Midwest 99.72%, Desert 99.51%, Links 99.41%, Lakeshore 99.21%, Island 97.98%,
+PNW 97.69%, Mountain 97.11% (after the ground types got their own layer --
+below). What differs is edges: ground-type boundaries traced from a 1 m
+raster (pine straw under trees is most of PNW's and Mountain's 2-3%), the
+fairway beside water where the generator mows a semi-rough band the frozen
+corridor does not carry (0.04-0.06%), and sand at a beach's foot.
+
+**The first version collapsed every ground type into native grass**, PLACED
+for a single field channel: 47% of PNW, 76% of Desert, 44% of Autumn changed
+lie (pine straw, hardpan, leaves -- and hardpan plays like fairway). Rejected
+on that measurement. The field's second texture now holds the ground type as a
+code read texel by texel (ground.js's own GROUND_CODE, so groundPaint draws
+it) and the distance to its edge; a texel where two types meet takes the one
+it is deeper inside. Where two types meet the boundary is a texel step (half
+a metre to 1 m), which the generator's own baked ground types also have at
+1.75 m.
+
+**The ground, every 5 m:** median 0.1-0.4 cm, 95th percentile 0.4 cm on every
+landscape after the land grid was aligned to the ground mesh on both axes
+(the first version used one spacing for both and Mountain's 95th percentile
+was 24 cm, worst 2.27 m on a crag), 99th percentile 0.9-1.8 cm, worst 16-42 cm
+on the steepest rough. **Greens, every 0.5 m:** median 0.08-0.12 cm, worst
+0.7-1.3 cm. The land is stored at a third of the ground mesh's spacing (about
+1 m), greens, tees and bunkers again at 0.25 m (PLACED: finer than the
+generator's own 0.5 m refinement, coarser than anything a ball feels).
+
+**Bunkers get a patch too.** Without one the virtual golfer took extra
+strokes in bunkers on a frozen Midwest (hole 7: four shots in sand against
+two); a bunker's lip is sharper than 1 m holds. Every bunker now gets a 0.25 m
+patch and the rebuilt mesh refines inside sand as well as near it.
+
+**Strokes, eight virtual golfers, eighteen holes, the same pins on both:**
+Mountain 0 ± 1.0, Desert +1.4 ± 0.8, Midwest +3.1 ± 3.8 (mean of built minus
+generated, ± its standard error). No landscape differs by more than its
+error allows at two standard errors. One round is not a measurement: the
+club flights are memoised by a rounded key (swing-meter.js `fullCarry`,
+physics.js's damping table), so what was played before a round nudges a
+flight by a hair, and a round turns a hair into strokes -- the same golfer on
+the same generated course scored 85 and 74 in two runs that differed only in
+what was played first. Boulders and haunted props are not carried, and they
+were solid, so a frozen course is if anything slightly easier there.
+
+**Size and time, a 9:** files 0.7-2.7 MB (an 18: 1.6-3.4 MB); freezing 4-6 s
+(an 18: 6-9 s), most of it the 1 m raster of `surface` for the ground types
+(1.8 µs a call, measured on an 18); building the world from a file 0.6-4.7 s,
+most of it the field bake and the ground mesh.
+
+**In the game** (tools/freeze-capture.mjs, the built dist/index.html, High):
+the frozen Midwest from above differs from the generated one in 1.43% of
+pixels; at ground level from the same world poses, 13-17%, almost all of it
+the grass tufts (placed differently) and the edges of the semi-rough bands,
+and one house the frozen copy does not carry. No page error, no request.
+
+**Low, the ground shader's new branch on a Classic course** (main's build
+against the branch's, `profile.mjs --only tiers`, real GPU, redwood): Low GPU
+-0.04 ms, Medium +0.02, High -0.02, Ultra -0.74 -- all within the run-to-run
+spread. The branch costs Classic nothing measurable.
+
+**Low, a built course against its generated original** (`profile.mjs --only
+built`, real GPU, nine holes, seed PROFILE): Midwest 0.83 against 0.99 ms of
+graphics time, PNW 1.07 against 1.20, Links 0.93 against 0.96 -- no dearer,
+and a little cheaper for carrying no houses or props. The first PNW reading
+was 1.50 against 1.20: the frozen trees had lost the generated forest's
+`stand` and `under` marks, which the lower tiers thin by (vegetation.js
+`understory`); with the marks carried in the stored role, the gap went.

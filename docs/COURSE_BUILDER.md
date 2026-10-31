@@ -208,9 +208,9 @@ nor any built copy of the course (tests that need it skip when it is absent):
 | # | Stage | Status |
 | --- | --- | --- |
 | 0 | Groundwork: this record, OSM to IDEAS, the builder page and its build, the file format | **Built** (below) |
-| 1 | The game plays a file: `worldFromDoc`, the field-only shader path, freezing, the frozen-against-generated comparison | |
-| 2 | Pins per round on built courses | |
-| 3 | Builder shell and door 1 | |
+| 1 | The game plays a file: `worldFromDoc`, the field-only shader path, freezing, the frozen-against-generated comparison | **Built** (below); not played by a person |
+| 2 | Pins per round on built courses | **Built** (below) |
+| 3 | Builder shell and door 1 | **Built** (below); not played by a person |
 | 4 | Real-time ground shaping | |
 | 5 | The editor's tools, checks, test round | |
 | 6 | LIDAR readers; Worthington's ground and trees against the references | |
@@ -240,6 +240,103 @@ nor any built copy of the course (tests that need it skip when it is absent):
   no requests, like the game's; journey `builder-opens` passed (31 October,
   through `tools/gpu-run.mjs`).
 
+### Stage 1 (31 October 2026): the game plays a file
+
+- **`src/built-world.js`** -- `worldFromDoc(doc, settings)`: the generator's
+  world contract from a built document. The land a bilinear sampler over the
+  stored grid with the 0.25 m patches faded in over 1.5 m (PLACED); the same
+  adaptive ground mesh the generator builds, refined on greens, tees, sand and
+  within 3 m of water. The surfaces **one baked field in two RGBA8 textures**:
+  sand, green, fairway, tee; water, semi-rough, and the ground types as a code
+  plus a distance (so all ten ground types and the cart path travel, not one
+  "native" channel -- the first version's, rejected on its numbers). Texel half
+  a metre, coarser only where a course is wider than 2048 texels (about 1 m
+  for a big eighteen); the field reaches 6 m either side of an edge (PLACED).
+  The lie, `builtSurface`, and the paint, ground.js's built branch, read it in
+  one order. Holes: the game's hole object on the back tee facing the green,
+  its centre line the stored line, widths measured off the fairway field,
+  greens answered exactly from their outline (`greenDistance` asks a built
+  hole). Trees with stored trunks and crowns, drawn as their stored species
+  while the course wears the landscape it came from, else by role
+  (`speciesFor`). Creeks and rivers as the generator's own stations through
+  the same channel lookup (`streamIndex`, extracted from `generateStreams`
+  unchanged -- both fingerprints silent).
+- **`src/freeze.js`** -- `freezeWorld`: door 1's *Take it over*. Shapes traced
+  where shapes exist (greens, bunkers, ponds, lakes, tees and their collars,
+  the fairway and semi-rough corridors, cart paths), the ground types, beach
+  and blowouts from a 1 m raster (`src/contour.js`), the land at a third of
+  the ground mesh's spacing each way, every green, tee and bunker at 0.25 m.
+  Not carried: houses, clubhouse, boulders, haunted props, walls, markings,
+  life.
+- **`src/built-store.js`** and **main.js**: a built `.fairway` opened from
+  Saved courses (Import courses from a file, or dropped on the screen) is
+  kept in IndexedDB by its hash, listed in the library with the hash as
+  `settings.built`, played through the same path as any saved course, and
+  saved back out as its own file; a built course has no code (it refuses one
+  in plain words). The game's ground shader paints it (the `builtOn` branch),
+  the renderer draws its ponds and lakes from their outlines, the maps draw
+  its outlines. A saved round on a built course carries the hash and resumes
+  by loading the file first. `BUILT_STAMP + BUILT_VERSION` is its stamp.
+- **Measured** (RESEARCH *Course builder: a world from a file*): surfaces
+  97.1-99.7% the same at every 2 m on every landscape; the ground within
+  0.4 cm at the 95th percentile; greens within 0.12 cm at the median; every
+  par, tee and green the same; eight virtual golfers within their error on
+  three landscapes; from above, 1.4% of pixels differ in the built game; the
+  shader's new branch costs Classic nothing measurable on any tier.
+- **Not seen by a person**: no one has played a built course in the game.
+  The capture tool played one (lab.course) and photographed it.
+
+- **Low, a built course against its generated original** (`profile.mjs --only built`, real GPU, 31 October): Midwest 0.83 against 0.99 ms of graphics time, PNW 1.07 against 1.20, Links 0.93 against 0.96 -- a frozen copy costs no more, and a little less (it carries no houses or props). The first measurement had PNW's copy 25% dearer: the frozen trees had lost the generated forest's `stand` and `under` marks, so Low drew every understory plant. Both now ride in the stored role (+8, +16).
+- **Every landscape loads** its frozen copy in the built game (a nine each, Low, 2.6-13 s, no error). The first try found Links hanging: `addFarHeath` (vegetation.js) read the generated landscape's `landform` record, which a built world does not have, threw while the course was being drawn, and left the load waiting for ever -- the profiler's first two runs stalled there (*Graphics card log*). Heather on a built course is now its own outlines.
+
+### Stage 2 (31 October 2026): pins per round
+
+- **A built course's cups are cut when a round starts**: `placeBuiltPins`
+  (built-world.js) runs the generator's own `choosePin` on every hole -- the
+  hole's band, the pin day's slope and room from the edge -- reading the
+  slope off the stored ground (`greenSlopeAt` asks a built hole's height) and
+  the room off the green's outline. Seeded by the round: `Round.pinSeed`
+  (game.js; a round's own id unless told otherwise), passed to the world as
+  `settings.builtPins` and in the world key, so a new round is a new world and
+  a resumed round finds the same cups.
+- **A friend's challenge on a built course** carries the file's hash and the
+  challenger's pin seed (rival.js `b`, `p`); played without the file it is
+  refused in plain words ("ask for its .fairway file").
+- **Generated courses keep their pins** (one per course, varied by pin day).
+- Tested: tests/built-pins.test.mjs (every cup on its green, 2 m or more from
+  the edge, under 6% slope, Thursday and Sunday; the same seed the same cups;
+  the seed through a save and through a challenge code).
+
+### Stage 3 (31 October 2026): the builder's shell and door 1
+
+- **Door 1** (`src/builder/door-generate.js`): the game's own settings
+  schema as a form (every setting, by category, Architect's shown for
+  Architect), *Grow this course* in slices so the page keeps painting, a
+  picture from above, *Take it over* (freeze.js) into the editor.
+- **The editor** (`editor.js`, `view.js`, `editing.js`, `checks.js`): a
+  working 3D view (the land as plain meshes, every stored sample to about
+  1 km a side and coarser past it to stay under 2.2 million vertices, PLACED;
+  the surfaces one texture in the landscape's colours, patched where a brush
+  paints; trees as coloured cones; water, tees, flags and lines), the tool
+  column, the holes and checks on the right, undo and redo (Ctrl+Z, Ctrl+Y),
+  the landscape switch, Save as a .fairway file.
+  **Decided: the editor's view is not the game's picture.** The game's
+  renderer builds a whole course in seconds; a brush needs the next frame. So
+  the editor draws its own plain view, and how the course looks in Fairway is
+  seen by opening the saved file in the game. The spec's "looks in the
+  builder the way it will in the game" is not met by the editor's view.
+- **The editing model** (`editing.js`, pure): the surfaces as a grid of codes
+  while editing (half a metre, coarser past 4096 cells a side), painted and
+  filled, traced back into outlines on save -- untouched, a document keeps its
+  own outlines; the land changed in place on its grid and patches; undo for
+  every tool (a drag is one step).
+- **Measured**: the `builder-door-1` smoke journey grows a nine, takes it
+  over, raises the ground with a drag, paints sand, undoes and redoes, saves
+  the file (a ZIP over 100 KB), opens it in the built game and plays a tee
+  shot on it (59 s, passed 31 October). The builder page is 907 KB (three.js
+  and the generator now ride in it).
+- **Not played by a person.**
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the
@@ -248,6 +345,31 @@ owner can overrule them:
 - Heights stored to the centimetre; the file's limits (above).
 - Land 1 m, greens and tees 0.25 m; the 3 x 3 km cap.
 - A fixed ZIP entry date (1 January 2026), so a file's hash is its identity.
+- The built field: half a metre (coarser past 2048 texels), 6 m either side of
+  an edge; a patch fades into the land over 1.5 m; a ground type's texel step
+  where two types meet.
+- Freezing: the ground types from a 1 m raster, simplified to 0.35 m.
+- A built course's file is kept by a 96-bit prefix of its SHA-256.
+- The editor: the land drawn at every stored sample to about 1 km a side,
+  coarser past it (under 2.2 million vertices); the surfaces edited at half a
+  metre (coarser past 4096 cells a side), traced back simplified to 0.35 of a
+  cell; a brush's raise or lower 0.5 m a dab at full strength.
+- The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%
+  average slope is too steep to putt.
+
+## Graphics card log
+
+Every run through `tools/gpu-run.mjs --goal course-builder` (30%, 80 °C, a
+minute apart; the card read before each), 31 October 2026:
+
+| # | What | Result |
+| --- | --- | --- |
+| 1 | `builder-smoke` (builder-opens) | passed |
+| 2-3 | `freeze-capture` (Midwest, High) | pictures; no error |
+| 4-5 | `profile --only tiers`, main's build then the branch's | Classic unchanged on every tier |
+| 6 | `profile --only built` | **stalled** on Links' frozen copy (a page error left the load waiting); stopped by hand after about 13 minutes at full load, 68 °C, its headless browsers closed by hand. A second run stalled at the same case and was stopped the same way; the cause was then found without the card and fixed |
+| 7 | `profile --only built` (after the fix) | all six cases |
+| 8-10 | `builder-smoke` | door 1 failed on the harness (a button name), then on the editor (its land drawn facing down), then passed |
 
 ## Sources
 

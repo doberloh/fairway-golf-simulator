@@ -35,8 +35,9 @@ check.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
-- [ ] **Stages 1-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stage 0
-  (the page, its build and packing, the file format) is built.
+- [ ] **Stages 4-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stages
+  0-3 are built: the page and file format, the game playing a built file,
+  pins per round, door 1 and the editor's first tools.
 - [ ] **The owner plays the builder and a built course** at the end of the
   goal: the builder's doors and editor, a Worthington round in the game.
   Nothing in the builder has been played by a person.
