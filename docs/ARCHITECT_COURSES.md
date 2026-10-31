@@ -21,9 +21,9 @@ number of holes.
 | Phase | State |
 | --- | --- |
 | 0. The switch | built: the `designer` setting and the four dials, `ARCHITECT_VERSION` and the per-course stamp, saves, codes, files and challenge codes, the studio, a fingerprint per designer, the baselines; Architect builds exactly what Classic builds at its defaults |
-| 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Deferred: greens turned to the approach (phase 3; *Deviations*) |
+| 1. Purpose | built: the golfer table, the styles, clubs and ages as settings, a plan per hole with every hazard placed against a shot and its reason recorded, templates, fairways that swell, neck and tuck, greens that drain off a corner, the hole sequence, the tree line, avenues and dogleg corners. Greens turned to the approach came with the surface field (phase 3) |
 | 2. People | built: cart paths with bridges and free relief; hole names, flags by pin position and the crest for both designers; an Architect course's founding and the architect's note; stakes, yardage posts and rakes (ten iterations); the clubhouse, solid, one per landscape (ten iterations). The bridge deck became solid in phase 5 |
-| 3. The field | built, without the study's baked field (*Deviations*): collection areas (a hazard-slot kind the shader paints and the lie reads), lobed bunker complexes, thin collars where fairways run into greens, divot wear. Not done: greens turned to the approach, per-band mowing heights, native mower lines (*Deviations*) |
+| 3. The field | built: collection areas (a hazard-slot kind), lobed bunker complexes, thin collars where fairways run into greens, divot wear; then the surface field (*Phase 3, finished*): the ground shader's tables packed to free texture room, a baked field the paint and the lie both read, up to 24 hazards a hole through it, greens turned to the approach, heights read as heights, the mower's line at native grass |
 | 4. Home | built: routed from the clubhouse -- each nine pulled home toward its turn, the 10th tee at the clubhouse, every hole within walking reach of home. 10 of 12 nines home on the bench (Classic 7), 19 of 24 on eighteen-hole courses (Classic 10); Links the hard case. Not done: double greens (*Deviations*) |
 | 5. Built | built: mounds by style as real ground (framing, spectator banks, chocolate drops); rip-rap or tie walls along the faced edge of a pond and fountains in big ponds; a bridge kit (ten iterations) whose deck is solid, a ball at rest on it in the penalty area; paths that cross creeks rather than run along them; the fairway tucks on the right side (a phase 1 bug). Not done: levelled clubhouse ground, feeder slopes and arroyos (*Phase 5*) |
 | 6. Story | built: the land's story (field walls, a farmstead, ruins, a landmark, a stone circle and lanterns; solid where they stand; ten iterations), the land's templates (Dell, Alps, Barranca, Pit), the age dial's history (grassed-over bunkers, a felled avenue's stumps) and life (animals and distant people, never on Low; ten iterations). Not built: tiger tees, a later pond, a rebuilt green, plaques (*Phase 6*, second half) |
@@ -246,9 +246,11 @@ shader draws at most twelve hazards a hole (ground.js `HOLE_ATLAS`), and the
 architect designs to that (`MAX_HAZARDS`), but the signatures and the hand
 tools were laid past it -- 9 holes in 432 had 13 or 14, the extra bunkers
 playing as sand and never drawn. Found counting hazards while writing the
-custom-course study. Now `applyHand` stops at `HAZARD_CAP` (a test holds it to
-`MAX_HAZARDS`, and builds courses with twenty hand bunkers on a hole), and the
-studio refuses a bunker on a full hole with a message.
+custom-course study. 17 stopped `applyHand` at twelve; since 18 the bunkers
+past the slots are drawn and played from the surface field and the limit is
+24 (*Phase 3, finished*). A test builds courses with twenty hand bunkers on a
+hole and holds every hole to the cap and its slots to twelve; the studio
+refuses a bunker on a full hole with a message.
 
 Cost: walkers and spectators are one instanced mesh per body part per body,
 coloured per instance (no extra draws for the colours); the crowd five
@@ -259,16 +261,16 @@ bodies (was one), so five times the crowd's draw calls on Medium and up
 
 **Met** (each figure re-measured on the final code, 30 October 2026, after the
 last change): every phase built and documented, and the owner's review list
-worked through (above); npm test (1,219) and the build pass; the round
+worked through (above); npm test (1,226 since the surface field) and the build pass; the round
 matrix (now on a real Classic and a real Architect nine too) and the virtual
 golfer run on both designers -- **Architect 0.17 strokes per 18 harder**
-(limit 1.5); Classic's fingerprint unchanged from the start; the bench moved
+(limit 1.5; -0.07 after the surface field); Classic's fingerprint unchanged from the start; the bench moved
 (bunkers by a landing zone 80% against 27%, nines home 11 of 12 against 7);
 **frame time on Low at or below Classic's in every landscape** by mean and by
 median (the final run: processor -38% to +0.3%, graphics -48% to +0.4%);
 **an eighteen builds at most 0.75 s slower** on
-Architect (PNW, the last measure; limit 2 s); **every smoke journey green**
-(40 of 40 on the graphics card, on the final code, the played-round journey
+Architect (PNW; 0.84 s after the surface field; limit 2 s); **every smoke journey green**
+(41 of 41 after the surface field; 40 of 40 on the graphics card, on the final code, the played-round journey
 `architect-tournament` included -- `ball-light-hole-out`, which had failed
 about 3 runs in 8 on main too, FIXED: programs first drawn only in play, a
 pond out of view from the tee or a planting the cull had hidden, are now
@@ -305,7 +307,11 @@ following it** -- before a shot the golfer on the board at "-", after the
 hole-out "E, thru 1", the same score as the golfer's chip in the top bar. And **a hand-shaped
 hole played through** (smoke journey `architect-hand-round`): every hand tool
 on hole 1, two full shots, a drop by the pin of the punchbowl green, putts to
-the hole-out, no error. **Not seen by anyone**:
+the hole-out, no error. After the surface field (GPU captures): a green turned
+to its approach, from above; the step of the mowing heights at a fairway's
+edge; the mower's line at native grass on Midwest; a bunker drawn from the
+field. **Not seen by anyone**: a ball in a field bunker or on a turned
+green in a round (the lie tested in Node);
 anything played by a person; the walkers and animals in motion looked at
 (measured moving, above, but seen only in stills); a ball against a wall, a stand or a bridge deck in a round
 (Node tests only). The journeys' rounds, the hand-shaped one included, are
@@ -509,6 +515,85 @@ ARCHITECT_VERSION 6. Classic's fingerprint unchanged.
   tees, thickest on par 3s (irons; USGA's par-3 tee area doubled for that
   reason), a few on every back tee and scattered in the landing zones, by
   club and age; one instanced mesh of small dark patches.
+
+### Phase 3, finished: the surface field (30-31 October 2026)
+
+ARCHITECT_VERSION 18. Classic's fingerprint unchanged. The owner, asked
+whether to build the study's field or keep it as a deviation: "yes. Please
+extend the limit on the surface fields. And leave room for more if
+possible." Read as: build the field, lift the twelve-hazard limit through it,
+and free texture room for the field's later layers.
+
+- **Room first: seven samplers to four, then five.** The ground shader was at
+  the budget its floodlight shadows were measured with (7 samplers of 16).
+  The route curves, the per-hole table, the pond banks and the stream
+  segments, four float textures, are one now (ground.js `packTables`, 1024
+  floats wide, each table in its own rows; each was already laid in rows that
+  divide 1024, so each copies in one block). The field takes one sampler;
+  **two are free** for its later layers, on top of the one every tier keeps
+  spare (tests/flood-shadows.test.mjs counts 5).
+  - **A filtered read cost Classic 5-10% of its ground on Low.** The packed
+    texture filters linearly, which the curves and banks need, and the hole
+    table's thirty-odd reads a pixel went through the filter too. Read with
+    `texelFetch` (GLSL ES 3.00, which three r186 compiles to): no filter, the
+    exact texel, the old figures back (`tools/frame-ab.mjs`, Classic Low,
+    old build against new, two rounds: mean frame -2%, within noise).
+- **The surface field** (surface-field.js): a picture of the ground baked on
+  the owner atlas's grid (1.75 m texels), one byte a channel, each a signed
+  distance to an edge (0.5 on it; FIELD_RANGE 4 m either side, 3 cm a step,
+  PLACED) so a linear filter draws a smooth edge. The ground shader paints
+  from it and course.js `surface` plays from the same bytes, read the same
+  way (`fieldAt`, as the blowouts are). **R: sand. G, B, A: free**, for the
+  hand-drawn outlines, a native line or wear the sculpting and real-courses
+  studies want. Classic bakes none and binds one empty texel the shader
+  never reads.
+- **The hazard limit, through the field.** A hole holds up to 24 hazards
+  (hand-tools.js `HAZARD_CAP`, PLACED: twice the slots; past about two dozen
+  a hole reads as a sand course). The shader's twelve slots take the
+  collection areas, the ponds and the first bunkers; every bunker past them
+  is marked `field` (`markOverflow`, after the hand tools) and drawn and
+  played from the field. The lobes ARCHITECT_VERSION 17 trimmed are back,
+  and a studio hole takes 24 hazards before it refuses one. The architect
+  still designs to the twelve (`MAX_HAZARDS`).
+  - **Seen**: a hole with sixteen hand bunkers (`arch-p3h`, Midwest, view
+    `arch-field`): the field bunker drawn as a slot bunker is, sand, rake
+    lines, lip and its rake. **Its outline is faceted** at the field's
+    texel: a 4 m bunker spans about five texels and the filter is straight
+    between them. A finer field (half the texel) would cost four times the
+    memory; left as it is, the lie reading the same facets.
+- **Greens turned to the approach** (the study, workstream A; architect.js
+  `approachTurn`): the oval's depth laid along the line the second shot is
+  played from -- the good player's drive on a par 4, the lay-up on a par 5,
+  the back tee on a par 3 -- and on a strategic or heroic hole turned a
+  further 0.35 rad (20 degrees) to open the green's length to the preferred
+  side; the Redan 0.5 (29). Capped at 0.6 (34). All PLACED, by eye from the
+  angled greens the study names; no source gives a figure. The turn is one
+  number (`greenTurn`), in the pin texel's free fourth channel; the lie
+  (`greenDistance`), the shape round a green (`greenPoint`, `greenOffset`:
+  the greenside bunkers, the collection area, the three maps, the course
+  picture, the yardage book, the green-reading heat map) and the green's
+  fall, ridge, tier and false front all turn with it. Classic's turn is
+  zero and **skipped, not multiplied by one**, so its arithmetic is the same
+  to the bit (a test holds `greenDistance` to the old formula). Seen from
+  above (`arch-turned`, Midwest).
+- **Heights read as heights** (the study, D, pass 7): green about 0.15 in,
+  fringe and fairway about 0.4, first cut 1.5, rough 2.5 (USGA; RESEARCH.md
+  *Mowing heights*). Where a shorter cut meets a taller one, the taller grass
+  shades the edge -- 30% at most on the short side, its lit tips 20% on the
+  tall side, each scaled by the step in height (PLACED) -- over about two
+  pixels, fading out past 0.5 m a pixel. Round 1 at 16% could not be seen
+  at eye height; a debug build painting the reach red and blue confirmed it
+  sat on every edge (`arch-p3f-debug`), and round 2 is seen (`arch-p3g`).
+  Painted only; the lies were already per band.
+- **The mower's line** (the study, D): where mown rough meets native grass
+  (Links, Midwest, Lakeshore Dunes), the colour switches within 0.48-0.52
+  of the field instead of 0.34-0.66, centred on the 0.5 the lie switches
+  at, with a 20% shadow on the mown side and a 10% lit fringe on the
+  native side. Seen (`arch-p3g`, Midwest): a clean cut edge.
+- **Classic, measured unchanged**: the fingerprint silent; the same views
+  from the last commit's build and this one (`frame-ab --shots`, Midwest,
+  Low): 0.02-0.08% of pixels differ, below the 0.04-1.89% two runs of one
+  build differ by (wind, water, clouds), frame time level.
 ### Phase 4: home (30 October 2026)
 
 ARCHITECT_VERSION 7. Classic's fingerprint unchanged.
@@ -875,13 +960,22 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
 - **Walkers on a straight line between two path points**: on a bend they
   walked off the path. They follow its points.
 
+- **The surface field as one more texture** beside the four float tables:
+  it would have spent the ground's last unit below the floodlights' spare.
+  The tables were packed instead, which freed three.
+- **The packed tables read through the filter**: Classic's ground cost 5-10%
+  more on Low. Fetched by texel.
+- **A field at half the texel** for rounder field bunkers: four times the
+  memory, for the bunkers past the twelfth only.
+- **The green's turn multiplied in on every green** (a cosine of zero for
+  Classic): the same numbers in exact arithmetic, but not promised to the
+  bit. Classic skips the turn.
+- **A diagonal green at a random angle**: a new draw would have moved every
+  later decision on the hole. The turn comes from the hole's geometry and
+  its concept.
+
 ## Deviations from the study
 
-- **Greens turned to the approach** (the study, workstream A) is deferred to
-  phase 3. A green's outline is an oval aligned to the hole in the shader's
-  hole table; turning it needs a rotation the shader does not read, which is
-  the surface field's job. Phase 1 turns what the green does instead -- its
-  drainage, the Redan's fall.
 - **The study's "golfer simulated or tabled"**: tabled, as the study's pass 4
   said, from three golfers; the "course built for your game" idea would add a
   fourth from the player's own shots.
@@ -891,18 +985,14 @@ ARCHITECT_VERSION 13. Classic's fingerprint unchanged.
   which Architect keeps; two holes sharing one putting surface with two cups
   would need two flags, two hole locations and a green the shader draws once
   for two holes -- left for later work.
-- **The surface field is not built** (the study's engine piece: a baked
-  texture of distances to every surface edge, read by the lie and the
-  shader). The ground shader is at its sixteen-texture limit, and a new
-  texture meant replacing a data texture both designers share -- a change
-  Classic's look would ride on. Phase 3's pieces went into what exists
-  instead: a hazard-slot kind (collection areas), more hazards (lobes), a
-  setting (collars) and a decal mesh (wear). What that leaves undone:
-  **greens turned to the approach** (a rotation the hole table has no free
-  channel for), **per-band mowing heights** read as heights, and **native
-  mower lines** where mown rough meets native grass. The sculpting and
-  real-courses studies still need the field; it stays the first piece of
-  either.
+- **The surface field holds one layer, sand past the twelve slots**, not
+  every surface the study lists (green, fringe, fairway, first cut,
+  collection, waste, path, native line, wear). The others are still drawn
+  from the hole table's shapes, which already agree with the lie; the
+  field's three free channels and the two free samplers are where the
+  sculpting and real-courses studies' outlines go (*Phase 3, finished*).
+  Greens turned to the approach, the heights and the native line were built
+  without it.
 - **A clubhouse on a slope stands on a terrace** -- its floor level with the
   high side and a stone wall down to the low -- rather than on levelled
   ground: levelling is earthworks (phase 5). On Mountain, where nowhere falls
@@ -1102,6 +1192,23 @@ Island 6.66 / 4.75, Redwood 3.21 / 3.17, Autumn 4.51 / 4.73, Haunted 3.44 /
 inside the goal's 2 s everywhere. (Before the width tables Island was 11.03 s,
 +4.4 s.) Re-measured at the end of the goal.
 
+### After the surface field (31 October 2026, ARCHITECT_VERSION 18)
+
+Every measure re-run on the final code of phase 3, finished.
+
+| Measure | Classic | Architect |
+| --- | --- | --- |
+| Frame on Low, processor, mean ms (Midwest, PNW, Links) | 0.695, 0.825, 0.614 | 0.694, 0.603, 0.540 (-0.1%, -27%, -12%) |
+| Frame on Low, graphics, mean ms | 1.008, 1.207, 1.004 | 0.742, 0.853, 0.680 (-26%, -29%, -32%) |
+| An eighteen's build, median of 3 (worst gap) | PNW 3.39 s | PNW 4.23 s (+0.84 s; the others -0.9 to +0.51 s) |
+| Strokes per 18 over par, virtual golfer, 40 rounds | 1.75 | 1.68 (-0.07: no harder) |
+| Bunkers by a landing zone (bench, standard tier) | | 179 of 224 (80%) |
+| Nines home | | 11 of 12 |
+| Median walk to the next tee | | 93 m |
+
+npm test 1,226 of 1,226; smoke 41 of 41; Classic's fingerprint silent;
+every bench invariant clear.
+
 ### Frame time on Low, every landscape: met (30 October 2026, the last measure)
 
 After the tee furniture was batched (below) -- `node tools/profile.mjs
@@ -1248,6 +1355,10 @@ read `nvidia-smi` first; no crash, hang or driver error in any:
 | review | smoke, all journeys (seven full runs) | 1-6% | 39/39, 39/39, 38/39, 39/40, 39/40, 40/40, 40/40 -- the failures all `ball-light-hole-out`, traced to main and fixed (*EVERY PROGRAM IS DRAWN ONCE*) |
 | review | smoke `ball-light-hole-out` alone: about 80 runs across the bisect (main's build in a temporary worktree, removed after) | 3-5% | before the fix 3 in 8 failing on main; after it 20 of 20 |
 | review | profiles `--only architect`: three landscapes, then all ten (median, then 1,200-frame means), Medium and High with a Championship crowd, every kit at once on Low, the final run on the final code | 2-6%, then about 30% while Chrome Remote Desktop's host was encoding the owner's session (both designers alike) | *Frame time on Low, every landscape: met*; *The crowd's cost* |
+| 31 Oct, phase 3 finished | captures `cls-before`, `cls-after` (Classic, three landscapes, old build and new; the first new run showed a shader error, fixed), `cls-before2` (the noise control), `arch-p3f`, `arch-p3f-before`, `arch-p3f-debug`, `arch-p3g`, `arch-p3h` | 3-7%, 37-40 °C | no errors after the fix |
+| 31 Oct, phase 3 finished | `frame-ab --shots` Classic Low Midwest, old build against new: one round (Classic 5-10% slower on the graphics card: the filtered table reads), then two rounds after `texelFetch` | 3-4% | level; pictures within the noise floor |
+| 31 Oct, phase 3 finished | profile `--only architect` (six cases, Low) | 3%, 39 °C | 1.5 minutes, no errors; *Frame time on Low after the surface field* |
+| 31 Oct, phase 3 finished | smoke, all journeys | 3% | 41 of 41 |
 | review | captures for the tee furniture (before and after), the creek riffles (before and after; the owner then said not to bother), draw counts and frame times read through `window.__view` | 3-40% (the higher with the remote session) | no errors |
 
 ## Blender iteration log

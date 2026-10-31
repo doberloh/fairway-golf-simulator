@@ -10865,11 +10865,31 @@ front corner a green drains toward (its low side), on the styles that play
 along the ground. PLACED: the size (a half to three quarters of the green
 across) and which styles.
 
-**Mowing heights** read for this phase and not yet used (the per-band
-heights need the surface field; ARCHITECT_COURSES *Deviations*): greens to
-about 0.187 in, one new course 0.100 in; fairways and tees 0.350-0.500 in;
-rough 2-3 in, 2.5 the commonest; a first cut about 1.5 in (USGA *Understanding
-mowing heights*, 2018; golfcourseindustry.com, *First cut at Bella Ridge*).
+**Mowing heights** (used since ARCHITECT_VERSION 18, the ground shader's
+*Heights read as heights*): greens to about 0.187 in, one new course 0.100
+in; fairways and tees 0.350-0.500 in; rough 2-3 in, 2.5 the commonest; a
+first cut about 1.5 in (USGA *Understanding mowing heights*, 2018;
+golfcourseindustry.com, *First cut at Bella Ridge*). Taken as the ORDER and
+rough size of the steps: green to fringe small (about 0.15 to 0.4 in),
+fairway to first cut large (0.4 to 1.5), first cut to rough middling (1.5
+to 2.5), fringe to first cut large. PLACED: the paint is not a height --
+each edge is shaded on the short side by up to 30% and lit on the tall
+side by up to 20%, scaled 0.35, 0.75, 0.45 and 0.6 for those four steps,
+over about two pixels (at least 0.4 m) -- set by eye in captures
+(`arch-p3f-debug`, `arch-p3g`); round 1 at 16% could not be seen.
+
+**Greens turned to the approach** (ARCHITECT_VERSION 18; the study,
+*The green, designed*: "Turned to the approach the concept wants"). No
+source found gives an angle. PLACED: the oval's depth along the approach
+line (exact geometry), plus 0.35 rad (20 degrees) toward the preferred
+side on strategic and heroic holes and 0.5 (29) on a Redan, capped at
+0.6 (34) -- by eye from plans of angled greens the study names.
+
+**The surface field's range** (surface-field.js FIELD_RANGE): 4 m either
+side of an edge in 255 steps, about 3 cm a step; past it a byte is plainly
+in or out. PLACED. The field's texel is the owner atlas's, about 1.75 m:
+a 4 m field bunker spans about five texels and its edge is visibly
+faceted; a half-size texel would cost four times the memory.
 
 **Thin collars**: a links fairway is mown to the green's edge, so a running
 shot can be played in (the study, *Links run in*). PLACED: 0.75-1.0 m.

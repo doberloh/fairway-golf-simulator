@@ -139,6 +139,22 @@ export const VIEWS = [
  {name: 'arch-rake', hole: 0, when: 'afternoon', caption: 'An Architect course\'s rake beside a bunker', cam: `w => { const m = (w.markers || []).find(k => k.kind === 'rake') || {x: 0, z: 0};
   const px = Math.cos(m.rot), pz = -Math.sin(m.rot);
   return {x: m.x + px * 3.5, z: m.z + pz * 3.5, yaw: Math.atan2(-px, -pz) * 180 / Math.PI, height: 1.6, pitch: -22}; }`},
+ // PHASE 3'S GROUND (the surface field, 30-31 October 2026): the green turned
+ // most to its approach, from above; the mower's line where rough meets native
+ // grass; the step of the mowing heights at the first fairway's edge, from the
+ // first cut; and a bunker drawn from the surface field (needs one: pass
+ // `--course` with an archHand that overflows a hole).
+ {name: 'arch-turned', hole: 0, when: 'afternoon', caption: 'The green turned most to its approach, from above', cam: `w => { const h = w.holes.reduce((a, b) => Math.abs(b.greenTurn || 0) > Math.abs(a.greenTurn || 0) ? b : a), g = h.worldGreen;
+  return {x: g.x, z: g.z - 2, yaw: 0, height: 60, pitch: -86}; }`},
+ {name: 'arch-native', hole: 0, when: 'afternoon', caption: 'The mower\'s line where rough meets native grass', cam: `w => { let best = null;
+  for (const h of w.holes) { const g = h.worldPin; for (let r = 25; r < 220 && !best; r += 6) for (let a = 0; a < 6.28 && !best; a += .15) { const x = g.x + Math.cos(a) * r, z = g.z + Math.sin(a) * r; if (w.surface(x, z) === 'native' && w.surface(x - Math.cos(a) * 1.5, z - Math.sin(a) * 1.5) === 'rough') best = {x, z, a}; } if (best) break; }
+  if (!best) return {x: 0, z: 0, yaw: 0, height: 20, pitch: -15};
+  const cx = best.x - Math.cos(best.a) * 7, cz = best.z - Math.sin(best.a) * 7;
+  return {x: cx, z: cz, yaw: Math.atan2(best.x - cx, best.z - cz) * 180 / Math.PI, height: 1.7, pitch: -14}; }`},
+ {name: 'arch-bands', hole: 0, when: 'afternoon', caption: 'The mowing heights stepping down at a fairway\'s edge', cam: `w => { const h = w.holes[0], z = h.length * .55, c = h.center(z), e = h.toWorld({x: c + h.leftWidth(z), z: z + 6}), o = h.toWorld({x: c + h.leftWidth(z) + 8, z: z - 4});
+  return {x: o.x, z: o.z, yaw: Math.atan2(e.x - o.x, e.z - o.z) * 180 / Math.PI, height: 1.7, pitch: -18}; }`},
+ {name: 'arch-field', hole: 0, when: 'afternoon', caption: 'A bunker drawn from the surface field', cam: `w => { for (const h of w.holes) { const b = h.bunkers.find(k => k.field); if (b) { const c = h.toWorld({x: b.x, z: b.z}); return {x: c.x, z: c.z - 15, yaw: 0, height: 12, pitch: -36}; } }
+  return {x: 0, z: 0, yaw: 0, height: 20, pitch: -15}; }`},
  // The clubhouse: from 42 m in front of it, a little off-centre, at 7 m; and
  // from the first tee, where a player first sees it.
  {name: 'arch-club', hole: 0, when: 'afternoon', caption: 'An Architect course\'s clubhouse', cam: `w => { const b = (w.buildings || [])[0] || {x: 0, z: 0, rotation: 0, depth: 10};

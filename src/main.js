@@ -4153,10 +4153,11 @@ function wireHandTools(){
   for(const k of Object.keys(HAND_FIELDS[kind]))if(k!=='hole'&&$('hand-'+k))f[k]=Number($('hand-'+k).value);
   if(kind==='green')f.contour=$('hand-contour').value;
   const clean=cleanFeature(f);if(!clean)return;
-  // A hole holds at most the twelve hazards the ground can draw (hand-tools.js
-  // HAZARD_CAP); a bunker past them would never be laid, so say so now.
+  // A hole holds at most HAZARD_CAP hazards (hand-tools.js; twelve in the hole
+  // table, the rest in the surface field); a bunker past them would never be
+  // laid, so say so now.
   const built=world?.holes?.[clean.hole];
-  if(kind==='bunker'&&built&&built.bunkers.length+(built.ponds?.length||0)+(built.collections?.length||0)>=HAZARD_CAP){toast(`Hole ${clean.hole+1} already has the ${HAZARD_CAP} hazards a hole can show; take one away first.`);return;}
+  if(kind==='bunker'&&built&&built.bunkers.length+(built.ponds?.length||0)+(built.collections?.length||0)>=HAZARD_CAP){toast(`Hole ${clean.hole+1} already has the ${HAZARD_CAP} hazards a hole can hold; take one away first.`);return;}
   if(handDraft.length>=MAX_HAND){toast(`At most ${MAX_HAND} hand-shaped features a course.`);return;}
   handDraft.push(clean);drawList();markStudioDirty();toast(`${HAND_LABEL[kind]} added to hole ${clean.hole+1} -- grow the landscape again to see it.`);
  };

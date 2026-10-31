@@ -31,12 +31,16 @@
 export const HAND_KINDS = ['bunker', 'green', 'slope', 'fairway'];
 export const CONTOURS = ['designed', 'tilted', 'tiered', 'ridged', 'crowned', 'bowl', 'punchbowl', 'raised'];
 export const MAX_HAND = 80;
-// The most hazards one hole can have DRAWN: the ground shader reads twelve a
-// hole from HOLE_ATLAS (ground.js), and the architect designs to the same
-// limit (architect.js MAX_HAZARDS; a test holds the two equal). A hand-made
-// bunker past it would play as sand and not be drawn -- found on 9 holes in
-// 432 before this limit (30 October 2026) -- so it is not laid.
-export const HAZARD_CAP = 12;
+// The most hazards one hole can hold. It was twelve, the slots the ground
+// shader reads from HOLE_ATLAS (ground.js): a bunker past them played as sand
+// and was not drawn (9 holes in 432, 30 October 2026). Bunkers past the slots
+// are now baked into the surface field (surface-field.js) and drawn from it,
+// so the limit is what a hole should hold rather than what the table can:
+// twice the slots, PLACED -- past about two dozen a hole reads as a sand
+// course, and the studio says so rather than laying one more. The architect
+// still designs to the slots (architect.js MAX_HAZARDS); the rest is the
+// signatures' lobes and the hand's.
+export const HAZARD_CAP = 24;
 
 // Each field: [min, max, default]. Out-of-range values are clamped, unknown
 // fields dropped, a record of an unknown kind dropped.

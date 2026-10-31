@@ -13,7 +13,7 @@
 // the biome's rough as the ground, `mapTurf` for semi-rough, fairway and green,
 // ponds and bunkers in the map's own blue and sand, the tees as dots.
 
-import {generateCourse, DEFAULT_COURSE, random, BIOMES, fairwayWidth, greenRadius, ovalRadius} from './course.js';
+import {generateCourse, DEFAULT_COURSE, random, BIOMES, fairwayWidth, greenRadius, greenPoint, ovalRadius} from './course.js';
 import {routeHoles} from './routing.js';
 
 const TAU = Math.PI * 2;
@@ -85,8 +85,7 @@ export function drawCoursePicture(ctx, layout, w, h) {
  for (const h0 of layout.holes) {
   for (const p of h0.ponds || []) oval(h0, p, '#70a6aa');
   for (const b of h0.bunkers || []) oval(h0, b, '#efe0b9');
-  const c = h0.green ?? h0.pin;
-  fill(Array.from({length: 24}, (_, i) => { const a = i / 24 * TAU, r = greenRadius(h0, a); return at(h0.toWorld({x: c.x + Math.cos(a) * r * (h0.greenAspect ?? 1), z: c.z + Math.sin(a) * r})); }), turf.green ?? '#b3cc86');
+  fill(Array.from({length: 24}, (_, i) => { const a = i / 24 * TAU; return at(h0.toWorld(greenPoint(h0, a, greenRadius(h0, a)))); }), turf.green ?? '#b3cc86');
   const [tx, ty] = at(h0.toWorld(h0.tee));
   ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(tx, ty, Math.max(1.2, 3.5 * scale), 0, TAU); ctx.fill();
  }

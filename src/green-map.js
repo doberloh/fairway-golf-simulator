@@ -9,19 +9,20 @@
 // It is the SAME field the 3D overlay draws -- height across the putting
 // surface, scaled between that green's own lowest and highest point, blue low to
 // red high. Two views of one thing that disagreed would be worse than one view.
-import {greenDistance, greenRadius} from './course.js';
+import {greenDistance, greenOffset, greenRadius} from './course.js';
 
 // The square the green occupies, in hole-local coordinates. Sampled from
 // `greenRadius` rather than assumed circular, because greens are not: the
-// outline wobbles with the hole's own seed and is stretched by `greenAspect`.
+// outline wobbles with the hole's own seed, is stretched by `greenAspect`
+// and is turned by an Architect green's `greenTurn` (course.js greenOffset).
 export function greenBounds(course, margin = 1.5) {
  const centre = course.green ?? course.pin;
  let rx = 0, rz = 0;
  for (let i = 0; i < 64; i++) {
   const a = i * Math.PI / 32;
-  const r = greenRadius(course, a) + (course.settings?.fringe ?? 0);
-  rx = Math.max(rx, Math.abs(Math.cos(a) * r * course.greenAspect));
-  rz = Math.max(rz, Math.abs(Math.sin(a) * r));
+  const q = greenOffset(course, a, greenRadius(course, a) + (course.settings?.fringe ?? 0));
+  rx = Math.max(rx, Math.abs(q.x));
+  rz = Math.max(rz, Math.abs(q.z));
  }
  return {x: centre.x, z: centre.z, rx: rx + margin, rz: rz + margin};
 }

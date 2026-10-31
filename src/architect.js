@@ -78,6 +78,28 @@ export function landingZones({center,length,tees}){
  const average=Math.min(length-110,alongLine(center,tees.white?.z??0,T.average.clubs.driver.total*YD,length));
  return {good,average};
 }
+// THE GREEN TURNED TO ITS APPROACH (the study, workstream A, "Turned to the
+// approach the concept wants"; built in phase 3 once the hole table had a
+// slot for it -- ground.js reads it from the pin texel's fourth channel).
+// Classic lays every green square to the hole's own axis, so on a dogleg the
+// approach comes in across the green's depth at an angle no architect chose.
+// Two parts, in radians, the oval turned about its centre (course.js
+// greenPoint): the approach -- the oval's depth laid along the line from where
+// the second shot is played (the good player's drive on a par 4, the lay-up
+// on a par 5, the back tee on a par 3) -- and the concept's diagonal, which
+// opens the green's length to the preferred side so the right drive is
+// rewarded with the longer target (a strategic or heroic hole, and the Redan,
+// whose green runs away on the diagonal). The diagonal, 0.35 rad (20
+// degrees) and the Redan's 0.5 (29), and the cap of 0.6 (34) are PLACED, as
+// eyeballed from plans of the angled greens the study names; no source gives
+// a figure. No random draw: the plan's other dice stay where they were.
+export function approachTurn({par,center,tees,length,green,goodZ,layZ,concept,template,preferred}){
+ const fromZ=par===3?(tees.blue?.z??0):par===5?(layZ??goodZ):goodZ;
+ const fromX=par===3?(tees.blue?.x??0):center(Math.max(0,Math.min(length,fromZ)));
+ const approach=Math.atan2(green.x-fromX,Math.max(1,green.z-fromZ));
+ const diagonal=template==='redan'?.5:concept==='strategic'||concept==='heroic'?.35:0;
+ return Math.max(-.6,Math.min(.6,-approach-preferred*diagonal));
+}
 function pick(rnd,weights){
  const entries=Object.entries(weights).filter(([,w])=>w>0),total=entries.reduce((a,[,w])=>a+w,0);
  let t=rnd()*total;for(const [k,w] of entries){t-=w;if(t<0)return k;}
@@ -134,6 +156,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  const layZ=par===5?Math.min(length-75,alongLine(center,avgZ,table.average.clubs.wood.total*YD,length)):null;
  const fairwayStart=Math.min(length*.54,maxTeeZ+14+rnd()*45);
  const mowStart=par===3?Math.max(maxTeeZ+22,length*.55,length-(greenSize+38)):fairwayStart;
+ const greenTurn=approachTurn({par,center,tees,length,green,goodZ,layZ,concept,template,preferred});
 
  // ------------------------------------------------- the fairway, swelling at
  // the landing zones and necking before the green; tucks come after the
@@ -149,7 +172,7 @@ export function designHole({s,hole,par,line,bio,geo}){
 
  // --------------------------------------------------------------- hazards
  const bunkers=[],ponds=[],reasons=[],collections=[];
- const greenGuide={green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5};
+ const greenGuide={green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5,greenTurn};
  const size=(lo,hi)=>(lo+rnd()*(hi-lo))*A.size;
  const waves=b=>{b.phase=rnd()*6.28;b.wave2=(rnd()-.5)*.1;b.wave3=.025+rnd()*.08;
   // Classic's bunkerShape treatment: spread the waves toward even, scaled by
@@ -204,10 +227,11 @@ export function designHole({s,hole,par,line,bio,geo}){
  const greenBunker=(a,why,{rx=size(4,7.5),rz=size(4,8)}={})=>{
   const b={x:0,z:0,rx,rz,greenSide:true};waves(b);
   const target=(s.fringe??2)+(s.bunkerGap??2)+.04;let lo=0,hi=90;
-  for(let j=0;j<16;j++){const r=(lo+hi)/2;b.x=green.x+Math.cos(a)*r*greenAspect;b.z=green.z+Math.sin(a)*r;let gap=Infinity;
+  // Round the green's own oval, turned with it (course.js greenPoint).
+  for(let j=0;j<16;j++){const r=(lo+hi)/2;({x:b.x,z:b.z}=geo.greenPoint(greenGuide,a,r));let gap=Infinity;
    for(let k=0;k<64;k++){const q=geo.ovalRadius(b,k*Math.PI/32);gap=Math.min(gap,geo.greenDistance(greenGuide,b.x+q.x,b.z+q.z));}
    if(gap<target)lo=r;else hi=r;}
-  const r=hi;b.x=green.x+Math.cos(a)*r*greenAspect;b.z=green.z+Math.sin(a)*r;
+  ({x:b.x,z:b.z}=geo.greenPoint(greenGuide,a,hi));
   if(!room()||!clearOfTees(b.x,b.z,Math.max(rx,rz))||!clearOfOthers(b.x,b.z,Math.max(rx,rz)))return false;
   bunkers.push(b);reasons.push({kind:'bunker',i:bunkers.length-1,why});lobes(b);return true;
  };
@@ -361,7 +385,8 @@ export function designHole({s,hole,par,line,bio,geo}){
   const gr=greenSize*greenAspect,rx=greenSize*(.55+rnd()*.2),rz=greenSize*(.4+rnd()*.15);
   const off=gr+(s.fringe??2)+Math.max(rx,rz)*.55,ph=rnd()*6.28,w2=(rnd()-.5)*.08,w3=.03+rnd()*.05;
   // The low front corner; the other front corner if a bunker already sits there.
-  const at=k=>({x:green.x+.56*k*off,z:green.z-.83*off,rx,rz,phase:ph,wave2:w2,wave3:w3,collection:true});
+  // (Turned with the green, so the corner is the green's own.)
+  const at=k=>{const cs=Math.cos(greenTurn),sn=Math.sin(greenTurn),x=.56*k*off,z=-.83*off;return {x:green.x+x*cs-z*sn,z:green.z+x*sn+z*cs,rx,rz,phase:ph,wave2:w2,wave3:w3,collection:true};};
   const sandy=q=>bunkers.some(b=>Math.hypot(b.x-q.x,b.z-q.z)<Math.max(b.rx,b.rz)+Math.max(rx,rz)*.6);
   const col=sandy(at(c))?at(-c):at(c);
   if(!sandy(col)&&clearOfTees(col.x,col.z,Math.max(rx,rz))&&!ponds.some(p=>geo.insideOval(col.x,col.z,p,Math.max(rx,rz)+2))){collections.push(col);reasons.push({kind:'collection',i:0,why:'A collection area on the low side: a miss there runs away from the green, down short grass.'});}
@@ -374,7 +399,7 @@ export function designHole({s,hole,par,line,bio,geo}){
  for(let k=0;k<N;k++){const z=Z0+k*STEP;L[k]=leftWidth(z);R[k]=rightWidth(z);}
  const lookup=T=>z=>{const u=(z-Z0)/STEP;if(u<=0)return T[0];if(u>=N-1)return T[N-1];const k=Math.floor(u),f=u-k;return T[k]+(T[k+1]-T[k])*f;};
  const fastLeft=lookup(L),fastRight=lookup(R);
- return {leftWidth:fastLeft,rightWidth:fastRight,width:z=>Math.max(fastLeft(z),fastRight(z)),fairwayStart,mowStart,bunkers,ponds,collections,design,gaps};
+ return {leftWidth:fastLeft,rightWidth:fastRight,width:z=>Math.max(fastLeft(z),fastRight(z)),fairwayStart,mowStart,bunkers,ponds,collections,design,gaps,greenTurn};
 }
 
 // What a template asks of its green. Undefined fields keep the green's own

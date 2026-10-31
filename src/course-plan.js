@@ -382,8 +382,11 @@ export function greenContour(h,x,z){
  // round the front as the edge does. Unchanged on the centre line.
  if(r.falseFront<(h.settings.falseFronts??0)/100){
   const reach=h.greenSize??17,half=reach*(h.greenAspect??1.17),depth=r.frontDepth;
-  const start=-reach*.74*Math.sqrt(Math.max(.15,1-(dx/half)**2));
-  y-=r.frontDrop*Math.pow(slider,.6)*smoothstep01((start-dz)/depth)*(1-smoothstep01((Math.abs(dx)-half)/12));
+  // In the green's own frame, so a green turned to its approach (architect.js
+  // approachTurn) keeps its false front on its own front edge.
+  let fx=dx,fz=dz;const t=h.greenTurn;if(t){const cs=Math.cos(t),sn=Math.sin(t);fx=dx*cs+dz*sn;fz=-dx*sn+dz*cs;}
+  const start=-reach*.74*Math.sqrt(Math.max(.15,1-(fx/half)**2));
+  y-=r.frontDrop*Math.pow(slider,.6)*smoothstep01((start-fz)/depth)*(1-smoothstep01((Math.abs(fx)-half)/12));
  }
  return y;
 }
@@ -459,6 +462,12 @@ function greenRecipe(h){
   for(const k of ['character','ridgeAmp','ridgeAngle','ridgeAt','ridgeHalf'])if(plan[k]!==undefined&&plan[k]!=='tilted')r[k]=plan[k];
   if(plan.character==='ridged'||plan.character==='tiered')r.dish=0;
   r.pedestal=plan.pedestal||null;
+  // A green turned to its approach (architect.js approachTurn) turns its fall,
+  // ridge and tier with it, so the corner it drains to is still the corner
+  // the collection area was put beside.
+  const t=h.greenTurn;
+  if(t){const cs=Math.cos(t),sn=Math.sin(t),tx=r.tx;r.tx=tx*cs-r.tz*sn;r.tz=tx*sn+r.tz*cs;
+   if(r.ridgeAngle!==undefined)r.ridgeAngle+=t;if(r.tierAngle!==undefined)r.tierAngle+=t;}
  }
  r.zero=greenShape(r,0,0);
  RECIPES.set(h,r);

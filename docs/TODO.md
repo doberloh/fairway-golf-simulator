@@ -101,6 +101,16 @@ quality measures*, which it absorbs.
   seen: a round played over hand-shaped ground, a green resized by hand under
   a real putt, the hand tools on a phone. To check: shape a hole in the
   studio, play it.
+- [ ] **Not yet played by a person: the surface field and the turned greens**
+  (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
+  in GPU captures only: a green turned to its approach from above, the
+  mowing-height step at a fairway's edge, the mower's line at native grass
+  on Midwest, a bunker drawn from the field (sixteen hand bunkers on a hole).
+  Tested in Node: field bunkers play as sand. Not seen: a ball played out of
+  a field bunker, a putt on a turned green, the native line on Links and
+  Lakeshore (the capture view landed on a path). To check: put more than
+  twelve bunkers on a hole in the studio, play into the last ones; play a
+  dogleg's approach to its turned green.
 - [ ] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
   than its Classic course (ARCHITECT_COURSES.md, *The crowd's cost*); every
   other case measured is within 4% or cheaper. Low draws no crowd. The

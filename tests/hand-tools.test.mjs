@@ -90,16 +90,29 @@ test('every hand-made bunker, lobes included, has its reason', () => {
  for (const h of w.holes) h.bunkers.forEach((b, i) => assert.ok(h.design.reasons.some(r => r.kind === 'bunker' && r.i === i), `hole ${h.hole + 1}: bunker ${i} without a reason`));
 });
 
-// THE TWELVE THE SHADER CAN DRAW (ground.js HOLE_ATLAS): hand-made and
-// generated bunkers stop there -- past it a bunker played as sand and was not
-// drawn (9 holes in 432, 30 October 2026).
-test('no hole has more hazards than the ground shader draws', async () => {
+// THE CAP AND THE FIELD (hand-tools.js HAZARD_CAP, surface-field.js): a hole
+// holds at most HAZARD_CAP hazards; the shader's twelve slots take the
+// collection areas, the ponds and the first bunkers, and every bunker past
+// them is marked for the surface field -- so nothing plays as sand without
+// being drawn (9 holes in 432 did, 30 October 2026, before the field).
+test('no hole holds more than the cap, and no slot is over-filled', async () => {
  const {HAZARD_CAP} = await import('../src/hand-tools.js');
  const {MAX_HAZARDS} = await import('../src/architect.js');
- assert.equal(HAZARD_CAP, MAX_HAZARDS);
+ const {HAZARD_SLOTS} = await import('../src/surface-field.js');
+ assert.equal(MAX_HAZARDS, HAZARD_SLOTS);
+ assert.ok(HAZARD_CAP > HAZARD_SLOTS);
+ let fielded = 0;
  const many = Array.from({length: 20}, (_, k) => ({kind: 'bunker', hole: 1, at: 60 + k * 15, off: k % 2 ? 30 : -30, size: 4, lobes: 3}));
  for (const [style, seed] of [['golden', 'HZ-2'], ['sandhills', 'HZ-1'], ['heathland', 'HZ-3'], ['parkland', 'HAND-1']]) {
   const w = world({seed, holes: 18, biome: 'midwest', designer: 'architect', archStyle: style, archHand: many});
-  for (const h of w.holes) assert.ok((h.collections || []).length + h.bunkers.length + h.ponds.length <= HAZARD_CAP, `${style} ${seed} hole ${h.hole + 1}: ${(h.collections || []).length + h.bunkers.length + h.ponds.length} hazards`);
+  for (const h of w.holes) {
+   assert.ok((h.collections || []).length + h.bunkers.length + h.ponds.length <= HAZARD_CAP, `${style} ${seed} hole ${h.hole + 1}: ${(h.collections || []).length + h.bunkers.length + h.ponds.length} hazards`);
+   const slotted = (h.collections || []).length + h.bunkers.filter(b => !b.field).length + h.ponds.length;
+   assert.ok(slotted <= HAZARD_SLOTS, `${style} ${seed} hole ${h.hole + 1}: ${slotted} in the slots`);
+   fielded += h.bunkers.filter(b => b.field).length;
+  }
+  if (h0(w)) assert.ok(w.surfaceField, `${style} ${seed}: bunkers marked for the field, and no field baked`);
  }
+ assert.ok(fielded > 0, 'twenty hand bunkers on one hole should overflow its slots');
 });
+const h0 = w => w.holes.some(h => h.bunkers.some(b => b.field));

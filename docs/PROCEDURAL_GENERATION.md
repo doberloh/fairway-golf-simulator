@@ -244,7 +244,11 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   sometimes a centreline bunker; cross bunkers at a par five's lay-up; the
   green's front corner on the wrong side always guarded, then the style's
   count round the green; water placed for a carry, a cape, a go-for-it second
-  or a short side. Every hazard records why; at most twelve a hole.
+  or a short side. Every hazard records why; the architect places at most
+  twelve a hole, and with the signatures and the hand tools a hole holds up
+  to 24 -- the bunkers past the shader's twelve slots baked into the surface
+  field (surface-field.js) at the end, after the ground grid, and painted
+  and played from it.
 - **The fairway** swells at the landing zones, necks before the green and
   tucks round a bunker on its edge; on Links, Sandhills and Minimalist it runs
   into the green on a collar under a metre wide.
@@ -254,8 +258,14 @@ seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
   over 7 m grow a lobe over their rim (outward, on a fairway bunker).
 - **Wear**: divots on the tees (most on par 3s) and in the landing zones,
   by club and age; decoration.
-- **The green** drains off a front corner, higher at the back; a template
-  asks for its own (the Redan's fall away, the Biarritz swale, a punchbowl).
+- **The green** is turned to its approach -- its depth along the line the
+  second shot comes from, opened to the preferred side on a strategic or
+  heroic hole -- and drains off a front corner, higher at the back; a
+  template asks for its own (the Redan's fall away, the Biarritz swale, a
+  punchbowl). The fall, ridge, tier and false front turn with the green.
+- **The ground's paint** (not generation, but Architect's only): a step of
+  shade where a shorter cut meets a taller one, and a mower's line where
+  rough meets native grass.
 - **Routing from the clubhouse** (routing.js): the first tee at home, each
   nine pulled home toward its turn, every hole kept within walking reach of
   home, the green before the last about a last hole's length out, the 10th tee

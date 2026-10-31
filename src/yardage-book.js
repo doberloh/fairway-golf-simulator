@@ -71,7 +71,9 @@ export function yardageBook(world) {
   edge(0, FAIRWAY, 1.4);
   // The green, its fall, its fringe.
   const [gx, gy] = P(h.green.x, h.green.z), gr = (h.greenSize ?? 15) * k;
-  page.ellipse(gx, gy, gr * (h.greenAspect ?? 1.1), gr, 0, {fill: GREEN, stroke: INK, width: .5});
+  // An Architect green turned to its approach (course.js greenOffset): the
+  // page mirrors the hole across, so the local turn is clockwise on it.
+  page.ellipse(gx, gy, gr * (h.greenAspect ?? 1.1), gr, h.greenTurn || 0, {fill: GREEN, stroke: INK, width: .5});
   const fall = d.green?.drainCorner ?? d.green?.tiltSide;
   if (fall) {
    // An arrow from the back to the front corner it drains to.

@@ -9,6 +9,8 @@ import {occlusionAtlas} from './occlusion.js';
 import {BLOWOUT_NEAR,BLOWOUT_RAMP,BLOWOUT_WATER} from './blowouts.js';
 import {WILD_WATER} from './landforms.js';
 import {TURF_DETAIL} from './turf-detail.js';
+import {isArchitect} from './settings-schema.js';
+import {FIELD_RANGE} from './surface-field.js';
 
 // The turf detail atlas (tools/turf-detail.mjs) as a texture: tiling, mip-
 // mapped and sharp at a glancing angle. Data, not colour, so no sRGB step.
@@ -141,8 +143,9 @@ export function groundGeometry(g){
  for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){const n=j*(g.nx+1)+i;positions.set([-g.halfX+i*g.dx,g.values[n],-g.halfZ+j*g.dz],n*3);if(i<g.nx&&j<g.nz){const a=n,b=a+1,c=a+g.nx+1,d=c+1;indices.set([a,c,b,b,c,d],k);k+=6;}}
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));geometry.setIndex(new T.BufferAttribute(indices,1));geometry.computeVertexNormals();return attachRelief(geometry,g);
 }
-// THE PER-HOLE TABLE. One row a hole, one RGBA float texel a column, read with
-// nearest filtering -- four tables that used to be four textures: the route
+// THE PER-HOLE TABLE. One row a hole, one RGBA float texel a column, fetched by
+// texel (since Architect phase 3 it is rows of the one table texture,
+// packTables below) -- four tables that used to be four textures: the route
 // (where the hole is and how it is mown, 3 texels), the tees (two texels each
 // for three tees), the cup (the green's centre and shape, then the pin) and up
 // to twelve hazards (two texels each). Packed because a texture is a sampler
@@ -155,7 +158,8 @@ export function groundGeometry(g){
 // texels each -- centre and size, outline, cup -- for up to RANGE_GREENS of
 // them, counted in the third channel of the pin texel (cups + 1). Every course
 // hole writes zero there and the shader's loop ends before its first read. See
-// range.js greenTexels.
+// range.js greenTexels. The pin texel's fourth channel is an Architect
+// green's turn (course.js greenDistance), zero everywhere else.
 export const RANGE_GREENS = 8;
 export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, greens: 35, width: 35 + 3 * RANGE_GREENS};
 // The painted forest on the far hills (biomes.js `farForest`; the shader says
@@ -167,6 +171,33 @@ export function farForestUniforms(bio){
   // A fourth colour where the record names one (Autumn's evergreens); else
   // the first, in shade.
   farC3:{value:c[3]?new T.Color(c[3]):new T.Color(c[0]).multiplyScalar(.75)}};
+}
+// ONE TEXTURE FOR EVERY TABLE (phase 3 of the Architect courses; the owner,
+// 30 October 2026: "extend the limit on the surface fields, and leave room
+// for more"). The ground shader may sample sixteen textures, and was at its
+// budget (tests/flood-shadows.test.mjs) with four of them float tables: the
+// route curves, the per-hole table, the pond banks and the stream segments.
+// They are one texture now, 1024 floats wide, each table in its own rows:
+//
+//   rows 0..N-1      the route curves and the semi-rough widths, a hole a row
+//   rows N..2N-1     the per-hole table (HOLE_ATLAS), a hole a row
+//   rows 2N..4N-1    the pond banks: 512 texels a pond, two ponds a row
+//   rows 4N..        the stream segments, two texels each
+//
+// Each table was already laid out in rows that divide 1024, so it is copied
+// in one block and every texel keeps its neighbours. Filtered linearly, as
+// the curves and banks were; the hole table and the streams are read at
+// texel centres, where linear filtering returns the texel itself, so what
+// they were read nearest gives the same numbers. Three samplers freed: the
+// surface field takes one, and two are left for more.
+export const TABLE_WIDTH=1024;
+export function packTables({curves,holes,banks,streams,rows:N,streamCount}){
+ const HW=HOLE_ATLAS.width,rows=4*N+Math.ceil(streamCount*2/TABLE_WIDTH),data=new Float32Array(TABLE_WIDTH*rows*4);
+ data.set(curves.subarray(0,N*TABLE_WIDTH*4),0);
+ for(let r=0;r<N;r++)data.set(holes.subarray(r*HW*4,(r+1)*HW*4),(N+r)*TABLE_WIDTH*4);
+ data.set(banks.subarray(0,N*2*TABLE_WIDTH*4),2*N*TABLE_WIDTH*4);
+ data.set(streams.subarray(0,streamCount*8),4*N*TABLE_WIDTH*4);
+ return {data,rows};
 }
 export function groundMaterial(view,palette){
  const w=view.world,N=w.holes.length,span=Math.max(...w.holes.map(h=>h.length))+80,extent=new T.Vector2(w.groundGrid.halfX,w.groundGrid.halfZ);
@@ -202,7 +233,11 @@ export function groundMaterial(view,palette){
   // somewhere of its own.
   Object.values(h.tees).forEach((t,i)=>{const p=teePad(t);
    holeData.set(p?[t.x,p.z,1,p.rz,p.ux,p.uz,0,0]:[0,0,0,0,0,0,0,0],(h.hole*HW+HOLE_ATLAS.tees)*4+i*8);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*1024+j)*4);curves.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*1024+512+j)*4);}}
- const streamCount=Math.max(1,w.streams.segments.length),streamData=new Float32Array(streamCount*8);for(const q of w.streams.segments)streamData.set([q.a.x,q.a.z,q.b.x,q.b.z,q.a.width,q.b.width,q.stream+1,q.bank],q.id*8);const streamTexture=texture(streamData,2,streamCount);
+ const streamCount=Math.max(1,w.streams.segments.length),streamData=new Float32Array(streamCount*8);for(const q of w.streams.segments)streamData.set([q.a.x,q.a.z,q.b.x,q.b.z,q.a.width,q.b.width,q.stream+1,q.bank],q.id*8);
+ const tables=packTables({curves,holes:holeData,banks:view.bankAtlas.image.data,streams:streamData,rows:N,streamCount});
+ const tableTex=new T.DataTexture(tables.data,TABLE_WIDTH,tables.rows,T.RGBAFormat,T.FloatType);tableTex.minFilter=tableTex.magFilter=T.LinearFilter;tableTex.needsUpdate=true;view.resources.push(tableTex);tables.texture=tableTex;
+ // The range rewrites its hole's row as greens slide (renderer.js refreshRangeGreens).
+ view.syncHoleTable=hole=>{tables.data.set(holeData.subarray(hole*HW*4,(hole+1)*HW*4),(N+hole)*TABLE_WIDTH*4);tableTex.needsUpdate=true;};
  const steps=toonRamp(view);const m=new T.MeshToonMaterial({color:'#ffffff',gradientMap:steps}),colors=Object.fromEntries(Object.entries(palette).map(([k,v])=>['tint_'+k,{value:new T.Color(v)}]));
  // THE CUE SWITCHES, AS UNIFORMS. Held outside onBeforeCompile and handed to
  // the shader by reference, so flipping one is a float write rather than a new
@@ -262,15 +297,20 @@ export function groundMaterial(view,palette){
  const coverTex=new T.DataTexture(coverBytes,Sx,Sz,T.RGBAFormat,T.UnsignedByteType);
  coverTex.minFilter=coverTex.magFilter=T.LinearFilter;coverTex.needsUpdate=true;view.resources.push(coverTex);
  const detailTex=turfDetailTexture(view);
+ // The surface field (surface-field.js), or one empty texel where there is
+ // none -- every Classic course -- which fieldOn keeps the shader from reading.
+ const sandField=w.surfaceField&&w.surfaceField.Sx===Sx&&w.surfaceField.Sz===Sz?w.surfaceField:null;
+ const fieldTex=new T.DataTexture(sandField?sandField.data:new Uint8Array(4),sandField?Sx:1,sandField?Sz:1,T.RGBAFormat,T.UnsignedByteType);
+ fieldTex.minFilter=fieldTex.magFilter=T.LinearFilter;fieldTex.needsUpdate=true;view.resources.push(fieldTex);
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},holes:{value:view.holeAtlas},curveSpan:{value:span},curves:{value:texture(curves,1024,N,true)},banks:{value:view.bankAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+   ...wildUniforms(w,!!wild,!!fallen),archGround:{value:isArchitect(w.settings)?1:0},field:{value:fieldTex},fieldOn:{value:sandField?1:0},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -279,7 +319,7 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,holes,curves,banks,detail;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field;uniform float tableRows,fieldOn,rows;
 // THE ROUTE CURVES AND THE SEMI-ROUGH EDGES SHARE ONE TEXTURE (the cartoon
 // overhaul): curves in texels 0-511 of a hole's row, the semi-rough's two
 // widths in 512-1023. They were two textures of the same grid, and the
@@ -289,13 +329,17 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
 // the linear filter would blend the last curve texel into the first edge.
 // (curveAt and outerAt follow the curveSpan uniform below.)
 // A texel of the per-hole table (HOLE_ATLAS): column, then the hole's row.
-vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_ATLAS.width}.,row));}uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn;
-vec4 curveAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+.5)/1024.,row));}
-vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+512.5)/1024.,row)).xy;}
+// Fetched, not filtered (GLSL ES 3.00, which three compiles to): the table
+// texture is linear for the curves and banks, and a filtered read of every
+// table texel cost Classic 5-10% of its ground on Low (tools/frame-ab.mjs,
+// 31 October 2026). The row passed is the hole's texel centre, hole + .5.
+vec4 holeTexel(float col,float row){return texelFetch(tables,ivec2(int(col),int(rows)+int(row)),0);}uniform vec2 extent;uniform float streamCount;uniform float curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn;
+vec4 curveAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+.5)/1024.,row/tableRows));}
+vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+512.5)/1024.,row/tableRows)).xy;}
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
- uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
+ uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom,archGround;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
  uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
@@ -394,12 +438,19 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // The colour's soft edge either side of the 0.5 the lie switches at (round
  // 2: .42-.58 left hard-edged blobs of heather on the links).
  float wildSoft(float f){return smoothstep(.34,.66,f);}
+ // THE MOWER'S LINE (Architect, phase 3; the study, D: "a crisp mower's line
+ // where mown rough meets native"). A mower leaves a clean edge, not a
+ // two-metre blend, so on an Architect course native grass starts within a
+ // few hundredths of the 0.5 the lie switches at. Every other ground type,
+ // and every Classic course (archGround is 0), keeps the soft edge above.
+ float wildEdge(float code,float f){return archGround>.5&&code==9.?smoothstep(.48,.52,f):wildSoft(f);}
  // Distance to one channel station, with its width, channel index and valley
  // shoulder. Returned as xyzw so the shore bands can size themselves from the
  // same numbers the CPU carve and contact queries use.
- vec4 channelInfo(vec2 p,float row){
-  vec4 seg=texture2D(streamSegments,vec2(.25,row));
-  vec4 meta=texture2D(streamSegments,vec2(.75,row));
+ vec4 channelInfo(vec2 p,float sid){
+  int st=int(sid)*2,sr=st/1024,sc=st-sr*1024;ivec2 sv=ivec2(sc,int(rows)*4+sr);
+  vec4 seg=texelFetch(tables,sv,0);
+  vec4 meta=texelFetch(tables,sv+ivec2(1,0),0);
   vec2 ab=seg.zw-seg.xy;
   float t=clamp(dot(p-seg.xy,ab)/max(dot(ab,ab),1e-4),0.,1.);
   float w=mix(meta.x,meta.y,t);
@@ -416,7 +467,7 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  // blend; measuring against those would answer a different question from the one
  // the atlas was built with, and the resolve would fight the data it is fixing.
  float holeDistance(float hole,vec2 wp){
-  float r=(floor(hole+.5)+.5)/rows;
+  float r=floor(hole+.5)+.5;
   vec4 tr=holeTexel(0.,r),nfo=holeTexel(1.,r);
   vec2 d=wp-tr.xy;
   vec2 q=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
@@ -486,10 +537,14 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    owner.r=bestHole;
   }
  }
- float row=(floor(owner.r+.5)+.5)/rows;
+ float row=floor(owner.r+.5)+.5;
  vec4 tr=holeTexel(0.,row),info=holeTexel(1.,row);vec2 d=wp-tr.xy;vec2 p=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
  vec4 curve=curveAt(p.y,row);vec4 cupInfo=holeTexel(9.,row);vec2 cup=cupInfo.xy;vec2 pin=holeTexel(10.,row).xy;vec4 outline=holeTexel(2.,row);
- vec2 gd=vec2((p.x-cup.x)/cupInfo.w,p.y-cup.y);float angle=atan(gd.y,gd.x);float greenD=length(gd)-cupInfo.z*(1.+outline.y*sin(angle*2.+info.y)+outline.z*sin(angle*3.+info.y)+outline.w*cos(angle*5.));
+ // A green turned to its approach (course.js greenDistance, the same branch):
+ // the turn rides in the pin texel's fourth channel, zero on Classic, whose
+ // greens skip it and draw exactly as before.
+ vec2 gu=p-cup;float greenTurn=holeTexel(10.,row).w;if(greenTurn!=0.){float gcs=cos(greenTurn),gsn=sin(greenTurn);gu=vec2(gu.x*gcs+gu.y*gsn,-gu.x*gsn+gu.y*gcs);}
+ vec2 gd=vec2(gu.x/cupInfo.w,gu.y);float angle=atan(gd.y,gd.x);float greenD=length(gd)-cupInfo.z*(1.+outline.y*sin(angle*2.+info.y)+outline.z*sin(angle*3.+info.y)+outline.w*cos(angle*5.));
  // The range's other greens (HOLE_ATLAS.greens): nearest edge wins, the same
  // rule as greenDistance on the CPU, and the nearest cup is the one cut.
  vec2 cupAt=pin;float extraGreens=holeTexel(10.,row).z;
@@ -572,7 +627,7 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){vec2 bank=texture2D(banks,vec2((clamp(q.y*.5+.5,0.,1.)*511.+.5)/512.,(floor(owner.r+.5)*4.+meta.y-.5)/(rows*4.))).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -597,15 +652,26 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   turf=shoreTint(turf,hd,ps,pb);if(hd<pb.y)kind=6.;}
  else if(hd<0.){turf=tint_sand;kind=5.;}
  else if(hd<.35){turf=mix(turf,tint_sand,.20);}}}
+ // THE SURFACE FIELD'S SAND (surface-field.js): an Architect hole's bunkers
+ // past the twelve slots, painted as a slot bunker is -- sand inside, a
+ // sandy lip 0.35 m out -- over the rough, semi-rough and fairway, which is
+ // where course.js surface reads the same bytes as sand. A tee's ground is
+ // left alone: a field bunker is a hand's or a lobe, and both are kept 10 m
+ // from a tee (hand-tools.js clearOfPlay), so the lie never meets one there.
+ if(fieldOn>.5&&kind<2.5&&teeGround<.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
+  float fd=(.5-texture2D(field,(wp/extent+1.)*.5).r)*${(2*FIELD_RANGE).toFixed(1)};
+  if(fd<=0.){turf=tint_sand;kind=5.;}
+  else if(fd<.35)turf=mix(turf,tint_sand,.20);
+ }
  if(owner.b>.5){
-  float sid=owner.b-1.;vec4 ch=channelInfo(wp,(sid+.5)/streamCount);
+  float sid=owner.b-1.;vec4 ch=channelInfo(wp,sid);
   // One segment is stored per owner texel, so a fragment beside a station join
   // can land on the wrong one. Test both neighbours of the same channel and keep
   // the nearest; that removes the stepped seams the single lookup produced.
   for(int k=0;k<2;k++){
    float other=sid+(k==0?-1.:1.);
    if(other<0.||other>streamCount-1.)continue;
-   vec4 q=channelInfo(wp,(other+.5)/streamCount);
+   vec4 q=channelInfo(wp,other);
    if(abs(q.z-ch.z)<.5&&q.x<ch.x)ch=q;
   }
   // The band fades out well inside the valley shoulder, so the owner atlas
@@ -674,11 +740,19 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
   float fz=wildOn>.5&&wildKinds.z>.5?smoothstep(wildGateF.x,wildGateF.x+wildGateF.y,hd):0.;
   float fy=wildOn>.5&&wildKinds.y>.5?cv.b*smoothstep(wildGateB.x,wildGateB.x+wildGateB.y,hd):0.;
   float fx=wildOn>.5&&wildKinds.x>.5?cv.a*smoothstep(wildGateA.x,wildGateA.x+wildGateA.y,hd):0.;
-  if(ff>0.)c=mix(c,groundPaint(wildKinds.w,wp,groundPoint.y,gn,turf),wildSoft(ff));
-  if(fz>0.)c=mix(c,groundPaint(wildKinds.z,wp,groundPoint.y,gn,turf),wildSoft(fz));
-  if(fy>0.)c=mix(c,groundPaint(wildKinds.y,wp,groundPoint.y,gn,turf),wildSoft(fy));
-  if(fx>0.)c=mix(c,groundPaint(wildKinds.x,wp,groundPoint.y,gn,turf),wildSoft(fx));
+  if(ff>0.)c=mix(c,groundPaint(wildKinds.w,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.w,ff));
+  if(fz>0.)c=mix(c,groundPaint(wildKinds.z,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.z,fz));
+  if(fy>0.)c=mix(c,groundPaint(wildKinds.y,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.y,fy));
+  if(fx>0.)c=mix(c,groundPaint(wildKinds.x,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.x,fx));
   turf=c;
+  // The line itself: the mown side darkened where the uncut grass stands
+  // over it, the native side lit where its seed heads catch the sun. Read
+  // from whichever channel holds native grass. Strengths PLACED, by eye.
+  if(archGround>.5){
+   float nf=max(max(wildKinds.x==9.?fx:0.,wildKinds.y==9.?fy:0.),max(wildKinds.z==9.?fz:0.,wildKinds.w==9.?ff:0.));
+   if(nf>.38&&nf<.5)turf*=1.-.2*smoothstep(.38,.5,nf);
+   else if(nf>=.5&&nf<.58)turf*=1.+.1*(1.-smoothstep(.5,.58,nf));
+  }
   // Which ground the lie says this is, for the detail atlas below.
   wildTop=fx>=.5?wildKinds.x:fy>=.5?wildKinds.y:fz>=.5?wildKinds.z:ff>=.5?wildKinds.w:0.;
  }
@@ -1125,6 +1199,39 @@ vec2 outerAt(float z,float row){return texture2D(curves,vec2((clamp((z+32.)/curv
    turf*=1.-occ*vec3(.95,.9,.78);
   }
  }
+ // HEIGHTS READ AS HEIGHTS (Architect, phase 3; the study, D). Green about
+ // 0.15 in, fringe and fairway about 0.4, first cut 1.5, rough 2.5 (USGA,
+ // RESEARCH.md *Mowing heights*): where a shorter cut meets a taller one, the
+ // taller grass stands over the edge as a little wall -- a shadow on the short
+ // side, its lit tips on the tall side -- so the eye reads a step, not a seam
+ // of two greens. Each step's strength follows the difference in height
+ // (PLACED, by eye); a line a few centimetres wide is widened to two pixels and fades out where even that is too small to hold. Not on tees,
+ // which are their own ground. Classic (archGround 0) never comes here.
+ // (The pixel size is taken before the per-fragment test: a derivative inside
+ // a branch that differs between neighbouring pixels is undefined.)
+ if(archGround>.5){float mpp=length(fwidth(wp));if(teeGround<.5&&kind>.5&&kind<4.5){
+  float band=max(.4,mpp*2.),fade=1.-smoothstep(.5,1.5,mpp);
+  // Signed distance to the edge of this band against the next taller one
+  // (negative inside the shorter), and how big that step is.
+  float semiD=min(max(max(abs(p.x-curve.x)-outerWidth,start-p.y),p.y-end),greenD-(info.z+info.w));
+  // The fairway's edge only along its own length (fw runs the whole hole).
+  float fwIn=p.y>mowStart&&p.y<info.x+8.?fw:1e3;bool onFairway=fwIn<0.;
+  float e=0.,rise=0.;
+  if(kind==4.){e=greenD;rise=.35;}
+  else if(kind==3.){e=greenD-info.z;rise=onFairway?0.:.6;if(greenD<-e){e=greenD;rise=-.35;}}
+  else if(kind==2.){e=fw;rise=.75;}
+  else if(kind==1.){
+   // The first cut: its own outer edge to the rough, and its inner edge, lit,
+   // where the fairway or fringe below it ends.
+   float inner=min(fwIn,greenD-info.z);
+   if(-semiD<inner){e=semiD;rise=.45;}else{e=-inner;rise=-.75;}
+  }
+  float near=1.-smoothstep(0.,band,abs(e));
+  // A positive step: this band is the shorter, in the taller one's shadow;
+  // a negative one: this is the taller, its tips lit at the edge.
+  // (Round 2: at 16% either way it could not be seen at eye height.)
+  turf*=1.-(rise>0.?.3:.2)*rise*near*fade;
+ }}
  // THE TURF DETAIL ATLAS (the cartoon overhaul; tools/turf-detail.mjs): the
  // hand-made texture of each surface, one channel each -- R grass strokes for
  // rough and the grassy grounds, G a mown nap for fairway, fringe, tee and

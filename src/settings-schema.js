@@ -340,7 +340,13 @@ export const GENERATOR_VERSION=52;
 // 17: hand-made bunkers stop at the twelve hazards a hole can have drawn
 //    (hand-tools.js HAZARD_CAP): a signature's waste area had taken 9 holes
 //    in 432 to 13 or 14, the extra sand played but never drawn.
-export const ARCHITECT_VERSION=17;
+// 18: greens turned to their approach (architect.js approachTurn), their
+//    fall, ridge, tier, false front, collection area and greenside bunkers
+//    turned with them; and the surface field (surface-field.js): a hole holds
+//    up to 24 hazards (hand-tools.js HAZARD_CAP), the bunkers past the
+//    shader's twelve slots baked into the field and played from it, so the
+//    lobes 17 trimmed are back.
+export const ARCHITECT_VERSION=18;
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
 // `generator`, and has since long before there were two designers; every
 // reader checks `Number.isInteger`. So an Architect course's stamp folds both

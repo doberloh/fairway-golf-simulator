@@ -80,7 +80,7 @@ function dressPeople(mesh,role,n,salt){
 }
 
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
-import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
+import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
 import {addVegetation,farWoodGeometry} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {cullInstances} from './instance-cull.js';
@@ -1557,13 +1557,17 @@ export class GolfView{
   const put=(hole,col,v)=>holeData.set(v,(hole*W+col)*4);
   for(const h of this.world.holes){
    if(h.greens)writeRangeGreens(h,(col,v)=>put(h.hole,col,v),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
-   else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);}
+   else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,h.greenTurn||0]);}
    // An Architect hole's collection areas first (marked -1; architect.js), so a
    // bunker over one is painted after it and stays sand.
-   [...(h.collections||[]),...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,b.collection?-1:h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
+   // A bunker past the slots (`field`, surface-field.js) is painted from the
+   // surface field instead.
+   [...(h.collections||[]),...h.bunkers.filter(b=>!b.field),...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,b.collection?-1:h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
   }
-  this.holeAtlas=new T.DataTexture(holeData,W,rows,T.RGBAFormat,T.FloatType);this.holeAtlas.minFilter=this.holeAtlas.magFilter=T.NearestFilter;this.holeAtlas.needsUpdate=true;this.resources.push(this.holeAtlas);
-  const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas=new T.DataTexture(bankData,512,rows*4,T.RGBAFormat,T.FloatType);this.bankAtlas.minFilter=this.bankAtlas.magFilter=T.LinearFilter;this.bankAtlas.needsUpdate=true;this.resources.push(this.bankAtlas);
+  // Plain arrays: the ground packs them, with its curves and streams, into one
+  // texture (ground.js packTables) -- a sampler each was three too many.
+  this.holeAtlas={image:{data:holeData}};
+  const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas={image:{data:bankData}};
  }
  addWaterBody(geometry,level,depth,center,ocean=false,stream=false){
   const blue=this.style==='blueprint',toon=this.style==='cartoon',real=this.style==='realistic',tint=new T.Color(blue?'#398ca2':toon?new T.Color(this.world.bio.water).lerp(new T.Color('#8eb8b2'),.27):this.world.bio.water);if(real&&depth<2)tint.lerp(new T.Color('#9fba98'),.35*(1-depth/2));
@@ -2629,7 +2633,7 @@ export class GolfView{
   if(data){
    const W=HOLE_ATLAS.width;
    writeRangeGreens(h,(col,v)=>data.set(v,(h.hole*W+col)*4),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
-   this.holeAtlas.needsUpdate=true;
+   this.syncHoleTable?.(h.hole);
   }
   const live=activeGreen(h),others=[];
   for(const g of h.greens){
@@ -3741,7 +3745,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   // The disc is the green, so it is drawn around the green's centre; the number
   // that labels the hole goes with it.
   const centre=hole.green??hole.pin;
-  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
+  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,g=greenPoint(hole,a,greenRadius(hole,a)),q=to(g.x,g.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
  }
  }
  ctx.drawImage(layers.base,0,0);
