@@ -441,8 +441,9 @@ November 2026), in the order it will be done:
   landscapes, from the picture and the LIDAR, with no specks, pocks or
   jagged edges (amendment 5). At iteration 52, from the picture alone and
   against the lined-up map: greens 31, fairways 31, sand 35, water 38.
-- **Houses shown and edited in the editor** (view.js): carried through the
-  file and stood by the game, but the editor's view does not draw them.
+- **Houses shown and edited in the editor**: done 1 November 2026 -- drawn
+  as blocks with a pale front, a House tool and Clear houses, in the
+  editor's undo and its file (editing.js addHome, removeHomes).
 - **Move shape in the editor** (amendment 12), and turning a shape.
 - **Swiss LV95** (oblique Mercator) worked from the file, so swisstopo's
   surveys place themselves; and swisstopo's tiles downloaded in the page.

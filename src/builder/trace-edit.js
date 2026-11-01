@@ -241,7 +241,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
 // Which way a house at (x, z) faces: toward the nearest mown ground (fairway,
 // green or tee) within 150 m, looked for along 32 bearings every 3 m; south
 // when there is none. homes.js turns a house by atan2(dx, dz) toward its hole.
-function facingFrom(kindAt) {
+// Which way a house's front faces: toward the nearest fairway, green or tee
+// (32 bearings, out to 150 m). Shared with the editor (editing.js addHome).
+export function facingFrom(kindAt) {
  return (x, z) => {
   for (let r = 3; r <= 150; r += 3) for (let a = 0; a < 32; a++) {
    const t = a / 32 * 2 * Math.PI, k = kindAt(x + Math.sin(t) * r, z + Math.cos(t) * r);

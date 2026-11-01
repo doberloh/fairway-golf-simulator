@@ -20,6 +20,7 @@
 // brush is a weight that falls off smoothly to nothing at its edge.
 import {GROUND_KINDS} from '../grounds.js';
 import {createLayers, LAYER_ORDER} from './layers.js';
+import {facingFrom} from './trace-edit.js';
 import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
@@ -79,6 +80,7 @@ export function createEditor(doc) {
   doc, raster: r, land, patches, ex, ez,
   holes: structuredClone(doc.holes), water: structuredClone(doc.water || []), creeks: structuredClone(doc.creeks || []),
   trees: Array.from({length: doc.trees.length / TREE_STRIDE}, (_, i) => Array.from(doc.trees.subarray(i * TREE_STRIDE, (i + 1) * TREE_STRIDE))),
+  homes: structuredClone(doc.homes || []),
   landscape: doc.landscape, name: doc.name,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
@@ -112,7 +114,7 @@ export function createEditor(doc) {
   state.changed = true;
   return step;
  };
- const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, landscape: state.landscape});
+ const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, homes: state.homes, landscape: state.landscape});
  const cellBox = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)),
   Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
  // Swaps a step's stored state with the present (undo and redo are the same act).
@@ -219,6 +221,18 @@ export function createEditor(doc) {
    let n = 0;
    state.trees = state.trees.filter(t => { const inside = Math.hypot(t[0] - x, t[1] - z) <= radius; if (!inside) return true; n++; return keep > 0 && n % keep === 0; });
   },
+  // HOUSES (1 November 2026: carried through the editor, never shown or
+  // edited until now): a footprint stood where clicked, facing the nearest
+  // fairway, green or tee, as door 2 stands them (trace-edit.js facingFrom);
+  // taken off under the brush. Records, one undo step each.
+  // Refused (false) where it would not stand on open ground all round -- not
+  // turf, sand, water or a path -- as door 2 refuses one (trace-edit.js homeFits).
+  addHome({x, z, rotation = null, width = 20, depth = 15}) {
+   const rot = rotation ?? facingFrom((px, pz) => api.surfaceAt(px, pz))(x, z), c = Math.cos(rot), sn = Math.sin(rot), MOWN = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']);
+   if ([[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].some(([a, b]) => { const lx = a * (width / 2 + 2), lz = b * (depth / 2 + 2); return MOWN.has(api.surfaceAt(x + lx * c + lz * sn, z - lx * sn + lz * c)); })) return false;
+   remember('records', 0, 0, 0, 0); state.homes.push({x, z, rotation: rot, width, depth}); return true;
+  },
+  removeHomes({x, z, radius}) { const keep = state.homes.filter(h => Math.hypot(h.x - x, h.z - z) > radius); if (keep.length === state.homes.length) return 0; remember('records', 0, 0, 0, 0); const n = state.homes.length - keep.length; state.homes = keep; return n; },
   addPond({ring, level = null}) {
    remember('records', 0, 0, 0, 0);
    const lv = level ?? Math.min(...ring.map(([x, z]) => sample(x, z))) - .3;
@@ -332,7 +346,7 @@ export function createEditor(doc) {
    const trees = new Float32Array(state.trees.length * TREE_STRIDE);
    state.trees.forEach((t, i) => trees.set(t, i * TREE_STRIDE));
    return {...doc, name: state.name, landscape: state.landscape, land: {...land, heights: Float32Array.from(land.heights)}, patches: patches.map(p => ({...p, heights: Float32Array.from(p.heights)})),
-    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, landEdits: state.landEdits.map(b => [...b])};
+    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },
  };
  // A brush onto one layer (or every layer, `kind` null) -- covering (v 1) or

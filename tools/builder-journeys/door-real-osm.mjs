@@ -80,6 +80,25 @@ export default function ({journey, SHOTS}) {
   await t.shot('review');
   await page.getByRole('button', {name: 'Open in the editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
+  // The house OpenStreetMap gave is drawn in the editor; the House tool
+  // stands another where clicked.
+  const drawn = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let n = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.material.color?.getHexString() === 'd67860') n += o.count; }); return {drawn: n, stored: window.fairwayBuilder.editor.editor.state.homes.length}; });
+  const h0 = await drawn();
+  if (h0.stored < 1 || h0.drawn !== h0.stored) throw Error(`the editor should draw the course's houses: ${JSON.stringify(h0)}`);
+  await page.getByRole('button', {name: 'House', exact: true}).click();
+  const vb = await page.locator('.cb-view canvas').boundingBox();
+  // On the fairway it is refused; on the rough at the side it stands.
+  await page.mouse.click(vb.x + vb.width / 2, vb.y + vb.height * .7);
+  if ((await drawn()).stored !== h0.stored) throw Error('a house on the fairway should be refused');
+  await page.mouse.click(vb.x + vb.width * .28, vb.y + vb.height * .62);
+  const h1 = await drawn();
+  if (h1.stored !== h0.stored + 1 || h1.drawn !== h1.stored) throw Error(`the House tool should stand a house where clicked: ${JSON.stringify([h0, h1])}`);
+  await t.shot('editor-houses');
+  // Undo takes it away again (it stood in front of hole 1's tee, where the
+  // game's tee shot below would hit it).
+  await page.getByRole('button', {name: 'Undo', exact: true}).click();
+  const h2 = await drawn();
+  if (h2.stored !== h0.stored || h2.drawn !== h0.stored) throw Error(`Undo should take the house away: ${JSON.stringify([h1, h2])}`);
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-2-osm.fairway');
   await download.saveAs(file);

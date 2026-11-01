@@ -149,3 +149,19 @@ test('layers: painting a fairway through a bunker keeps the bunker; erasing one 
  const out = e.toDoc();
  assert.ok(out.surfaces.sand.length && out.surfaces.fairway.length, 'both layers saved, overlapping');
 });
+
+test('houses in the editor: stood on open ground facing the turf, refused on it, cleared under the brush, each one undo step, written back to the file', () => {
+ const ed = createEditor(doc());
+ const n0 = ed.state.homes.length;
+ assert.equal(ed.addHome({x: 0, z: 0}), false, 'not on the fairway');
+ assert.equal(ed.state.homes.length, n0);
+ assert.equal(ed.addHome({x: 60, z: -80}), true, 'on the rough');
+ assert.equal(ed.state.homes.length, n0 + 1);
+ const h = ed.state.homes.at(-1);
+ assert.ok(Number.isFinite(h.rotation) && h.width === 20 && h.depth === 15);
+ assert.equal(ed.removeHomes({x: 500, z: 500, radius: 5}), 0, 'nothing under the brush: no undo step');
+ assert.equal(ed.removeHomes({x: 60, z: -80, radius: 5}), 1);
+ ed.undo(); assert.equal(ed.state.homes.length, n0 + 1, 'undo puts it back');
+ const out = ed.toDoc();
+ assert.equal(out.homes.length, n0 + 1, 'the file keeps it');
+});

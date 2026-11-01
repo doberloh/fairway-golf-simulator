@@ -634,7 +634,10 @@ not in the editing grid's squares; while you paint, the squares show for a
 moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); **Paint** any
 surface or ground type; **Outline** draws one by its edge; dig a bunker,
-draw a pond or a creek (it runs downhill), plant or clear trees. The holes
+draw a pond or a creek (it runs downhill), plant or clear trees, stand a
+**House** where you click (on open ground, facing the nearest fairway, green
+or tee; refused on turf, sand, water or a path) or **Clear houses** under
+the brush -- the game builds each one from where it stands. The holes
 list moves tees and greens, adds a bend to a hole's line and changes par.
 **Check the course** lists what breaks a rule (a tee off its pad or in
 water, a green too small or too steep, a tree on a green) and clicking one

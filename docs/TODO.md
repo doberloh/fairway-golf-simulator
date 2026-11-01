@@ -65,8 +65,10 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
   builder-door-2-osm journeys drive each once and the game plays a tee shot
   on a course with a house; nobody has looked at a built house in the game
-  or painted with the smooth view by hand. Not yet in the editor: houses are
-  carried through it but not drawn or edited there.
+  or painted with the smooth view by hand. In the editor since 1 November
+  2026 (drawn, the House tool, Clear houses): the builder-door-2-osm journey
+  draws the map's house, has one refused on the fairway, stands one on the
+  rough and undoes it; not played by a person.
 - [ ] **Not played by a person: Viewing, the picture's lock, Move shape**
   (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
   step). The builder-door-2 journey sets the opacities, draws the LIDAR's

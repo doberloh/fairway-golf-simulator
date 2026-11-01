@@ -56,6 +56,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
   bend: () => `Click to add a bend to hole ${selected + 1}'s line.`,
   plant: () => 'Click to plant a tree. Drag to plant a wood.',
   clear: () => 'Drag to take trees out.',
+  house: () => 'Click to stand a house: it faces the nearest fairway, green or tee.',
+  clearHomes: () => 'Drag to take houses out.',
  };
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
@@ -89,7 +91,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}))),
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}))),
  );
 
  // ---- the right: the course, its holes, the checks, Save.
@@ -143,6 +145,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
    const h = 10 + strength * 20;
    editor.addTree([p.x, p.z, h, h * .3, Math.min(.8, h * .027), 2, -1]); down.last = p; view.refreshTrees();
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
+  else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }
+  else if (tool.kind === 'clearHomes') { if (editor.removeHomes({x: p.x, z: p.z, radius})) view.refreshHomes(); }
  };
  canvas.addEventListener('pointerdown', e => {
   if (e.button !== 0 || tool.kind === 'navigate') return;
@@ -164,7 +168,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
  canvas.addEventListener('pointermove', e => {
   const p = view.pick(e);
   if (p) {
-   view.cursor(['shape', 'paint', 'erase', 'clear', 'plant'].includes(tool.kind) ? p.x : null, p.z, radius);
+   view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }

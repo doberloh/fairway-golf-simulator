@@ -132,7 +132,7 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
  for (const m of chunks) heightChunk(m);
 
  // ---- water, trees, holes: rebuilt whole when they change (they are small).
- const layers = {water: new T.Group(), trees: new T.Group(), holes: new T.Group(), marks: new T.Group()};
+ const layers = {water: new T.Group(), trees: new T.Group(), homes: new T.Group(), holes: new T.Group(), marks: new T.Group()};
  for (const g of Object.values(layers)) scene.add(g);
  const clear = g => { for (const c of [...g.children]) { g.remove(c); c.geometry?.dispose(); } };
  function refreshWater() {
@@ -166,6 +166,24 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
   mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true; mesh.computeBoundingSphere();
   layers.trees.add(mesh);
  }
+ // Houses: a block on each footprint, 6 m to the eaves (PLACED), its front
+ // marked pale -- the game builds the house itself from the same record
+ // (built-world.js builtHomes); this shows where and which way.
+ const block = new T.BoxGeometry(1, 1, 1); block.translate(0, .5, 0);
+ function refreshHomes() {
+  clear(layers.homes);
+  const list = s.homes || []; if (!list.length) return;
+  const mesh = new T.InstancedMesh(block, new T.MeshLambertMaterial({color: '#d67860'}), list.length), front = new T.InstancedMesh(block, new T.MeshLambertMaterial({color: '#fff4d6'}), list.length);
+  const m = new T.Matrix4(), q = new T.Quaternion(), up = new T.Vector3(0, 1, 0);
+  list.forEach((h, i) => {
+   q.setFromAxisAngle(up, h.rotation); const y = editor.height(h.x, h.z);
+   m.compose(new T.Vector3(h.x, y, h.z), q, new T.Vector3(h.width, 6, h.depth)); mesh.setMatrixAt(i, m);
+   const fx = h.x + Math.sin(h.rotation) * h.depth / 2, fz = h.z + Math.cos(h.rotation) * h.depth / 2;
+   m.compose(new T.Vector3(fx, y, fz), q, new T.Vector3(h.width * .9, 6.2, .4)); front.setMatrixAt(i, m);
+  });
+  mesh.instanceMatrix.needsUpdate = true; front.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere(); front.computeBoundingSphere();
+  layers.homes.add(mesh, front);
+ }
  function refreshHoles(selected = -1) {
   clear(layers.holes);
   const ball = new T.SphereGeometry(1.6, 12, 8), pole = new T.CylinderGeometry(.15, .15, 6, 6); pole.translate(0, 3, 0);
@@ -178,7 +196,7 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
    g.position.set(h.green.x, editor.height(h.green.x, h.green.z), h.green.z); g.userData.hole = i; layers.holes.add(g);
   });
  }
- refreshWater(); refreshTrees(); refreshHoles();
+ refreshWater(); refreshTrees(); refreshHomes(); refreshHoles();
 
  // ---- the cursor: a ring lying on the ground.
  const ringGeo = new T.BufferGeometry(), RING = 64;
@@ -267,9 +285,9 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
   },
   // Every surface redrawn smooth (a layer hidden or shown, the landscape changed).
   refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); },
-  refreshAll() { colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHoles(); },
+  refreshAll() { colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
   texels: () => ({width: W, height: H, perCell: F}),
-  refreshWater, refreshTrees, refreshHoles, frameHole, planView,
+  refreshWater, refreshTrees, refreshHomes, refreshHoles, frameHole, planView,
   held, fly,
   dispose() { running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
  };
