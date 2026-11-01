@@ -176,6 +176,18 @@ export default function ({journey, SHOTS}) {
   await t.shot('shape-moved');
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   if (await kindAt(-55, 40) !== 'sand') throw Error('Undo should put the bunker back');
+  // Turn shape: the same east-west bunker (-64 to -46 m) turned a quarter by
+  // a drag round its middle, so it runs north-south; Undo puts it back.
+  await page.locator('[data-tool="turnShape"]').click();
+  [x0, y0] = await at(-49, 40); [x1, y1] = await at(-55, 46);
+  await page.mouse.move(x0, y0); await page.mouse.down();
+  for (const a of [.3, .6, .9, 1.2, Math.PI / 2]) { const [px, py] = await at(-55 + 6 * Math.cos(a), 40 + 6 * Math.sin(a)); await page.mouse.move(px, py); }
+  if (!/Turning the sand/.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the sand is being turned');
+  await page.mouse.up();
+  if (await kindAt(-62, 40) === 'sand' || await kindAt(-55, 47) !== 'sand' || await sandCells() < sand0 * .9) throw Error(`the bunker should have turned to run north-south, its area kept (${sand0} -> ${await sandCells()} cells)`);
+  await t.shot('shape-turned');
+  await page.getByRole('button', {name: 'Undo', exact: true}).click();
+  if (await kindAt(-62, 40) !== 'sand') throw Error('Undo should turn the bunker back');
   await page.locator('[data-tool="brush"]').click();
   // The smooth view: a moment after the stroke, the trace is drawn as outlines.
   await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});

@@ -1673,9 +1673,9 @@ credits, and a database made from it and shared stays ODbL -- a shared
 `.fairway` built from it carries that licence (the owner's call to allow,
 named here so a release can say so). **Since 1 November 2026, LIDAR too**
 (amendments 13-14): *Search for LIDAR* asks the National Map's product API
-(tnmaccess.nationalmap.gov) and IGN's WFS (data.geopf.fr); *Download the
+(tnmaccess.nationalmap.gov), IGN's WFS (data.geopf.fr) and swisstopo's STAC catalogue (data.geo.admin.ch); *Download the
 square here* reads USGS's Entwine copy on Amazon's open data
-(s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles;
+(s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles or swisstopo's zipped LAS;
 *Download its whole tiles* asks Fairway's bridge on 127.0.0.1:1922 (its
 `/lidar` route, which fetches rockyweb.usgs.gov and prd-tnm only, for local
 pages only) or makes ordinary browser downloads from rockyweb and reads them

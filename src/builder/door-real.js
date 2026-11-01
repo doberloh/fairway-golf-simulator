@@ -178,6 +178,7 @@ export function open(draft = null) {
     homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, corner by corner; houses line it 42 m apart, each facing the course.',
     homeErase: `Clear houses: drag to take houses off (${r} m round).`,
     treeErase: `Clear trees: drag to take trees off (${r} m round).`,
+    turnShape: st.turning ? `Turning the ${st.turning.what}: ${Math.round(st.turning.angle * 180 / Math.PI)} degrees; let go to set it.` : `Turn shape: press on a green, bunker, pond or house and drag round its middle to turn it -- the ${k} layer where it lies under the pointer, else the topmost shown.`,
     shape: st.moving ? `Moving the ${st.moving.what}: let go where it belongs. Undo puts it back.` : `Move shape: drag a green, bunker, fairway, pond, tree or house to move it whole -- the ${k} layer where it lies under the pointer, else the topmost shown.`,
     align: `Picture unlocked: drag it into line with the LIDAR, or nudge it with the arrow keys (a quarter metre; Shift, a metre). It is ${st.offset.x.toFixed(2)} m east, ${(-st.offset.z).toFixed(2)} m north of where its position put it. Lock it when it is right.`,
    })[st.tool] ?? '';
@@ -226,6 +227,15 @@ export function open(draft = null) {
    if (pick.type === 'tree') { const t = m.trees[pick.index], [x, y] = p.toScreen(t.x + dx, t.z + dz); ctx.arc(x, y, Math.max(3 * px, t.crown * p.view.scale), 0, 7); }
    else if (pick.type === 'home') { const h = m.homes[pick.index], [x, y] = p.toScreen(h.x + dx, h.z + dz), r = Math.max(h.width, h.depth) / 2 * p.view.scale; ctx.rect(x - r, y - r, 2 * r, 2 * r); }
    else for (const r of st.moving.rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x + dx, z + dz); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
+   ctx.fill('evenodd'); ctx.stroke();
+  }
+  // The shape being turned, drawn as it would lie.
+  if (st.turning && st.turning.angle) {
+   const {pick, angle, mid, rings} = st.turning, c = Math.cos(angle), sn = Math.sin(angle), m = st.model.state;
+   const rot = ([x, z]) => p.toScreen(mid.x + (x - mid.x) * c - (z - mid.z) * sn, mid.z + (x - mid.x) * sn + (z - mid.z) * c);
+   ctx.strokeStyle = '#ff6bd6'; ctx.fillStyle = 'rgba(255,107,214,.25)'; ctx.lineWidth = 2 * px; ctx.beginPath();
+   if (pick.type === 'home') { const h = m.homes[pick.index], r = h.rotation - angle, hc = Math.cos(r), hs = Math.sin(r), w = h.width / 2, d = h.depth / 2; [[-w, -d], [w, -d], [w, d], [-w, d]].forEach(([a, b], q) => { const [sx, sy] = p.toScreen(h.x + a * hc + b * hs, h.z - a * hs + b * hc); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
+   else for (const r of rings) { r.forEach((pt, q) => { const [sx, sy] = rot(pt); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
    ctx.fill('evenodd'); ctx.stroke();
   }
   if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) { const [x, y] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke(); }
@@ -292,6 +302,23 @@ export function open(draft = null) {
     if (type === 'up' && st.moving) {
      const {pick, dx, dz, what} = st.moving; st.moving = null;
      if (Math.hypot(dx, dz) >= st.land.cell / 2) { m.move(pick, dx, dz); if (pick.type === 'shape') paintCodes(); refreshCount(); say(`The ${what} moved ${Math.hypot(dx, dz).toFixed(1)} m. Undo puts it back.`); }
+    }
+    plan.draw(); return;
+   }
+   // TURN SHAPE: the same pick, turned about its middle by the angle the
+   // pointer sweeps round it (trace-edit.js turn).
+   if (t === 'turnShape') {
+    if (type === 'down') {
+     const pick = m.pickAt({x: p.x, z: p.z, kind: st.kind});
+     if (!pick || pick.type === 'tree') { say(pick ? 'A tree is round: nothing to turn.' : 'Nothing to turn there: only rough under the pointer.', true); return; }
+     let mid = pick.type === 'home' ? {x: m.state.homes[pick.index].x, z: m.state.homes[pick.index].z} : null, rings = [];
+     if (!mid) { const {nx, cell, halfX, halfZ} = st.land; let sx = 0, sz = 0; for (const k of pick.cells) { sx += -halfX + (k % nx) * cell; sz += -halfZ + Math.floor(k / nx) * cell; } mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; const mask = new Uint8Array(st.land.nx * st.land.nz); for (const k of pick.cells) mask[k] = 1; rings = layerRings(mask, st.land); }
+     st.turning = {pick, mid, a0: Math.atan2(p.x - mid.x, p.z - mid.z), angle: 0, rings, what: pick.type === 'home' ? 'house' : LABEL(pick.kind).toLowerCase()};
+    }
+    if (type === 'drag' && st.turning) st.turning.angle = st.turning.a0 - Math.atan2(p.x - st.turning.mid.x, p.z - st.turning.mid.z);
+    if (type === 'up' && st.turning) {
+     const {pick, angle, what} = st.turning; st.turning = null;
+     if (Math.abs(angle) > .01) { m.turn(pick, angle); if (pick.type === 'shape') paintCodes(); refreshCount(); say(`The ${what} turned ${Math.round(angle * 180 / Math.PI)} degrees. Undo puts it back.`); }
     }
     plan.draw(); return;
    }
@@ -375,7 +402,7 @@ export function open(draft = null) {
   const place = el('input', {class: 'cb-lidarplace', placeholder: 'A course or a place, by name', value: st.find?.label ?? ''}), size = el('select', {class: 'cb-lidarsize'}, [1000, 1500, 2000, 3000].map(m => el('option', {value: m, selected: m === (st.findSize ?? 1500)}, `${m / 1000} km square`)));
   size.onchange = () => { st.findSize = +size.value; };
   return el('div', {class: 'cb-field'}, el('label', {}, 'Find LIDAR'),
-   el('small', {}, 'Search by name, pick the place, then search every source that covers it: USGS 3DEP and IGN LiDAR HD download here; state and national portals open in a new tab. Goes online only when pressed.'),
+   el('small', {}, 'Search by name, pick the place, then search every source that covers it: USGS 3DEP, IGN LiDAR HD and swisstopo download here; state and national portals open in a new tab. Goes online only when pressed.'),
    el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => findPlace(place.value)}, 'Find')), findList,
    el('div', {class: 'cb-btns'}, size, el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: !st.find, 'data-find': 'search', onclick: () => searchAll()}, 'Search for LIDAR')), findOut);
  }
@@ -607,7 +634,7 @@ export function open(draft = null) {
   const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; howTo.hidden = !p.howTo; howTo.replaceChildren(el('summary', {}, `How to get a ${p.name} key`), el('ol', {}, (p.howTo ?? []).map(t => el('li', {}, t)))); };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move the view'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses'], ['shape', 'Move shape']];
+  const tools = [['move', 'Move the view'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses'], ['shape', 'Move shape'], ['turnShape', 'Turn shape']];
   toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
   // LOCK AND UNLOCK (the owner, 1 November 2026: "drag the satellite picture
   // to align and lock/unlock it"): unlocked, a left drag or the arrow keys

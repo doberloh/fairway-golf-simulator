@@ -349,8 +349,8 @@ After trying the builder, the owner amended the goal:
     while dragged. The editor has the same tool since that night. Decided: *a patch is all of a layer that touches* --
     a semi sheet drawn round three fairways moves as one; splitting it is
     the erase brush's job. *By whole cells*, so the move never resamples a
-    shape's edge. Not built: turning a shape. (Moving one in the editor: built the same
-    night.)
+    shape's edge. Moving one in the editor and turning one (door 2 and the editor) were
+    built the same night.
 
 13. **A list after testing, 1 November 2026** (the owner):
     - **The LIDAR in the repository, not committed**: the test courses'
@@ -447,9 +447,12 @@ November 2026), in the order it will be done:
   editor's undo and its file (editing.js addHome, removeHomes).
 - **Move shape in the editor**: done 1 November 2026 (editing.js pickAt,
   moveShape; the builder-tools journey drags a bunker and undoes it).
-  Still open: turning a shape.
-- **Swiss LV95** (oblique Mercator) worked from the file, so swisstopo's
-  surveys place themselves; and swisstopo's tiles downloaded in the page.
+  **Turning a shape**: done the same night (trace-edit.js turn,
+  turnedCells; editing.js turnShape; door 2's and the editor's Turn shape).
+- **Swiss LV95**: done 1 November 2026 -- swisstopo's approximate formulas
+  (geo.js, to about a metre; LV03 too), and swissSURFACE3D found and
+  downloaded in the page (its tiles state no grid: the catalogue's EPSG 2056
+  is given them). A square in Bern: 11.5 million points, placed and built.
 - **The builder's LIDAR checks a person can only do**: the rockyweb tiles
   through the downloads folder and through the owner's bridge (restarted to
   have `/lidar`), IGN downloaded in the page, Chrome's real save dialog.

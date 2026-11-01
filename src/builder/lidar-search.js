@@ -14,7 +14,8 @@
 //         Amazon's open data (rockyweb, where the LAZ tiles are, does not
 //         answer a page), only the octree's pieces over the square.
 //   ign   IGN LiDAR HD, France: its tile index (WFS) and COPC tiles.
-// Linked: Washington DNR, swisstopo (Swiss grid not worked yet), AHN, the
+//   swisstopo  swissSURFACE3D, Switzerland: its STAC catalogue and zipped LAS.
+// Linked: the state portals, AHN, the
 // Environment Agency, Dataforsyningen, CNIG, ELVIS, LINZ, NRCan,
 // OpenTopography.
 import {nodesFor, nodeBox, lonLatToMerc, mercToLonLat} from '../lidar/ept.js';
@@ -74,7 +75,7 @@ export const LIDAR_SOURCES = [
  {key: 'ign', name: 'IGN LiDAR HD (France)', covers: [[-5.5, 41, 10, 51.5]], online: true, licence: 'Licence Ouverte 2.0 (Etalab): free to use, IGN credited.'},
  {key: 'noaa', name: 'NOAA Digital Coast Data Access Viewer (US coasts)', covers: [[-180, 17, -64, 72]], link: 'https://coast.noaa.gov/dataviewer/', note: 'Coastal surveys, and states that send point clouds there (Massachusetts).'},
  ...STATE_PORTALS.map(([st, name, box, link, note]) => ({key: 'state-' + st, name, covers: [box], link, note: note ?? 'Download the LAZ there and bring the files here (Choose LIDAR files); State Plane feet are placed by the builder.'})),
- {key: 'swisstopo', name: 'swisstopo swissSURFACE3D (Switzerland)', covers: [[5.9, 45.8, 10.5, 47.9]], link: 'https://www.swisstopo.admin.ch/en/height-model-swisssurface3d', note: 'Its Swiss grid is not yet placed by the builder: pictures and OpenStreetMap need lining up by points.'},
+ {key: 'swisstopo', name: 'swisstopo swissSURFACE3D (Switzerland)', covers: [[5.9, 45.8, 10.5, 47.9]], online: true, licence: 'swisstopo open data (Open Government Data): free to use, swisstopo credited.'},
  {key: 'ahn', name: 'AHN (the Netherlands)', covers: [[3.2, 50.7, 7.3, 53.6]], link: 'https://www.ahn.nl/'},
  {key: 'ea', name: 'Environment Agency LIDAR (England)', covers: [[-6.5, 49.8, 1.9, 55.9]], link: 'https://environment.data.gov.uk/survey'},
  {key: 'dk', name: 'Dataforsyningen (Denmark)', covers: [[8, 54.5, 15.3, 57.8]], link: 'https://dataforsyningen.dk/'},
@@ -96,6 +97,7 @@ export function squareAround(lon, lat, size) {
 export async function searchLidar(key, box, {get = fetch} = {}) {
  if (key === 'usgs') return searchUsgs(box, get);
  if (key === 'ign') return searchIgn(box, get);
+ if (key === 'swisstopo') return searchSwisstopo(box, get);
  return [];
 }
 async function searchUsgs(box, get) {
@@ -159,7 +161,33 @@ export async function downloadLidar(found, box, {get = fetch, lazModule, onProgr
   }
   return out;
  }
+ if (found.source === 'swisstopo') {
+  // Each tile a ZIP holding one LAS (LV95: placed by geo.js's Swiss grid).
+  const [{openSource}, {readZip}] = await Promise.all([import('../lidar/formats.js'), import('../zip.js')]), out = [];
+  for (const [n, url] of found.urls.entries()) {
+   onProgress(n / found.urls.length, `tile ${n + 1} of ${found.urls.length}`);
+   const r = await get(url); if (!r.ok) throw Error(`swisstopo would not give ${url.split('/').pop()} (${r.status}).`);
+   const parts = await readZip(new Uint8Array(await r.arrayBuffer()));
+   // swissSURFACE3D's LAS states no grid in its header (checked 1 November
+   // 2026); its catalogue and its name say LV95 (EPSG 2056).
+   for (const [name, bytes] of parts) if (/[.]la[sz]$/i.test(name)) { const src = await openSource(name, bytes, {lazModule}); if (!src.crs?.epsg && !src.crs?.wkt) src.crs = {epsg: 2056, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false}; out.push({...src, name, downloaded: true}); }
+  }
+  return out;
+ }
  throw Error('This source is downloaded from its own site.');
+}
+// swisstopo's swissSURFACE3D tiles over the box (its STAC catalogue), by year.
+async function searchSwisstopo(box, get) {
+ const r = await get(`https://data.geo.admin.ch/api/stac/v0.9/collections/ch.swisstopo.swisssurface3d/items?bbox=${[box.lon0, box.lat0, box.lon1, box.lat1].map(v => v.toFixed(5)).join(',')}&limit=100`);
+ if (!r.ok) throw Error(`swisstopo did not answer (${r.status}).`);
+ const byYear = new Map();
+ for (const f of (await r.json()).features || []) {
+  const year = (f.id.match(/_([0-9]{4})_/) || [])[1] ?? String(f.properties?.datetime ?? '').slice(0, 4), a = Object.values(f.assets || {}).find(x => /[.]las[.]zip$|[.]laz$/i.test(x.href));
+  if (!a) continue;
+  const g = byYear.get(year) ?? {source: 'swisstopo', id: `swisssurface3d-${year}`, title: `swissSURFACE3D ${year}`, date: year, tiles: 0, urls: []};
+  g.tiles++; g.urls.push(a.href); byYear.set(year, g);
+ }
+ return [...byYear.values()].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
 // The Entwine pieces over the square, their points carried from Web Mercator

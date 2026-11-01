@@ -184,3 +184,16 @@ test('moving one shape in the editor: a bunker, a tree and a house, each one und
  ed.undo(); assert.equal(ed.state.homes.at(-1).z, -80);
  assert.equal(ed.pickAt({x: 95, z: -95}), null, 'nothing on rough');
 });
+
+test('turning one shape in the editor: a bunker a quarter turn, a house its facing, each one undo step', () => {
+ const ed = createEditor(doc());
+ // The sand box is 6 x 6: paint it longer east-west first.
+ ed.paint({kind: 'sand', x: 29, z: 3, radius: 4});   // joined to the square: 20-33 m east-west
+ const pick = ed.pickAt({x: 23, z: 3});
+ assert.ok(ed.turnShape(pick, Math.PI / 2));
+ assert.equal(ed.surfaceAt(26, 8), 'sand', 'now runs north-south'); assert.notEqual(ed.surfaceAt(32, 3), 'sand');
+ ed.undo(); assert.equal(ed.surfaceAt(32, 3), 'sand');
+ ed.addHome({x: 60, z: -80, rotation: 0});
+ ed.turnShape(ed.pickAt({x: 60, z: -80}), .5); assert.ok(Math.abs(ed.state.homes.at(-1).rotation + .5) < 1e-9);
+ assert.equal(ed.turnShape(ed.pickAt({x: 31, z: 30}), 1), null, 'a tree is round');
+});

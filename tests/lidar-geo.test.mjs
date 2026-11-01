@@ -45,3 +45,18 @@ test('UTM both ways, and a grid Fairway cannot work says so', () => {
  assert.equal(converter({epsg: 3035, wkt: 'PROJCS["ETRS89 / LAEA Europe",PROJECTION["Lambert_Azimuthal_Equal_Area"]]'}, WGS), null);
  assert.equal(projectionOf({epsg: 2927}), null, 'no WKT, no working');
 });
+
+test('the Swiss grid, LV95 and LV03, by swisstopo\'s approximate formulas: their worked example to a metre or two', () => {
+ const lat = 46 + 2 / 60 + 38.87 / 3600, lon = 8 + 43 / 60 + 49.79 / 3600;
+ const p = projectionOf({epsg: 2056});
+ const q = p.fromGeo(lat, lon);
+ near(q.x, 2700000, 2, 'E'); near(q.y, 1100000, 2, 'N');
+ const g = p.toGeo(2700000, 1100000);
+ near(g.lat, lat, 2e-5, 'latitude back'); near(g.lon, lon, 2e-5, 'longitude back');
+ const old = projectionOf({epsg: 21781}).fromGeo(lat, lon);
+ near(old.x, 700000, 2, 'LV03 y'); near(old.y, 100000, 2, 'LV03 x');
+ // By its WKT, through the converter to degrees.
+ const wkt = 'PROJCS["CH1903+ / LV95",GEOGCS["CH1903+",DATUM["CH1903+",SPHEROID["Bessel 1841",6377397.155,299.1528128]]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],UNIT["metre",1]]';
+ const c = converter({epsg: null, wkt}, WGS)(2600000, 1200000);
+ near(c.y, 46.95108, 1e-4, 'Bern latitude'); near(c.x, 7.43864, 1e-4, 'Bern longitude');
+});

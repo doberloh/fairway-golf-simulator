@@ -47,6 +47,20 @@ test('USGS: the tiles grouped by survey, newest first, with the Entwine copy and
  assert.deepEqual(got[0].tileUrls.map(t => t.name), ['USGS_LPC_MN_NEW_B21_1.laz', 'USGS_LPC_MN_NEW_B21_2.laz']);
 });
 
+test('swisstopo: swissSURFACE3D tiles from its catalogue, by year, newest first', async () => {
+ assert.ok(sourcesAt(7.447, 46.948).some(s => s.key === 'swisstopo' && s.online), 'downloaded in the page now the Swiss grid is placed');
+ let asked = '';
+ const item = (id, href) => ({id, properties: {datetime: '2023-01-01T00:00:00Z'}, assets: {[href.split('/').pop()]: {href}}});
+ const got = await searchLidar('swisstopo', squareAround(7.447, 46.948, 500), {get: async url => { asked = url; return answer({features: [
+  item('swisssurface3d_2019_2600-1199', 'https://data.geo.admin.ch/x/swisssurface3d_2019_2600-1199_2056_5728.las.zip'),
+  item('swisssurface3d_2023_2600-1198', 'https://data.geo.admin.ch/x/swisssurface3d_2023_2600-1198_2056_5728.las.zip'),
+  item('swisssurface3d_2023_2600-1199', 'https://data.geo.admin.ch/x/swisssurface3d_2023_2600-1199_2056_5728.las.zip'),
+  {id: 'swisssurface3d_2023_other', assets: {thumb: {href: 'https://data.geo.admin.ch/x/thumb.png'}}}]}); }});
+ assert.match(asked, /data[.]geo[.]admin[.]ch\/api\/stac.*swisssurface3d.*bbox=7[.]44/);
+ assert.deepEqual(got.map(g => [g.title, g.tiles]), [['swissSURFACE3D 2023', 2], ['swissSURFACE3D 2019', 1]]);
+ assert.ok(got[0].urls.every(u => u.endsWith('.las.zip')));
+});
+
 test('IGN: the LiDAR HD tiles by mission, their COPC addresses on https', async () => {
  const got = await searchLidar('ign', squareAround(2.35, 48.85, 1000), {get: async () => answer({features: [
   {properties: {code_mission: '23LHD1', date_fin_acquisition: '2023-09-27Z', nombre_points: 1000, url_npl: 'http://data.geopf.fr/telechargement/download/x/LHD_1.copc.laz'}},

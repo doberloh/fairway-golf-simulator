@@ -64,9 +64,32 @@ function ellipsoidOf(wkt) {
 }
 // The projected unit: the PROJCS's own UNIT, after its PROJECTION.
 const linearUnit = wkt => { const p = wkt.slice(wkt.search(/PROJECTION\[/i)), m = p.match(/(?:LENGTHUNIT|UNIT)\["[^"]*",\s*([0-9.]+)/i); return m ? +m[1] : 1; };
+// THE SWISS GRID (1 November 2026: swissSURFACE3D was linked but not placed).
+// LV95 (EPSG 2056) and LV03 (EPSG 21781) are an oblique Mercator on the Bessel
+// ellipsoid; swisstopo's own approximate formulas (*Approximate formulas for
+// the transformation between Swiss projection coordinates and WGS84*) are
+// good to about a metre -- enough to line a survey up with imagery and
+// OpenStreetMap, which is all placing is for. Checked against their worked
+// example (tests/lidar-geo.test.mjs).
+const SWISS = {
+ toGeo(E, N, lv95 = true) {
+  const y = ((lv95 ? E - 2600000 : E - 600000)) / 1e6, x = ((lv95 ? N - 1200000 : N - 200000)) / 1e6;
+  const l = 2.6779094 + 4.728982 * y + .791484 * y * x + .1306 * y * x * x - .0436 * y * y * y;
+  const p = 16.9023892 + 3.238272 * x - .270978 * y * y - .002528 * x * x - .0447 * y * y * x - .014 * x * x * x;
+  return {lat: p * 100 / 36, lon: l * 100 / 36};
+ },
+ fromGeo(lat, lon, lv95 = true) {
+  const p = (lat * 3600 - 169028.66) / 10000, l = (lon * 3600 - 26782.5) / 10000;
+  const E = 2600072.37 + 211455.93 * l - 10938.51 * l * p - .36 * l * p * p - 44.54 * l * l * l;
+  const N = 1200147.07 + 308807.95 * p + 3745.25 * l * l + 76.63 * p * p - 194.56 * l * l * p + 119.79 * p * p * p;
+  return lv95 ? {x: E, y: N} : {x: E - 2000000, y: N - 1000000};
+ },
+};
 export function projectionOf(crs) {
  const wkt = crs?.wkt?.replace(/,?\s*VERT(?:_CS|CRS)\[[\s\S]*$/, '') ?? '';
  const kind = wkt.match(/PROJECTION\["([^"]+)"/i)?.[1]?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? '';
+ const swiss = crs?.epsg === 2056 || crs?.epsg === 21781 || /^(hotineobliquemercator|swissobliquemercator|obliquemercator)/.test(kind) && /CH1903|LV95|LV03|Swiss/i.test(wkt);
+ if (swiss) { const lv95 = crs?.epsg !== 21781 && !/LV03/i.test(wkt); return {toGeo: (x, y) => SWISS.toGeo(x, y, lv95), fromGeo: (lat, lon) => SWISS.fromGeo(lat, lon, lv95)}; }
  if (!kind) return null;
  const {a, f} = ellipsoidOf(wkt), e2 = f * (2 - f), e = Math.sqrt(e2), u = linearUnit(wkt);
  const lat0 = rad(wktNum(wkt, ['latitude_of_origin', 'latitude_of_center']) ?? 0), lon0 = rad(wktNum(wkt, ['central_meridian', 'longitude_of_center']) ?? 0);

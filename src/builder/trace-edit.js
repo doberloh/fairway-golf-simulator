@@ -223,6 +223,17 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
     for (const k of pick.cells) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i >= 0 && j >= 0 && i < nx && j < nz) put(pick.kind, j * nx + i, 1); }
    });
   },
+  // TURNING ONE SHAPE (1 November 2026, the last of amendment 12's list):
+  // what `pickAt` found turned `angle` radians about its middle -- a patch
+  // cell by cell (each new cell takes the old cell it turns back onto, so no
+  // holes open), a house's facing; a tree is round. One undo step.
+  turn(pick, angle) {
+   if (!pick || !angle) return;
+   if (pick.type === 'home') return step(() => { keepHomes(); const h = s.homes[pick.index]; s.homes[pick.index] = {...h, rotation: h.rotation - angle}; });   // a facing is measured the other way round (homes.js)
+   if (pick.type !== 'shape') return;
+   const mask = turnedCells(pick.cells, angle, nx, nz);
+   step(() => { for (const k of pick.cells) put(pick.kind, k, 0); for (const k of mask) put(pick.kind, k, 1); });
+  },
   undo() { return swapStep(s.undo, s.redo); },
   redo() { return swapStep(s.redo, s.undo); },
  };
@@ -241,6 +252,22 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
 // Which way a house at (x, z) faces: toward the nearest mown ground (fairway,
 // green or tee) within 150 m, looked for along 32 bearings every 3 m; south
 // when there is none. homes.js turns a house by atan2(dx, dz) toward its hole.
+// A patch's cells (indices into an nx x nz grid) turned `angle` radians about
+// their middle: every cell in the turned box that turns back onto one of
+// them. Returns the new cells. Shared with the editor (editing.js turnShape).
+export function turnedCells(cells, angle, nx, nz) {
+ let ci = 0, cj = 0; for (const k of cells) { ci += k % nx; cj += Math.floor(k / nx); } ci /= cells.length; cj /= cells.length;
+ const c = Math.cos(angle), s = Math.sin(angle), had = new Set(cells);
+ let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity;
+ for (const k of cells) { const di = k % nx - ci, dj = Math.floor(k / nx) - cj, ti = ci + di * c - dj * s, tj = cj + di * s + dj * c; i0 = Math.min(i0, ti); i1 = Math.max(i1, ti); j0 = Math.min(j0, tj); j1 = Math.max(j1, tj); }
+ const out = [];
+ for (let j = Math.max(0, Math.floor(j0) - 1); j <= Math.min(nz - 1, Math.ceil(j1) + 1); j++) for (let i = Math.max(0, Math.floor(i0) - 1); i <= Math.min(nx - 1, Math.ceil(i1) + 1); i++) {
+  const di = i - ci, dj = j - cj, si = Math.round(ci + di * c + dj * s), sj = Math.round(cj - di * s + dj * c);
+  if (si >= 0 && sj >= 0 && si < nx && sj < nz && had.has(sj * nx + si)) out.push(j * nx + i);
+ }
+ return out;
+}
+
 // Which way a house's front faces: toward the nearest fairway, green or tee
 // (32 bearings, out to 150 m). Shared with the editor (editing.js addHome).
 export function facingFrom(kindAt) {

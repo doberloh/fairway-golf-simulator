@@ -11383,7 +11383,7 @@ each source was asked from `Origin: null` on 1 November 2026:
 | Hobu's Entwine index (https://raw.githubusercontent.com/hobuinc/usgs-lidar/master/boundaries/resources.geojson, 8.8 MB, 2,283 copies) | by place | which Entwine copies cover a point: their names are not always the work unit's (Breckenridge's 2016 survey is `USGS_LPC_CO_Central_Western_2016_LAS_2018`), and some newest surveys have none yet (Vermont's third statewide block) | yes, `*` |
 | Planetary Computer `3dep-lidar-copc` (STAC) | yes, `*` | COPC copies; at Worthington only the 2010 survey came back | yes (not used: Entwine has the newest) |
 | IGN LiDAR HD: WFS `IGNF_LIDAR-HD_METADONNEE:metadata` on data.geopf.fr | yes, `*` | `url_npl`: one COPC tile a km, Lambert-93 | **yes**, `*` |
-| swisstopo swissSURFACE3D STAC (data.geo.admin.ch) | yes, `*` | zipped LAS, LV95 (Swiss oblique Mercator, not worked: linked) | -- |
+| swisstopo swissSURFACE3D STAC (data.geo.admin.ch) | yes, `*` | zipped LAS (about 125 MB a km), LV95 -- the LAS states NO grid in its header; the catalogue and the name say EPSG 2056 | **yes**, `*` (downloaded since later that night: a square in Bern, 11.5 million points, placed and built) |
 | AHN, PDOK atom feed | `*` | tiles of gigabytes | linked |
 
 The test courses' surveys came the Entwine way too (tools/lidar-fetch.mjs, each course's box and 150 m, cached under bench/lidar/<course>/ept/): Key West, Northwood, Breckenridge, Ekwanok and Arcadia Bluffs in minutes, 72-309 MB each, where rockyweb's three Sahalee tiles had taken four hours.
@@ -11434,7 +11434,11 @@ Central (28.5 N, 96 W -> 2963503.91, 254759.80 US ft) and the British National
 Grid (50.5 N, 0.5 E -> 577274.99, 69740.50 m), both within 2 cm. The owner's
 three Washington surveys came out at Battle Creek (Tulalip), Salish Cliffs
 (Kamilche) and Snohomish golf courses. Datums are taken as one (NAD83 against
-WGS84 is about a metre). Not worked: oblique Mercator (Switzerland), polar
+WGS84 is about a metre). The Swiss grid (LV95 and LV03) by swisstopo's own
+*Approximate formulas for the transformation between Swiss projection
+coordinates and WGS84* -- to about a metre, checked against their worked
+example (46 2 38.87 N, 8 43 49.79 E = E 2,700,000, N 1,100,000) within 2 m;
+enough for lining up, which is all placing is for. Not worked: polar
 stereographic, Albers -- a file in one lines up by matched points.
 
 Sources: [National Map product API](https://tnmaccess.nationalmap.gov/api/v1/docs);

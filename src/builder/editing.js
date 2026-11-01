@@ -20,7 +20,7 @@
 // brush is a weight that falls off smoothly to nothing at its edge.
 import {GROUND_KINDS} from '../grounds.js';
 import {createLayers, LAYER_ORDER} from './layers.js';
-import {facingFrom} from './trace-edit.js';
+import {facingFrom, turnedCells} from './trace-edit.js';
 import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
@@ -262,6 +262,23 @@ export function createEditor(doc) {
    const m = r.layers.mask(pick.kind, true);
    for (const k of pick.cells) m[k] = 0;
    for (const k of pick.cells) { const i = k % r.nx + di, j = Math.floor(k / r.nx) + dj; if (i >= 0 && j >= 0 && i < r.nx && j < r.nz) m[j * r.nx + i] = 1; }
+   recomposeBox(box);
+   return box;
+  },
+  // Turning one shape `angle` radians about its middle (trace-edit.js
+  // turnedCells): a patch cell by cell, a house's facing; a tree is round.
+  // One undo step; returns the box changed (metres) for the view.
+  turnShape(pick, angle) {
+   if (!pick || !angle) return null;
+   if (pick.type === 'home') { remember('records', 0, 0, 0, 0); const h = state.homes[pick.index]; state.homes[pick.index] = {...h, rotation: h.rotation - angle}; return null; }   // a facing is measured the other way round
+   if (pick.type !== 'shape') return null;
+   const out = turnedCells(pick.cells, angle, r.nx, r.nz);
+   let i0 = r.nx, i1 = 0, j0 = r.nz, j1 = 0; for (const k of [...pick.cells, ...out]) { const i = k % r.nx, j = (k - i) / r.nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+   const box = [r.x0 + i0 * r.cell, r.x0 + (i1 + 1) * r.cell, r.z0 + j0 * r.cell, r.z0 + (j1 + 1) * r.cell];
+   remember('paint', ...box); state.surfacesEdited = true;
+   const m = r.layers.mask(pick.kind, true);
+   for (const k of pick.cells) m[k] = 0;
+   for (const k of out) m[k] = 1;
    recomposeBox(box);
    return box;
   },

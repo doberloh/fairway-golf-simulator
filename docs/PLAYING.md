@@ -464,7 +464,7 @@ the file to anyone else who has Fairway. It opens on three doors.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
      place, **Find**, pick it, choose the square round it (1 to 3 km), and
      **Search for LIDAR**. Every source over that place is listed. **USGS
-     3DEP** (the United States) and **IGN LiDAR HD** (France) download right
+     3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
      there: **Download the square here** takes just the survey over the
      square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
      square of Worthington is about 17 MB). **Download its whole tiles** gets
@@ -475,7 +475,7 @@ the file to anyone else who has Fairway. It opens on three doors.
      with Choose LIDAR files). Each state with its own LIDAR portal
      (Washington, Minnesota, Pennsylvania, North Carolina and thirty more),
      NOAA's Digital Coast, the national agencies of England, the Netherlands,
-     Switzerland, Denmark, Spain, Canada, Australia and New Zealand, and
+     Denmark, Spain, Canada, Australia and New Zealand, and
      OpenTopography are listed as links where they cover the place. This and
      the imagery are the only things in the builder that go online, and
      only when pressed.
@@ -485,7 +485,7 @@ the file to anyone else who has Fairway. It opens on three doors.
      file is read with it. Each file is listed with its form, its size, its map
      grid and its units (feet are converted to metres). Surveys in US State
      Plane (Lambert or transverse Mercator, in feet or metres), UTM, the
-     British grid and the like are placed for imagery and OpenStreetMap by
+     British grid, the Swiss grid (to about a metre) and the like are placed for imagery and OpenStreetMap by
      themselves. LIDAR of most of the
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
@@ -582,7 +582,9 @@ the file to anyone else who has Fairway. It opens on three doors.
      a house or tree under the pointer, else one shape: the chosen layer's
      where it lies under the pointer, else the topmost there (a green off
      its fairway, a bunker, a pond), all of that layer that touches moving
-     together, what lies under it showing where it stood -- and
+     together, what lies under it showing where it stood -- **Turn shape**
+     turns one about its middle as you drag round it (a house turns its
+     front; a tree is round) -- and
      **Smooth all edges** and **Tidy specks** clean the whole trace.
      **Extrapolate** lays a second layer round the chosen one, a width out --
      semi-rough round the fairways; under the chosen layer it runs on
@@ -639,7 +641,8 @@ draw a pond or a creek (it runs downhill), plant or clear trees, stand a
 or tee; refused on turf, sand, water or a path) or **Clear houses** under
 the brush -- the game builds each one from where it stands; **Move shape**
 picks up a house, a tree, or one surface's patch under the pointer and puts
-it down where you let go (Undo puts it back). The holes
+it down where you let go, and **Turn shape** turns one as you drag round
+its middle (Undo puts either back). The holes
 list moves tees and greens, adds a bend to a hole's line and changes par.
 **Check the course** lists what breaks a rule (a tee off its pad or in
 water, a green too small or too steep, a tree on a green) and clicking one

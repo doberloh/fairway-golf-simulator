@@ -77,7 +77,8 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   over a real picture makes the bunkers easy to line up, and whether picking
   the chosen layer before the topmost surprises anyone. Move shape is in
   the editor too (the builder-tools journey drags a bunker and undoes it;
-  under a tree's crown it takes the tree). Not built: turning a shape.
+  under a tree's crown it takes the tree). Turn shape too, in both (the
+  builder-door-2 journey turns a bunker a quarter and undoes it).
 - [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
   amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
   square or IGN tiles, rockyweb's tiles through the bridge or the downloads

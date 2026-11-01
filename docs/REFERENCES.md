@@ -802,7 +802,10 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - IGN, *LiDAR HD* -- https://geoservices.ign.fr/lidarhd -- France's tiles,
   found through the data.geopf.fr WFS layer IGNF_LIDAR-HD_METADONNEE:metadata.
 - swisstopo, *swissSURFACE3D* -- https://www.swisstopo.admin.ch/en/height-model-swisssurface3d
-  -- linked; its LV95 grid is not worked.
+  -- found through its STAC catalogue and downloaded in the page since 1
+  November 2026; and swisstopo, *Approximate formulas for the transformation
+  between Swiss projection coordinates and WGS84* -- the LV95/LV03 working in
+  geo.js and its worked example.
 - Wikipedia, *National Lidar Dataset (United States)* --
   https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States) -- the
   starting list of state programmes; the 36 state portals as checked are in
