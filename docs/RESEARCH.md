@@ -11428,8 +11428,22 @@ Breckenridge tee 31 -> 60, fairway 79 -> 80, water 90 -> 93 (lined up by -4,
 85 (by -6, +2); Worthington worse, tee 53 -> 37, sand 19 -> 2 (by +0.5, -3.5:
 the line-up misjudged). The first version, with no lining up and 8 m of edge
 relabelled, lost tees and greens everywhere (green 37 -> 22, tee 45 -> 9).
-Keep it as drawn stays the builder's safe choice until the line-up is
-reliable.
+Then, iterations on the refinement itself (each on the damaged maps):
+lined up by SMOOTH-AND-GREEN inside against coarse outside (45: wrong on two
+of four), then by EDGES -- the shift that puts the map's outlines on the
+strongest change in brightness and greenness (46) -- searched to 6 m, not 10
+(47: at 10, Breckenridge's mapped outlines jumped 9.5 m onto its two
+unmapped nines), moved only when clearly better (a tenth); only fairway,
+semi and rough edges move, greens, tees, paths, sand and water keeping their
+lined-up shapes (48); only fairway and semi rounded (49), the fairway's shape
+covering no bunker; and neither sand (50) nor ponds (51) added where the map
+has none -- each added more false than real. On all nine courses, damaged
+start -> refined: greens up everywhere (Key West 25 -> 65, Ekwanok 37 -> 69,
+Chambers Bay 32 -> 43); tees up 19-50 points where the map was moved (Key
+West 57 -> 94); sand up 10-22 points where moved (Arcadia 27 -> 48); water
+to 89-97 where moved; fairway up on six, down on TPC (85 -> 79) and
+Worthington (77 -> 75); semi down on three. The line-up found 8 of 9 shifts
+within 1.5 m of the truth (-4, 0) and left Worthington's unmoved.
 
 At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
 Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens

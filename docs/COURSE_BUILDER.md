@@ -251,6 +251,16 @@ After trying the builder, the owner amended the goal:
    classifier learning from OpenStreetMap's outlines instead of the rules,
    from the picture or the LIDAR. Moved from IDEAS.md, where OpenStreetMap
    import waited.
+10. **After testing, a list** (the owner, 1 November 2026): OpenStreetMap
+    then fit to the LIDAR as the best path, shored up; clearer instructions
+    for Google's imagery; a **course boundary**, outside it forest and the
+    like fading into the outskirts as a generated course's do; the
+    **landscape chosen in the trace step** and every surface it allows in
+    the list (rough among them); **extrapolate** any layer outward (semi
+    round fairways, fringe round greens); **every layer shown in a sensible
+    drawing order**, empty ones marked; **instructions top-middle** that
+    stay while a tool is in use; a **house zone**; a clear **erase brush**;
+    and **finer tracing** -- the tracer's cells looked pixellated.
 7. **Layers** (the owner, 1 November 2026): "the concept of layers so things
    can be easily painted in the trace step" -- each surface its own layer, so
    painting one never wipes another -- "exposed in the editor as well in real

@@ -88,3 +88,14 @@ test('with no hole marked the fairway is found from the picture; nothing under t
  const k = Math.round((40 + 150) / .5) * 401 + Math.round((50 + 100) / .5);
  assert.equal(TRACE[r.codes[k]], 'rough');
 });
+
+test('a starting trace 4 m off is lined up and refined from the picture', async () => {
+ const {refineTrace} = await import('../src/lidar/trace.js');
+ const h = hole(), shift = 8, start = new Uint8Array(h.truth.length);
+ // The truth moved 4 m east (8 cells), as a misaligned map can be.
+ for (let j = 0; j < 601; j++) for (let i = shift; i < 401; i++) { const t = h.truth[j * 401 + i - shift]; start[j * 401 + i] = t === 'rough' ? 0 : TRACE.indexOf(t); }
+ const before = iou(start, h.truth, 'green'), out = refineTrace(h.land, start, {picture: h.picture, mode: 'picture'});
+ assert.ok(Math.abs(refineTrace.lastShift.x + 4) <= 1 && Math.abs(refineTrace.lastShift.z) <= 1, JSON.stringify(refineTrace.lastShift));
+ assert.ok(iou(out, h.truth, 'green') > before + .1, `green ${before} -> ${iou(out, h.truth, 'green')}`);
+ assert.ok(iou(out, h.truth, 'sand') > .6);
+});

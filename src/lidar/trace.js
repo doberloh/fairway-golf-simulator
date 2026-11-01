@@ -312,6 +312,9 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
     // against the fairway's 0.33, brightness 73 against 103): clearly darker
     // and clearly less green than the fairway, and as smooth.
     || (turf && l < fc.l - 15 && turf.tex[k] < turf.texLo && (nd != null && fc.n != null ? nd < fc.n - .2 : exg(p) < fc.e - .08)) ? 1 : 0;
+    // (Iterations 43-44 added water much darker than the fairway, smooth and
+    // less green, for Key West's algae ponds: they gained 0 -> 10-14, Sahalee's
+    // and Ekwanok's shadows cost as much. Not kept.)
   }
   // Wider than a shadow (iteration 12: a road's tree shadows at Northwood
   // read as water): 3.5 m thick, area over edge (PLACED).
@@ -662,17 +665,20 @@ export function refineTrace(land, start, {picture = null, mode = 'picture', band
  const {nx, nz, cell} = land, N = nx * nz, R = m => Math.max(1, Math.round(m / cell));
  const C = Object.fromEntries(TRACE.map((t, i) => [t, i]));
  const usePic = mode === 'picture' && !!picture;
- // The features, and a smoothness map for lining the start up.
- let feat, smooth;
+ // The features, and the channels whose edges line the start up.
+ let feat, smooth, edgeChannels;
  if (usePic) {
   const P = picture, L = new Float32Array(N), L2 = new Float32Array(N), Gr = new Float32Array(N), cr = new Float32Array(N), cb = new Float32Array(N);
   for (let k = 0; k < N; k++) { if (!P.has[k]) continue; const r = P.rgb[k * 3], g = P.rgb[k * 3 + 1], b = P.rgb[k * 3 + 2], s = r + g + b + 1; L[k] = .299 * r + .587 * g + .114 * b; L2[k] = L[k] * L[k]; Gr[k] = P.nir ? (P.nir[k] - r) / (P.nir[k] + r + 1) : (2 * g - r - b) / s; cr[k] = r / s; cb[k] = b / s; }
   const tex = r => { const m1 = boxMean(L, nx, nz, r), m2 = boxMean(L2, nx, nz, r); return Float32Array.from(m1, (m, k) => Math.sqrt(Math.max(0, m2[k] - m * m)) / (m + 20)); };
   const t1 = tex(R(1)), t2 = tex(1), Lw = boxMean(L, nx, nz, R(10)), Gw = boxMean(Gr, nx, nz, R(10));
   feat = k => P.has[k] ? [L[k] / 40, Gr[k] * 6, cr[k] * 10, cb[k] * 10, t1[k] * 20, t2[k] * 20, (L[k] - Lw[k]) / 20, (Gr[k] - Gw[k]) * 6] : null;
-  smooth = t1;
+  // Mown is smooth AND green: each in its own spread (iteration 45; smoothness
+  // alone misjudged Worthington's shift).
+  edgeChannels = [L, Gr.map(v => v * 255)];
+  { const sp = a => { const v = []; for (let k = 0; k < N; k += 13) if (P.has[k]) v.push(a[k]); v.sort((x, y) => x - y); return Math.max(1e-6, (v[Math.floor(v.length * .84)] ?? 1) - (v[Math.floor(v.length * .16)] ?? 0)); }, st = sp(t1), sg = sp(Gr); smooth = Float32Array.from(t1, (v, k) => v / st - Gr[k] / sg); }
  } else {
-  const F = features(land); smooth = F.rough; const Iw = boxMean(Float32Array.from(land.intensity, v => Number.isFinite(v) ? v : 0), nx, nz, R(10));
+  const F = features(land); smooth = F.rough; edgeChannels = [F.rough, Float32Array.from(land.intensity, v => Number.isFinite(v) ? v : 0)]; const Iw = boxMean(Float32Array.from(land.intensity, v => Number.isFinite(v) ? v : 0), nx, nz, R(10));
   feat = k => [F.rough[k] * 50, F.slope[k] / 5, F.hollow[k] * 5, Number.isFinite(land.intensity[k]) ? land.intensity[k] * 5 : 0, Math.min(land.canopy[k], 20) / 4, Number.isFinite(land.intensity[k]) ? (land.intensity[k] - Iw[k]) * 10 : 0];
  }
  // LINED UP FIRST: a map is most often off by a shift. The start's mown
@@ -683,15 +689,27 @@ export function refineTrace(land, start, {picture = null, mode = 'picture', band
  // no lining up and 8 m of edge relabelled, lost tees and greens to a map 4 m
  // off: green 37 -> 22, tee 45 -> 9.)
  if (align) {
-  const mown = Uint8Array.from(start, c => c === C.fairway || c === C.green || c === C.tee ? 1 : 0), dist = distanceFrom(mown, nx, nz, cell);
+  // By EDGES (iteration 46): a map's outlines should lie where the picture
+  // (or the ground) changes -- brightness and greenness, or roughness and the
+  // laser's brightness, each over its own spread. Every shift to 6 m is
+  // tried and the one putting the start's outlines on the strongest change
+  // is kept, if clearly stronger than where they lie (a tenth, PLACED).
+  // (Iteration 45 lined up by smooth-and-green inside against coarse
+  // outside, and 36's smoothness alone: each misjudged one course in two.)
+  const grad = a => { const g = new Float32Array(N); for (let j = 1; j < nz - 1; j++) for (let i = 1; i < nx - 1; i++) { const k = j * nx + i; g[k] = Math.hypot(a[k + 1] - a[k - 1], a[k + nx] - a[k - nx]); } const v = []; for (let k = 0; k < N; k += 13) v.push(g[k]); v.sort((x, y) => x - y); const sc = Math.max(1e-6, v[Math.floor(v.length * .9)] ?? 1); for (let k = 0; k < N; k++) g[k] /= sc; return g; };
+  const E = new Float32Array(N); for (const ch of edgeChannels) { const g = grad(boxMean(ch, nx, nz, R(1))); for (let k = 0; k < N; k++) E[k] += g[k]; }
+  const out0 = Uint8Array.from(start, c => c && c < TRACE.length ? 1 : 0), line = [];
   let q0 = 777; const rnd0 = () => (q0 = (q0 * 1103515245 + 12345) % 2147483648) / 2147483648;
-  const inS = [], ring = []; for (let k = 0; k < N; k++) { if (mown[k] && rnd0() < .05) inS.push(k); else if (dist[k] > 2 && dist[k] < 6 && rnd0() < .05) ring.push(k); }
-  const at = (list, di, dj) => { let t = 0, n = 0; for (const k of list) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i < 0 || j < 0 || i >= nx || j >= nz) continue; t += smooth[j * nx + i]; n++; } return n ? t / n : Infinity; };
-  const energy = (di, dj) => at(inS, di, dj) - at(ring, di, dj);
-  let best = [0, 0], be = energy(0, 0);
-  const step = R(1), reach = R(10);
+  for (let k = nx; k < N - nx; k++) { const i = k % nx; if (i === 0 || i === nx - 1) continue; if (start[k] !== start[k + 1] || start[k] !== start[k + nx]) if (rnd0() < .25) line.push(k); }
+  const energy = (di, dj) => { let t = 0, n = 0; for (const k of line) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i < 0 || j < 0 || i >= nx || j >= nz) continue; t += E[j * nx + i]; n++; } return n ? -t / n : 0; };
+  const e0 = energy(0, 0); let best = [0, 0], be = e0;
+  // To 6 m (iteration 47): at 10, Breckenridge's mapped outlines were moved
+  // 9.5 m onto the edges of its two unmapped nines.
+  const step = R(1), reach = R(6);
   for (let dj = -reach; dj <= reach; dj += step) for (let di = -reach; di <= reach; di += step) { const e = energy(di, dj); if (e < be) { be = e; best = [di, dj]; } }
   const [bi, bj] = best; for (let dj = bj - step; dj <= bj + step; dj++) for (let di = bi - step; di <= bi + step; di++) { const e = energy(di, dj); if (e < be) { be = e; best = [di, dj]; } }
+  if (be > e0 - .1 * Math.abs(e0)) best = [0, 0];
+  void out0;
   if (best[0] || best[1]) { const moved = new Uint8Array(N); for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const si = i - best[0], sj = j - best[1]; if (si >= 0 && sj >= 0 && si < nx && sj < nz) moved[j * nx + i] = start[sj * nx + si]; } start = moved; }
   refineTrace.lastShift = {x: best[0] * cell, z: best[1] * cell};
  }
@@ -722,22 +740,27 @@ export function refineTrace(land, start, {picture = null, mode = 'picture', band
  const learnt = new Int8Array(N).fill(-1);
  for (let k = 0; k < N; k++) {
   if (toEdge[k] < band || far[k] < 80) learnt[k] = classify(k);
-  // Only the edges between fairway, semi, sand, water and rough move; greens,
-  // tees and paths keep the start's shapes (they are drawn most carefully,
-  // and a band wider than a tee swallowed them).
-  const fixed = c => c === C.green || c === C.tee || c === C.path;
+  // Only the edges between fairway, semi and rough move; greens, tees, paths,
+  // sand and water keep the start's (lined-up) shapes: a band wider than a
+  // tee swallowed tees, and moving sand's and water's edges lost more than it
+  // found (iteration 48: Worthington's sand 19 -> 4).
+  const fixed = c => c === C.green || c === C.tee || c === C.path || c === C.sand || c === C.water;
   if (toEdge[k] < band && learnt[k] >= 0 && !fixed(start[k])) { const to = learnt[k] === kinds.length ? (start[k] >= TRACE.length ? start[k] : C.rough) : C[kinds[learnt[k]]]; if (!fixed(to)) out[k] = to; }
  }
  // What the map left out, far from its surfaces: clear sand, water, greens.
  const addFar = (kind, opts) => { const c = kinds.indexOf(kind), m = Uint8Array.from(learnt, (v, k) => v === c && toEdge[k] >= band && !any[k] ? 1 : 0); const keep = blobs(majority(m, nx, nz, R(1)), nx, nz, cell, opts); for (let k = 0; k < N; k++) if (keep[k]) out[k] = C[kind]; };
- addFar('sand', {minArea: 6, maxArea: 1500, thick: 1.2, maxLength: 60});
- addFar('water', {minArea: 60, thick: 3.5});
+ // (Sand the map left out was added too, until iteration 50: it added more
+ // false bunkers than real ones -- Worthington's sand 19 -> 3.)
+ // (Ponds the map left out were added too, until iteration 51: they added
+ // more false water than real -- Worthington's water 61 -> 46.)
  addFar('green', {minArea: 200, maxArea: 1500, thick: 4, maxLength: 55});
- // Each surface rounded; the fairways made simple shapes.
+ // The fairway and semi rounded, the fairways made simple shapes; greens,
+ // tees, sand and water keep the start's lined-up shapes (rounding over
+ // 1.5 m wiped small bunkers: iteration 49).
  const final = Uint8Array.from(out);
- for (const kind of kinds) {
+ for (const kind of ['fairway', 'semi']) {
   const c = C[kind], m = majority(Uint8Array.from(out, v => v === c ? 1 : 0), nx, nz, R(1.5)), shaped = kind === 'fairway' ? shapeFairways(m, nx, nz, cell) : m;
-  for (let k = 0; k < N; k++) { if (shaped[k]) final[k] = c; else if (final[k] === c && !shaped[k]) final[k] = start[k] === c && toEdge[k] >= band ? c : C.rough; }
+  for (let k = 0; k < N; k++) { if (shaped[k] && (out[k] === C.rough || out[k] === C.semi || out[k] === C.fairway || out[k] >= TRACE.length)) final[k] = c; else if (final[k] === c && !shaped[k]) final[k] = start[k] === c && toEdge[k] >= band ? c : C.rough; }
  }
  return final;
 }
