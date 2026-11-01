@@ -103,10 +103,15 @@ export function createGridder({box, cell = 1, unit = {h: 1, v: 1}}) {
 }
 
 // Holes (no ground return: under water, under roofs, under dense trees)
-// filled from their edges inwards, each pass averaging the known neighbours.
-export function fill(a, nx, nz) {
+// filled from their edges inwards, each pass averaging the known neighbours;
+// then relaxed (`relax` passes, each filled cell the mean of its four
+// neighbours), so a pond's floor or the land past a survey's edge is a smooth
+// surface rather than the bumps of its rim carried inward in streaks (a
+// filled pond read 25% steep and was refused as water).
+export function fill(a, nx, nz, {relax = 40} = {}) {
  let todo = [];
  for (let k = 0; k < a.length; k++) if (Number.isNaN(a[k])) todo.push(k);
+ const filled = todo.slice();
  for (let pass = 0; todo.length && pass < 4000; pass++) {
   const next = [], set = [];
   for (const k of todo) {
@@ -123,6 +128,10 @@ export function fill(a, nx, nz) {
   todo = next;
  }
  for (const k of todo) a[k] = 0;
+ for (let pass = 0; pass < relax; pass++) for (const k of filled) {
+  const i = k % nx, j = (k - i) / nx;
+  a[k] = (a[i > 0 ? k - 1 : k] + a[i < nx - 1 ? k + 1 : k] + a[j > 0 ? k - nx : k] + a[j < nz - 1 ? k + nx : k]) / 4;
+ }
 }
 
 // AN UNCLASSIFIED CLOUD'S GROUND: a progressive morphological filter (Zhang et

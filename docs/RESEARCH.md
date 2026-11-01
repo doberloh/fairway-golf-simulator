@@ -11277,3 +11277,26 @@ on the canopy smoothed once, the height then read off the raw canopy (61% and
 71% before, at 1 m). The study's PLACED expectation from a forum -- "a 2 m grid
 captures green contours" -- is not tested here: the greens' fine break at 12.6
 points per m² is the other pipeline's README's own caveat.
+
+## Course builder: the auto trace on a real course (31 October 2026)
+
+What each surface looks like to each witness at Worthington, inside
+OpenStreetMap's outlines (medians, from `tools/real-course.mjs --diagnose`):
+the laser's brightness (0-1, the survey's own scale) greens 0.87, fairways
+0.79, tees 0.77, sand 0.69, other ground 0.70, water 0.17; roughness at a
+metre's scale greens 0.7 cm, fairways 0.7, sand 2.5, other 0.9; NAIP 2021
+(0.6 m, flown 15 and 21 August) brightness fairway 130, sand 189, water 88,
+other 139; greenness (2G-R-B over the sum) fairway 0.16, sand 0.02, water
+-0.01; NDVI fairway 0.20, sand -0.23, water -0.41. **Sand is darker to a
+1,064 nm laser than turf** -- grass reflects near-infrared strongly -- the
+opposite of the design's guess, which found no sand at all. The rules are set
+from these and stated against the course's own fairway, not as absolute
+values (docs/COURSE_BUILDER.md, stage 8, with the scores three ways on
+generated courses and on Worthington). The relaxed fill (stage 7) brought
+filled cells to a median 1.3 cm and a 95th percentile of 8 cm against USGS's
+DEM, from 2.6 and 24 cm. **Sources**: NAIP 2021 quarter-quads m_4309527_ne,
+m_4309519_se, m_4309528_nw and m_4309520_sw, from Microsoft's Planetary
+Computer (https://planetarycomputer.microsoft.com/api/stac/v1, collection
+naip; public domain; local only); OpenStreetMap's golf features through the
+Overpass API (https://overpass-api.de; ODbL; local only, as a reference); the
+club's scorecard as GolfPass lists it (par 71, blue 6,282 yards).

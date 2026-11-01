@@ -128,10 +128,11 @@ Esri ASCII grid, XYZ grids, Esri float grid and BIL, ERDAS Imagine, SRTM HGT.
 **The two closed forms** -- Esri zLAS and MrSID LiDAR -- are named with a free
 converter (Esri's LAS Optimizer or rapidlasso's LASliberator for zLAS).
 Several tiles at once, of mixed forms. Ground from class 2 (or a ground filter
-on an unclassified cloud), gaps filled, water flattened to its shoreline;
-trees from canopy height peaks; position and units from the files themselves
-(US survey feet converted and shown), reprojection only when sources differ
-(proj4js).
+on an unclassified cloud), gaps filled and relaxed smooth, a traced pond's
+floor carved a metre under its level; trees from canopy height peaks;
+position and units from the files themselves (US survey feet converted and
+shown); UTM and degrees converted by Fairway itself, any other map grid lined
+up by matching points (proj4js was not added: stage 6).
 
 ## The picture, and LIDAR first
 
@@ -139,7 +140,7 @@ Pictures are for tracing and are never drawn in the game. In order of how
 little lining up they need: the LIDAR's own colour or intensity; a
 georeferenced picture (GeoTIFF, or JPEG/PNG/WebP with a world file); any
 picture lined up by three or more matching points on the shaded relief; the
-relief itself. An auto-align nudge after any of them. The builder states the
+relief itself. (An auto-align nudge after any of them: not built; TODO.) The builder states the
 imagery licence position when a picture is loaded (Google, Bing and Esri
 imagery: assume tracing forbidden; NAIP is public domain).
 
@@ -163,11 +164,11 @@ LIDAR cannot decide.
 | Ground height | ground returns | never -- a picture has no height; no LIDAR at all takes the generator's land |
 | Trees | canopy over 2 m, many returns a pulse | coverage gaps; leaf-off or leaf-out flights (crowns widened, never heightened) |
 | Water | class 9, or flat with weak or no returns | no class 9 and returns over it; water drawn since the flight |
-| Sand | a smooth hollow, bright in intensity | no intensity; intensity not separating; flat waste areas |
+| Sand | rougher than mown turf (raked), a little darker to the laser than the fairway, low -- measured at stage 8; the design's "a smooth hollow, bright in intensity" was wrong on both counts | the LIDAR has no intensity, or where the LIDAR does not call it and the picture's pale, ungreen patch is not road-smooth |
 | Greens and tees | the smoothest raised pad round each mark | the edge (mowing differences are under the LIDAR's ~10 cm noise) |
-| Fairway against rough | roughness and intensity, tried first | usually -- mowing heights differ by centimetres |
-| Paths | narrow, smooth, intensity | gravel and worn paths |
-| Buildings | class 6, or flat planes with single returns | unclassified roofs the filter is unsure of |
+| Fairway against rough | smooth open ground near the hole's line only (a weak call) | always where there is a picture -- mowing heights differ by centimetres |
+| Paths | not traced yet (TODO) | |
+| Buildings | not traced yet (TODO) | |
 
 **No LIDAR at all**: a course still goes through door 2 on a picture alone --
 every surface from the picture, the land from the generator under the
@@ -176,8 +177,9 @@ card say the land is not the real land. **Measured three ways**: LIDAR alone,
 picture alone, LIDAR first with the picture as fallback, surface by surface.
 
 The auto trace ships no trained model: per-surface rules (a short function
-each), then a small classifier trained on the player's own corrections for
-this course, then outlines by marching squares. Measured on **synthetic
+each), then outlines by marching squares. (The study's next step, a small
+classifier trained on the player's own corrections for this course, is not
+built; TODO.) Measured on **synthetic
 courses** (a generated course turned into a fake LIDAR file and a fake aerial
 picture, scored against its known surfaces; target PLACED: greens and bunkers
 80% overlap, fairways 70%) and on the real test course.
@@ -199,7 +201,7 @@ nor any built copy of the course (tests that need it skip when it is absent):
   same tiles with vegetation and buildings classed; 0.5 m ground, surface and
   canopy-height grids; 2,413 trees (1,610 on the course) with height and crown.
   Its OpenStreetMap extract holds the course boundary and buildings only.
-- **Also compared against**: USGS's own 0.5 m bare-earth DEM for the flight,
+- **Also compared against**: USGS's own 1 m bare-earth DEM for the flight,
   NAIP aerial pictures of Nobles County, and the club's published scorecard
   (downloaded or read during the goal; none committed).
 
@@ -214,8 +216,8 @@ nor any built copy of the course (tests that need it skip when it is absent):
 | 4 | Real-time ground shaping | **Built** (below); not played by a person |
 | 5 | The editor's tools, checks, test round | **Built** (below); not played by a person |
 | 6 | LIDAR readers; Worthington's ground and trees against the references | **Built** (below) |
-| 7 | Door 2 end to end on Worthington | |
-| 8 | Auto trace, LIDAR first, measured three ways | |
+| 7 | Door 2 end to end on Worthington | **Built** (below); not played by a person |
+| 8 | Auto trace, LIDAR first, measured three ways | **Built** (below) |
 | 9 | Release-ready: docs sweep, distribution review, notices | |
 
 ### Stage 0 (31 October 2026)
@@ -422,12 +424,14 @@ nor any built copy of the course (tests that need it skip when it is absent):
   **Ground against USGS's own 1 m bare-earth DEM** (downloaded, 266 MB, LZW
   with the floating-point predictor -- also the real test of the LZW reader):
   **median 0.7 cm, 95th percentile 2.8 cm, 99th 5.3 cm** where the survey saw
-  ground; filled cells median 2.6 cm, 95th 24 cm. **Against the other
+  ground; filled cells median 2.6 cm, 95th 24 cm (1.3 and 8 cm since stage
+  7 relaxed filled ground). **Against the other
   simulator's 0.5 m terrain model**: median 0.4 cm, 95th 1.5 cm. **Canopy**
   against its canopy model, where either is over 2 m: median 28 cm (the
   95th percentile is 8.9 m: crown edges, one saying tree and the other ground).
   **Trees**: theirs 1,984 on the property, Fairway's 1,839; 1,405 within 3 m
-  of each other (71% of theirs, 76% of ours), height error median 0.34-0.66 m,
+  of each other (71% of theirs, 76% of ours; since stage 7, 1,792 and 1,404,
+  71% and 78%), height error median 0.34-0.66 m,
   crown 0.9 m. At 1 m cells the trees matched 61% and 84%.
 - **Tested**: tests/lidar-readers.test.mjs writes one small survey in every
   form (LAS formats 0-3, 6-8 and 10; GeoTIFF plain, Deflate with the float
@@ -436,6 +440,122 @@ nor any built copy of the course (tests that need it skip when it is absent):
   HGT), reads each back, grids it (classified and filtered ground, the tree at
   its height), and reads a real Worthington LAZ when `FAIRWAY_LIDAR_TEST`
   names the folder.
+
+### Stage 7 (31 October 2026): door 2 end to end
+
+- **Door 2's steps** (`src/builder/real-course.js`, pure, run by the page and
+  by the scripted build alike): `landFromSources` gathers every source onto
+  one grid over the property and the 150 m past it the game's mesh needs;
+  `pictureOnLand` lays a picture on that grid by its own position (geo.js) or
+  by points matched by hand (`affineFromPairs`, least squares, reporting the
+  worst pair's error in metres), each tile filling only what the ones before
+  left; `docFromLand` makes the built document -- the traced surfaces as
+  outlines (marching squares, simplified), each pond its outline with its
+  level just under its lowest tenth of shore and its floor carved a metre
+  below (the survey's ground there was filled in from the shore, so it stood
+  at the water's own level), the holes with par from length where none is
+  given, the trees on rough and semi only, conifer when narrow for their
+  height. With no trace, each green is a 12 m disc and each tee a pad.
+- **The page** (`src/builder/door-real.js`): six steps down the left beside a
+  plan of the land (shaded relief, the picture, the trace over it, the marks
+  and lines). The LIDAR files with their .prj/.hdr; a first look at a quarter
+  of the points and a property box dragged on it (to 3 x 3 km); the land; a
+  picture by position, by matched points, or the survey's own colour; the
+  holes clicked tee then green; the trace three ways; the landscape, name and
+  credit; then the editor.
+- **Measured on Worthington** (`tools/real-course.mjs`, the owner's tiles and
+  four NAIP 2021 quarter-quads lined up by position, together covering 100%
+  of the land; holes marked from OpenStreetMap's 18 numbered greens, each
+  given the tee that best fits the club's card -- near the yardage, near the
+  previous green, not another hole's): the land 2,359 x 2,189 cells at 0.5 m
+  (1,179 x 1,094 m with the margin), 15.3 million points, in 26 s; the file
+  **3.2 MB** with 4,484 trees and 10 ponds, made in 71 s. **Lengths against the
+  card** (blue): median 22 yards off, worst 84; 5,889 yards against the card's
+  6,282 -- the built holes run straight from tee to green and the card
+  measures round the doglegs; hole 2's tee is missing from OpenStreetMap, so
+  the nearest pad was taken (228 yards for the card's 173). **The test round**:
+  96 against par 71, nothing stuck (a generated Midwest eighteen: 65 and 68
+  against 68). The first round stuck 70 cm from two cups -- the survey's
+  centimetre noise left pits on the greens; greens and tees are now averaged
+  over 2.5 m and fairways 1.5 m when the course is made.
+- **Driven in the browser**: the `builder-door-2` journey makes a survey (a
+  LAS file of a nine-hole parkland with a pond, bunkers and trees), brings it
+  in, builds the land, marks nine holes by clicking the plan, traces, opens the
+  editor, saves, and the game plays a tee shot on the file (passed, 41 s). Its
+  first runs found three real faults: a survey of a point a square metre
+  gridded at half a metre left most cells empty and every empty cell read as
+  water (the cell is now never finer than the points' spacing); the land past
+  the survey's edge, where nothing came back, became a lake (water must not run
+  to the edge); and a filled pond's floor carried its rim's bumps inward in
+  streaks, 25% steep (filled ground is now relaxed smooth -- which also brought
+  Worthington's filled cells to a median 1.3 cm off USGS's DEM, from 2.6, and
+  the 95th percentile to 8 cm from 24).
+- **Not seen by a person**, and **Worthington not built through the page** (the
+  scripted build runs the page's own steps): in TODO.
+
+### Stage 8 (31 October 2026): the auto trace, LIDAR first
+
+`src/lidar/trace.js`, with no trained model: a rule per surface over each
+cell, every call keeping its source (LIDAR, picture, both) and how sure it was.
+
+- **The course is its own yardstick.** Each hole's approach (15-45 m short of
+  the green along the line into it) is fairway on nearly every hole; what it
+  looks like there -- to the laser and in the picture -- is what sand and
+  water are told from. Fixed colours and brightness failed at once on real
+  data: a picture's colours and a survey's brightness change with the camera,
+  the month and the course.
+- **Water**: LIDAR -- the survey's class 9, or silence (no return from the cell
+  and most of the metre round it), or very dark to the laser on level ground,
+  in patches of 60 m² and more that are thick (not roads) and partly silent,
+  never running to the survey's edge. Picture -- darker than the fairway and
+  far less green (NDVI where there is near-infrared), in patches, refused
+  where the LIDAR has a bright return.
+- **Sand**, within 70 m of a hole's line: LIDAR -- rougher than mown turf at a
+  metre's scale (raked sand and the lip), a little darker to the laser than
+  the fairway, low, where the laser reached, and not plainly turf in a
+  picture if there is one. Picture -- much brighter than the fairway and not
+  green, refused where the LIDAR measures ground as smooth as a road or roof.
+  Both in patches of 4-1,500 m², not longer than 60 m.
+- **Greens and tees** grow from the player's marks over smooth pad; with a
+  picture the colour finds the collar and the LIDAR only refuses what is
+  plainly not a pad. **Fairways** grow from the hole lines through the
+  fairway's colour (nearer it than the rough's, the rough sampled 30-60 m off
+  the lines); the LIDAR alone can only say "smooth open ground near the line".
+  **Semi-rough** a 2 m collar.
+- **What the first rules got wrong, measured** (Worthington, `--diagnose`
+  inside OpenStreetMap's outlines): sand was guessed bright to the laser and
+  is darker (0.69 against the fairway's 0.79: grass reflects the laser's
+  infrared strongly) and rougher (2.5 cm against 0.7); water returns a fifth
+  of the fairway's brightness; and in the August picture roads, car parks and
+  dry rough were as pale as the sand -- a million cells called sand, 4,024 of
+  them OpenStreetMap's bunkers. Patches, a length limit, the LIDAR's
+  smoothness veto and the 70 m from a line took that to 2,281.
+
+**Measured three ways** -- overlap with the truth (intersection over union),
+per cent:
+
+| | Green | Tee | Fairway | Sand | Water |
+| --- | --- | --- | --- | --- | --- |
+| Generated courses, LIDAR alone | 56 | 75 | 19 | 33 | 79 |
+| Generated courses, picture alone | 99 | 95 | 79 | 54 | 99 |
+| Generated courses, **LIDAR first** | **99** | **97** | **79** | **39** | **98** |
+| Worthington, LIDAR alone | 28 | 23 | 33 | 16 | 45 |
+| Worthington, picture alone | 62 | 30 | 34 | 21 | 29 |
+| Worthington, **LIDAR first** | **62** | **24** | **34** | **27** | **36** |
+
+The generated courses (`tools/trace-bench.mjs`, every landscape, 9 holes) are
+a fake survey and a fake picture of a course whose every surface is known;
+Worthington is scored against OpenStreetMap's hand-drawn outlines (23 greens,
+26 tees, 16 fairways, 20 bunkers, 8 water hazards and ponds), which are
+themselves rough: a fairway drawn as a line down the middle, bunkers missing.
+On Worthington the LIDAR-first rule beats either witness alone on sand and
+gives the LIDAR's water (98% of the LIDAR's water cells inside a mapped pond);
+on generated courses the LIDAR's sand calls lower the picture's (54 to 39) --
+the fake survey's rough is as rough and dark as its sand. **The study's
+targets** (greens and bunkers 80%, fairways 70%, PLACED) are met on generated
+courses for greens and fairways, not for sand, and not on Worthington. The
+LIDAR alone cannot find a green's collar (it runs on into the approach) or a
+fairway's edge -- what the picture is for. A trace takes 2-3 s.
 
 ## PLACED, and rules the build decided
 
@@ -466,6 +586,26 @@ owner can overrule them:
   canopy peak over 2 m within 2 m plus a tenth of its height, its crown out to
   where the canopy falls under half, its height the highest raw canopy within
   its window, peaks found on the canopy smoothed once (3 x 3).
+- Door 2: the land's cell never finer than the survey's point spacing,
+  rounded up to the half metre; a first look at the land from at most 4
+  million points; filled ground relaxed 40 passes; a traced pond's level 15 cm
+  under its lowest tenth of shore and its floor a metre under that; greens and
+  tees averaged over 2.5 m and fairways over 1.5 m; par from length (to 250
+  yards a three, to 470 a four); a tree a conifer when its crown is under a
+  fifth of its height; with no trace a green a 12 m disc and a tee a 6 x 10 m
+  pad.
+- The trace: SURE 0.6 (a call at least this sure decides); the approach 15-45
+  m short of the green as the fairway's yardstick; water a patch of 60 m², at
+  least 2.5 m thick (area over edge), a fifth of it silent, darker than the
+  fairway by 10 and its NDVI 0.45 under; silence a cell with no return and
+  60% of the 1.5 m round it the same; sand within 70 m of a line, 4-1,500 m²,
+  1.2 m thick, at most 60 m long, LIDAR rougher than 1.4 cm and 0.05 darker
+  than the fairway, the picture 30 brighter and 0.08 less green (NDVI 0.25
+  under), refused where the ground is smoother than 1 cm; a green grown to 24
+  m and a tee to 9 m from its mark, the colour within 38 of the mark's, the
+  LIDAR's smoothness and slope limits doubled when a picture decides the
+  edge; the fairway within 70 m of a line, nearer its colour than 0.85 of the
+  rough's distance; semi-rough a 2 m collar; a call under 0.45 left rough.
 
 ## Graphics card log
 
@@ -482,6 +622,9 @@ minute apart; the card read before each), 31 October 2026:
 | 8-10 | `builder-smoke` | door 1 failed on the harness (a button name), then on the editor (its land drawn facing down), then passed |
 | 11-12 | `builder-smoke --only builder-shaping` | failed (the hill played 0.41 m low), then passed after the refinement |
 | 13 | `builder-smoke --only builder-tools` | passed |
+| 14-16 | `builder-smoke --only builder-door-2` | failed on the harness (it measured the hidden picture canvas), then twice on the tee shot (water traced everywhere: empty cells of a sparse survey, then the land past its edge, then the picture's water rule without near-infrared) |
+| 17 | `builder-smoke --only builder-door-2` | passed (41 s) |
+| 18 | `builder-smoke` (all five journeys) | passed |
 
 ## Sources
 

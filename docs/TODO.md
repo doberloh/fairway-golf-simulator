@@ -35,16 +35,38 @@ check.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
-- [ ] **Stages 6-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*). Stages
-  0-5 are built: the page and file format, the game playing a built file,
-  pins per round, door 1, real-time shaping, the editor's tools, checks and a
-  test round.
+- [ ] **Stage 9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
+  release-readiness sweep. Stages 0-8 are built: the page and file format, the
+  game playing a built file, pins per round, door 1, real-time shaping, the
+  editor's tools, checks and a test round, the LIDAR readers, door 2 and the
+  auto trace.
+- [ ] **A real course's holes run straight from back tee to green** until the
+  player adds bends: door 2 does not yet draw a dogleg's bend from the traced
+  fairway. Worthington's test round, 96 against par 71 (a generated Midwest
+  eighteen plays at par), is partly the golfers aiming through trees on
+  doglegs; its yardages are short of the card by a median 22 yards for the same
+  reason.
+- [ ] **The trace does not yet draw paths or buildings**, has no review layer
+  in the editor (each cell's source is kept, and door 2 reports the share), no
+  automatic alignment nudge after a picture is lined up, and no classifier
+  learnt from the player's corrections -- all in the study's design
+  (docs/COURSE_BUILDER.md, *LIDAR first, the picture as fallback*).
+- [ ] **Sand is the trace's weakest surface**: 27% overlap with
+  OpenStreetMap's bunkers at Worthington with both witnesses, and on generated
+  courses the LIDAR's sand calls lower the picture's (docs/COURSE_BUILDER.md,
+  stage 8). OpenStreetMap maps 20 of the club's bunkers; some of what it
+  scores as wrong may be bunkers it lacks -- not checked by eye bunker by
+  bunker.
 - [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
 - [ ] **The editor cannot move or delete a pond or creek once drawn** (only
   Undo), add or remove holes, or stamp a green's contours beyond the brush.
 - [ ] **The owner plays the builder and a built course** at the end of the
   goal: the builder's doors and editor, a Worthington round in the game.
-  Nothing in the builder has been played by a person.
+  Nothing in the builder has been played by a person; the smoke journeys
+  drive every door (builder-door-2 on a made-up survey), and Worthington was
+  built by `tools/real-course.mjs` with door 2's own steps, not through the
+  page -- the owner's own run of door 2 on Worthington's tiles is the check
+  (`node tools/real-course.mjs` makes a copy to compare, local only).
 - [ ] **Before a release carrying the builder**: check the website's demo
   check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
   game's does not confuse it (tell the owner).

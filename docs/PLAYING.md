@@ -445,6 +445,68 @@ alone; hazards, slopes and green speed do not make a course harder here the way
 they would on a real card. Endless runs, three-hole rounds and unfinished rounds
 do not count toward it.
 
+## Fairway Course Builder
+
+**Fairway Builder.html**, beside the game in every download, is a second
+program for making courses. Open it the same way (double-click it); it never
+goes online. Everything it makes is a **.fairway file**: open it in the game
+with *Import courses from a file* on Saved courses, or drop it there, and give
+the file to anyone else who has Fairway. It opens on three doors.
+
+- **Generate and modify a course.** Pick a landscape, a designer and any
+  studio setting, grow the course, and press **Take it over**: from then on
+  everything on it is yours to change.
+- **Generate a real life course.** Build a course from LIDAR of a real
+  place, in six steps down the left of the screen:
+  1. **Bring the land**: LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
+     XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
+     its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
+     file is read with it. Each file is listed with its form, its size, its map
+     grid and its units (feet are converted to metres).
+  2. **The property**: drag a box round the course on the relief (up to 3 x 3
+     km), then **Build the land**. It says how the ground was found, how much
+     was filled in where no laser reached the ground, and how many trees it
+     found.
+  3. **A picture** (optional): an aerial photograph to trace over. A GeoTIFF
+     lines itself up; a PNG, JPEG or WebP with its world file (.pgw, .jgw,
+     .wld) and .prj does too. Choose several tiles one after another and each
+     fills what the others left. A picture that says nothing of where it is
+     is lined up by hand: click a point on the relief, then the same point on
+     the picture, three times or more, spread out; the builder says how far
+     off the worst pair is. **Use the LIDAR's own** shows the survey's colour
+     (or its laser brightness). Check the picture's terms: Google, Bing and
+     Esri imagery may forbid tracing; NAIP (the US) is public domain. The
+     picture is never saved in the course.
+  4. **Mark the holes**: for each hole its back tee (and middle and front if
+     you like) and its green, clicked on the plan, then **Next hole**. 9 or 18.
+  5. **Trace the course** (optional): **LIDAR first** draws the greens and
+     tees round your marks, the fairways along the holes, the sand and the
+     water -- from the survey where it can tell, from the picture where it
+     cannot. **LIDAR alone** and **Picture alone** show what each sees by
+     itself. It is a starting point to correct, not an answer.
+  6. **The landscape and the name**, a credit for the data, and **Open in the
+     editor**.
+- **Open a course file** to carry on with one you saved or one somebody gave
+  you.
+
+**The editor** is the same for all three. Left-drag moves round the course,
+right-drag turns, the wheel zooms; **From above** and **This hole** jump the
+view. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
+Roughen and Restore (the brush's size and strength above them); **Paint** any
+surface or ground type; **Outline** draws one by its edge; dig a bunker,
+draw a pond or a creek (it runs downhill), plant or clear trees. The holes
+list moves tees and greens, adds a bend to a hole's line and changes par.
+**Check the course** lists what breaks a rule (a tee off its pad or in
+water, a green too small or too steep, a tree on a green) and clicking one
+flies there; **Play a test round** has two virtual golfers play every hole
+and reports their strokes and any hole they could not finish. Undo and Redo
+(Ctrl+Z, Ctrl+Y) cover everything. **Save as a .fairway file** writes it.
+
+**A course built from real land** plays the real ground to the centimetre;
+its holes run straight from the back tee to the green until you add their
+bends, so mark a dogleg's bend in the editor or the golfers aim through the
+trees.
+
 ## Sound
 
 **The Swing Meter has its own sounds**: a soft rush of air that rises with the marker and falls as it comes back, a click when you set the distance, a buzz as it goes into overswing, a bright marimba run for a perfect strike, a wood block for one in the yellow zone, a thunk for a miss and a falling whistle if the swing runs out. Never with a launch monitor. Everything you hear is made as you play, never a recording, so nothing repeats. Each club has its own strike, and the ball sounds different on every surface: a soft thup on a green, a pfff into sand, a splash into water. It knocks off a trunk, rustles through leaves, clacks off rock, rattles the flagstick and thwacks off a house, and drops into the cup with a plastic knock and a rattle that settles to a skitter. Finishing a hole plays a short piece of chiptune metal for the score -- a clean, half-time guitar groove with an echoing lead, each score its own melody: a slow heavy build that lands on a big major chord for a hole in one, a climbing call for an eagle, a quick arpeggio for a birdie, one ringing chord for par, a sagging note for a bogey. An albatross, a double bogey and worse play shorter console jingles. Levelling up, the XP bar filling and finishing a round have tunes of their own, and the menus answer with short guitar chugs as you move, press and back out. Around you is the course itself: wind that gusts with the course's wind, birds one at a time, crickets on a warm night, water when your ball is near it -- a bubbly lap at a pond or lake, a rush at a river, a babble at a creek, surf at the sea -- the odd plane passing high overhead. **With a launch monitor armed there is no club sound**, because you hear your own strike; everything else plays. Sounds near the camera are louder than far ones, and they sit left or right as you see them. The **Sound** window, in the main menu and in the menu during a round, turns it all off or sets three volumes: everything, shots and landings, and the course around you. A browser stays silent until you first click, tap or press a key.

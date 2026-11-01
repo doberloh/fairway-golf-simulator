@@ -753,3 +753,30 @@ not the page itself; where that matters, it says so.
 - Architect courses, the land's story (RESEARCH, *Architect courses: the land's story*), via the study's sources, 30 October 2026: the Dell -- https://www.top100golfcourses.com/news-item/d-is-for-dell-blind-par-threes-template-holes, https://thefriedegg.com/courses/lahinch-golf-club-old-course; the Pit -- https://thefriedegg.com/eclectic-18-uk-hole-no-13-north-berwick/, https://www.yourgolftravel.com/best-golf-holes/north-berwick-13th; the Barranca -- https://www.planetgolf.com/courses/usa/pasatiempo-golf-club, https://golfcoursenerd.substack.com/p/pasatiempo-golf-club-new-back-nine.
 - Architect courses, history and life (RESEARCH, *Architect courses: history and life*), 30 October 2026: the study's own sources for workstreams M and O (Machrihanish Dunes' sheep); no new source was fetched, and every count is PLACED.
 - Architect courses, the owner's review (RESEARCH, *Architect courses: the owner's review*), via search summary, 30 October 2026: five-unit fairway mowers -- Toro Reelmaster 3575-D https://turfnet.com/directory/equipment/2020-toro-3575-fairway-mower/, Jacobsen LF550 https://www.turfnet.com/classifieds/item/56907-jacobsen-lf550, Jacobsen F305 https://nuturf.com.au/images/product-tech-sds/F305.pdf, Kubota LM551 https://www.kubota.com.au/product/lm551-5-unit-fairway-mower, John Deere 6500A and 6700A https://deere.com/en/mowers/fairway-mowers/6500a-precisioncut-fairway-mower -- length, width, height with ROPS, unit layout. The fountain's sizes are PLACED from makers' pictures of pond aerators; no page fetched.
+
+## Fairway Course Builder (31 October 2026)
+
+The record is docs/COURSE_BUILDER.md (its *Sources* lists the study's); these
+are the data the builder was measured against, all downloaded for testing
+only, kept under the ignored bench/shots/lidar/, never committed.
+
+- USGS 3DEP lidar, project MN_MissouriRiverBigSioux_2021_B21 (the owner's
+  copy of four LAZ tiles) -- the test course's ground, trees and laser
+  brightness; public domain.
+- USGS 3DEP 1 m DEM, USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21 --
+  https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/MN_MissouriRiverBigSioux_2021_B21/TIFF/USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21.tif
+  (found through https://tnmaccess.nationalmap.gov/api/v1/products) -- the
+  bare-earth reference the builder's ground is measured against.
+- NAIP 2021 0.6 m quarter-quads m_4309527_ne, m_4309519_se, m_4309528_nw,
+  m_4309520_sw -- Microsoft's Planetary Computer,
+  https://planetarycomputer.microsoft.com/api/stac/v1 (collection naip);
+  public domain -- the aerial picture the trace was tuned on (RESEARCH,
+  *Course builder: the auto trace on a real course*).
+- OpenStreetMap's golf features round the course, through the Overpass API
+  (https://overpass-api.de; ODbL) -- the hand-drawn outlines the trace is
+  scored against and the numbered greens and tees the scripted build marks
+  holes from.
+- GolfPass, *Worthington Country Club scorecard and layout* --
+  https://www.golfpass.com/travel-advisor/courses/8463-worthington-country-club/scorecard-and-layout
+  -- par 71, the blue tees 6,282 yards hole by hole: the lengths the built
+  course is compared with and the tees matched by.
