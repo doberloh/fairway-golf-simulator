@@ -11315,10 +11315,13 @@ each source was asked from `Origin: null` on 1 November 2026:
 | rockyweb.usgs.gov | -- | 3DEP's LAZ tiles | **no**: no allow-origin on GET; OPTIONS answered 405; 429 to a rush |
 | prd-tnm.s3.amazonaws.com | -- | the projects' metadata and a `.vpc` (STAC virtual point cloud, September 2026) whose tiles are `./LAZ/...` -- not in the bucket (404) | `*`, but no tiles |
 | USGS 3DEP Entwine copy, Amazon open data (https://s3-us-west-2.amazonaws.com/usgs-lidar-public/<work unit>/ept.json) | by work unit, the folder after the project in a rockyweb address | every 3DEP survey, Web Mercator (EPSG 3857), an octree of small LAZ files | **yes**, `*` |
+| Hobu's Entwine index (https://raw.githubusercontent.com/hobuinc/usgs-lidar/master/boundaries/resources.geojson, 8.8 MB, 2,283 copies) | by place | which Entwine copies cover a point: their names are not always the work unit's (Breckenridge's 2016 survey is `USGS_LPC_CO_Central_Western_2016_LAS_2018`), and some newest surveys have none yet (Vermont's third statewide block) | yes, `*` |
 | Planetary Computer `3dep-lidar-copc` (STAC) | yes, `*` | COPC copies; at Worthington only the 2010 survey came back | yes (not used: Entwine has the newest) |
 | IGN LiDAR HD: WFS `IGNF_LIDAR-HD_METADONNEE:metadata` on data.geopf.fr | yes, `*` | `url_npl`: one COPC tile a km, Lambert-93 | **yes**, `*` |
 | swisstopo swissSURFACE3D STAC (data.geo.admin.ch) | yes, `*` | zipped LAS, LV95 (Swiss oblique Mercator, not worked: linked) | -- |
 | AHN, PDOK atom feed | `*` | tiles of gigabytes | linked |
+
+The test courses' surveys came the Entwine way too (tools/lidar-fetch.mjs, each course's box and 150 m, cached under bench/lidar/<course>/ept/): Key West, Northwood, Breckenridge, Ekwanok and Arcadia Bluffs in minutes, 72-309 MB each, where rockyweb's three Sahalee tiles had taken four hours.
 
 **So rockyweb is reached two ways that need no reading by the page.** The
 browser DOWNLOADS from it like any site (a download is not a cross-origin

@@ -6,7 +6,8 @@
 // the ignored bench/lidar/<course>/ (lidar-home.mjs), for testing only -- never
 // committed or shipped. US government work, public domain.
 //
-//   node tools/lidar-fetch.mjs                every course without its LIDAR
+//   node tools/lidar-fetch.mjs                every course without its LIDAR (Entwine)
+//   node tools/lidar-fetch.mjs --tiles        rockyweb's whole tiles instead
 //   node tools/lidar-fetch.mjs desert links   some of them
 //
 // The newest project covering the course is taken (by its publication date);
@@ -16,7 +17,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {OUT, COURSES} from './imagery-fetch.mjs';
-import {lidarDir} from './lidar-home.mjs';
+import {lidarDir, lidarFiles, cachedGet} from './lidar-home.mjs';
+import {searchLidar, downloadLidar} from '../src/builder/lidar-search.js';
 
 const UA = {'User-Agent': 'FairwayCourseBuilder/0.1 (testing)'};
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -59,8 +61,36 @@ async function fetchCourse(key) {
  console.log(`${key}: ${newest[0]}, ${tiles.length} tile(s)`);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
- const want = process.argv.slice(2);
+// THE ENTWINE ROUTE (1 November 2026, the default): the course's box and 150 m
+// past it from 3DEP's Entwine copy, through the builder's own search and
+// download (lidar-search.js) with every answer kept under the course's ept/
+// (lidar-home.mjs cachedGet), and survey.json saying which survey and box --
+// courseSources() reads it back offline. Only the course, not whole 1 km
+// tiles, and no rockyweb rate limit: Sahalee's three tiles took four hours.
+async function fetchCourseEpt(key) {
+ const meta = JSON.parse(fs.readFileSync(path.join(OUT, key, 'course.json'), 'utf8')), out = lidarDir(key);
+ const [lon0, lat0, lon1, lat1] = meta.bbox_lonlat, padLat = 150 / 111320, padLon = 150 / (111320 * Math.cos((lat0 + lat1) / 2 * Math.PI / 180));
+ const box = {lon0: lon0 - padLon, lat0: lat0 - padLat, lon1: lon1 + padLon, lat1: lat1 + padLat};
+ const found = (await searchLidar('usgs', box)).find(f => f.ept);
+ if (!found) throw Error('no 3DEP LIDAR over it');
+ const M = await (async () => { const m = await import('laz-perf'); return (m.createLazPerf || m.default?.createLazPerf || m.default)(); })();
+ let last = -1;
+ const got = await downloadLidar(found, box, {get: cachedGet(path.join(out, 'ept')), lazModule: M, onProgress: (f, what) => { const p = Math.floor(f * 10); if (p !== last) { last = p; console.log(`  ${key}: ${what}`); } }});
+ fs.mkdirSync(out, {recursive: true});
+ fs.writeFileSync(path.join(out, 'survey.json'), JSON.stringify({found: {...found, tileUrls: undefined}, box, course: meta.name}, null, 1));
+ console.log(`${key}: ${found.title} (${String(found.date).slice(0, 10)}), ${got[0].count.toLocaleString()} points in ${got[0].pieces} pieces, ${(got[0].bytes / 1e6).toFixed(0)} MB`);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && !process.argv.includes('--tiles')) {
+ const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
+ for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
+  if (lidarFiles(lidarDir(c.key)).length || fs.existsSync(path.join(lidarDir(c.key), 'survey.json'))) { console.log(`${c.key}: already here`); continue; }
+  try { await fetchCourseEpt(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
+ }
+}
+// --tiles: rockyweb's whole tiles, as before.
+else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+ const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
  // Worthington's tiles are the owner's survey, copied to bench/lidar/worthington: not fetched.
  for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
   try { await fetchCourse(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }

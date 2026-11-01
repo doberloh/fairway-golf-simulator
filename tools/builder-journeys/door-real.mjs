@@ -76,7 +76,8 @@ export default function ({journey, SHOTS}) {
   const at = async (x, z) => { const box = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [box.x + cx / r, box.y + cy / r]; };
   // Find LIDAR: a place, then every source over it -- the National Map stood
   // in for (two tiles of one survey), the state's portal linked.
-  t.allow.push(/^https:\/\/tnmaccess\.nationalmap\.gov\//);
+  t.allow.push(/^https:\/\/tnmaccess\.nationalmap\.gov\//, /^https:\/\/raw\.githubusercontent\.com\/hobuinc\//);
+  await page.route(/raw\.githubusercontent\.com\/hobuinc/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify({features: [{properties: {name: 'MN_TEST_1_B21', url: 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_TEST_1_B21/ept.json', count: 1e9}, geometry: {type: 'Polygon', coordinates: [[[-96, 43], [-95, 43], [-95, 44], [-96, 44], [-96, 43]]]}}]})}));
   await page.route(/tnmaccess\.nationalmap\.gov/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify({items: [1, 2].map(n => ({publicationDate: '2023-02-10', sizeInBytes: 6e7, downloadLazURL: `https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/MN_TEST/MN_TEST_1_B21/LAZ/USGS_LPC_MN_TEST_${n}.laz`}))})}));
   await page.locator('.cb-lidarplace').fill('A test place');
   await page.getByRole('button', {name: 'Find', exact: true}).click();

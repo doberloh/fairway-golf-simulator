@@ -31,6 +31,37 @@ export function lidarFiles(dir) {
  const out = [], walk = d => { for (const e of fs.readdirSync(d, {withFileTypes: true})) { const p = path.join(d, e.name); if (e.isDirectory()) { if (!/^(classified|dsm|dsmhs|dtmhs|metadata)$/i.test(e.name)) walk(p); } else if (/\.(laz|las)$/i.test(e.name)) out.push(p); } };
  walk(dir); return out;
 }
+// A fetch that keeps every answer under `dir` (by host and path) and answers
+// from there next time: a survey downloaded through the builder's own code
+// (lidar-search.js) once, then read offline.
+export function cachedGet(dir) {
+ return async url => {
+  const u = new URL(url), file = path.join(dir, u.hostname, ...u.pathname.split('/').filter(Boolean)) + (u.search ? '_' + Buffer.from(u.search).toString('hex').slice(0, 40) : '');
+  if (!fs.existsSync(file)) {
+   let r = null;
+   for (let attempt = 0; attempt < 5; attempt++) { r = await fetch(url).catch(() => null); if (r?.ok) break; await new Promise(res => setTimeout(res, 5000 * (attempt + 1))); }
+   if (!r?.ok) return {ok: false, status: r?.status ?? 0};
+   fs.mkdirSync(path.dirname(file), {recursive: true});
+   fs.writeFileSync(file + '.part', Buffer.from(await r.arrayBuffer())); fs.renameSync(file + '.part', file);
+  }
+  const b = fs.readFileSync(file);
+  return {ok: true, status: 200, json: async () => JSON.parse(b.toString('utf8')), arrayBuffer: async () => b.buffer.slice(b.byteOffset, b.byteOffset + b.length)};
+ };
+}
+// A course's survey as door 2 sources: its tiles here, else the Entwine
+// square lidar-fetch.mjs saved (survey.json and the ept/ cache), offline.
+export async function courseSources(key, lazModule) {
+ const dir = lidarDir(key), files = lidarFiles(dir);
+ if (files.length) {
+  const {openSource} = await import('../src/lidar/formats.js');
+  const out = []; for (const f of files) out.push({...(await openSource(path.basename(f), new Uint8Array(fs.readFileSync(f)), {lazModule})), name: path.basename(f)});
+  return out;
+ }
+ const sj = path.join(dir, 'survey.json');
+ if (!fs.existsSync(sj)) return [];
+ const {found, box} = JSON.parse(fs.readFileSync(sj, 'utf8')), {downloadLidar} = await import('../src/builder/lidar-search.js');
+ return downloadLidar(found, box, {get: cachedGet(path.join(dir, 'ept')), lazModule});
+}
 // Worthington's folder: FAIRWAY_LIDAR_TEST when set, else the copy here.
 export function worthingtonDir() {
  if (process.env.FAIRWAY_LIDAR_TEST) return process.env.FAIRWAY_LIDAR_TEST;

@@ -108,11 +108,33 @@ async function searchUsgs(box, get) {
  for (const it of items) {
   const u = it.downloadLazURL || it.downloadURL || '', m = u.match(/\/Projects\/([^/]+)\/([^/]+)\/LAZ\//), unit = m?.[2] ?? m?.[1];
   if (!unit) continue;
-  const g = units.get(unit) ?? {source: 'usgs', id: unit, project: m[1], title: unit.replace(/_/g, ' '), date: it.publicationDate ?? '', tiles: 0, bytes: 0, ept: `${EPT}/${unit}/ept.json`, tileUrls: []};
+  const g = units.get(unit) ?? {source: 'usgs', id: unit, project: m[1], title: unit.replace(/_/g, ' '), date: it.publicationDate ?? '', tiles: 0, bytes: 0, ept: null, tileUrls: []};
   g.tiles++; g.bytes += it.sizeInBytes || 0; g.tileUrls.push({url: u, name: u.split('/').pop(), bytes: it.sizeInBytes || 0}); if ((it.publicationDate ?? '') > g.date) g.date = it.publicationDate; units.set(unit, g);
  }
- return [...units.values()].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+ // Which have an Entwine copy, and which copies the National Map did not
+ // list: by the copies' own boundaries. The copy is often named for the work
+ // unit, but not always (Breckenridge's 2016 survey is
+ // USGS_LPC_CO_Central_Western_2016_LAS_2018), and some surveys have none
+ // yet (Vermont's third statewide block, 1 November 2026).
+ const copies = await entwineAt(box, get).catch(() => []), used = new Set();
+ for (const g of units.values()) {
+  const c = copies.find(x => x.name === g.id) ?? copies.find(x => x.name.includes(g.id.replace(/_[A-Z]?\d+$/, '')) && !used.has(x.name));
+  if (c) { g.ept = c.url; g.points = c.count; used.add(c.name); }
+ }
+ const extra = copies.filter(c => !used.has(c.name)).map(c => ({source: 'usgs', id: c.name, title: c.name.replace(/_/g, ' '), date: (c.name.match(/(19|20)\d\d/g) ?? []).at(-1) ?? '', tiles: 0, points: c.count, ept: c.url, tileUrls: []}));
+ return [...units.values(), ...extra].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
+// USGS's Entwine copies over a box, from their published boundaries (Hobu's
+// usgs-lidar index, about 9 MB, read once a session): [{name, url, count}].
+let entwineIndex = null;
+const ENTWINE_INDEX = 'https://raw.githubusercontent.com/hobuinc/usgs-lidar/master/boundaries/resources.geojson';
+export async function entwineAt(box, get = fetch) {
+ entwineIndex ??= (async () => { const r = await get(ENTWINE_INDEX); if (!r.ok) throw Error(`The Entwine index did not answer (${r.status}).`); return (await r.json()).features; })().catch(e => { entwineIndex = null; throw e; });
+ const feats = await entwineIndex, lon = (box.lon0 + box.lon1) / 2, lat = (box.lat0 + box.lat1) / 2;
+ const inRing = r => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) c = !c; } return c; };
+ return feats.filter(f => { const g = f.geometry; if (!g) return false; const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []; return polys.some(p => inRing(p[0])); }).map(f => f.properties);
+}
+export const forgetEntwineIndex = () => { entwineIndex = null; };
 async function searchIgn(box, get) {
  const url = `https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=IGNF_LIDAR-HD_METADONNEE:metadata&OUTPUTFORMAT=application/json&COUNT=200&BBOX=${[box.lat0, box.lon0, box.lat1, box.lon1].map(v => v.toFixed(5)).join(',')},urn:ogc:def:crs:EPSG::4326`;
  const r = await get(url); if (!r.ok) throw Error(`IGN did not answer (${r.status}).`);
@@ -144,7 +166,9 @@ export async function downloadLidar(found, box, {get = fetch, lazModule, onProgr
 // to UTM (the square's middle's zone, NAD83(2011): what 3DEP's own tiles use)
 // as they are read.
 async function downloadEpt(found, box, {get, lazModule, onProgress}) {
- const ept = await (await get(found.ept)).json(), root = found.ept.replace(/ept\.json$/, '');
+ if (!found.ept) throw Error('This survey has no copy that downloads by the square: download its whole tiles.');
+ const er = await get(found.ept); if (!er.ok) throw Error(`This survey's square copy did not answer (${er.status}): download its whole tiles.`);
+ const ept = await er.json(), root =found.ept.replace(/ept\.json$/, '');
  if (ept.dataType !== 'laszip') throw Error(`This survey's copy is stored as ${ept.dataType}, which the builder does not read.`);
  const a = lonLatToMerc(box.lon0, box.lat0), b = lonLatToMerc(box.lon1, box.lat1);
  const {nodes} = await nodesFor(ept.bounds, [a.x, a.y, b.x, b.y], async key => { const r = await get(`${root}ept-hierarchy/${key}.json`); if (!r.ok) throw Error(`The survey's index would not load (${r.status}).`); return r.json(); });

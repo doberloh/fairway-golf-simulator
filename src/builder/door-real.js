@@ -396,8 +396,8 @@ export function open(draft = null) {
    try {
     const found = await searchLidar(s.key, box);
     rows.push(el('div', {class: 'cb-field', style: 'padding:6px'}, el('label', {}, s.name), el('small', {}, s.licence),
-     found.length ? el('ul', {}, found.map(f => el('li', {}, `${f.title}${f.date ? ', ' + String(f.date).slice(0, 10) : ''}: ${f.tiles} tile${f.tiles === 1 ? '' : 's'}${f.bytes ? `, ${(f.bytes / 1e6).toFixed(0)} MB as tiles` : f.points ? `, ${(f.points / 1e6).toFixed(1)} M points` : ''} `,
-      el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-download': f.id, onclick: () => fetchLidar(f)}, s.key === 'usgs' ? 'Download the square here' : 'Download here'),
+     found.length ? el('ul', {}, found.map(f => el('li', {}, `${f.title}${f.date ? ', ' + String(f.date).slice(0, 10) : ''}: ${f.tiles ? `${f.tiles} tile${f.tiles === 1 ? '' : 's'}` : 'its square copy only'}${f.bytes ? `, ${(f.bytes / 1e6).toFixed(0)} MB as tiles` : f.points ? `, ${(f.points / 1e6).toFixed(1)} M points` : ''} `,
+      el('div', {class: 'cb-btns'}, f.ept || s.key !== 'usgs' ? el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-download': f.id, onclick: () => fetchLidar(f)}, s.key === 'usgs' ? 'Download the square here' : 'Download here') : el('small', {}, 'No copy that downloads by the square yet.'),
        f.tileUrls?.length ? el('button', {class: 'cb-btn', type: 'button', 'data-rocky': f.id, onclick: () => viaDownloads(f)}, 'Download its whole tiles (to your Downloads)') : null)))) : el('small', {}, 'Nothing over this square.')));
    } catch (e) { rows.push(el('small', {class: 'cb-err'}, `${s.name}: ${e.message}`)); }
   }

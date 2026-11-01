@@ -21,7 +21,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import {openSource} from '../src/lidar/formats.js';
 import {readGeoTiffRgb} from '../src/lidar/geotiff.js';
-import {toUtm, utmOfEpsg, converter} from '../src/lidar/geo.js';
+import {converter} from '../src/lidar/geo.js';
 import {trace, TRACE, refineTrace} from '../src/lidar/trace.js';
 import {landFromSources, pictureOnLand, docFromLand} from '../src/builder/real-course.js';
 import {writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
@@ -29,10 +29,17 @@ import {worldFromDoc} from '../src/built-world.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
 import {testRound} from '../src/builder/test-round.js';
 import {osmWays, holesFromOsm, truthGrid, scoreCodes, damageTruth, lineUpTruth, KINDS} from './osm-holes.mjs';
-import {worthingtonDir} from './lidar-home.mjs';
+import {worthingtonDir, courseSources} from './lidar-home.mjs';
+import {fileURLToPath} from 'node:url';
+import {toMetres} from '../src/lidar/las.js';
 
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : argv[i + 1]; };
-const dir = opt('data', worthingtonDir()), naipFile = opt('naip', null), osmFile = opt('osm', null), cardFile = opt('scorecard', null), out = opt('out', null);
+// --course <key>: one of the imagery bench's test courses (its picture and
+// OpenStreetMap from bench/shots/imagery/<key>, its survey from bench/lidar).
+const courseKey = opt('course', null), imgDir = courseKey ? path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bench', 'shots', 'imagery', courseKey) : null;
+const dir = courseKey ? imgDir : opt('data', worthingtonDir());
+const tifs = imgDir && fs.existsSync(imgDir) ? fs.readdirSync(imgDir).filter(f => f.toLowerCase().endsWith('.tif')).map(f => path.join(imgDir, f)) : [];
+const naipFile = opt('naip', tifs.length ? tifs.join(',') : null), osmFile = opt('osm', imgDir && fs.existsSync(path.join(imgDir, 'osm.json')) ? path.join(imgDir, 'osm.json') : null), cardFile = opt('scorecard', null), out = opt('out', null);
 if (!dir || !fs.existsSync(dir)) { console.log('No data folder (pass --data <folder>). Nothing to build.'); process.exit(0); }
 const t0 = performance.now(), secs = () => ((performance.now() - t0) / 1000).toFixed(0) + ' s';
 const card = cardFile ? JSON.parse(fs.readFileSync(cardFile, 'utf8')) : null;
@@ -41,10 +48,12 @@ const lazModule = async () => { const m = await import('laz-perf'); return (m.cr
 const M = await lazModule();
 
 // 1. The land.
-const sources = [];
-for (const f of fs.readdirSync(path.join(dir, 'raw')).filter(f => /\.la[sz]$/i.test(f))) sources.push({...(await openSource(f, new Uint8Array(fs.readFileSync(path.join(dir, 'raw', f))), {lazModule: M})), name: f});
-const crs = sources[0].crs, zone = utmOfEpsg(crs.epsg).zone;
-const [lon0, lat0, lon1, lat1] = course.bbox_lonlat, a = toUtm(lat0, lon0, zone), b = toUtm(lat1, lon1, zone), pad = 30;
+const sources = courseKey ? await courseSources(courseKey, M) : [];
+if (!courseKey) for (const f of fs.readdirSync(path.join(dir, 'raw')).filter(f => /\.la[sz]$/i.test(f))) sources.push({...(await openSource(f, new Uint8Array(fs.readFileSync(path.join(dir, 'raw', f))), {lazModule: M})), name: f});
+if (!sources.length) { console.log(`No survey for ${courseKey} in bench/lidar (node tools/lidar-fetch.mjs ${courseKey}).`); process.exit(0); }
+// Degrees to the survey's own grid (UTM, State Plane or the like: geo.js).
+const crs = sources[0].crs, fromDeg = converter({epsg: 4326, geographic: true}, crs), toGrid = (lat, lon) => fromDeg(lon, lat);
+const [lon0, lat0, lon1, lat1] = course.bbox_lonlat, a = toGrid(lat0, lon0), b = toGrid(lat1, lon1), pad = 30 / toMetres(crs).h;
 const box = {x0: Math.min(a.x, b.x) - pad, x1: Math.max(a.x, b.x) + pad, y0: Math.min(a.y, b.y) - pad, y1: Math.max(a.y, b.y) + pad};
 const {land, gridder, trees} = await landFromSources(sources, box);
 console.log(`land: ${land.nx} x ${land.nz} at ${land.cell} m (${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m with the margin), ${land.points.toLocaleString()} points, ground ${land.method}, ${trees.length} trees; ${secs()}`);
@@ -64,7 +73,7 @@ for (const file of naipFile ? naipFile.split(',') : []) {
 
 // 3. The holes, from OpenStreetMap's numbered greens and its tees (osm-holes.mjs).
 const osm = osmFile ? JSON.parse(fs.readFileSync(osmFile, 'utf8')) : null;
-const ways = osmWays(osm, (lat, lon) => { const p = toUtm(lat, lon, zone); return gridder.local(p.x, p.y); });
+const ways = osmWays(osm, (lat, lon) => { const p = toGrid(lat, lon); return gridder.local(p.x, p.y); });
 const holes = osm && card ? holesFromOsm(ways, card, t => console.log(t)) : [];
 
 // 4. The trace, three ways, against OpenStreetMap's outlines.
@@ -140,7 +149,10 @@ if (argv.includes('--refine')) {
 }
 if (argv.includes('--trace-only')) process.exit(0);
 // 5. The course, as a file; read back and measured.
-const doc = docFromLand({land, traced: best, holes, trees, name: `${course.name} (test)`, landscape: 'midwest', credits: ['Elevation: USGS 3D Elevation Program, public domain'], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}}});
+// A test course without a card has no holes to mark: its traces are
+// measured above, and no course is made.
+if (![9, 18].includes(holes.length)) { console.log(`No course made: ${holes.length} holes known (a scorecard and OpenStreetMap's numbered holes are needed). ${secs()}`); process.exit(0); }
+const doc = docFromLand({land, traced: best, holes, trees, name: `${course.name} (test)`, landscape: courseKey ?? 'midwest', credits: ['Elevation: USGS 3D Elevation Program, public domain'], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}}});
 const bytes = await writeBuiltFile(doc, BUILT_VERSION);
 if (out) fs.writeFileSync(out, bytes);
 const w = worldFromDoc(await readBuiltFile(bytes));
