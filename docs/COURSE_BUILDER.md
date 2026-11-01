@@ -261,6 +261,44 @@ After trying the builder, the owner amended the goal:
     drawing order**, empty ones marked; **instructions top-middle** that
     stay while a tool is in use; a **house zone**; a clear **erase brush**;
     and **finer tracing** -- the tracer's cells looked pixellated.
+
+    **Built (1 November 2026), not yet played by a person**, in order of the
+    list: the landscape chosen in the trace step, its ground types offered
+    (`layersFor`, layers.js) -- rough was missing because it is no layer,
+    the bottom of the stack, and is now listed last; every offered layer
+    listed in the game's order with its area or *empty*; **Extrapolate**
+    (trace-edit.js `extrapolate`); a **banner** top middle naming what the
+    tool does; the brushes named **Paint brush**, **Erase brush**, **Erase
+    all layers**; **Google's key instructions** under the key box and Bing's
+    state (no new keys since 30 June 2025); a **course boundary** drawn or
+    taken from OpenStreetMap's `leisure=golf_course`, and **Fill outside
+    it** (trace-edit.js `fillOutside`); **houses** -- a House tool, a House
+    zone, OpenStreetMap's buildings as houses (osm.js `homeOfFootprint`),
+    stored in the course file (`homes`) and stood by the game
+    (built-world.js `builtHomes`); and the **smooth view**. OpenStreetMap
+    then fit to the LIDAR is the next piece (the LIDAR iterations).
+
+    Decided, with what was turned down:
+    - **Finer tracing: the outlines drawn, not a finer grid.** The game never
+      saw the cells: each layer goes into the course as smoothed outlines
+      (simplified to 0.6 of a cell, two passes of corner cutting), so the
+      tracer now draws exactly those (`layerRings`, real-course.js). A grid
+      four times finer would have cost sixteen times the memory and every
+      brush stroke's time on a 3 km property, and still shown steps.
+    - **A green's fringe is not an extrapolated layer**: the game already
+      mows a collar round every green (the course's fringe width). There is
+      no fringe layer to paint, and adding one would draw two fringes.
+    - **Outside the boundary, the survey's trees stay.** They are real; the
+      wood is added only where none stands. Wiping them would have thinned a
+      boundary that is already a wood.
+    - **Houses are footprints; the game builds them.** A file stores where a
+      house stands, which way it faces and its size; its form, roof, porch
+      and garden come from a hash of where it stands, as the generator draws
+      its own. A file without houses plays exactly as before, so
+      `BUILT_VERSION` did not move.
+    - **The landscape filters the list, not the course.** A built course
+      takes any ground type in any landscape; a layer already holding
+      something stays listed, marked *not this landscape's*.
 7. **Layers** (the owner, 1 November 2026): "the concept of layers so things
    can be easily painted in the trace step" -- each surface its own layer, so
    painting one never wipes another -- "exposed in the editor as well in real
@@ -271,8 +309,7 @@ After trying the builder, the owner amended the goal:
    RESEARCH.md, *Free aerial imagery for the builder*; the open services found
    are offered in the builder where they cover the land, with no key.
 
-The four parts of the study's tracing design not yet built -- paths and
-buildings in the trace, the alignment nudge, a review layer, a classifier
+The parts of the study's tracing design not yet built -- the alignment nudge, a review layer, a classifier
 learnt from corrections -- wait for that later loop (TODO).
 
 ## Stages

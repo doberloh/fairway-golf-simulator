@@ -59,6 +59,15 @@ export function tilesFor(box, z) {
 export const PROVIDERS = {
  google: {
   name: 'Google', keyHelp: 'A Google Maps Platform key with the Map Tiles API (and the Geocoding API to search) turned on.',
+  // How to get one, step by step (the owner, 1 November 2026: "Need better
+  // instructions for how to enable google satellite map image pulling";
+  // Google's own setup page, REFERENCES). Shown under the key box.
+  howTo: ['Sign in at console.cloud.google.com and create a project (any name).',
+   'Billing: link a billing account to the project. Google asks for one even within its free monthly allowance.',
+   'APIs and services, Library: turn on the Map Tiles API, and the Geocoding API if you want to search for a place by name.',
+   'APIs and services, Credentials: Create credentials, API key. Copy it into the box above; it stays in this browser only.',
+   'Restrict the key to those two APIs (Edit key, API restrictions). A website restriction will not work when the game is opened as a file, which sends no website address.',
+   'Optional: set a daily quota on the Map Tiles API so a mistake cannot cost much. One fetch for a course is a few hundred tiles.'],
   terms: 'Google\'s terms (Maps Platform, section 3.2.3) forbid creating content from its imagery outside Google\'s own products. Using it to trace a course is your decision and your account\'s.',
   async start(key, get = fetch) {
    const r = await get(`https://tile.googleapis.com/v1/createSession?key=${encodeURIComponent(key)}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mapType: 'satellite', language: 'en-US', region: 'US'})});
@@ -73,6 +82,9 @@ export const PROVIDERS = {
  },
  bing: {
   name: 'Bing', keyHelp: 'A Bing Maps key.',
+  howTo: ['Microsoft no longer gives out Bing Maps keys to new users: free and Basic accounts ended on 30 June 2025, and Enterprise accounts run to 30 June 2028 (Microsoft\'s notice, REFERENCES).',
+   'If you already have a Bing Maps key (from bingmapsportal.com), paste it above and it works as before.',
+   'Otherwise use Google, or the free national imagery where it covers the course.'],
   terms: 'Microsoft\'s Bing Maps terms limit what may be made from its imagery; Microsoft has let OpenStreetMap trace it, but a course you share is your decision and your account\'s.',
   async start(key, get = fetch) {
    const r = await get(`https://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial?key=${encodeURIComponent(key)}&uriScheme=https&output=json`);

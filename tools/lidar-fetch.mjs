@@ -46,8 +46,12 @@ async function fetchCourse(key) {
   const url = it.downloadLazURL || it.downloadURL, file = path.join(out, path.basename(new URL(url).pathname));
   if (fs.existsSync(file) && fs.statSync(file).size > 1e5) continue;
   console.log(`  ${key}: ${path.basename(file)} (${(it.sizeInBytes / 1e6).toFixed(0)} MB)`);
-  const r = await fetch(url, {headers: UA}); if (!r.ok) throw Error(`${r.status} for ${url}`);
+  // USGS's server limits how fast it is asked (429): wait and try again, a
+  // minute more each time, and rest between tiles.
+  let r = null; for (let attempt = 0; attempt < 6; attempt++) { r = await fetch(url, {headers: UA}).catch(() => null); if (r?.ok) break; await wait(60000 * (attempt + 1)); }
+  if (!r?.ok) throw Error(`${r?.status ?? 'no answer'} for ${url}`);
   fs.writeFileSync(file + '.part', Buffer.from(await r.arrayBuffer())); fs.renameSync(file + '.part', file);
+  await wait(15000);
  }
  meta.lidar = {project: newest[0], tiles: tiles.map(t => path.basename(new URL(t.downloadLazURL || t.downloadURL).pathname)), published: tiles[0].publicationDate};
  fs.writeFileSync(path.join(dir, 'course.json'), JSON.stringify(meta, null, 1));
@@ -56,7 +60,8 @@ async function fetchCourse(key) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const want = process.argv.slice(2);
- for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
+ // Worthington's tiles are the owner's, read in place (FAIRWAY_LIDAR_TEST): not fetched.
+ for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
   try { await fetchCourse(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
  }
 }

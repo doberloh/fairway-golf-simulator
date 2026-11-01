@@ -18,6 +18,18 @@ import {GROUND_KINDS} from '../grounds.js';
 // Top first.
 export const LAYER_ORDER = ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
 
+// The layers a landscape offers, top first, ending with rough (the owner, 1
+// November 2026: "all types available to that biome ... i dont see rough,
+// why?"): every turf, sand, water and path layer, the landscape's own ground
+// types -- its landform's (biomes.js `landform.kinds`) and what falls under
+// its trees (`fallen`) -- and rough, the bottom of the stack: no layer at all,
+// so painting rough takes every layer off. A built course takes any ground
+// type in any landscape; this only keeps the list to what the place has.
+export function layersFor(biome) {
+ const own = new Set(['path', ...Object.values(biome?.landform?.kinds ?? {}), biome?.fallen?.kind].filter(Boolean));
+ return [...LAYER_ORDER.filter(k => !GROUND_KINDS.includes(k) || own.has(k)), 'rough'];
+}
+
 // `palette`: the composite's code for each kind (index; 'rough' is 0).
 export function createLayers(nx, nz, palette) {
  const N = nx * nz, code = Object.fromEntries(palette.map((k, i) => [k, i]));

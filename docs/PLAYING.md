@@ -480,7 +480,13 @@ the file to anyone else who has Fairway. It opens on three doors.
        about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
        Spain, swisstopo in Switzerland -- or **Google** or **Bing** with your
        own key (kept in this browser only; their terms limit tracing, and the
-       builder says so). It is sized and placed by itself; if the survey
+       builder says so). **How to get a Google key** opens under the key box
+       when Google is chosen: a Google Cloud project with billing, the Map
+       Tiles API (and the Geocoding API, to search by name) turned on, an API
+       key restricted to those two APIs -- not to a website, which a game
+       opened as a file cannot name -- and, if you like, a daily quota. Bing
+       no longer gives out keys to new users (free accounts ended 30 June
+       2025); one you already have still works. It is sized and placed by itself; if the survey
        does not say where it is, **Find** the place by name first.
        **Align (drag)** moves it into line with the relief by hand; **Undo
        align** puts it back. This is the only thing in the builder that goes
@@ -495,8 +501,8 @@ the file to anyone else who has Fairway. It opens on three doors.
      **OpenStreetMap** comes first: many courses are already drawn there.
      **Fetch OpenStreetMap** (or **An OpenStreetMap file**, an Overpass JSON
      answer you saved) lays its greens, fairways, tees, bunkers, water, cart
-     paths and woods as layers and sets its numbered holes as step 4's
-     markers; the course is credited "© OpenStreetMap contributors (ODbL)",
+     paths, woods and buildings (as houses) as layers and sets its numbered
+     holes as step 4's markers, and its course boundary when it has one; the course is credited "© OpenStreetMap contributors (ODbL)",
      and a course you share that is built from it falls under that licence.
      Then **Keep it as drawn**, or **Refine with the picture** / **with the
      LIDAR**: the map is lined up with the picture or the ground first, then
@@ -507,21 +513,45 @@ the file to anyone else who has Fairway. It opens on three doors.
 
      Or **Auto trace** (the greens, tees, fairways, sand and water found
      for you) or **Manual trace** (a blank course to draw), and the same
-     tools for either. **Every surface is its own layer**, top first in the
-     game's own order (water, sand, green, tee, path, fairway, semi, then the
-     ground types): painting a fairway never covers a bunker above it, and
-     the fairway runs on under the bunker. The **Layers** list shows each
-     with its area; click one to paint it, and its **shown/hidden** button
-     hides it from view (the course keeps it). **Brush** paints the chosen
-     layer, **Erase layer** takes the chosen layer off (what lies under it
-     shows), **Erase all** takes every layer off, **Outline** fills a shape (click its
-     corners; double-click or Enter closes it, Esc drops it), **Smooth
-     brush** rounds edges under it, **Tree** places one (its height set
-     below), **Tree zone** scatters trees through an outline at the density
-     set below (never on fairway, greens, tees, sand, water or path),
-     **Clear trees** takes them away under the brush, and **Smooth all
-     edges** and **Tidy specks** clean the whole trace. Undo and Redo (Ctrl+Z,
-     Ctrl+Y) cover every stroke.
+     tools for either. First the **Landscape**: it decides which ground types
+     are offered (rock and scree in the mountains, native grass and heather
+     on a links, pine straw where needles fall) and is the course's look.
+     **Every surface is its own layer**, top first in the game's own order
+     (water, sand, green, tee, path, fairway, semi, then the landscape's
+     ground types, and **Rough** last): one higher in the list shows over one
+     lower, so sand painted on fairway or rough is sand, and the fairway runs
+     on under the bunker. The **Layers** list shows every layer the
+     landscape offers, each with its area or *empty*, Rough with the ground
+     under no layer at all; click one to paint it, and its **shown/hidden**
+     button hides it from view (the course keeps it). Painting Rough takes
+     every layer off. The tool in use says what it does in a box at the top
+     middle of the view, for as long as it is held. **Paint brush** paints
+     the chosen layer, **Erase brush** takes the chosen layer off (what lies
+     under it shows), **Erase all layers** takes every layer off, **Outline
+     fill** fills a shape (click its corners; double-click or Enter closes
+     it, Esc drops it), **Smooth brush** rounds edges under it, **Tree**
+     places one (its height set below), **Tree zone** scatters trees through
+     an outline at the density set below (never on fairway, greens, tees,
+     sand, water or path), **Clear trees** takes them away under the brush,
+     **House** stands a house where clicked facing the nearest fairway, green
+     or tee, **House zone** lines an outline with houses 42 m apart (each on
+     open ground), **Clear houses** takes them away under the brush, and
+     **Smooth all edges** and **Tidy specks** clean the whole trace.
+     **Extrapolate** lays a second layer round the chosen one, a width out --
+     semi-rough round the fairways; under the chosen layer it runs on
+     unbroken, over it only the band shows. (The fringe round a green needs
+     none: the game mows one round every green.) The trace is drawn **as the
+     course will have it** -- each layer's outline smoothed and its specks
+     gone -- a moment after each stroke; while you paint, its cells show.
+     **Smooth / cell view** switches to the cells. **Course boundary**: draw
+     a line round the course (OpenStreetMap's comes with it when it has
+     one), then **Fill outside it**: every surface outside comes off, the
+     landscape's own ground goes in (pine straw, leaves, the desert floor or
+     native grass) with a wood -- 150 trees a hectare where needles or leaves
+     fall, 15 on a links, desert or island, 80 elsewhere -- thinning in from
+     the line; the survey's own trees stay. Past the land, the game's
+     landscape carries on as round any generated course. Undo and Redo
+     (Ctrl+Z, Ctrl+Y) cover every stroke.
   4. **Holes**: for each hole, left-click its **Back tee** (the middle and
      front if you like), any **Aim points** where it bends, in order, and its
      **Green**; then **Next hole**. 9 or 18.

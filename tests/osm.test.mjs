@@ -3,7 +3,7 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, osmHoles, overpassQuery, fetchOsm} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, osmHoles, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint} from '../src/builder/osm.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
 // Degrees to metres round 0,0 near enough for a test: a hundred-thousandth of
@@ -47,4 +47,28 @@ test('the query asks for the golf features in the box; a busy server is said so'
  await assert.rejects(fetchOsm([0, 0, 1, 1], async () => ({ok: false, status: 504})), /busy/);
  const got = await fetchOsm([0, 0, 1, 1], async (url, o) => ({ok: true, json: async () => ({url, body: o.body})}));
  assert.match(got.url, /overpass-api\.de/);
+});
+
+test('the course boundary: a relation\'s outer ways joined end to end, the largest ring kept', () => {
+ const P = (lat, lon) => ({lat, lon}), toLocal = (lat, lon) => ({x: lon * 1000, z: -lat * 1000});
+ const json = {elements: [
+  {type: 'relation', tags: {leisure: 'golf_course'}, members: [
+   {role: 'outer', geometry: [P(0, 0), P(0, .2)]}, {role: 'outer', geometry: [P(.2, .2), P(0, .2)]}, {role: 'outer', geometry: [P(.2, .2), P(.2, 0), P(0, 0)]}]},
+  {type: 'way', tags: {leisure: 'golf_course'}, geometry: [P(1, 1), P(1, 1.01), P(1.01, 1.01), P(1, 1)]},
+  {type: 'way', tags: {golf: 'green'}, geometry: [P(0, 0), P(0, .3), P(.3, .3), P(0, 0)]}]};
+ const ring = osmBoundary(json, toLocal);
+ assert.equal(ring.length, 5, JSON.stringify(ring));
+ const xs = ring.map(p => p[0]); assert.equal(Math.max(...xs), 200); assert.equal(Math.min(...xs), 0);
+ assert.equal(osmBoundary({elements: []}, toLocal), null);
+});
+
+test('a building becomes a house: its smallest rectangle, turned to face the course; a shed is left out', () => {
+ // A 20 x 12 m footprint turned 30 degrees, the course to the east.
+ const t = Math.PI / 6, c = Math.cos(t), s = Math.sin(t), pt = (a, b) => [100 + a * c + b * s, 50 - a * s + b * c];
+ const ring = [pt(-10, -6), pt(10, -6), pt(10, 6), pt(-10, 6), pt(-10, -6)];
+ const h = homeOfFootprint(ring, () => Math.PI / 2);
+ assert.ok(Math.abs(h.x - 100) < 1e-6 && Math.abs(h.z - 50) < 1e-6);
+ assert.ok(Math.abs(h.width * h.depth - 240) < 1e-6, `${h.width} x ${h.depth}`);
+ assert.ok(Math.abs(Math.atan2(Math.sin(h.rotation - Math.PI / 2), Math.cos(h.rotation - Math.PI / 2))) <= Math.PI / 4 + 1e-9, `faces east: ${h.rotation}`);
+ assert.equal(homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5], [0, 0]]), null, 'a 25 m² shed');
 });

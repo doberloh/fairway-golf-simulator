@@ -11344,6 +11344,41 @@ https://www.swisstopo.admin.ch/en/terms-and-conditions (free since 1 March
 pages, not each provider's full legal text: worth the owner's own read
 before a release names them.
 
+**Getting a Google or Bing key (1 November 2026).** The owner asked for
+clearer steps. Google's Map Tiles API setup page: enable the API in a Cloud
+project (service `tile.googleapis.com`), create an API key under
+Credentials, restrict it; a session (`createSession`, mapType satellite)
+then a tile address with the key and the session. Maps Platform needs a
+billing account on the project. The builder's steps add two of its own: the
+Geocoding API for the place search, and **an API restriction rather than a
+website one** -- a page opened from a file sends no website address, so a
+key restricted by website would refuse it (reasoned from how browsers treat
+file pages, not tested with a key). Bing: Microsoft's notice and its Learn
+coverage page -- free and Basic Bing Maps for Enterprise accounts ended 30
+June 2025, Enterprise accounts run to 30 June 2028, and new users are sent
+to Azure Maps; a community thread had a reseller still issuing Enterprise
+keys (not Microsoft). So the builder tells a player that Bing gives no new
+keys and an existing one still works. Azure Maps' imagery is not offered
+(not built). **Sources**:
+https://developers.google.com/maps/documentation/tile/get-api-key?setupProd=enable,
+https://developers.google.com/maps/documentation/tile/overview,
+https://blogs.bing.com/maps/?p=25433, https://learn.microsoft.com/en-us/bingmaps/coverage,
+https://community.blackbaud.com/discussion/comment/291318 (the reseller).
+
+**Outside the course boundary (1 November 2026), all PLACED.** A wood of 150
+trees a hectare where the landscape drops needles or leaves (its `fallen`:
+Pacific Northwest, Mountain, Midwest, Giant Redwood, Autumn, Lakeshore),
+15 on a links, a desert or an island, 80 elsewhere -- by eye against the
+generated courses' edges, not measured; thinning linearly from none at the
+line to full 15 m out, so the course is not walled in. The ground laid
+outside: what falls under its trees, else its desert floor (hardpan), else
+its native grass or heather, else rough. **Houses**: a house zone spaces them
+42 m apart, the generator's own spacing (homes.js); sizes 16-25 x 13-19 m as
+the generator draws; OpenStreetMap buildings taken as houses only between 40
+and 1,500 m² (a shed and a warehouse are not houses); a footprint clamped to
+6-40 m a side in the file; each faces the nearest fairway, green or tee found
+along 32 bearings every 3 m out to 150 m. All PLACED.
+
 ## The auto trace from the picture, iteration by iteration (31 October - 1 November 2026)
 
 The owner's amended goal (docs/COURSE_BUILDER.md, *The amended goal*): door 2

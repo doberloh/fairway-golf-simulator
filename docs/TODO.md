@@ -54,8 +54,18 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 - [ ] **Door 2's new steps are not played by a person** (the owner's order of
   31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
   review): the builder-door-2 journey drives every control once.
-- [ ] **The trace does not yet draw paths or buildings**, has no review layer
-  in the editor (each cell's source is kept, and door 2 reports the share), no
+- [ ] **Not played by a person: the trace step's 1 November list** (the
+  owner's list after testing; docs/COURSE_BUILDER.md, *The amended goal*,
+  item 10): the landscape in the trace step, every layer listed with empty
+  ones marked, Extrapolate, the banner, the renamed brushes, Google's key
+  steps, the course boundary and Fill outside it, houses (tool, zone,
+  OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
+  builder-door-2-osm journeys drive each once and the game plays a tee shot
+  on a course with a house; nobody has looked at a built house in the game
+  or painted with the smooth view by hand. Not yet in the editor: houses are
+  carried through it but not drawn or edited there.
+- [ ] **The trace has no review layer
+  in the editor** (each cell's source is kept, and door 2 reports the share), no
   automatic alignment nudge after a picture is lined up, and no classifier
   learnt from the player's corrections -- all in the study's design
   (docs/COURSE_BUILDER.md, *LIDAR first, the picture as fallback*).

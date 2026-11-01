@@ -65,3 +65,10 @@ test('what is not a built course, or is broken, is refused in plain words', asyn
  const newer = await writeZip([{name: 'course.json', data: JSON.stringify({kind: 'fairway-course', type: 'built', version: BUILT_FILE_VERSION + 1})}]);
  await assert.rejects(readBuiltFile(newer), /newer version/);
 });
+
+test('houses go into the file and come back; a broken one is dropped', async () => {
+ const {writeBuiltFile: w, readBuiltFile: r} = await import('../src/course-doc.js');
+ const d = {...tinyDoc(), homes: [{x: 10.04, z: -5, rotation: .5, width: 20, depth: 14}, {x: 'no'}]};
+ const back = await r(await w(d, 1));
+ assert.deepEqual(back.homes, [{x: 10, z: -5, rotation: .5, width: 20, depth: 14}]);
+});

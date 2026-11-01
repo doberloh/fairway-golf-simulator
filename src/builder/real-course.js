@@ -119,7 +119,16 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // the trace drew no green or tee under a mark -- a green is a 12 m disc round
 // its mark and a tee a 6 x 10 m pad (PLACED), for the player to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
 // line?}] in local metres. `trees` as land.js finds them.
-export function docFromLand({land, traced = null, holes, trees = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}}) {
+// One layer's outlines as a course gets them: traced round its cells, the
+// staircase taken out (simplified to 0.6 of a cell, PLACED) and the corners
+// rounded (two passes of corner cutting); scraps under SPECK dropped. The
+// trace step draws these too, so what is painted is seen as it will play.
+export function layerRings(m, {nx, nz, cell, halfX, halfZ}) {
+ return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, -halfX, -halfZ, cell)
+  .map(r => smoothRing(simplify(r, cell * .6))).filter(r => r.length >= 3 && ringArea(r) > SPECK);
+}
+
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -153,15 +162,12 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
  const r2 = v => Math.round(v * 100) / 100;
  const surfaces = {green: [], fairway: [], tee: [], sand: [], semi: [], path: []};
  const water = [];
- // THE OUTLINES, SMOOTH: each layer's traced round its cells, its staircase
- // taken out (simplified to 0.6 of a cell, PLACED) and its corners rounded
- // (two passes of corner cutting).
+ // THE OUTLINES, SMOOTH: each layer's as `layerRings` makes them.
  const codeAt = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return codes && i >= 0 && j >= 0 && i < nx && j < nz ? PALETTE[codes[j * nx + i]] : 'rough'; };
  if (codes) {
   for (const kind of LAYER_ORDER) {
    const m = L.masks.get(kind); if (!m) continue;
-   const rings = maskRings((i, j) => m[j * nx + i] === 1, nx, nz, -halfX, -halfZ, cell)
-    .map(r => smoothRing(simplify(r, cell * .6)).map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3 && ringArea(r) > SPECK);
+   const rings = layerRings(m, land).map(r => r.map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3);
    if (!rings.length) continue;
    if (kind !== 'water') { surfaces[kind] = [rings]; continue; }
    // Water: a body a ring not inside another, its islands with it; its level
@@ -206,7 +212,7 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [], holes: recs,
-  trees: new Float32Array(treeData), treeKinds: [], credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
+  trees: new Float32Array(treeData), treeKinds: [], homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };

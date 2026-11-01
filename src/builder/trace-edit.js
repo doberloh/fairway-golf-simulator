@@ -9,7 +9,7 @@
 // Codes: TRACE's eight first (rough .. path, the auto trace's own), then every
 // other ground type grounds.js knows. Local metres as door 2 lays them: x east
 // of the land's middle, z south of it; the grid is the land's.
-import {TRACE, boxMean} from '../lidar/trace.js';
+import {TRACE, boxMean, distanceFrom} from '../lidar/trace.js';
 import {GROUND_KINDS} from '../grounds.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 
@@ -29,11 +29,11 @@ export const POCK = 30;
 // tidying work on one layer (`kind`), or -- Erase, Smooth all, Tidy with no
 // kind -- on every layer. `state.codes` is what the course will be made of,
 // `state.layers.view` what is shown (hidden layers left out).
-export function createTrace(grid, {codes = null, trees = []} = {}) {
+export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
  const layers = createLayers(nx, nz, PALETTE);
  if (codes) layers.fromCodes(codes);
- const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), undo: [], redo: [], stroke: null};
+ const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), homes: homes.map(h => ({...h})), undo: [], redo: [], stroke: null};
  const idx = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i < 0 || j < 0 || i >= nx || j >= nz ? -1 : j * nx + i; };
  // Every change goes through `put`, which remembers each layer cell's first
  // value in the current step (so a whole drag undoes at once) and the box the
@@ -47,10 +47,12 @@ export function createTrace(grid, {codes = null, trees = []} = {}) {
   if (i < bx[0]) bx[0] = i; if (i > bx[1]) bx[1] = i; if (j < bx[2]) bx[2] = j; if (j > bx[3]) bx[3] = j;
  };
  const keepTrees = () => { if (!s.stroke.trees) s.stroke.trees = s.trees.map(t => ({...t})); };
+ const keepHomes = () => { if (!s.stroke.homes) s.stroke.homes = s.homes.map(h => ({...h})); };
  const settle = () => { const bx = s.stroke?.box; if (bx && bx[1] >= 0) layers.recompose(bx[0], bx[1], bx[2], bx[3]); };
- const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
+ const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees || s.stroke.homes)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
  const box = (x, z, r) => ({i0: Math.max(0, Math.floor((x - r + halfX) / cell)), i1: Math.min(nx - 1, Math.ceil((x + r + halfX) / cell)), j0: Math.max(0, Math.floor((z - r + halfZ) / cell)), j1: Math.min(nz - 1, Math.ceil((z + r + halfZ) / cell))});
  const layerOf = k => { if (k == null || k === 'rough') return null; if (CODE[k] == null || !LAYER_ORDER.includes(k)) throw Error(`No such surface: ${k}`); return k; };
+ const facing = (x, z) => facingFrom(api.kindAt)(x, z);
  const step = fn => { const own = !s.stroke; begin(); fn(); if (own) end(); else settle(); };
  const every = () => [...layers.masks.keys()];
 
@@ -97,6 +99,17 @@ export function createTrace(grid, {codes = null, trees = []} = {}) {
     }
    } });
   },
+  // EXTRAPOLATE (the owner, 1 November 2026: "semi rough to fairways ...
+  // Allow the user to extrapolate any layers"): `to`'s layer laid `width`
+  // metres round `from`'s. A layer below runs on unbroken beneath it (semi
+  // under a fairway, as a course is drawn); one above takes only the band
+  // round it, so `from` still shows. (A green's fringe needs none: the game
+  // mows a collar round every green, the course's fringe width.)
+  extrapolate({from, to, width}) {
+   const F = layers.mask(layerOf(from)), T = layerOf(to); if (!F || !T || T === from || !(width > 0)) return;
+   const d = distanceFrom(F, nx, nz, cell), under = LI[T] > LI[from];
+   step(() => { for (let k = 0; k < N; k++) if (d[k] <= width && (under || !F[k])) put(T, k, 1); });
+  },
   // TIDY: on each layer (or `kind`'s), patches under `minArea` m² go and
   // holes under POCK m² fill -- no specks, no pocks.
   tidy({minArea = SPECK, kind = null} = {}) {
@@ -118,19 +131,93 @@ export function createTrace(grid, {codes = null, trees = []} = {}) {
      s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])});
     } });
   },
+  // OUTSIDE THE COURSE (the owner, 1 November 2026: "course boundary.
+  // Outside of this we will fill with forest/etc, then fade into the
+  // outskirts geometry. just like the course boundaries generate today"):
+  // past the boundary ring every layer comes off and `ground`'s is laid (the
+  // landscape's own floor; null leaves rough), and a wood is scattered at
+  // `density` trees a hectare, thinning from none at the line to full
+  // `edge` metres out, where no tree already stands. The survey's own trees
+  // there stay. (Past the land itself the game's landscape rings carry on, as
+  // round every generated course.)
+  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1} = {}) {
+   if (!ring || ring.length < 3) return 0;
+   const G = ground && ground !== 'rough' ? layerOf(ground) : null;
+   let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
+   const segDist = (x, z) => { let d = Infinity; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1))); d = Math.min(d, Math.hypot(x - ax - t * dx, z - az - t * dz)); } return d; };
+   let planted = 0;
+   step(() => {
+    // Row by row: where the ring crosses each row, so a ring of hundreds of
+    // corners over a million cells stays quick.
+    const others = every().filter(K => K !== G), within = new Uint8Array(nx);
+    for (let j = 0; j < nz; j++) {
+     const z = -halfZ + j * cell, xs = []; within.fill(0);
+     for (let p = 0, o = ring.length - 1; p < ring.length; o = p++) { const [ax, az] = ring[o], [bx, bz] = ring[p]; if ((az > z) !== (bz > z)) xs.push(ax + (z - az) / (bz - az) * (bx - ax)); }
+     xs.sort((u, v) => u - v);
+     for (let c = 0; c + 1 < xs.length; c += 2) for (let i = Math.max(0, Math.ceil((xs[c] + halfX) / cell)); i <= Math.min(nx - 1, Math.floor((xs[c + 1] + halfX) / cell)); i++) within[i] = 1;
+     for (let i = 0; i < nx; i++) { if (within[i]) continue; const k = j * nx + i; for (const K of others) put(K, k, 0); if (G) put(G, k, 1); }
+    }
+    keepTrees();
+    const spacing = Math.sqrt(1e4 / density), stood = new Map(), at = (x, z) => `${Math.floor(x / spacing)},${Math.floor(z / spacing)}`;
+    for (const t of s.trees) { const c = at(t.x, t.z); stood.set(c, (stood.get(c) || 0) + 1); }
+    for (let z = -halfZ; z <= halfZ; z += spacing) for (let x = -halfX; x <= halfX; x += spacing) {
+     const px = x + (rnd() - .5) * spacing * .9, pz = z + (rnd() - .5) * spacing * .9;
+     if (Math.abs(px) > halfX || Math.abs(pz) > halfZ || inside(ring, px, pz) || stood.get(at(px, pz))) continue;
+     if (rnd() > Math.min(1, segDist(px, pz) / edge)) continue;
+     s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])}); planted++;
+    }
+   });
+   return planted;
+  },
+  // HOUSES (the owner, 1 November 2026: "We need to add houses to the
+  // tracing options also. house zone perhaps?"): each a footprint -- where it
+  // stands, which way its front faces (`rotation`, as homes.js turns its own:
+  // the front looks along +z turned by it), its width and depth in metres.
+  // The game builds the house itself (form, roof, porch, garden) from where
+  // it stands. One is stood where clicked, facing the nearest mown ground; a
+  // ZONE is lined with them, 42 m apart as the game spaces its own (PLACED
+  // there), each on open ground whole -- not on turf, sand, water or a path.
+  addHome(h) { step(() => { keepHomes(); s.homes.push(api.homeAt(h)); }); },
+  removeHomes({x, z, radius}) { step(() => { keepHomes(); s.homes = s.homes.filter(h => Math.hypot(h.x - x, h.z - z) > radius); }); },
+  facing: (x, z) => facing(x, z),
+  homeAt({x, z, rotation = null, width = 20, depth = 15}) { return {x, z, rotation: rotation ?? facing(x, z), width, depth}; },
+  homeFits(h) { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation); return [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].every(([a, b]) => { const lx = a * (h.width / 2 + 2), lz = b * (h.depth / 2 + 2), here = api.kindAt(h.x + lx * c + lz * sn, h.z - lx * sn + lz * c); return here && OPEN.has(here); }) && !s.homes.some(o => Math.hypot(o.x - h.x, o.z - h.z) < (Math.max(o.width, o.depth) + Math.max(h.width, h.depth)) / 2 + 4); },
+  homeZone(ring, {spacing = 42, seed = 1} = {}) {
+   let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
+   const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]); let n = 0;
+   step(() => { keepHomes();
+    for (let z = Math.min(...zs) + spacing / 2; z <= Math.max(...zs); z += spacing) for (let x = Math.min(...xs) + spacing / 2; x <= Math.max(...xs); x += spacing) {
+     const h = api.homeAt({x: x + (rnd() - .5) * spacing * .3, z: z + (rnd() - .5) * spacing * .3, width: 16 + rnd() * 9, depth: 13 + rnd() * 6});
+     if (inside(ring, h.x, h.z) && api.homeFits(h)) { s.homes.push(h); n++; }
+    } });
+   return n;
+  },
   undo() { return swapStep(s.undo, s.redo); },
   redo() { return swapStep(s.redo, s.undo); },
  };
  // Undo and redo are one act: a step's remembered values swapped with the present.
  function swapStep(from, to) {
   const st = from.pop(); if (!st) return false;
-  const back = {cells: new Map(), trees: st.trees ? s.trees : null, box: st.box};
+  const back = {cells: new Map(), trees: st.trees ? s.trees : null, homes: st.homes ? s.homes : null, box: st.box};
   for (const [key, v] of st.cells) { const L = LAYER_ORDER[key % 32], k = Math.floor(key / 32), m = layers.mask(L, true); back.cells.set(key, m[k]); m[k] = v; }
   if (st.trees) s.trees = st.trees;
+  if (st.homes) s.homes = st.homes;
   if (st.box[1] >= 0) layers.recompose(st.box[0], st.box[1], st.box[2], st.box[3]);
   to.push(back); return true;
  }
  return api;
+}
+// Which way a house at (x, z) faces: toward the nearest mown ground (fairway,
+// green or tee) within 150 m, looked for along 32 bearings every 3 m; south
+// when there is none. homes.js turns a house by atan2(dx, dz) toward its hole.
+function facingFrom(kindAt) {
+ return (x, z) => {
+  for (let r = 3; r <= 150; r += 3) for (let a = 0; a < 32; a++) {
+   const t = a / 32 * 2 * Math.PI, k = kindAt(x + Math.sin(t) * r, z + Math.cos(t) * r);
+   if (k === 'fairway' || k === 'green' || k === 'tee') return t;
+  }
+  return 0;
+ };
 }
 // Where a tree may stand: rough and the wild ground types, not mown turf,
 // sand, water or path.

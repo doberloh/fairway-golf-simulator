@@ -3,7 +3,8 @@
 // only; a composite split back into layers; a mask tidied.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createLayers, LAYER_ORDER, tidyMask} from '../src/builder/layers.js';
+import {createLayers, LAYER_ORDER, tidyMask, layersFor} from '../src/builder/layers.js';
+import {BIOMES} from '../src/biomes.js';
 import {PALETTE} from '../src/builder/trace-edit.js';
 
 test('the order is the game\'s: water over sand over green over tee over path over fairway over semi over ground', () => {
@@ -34,4 +35,13 @@ test('a mask is tidied: small patches go, small holes fill', () => {
  m[44] = 0; m[91] = 1;
  tidyMask(m, 10, 10, 3, 3);
  assert.equal(m[44], 1, 'the hole is filled'); assert.equal(m[91], 0, 'the speck is gone');
+});
+
+test('a landscape offers every turf layer, its own ground types, and rough last', () => {
+ const mountain = layersFor(BIOMES.mountain), links = layersFor(BIOMES.links);
+ for (const L of [mountain, links]) { assert.deepEqual(L.slice(0, 7), ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi']); assert.equal(L.at(-1), 'rough'); }
+ assert.ok(mountain.includes('rock') && mountain.includes('scree') && !mountain.includes('heather'), mountain.join());
+ assert.ok(links.includes('native') && links.includes('heather') && !links.includes('rock'), links.join());
+ assert.ok(layersFor(BIOMES.pnw).includes('pinestraw'), 'what falls under its trees');
+ assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 7), 'rough']);
 });

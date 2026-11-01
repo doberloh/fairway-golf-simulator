@@ -96,3 +96,44 @@ test('layers: a fairway painted through a bunker keeps the bunker; erasing one l
  t.erase({x: 0, z: 0, radius: 5});
  assert.equal(t.kindAt(0, 0), 'rough', 'Erase with no layer takes every layer off');
 });
+
+test('extrapolate lays one layer round another: under it unbroken, over it only the band', () => {
+ const t = createTrace(grid);
+ t.fill([[[-10, -10], [10, -10], [10, 10], [-10, 10]]], 'fairway');
+ t.extrapolate({from: 'fairway', to: 'semi', width: 3});
+ const semi = t.state.layers.mask('semi');
+ assert.equal(semi[100 * 201 + 100], 1, 'semi runs on under the fairway');
+ assert.equal(t.kindAt(0, 0), 'fairway'); assert.equal(t.kindAt(12, 0), 'semi'); assert.equal(t.kindAt(14, 0), 'rough');
+ t.undo(); assert.equal(t.kindAt(12, 0), 'rough', 'one undo step');
+ t.extrapolate({from: 'fairway', to: 'sand', width: 2});
+ assert.equal(t.state.layers.mask('sand')[100 * 201 + 100], 0, 'a layer above takes only the band');
+ assert.equal(t.kindAt(0, 0), 'fairway'); assert.equal(t.kindAt(11, 0), 'sand');
+});
+
+test('outside the boundary: every layer off, the landscape\'s floor laid, a wood thinning in from the line', () => {
+ const t = createTrace(grid);
+ t.fill([[[-40, -40], [40, -40], [40, 40], [-40, 40]]], 'fairway');
+ t.addTree({x: 45, z: 45, h: 20, crown: 5});
+ const ring = [[-30, -30], [30, -30], [30, 30], [-30, 30]];
+ const planted = t.fillOutside(ring, {ground: 'pinestraw', density: 200, edge: 5, seed: 3});
+ assert.equal(t.kindAt(0, 0), 'fairway', 'inside kept');
+ assert.equal(t.kindAt(35, 0), 'pinestraw', 'outside: the floor, no fairway');
+ assert.ok(planted > 20, `${planted} trees planted`);
+ assert.ok(t.state.trees.every(tr => Math.abs(tr.x) > 30 || Math.abs(tr.z) > 30), 'none inside');
+ assert.ok(t.state.trees.some(tr => tr.x === 45 && tr.z === 45), 'the survey\'s own tree stays');
+ t.undo(); assert.equal(t.kindAt(35, 0), 'fairway'); assert.equal(t.state.trees.length, 1, 'one undo step');
+});
+
+test('houses: one faces the nearest fairway, a zone is lined with them on open ground only, undone at once', () => {
+ const t = createTrace(grid);
+ t.fill([[[-50, -8], [50, -8], [50, 8], [-50, 8]]], 'fairway');
+ const h = t.homeAt({x: 0, z: 30});
+ assert.ok(Math.abs(Math.atan2(Math.sin(h.rotation - Math.PI), Math.cos(h.rotation - Math.PI))) < .2, `faces north to the fairway: ${h.rotation}`);
+ assert.ok(t.homeFits(h)); assert.ok(!t.homeFits(t.homeAt({x: 0, z: 0})), 'not on the fairway');
+ t.addHome(h); assert.equal(t.state.homes.length, 1);
+ const n = t.homeZone([[-50, -50], [50, -50], [50, 50], [-50, 50]], {spacing: 30});
+ assert.ok(n >= 2, `${n} houses`);
+ assert.ok(t.state.homes.every(o => Math.abs(o.z) > 12), 'none on the fairway');
+ t.undo(); assert.equal(t.state.homes.length, 1, 'the zone undone at once');
+ t.removeHomes({x: 0, z: 30, radius: 5}); assert.equal(t.state.homes.length, 0);
+});

@@ -1662,7 +1662,7 @@ door 2's *Fetch imagery for this land* and *Find* ask an imagery provider --
 USGS, IGN France, PDOK, PNOA, swisstopo with no key, Google or Bing with the
 player's own -- for map tiles over the land, and OpenStreetMap's Nominatim
 (the free providers' place search) for a place by name; and *Fetch
-OpenStreetMap* asks the Overpass API (overpass-api.de) for the golf features
+OpenStreetMap* asks the Overpass API (overpass-api.de) for the golf features, the course boundary and the buildings
 over the land. **OpenStreetMap's licence travels with a course built from
 it**: the ODbL asks for the credit, which the builder adds to the course's
 credits, and a database made from it and shared stays ODbL -- a shared

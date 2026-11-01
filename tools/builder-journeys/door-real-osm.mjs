@@ -25,6 +25,8 @@ function answer() {
    way({golf: 'hole', ref: String(n + 1), par: '4'}, [[x, 120], [x, -110]]));
  }
  elements.push(way({golf: 'bunker'}, disc(-148, -104, 4)));
+ // The course's boundary, and a house beside the eighth.
+ elements.push(way({leisure: 'golf_course'}, rect(-190, -140, 190, 140)), way({building: 'house'}, rect(108, 20, 126, 34)));
  return {elements};
 }
 
@@ -60,6 +62,12 @@ export default function ({journey, SHOTS}) {
   if (got.holes !== 9) throw Error(`the map's nine numbered holes should be set as markers, not ${got.holes}`);
   if (!got.credits.some(c => /OpenStreetMap/.test(c))) throw Error('OpenStreetMap should be credited');
   await page.getByRole('button', {name: 'Keep it as drawn'}).click();
+  // Its boundary and its house came with it; outside the boundary, filled.
+  const kept = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {boundary: st.boundary?.length ?? 0, homes: st.model.state.homes.length, trees: st.model.state.trees.length}; });
+  if (!kept.boundary || kept.homes !== 1) throw Error(`OpenStreetMap's boundary and house should come with it: ${JSON.stringify(kept)}`);
+  await page.getByRole('button', {name: 'Fill outside it'}).click(); await idle();
+  const filled = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {trees: st.model.state.trees.length, out: st.model.kindAt(-200, 0), inside: st.model.kindAt(-160, 0)}; });
+  if (!(filled.trees > kept.trees) || filled.inside !== 'fairway' || ['fairway', 'green', 'tee'].includes(filled.out)) throw Error(`outside the boundary should become the landscape's wood: ${JSON.stringify(filled)}`);
   await t.shot('osm');
   await page.getByRole('button', {name: 'Next: the holes'}).click();
   await page.getByRole('button', {name: 'Next: the name'}).click();

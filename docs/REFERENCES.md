@@ -780,3 +780,12 @@ only, kept under the ignored bench/shots/lidar/, never committed.
   https://www.golfpass.com/travel-advisor/courses/8463-worthington-country-club/scorecard-and-layout
   -- par 71, the blue tees 6,282 yards hole by hole: the lengths the built
   course is compared with and the tees matched by.
+- Google, *Set up the Map Tiles API* --
+  https://developers.google.com/maps/documentation/tile/get-api-key?setupProd=enable
+  -- and the *Map Tiles API overview*,
+  https://developers.google.com/maps/documentation/tile/overview: the steps
+  door 2 shows for a Google key (RESEARCH, *Getting a Google or Bing key*).
+- Microsoft, the Bing Maps blog, https://blogs.bing.com/maps/?p=25433, and
+  *Bing Maps coverage*, https://learn.microsoft.com/en-us/bingmaps/coverage:
+  free and Basic accounts ended 30 June 2025, Enterprise runs to 30 June
+  2028.

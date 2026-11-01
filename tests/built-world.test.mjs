@@ -87,3 +87,14 @@ test('any landscape: the same file in Desert keeps every lie', () => {
  assert.equal(d.trees[0].h, 18); assert.equal(d.trees[0].radius, .5);
  assert.equal(d.bio.name, biomeOf('desert').name);
 });
+
+test('stored houses stand where the file puts them, the same street every time, and none in an old file', () => {
+ assert.deepEqual(world.homes, [], 'a file without houses has none');
+ const homes = [{x: 60, z: 20, rotation: 1.2, width: 20, depth: 14}, {x: -60, z: -20, rotation: -.4, width: 18, depth: 16}];
+ const a = worldFromDoc(doc({homes})), b = worldFromDoc(doc({homes}));
+ assert.equal(a.homes.length, 2);
+ assert.deepEqual(a.homes, b.homes, 'built the same each time');
+ const h = a.homes[0];
+ assert.equal(h.x, 60); assert.equal(h.rotation, 1.2); assert.equal(h.width, 20);
+ assert.ok(Number.isFinite(h.y) && h.footing >= .45 && ['gable', 'hip', 'saltbox', 'lshape'].includes(h.form) && h.height >= 7 && h.height <= 11);
+});

@@ -118,10 +118,18 @@ export default function ({journey, SHOTS}) {
   const greens = await page.evaluate(() => { const st = window.fairwayBuilder.door2, c = st.model.state.codes, L = st.land; let n = 0; for (let k = 0; k < c.length; k++) if (c[k] === 4) n++; return n * L.cell * L.cell; });
   await t.shot('traced');
   const kindAt = (x, z) => page.evaluate(([x, z]) => window.fairwayBuilder.door2.model.kindAt(x, z), [x, z]);
+  // Every layer the landscape offers is listed in order, rough last, the
+  // empty ones said so; the tool says what it does at the top of the view.
+  const rows = await page.locator('.cb-layers li').evaluateAll(ls => ls.map(l => [l.dataset.layer, l.classList.contains('cb-empty')]));
+  if (rows.at(-1)?.[0] !== 'rough' || rows[0]?.[0] !== 'water' || !rows.some(r => r[1])) throw Error(`the layer list should run water to rough with empty ones marked: ${JSON.stringify(rows)}`);
   await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-kind').selectOption('sand');
+  const hint = await page.locator('.cb-toolhint').textContent();
+  if (!/Paint brush/.test(hint) || !/sand/.test(hint)) throw Error(`the banner should say the brush paints sand: ${hint}`);
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // The smooth view: a moment after the stroke, the trace is drawn as outlines.
+  await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});
   // Layers: a fairway painted over the bunker leaves the bunker on top; the
   // sand layer hidden shows the fairway under it in the view, not the course.
   await page.locator('.cb-kind').selectOption('fairway');
@@ -132,6 +140,15 @@ export default function ({journey, SHOTS}) {
   const shown = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((40 + L.halfZ) / L.cell) * L.nx + Math.round((-55 + L.halfX) / L.cell); return [st.model.state.layers.palette[st.model.state.layers.view[k]], st.model.kindAt(-55, 40)]; });
   if (shown[0] !== 'fairway' || shown[1] !== 'sand') throw Error(`hiding the sand layer should show the fairway in the view and keep the bunker in the course: ${shown}`);
   await page.locator('[data-eye="sand"]').click();
+  // Extrapolate: semi-rough laid 4 m round the fairway.
+  const semiCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('semi')?.reduce((t, v) => t + v, 0) ?? 0);
+  const semi0 = await semiCells();
+  await page.locator('.cb-exto').selectOption('semi'); await page.locator('.cb-exwidth').fill('4');
+  await page.getByRole('button', {name: 'Extrapolate', exact: true}).click();
+  if (!(await semiCells() > semi0)) throw Error('Extrapolate should lay semi-rough round the fairway');
+  // The landscape decides the ground types offered: heather is a links' own.
+  if (await page.locator('.cb-kind option[value="heather"]').count()) throw Error('the Midwest should not offer heather');
+  await page.locator('.cb-landscape').selectOption('links');
   await page.locator('[data-tool="outline"]').click(); await page.locator('.cb-kind').selectOption('heather');
   for (const [x, z] of [[100, 80], [130, 80], [130, 100], [100, 100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');

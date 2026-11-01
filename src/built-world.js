@@ -223,6 +223,27 @@ export function builtSurface(field, x, z, fringe = DEFAULT_COURSE.fringe) {
  return ground || 'rough';
 }
 
+// --------------------------------------------------------------- the houses
+// A stored house (course-doc.js `homes`: where it stands, which way it faces,
+// its footprint) as the generator's own (homes.js generateHomes): standing on
+// its highest corner with a footing down to its lowest, and its form, roof,
+// porch, garage, fence, garden and colours drawn from a hash of where it
+// stands, so the same file always builds the same street. The forms are
+// homes.js's FORMS.
+const HOME_FORMS = ['gable', 'hip', 'saltbox', 'lshape'];
+export function builtHomes(doc, height, nearest) {
+ return (doc.homes || []).map(h => {
+  let q = (Math.round(h.x * 10) * 73856093 ^ Math.round(h.z * 10) * 19349663) >>> 0 || 1;
+  const rng = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const c = Math.cos(h.rotation), sn = Math.sin(h.rotation);
+  const levels = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => { const lx = a * h.width / 2, lz = b * h.depth / 2; return height(h.x + lx * c + lz * sn, h.z - lx * sn + lz * c); });
+  const base = Math.max(...levels);
+  return {x: h.x, z: h.z, y: base, footing: base - Math.min(...levels) + .45, rotation: h.rotation, width: h.width, depth: h.depth, height: 7 + rng() * 4, shade: rng(),
+   hole: nearest(h.x, h.z)?.h.hole ?? 0, form: HOME_FORMS[Math.floor(rng() * HOME_FORMS.length)], porch: rng() < .55, garage: rng() < .5, fence: rng() < .45, garden: rng() < .7,
+   roofPitch: .8 + rng() * .9, trim: rng(), wing: .42 + rng() * .22, built: true};
+ });
+}
+
 // --------------------------------------------------------------- the trees
 // Which of the landscape's species draws a stored tree: by its role, and by
 // its height among the kinds that fit, hashed from where it stands so the
@@ -391,7 +412,8 @@ export function worldFromDoc(doc, settings = {}) {
   trees.push({x, z, y: height(x, z), h: th, r: crown, radius: trunk, shade: (Math.sin(x * 3.1 + z * 7.7) * .5 + .5), kind, hole: nearest(x, z).h.hole, built: true,
    ...(role & 8 ? {stand: true} : {}), ...(role & 16 ? {under: true} : {})});
  }
- const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes: [], buildings: [], life: [], occasion: null, walls: [], wallBoxes: [],
+ const homes = builtHomes(doc, height, nearest);
+ const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], occasion: null, walls: [], wallBoxes: [],
   storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: [], props: [], paths: [], bridges: [], markers: [], wear: [], streams,
   footprint: null, groundGrid, groundCover: (x, z) => { const g = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null; return g === 'pinestraw' || g === 'litter' ? 'straw' : bio.cover; }, straw: [], blowouts: null, wild: null, fallenField: null, surfaceField: null, landform: null,
   settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,

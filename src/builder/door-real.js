@@ -30,10 +30,10 @@ import {converter} from '../lidar/geo.js';
 import {crsOf, toMetres} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
-import {fetchOsm, osmFeatures, layOsm, osmHoles, OSM_CREDIT} from './osm.js';
-import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, MAX_PROPERTY} from './real-course.js';
-import {createTrace, PALETTE} from './trace-edit.js';
-import {LAYER_ORDER} from './layers.js';
+import {fetchOsm, osmFeatures, layOsm, osmHoles, osmBoundary, OSM_CREDIT} from './osm.js';
+import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, MAX_PROPERTY} from './real-course.js';
+import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
+import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
 import {createPlanView} from './plan-view.js';
 import {validateDoc} from '../course-doc.js';
@@ -52,27 +52,35 @@ const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150]
 const COLOUR = Object.fromEntries(PALETTE.map(k => [k, k === 'rough' ? null : OWN[k] ?? hex(GROUNDS[k]?.map ?? '#888888')]));
 const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
 const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bpw|gfw)$/i;
+// OUTSIDE THE BOUNDARY (the owner, 1 November 2026): the landscape's own
+// floor -- what falls under its trees, its desert floor, its native grass --
+// or rough; and a wood as thick as the landscape grows one: 150 trees a
+// hectare where needles or leaves fall, 15 on a links, a desert or an island,
+// 80 elsewhere (PLACED: by eye against the generated courses' edges).
+const outsideGround = bio => bio.fallen?.kind ?? bio.landform?.kinds?.floor ?? (['native', 'heather'].includes(bio.landform?.kinds?.a) ? bio.landform.kinds.a : null);
+const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'island'].includes(key) ? 15 : 80;
+const MARK_NAME = {back: 'back tee', middle: 'middle tee', front: 'front tee', aim: 'aim point', green: 'green'};
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
-const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase'];
+const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase', 'homeErase'];
 
 export function open() {
  setTitle('Real life course');
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
-  name: 'My real course', landscape: 'midwest', credits: [], align: null};
+  name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
  const say = (t, err = false) => { notes.textContent = t; notes.classList.toggle('cb-err', err); };
- const zoomText = el('span');
+ const zoomText = el('span'), hintBar = el('div', {class: 'cb-toolhint', hidden: true});
  const plan = createPlanView(canvas, {onTool, overlay});
  st.plan = plan;
  st.toCanvas = (x, z) => plan.toScreen(x, z);
  const panel = el('div', {style: 'display:flex;flex-direction:column;gap:10px'}), nav = el('div', {class: 'cb-stepnav'});
  show(el('section', {class: 'cb-door2'},
   el('div', {class: 'cb-steps'}, el('h2', {style: 'font:800 22px/1 var(--head);text-transform:uppercase;margin:0'}, 'A real life course'), nav, panel),
-  el('div', {class: 'cb-planbox'}, canvas,
+  el('div', {class: 'cb-planbox'}, canvas, hintBar,
    el('div', {class: 'cb-planbar'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.fit()}, 'Whole land'), el('span', {}, 'Wheel zooms; right-drag, Space-drag or Move drags the view.'), zoomText),
    notes)));
@@ -106,16 +114,80 @@ export function open() {
   if (!st.land || !st.model) { plan.clearLayer('codes'); return; }
   const c = st.model.state.layers.view;
   plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
+  dirtyVec();
  }
  function patchCodes(x, z, r) {
   const {cell, halfX, halfZ, nx} = st.land, c = st.model.state.layers.view, w = 2 * r / cell + 4;
   plan.patchLayer('codes', (x - r + halfX) / cell - 2, (z - r + halfZ) / cell - 2, w, w, (d, a, b, W, H) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) codeTexel(d, (j * W + i) * 4, c[(b + j) * nx + a + i]); });
+  dirtyVec();
+ }
+ // THE TRACE AS IT WILL PLAY (the owner, 1 November 2026: "It gets really
+ // pixellated in the tracer. will the game smooth those lines out?"). It
+ // does: each layer goes into the course as smoothed outlines (layerRings,
+ // after the specks and pocks are tidied), so the trace is drawn that way
+ // too, a moment after each change. While a stroke is being painted its cells
+ // show; Smooth view off shows the cells always.
+ let vecTimer = 0;
+ const vecCanvas = document.createElement('canvas');
+ function dirtyVec() { st.vec = null; clearTimeout(vecTimer); if (st.smoothView) vecTimer = setTimeout(buildVec, 250); showCodes(); }
+ function buildVec() {
+  if (!st.model || !st.land || !st.smoothView) return;
+  if (st.model.state.stroke) { vecTimer = setTimeout(buildVec, 250); return; }
+  const Ls = st.model.state.layers, {nx, nz, cell} = st.land, speck = Math.round(SPECK / (cell * cell)), pock = Math.round(POCK / (cell * cell));
+  st.vec = LAYER_ORDER.filter(k => Ls.masks.has(k) && !Ls.hidden.has(k)).reverse().map(k => { const c = Uint8Array.from(Ls.masks.get(k)); tidyMask(c, nx, nz, speck, pock); return {kind: k, rings: layerRings(c, st.land)}; });
+  showCodes();
+ }
+ function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && !(st.smoothView && st.vec); plan.draw(); }
+ function drawVec(ctx, p) {
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  if (vecCanvas.width !== W || vecCanvas.height !== H) { vecCanvas.width = W; vecCanvas.height = H; }
+  const v = vecCanvas.getContext('2d'); v.clearRect(0, 0, W, H); v.lineWidth = p.px; v.strokeStyle = 'rgba(0,0,0,.45)';
+  for (const {kind, rings} of st.vec) {
+   const col = COLOUR[kind]; if (!col) continue;
+   v.fillStyle = `rgb(${col.join(',')})`; v.beginPath();
+   for (const r of rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) v.lineTo(sx, sy); else v.moveTo(sx, sy); }); v.closePath(); }
+   v.fill('evenodd'); v.stroke();
+  }
+  ctx.globalAlpha = 120 / 255; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
+ }
+ // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
+ // owner, 1 November 2026: "It needs to be more clear what you are doing").
+ function showHint() {
+  const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} corner${n === 1 ? '' : 's'} so far: click more; double-click or Enter closes it, Esc drops it.`;
+  let t = '';
+  if (st.step === 0) t = st.preview ? `Drag a box round the property on the relief. ${view}` : '';
+  else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}. ${view}`;
+  else if (st.step === 2 && !st.model) t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
+  else if (st.step === 2) {
+   const all = st.kind === 'rough';
+   t = ({
+    move: 'Move: drag to move the view; the wheel zooms. Pick a tool to paint.',
+    brush: all ? `Paint brush, rough (${r} m round): drag to take every layer off.` : `Paint brush: drag to paint ${k} (${r} m round).`,
+    erase: all ? `Erase brush (${r} m round): drag to take every layer off.` : `Erase brush: drag to take ${k} off (${r} m round); whatever lies under it shows.`,
+    eraseAll: `Erase all layers (${r} m round): drag to take every layer off, down to rough.`,
+    outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, corner by corner.`,
+    smooth: `Smooth brush (${r} m round): drag along a ragged edge to round it.`,
+    tree: `Tree: click to stand a ${st.treeH} m tree (not on mown ground, sand, water or a path).`,
+    treeZone: st.outline.length ? `Tree zone: ${corners(st.outline.length)}` : `Tree zone: click round the zone, corner by corner; it fills with ${st.density} trees a hectare.`,
+    boundary: st.outline.length ? `Course boundary: ${corners(st.outline.length)}` : 'Course boundary: click round the course, corner by corner; outside it becomes the landscape\'s wood.',
+    home: 'House: click to stand a house; it faces the nearest fairway, green or tee.',
+    homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, corner by corner; houses line it 42 m apart, each facing the course.',
+    homeErase: `Clear houses: drag to take houses off (${r} m round).`,
+    treeErase: `Clear trees: drag to take trees off (${r} m round).`,
+    align: 'Align: drag the picture into line with the relief.',
+   })[st.tool] ?? '';
+   if (t && st.tool !== 'move') t += ' ' + view;
+  }
+  if (hintBar.textContent !== t) hintBar.textContent = t;
+  hintBar.hidden = !t;
  }
 
  // --------------------------------------------------------------- overlay
  function overlay(ctx, p) {
   const px = p.px; if (!L()) return;
   zoomText.textContent = `${(px / p.view.scale).toFixed(2)} m a screen pixel`;
+  showHint();
+  if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land) drawVec(ctx, p);
   if (st.step === 0 && st.box && st.preview) {
    const g = st.preview.gridder, a = g.local(st.box.x0, st.box.y1), b = g.local(st.box.x1, st.box.y0), [ax, ay] = p.toScreen(a.x, a.z), [bx, by] = p.toScreen(b.x, b.z);
    ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2 * px; ctx.strokeRect(ax, ay, bx - ax, by - ay);
@@ -126,6 +198,13 @@ export function open() {
    ctx.strokeStyle = 'rgba(20,70,30,.9)'; ctx.fillStyle = 'rgba(40,110,50,.45)'; ctx.lineWidth = px;
    for (const t of trees) { const [x, y] = p.toScreen(t.x, t.z), r = Math.max(1.5 * px, t.crown * p.view.scale); if (x < -r || y < -r || x > ctx.canvas.width + r || y > ctx.canvas.height + r) continue; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); if (r > 3 * px) ctx.stroke(); }
   }
+  const homes = st.model?.state.homes;
+  if (st.land && homes?.length) for (const h of homes) {
+   const c = Math.cos(h.rotation), sn = Math.sin(h.rotation), pt = (a, b) => p.toScreen(h.x + a * c + b * sn, h.z - a * sn + b * c), w = h.width / 2, d = h.depth / 2;
+   ctx.fillStyle = 'rgba(214,120,96,.85)'; ctx.strokeStyle = '#3b1d14'; ctx.lineWidth = px; ctx.beginPath();
+   [[-w, -d], [w, -d], [w, d], [-w, d]].forEach(([a, b], q) => { const [x, y] = pt(a, b); if (q) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.closePath(); ctx.fill(); ctx.stroke();
+   ctx.strokeStyle = '#fff4d6'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.moveTo(...pt(-w, d)); ctx.lineTo(...pt(w, d)); ctx.stroke();
+  }
   if (st.step >= 3) st.holes.slice(0, st.holesN).forEach((h, n) => {
    if (!h) return;
    const on = n === st.hole, line = holeLine(h);
@@ -134,6 +213,7 @@ export function open() {
    for (const a of h.aims) { const [x, y] = p.toScreen(a.x, a.z); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.moveTo(x - 9 * px, y); ctx.lineTo(x + 9 * px, y); ctx.moveTo(x, y - 9 * px); ctx.lineTo(x, y + 9 * px); ctx.stroke(); }
    if (h.green) { const [x, y] = p.toScreen(h.green.x, h.green.z); ctx.fillStyle = on ? '#fde68a' : '#d4443a'; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `bold ${13 * px}px system-ui`; ctx.fillText(String(n + 1), x + 8 * px, y - 6 * px); }
   });
+  if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
   if (st.outline.length) { ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; ctx.beginPath(); st.outline.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); if (st.hover) ctx.lineTo(...p.toScreen(st.hover.x, st.hover.z)); ctx.stroke(); }
   if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) { const [x, y] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke(); }
   if (st.align?.pairs) for (const q of st.align.pairs) { const [x, y] = p.toScreen(q.local.x, q.local.z); ctx.strokeStyle = '#ff6bd6'; ctx.strokeRect(x - 5 * px, y - 5 * px, 10 * px, 10 * px); }
@@ -172,15 +252,22 @@ export function open() {
      else if (t === 'erase') m.erase({x: p.x, z: p.z, radius: st.size, kind: st.kind === 'rough' ? null : st.kind});
      else if (t === 'eraseAll') m.erase({x: p.x, z: p.z, radius: st.size});
      else if (t === 'smooth') m.smooth({x: p.x, z: p.z, radius: Math.max(1, st.size / 3), area: st.size});
+     else if (t === 'homeErase') m.removeHomes({x: p.x, z: p.z, radius: st.size});
      else m.removeTrees({x: p.x, z: p.z, radius: st.size});
-     if (t !== 'treeErase') patchCodes(p.x, p.z, st.size + 2);
+     if (t !== 'treeErase' && t !== 'homeErase') patchCodes(p.x, p.z, st.size + 2);
     }
     if (type === 'up') { m.endStroke(); refreshCount(); }
     plan.draw(); return;
    }
-   if (t === 'outline' || t === 'treeZone') {
+   if (t === 'outline' || t === 'treeZone' || t === 'boundary' || t === 'homeZone') {
     if (type === 'down') st.outline.push([p.x, p.z]);
     if (type === 'double' && st.outline.length >= 3) closeOutline();
+    plan.draw(); return;
+   }
+   if (t === 'home' && type === 'down') {
+    const h = m.homeAt({x: p.x, z: p.z});
+    if (!m.homeFits(h)) say('A house needs open ground all round it -- not turf, sand, water, a path or another house.', true);
+    else { m.addHome(h); refreshCount(); }
     plan.draw(); return;
    }
    if (t === 'tree' && type === 'down') {
@@ -198,6 +285,8 @@ export function open() {
   // A double-click adds its own two clicks as corners; they are one point.
   const ring = st.outline.filter((q, i, a) => !i || Math.hypot(q[0] - a[i - 1][0], q[1] - a[i - 1][1]) > .05); st.outline = [];
   if (ring.length < 3) return;
+  if (st.tool === 'boundary') { st.boundary = ring; say(`The course boundary: ${(ringArea(ring) / 1e4).toFixed(1)} ha. Fill outside it when it is right.`); setTool('move'); go(2); return; }
+  if (st.tool === 'homeZone') { const n = st.model.homeZone(ring, {seed: st.model.state.undo.length + 1}); say(n ? `${n} house${n === 1 ? '' : 's'} in the zone, each facing the nearest fairway, green or tee.` : 'No house fits there: each needs open ground all round it.', !n); refreshCount(); plan.draw(); return; }
   if (st.tool === 'treeZone') { st.model.treeZone(ring, {density: st.density, seed: st.model.state.undo.length + 1}); say(`Trees: ${st.model.state.trees.length.toLocaleString()} in all.`); }
   else { st.model.fill([ring], st.kind); paintCodes(); }
   refreshCount(); plan.draw();
@@ -219,7 +308,7 @@ export function open() {
   if (!can(n)) return;
   st.step = n; st.outline = [];
   if (n !== 5) { plan.clearLayer('course'); st.doc = null; }
-  plan.showLayer('codes', n !== 5); plan.showLayer('picture', n !== 5 && st.picOn !== false);
+  plan.showLayer('picture', n !== 5 && st.picOn !== false); showCodes();
   nav.replaceChildren(...STEPS.map((s, i) => el('button', {class: 'cb-btn' + (i === n ? ' cb-on' : ''), type: 'button', disabled: !can(i), onclick: () => go(i)}, s)));
   panel.replaceChildren(...steps[n]().filter(Boolean));
   // Step 1's left drag draws the property box and step 4's left click places
@@ -304,15 +393,40 @@ export function open() {
  const countText = el('small'), layerBox = el('ul', {class: 'cb-layers', style: 'list-style:none;padding:0'});
  // THE LAYERS (the owner, 1 November 2026): each surface its own, top first;
  // click one to paint it, the eye to hide it from view.
+ // The layers offered: the landscape's own (layersFor) and any other that
+ // holds something, in the game's order, rough last.
+ const kindsShown = () => { const own = layersFor(BIOMES[st.landscape]), have = st.model?.layersPresent() ?? []; return [...LAYER_ORDER.filter(k => own.includes(k) || have.includes(k)), 'rough']; };
  function layersList() {
   if (!st.model) return;
-  const L = st.model.state.layers, a = st.land.cell ** 2, shown = [...new Set([...L.present(), st.kind].filter(k => k !== 'rough'))].sort((p, q) => LAYER_ORDER.indexOf(p) - LAYER_ORDER.indexOf(q));
-  layerBox.replaceChildren(...shown.map(k => { const m = L.masks.get(k), n = m ? m.reduce((t, v) => t + v, 0) : 0, col = COLOUR[k] ?? [128, 128, 128];
-   return el('li', {class: k === st.kind ? 'cb-cur' : '', 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); }},
-    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 6px;font-size:11px', onclick: e => { e.stopPropagation(); st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }}, L.hidden.has(k) ? 'hidden' : 'shown'),
-    el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), `${LABEL(k)} ${(n * a / 1e4).toFixed(2)} ha`); }));
+  const L = st.model.state.layers, a = st.land.cell ** 2, own = layersFor(BIOMES[st.landscape]);
+  layerBox.replaceChildren(...kindsShown().map(k => {
+   const rough = k === 'rough', m = L.masks.get(k), n = rough ? L.codes.reduce((t, c) => t + (c ? 0 : 1), 0) : m ? m.reduce((t, v) => t + v, 0) : 0;
+   const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n * a / 1e4).toFixed(2)} ha`;
+   return el('li', {class: (k === st.kind ? 'cb-cur' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); }},
+    rough ? el('span', {style: 'width:52px;flex:none'}) : el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 6px;font-size:11px;width:52px;flex:none', onclick: e => { e.stopPropagation(); st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }}, L.hidden.has(k) ? 'hidden' : 'shown'),
+    el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), el('span', {style: 'flex:1'}, LABEL(k) + (rough || own.includes(k) ? '' : ' (not this landscape\'s)')),
+    el('small', {}, rough ? `${ha}, under no layer` : n ? ha : 'empty'));
+  }));
  }
- const refreshCount = () => { if (!st.model) return; layersList(); const n = new Map(); for (const c of st.model.state.codes) n.set(c, (n.get(c) || 0) + 1); const a = st.land.cell ** 2; countText.textContent = [...n].filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees`; };
+ const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };
+ function fillOutsideNow() {
+  if (!st.boundary) return say('Draw the boundary first, or fetch OpenStreetMap\'s.', true);
+  const bio = BIOMES[st.landscape], ground = outsideGround(bio), density = outsideTrees(st.landscape);
+  setBusy('Filling outside the boundary…');
+  try {
+   const n = st.model.fillOutside(st.boundary, {ground, density, seed: st.model.state.undo.length + 1});
+   paintCodes(); refreshCount(); plan.draw();
+   say(`Outside the boundary: ${ground ? LABEL(ground).toLowerCase() : 'rough'} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
+  } finally { setBusy(''); }
+ }
+ function extrapolateNow() {
+  const from = st.kind, to = st.exTo;
+  if (from === 'rough' || !st.model.state.layers.masks.get(from)?.some(v => v)) return say(`Pick a layer with something on it to extrapolate from; ${LABEL(from).toLowerCase()} has nothing.`, true);
+  if (to === from) return say('Pick another layer to lay round it.', true);
+  st.model.extrapolate({from, to, width: st.exWidth}); paintCodes(); refreshCount();
+  say(`${LABEL(to)} laid ${st.exWidth} m round the ${LABEL(from).toLowerCase()}. Undo takes it back.`);
+ }
+ const refreshCount = () => { if (!st.model) return; layersList(); const n = new Map(); for (const c of st.model.state.codes) n.set(c, (n.get(c) || 0) + 1); const a = st.land.cell ** 2; countText.textContent = [...n].filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees · ${st.model.state.homes.length} house${st.model.state.homes.length === 1 ? '' : 's'}`; };
  // Local metres to degrees: by the survey's map grid, or round a place the
  // player searched for when the survey states none.
  const lonLatOfLocal = () => {
@@ -326,18 +440,18 @@ export function open() {
   const ll = lonLatOfLocal(), centre = ll ? ll(0, 0) : null, offer = centre ? providersAt(centre.lon, centre.lat) : Object.keys(PROVIDERS);
   let keys = {}; try { keys = JSON.parse(localStorage.getItem(KEYS) || '{}'); } catch { /* private window */ }
   const prov = el('select', {class: 'cb-provider'}, offer.map(k => el('option', {value: k}, PROVIDERS[k].name + (PROVIDERS[k].free ? ' -- free' : ' -- your key'))));
-  const keyIn = el('input', {type: 'password', placeholder: 'Your key (kept in this browser only)', autocomplete: 'off'}), terms = el('small');
-  const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; };
+  const keyIn = el('input', {type: 'password', placeholder: 'Your key (kept in this browser only)', autocomplete: 'off'}), terms = el('small'), howTo = el('details', {class: 'cb-howto'});
+  const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; howTo.hidden = !p.howTo; howTo.replaceChildren(el('summary', {}, `How to get a ${p.name} key`), el('ol', {}, (p.howTo ?? []).map(t => el('li', {}, t)))); };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move'], ['brush', 'Brush'], ['erase', 'Erase layer'], ['eraseAll', 'Erase all'], ['outline', 'Outline'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees']];
+  const tools = [['move', 'Move'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses']];
   toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
   const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => { if (!st.pics.length) return say('Bring a picture with a position first.', true); setTool('align'); say('Drag the picture into line with the relief (Move, the wheel and right-drag still move the view).'); }}, 'Align (drag)');
   toolButtons.push(alignBtn);
   return [
    el('div', {class: 'cb-field'}, el('label', {}, 'A picture to trace over'),
     el('small', {}, 'Fetched for this land and placed by itself, or a file. Drag it into line with Align if it sits off. It is never saved in the course.'),
-    prov, keyIn, terms,
+    prov, keyIn, howTo, terms,
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
      alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); }}, 'Undo align')),
@@ -356,18 +470,34 @@ export function open() {
    el('div', {class: 'cb-field'}, el('label', {}, 'Trace the course'),
     el('small', {}, 'Auto: greens, tees, fairways, sand and water found for you to correct. Manual: draw them yourself. The same tools either way.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: autoTrace}, st.traceMode === 'auto' ? 'Auto trace again' : 'Auto trace'), el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: manualTrace}, 'Manual trace'))),
+   // THE LANDSCAPE, chosen here (the owner, 1 November 2026: "User should
+   // select biome in the tracing step"): it decides which ground types the
+   // layers offer, and is step 5's look.
+   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Landscape'),
+    el('small', {}, 'Which ground types the layers offer -- rock and scree in the mountains, heather and native grass on a links -- and the course\'s look.'),
+    el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))) : null,
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'), el('div', {class: 'cb-btns'}, ...toolButtons.slice(0, -1)),
-    el('small', {}, 'The layer you paint, outline, erase and smooth'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); }}, LAYER_ORDER.map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
-    el('small', {}, 'Layers (top first; the eye hides one from view, the course keeps it)'), layerBox,
-    el('small', {}, 'Brush size (metres)'), el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; }}),
+    el('small', {}, 'The layer you paint, outline, erase and smooth (Rough takes every layer off)'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); showHint(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
+    el('small', {}, 'Layers, top first: one higher in the list shows over one lower (sand painted on rough or fairway is sand). The eye hides one from view; the course keeps it.'), layerBox,
+    el('small', {}, 'Extrapolate: lay a layer round the one picked above, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),
+    el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k)))),
+     el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'metres', oninput: e => { st.exWidth = +e.target.value || 4; }})),
+    el('button', {class: 'cb-btn', type: 'button', onclick: extrapolateNow}, 'Extrapolate'),
+    el('small', {}, 'Brush size (metres round)'), el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}),
     el('small', {}, 'A tree\'s height, and a zone\'s trees a hectare'),
     el('div', {class: 'cb-btns'}, el('input', {type: 'number', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; }}), el('input', {type: 'number', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; }})),
     el('small', {}, 'Outline and Tree zone: click the corners; double-click or Enter closes, Esc drops.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Tidy specks'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Undo'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Redo'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }}, 'Picture on/off'), el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.showLayer('codes', !plan.view.show.codes)}, 'Trace on/off')),
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }}, 'Picture on/off'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.traceOn = !st.traceOn; showCodes(); }}, 'Trace on/off'),
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } say(st.smoothView ? 'Smooth view: the trace drawn as the course will have it.' : 'Cell view: the trace\'s cells as painted.'); }}, 'Smooth / cell view')),
     countText) : null,
+   // THE COURSE BOUNDARY (the owner, 1 November 2026).
+   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Course boundary'),
+    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: every surface there comes off, the landscape's ground and a wood go in, thinning in from the line; the survey's trees stay. Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood -- the neighbours\' gardens and roads gone.'),
+    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Draw it again' : 'Draw the boundary'),
+     el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, onclick: fillOutsideNow}, 'Fill outside it'))) : null,
    next(3, 'Next: the holes')];
  }
  async function fetchImagery(key, apiKey, keys) {
@@ -473,7 +603,8 @@ export function open() {
    let json;
    if (fromFile) { const [file] = await pickFile('.json,application/json'); if (!file) return; json = JSON.parse(await file.text()); }
    else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))]); }
-   const feats = osmFeatures(json, toLocal);
+   const feats = osmFeatures(json, toLocal), edge = osmBoundary(json, toLocal);
+   if (edge) st.boundary = edge;
    st.model = createTrace(st.land, {trees: []}); st.traceMode = 'openstreetmap';
    const laid = layOsm(st.model, feats);
    // The LIDAR's trees where the map has none of its own.
@@ -482,20 +613,20 @@ export function open() {
    const holes = osmHoles(feats);
    if (holes.filter(Boolean).length) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green} : undefined); st.holesN = holes.length > 9 ? 18 : 9; }
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
-   st.osm = {codes: Uint8Array.from(st.model.state.codes), trees: st.model.state.trees.map(t => ({...t})), said: `Laid: ${Object.entries(laid).map(([k, n]) => `${n} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${holes.filter(Boolean).length} holes numbered.`};
+   st.osm = {codes: Uint8Array.from(st.model.state.codes), trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), said: `Laid: ${Object.entries(laid).map(([k, n]) => `${n} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${holes.filter(Boolean).length} holes numbered${edge ? '; the course boundary' : ''}.`};
    paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
    say(st.osm.said);
   } catch (e) { say('OpenStreetMap: ' + e.message, true); }
   finally { setBusy(''); }
  }
- function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {codes: st.osm.codes, trees: st.osm.trees}); st.traceMode = 'openstreetmap'; paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
+ function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
  async function refineOsm(mode) {
   if (!st.osm) return;
   if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
   setBusy('Refining…'); await frame();
   try {
    const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
-   st.model = createTrace(st.land, {codes, trees: st.osm.trees}); st.traceMode = 'openstreetmap+' + mode;
+   st.model = createTrace(st.land, {codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
    paintCodes(); go(2); refreshCount();
    const sh = refineTrace.lastShift;
    say(`Refined from the ${mode === 'picture' ? 'picture' : 'LIDAR'}${sh ? `: the map moved ${Math.hypot(sh.x, sh.z).toFixed(1)} m to line up` : ''}. Keep it as drawn puts OpenStreetMap's back.`);
@@ -564,7 +695,7 @@ export function open() {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
+   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.pics.length ? 'placed' : st.picture ? 'lidar' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
