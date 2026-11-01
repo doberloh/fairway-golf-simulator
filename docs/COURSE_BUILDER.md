@@ -480,6 +480,24 @@ the built-course shader path (*Stage 7*: a real course 0.81 ms of graphics
 time against a generated eighteen's 1.18); the game's page makes no request;
 the builder's only network use is what the owner's amendments asked for, at
 the player's press (imagery, OpenStreetMap, LIDAR -- DISTRIBUTION_REVIEW).
+The amendments against the spec's stages (each extends one; none adds a
+stage): stage 5, the editor -- 7 (layers in the editor), 13 (WASD, the
+smoothed surfaces, Save); stage 7, door 2 -- 1 (the step order), 2 (manual
+trace), 3 (zoom and drag), 5 and 6 (imagery), 7 (layers), 8 (the painted
+review), 9 (OpenStreetMap first), 10 (the 1 November list), 11 (the LIDAR
+and the picture together, the lock), 12 (move a shape), 13 (find and
+download LIDAR, kept pictures, drafts), 14 (rockyweb, state portals); stage
+8, the auto trace -- 4 and 5 (the iterations to 90%: picture 52 so far,
+LIDAR 9), 10's OpenStreetMap lined up by the LIDAR; stage 6, the readers --
+13's State Plane; stage 1, the game -- BUILT_VERSION 2 (each green its own).
+**The fingerprints at every stage**, checked again on 1 November 2026 by
+checking each commit out in its own worktree (`biome-fingerprint.mjs
+--check`, Classic and `--designer architect`): 62e9cbc, 502a3aa, f640390,
+51def4a, 959334e, c974e34 and 2cac003 -- "every existing biome is unchanged"
+for both, every one.
+Only stage 1 changed the ground shader on this branch (502a3aa), and Low was
+measured there (*Stage 1*: a built course against its generated original,
+no dearer).
 OpenStreetMap import went into IDEAS.md at stage 0 and left it when the
 owner picked it (amendment 9), as IDEAS.md's rules say. Worthington end to
 end through door 2's page (the builder-door-2-worthington journey, on
