@@ -28,7 +28,7 @@ export const lidarDir = key => path.join(LIDAR_HOME, LIDAR_FOLDERS[key] ?? key);
 // Worthington's raw/, a DNR download's laz/).
 export function lidarFiles(dir) {
  if (!fs.existsSync(dir)) return [];
- const out = [], walk = d => { for (const e of fs.readdirSync(d, {withFileTypes: true})) { const p = path.join(d, e.name); if (e.isDirectory()) { if (!/^(classified|dsm|dsmhs|dtmhs|metadata)$/i.test(e.name)) walk(p); } else if (/\.(laz|las)$/i.test(e.name)) out.push(p); } };
+ const out = [], walk = d => { for (const e of fs.readdirSync(d, {withFileTypes: true})) { const p = path.join(d, e.name); if (e.isDirectory()) { if (!/^(classified|dsm|dsmhs|dtmhs|metadata|ept)$/i.test(e.name)) walk(p); } else if (/\.(laz|las)$/i.test(e.name)) out.push(p); } };
  walk(dir); return out;
 }
 // A fetch that keeps every answer under `dir` (by host and path) and answers
@@ -50,8 +50,11 @@ export function cachedGet(dir) {
 }
 // A course's survey as door 2 sources: its tiles here, else the Entwine
 // square lidar-fetch.mjs saved (survey.json and the ept/ cache), offline.
+// The Entwine square first when there is one: rockyweb's tiles fetched for a
+// test course covered only part of it (Chambers Bay's mapped fairway lay
+// wholly outside its three tiles, TPC Scottsdale's a third).
 export async function courseSources(key, lazModule) {
- const dir = lidarDir(key), files = lidarFiles(dir);
+ const dir = lidarDir(key), files = fs.existsSync(path.join(dir, 'survey.json')) ? [] : lidarFiles(dir);
  if (files.length) {
   const {openSource} = await import('../src/lidar/formats.js');
   const out = []; for (const f of files) out.push({...(await openSource(path.basename(f), new Uint8Array(fs.readFileSync(f)), {lazModule})), name: path.basename(f)});

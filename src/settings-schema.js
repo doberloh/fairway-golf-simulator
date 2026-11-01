@@ -390,7 +390,10 @@ export const ARCHITECT_VERSION=20;
 // the player like a generator mismatch. (The course-builder branch, 31 October
 // 2026; docs/COURSE_BUILDER.md.)
 //  1: the first reader (stage 1).
-export const BUILT_VERSION=1;
+//  2: each green on its own (built-world.js greenParts, 1 November 2026): a
+//     hole's green was every green the file stored in one set, so its size
+//     and cups moved; now the one under its mark.
+export const BUILT_VERSION=2;
 export const isArchitect=s=>s?.designer==='architect';
 // A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
 // it, so neither generator number may flag it, and only BUILT_VERSION can.

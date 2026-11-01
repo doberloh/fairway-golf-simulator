@@ -84,7 +84,10 @@ and the game's cache key.
 document into a world. A built course never runs the generator, so
 `GENERATOR_VERSION` and `ARCHITECT_VERSION` cannot move it; `BUILT_VERSION`
 can, and is bumped with a line whenever a built course's ground, lie or trees
-would change for an unchanged file.
+would change for an unchanged file. **2** since 1 November 2026: each green on
+its own (built-world.js `greenParts`) -- a file stores all its greens as one set
+of outlines, and every hole took the whole set as its green, so cups were cut
+wherever the search reached (Worthington's hole 3 on the practice green).
 
 ## The game: a world from a file
 

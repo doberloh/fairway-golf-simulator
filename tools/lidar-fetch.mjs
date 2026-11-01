@@ -8,6 +8,7 @@
 //
 //   node tools/lidar-fetch.mjs                every course without its LIDAR (Entwine)
 //   node tools/lidar-fetch.mjs --tiles        rockyweb's whole tiles instead
+//   node tools/lidar-fetch.mjs --ept links     the Entwine square even where tiles are here (they may not cover it)
 //   node tools/lidar-fetch.mjs desert links   some of them
 //
 // The newest project covering the course is taken (by its publication date);
@@ -84,7 +85,7 @@ async function fetchCourseEpt(key) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && !process.argv.includes('--tiles')) {
  const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
  for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
-  if (lidarFiles(lidarDir(c.key)).length || fs.existsSync(path.join(lidarDir(c.key), 'survey.json'))) { console.log(`${c.key}: already here`); continue; }
+  if ((!process.argv.includes('--ept') && lidarFiles(lidarDir(c.key)).length) || fs.existsSync(path.join(lidarDir(c.key), 'survey.json'))) { console.log(`${c.key}: already here`); continue; }
   try { await fetchCourseEpt(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
  }
 }

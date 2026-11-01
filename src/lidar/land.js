@@ -13,8 +13,11 @@
 // data, tools/lidar-compare.mjs).
 
 // Classes (ASPRS): 2 ground, 8 model key point (ground thinned), 9 water,
-// 6 building, 7 and 18 noise.
-const GROUND = new Set([2, 8]), NOISE = new Set([7, 18]);
+// 6 building, 7 and 18 noise; and a topobathymetric survey's water -- 41 water
+// surface, 42 derived water surface, 45 water column (LAS 1.4 R15; Key West
+// is one: its ponds read as dark ground under a "canopy" of water until 1
+// November 2026).
+const GROUND = new Set([2, 8]), NOISE = new Set([7, 18]), WATER = new Set([9, 41, 42, 45]);
 
 // `box`: {x0, y0, x1, y1} in the source's map units; `cell` metres;
 // `unit`: {h, v} metres per map unit.
@@ -47,9 +50,9 @@ export function createGridder({box, cell = 1, unit = {h: 1, v: 1}}) {
    if (z < g.low[k]) g.low[k] = z;
    // The tops of things: the highest return of any kind, not only first
    // returns (a leaf-out survey's second return off a crown is often its top).
-   if (z > g.top[k]) g.top[k] = z;
+   if (z > g.top[k] && !(p.cls >= 41 && p.cls <= 45)) g.top[k] = z;
    if (p.returns > 1) g.multi[k]++;
-   if (p.cls === 9) g.water[k]++;
+   if (WATER.has(p.cls)) g.water[k]++;
    if (p.cls === 6) g.building[k]++;
    if (p.r || p.g || p.b) {
     if (!g.rgb) { g.rgb = new Float32Array(N * 3); g.rgbN = new Uint32Array(N); }

@@ -156,6 +156,41 @@ export function mownTurf(P, land, debug = null) {
  return kept;
 }
 
+// MOWN TURF FROM THE LIDAR ALONE (no hole marked, no picture; the LIDAR
+// iterations, RESEARCH *The auto trace from the LIDAR alone*). Measured on the
+// nine courses (tools/lidar-bench.mjs --study): mapped fairway, greens and
+// tees are open (canopy under 0.1 m, single returns), smooth -- ground
+// roughness 0.2-1.1 cm at the median, 2 cm at the 90th percentile -- and of
+// one brightness to the laser (0.9-1.1 of the fairway's). So turf is open
+// ground under 1.6 cm rough (PLACED) within 20% of the open smooth ground's
+// median brightness (PLACED), in patches of 400 m² and 3 m thick, the gaps
+// under 300 m² filled (as the picture's turf). It holds the rough cut too:
+// to the laser a fairway and its rough differ by millimetres.
+export function lidarTurf(land, F = features(land)) {
+ const {nx, nz, cell} = land, N = nx * nz;
+ // Several returns a pulse only where something stands above the ground
+ // (iteration 2): Chambers Bay's fescue fairway sent several on 44% of its
+ // cells with no canopy at all.
+ const open = k => !land.noReturns[k] && land.canopy[k] < .3 && (land.multi[k] < 13 || land.canopy[k] < .1) && land.water[k] < 26 && land.building[k] < 26;
+ // Grass is the BRIGHT ground to the laser (its leaves reflect the near
+ // infrared): the open smooth ground's brightness split in two (a two-means)
+ // and the brighter kept, from halfway between the two. (Iteration 1 kept
+ // 20% round the median: on a desert course, the open smooth ground is
+ // mostly desert floor, and 71% of TPC Scottsdale's fairway fell outside;
+ // Breckenridge's fairway lay at twice the median.)
+ const v = []; for (let k = 0; k < N; k += 7) if (open(k) && F.rough[k] < .016 && Number.isFinite(land.intensity[k])) v.push(land.intensity[k]);
+ v.sort((a, b) => a - b);
+ let lo = v[Math.floor(v.length * .25)] ?? 0, hi = v[Math.floor(v.length * .75)] ?? 0;
+ for (let it = 0; it < 12 && v.length; it++) { const mid = (lo + hi) / 2; let s0 = 0, n0 = 0, s1 = 0, n1 = 0; for (const x of v) if (x < mid) { s0 += x; n0++; } else { s1 += x; n1++; } lo = n0 ? s0 / n0 : lo; hi = n1 ? s1 / n1 : hi; }
+ const bar = hi > lo ? (lo + hi) / 2 : -Infinity;
+ const mask = new Uint8Array(N);
+ for (let k = 0; k < N; k++) mask[k] = open(k) && F.rough[k] < .016 && !(land.intensity[k] < bar) ? 1 : 0;
+ const kept = blobs(majority(mask, nx, nz, Math.max(1, Math.round(2 / cell))), nx, nz, cell, {minArea: 400, thick: 3});
+ const gaps = blobs(Uint8Array.from(kept, x => x ? 0 : 1), nx, nz, cell, {maxArea: 300, accept: list => !list.some(k => { const i = k % nx; return i === 0 || i === nx - 1 || k < nx || k >= N - nx; })});
+ for (let k = 0; k < N; k++) if (gaps[k]) kept[k] = 1;
+ return kept;
+}
+
 // A mask closed: grown by r cells and shrunk back, so gaps narrower than 2r
 // between patches are bridged and notches filled.
 export function close(mask, nx, nz, r) {
@@ -251,7 +286,12 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  const markless = !lines.length && !!P;
  const turf = markless ? mownTurf(P, land, debug) : null;
  if (turf) { const d = distanceFrom(turf, nx, nz, cell); for (let k = 0; k < N; k++) off[k] = d[k]; }
- const turfCells = []; if (turf) for (let k = 0; k < N; k += 13) if (turf[k]) turfCells.push(k);
+ // NO HOLE AND NO PICTURE (1 November 2026: the survey alone, before any
+ // mark, traced nothing but water). The LIDAR's own mown turf
+ // (`lidarTurf`) stands in, as the picture's does above.
+ const lturf = !lines.length && !P && useL ? lidarTurf(land, F) : null;
+ if (lturf) { const d = distanceFrom(lturf, nx, nz, cell); for (let k = 0; k < N; k++) off[k] = d[k]; }
+ const turfCells = []; for (const t of [turf, lturf]) if (t) for (let k = 0; k < N; k += 13) if (t[k]) turfCells.push(k);
  // Still water darker than nearly everything (the darkest 6% of the picture,
  // PLACED): algae can make a pond as green as grass to the colour tests, but
  // not as smooth or as dark (TPC Scottsdale's lakes, iteration 2).
@@ -293,7 +333,13 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // And a patch that runs to the edge of the land is past the survey's
   // edge (nothing came back because nothing was flown), unless the survey
   // called it water.
-  const accept = list => { let n = 0, w = 0, edge = false; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (silent(k)) n++; if (land.water[k] > 76) w++; if (i === 0 || j === 0 || i === nx - 1 || j === nz - 1) edge = true; } return w > list.length * .2 || (!edge && n + w > list.length * .2); };
+  // Or (LIDAR iteration 3, 1 November 2026) a patch whose SURFACE is dead
+  // level -- its 10th to 90th percentile within 15 cm (PLACED) -- over 200
+  // m²: a pond the survey neither silenced nor classed (Key West's mapped
+  // water returned points of no class); a car park or a roof drains, and
+  // falls more than that across 200 m².
+  const level = list => { if (list.length * cell * cell < 200) return false; const z = list.filter((_, q) => q % 3 === 0).map(k => land.surface[k]).sort((a, b) => a - b); return z[Math.floor(z.length * .9)] - z[Math.floor(z.length * .1)] < .15; };
+  const accept = list => { let n = 0, w = 0, edge = false; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (silent(k)) n++; if (land.water[k] > 76) w++; if (i === 0 || j === 0 || i === nx - 1 || j === nz - 1) edge = true; } return w > list.length * .2 || (!edge && (n + w > list.length * .2 || level(list))); };
   const keep = blobs(majority(wet, nx, nz, Math.max(1, Math.round(1.5 / cell))), nx, nz, cell, {minArea: 60, thick: 2.5, accept});
   if (debug) Object.assign(debug, {lidarWater: wet, lidarWaterKept: keep});
   for (let k = 0; k < N; k++) if (keep[k]) set(k, C.water, SOURCE.lidar, land.water[k] > 76 ? .95 : .85);
@@ -350,7 +396,15 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // on both the synthetic courses and Worthington.
   const turfy = k => { const p = P && fc ? pix(k) : null; return p ? lum(p.r, p.g, p.b) < fc.l + 15 || exg(p) > fc.e - .04 : false; };
   // Only where the laser reached: past a survey's edge the land is filled in.
-  for (let k = 0; k < N; k++) m[k] = !land.noReturns[k] && off[k] < 70 && sure[k] < SURE && land.canopy[k] < 1 && F.rough[k] > .014 && land.intensity[k] < iF - .05 && F.hollow[k] < 0 && !turfy(k) ? 1 : 0;
+  // With no hole and no picture, the LIDAR's turf is the yardstick and the
+  // nine courses say what sand is to the laser (tools/lidar-bench.mjs
+  // --study): rough 2.8-5.8 cm at the median against the fairway's 0.4-1.1,
+  // its slope 9-15% against 1-8% (a bunker's face), darker or no brighter
+  // (0.5-0.98 of the fairway). So: over 2 cm rough and 6% slope (PLACED),
+  // no brighter than the turf, within 30 m of it -- relative brightness, as a
+  // survey's own scale can run 0-0.1 (Breckenridge) or 0-1.
+  const sandL = lturf ? k => off[k] < 30 && F.rough[k] > .02 && F.slope[k] > 6 && !(land.intensity[k] > iF * 1.02) : k => off[k] < 70 && F.rough[k] > .014 && land.intensity[k] < iF - .05 && F.hollow[k] < 0;
+  for (let k = 0; k < N; k++) m[k] = !land.noReturns[k] && sure[k] < SURE && land.canopy[k] < 1 && sandL(k) && !turfy(k) ? 1 : 0;
   const keep = blobs(majority(m, nx, nz, 1), nx, nz, cell, sandy);
   if (debug) Object.assign(debug, {lidarSand: m, lidarSandKept: keep});
   for (let k = 0; k < N; k++) if (keep[k]) set(k, C.sand, SOURCE.lidar, .75);
@@ -629,6 +683,26 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  for (const k of q) reached[k] = 1;
  while (q.length) { const k = q.pop(), i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (n >= 0 && n < N && !reached[n] && mown[n]) { reached[n] = 1; q.push(n); } }
  for (let k = 0; k < N; k++) if (reached[k]) set(k, C.fairway, mown[k] === 2 ? SOURCE.picture : SOURCE.lidar, mown[k] === 2 ? .75 : .5);
+ // The LIDAR's turf with no mark and no picture: TEES are its flattest
+ // squared-off pads -- mapped tees are the flattest ground on every course
+ // (1.2-2.3% median slope against the fairway's 1.2-8%) -- 40 to 900 m²,
+ // under 1.5% slope over 3 m (PLACED); the rest of the turf FAIRWAY, below SURE
+ // (it holds the rough cut too; the player draws the line).
+ if (lturf) {
+  const flat = boxMean(F.slope, nx, nz, Math.max(1, Math.round(1.5 / cell)));
+  const fill = list => { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) > .6; };
+  const pads = blobs(majority(Uint8Array.from(flat, (s, k) => lturf[k] && s < 1.5 ? 1 : 0), nx, nz, 1), nx, nz, cell, {minArea: 40, maxArea: 900, thick: 1.5, maxLength: 50, accept: fill});
+  // FAIRWAY OR SEMI by smoothness over 2 m (a two-means, as the picture's
+  // turf is split by texture): the smoother is fairway when the two differ
+  // by a fifth (PLACED); else all of it.
+  const sm = boxMean(F.rough, nx, nz, Math.max(1, Math.round(2 / cell))), tv = []; for (let k = 0; k < N; k += 5) if (lturf[k]) tv.push(sm[k]);
+  let a = tv[Math.floor(tv.length * .3)] ?? 0, b = tv[Math.floor(tv.length * .8)] ?? 0;
+  for (let it = 0; it < 12 && tv.length; it++) { const mid = (a + b) / 2; let s0 = 0, n0 = 0, s1 = 0, n1 = 0; for (const x of tv) if (x < mid) { s0 += x; n0++; } else { s1 += x; n1++; } a = n0 ? s0 / n0 : a; b = n1 ? s1 / n1 : b; }
+  const cut = b > a * 1.2 ? (a + b) / 2 : Infinity;
+  const fairM = Uint8Array.from(lturf, (t, k) => t && sm[k] < cut ? 1 : 0), fair = shapeFairways(blobs(majority(fairM, nx, nz, Math.max(1, Math.round(2.5 / cell))), nx, nz, cell, {minArea: 300, thick: 3}), nx, nz, cell);
+  for (let k = 0; k < N; k++) if (codes[k] === C.rough && (pads[k] || lturf[k])) set(k, pads[k] ? C.tee : fair[k] ? C.fairway : C.semi, SOURCE.lidar, pads[k] ? .6 : .5);
+  if (debug) Object.assign(debug, {lidarTurf: lturf, lidarTees: pads});
+ }
  // SEMI-ROUGH: a 2 m collar round the fairways (PLACED: the generator's
  // default is 6 m of semi each side, but a real course's first cut is
  // narrower and the picture rarely shows it).

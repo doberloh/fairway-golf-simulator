@@ -11301,6 +11301,65 @@ naip; public domain; local only); OpenStreetMap's golf features through the
 Overpass API (https://overpass-api.de; ODbL; local only, as a reference); the
 club's scorecard as GolfPass lists it (par 71, blue 6,282 yards).
 
+## The auto trace from the LIDAR alone (1 November 2026)
+
+Door 2's *Auto trace* runs before any hole is marked (the owner's order), and
+with no picture it traced nothing but water: every LIDAR rule measured from
+the hole lines, and the no-hole path (`mownTurf`) read only the picture.
+tools/lidar-bench.mjs now scores the LIDAR-only trace, no hole, on the nine
+landscape courses (surveys in bench/lidar, land at 1 m, OpenStreetMap lined
+up with the laser first), and `--study` prints what each mapped surface is
+like to the laser -- the 10th/50th/90th percentiles:
+
+| Surface | Ground roughness (cm) | Slope (%) | Laser brightness / fairway's |
+| --- | --- | --- | --- |
+| Fairway | 0.2-1.1 median, to 2.1 at the 90th | 1.2-8 | 1 |
+| Green | 0.2-0.9 | 2.5-4.6 | 0.9-1.3 (no one way) |
+| Tee | 0.1-1.0 | **1.2-2.3** (the flattest ground on every course) | 0.94-1.31 |
+| Sand | **2.8-5.8** on seven courses; 0.2-0.3 at Chambers Bay and TPC Scottsdale | **9-15** | 0.5-0.98 |
+| Water | 0-1.2 | 0.3-2.5 | 0.13-0.75 |
+| Mapped rough/semi | 0.2-1.6 | 4-8 | 0.64-1.03 |
+
+So **to the laser a fairway, a green and the rough beside them differ by
+millimetres**; sand, water, tees and trees are what it can tell apart.
+Grass is BRIGHT to the laser (its leaves reflect the 1064 nm near infrared):
+on TPC Scottsdale the open ground is mostly desert floor at half the
+fairway's brightness, on Breckenridge the fairway lies at twice the open
+ground's median.
+
+| Iteration | Change | Mean overlap (green, tee, fairway, semi, sand, water) |
+| --- | --- | --- |
+| 0 | none: no yardstick without holes or a picture | 0, 0, 0, 0, 0, 13 |
+| 1 | `lidarTurf` (trace.js): open (canopy under 0.3 m, single returns, not water or roofs), under 1.6 cm rough, within 20% of the open smooth ground's median brightness, 400 m² patches -- stands in for the hole lines; tees its flattest squared pads (40-900 m², under 1.5% over 3 m); the rest fairway | 0, 1, 10, 1, 3, 13 |
+| 1b | TPC Scottsdale's and Chambers Bay's rockyweb tiles did not cover their courses (a third and all of their mapped fairway had no returns): the Entwine square fetched for both, and a course's Entwine survey now read before loose tiles | -- |
+| 2 | brightness: the open smooth ground split in two, the BRIGHTER half kept (the median band threw out 71% of TPC Scottsdale's fairway and all of Breckenridge's) | 0, 3, 17, 2, 4, 17 |
+| 3 | several returns a pulse only count where something stands above the ground (Chambers Bay's fescue sent several on 44% of its fairway); the turf split in two by smoothness over 2 m, the smoother fairway, the other semi | 0, 3, 19, 5, 5, 17 |
+| 4 | sand with no hole: over 2 cm rough and 6% slope, no brighter than the turf, within 30 m of it (the old rule's absolute darkness, iF - 0.05, meant nothing on Breckenridge's 0-0.1 brightness scale) | 0, 3, 19, 5, 9, 17 |
+| 5 | water: a dark patch whose surface is level within 15 cm (10th to 90th percentile) over 200 m² is a pond, silent or not (Key West's ponds returned points of no class); and a topobathymetric survey's water classes (41, 42, 45) counted as water (land.js) | 0, 3, 19, 5, 9, **21** |
+
+By course at iteration 5: Sahalee fairway 46, sand 31, water 69; TPC
+Scottsdale tee 17, semi 22, water 56; Breckenridge fairway 31; Worthington
+fairway 19, water 18; Key West fairway 18, sand 16, water 25; Ekwanok
+fairway 26, sand 13; Arcadia Bluffs fairway 17, semi 17; Chambers Bay
+fairway 7 (its fescue is as rough as its rough); Northwood maps no fairway.
+**Greens 0 everywhere: the laser does not tell a green from its fairway**
+(the picture finds them at 30-66%; OpenStreetMap maps them). Checked not to
+move the trace with holes: tools/trace-bench.mjs's nine synthetic
+courses scored the same before and after (lidar green 56, tee 75, fairway
+19, sand 33, water 79), and Worthington's scripted build's traces matched.
+Far from 90%: the LIDAR alone is a start the player corrects, and
+OpenStreetMap lined up by the LIDAR (*OpenStreetMap is itself off the
+place*) stays the recommended path. All numbers set here are PLACED.
+
+**Found on the way: a built course's cups on the wrong green** (BUILT_VERSION
+2). Door 2 and the editor store all of a course's greens as one set of
+outlines; the game took that set as each hole's green -- its size the area
+of all eighteen, its cup cut wherever the search reached. Worthington's
+scripted build cut hole 3's cup on the practice putting green 50 m off,
+in a survey pit, and the test golfers putted at it forty times: 168 strokes
+against par 71. With each outer ring a green of its own (built-world.js
+`greenParts`): 88.5 strokes, nothing stuck.
+
 ## Finding LIDAR from the builder (1 November 2026)
 
 The owner asked for LIDAR searched for and downloaded inside the builder

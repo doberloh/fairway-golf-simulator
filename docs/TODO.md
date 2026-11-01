@@ -91,14 +91,14 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   restart to have the route), IGN's in-page download end to end, a real
   save dialog in Chrome, WASD feel. Swiss LV95 is not worked (swisstopo is a
   link).
-- [ ] **The auto trace from the LIDAR alone finds nothing before the holes
-  are marked** (found 1 November 2026, running tools/real-course.mjs --course
-  links: LIDAR green 0, fairway 0, sand 0): with no hole line and no picture
-  there is no yardstick -- the markless path (`mownTurf`, trace.js) reads the
-  picture only. So door 2's *Auto trace* on a survey with no picture traces
-  nothing but water. This is the start of the LIDAR iterations (amendments 4
-  and 5): a mown-turf finder from the laser (open, smooth to the centimetre,
-  even in brightness), measured on the nine courses now in bench/lidar.
+- [ ] **The auto trace from the LIDAR alone, before the holes: started, far
+  from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
+  trace from the LIDAR alone*): mean overlap over the nine courses green 0,
+  tee 3, fairway 19, semi 5, sand 9, water 21 (from 0 but water 13). The
+  laser tells fairway, green and rough apart by millimetres only; greens
+  need the picture, OpenStreetMap or the player. Next: greens by shape
+  (compact raised pads at the turf's ends, bunkers round them), fairway
+  corridors by width. Not seen in the builder's page.
 - [ ] **The editor's saved outlines changed** (1 November 2026): it now saves
   door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
   to 0.35 of a cell, so a course saved again from the editor differs slightly

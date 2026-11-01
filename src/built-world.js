@@ -93,6 +93,22 @@ export function landSampler(doc) {
 // Signed distance from a point to a polygon (rings, even-odd), negative
 // inside: exact, any distance -- for the rules that ask further than the
 // field reaches (a pin's room from the edge).
+// EACH GREEN ON ITS OWN (BUILT_VERSION 2, 1 November 2026). A file stores a
+// surface as sets of rings, and door 2 and the editor write ALL of a kind's
+// rings as one set -- so a hole's "green" was every green on the course: its
+// size the area of eighteen, and its cup cut wherever the search reached
+// (Worthington's hole 3 on the practice green 50 m off, holed out never).
+// Split here: each outer ring with the rings inside it (its islands).
+export function greenParts(polys) {
+ const out = [];
+ for (const p of polys) {
+  const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
+  const depth = r => p.filter(o => o !== r && inside(o, r[0][0], r[0][1])).length;
+  for (const r of p) if (depth(r) % 2 === 0) out.push([r, ...p.filter(o => o !== r && depth(o) % 2 === 1 && inside(r, o[0][0], o[0][1]))]);
+ }
+ return out;
+}
+
 export function polygonDistance(poly, x, z) {
  let d = Infinity, inside = false;
  for (const ring of poly) {
@@ -359,7 +375,7 @@ export function worldFromDoc(doc, settings = {}) {
  const halfX = doc.halfX, halfZ = doc.halfZ, ex = halfX + GRID_MARGIN, ez = halfZ + GRID_MARGIN;
  const field = bakeBuiltField(doc, ex, ez);
  const sample = landSampler(doc);
- const greenPolys = doc.surfaces.green || [];
+ const greenPolys = greenParts(doc.surfaces.green || []);
  const holes = [...doc.holes].sort((a, b) => a.number - b.number).map((rec, i) => builtHole(rec, i, s, bio, field, greenPolys));
  // Finer ground where the ball rolls and where edges meet: greens, tees,
  // sand and water within 3 m, as the generator refines its own.

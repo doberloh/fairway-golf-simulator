@@ -14,6 +14,16 @@ export const GOLFERS = [{seed: 'steady', skill: .010}, {seed: 'loose', skill: .0
 // tool's rule).
 export const STUCK = 40;
 
+// ANOTHER GREEN IS NOT THIS HOLE'S (1 November 2026): Worthington's practice
+// putting green, traced as green and marked by no hole, lies by holes 3 and
+// 4. (Its holes of 40 and 47 strokes were the cup cut ON it -- every green
+// was one outline then; built-world.js greenParts.) A golfer landing on a
+// green 45 m or more from the hole's cup (PLACED: a green's far edge is
+// rarely 40 m from its pin) plays it as fairway, not with the putter.
+const OWN_GREEN = 45;
+const lieOf = (h, x, z) => { const s = h.surface(x, z); return s === 'green' && Math.hypot(x - h.pin.x, z - h.pin.z) >= OWN_GREEN ? 'fairway' : s; };
+const played = h => { const p = Object.create(h); p.surface = (x, z) => lieOf(h, x, z); return p; };
+
 // Plays `doc`, a hole at a time; `onHole(result)` after each (the page
 // redraws between them). Resolves to {holes: [{number, par, strokes, stuck}], total, par}.
 export async function testRound(doc, {golfers = GOLFERS, onHole = () => {}, pause = () => Promise.resolve()} = {}) {
@@ -28,7 +38,7 @@ export async function testRound(doc, {golfers = GOLFERS, onHole = () => {}, paus
    let n = 0;
    for (; !r.holeComplete && n < STUCK; n++) {
     if (r.relief) { r.takeRelief({spot: {...r.relief.from}, penalty: 1}, h.pin); continue; }
-    const lie = h.surface(r.position.x, r.position.z), s = golfer.shot({hole: h, from: {...r.position}});
+    const lie = lieOf(h, r.position.x, r.position.z), s = golfer.shot({hole: played(h), from: {...r.position}});
     r.takeShot({...s.result, puttStroke: lie === 'green', onGreen: s.result.onGreen}, h.pin);
    }
    if (!r.holeComplete) { const p = h.toWorld(r.position); stuck = {x: p.x, z: p.z, on: h.surface(r.position.x, r.position.z)}; }
