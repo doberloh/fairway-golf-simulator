@@ -469,6 +469,30 @@ learnt from corrections -- wait for that later loop (TODO).
 | 8 | Auto trace, LIDAR first, measured three ways | **Built** (below) |
 | 9 | Release-ready: docs sweep, distribution review, notices | **Done** (below); not merged or released |
 
+**Where the goal stands (1 November 2026).** Stages 0-9 were built in order
+and committed as each passed `npm test` and `npm run build` (62e9cbc stage 0,
+502a3aa 1-3, f640390 4-5, 51def4a 6, 959334e 7-8, c974e34 9); the owner's
+amendments 1-14 (*The amended goal*) were built on top, each committed the
+same way, the last c2732ef. Held throughout: the Classic and Architect
+fingerprints silent at every commit (checked again on a9f4b68); the game one
+file, 14,848,264 bytes against main's 14,820,197 (+0.19%); Low measured for
+the built-course shader path (*Stage 7*: a real course 0.81 ms of graphics
+time against a generated eighteen's 1.18); the game's page makes no request;
+the builder's only network use is what the owner's amendments asked for, at
+the player's press (imagery, OpenStreetMap, LIDAR -- DISTRIBUTION_REVIEW).
+OpenStreetMap import went into IDEAS.md at stage 0 and left it when the
+owner picked it (amendment 9), as IDEAS.md's rules say. Worthington end to
+end through door 2's page (the builder-door-2-worthington journey, on
+c2732ef's code): ground against USGS's 1 m DEM 0.6 cm at the median, against
+the other simulator's DTM 0.4 cm; its surfaces against OpenStreetMap; its
+lengths against the club's card (median 22 yards short, the straight lines
+of unbent holes); NAIP as the picture; a test round 101.5 against par 71,
+nothing stuck; the trace measured three ways (LIDAR, picture, both: *Stage
+8*, RESEARCH). Worthington's survey is read from a git-ignored copy in the
+repository since amendment 13 (the owner's request), never committed. **Not
+done, by the goal's own terms**: the owner playing the result -- nothing in
+the builder has been played by a person (TODO lists what to check).
+
 ### Stage 0 (31 October 2026)
 
 - **`builder.html`** and **`vite.builder.config.js`**: the builder's page,
