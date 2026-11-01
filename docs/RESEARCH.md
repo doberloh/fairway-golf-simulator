@@ -11412,6 +11412,25 @@ NAIP, joins).
 | 37 | the learnt greens and water kept, its fairways and sand dropped | 30 | 30 | 28 | 42 | 41, 62, 45, 71 | 50, 44, 41, 72 |
 | 38 | fairway spurs cut over 6 m (was 4): no gain, not kept | 30 | 29 | 28 | 42 | 41, 59, 45, 71 | 49, 44, 41, 72 |
 
+| 39 | where too few greens are found (under 6, or 40% of the room for them), a second, looser look on that course alone -- the loosening 32-34 tried everywhere | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
+| 40 | the learnt sand where a looser rule agrees (found 45 to 49, right 41 to 26): not kept | 32 | 30 | 20 | 42 | | |
+| 41 | the learnt water dropped (no gain on the real courses; over a picture of plain dark and light squares it called every dark square a pond) | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
+
+**OpenStreetMap first** (the owner, 1 November 2026): the builder can start
+from OpenStreetMap's own outlines and refine them (`refineTrace`). Measured
+by `imagery-bench.mjs --refine` on three courses with the map damaged (every
+outline 4 m east, every other green and bunker left out), the refinement
+lining the map up first (the shift that puts fairways, greens and tees on the
+smoothest ground and the 2-6 m round them on coarser) and then moving only
+fairway, semi, sand and water edges within 3 m. Start -> refined:
+Breckenridge tee 31 -> 60, fairway 79 -> 80, water 90 -> 93 (lined up by -4,
+-2 m; the truth -4, 0); Ekwanok green 37 -> 61, sand 19 -> 45, fairway 82 ->
+85 (by -6, +2); Worthington worse, tee 53 -> 37, sand 19 -> 2 (by +0.5, -3.5:
+the line-up misjudged). The first version, with no lining up and 8 m of edge
+relabelled, lost tees and greens everywhere (green 37 -> 22, tee 45 -> 9).
+Keep it as drawn stays the builder's safe choice until the line-up is
+reliable.
+
 At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
 Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens
 still 0); Sahalee green 30; Chambers Bay green 25. **Where the 90% stands**:

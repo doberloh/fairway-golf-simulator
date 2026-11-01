@@ -41,6 +41,11 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   eighteen plays at par), is partly the golfers aiming through trees on
   doglegs; its yardages are short of the card by a median 22 yards for the same
   reason.
+- [ ] **Refining OpenStreetMap's trace is not yet reliable** (door 2, *Refine
+  with the picture / the LIDAR*): its line-up found the shift on two of three
+  damaged test maps and misjudged Worthington's, where the refinement made
+  things worse (RESEARCH, *The auto trace from the picture*). The builder says
+  Keep it as drawn is the safe choice. Not played by a person.
 - [ ] **Google and Bing imagery not tried with a real key** (door 2, *Fetch
   imagery for this land*): their session, metadata and tile addresses follow
   the providers' documentation and are tested against a fake fetch; the free

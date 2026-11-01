@@ -492,7 +492,20 @@ the file to anyone else who has Fairway. It opens on three doors.
        the picture, three times or more.
      - **The LIDAR's own**: the survey's colour, or its laser brightness.
 
-     Then **Auto trace** (the greens, tees, fairways, sand and water found
+     **OpenStreetMap** comes first: many courses are already drawn there.
+     **Fetch OpenStreetMap** (or **An OpenStreetMap file**, an Overpass JSON
+     answer you saved) lays its greens, fairways, tees, bunkers, water, cart
+     paths and woods as layers and sets its numbered holes as step 4's
+     markers; the course is credited "© OpenStreetMap contributors (ODbL)",
+     and a course you share that is built from it falls under that licence.
+     Then **Keep it as drawn**, or **Refine with the picture** / **with the
+     LIDAR**: the map is lined up with the picture or the ground first, then
+     its fairway, semi, sand and water edges move to where those show, and
+     clear bunkers, ponds and greens it left out are added (greens and tees
+     keep their mapped shapes). Refining is new and helps some courses more
+     than others; keeping it as drawn is the safe choice.
+
+     Or **Auto trace** (the greens, tees, fairways, sand and water found
      for you) or **Manual trace** (a blank course to draw), and the same
      tools for either. **Every surface is its own layer**, top first in the
      game's own order (water, sand, green, tee, path, fairway, semi, then the

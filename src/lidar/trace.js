@@ -498,6 +498,33 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   };
   const nGreens = Math.max(9, Math.min(40, Math.round(turfHa / 1)));
   const greens = pick(opened, {minArea: 150, maxArea: 1500, thick: 3, maxLength: 60, keep: round}, nGreens);
+  // TOO FEW GREENS FOUND: a second look, looser, on that course alone
+  // (iteration 39). Greens can be pale -- Ekwanok's read NDVI 0.07 in June
+  // 2023 against its fairways' 0.16 -- not counted as turf, and ringed by
+  // collars that are not turf either. Loosened everywhere (iterations 32-34)
+  // the same tests cost the other courses more than they found; asked only
+  // where the first look found under 6 greens or 40% of the room for them,
+  // they cost nothing elsewhere. The plant bar a third of the fairway's own
+  // greenness, 30 m from the turf, a green with no turf near against all that
+  // is near.
+  { let found = 0; const seen = new Uint8Array(N);
+   for (let s0 = 0; s0 < N; s0++) if (greens[s0] && !seen[s0]) { found++; const st = [s0]; seen[s0] = 1; while (st.length) { const k = st.pop(), i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (n >= 0 && n < N && greens[n] && !seen[n]) { seen[n] = 1; st.push(n); } } }
+   if (found < Math.max(6, nGreens * .4)) {
+    const bar2 = Math.min(plantBar, (fc.n ?? fc.e) * .35), all = [boxMean(L, nx, nz, r2), boxMean(G, nx, nz, r2), boxMean(turf.fine, nx, nz, r2)];
+    const score2 = new Float32Array(N).fill(-Infinity);
+    for (let k = 0; k < N; k++) {
+     if (!pix(k) || !(off[k] < 30) || G[k] <= bar2 || codes[k] === C.sand || codes[k] === C.water || greens[k]) continue;
+     const near = wTurf[k] > .05, l = near ? wL[k] : all[0][k], g = near ? wG[k] : all[1][k], t = near ? wT[k] : all[2][k];
+     score2[k] = (nL[k] - l) / sL + (g - nG[k]) / sG + 2 * (t - nT[k]) / sT;
+    }
+    const v = []; for (let k = 0; k < N; k += 7) if (score2[k] > -Infinity) v.push(score2[k]); v.sort((x, y) => x - y);
+    const bar3 = v[Math.floor(v.length * .9)] ?? Infinity, cand2 = Uint8Array.from(score2, x => x > bar3 ? 1 : 0);
+    for (let k = 0; k < N; k++) if (score2[k] > -Infinity) score[k] = score2[k];
+    const more = pick(open(majority(cand2, nx, nz, Math.max(1, Math.round(1.5 / cell))), nx, nz, Math.max(1, Math.round(2.5 / cell))), {minArea: 150, maxArea: 1500, thick: 3, maxLength: 60, keep: round}, Math.round(nGreens - found));
+    for (let k = 0; k < N; k++) if (more[k]) greens[k] = 1;
+    if (debug) Object.assign(debug, {greenSecondLook: {found, added: true}});
+   }
+  }
   // Each green found GROWN to its edge (iteration 30): the patch that stood
   // out is often only part of a green (found 28%, right 70%), so it spreads
   // to neighbouring cells as bright, as green and as smooth as itself (within
@@ -574,10 +601,14 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
    for (let k = 0; k < N; k++) if (more[k] && codes[k] !== C.sand && codes[k] !== C.water) set(k, C.green, SOURCE.picture, .86);
    // (Its fairways and sand were tried too, iteration 36: drawn too wide --
    // fairway 30% right, sand 25% -- they fell 31 to 24 and 28 to 19. Its
-   // greens and water are kept.)
-   // Water: the learnt, in the rules' own shape.
-   const wtKeep = blobs(majority(as(4), nx, nz, R(1.5)), nx, nz, cell, {minArea: 60, thick: 3.5});
-   for (let k = 0; k < N; k++) if (wtKeep[k] && (codes[k] === C.rough || codes[k] === C.semi)) set(k, C.water, SOURCE.picture, .72);
+   // greens are kept.)
+   // (Iteration 40 added the learnt sand where a looser rule agreed: sand
+   // found more, 45 to 49, but right fell 41 to 26 and overlap 28 to 20. Not
+   // kept.)
+   // (Its water was kept at iteration 37 and dropped after: on the real
+   // courses it added nothing -- water 42 either way -- and over a picture
+   // of plain dark and light squares it learnt the survey's one pond and
+   // called every dark square a pond, the first tee in one.)
    if (debug) Object.assign(debug, {learnt: label, seeds: classes.map(l => l.length)});
   }
  }
@@ -609,4 +640,104 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  for (let k = 0; k < N; k++) if (sure[k] < .45 && codes[k] !== C.rough) { codes[k] = C.rough; }
  if (debug) Object.assign(debug, {iF, fc, off});
  return {codes, source, sure, nx, nz, cell, halfX, halfZ};
+}
+
+// REFINING A STARTING TRACE (the owner, 1 November 2026: OpenStreetMap's
+// outlines "as a starting point to build LIDAR or Image traces"). `start`:
+// codes over the land in the palette whose first entries are TRACE's (door
+// 2's layers' composite). The start's surfaces, each shrunk 2 m from its
+// edges, are the examples; a naive-Bayes classifier learns what each looks
+// like -- in the picture (`mode` 'picture': brightness, greenness, colour
+// balance, texture at two scales) or in the survey ('lidar': roughness at a
+// metre, slope, hollows, the laser's brightness, canopy) -- and then:
+//   - a cell within `band` m of the start's edges takes what the classifier
+//     says: the edge moves to where the picture or the ground puts it;
+//   - deeper inside a surface, the start's surface stands;
+//   - away from every surface of the start, only what is clearly sand, water
+//     or green (by the classifier, in the shapes the auto trace keeps) is
+//     added -- a bunker or pond the map left out.
+// Each surface then rounded (a majority over 1.5 m) and the fairways made
+// simple shapes (shapeFairways). Returns new codes. PLACED, all of it.
+export function refineTrace(land, start, {picture = null, mode = 'picture', band = 3, align = true} = {}) {
+ const {nx, nz, cell} = land, N = nx * nz, R = m => Math.max(1, Math.round(m / cell));
+ const C = Object.fromEntries(TRACE.map((t, i) => [t, i]));
+ const usePic = mode === 'picture' && !!picture;
+ // The features, and a smoothness map for lining the start up.
+ let feat, smooth;
+ if (usePic) {
+  const P = picture, L = new Float32Array(N), L2 = new Float32Array(N), Gr = new Float32Array(N), cr = new Float32Array(N), cb = new Float32Array(N);
+  for (let k = 0; k < N; k++) { if (!P.has[k]) continue; const r = P.rgb[k * 3], g = P.rgb[k * 3 + 1], b = P.rgb[k * 3 + 2], s = r + g + b + 1; L[k] = .299 * r + .587 * g + .114 * b; L2[k] = L[k] * L[k]; Gr[k] = P.nir ? (P.nir[k] - r) / (P.nir[k] + r + 1) : (2 * g - r - b) / s; cr[k] = r / s; cb[k] = b / s; }
+  const tex = r => { const m1 = boxMean(L, nx, nz, r), m2 = boxMean(L2, nx, nz, r); return Float32Array.from(m1, (m, k) => Math.sqrt(Math.max(0, m2[k] - m * m)) / (m + 20)); };
+  const t1 = tex(R(1)), t2 = tex(1), Lw = boxMean(L, nx, nz, R(10)), Gw = boxMean(Gr, nx, nz, R(10));
+  feat = k => P.has[k] ? [L[k] / 40, Gr[k] * 6, cr[k] * 10, cb[k] * 10, t1[k] * 20, t2[k] * 20, (L[k] - Lw[k]) / 20, (Gr[k] - Gw[k]) * 6] : null;
+  smooth = t1;
+ } else {
+  const F = features(land); smooth = F.rough; const Iw = boxMean(Float32Array.from(land.intensity, v => Number.isFinite(v) ? v : 0), nx, nz, R(10));
+  feat = k => [F.rough[k] * 50, F.slope[k] / 5, F.hollow[k] * 5, Number.isFinite(land.intensity[k]) ? land.intensity[k] * 5 : 0, Math.min(land.canopy[k], 20) / 4, Number.isFinite(land.intensity[k]) ? (land.intensity[k] - Iw[k]) * 10 : 0];
+ }
+ // LINED UP FIRST: a map is most often off by a shift. The start's mown
+ // surfaces (fairway, green, tee) should sit on the smoothest ground and the
+ // 2-6 m just outside them on coarser: every shift to 10 m either way is
+ // tried (a metre apart, then half a metre round the best) and the start moved
+ // by the one that makes that contrast greatest. (The first refinement, with
+ // no lining up and 8 m of edge relabelled, lost tees and greens to a map 4 m
+ // off: green 37 -> 22, tee 45 -> 9.)
+ if (align) {
+  const mown = Uint8Array.from(start, c => c === C.fairway || c === C.green || c === C.tee ? 1 : 0), dist = distanceFrom(mown, nx, nz, cell);
+  let q0 = 777; const rnd0 = () => (q0 = (q0 * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const inS = [], ring = []; for (let k = 0; k < N; k++) { if (mown[k] && rnd0() < .05) inS.push(k); else if (dist[k] > 2 && dist[k] < 6 && rnd0() < .05) ring.push(k); }
+  const at = (list, di, dj) => { let t = 0, n = 0; for (const k of list) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i < 0 || j < 0 || i >= nx || j >= nz) continue; t += smooth[j * nx + i]; n++; } return n ? t / n : Infinity; };
+  const energy = (di, dj) => at(inS, di, dj) - at(ring, di, dj);
+  let best = [0, 0], be = energy(0, 0);
+  const step = R(1), reach = R(10);
+  for (let dj = -reach; dj <= reach; dj += step) for (let di = -reach; di <= reach; di += step) { const e = energy(di, dj); if (e < be) { be = e; best = [di, dj]; } }
+  const [bi, bj] = best; for (let dj = bj - step; dj <= bj + step; dj++) for (let di = bi - step; di <= bi + step; di++) { const e = energy(di, dj); if (e < be) { be = e; best = [di, dj]; } }
+  if (best[0] || best[1]) { const moved = new Uint8Array(N); for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const si = i - best[0], sj = j - best[1]; if (si >= 0 && sj >= 0 && si < nx && sj < nz) moved[j * nx + i] = start[sj * nx + si]; } start = moved; }
+  refineTrace.lastShift = {x: best[0] * cell, z: best[1] * cell};
+ }
+ // The examples: each surface of the start shrunk 2 m; rough 6 m from all.
+ const kinds = ['green', 'fairway', 'semi', 'tee', 'sand', 'water', 'path'];
+ const any = Uint8Array.from(start, c => c && c < TRACE.length ? 1 : 0);
+ const far = distanceFrom(any, nx, nz, cell);
+ const sets = kinds.map(kind => { const m = Uint8Array.from(boxMean(Float32Array.from(start, c => c === C[kind] ? 1 : 0), nx, nz, R(2)), v => v > .999 ? 1 : 0); return m; });
+ sets.push(Uint8Array.from(far, d => d > 6 && d < 80 ? 1 : 0));
+ let q = 4242; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
+ const models = sets.map(m => {
+  const list = []; let seen = 0; for (let k = 0; k < N; k++) if (m[k]) seen++;
+  const p = Math.min(1, 6000 / Math.max(1, seen)); for (let k = 0; k < N; k++) if (m[k] && rnd() < p) { const f = feat(k); if (f) list.push(f); }
+  if (list.length < 30) return null;
+  const D = list[0].length, mu = new Float64Array(D), va = new Float64Array(D);
+  for (const f of list) for (let d = 0; d < D; d++) mu[d] += f[d];
+  for (let d = 0; d < D; d++) mu[d] /= list.length;
+  for (const f of list) for (let d = 0; d < D; d++) va[d] += (f[d] - mu[d]) ** 2;
+  for (let d = 0; d < D; d++) va[d] = Math.max(.02, va[d] / list.length);
+  return {mu, va, norm: -.5 * va.reduce((s, v) => s + Math.log(v), 0)};
+ });
+ const classify = k => { const f = feat(k); if (!f) return -1; let best = -1, bl = -Infinity; for (let c = 0; c < models.length; c++) { const m = models[c]; if (!m) continue; let l = m.norm; for (let d = 0; d < f.length; d++) l -= (f[d] - m.mu[d]) ** 2 / (2 * m.va[d]); if (l > bl) { bl = l; best = c; } } return best; };
+ // The start's edges, and how far each cell is from one.
+ const edge = new Uint8Array(N);
+ for (let k = 0; k < N; k++) { const i = k % nx; if ((i > 0 && start[k - 1] !== start[k]) || (k >= nx && start[k - nx] !== start[k])) edge[k] = 1; }
+ const toEdge = distanceFrom(edge, nx, nz, cell);
+ const out = Uint8Array.from(start, c => c < TRACE.length ? c : c);
+ const learnt = new Int8Array(N).fill(-1);
+ for (let k = 0; k < N; k++) {
+  if (toEdge[k] < band || far[k] < 80) learnt[k] = classify(k);
+  // Only the edges between fairway, semi, sand, water and rough move; greens,
+  // tees and paths keep the start's shapes (they are drawn most carefully,
+  // and a band wider than a tee swallowed them).
+  const fixed = c => c === C.green || c === C.tee || c === C.path;
+  if (toEdge[k] < band && learnt[k] >= 0 && !fixed(start[k])) { const to = learnt[k] === kinds.length ? (start[k] >= TRACE.length ? start[k] : C.rough) : C[kinds[learnt[k]]]; if (!fixed(to)) out[k] = to; }
+ }
+ // What the map left out, far from its surfaces: clear sand, water, greens.
+ const addFar = (kind, opts) => { const c = kinds.indexOf(kind), m = Uint8Array.from(learnt, (v, k) => v === c && toEdge[k] >= band && !any[k] ? 1 : 0); const keep = blobs(majority(m, nx, nz, R(1)), nx, nz, cell, opts); for (let k = 0; k < N; k++) if (keep[k]) out[k] = C[kind]; };
+ addFar('sand', {minArea: 6, maxArea: 1500, thick: 1.2, maxLength: 60});
+ addFar('water', {minArea: 60, thick: 3.5});
+ addFar('green', {minArea: 200, maxArea: 1500, thick: 4, maxLength: 55});
+ // Each surface rounded; the fairways made simple shapes.
+ const final = Uint8Array.from(out);
+ for (const kind of kinds) {
+  const c = C[kind], m = majority(Uint8Array.from(out, v => v === c ? 1 : 0), nx, nz, R(1.5)), shaped = kind === 'fairway' ? shapeFairways(m, nx, nz, cell) : m;
+  for (let k = 0; k < N; k++) { if (shaped[k]) final[k] = c; else if (final[k] === c && !shaped[k]) final[k] = start[k] === c && toEdge[k] >= band ? c : C.rough; }
+ }
+ return final;
 }

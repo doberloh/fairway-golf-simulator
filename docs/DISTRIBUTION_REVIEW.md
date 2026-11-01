@@ -1661,7 +1661,13 @@ picker, makes a course and plays it in the game by file://. **The one network us
 door 2's *Fetch imagery for this land* and *Find* ask an imagery provider --
 USGS, IGN France, PDOK, PNOA, swisstopo with no key, Google or Bing with the
 player's own -- for map tiles over the land, and OpenStreetMap's Nominatim
-(the free providers' place search) for a place by name. Only when the player
+(the free providers' place search) for a place by name; and *Fetch
+OpenStreetMap* asks the Overpass API (overpass-api.de) for the golf features
+over the land. **OpenStreetMap's licence travels with a course built from
+it**: the ODbL asks for the credit, which the builder adds to the course's
+credits, and a database made from it and shared stays ODbL -- a shared
+`.fairway` built from it carries that licence (the owner's call to allow,
+named here so a release can say so). Only when the player
 presses them; a key is kept in that browser's storage and sent only to its
 own provider; the picture is never saved in a course, and its credit is added
 to the course's credits. Everything else in both pages stays offline, and the

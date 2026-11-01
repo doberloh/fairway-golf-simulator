@@ -242,6 +242,15 @@ After trying the builder, the owner amended the goal:
    so beside the overlap the bench reports how much of what OpenStreetMap
    maps is found and how much of what is drawn is mapped -- which says
    whether a shortfall is the trace's or the map's.
+9. **OpenStreetMap first** (the owner, 1 November 2026: "reverse the order.
+   Pull in the open maps tracing first. Give the user the option to keep it.
+   Or use it as a starting point to build LIDAR or Image traces"): door 2's
+   trace step fetches the course's golf features from OpenStreetMap (at the
+   player's press; ODbL, credited in the course) as layers, with its numbered
+   holes as markers; the player keeps it, or refines it -- the self-taught
+   classifier learning from OpenStreetMap's outlines instead of the rules,
+   from the picture or the LIDAR. Moved from IDEAS.md, where OpenStreetMap
+   import waited.
 7. **Layers** (the owner, 1 November 2026): "the concept of layers so things
    can be easily painted in the trace step" -- each surface its own layer, so
    painting one never wipes another -- "exposed in the editor as well in real

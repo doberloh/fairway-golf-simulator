@@ -31,7 +31,7 @@ import {fileURLToPath} from 'node:url';
 import {readGeoTiffRgb} from '../src/lidar/geotiff.js';
 import {toUtm, converter} from '../src/lidar/geo.js';
 import {createGridder} from '../src/lidar/land.js';
-import {trace, TRACE, boxMean} from '../src/lidar/trace.js';
+import {trace, TRACE, boxMean, refineTrace} from '../src/lidar/trace.js';
 import {pictureOnLand} from '../src/builder/real-course.js';
 import {tidyCodes, SPECK} from '../src/builder/trace-edit.js';
 import {osmWays, truthGrid, scoreCodes, KINDS} from './osm-holes.mjs';
@@ -101,7 +101,24 @@ export async function benchCourse(key, {shots = false} = {}) {
  const fr = Object.fromEntries(Object.keys(KINDS).map(kind => { const c = TRACE.indexOf(kind); let hit = 0, all = 0, tot = 0; for (let k = 0; k < N; k++) { const t = truth[k] === kind, q = codes[k] === c; if (t) tot++; if (q) all++; if (t && q) hit++; } return [kind, {found: tot ? hit / tot : null, right: all ? hit / all : null}]; }));
  const score = scoreCodes(truth, codes), edges = Object.fromEntries(Object.keys(KINDS).map(k => [k, edgeStats(codes, land.nx, land.nz, CELL, TRACE.indexOf(k))]));
  if (shots) writeShot(path.join(dir, 'trace.png'), land, picture, codes, truth);
- return {key, name: meta.name, cover, secs, score, edges, fr, size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
+ // --refine: OpenStreetMap as the starting point (the owner, 1 November
+ // 2026), DAMAGED first -- every outline 4 m east, every other bunker and
+ // green left out -- then refined from the picture; both scored against the
+ // map as it is. What the refinement recovers is the measure.
+ let refine = null;
+ if (flag('refine')) {
+  const shift = Math.round(4 / CELL), damaged = new Uint8Array(N); let flip = 0;
+  const seenFeature = new Set();
+  for (let j = 0; j < land.nz; j++) for (let i = 0; i < land.nx; i++) { const k = j * land.nx + i, src = i - shift >= 0 ? j * land.nx + i - shift : -1, t = src >= 0 ? truth[src] : null; if (t) damaged[k] = TRACE.indexOf(t); }
+  // Every other bunker and green dropped, by feature.
+  const lab = new Int32Array(N).fill(-1); let id = 0;
+  for (let s0 = 0; s0 < N; s0++) { const c = damaged[s0]; if ((c !== TRACE.indexOf('sand') && c !== TRACE.indexOf('green')) || lab[s0] >= 0) continue; const st = [s0]; lab[s0] = id; const drop = (flip++ % 2) === 1; const cells = [s0]; while (st.length) { const k = st.pop(), i = k % land.nx; for (const n of [i > 0 ? k - 1 : -1, i < land.nx - 1 ? k + 1 : -1, k - land.nx, k + land.nx]) if (n >= 0 && n < N && lab[n] < 0 && damaged[n] === c) { lab[n] = id; st.push(n); cells.push(n); } } if (drop) for (const k of cells) damaged[k] = 0; id++; }
+  void seenFeature;
+  const refined = refineTrace(land, damaged, {picture, mode: 'picture'});
+  refine = {start: scoreCodes(truth, damaged), refined: scoreCodes(truth, refined), shift: refineTrace.lastShift};
+  if (shots) writeShot(path.join(dir, 'refine.png'), land, picture, refined, truth);
+ }
+ return {key, name: meta.name, cover, secs, score, edges, fr, refine, size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
 }
 
 // The trace over the picture at a metre a pixel, OpenStreetMap's outlines white.
@@ -132,6 +149,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
    const r = await benchCourse(key, {shots: flag('shots')});
    for (const k of kinds) { if (r.fr[k].found != null) found[k].push(r.fr[k].found); if (r.fr[k].right != null && r.fr[k].found != null) right[k].push(r.fr[k].right); if (r.score[k] != null) mean[k].push(r.score[k]); if (r.edges[k].ragged != null) rag[k].push(r.edges[k].ragged); }
    const sp = kinds.reduce((s, k) => s + r.edges[k].specks, 0), po = kinds.reduce((s, k) => s + r.edges[k].pocks, 0); specks += sp; pocks += po;
+   if (r.refine) console.log(`   refine from damaged OSM (lined up by ${r.refine.shift ? r.refine.shift.x.toFixed(1) + ', ' + r.refine.shift.z.toFixed(1) : '-'} m): start ${kinds.map(k => `${k} ${fmt(r.refine.start[k]).trim()}`).join(', ')}
+                       refined ${kinds.map(k => `${k} ${fmt(r.refine.refined[k]).trim()}`).join(', ')}`);
    console.log(`${key.padEnd(11)} ${(100 * r.cover).toFixed(0).padStart(4)}%  ${kinds.map(k => fmt(r.score[k]).padStart(7)).join('')}   ${String(sp).padStart(6)} ${String(po).padStart(5)}  ${['green', 'fairway', 'sand', 'water'].map(k => r.edges[k].ragged?.toFixed(2) ?? '-').join(' ')}   (${r.size}, ${r.secs.toFixed(1)} s)`);
   } catch (e) { console.log(`${key.padEnd(11)} FAILED: ${e.message}`); }
  }

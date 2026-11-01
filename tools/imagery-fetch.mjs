@@ -30,7 +30,7 @@ export const COURSES = [
  {key: 'midwest', name: 'Worthington Country Club, Worthington MN', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]'},
  // Kapalua (Maui) was the first choice: Hawaii has no NAIP in the Planetary
  // Computer's collection, so a tropical island course in Florida stands in.
- {key: 'island', name: 'Key West Golf Club, Key West FL', osm: '(way["leisure"="golf_course"]["name"~"Key West Golf"];rel["leisure"="golf_course"]["name"~"Key West Golf"];)'},
+ {key: 'island', name: 'Key West City Golf Club, Key West FL', osm: 'way(84902763)'},
  {key: 'redwood', name: 'Northwood Golf Club, Monte Rio CA', osm: 'way(1246462624)'},
  {key: 'autumn', name: 'Ekwanok Country Club, Manchester VT', osm: 'way(424514357)'},
  {key: 'lakeshore', name: 'Arcadia Bluffs Golf Club, Arcadia MI', osm: 'way(293247442)'},

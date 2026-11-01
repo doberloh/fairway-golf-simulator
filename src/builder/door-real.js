@@ -29,7 +29,8 @@ import {readGeoTiffRgb} from '../lidar/geotiff.js';
 import {converter} from '../lidar/geo.js';
 import {crsOf, toMetres} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
-import {trace} from '../lidar/trace.js';
+import {trace, refineTrace} from '../lidar/trace.js';
+import {fetchOsm, osmFeatures, layOsm, osmHoles, OSM_CREDIT} from './osm.js';
 import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE} from './trace-edit.js';
 import {LAYER_ORDER} from './layers.js';
@@ -341,6 +342,17 @@ export function open() {
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
      alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); }}, 'Undo align')),
     ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found),
+   // OPENSTREETMAP FIRST (the owner, 1 November 2026): the course as mappers
+   // have drawn it, kept as it is or refined from the picture or the LIDAR.
+   el('div', {class: 'cb-field'}, el('label', {}, 'OpenStreetMap'),
+    el('small', {}, 'Many courses are already drawn in OpenStreetMap: its greens, fairways, tees, bunkers, water, paths, woods and numbered holes, laid as layers and markers. Credited in the course (ODbL). Goes online only when pressed.'),
+    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
+    st.osm ? el('small', {}, st.osm.said) : null,
+    st.osm ? el('div', {class: 'cb-btns'},
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('picture')}, 'Refine with the picture'),
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('lidar')}, 'Refine with the LIDAR'),
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => keepOsm()}, 'Keep it as drawn')) : null,
+    st.osm ? el('small', {}, 'Refining lines the map up with the picture or the ground first, then moves the fairway, semi, sand and water edges to where they show; greens and tees keep their mapped shapes. It is new: on test courses it helped some and not others -- Keep it as drawn is the safe choice.') : null),
    el('div', {class: 'cb-field'}, el('label', {}, 'Trace the course'),
     el('small', {}, 'Auto: greens, tees, fairways, sand and water found for you to correct. Manual: draw them yourself. The same tools either way.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: autoTrace}, st.traceMode === 'auto' ? 'Auto trace again' : 'Auto trace'), el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: manualTrace}, 'Manual trace'))),
@@ -444,6 +456,50 @@ export function open() {
    plan.draw();
   });
   panel.append(pc);
+ }
+ // Local metres from degrees: by the survey's map grid, or round the place found.
+ const localOfLonLat = () => {
+  const crs = crsOfSources(st.sources), conv = crs?.epsg ? converter({epsg: 4326, geographic: true}, crs) : null;
+  if (conv) return (lat, lon) => { const m = conv(lon, lat); return st.gridder.local(m.x, m.y); };
+  if (st.geo) return (lat, lon) => ({x: (lon - st.geo.lon) * 111320 * Math.cos(st.geo.lat * Math.PI / 180), z: -(lat - st.geo.lat) * 111320});
+  return null;
+ };
+ async function loadOsm(fromFile = false) {
+  if (!st.land) return;
+  const toLocal = localOfLonLat(), ll = lonLatOfLocal();
+  if (!toLocal || !ll) return say('The survey does not say where it is: find the place first.', true);
+  setBusy(fromFile ? 'Reading the OpenStreetMap file…' : 'Asking OpenStreetMap…');
+  try {
+   let json;
+   if (fromFile) { const [file] = await pickFile('.json,application/json'); if (!file) return; json = JSON.parse(await file.text()); }
+   else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))]); }
+   const feats = osmFeatures(json, toLocal);
+   st.model = createTrace(st.land, {trees: []}); st.traceMode = 'openstreetmap';
+   const laid = layOsm(st.model, feats);
+   // The LIDAR's trees where the map has none of its own.
+   if (!laid.trees && !laid.woods) for (const t of st.trees) st.model.state.trees.push({...t});
+   st.model.state.undo.length = 0;
+   const holes = osmHoles(feats);
+   if (holes.filter(Boolean).length) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green} : undefined); st.holesN = holes.length > 9 ? 18 : 9; }
+   if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
+   st.osm = {codes: Uint8Array.from(st.model.state.codes), trees: st.model.state.trees.map(t => ({...t})), said: `Laid: ${Object.entries(laid).map(([k, n]) => `${n} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${holes.filter(Boolean).length} holes numbered.`};
+   paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
+   say(st.osm.said);
+  } catch (e) { say('OpenStreetMap: ' + e.message, true); }
+  finally { setBusy(''); }
+ }
+ function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {codes: st.osm.codes, trees: st.osm.trees}); st.traceMode = 'openstreetmap'; paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
+ async function refineOsm(mode) {
+  if (!st.osm) return;
+  if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
+  setBusy('Refining…'); await frame();
+  try {
+   const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
+   st.model = createTrace(st.land, {codes, trees: st.osm.trees}); st.traceMode = 'openstreetmap+' + mode;
+   paintCodes(); go(2); refreshCount();
+   const sh = refineTrace.lastShift;
+   say(`Refined from the ${mode === 'picture' ? 'picture' : 'LIDAR'}${sh ? `: the map moved ${Math.hypot(sh.x, sh.z).toFixed(1)} m to line up` : ''}. Keep it as drawn puts OpenStreetMap's back.`);
+  } finally { setBusy(''); }
  }
  async function autoTrace() {
   if (!st.land) return;
