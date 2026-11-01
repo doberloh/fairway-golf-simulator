@@ -15,7 +15,7 @@ import {maskRings, simplify, smoothRing} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features} from '../lidar/trace.js';
-import {GRID_MARGIN} from '../built-world.js';
+import {GRID_MARGIN, builtLine} from '../built-world.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
 // a metre to 2.25 km², else a metre -- memory for a 3 x 3 km course).
@@ -242,8 +242,12 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   for (const t of h.tees) { if (onKind('tee', t)) continue;
    const ux = (h.green.x - t.x), uz = (h.green.z - t.z), l = Math.hypot(ux, uz) || 1, ax = ux / l, az = uz / l, px = -az, pz = ax;
    surfaces.tee.push([[[-3, -5], [3, -5], [3, 5], [-3, 5]].map(([u, v]) => [r2(t.x + px * u + ax * v), r2(t.z + pz * u + az * v)])]); }
-  return {number: h.number ?? i + 1, par: h.par ?? parFor(yards(back, h.green)), index: h.index ?? i + 1, tees: h.tees.map(t => ({x: r2(t.x), z: r2(t.z), set: t.set || 'middle'})),
-   green: {x: r2(h.green.x), z: r2(h.green.z)}, line: h.line?.length >= 2 ? h.line.map(([x, z]) => [r2(x), r2(z)]) : [[r2(back.x), r2(back.z)], [r2(h.green.x), r2(h.green.z)]]};
+  const line = h.line?.length >= 2 ? h.line.map(([x, z]) => [r2(x), r2(z)]) : [[r2(back.x), r2(back.z)], [r2(h.green.x), r2(h.green.z)]];
+  // Par, unless given, from the back tee's yards along the line as the game
+  // measures them (built-world.js builtLine) -- round the doglegs, not
+  // straight to the green (until 1 November 2026: straight).
+  return {number: h.number ?? i + 1, par: h.par ?? parFor(builtLine({tees: h.tees, green: h.green, line}).yards.blue), index: h.index ?? i + 1, tees: h.tees.map(t => ({x: r2(t.x), z: r2(t.z), set: t.set || 'middle'})),
+   green: {x: r2(h.green.x), z: r2(h.green.z)}, line};
  });
  // The trees: those standing on rough or semi-rough (a canopy peak over a
  // green or in water is a flag, a lamp or a mistake), their trunk from their

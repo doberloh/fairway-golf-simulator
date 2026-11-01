@@ -81,6 +81,9 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-treesfrom').selectOption('lidar');
   if ((await trees()).now !== t0.lidar) throw Error('the LIDAR\'s only should be the survey\'s trees');
   await page.locator('.cb-treesfrom').selectOption('merge');
+  // The trees choice stays inside the steps' column (it ran off it).
+  const fits = await page.evaluate(() => { const s = document.querySelector('.cb-treesfrom').getBoundingClientRect(), c = document.querySelector('.cb-steps').getBoundingClientRect(); return s.right <= c.right + 1 && s.left >= c.left - 1; });
+  if (!fits) throw Error('the trees choice should fit inside the steps\' column');
   await page.getByRole('button', {name: 'Keep it as drawn'}).click();
   if ((await trees()).now !== t0.lidar + 1) throw Error('Keep it as drawn should keep the merged trees');
   // Its boundary and its houses came with it; outside the boundary, filled

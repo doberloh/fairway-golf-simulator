@@ -24,6 +24,7 @@ import {facingFrom, turnedCells} from './trace-edit.js';
 import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
+import {clearTrees} from './tree-clear.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
@@ -82,6 +83,12 @@ export function createEditor(doc) {
   trees: Array.from({length: doc.trees.length / TREE_STRIDE}, (_, i) => Array.from(doc.trees.subarray(i * TREE_STRIDE, (i + 1) * TREE_STRIDE))),
   homes: structuredClone(doc.homes || []),
   landscape: doc.landscape, name: doc.name,
+  // THE TREES' HEIGHT SCALE (the owner, 1 November 2026: "allow the user to
+  // adjust the tree height scale. show in real time"): every tree's height
+  // and trunk times this, as drawn and as saved (toDoc); the trees keep their
+  // own heights, so it can go back to 1. A course saved at 1.2 opens at 1
+  // with its trees 1.2 times taller.
+  treeScale: 1,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
   // mesh to the land there (built-world.js), so a hill plays as drawn.
@@ -215,6 +222,18 @@ export function createEditor(doc) {
   addBend(hole, x, z) { api.editHoles(hs => { const h = hs[hole]; h.line.splice(h.line.length - 1, 0, [x, z]); }); },
   setPar(hole, par) { api.editHoles(hs => { hs[hole].par = par; }); },
   addTree(tree) { remember('records', 0, 0, 0, 0); state.trees.push(tree); },
+  setTreeScale(f) { state.treeScale = Math.max(.25, Math.min(3, f)); state.changed = true; },
+  // Crowns drawn in off the greens and tees, a tree with no room taken out
+  // (tree-clear.js); one undo step. Returns {shrunk, removed}.
+  clearTreesFromTurf() {
+   const N = r.nx * r.nz, mask = new Uint8Array(N);
+   for (const k of ['green', 'tee']) { const m = r.layers.masks.get(k); if (m) for (let q = 0; q < N; q++) if (m[q]) mask[q] = 1; }
+   const got = clearTrees(state.trees, {nx: r.nx, nz: r.nz, cell: r.cell, x0: r.x0 + r.cell / 2, z0: r.z0 + r.cell / 2}, mask,
+    {get: t => ({x: t[0], z: t[1], crown: t[3]}), put: (t, crown) => { const n = [...t]; n[3] = crown; return n; }});
+   if (!got.shrunk && !got.removed) return got;
+   remember('records', 0, 0, 0, 0); state.trees = got.trees;
+   return got;
+  },
   // Removes trees within `radius`, or every `keep`-th one is kept (thinning).
   removeTrees({x, z, radius, keep = 0}) {
    remember('records', 0, 0, 0, 0);
@@ -392,8 +411,8 @@ export function createEditor(doc) {
      return {rings: [o, ...islands], level: was?.level ?? shore[Math.floor(shore.length * .1)] - .3, kind: was?.kind ?? 'pond'};
     });
    }
-   const trees = new Float32Array(state.trees.length * TREE_STRIDE);
-   state.trees.forEach((t, i) => trees.set(t, i * TREE_STRIDE));
+   const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
+   state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3], t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
    return {...doc, name: state.name, landscape: state.landscape, land: {...land, heights: Float32Array.from(land.heights)}, patches: patches.map(p => ({...p, heights: Float32Array.from(p.heights)})),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },

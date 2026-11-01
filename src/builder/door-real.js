@@ -33,7 +33,7 @@ import {crsOf, toMetres, parseHeader} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
 import {fetchOsm, osmFeatures, layOsm, osmHoles, osmBoundary, mergeTrees, OSM_CREDIT} from './osm.js';
-import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
+import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
@@ -46,9 +46,10 @@ import {BIOME_KEYS} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {GROUNDS} from '../grounds.js';
 import {openEditor} from './editor.js';
-import {worldFromDoc, GRID_MARGIN} from '../built-world.js';
+import {worldFromDoc, builtLine, GRID_MARGIN} from '../built-world.js';
 import {createEditor} from './editing.js';
 import {checkCourse} from './checks.js';
+import {clearTrees} from './tree-clear.js';
 
 const {el} = ui;
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -85,17 +86,27 @@ export function open(draft = null) {
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
  const say = (t, err = false) => { notes.textContent = t; notes.classList.toggle('cb-err', err); };
  const zoomText = el('span'), hintBar = el('div', {class: 'cb-toolhint', hidden: true});
- const plan = createPlanView(canvas, {onTool, overlay});
+ const plan = createPlanView(canvas, {onTool, overlay, onWindowChange: ui.onWindowChange});
  st.plan = plan;
  st.toCanvas = (x, z) => plan.toScreen(x, z);
  const panel = el('div', {style: 'display:flex;flex-direction:column;gap:10px'}), nav = el('div', {class: 'cb-stepnav'});
- show(el('section', {class: 'cb-door2'},
+ const section = el('section', {class: 'cb-door2'},
   el('div', {class: 'cb-steps'}, el('h2', {style: 'font:800 22px/1 var(--head);text-transform:uppercase;margin:0'}, 'A real life course'), nav, panel),
   el('div', {class: 'cb-planbox'}, canvas, hintBar,
    el('div', {class: 'cb-planbar'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.fit()}, 'Whole land'), el('span', {}, 'Wheel zooms; right-drag, Space-drag or Move the view drags it.'), zoomText),
-   notes)));
- topTools(el('button', {class: 'cb-btn', type: 'button', onclick: home}, 'Back'));
+   notes));
+ show(section);
+ // Back to the builder's start ends this course, so with work in it, it asks
+ // twice (the owner, 1 November 2026: a double confirm on fully closing).
+ const backButton = () => el('button', {class: 'cb-btn', type: 'button', onclick: () => {
+  if (st.sources.length || st.land) {
+   if (!confirm('Leave this course and go back to the builder\'s start?')) return;
+   if (!confirm('Are you sure? What is not saved (Save keeps a draft) is lost.')) return;
+  }
+  home();
+ }}, 'Back');
+ topTools(backButton());
  const L = () => st.land ?? st.preview?.land;
 
  // ---------------------------------------------------------------- layers
@@ -367,15 +378,15 @@ export function open(draft = null) {
   refreshCount(); plan.draw();
  }
  const onKey = e => {
-  if (!document.body.contains(canvas)) { window.removeEventListener('keydown', onKey); return; }
+  if (!document.body.contains(canvas)) return;   // door 2 not shown (the editor over it, or another door): kept, as it may come back
   if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
   if (e.key === 'Enter' && st.outline.length >= 3) closeOutline();
   if (e.key === 'Escape') { st.outline = []; plan.draw(); }
   // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
   const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
   if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { st.model.undo(); paintCodes(); refreshCount(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { st.model.redo(); paintCodes(); refreshCount(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { e.preventDefault(); if (e.shiftKey) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { e.preventDefault(); st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }
  };
  window.addEventListener('keydown', onKey);
 
@@ -717,10 +728,22 @@ export function open(draft = null) {
   setBusy('Filling outside the boundary…');
   try {
    const homes = st.model.state.homes.length, keep = !!st.outsideKeep;
-   const n = st.model.fillOutside(st.boundary, {ground, density, keep, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length;
+   const trees0 = st.model.state.trees.length;
+   const n = st.model.fillOutside(st.boundary, {ground, density, keep, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length, treesGone = trees0 - (st.model.state.trees.length - n);
    paintCodes(); refreshCount(); plan.draw();
-   say(`Outside the boundary: ${keep ? 'what was there kept (OpenStreetMap\'s and yours), ' : `every surface taken off${gone ? ` and ${gone} house${gone === 1 ? '' : 's'}` : ''}, `}${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' on the bare ground' : ''} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
+   say(`Outside the boundary: ${keep ? 'what was there kept (OpenStreetMap\'s and yours), ' : `everything taken off first (every surface${gone ? `, ${gone} house${gone === 1 ? '' : 's'}` : ''}${treesGone ? `, ${treesGone.toLocaleString()} trees` : ''}), then `}${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' on the bare ground' : ''} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
   } finally { setBusy(''); }
+ }
+ // CLEAR TREES FROM TEES AND GREENS (tree-clear.js): every crown reaching
+ // over one drawn in, a tree with no room taken out; one undo step.
+ function clearTurfTreesNow() {
+  const {nx, nz, cell, halfX, halfZ} = st.land, N = nx * nz, mask = new Uint8Array(N), M = st.model.state.layers.masks;
+  for (const k of ['green', 'tee']) { const m = M.get(k); if (m) for (let q = 0; q < N; q++) if (m[q]) mask[q] = 1; }
+  if (!mask.some(v => v)) return say('No greens or tees traced yet to clear trees from.', true);
+  const got = clearTrees(st.model.state.trees, {nx, nz, cell, x0: -halfX, z0: -halfZ}, mask);
+  if (got.shrunk || got.removed) st.model.setTrees(got.trees);
+  plan.draw(); refreshCount();
+  say(got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.');
  }
  function extrapolateNow() {
   const from = st.kind, to = st.exTo;
@@ -785,8 +808,9 @@ export function open(draft = null) {
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
     st.osm ? el('small', {}, st.osm.said) : null,
     // WHOSE TREES (osm.js mergeTrees; the owner, 1 November 2026).
-    st.osm ? el('div', {class: 'cb-btns'}, el('small', {}, 'Trees'), el('select', {class: 'cb-treesfrom', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
-     [['merge', 'The LIDAR\'s, and OpenStreetMap\'s where the LIDAR has none'], ['lidar', 'The LIDAR\'s only'], ['osm', 'OpenStreetMap\'s only']].map(([v, t]) => el('option', {value: v, selected: v === (st.treesFrom ?? 'merge')}, t)))) : null,
+    st.osm ? el('small', {}, 'Trees') : null,
+    st.osm ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
+     [['merge', 'Both: the LIDAR\'s, and OpenStreetMap\'s where it has none'], ['lidar', 'The LIDAR\'s only'], ['osm', 'OpenStreetMap\'s only']].map(([v, t]) => el('option', {value: v, selected: v === (st.treesFrom ?? 'merge')}, t))) : null,
     st.osm ? el('div', {class: 'cb-btns'},
      el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('picture')}, 'Refine with the picture'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('lidar')}, 'Refine with the LIDAR'),
@@ -814,16 +838,17 @@ export function open(draft = null) {
     el('small', {}, 'Outline and Tree zone: click the corners; double-click or Enter closes, Esc drops.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Tidy specks'),
+     el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Undo'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Redo'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }}, 'Picture on/off'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.traceOn = !st.traceOn; showCodes(); }}, 'Trace on/off'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } say(st.smoothView ? 'Smooth view: the trace drawn as the course will have it.' : 'Cell view: the trace\'s cells as painted.'); }}, 'Smooth / cell view')),
     countText) : null,
    // THE COURSE BOUNDARY (the owner, 1 November 2026).
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Course boundary'),
-    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, and what is already there is removed or kept (the choice beside it); the survey's trees stay. Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
+    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, and what is already there -- surfaces, houses and trees, the survey's too -- is removed first or kept (the choice beside it). Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Draw it again' : 'Draw the boundary'),
      el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
-      el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove what is there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),
+      el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove everything there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),
      el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, title: 'Lay the landscape\'s ground and a wood outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside it'))) : null,
    next(3, 'Next: the holes')];
  }
@@ -1003,17 +1028,49 @@ export function open(draft = null) {
  }
 
  // 4. Holes.
+ // THE SCORECARD (the owner, 1 November 2026: "We need to add a scorecard
+ // section to the 'holes' step"; "let the user set the par. per hole and
+ // edit the card (not yardage tho)"): each hole's par and handicap index, set
+ // by hand, and its yards from the three tee sets -- not editable: AS THE GAME
+ // WILL MEASURE THEM (built-world.js builtLine: along the line through the aim
+ // points, blue the farthest tee, white and red the nearer; players start on
+ // white). Par is worked from the blue yards until set; the index runs 1 to
+ // 18 down the card until set.
+ const cardOf = h => { if (!h?.green || !h.tees.length) return null; const L = builtLine({tees: h.tees, green: h.green, line: holeLine(h)}); return {...L.yards, skipped: L.skipped, par: h.par ?? parFor(L.yards.blue), auto: h.par == null}; };
+ function scorecard() {
+  const rows = Array.from({length: st.holesN}, (_, n) => ({n, h: st.holes[n], c: cardOf(st.holes[n])}));
+  const yd = v => v == null ? '--' : Math.round(v);
+  const sum = (list, f) => list.reduce((t, x) => t + (f(x) ?? 0), 0);
+  const total = (label, list) => el('tr', {class: 'cb-cardsum'}, el('td', {}, label), el('td', {}, sum(list, x => x.c?.par)), el('td'), ...['blue', 'white', 'red'].map(k => el('td', {}, Math.round(sum(list, x => x.c?.[k])))));
+  const body = rows.map(({n, h, c}) => el('tr', {class: n === st.hole ? 'cb-cur' : ''},
+   el('td', {style: 'cursor:pointer', title: 'Mark this hole', onclick: () => { st.hole = n; go(3); }}, n + 1),
+   el('td', {}, el('select', {class: 'cb-par', 'data-hole': n, disabled: !c, title: 'This hole\'s par: worked from the blue yards (*), or set by hand', onchange: e => { if (!h) return; h.par = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
+    el('option', {value: 'auto', selected: !c || c.auto}, c ? `${parFor(c.blue)}*` : '--'), [3, 4, 5, 6].map(v => el('option', {value: v, selected: !!c && !c.auto && c.par === v}, v)))),
+   el('td', {}, el('select', {class: 'cb-index', 'data-hole': n, disabled: !c, title: 'This hole\'s handicap index: 1 the hardest, where strokes are given first', onchange: e => { if (!h) return; h.index = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
+    el('option', {value: 'auto', selected: h?.index == null}, `${n + 1}*`), Array.from({length: st.holesN}, (_, q) => q + 1).map(v => el('option', {value: v, selected: h?.index === v}, v)))),
+   el('td', {}, yd(c?.blue)), el('td', {}, yd(c?.white)), el('td', {}, yd(c?.red))));
+  const half = st.holesN === 18 ? [total('Out', rows.slice(0, 9)), ...body.slice(9), total('In', rows.slice(9))] : [];
+  const skipped = rows.filter(x => x.c?.skipped);
+  const used = rows.map(x => x.h?.index ?? x.n + 1), twice = [...new Set(used.filter((v, q) => used.indexOf(v) !== q))].sort((p, q) => p - q);
+  return el('div', {class: 'cb-field cb-card'}, el('label', {}, 'Scorecard'),
+   el('small', {}, 'Set each hole\'s par and handicap index. The yards are the game\'s own, measured along each hole\'s line through its aim points; to change them, move the tees, the aim points or the green. Blue, white and red are the game\'s names for the back, middle and front tees -- players start on white -- and a hole with one tee plays the same from all three. * = worked out for you.'),
+   el('table', {}, el('thead', {}, el('tr', {}, ...['Hole', 'Par', 'Index', 'Blue', 'White', 'Red'].map(t => el('th', {}, t)))),
+    el('tbody', {}, ...(st.holesN === 18 ? [...body.slice(0, 9), ...half] : body), total('Total', rows))),
+   twice.length ? el('small', {class: 'cb-err'}, `Handicap index on more than one hole: ${twice.join(', ')} -- each hole needs its own.`) : null,
+   skipped.length ? el('small', {class: 'cb-err'}, `The game skips an aim point that is no farther on than the one before (or is at the green): ${skipped.map(x => `hole ${x.n + 1} (${x.c.skipped})`).join(', ')}.`) : null);
+ }
  function stepHoles() {
-  const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n]; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
+  const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
   const marks = [['back', 'Back tee'], ['middle', 'Middle tee'], ['front', 'Front tee'], ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, onclick: () => { st.mark = m; go(3); }}, t));
   return [el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
-   el('small', {}, 'Click the plan: the back tee (the middle and front if you like), any aim points where the hole bends, in order, and the green.'),
+   el('small', {}, 'Click the plan: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
    el('select', {class: 'cb-holes', onchange: e => { st.holesN = +e.target.value; go(3); }}, [18, 9].map(n => el('option', {value: n, selected: n === st.holesN}, `${n} holes`))),
    el('div', {class: 'cb-btns'}, ...marks),
    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.hole = Math.max(0, st.hole - 1); st.mark = 'back'; go(3); }}, 'Previous hole'),
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { st.hole = Math.min(st.holesN - 1, st.hole + 1); st.mark = 'back'; go(3); }}, 'Next hole'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole] = {tees: [], aims: [], green: null}; go(3); }}, 'Clear this hole'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole]?.aims.pop(); go(3); }}, 'Drop last aim')), list),
+  scorecard(),
   next(4, 'Next: the name')];
  }
  function markAt(p) {
@@ -1038,12 +1095,12 @@ export function open(draft = null) {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course, painted'),
    el('small', {}, 'Every surface as the course will have it -- the outlines smoothed, the specks gone -- in the landscape\'s colours, with the trees and the holes. Go back to any step to change it.'),
    card, el('small', {}, 'Checks'), found,
-   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real'})}, 'Open in the editor'))];
+   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real', back: remount})}, 'Open in the editor'))];
  }
  // The course made (docFromLand) and drawn from the world the game will
  // build from it, so what is shown is what will be played.
  async function paintCourse(card, found) {
-  const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, tees: h.tees, green: h.green, line: holeLine(h)}));
+  const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
    const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
@@ -1074,8 +1131,17 @@ export function open(draft = null) {
   view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView},
   picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land,
   trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes} : null});
- setSaver({key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
-  said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)});
+ const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
+  said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
+ setSaver(saver);
+ // BACK FROM THE 3D EDITOR (the owner, 1 November 2026: "add a button to go
+ // back to the 2d editor from the 3d editor"): door 2 shown again as it was
+ // left -- the same plan, layers, pictures and steps -- at the review.
+ function remount() {
+  show(section); setTitle('Real life course'); topTools(backButton()); setSaver(saver);
+  go(can(5) ? 5 : 3); plan.fit();
+  say('Back from the 3D editor: the trace as you left it. Change anything in the steps, then Open in the editor again.');
+ }
  if (draft) restore(draft);
  else { go(0); say('Start with the LIDAR files.'); }
 

@@ -94,3 +94,23 @@ button,input,select{font:inherit;color:inherit}
 .cb-door2 .cb-btn.cb-result:hover .cb-resultgo{color:inherit}
 .cb-door2 .cb-foldername{color:var(--hot)}
 .cb-door2 .cb-folderfiles{font-size:12px;max-height:180px;overflow:auto}
+/* Selects and fields never wider than the steps' column (the trees choice ran off it). */
+.cb-door2 .cb-steps select,.cb-door2 .cb-steps input{max-width:100%;min-width:0;box-sizing:border-box}
+.cb-door2 .cb-btns>*{min-width:0}
+/* The holes step's scorecard. */
+.cb-door2 .cb-card table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0}
+.cb-door2 .cb-card th,.cb-door2 .cb-card td{padding:2px 4px;text-align:right;border-bottom:1px solid var(--line)}
+.cb-door2 .cb-card th:first-child,.cb-door2 .cb-card td:first-child{text-align:left}
+.cb-door2 .cb-card th{color:var(--soft);font-weight:700}
+.cb-door2 .cb-card tr.cb-cur td{color:var(--hot)}
+.cb-door2 .cb-card tr.cb-cardsum td{font-weight:800;border-bottom:2px solid var(--line)}
+.cb-door2 .cb-card select{font-size:12px;padding:0 2px}
+/* Selects outside a field (the editor's par, door 2's rows of choices) styled as the fields' are. */
+.cb-btns select,.cb-side select,.cb-card select{background:#03100e;border:1px solid var(--line);padding:4px 6px;min-width:0}
+.cb-btns select option,.cb-side select option{background:#03100e}
+/* The plan's canvas never sets the layout's height: its pixel size follows the
+   box, not the other way (coming back from the editor it held a stale size
+   and pushed the bar below the window). */
+.cb-door2{grid-template-rows:minmax(0,1fr)}
+.cb-door2 .cb-planbox{min-height:0;overflow:hidden}
+.cb-door2 canvas.cb-plan{height:0;flex:1 1 0}

@@ -16,7 +16,7 @@
 // LIDAR files reach, in yellow ('coverage'; the owner, 1 November 2026).
 const ORDER = ['relief', 'coverage', 'picture', 'codes', 'course'];
 
-export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
+export function createPlanView(canvas, {onTool = null, overlay = null, onWindowChange = null} = {}) {
  const ctx = canvas.getContext('2d');
  const v = {scale: 1, cx: 0, cz: 0, land: null, layers: {}, show: {relief: true, coverage: true, picture: true, codes: true, course: true}, alpha: {}, order: ORDER.slice(), shift: {}, tool: 'move', space: false};
  let raf = 0, drag = null;
@@ -97,5 +97,8 @@ export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
  window.addEventListener('keydown', e => { if (e.code === 'Space' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) { v.space = true; e.preventDefault(); } });
  window.addEventListener('keyup', e => { if (e.code === 'Space') v.space = false; });
  new ResizeObserver(() => api.draw()).observe(canvas);
+ // A window moved to a screen of another pixel density changes no size:
+ // drawn again (size() takes the new density), the view kept on its middle.
+ api.stopWatching = onWindowChange?.(() => api.draw());
  return api;
 }

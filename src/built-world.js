@@ -285,25 +285,44 @@ const lerpLine = (pts, z) => {
  for (let i = 1; i < pts.length; i++) if (z <= pts[i].z) { const a = pts[i - 1], b = pts[i], t = (z - a.z) / (b.z - a.z || 1); return a.x + (b.x - a.x) * t; }
  return pts[pts.length - 1].x;
 };
+// A BUILT HOLE'S PLAYING LINE AND YARDS, as the game measures them (the
+// builder's scorecard asks this too, so the card it shows is the card the
+// game plays; the owner, 1 November 2026: "We need to add a scorecard section
+// to the holes step"). The frame: the back tee (the tee farthest from the
+// green) at the origin, +z towards the green, placeHole's turn. The line runs
+// from the back tee through each bend to the green; a bend no farther on than
+// the one before, or within a metre of the green, is skipped (`skipped`) --
+// the centre must be a function of the distance down the hole. The three tee
+// sets, blue, white and red, are the tees by distance, farthest first, spread
+// over the three (one tee plays all three; two make white and red the
+// nearer). A tee's yards are along the line from where it stands across it.
+export function builtLine(rec) {
+ const tees = [...rec.tees].sort((a, b) => Math.hypot(b.x - rec.green.x, b.z - rec.green.z) - Math.hypot(a.x - rec.green.x, a.z - rec.green.z));
+ const back = tees[0], dir = Math.atan2(rec.green.x - back.x, rec.green.z - back.z), c = Math.cos(dir), sn = Math.sin(dir);
+ const local = p => { const x = (p[0] ?? p.x) - back.x, z = (p[1] ?? p.z) - back.z; return {x: x * c - z * sn, z: x * sn + z * c}; };
+ const green = local(rec.green), length = Math.max(20, green.z);
+ const pts = [{x: 0, z: 0}]; let skipped = 0;
+ for (const p of (rec.line ?? []).slice(1, -1).map(local)) { if (p.z > pts[pts.length - 1].z + 1 && p.z < length - 1) pts.push(p); else skipped++; }
+ pts.push({x: green.x, z: length});
+ const center = z => lerpLine(pts, z);
+ const yardsFrom = t => { const z0 = Math.max(0, local(t).z); let d = 0, prev = {x: center(z0), z: z0}; for (let z = z0 + 1; z <= length; z += 1) { const q = {x: center(z), z}; d += Math.hypot(q.x - prev.x, q.z - prev.z); prev = q; } return d / YARD; };
+ const names = Object.keys(TEE_COLORS);
+ const sets = names.map((name, i) => tees[Math.min(tees.length - 1, Math.round(i * (tees.length - 1) / Math.max(1, names.length - 1)))]);
+ return {tees, back, dir, local, green, length, pts, center, skipped, names, sets, yards: Object.fromEntries(names.map((name, i) => [name, yardsFrom(sets[i])]))};
+}
 // A built hole: the game's hole contract (range.js buildRange keeps the
 // shortest list of it) from a stored record, measured against the field.
 export function builtHole(rec, index, s, bio, field, greenPolys) {
- const tees = [...rec.tees].sort((a, b) => Math.hypot(b.x - rec.green.x, b.z - rec.green.z) - Math.hypot(a.x - rec.green.x, a.z - rec.green.z));
- const back = tees[0], dir = Math.atan2(rec.green.x - back.x, rec.green.z - back.z);
+ const line = builtLine(rec), {back, dir} = line;
  const h = {built: true, hole: index, number: rec.number, par: rec.par, index: rec.index, settings: s, bio, seed: s.seed,
   ponds: [], bunkers: [], collections: [], trees: [], phase: 0, doglegAngle: 0, greenWave2: 0, greenWave3: 0, greenWave5: 0, greenAspect: 1, greenTurn: 0};
  // placeHole reads the pin, green, tee and centre to cache their world
  // places; they are set for real below and the caches written again.
  Object.assign(h, {pin: {x: 0, z: 0}, tee: {x: 0, z: 0}, length: 0, center: () => 0});
  placeHole(h, {x: back.x, z: back.z}, dir);
- const local = p => h.toLocal({x: p[0] ?? p.x, z: p[1] ?? p.z});
- const green = local(rec.green), length = Math.max(20, green.z);
- // The line in the hole's frame, kept running forward: a bend that turned
- // back on itself would make the centre a function of nothing.
- const pts = [{x: 0, z: 0}];
- for (const p of rec.line.slice(1, -1).map(local)) if (p.z > pts[pts.length - 1].z + 1 && p.z < length - 1) pts.push(p);
- pts.push({x: green.x, z: length});
- const center = z => lerpLine(pts, z);
+ // The line in the hole's frame, kept running forward (builtLine): a bend
+ // that turned back on itself would make the centre a function of nothing.
+ const {local, green, length, center} = line;
  // The fairway's half-widths, measured off the field every 4 m along the
  // line out to 70 m each side; zero where there is no fairway (a par 3).
  const STEP = 4, n = Math.ceil(length / STEP) + 1, left = new Float32Array(n), right = new Float32Array(n);
@@ -322,11 +341,8 @@ export function builtHole(rec, index, s, bio, field, greenPolys) {
  const gw = h.toWorld(green);
  const gpoly = greenPolys.find(p => polygonDistance(p, gw.x, gw.z) <= 0) || greenPolys.reduce((best, p) => !best || polygonDistance(p, gw.x, gw.z) < polygonDistance(best, gw.x, gw.z) ? p : best, null);
  const greenSize = gpoly ? Math.max(4, Math.sqrt(Math.abs(polygonArea(gpoly)) / Math.PI)) : 12;
- // A tee's yards along the playing line, as course-plan.js measures them.
- const yardsFrom = t => { const z0 = Math.max(0, local(t).z); let d = 0, prev = {x: center(z0), z: z0}; for (let z = z0 + 1; z <= length; z += 1) { const c = {x: center(z), z}; d += Math.hypot(c.x - prev.x, c.z - prev.z); prev = c; } return d / YARD; };
- const names = Object.keys(TEE_COLORS);
- const sets = names.map((name, i) => tees[Math.min(tees.length - 1, Math.round(i * (tees.length - 1) / Math.max(1, names.length - 1)))]);
- h.tees = Object.fromEntries(names.map((name, i) => { const q = local(sets[i]); return [name, {x: q.x, z: q.z, yards: yardsFrom(sets[i])}]; }));
+ // Each tee set's yards along the playing line, as course-plan.js measures them.
+ h.tees = Object.fromEntries(line.names.map((name, i) => { const q = local(line.sets[i]); return [name, {x: q.x, z: q.z, yards: line.yards[name]}]; }));
  Object.assign(h, {length, routeLength: length, yards: h.tees.blue.yards, center, width: z => Math.max(leftWidth(z), rightWidth(z)), leftWidth, rightWidth,
   fairwayStart: mowStart, mowStart, turnFraction: .5, greenSize, tee: {x: 0, z: 0}, green: {x: green.x, z: green.z}, pin: {x: green.x, z: green.z},
   bounds: {x: 80, minZ: -40, maxZ: length + 50}});

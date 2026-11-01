@@ -68,7 +68,7 @@ export const TIPS = {
  'Smooth all edges': 'Round every ragged edge of every layer',
  'Tidy specks': 'Take off tiny patches and fill tiny holes on every layer',
  'Undo': 'Take back the last change (Ctrl+Z)',
- 'Redo': 'Put back what Undo took (Ctrl+Y)',
+ 'Redo': 'Put back what Undo took (Ctrl+Shift+Z or Ctrl+Y)',
  'Picture on/off': 'Show or hide the picture',
  'Trace on/off': 'Show or hide the traced surfaces',
  'Smooth / cell view': 'Show the trace as the course will draw it, or as its painted cells',
@@ -87,10 +87,10 @@ export const TIPS = {
  // The editor.
  'From above': 'Look straight down on the whole course',
  'This hole': 'Frame the hole picked in the list',
- 'Par +': 'Raise this hole\'s par by one (after 6, back to 3)',
  'Check the course': 'Look for holes too short or long, tees off the ground, greens too steep, and more',
  'Play a test round': 'A computer golfer plays every hole; its scores show where a hole plays badly',
- 'Close': 'Leave this course for the builder\'s start (asks first if anything is not saved)',
+ 'Close': 'Close this course and go back to the builder\'s start (asks twice)',
+ 'Clear trees from tees and greens': 'Draw in every crown that reaches over a green or tee, and take out a tree with no room left; one Undo puts them back',
  'shown': 'Hide this layer from view (the course keeps it)',
  'hidden': 'Show this layer again',
 };

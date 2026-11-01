@@ -63,6 +63,7 @@ export default function ({journey, SHOTS}) {
  journey('builder-door-2', 'door 2 in order: LIDAR and the property boxed, land, place searched and imagery fetched and dragged, auto trace corrected by hand, nine holes with an aim point, name, the painted review, editor, saved; the game plays the file', async t => {
   const {page} = t;
   await page.setViewportSize({width: 1600, height: 1000});
+  const asked = []; page.on('dialog', d => { asked.push(d.message()); d.accept(); });
   // The stand-ins: OpenStreetMap's place search and USGS's tiles.
   t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/basemap\.nationalmap\.gov\//);
   let tiles = 0;
@@ -222,6 +223,16 @@ export default function ({journey, SHOTS}) {
   if (treesAfter <= treesBefore) throw Error('the tree zone should have planted trees');
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length) !== treesBefore) throw Error('Undo should take the zone\'s trees away');
+  // Ctrl+Shift+Z redoes (the owner, 1 November 2026); Ctrl+Z undoes again.
+  await page.locator('canvas.cb-plan').hover();
+  await page.keyboard.press('Control+Shift+KeyZ');
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length) !== treesAfter) throw Error('Ctrl+Shift+Z should redo the tree zone');
+  await page.keyboard.press('Control+KeyZ');
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length) !== treesBefore) throw Error('Ctrl+Z should undo it again');
+  // Clear trees from tees and greens: no crown left over a traced green.
+  await page.getByRole('button', {name: 'Clear trees from tees and greens'}).click();
+  const over = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, g = st.model.state.layers.masks.get('green'); if (!g) return 0; let n = 0; for (const t of st.model.state.trees) { const r = Math.ceil(t.crown / L.cell); const i0 = Math.round((t.x + L.halfX) / L.cell), j0 = Math.round((t.z + L.halfZ) / L.cell); for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < L.nx && j < L.nz && g[j * L.nx + i] && Math.hypot((i - i0) * L.cell, (j - j0) * L.cell) < t.crown - L.cell) { n++; j = 1e9; break; } } return n; });
+  if (over) throw Error(`no tree's crown should reach over a green after clearing: ${over}`);
   await page.getByRole('button', {name: 'Smooth all edges'}).click();
   await t.shot('corrected');
   await page.getByRole('button', {name: 'Next: the holes'}).click();
@@ -236,6 +247,15 @@ export default function ({journey, SHOTS}) {
   }
   const holes = await page.evaluate(() => window.fairwayBuilder.door2.holes.filter(h => h?.green && h.tees.length).length);
   if (holes !== 9) throw Error(`nine holes should be marked, not ${holes}`);
+  // The scorecard: nine holes and a total, the yards the game will measure;
+  // par and handicap index set by hand (hole 2 a par 5, index 1).
+  const card = await page.locator('.cb-card tbody tr').evaluateAll(rows => rows.map(r => [...r.children].map(c => c.querySelector('select')?.value ?? c.textContent)));
+  if (card.length !== 10 || card[9][0] !== 'Total' || !(+card[0][3] > 150) || card[0][4] !== card[0][3]) throw Error(`the scorecard should list nine holes and a total, white as blue with one tee: ${JSON.stringify(card.slice(0, 2))}`);
+  if (await page.locator('.cb-card input').count()) throw Error('the scorecard\'s yards are the game\'s, not typed');
+  await page.locator('.cb-par[data-hole="1"]').selectOption('5');
+  await page.locator('.cb-index[data-hole="1"]').selectOption('1');
+  if (await page.locator('.cb-par[data-hole="1"]').inputValue() !== '5') throw Error('hole 2\'s par should be set to 5');
+  await t.shot('scorecard');
   // Save from here: a stand-in save dialog (the harness hides Chrome's) -- the
   // first Save asks where, the second goes to the same file with one click.
   await page.evaluate(() => { window.__picks = 0; window.__writes = 0; window.showSaveFilePicker = async o => { window.__picks++; return {name: o.suggestedName, async createWritable() { return {async write() { window.__writes++; }, async close() {}}; }}; }; });
@@ -266,6 +286,8 @@ export default function ({journey, SHOTS}) {
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
   const doc = await page.evaluate(() => { const d = window.fairwayBuilder.door2.doc; return {holes: d.holes.length, line: d.holes[0].line.length, credits: d.credits, kinds: Object.entries(d.surfaces).filter(([, v]) => v.length).map(([k]) => k)}; });
   if (doc.line !== 3) throw Error(`hole 1's line should bend at its aim point: ${doc.line} points`);
+  const pi = await page.evaluate(() => { const h = window.fairwayBuilder.door2.doc.holes[1]; return [h.par, h.index]; });
+  if (pi[0] !== 5 || pi[1] !== 1) throw Error(`hole 2 should be a par 5, index 1, as set on the card: ${pi}`);
   if (!doc.kinds.includes('heather') || !doc.kinds.includes('green')) throw Error(`the course should carry the traced and painted surfaces: ${doc.kinds}`);
   if (!doc.credits.some(c => /USGS/.test(c))) throw Error('the imagery\'s credit should be on the course');
   console.log(`       auto trace: ${greens.toFixed(0)} m² of green; ${treesAfter - treesBefore} trees in the zone (undone); ${tiles} imagery tiles; review: ${doc.kinds.join(', ')}`);
@@ -294,11 +316,51 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-layers [data-eye="heather"]').click();
   if (!await page.evaluate(() => window.fairwayBuilder.editor.editor.isHidden('heather'))) throw Error('the editor should hide the heather layer');
   await page.locator('.cb-layers [data-eye="heather"]').click();
+  // Only the landscape's own ground types to paint (a links: heather, not
+  // pine straw), its sky, its trees' shape (a links' shrubs, round).
+  const paints = await page.locator('.cb-tools [data-tool^="paint:"]').evaluateAll(b => b.map(x => x.dataset.tool.slice(6)));
+  if (!paints.includes('heather') || paints.includes('pinestraw') || paints.includes('litter')) throw Error(`a links should offer its own ground types only: ${paints}`);
+  const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') shape = 'round'; else if (o.isInstancedMesh && o.geometry.type === 'ConeGeometry' && !shape) shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
+  if (look.sky !== '#c8d7df' || look.shape !== 'round') throw Error(`the editor should look like a links: ${JSON.stringify(look)}`);
+  // The tree height scale, at once in the view.
+  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; } }); return top; });
+  const top0 = await crownTop();
+  await page.locator('.cb-treescale').fill('1.5'); await page.waitForTimeout(200);
+  const top1 = await crownTop();
+  if (await page.evaluate(() => window.fairwayBuilder.editor.editor.state.treeScale) !== 1.5 || !(top1 > top0)) throw Error(`the tree height scale should grow the trees at once: ${top0} -> ${top1}`);
+  await page.locator('.cb-treescale').fill('1');
+  await page.getByRole('button', {name: 'Clear trees from tees and greens'}).click();
+  if (!/greens and tees|reaches over a green/.test(await page.locator('.cb-status').textContent())) throw Error('clearing trees should say what it did');
+  // The window resized: the view follows.
+  await page.setViewportSize({width: 1200, height: 800}); await page.waitForTimeout(300);
+  const fit = await page.evaluate(() => { const c = window.fairwayBuilder.editor.view.canvas, p = c.parentElement; return [c.width / devicePixelRatio, p.clientWidth]; });
+  if (Math.abs(fit[0] - fit[1]) > 2) throw Error(`the 3D view should follow the window: ${fit}`);
+  await page.setViewportSize({width: 1600, height: 1000});
+  // Back to 2D (asks, as the tree scale changed the course), the review
+  // shown again, then the editor once more.
+  const asked0 = asked.length;
+  await page.getByRole('button', {name: 'Back to 2D'}).click();
+  await page.waitForFunction(() => document.querySelector('.cb-door2') && window.fairwayBuilder.door2.step === 5 && window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
+  if (asked.length !== asked0 + 1) throw Error('going back to 2D with changes should ask once');
+  const planFit = await page.evaluate(() => { const c = document.querySelector('canvas.cb-plan'); return [c.width, Math.round(c.getBoundingClientRect().width * devicePixelRatio)]; });
+  if (Math.abs(planFit[0] - planFit[1]) > 2) throw Error(`door 2's plan should fill its place again: ${planFit}`);
+  // ...and its bar and notes inside the window (a stale canvas size once
+  // pushed them below it).
+  const below = await page.evaluate(() => ['.cb-planbar', '.cb-note'].map(q => document.querySelector(q).getBoundingClientRect().bottom - innerHeight));
+  if (below.some(v => v > 1)) throw Error(`door 2's plan bar and notes should be inside the window: ${below}`);
+  await t.shot('back-to-2d');
+  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.waitForFunction(() => window.fairwayBuilder?.editor?.view && document.querySelector('.cb-view canvas'), null, {timeout: 120000});
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-2.fairway');
   await download.saveAs(file);
   const bytes = fs.readFileSync(file);
   if (bytes[0] !== 0x50) throw Error('the saved file is not a built course');
+  // Close asks twice, then the builder's start.
+  const asked1 = asked.length;
+  await page.getByRole('button', {name: 'Close', exact: true}).click();
+  await page.waitForSelector('.cb-door', {timeout: 10000});
+  if (asked.length !== asked1 + 2) throw Error(`Close should ask twice: ${JSON.stringify(asked.slice(asked1))}`);
   await playOneShot(t, bytes, 'builder-door-2');
  });
 }

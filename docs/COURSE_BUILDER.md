@@ -517,6 +517,79 @@ After trying the builder, the owner amended the goal:
     a later visit, and the folder remembered between visits are for the
     owner to see.
 
+16. **The owner's second list that day** (1 November 2026, after trying
+    door 2 and the editor):
+    - "the trees dropdown trails off the edge of the menu" -- it sat in a
+      two-column row; now on its own line, and no select or field in the
+      steps is wider than the column.
+    - "we need to add 're do' ctrl+shift+z" -- door 2 took Ctrl+Shift+Z as
+      Undo (it only checked Z); it redoes now, as in the editor.
+    - "when there is more than a single aim point, what does that do in
+      game?" -- answered from the code (built-world.js `builtLine`): the
+      hole's line runs from the back tee through every aim point in turn to
+      the green, so two make a double dogleg; the yards are measured along
+      it, the computer golfers and the tee shot aim along it, and a point no
+      farther down the hole than the one before (or within a metre of the
+      green) is skipped. The holes step now says so, and names a hole whose
+      aim point the game would skip.
+    - "We need to add a scorecard section to the 'holes' step", then "let
+      the user set the par. per hole and edit the card (not yardage tho)" --
+      the **Scorecard**: par and handicap index set per hole (or worked out:
+      par from the blue yards, the index down the card), and the blue, white
+      and red yards as the game measures them, not editable; Out, In and
+      Total. The editor's **Par +** became a par select.
+    - "window needs to properly resize when its moved or changed" -- both
+      views followed size changes already; a window moved to a screen of
+      another pixel density changes no size, so neither heard of it. They
+      watch the density too now (builder.js `onWindowChange`). Found on the way, by the journey's screenshot: coming back from the 3D editor, door 2's plan canvas kept a stale pixel size that the layout let set its height, pushing the zoom bar and the notes below the window; the canvas now takes its height from its box, never the other way (builder.css), and the journey checks the bar is inside the window.
+    - Fill outside, removing: "We should also remove trees that had been
+      placed from the LIDAR. Remove EVERYTHING outside the course boundary
+      before filling" -- every surface, house and tree outside comes off
+      first, the survey's trees too.
+    - "When in the 3d editor. Only allow the user to paint or place ground
+      and objects from that biome" -- the editor's Paint and Outline offer
+      the landscape's own layers (layers.js `layersFor`, as door 2 does);
+      trees planted are the landscape's own species (kind -1); another
+      landscape picked, the tools change.
+    - "the 3d editor needs to look like the biome you are editing as well.
+      Everything looks like just pine trees right now" -- the editor's sky
+      and its trees are the landscape's: a shape for its tree kind
+      (`treeKind`) in its tree colour, each tree its own shade, on a trunk
+      (view.js). Stand-ins still: the game draws the real models.
+    - "add a button to go back to the 2d editor from the 3d editor" --
+      **Back to 2D**, when the course came from door 2: door 2 shown again
+      as it was left, at the review. **Decided**: what was changed in 3D is
+      not carried back (the trace is cells, the editor's course outlines and
+      a shaped land; carrying one into the other is its own piece of work),
+      so it asks first when anything changed.
+    - "close needs a double confirm if its going to fully close the project
+      in the builder" -- Close asks twice, the second time saying what is
+      unsaved; door 2's Back to the start asks twice once there is work.
+    - "when importing a course. The yardage seems off. I think we might need
+      to change things in the builder to make that import correctly?" --
+      **Measured, not a loss in the import**: on the Worthington file the
+      game's blue yards equal the builder's line to within a yard on every
+      hole (the same routine now: builtLine). What makes it look off: (1)
+      **players start on the white tees**, which are the builder's *middle*
+      tees -- Worthington's hole 1 plays 287 from white, 337 from blue; (2)
+      **a hole marked straight measures straight**, where a club's card
+      measures round its doglegs (Worthington: 22 yards short at the median
+      without bends); (3) **par was worked from the straight line** -- now
+      from the yards along the line. The scorecard shows all three tees as
+      the game will play them, so it no longer surprises after import.
+    - "we need to make sure that we don't have trees encroaching massively
+      over greens and tees. Lets add a function to 'clear trees from tees
+      and greens' that will resize tree shapes" -- in door 2's trace tools
+      and the editor (tree-clear.js): a crown over a green or tee drawn in to
+      stop 1.5 m short of it (PLACED), a tree left with under 1.2 m of crown
+      (PLACED) or standing on it taken out; one undo.
+    - "In the editor, allow the user to adjust the tree height scale. show
+      in real time" -- **Tree height**, 0.5 to 2 times, every tree redrawn as
+      it is dragged; saved into the trees' heights (and trunks) when the
+      course is saved (editing.js `treeScale`).
+    **Built that day, not yet played by a person** (the journeys drive each:
+    builder-door-2, builder-door-2-osm, builder-lidar-folder, builder-tools).
+
 **The work remaining** (written into the goal at the owner's request, 1
 November 2026), in the order it will be done:
 
@@ -588,7 +661,9 @@ trace), 3 (zoom and drag), 5 and 6 (imagery), 7 (layers), 8 (the painted
 review), 9 (OpenStreetMap first), 10 (the 1 November list), 11 (the LIDAR
 and the picture together, the lock), 12 (move a shape), 13 (find and
 download LIDAR, kept pictures, drafts), 14 (rockyweb, state portals), 15 (the
-LIDAR folder, tooltips, whose trees, keep or remove outside, coverage); stage
+LIDAR folder, tooltips, whose trees, keep or remove outside, coverage), 16
+(the scorecard, Back to 2D, the landscape's look and tools, clearing trees,
+tree height, redo, resizing); stage
 8, the auto trace -- 4 and 5 (the iterations to 90%: picture 52 so far,
 LIDAR 9), 10's OpenStreetMap lined up by the LIDAR; stage 6, the readers --
 13's State Plane; stage 1, the game -- BUILT_VERSION 2 (each green its own).

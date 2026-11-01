@@ -622,25 +622,45 @@ the file to anyone else who has Fairway. It opens on three doors.
      **Smooth / cell view** switches to the cells. **Course boundary**: draw
      a line round the course (OpenStreetMap's comes with it when it has
      one), choose what happens to what is already outside it --
-     **Remove what is there** (every surface and house outside comes off:
-     OpenStreetMap's roads, ponds and the neighbours' houses) or **Keep what
-     is there** (they all stay; the ground goes in only where nothing is laid,
-     and no tree on them) -- then **Fill outside it**: the
+     **Remove everything there** (every surface, house and tree outside comes
+     off first, the survey's trees too: OpenStreetMap's roads, ponds and the
+     neighbours' houses) or **Keep what is there** (they all stay; the ground
+     goes in only where nothing is laid, and no tree on them) -- then **Fill outside it**: the
      landscape's own ground goes in (pine straw, leaves, the desert floor or
      native grass) with a wood -- 150 trees a hectare where needles or leaves
      fall, 15 on a links, desert or island, 80 elsewhere -- thinning in from
-     the line; the survey's own trees stay. Past the land, the game's
+     the line. Past the land, the game's
      landscape carries on as round any generated course. Undo and Redo
-     (Ctrl+Z, Ctrl+Y) cover every stroke.
+     (Ctrl+Z; Ctrl+Shift+Z or Ctrl+Y) cover every stroke. **Clear trees from
+     tees and greens** draws in every tree's crown that reaches over a
+     traced green or tee, to stop a metre and a half short of it, and takes
+     out a tree with no room left (or one standing on it); Undo puts them
+     back.
   4. **Holes**: for each hole, left-click its **Back tee** (the middle and
-     front if you like), any **Aim points** where it bends, in order, and its
-     **Green**; then **Next hole**. 9 or 18.
+     front if you like), any **Aim points** where it bends, in order from the
+     tee, and its **Green**; then **Next hole**. 9 or 18. The game draws
+     each hole's line through its aim points in turn -- two make a double
+     dogleg -- measures its yards along that line, and points the tee shot
+     at the first; an aim point no farther on than the one before (or at the
+     green) is skipped, and the step says so. The **Scorecard** under the
+     holes: each hole's **par** and **handicap index**, which you set (a *
+     marks one worked out for you: par from the yards, the index down the
+     card), and its yards from the **blue, white and red** tees -- the game's
+     names for the back, middle and front tees -- exactly as the game will
+     measure them. The yards are not typed: move the tees, aim points or
+     green to change them. Players start on the white tees, so a hole with a
+     middle tee plays shorter than its back tee for most rounds; a hole with
+     one tee plays the same from all three. Out, In and Total add up.
   5. **Name**: the name, the landscape, and the credits for the data (an
      imagery provider's is added for you).
   6. **Review**: the whole course painted as it will be built -- every
      surface smoothed, in the landscape's colours, with the trees and the
      holes -- its card, and the checks. Go back to any step to change
-     anything, or **Open in the editor**.
+     anything, or **Open in the editor**; the editor's **Back to 2D** comes
+     back here with the trace as you left it (what you changed in 3D is not
+     carried back, and it asks first if you changed anything). **Back**
+     (top right) to the builder's start asks twice once there is work in
+     the course.
 - **Open a course file** to carry on with one you saved or one somebody gave
   you, or a door 2 draft.
 
@@ -655,7 +675,16 @@ saved, the button says **Save again** and one click writes the same file;
 rename the course and Save asks for a new file. (Chrome and Edge write to
 the file you chose; other browsers download a new copy each time.)
 
-**The editor** is the same for all three, and has the same **Layers**: every
+**The editor** looks like the course's landscape -- its sky, its ground
+colours, its trees drawn as the landscape grows them (cones for the
+Pacific Northwest's pines, the mountains' spruces and the redwoods; round
+crowns for the oak landscapes, copper and gold in Autumn; palms on the
+Island; low spreading trees in the Desert; squat shrubs on a links) -- and
+offers only that landscape's own ground types to paint (another landscape
+picked, the tools change with it). **Tree height** scales every tree's
+height at once, as you drag, and the course is saved at that scale;
+**Clear trees from tees and greens** does what it does in door 2. It is the
+same for all three doors, and has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
 with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
 surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
@@ -674,13 +703,15 @@ the brush -- the game builds each one from where it stands; **Move shape**
 picks up a house, a tree, or one surface's patch under the pointer and puts
 it down where you let go, and **Turn shape** turns one as you drag round
 its middle (Undo puts either back). The holes
-list moves tees and greens, adds a bend to a hole's line and changes par.
+list moves tees and greens, adds a bend to a hole's line, and sets the
+picked hole's par.
 **Check the course** lists what breaks a rule (a tee off its pad or in
 water, a green too small or too steep, a tree on a green) and clicking one
 flies there; **Play a test round** has two virtual golfers play every hole
 and reports their strokes and any hole they could not finish. Undo and Redo
-(Ctrl+Z, Ctrl+Y) cover everything. **Save** (top right, or Ctrl+S) writes
-the .fairway file.
+(Ctrl+Z; Ctrl+Shift+Z or Ctrl+Y) cover everything. **Save** (top right, or Ctrl+S) writes
+the .fairway file. **Close** asks twice before it closes the course. Both
+views follow the window when it is resized or moved to another screen.
 
 **A course built from real land** plays the real ground to the centimetre;
 its holes run straight from the back tee to the green until you add their

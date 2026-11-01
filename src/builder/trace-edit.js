@@ -140,14 +140,14 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
   // past the boundary ring every layer comes off and `ground`'s is laid (the
   // landscape's own floor; null leaves rough), and a wood is scattered at
   // `density` trees a hectare, thinning from none at the line to full
-  // `edge` metres out, where no tree already stands. The survey's own trees
-  // there stay. (Past the land itself the game's landscape rings carry on, as
-  // round every generated course.) WHAT WAS THERE (the owner, 1 November
-  // 2026: "When filling outside the course boundaries, give the option to
-  // remove OSM data or keep it"): `keep` false takes every surface and house
-  // outside off (the neighbours' roads, ponds and gardens); `keep` true
-  // leaves each surface and house where it is, lays the floor only on bare
-  // ground, and plants no tree on a surface or a house.
+  // `edge` metres out, where no tree already stands. (Past the land itself
+  // the game's landscape rings carry on, as round every generated course.)
+  // WHAT WAS THERE (the owner, 1 November 2026: "give the option to remove
+  // OSM data or keep it"; then "Remove EVERYTHING outside the course boundary
+  // before filling"): `keep` false takes every surface, house and tree
+  // outside off -- the survey's trees too -- before the floor and the wood go
+  // in; `keep` true leaves each surface, house and tree where it is, lays the
+  // floor only on bare ground, and plants no tree on a surface or a house.
   fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false} = {}) {
    if (!ring || ring.length < 3) return 0;
    const G = ground && ground !== 'rough' ? layerOf(ground) : null;
@@ -167,7 +167,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
     }
     keepTrees();
     const onHome = (x, z) => s.homes.some(h => Math.hypot(h.x - x, h.z - z) < Math.max(h.width, h.depth) / 2 + 3);
-    if (!keep) { keepHomes(); s.homes = s.homes.filter(h => inside(ring, h.x, h.z)); }
+    if (!keep) { keepHomes(); s.homes = s.homes.filter(h => inside(ring, h.x, h.z)); s.trees = s.trees.filter(t => inside(ring, t.x, t.z)); }
     const spacing = Math.sqrt(1e4 / density), stood = new Map(), at = (x, z) => `${Math.floor(x / spacing)},${Math.floor(z / spacing)}`;
     for (const t of s.trees) { const c = at(t.x, t.z); stood.set(c, (stood.get(c) || 0) + 1); }
     for (let z = -halfZ; z <= halfZ; z += spacing) for (let x = -halfX; x <= halfX; x += spacing) {

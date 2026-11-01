@@ -11370,6 +11370,35 @@ in a survey pit, and the test golfers putted at it forty times: 168 strokes
 against par 71. With each outer ring a green of its own (built-world.js
 `greenParts`): 88.5 strokes, nothing stuck.
 
+## A built course's yards, and the builder's card (1 November 2026)
+
+The owner found an imported course's yards "off". Measured on the
+Worthington file door 2 made (tools: a script reading the file, the game's
+world from it, and the builder's line): the game's blue yards equal the
+length of the builder's line, tee through bends to green, to within 1 yard
+on all 18 holes (5,899 against 5,889 in all; the game steps the line a metre
+at a time). Nothing is lost in the import. Three things make it look off:
+**the white tees** -- every player starts on white (main.js), and white is
+the builder's middle tee where a hole has two (the tees by distance:
+farthest blue, the next white and red; with three, one each), so hole 1
+reads 287 yards to a player and 337 from the back; **holes marked straight**
+measure straight, where the club's card measures round its doglegs (22 yards
+short at the median, 84 at worst, on Worthington's clicked holes); and
+**par was worked from the straight line** from the back tee to the green
+(real-course.js) -- now from the yards along the line, as the game measures
+them. The game's measure is one routine now, built-world.js `builtLine`,
+which the builder's scorecard and its par read too; the refactor left every
+yard on five built courses exactly as it was (compared before and after).
+An aim point no farther down the hole than the one before, or within a
+metre of the green, is skipped by the game (the line must keep running
+forward); the builder names the holes where that happens.
+
+**Clearing trees from tees and greens** (tree-clear.js): a crown is drawn in
+to stop 1.5 m short of the nearest green or tee cell's edge (PLACED: the
+collar and a little air) and a tree with under 1.2 m of crown left (PLACED:
+less reads as a pole), or standing on the turf, is taken out; the height is
+kept. Not measured on a real course yet.
+
 ## Whose trees, when OpenStreetMap is laid on the LIDAR (1 November 2026)
 
 The owner built Nile Shrine (Mountlake Terrace, WA) in the builder and lost

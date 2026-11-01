@@ -88,7 +88,10 @@ export default function ({journey}) {
   if (!cover.layer || !cover.shown || !(cover.share > .5)) throw Error(`the files' coverage should show yellow over the relief: ${JSON.stringify(cover)}`);
   await t.shot('coverage');
   // Door 2 again: the same square read from the folder, nothing downloaded.
+  // Back asks twice when door 2 holds work (both answered yes).
+  const asked = []; page.on('dialog', d => { asked.push(d.message()); d.accept(); });
   await page.getByRole('button', {name: 'Back', exact: true}).click();
+  if (asked.length !== 2) throw Error(`leaving door 2 with work in it should ask twice: ${JSON.stringify(asked)}`);
   await page.getByRole('button', {name: /Generate a real life course/}).click();
   if (!/Downloads/.test(await page.locator('.cb-foldername').textContent())) throw Error('door 2 should remember the LIDAR folder');
   await findAndSearch();

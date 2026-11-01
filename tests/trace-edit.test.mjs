@@ -110,7 +110,7 @@ test('extrapolate lays one layer round another: under it unbroken, over it only 
  assert.equal(t.kindAt(0, 0), 'fairway'); assert.equal(t.kindAt(11, 0), 'sand');
 });
 
-test('outside the boundary: every layer off, the landscape\'s floor laid, a wood thinning in from the line', () => {
+test('outside the boundary: every layer and tree off, the landscape\'s floor laid, a wood thinning in from the line', () => {
  const t = createTrace(grid);
  t.fill([[[-40, -40], [40, -40], [40, 40], [-40, 40]]], 'fairway');
  t.addTree({x: 45, z: 45, h: 20, crown: 5});
@@ -120,8 +120,10 @@ test('outside the boundary: every layer off, the landscape\'s floor laid, a wood
  assert.equal(t.kindAt(35, 0), 'pinestraw', 'outside: the floor, no fairway');
  assert.ok(planted > 20, `${planted} trees planted`);
  assert.ok(t.state.trees.every(tr => Math.abs(tr.x) > 30 || Math.abs(tr.z) > 30), 'none inside');
- assert.ok(t.state.trees.some(tr => tr.x === 45 && tr.z === 45), 'the survey\'s own tree stays');
+ assert.ok(!t.state.trees.some(tr => tr.x === 45 && tr.z === 45), 'the survey\'s own tree outside taken off too');
  t.undo(); assert.equal(t.kindAt(35, 0), 'fairway'); assert.equal(t.state.trees.length, 1, 'one undo step');
+ const k = createTrace(grid); k.addTree({x: 45, z: 45, h: 20, crown: 5}); k.fillOutside(ring, {density: 200, edge: 5, seed: 3, keep: true});
+ assert.ok(k.state.trees.some(tr => tr.x === 45 && tr.z === 45), 'kept when keeping what is there');
 });
 
 test('outside the boundary, keeping what is there: surfaces and houses stay, the floor goes on bare ground, no tree on a surface; removing takes houses too', () => {

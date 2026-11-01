@@ -33,15 +33,16 @@ export function surfaceColours(key) {
  });
 }
 
-export function createView(parent, editor, {onReady = () => {}} = {}) {
+export function createView(parent, editor, {onReady = () => {}, onWindowChange = null} = {}) {
  const s = editor.state, r = s.raster, L = s.land;
  const renderer = new T.WebGLRenderer({antialias: true});
  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
  parent.append(renderer.domElement);
  renderer.domElement.tabIndex = 0;
  const scene = new T.Scene();
- scene.background = new T.Color('#a9cfe8');
- scene.fog = new T.Fog('#a9cfe8', 1500, 6000);
+ // The landscape's own sky (biomes.js `sky`), set again when it changes.
+ const setSky = () => { const sky = new T.Color(biomeOf(s.landscape).sky || '#a9cfe8'); scene.background = sky; scene.fog = new T.Fog(sky, 1500, 6000); };
+ setSky();
  const camera = new T.PerspectiveCamera(50, 1, .5, 12000);
  scene.add(new T.HemisphereLight('#ffffff', '#8c9a7c', 2.3));
  const sun = new T.DirectionalLight('#fff4e0', 1.5); sun.position.set(-.5, 1, .35); scene.add(sun);
@@ -152,19 +153,47 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
    layers.water.add(new T.Mesh(geo, new T.MeshLambertMaterial({color: biomeOf(s.landscape).water || '#4a8fb0', side: T.DoubleSide})));
   }
  }
- const crown = new T.ConeGeometry(1, 1, 7); crown.translate(0, .5, 0);
+ // THE TREES AS THE LANDSCAPE GROWS THEM (the owner, 1 November 2026: "the
+ // 3d editor needs to look like the biome you are editing as well.
+ // Everything looks like just pine trees right now"): a stand-in shape for
+ // the landscape's tree (biomes.js `treeKind`) in its own colour, varied
+ // tree by tree, on a trunk -- conifers as cones (the Pacific Northwest's
+ // pines, the mountains' narrower spruces, the redwoods' on red trunks), a
+ // round crown on the oak landscapes (autumn's in copper, orange and gold,
+ // Haunted Hollow's dark), a palm's flat head on a tall trunk, the desert's
+ // low spreading mesquite, a links' squat shrub. The game draws the real
+ // models; these say what grows where. Heights times the editor's tree scale.
+ const cone = new T.ConeGeometry(1, 1, 8); cone.translate(0, .5, 0);
+ const ball = new T.IcosahedronGeometry(1, 1); ball.translate(0, 1, 0); ball.scale(1, .5, 1);
+ const stem = new T.CylinderGeometry(.7, 1, 1, 6); stem.translate(0, .5, 0);
+ // [crown geometry, where the crown starts (a share of the height), its
+ // width (a share of the crown), its height cap (a share of the crown's
+ // width; 0: none)].
+ const SHAPE = {pine: [cone, .2, 1, 0], spruce: [cone, .12, .75, 0], oak: [ball, .32, 1, 0], palm: [ball, .86, 1, .45], cactus: [ball, .3, 1.1, .9], shrub: [ball, 0, 1, 1.1]};
+ const AUTUMN = ['#b76427', '#c9852f', '#a8452a', '#d4a23c', '#8a6a2a', '#6f7d34'].map(c => new T.Color(c));
  function refreshTrees() {
   clear(layers.trees);
   if (!s.trees.length) return;
-  const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(crown, new T.MeshLambertMaterial({color: '#ffffff'}), n);
-  const m = new T.Matrix4(), q = new T.Quaternion(), roleCol = [new T.Color('#2f6b3a'), new T.Color('#1f5132'), new T.Color('#3f7d36'), new T.Color('#6b8f3a'), new T.Color('#4f8d4a')];
+  const bio = biomeOf(s.landscape), kind = SHAPE[bio.treeKind] ? bio.treeKind : 'oak', [geo, base, wide, cap] = SHAPE[kind], f = s.treeScale ?? 1;
+  const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : s.landscape === 'haunted' ? '#3a3036' : '#5b4634'}), n);
+  const m = new T.Matrix4(), q = new T.Quaternion(), own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
   for (let i = 0; i < n; i++) {
-   const [x, z, h, cr, , role] = s.trees[i];
-   m.compose(new T.Vector3(x, editor.height(x, z), z), q, new T.Vector3(Math.max(.6, cr), Math.max(.8, h), Math.max(.6, cr)));
-   mesh.setMatrixAt(i, m); mesh.setColorAt(i, roleCol[role & 7] || roleCol[0]);
+   // The shape at the tree's own height, then stretched up by the scale (a
+   // shrub capped by its width grows with it too).
+   const [x, z, h0, cr0, trunk] = s.trees[i], h = Math.max(.8, h0), cr = Math.max(.6, cr0) * wide, y = editor.height(x, z);
+   const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)) * f, y0 = y + h * base * f;
+   m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(i, m);
+   const tr = Math.max(.12, (trunk || h * .02) * f * (s.landscape === 'redwood' ? 1.6 : 1));
+   m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(i, m);
+   // Each tree its own shade: a hash of where it stands.
+   const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+   if (s.landscape === 'autumn') col.copy(AUTUMN[Math.floor(u * AUTUMN.length)]);
+   else { own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3)))); }
+   mesh.setColorAt(i, col);
   }
-  mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true; mesh.computeBoundingSphere();
-  layers.trees.add(mesh);
+  for (const g of [mesh, trunks]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
+  mesh.instanceColor.needsUpdate = true;
+  layers.trees.add(trunks, mesh);
  }
  // Houses: a block on each footprint, 6 m to the eaves (PLACED), its front
  // marked pale -- the game builds the house itself from the same record
@@ -208,11 +237,15 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
  const raycaster = new T.Raycaster(), ndc = new T.Vector2();
  let width = 1, height = 1;
  function resize() {
+  // The screen's density too: a window moved to another screen (it changes
+  // no size, so onWindowChange tells of it).
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
   width = parent.clientWidth || 1; height = parent.clientHeight || 1;
   renderer.setSize(width, height, false); renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%';
   camera.aspect = width / height; camera.updateProjectionMatrix();
  }
  new ResizeObserver(resize).observe(parent); resize();
+ const stopWatching = onWindowChange?.(resize);
  // Start over the first hole, looking down it from behind its tee.
  function frameHole(i = 0) {
   const h = s.holes[i] || s.holes[0], t = h.tees[0], g = h.green, dx = g.x - t.x, dz = g.z - t.z, len = Math.hypot(dx, dz) || 1;
@@ -285,10 +318,10 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
   },
   // Every surface redrawn smooth (a layer hidden or shown, the landscape changed).
   refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); },
-  refreshAll() { colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
+  refreshAll() { setSky(); colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
   texels: () => ({width: W, height: H, perCell: F}),
   refreshWater, refreshTrees, refreshHomes, refreshHoles, frameHole, planView,
   held, fly,
-  dispose() { running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
+  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
  };
 }

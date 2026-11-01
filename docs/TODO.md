@@ -95,6 +95,18 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   restart to have the route), IGN's in-page download end to end, a real
   save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
   same night: swissSURFACE3D found and downloaded in the page.)
+- [ ] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
+  owner's second list of 1 November 2026): the scorecard (par and index
+  set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
+  Back to 2D, Close and Back asking twice, the editor's landscape-only paint
+  and its landscape look, Tree height, Clear trees from tees and greens,
+  Fill outside removing the trees too, the views following the window.
+  Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
+  and builder-tools journeys and tests/tree-clear.test.mjs. **To check by
+  hand**: a window dragged to a second screen of another scaling (the
+  journeys only resize); how the editor's stand-in trees read against the
+  game's; clearing trees on a real course (not yet measured how many it
+  draws in at Worthington or Nile Shrine).
 - [ ] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
   owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
   folder (every download saved there, read back instead of downloaded

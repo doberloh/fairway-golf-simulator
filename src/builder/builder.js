@@ -24,7 +24,19 @@ const el = (tag, attrs = {}, ...kids) => {
  for (const c of kids.flat()) if (c != null && c !== false) n.append(c.nodeType ? c : String(c));
  return n;
 };
-export const ui = {el, root};
+// WHEN THE WINDOW CHANGES (the owner, 1 November 2026: "window needs to
+// properly resize when its moved or changed"): `f` called when the window is
+// resized and when it moves to a screen of another pixel density (a laptop's
+// screen and a monitor beside it) -- which changes no element's size, so a
+// ResizeObserver alone never hears of it. Returns a function that stops it.
+export function onWindowChange(f) {
+ let mq = null, stopped = false;
+ const watch = () => { mq?.removeEventListener('change', fire); if (stopped) return; mq = matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`); mq.addEventListener('change', fire); };
+ function fire() { if (stopped) return; watch(); f(); }
+ addEventListener('resize', f); watch();
+ return () => { stopped = true; removeEventListener('resize', f); mq?.removeEventListener('change', fire); };
+}
+export const ui = {el, root, onWindowChange};
 
 const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {class: 'cb-savenote', id: 'cbSaveNote'}), el('button', {class: 'cb-btn cb-hot', type: 'button', id: 'cbSave', hidden: true, title: 'Ctrl+S', onclick: () => saveNow()}, 'Save'), el('span', {id: 'cbTopTools'}));
 const main = el('main', {class: 'cb-main', id: 'cbMain'});

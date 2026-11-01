@@ -14,6 +14,7 @@ import {fileName} from '../course-file.js';
 import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
+import {layersFor} from './layers.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
@@ -23,14 +24,17 @@ let opened = 0;               // each course opened is its own piece of work for
 const SHAPES = [['raise', 'Raise'], ['lower', 'Lower'], ['smooth', 'Smooth'], ['flatten', 'Flatten'], ['ramp', 'Ramp'], ['roughen', 'Roughen'], ['restore', 'Restore']];
 const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 
-export function openEditor(doc, {from = 'file'} = {}) {
+// `back`: door 2's way back to its own steps (the owner, 1 November 2026:
+// "add a button to go back to the 2d editor from the 3d editor"), when the
+// course came from there.
+export function openEditor(doc, {from = 'file', back = null} = {}) {
  current?.view.dispose();
  const editor = createEditor(doc), s = editor.state;
  setTitle(s.name);
  const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools'}), side = el('div', {class: 'cb-side'});
  show(el('div', {style: 'position:absolute;inset:0'}, wrap, tools, side, status));
- const view = createView(wrap, editor);
+ const view = createView(wrap, editor, {onWindowChange: ui.onWindowChange});
  current = {editor, view};
  // The smoke journeys look (never drive) through this, as the game's do through lab.
  window.fairwayBuilder.editor = current;
@@ -64,7 +68,14 @@ export function openEditor(doc, {from = 'file'} = {}) {
  // Each tool's tooltip is its hint (HINT), as the status line gives it.
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), title: HINT[t.kind]?.(t) ?? text, onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
- const landscapeKinds = () => PAINT.filter(k => k !== 'water');
+ // ONLY THE LANDSCAPE'S OWN (the owner, 1 November 2026: "Only allow the
+ // user to paint or place ground and objects from that biome"): the turf,
+ // sand and path layers and the landscape's own ground types (layers.js
+ // layersFor, as door 2's trace offers them); water by its own tools. The
+ // trees planted are the landscape's own (a tree record's kind -1: the game
+ // grows the landscape's species). Another landscape picked, the tools change
+ // with it; a layer already painted from another stays in the Layers list.
+ const landscapeKinds = () => { const own = layersFor(BIOMES[s.landscape]); return PAINT.filter(k => k !== 'water' && own.includes(k)); };
  // THE LAYERS (the owner, 1 November 2026: "exposed in the editor as well in
  // real time"): every surface the course holds, top first, its area kept up
  // to date as it is painted; the eye hides one from the view (the course
@@ -79,7 +90,18 @@ export function openEditor(doc, {from = 'file'} = {}) {
     button('Erase', {kind: 'erase', surface: k}, {style: 'padding:2px 5px;font-size:11px'})); }));
  }
  const paintButtons = (kind) => el('div', {class: 'cb-btns'}, landscapeKinds().map(k => button(label(k), {kind, surface: k})));
- tools.replaceChildren(
+ // The tree height scale, as the slider is dragged (editing.js treeScale).
+ const scaleText = el('span', {}, `${s.treeScale.toFixed(2)}x`);
+ let scaling = 0;
+ const treeScale = el('input', {type: 'range', min: .5, max: 2, step: .05, value: s.treeScale, class: 'cb-treescale', title: 'Every tree\'s height, as drawn and as saved', oninput: e => {
+  editor.setTreeScale(+e.target.value); scaleText.textContent = `${s.treeScale.toFixed(2)}x`; refreshSave();
+  if (!scaling) scaling = requestAnimationFrame(() => { scaling = 0; view.refreshTrees(); });
+ }});
+ function clearTurfTrees() {
+  const got = editor.clearTreesFromTurf(); view.refreshTrees();
+  status.textContent = got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.';
+ }
+ const buildTools = () => tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
    button('Move', {kind: 'navigate'}),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'From above'),
@@ -94,12 +116,15 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Move shape', {kind: 'moveShape'}), button('Turn shape', {kind: 'turnShape'}))),
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Move shape', {kind: 'moveShape'}), button('Turn shape', {kind: 'turnShape'})),
+   el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
+   el('label', {}, 'Tree height ', scaleText, treeScale)),
  );
+ buildTools();
 
  // ---- the right: the course, its holes, the checks, Save.
  const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); refreshSave(); }});
- const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); view.refreshAll(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
+ const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); view.refreshAll(); buildTools(); setTool({kind: 'navigate'}); refreshLayers(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
  const holeList = el('ul');
  const checkList = el('ul'), roundList = el('ul');
  async function runTest() {
@@ -110,16 +135,20 @@ export function openEditor(doc, {from = 'file'} = {}) {
    lines.unshift(el('li', {style: 'color:var(--hot)'}, `${r.total.toFixed(1)} on average against par ${r.par}`)); roundList.replaceChildren(...lines);
   } catch (e) { roundList.replaceChildren(el('li', {}, 'Could not play it: ' + e.message)); }
  }
+ const parSelect = el('select', {class: 'cb-epar', title: 'The picked hole\'s par', onchange: e => { editor.setPar(selected, +e.target.value); refreshHoles(); }}, [3, 4, 5, 6].map(v => el('option', {value: v}, `Par ${v}`)));
  const holeTools = el('div', {class: 'cb-btns'},
   button('Back tee', {kind: 'tee', set: 'back'}), button('Middle tee', {kind: 'tee', set: 'middle'}), button('Front tee', {kind: 'tee', set: 'front'}),
   button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}),
-  el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.setPar(selected, s.holes[selected].par >= 6 ? 3 : s.holes[selected].par + 1); refreshHoles(); }}, 'Par +'));
+  // Par set by hand, hole by hole (the owner, 1 November 2026: "let the user
+  // set the par. per hole"); the yards are the line's, not typed.
+  parSelect);
  function refreshHoles() {
   holeList.replaceChildren(...s.holes.map((h, i) => {
    const len = h.line.reduce((d, p, k) => k ? d + Math.hypot(p[0] - h.line[k - 1][0], p[1] - h.line[k - 1][1]) : 0, 0);
    return el('li', {style: i === selected ? 'color:var(--hot)' : '', onclick: () => { selected = i; refreshHoles(); view.frameHole(i); }}, `Hole ${h.number} · par ${h.par} · ${Math.round(len / .9144)} yd`);
   }));
   view.refreshHoles(selected);
+  parSelect.value = String(s.holes[selected]?.par ?? 4);
  }
  function runChecks() {
   const found = checkCourse(editor);
@@ -132,8 +161,21 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList,
   el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);
  refreshHoles(); refreshLayers();
+ // CLOSE ASKS TWICE (the owner, 1 November 2026: "close needs a double
+ // confirm if its going to fully close the project in the builder"): Close
+ // ends the course and goes back to the builder's start, so it asks, and
+ // then asks again -- the second time saying what is not saved.
+ const leave = () => { current?.view.dispose(); current = null; document.removeEventListener('keydown', onKey); };
  topTools(
-  el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (!s.changed || confirm('Leave this course? Anything not saved is lost.')) { current?.view.dispose(); current = null; home(); } }}, 'Close'));
+  back ? el('button', {class: 'cb-btn', type: 'button', title: 'Back to door 2\'s steps, the trace as you left it (what was changed here in 3D is not carried back)', onclick: () => {
+   if (s.changed && !confirm('Go back to the 2D steps? What you changed here in the 3D editor is not carried back: the course is made again from the trace when you return.')) return;
+   leave(); back();
+  }}, 'Back to 2D') : null,
+  el('button', {class: 'cb-btn', type: 'button', onclick: () => {
+   if (!confirm('Close this course and go back to the builder\'s start?')) return;
+   if (!confirm(s.changed ? 'Are you sure? It has changes that are not saved, and they will be lost.' : 'Are you sure? The course closes (anything saved stays in its file).')) return;
+   leave(); home();
+  }}, 'Close'));
 
  // ---- the mouse on the ground.
  const canvas = view.canvas;
