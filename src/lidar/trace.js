@@ -221,7 +221,10 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  if (P && fc) {
   const m = new Uint8Array(N);
   for (let k = 0; k < N; k++) {
-   if (off[k] >= 70 || sure[k] >= SURE || land.canopy[k] > 1) continue;
+   // Cells the LIDAR already called sand stay in the picture's patch: left out,
+   // they broke its bunkers into pieces too small to keep, and "both" scored
+   // under the picture alone.
+   if (off[k] >= 70 || (sure[k] >= SURE && codes[k] !== C.sand) || land.canopy[k] > 1) continue;
    // The LIDAR first: ground as smooth as a road, a roof or a car park is
    // not sand, however pale.
    if (useL && F.rough[k] < .01) continue;

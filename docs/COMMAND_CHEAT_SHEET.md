@@ -16,6 +16,7 @@ The website has its own repository and its own commands.
 | `npm ci` | Installs dependencies (first time, or after `package.json` changes) |
 | `npm run dev` | Live dev server at http://127.0.0.1:5173, reloads as you edit |
 | `npm run build` | Builds the game into `dist/index.html` (the single file), Fairway Course Builder into `dist/builder.html`, plus `dist/fairway-bridge.mjs` |
+| `node tools/built-compare.mjs --file <course.fairway> --dem <dem.tif> --osm <osm.json> --scorecard <card.json>` | Measures a real course's saved file (door 2) against a bare-earth DEM, OpenStreetMap's outlines and the club's card, and plays a test round |
 | `node tools/builder-smoke.mjs` | Drives the built course builder (`dist/builder.html`) by file:// in a real browser; fails on any error or network request. `--only <journey>`, `--list`. Uses the graphics card (docs/COURSE_BUILDER.md) |
 | `npm run preview` | Serves the built `dist/` locally to check the real build |
 

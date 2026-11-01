@@ -73,6 +73,10 @@ test('the land, the trace and the marks become a course the game can play', asyn
  const plain = validateDoc(docFromLand({land: {nx, nz, cell, halfX, halfZ, ground}, holes, trees: []}));
  assert.equal(plain.surfaces.green.length, 9);
  assert.equal(plain.surfaces.tee.length, 9);
+ // A trace that missed a mark: the plain green or pad goes under it.
+ const missed = validateDoc(docFromLand({land: {nx, nz, cell, halfX, halfZ, ground}, traced: {codes: new Uint8Array(N)}, holes, trees: []}));
+ assert.equal(missed.surfaces.green.length, 9);
+ assert.equal(missed.surfaces.tee.length, 9);
 });
 
 test('a property to 2.25 km² is gathered at half a metre, a larger one at a metre', () => {

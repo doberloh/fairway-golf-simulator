@@ -490,8 +490,34 @@ nor any built copy of the course (tests that need it skip when it is absent):
   streaks, 25% steep (filled ground is now relaxed smooth -- which also brought
   Worthington's filled cells to a median 1.3 cm off USGS's DEM, from 2.6, and
   the 95th percentile to 8 cm from 24).
-- **Not seen by a person**, and **Worthington not built through the page** (the
-  scripted build runs the page's own steps): in TODO.
+- **Worthington through the page** (the `builder-door-2-worthington`
+  journey, local only: it runs when `FAIRWAY_LIDAR_TEST` names the owner's
+  folder): the four raw LAZ tiles chosen in the builder, the property dragged
+  round the club on the relief, the land built, the four NAIP tiles chosen one
+  after another, eighteen holes clicked on the plan where OpenStreetMap's
+  greens and the card's tees are (`tools/osm-holes.mjs`, the same marks as the
+  scripted build), traced LIDAR first, named, opened in the editor and saved
+  -- **60 s from the first file to the saved course**, 135 s with the
+  measuring and a tee shot in the game. The page's file, measured by
+  `tools/built-compare.mjs` (which reads only the saved file; a real course's
+  file now keeps its place, `source.origin` and `source.epsg`): **ground on
+  open land against USGS's DEM median 0.6 cm, 95th 2.9, 99th 5.9** (688,125
+  points a metre apart); against the other pipeline's terrain model 0.4, 2.0
+  and 4.9 cm; outlines against OpenStreetMap greens 62%, tees 25%, fairways
+  37%, sand 28%, water 47% (tees 28% once the missed pads below were given); the same surface as the scripted build's file on
+  97.7% of the property and the same ground to 0.7 cm; lengths against the card
+  as the scripted build's; the test round 90.5 against par 71, nothing stuck
+  (95.5 after the pads below: the golfers' dispersion moves a few strokes);
+  4,522 trees, 8 ponds, 3.2 MB. It also found the first tee playing from
+  semi-rough -- the trace had drawn no tee under that mark -- and a green or
+  tee the trace misses now gets the plain one under its mark.
+- **Low, measured** (`profile --only built --built-file`, the page's file
+  against a generated Midwest eighteen, 31 October 2026, RTX 4090): the real
+  course 0.70 ms of processor time a frame (median) and 0.81 ms of graphics
+  card, the generated one 1.00 and 1.18 -- 190 draws and 7.0 million
+  triangles against 252 and 12.0 million. A real course from door 2 costs Low
+  less than a generated one.
+- **Not seen by a person**: in TODO.
 
 ### Stage 8 (31 October 2026): the auto trace, LIDAR first
 
@@ -538,7 +564,7 @@ per cent:
 | --- | --- | --- | --- | --- | --- |
 | Generated courses, LIDAR alone | 56 | 75 | 19 | 33 | 79 |
 | Generated courses, picture alone | 99 | 95 | 79 | 54 | 99 |
-| Generated courses, **LIDAR first** | **99** | **97** | **79** | **39** | **98** |
+| Generated courses, **LIDAR first** | **99** | **97** | **79** | **43** | **98** |
 | Worthington, LIDAR alone | 28 | 23 | 33 | 16 | 45 |
 | Worthington, picture alone | 62 | 30 | 34 | 21 | 29 |
 | Worthington, **LIDAR first** | **62** | **24** | **34** | **27** | **36** |
@@ -550,8 +576,16 @@ Worthington is scored against OpenStreetMap's hand-drawn outlines (23 greens,
 themselves rough: a fairway drawn as a line down the middle, bunkers missing.
 On Worthington the LIDAR-first rule beats either witness alone on sand and
 gives the LIDAR's water (98% of the LIDAR's water cells inside a mapped pond);
-on generated courses the LIDAR's sand calls lower the picture's (54 to 39) --
-the fake survey's rough is as rough and dark as its sand. **The study's
+on generated courses the LIDAR's sand calls lower the picture's (54 to 43) --
+the fake survey's pale native grass is as rough and dark to the laser as its
+sand. (It was 39 until the picture's patches kept the cells the LIDAR had
+already called sand: left out, they broke its bunkers into pieces too small to
+keep. Requiring the LIDAR's sand to lie 3 cm under its surroundings, as
+Worthington's bunkers do, was tried and lowered it to 44 on four landscapes
+from 50 -- the generated bunkers are shallow; not kept.) Looked at by eye
+(`real-course.mjs --crop`), one of OpenStreetMap's bunkers by the clubhouse
+greens is dark in the August picture -- shadow or wet sand -- and is not
+found. **The study's
 targets** (greens and bunkers 80%, fairways 70%, PLACED) are met on generated
 courses for greens and fairways, not for sand, and not on Worthington. The
 LIDAR alone cannot find a green's collar (it runs on into the approach) or a
@@ -567,7 +601,7 @@ fairway's edge -- what the picture is for. A trace takes 2-3 s.
   the builder was measured against), and the design's claims the build
   overturned, corrected where they stood (bright sand, proj4js, the
   classifier, paths and buildings).
-- **Sizes**: the builder's page 1,374,268 bytes; the game's 14,846,858 against
+- **Sizes**: the builder's page 1,374,433 bytes; the game's 14,846,858 against
   main's 14,820,197 built the same day (+0.18%), still one file.
 - **Checks at the end**: `npm test` (1,291 pass, the real-LAZ test skipped
   without the owner's folder named); both fingerprints silent -- no
@@ -650,6 +684,9 @@ minute apart; the card read before each), 31 October 2026:
 | 14-16 | `builder-smoke --only builder-door-2` | failed on the harness (it measured the hidden picture canvas), then twice on the tee shot (water traced everywhere: empty cells of a sparse survey, then the land past its edge, then the picture's water rule without near-infrared) |
 | 17 | `builder-smoke --only builder-door-2` | passed (41 s) |
 | 18 | `builder-smoke` (all five journeys) | passed |
+| 19 | `builder-smoke --only builder-door-2-worthington` | passed (135 s) |
+| 20 | `profile --only built --built-file` (Worthington's file from the page) | both cases; figures in stage 7 |
+| 21 | `builder-smoke` (all six journeys, Worthington's included) | passed |
 
 ## Sources
 

@@ -48,20 +48,22 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   (docs/COURSE_BUILDER.md, *LIDAR first, the picture as fallback*).
 - [ ] **Sand is the trace's weakest surface**: 27% overlap with
   OpenStreetMap's bunkers at Worthington with both witnesses, and on generated
-  courses the LIDAR's sand calls lower the picture's (docs/COURSE_BUILDER.md,
-  stage 8). OpenStreetMap maps 20 of the club's bunkers; some of what it
-  scores as wrong may be bunkers it lacks -- not checked by eye bunker by
-  bunker.
+  courses the LIDAR's sand calls lower the picture's, 54 to 43, on pale
+  native grass (docs/COURSE_BUILDER.md, stage 8). OpenStreetMap maps 20 of
+  the club's bunkers; some of what it scores as wrong may be bunkers it lacks
+  -- one corner checked by eye, not the whole course. The study's 80% target
+  is not met.
 - [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
 - [ ] **The editor cannot move or delete a pond or creek once drawn** (only
   Undo), add or remove holes, or stamp a green's contours beyond the brush.
 - [ ] **The owner plays the builder and a built course** at the end of the
   goal: the builder's doors and editor, a Worthington round in the game.
   Nothing in the builder has been played by a person; the smoke journeys
-  drive every door (builder-door-2 on a made-up survey), and Worthington was
-  built by `tools/real-course.mjs` with door 2's own steps, not through the
-  page -- the owner's own run of door 2 on Worthington's tiles is the check
-  (`node tools/real-course.mjs` makes a copy to compare, local only).
+  drive every door (builder-door-2 on a made-up survey; the local
+  builder-door-2-worthington on Worthington's own tiles, the holes clicked by
+  the script from OpenStreetMap). `node tools/built-compare.mjs --file <your
+  course.fairway> --dem ... --osm ... --scorecard ...` measures the owner's own
+  door 2 course the same way.
 - [ ] **Before a release carrying the builder**: check the website's demo
   check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
   game's does not confuse it (tell the owner).

@@ -263,7 +263,7 @@ export function open() {
   setBusy('Making the course…'); await frame();
   try {
    const doc = validateDoc(docFromLand({land: st.land, traced: st.traced, holes, trees: st.trees, name: st.name.trim() || 'My real course', landscape: st.landscape,
-    credits: st.credits.trim() ? [st.credits.trim()] : [], source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, trace: st.traced ? st.mode : 'none'}}));
+    credits: st.credits.trim() ? [st.credits.trim()] : [], source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traced ? st.mode : 'none'}}));
    openEditor(doc, {from: 'real'});
   } catch (e) { say('Could not make the course: ' + e.message, true); }
   finally { setBusy(''); }

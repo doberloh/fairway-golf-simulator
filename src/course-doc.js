@@ -25,7 +25,9 @@
 //    fringe, semiRough: metres (null: the defaults), sea: {level} | null (a coast),
 //    landEdits: [[x0, x1, z0, z1]] where the land was shaped by hand (built-world.js
 //      refines its mesh to the land there; on land from LIDAR, everywhere),
-//    credits: [string], source: {}, from: {seed, settings, generator} | null,
+//    credits: [string], source: {} (door 2's: {kind: 'lidar', files, epsg, origin:
+//      {x, y} -- the land's middle in the survey's map units -- trace}),
+//    from: {seed, settings, generator} | null,
 //    picture: data URL | null}
 //
 // THE FILE: a ZIP (zip.js) of course.json (everything but the big arrays),

@@ -18,6 +18,8 @@
 // trace, marked with the course's own tees and greens, in three ways: the
 // LIDAR alone, the picture alone, and the LIDAR first with the picture as
 // fallback. Each surface's overlap with the truth (intersection over union).
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {generateWorld, BIOMES, DEFAULT_COURSE} from '../src/course.js';
 import {trace, TRACE} from '../src/lidar/trace.js';
 import {GROUNDS} from '../src/grounds.js';
@@ -76,7 +78,7 @@ export function synthetic(w, cell = .5) {
 }
 
 const fmt = s => KINDS.map(k => `${k} ${s[k] == null ? '  -' : (100 * s[k]).toFixed(0).padStart(3)}`).join('  ');
-{
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const biomes = argv.length ? argv : Object.keys(BIOMES), totals = Object.fromEntries(MODES.map(m => [m, Object.fromEntries(KINDS.map(k => [k, []]))]));
  for (const biome of biomes) {
   const w = generateWorld({...DEFAULT_COURSE, biome, holes: holesN, seed: `TRACE-${biome.toUpperCase()}`, water: 60});

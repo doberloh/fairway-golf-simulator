@@ -112,9 +112,9 @@ export function affineFromPairs(pairs) {
 // five past it -- the USGA's men's guide, rounded).
 export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 
-// The built document. `traced` (trace.js) may be null: then a green is a
-// 12 m disc round its mark and a tee a 6 x 10 m pad (PLACED), for the player
-// to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
+// The built document. `traced` (trace.js) may be null: then -- and wherever
+// the trace drew no green or tee under a mark -- a green is a 12 m disc round
+// its mark and a tee a 6 x 10 m pad (PLACED), for the player to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
 // line?}] in local metres. `trees` as land.js finds them.
 export function docFromLand({land, traced = null, holes, trees = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
@@ -163,13 +163,16 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
   }
  }
  const yards = (a, b) => Math.hypot(b.x - a.x, b.z - a.z) / .9144;
+ // Inside a kind's outlines (each polygon even-odd over its rings).
+ const onKind = (kind, p) => surfaces[kind].some(poly => poly.filter(r => inside(r, [p.x, p.z])).length % 2 === 1);
  const recs = [...holes].sort((a, b) => a.number - b.number).map((h, i) => {
   const back = [...h.tees].sort((p, q) => yards(q, h.green) - yards(p, h.green))[0];
-  if (!traced) {
-   surfaces.green.push([Array.from({length: 32}, (_, k) => [r2(h.green.x + 12 * Math.cos(k / 32 * Math.PI * 2)), r2(h.green.z + 12 * Math.sin(k / 32 * Math.PI * 2))])]);
-   for (const t of h.tees) { const ux = (h.green.x - t.x), uz = (h.green.z - t.z), l = Math.hypot(ux, uz) || 1, ax = ux / l, az = uz / l, px = -az, pz = ax;
-    surfaces.tee.push([[[-3, -5], [3, -5], [3, 5], [-3, 5]].map(([u, v]) => [r2(t.x + px * u + ax * v), r2(t.z + pz * u + az * v)])]); }
-  }
+  // A green or tee the trace did not draw under its mark gets the plain
+  // one (Worthington's first tee, traced only as semi-rough, played from it).
+  if (!onKind('green', h.green)) surfaces.green.push([Array.from({length: 32}, (_, k) => [r2(h.green.x + 12 * Math.cos(k / 32 * Math.PI * 2)), r2(h.green.z + 12 * Math.sin(k / 32 * Math.PI * 2))])]);
+  for (const t of h.tees) { if (onKind('tee', t)) continue;
+   const ux = (h.green.x - t.x), uz = (h.green.z - t.z), l = Math.hypot(ux, uz) || 1, ax = ux / l, az = uz / l, px = -az, pz = ax;
+   surfaces.tee.push([[[-3, -5], [3, -5], [3, 5], [-3, 5]].map(([u, v]) => [r2(t.x + px * u + ax * v), r2(t.z + pz * u + az * v)])]); }
   return {number: h.number ?? i + 1, par: h.par ?? parFor(yards(back, h.green)), index: h.index ?? i + 1, tees: h.tees.map(t => ({x: r2(t.x), z: r2(t.z), set: t.set || 'middle'})),
    green: {x: r2(h.green.x), z: r2(h.green.z)}, line: h.line?.length >= 2 ? h.line.map(([x, z]) => [r2(x), r2(z)]) : [[r2(back.x), r2(back.z)], [r2(h.green.x), r2(h.green.z)]]};
  });

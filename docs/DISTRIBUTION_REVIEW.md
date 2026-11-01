@@ -1646,7 +1646,7 @@ GeoTIFF is read by Fairway's own reader, and UTM and degrees by its own
 conversions, any other map grid lined up by matching points.
 
 **Stages 7-9 (31 October 2026).** Door 2 and the auto trace add no
-dependency. The builder's page is **1,374,268 bytes** (gzip about 461 KB):
+dependency. The builder's page is **1,374,433 bytes** (gzip about 461 KB):
 laz-perf's WebAssembly and the LIDAR readers since stage 3's 906,624. The
 game's page is 14,846,858 bytes against main's 14,820,197 built the same day
 (+26,661, 0.18%: the code that plays a built file -- built-world, the ZIP and

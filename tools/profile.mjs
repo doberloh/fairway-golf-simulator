@@ -6,6 +6,8 @@
 //                                          ablation, water, pixels, sun, weak,
 //                                          architect: Classic against Architect on Low;
 //                                          built: a seeded course against its frozen copy on Low;
+//                                          --built-file <x.fairway> instead: that course (a real
+//                                          one from door 2) against a generated Midwest eighteen
 //                                          --landscapes all for every landscape)
 //   node tools/profile.mjs --save          store the run as the baseline
 //   node tools/profile.mjs --since         compare against the stored baseline
@@ -119,7 +121,11 @@ function matrix() {
  // the same landscape and seed on Low, grown from its seed against its frozen
  // copy played from a .fairway file (freeze.js, built-world.js). The goal's
  // rule: a change that adds cost to Low is measured there before it is done.
- for (const biome of archBiomes) for (const kind of ['generated', 'built'])
+ // `--built-file <x.fairway>`: a course from a file (a real one, door 2's)
+ // against a generated Midwest eighteen on the same tier.
+ if (flag('built-file', null)) for (const kind of ['generated', 'built'])
+  cases.push({group: 'built', name: kind === 'built' ? `${String(flag('built-file')).split(/[\\/]/).pop()} · built` : 'midwest 18 · generated', arm: 'gpu', quality: flag('built-tier', 'low'), biome: 'midwest', holes: 18, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {path: flag('built-file')}} : {})});
+ else for (const biome of archBiomes) for (const kind of ['generated', 'built'])
   cases.push({group: 'built', name: `${biome} · ${kind}`, arm: 'gpu', quality: flag('built-tier', 'low'), biome, holes: 9, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {biome, holes: 9, seed: 'PROFILE'}} : {})});
  // FACING THE SUN. The god rays draw only with the sun in shot, so every other
  // case -- the tee looking down the hole -- usually measures them as free. A
@@ -213,6 +219,7 @@ async function proveItCanSeeBelowVsync(page) {
 const builtFiles = new Map();
 async function builtFile(o) {
  const key = JSON.stringify(o);
+ if (!builtFiles.has(key) && o.path) builtFiles.set(key, new Uint8Array(fs.readFileSync(o.path)));
  if (!builtFiles.has(key)) {
   const [{generateWorld, DEFAULT_COURSE}, {freezeWorld}, {writeBuiltFile}, {BUILT_VERSION}] = await Promise.all([
    import('../src/course.js'), import('../src/freeze.js'), import('../src/course-doc.js'), import('../src/settings-schema.js')]);
