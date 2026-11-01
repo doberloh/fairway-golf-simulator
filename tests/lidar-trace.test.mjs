@@ -31,7 +31,9 @@ function hole({intensity = true, picture = true, pictureHole = null} = {}) {
   ground[k] = 100 + z * .01 + (mown || t === 'water' ? 0 : (rnd() - .5) * (t === 'sand' ? .2 : .16)) - (bunker < 6 ? .6 * (1 - (bunker / 6) ** 2) : 0);
   if (t === 'water') { noReturns[k] = 1; inten[k] = NaN; } else inten[k] = intensity ? (t === 'sand' ? .66 : mown ? .8 : .72) + (rnd() - .5) * .06 : NaN;
   if (picture && !(pictureHole && pictureHole(x, z))) {
-   for (let q = 0; q < 3; q++) rgb[k * 3 + q] = Math.max(0, Math.min(255, COL[t][q] + (rnd() - .5) * 14));
+   // Rough coarser to the camera than mown turf, as every real course measured
+   // (RESEARCH, *The auto trace from the picture*).
+   for (let q = 0; q < 3; q++) rgb[k * 3 + q] = Math.max(0, Math.min(255, COL[t][q] + (rnd() - .5) * (t === 'rough' ? 44 : 12)));
    nir[k] = t === 'water' ? 18 : t === 'sand' ? rgb[k * 3] : Math.min(255, rgb[k * 3] * 2.5);
    has[k] = 1;
   }

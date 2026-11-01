@@ -144,8 +144,40 @@ export function mownTurf(P, land, debug = null) {
  const gaps = blobs(Uint8Array.from(kept, v => v ? 0 : 1), nx, nz, cell, {maxArea: 300, accept: list => !list.some(k => { const i = k % nx; return i === 0 || i === nx - 1 || k < nx || k >= N - nx; })});
  for (let k = 0; k < N; k++) if (gaps[k]) kept[k] = 1;
  kept.tex = tex; kept.lum = lum; kept.texLo = texLo;
+ // Texture over a 1.5 m square too, for greens (iteration 24): a putting
+ // surface is smooth close up.
+ { const f1 = boxMean(lum, nx, nz, 1), f2 = boxMean(lum2, nx, nz, 1); kept.fine = new Float32Array(N); for (let k = 0; k < N; k++) kept.fine[k] = Math.sqrt(Math.max(0, f2[k] - f1[k] * f1[k])) / (f1[k] + 20); }
+ // The small mown islands the 400 m² floor drops: a tee box set apart in the
+ // rough is one (40 to 600 m², squared off -- filling over 62% of its box;
+ // PLACED, iteration 21).
+ const fill = list => { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) > .62; };
+ kept.islands = blobs(majority(mask, nx, nz, 1), nx, nz, cell, {minArea: 40, maxArea: 600, thick: 1.5, maxLength: 45, accept: list => fill(list) && !list.some(k => kept[k])});
  if (debug) Object.assign(debug, {turfRaw: mask, turf: kept, turfLimits: {gMid, lumLo, texLo, texMid, lumTree}});
  return kept;
+}
+
+// A mask closed: grown by r cells and shrunk back, so gaps narrower than 2r
+// between patches are bridged and notches filled.
+export function close(mask, nx, nz, r) {
+ const grown = Uint8Array.from(boxMean(Float32Array.from(mask), nx, nz, r), v => v > 0 ? 1 : 0);
+ return Uint8Array.from(boxMean(Float32Array.from(grown), nx, nz, r), v => v > .999 ? 1 : 0);
+}
+
+// FAIRWAYS AS SIMPLE SHAPES (the owner, 1 November 2026: "real fairways are
+// one continuous shape ... bring our fairway shapes closer to more simple
+// shapes"; iteration 28). The pieces along a hole are joined (closed over
+// 8 m: gaps a shadow or a cart path cut are bridged), the holes in them
+// filled (to 2,000 m²), the spurs and fringes cut off (opened over 4 m), and
+// the outline rounded (a majority over 5 m) -- then only whole fairways are
+// kept (2,000 m² and up). PLACED, all of it.
+export function shapeFairways(mask, nx, nz, cell) {
+ const N = nx * nz, R = m => Math.max(1, Math.round(m / cell));
+ let m = close(mask, nx, nz, R(8));
+ const holes = blobs(Uint8Array.from(m, v => v ? 0 : 1), nx, nz, cell, {maxArea: 2000, accept: list => !list.some(k => { const i = k % nx; return i === 0 || i === nx - 1 || k < nx || k >= N - nx; })});
+ for (let k = 0; k < N; k++) if (holes[k]) m[k] = 1;
+ m = open(m, nx, nz, R(4));
+ m = majority(m, nx, nz, R(5));
+ return blobs(m, nx, nz, cell, {minArea: 2000, thick: 5});
 }
 
 // A mask opened: shrunk by r cells and grown back (a square's reach), so
@@ -224,6 +256,8 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  // PLACED): algae can make a pond as green as grass to the colour tests, but
  // not as smooth or as dark (TPC Scottsdale's lakes, iteration 2).
  const darkest = turf ? (() => { const v = []; for (let k = 0; k < N; k += 11) if (P.has[k]) v.push(turf.lum[k]); v.sort((a, b) => a - b); return v[Math.floor(v.length * .06)] ?? 0; })() : 0;
+ // (Iteration 27 let sand be 30 brighter than the turf within 20 m, for
+ // bunkers in shade: sand fell 24 to 23. Not kept.)
  // With no hole marked and no picture, the open ground as a whole stands in.
  const yard = approach.length ? approach : seeds.length ? seeds : turfCells.length ? turfCells : Array.from({length: Math.ceil(N / 97)}, (_, q) => q * 97).filter(k => land.canopy[k] < 1);
  // A survey with the laser's brightness has it varying over the land (one
@@ -389,18 +423,25 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // as smooth to the camera as its fairway, and is called fairway (TPC
   // Scottsdale's semi 52 -> 13); half-weight brightness (17) and the shade
   // judged by texture alone (18) each kept the cost and lost the gain.
-  const fz = k => [0, -turf.tex[k] / (turf.texLo || 1)];
-  let a = fz(cells[Math.floor(cells.length * .25)] ?? 0), b = fz(cells[Math.floor(cells.length * .75)] ?? 0);
-  for (let it = 0; it < 8 && cells.length; it++) {
-   const sa = [0, 0, 0], sb = [0, 0, 0];
-   for (const k of cells) { const f = fz(k), da = (f[0] - a[0]) ** 2 + (f[1] - a[1]) ** 2, db = (f[0] - b[0]) ** 2 + (f[1] - b[1]) ** 2, t = da < db ? sa : sb; t[0] += f[0]; t[1] += f[1]; t[2]++; }
-   if (sa[2]) a = [sa[0] / sa[2], sa[1] / sa[2]]; if (sb[2]) b = [sb[0] / sb[2], sb[1] / sb[2]];
+  // In THREE by texture (iteration 25): the smoothest third fairway, the
+  // middle semi, the coarsest left rough -- mown turf holds all three cuts.
+  // (A three-means over the texture, PLACED; with the three closer than half
+  // the turf's texture bar, the whole is fairway.)
+  const t1 = boxMean(turf.tex, nx, nz, Math.max(1, Math.round(1.5 / cell)));
+  const vals = cells.map(k => t1[k]).sort((x, y) => x - y);
+  let c = [vals[Math.floor(vals.length * .2)] ?? 0, vals[Math.floor(vals.length * .5)] ?? 0, vals[Math.floor(vals.length * .8)] ?? 0];
+  for (let it = 0; it < 10 && vals.length; it++) {
+   const sum = [0, 0, 0], n = [0, 0, 0];
+   for (const v of vals) { const q = Math.abs(v - c[0]) < Math.abs(v - c[1]) ? (Math.abs(v - c[0]) < Math.abs(v - c[2]) ? 0 : 2) : (Math.abs(v - c[1]) < Math.abs(v - c[2]) ? 1 : 2); sum[q] += v; n[q]++; }
+   c = c.map((v, q) => n[q] ? sum[q] / n[q] : v);
   }
-  const hi = a[0] + a[1] > b[0] + b[1] ? a : b, lo = hi === a ? b : a, apart = Math.hypot(hi[0] - lo[0], hi[1] - lo[1]) > .5;
-  const cut = new Uint8Array(N);
-  for (let k = 0; k < N; k++) if (turf[k]) { if (!apart) { cut[k] = 1; continue; } const f = fz(k); cut[k] = (f[0] - hi[0]) ** 2 + (f[1] - hi[1]) ** 2 <= (f[0] - lo[0]) ** 2 + (f[1] - lo[1]) ** 2 ? 1 : 0; }
-  const fairCut = blobs(majority(cut, nx, nz, Math.max(1, Math.round(2.5 / cell))), nx, nz, cell, {minArea: 300, thick: 3});
-  for (let k = 0; k < N; k++) if (codes[k] === C.rough && turf[k]) set(k, fairCut[k] ? C.fairway : C.semi, SOURCE.picture, fairCut[k] ? .75 : .55);
+  const apart = c[2] - c[0] > turf.texLo * .5, hi = c[0], lo = c[2];
+  const which = v => !apart ? 0 : Math.abs(v - c[0]) <= Math.abs(v - c[1]) ? 0 : Math.abs(v - c[1]) <= Math.abs(v - c[2]) ? 1 : 2;
+  const fairM = new Uint8Array(N), semiM = new Uint8Array(N);
+  for (let k = 0; k < N; k++) if (turf[k]) { const q = which(t1[k]); if (q === 0) fairM[k] = 1; else if (q === 1) semiM[k] = 1; }
+  const fairCut = shapeFairways(blobs(majority(fairM, nx, nz, Math.max(1, Math.round(2.5 / cell))), nx, nz, cell, {minArea: 300, thick: 3}), nx, nz, cell);
+  const semiCut = majority(semiM, nx, nz, Math.max(1, Math.round(2.5 / cell)));
+  for (let k = 0; k < N; k++) if (codes[k] === C.rough && turf[k] && (fairCut[k] || semiCut[k])) set(k, fairCut[k] ? C.fairway : C.semi, SOURCE.picture, fairCut[k] ? .75 : .55);
   if (debug) Object.assign(debug, {turfSplit: {apart, hi, lo}});
   // GREENS with no mark: a green is cut shorter than the fairway round it, so
   // in the picture it is smoother and a different shade, and it is compact --
@@ -420,14 +461,14 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // trees counted in, every fairway edge among Northwood's redwoods was
   // "lighter than round it" and no green was kept.
   const tf = Float32Array.from(turf), wTurf = boxMean(tf, nx, nz, r2), turfMean = a => { const m = boxMean(Float32Array.from(a, (v, k) => turf[k] ? v : 0), nx, nz, r2); for (let k = 0; k < N; k++) m[k] = wTurf[k] > .05 ? m[k] / wTurf[k] : a[k]; return m; };
-  const nL = boxMean(L, nx, nz, r1), wL = turfMean(L), nG = boxMean(G, nx, nz, r1), wG = turfMean(G), nT = boxMean(turf.tex, nx, nz, r1), wT = turfMean(turf.tex);
+  const nL = boxMean(L, nx, nz, r1), wL = turfMean(L), nG = boxMean(G, nx, nz, r1), wG = turfMean(G), nT = boxMean(turf.fine, nx, nz, r1), wT = turfMean(turf.fine);
   const spread = f => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k]) v.push(f(k)); v.sort((x, y) => x - y); return Math.max(1e-6, (v[Math.floor(v.length * .84)] ?? 1) - (v[Math.floor(v.length * .16)] ?? 0)) / 2; };
   const sL = spread(k => nL[k] - wL[k]), sG = spread(k => nG[k] - wG[k]), sT = spread(k => nT[k] - wT[k]);
   const score = new Float32Array(N).fill(-Infinity);
   // A green is a plant: bare ground, paths and roofs stand out the same way
   // (iteration 9: ranked by score alone, they were all that was kept).
   const plantBar = P.nir ? .15 : .04;
-  for (let k = 0; k < N; k++) if (pix(k) && off[k] < 12 && G[k] > plantBar && codes[k] !== C.sand && codes[k] !== C.water) score[k] = (nL[k] - wL[k]) / sL + (wG[k] - nG[k]) / sG + (wT[k] - nT[k]) / sT;
+  for (let k = 0; k < N; k++) if (pix(k) && off[k] < 12 && G[k] > plantBar && codes[k] !== C.sand && codes[k] !== C.water) score[k] = (nL[k] - wL[k]) / sL + (wG[k] - nG[k]) / sG + 2 * (wT[k] - nT[k]) / sT;
   const bar = (() => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k] && score[k] > -Infinity) v.push(score[k]); v.sort((x, y) => x - y); return v[Math.floor(v.length * .9)] ?? Infinity; })();
   const cand = new Uint8Array(N);
   for (let k = 0; k < N; k++) cand[k] = score[k] > bar ? 1 : 0;
@@ -457,7 +498,7 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // pads -- 30 to 450 m², filling most of their own box (PLACED; iteration 7).
   const pad = list => { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) > .6; };
   const tees = pick(open(cand, nx, nz, Math.max(1, Math.round(1 / cell))), {minArea: 30, maxArea: 450, thick: 1.5, maxLength: 45, keep: list => pad(list) && !list.some(k => greens[k])}, nGreens * 2);
-  for (let k = 0; k < N; k++) if (tees[k] && codes[k] !== C.green) set(k, C.tee, SOURCE.picture, .8);
+  for (let k = 0; k < N; k++) if ((tees[k] || (turf.islands[k] && off[k] < 150)) && codes[k] !== C.green) set(k, C.tee, SOURCE.picture, .8);
   if (debug) Object.assign(debug, {greenCand: cand, greens, tees});
  }
  const roughPix = [];

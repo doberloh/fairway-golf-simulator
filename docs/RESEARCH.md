@@ -11385,6 +11385,22 @@ ragged is a surface's edge length against the same surface smoothed over
 | 19 | back to 16's split, kept | 20 | 1 | 16 | 3 | 20 | 22 | 0/0 | 1.07, 1.20 |
 | 20 | sand's NDVI bar a share of the fairway's (Chambers Bay's fescue fairways read 0.20, so "0.25 below" asked for less than nothing); patches to 6,000 m² for waste areas (fell elsewhere: not kept) | 20 | 1 | 16 | 3 | 24 | 22 | 0/0 | 1.07, 1.21 |
 
+| 21 | tees as small squared mown islands (no change: measured, most tees lie INSIDE the found turf, joined to the grass round them -- 42-94% kept as turf, 0-3% islands; left to the player's tee markers and the pads made under them) | 20 | 1 | 16 | 3 | 24 | 22 | 0/0 | 1.07, 1.21 |
+| 22 | Arcadia Bluffs (Lakeshore Dunes) joins untuned: green 40, tee 14, sand 27, water 77 there | 23 | 3 | 18 | 6 | 24 | 32 | 0/0 | 1.08, 1.21 |
+| 23 | a green's smoothness counted twice (Chambers Bay's greens differ from its fairways in texture alone) | 25 | 3 | 17 | 6 | 24 | 32 | 0/0 | 1.09, 1.21 |
+| 24 | a green's smoothness over 1.5 m (neutral, kept) | 25 | 4 | 17 | 6 | 24 | 32 | 0/0 | 1.09, 1.21 |
+| 25 | turf split in THREE by texture: fairway, semi, the coarsest left rough | 25 | 4 | 21 | 11 | 24 | 32 | 0/0 | 1.06, 1.21 |
+| 26 | the REFERENCE: OSM's lateral water hazards counted as water | 25 | 4 | 21 | 11 | 24 | 42 | 0/0 | 1.06, 1.21 |
+| 27 | sand 30 brighter than the turf within 20 m, for bunkers in shade (fell 24 to 23: not kept) | 25 | 4 | 21 | 11 | 23 | 42 | 0/0 | 1.06, 1.23 |
+| 28 | FAIRWAYS AS SIMPLE SHAPES (the owner: "real fairways are one continuous shape"): pieces joined over 8 m, holes to 2,000 m² filled, spurs cut over 4 m, the outline rounded over 5 m, whole fairways only (2,000 m²); Ekwanok (Autumn) joins: seven courses | 22 | 3 | 28 | 8 | 27 | 44 | 0/0 | 1.04, 1.19 |
+
+**Found and right** (iteration 27, before the shaping): sand found 8-72% of
+the mapped, 4-80% of what it drew mapped; greens found 0-57%, but 59-98% of
+what was drawn a mapped green (the greens drawn are right, too few are
+drawn); fairways found 40-89% at most courses, 5-47% of what was drawn
+mapped -- the drawn fairway ran over into rough, which the shaping of
+iteration 28 trims.
+
 By course at iteration 20: Breckenridge green 48, fairway 27, sand 41;
 TPC Scottsdale green 16, sand 45, water 59; Sahalee green 19, fairway 30,
 sand 22, water 54; Chambers Bay green 7, fairway 12, sand 8 (its dunes and

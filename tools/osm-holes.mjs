@@ -50,7 +50,7 @@ export function holesFromOsm(ways, card, log = () => {}) {
 // each cell 'green', 'tee', 'fairway', 'sand', 'water' or null.
 // OpenStreetMap's golf=rough is the grass mapped beside the fairways -- what
 // the trace calls semi-rough -- scored only where a course maps it.
-export const KINDS = {green: ['green'], tee: ['tee'], fairway: ['fairway'], semi: ['rough'], sand: ['bunker'], water: ['water_hazard']};
+export const KINDS = {green: ['green'], tee: ['tee'], fairway: ['fairway'], semi: ['rough'], sand: ['bunker'], water: ['water_hazard', 'lateral_water_hazard']};
 export function truthGrid(ways, grid) {
  const {nx, nz, cell, halfX, halfZ} = grid, truth = new Array(nx * nz).fill(null);
  const fillRing = (ring, kind) => {
