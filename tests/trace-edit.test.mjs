@@ -137,3 +137,32 @@ test('houses: one faces the nearest fairway, a zone is lined with them on open g
  t.undo(); assert.equal(t.state.homes.length, 1, 'the zone undone at once');
  t.removeHomes({x: 0, z: 30, radius: 5}); assert.equal(t.state.homes.length, 0);
 });
+
+test('moving one shape: a green lifted off the fairway, a bunker beside it untouched, a tree and a house, each one undo step', () => {
+ const t = createTrace(grid);
+ t.fill([[[-30, -10], [30, -10], [30, 10], [-30, 10]]], 'fairway');
+ t.paint({x: -10, z: 0, radius: 4, kind: 'green'});
+ t.paint({x: 15, z: 0, radius: 3, kind: 'sand'});
+ const greens = count(t, 'green'), sands = count(t, 'sand');
+ // On the green: the topmost shown is the green, not the fairway under it.
+ const pick = t.pickAt({x: -10, z: 1});
+ assert.equal(pick.type, 'shape'); assert.equal(pick.kind, 'green'); assert.equal(pick.cells.length, greens);
+ t.move(pick, 6, -20);
+ assert.equal(t.kindAt(-4, -20), 'green'); assert.equal(t.kindAt(-10, 0), 'fairway', 'the fairway under it shows');
+ assert.equal(count(t, 'green'), greens); assert.equal(count(t, 'sand'), sands);
+ // The layer picked in the list is moved when it covers the point: the fairway, the bunker riding on top unmoved.
+ const fw = t.pickAt({x: 0, z: 0, kind: 'fairway'});
+ assert.equal(fw.kind, 'fairway');
+ t.move(fw, 0, 30);
+ assert.equal(t.kindAt(0, 35), 'fairway'); assert.equal(t.kindAt(15, 0), 'sand');
+ t.undo(); assert.equal(t.kindAt(0, 35), 'rough'); t.undo(); assert.equal(t.kindAt(-10, 0), 'green');
+ // A tree, then a house, ahead of the ground under them.
+ t.addTree({x: 40, z: 40, h: 12, crown: 3});
+ const tp = t.pickAt({x: 41, z: 41}); assert.deepEqual(tp, {type: 'tree', index: 0});
+ t.move(tp, -5, 0); assert.equal(t.state.trees[0].x, 35);
+ t.addHome({x: -40, z: 40, rotation: 0, width: 10, depth: 8});
+ const hp = t.pickAt({x: -36, z: 43}); assert.equal(hp.type, 'home');
+ t.move(hp, 0, -5); assert.equal(t.state.homes[0].z, 35);
+ t.undo(); assert.equal(t.state.homes[0].z, 40);
+ assert.equal(t.pickAt({x: 45, z: -45}), null, 'nothing on rough');
+});

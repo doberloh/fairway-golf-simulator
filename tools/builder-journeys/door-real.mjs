@@ -97,12 +97,34 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.length, null, {timeout: 60000}); await idle();
   if (!tiles) throw Error('no imagery tile was asked for');
-  await page.getByRole('button', {name: 'Align (drag)'}).click();
+  // The LIDAR and the picture together: opacities, either on top, the slope.
+  const pv = () => page.evaluate(() => { const v = window.fairwayBuilder.door2.plan.view; return {alpha: {...v.alpha}, order: v.order.slice()}; });
+  await page.locator('[data-alpha="picAlpha"]').fill('40');
+  if (Math.abs((await pv()).alpha.picture - .4) > .01) throw Error(`the picture opacity slider should set 0.4: ${JSON.stringify(await pv())}`);
+  await page.getByRole('button', {name: 'LIDAR on top'}).click();
+  if ((await pv()).order.indexOf('relief') < (await pv()).order.indexOf('picture')) throw Error('LIDAR on top should draw the relief over the picture');
+  await page.locator('[data-alpha="lidarAlpha"]').fill('50');
+  await page.locator('.cb-lidarview').selectOption('slope');
+  await t.shot('lidar-over-picture');
+  await page.getByRole('button', {name: 'Picture on top'}).click();
+  // Unlock, drag the picture into line, nudge it, lock it.
+  await page.getByRole('button', {name: 'Unlock the picture'}).click();
   [x0, y0] = await at(0, 0); [x1, y1] = await at(6, -4);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 4}); await page.mouse.up();
   await idle();
-  const off = await page.evaluate(() => window.fairwayBuilder.door2.offset);
+  let off = await page.evaluate(() => window.fairwayBuilder.door2.offset);
   if (Math.abs(off.x - 6) > 1 || Math.abs(off.z + 4) > 1) throw Error(`the picture was dragged 6 m east and 4 m north, not ${JSON.stringify(off)}`);
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Shift+ArrowUp'); await idle();
+  const nudged = await page.evaluate(() => window.fairwayBuilder.door2.offset);
+  if (Math.abs(nudged.x - off.x - .25) > .01 || Math.abs(nudged.z - off.z + 1) > .01) throw Error(`the arrows should nudge a quarter metre east and (Shift) a metre north: ${JSON.stringify(off)} -> ${JSON.stringify(nudged)}`);
+  if (!/unlocked/i.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the picture is unlocked');
+  await page.getByRole('button', {name: 'Lock the picture'}).click();
+  off = nudged;
+  [x0, y0] = await at(20, 20); [x1, y1] = await at(30, 30);
+  await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 4}); await page.mouse.up();
+  await page.keyboard.press('ArrowRight'); await idle();
+  const locked = await page.evaluate(() => window.fairwayBuilder.door2.offset);
+  if (locked.x !== off.x || locked.z !== off.z) throw Error(`a locked picture should not move: ${JSON.stringify(off)} -> ${JSON.stringify(locked)}`);
   // Zoom with the wheel about a point, drag the view with the right button.
   const pb = await plan.boundingBox(), before = await page.evaluate(() => window.fairwayBuilder.door2.plan.view.scale);
   await page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2); await page.mouse.wheel(0, -600); await page.waitForTimeout(100);
@@ -128,6 +150,19 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // Move shape: the bunker picked up and put down 12 m south, then back by Undo.
+  const sandCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('sand').reduce((t, v) => t + v, 0));
+  const sand0 = await sandCells();
+  await page.locator('[data-tool="shape"]').click();
+  [x0, y0] = await at(-55, 40); [x1, y1] = await at(-55, 52);
+  await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5});
+  if (!/Moving the sand/.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the sand is being moved');
+  await page.mouse.up();
+  if (await kindAt(-55, 52) !== 'sand' || await kindAt(-55, 40) === 'sand' || await sandCells() !== sand0) throw Error(`the bunker should have moved 12 m whole (${sand0} -> ${await sandCells()} cells)`);
+  await t.shot('shape-moved');
+  await page.getByRole('button', {name: 'Undo', exact: true}).click();
+  if (await kindAt(-55, 40) !== 'sand') throw Error('Undo should put the bunker back');
+  await page.locator('[data-tool="brush"]').click();
   // The smooth view: a moment after the stroke, the trace is drawn as outlines.
   await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});
   // Layers: a fairway painted over the bunker leaves the bunker on top; the

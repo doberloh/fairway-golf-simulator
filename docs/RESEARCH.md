@@ -11527,6 +11527,15 @@ place -- fairway, tee and water 100, greens 62 (40 or 21 at the start),
 sand 59 (34 or 5); from the picture the same but greens 58. With the
 fairway edges still moved, fairway 78.
 
+**The same edges shown to the player (1 November 2026).** Door 2's
+*Viewing* can draw the LIDAR as its slope, so a player dragging the picture
+into line sees the edges `lineUp` reads. The slope is the one
+`features(land)` computes (the ground averaged over a metre, its fall over
+two cells), drawn dark at flat and white at **25%**, PLACED: a bunker's lip
+and a tee's bank run 30-100% and saturate, a green's fall (2-4%) stays near
+the floor, so the lines are the firm edges and not the greens' tilt. Not
+measured against a player's eye; the owner's play is the check.
+
 At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
 Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens
 still 0); Sahalee green 30; Chambers Bay green 25. **Where the 90% stands**:

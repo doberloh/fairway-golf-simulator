@@ -313,6 +313,58 @@ After trying the builder, the owner amended the goal:
    RESEARCH.md, *Free aerial imagery for the builder*; the open services found
    are offered in the builder where they cover the land, with no key.
 
+11. **The LIDAR and the picture together, and the picture locked** (the
+    owner, 1 November 2026: "display the lidar data along with the
+    satellite data with different opacities, then we need to be able to drag
+    the satellite picture to align and lock/unlock it"). **Built the same
+    day, not yet played by a person**: the trace step's **Viewing** -- the
+    LIDAR as shaded relief, the laser's brightness or slope
+    (real-course.js `lidarTexels`), an opacity each for the LIDAR, the
+    picture and the trace, and either of the first two on top (plan-view.js
+    `setAlpha`, `setOrder`); the picture **locked** until **Unlock the
+    picture**, then dragged or nudged with the arrow keys (a quarter metre,
+    a metre with Shift), and locked again by **Lock the picture** or any
+    other tool. Decided: *unlocked only while the Align tool is held* --
+    a separate lock beside the tool would let a brush stroke drag the
+    picture, which is what a lock is for; *slope as edges* -- the line-up
+    (trace.js `lineUp`) finds OpenStreetMap's offset from slope, so the
+    player sees the edges the machine reads; the slope runs dark (flat) to
+    white at 25%, PLACED.
+12. **Move one shape** (the owner, 1 November 2026: "also need the ability
+    to move individual shapes, not sure if we have that"). There was none --
+    not in the trace step, nor in the editor, whose Move moves the view.
+    **Built in the trace step the same day, not yet played by a person**:
+    **Move shape** (trace-edit.js `pickAt`, `move`) picks up a house or tree
+    under the pointer, else one layer's patch -- the chosen layer's where it
+    covers the point, else the topmost shown -- and puts it down where the
+    pointer is let go, by whole cells, one undo step, drawn in outline
+    while dragged. Decided: *a patch is all of a layer that touches* --
+    a semi sheet drawn round three fairways moves as one; splitting it is
+    the erase brush's job. *By whole cells*, so the move never resamples a
+    shape's edge. Not built: turning a shape, and moving one in the editor.
+
+**The work remaining** (written into the goal at the owner's request, 1
+November 2026), in the order it will be done:
+
+- **Checked on the graphics card** when it is free: the full `npm test`, the
+  builder's journeys (door 2, door 2 with OpenStreetMap) on the latest
+  commit.
+- **The other test courses' LIDAR** (tools/lidar-fetch.mjs, rate-limited by
+  the National Map and resumed), then the LIDAR iterations and OpenStreetMap
+  lined up with the LIDAR on each, as on Worthington.
+- **Worthington end to end through door 2 in the browser**
+  (door-real-worthington.mjs), compared with the references: the other
+  simulator's classed tiles, grids and trees, USGS's 1 m DEM, NAIP and the
+  scorecard.
+- **The auto trace towards 90% overlap with OpenStreetMap** across the
+  landscapes, from the picture and the LIDAR, with no specks, pocks or
+  jagged edges (amendment 5). At iteration 52, from the picture alone and
+  against the lined-up map: greens 31, fairways 31, sand 35, water 38.
+- **Houses shown and edited in the editor** (view.js): carried through the
+  file and stood by the game, but the editor's view does not draw them.
+- **Move shape in the editor** (amendment 12), and turning a shape.
+- **Reported as not played** until the owner plays it: every one of these.
+
 The parts of the study's tracing design not yet built -- the alignment nudge, a review layer, a classifier
 learnt from corrections -- wait for that later loop (TODO).
 

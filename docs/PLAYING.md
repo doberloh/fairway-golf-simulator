@@ -458,8 +458,9 @@ the file to anyone else who has Fairway. It opens on three doors.
   everything on it is yours to change.
 - **Generate a real life course.** Build a course from LIDAR of a real
   place, in six steps (the buttons along the top of the left side), on a plan
-  of the land: **the wheel zooms, the right button or Space drags the view**,
-  and **Whole land** brings it all back.
+  of the land: **the wheel zooms, the right button or Space drags the view**
+  (as does the trace step's **Move the view** tool), and **Whole land**
+  brings it all back.
   1. **LIDAR**: LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
      XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
@@ -488,8 +489,12 @@ the file to anyone else who has Fairway. It opens on three doors.
        no longer gives out keys to new users (free accounts ended 30 June
        2025); one you already have still works. It is sized and placed by itself; if the survey
        does not say where it is, **Find** the place by name first.
-       **Align (drag)** moves it into line with the relief by hand; **Undo
-       align** puts it back. This is the only thing in the builder that goes
+       The picture starts **locked**. **Unlock the picture** and drag it
+       into line with the LIDAR, or nudge it with the arrow keys (a quarter
+       metre a press, a metre with Shift); the box at the top says how far it
+       has moved. **Lock the picture** (or picking any other tool) locks it
+       again, so a brush stroke never moves it; **Back to its position**
+       undoes the dragging. This is the only thing in the builder that goes
        online, and only when you press it.
      - **A picture file**: a GeoTIFF places itself; a PNG, JPEG or WebP with
        its world file (.pgw, .jgw, .wld) and .prj does too; several tiles one
@@ -497,6 +502,15 @@ the file to anyone else who has Fairway. It opens on three doors.
        is is lined up by clicking a point on the land, then the same point on
        the picture, three times or more.
      - **The LIDAR's own**: the survey's colour, or its laser brightness.
+
+     **Viewing** puts the LIDAR and the picture together: show the LIDAR as
+     **Shaded relief**, **The laser's brightness** (sand and paths bright,
+     water dark) or **Slope** (flat ground dark, a bunker's lip, a green's
+     fall and a tee's bank as bright lines); set the **LIDAR**, **Picture**
+     and **Trace** opacity each from 0 to 100%; and **LIDAR on top** draws
+     the LIDAR over the picture instead of under it (**Picture on top** puts
+     it back). A half-seen slope over the picture is the easiest way to see
+     whether the bunkers line up while you drag.
 
      **OpenStreetMap** comes first: many courses are already drawn there.
      **Fetch OpenStreetMap** (or **An OpenStreetMap file**, an Overpass JSON
@@ -536,7 +550,12 @@ the file to anyone else who has Fairway. It opens on three doors.
      sand, water or path), **Clear trees** takes them away under the brush,
      **House** stands a house where clicked facing the nearest fairway, green
      or tee, **House zone** lines an outline with houses 42 m apart (each on
-     open ground), **Clear houses** takes them away under the brush, and
+     open ground), **Clear houses** takes them away under the brush,
+     **Move shape** picks up one thing and puts it down where you let go --
+     a house or tree under the pointer, else one shape: the chosen layer's
+     where it lies under the pointer, else the topmost there (a green off
+     its fairway, a bunker, a pond), all of that layer that touches moving
+     together, what lies under it showing where it stood -- and
      **Smooth all edges** and **Tidy specks** clean the whole trace.
      **Extrapolate** lays a second layer round the chosen one, a width out --
      semi-rough round the fairways; under the chosen layer it runs on

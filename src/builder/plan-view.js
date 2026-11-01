@@ -9,12 +9,15 @@
 // relief, the picture over it (which can be shifted while it is dragged into
 // line), and the trace's surfaces; over them, drawn each frame by the step,
 // the trees, the property box, the holes and whatever the tool is drawing.
-// Last, at review, the course as it will be built ('course').
+// Last, at review, the course as it will be built ('course'). Each layer has
+// an opacity (`setAlpha`), and the relief and the picture can trade places
+// (`setOrder`): the LIDAR seen through the picture or over it, to line the
+// two up (the owner, 1 November 2026).
 const ORDER = ['relief', 'picture', 'codes', 'course'];
 
 export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
  const ctx = canvas.getContext('2d');
- const v = {scale: 1, cx: 0, cz: 0, land: null, layers: {}, show: {relief: true, picture: true, codes: true, course: true}, shift: {}, tool: 'move', space: false};
+ const v = {scale: 1, cx: 0, cz: 0, land: null, layers: {}, show: {relief: true, picture: true, codes: true, course: true}, alpha: {}, order: ORDER.slice(), shift: {}, tool: 'move', space: false};
  let raf = 0, drag = null;
  const size = () => { const r = canvas.getBoundingClientRect(), d = window.devicePixelRatio || 1, w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d)); if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; } };
  const fitScale = () => Math.min(canvas.width / (2 * v.land.halfX), canvas.height / (2 * v.land.halfZ)) * .98;
@@ -43,6 +46,9 @@ export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
    const id = c.getContext('2d').createImageData(w, h); paint(id.data, i0, j0, w, h); c.getContext('2d').putImageData(id, i0, j0); api.draw();
   },
   showLayer(name, on) { v.show[name] = on; api.draw(); },
+  setAlpha(name, a) { v.alpha[name] = Math.max(0, Math.min(1, a)); api.draw(); },
+  // The layers' drawing order, bottom first (names left out keep their place).
+  setOrder(names) { v.order = [...names, ...ORDER.filter(n => !names.includes(n))]; api.draw(); },
   // A layer drawn `x`, `z` metres off its place (the picture while dragged).
   shiftLayer(name, x, z) { v.shift[name] = {x, z}; api.draw(); },
   setTool(t) { v.tool = t; canvas.style.cursor = t === 'move' ? 'grab' : 'crosshair'; },
@@ -63,12 +69,12 @@ export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
   if (!v.land) return;
   const {cell, halfX, halfZ} = v.land;
   ctx.imageSmoothingEnabled = v.scale * cell < 2;
-  for (const name of ORDER) {
-   const c = v.layers[name]; if (!c || !v.show[name]) continue;
+  for (const name of v.order) {
+   const c = v.layers[name], a = v.alpha[name] ?? 1; if (!c || !v.show[name] || a <= 0) continue;
    const s = v.shift[name] ?? {x: 0, z: 0}, [x0, y0] = api.toScreen(-halfX - cell / 2 + s.x, -halfZ - cell / 2 + s.z);
-   ctx.setTransform(v.scale * cell, 0, 0, v.scale * cell, x0, y0); ctx.drawImage(c, 0, 0);
+   ctx.globalAlpha = a; ctx.setTransform(v.scale * cell, 0, 0, v.scale * cell, x0, y0); ctx.drawImage(c, 0, 0);
   }
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
   overlay?.(ctx, api);
  }
  // The pointer: drag the view, or hand the press to the tool.

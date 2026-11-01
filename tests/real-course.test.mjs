@@ -3,7 +3,7 @@
 // holes and trees made into a course the game's world contract accepts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor} from '../src/builder/real-course.js';
+import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor, lidarTexels, LIDAR_VIEWS} from '../src/builder/real-course.js';
 import {createGridder} from '../src/lidar/land.js';
 import {TRACE} from '../src/lidar/trace.js';
 import {validateDoc, writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
@@ -82,4 +82,21 @@ test('the land, the trace and the marks become a course the game can play', asyn
 test('a property to 2.25 km² is gathered at half a metre, a larger one at a metre', () => {
  assert.equal(cellFor(1500, 1500), .5);
  assert.equal(cellFor(2000, 1500), 1);
+});
+
+test('the LIDAR shows as its relief, its brightness or its slope, to lay the picture against', () => {
+ // A 40 x 40 land, flat but for a 1 m step at i = 20 (a bunker's lip), its
+ // brightness bright on the left half, and no brightness in one corner cell.
+ const nx = 40, nz = 40, N = nx * nz, ground = new Float32Array(N), intensity = new Float32Array(N);
+ for (let k = 0; k < N; k++) { ground[k] = k % nx >= 20 ? 1 : 0; intensity[k] = k % nx < 20 ? .8 : .2; }
+ intensity[0] = NaN;
+ const land = {nx, nz, cell: .5, halfX: 10, halfZ: 10, ground, intensity};
+ const at = (d, i, j) => d[(j * nx + i) * 4];
+ assert.deepEqual(LIDAR_VIEWS, ['relief', 'brightness', 'slope']);
+ const rel = lidarTexels(land, 'relief', new Uint8ClampedArray(N * 4)), br = lidarTexels(land, 'brightness', new Uint8ClampedArray(N * 4)), sl = lidarTexels(land, 'slope', new Uint8ClampedArray(N * 4));
+ for (const d of [rel, br, sl]) assert.ok(d.every((v, q) => q % 4 !== 3 || v === 255), 'every texel opaque');
+ assert.equal(at(br, 5, 20), 204); assert.equal(at(br, 30, 20), 51);
+ assert.equal(at(br, 0, 0), at(rel, 0, 0), 'no brightness: the relief');
+ assert.ok(at(sl, 20, 20) > 200 && at(sl, 5, 20) === 20, 'the step bright, the flat dark');
+ assert.ok(at(rel, 20, 20) !== at(rel, 5, 20), 'the relief shades the step');
 });

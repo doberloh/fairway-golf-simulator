@@ -67,6 +67,14 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   on a course with a house; nobody has looked at a built house in the game
   or painted with the smooth view by hand. Not yet in the editor: houses are
   carried through it but not drawn or edited there.
+- [ ] **Not played by a person: Viewing, the picture's lock, Move shape**
+  (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
+  step). The builder-door-2 journey sets the opacities, draws the LIDAR's
+  slope over the picture, unlocks, drags, nudges and locks the picture, and
+  moves a bunker and undoes it. To check by hand: whether a half-seen slope
+  over a real picture makes the bunkers easy to line up, and whether picking
+  the chosen layer before the topmost surprises anyone. Not built: Move
+  shape in the editor, and turning a shape.
 - [ ] **The trace has no review layer
   in the editor** (each cell's source is kept, and door 2 reports the share), no
   automatic alignment nudge after a picture is lined up, and no classifier

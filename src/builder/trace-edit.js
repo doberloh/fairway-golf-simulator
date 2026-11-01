@@ -192,6 +192,37 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
     } });
    return n;
   },
+  // MOVING ONE SHAPE (the owner, 1 November 2026: "the ability to move
+  // individual shapes"). What is under a point (`pickAt`): a house whose
+  // footprint holds it, else a tree whose crown does (at least 1.5 m), else
+  // a SHAPE -- the patch of one layer there, its cells joined edge to edge:
+  // `kind`'s layer when it covers the point, else the topmost shown. A patch
+  // is all of a layer that touches: semi-rough drawn as one sheet round
+  // three fairways moves as one.
+  pickAt({x, z, kind = null}) {
+   const hi = s.homes.findIndex(h => { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation), lx = (x - h.x) * c - (z - h.z) * sn, lz = (x - h.x) * sn + (z - h.z) * c; return Math.abs(lx) <= h.width / 2 && Math.abs(lz) <= h.depth / 2; });
+   if (hi >= 0) return {type: 'home', index: hi};
+   let ti = -1, td = Infinity; s.trees.forEach((t, q) => { const d = Math.hypot(t.x - x, t.z - z); if (d <= Math.max(1.5, t.crown) && d < td) { td = d; ti = q; } });
+   if (ti >= 0) return {type: 'tree', index: ti};
+   const k0 = idx(x, z); if (k0 < 0) return null;
+   const want = kind && kind !== 'rough' && LI[kind] != null && layers.mask(kind)?.[k0] ? kind : PALETTE[layers.view[k0]];
+   const m = want && want !== 'rough' ? layers.mask(want) : null; if (!m?.[k0]) return null;
+   const seen = new Uint8Array(N), cells = [k0]; seen[k0] = 1;
+   for (let q = 0; q < cells.length; q++) { const k = cells[q], i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (n >= 0 && n < N && !seen[n] && m[n]) { seen[n] = 1; cells.push(n); } }
+   return {type: 'shape', kind: want, cells};
+  },
+  // What `pickAt` found, moved `dx`, `dz` metres (a shape by whole cells; the
+  // layers under it show where it stood). One undo step.
+  move(pick, dx, dz) {
+   if (!pick) return;
+   if (pick.type === 'tree') return step(() => { keepTrees(); const t = s.trees[pick.index]; s.trees[pick.index] = {...t, x: t.x + dx, z: t.z + dz}; });
+   if (pick.type === 'home') return step(() => { keepHomes(); const h = s.homes[pick.index]; s.homes[pick.index] = {...h, x: h.x + dx, z: h.z + dz}; });
+   const di = Math.round(dx / cell), dj = Math.round(dz / cell); if (!di && !dj) return;
+   step(() => {
+    for (const k of pick.cells) put(pick.kind, k, 0);
+    for (const k of pick.cells) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i >= 0 && j >= 0 && i < nx && j < nz) put(pick.kind, j * nx + i, 1); }
+   });
+  },
   undo() { return swapStep(s.undo, s.redo); },
   redo() { return swapStep(s.redo, s.undo); },
  };

@@ -31,7 +31,7 @@ import {crsOf, toMetres} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
 import {fetchOsm, osmFeatures, layOsm, osmHoles, osmBoundary, OSM_CREDIT} from './osm.js';
-import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, MAX_PROPERTY} from './real-course.js';
+import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
@@ -68,7 +68,8 @@ export function open() {
  setTitle('Real life course');
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
-  name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4};
+  name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
+  lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
@@ -82,7 +83,7 @@ export function open() {
   el('div', {class: 'cb-steps'}, el('h2', {style: 'font:800 22px/1 var(--head);text-transform:uppercase;margin:0'}, 'A real life course'), nav, panel),
   el('div', {class: 'cb-planbox'}, canvas, hintBar,
    el('div', {class: 'cb-planbar'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
-    el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.fit()}, 'Whole land'), el('span', {}, 'Wheel zooms; right-drag, Space-drag or Move drags the view.'), zoomText),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.fit()}, 'Whole land'), el('span', {}, 'Wheel zooms; right-drag, Space-drag or Move the view drags it.'), zoomText),
    notes)));
  topTools(el('button', {class: 'cb-btn', type: 'button', onclick: home}, 'Back'));
  const L = () => st.land ?? st.preview?.land;
@@ -91,17 +92,14 @@ export function open() {
  function paintRelief() {
   const land = L(); if (!land) return;
   plan.setLand(land);
-  const g = land.ground, N = land.nx * land.nz, nx = land.nx;
-  plan.setLayer('relief', d => {
-   for (let k = 0; k < N; k++) {
-    const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)];
-    const s = Math.max(.15, Math.min(1, .62 - (a * .7 - b * .7) / (2 * land.cell) * 1.8));
-    let c = [s * 230, s * 235, s * 225];
-    if (land.canopy?.[k] > 2) c = c.map((v, q) => v * .5 + [30, 90, 40][q] * .5);
-    d[k * 4] = c[0]; d[k * 4 + 1] = c[1]; d[k * 4 + 2] = c[2]; d[k * 4 + 3] = 255;
-   }
-  });
-  paintPicture(); paintCodes();
+  paintLidar(); viewLayers(); paintPicture(); paintCodes();
+ }
+ // The LIDAR as the relief, its brightness or its slope (lidarTexels).
+ function paintLidar() { const land = L(); if (land) plan.setLayer('relief', d => lidarTexels(land, st.lidarView, d)); }
+ // Each layer's opacity, and the LIDAR under the picture or over it.
+ function viewLayers() {
+  plan.setAlpha('relief', st.lidarAlpha); plan.setAlpha('picture', st.picAlpha); plan.setAlpha('codes', st.traceAlpha);
+  plan.setOrder(st.lidarOnTop ? ['picture', 'relief'] : ['relief', 'picture']);
  }
  function paintPicture() {
   if (!st.land || !st.picture) { plan.clearLayer('picture'); return; }
@@ -109,7 +107,7 @@ export function open() {
   plan.setLayer('picture', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) if (p.has[k]) { d[k * 4] = p.rgb[k * 3]; d[k * 4 + 1] = p.rgb[k * 3 + 1]; d[k * 4 + 2] = p.rgb[k * 3 + 2]; d[k * 4 + 3] = 255; } });
   plan.shiftLayer('picture', 0, 0);
  }
- const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 120; } else d[o + 3] = 0; };
+ const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; } else d[o + 3] = 0; };
  function paintCodes() {
   if (!st.land || !st.model) { plan.clearLayer('codes'); return; }
   const c = st.model.state.layers.view;
@@ -148,7 +146,7 @@ export function open() {
    for (const r of rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) v.lineTo(sx, sy); else v.moveTo(sx, sy); }); v.closePath(); }
    v.fill('evenodd'); v.stroke();
   }
-  ctx.globalAlpha = 120 / 255; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
+  ctx.globalAlpha = st.traceAlpha; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
  }
  // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
  // owner, 1 November 2026: "It needs to be more clear what you are doing").
@@ -157,11 +155,11 @@ export function open() {
   let t = '';
   if (st.step === 0) t = st.preview ? `Drag a box round the property on the relief. ${view}` : '';
   else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}. ${view}`;
-  else if (st.step === 2 && !st.model) t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
+  else if (st.step === 2 && !st.model && st.tool !== 'align') t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
   else if (st.step === 2) {
    const all = st.kind === 'rough';
    t = ({
-    move: 'Move: drag to move the view; the wheel zooms. Pick a tool to paint.',
+    move: 'Move the view: drag to move it; the wheel zooms. Pick a tool to paint.',
     brush: all ? `Paint brush, rough (${r} m round): drag to take every layer off.` : `Paint brush: drag to paint ${k} (${r} m round).`,
     erase: all ? `Erase brush (${r} m round): drag to take every layer off.` : `Erase brush: drag to take ${k} off (${r} m round); whatever lies under it shows.`,
     eraseAll: `Erase all layers (${r} m round): drag to take every layer off, down to rough.`,
@@ -174,7 +172,8 @@ export function open() {
     homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, corner by corner; houses line it 42 m apart, each facing the course.',
     homeErase: `Clear houses: drag to take houses off (${r} m round).`,
     treeErase: `Clear trees: drag to take trees off (${r} m round).`,
-    align: 'Align: drag the picture into line with the relief.',
+    shape: st.moving ? `Moving the ${st.moving.what}: let go where it belongs. Undo puts it back.` : `Move shape: drag a green, bunker, fairway, pond, tree or house to move it whole -- the ${k} layer where it lies under the pointer, else the topmost shown.`,
+    align: `Picture unlocked: drag it into line with the LIDAR, or nudge it with the arrow keys (a quarter metre; Shift, a metre). It is ${st.offset.x.toFixed(2)} m east, ${(-st.offset.z).toFixed(2)} m north of where its position put it. Lock it when it is right.`,
    })[st.tool] ?? '';
    if (t && st.tool !== 'move') t += ' ' + view;
   }
@@ -215,6 +214,14 @@ export function open() {
   });
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
   if (st.outline.length) { ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; ctx.beginPath(); st.outline.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); if (st.hover) ctx.lineTo(...p.toScreen(st.hover.x, st.hover.z)); ctx.stroke(); }
+  // The shape being moved, drawn where it would go.
+  if (st.moving && (st.moving.dx || st.moving.dz)) {
+   const {pick, dx, dz} = st.moving, m = st.model.state; ctx.strokeStyle = '#ff6bd6'; ctx.fillStyle = 'rgba(255,107,214,.25)'; ctx.lineWidth = 2 * px; ctx.beginPath();
+   if (pick.type === 'tree') { const t = m.trees[pick.index], [x, y] = p.toScreen(t.x + dx, t.z + dz); ctx.arc(x, y, Math.max(3 * px, t.crown * p.view.scale), 0, 7); }
+   else if (pick.type === 'home') { const h = m.homes[pick.index], [x, y] = p.toScreen(h.x + dx, h.z + dz), r = Math.max(h.width, h.depth) / 2 * p.view.scale; ctx.rect(x - r, y - r, 2 * r, 2 * r); }
+   else for (const r of st.moving.rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x + dx, z + dz); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
+   ctx.fill('evenodd'); ctx.stroke();
+  }
   if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) { const [x, y] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke(); }
   if (st.align?.pairs) for (const q of st.align.pairs) { const [x, y] = p.toScreen(q.local.x, q.local.z); ctx.strokeStyle = '#ff6bd6'; ctx.strokeRect(x - 5 * px, y - 5 * px, 10 * px, 10 * px); }
  }
@@ -237,6 +244,7 @@ export function open() {
   }
   if (st.step === 2 && st.land) {
    if (t === 'align') {
+    if (st.picLocked) return;
     if (type === 'down') dragFrom = {...p, ox: st.offset.x, oz: st.offset.z};
     if (type === 'drag' && dragFrom) plan.shiftLayer('picture', p.x - dragFrom.x, p.z - dragFrom.z);
     if (type === 'up' && dragFrom) { st.offset = {x: dragFrom.ox + p.x - dragFrom.x, z: dragFrom.oz + p.z - dragFrom.z}; dragFrom = null; relay(); say(`The picture is ${Math.hypot(st.offset.x, st.offset.z).toFixed(1)} m from where its position put it.`); }
@@ -262,6 +270,23 @@ export function open() {
    if (t === 'outline' || t === 'treeZone' || t === 'boundary' || t === 'homeZone') {
     if (type === 'down') st.outline.push([p.x, p.z]);
     if (type === 'double' && st.outline.length >= 3) closeOutline();
+    plan.draw(); return;
+   }
+   // MOVE SHAPE (the owner, 1 November 2026): one shape, tree or house
+   // picked up and put down whole (trace-edit.js pickAt and move).
+   if (t === 'shape') {
+    if (type === 'down') {
+     const pick = m.pickAt({x: p.x, z: p.z, kind: st.kind});
+     if (!pick) { say('Nothing to move there: only rough under the pointer.', true); return; }
+     let rings = [];
+     if (pick.type === 'shape') { const mask = new Uint8Array(st.land.nx * st.land.nz); for (const k of pick.cells) mask[k] = 1; rings = layerRings(mask, st.land); }
+     st.moving = {pick, from: p, dx: 0, dz: 0, rings, what: pick.type === 'shape' ? LABEL(pick.kind).toLowerCase() : pick.type === 'tree' ? 'tree' : 'house'};
+    }
+    if (type === 'drag' && st.moving) { st.moving.dx = p.x - st.moving.from.x; st.moving.dz = p.z - st.moving.from.z; }
+    if (type === 'up' && st.moving) {
+     const {pick, dx, dz, what} = st.moving; st.moving = null;
+     if (Math.hypot(dx, dz) >= st.land.cell / 2) { m.move(pick, dx, dz); if (pick.type === 'shape') paintCodes(); refreshCount(); say(`The ${what} moved ${Math.hypot(dx, dz).toFixed(1)} m. Undo puts it back.`); }
+    }
     plan.draw(); return;
    }
    if (t === 'home' && type === 'down') {
@@ -296,6 +321,9 @@ export function open() {
   if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
   if (e.key === 'Enter' && st.outline.length >= 3) closeOutline();
   if (e.key === 'Escape') { st.outline = []; plan.draw(); }
+  // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
+  const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
+  if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { st.model.undo(); paintCodes(); refreshCount(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { st.model.redo(); paintCodes(); refreshCount(); }
  };
@@ -321,7 +349,14 @@ export function open() {
  st.go = go;
  const next = (n, text) => el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { if (can(n)) go(n); else say(n === 4 ? 'Every hole needs a tee and a green.' : 'Finish this step first.', true); }}, text);
  let toolButtons = [];
- function setTool(t) { st.tool = t; if (st.step === 2) st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); st.outline = []; toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t)); }
+ // The picture is unlocked only while the Align tool is held: any other tool
+ // locks it again, so a brush stroke never drags it.
+ function setTool(t) {
+  if (t !== 'align') st.picLocked = true;
+  st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); st.outline = [];
+  toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t));
+  const lockBtn = toolButtons.find(b => b.dataset.tool === 'align'); if (lockBtn) lockBtn.textContent = st.picLocked ? 'Unlock the picture' : 'Lock the picture';
+ }
 
  // 1. The LIDAR, and the property.
  const fileList = el('ul'), boxText = el('small');
@@ -444,18 +479,35 @@ export function open() {
   const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; howTo.hidden = !p.howTo; howTo.replaceChildren(el('summary', {}, `How to get a ${p.name} key`), el('ol', {}, (p.howTo ?? []).map(t => el('li', {}, t)))); };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses']];
+  const tools = [['move', 'Move the view'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses'], ['shape', 'Move shape']];
   toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
-  const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => { if (!st.pics.length) return say('Bring a picture with a position first.', true); setTool('align'); say('Drag the picture into line with the relief (Move, the wheel and right-drag still move the view).'); }}, 'Align (drag)');
+  // LOCK AND UNLOCK (the owner, 1 November 2026: "drag the satellite picture
+  // to align and lock/unlock it"): unlocked, a left drag or the arrow keys
+  // move the picture; locked -- as it starts, and as any other tool leaves it
+  // -- nothing moves it.
+  const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => {
+   if (!st.picLocked) { setTool(st.model ? st.traceTool ?? 'brush' : 'move'); return say(`The picture is locked, ${Math.hypot(st.offset.x, st.offset.z).toFixed(2)} m from where its position put it.`); }
+   if (!st.pics.length) return say('Bring a picture with a position first.', true);
+   st.picLocked = false; setTool('align'); say('Unlocked: drag the picture into line with the LIDAR -- see-through, or the LIDAR over it, makes it easier (Viewing, below).');
+  }}, st.picLocked ? 'Unlock the picture' : 'Lock the picture');
   toolButtons.push(alignBtn);
+  const pct = (key, after) => el('input', {type: 'range', min: 0, max: 100, value: Math.round(st[key] * 100), 'data-alpha': key, oninput: e => { st[key] = +e.target.value / 100; viewLayers(); after?.(); }});
   return [
    el('div', {class: 'cb-field'}, el('label', {}, 'A picture to trace over'),
-    el('small', {}, 'Fetched for this land and placed by itself, or a file. Drag it into line with Align if it sits off. It is never saved in the course.'),
+    el('small', {}, 'Fetched for this land and placed by itself, or a file. If it sits off, unlock it and drag it into line with the LIDAR, then lock it. It is never saved in the course.'),
     prov, keyIn, howTo, terms,
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
-     alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); }}, 'Undo align')),
+     alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); showHint(); }}, 'Back to its position')),
     ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found),
+   // THE LIDAR AND THE PICTURE TOGETHER (the owner, 1 November 2026): each
+   // with its own opacity, either on top.
+   el('div', {class: 'cb-field cb-viewing'}, el('label', {}, 'Viewing'),
+    el('small', {}, 'The LIDAR as'), el('select', {class: 'cb-lidarview', onchange: e => { st.lidarView = e.target.value; paintLidar(); }}, LIDAR_VIEWS.map(k => el('option', {value: k, selected: k === st.lidarView}, {relief: 'Shaded relief', brightness: 'The laser\'s brightness', slope: 'Slope (edges bright)'}[k]))),
+    el('small', {}, 'LIDAR opacity'), pct('lidarAlpha'),
+    el('small', {}, 'Picture opacity'), pct('picAlpha'),
+    el('small', {}, 'Trace opacity'), pct('traceAlpha', () => plan.draw()),
+    el('button', {class: 'cb-btn cb-lidartop', type: 'button', onclick: e => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); e.target.textContent = st.lidarOnTop ? 'Picture on top' : 'LIDAR on top'; }}, st.lidarOnTop ? 'Picture on top' : 'LIDAR on top')),
    // OPENSTREETMAP FIRST (the owner, 1 November 2026): the course as mappers
    // have drawn it, kept as it is or refined from the picture or the LIDAR.
    el('div', {class: 'cb-field'}, el('label', {}, 'OpenStreetMap'),
@@ -516,7 +568,7 @@ export function open() {
    st.offset = {x: 0, z: 0};
    if (!st.credits.includes(pic.credit)) st.credits.push(pic.credit);
    relay();
-   say(`${p.name}: ${pic.width} x ${pic.height} pixels at zoom ${pic.z}${pic.missing ? `, ${pic.missing} tiles missing` : ''}, sized and placed by position. If it sits off, drag it with Align.`);
+   say(`${p.name}: ${pic.width} x ${pic.height} pixels at zoom ${pic.z}${pic.missing ? `, ${pic.missing} tiles missing` : ''}, sized and placed by position. If it sits off, unlock it and drag it into line with the LIDAR.`);
   } catch (e) { say(`${p.name}: ${e.message}`, true); }
   finally { setBusy(''); }
  }
@@ -581,7 +633,7 @@ export function open() {
    if (st.align?.waiting !== 'picture') return;
    const b = pc.getBoundingClientRect();
    st.align.pairs.push({local: st.align.local, pixel: {col: (e.clientX - b.left) / b.width * pic.width, row: (e.clientY - b.top) / b.height * pic.height}}); st.align.waiting = 'land';
-   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = [{pic, toPixel: fit.map}]; relay(); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or drag it with Align.`); } catch (er) { say(er.message, true); } }
+   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = [{pic, toPixel: fit.map}]; relay(); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or unlock it and drag it.`); } catch (er) { say(er.message, true); } }
    else say(`${st.align.pairs.length} of 3: click the next point on the land.`);
    plan.draw();
   });

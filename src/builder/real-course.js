@@ -14,7 +14,7 @@ import {toMetres} from '../lidar/las.js';
 import {maskRings, simplify, smoothRing} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
-import {boxMean} from '../lidar/trace.js';
+import {boxMean, features} from '../lidar/trace.js';
 import {GRID_MARGIN} from '../built-world.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
@@ -108,6 +108,34 @@ export function affineFromPairs(pairs) {
  const px = Math.sqrt(Math.abs(1 / (a[0] * b[1] - a[1] * b[0])));
  const worst = Math.max(...pairs.map(p => { const [c, r] = f(p.local.x, p.local.z); return Math.hypot(c - p.pixel.col, r - p.pixel.row) * px; }));
  return {map: f, worst};
+}
+
+// THE LIDAR AS A PICTURE, to lay the aerial picture against (the owner, 1
+// November 2026: "display the lidar data along with the satellite data with
+// different opacities"). One RGBA texel a cell into `out`:
+//   relief      the ground shaded from the north-west, trees tinted green
+//   brightness  the laser's brightness (sand and paths bright, water dark);
+//               the relief where the survey has none
+//   slope       the ground's slope, dark flat to white at 25% (PLACED) -- a
+//               bunker's lip, a green's fall and a tee's bank as bright lines,
+//               the edges the line-up (trace.js lineUp) itself reads
+export const LIDAR_VIEWS = ['relief', 'brightness', 'slope'];
+export function lidarTexels(land, mode, out) {
+ const {nx, ground: g, cell} = land, N = land.nx * land.nz;
+ const slope = mode === 'slope' ? features(land).slope : null, I = mode === 'brightness' ? land.intensity : null;
+ for (let k = 0; k < N; k++) {
+  let c;
+  if (slope) { const v = 20 + 235 * Math.min(1, slope[k] / 25); c = [v, v, v]; }
+  else if (I && Number.isFinite(I[k])) { const v = Math.max(0, Math.min(255, I[k] * 255)); c = [v, v, v]; }
+  else {
+   const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)];
+   const s = Math.max(.15, Math.min(1, .62 - (a * .7 - b * .7) / (2 * cell) * 1.8));
+   c = [s * 230, s * 235, s * 225];
+   if (land.canopy?.[k] > 2) c = c.map((v, q) => v * .5 + [30, 90, 40][q] * .5);
+  }
+  out[k * 4] = c[0]; out[k * 4 + 1] = c[1]; out[k * 4 + 2] = c[2]; out[k * 4 + 3] = 255;
+ }
+ return out;
 }
 
 // Par from a hole's length (PLACED: to 250 yards a three, to 470 a four, a
