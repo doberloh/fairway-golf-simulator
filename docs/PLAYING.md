@@ -637,7 +637,9 @@ surface or ground type; **Outline** draws one by its edge; dig a bunker,
 draw a pond or a creek (it runs downhill), plant or clear trees, stand a
 **House** where you click (on open ground, facing the nearest fairway, green
 or tee; refused on turf, sand, water or a path) or **Clear houses** under
-the brush -- the game builds each one from where it stands. The holes
+the brush -- the game builds each one from where it stands; **Move shape**
+picks up a house, a tree, or one surface's patch under the pointer and puts
+it down where you let go (Undo puts it back). The holes
 list moves tees and greens, adds a bend to a hole's line and changes par.
 **Check the course** lists what breaks a rule (a tee off its pad or in
 water, a green too small or too steep, a tree on a green) and clicking one

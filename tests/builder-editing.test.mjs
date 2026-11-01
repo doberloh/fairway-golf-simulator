@@ -165,3 +165,22 @@ test('houses in the editor: stood on open ground facing the turf, refused on it,
  const out = ed.toDoc();
  assert.equal(out.homes.length, n0 + 1, 'the file keeps it');
 });
+
+test('moving one shape in the editor: a bunker, a tree and a house, each one undo step', () => {
+ const ed = createEditor(doc());
+ const sand = ed.pickAt({x: 23, z: 3});
+ assert.equal(sand.type, 'shape'); assert.equal(sand.kind, 'sand');
+ const box = ed.moveShape(sand, 10, 0);
+ assert.ok(box, 'the box changed');
+ assert.equal(ed.surfaceAt(33, 3), 'sand'); assert.notEqual(ed.surfaceAt(21, 3), 'sand');
+ ed.undo(); assert.equal(ed.surfaceAt(23, 3), 'sand'); assert.notEqual(ed.surfaceAt(33, 3), 'sand');
+ // The green on its fairway: the green moves, the fairway stays (the layer under it shows).
+ const green = ed.pickAt({x: 0, z: 80}); assert.equal(green.kind, 'green');
+ const tree = ed.pickAt({x: 31, z: 30}); assert.deepEqual(tree, {type: 'tree', index: 0});
+ ed.moveShape(tree, -5, 0); assert.equal(ed.state.trees[0][0], 25);
+ ed.addHome({x: 60, z: -80});
+ const home = ed.pickAt({x: 61, z: -79}); assert.equal(home.type, 'home');
+ ed.moveShape(home, 0, 5); assert.equal(ed.state.homes.at(-1).z, -75);
+ ed.undo(); assert.equal(ed.state.homes.at(-1).z, -80);
+ assert.equal(ed.pickAt({x: 95, z: -95}), null, 'nothing on rough');
+});

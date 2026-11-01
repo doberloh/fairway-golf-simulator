@@ -58,6 +58,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   clear: () => 'Drag to take trees out.',
   house: () => 'Click to stand a house: it faces the nearest fairway, green or tee.',
   clearHomes: () => 'Drag to take houses out.',
+  moveShape: () => 'Drag a green, bunker, fairway, pond, tree or house to move it whole; Undo puts it back.',
  };
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
@@ -91,7 +92,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}))),
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Move shape', {kind: 'moveShape'}))),
  );
 
  // ---- the right: the course, its holes, the checks, Save.
@@ -146,6 +147,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
    editor.addTree([p.x, p.z, h, h * .3, Math.min(.8, h * .027), 2, -1]); down.last = p; view.refreshTrees();
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
   else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }
+  else if (tool.kind === 'moveShape') down.last = p;
   else if (tool.kind === 'clearHomes') { if (editor.removeHomes({x: p.x, z: p.z, radius})) view.refreshHomes(); }
  };
  canvas.addEventListener('pointerdown', e => {
@@ -162,6 +164,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
    if (!rampA) { rampA = p; status.textContent = 'Now click the high end.'; return; }
    view.refreshLand(editor.shape({op: 'ramp', a: rampA, b: p, radius, strength})); rampA = null; status.textContent = HINT.shape(tool); return;
   }
+  if (tool.kind === 'moveShape') { const pick = editor.pickAt({x: p.x, z: p.z}); if (!pick) { status.textContent = 'Nothing to move there: only rough.'; return; } down = {pick, start: p, last: p}; status.textContent = `Moving the ${pick.type === 'shape' ? pick.kind : pick.type === 'home' ? 'house' : 'tree'}: let go where it belongs.`; return; }
   down = {group: {}, last: p}; apply(p, true);
  });
  let pending = null;
@@ -173,7 +176,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   }
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
  });
- canvas.addEventListener('pointerup', () => { if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
+ canvas.addEventListener('pointerup', () => { if (down?.pick) { const {pick, start, last} = down; down = null; const box = editor.moveShape(pick, last.x - start.x, last.z - start.z); if (box) { view.refreshSurface(box); refreshLayers(); } else if (pick.type === 'tree') view.refreshTrees(); else if (pick.type === 'home') view.refreshHomes(); status.textContent = HINT.moveShape(); return; } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
  const finishOutline = () => {
   if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
   if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }

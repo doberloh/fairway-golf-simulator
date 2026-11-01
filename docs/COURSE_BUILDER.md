@@ -346,10 +346,11 @@ After trying the builder, the owner amended the goal:
     under the pointer, else one layer's patch -- the chosen layer's where it
     covers the point, else the topmost shown -- and puts it down where the
     pointer is let go, by whole cells, one undo step, drawn in outline
-    while dragged. Decided: *a patch is all of a layer that touches* --
+    while dragged. The editor has the same tool since that night. Decided: *a patch is all of a layer that touches* --
     a semi sheet drawn round three fairways moves as one; splitting it is
     the erase brush's job. *By whole cells*, so the move never resamples a
-    shape's edge. Not built: turning a shape, and moving one in the editor.
+    shape's edge. Not built: turning a shape. (Moving one in the editor: built the same
+    night.)
 
 13. **A list after testing, 1 November 2026** (the owner):
     - **The LIDAR in the repository, not committed**: the test courses'
@@ -444,7 +445,9 @@ November 2026), in the order it will be done:
 - **Houses shown and edited in the editor**: done 1 November 2026 -- drawn
   as blocks with a pale front, a House tool and Clear houses, in the
   editor's undo and its file (editing.js addHome, removeHomes).
-- **Move shape in the editor** (amendment 12), and turning a shape.
+- **Move shape in the editor**: done 1 November 2026 (editing.js pickAt,
+  moveShape; the builder-tools journey drags a bunker and undoes it).
+  Still open: turning a shape.
 - **Swiss LV95** (oblique Mercator) worked from the file, so swisstopo's
   surveys place themselves; and swisstopo's tiles downloaded in the page.
 - **The builder's LIDAR checks a person can only do**: the rockyweb tiles

@@ -75,8 +75,9 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   slope over the picture, unlocks, drags, nudges and locks the picture, and
   moves a bunker and undoes it. To check by hand: whether a half-seen slope
   over a real picture makes the bunkers easy to line up, and whether picking
-  the chosen layer before the topmost surprises anyone. Not built: Move
-  shape in the editor, and turning a shape.
+  the chosen layer before the topmost surprises anyone. Move shape is in
+  the editor too (the builder-tools journey drags a bunker and undoes it;
+  under a tree's crown it takes the tree). Not built: turning a shape.
 - [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
   amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
   square or IGN tiles, rockyweb's tiles through the bridge or the downloads

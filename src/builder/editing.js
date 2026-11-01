@@ -233,6 +233,38 @@ export function createEditor(doc) {
    remember('records', 0, 0, 0, 0); state.homes.push({x, z, rotation: rot, width, depth}); return true;
   },
   removeHomes({x, z, radius}) { const keep = state.homes.filter(h => Math.hypot(h.x - x, h.z - z) > radius); if (keep.length === state.homes.length) return 0; remember('records', 0, 0, 0, 0); const n = state.homes.length - keep.length; state.homes = keep; return n; },
+  // MOVING ONE SHAPE (amendment 12, in the editor as in door 2's trace step):
+  // what is under a point -- a house whose footprint holds it, a tree whose
+  // crown does (at least 1.5 m), else one layer's patch, its cells joined edge
+  // to edge: `kind`'s where it covers the point, else the topmost shown --
+  // and `moveShape` puts it down `dx`, `dz` metres off, by whole cells. One
+  // undo step; returns the box changed (metres) for the view.
+  pickAt({x, z, kind = null}) {
+   const hi = state.homes.findIndex(h => { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation), lx = (x - h.x) * c - (z - h.z) * sn, lz = (x - h.x) * sn + (z - h.z) * c; return Math.abs(lx) <= h.width / 2 && Math.abs(lz) <= h.depth / 2; });
+   if (hi >= 0) return {type: 'home', index: hi};
+   let ti = -1, td = Infinity; state.trees.forEach((t, q) => { const d = Math.hypot(t[0] - x, t[1] - z); if (d <= Math.max(1.5, t[3]) && d < td) { td = d; ti = q; } });
+   if (ti >= 0) return {type: 'tree', index: ti};
+   const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); if (i < 0 || j < 0 || i >= r.nx || j >= r.nz) return null;
+   const k0 = j * r.nx + i, want = kind && r.layers.masks.get(kind)?.[k0] ? kind : PAINT[r.layers.view[k0]];
+   const m = want && want !== 'rough' ? r.layers.masks.get(want) : null; if (!m?.[k0]) return null;
+   const N = r.nx * r.nz, seen = new Uint8Array(N), cells = [k0]; seen[k0] = 1;
+   for (let q = 0; q < cells.length; q++) { const k = cells[q], ci = k % r.nx; for (const n of [ci > 0 ? k - 1 : -1, ci < r.nx - 1 ? k + 1 : -1, k - r.nx, k + r.nx]) if (n >= 0 && n < N && !seen[n] && m[n]) { seen[n] = 1; cells.push(n); } }
+   return {type: 'shape', kind: want, cells};
+  },
+  moveShape(pick, dx, dz) {
+   if (!pick) return null;
+   if (pick.type === 'tree') { remember('records', 0, 0, 0, 0); const t = state.trees[pick.index]; state.trees[pick.index] = [t[0] + dx, t[1] + dz, ...t.slice(2)]; return null; }
+   if (pick.type === 'home') { remember('records', 0, 0, 0, 0); const h = state.homes[pick.index]; state.homes[pick.index] = {...h, x: h.x + dx, z: h.z + dz}; return null; }
+   const di = Math.round(dx / r.cell), dj = Math.round(dz / r.cell); if (!di && !dj) return null;
+   let i0 = r.nx, i1 = 0, j0 = r.nz, j1 = 0; for (const k of pick.cells) { const i = k % r.nx, j = (k - i) / r.nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+   const box = [r.x0 + (Math.min(i0, i0 + di)) * r.cell, r.x0 + (Math.max(i1, i1 + di) + 1) * r.cell, r.z0 + (Math.min(j0, j0 + dj)) * r.cell, r.z0 + (Math.max(j1, j1 + dj) + 1) * r.cell];
+   remember('paint', ...box); state.surfacesEdited = true;
+   const m = r.layers.mask(pick.kind, true);
+   for (const k of pick.cells) m[k] = 0;
+   for (const k of pick.cells) { const i = k % r.nx + di, j = Math.floor(k / r.nx) + dj; if (i >= 0 && j >= 0 && i < r.nx && j < r.nz) m[j * r.nx + i] = 1; }
+   recomposeBox(box);
+   return box;
+  },
   addPond({ring, level = null}) {
    remember('records', 0, 0, 0, 0);
    const lv = level ?? Math.min(...ring.map(([x, z]) => sample(x, z))) - .3;
