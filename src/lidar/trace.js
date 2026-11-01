@@ -529,6 +529,57 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   const tees = pick(open(cand, nx, nz, Math.max(1, Math.round(1 / cell))), {minArea: 30, maxArea: 450, thick: 1.5, maxLength: 45, keep: list => pad(list) && !list.some(k => greens[k])}, nGreens * 2);
   for (let k = 0; k < N; k++) if ((tees[k] || (turf.islands[k] && off[k] < 150)) && codes[k] !== C.green) set(k, C.tee, SOURCE.picture, .8);
   if (debug) Object.assign(debug, {greenCand: cand, greens, tees});
+  // THE COURSE TEACHES ITSELF (iteration 36). What the rules above are surest
+  // of -- each surface shrunk from its edges -- becomes the examples of what a
+  // green, a fairway, the semi, sand, water, rough and bare ground look like
+  // in THIS picture, by twelve measures a cell (brightness, greenness, the
+  // colour's balance, texture at two scales, how it stands out from the turf
+  // round it). A naive-Bayes classifier learns them and labels every cell
+  // near the course; the shape rules then clean what it says (whole round
+  // greens, simple fairways, compact bunkers, wide water), and it may only
+  // add to the rules, never take away. PLACED, all of it.
+  {
+   const R = m => Math.max(1, Math.round(m / cell));
+   const shrink = (code, r) => Uint8Array.from(boxMean(Float32Array.from(codes, c => c === code ? 1 : 0), nx, nz, r), v => v > .999 ? 1 : 0);
+   const sums = new Float32Array(N); for (let k = 0; k < N; k++) { const p = pix(k); if (p) sums[k] = p.r + p.g + p.b + 1; }
+   const feat = k => { const p = pix(k); return [L[k] / 40, G[k] * 6, turf.tex[k] / turf.texLo, turf.fine[k] / turf.texLo, (L[k] - wL[k]) / 20, (G[k] - wG[k]) * 6, p.r / sums[k] * 10, p.b / sums[k] * 10, (nL[k] - wL[k]) / 20, (nT[k] - wT[k]) / turf.texLo, Math.min(off[k], 60) / 20, (p.n ?? p.g) / 40]; };
+   const seedOf = [shrink(C.green, R(1)), shrink(C.fairway, R(3)), shrink(C.semi, R(1)), shrink(C.sand, 1), shrink(C.water, R(2))];
+   const classes = seedOf.map(() => []), rough = [], bare = [];
+   let q = 12345; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
+   for (let k = 0; k < N; k++) {
+    if (!pix(k) || !(off[k] < 60)) continue;
+    for (let c = 0; c < seedOf.length; c++) if (seedOf[c][k] && classes[c].length < 4000 && rnd() < .3) classes[c].push(k);
+    if (codes[k] === C.rough && off[k] > 8 && rnd() < .05) (G[k] > plantBar ? rough : bare).length < 4000 && (G[k] > plantBar ? rough : bare).push(k);
+   }
+   classes.push(rough, bare);
+   const models = classes.map(list => {
+    if (list.length < 30) return null;
+    const D = 12, mu = new Float64Array(D), va = new Float64Array(D);
+    for (const k of list) { const f = feat(k); for (let d = 0; d < D; d++) mu[d] += f[d]; }
+    for (let d = 0; d < D; d++) mu[d] /= list.length;
+    for (const k of list) { const f = feat(k); for (let d = 0; d < D; d++) va[d] += (f[d] - mu[d]) ** 2; }
+    for (let d = 0; d < D; d++) va[d] = Math.max(.02, va[d] / list.length);
+    return {mu, va, norm: -.5 * va.reduce((s, v) => s + Math.log(v), 0)};
+   });
+   const label = new Int8Array(N).fill(-1);
+   for (let k = 0; k < N; k++) {
+    if (!pix(k) || !(off[k] < 60)) continue;
+    const f = feat(k); let best = -1, bl = -Infinity;
+    for (let c = 0; c < models.length; c++) { const m = models[c]; if (!m) continue; let l = m.norm; for (let d = 0; d < 12; d++) l -= (f[d] - m.mu[d]) ** 2 / (2 * m.va[d]); if (l > bl) { bl = l; best = c; } }
+    label[k] = best;
+   }
+   const as = c => Uint8Array.from(label, v => v === c ? 1 : 0);
+   // Greens: the learnt green, in whole round patches, beside the rules' own.
+   const more = pick(open(majority(as(0), nx, nz, R(1.5)), nx, nz, R(2)), {minArea: 150, maxArea: 1500, thick: 3, maxLength: 60, keep: list => round(list) && !list.some(k => greens[k])}, nGreens);
+   for (let k = 0; k < N; k++) if (more[k] && codes[k] !== C.sand && codes[k] !== C.water) set(k, C.green, SOURCE.picture, .86);
+   // (Its fairways and sand were tried too, iteration 36: drawn too wide --
+   // fairway 30% right, sand 25% -- they fell 31 to 24 and 28 to 19. Its
+   // greens and water are kept.)
+   // Water: the learnt, in the rules' own shape.
+   const wtKeep = blobs(majority(as(4), nx, nz, R(1.5)), nx, nz, cell, {minArea: 60, thick: 3.5});
+   for (let k = 0; k < N; k++) if (wtKeep[k] && (codes[k] === C.rough || codes[k] === C.semi)) set(k, C.water, SOURCE.picture, .72);
+   if (debug) Object.assign(debug, {learnt: label, seeds: classes.map(l => l.length)});
+  }
  }
  const roughPix = [];
  if (!turf) for (let k = 0; k < N; k += 37) if (land.canopy[k] < 1 && codes[k] === C.rough && off[k] > 30 && off[k] < 60) { const p = pix(k); if (p) roughPix.push(p); }

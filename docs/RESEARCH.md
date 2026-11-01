@@ -11408,6 +11408,18 @@ NAIP, joins).
 | 31 | grown greens rounded (closed 2 m, majority 2.5 m: the growing frayed them, 1.31 ragged to 1.01) | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
 | 32-34 | for Ekwanok's pale greens (NDVI 0.07 against its fairways' 0.16, June 2023): the plant bar from the fairway's own greenness, greens to 40 m from turf, a green with no turf near measured against everything near -- fell to 24, Ekwanok 3: not kept | 24-26 | 31 | 28 | 42 | | |
 | 35 | back to 31 | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
+| 36 | THE COURSE TEACHES ITSELF: the rules' surest cells (each surface shrunk from its edges) are examples; a naive-Bayes classifier on twelve measures a cell (brightness, greenness, colour balance, texture at two scales, standing out from the turf round it, distance from turf) labels every cell near the course; shape rules clean it; it may only add. Greens and water gained; its fairways and sand were drawn too wide (30% and 25% right) | 30 | 24 | 19 | 42 | 41, 75, 48, 71 | 50, 30, 25, 72 |
+| 37 | the learnt greens and water kept, its fairways and sand dropped | 30 | 30 | 28 | 42 | 41, 62, 45, 71 | 50, 44, 41, 72 |
+| 38 | fairway spurs cut over 6 m (was 4): no gain, not kept | 30 | 29 | 28 | 42 | 41, 59, 45, 71 | 49, 44, 41, 72 |
+
+At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
+Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens
+still 0); Sahalee green 30; Chambers Bay green 25. **Where the 90% stands**:
+greens 30, fairways 30, sand 28, water 42 -- far short. What limits it, as
+measured: greens are now found at 41% and right at 50%; fairways are found at
+62% but right at 44%, much of the shortfall being OpenStreetMap's own (TPC
+Scottsdale's mapped fairways are a sliver of its mown grass: 12% of a
+fairway drawn there is mapped; Ekwanok's, mapped with care, 90%).
 
 By course at 35: Worthington green 50, fairway 51; Arcadia Bluffs green
 42, fairway 38, water 77; Breckenridge green 43, fairway 42, sand 41, water
