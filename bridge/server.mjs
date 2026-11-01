@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
+import {once} from 'node:events';
 import {WebSocketServer,WebSocket} from 'ws';
 import {parseLaunchMessage,readDeviceStatus,MPH} from '../src/physics.js';
 import {CLUB_KINDS} from '../src/clubs.js';
@@ -66,6 +67,24 @@ export function isLocalOrigin(origin){
  if(a===192&&b===168)return true;         // 192.168.0.0/16
  if(a===172&&b>=16&&b<=31)return true;    // 172.16.0.0/12
  return false;
+}
+
+// LIDAR FOR THE COURSE BUILDER (1 November 2026, the owner: "figure out how to
+// gain access to rockyweb for LIDAR"). USGS keeps 3DEP's LAZ tiles on
+// rockyweb, which sends no Access-Control-Allow-Origin and refuses a
+// preflight, so the builder's page cannot read it; the bridge, not being a
+// page, can, and hands the bytes on. `/lidar?url=` fetches ONLY from USGS's
+// own hosts below, and only for a local origin (isLocalOrigin), so it is no
+// open proxy. Returns the URL to fetch, or null.
+export const LIDAR_HOSTS = new Set(['rockyweb.usgs.gov', 'prd-tnm.s3.amazonaws.com']);
+export function lidarTarget(reqUrl){
+ let u;
+ try{u=new URL(reqUrl,'http://127.0.0.1');}catch{return null;}
+ if(u.pathname!=='/lidar')return null;
+ let t;
+ try{t=new URL(u.searchParams.get('url')||'');}catch{return null;}
+ if(t.protocol!=='https:'||!LIDAR_HOSTS.has(t.hostname)||!/\.(laz|las|copc\.laz)$/i.test(t.pathname))return null;
+ return t.href;
 }
 
 // THE GAME THE BRIDGE SERVES, found beside the bridge rather than assumed.
@@ -211,6 +230,25 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
   socket.on('close',()=>{sockets.delete(socket);if(!sockets.size)device=null;log(`device disconnected (${sockets.size} open)`);notify();});
  });
  const server=http.createServer(async(req,res)=>{
+  if(req.url.startsWith('/lidar')){
+   // A local page only (a file:// page sends "null"); Chrome asks first
+   // whether a page may reach a private address (Private Network Access).
+   const origin=req.headers.origin;
+   if(origin!==undefined&&!isLocalOrigin(origin)){res.writeHead(403);res.end();return;}
+   const cors={'access-control-allow-origin':origin??'*','access-control-allow-private-network':'true','access-control-allow-headers':'range','access-control-expose-headers':'content-length,content-range'};
+   if(req.method==='OPTIONS'){res.writeHead(204,cors);res.end();return;}
+   const target=req.method==='GET'?lidarTarget(req.url):null;
+   if(!target){res.writeHead(404,cors);res.end();return;}
+   log('LIDAR for the builder:',target.split('/').pop());
+   try{
+    const r=await fetch(target,{headers:{'user-agent':'FairwayBridge (course builder)',...(req.headers.range?{range:req.headers.range}:{})}});
+    res.writeHead(r.status,{...cors,'content-type':'application/octet-stream',...(r.headers.get('content-length')?{'content-length':r.headers.get('content-length')}:{}),...(r.headers.get('content-range')?{'content-range':r.headers.get('content-range')}:{})});
+    if(!r.body){res.end();return;}
+    for await(const chunk of r.body)if(!res.write(chunk))await once(res,'drain');
+    res.end();
+   }catch(e){if(!res.headersSent)res.writeHead(502,cors);res.end();log('LIDAR fetch failed:',e.message);}
+   return;
+  }
   if(req.method!=='GET'){res.writeHead(405);res.end();return;}
   if(req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,deviceConnected:sockets.size>0,browserConnected:!!browser,ready}));return;}
   if(req.url==='/manifest.webmanifest'){const m=await readManifest();if(m){res.writeHead(200,{'content-type':'application/manifest+json','cache-control':'no-store'});res.end(m);}else{res.writeHead(404);res.end();}return;}

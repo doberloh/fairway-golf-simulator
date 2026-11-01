@@ -789,3 +789,28 @@ only, kept under the ignored bench/shots/lidar/, never committed.
   *Bing Maps coverage*, https://learn.microsoft.com/en-us/bingmaps/coverage:
   free and Basic accounts ended 30 June 2025, Enterprise runs to 30 June
   2028.
+- USGS, *The National Map product API* -- https://tnmaccess.nationalmap.gov/api/v1/docs
+  -- door 2's LIDAR search for the United States (RESEARCH, *Finding LIDAR
+  from the builder*); its LAZ tiles are on rockyweb.usgs.gov, which no page
+  may read.
+- USGS 3DEP on the Registry of Open Data on AWS -- https://registry.opendata.aws/usgs-lidar/
+  -- and *Entwine Point Tile*, https://entwine.io/en/latest/entwine-point-tile.html:
+  the copy door 2 downloads the square from (ept.js), Web Mercator.
+- Microsoft Planetary Computer, *USGS 3DEP Lidar Point Cloud (COPC)* --
+  https://planetarycomputer.microsoft.com/dataset/3dep-lidar-copc -- checked,
+  readable, not used (older surveys at Worthington).
+- IGN, *LiDAR HD* -- https://geoservices.ign.fr/lidarhd -- France's tiles,
+  found through the data.geopf.fr WFS layer IGNF_LIDAR-HD_METADONNEE:metadata.
+- swisstopo, *swissSURFACE3D* -- https://www.swisstopo.admin.ch/en/height-model-swisssurface3d
+  -- linked; its LV95 grid is not worked.
+- Wikipedia, *National Lidar Dataset (United States)* --
+  https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States) -- the
+  starting list of state programmes; the 36 state portals as checked are in
+  src/builder/lidar-search.js `STATE_PORTALS`.
+- IOGP, *Guidance Note 7-2: Coordinate Conversions and Transformations
+  including Formulas* -- https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/
+  -- the Lambert conformal conic and transverse Mercator worked examples
+  tests/lidar-geo.test.mjs checks geo.js `projectionOf` against.
+- J. P. Snyder, *Map Projections -- A Working Manual*, USGS Professional
+  Paper 1395 (1987), pp. 61-64 and 104-110 -- the transverse Mercator and
+  Lambert conformal conic formulas.

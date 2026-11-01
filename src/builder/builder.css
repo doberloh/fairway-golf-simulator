@@ -82,3 +82,6 @@ button,input,select{font:inherit;color:inherit}
 .cb-door2 .cb-toolhint{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;max-width:min(760px,86%);padding:7px 16px;border:1px solid var(--hot);border-radius:8px;background:rgba(3,12,10,.88);color:#fff;font:600 14px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 4px 14px #0008}
 .cb-door2 .cb-toolhint[hidden]{display:none}
 .cb-door2 .cb-swatch{display:inline-block;width:10px;height:10px;margin-right:6px;border:1px solid #0006;vertical-align:-1px}
+/* Links out of the builder (door 2's LIDAR portals), readable on the panels. */
+#builder a{color:var(--a1)}#builder a:visited{color:var(--soft)}
+.cb-savenote{color:var(--soft);font-size:12px;margin-right:10px}

@@ -1,14 +1,16 @@
 // Every open form of LIDAR read (src/lidar/las.js, geotiff.js, formats.js):
 // one small survey written out in each form by the writers below, read back,
 // and the same points or heights found. The real LAZ is read locally from the
-// owner's Worthington data when FAIRWAY_LIDAR_TEST names its folder.
+// owner's Worthington data where it is here (bench/lidar/worthington, or FAIRWAY_LIDAR_TEST).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {worthingtonDir, LIDAR_HOME} from '../tools/lidar-home.mjs';
 import path from 'node:path';
 import {deflateSync} from 'node:zlib';
 import {openSource, formOf, REFUSED} from '../src/lidar/formats.js';
 import {parseHeader, toMetres} from '../src/lidar/las.js';
+import {converter} from '../src/lidar/geo.js';
 import {readGeoTiff} from '../src/lidar/geotiff.js';
 import {createGridder, findTrees} from '../src/lidar/land.js';
 
@@ -183,8 +185,22 @@ test('land from points: the ground classed, the tree found at its height', async
  near(l2.ground[20 * l2.nx + 20], ground(E0 + 20, 0), .3, 'filtered ground under the tree');
 });
 
-test('the owner\'s Worthington LAZ, where it is on this machine', {skip: !process.env.FAIRWAY_LIDAR_TEST && 'set FAIRWAY_LIDAR_TEST to the course folder'}, async () => {
- const dir = path.join(process.env.FAIRWAY_LIDAR_TEST, 'raw'), file = fs.readdirSync(dir).find(f => f.endsWith('.laz'));
+test('the owner\'s Washington surveys, in State Plane feet, place where their courses are', {skip: !fs.existsSync(path.join(LIDAR_HOME, 'battle-creek')) && 'no surveys in bench/lidar'}, () => {
+ // Each folder's first tile: its header's middle, through its own WKT, to degrees.
+ const where = {'battle-creek': [48.05, -122.23], 'salish-cliffs': [47.118, -123.108], snohomish: [47.923, -122.028]};
+ for (const [key, [lat, lon]] of Object.entries(where)) {
+  const d = path.join(LIDAR_HOME, key), sub = fs.existsSync(path.join(d, 'laz')) ? path.join(d, 'laz') : d, file = fs.readdirSync(sub).find(f => f.endsWith('.laz'));
+  if (!file) continue;
+  const fd = fs.openSync(path.join(sub, file), 'r'), buf = Buffer.alloc(65536); fs.readSync(fd, buf, 0, buf.length, 0); fs.closeSync(fd);
+  const h = parseHeader(new Uint8Array(buf.buffer, buf.byteOffset, buf.length)), c = converter(h.crs, {epsg: 4326, geographic: true});
+  assert.ok(c, `${key}: its grid (EPSG ${h.crs.epsg}) should be worked from its WKT`);
+  const g = c((h.bounds.minX + h.bounds.maxX) / 2, (h.bounds.minY + h.bounds.maxY) / 2);
+  assert.ok(Math.abs(g.y - lat) < .03 && Math.abs(g.x - lon) < .03, `${key}: ${g.y.toFixed(4)}, ${g.x.toFixed(4)} should be near ${lat}, ${lon}`);
+ }
+});
+
+test('the owner\'s Worthington LAZ, where it is on this machine', {skip: !worthingtonDir() && 'no Worthington survey in bench/lidar/worthington (or FAIRWAY_LIDAR_TEST)'}, async () => {
+ const dir = path.join(worthingtonDir(), 'raw'), file = fs.readdirSync(dir).find(f => f.endsWith('.laz'));
  const bytes = new Uint8Array(fs.readFileSync(path.join(dir, file))), h = parseHeader(bytes);
  assert.equal(h.version, '1.4'); assert.equal(h.format, 6); assert.equal(h.crs.epsg, 6344); assert.deepEqual(toMetres(h.crs), {h: 1, v: 1});
  const m = await import('laz-perf'), M = await (m.createLazPerf || m.default?.createLazPerf || m.default)();

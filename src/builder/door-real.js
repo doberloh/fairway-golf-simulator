@@ -23,7 +23,9 @@
 // work is in pure modules beside this one: real-course.js (land, picture,
 // course), trace-edit.js (the trace being drawn), imagery.js (fetched
 // pictures), lidar/trace.js (the auto trace).
-import {show, setTitle, setBusy, topTools, home, pickFile, ui} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave} from './builder.js';
+import {writeDraft, DRAFT_EXT} from './draft.js';
+import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
 import {converter} from '../lidar/geo.js';
@@ -35,13 +37,14 @@ import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPair
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
+import {sourcesAt, squareAround, searchLidar, downloadLidar} from './lidar-search.js';
 import {createPlanView} from './plan-view.js';
 import {validateDoc} from '../course-doc.js';
 import {BIOME_KEYS} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {GROUNDS} from '../grounds.js';
 import {openEditor} from './editor.js';
-import {worldFromDoc} from '../built-world.js';
+import {worldFromDoc, GRID_MARGIN} from '../built-world.js';
 import {createEditor} from './editing.js';
 import {checkCourse} from './checks.js';
 
@@ -62,14 +65,17 @@ const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'isla
 const MARK_NAME = {back: 'back tee', middle: 'middle tee', front: 'front tee', aim: 'aim point', green: 'green'};
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
+// Imagery fetched this session, by provider and place (fetchImagery): kept
+// across door 2's steps, the land rebuilt and door 2 opened again.
+const IMAGERY = new Map();
 const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase', 'homeErase'];
 
-export function open() {
+export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
   name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
-  lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
+  picShow: null, picOffsets: {}, lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
@@ -331,7 +337,7 @@ export function open() {
 
  // ----------------------------------------------------------------- steps
  const steps = [stepLidar, stepLand, stepTrace, stepHoles, stepName, stepReview];
- const can = n => n === 0 || (n === 1 && !!st.preview) || (n >= 2 && !!st.land && (n < 3 || !!st.model) && (n < 4 || st.holes.slice(0, st.holesN).every(h => h?.green && h.tees.length)) && (n !== 2 || true));
+ const can = n => n === 0 || (n === 1 && (!!st.preview || !!st.land)) || (n >= 2 && !!st.land && (n < 3 || !!st.model) && (n < 4 || st.holes.slice(0, st.holesN).every(h => h?.green && h.tees.length)) && (n !== 2 || true));
  function go(n) {
   if (!can(n)) return;
   st.step = n; st.outline = [];
@@ -361,8 +367,115 @@ export function open() {
  // 1. The LIDAR, and the property.
  const fileList = el('ul'), boxText = el('small');
  const boxInfo = () => { const crs = crsOfSources(st.sources), u = crs ? toMetres(crs) : {h: 1}; boxText.textContent = st.box ? `The property: ${((st.box.x1 - st.box.x0) * u.h).toFixed(0)} x ${((st.box.y1 - st.box.y0) * u.h).toFixed(0)} m. Drag on the relief for another.` : ''; };
+ // FIND LIDAR FOR A PLACE (the owner, 1 November 2026; lidar-search.js): a
+ // place by name, a square round it, every source that covers it. Online
+ // only when pressed.
+ const findList = el('ul', {class: 'cb-found'}), findOut = el('div', {class: 'cb-lidarfound'});
+ function findField() {
+  const place = el('input', {class: 'cb-lidarplace', placeholder: 'A course or a place, by name', value: st.find?.label ?? ''}), size = el('select', {class: 'cb-lidarsize'}, [1000, 1500, 2000, 3000].map(m => el('option', {value: m, selected: m === (st.findSize ?? 1500)}, `${m / 1000} km square`)));
+  size.onchange = () => { st.findSize = +size.value; };
+  return el('div', {class: 'cb-field'}, el('label', {}, 'Find LIDAR'),
+   el('small', {}, 'Search by name, pick the place, then search every source that covers it: USGS 3DEP and IGN LiDAR HD download here; state and national portals open in a new tab. Goes online only when pressed.'),
+   el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => findPlace(place.value)}, 'Find')), findList,
+   el('div', {class: 'cb-btns'}, size, el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: !st.find, 'data-find': 'search', onclick: () => searchAll()}, 'Search for LIDAR')), findOut);
+ }
+ async function findPlace(text) {
+  if (!text.trim()) return;
+  try {
+   const r = await PROVIDERS.usgs.search(null, text);
+   findList.replaceChildren(...r.map(f => el('li', {style: 'cursor:pointer', onclick: () => { st.find = f; findList.replaceChildren(); go(0); say(`${f.label}: search for LIDAR round it.`); }}, f.label)));
+   if (!r.length) say('Nothing found by that name.', true);
+  } catch (e) { say('The search failed: ' + e.message, true); }
+ }
+ async function searchAll() {
+  if (!st.find) return;
+  const box = squareAround(st.find.lon, st.find.lat, st.findSize ?? 1500), here = sourcesAt(st.find.lon, st.find.lat);
+  st.findBox = box; findOut.replaceChildren(el('small', {}, 'Searching…'));
+  const rows = [];
+  for (const s of here.filter(s => s.online)) {
+   try {
+    const found = await searchLidar(s.key, box);
+    rows.push(el('div', {class: 'cb-field', style: 'padding:6px'}, el('label', {}, s.name), el('small', {}, s.licence),
+     found.length ? el('ul', {}, found.map(f => el('li', {}, `${f.title}${f.date ? ', ' + String(f.date).slice(0, 10) : ''}: ${f.tiles} tile${f.tiles === 1 ? '' : 's'}${f.bytes ? `, ${(f.bytes / 1e6).toFixed(0)} MB as tiles` : f.points ? `, ${(f.points / 1e6).toFixed(1)} M points` : ''} `,
+      el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-download': f.id, onclick: () => fetchLidar(f)}, s.key === 'usgs' ? 'Download the square here' : 'Download here'),
+       f.tileUrls?.length ? el('button', {class: 'cb-btn', type: 'button', 'data-rocky': f.id, onclick: () => viaDownloads(f)}, 'Download its whole tiles (to your Downloads)') : null)))) : el('small', {}, 'Nothing over this square.')));
+   } catch (e) { rows.push(el('small', {class: 'cb-err'}, `${s.name}: ${e.message}`)); }
+  }
+  const links = here.filter(s => s.link);
+  if (links.length) rows.push(el('div', {class: 'cb-field', style: 'padding:6px'}, el('label', {}, 'Also covering this place'), el('ul', {}, links.map(s => el('li', {}, el('a', {href: s.link, target: '_blank', rel: 'noopener'}, s.name), s.note ? ` -- ${s.note}` : '')))));
+  findOut.replaceChildren(...rows);
+ }
+ async function fetchLidar(found) {
+  setBusy('Downloading the LIDAR…');
+  try {
+   const lazModule = await (await import('../lidar/laz.js')).lazModule();
+   // The square and the land built past it (GRID_MARGIN each side).
+   const wide = squareAround(st.find.lon, st.find.lat, (st.findSize ?? 1500) + 2 * GRID_MARGIN);
+   const got = await downloadLidar(found, wide, {lazModule, onProgress: (f, what) => setBusy(`Downloading the LIDAR… ${what} (${Math.round(f * 100)}%)`)});
+   for (const src of got) { st.sources.push(src); fileList.append(el('li', {}, `${src.name}: downloaded, ${src.count.toLocaleString()} points${src.bytes ? `, ${(src.bytes / 1e6).toFixed(0)} MB` : ''}`)); }
+   await previewLand(st.findBox);
+  } catch (e) { say('Could not download it: ' + e.message, true); }
+  finally { setBusy(''); }
+ }
+ // ROCKYWEB'S WHOLE TILES (the owner, 1 November 2026: "figure out how to
+ // gain access to rockyweb for LIDAR. there has to be a way"). Rockyweb lets
+ // no page read it (no Access-Control-Allow-Origin; its preflight answers
+ // 405), but a browser DOWNLOADS from it like any site. So the tiles are
+ // downloaded as files, a few seconds apart (rockyweb answers 429 to a rush),
+ // and read back from the downloads folder the player picks once
+ // (showDirectoryPicker: Chrome and Edge). Where the browser cannot pick a
+ // folder, the player brings the downloaded files with Choose LIDAR files.
+ // First, Fairway's bridge if it is running (the launch monitor's helper,
+ // bridge/server.mjs `/lidar`): it fetches rockyweb for the page.
+ async function viaBridge(tiles) {
+  const base = 'http://127.0.0.1:1922';
+  try { const ctl = new AbortController(); setTimeout(() => ctl.abort(), 1500); if (!(await fetch(base + '/health', {signal: ctl.signal})).ok) return false; } catch { return false; }
+  const lazModule = await (await import('../lidar/laz.js')).lazModule();
+  for (const [n, t] of tiles.entries()) {
+   const r = await fetch(`${base}/lidar?url=${encodeURIComponent(t.url)}`);
+   if (!r.ok) throw Error(`USGS would not give ${t.name} through the bridge (${r.status}).`);
+   const total = +r.headers.get('content-length') || t.bytes, parts = [], reader = r.body.getReader(); let got = 0;
+   for (;;) { const {done, value} = await reader.read(); if (done) break; parts.push(value); got += value.length; setBusy(`Downloading ${t.name} through Fairway's bridge (${n + 1} of ${tiles.length}): ${Math.round(100 * got / total)}%`); }
+   const bytes = new Uint8Array(got); let at = 0; for (const p of parts) { bytes.set(p, at); at += p.length; }
+   const src = {...(await openSource(t.name, bytes, {lazModule})), name: t.name, downloaded: true};
+   st.sources.push(src); fileList.append(el('li', {}, `${t.name}: from USGS through the bridge, ${src.count.toLocaleString()} points`));
+  }
+  return true;
+ }
+ async function viaDownloads(found) {
+  const tiles = found.tileUrls;
+  setBusy('Looking for Fairway\'s bridge…');
+  try { if (await viaBridge(tiles)) { setBusy(''); await previewLand(st.findBox); return; } }
+  catch (e) { setBusy(''); return say(e.message, true); }
+  setBusy('');
+  let dir = downloadsDir;
+  if (!dir && typeof window.showDirectoryPicker === 'function') {
+   say('Pick the folder your browser downloads to (usually Downloads): the builder reads the tiles from there once they arrive.');
+   try { dir = downloadsDir = await window.showDirectoryPicker({id: 'fairway-downloads', mode: 'read', startIn: 'downloads'}); } catch { return say('No folder picked: nothing downloaded.', true); }
+  }
+  const have = async t => { if (!dir) return null; try { const f = await (await dir.getFileHandle(t.name)).getFile(); return !t.bytes || f.size === t.bytes ? f : null; } catch { return null; } };
+  for (const [n, t] of tiles.entries()) {
+   if (await have(t)) continue;
+   const a = el('a', {href: t.url, download: t.name}); document.body.append(a); a.click(); a.remove();
+   say(`Downloading ${t.name} from USGS (${n + 1} of ${tiles.length}, ${(t.bytes / 1e6).toFixed(0)} MB). Your browser may ask once to allow several downloads.`);
+   await new Promise(r => setTimeout(r, 4000));
+  }
+  if (!dir) return say(`${tiles.length} tile${tiles.length === 1 ? '' : 's'} downloading from USGS. When they finish, bring them with Choose LIDAR files.`);
+  // Each tile read once it is whole in the folder (the browser writes a
+  // .crdownload and renames it when done).
+  const got = new Map(), t0 = Date.now();
+  while (got.size < tiles.length && Date.now() - t0 < 60 * 60e3) {
+   for (const t of tiles) if (!got.has(t.name)) { const f = await have(t); if (f) got.set(t.name, f); }
+   setBusy(`Waiting for the downloads: ${got.size} of ${tiles.length} tiles whole in the folder…`);
+   if (got.size < tiles.length) await new Promise(r => setTimeout(r, 2000));
+  }
+  setBusy('');
+  if (got.size < tiles.length) return say(`Only ${got.size} of ${tiles.length} tiles arrived in that folder within the hour. Bring them with Choose LIDAR files when they are done.`, true);
+  await readFiles([...got.values()]);
+  if (st.findBox && st.preview) await previewLand(st.findBox);
+ }
  function stepLidar() {
-  return [el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
+  return [findField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
    el('small', {}, 'LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a file is read with it.'),
    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: chooseLand}, 'Choose LIDAR files'), fileList),
   el('div', {class: 'cb-field'}, el('label', {}, 'The property'), el('small', {}, 'Drag a box on the relief round the course with the left button (up to 3 x 3 km); 150 m past it are built too, for the land beyond. The wheel zooms; the right button or Space drags the view.'), boxText),
@@ -370,6 +483,9 @@ export function open() {
  }
  async function chooseLand() {
   const files = await pickFile('', true); if (!files.length) return;
+  await readFiles(files);
+ }
+ async function readFiles(files) {
   setBusy('Reading the files…');
   try {
    const side = new Map(files.filter(f => /\.(prj|hdr)$/i.test(f.name)).map(f => [f.name.toLowerCase(), f]));
@@ -387,10 +503,11 @@ export function open() {
      fileList.append(el('li', {}, `${f.name}: ${src.form.toUpperCase()}, ${src.kind === 'points' ? src.count.toLocaleString() + ' points' : `${src.raster.width} x ${src.raster.height} heights`}, ${crs.epsg ? 'EPSG ' + crs.epsg : 'no map grid stated'}, ${crs.units.h === 'metre' && crs.units.v === 'metre' ? 'metres' : `${crs.units.h} across, ${crs.units.v} up (converted to metres)`}`));
     } catch (e) { fileList.append(el('li', {class: 'cb-err'}, `${f.name}: ${e.message}`)); }
    }
-   if (st.sources.length) await previewLand();
+   if (st.sources.length) await previewLand(st.findBox);
   } finally { setBusy(''); }
  }
- async function previewLand() {
+ // `degrees`: the square searched for ({lon0, lat0, lon1, lat1}), made the property.
+ async function previewLand(degrees = null) {
   const box = sourcesBox(st.sources), unit = toMetres(crsOfSources(st.sources));
   const w = (box.x1 - box.x0) * unit.h, h = (box.y1 - box.y0) * unit.h, cell = Math.max(2, Math.sqrt(w * h / 6e5));
   const g = createGridder({box, cell, unit}), total = st.sources.reduce((s, x) => s + (x.count || 0), 0), every = Math.max(1, Math.floor(total / 4e6));
@@ -401,6 +518,12 @@ export function open() {
   st.preview = {land: g.finish(), gridder: g};
   const cap = MAX_PROPERTY / unit.h, cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
   st.box = {x0: Math.max(box.x0, cx - cap / 2), x1: Math.min(box.x1, cx + cap / 2), y0: Math.max(box.y0, cy - cap / 2), y1: Math.min(box.y1, cy + cap / 2)};
+  const conv = degrees ? converter({epsg: 4326, geographic: true}, crsOfSources(st.sources)) : null;
+  if (conv) {
+   const c = [[degrees.lon0, degrees.lat0], [degrees.lon1, degrees.lat0], [degrees.lon0, degrees.lat1], [degrees.lon1, degrees.lat1]].map(([x, y]) => conv(x, y)), xs = c.map(q => q.x), ys = c.map(q => q.y);
+   const sq = {x0: Math.max(box.x0, Math.min(...xs)), x1: Math.min(box.x1, Math.max(...xs)), y0: Math.max(box.y0, Math.min(...ys)), y1: Math.min(box.y1, Math.max(...ys))};
+   if (sq.x1 > sq.x0 && sq.y1 > sq.y0) st.box = sq;
+  }
   paintRelief(); boxInfo(); go(0);
   say('Drag a box on the relief round the course, then build the land.');
  }
@@ -413,13 +536,18 @@ export function open() {
  }
  async function buildLand() {
   if (!st.box) return say('Load the LIDAR first.', true);
+  if (st.sources.some(s => s.restored)) return say('This draft keeps the land it built, not the LIDAR files: bring them again in step 1 to build the land anew.', true);
   setBusy('Building the land…');
   try {
    const r = await landFromSources(st.sources, st.box, {pause: frame, onStep: (what, f) => setBusy(`Building the land… ${what} ${Math.round(f * 100)}%`)});
-   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, pics: [], picture: null, offset: {x: 0, z: 0}});
+   // The pictures stay (the owner, 1 November 2026: keep the imagery when
+   // the mode changes): placed by position, they lie on new land as on old;
+   // one lined up by matched points was matched to the old land, and goes.
+   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, pics: st.pics.filter(p => p.provider || p.file), picture: null});
+   if (st.picShow === 'matched') st.picShow = null;
    landText.textContent = `${(2 * r.land.halfX).toFixed(0)} x ${(2 * r.land.halfZ).toFixed(0)} m at ${r.land.cell} m; ground ${r.land.method === 'classified' ? 'from the survey\'s own classes' : 'found by a ground filter'}; ${(100 * r.land.filled.reduce((s, v) => s + v, 0) / r.land.filled.length).toFixed(1)}% filled where no laser reached the ground; ${r.trees.length.toLocaleString()} trees.`;
    say(landText.textContent);
-   paintRelief(); go(1);
+   paintRelief(); if (st.picShow) relay(); go(1);
   } catch (e) { say('Could not build the land: ' + e.message, true); }
   finally { setBusy(''); }
  }
@@ -487,7 +615,7 @@ export function open() {
   // -- nothing moves it.
   const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => {
    if (!st.picLocked) { setTool(st.model ? st.traceTool ?? 'brush' : 'move'); return say(`The picture is locked, ${Math.hypot(st.offset.x, st.offset.z).toFixed(2)} m from where its position put it.`); }
-   if (!st.pics.length) return say('Bring a picture with a position first.', true);
+   if (!st.pics.length || st.picShow === 'lidar') return say(st.pics.length ? 'Show a fetched picture or a file first (Showing): the LIDAR\'s own needs no lining up.' : 'Bring a picture with a position first.', true);
    st.picLocked = false; setTool('align'); say('Unlocked: drag the picture into line with the LIDAR -- see-through, or the LIDAR over it, makes it easier (Viewing, below).');
   }}, st.picLocked ? 'Unlock the picture' : 'Lock the picture');
   toolButtons.push(alignBtn);
@@ -499,6 +627,8 @@ export function open() {
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
      alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); showHint(); }}, 'Back to its position')),
+    st.pics.length ? el('small', {}, 'Showing (every picture fetched or brought is kept, each with its own lining up)') : null,
+    st.pics.length ? el('select', {class: 'cb-picshow', onchange: e => showPic(e.target.value)}, [...new Map(st.pics.map(p => [p.group, p.label])), ['lidar', 'The LIDAR\'s own']].map(([g, label]) => el('option', {value: g, selected: g === st.picShow}, label + (g === 'files' ? ` (${st.pics.filter(p => p.group === 'files').length})` : '')))) : null,
     ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found),
    // THE LIDAR AND THE PICTURE TOGETHER (the owner, 1 November 2026): each
    // with its own opacity, either on top.
@@ -562,13 +692,15 @@ export function open() {
   try {
    const {halfX, halfZ} = st.land, corners = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z));
    const box = {lon0: Math.min(...corners.map(c => c.lon)), lon1: Math.max(...corners.map(c => c.lon)), lat0: Math.min(...corners.map(c => c.lat)), lat1: Math.max(...corners.map(c => c.lat))};
-   const session = await p.start(apiKey);
-   const pic = await mosaic(session, box, {onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
-   st.pics = [{pic, provider: key, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}];
-   st.offset = {x: 0, z: 0};
+   // Fetched once a session for this provider and place: asked again (the
+   // land rebuilt, door 2 opened again), it comes from memory, not the network.
+   const cacheKey = `${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`, kept = IMAGERY.get(cacheKey);
+   const pic = kept ?? await mosaic(await p.start(apiKey), box, {onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
+   IMAGERY.set(cacheKey, pic);
+   st.pics = st.pics.filter(q => q.group !== key).concat([{group: key, label: p.name, pic, provider: key, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}]);
    if (!st.credits.includes(pic.credit)) st.credits.push(pic.credit);
-   relay();
-   say(`${p.name}: ${pic.width} x ${pic.height} pixels at zoom ${pic.z}${pic.missing ? `, ${pic.missing} tiles missing` : ''}, sized and placed by position. If it sits off, unlock it and drag it into line with the LIDAR.`);
+   showPic(key, {offset: {x: 0, z: 0}});
+   say(`${p.name}: ${pic.width} x ${pic.height} pixels at zoom ${pic.z}${pic.missing ? `, ${pic.missing} tiles missing` : ''}, ${kept ? 'kept from earlier -- nothing downloaded' : 'sized and placed by position'}. If it sits off, unlock it and drag it into line with the LIDAR.`);
   } catch (e) { say(`${p.name}: ${e.message}`, true); }
   finally { setBusy(''); }
  }
@@ -580,16 +712,31 @@ export function open() {
    if (!r.length) say('Nothing found by that name.', true);
   } catch (e) { say('The search failed: ' + e.message, true); }
  }
+ // EVERY PICTURE KEPT (the owner, 1 November 2026: "once the google/bing/usgs
+ // images are downloaded. if the user changes modes keep the images"): each
+ // provider's, the files placed by position (tiles filling each other's
+ // gaps) and one matched by points are kept side by side as groups, each
+ // with its own drag into line; one is shown -- or the LIDAR's own -- and
+ // switching back fetches nothing.
+ function showPic(group, {offset = null, render = true} = {}) {
+  if (st.picShow && st.picShow !== 'lidar') st.picOffsets[st.picShow] = st.offset;
+  st.picShow = group; st.offset = offset ?? st.picOffsets[group] ?? {x: 0, z: 0};
+  relay(); if (render && st.step === 2) go(2);
+ }
  function relay() {
+  if (st.picShow === 'lidar') return lidarPicture();
   let picture = null;
-  for (const p of st.pics) picture = pictureOnLand(st.land, st.gridder, p.pic, {affine: (x, z) => p.toPixel(x - st.offset.x, z - st.offset.z), into: picture});
+  for (const p of st.pics.filter(q => q.group === st.picShow)) picture = pictureOnLand(st.land, st.gridder, p.pic, {affine: (x, z) => p.toPixel(x - st.offset.x, z - st.offset.z), into: picture});
   st.picture = picture; paintPicture();
  }
- function useLidarColour() {
+ function lidarPicture() {
   const {land} = st, N = land.nx * land.nz, rgb = new Uint8Array(N * 3), has = new Uint8Array(N);
   for (let k = 0; k < N; k++) { if (land.rgb) { rgb.set(land.rgb.subarray(k * 3, k * 3 + 3), k * 3); has[k] = land.rgb[k * 3] || land.rgb[k * 3 + 1] ? 1 : 0; } else if (Number.isFinite(land.intensity[k])) { const v = Math.round(land.intensity[k] * 255); rgb[k * 3] = rgb[k * 3 + 1] = rgb[k * 3 + 2] = v; has[k] = 1; } }
-  st.pics = []; st.picture = {rgb, nir: null, has, fromLidar: true, colour: !!land.rgb}; paintPicture();
-  say(land.rgb ? 'The survey\'s own colour.' : 'The laser\'s brightness: sand and paths bright, water dark.');
+  st.picture = {rgb, nir: null, has, fromLidar: true, colour: !!land.rgb}; paintPicture();
+ }
+ function useLidarColour() {
+  showPic('lidar');
+  say((st.land.rgb ? 'The survey\'s own colour.' : 'The laser\'s brightness: sand and paths bright, water dark.') + (st.pics.length ? ' The fetched pictures are kept: pick one under Showing.' : ''));
  }
  async function choosePicture() {
   const files = await pickFile('', true), main = files.find(f => /\.(tiff?|png|jpe?g|webp|gif|bmp)$/i.test(f.name)); if (!main) return;
@@ -614,8 +761,8 @@ export function open() {
    }
    const conv = pic.x0 != null && landCrs ? converter(landCrs, pic.crs ?? landCrs) : null;
    if (conv) {
-    st.pics = st.pics.filter(p => !p.provider).concat([{pic, toPixel: (x, z) => { const m = st.gridder.map(x, z), q = conv(m.x, m.y); return [(q.x - pic.x0) / pic.dx, (q.y - pic.y0) / pic.dy]; }}]);
-    relay();
+    st.pics.push({group: 'files', label: 'Picture files', file: main.name, pic, toPixel: (x, z) => { const m = st.gridder.map(x, z), q = conv(m.x, m.y); return [(q.x - pic.x0) / pic.dx, (q.y - pic.y0) / pic.dy]; }});
+    showPic('files');
     say(`Placed by its own position: the pictures cover ${(100 * st.picture.has.reduce((s, v) => s + v, 0) / st.picture.has.length).toFixed(0)}% of the land. Add another tile to fill the rest.`);
    } else {
     st.align = {pairs: [], waiting: 'land', pic};
@@ -633,7 +780,7 @@ export function open() {
    if (st.align?.waiting !== 'picture') return;
    const b = pc.getBoundingClientRect();
    st.align.pairs.push({local: st.align.local, pixel: {col: (e.clientX - b.left) / b.width * pic.width, row: (e.clientY - b.top) / b.height * pic.height}}); st.align.waiting = 'land';
-   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = [{pic, toPixel: fit.map}]; relay(); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or unlock it and drag it.`); } catch (er) { say(er.message, true); } }
+   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = st.pics.filter(q => q.group !== 'matched').concat([{group: 'matched', label: 'Matched by points', pic, toPixel: fit.map}]); showPic('matched', {offset: {x: 0, z: 0}, render: false}); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or unlock it and drag it.`); } catch (er) { say(er.message, true); } }
    else say(`${st.align.pairs.length} of 3: click the next point on the land.`);
    plan.draw();
   });
@@ -728,7 +875,7 @@ export function open() {
  // 5. Name; 6. Edit.
  function stepName() {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course'),
-   el('small', {}, 'Name'), el('input', {class: 'cb-name', value: st.name, maxlength: 60, oninput: e => { st.name = e.target.value; }}),
+   el('small', {}, 'Name'), el('input', {class: 'cb-name', value: st.name, maxlength: 60, oninput: e => { st.name = e.target.value; refreshSave(); }}),
    el('small', {}, 'Landscape (the look; the land and lies stay)'), el('select', {onchange: e => { st.landscape = e.target.value; }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name))),
    el('small', {}, 'Credits for the data (one a line)'), el('textarea', {class: 'cb-credits', rows: 4, style: 'background:#03100e;border:1px solid var(--line);color:inherit', oninput: e => { st.credits = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); }}, st.credits.join('\n'))),
   next(5, 'Next: review the course')];
@@ -748,7 +895,7 @@ export function open() {
   setBusy('Painting the course…'); await frame();
   try {
    const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
-    source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.pics.length ? 'placed' : st.picture ? 'lidar' : 'none'}}));
+    source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
    const {nx, nz, cell, halfX, halfZ, ground: g} = st.land, N = nx * nz;
@@ -767,6 +914,44 @@ export function open() {
   } catch (e) { say('Could not make the course: ' + e.message, true); }
   finally { setBusy(''); }
  }
- go(0);
- say('Start with the LIDAR files.');
+ // SAVE FROM ANY STEP (the owner, 1 November 2026): door 2 saves a draft
+ // (draft.js) that opens back here at the same step; the playable course is
+ // saved from the editor. Pictures are not in it, but each one's lining up is.
+ const snapshot = () => ({step: st.step, name: st.name, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box,
+  sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
+  view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView},
+  picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land,
+  trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes} : null});
+ setSaver({key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
+  said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)});
+ if (draft) restore(draft);
+ else { go(0); say('Start with the LIDAR files.'); }
+
+ function restore(d) {
+  // The LIDAR files are not in a draft: stand-ins carry their names and map
+  // grid, so the place is known (imagery, OpenStreetMap); building the land
+  // anew needs the files again.
+  Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box,
+   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], ...(d.view ?? {})});
+  if (d.land) {
+   const L = d.land, u = L.unit ?? {h: 1, v: 1};
+   st.land = L;
+   st.gridder = createGridder({box: {x0: L.center.x - L.halfX / u.h, x1: L.center.x + L.halfX / u.h, y0: L.center.y - L.halfZ / u.h, y1: L.center.y + L.halfZ / u.h}, cell: L.cell, unit: u});
+   if (d.osm?.codes) st.osm = d.osm;
+   if (d.trace) {
+    st.model = createTrace(st.land, {trees: d.trace.trees, homes: d.trace.homes});
+    const Ls = st.model.state.layers;
+    for (const [k, m] of d.trace.masks) Ls.mask(k, true).set(m);
+    for (const k of d.trace.hidden ?? []) Ls.hidden.add(k);
+    Ls.recompose();
+   }
+   paintRelief();
+  }
+  setTitle('Real life course');
+  go(Math.min(d.step ?? 0, st.land ? (st.model ? 5 : 2) : 0));
+  if (st.step === 5 && !can(5)) go(st.model ? 3 : 2);
+  say(`Opened the draft "${d.name}" at step ${st.step + 1}. ${st.land ? 'The land and the trace are as saved; pictures are fetched or brought again (each keeps its lining up).' : 'Bring the LIDAR files again to build the land.'}`);
+ }
 }
+let opened = 0;   // each door 2 opened is its own piece of work for Save
+let downloadsDir = null;   // the folder the browser downloads to, once picked (viaDownloads)

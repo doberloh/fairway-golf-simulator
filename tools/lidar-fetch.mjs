@@ -3,7 +3,7 @@
 // docs/COURSE_BUILDER.md, *The amended goal*). For each course
 // tools/imagery-fetch.mjs saved, the USGS 3DEP lidar point-cloud tiles (LAZ)
 // over it, found through the National Map's product search and downloaded into
-// the ignored bench/shots/imagery/<course>/lidar/, for testing only -- never
+// the ignored bench/lidar/<course>/ (lidar-home.mjs), for testing only -- never
 // committed or shipped. US government work, public domain.
 //
 //   node tools/lidar-fetch.mjs                every course without its LIDAR
@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {OUT, COURSES} from './imagery-fetch.mjs';
+import {lidarDir} from './lidar-home.mjs';
 
 const UA = {'User-Agent': 'FairwayCourseBuilder/0.1 (testing)'};
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -32,7 +33,7 @@ async function products(bbox) {
 
 async function fetchCourse(key) {
  const dir = path.join(OUT, key), meta = JSON.parse(fs.readFileSync(path.join(dir, 'course.json'), 'utf8'));
- const out = path.join(dir, 'lidar'); fs.mkdirSync(out, {recursive: true});
+ const out = lidarDir(key); fs.mkdirSync(out, {recursive: true});
  const [lon0, lat0, lon1, lat1] = meta.bbox_lonlat, pad = .0015, bbox = [lon0 - pad, lat0 - pad, lon1 + pad, lat1 + pad];
  const items = await products(bbox);
  if (!items.length) throw Error('no 3DEP LIDAR over it');
@@ -60,7 +61,7 @@ async function fetchCourse(key) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const want = process.argv.slice(2);
- // Worthington's tiles are the owner's, read in place (FAIRWAY_LIDAR_TEST): not fetched.
+ // Worthington's tiles are the owner's survey, copied to bench/lidar/worthington: not fetched.
  for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
   try { await fetchCourse(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
  }

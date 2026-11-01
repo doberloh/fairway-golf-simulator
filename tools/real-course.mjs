@@ -29,9 +29,10 @@ import {worldFromDoc} from '../src/built-world.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
 import {testRound} from '../src/builder/test-round.js';
 import {osmWays, holesFromOsm, truthGrid, scoreCodes, damageTruth, lineUpTruth, KINDS} from './osm-holes.mjs';
+import {worthingtonDir} from './lidar-home.mjs';
 
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : argv[i + 1]; };
-const dir = opt('data', process.env.FAIRWAY_LIDAR_TEST), naipFile = opt('naip', null), osmFile = opt('osm', null), cardFile = opt('scorecard', null), out = opt('out', null);
+const dir = opt('data', worthingtonDir()), naipFile = opt('naip', null), osmFile = opt('osm', null), cardFile = opt('scorecard', null), out = opt('out', null);
 if (!dir || !fs.existsSync(dir)) { console.log('No data folder (pass --data <folder>). Nothing to build.'); process.exit(0); }
 const t0 = performance.now(), secs = () => ((performance.now() - t0) / 1000).toFixed(0) + ' s';
 const card = cardFile ? JSON.parse(fs.readFileSync(cardFile, 'utf8')) : null;

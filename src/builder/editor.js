@@ -4,7 +4,7 @@
 // change goes through the editing model (editing.js), which is tested in
 // Node; this file only turns the mouse and keys into its calls and tells the
 // view what to redraw.
-import {show, setTitle, setBusy, topTools, home, ui} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave} from './builder.js';
 import {createEditor, PAINT} from './editing.js';
 import {createView} from './view.js';
 import {writeBuiltFile, validateDoc} from '../course-doc.js';
@@ -17,6 +17,7 @@ import {testRound} from './test-round.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
+let opened = 0;               // each course opened is its own piece of work for Save
 
 // The tools: what a click or a drag on the ground does.
 const SHAPES = [['raise', 'Raise'], ['lower', 'Lower'], ['smooth', 'Smooth'], ['flatten', 'Flatten'], ['ramp', 'Ramp'], ['roughen', 'Roughen'], ['restore', 'Restore']];
@@ -68,7 +69,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   const a = s.raster.cell ** 2;
   layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
    return el('li', {'data-layer': k, style: 'display:flex;gap:4px;align-items:center;margin:2px 0'},
-    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: () => { editor.setHidden(k, !hid); view.refreshSurface([-s.ex, s.ex, -s.ez, s.ez]); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
+    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
     el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
     button('Erase', {kind: 'erase', surface: k}, {style: 'padding:2px 5px;font-size:11px'})); }));
  }
@@ -92,7 +93,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
  );
 
  // ---- the right: the course, its holes, the checks, Save.
- const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); }});
+ const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); refreshSave(); }});
  const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); view.refreshAll(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
  const holeList = el('ul');
  const checkList = el('ul'), roundList = el('ul');
@@ -127,8 +128,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);
  refreshHoles(); refreshLayers();
  topTools(
-  el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (!s.changed || confirm('Leave this course? Anything not saved is lost.')) { current?.view.dispose(); current = null; home(); } }}, 'Close'),
-  el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: save}, 'Save as a .fairway file'));
+  el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (!s.changed || confirm('Leave this course? Anything not saved is lost.')) { current?.view.dispose(); current = null; home(); } }}, 'Close'));
 
  // ---- the mouse on the ground.
  const canvas = view.canvas;
@@ -199,20 +199,20 @@ export function openEditor(doc, {from = 'file'} = {}) {
  function undo() { after(editor.undo()); }
  function redo() { after(editor.redo()); }
 
- async function save() {
-  setBusy('Saving the course…');
-  try {
+ // Save (the top bar's, and Ctrl+S): the course as a .fairway file; once
+ // saved, again to the same file until it is renamed (saving.js).
+ setSaver({
+  key: `editor-${++opened}`, name: () => s.name, file: () => fileName(s.name),
+  async bytes() {
    await new Promise(r => setTimeout(r, 30));
-   const out = validateDoc(editor.toDoc({onStep: what => setBusy(`Saving the course… ${what}`)}));
-   const bytes = await writeBuiltFile(out, BUILT_VERSION);
-   const url = URL.createObjectURL(new Blob([bytes], {type: 'application/zip'})), a = el('a', {href: url, download: fileName(out.name)});
-   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+   return writeBuiltFile(validateDoc(editor.toDoc({onStep: what => setBusy(`Saving the course… ${what}`)})), BUILT_VERSION);
+  },
+  said(r, bytes) {
+   if (r.how === 'failed') { status.textContent = 'Could not save: ' + r.error.message; return; }
    s.changed = false;
-   status.textContent = `Saved ${fileName(out.name)} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.`;
-   window.fairwayBuilder.lastSaved = bytes;
-  } catch (e) { status.textContent = 'Could not save: ' + e.message; }
-  finally { setBusy(''); }
- }
+   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.`;
+  },
+ });
  setTool({kind: 'navigate'});
  status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : HINT.navigate();
  return current;

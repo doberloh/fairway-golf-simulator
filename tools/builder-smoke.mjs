@@ -59,6 +59,10 @@ async function run() {
  try {
   for (const name of names) {
    const context = await browser.newContext({viewport: {width: 1600, height: 900}, acceptDownloads: true});
+   // The save dialog (showSaveFilePicker) is a window a script cannot answer:
+   // hidden, so Save downloads as in Firefox; a journey that tests the dialog's
+   // one-click resave puts a stand-in back (door-real.mjs).
+   await context.addInitScript(() => { window.showSaveFilePicker = undefined; });
    const page = await context.newPage();
    const errors = [], requests = [], allow = [];
    page.on('pageerror', e => errors.push('pageerror: ' + e.message));

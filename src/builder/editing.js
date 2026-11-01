@@ -20,7 +20,7 @@
 // brush is a weight that falls off smoothly to nothing at its edge.
 import {GROUND_KINDS} from '../grounds.js';
 import {createLayers, LAYER_ORDER} from './layers.js';
-import {maskRings, simplify} from '../contour.js';
+import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
 
@@ -123,8 +123,25 @@ export function createEditor(doc) {
   return step;
  };
 
+ // A LAYER'S OUTLINES AS THE COURSE GETS THEM (1 November 2026: the editor's
+ // 3D view given the trace step's "resolution treatment"): the cells traced,
+ // simplified and their corners rounded -- real-course.js `layerRings`, the
+ // same routine door 2 makes its course with -- over the layer's own box, or
+ // over cells [i0, i1, j0, j1] widened by `margin` (the view redraws a
+ // stroke's part). Save writes these; the view draws these.
+ const outlines = (kind, box = null, margin = 0) => {
+  const m = r.layers.masks.get(kind); if (!m) return [];
+  let [i0, i1, j0, j1] = box ?? [Infinity, -1, Infinity, -1];
+  if (!box) for (let j = 0; j < r.nz; j++) for (let i = 0; i < r.nx; i++) if (m[j * r.nx + i]) { if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+  if (i1 < i0) return [];
+  i0 = Math.max(0, i0 - margin); i1 = Math.min(r.nx - 1, i1 + margin); j0 = Math.max(0, j0 - margin); j1 = Math.min(r.nz - 1, j1 + margin);
+  const w = i1 - i0 + 1, h = j1 - j0 + 1, sub = new Uint8Array(w * h);
+  for (let j = 0; j < h; j++) sub.set(m.subarray((j + j0) * r.nx + i0, (j + j0) * r.nx + i0 + w), j * w);
+  return layerRings(sub, {nx: w, nz: h, cell: r.cell, x0: r.x0 + (i0 + .5) * r.cell, z0: r.z0 + (j0 + .5) * r.cell});
+ };
  const api = {
   state,
+  outlines,
   height: (x, z) => sample(x, z),
   codeAt(x, z) { const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); return i < 0 || j < 0 || i >= r.nx || j >= r.nz ? 0 : r.codes[j * r.nx + i]; },
   surfaceAt(x, z) { return PAINT[api.codeAt(x, z)]; },
@@ -291,15 +308,12 @@ export function createEditor(doc) {
     // in the layers' order), over its own box, not the course.
     const traced = {};
     LAYER_ORDER.forEach((kind, n) => {
-     const m = r.layers.masks.get(kind); if (!m) return;
-     let i0 = Infinity, i1 = -1, j0 = Infinity, j1 = -1;
-     for (let j = 0; j < r.nz; j++) for (let i = 0; i < r.nx; i++) if (m[j * r.nx + i]) { if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
-     if (i1 < 0) return;
+     if (!r.layers.masks.get(kind)) return;
      onStep(`Tracing the ${kind}`, n / LAYER_ORDER.length);
-     const w = i1 - i0 + 1, h = j1 - j0 + 1;
-     const rings = maskRings((i, j) => m[(j + j0) * r.nx + i + i0] === 1, w, h, r.x0 + (i0 + .5) * r.cell, r.z0 + (j0 + .5) * r.cell, r.cell)
-      .map(ring => simplify(ring, r.cell * .35).map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100])).filter(ring => ring.length >= 3);
-     traced[kind] = rings;
+     // As door 2 makes its course (outlines, above): until 1 November 2026
+     // the editor simplified to a third of a cell and kept the staircase.
+     const rings = outlines(kind).map(ring => ring.map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100]));
+     if (rings.length) traced[kind] = rings;
     });
     for (const [kind, rings] of Object.entries(traced)) if (kind !== 'water' && rings.length) surfaces[kind] = [rings];
     // Water: one body a ring that is not inside another, its islands with it;

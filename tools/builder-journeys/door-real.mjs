@@ -74,6 +74,19 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: /Generate a real life course/}).click();
   const plan = page.locator('canvas.cb-plan');
   const at = async (x, z) => { const box = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [box.x + cx / r, box.y + cy / r]; };
+  // Find LIDAR: a place, then every source over it -- the National Map stood
+  // in for (two tiles of one survey), the state's portal linked.
+  t.allow.push(/^https:\/\/tnmaccess\.nationalmap\.gov\//);
+  await page.route(/tnmaccess\.nationalmap\.gov/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify({items: [1, 2].map(n => ({publicationDate: '2023-02-10', sizeInBytes: 6e7, downloadLazURL: `https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/MN_TEST/MN_TEST_1_B21/LAZ/USGS_LPC_MN_TEST_${n}.laz`}))})}));
+  await page.locator('.cb-lidarplace').fill('A test place');
+  await page.getByRole('button', {name: 'Find', exact: true}).click();
+  await page.getByText('A test place, Minnesota').click();
+  await page.getByRole('button', {name: 'Search for LIDAR'}).click();
+  await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
+  const found = await page.locator('.cb-lidarfound').textContent();
+  if (!/MN TEST 1 B21/.test(found) || !/2 tiles/.test(found) || !/MnGeo Lidar \(Minnesota\)/.test(found) || /Iowa/.test(found)) throw Error(`the search should list the survey and Minnesota's own portal: ${found}`);
+  if (!await page.locator('[data-rocky="MN_TEST_1_B21"]').count()) throw Error('the survey\'s whole tiles should be offered (rockyweb)');
+  await t.shot('lidar-found');
   // 1. The LIDAR, and the property boxed with a left drag (the whole survey
   // less 20 m each side).
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
@@ -210,9 +223,32 @@ export default function ({journey, SHOTS}) {
   }
   const holes = await page.evaluate(() => window.fairwayBuilder.door2.holes.filter(h => h?.green && h.tees.length).length);
   if (holes !== 9) throw Error(`nine holes should be marked, not ${holes}`);
+  // Save from here: a stand-in save dialog (the harness hides Chrome's) -- the
+  // first Save asks where, the second goes to the same file with one click.
+  await page.evaluate(() => { window.__picks = 0; window.__writes = 0; window.showSaveFilePicker = async o => { window.__picks++; return {name: o.suggestedName, async createWritable() { return {async write() { window.__writes++; }, async close() {}}; }}; }; });
+  await page.locator('#cbSave').click(); await page.waitForFunction(() => window.__writes === 1, null, {timeout: 60000});
+  if (await page.locator('#cbSave').textContent() !== 'Save again') throw Error('after saving, the button should offer Save again');
+  await page.keyboard.press('Control+s'); await page.waitForFunction(() => window.__writes === 2, null, {timeout: 60000});
+  if (await page.evaluate(() => window.__picks) !== 1) throw Error('saving again should go to the same file without asking');
+  if (!/My-real-course\.fairway-draft/.test(await page.locator('#cbSaveNote').textContent())) throw Error(`the bar should name the draft: ${await page.locator('#cbSaveNote').textContent()}`);
   await page.getByRole('button', {name: 'Next: the name'}).click();
   // 5. The name; 6. the review, painted.
   await page.locator('.cb-name').fill('Door 2 test');
+  // Renamed: Save makes a new file.
+  if (await page.locator('#cbSave').textContent() !== 'Save') throw Error('a renamed course should Save to a new file');
+  await page.locator('#cbSave').click(); await page.waitForFunction(() => window.__writes === 3, null, {timeout: 60000});
+  if (await page.evaluate(() => window.__picks) !== 2) throw Error('the renamed course should have asked for a new file');
+  // The draft opened again, from the start page, back at this step.
+  const b64 = await page.evaluate(() => { const b = window.fairwayBuilder.lastSaved; let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); });
+  const saved = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: st.model.state.layers.mask('sand').reduce((a, v) => a + v, 0), trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length}; });
+  await page.getByRole('button', {name: 'Back', exact: true}).click();
+  const [draftChooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: /Open a course file/}).click()]);
+  await draftChooser.setFiles({name: 'Door-2-test.fairway-draft', mimeType: 'application/zip', buffer: Buffer.from(b64, 'base64')});
+  await page.waitForFunction(() => window.fairwayBuilder.door2?.step === 4 && window.fairwayBuilder.door2.model, null, {timeout: 60000}); await idle();
+  const opened = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: st.model.state.layers.mask('sand').reduce((a, v) => a + v, 0), trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length, name: st.name}; });
+  if (opened.sand !== saved.sand || opened.trees !== saved.trees || opened.holes !== saved.holes || opened.name !== 'Door 2 test') throw Error(`the draft should open as saved: ${JSON.stringify(saved)} -> ${JSON.stringify(opened)}`);
+  await t.shot('draft-reopened');
+  await page.evaluate(() => { window.showSaveFilePicker = undefined; });   // downloads again, as the harness set it
   await page.getByRole('button', {name: 'Next: review the course'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
   const doc = await page.evaluate(() => { const d = window.fairwayBuilder.door2.doc; return {holes: d.holes.length, line: d.holes[0].line.length, credits: d.credits, kinds: Object.entries(d.surfaces).filter(([, v]) => v.length).map(([k]) => k)}; });
@@ -225,13 +261,27 @@ export default function ({journey, SHOTS}) {
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   await page.waitForTimeout(800);
   await t.shot('editor');
+  // The 3D view: surfaces drawn from their outlines, finer than the cells;
+  // W flies forward, Q down, the orbit's centre with it.
+  const tx = await page.evaluate(() => window.fairwayBuilder.editor.view.texels());
+  if (!(tx.perCell > 1)) throw Error(`the 3D view's surfaces should be finer than the editing grid: ${JSON.stringify(tx)}`);
+  const cam = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view; return {x: v.camera.position.x, y: v.camera.position.y, z: v.camera.position.z, tx: v.controls.target.x, tz: v.controls.target.z}; });
+  const cam0 = await cam();
+  await page.locator('.cb-view canvas').focus();
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(600); await page.keyboard.up('KeyW');
+  const cam1 = await cam(), flown = Math.hypot(cam1.x - cam0.x, cam1.z - cam0.z);
+  if (!(flown > 5) || Math.abs((cam1.tx - cam0.tx) - (cam1.x - cam0.x)) > .01) throw Error(`W should fly the camera forward with its centre: ${JSON.stringify([cam0, cam1])}`);
+  await page.keyboard.down('KeyQ'); await page.waitForTimeout(400); await page.keyboard.up('KeyQ');
+  if (!((await cam()).y < cam1.y)) throw Error('Q should fly down');
+  console.log(`       3D view: ${tx.width} x ${tx.height} texels, ${tx.perCell.toFixed(2)} a cell; W flew ${flown.toFixed(0)} m in 0.6 s`);
+  await t.shot('editor-flown');
   // The same layers in the editor, kept up to date as it is painted.
   const layers = await page.locator('.cb-layers li').evaluateAll(li => li.map(l => l.dataset.layer));
   if (!layers.includes('sand') || !layers.includes('fairway') || !layers.includes('heather')) throw Error(`the editor should list the course's layers: ${layers}`);
   await page.locator('.cb-layers [data-eye="heather"]').click();
   if (!await page.evaluate(() => window.fairwayBuilder.editor.editor.isHidden('heather'))) throw Error('the editor should hide the heather layer');
   await page.locator('.cb-layers [data-eye="heather"]').click();
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-2.fairway');
   await download.saveAs(file);
   const bytes = fs.readFileSync(file);

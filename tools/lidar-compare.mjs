@@ -19,10 +19,11 @@ import {parseHeader, readPoints, toMetres} from '../src/lidar/las.js';
 import {readGeoTiff} from '../src/lidar/geotiff.js';
 import {createGridder, findTrees} from '../src/lidar/land.js';
 import {toUtm, utmOfEpsg} from '../src/lidar/geo.js';
+import {worthingtonDir} from './lidar-home.mjs';
 
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : argv[i + 1]; };
-const dir = opt('data', process.env.FAIRWAY_LIDAR_TEST);
-if (!dir || !fs.existsSync(dir)) { console.log('No data folder (pass --data <folder>, or set FAIRWAY_LIDAR_TEST). Nothing to compare.'); process.exit(0); }
+const dir = opt('data', worthingtonDir());
+if (!dir || !fs.existsSync(dir)) { console.log('No data folder (pass --data <folder>, set FAIRWAY_LIDAR_TEST, or copy the survey to bench/lidar/worthington). Nothing to compare.'); process.exit(0); }
 const cell = Number(opt('cell', 1)), margin = Number(opt('margin', 0));
 const pct = (a, q) => { if (!a.length) return NaN; const s = Float64Array.from(a).sort(); return s[Math.min(s.length - 1, Math.floor(q * s.length))]; };
 const fmt = a => `median ${(pct(a, .5) * 100).toFixed(1)} cm, 95th ${(pct(a, .95) * 100).toFixed(1)}, 99th ${(pct(a, .99) * 100).toFixed(1)}, n ${a.length}`;

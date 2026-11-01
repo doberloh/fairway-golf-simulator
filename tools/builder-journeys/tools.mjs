@@ -60,7 +60,7 @@ export default function ({journey, SHOTS}) {
   const report = await page.evaluate(() => [...document.querySelectorAll('.cb-side li')].map(li => li.textContent).filter(t => /par/.test(t)).slice(0, 3));
   console.log(`       ${report.join(' | ')}`);
   await t.shot('reports');
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const saved = path.join(SHOTS, 'builder-tools-saved.fairway');
   await download.saveAs(saved);
   const {readBuiltFile} = await import('../../src/course-doc.js');

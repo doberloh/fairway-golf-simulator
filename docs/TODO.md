@@ -75,6 +75,28 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   over a real picture makes the bunkers easy to line up, and whether picking
   the chosen layer before the topmost surprises anyone. Not built: Move
   shape in the editor, and turning a shape.
+- [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
+  amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
+  square or IGN tiles, rockyweb's tiles through the bridge or the downloads
+  folder, the 36 state portals), Save on every screen with Save again and
+  door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
+  its smoothed surfaces, State Plane surveys placed. Checked: the
+  builder-door-2 journey (search with the National Map stood in for, Save
+  and Save again with a stand-in dialog, a renamed Save, a draft reopened,
+  the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
+  square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
+  real rockyweb range through a test bridge. **Not checked**: the rockyweb
+  download through the downloads folder (a browser download a script cannot
+  watch), the bridge path from the page (the owner's running bridge needs a
+  restart to have the route), IGN's in-page download end to end, a real
+  save dialog in Chrome, WASD feel. Swiss LV95 is not worked (swisstopo is a
+  link).
+- [ ] **The editor's saved outlines changed** (1 November 2026): it now saves
+  door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
+  to 0.35 of a cell, so a course saved again from the editor differs slightly
+  at its edges from the same course saved before. A file already saved plays
+  as before (`BUILT_VERSION` unchanged). Not yet compared on a course by
+  measurement (tools/freeze-compare.mjs round trip).
 - [ ] **The trace has no review layer
   in the editor** (each cell's source is kept, and door 2 reports the share), no
   automatic alignment nudge after a picture is lined up, and no classifier

@@ -61,7 +61,7 @@ export default function ({journey, ROOT, SHOTS}) {
   await t.shot('edited');
   // Undo the paint, redo it.
   await page.keyboard.press('Control+z'); await page.keyboard.press('Control+y');
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-1.fairway');
   await download.saveAs(file);
   const bytes = fs.readFileSync(file);

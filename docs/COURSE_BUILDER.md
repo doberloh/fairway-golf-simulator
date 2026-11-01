@@ -131,8 +131,10 @@ Several tiles at once, of mixed forms. Ground from class 2 (or a ground filter
 on an unclassified cloud), gaps filled and relaxed smooth, a traced pond's
 floor carved a metre under its level; trees from canopy height peaks;
 position and units from the files themselves (US survey feet converted and
-shown); UTM and degrees converted by Fairway itself, any other map grid lined
-up by matching points (proj4js was not added: stage 6).
+shown); UTM, degrees, and any Lambert conformal conic or transverse Mercator
+grid described in the file (every US State Plane zone, since 1 November 2026)
+converted by Fairway itself, any other map grid lined up by matching points
+(proj4js was not added: stage 6).
 
 ## The picture, and LIDAR first
 
@@ -189,8 +191,11 @@ picture, scored against its known surfaces; target PLACED: greens and bunkers
 The owner named **GreatLIFE Golf & Fitness (Worthington Country Club),
 Worthington, Minnesota** -- 18 holes, par 71 -- as the real course for the
 LIDAR stages. Its data is the owner's local copy, downloaded on 12 October
-2026 for another simulator, **read in place and never committed or shipped**,
-nor any built copy of the course (tests that need it skip when it is absent):
+2026 for another simulator, **never committed or shipped**, nor any built
+copy of the course (tests that need it skip when it is absent). Read in place
+until 1 November 2026; since then a copy is in the git-ignored
+`bench/lidar/worthington/` at the owner's request (amendment 13), found by
+tools/lidar-home.mjs `worthingtonDir` (`FAIRWAY_LIDAR_TEST` still overrides):
 
 - **The input**: four USGS 3DEP tiles as delivered (project
   MN_MissouriRiverBigSioux_2021_B21), 1 km each, about 255 MB of LAZ; QL1,
@@ -343,14 +348,87 @@ After trying the builder, the owner amended the goal:
     the erase brush's job. *By whole cells*, so the move never resamples a
     shape's edge. Not built: turning a shape, and moving one in the editor.
 
+13. **A list after testing, 1 November 2026** (the owner):
+    - **The LIDAR in the repository, not committed**: the test courses'
+      tiles for each landscape and Worthington's, and the many other surveys
+      in the owner's Downloads (and Documents) identified by course and
+      moved in. Home: `bench/lidar/<course>/`, git-ignored. (This replaces
+      "Worthington read in place": the owner asked for a copy here. It is
+      still never committed or shipped.)
+    - **Save from any point in the builder**; once saved, one click saves
+      again to the same file; a new file only when the course is renamed.
+    - **Search for LIDAR before door 2's first step**, using every source
+      known, and **download it in the builder** (online only when pressed,
+      as the imagery and OpenStreetMap are).
+    - **Fetched imagery kept** (Google, Bing, USGS and the rest) when the
+      player changes modes, rather than fetched again.
+    - **WASD flying in the builder's 3D view**, and **the 3D view given the
+      trace's resolution treatment** -- surfaces drawn as the smoothed
+      outlines the course will have, not cells.
+    Found on the way: **State Plane surveys could not be placed.** The
+    owner's Washington surveys are NAD83(HARN) / Washington South in US feet
+    (EPSG 2927), and the builder worked only UTM and degrees -- so imagery,
+    OpenStreetMap and the LIDAR search could not find where they are. Fixed
+    the same day: geo.js `projectionOf` works Lambert conformal conic and
+    transverse Mercator grids from the file's own WKT (every US State Plane
+    zone, the British grid and the like), checked against IOGP Guidance Note
+    7-2's worked examples to 2 cm (tests/lidar-geo.test.mjs).
+
+14. **Rockyweb, and every state's survey** (the owner, 1 November 2026:
+    "figure out how to gain access to rockyweb for LIDAR. there has to be a
+    way. And add sources for each states survey as well. Washington has one,
+    i bet other states do too"). Rockyweb.usgs.gov -- where the National
+    Map's LAZ tiles are -- answers a page's request with the file but no
+    `Access-Control-Allow-Origin`, and refuses the browser's preflight (405),
+    so a page cannot read it (checked 1 November 2026). Two ways round it,
+    both legitimate: **the browser downloads the tiles as files** (a
+    download is no cross-origin read) and the builder reads them from the
+    downloads folder the player picks once (showDirectoryPicker, Chrome and
+    Edge; elsewhere the player brings the files); and **Fairway's own bridge**
+    (the local program a launch monitor talks to) fetching them for the page.
+    And a source for each state with its own LIDAR programme, linked from
+    door 2's search where it covers the place.
+
+    **Built that night (13 and 14), not yet played by a person:** the LIDAR
+    in `bench/lidar/<course>/` (Worthington copied; Battle Creek, Salish
+    Cliffs and Snohomish moved from the owner's Downloads, identified by
+    their own positions; the test courses' tiles as tools/lidar-fetch.mjs
+    brings them); **Save** in the top bar on every screen and Ctrl+S
+    (saving.js), door 2's **drafts** (draft.js), **Save again** to the same
+    file, a new file on a new name; **every picture kept** with its own
+    lining up and **Showing** to switch, and a session's imagery reused;
+    **WASD** in the editor and its surfaces drawn from the smoothed outlines
+    (the editor saves those too now); **Find LIDAR** (lidar-search.js): USGS
+    3DEP's square from its Entwine copy (measured against the owner's
+    Worthington tiles: the same ground to 0.1 cm), IGN LiDAR HD's tiles,
+    rockyweb's whole tiles through **the bridge's `/lidar`** or **the
+    downloads folder**, **36 state portals** and the national agencies as
+    links; **State Plane** placed. RESEARCH, *Finding LIDAR from the
+    builder*. Decided, with what was turned down:
+    - **A draft is its own file kind** (`.fairway-draft`), not a course file
+      with extras: a half-traced course has no holes to validate, and the
+      game would refuse it in words that do not say why.
+    - **Door 2 saves a draft at every step, the playable course from the
+      editor**: a draft opens back where it was; a course file opens in the
+      editor. Saving a course at the review step was turned down -- reopening
+      it would lose the trace step's layers' history and the pictures' lining
+      up.
+    - **The rockyweb downloads are spaced 4 s apart** and read from a folder
+      the player picks, because the browser, not the page, saves them; a
+      proxy on the internet was not considered (it would see every player's
+      requests).
+    - **USGS's Entwine copy rather than the Planetary Computer's COPC**: both
+      answer a page, but at Worthington only Entwine had the newest survey,
+      and Entwine downloads only the square.
+
 **The work remaining** (written into the goal at the owner's request, 1
 November 2026), in the order it will be done:
 
-- **Checked on the graphics card** when it is free: the full `npm test`, the
-  builder's journeys (door 2, door 2 with OpenStreetMap) on the latest
-  commit.
+- **Checked on the graphics card** (done 1 November: npm test and every
+  builder journey after each change).
 - **The other test courses' LIDAR** (tools/lidar-fetch.mjs, rate-limited by
-  the National Map and resumed), then the LIDAR iterations and OpenStreetMap
+  rockyweb; the Entwine copy the builder now uses is faster), then the LIDAR
+  iterations and OpenStreetMap
   lined up with the LIDAR on each, as on Worthington.
 - **Worthington end to end through door 2 in the browser**
   (door-real-worthington.mjs), compared with the references: the other
@@ -363,6 +441,11 @@ November 2026), in the order it will be done:
 - **Houses shown and edited in the editor** (view.js): carried through the
   file and stood by the game, but the editor's view does not draw them.
 - **Move shape in the editor** (amendment 12), and turning a shape.
+- **Swiss LV95** (oblique Mercator) worked from the file, so swisstopo's
+  surveys place themselves; and swisstopo's tiles downloaded in the page.
+- **The builder's LIDAR checks a person can only do**: the rockyweb tiles
+  through the downloads folder and through the owner's bridge (restarted to
+  have `/lidar`), IGN downloaded in the page, Chrome's real save dialog.
 - **Reported as not played** until the owner plays it: every one of these.
 
 The parts of the study's tracing design not yet built -- the alignment nudge, a review layer, a classifier
@@ -574,8 +657,9 @@ learnt from corrections -- wait for that later loop (TODO).
   formats; Esri's free LAS Optimizer, rapidlasso's LASliberator, Extensis'
   tools), ERDAS Imagine and the old USGS DEM (open; not read yet: GDAL to
   GeoTIFF). **proj4js was not added**: Fairway converts UTM and degrees
-  itself, which covers most open data; another map grid lines up by matching
-  points by hand (stage 7). A departure from the study, which named proj4js.
+  itself, and since 1 November 2026 any Lambert conformal conic or transverse
+  Mercator grid from the file's WKT (State Plane: geo.js `projectionOf`);
+  another map grid lines up by matching points by hand (stage 7). A departure from the study, which named proj4js.
 - **Units**: a file's units from its GeoKeys (3076 horizontal, 4099 vertical)
   or its WKT, metres, international feet or US survey feet each way, shown
   and converted; Worthington's tiles are EPSG 6344 in metres both ways.
@@ -601,8 +685,8 @@ learnt from corrections -- wait for that later loop (TODO).
   predictor, LZW, tiled; E57 across packets and pages with a pose; PLY both
   ways; PTS; PTX with its transform; XYZ both ways; ASCII grid; float grid;
   HGT), reads each back, grids it (classified and filtered ground, the tree at
-  its height), and reads a real Worthington LAZ when `FAIRWAY_LIDAR_TEST`
-  names the folder.
+  its height), and reads a real Worthington LAZ when its survey is in
+  bench/lidar/worthington (or `FAIRWAY_LIDAR_TEST` names the folder).
 
 ### Stage 7 (31 October 2026): door 2 end to end
 
@@ -654,8 +738,8 @@ learnt from corrections -- wait for that later loop (TODO).
   Worthington's filled cells to a median 1.3 cm off USGS's DEM, from 2.6, and
   the 95th percentile to 8 cm from 24).
 - **Worthington through the page** (the `builder-door-2-worthington`
-  journey, local only: it runs when `FAIRWAY_LIDAR_TEST` names the owner's
-  folder): the four raw LAZ tiles chosen in the builder, the property dragged
+  journey, local only: it runs when Worthington's survey is in
+  bench/lidar/worthington, or `FAIRWAY_LIDAR_TEST` names the folder): the four raw LAZ tiles chosen in the builder, the property dragged
   round the club on the relief, the land built, the four NAIP tiles chosen one
   after another, eighteen holes clicked on the plan where OpenStreetMap's
   greens and the card's tees are (`tools/osm-holes.mjs`, the same marks as the
@@ -794,8 +878,10 @@ owner can overrule them:
 - A built course's file is kept by a 96-bit prefix of its SHA-256.
 - The editor: the land drawn at every stored sample to about 1 km a side,
   coarser past it (under 2.2 million vertices); the surfaces edited at half a
-  metre (coarser past 4096 cells a side), traced back simplified to 0.35 of a
-  cell; a brush's raise or lower 0.5 m a dab at full strength.
+  metre (coarser past 4096 cells a side), traced back as door 2 does since 1
+  November 2026 (`layerRings`: simplified to 0.6 of a cell, corners rounded;
+  until then 0.35 of a cell, the staircase kept); the 3D view's surfaces drawn
+  from those outlines at up to 4 texels a cell and 12 million texels; a brush's raise or lower 0.5 m a dab at full strength.
 - The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%
   average slope is too steep to putt.
 - The game's mesh refined where it misses the land by over 6 cm (shaped or

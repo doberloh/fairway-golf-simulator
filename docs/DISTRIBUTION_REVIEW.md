@@ -1636,14 +1636,18 @@ release**: the website's demo checks `Fairway.html` against
 `RELEASE_SHA256.txt`, and must be confirmed to read it by name.
 
 The builder is offline on the same terms as the game: it opens by file://,
-reads only the files a player gives it, writes `.fairway` files as downloads,
+reads only the files a player gives it, writes `.fairway` files (and door 2 drafts) as downloads -- or, since 1
+November 2026, to the one file the player chose in the browser's save dialog,
+written again by Save (saving.js) --
 and makes no request -- checked by its own smoke harness
 (`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it was
 107,941 bytes; at stage 3 906,624 (three.js and the course generator now
 ride in it, for door 1 and the editor), still no dependency of its own. **Stage 6 adds laz-perf 0.0.7** (Apache-2.0; npm, `laz-perf`), the LASzip decoder compiled to WebAssembly, to the builder's page only, its 214 KB of WebAssembly inlined (laz.js hands it in, so the loader never fetches its .wasm). In DEPENDENCY_INVENTORY.json (runtime), THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md. The game's page does not import it. The game's page is unchanged by stage 0.
 The study named geotiff.js and proj4js too; **neither was added** (stage 6):
-GeoTIFF is read by Fairway's own reader, and UTM and degrees by its own
-conversions, any other map grid lined up by matching points.
+GeoTIFF is read by Fairway's own reader, and UTM, degrees and (since 1
+November 2026) Lambert conformal conic and transverse Mercator grids from a
+file's WKT by its own conversions, any other map grid lined up by matching
+points.
 
 **Stages 7-9 (31 October 2026).** Door 2 and the auto trace add no
 dependency. The builder's page is **1,374,433 bytes** (gzip about 461 KB):
@@ -1667,7 +1671,17 @@ over the land. **OpenStreetMap's licence travels with a course built from
 it**: the ODbL asks for the credit, which the builder adds to the course's
 credits, and a database made from it and shared stays ODbL -- a shared
 `.fairway` built from it carries that licence (the owner's call to allow,
-named here so a release can say so). Only when the player
+named here so a release can say so). **Since 1 November 2026, LIDAR too**
+(amendments 13-14): *Search for LIDAR* asks the National Map's product API
+(tnmaccess.nationalmap.gov) and IGN's WFS (data.geopf.fr); *Download the
+square here* reads USGS's Entwine copy on Amazon's open data
+(s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles;
+*Download its whole tiles* asks Fairway's bridge on 127.0.0.1:1922 (its
+`/lidar` route, which fetches rockyweb.usgs.gov and prd-tnm only, for local
+pages only) or makes ordinary browser downloads from rockyweb and reads them
+from the folder the player picks; state and national portals are plain
+links. 3DEP is public domain and LiDAR HD Licence Ouverte; a course built
+from a survey carries the land, not the survey. Only when the player
 presses them; a key is kept in that browser's storage and sent only to its
 own provider; the picture is never saved in a course, and its credit is added
 to the course's credits. Everything else in both pages stays offline, and the

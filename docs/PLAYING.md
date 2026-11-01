@@ -461,11 +461,32 @@ the file to anyone else who has Fairway. It opens on three doors.
   of the land: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
-  1. **LIDAR**: LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
+  1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
+     place, **Find**, pick it, choose the square round it (1 to 3 km), and
+     **Search for LIDAR**. Every source over that place is listed. **USGS
+     3DEP** (the United States) and **IGN LiDAR HD** (France) download right
+     there: **Download the square here** takes just the survey over the
+     square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
+     square of Worthington is about 17 MB). **Download its whole tiles** gets
+     USGS's own tiles: through Fairway's bridge if it is running (the
+     launch-monitor helper, which fetches them for the page), or else your
+     browser downloads them and the builder reads them from the folder you
+     pick once (Chrome and Edge; in other browsers bring the downloaded files
+     with Choose LIDAR files). Each state with its own LIDAR portal
+     (Washington, Minnesota, Pennsylvania, North Carolina and thirty more),
+     NOAA's Digital Coast, the national agencies of England, the Netherlands,
+     Switzerland, Denmark, Spain, Canada, Australia and New Zealand, and
+     OpenTopography are listed as links where they cover the place. This and
+     the imagery are the only things in the builder that go online, and
+     only when pressed.
+     Or choose LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
      XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
      file is read with it. Each file is listed with its form, its size, its map
-     grid and its units (feet are converted to metres). LIDAR of most of the
+     grid and its units (feet are converted to metres). Surveys in US State
+     Plane (Lambert or transverse Mercator, in feet or metres), UTM, the
+     British grid and the like are placed for imagery and OpenStreetMap by
+     themselves. LIDAR of most of the
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
@@ -494,7 +515,11 @@ the file to anyone else who has Fairway. It opens on three doors.
        metre a press, a metre with Shift); the box at the top says how far it
        has moved. **Lock the picture** (or picking any other tool) locks it
        again, so a brush stroke never moves it; **Back to its position**
-       undoes the dragging. This is the only thing in the builder that goes
+       undoes the dragging. Every picture fetched or brought is **kept** --
+       Google, Bing, USGS, files, the LIDAR's own -- each with its own lining
+       up, and **Showing** picks which is shown; switching back fetches
+       nothing, and building the land again keeps them. Fetching the same
+       land again in this session (door 2 reopened) comes from memory. Fetching goes
        online, and only when you press it.
      - **A picture file**: a GeoTIFF places itself; a PNG, JPEG or WebP with
        its world file (.pgw, .jgw, .wld) and .prj does too; several tiles one
@@ -582,14 +607,29 @@ the file to anyone else who has Fairway. It opens on three doors.
      holes -- its card, and the checks. Go back to any step to change
      anything, or **Open in the editor**.
 - **Open a course file** to carry on with one you saved or one somebody gave
-  you.
+  you, or a door 2 draft.
+
+**Save, anywhere** (top right, or Ctrl+S): the editor saves the course as a
+.fairway file; door 1 saves the course as its settings; door 2 saves a
+**draft** (.fairway-draft) at any step -- the land, the trace's layers,
+trees and houses, the holes so far, the boundary, the name, and how each
+picture was lined up -- which **Open a course file** opens back at that step.
+A draft keeps the land, not the LIDAR files (bring them again only to build
+the land anew), and not the pictures (fetch or bring them again). Once
+saved, the button says **Save again** and one click writes the same file;
+rename the course and Save asks for a new file. (Chrome and Edge write to
+the file you chose; other browsers download a new copy each time.)
 
 **The editor** is the same for all three, and has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
 with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
 surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
-right-drag turns, the wheel zooms; **From above** and **This hole** jump the
-view. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
+right-drag turns, the wheel zooms; **W A S D** fly forward, left, back and
+right, **Q** and **E** down and up, Shift three times as fast (faster the
+higher you are); **From above** and **This hole** jump the view. The surfaces
+are drawn as the course will have them -- each one's outline smoothed --
+not in the editing grid's squares; while you paint, the squares show for a
+moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); **Paint** any
 surface or ground type; **Outline** draws one by its edge; dig a bunker,
 draw a pond or a creek (it runs downhill), plant or clear trees. The holes
@@ -598,7 +638,8 @@ list moves tees and greens, adds a bend to a hole's line and changes par.
 water, a green too small or too steep, a tree on a green) and clicking one
 flies there; **Play a test round** has two virtual golfers play every hole
 and reports their strokes and any hole they could not finish. Undo and Redo
-(Ctrl+Z, Ctrl+Y) cover everything. **Save as a .fairway file** writes it.
+(Ctrl+Z, Ctrl+Y) cover everything. **Save** (top right, or Ctrl+S) writes
+the .fairway file.
 
 **A course built from real land** plays the real ground to the centimetre;
 its holes run straight from the back tee to the green until you add their

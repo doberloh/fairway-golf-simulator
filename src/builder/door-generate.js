@@ -5,7 +5,8 @@
 // from above; then *Take it over*: the world is frozen (freeze.js) and the
 // editor opens on it. Nothing is edited until then, so nothing is lost by
 // growing again.
-import {show, setTitle, setBusy, topTools, home, ui} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, ui, setSaver} from './builder.js';
+import {courseFile, fileName} from '../course-file.js';
 import {SETTINGS, CATEGORIES, DEFAULT_COURSE, validateSettings, shownFor, bound} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {generateWorldSteps} from '../course.js';
@@ -93,13 +94,18 @@ export function open(start = null) {
   setBusy('Taking it over…');
   try {
    await frame();
-   const name = (start?.name || s.courseName || `${BIOMES[s.biome].name} ${s.seed}`).slice(0, 60);
+   const name = courseName();
    const doc = freezeWorld(world, {name, onStep: what => setBusy(`Taking it over… ${what}`)});
    await frame();
    openEditor(doc, {from: 'generated'});
   } catch (e) { facts.textContent = 'Could not take this course over: ' + e.message; }
   finally { setBusy(''); }
  }
+ // Save (the top bar's): the course as its settings, a seeded .fairway file
+ // the game plays and Open a course file brings back here.
+ const courseName = () => (start?.name || s.courseName || `${BIOMES[s.biome].name} ${s.seed}`).slice(0, 60);
+ setSaver({key: `door1-${++opened}`, name: courseName, file: () => fileName(courseName()), bytes: async () => new TextEncoder().encode(courseFile({name: courseName(), settings: s})),
+  said: r => { facts.textContent = r.how === 'failed' ? 'Could not save: ' + r.error.message : `${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file}: the course as its settings, which Fairway grows the same every time. Take it over to change the ground itself.`; }});
  render();
  topTools(el('button', {class: 'cb-btn', type: 'button', onclick: home}, 'Back'), growBtn, take);
  show(el('section', {class: 'cb-sheet'},
@@ -113,3 +119,5 @@ export function open(start = null) {
  sync();
  void bound;
 }
+
+let opened = 0;   // each door 1 opened is its own piece of work for Save

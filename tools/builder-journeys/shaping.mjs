@@ -49,7 +49,7 @@ export default function ({journey, SHOTS}) {
   if (timing.dabMedian > 33) throw Error(`a dab takes ${timing.dabMedian.toFixed(1)} ms: not real time`);
   if (timing.undo !== 1) throw Error(`a drag should be one undo, not ${timing.undo}`);
   await t.shot('hill');
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const saved = path.join(SHOTS, 'builder-shaping-saved.fairway');
   await download.saveAs(saved);
   const {readBuiltFile} = await import('../../src/course-doc.js');

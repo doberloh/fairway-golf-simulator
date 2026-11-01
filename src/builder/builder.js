@@ -9,6 +9,8 @@ import {BIOMES} from '../biomes.js';
 import {BIOME_KEYS} from '../settings-schema.js';
 import {readBuiltFile, isBuiltFile, textOf} from '../course-doc.js';
 import {readCourseFile} from '../course-file.js';
+import {saveBytes, saveHow, lastSave} from './saving.js';
+import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
 
 const root = document.getElementById('builder');
 const el = (tag, attrs = {}, ...kids) => {
@@ -21,7 +23,7 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 export const ui = {el, root};
 
-const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {id: 'cbTopTools'}));
+const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {class: 'cb-savenote', id: 'cbSaveNote'}), el('button', {class: 'cb-btn cb-hot', type: 'button', id: 'cbSave', hidden: true, title: 'Ctrl+S', onclick: () => saveNow()}, 'Save'), el('span', {id: 'cbTopTools'}));
 const main = el('main', {class: 'cb-main', id: 'cbMain'});
 const busy = el('div', {class: 'cb-busy', hidden: true, role: 'status'});
 root.append(top, main, busy);
@@ -30,6 +32,32 @@ export function setTitle(t) { document.getElementById('cbTitle').textContent = t
 export function setBusy(text) { busy.textContent = text || ''; busy.hidden = !text; }
 export function topTools(...nodes) { const t = document.getElementById('cbTopTools'); t.replaceChildren(...nodes); }
 export function show(node) { main.replaceChildren(node); }
+
+// SAVE, ON EVERY SCREEN (saving.js): the screen says what it would save --
+// {key, name(), file(), bytes(), said?(result)} -- or null where there is
+// nothing yet. The button says "Save again" when one click goes to the same
+// file; Ctrl+S does the same.
+let saver = null;
+export function setSaver(s) { saver = s; refreshSave(); }
+export function refreshSave() {
+ const b = document.getElementById('cbSave'), note = document.getElementById('cbSaveNote'), last = lastSave();
+ b.hidden = !saver;
+ if (!saver) { note.textContent = ''; return; }
+ const again = saveHow(last, {key: saver.key, name: saver.name()}, {canPick: typeof window.showSaveFilePicker === 'function'}) === 'overwrite';
+ b.textContent = again ? 'Save again' : 'Save';
+ note.textContent = last?.key === saver.key ? `Saved as ${last.file}${last.name !== saver.name() ? ' -- renamed, Save makes a new file' : ''}` : '';
+}
+export async function saveNow() {
+ if (!saver) return;
+ setBusy('Saving…');
+ try {
+  const bytes = await saver.bytes(), r = await saveBytes(bytes, {key: saver.key, name: saver.name(), file: saver.file()});
+  if (r.how !== 'cancelled') { window.fairwayBuilder.lastSaved = bytes; saver.said?.(r, bytes); }
+ } catch (e) { saver.said?.({how: 'failed', error: e}); document.getElementById('cbSaveNote').textContent = 'Could not save: ' + e.message; return; }
+ finally { setBusy(''); }
+ refreshSave();
+}
+window.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveNow(); } });
 
 // Opens a file the player picks: a built course (a ZIP) or a seeded one
 // (JSON text), told apart by their first bytes.
@@ -49,11 +77,11 @@ export async function readCourseAny(file) {
 const doors = [
  {key: 'generate', title: 'Generate and modify a course', text: 'Pick a landscape, a designer and every studio setting; grow it, then take it over and reshape anything.', go: () => import('./door-generate.js').then(m => m.open())},
  {key: 'real', title: 'Generate a real life course', text: 'Bring LIDAR of a real place and an aerial picture; mark the tees and greens, let the auto trace start the rest.', go: () => import('./door-real.js').then(m => m.open())},
- {key: 'open', title: 'Open a course file', text: 'Carry on with a course you saved, or open a .fairway file somebody gave you.', go: openFile},
+ {key: 'open', title: 'Open a course file', text: 'Carry on with a course or a draft you saved, or open a .fairway file somebody gave you.', go: openFile},
 ];
 
 export function home() {
- setTitle(''); topTools();
+ setTitle(''); topTools(); setSaver(null);
  const msg = el('p', {class: 'cb-note', id: 'cbHomeMsg'});
  show(el('section', {class: 'cb-doors'},
   el('h1', {}, 'Build a ', el('b', {}, 'course')),
@@ -65,10 +93,12 @@ export function home() {
 }
 
 async function openFile() {
- const [file] = await pickFile('.fairway,application/zip,application/json');
+ const [file] = await pickFile('.fairway,' + DRAFT_EXT + ',application/zip,application/json');
  if (!file) return;
  setBusy('Opening ' + file.name);
  try {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (await isDraft(bytes)) { (await import('./door-real.js')).open(await readDraft(bytes)); return; }
   const got = await readCourseAny(file);
   if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc);
   else (await import('./door-generate.js')).open(got.course);
@@ -76,5 +106,5 @@ async function openFile() {
 }
 
 // The test harness (tools/smoke.mjs) and the console reach the builder here.
-window.fairwayBuilder = {home, readCourseAny};
+window.fairwayBuilder = {home, readCourseAny, saveNow};
 home();

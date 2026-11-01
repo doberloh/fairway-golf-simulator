@@ -8,7 +8,7 @@
 // DEM, the other pipeline's terrain model, OpenStreetMap and the card
 // (built-compare.mjs), and played in the game.
 //
-// LOCAL ONLY: registered when FAIRWAY_LIDAR_TEST names the owner's folder
+// LOCAL ONLY: registered when Worthington's survey is here (bench/lidar/worthington, or FAIRWAY_LIDAR_TEST names the folder)
 // (raw/*.laz, course.json, terrain/dtm_0p5m.tif) and the NAIP tiles, the DEM,
 // the OpenStreetMap extract and the card are in bench/shots/lidar/ (ignored).
 // Nothing it reads or writes is committed.
@@ -18,9 +18,10 @@ import {toUtm, utmOfEpsg} from '../../src/lidar/geo.js';
 import {osmWays, holesFromOsm} from '../osm-holes.mjs';
 import {compareBuilt} from '../built-compare.mjs';
 import {playOneShot} from './door-generate.mjs';
+import {worthingtonDir} from '../lidar-home.mjs';
 
 export default function ({journey, ROOT, SHOTS}) {
- const dir = process.env.FAIRWAY_LIDAR_TEST, data = path.join(ROOT, 'bench', 'shots', 'lidar');
+ const dir = worthingtonDir(), data = path.join(ROOT, 'bench', 'shots', 'lidar');
  const naip = fs.existsSync(data) ? fs.readdirSync(data).filter(f => /^naip-.*\.tif$/.test(f)).map(f => path.join(data, f)) : [];
  const need = [path.join(data, 'worthington-osm-golf.json'), path.join(data, 'worthington-scorecard.json')];
  if (!dir || !fs.existsSync(path.join(dir, 'raw')) || !naip.length || need.some(f => !fs.existsSync(f))) return;
@@ -93,7 +94,7 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 600000});
   await page.waitForTimeout(1500);
   await t.shot('worthington-editor');
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 600000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 600000}), page.locator('#cbSave').click()]);
   const file = path.join(data, 'worthington-door2.fairway');
   await download.saveAs(file);
   const bytes = fs.readFileSync(file);

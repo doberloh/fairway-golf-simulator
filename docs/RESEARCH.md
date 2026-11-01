@@ -11301,6 +11301,84 @@ naip; public domain; local only); OpenStreetMap's golf features through the
 Overpass API (https://overpass-api.de; ODbL; local only, as a reference); the
 club's scorecard as GolfPass lists it (par 71, blue 6,282 yards).
 
+## Finding LIDAR from the builder (1 November 2026)
+
+The owner asked for LIDAR searched for and downloaded inside the builder
+(docs/COURSE_BUILDER.md, amendments 13-14), from "all known sources", rockyweb
+included, and every state's own survey. A page opened from a file can read
+another site only if that site answers with `Access-Control-Allow-Origin`;
+each source was asked from `Origin: null` on 1 November 2026:
+
+| Source | Search | The points | Readable by the page |
+| --- | --- | --- | --- |
+| USGS 3DEP: the National Map's product API (https://tnmaccess.nationalmap.gov/api/v1/products) | yes, `*` | its LAZ tiles are on rockyweb.usgs.gov | search yes; **tiles no** |
+| rockyweb.usgs.gov | -- | 3DEP's LAZ tiles | **no**: no allow-origin on GET; OPTIONS answered 405; 429 to a rush |
+| prd-tnm.s3.amazonaws.com | -- | the projects' metadata and a `.vpc` (STAC virtual point cloud, September 2026) whose tiles are `./LAZ/...` -- not in the bucket (404) | `*`, but no tiles |
+| USGS 3DEP Entwine copy, Amazon open data (https://s3-us-west-2.amazonaws.com/usgs-lidar-public/<work unit>/ept.json) | by work unit, the folder after the project in a rockyweb address | every 3DEP survey, Web Mercator (EPSG 3857), an octree of small LAZ files | **yes**, `*` |
+| Planetary Computer `3dep-lidar-copc` (STAC) | yes, `*` | COPC copies; at Worthington only the 2010 survey came back | yes (not used: Entwine has the newest) |
+| IGN LiDAR HD: WFS `IGNF_LIDAR-HD_METADONNEE:metadata` on data.geopf.fr | yes, `*` | `url_npl`: one COPC tile a km, Lambert-93 | **yes**, `*` |
+| swisstopo swissSURFACE3D STAC (data.geo.admin.ch) | yes, `*` | zipped LAS, LV95 (Swiss oblique Mercator, not worked: linked) | -- |
+| AHN, PDOK atom feed | `*` | tiles of gigabytes | linked |
+
+**So rockyweb is reached two ways that need no reading by the page.** The
+browser DOWNLOADS from it like any site (a download is not a cross-origin
+read), and the builder reads the files from the folder the player picks
+once (`showDirectoryPicker`, Chrome and Edge); and **Fairway's bridge**, a
+program rather than a page, fetches it and hands the bytes on (`/lidar`,
+bridge/server.mjs, USGS's two hosts only, local pages only): a range request
+through a test bridge returned rockyweb's `LASF` header with the page's
+allow-origin. The downloads are spaced 4 s apart (PLACED: rockyweb answered
+429 to a burst) and the builder waits up to an hour for them (PLACED).
+
+**The Entwine path was measured on Worthington** (tools/lidar-search.mjs): a
+400 m square searched, its 91 octree pieces downloaded (3.29 million points,
+16.6 MB, 12 s), carried from Web Mercator to UTM 15N point by point, and the
+land built at 1 m against the owner's own four tiles of the same survey
+(MN_MORiverBigSioux_2021_B21): ground differing by 0.0 cm at the median, 0.1
+cm at the 95th percentile and 20 cm at the worst, over 220,873 cells -- the
+same survey, read correctly. Web Mercator's metres are 1/cos(latitude)
+ground metres (1.38 at Worthington), which is why the points are carried to
+UTM before the land is built and never gridded in 3857.
+
+**Every state's own portal** (the owner: "Washington has one, i bet other
+states do too"). Wikipedia's *National Lidar Dataset (United States)* table
+of state programmes was the starting list, many of its links dead; each
+state's current address was found by search and checked to answer on 1
+November 2026: 36 states (lidar-search.js `STATE_PORTALS`). Moved since the
+table: Illinois (the ISGS Clearinghouse root), Minnesota (mn.gov/mngeo),
+Vermont (the VCGI lidar program page), Montana (State Library elevation;
+point clouds by request), Tennessee (TNMap), Texas (TxGIO DataHub). Dropped:
+Mississippi's MARIS did not answer. Massachusetts' page refuses scripts (403)
+but is the state's own; MassGIS sends point clouds through NOAA's Digital
+Coast Data Access Viewer, added as a US coastal source. None of the state
+portals answers a page, so each is a link; most deliver State Plane in US
+feet, which the builder now places itself (below). Each state's box is loose
+(its extent rounded out), so a place near a border may list a neighbour.
+
+**State Plane, worked from the file.** The owner's Washington surveys are
+NAD83(HARN) / Washington South in US survey feet (EPSG 2927), and the builder
+worked only UTM and degrees, so they could not be placed. geo.js
+`projectionOf` now works Lambert conformal conic (one or two parallels) and
+transverse Mercator from a file's WKT -- parameters, ellipsoid and linear
+unit -- after Snyder (USGS Professional Paper 1395, pp. 61-64, 104-110).
+Checked against IOGP Guidance Note 7-2's worked examples: NAD27 / Texas South
+Central (28.5 N, 96 W -> 2963503.91, 254759.80 US ft) and the British National
+Grid (50.5 N, 0.5 E -> 577274.99, 69740.50 m), both within 2 cm. The owner's
+three Washington surveys came out at Battle Creek (Tulalip), Salish Cliffs
+(Kamilche) and Snohomish golf courses. Datums are taken as one (NAD83 against
+WGS84 is about a metre). Not worked: oblique Mercator (Switzerland), polar
+stereographic, Albers -- a file in one lines up by matched points.
+
+Sources: [National Map product API](https://tnmaccess.nationalmap.gov/api/v1/docs);
+[USGS 3DEP on AWS (Entwine)](https://registry.opendata.aws/usgs-lidar/);
+[Entwine Point Tile format](https://entwine.io/en/latest/entwine-point-tile.html);
+[Planetary Computer 3DEP COPC](https://planetarycomputer.microsoft.com/dataset/3dep-lidar-copc);
+[IGN LiDAR HD](https://geoservices.ign.fr/lidarhd);
+[swisstopo swissSURFACE3D](https://www.swisstopo.admin.ch/en/height-model-swisssurface3d);
+[National Lidar Dataset (United States), Wikipedia](https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States));
+[IOGP Guidance Note 7-2](https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/);
+Snyder, *Map Projections -- A Working Manual*, USGS PP 1395 (1987).
+
 ## Free aerial imagery for the builder (31 October 2026)
 
 The owner asked for free imagery beside Google's. What a golf course needs:

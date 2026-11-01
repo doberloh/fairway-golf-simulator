@@ -151,8 +151,10 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // staircase taken out (simplified to 0.6 of a cell, PLACED) and the corners
 // rounded (two passes of corner cutting); scraps under SPECK dropped. The
 // trace step draws these too, so what is painted is seen as it will play.
-export function layerRings(m, {nx, nz, cell, halfX, halfZ}) {
- return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, -halfX, -halfZ, cell)
+// `x0`, `z0`: the first cell's middle, when the grid is not centred (the
+// editor's raster, a part of it).
+export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -halfZ}) {
+ return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, x0, z0, cell)
   .map(r => smoothRing(simplify(r, cell * .6))).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 

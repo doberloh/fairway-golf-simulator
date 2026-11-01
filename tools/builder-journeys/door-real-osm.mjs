@@ -80,7 +80,7 @@ export default function ({journey, SHOTS}) {
   await t.shot('review');
   await page.getByRole('button', {name: 'Open in the editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
-  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-2-osm.fairway');
   await download.saveAs(file);
   await playOneShot(t, fs.readFileSync(file), 'builder-door-2-osm');
