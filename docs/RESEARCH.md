@@ -11340,6 +11340,7 @@ ground's median.
 | 7 | a green's top is gentle (under 6% over 3 m) and round (over 55% of its box), to 2,500 m² -- hillsides had joined the greens' patches past 1,500 m² | 7, 3, 19, 5, 9, 21 |
 | 8 | the patches greens fall in are 75-100% green but irregular (40-55% of their box, 100-600 m²): over 35%, from 80 m², then grown 3 m over the turf (a green's edge stands lower than its middle) | **13**, 3, 19, 5, 9, 21 |
 | 9 | TEES stand higher still (20-61 cm, median) and flatter: a raised pad over 20 cm and under 3% is a tee as well as the flattest | 12, **5**, 19, 5, 9, 21 |
+| 10 (study, not built) | why fairway stays at 19: the LIDAR's fairway finds 41-95% of the mapped fairway (recall) but only 7-59% of what it calls fairway is mapped fairway -- the rest is mown rough, mapped as semi or not mapped at all, 3-10 times the fairway's area on open courses. Tried as a separator: distance from the turf's edge (a fairway runs down the corridor's middle) -- mapped fairway lies a median 8-21 m in, the overcalled 6-15 m, the spreads overlapping; a cut there loses more fairway than it saves. Not built | -- |
 
 By course at iteration 9: Sahalee green 17, fairway 46, sand 31, water 69;
 TPC Scottsdale green 9, tee 18, semi 22, water 56; Breckenridge fairway 31;
@@ -11353,7 +11354,10 @@ picture finds them at 30-66%. Checked not to
 move the trace with holes: tools/trace-bench.mjs's nine synthetic
 courses scored the same before and after (lidar green 56, tee 75, fairway
 19, sand 33, water 79), and Worthington's scripted build's traces matched.
-Far from 90%: the LIDAR alone is a start the player corrects, and
+**Where the LIDAR alone stops** (iteration 10): a mowing line is a few
+centimetres of grass, under the survey's noise, and the course's shape does
+not stand in for it; the fairway's edge needs a picture, the map or the
+player. Far from 90%: the LIDAR alone is a start the player corrects, and
 OpenStreetMap lined up by the LIDAR (*OpenStreetMap is itself off the
 place*) stays the recommended path. All numbers set here are PLACED.
 
