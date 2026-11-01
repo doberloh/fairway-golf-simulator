@@ -34,7 +34,7 @@ import {createGridder} from '../src/lidar/land.js';
 import {trace, TRACE, boxMean, refineTrace} from '../src/lidar/trace.js';
 import {pictureOnLand} from '../src/builder/real-course.js';
 import {tidyCodes, SPECK} from '../src/builder/trace-edit.js';
-import {osmWays, truthGrid, scoreCodes, KINDS} from './osm-holes.mjs';
+import {osmWays, truthGrid, scoreCodes, damageTruth, lineUpTruth, KINDS} from './osm-holes.mjs';
 import {OUT, COURSES} from './imagery-fetch.mjs';
 
 const argv = process.argv.slice(2), flag = n => argv.includes(`--${n}`), opt = n => { const i = argv.indexOf(`--${n}`); return i < 0 ? null : argv[i + 1]; };
@@ -81,7 +81,11 @@ export async function benchCourse(key, {shots = false} = {}) {
   picture = pictureOnLand(land, g, pic, {toPicture: conv, into: picture});
  }
  const cover = picture ? picture.has.reduce((s, v) => s + v, 0) / N : 0;
- const ways = osmWays(osm, (lat, lon) => { const p = toUtm(lat, lon, zone); return g.local(p.x, p.y); }), truth = truthGrid(ways, land);
+ const ways = osmWays(osm, (lat, lon) => { const p = toUtm(lat, lon, zone); return g.local(p.x, p.y); });
+ // The yardstick lined up with the picture first (osm-holes.mjs lineUpTruth;
+ // 1 November 2026): OpenStreetMap's own offset is not the trace's error.
+ // --raw scores against the map as it lies, as iterations 0-51 did.
+ const lined = flag('raw') ? {truth: truthGrid(ways, land), x: 0, z: 0} : lineUpTruth(truthGrid(ways, land), land, {picture}), truth = lined.truth;
  const debug = {}, t0 = performance.now(), r = trace(land, {picture, holes: [], mode: 'picture', debug}), secs = (performance.now() - t0) / 1000;
  if (flag('diagnose') && debug.turf) {
   // What each mapped surface measures in the picture: brightness, greenness
@@ -107,18 +111,12 @@ export async function benchCourse(key, {shots = false} = {}) {
  // map as it is. What the refinement recovers is the measure.
  let refine = null;
  if (flag('refine')) {
-  const shift = Math.round(4 / CELL), damaged = new Uint8Array(N); let flip = 0;
-  const seenFeature = new Set();
-  for (let j = 0; j < land.nz; j++) for (let i = 0; i < land.nx; i++) { const k = j * land.nx + i, src = i - shift >= 0 ? j * land.nx + i - shift : -1, t = src >= 0 ? truth[src] : null; if (t) damaged[k] = TRACE.indexOf(t); }
-  // Every other bunker and green dropped, by feature.
-  const lab = new Int32Array(N).fill(-1); let id = 0;
-  for (let s0 = 0; s0 < N; s0++) { const c = damaged[s0]; if ((c !== TRACE.indexOf('sand') && c !== TRACE.indexOf('green')) || lab[s0] >= 0) continue; const st = [s0]; lab[s0] = id; const drop = (flip++ % 2) === 1; const cells = [s0]; while (st.length) { const k = st.pop(), i = k % land.nx; for (const n of [i > 0 ? k - 1 : -1, i < land.nx - 1 ? k + 1 : -1, k - land.nx, k + land.nx]) if (n >= 0 && n < N && lab[n] < 0 && damaged[n] === c) { lab[n] = id; st.push(n); cells.push(n); } } if (drop) for (const k of cells) damaged[k] = 0; id++; }
-  void seenFeature;
+  const damaged = damageTruth(truth, land);
   const refined = refineTrace(land, damaged, {picture, mode: 'picture'});
   refine = {start: scoreCodes(truth, damaged), refined: scoreCodes(truth, refined), shift: refineTrace.lastShift};
   if (shots) writeShot(path.join(dir, 'refine.png'), land, picture, refined, truth);
  }
- return {key, name: meta.name, cover, secs, score, edges, fr, refine, size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
+ return {key, name: meta.name, cover, secs, score, edges, fr, refine, osmOff: [lined.x, lined.z], size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
 }
 
 // The trace over the picture at a metre a pixel, OpenStreetMap's outlines white.
@@ -149,13 +147,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
    const r = await benchCourse(key, {shots: flag('shots')});
    for (const k of kinds) { if (r.fr[k].found != null) found[k].push(r.fr[k].found); if (r.fr[k].right != null && r.fr[k].found != null) right[k].push(r.fr[k].right); if (r.score[k] != null) mean[k].push(r.score[k]); if (r.edges[k].ragged != null) rag[k].push(r.edges[k].ragged); }
    const sp = kinds.reduce((s, k) => s + r.edges[k].specks, 0), po = kinds.reduce((s, k) => s + r.edges[k].pocks, 0); specks += sp; pocks += po;
+   if (r.osmOff[0] || r.osmOff[1]) console.log(`   OpenStreetMap lined up with the picture by ${r.osmOff[0].toFixed(1)}, ${r.osmOff[1].toFixed(1)} m first`);
    if (r.refine) console.log(`   refine from damaged OSM (lined up by ${r.refine.shift ? r.refine.shift.x.toFixed(1) + ', ' + r.refine.shift.z.toFixed(1) : '-'} m): start ${kinds.map(k => `${k} ${fmt(r.refine.start[k]).trim()}`).join(', ')}
                        refined ${kinds.map(k => `${k} ${fmt(r.refine.refined[k]).trim()}`).join(', ')}`);
    console.log(`${key.padEnd(11)} ${(100 * r.cover).toFixed(0).padStart(4)}%  ${kinds.map(k => fmt(r.score[k]).padStart(7)).join('')}   ${String(sp).padStart(6)} ${String(po).padStart(5)}  ${['green', 'fairway', 'sand', 'water'].map(k => r.edges[k].ragged?.toFixed(2) ?? '-').join(' ')}   (${r.size}, ${r.secs.toFixed(1)} s)`);
   } catch (e) { console.log(`${key.padEnd(11)} FAILED: ${e.message}`); }
  }
  const avg = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
- const line = `${new Date().toISOString().slice(0, 16)} ${opt('label') ?? ''} | ${have.length} courses | overlap ${kinds.map(k => `${k} ${fmt(avg(mean[k])).trim()}`).join(', ')} | found ${kinds.map(k => `${k} ${fmt(avg(found[k])).trim()}`).join(', ')} | right ${kinds.map(k => `${k} ${fmt(avg(right[k])).trim()}`).join(', ')} | specks ${specks}, pocks ${pocks} | ragged ${kinds.map(k => `${k} ${avg(rag[k])?.toFixed(2) ?? '-'}`).join(', ')}`;
+ const line = `${new Date().toISOString().slice(0, 16)} ${opt('label') ?? ''}${flag('raw') ? ' (raw OSM)' : ' (OSM lined up)'} | ${have.length} courses | overlap ${kinds.map(k => `${k} ${fmt(avg(mean[k])).trim()}`).join(', ')} | found ${kinds.map(k => `${k} ${fmt(avg(found[k])).trim()}`).join(', ')} | right ${kinds.map(k => `${k} ${fmt(avg(right[k])).trim()}`).join(', ')} | specks ${specks}, pocks ${pocks} | ragged ${kinds.map(k => `${k} ${avg(rag[k])?.toFixed(2) ?? '-'}`).join(', ')}`;
  console.log('\n' + line);
  fs.appendFileSync(path.join(OUT, 'log.txt'), line + '\n');
 }

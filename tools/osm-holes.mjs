@@ -6,7 +6,7 @@
 //
 // `toLocal(lat, lon)` -> {x, z}: door 2's local metres (x east of the
 // property's middle, z south of it).
-import {TRACE} from '../src/lidar/trace.js';
+import {TRACE, lineUp} from '../src/lidar/trace.js';
 
 export function osmWays(osm, toLocal) {
  return (osm?.elements || []).filter(e => e.type === 'way' && e.geometry).map(e => ({tags: e.tags || {}, ring: e.geometry.map(g => { const p = toLocal(g.lat, g.lon); return [p.x, p.z]; })}));
@@ -72,3 +72,31 @@ export function overlap(truth, kindAt) {
  return Object.fromEntries(Object.keys(KINDS).map(kind => { let i = 0, u = 0; for (let k = 0; k < truth.length; k++) { const p = kindAt(k) === kind, t = truth[k] === kind; if (p && t) i++; if (p || t) u++; } return [kind, u ? i / u : null]; }));
 }
 export const scoreCodes = (truth, codes) => overlap(truth, k => TRACE[codes[k]]);
+
+// OPENSTREETMAP DAMAGED, the refinement's test (the owner, 1 November 2026:
+// OpenStreetMap first, refined from the picture or the LIDAR): the map's
+// codes (TRACE's) with every outline moved `shiftM` metres east (and `dz` south) and every
+// other bunker and green left out. What a refinement recovers from this,
+// scored against the map as it is, is the measure (imagery-bench.mjs and
+// real-course.mjs --refine).
+export function damageTruth(truth, land, {shiftM = 4, dz = 0} = {}) {
+ const N = land.nx * land.nz, shift = Math.round(shiftM / land.cell), sz = Math.round(dz / land.cell), damaged = new Uint8Array(N); let flip = 0;
+ for (let j = 0; j < land.nz; j++) for (let i = 0; i < land.nx; i++) { const k = j * land.nx + i, si = i - shift, sj = j - sz, src = si >= 0 && sj >= 0 && si < land.nx && sj < land.nz ? sj * land.nx + si : -1, t = src >= 0 ? truth[src] : null; if (t) damaged[k] = TRACE.indexOf(t); }
+ const lab = new Int32Array(N).fill(-1); let id = 0;
+ for (let s0 = 0; s0 < N; s0++) { const c = damaged[s0]; if ((c !== TRACE.indexOf('sand') && c !== TRACE.indexOf('green')) || lab[s0] >= 0) continue; const st = [s0]; lab[s0] = id; const drop = (flip++ % 2) === 1; const cells = [s0]; while (st.length) { const k = st.pop(), i = k % land.nx; for (const n of [i > 0 ? k - 1 : -1, i < land.nx - 1 ? k + 1 : -1, k - land.nx, k + land.nx]) if (n >= 0 && n < N && lab[n] < 0 && damaged[n] === c) { lab[n] = id; st.push(n); cells.push(n); } } if (drop) for (const k of cells) damaged[k] = 0; id++; }
+ return damaged;
+}
+
+// OPENSTREETMAP LINED UP WITH THE PLACE before it is a yardstick (1 November
+// 2026): Worthington's outlines sit about 3 m west and 1.5 m north of where
+// the LIDAR's ground and the aerial picture both put its bunkers and ponds,
+// and scoring a trace against the map as it lies charged the trace with the
+// map's own error. The map's truth grid moved by trace.js's own lineUp (from
+// the picture, or the LIDAR); the shift in metres comes back with it.
+export function lineUpTruth(truth, land, {picture = null, mode = 'picture'} = {}) {
+ const {nx, nz, cell} = land, codes = Uint8Array.from(truth, t => t ? TRACE.indexOf(t) : 0), u = lineUp(land, codes, {picture, mode});
+ if (!u.di && !u.dj) return {truth, x: 0, z: 0, gain: u.gain};
+ const moved = new Array(truth.length).fill(null);
+ for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const si = i - u.di, sj = j - u.dj; if (si >= 0 && sj >= 0 && si < nx && sj < nz) moved[j * nx + i] = truth[sj * nx + si]; }
+ return {truth: moved, x: u.di * cell, z: u.dj * cell, gain: u.gain};
+}

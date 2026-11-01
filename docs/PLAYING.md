@@ -505,11 +505,12 @@ the file to anyone else who has Fairway. It opens on three doors.
      holes as step 4's markers, and its course boundary when it has one; the course is credited "© OpenStreetMap contributors (ODbL)",
      and a course you share that is built from it falls under that licence.
      Then **Keep it as drawn**, or **Refine with the picture** / **with the
-     LIDAR**: the map is lined up with the picture or the ground first, then
-     its fairway, semi, sand and water edges move to where those show, and
-     clear bunkers, ponds and greens it left out are added (greens and tees
-     keep their mapped shapes). Refining is new and helps some courses more
-     than others; keeping it as drawn is the safe choice.
+     LIDAR**: the map is lined up with the picture or the ground first --
+     OpenStreetMap is often a metre or three off the real place -- by its
+     bunkers', ponds' and greens' edges, and clear greens it left out are
+     added; its shapes are kept as drawn. On test courses it put a map moved
+     up to 8 m back within half a metre. **Refine with the LIDAR** is the
+     recommended path when you have a survey.
 
      Or **Auto trace** (the greens, tees, fairways, sand and water found
      for you) or **Manual trace** (a blank course to draw), and the same

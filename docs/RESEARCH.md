@@ -11450,6 +11450,7 @@ NAIP, joins).
 | 39 | where too few greens are found (under 6, or 40% of the room for them), a second, looser look on that course alone -- the loosening 32-34 tried everywhere | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
 | 40 | the learnt sand where a looser rule agrees (found 45 to 49, right 41 to 26): not kept | 32 | 30 | 20 | 42 | | |
 | 41 | the learnt water dropped (no gain on the real courses; over a picture of plain dark and light squares it called every dark square a pond) | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
+| 52 | the YARDSTICK lined up with the picture first (OpenStreetMap lay 1-2.5 m off on seven of nine; *OpenStreetMap is itself off the place*, below) -- the auto trace unchanged | 31 | 31 | 35 | 38 | 48, 65, 52, 60 | 48, 44, 47, 64 |
 
 **OpenStreetMap first** (the owner, 1 November 2026): the builder can start
 from OpenStreetMap's own outlines and refine them (`refineTrace`). Measured
@@ -11479,6 +11480,52 @@ West 57 -> 94); sand up 10-22 points where moved (Arcadia 27 -> 48); water
 to 89-97 where moved; fairway up on six, down on TPC (85 -> 79) and
 Worthington (77 -> 75); semi down on three. The line-up found 8 of 9 shifts
 within 1.5 m of the truth (-4, 0) and left Worthington's unmoved.
+
+**OpenStreetMap is itself off the place, and Worthington showed it (1
+November 2026).** Asked to shore up "OpenStreetMap then fit to LIDAR", the
+refinement was run on Worthington's own survey (`real-course.mjs --refine`):
+the line-up found no shift there from the LIDAR either. A study of which
+edges find a 4 m shift showed why: the map MOVED 4 m east lay on the
+ground's edges better than the map as drawn. OpenStreetMap's own Worthington
+lies about 3 m west and 1.5 m north of where the LIDAR's ground (3.0, -1.5 m)
+and the aerial picture (3.0, -1.0 m) both put its bunkers and ponds -- two
+independent sources agreeing within half a metre. So the yardstick charged
+every trace with the map's own error. Of the nine picture courses, seven
+lie 1-2.5 m off their pictures (Worthington 2.5 east, Northwood 2.0,
+Breckenridge, TPC and Chambers Bay 1.5, Sahalee and Arcadia 1.0; Key West and Ekwanok none found).
+
+What changed (iteration 52): **the line-up uses the FIRM outlines** --
+bunkers, water, greens, tees -- when the map has 200 sampled cells of them:
+on Worthington the fairways' best shift wandered to 8 m in any direction
+while the bunkers' and ponds' agreed in the LIDAR and in the picture.
+**From the LIDAR it reads slope and the laser's brightness** (a bunker's lip
+and a green's fall are breaks of slope): with the bunker-and-pond outlines,
+slope with brightness gained 47% over where the map lay, roughness with
+brightness (the first choice) 28%, the picture's brightness and greenness
+51%. One routine, `lineUp` (trace.js), serves the refinement and the
+benches. **The yardstick is lined up first** (osm-holes.mjs `lineUpTruth`;
+imagery-bench's `--raw` keeps the old scoring): the trace is scored
+against OpenStreetMap moved onto the picture (or the LIDAR) by that same
+routine. Iterations 0-51 were scored against the map as it lay.
+
+Then (iteration 53) **the map's fairway and semi-rough are kept as drawn**
+(`refineTrace`'s `mown`, now false by default): moving their edges by the
+learnt classifier took Worthington's fairway from 89 to 78 and the semi of
+Sahalee 53 -> 12, Chambers Bay 78 -> 45 and Northwood 84 -> 63; a mowing line
+is what a mapper draws best and the picture and the laser show least.
+
+**Damaged map -> refined, with both**, nine courses from the picture
+(imagery-bench --refine; the map moved 4 m east, half its greens and
+bunkers left out; against the map lined up): the line-up found every shift
+within half a metre (-3.5 to -4.5 m); fairway 96-100, semi 94-100, tee
+85-100, water 94-100, greens 48-74 (from 25-54), sand 35-62 (from 12-29) --
+greens and sand short because half were removed and only greens are added
+back. **Worthington from its LIDAR** (real-course.mjs --refine), moved 4 m
+east (which happened to land it near the truth, OpenStreetMap being 3 m
+west) and moved 4 m west and 3 m north (8 m off): both come back to the same
+place -- fairway, tee and water 100, greens 62 (40 or 21 at the start),
+sand 59 (34 or 5); from the picture the same but greens 58. With the
+fairway edges still moved, fairway 78.
 
 At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
 Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens

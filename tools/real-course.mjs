@@ -3,6 +3,8 @@
 // docs/COURSE_BUILDER.md, *The test course*).
 //
 //   node tools/real-course.mjs --data <folder> --naip <naip.tif> --osm <osm.json> --scorecard <card.json> [--out <file.fairway>]
+//   ... --refine      OpenStreetMap damaged (osm-holes.mjs damageTruth) and refined from
+//                     the LIDAR, the picture, and both in turn; scored, then stop
 //
 // Door 2's own pipeline (src/builder/real-course.js) with no clicks: the raw
 // LIDAR of <folder>/raw gathered into land over the course's box
@@ -20,13 +22,13 @@ import zlib from 'node:zlib';
 import {openSource} from '../src/lidar/formats.js';
 import {readGeoTiffRgb} from '../src/lidar/geotiff.js';
 import {toUtm, utmOfEpsg, converter} from '../src/lidar/geo.js';
-import {trace, TRACE} from '../src/lidar/trace.js';
+import {trace, TRACE, refineTrace} from '../src/lidar/trace.js';
 import {landFromSources, pictureOnLand, docFromLand} from '../src/builder/real-course.js';
 import {writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
 import {worldFromDoc} from '../src/built-world.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
 import {testRound} from '../src/builder/test-round.js';
-import {osmWays, holesFromOsm, truthGrid, scoreCodes, KINDS} from './osm-holes.mjs';
+import {osmWays, holesFromOsm, truthGrid, scoreCodes, damageTruth, lineUpTruth, KINDS} from './osm-holes.mjs';
 
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : argv[i + 1]; };
 const dir = opt('data', process.env.FAIRWAY_LIDAR_TEST), naipFile = opt('naip', null), osmFile = opt('osm', null), cardFile = opt('scorecard', null), out = opt('out', null);
@@ -116,6 +118,25 @@ if (dbg) { console.log(`  yardstick: laser ${dbg.iF?.toFixed(3)}, picture ${JSON
  if (argv.includes('--diagnose')) { const n = TRACE.map(() => 0), t = {}; for (let k = 0; k < r.codes.length; k++) n[r.codes[k]]++; for (const v of truth) if (v) t[v] = (t[v] || 0) + 1; console.log('  cells traced ' + TRACE.map((k, i) => k + ' ' + n[i]).join(', ') + '; outlined ' + JSON.stringify(t)); }
 }
 
+// --refine: OPENSTREETMAP THEN THE LIDAR (the owner, 1 November 2026: "the
+// best path for mapping is pull open street maps and then fit to LIDAR").
+if (argv.includes('--refine')) {
+ // The yardstick lined up with the place first (lineUpTruth): by the LIDAR,
+ // and by the picture for comparison.
+ const byL = lineUpTruth(truth, land, {mode: 'lidar'}), byP = picture ? lineUpTruth(truth, land, {picture, mode: 'picture'}) : null;
+ console.log(`OpenStreetMap lies off the LIDAR by ${byL.x.toFixed(1)}, ${byL.z.toFixed(1)} m (gain ${(100 * byL.gain).toFixed(0)}%)${byP ? `, off the picture by ${byP.x.toFixed(1)}, ${byP.z.toFixed(1)} m (gain ${(100 * byP.gain).toFixed(0)}%)` : ''}; scored against it lined up by the LIDAR, the raw map's score in brackets`);
+ const aligned = byL.truth, scoreA = codes => scoreCodes(aligned, codes);
+ const dmg = (opt('damage', '4,0')).split(',').map(Number), damaged = damageTruth(truth, land, {shiftM: dmg[0], dz: dmg[1]}), row = (name, codes, extra = '') => console.log(`${name.padEnd(20)} ${Object.entries(scoreA(codes)).map(([k, v]) => `${k} ${v == null ? '-' : (100 * v).toFixed(0)} (${score(codes)[k] == null ? '-' : (100 * score(codes)[k]).toFixed(0)})`).join('  ')}${extra}`); void row;
+ const row0 = (name, codes, extra = '') => console.log(`${name.padEnd(20)} ${Object.entries(score(codes)).map(([k, v]) => `${k} ${v == null ? '-' : (100 * v).toFixed(0)}`).join('  ')}${extra}`);
+ row(`OSM moved ${dmg[0]}, ${dmg[1]} m`, damaged);
+ for (const mode of ['lidar', 'picture']) for (const mown of [true, false]) {
+  if (mode === 'picture' && !picture) continue;
+  const t = performance.now(), r = refineTrace(land, damaged, {picture, mode, mown}), sh = refineTrace.lastShift;
+  row(`refined, ${mode}${mown ? '' : ', mown kept'}`, r, ` (lined up ${sh ? `${sh.x.toFixed(1)}, ${sh.z.toFixed(1)} m` : '-'}; ${((performance.now() - t) / 1000).toFixed(1)} s)`);
+  if (shots) picturePng(path.join(shots, `worthington-refine-${mode}.png`), r);
+ }
+ process.exit(0);
+}
 if (argv.includes('--trace-only')) process.exit(0);
 // 5. The course, as a file; read back and measured.
 const doc = docFromLand({land, traced: best, holes, trees, name: `${course.name} (test)`, landscape: 'midwest', credits: ['Elevation: USGS 3D Elevation Program, public domain'], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}}});

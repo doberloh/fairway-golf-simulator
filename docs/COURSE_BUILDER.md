@@ -276,7 +276,11 @@ After trying the builder, the owner amended the goal:
     zone, OpenStreetMap's buildings as houses (osm.js `homeOfFootprint`),
     stored in the course file (`homes`) and stood by the game
     (built-world.js `builtHomes`); and the **smooth view**. OpenStreetMap
-    then fit to the LIDAR is the next piece (the LIDAR iterations).
+    then fit to the LIDAR, shored up the same day: lined up by its bunkers', ponds' and
+    greens' edges, its shapes kept; every damaged test map came back within half
+    a metre, and OpenStreetMap itself turned out to lie 1-3 m off most real
+    places (RESEARCH, *OpenStreetMap is itself off the place*). The door says
+    Refine with the LIDAR is the recommended path.
 
     Decided, with what was turned down:
     - **Finer tracing: the outlines drawn, not a finer grid.** The game never
