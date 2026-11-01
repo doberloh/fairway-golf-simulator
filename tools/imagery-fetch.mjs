@@ -26,9 +26,11 @@ export const COURSES = [
  {key: 'pnw', name: 'Sahalee Country Club, Sammamish WA', osm: 'way(1002185812)'},
  {key: 'desert', name: 'TPC Scottsdale Stadium Course, Scottsdale AZ', osm: 'way(78388948)'},
  {key: 'mountain', name: 'Breckenridge Golf Club, Bear nine, Breckenridge CO', osm: 'way(1571231453)'},
- {key: 'links', name: 'Chambers Bay, University Place WA', osm: 'way["leisure"="golf_course"]["name"="Chambers Bay"]'},
+ {key: 'links', name: 'Chambers Bay, University Place WA', osm: 'way(26787026)'},
  {key: 'midwest', name: 'Worthington Country Club, Worthington MN', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]'},
- {key: 'island', name: 'Kapalua Plantation Course, Maui HI', osm: 'rel(12152889)'},
+ // Kapalua (Maui) was the first choice: Hawaii has no NAIP in the Planetary
+ // Computer's collection, so a tropical island course in Florida stands in.
+ {key: 'island', name: 'Key West Golf Club, Key West FL', osm: '(way["leisure"="golf_course"]["name"~"Key West Golf"];rel["leisure"="golf_course"]["name"~"Key West Golf"];)'},
  {key: 'redwood', name: 'Northwood Golf Club, Monte Rio CA', osm: 'way(1246462624)'},
  {key: 'autumn', name: 'Ekwanok Country Club, Manchester VT', osm: 'way(424514357)'},
  {key: 'lakeshore', name: 'Arcadia Bluffs Golf Club, Arcadia MI', osm: 'way(293247442)'},
@@ -73,14 +75,16 @@ async function fetchCourse(c) {
  if (!items.length) throw Error(`${c.key}: no NAIP over ${bbox}`);
  const year = items[0].properties['naip:year'] ?? items[0].properties.datetime.slice(0, 4);
  const mine = items.filter(i => (i.properties['naip:year'] ?? i.properties.datetime.slice(0, 4)) === year);
- const token = (await fetch('https://planetarycomputer.microsoft.com/api/sas/v1/token/naip', {headers: UA}).then(r => r.json())).token;
+ // A fresh signature for each tile: one lasts about an hour, and a course's
+ // tiles can take longer (Worthington's expired half-way).
+ const token = async () => (await fetch('https://planetarycomputer.microsoft.com/api/sas/v1/token/naip', {headers: UA}).then(r => r.json())).token;
  const tiles = [];
  for (const it of mine) {
   const href = it.assets.image.href, file = path.join(dir, path.basename(new URL(href).pathname));
   tiles.push(path.basename(file));
   if (fs.existsSync(file) && fs.statSync(file).size > 1e6) continue;
   console.log(`  ${c.key}: downloading ${path.basename(file)}`);
-  const r = await fetch(`${href}?${token}`, {headers: UA});
+  const r = await fetch(`${href}?${await token()}`, {headers: UA});
   if (!r.ok) throw Error(`${c.key}: ${r.status} for ${href}`);
   fs.writeFileSync(file + '.part', Buffer.from(await r.arrayBuffer()));
   fs.renameSync(file + '.part', file);

@@ -11375,6 +11375,21 @@ ragged is a surface's edge length against the same surface smoothed over
 | 8 | only as many greens as the turf has room for (1 per 2 ha), the strongest (fell: the strongest were bare ground and paths) | 4 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.10, 1.18 |
 | 9 | a green must be a plant (NDVI over 0.15) | 10 | 1 | 16 | 20 | 32 | 24 | 0/0 | 1.11, 1.18 |
 | 10 | the REFERENCE fixed: OSM's rough was painted last and hid nearly every green TPC maps; larger surfaces now go down first | 20 | 1 | 18 | 17 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 11 | layers in (the trace and the editor); Northwood (Giant Redwood) joins: four courses | 15 | 1 | 14 | 13 | 26 | 18 | 0/0 | 1.10, 1.20 |
+| 12 | a green's surroundings are the TURF within 20 m (trees left out: every redwood-lined edge was "lighter"); water from the picture wider than a shadow (3.5 m) | 18 | 0 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 13 | shaded sand with near-infrared only 10 brighter than the fairway (fell, 26 to 24: not kept); cart paths refused by their length (neutral, kept) | 18 | 0 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 14 | green patches ranked by how round as well as how strong; candidates the top 10% | 22 | 1 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 15 | a green per 1.5 ha of turf (was 2) | 23 | 1 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 16 | the fairway split by texture alone: shaded fairway no longer semi (Sahalee 21 to 30); TPC's green rough now fairway (semi 52 to 13) | 23 | 1 | 17 | 3 | 26 | 28 | 0/0 | 1.06, 1.20 |
+| 17-18 | brightness at half weight; shade judged by texture alone -- each kept 16's cost and lost its gain; Chambers Bay (Links) joins: five courses | 20 | 1 | 11-14 | 3-11 | 20 | 22 | 0/0 | 1.07-1.11, 1.20 |
+| 19 | back to 16's split, kept | 20 | 1 | 16 | 3 | 20 | 22 | 0/0 | 1.07, 1.20 |
+| 20 | sand's NDVI bar a share of the fairway's (Chambers Bay's fescue fairways read 0.20, so "0.25 below" asked for less than nothing); patches to 6,000 m² for waste areas (fell elsewhere: not kept) | 20 | 1 | 16 | 3 | 24 | 22 | 0/0 | 1.07, 1.21 |
+
+By course at iteration 20: Breckenridge green 48, fairway 27, sand 41;
+TPC Scottsdale green 16, sand 45, water 59; Sahalee green 19, fairway 30,
+sand 22, water 54; Chambers Bay green 7, fairway 12, sand 8 (its dunes and
+waste areas are one pale sweep the rules cannot yet cut into bunkers);
+Northwood green 8 (OSM maps no fairway there to score).
 
 By course at iteration 10: Breckenridge green 30, fairway 24, sand 40; TPC
 Scottsdale green 15, semi 52, sand 36, water 59; Sahalee green 15, fairway

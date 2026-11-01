@@ -279,7 +279,9 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
     // and clearly less green than the fairway, and as smooth.
     || (turf && l < fc.l - 15 && turf.tex[k] < turf.texLo && (nd != null && fc.n != null ? nd < fc.n - .2 : exg(p) < fc.e - .08)) ? 1 : 0;
   }
-  const keep = blobs(majority(wet, nx, nz, Math.max(1, Math.round(1.5 / cell))), nx, nz, cell, {minArea: 60, thick: 2.5});
+  // Wider than a shadow (iteration 12: a road's tree shadows at Northwood
+  // read as water): 3.5 m thick, area over edge (PLACED).
+  const keep = blobs(majority(wet, nx, nz, Math.max(1, Math.round(1.5 / cell))), nx, nz, cell, {minArea: 60, thick: 3.5});
   if (debug) Object.assign(debug, {pictureWater: wet, pictureWaterKept: keep});
   for (let k = 0; k < N; k++) if (keep[k]) set(k, C.water, SOURCE.picture, .7);
  }
@@ -293,10 +295,15 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  // roughness 2.5 cm against 0.7, its brightness in the picture 60 over the
  // fairway's, its greenness 0.14 under. The first rule -- "bright to the
  // laser" -- was a guess and found none.)
- const sandy = {minArea: 4, maxArea: 1500, thick: 1.2, maxLength: 60, accept: notBox};
+ // (Iteration 20 let sand run to 6,000 m² and 120 m for a links course's
+ // waste areas: Breckenridge's sand fell 40 to 27 on false patches. Not kept.)
+ const sandy = {minArea: 4, maxArea: 1500, thick: 1.2, maxLength: 60, accept: list => notBox(list) && notPath(list)};
  // A patch filling over 86% of its own box (a disc fills 79%) and over 40 m²
- // is a roof or a car
- // park, not a bunker (PLACED; iteration 2: TPC Scottsdale's houses).
+ // is a roof or a car park, not a bunker (PLACED; iteration 2: TPC
+ // Scottsdale's houses). One whose area is under 8% of its length squared is
+ // a cart path (a 3 x 60 m path 5%, a 4 x 30 m fairway bunker 13%; PLACED,
+ // iteration 13).
+ function notPath(list) { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } const len = Math.hypot(i1 - i0 + 1, j1 - j0 + 1) * cell; return list.length * cell * cell / (len * len) > .08; }
  function notBox(list) { if (list.length * cell * cell < 40) return true; let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) < .86; }
  if (useL && iF != null) {
   const m = new Uint8Array(N);
@@ -323,7 +330,13 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
    if (useL && F.rough[k] < .01) continue;
    const p = pix(k); if (!p) continue;
    const nd = ndvi(p);
-   m[k] = lum(p.r, p.g, p.b) > fc.l + 30 && exg(p) < fc.e - .08 && (nd == null || fc.n == null || nd < fc.n - .25) ? 1 : 0;
+   // (Iteration 13 let sand with near-infrared be only 10 brighter than the
+   // fairway, for Sahalee's shaded bunkers: sand fell 26 to 24 -- the shade
+   // took in more than it found. Not kept.)
+   // Under 0.25 below the fairway's NDVI, or under 40% of it, whichever is
+   // more (iteration 20): Chambers Bay's fescue fairways read only 0.20, so
+   // "0.25 below" asked for less than nothing and its sand (0.00) failed.
+   m[k] = lum(p.r, p.g, p.b) > fc.l + 30 && exg(p) < fc.e - .08 && (nd == null || fc.n == null || nd < Math.max(fc.n - .25, fc.n * .4)) ? 1 : 0;
   }
   const keep = blobs(m, nx, nz, cell, sandy);
   if (debug) Object.assign(debug, {pictureSand: m, pictureSandKept: keep});
@@ -370,7 +383,13 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // brighter, smoother half is fairway, when the halves differ enough to be
   // two cuts (iteration 3).
   const cells = []; for (let k = 0; k < N; k += 5) if (turf[k]) cells.push(k);
-  const fz = k => [turf.lum[k] / 40, -turf.tex[k] / (turf.texLo || 1)];
+  // By TEXTURE ALONE (iteration 16, kept): with brightness counted, a
+  // fairway in the shade of its trees was split off as semi (Sahalee's
+  // fairway 21 -> 30 without it). The cost: a desert course's green rough is
+  // as smooth to the camera as its fairway, and is called fairway (TPC
+  // Scottsdale's semi 52 -> 13); half-weight brightness (17) and the shade
+  // judged by texture alone (18) each kept the cost and lost the gain.
+  const fz = k => [0, -turf.tex[k] / (turf.texLo || 1)];
   let a = fz(cells[Math.floor(cells.length * .25)] ?? 0), b = fz(cells[Math.floor(cells.length * .75)] ?? 0);
   for (let it = 0; it < 8 && cells.length; it++) {
    const sa = [0, 0, 0], sb = [0, 0, 0];
@@ -397,7 +416,11 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   const L = new Float32Array(N), G = new Float32Array(N);
   for (let k = 0; k < N; k++) { const p = pix(k); if (!p) continue; L[k] = lum(p.r, p.g, p.b); G[k] = p.n != null ? ndvi(p) : exg(p); }
   const r1 = Math.max(1, Math.round(1.5 / cell)), r2 = Math.max(2, Math.round(20 / cell));
-  const nL = boxMean(L, nx, nz, r1), wL = boxMean(L, nx, nz, r2), nG = boxMean(G, nx, nz, r1), wG = boxMean(G, nx, nz, r2), nT = boxMean(turf.tex, nx, nz, r1), wT = boxMean(turf.tex, nx, nz, r2);
+  // The surroundings are the TURF within 20 m only (iteration 12): with the
+  // trees counted in, every fairway edge among Northwood's redwoods was
+  // "lighter than round it" and no green was kept.
+  const tf = Float32Array.from(turf), wTurf = boxMean(tf, nx, nz, r2), turfMean = a => { const m = boxMean(Float32Array.from(a, (v, k) => turf[k] ? v : 0), nx, nz, r2); for (let k = 0; k < N; k++) m[k] = wTurf[k] > .05 ? m[k] / wTurf[k] : a[k]; return m; };
+  const nL = boxMean(L, nx, nz, r1), wL = turfMean(L), nG = boxMean(G, nx, nz, r1), wG = turfMean(G), nT = boxMean(turf.tex, nx, nz, r1), wT = turfMean(turf.tex);
   const spread = f => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k]) v.push(f(k)); v.sort((x, y) => x - y); return Math.max(1e-6, (v[Math.floor(v.length * .84)] ?? 1) - (v[Math.floor(v.length * .16)] ?? 0)) / 2; };
   const sL = spread(k => nL[k] - wL[k]), sG = spread(k => nG[k] - wG[k]), sT = spread(k => nT[k] - wT[k]);
   const score = new Float32Array(N).fill(-Infinity);
@@ -405,9 +428,11 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // (iteration 9: ranked by score alone, they were all that was kept).
   const plantBar = P.nir ? .15 : .04;
   for (let k = 0; k < N; k++) if (pix(k) && off[k] < 12 && G[k] > plantBar && codes[k] !== C.sand && codes[k] !== C.water) score[k] = (nL[k] - wL[k]) / sL + (wG[k] - nG[k]) / sG + (wT[k] - nT[k]) / sT;
-  const bar = (() => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k] && score[k] > -Infinity) v.push(score[k]); v.sort((x, y) => x - y); return v[Math.floor(v.length * .93)] ?? Infinity; })();
+  const bar = (() => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k] && score[k] > -Infinity) v.push(score[k]); v.sort((x, y) => x - y); return v[Math.floor(v.length * .9)] ?? Infinity; })();
   const cand = new Uint8Array(N);
   for (let k = 0; k < N; k++) cand[k] = score[k] > bar ? 1 : 0;
+  // How round a patch is: 1 a disc, less as it runs long or ragged.
+  const roundness = list => { let e = 0; const set1 = new Set(list); for (const k of list) { const i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (!set1.has(n)) e++; } const P = e * cell / 1.27; return Math.min(1, 4 * Math.PI * list.length * cell * cell / (P * P)); };
   const round = list => { let e = 0; const set1 = new Set(list); for (const k of list) { const i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (!set1.has(n)) e++; } const A = list.length * cell * cell, P = e * cell / 1.27; return 4 * Math.PI * A / (P * P) > .45; };
   // Opened (shrunk and grown back 2.5 m, PLACED) so candidates touching by a
   // thin strip part into their own patches (iteration 7: on TPC Scottsdale's
@@ -421,11 +446,11 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   // false ones.
   const turfHa = (() => { let n = 0; for (let k = 0; k < N; k++) if (turf[k]) n++; return n * cell * cell / 1e4; })();
   const pick = (mask, opts, howMany) => {
-   const found = []; blobs(mask, nx, nz, cell, {...opts, accept: list => { if (!opts.keep || opts.keep(list)) { let m = 0; for (const k of list) m += score[k]; found.push({list: list.slice(), mean: m / list.length}); } return false; }});
+   const found = []; blobs(mask, nx, nz, cell, {...opts, accept: list => { if (!opts.keep || opts.keep(list)) { let m = 0; for (const k of list) m += score[k]; found.push({list: list.slice(), mean: m / list.length * roundness(list)}); } return false; }});
    found.sort((x, y) => y.mean - x.mean);
    const out = new Uint8Array(N); for (const f of found.slice(0, howMany)) for (const k of f.list) out[k] = 1; return out;
   };
-  const nGreens = Math.max(6, Math.min(30, Math.round(turfHa / 2)));
+  const nGreens = Math.max(6, Math.min(36, Math.round(turfHa / 1.5)));
   const greens = pick(opened, {minArea: 150, maxArea: 1500, thick: 3, maxLength: 60, keep: round}, nGreens);
   for (let k = 0; k < N; k++) if (greens[k]) set(k, C.green, SOURCE.picture, .85);
   // TEES with no mark: the same short cut as a green, in small squared-off
