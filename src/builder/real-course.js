@@ -23,12 +23,14 @@ export const cellFor = (wMetres, hMetres) => wMetres * hMetres <= 2.25e6 ? .5 : 
 // The largest property (PLACED, the owner's decision 10: 3 x 3 km).
 export const MAX_PROPERTY = 3000;
 
+// One source's box, in its map units.
+export const sourceBox = s => s.kind === 'points' ? {x0: s.bounds.minX, x1: s.bounds.maxX, y0: s.bounds.minY, y1: s.bounds.maxY}
+   : {x0: Math.min(s.raster.x0, s.raster.x0 + s.raster.dx * (s.raster.width - 1)), x1: Math.max(s.raster.x0, s.raster.x0 + s.raster.dx * (s.raster.width - 1)), y0: Math.min(s.raster.y0, s.raster.y0 + s.raster.dy * (s.raster.height - 1)), y1: Math.max(s.raster.y0, s.raster.y0 + s.raster.dy * (s.raster.height - 1))};
 // The box every source covers, in the first one's map units.
 export function sourcesBox(sources) {
  let b = null;
  for (const s of sources) {
-  const r = s.kind === 'points' ? {x0: s.bounds.minX, x1: s.bounds.maxX, y0: s.bounds.minY, y1: s.bounds.maxY}
-   : {x0: Math.min(s.raster.x0, s.raster.x0 + s.raster.dx * (s.raster.width - 1)), x1: Math.max(s.raster.x0, s.raster.x0 + s.raster.dx * (s.raster.width - 1)), y0: Math.min(s.raster.y0, s.raster.y0 + s.raster.dy * (s.raster.height - 1)), y1: Math.max(s.raster.y0, s.raster.y0 + s.raster.dy * (s.raster.height - 1))};
+  const r = sourceBox(s);
   b = b ? {x0: Math.min(b.x0, r.x0), x1: Math.max(b.x1, r.x1), y0: Math.min(b.y0, r.y0), y1: Math.max(b.y1, r.y1)} : r;
  }
  return b;
@@ -120,6 +122,19 @@ export function affineFromPairs(pairs) {
 //               bunker's lip, a green's fall and a tee's bank as bright lines,
 //               the edges the line-up (trace.js lineUp) itself reads
 export const LIDAR_VIEWS = ['relief', 'brightness', 'slope'];
+// WHERE THE FILES REACH (door 2's step 1, yellow; the owner, 1 November
+// 2026): 1 for every cell within `metres` of a cell a point or height landed
+// in (`land.noReturns` 0). The reach smooths over a survey thinned for the
+// first look, or one sparse to begin with, and a pond the laser saw nothing
+// back from; 10 m (PLACED: past the widest spacing of a QL2 survey thinned
+// tenfold for the first look, short of a gap worth seeing).
+export function coverage(land, metres = 10) {
+ const {nx, nz, noReturns} = land, r = Math.max(1, Math.round(metres / land.cell)), a = new Uint8Array(nx * nz), out = new Uint8Array(nx * nz);
+ // A square reach, row then column, each by a running count over the window.
+ for (let j = 0; j < nz; j++) { let n = 0; const row = j * nx; for (let i = -r; i < nx; i++) { if (i + r < nx && !noReturns[row + i + r]) n++; if (i - r - 1 >= 0 && !noReturns[row + i - r - 1]) n--; if (i >= 0) a[row + i] = n > 0 ? 1 : 0; } }
+ for (let i = 0; i < nx; i++) { let n = 0; for (let j = -r; j < nz; j++) { if (j + r < nz && a[(j + r) * nx + i]) n++; if (j - r - 1 >= 0 && a[(j - r - 1) * nx + i]) n--; if (j >= 0) out[j * nx + i] = n > 0 ? 1 : 0; } }
+ return out;
+}
 export function lidarTexels(land, mode, out) {
  const {nx, ground: g, cell} = land, N = land.nx * land.nz;
  const slope = mode === 'slope' ? features(land).slope : null, I = mode === 'brightness' ? land.intensity : null;

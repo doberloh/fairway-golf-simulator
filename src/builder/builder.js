@@ -11,10 +11,13 @@ import {readBuiltFile, isBuiltFile, textOf} from '../course-doc.js';
 import {readCourseFile} from '../course-file.js';
 import {saveBytes, saveHow, lastSave} from './saving.js';
 import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
+import {tipFor} from './tips.js';
 
 const root = document.getElementById('builder');
 const el = (tag, attrs = {}, ...kids) => {
  const n = document.createElement(tag);
+ // A button made without a tooltip takes its own from tips.js.
+ if (tag === 'button' && attrs.title == null) { const t = tipFor(attrs, kids); if (t) n.title = t; }
  for (const [k, v] of Object.entries(attrs)) {
   if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else if (v !== false && v != null) n.setAttribute(k, v === true ? '' : v);
  }

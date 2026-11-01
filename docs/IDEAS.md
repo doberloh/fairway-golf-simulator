@@ -119,6 +119,19 @@ often has the how-to already worked out.
 
 ## Under the hood
 
+- **Washington's surveys listed in the builder, through the bridge.** The
+  Washington Lidar Portal answers what covers a box only to its own page,
+  and its download needs the pass its page hands a browser, so door 2 now
+  opens it on the place and the player draws a box there. Fairway's bridge
+  (a program, which needs no allow-origin) could ask the portal's `/query`
+  for door 2, which would list Washington's surveys beside USGS's and give
+  each its download link, the browser fetching the ZIP with the portal's
+  pass (opened once). Why: three clicks on another site fewer, for the
+  owner's own state. Small to medium: bridge/server.mjs `lidarTarget` and a
+  POST route, lidar-search.js a `wa` source, door-real.js `searchAll`; only
+  while the bridge runs. The same may suit other state portals with a query
+  of their own (not checked). Claude, 1 November 2026 (RESEARCH, *Finding
+  LIDAR from the builder*).
 - **Spin at the rim.** A putt reaches the lip carrying only rolling spin; one
   with sidespin should take the lip differently. Medium. (was: *Spin-dependent
   rim behaviour*)

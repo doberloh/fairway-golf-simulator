@@ -448,8 +448,10 @@ do not count toward it.
 ## Fairway Course Builder
 
 **Fairway Builder.html**, beside the game in every download, is a second
-program for making courses. Open it the same way (double-click it); it never
-goes online. Everything it makes is a **.fairway file**: open it in the game
+program for making courses. Open it the same way (double-click it); it goes
+online only when you press for something from the internet (LIDAR, imagery,
+OpenStreetMap). Hold the pointer over any button to see what it does.
+Everything it makes is a **.fairway file**: open it in the game
 with *Import courses from a file* on Saved courses, or drop it there, and give
 the file to anyone else who has Fairway. It opens on three doors.
 
@@ -462,27 +464,47 @@ the file to anyone else who has Fairway. It opens on three doors.
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
-     place, **Find**, pick it, choose the square round it (1 to 3 km), and
+     place, **Find** (or Enter), click the place you mean in the list (each
+     is a button marked **Use ›**), choose the square round it (1 to 3 km), and
      **Search for LIDAR**. Every source over that place is listed. **USGS
      3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
      there: **Download the square here** takes just the survey over the
      square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
-     square of Worthington is about 17 MB). **Download its whole tiles** gets
+     square of Worthington is about 17 MB). **Download all tiles** gets
      USGS's own tiles: through Fairway's bridge if it is running (the
      launch-monitor helper, which fetches them for the page), or else your
-     browser downloads them and the builder reads them from the folder you
-     pick once (Chrome and Edge; in other browsers bring the downloaded files
-     with Choose LIDAR files). Each state with its own LIDAR portal
+     browser downloads them and the builder reads each from your LIDAR
+     folder as it arrives (at once if that folder is Downloads; otherwise
+     move them in when they finish -- the builder says so).
+     **Your LIDAR folder** (Chrome and Edge): every download is saved there
+     as it arrives -- a USGS square as one ZIP named for the survey, the
+     place and the size, other tiles under their own names -- and the same
+     download asked for again is read from there instead, so nothing is
+     downloaded twice. Pick it once with **Choose the folder** (Downloads is
+     the easy choice: the portals' and USGS's tile downloads land there by
+     themselves) or the builder asks the first time it downloads; the
+     browser remembers it and may ask leave to use it again on a later
+     visit. **Load from the folder** lists the LIDAR files in it (and the
+     folders one down), ticking those over the place you searched for;
+     **Load the ticked** reads them. In other browsers each download is
+     saved to the browser's download folder instead; bring them back with
+     Choose LIDAR files. Each state with its own LIDAR portal
      (Washington, Minnesota, Pennsylvania, North Carolina and thirty more),
      NOAA's Digital Coast, the national agencies of England, the Netherlands,
      Denmark, Spain, Canada, Australia and New Zealand, and
-     OpenTopography are listed as links where they cover the place. This and
+     OpenTopography are listed as links where they cover the place
+     (Washington's opens right on the place: draw a box round the course with
+     its square tool, tick the newest Point Cloud, press Download). When a
+     portal's download finishes, put the files -- a ZIP is fine, the builder
+     unpacks it -- in your LIDAR folder and press **Load from the folder**. This and
      the imagery are the only things in the builder that go online, and
      only when pressed.
      Or choose LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
-     XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
-     its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
-     file is read with it. Each file is listed with its form, its size, its map
+     XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with
+     its .hdr, BIL, SRTM HGT), or a ZIP of them (a portal's download). Several tiles at once; a .prj or .hdr beside a
+     file is read with it. Where the files reach shows **yellow** over the
+     relief, each file's box outlined yellow with its name; the property box
+     is white. Each file is listed with its form, its size, its map
      grid and its units (feet are converted to metres). Surveys in US State
      Plane (Lambert or transverse Mercator, in feet or metres), UTM, the
      British grid, the Swiss grid (to about a metre) and the like are placed for imagery and OpenStreetMap by
@@ -550,6 +572,11 @@ the file to anyone else who has Fairway. It opens on three doors.
      added; its shapes are kept as drawn. On test courses it put a map moved
      up to 8 m back within half a metre. **Refine with the LIDAR** is the
      recommended path when you have a survey.
+     **Trees** (beside it): **the LIDAR's, and OpenStreetMap's where the
+     LIDAR has none** (the default: every tree the survey measured, and the
+     map's single trees and woods only where no surveyed tree stands within
+     6 m), **the LIDAR's only**, or **OpenStreetMap's only**. Undo takes a
+     change back.
 
      Or **Auto trace** (the greens, tees, fairways, sand and water found
      for you -- from the LIDAR alone, with no picture, the mown turf, the
@@ -594,7 +621,11 @@ the file to anyone else who has Fairway. It opens on three doors.
      gone -- a moment after each stroke; while you paint, its cells show.
      **Smooth / cell view** switches to the cells. **Course boundary**: draw
      a line round the course (OpenStreetMap's comes with it when it has
-     one), then **Fill outside it**: every surface outside comes off, the
+     one), choose what happens to what is already outside it --
+     **Remove what is there** (every surface and house outside comes off:
+     OpenStreetMap's roads, ponds and the neighbours' houses) or **Keep what
+     is there** (they all stay; the ground goes in only where nothing is laid,
+     and no tree on them) -- then **Fill outside it**: the
      landscape's own ground goes in (pine straw, leaves, the desert floor or
      native grass) with a wood -- 150 trees a hectare where needles or leaves
      fall, 15 on a links, desert or island, 80 elsewhere -- thinning in from

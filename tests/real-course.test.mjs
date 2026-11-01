@@ -3,7 +3,7 @@
 // holes and trees made into a course the game's world contract accepts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor, lidarTexels, LIDAR_VIEWS} from '../src/builder/real-course.js';
+import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor, lidarTexels, coverage, LIDAR_VIEWS} from '../src/builder/real-course.js';
 import {createGridder} from '../src/lidar/land.js';
 import {TRACE} from '../src/lidar/trace.js';
 import {validateDoc, writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
@@ -99,4 +99,12 @@ test('the LIDAR shows as its relief, its brightness or its slope, to lay the pic
  assert.equal(at(br, 0, 0), at(rel, 0, 0), 'no brightness: the relief');
  assert.ok(at(sl, 20, 20) > 200 && at(sl, 5, 20) === 20, 'the step bright, the flat dark');
  assert.ok(at(rel, 20, 20) !== at(rel, 5, 20), 'the relief shades the step');
+});
+
+test('where the files reach: every cell within 10 m of one a point landed in, a far corner not', () => {
+ const nx = 100, nz = 80, cell = 1, noReturns = new Uint8Array(nx * nz).fill(1);
+ for (let j = 0; j < 40; j += 8) for (let i = 0; i < 50; i += 8) noReturns[j * nx + i] = 0;   // points every 8 m over the west half of the north
+ const on = coverage({nx, nz, cell, noReturns});
+ assert.equal(on[20 * nx + 20], 1, 'between the points: covered'); assert.equal(on[42 * nx + 30], 1, '10 m past the last row'); assert.equal(on[43 * nx + 30], 0, '11 m past it: not');
+ assert.equal(on[60 * nx + 90], 0, 'the far corner: not'); assert.equal(on[20 * nx + 60], 0, '12 m past the last column: not');
 });

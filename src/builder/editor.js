@@ -61,7 +61,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
   moveShape: () => 'Drag a green, bunker, fairway, pond, tree or house to move it whole; Undo puts it back.',
   turnShape: () => 'Press on a green, bunker, pond or house and drag round its middle to turn it; Undo puts it back.',
  };
- const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), onclick: () => setTool(t), ...extra}, text);
+ // Each tool's tooltip is its hint (HINT), as the status line gives it.
+ const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), title: HINT[t.kind]?.(t) ?? text, onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
  const landscapeKinds = () => PAINT.filter(k => k !== 'water');
  // THE LAYERS (the owner, 1 November 2026: "exposed in the editor as well in

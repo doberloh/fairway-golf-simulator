@@ -799,6 +799,14 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - Microsoft Planetary Computer, *USGS 3DEP Lidar Point Cloud (COPC)* --
   https://planetarycomputer.microsoft.com/dataset/3dep-lidar-copc -- checked,
   readable, not used (older surveys at Worthington).
+- Washington DNR, *Washington Lidar Portal* -- https://lidarportal.dnr.wa.gov/
+  and its script, https://lidarportal.dnr.wa.gov/js/lidar.js (read 1 November
+  2026): its `/query` and `download?geojson=&ids=` addresses, the
+  `#lat:lon:zoom` place in its address door 2 opens it on, and the `dlgate`
+  pass its download needs (RESEARCH, *Finding LIDAR from the builder*).
+- OpenStreetMap's map of Nile Shrine Golf Course, Mountlake Terrace WA,
+  through the Overpass API (1 November 2026; bench/shots/imagery/nile-shrine,
+  local): its trees and woods against the survey's (RESEARCH, *Whose trees*).
 - IGN, *LiDAR HD* -- https://geoservices.ign.fr/lidarhd -- France's tiles,
   found through the data.geopf.fr WFS layer IGNF_LIDAR-HD_METADONNEE:metadata.
 - swisstopo, *swissSURFACE3D* -- https://www.swisstopo.admin.ch/en/height-model-swisssurface3d

@@ -85,3 +85,12 @@ button,input,select{font:inherit;color:inherit}
 /* Links out of the builder (door 2's LIDAR portals), readable on the panels. */
 #builder a{color:var(--a1)}#builder a:visited{color:var(--soft)}
 .cb-savenote{color:var(--soft);font-size:12px;margin-right:10px}
+/* Places found: each a button, so it reads as something to click (the owner, 1 November 2026). */
+.cb-door2 ul:has(> li > .cb-result){list-style:none;padding:0}
+.cb-door2 li.cb-resulthead{font-size:12px;color:var(--soft);margin:2px 0}
+.cb-door2 .cb-btn.cb-result{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;margin:2px 0;text-align:left;text-transform:none;font:600 13px/1.25 var(--body,system-ui);letter-spacing:0}
+.cb-door2 .cb-btn.cb-result:hover{background:var(--a1);color:var(--on-hot)}
+.cb-door2 .cb-resultgo{flex:none;font:800 12px/1 var(--head);text-transform:uppercase;color:var(--hot)}
+.cb-door2 .cb-btn.cb-result:hover .cb-resultgo{color:inherit}
+.cb-door2 .cb-foldername{color:var(--hot)}
+.cb-door2 .cb-folderfiles{font-size:12px;max-height:180px;overflow:auto}

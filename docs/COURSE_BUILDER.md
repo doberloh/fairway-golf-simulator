@@ -387,8 +387,9 @@ After trying the builder, the owner amended the goal:
     so a page cannot read it (checked 1 November 2026). Two ways round it,
     both legitimate: **the browser downloads the tiles as files** (a
     download is no cross-origin read) and the builder reads them from the
-    downloads folder the player picks once (showDirectoryPicker, Chrome and
-    Edge; elsewhere the player brings the files); and **Fairway's own bridge**
+    player's LIDAR folder (showDirectoryPicker, Chrome and Edge; elsewhere
+    the player brings the files -- first a separate "downloads folder",
+    which amendment 15 made the one LIDAR folder); and **Fairway's own bridge**
     (the local program a launch monitor talks to) fetching them for the page.
     And a source for each state with its own LIDAR programme, linked from
     door 2's search where it covers the place.
@@ -406,7 +407,8 @@ After trying the builder, the owner amended the goal:
     3DEP's square from its Entwine copy (measured against the owner's
     Worthington tiles: the same ground to 0.1 cm), IGN LiDAR HD's tiles,
     rockyweb's whole tiles through **the bridge's `/lidar`** or **the
-    downloads folder**, **36 state portals** and the national agencies as
+    browser's own downloads** (read from the LIDAR folder since amendment
+    15), **36 state portals** and the national agencies as
     links; **State Plane** placed. RESEARCH, *Finding LIDAR from the
     builder*. Decided, with what was turned down:
     - **A draft is its own file kind** (`.fairway-draft`), not a course file
@@ -418,12 +420,102 @@ After trying the builder, the owner amended the goal:
       it would lose the trace step's layers' history and the pictures' lining
       up.
     - **The rockyweb downloads are spaced 4 s apart** and read from a folder
-      the player picks, because the browser, not the page, saves them; a
+      the player picks (the LIDAR folder, amendment 15), because the
+      browser, not the page, saves them; a
       proxy on the internet was not considered (it would see every player's
       requests).
     - **USGS's Entwine copy rather than the Planetary Computer's COPC**: both
       answer a page, but at Worthington only Entwine had the newest survey,
       and Entwine downloads only the square.
+
+15. **Downloads kept, finding made clearer, trees and the boundary as the
+    player chooses** (the owner, 1 November 2026, after building Nile Shrine
+    in the builder):
+    - "when downloading LIDAR files into the browser. Are those files
+      saved?, make sure that they go somewhere local always. We don't want
+      the user needing to re download the files. Maybe we just only allow
+      downloading to the downloads folder? what do you think?" -- **They were
+      not**: a square or tile downloaded in the page lived only in the page,
+      and a draft keeps the land, not the LIDAR. Now **every download is
+      written to the player's LIDAR folder** (lidar-folder.js), one folder
+      picked once (Downloads suggested) and remembered by the browser, and
+      **read from there instead of downloaded again** by the same name
+      (lidar-search.js `kept`); a USGS square is kept as a ZIP of its
+      Entwine pieces with the square written in it (`squareName`,
+      `eptZipSource`). Where the browser cannot pick a folder (Firefox,
+      Safari), each download is saved the browser's way, into its download
+      folder. **Downloads-only was not chosen as the rule**: a page cannot
+      write into the download folder except by a download, cannot tell
+      whether a picked folder is it, and a player who keeps LIDAR elsewhere
+      (the owner's own `fairway-courses` folder) would be refused; so the
+      folder is the player's, and Downloads the suggestion -- the folder
+      that makes rockyweb's and the portals' files arrive by themselves.
+    - "for other sources like WA DNR, can we link directly to the
+      downloads or does the user really need to do manual work?" --
+      **Partly.** Washington's portal answers what covers a box only to its
+      own page (`POST /query`, no Access-Control-Allow-Origin), and its
+      download link (`download?geojson=<box>&ids=<datasets>`, a ZIP made to
+      order) answers 403 unless the browser carries the pass the portal's
+      page hands it (a `dlgate` cookie, two hours) -- checked 1 November
+      2026: in a browser that had opened the portal the link gave
+      `custom_download.zip` at once; without the cookie, 403. So the builder
+      cannot make that link itself, but it **opens the portal on the course**
+      (its address takes `#lat:lon:zoom`), leaving three clicks there (a
+      box, the newest Point Cloud, Download), and **reads the ZIP the portal
+      gives** from the LIDAR folder. Not built, and possible: Fairway's
+      bridge asking the portal's `/query` for the page, which would let the
+      builder list Washington's surveys itself and give the download link
+      (the browser still fetching it, with the portal's pass): in IDEAS.md. The other 35
+      portals are links to their own pages; whether each takes a place in
+      its address was not checked one by one.
+    - "change the text 'download its whole tiles' to 'download all tiles'"
+      -- done.
+    - "can we add on hover tooltips for buttons?" -- every button in the
+      builder has one: from tips.js by its tool or its label when made
+      without its own (builder.js `el`), the editor's tools from their
+      hints, and a test that every fixed label has one
+      (tests/builder-tips.test.mjs).
+    - "When searching a course and showing results. Make it clear the
+      results can be clicked." -- each place found is a button with "Use ›"
+      under a line saying to click one (door 2's Find LIDAR and the trace
+      step's place search).
+    - "I tried to build the nile shrine golf course ... when i started
+      building the course i had tree data, but then after i imported open
+      street maps i lost the trees. We need to give the user options for
+      tree data to be merged with OSM." -- **The cause**: door 2 kept the
+      LIDAR's trees only where OpenStreetMap had no tree or wood of its own;
+      one mapped tree dropped every surveyed one. Now a **Trees** choice
+      beside OpenStreetMap: the LIDAR's with OpenStreetMap's added where no
+      LIDAR tree stands within 6 m (the default, PLACED), the LIDAR's only,
+      or OpenStreetMap's only (osm.js `mergeTrees`, one undo step).
+      Measured on Nile Shrine: RESEARCH, *Whose trees*.
+    - "Nile shrine LIDAR is here ... Please bring this folder into our
+      untracked LIDAR folder." -- moved to bench/lidar/nile-shrine (four
+      rockyweb tiles of USGS WA_KingCounty_2021_B21, State Plane Washington
+      North, US feet).
+    - "When loading LIDAR files in step 1. Show the coverage of the files in
+      highlighted yellow." -- every cell within 10 m of one a point or height
+      landed in (PLACED; real-course.js `coverage`), yellow over the relief
+      at step 1, each file's box outlined yellow with its name; the property
+      box is white now, so yellow means the files.
+    - "When filling outside the course boundaries, give the option to remove
+      OSM data or keep it." -- **Remove what is there** (the default, as
+      before, and now the houses outside too) or **Keep what is there**: the
+      surfaces and houses outside stay, the landscape's floor goes only on
+      bare ground, and no tree is planted on a surface or a house
+      (trace-edit.js `fillOutside` `keep`).
+    - "builder needs to tell the user to put the files in the folder once
+      they are done downloading." -- a portal opened from the search, and
+      rockyweb's tiles, both say so: put the files (a ZIP is fine; the
+      builder unpacks it) in the LIDAR folder, then **Load from the folder**,
+      which lists the folder's LIDAR files and ticks those over the place
+      searched for. Rockyweb's tiles are read as each arrives when the
+      LIDAR folder is Downloads.
+    **Built that day, not yet played by a person**; the builder-lidar-folder
+    journey drives the folder with a stand-in (a script cannot answer the
+    folder dialog), so Chrome's own folder dialog, its leave-to-use prompt on
+    a later visit, and the folder remembered between visits are for the
+    owner to see.
 
 **The work remaining** (written into the goal at the owner's request, 1
 November 2026), in the order it will be done:
@@ -454,8 +546,10 @@ November 2026), in the order it will be done:
   downloaded in the page (its tiles state no grid: the catalogue's EPSG 2056
   is given them). A square in Bern: 11.5 million points, placed and built.
 - **The builder's LIDAR checks a person can only do**: the rockyweb tiles
-  through the downloads folder and through the owner's bridge (restarted to
-  have `/lidar`), IGN downloaded in the page, Chrome's real save dialog.
+  through the LIDAR folder and through the owner's bridge (restarted to
+  have `/lidar`), IGN downloaded in the page, Chrome's real save dialog,
+  Chrome's folder dialog and the folder remembered on a later visit,
+  Washington's portal opened on the course and its ZIP loaded.
 - **Reported as not played** until the owner plays it: every one of these.
 
 The parts of the study's tracing design not yet built -- the alignment nudge, a review layer, a classifier
@@ -493,7 +587,8 @@ smoothed surfaces, Save); stage 7, door 2 -- 1 (the step order), 2 (manual
 trace), 3 (zoom and drag), 5 and 6 (imagery), 7 (layers), 8 (the painted
 review), 9 (OpenStreetMap first), 10 (the 1 November list), 11 (the LIDAR
 and the picture together, the lock), 12 (move a shape), 13 (find and
-download LIDAR, kept pictures, drafts), 14 (rockyweb, state portals); stage
+download LIDAR, kept pictures, drafts), 14 (rockyweb, state portals), 15 (the
+LIDAR folder, tooltips, whose trees, keep or remove outside, coverage); stage
 8, the auto trace -- 4 and 5 (the iterations to 90%: picture 52 so far,
 LIDAR 9), 10's OpenStreetMap lined up by the LIDAR; stage 6, the readers --
 13's State Plane; stage 1, the game -- BUILT_VERSION 2 (each green its own).

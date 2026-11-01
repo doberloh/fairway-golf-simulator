@@ -30,7 +30,12 @@ const EPT = 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public';
 // each address checked to answer on 1 November 2026 (RESEARCH, *Finding LIDAR
 // from the builder*). [state, name, its box (loose), link, note?]. States
 // without one of their own get 3DEP and NOAA. None of these lets a page read
-// it, so each is a link.
+// it, so each is a link. A sixth entry, where the portal takes a place in its
+// address, opens it on the course: Washington's (`#lat:lon:zoom`, its own
+// script, checked 1 November 2026). Washington's download itself cannot be
+// linked: its list of what covers a box answers only its own page (no
+// Access-Control-Allow-Origin), and its download answers 403 without the
+// pass its page hands the browser (a `dlgate` cookie) -- RESEARCH.
 const STATE_PORTALS = [
  ['AK', 'Alaska DGGS Elevation Portal', [-180, 51, -129, 72], 'https://elevation.alaska.gov/'],
  ['AR', 'Arkansas GIS Office (GeoStor)', [-94.62, 33, -89.64, 36.5], 'https://gis.arkansas.gov/'],
@@ -65,7 +70,7 @@ const STATE_PORTALS = [
  ['UT', 'Utah SGID elevation', [-114.05, 37, -109.04, 42], 'https://gis.utah.gov/products/sgid/elevation/'],
  ['VT', 'VCGI Lidar Program (Vermont)', [-73.44, 42.73, -71.46, 45.02], 'https://vcgi.vermont.gov/data-and-programs/lidar-program'],
  ['VA', 'VGIN (Virginia)', [-83.68, 36.54, -75.24, 39.47], 'https://vgin.vdem.virginia.gov/pages/cl-appsmaps'],
- ['WA', 'Washington DNR LiDAR Portal', [-124.85, 45.54, -116.92, 49], 'https://lidarportal.dnr.wa.gov/', 'Draw a box, download the LAZ, and bring the files here (State Plane feet: placed by the builder).'],
+ ['WA', 'Washington DNR LiDAR Portal', [-124.85, 45.54, -116.92, 49], 'https://lidarportal.dnr.wa.gov/', 'Opens on this place. Draw a box round the course (the square tool, top left), tick its newest Point Cloud, press Download, and put the ZIP in your LIDAR folder (State Plane feet: placed by the builder).', (lon, lat) => `https://lidarportal.dnr.wa.gov/#${lat.toFixed(4)}:${lon.toFixed(4)}:16`],
  ['WV', 'WV Elevation and LiDAR Download Tool', [-82.64, 37.2, -77.72, 40.64], 'https://data.wvgis.wvu.edu/elevation/'],
  ['WI', 'Wisconsin SCO elevation and lidar', [-92.89, 42.49, -86.25, 47.31], 'https://www.sco.wisc.edu/data/elevationlidar/'],
 ];
@@ -74,7 +79,7 @@ export const LIDAR_SOURCES = [
  {key: 'usgs', name: 'USGS 3DEP (United States)', covers: [[-180, 17, -64, 72]], online: true, licence: 'United States government work: public domain.'},
  {key: 'ign', name: 'IGN LiDAR HD (France)', covers: [[-5.5, 41, 10, 51.5]], online: true, licence: 'Licence Ouverte 2.0 (Etalab): free to use, IGN credited.'},
  {key: 'noaa', name: 'NOAA Digital Coast Data Access Viewer (US coasts)', covers: [[-180, 17, -64, 72]], link: 'https://coast.noaa.gov/dataviewer/', note: 'Coastal surveys, and states that send point clouds there (Massachusetts).'},
- ...STATE_PORTALS.map(([st, name, box, link, note]) => ({key: 'state-' + st, name, covers: [box], link, note: note ?? 'Download the LAZ there and bring the files here (Choose LIDAR files); State Plane feet are placed by the builder.'})),
+ ...STATE_PORTALS.map(([st, name, box, link, note, at]) => ({key: 'state-' + st, name, covers: [box], link, at, note: note ?? 'Download the LAZ there and put the files in your LIDAR folder (State Plane feet are placed by the builder).'})),
  {key: 'swisstopo', name: 'swisstopo swissSURFACE3D (Switzerland)', covers: [[5.9, 45.8, 10.5, 47.9]], online: true, licence: 'swisstopo open data (Open Government Data): free to use, swisstopo credited.'},
  {key: 'ahn', name: 'AHN (the Netherlands)', covers: [[3.2, 50.7, 7.3, 53.6]], link: 'https://www.ahn.nl/'},
  {key: 'ea', name: 'Environment Agency LIDAR (England)', covers: [[-6.5, 49.8, 1.9, 55.9]], link: 'https://environment.data.gov.uk/survey'},
@@ -149,28 +154,28 @@ async function searchIgn(box, get) {
 
 // ---- downloading: a LIDAR source as door 2 reads one (formats.js openSource
 // shape: {kind: 'points', form, name, crs, bounds, count, each}).
-export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}} = {}) {
- if (found.source === 'usgs') return downloadEpt(found, box, {get, lazModule, onProgress});
- if (found.source === 'ign') {
-  const {openSource} = await import('../lidar/formats.js'), out = [];
-  for (const [n, url] of found.urls.entries()) {
-   onProgress(n / found.urls.length, `tile ${n + 1} of ${found.urls.length}`);
-   const r = await get(url); if (!r.ok) throw Error(`IGN would not give ${url.split('/').pop()} (${r.status}).`);
-   const name = url.split('/').pop();
-   out.push({...(await openSource(name, new Uint8Array(await r.arrayBuffer()), {lazModule})), name, downloaded: true});
-  }
-  return out;
+// `kept(name)`: the bytes of a file already in the player's LIDAR folder, or
+// null -- what is there is read, not downloaded again. A source read from
+// there says `kept: true`; one downloaded carries `keep` (below).
+export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}, kept = async () => null} = {}) {
+ if (found.source === 'usgs') {
+  const name = squareName(found, box), have = await kept(name);
+  if (have) { const {readZip} = await import('../zip.js'); return [{...eptZipSource(await readZip(have), lazModule), kept: true, keptAs: name}]; }
+  return downloadEpt(found, box, {get, lazModule, onProgress});
  }
- if (found.source === 'swisstopo') {
-  // Each tile a ZIP holding one LAS (LV95: placed by geo.js's Swiss grid).
-  const [{openSource}, {readZip}] = await Promise.all([import('../lidar/formats.js'), import('../zip.js')]), out = [];
+ if (found.source === 'ign' || found.source === 'swisstopo') {
+  const [{openSource}, {readZip}] = await Promise.all([import('../lidar/formats.js'), import('../zip.js')]), out = [], who = found.source === 'ign' ? 'IGN' : 'swisstopo';
   for (const [n, url] of found.urls.entries()) {
+   const file = url.split('/').pop();
    onProgress(n / found.urls.length, `tile ${n + 1} of ${found.urls.length}`);
-   const r = await get(url); if (!r.ok) throw Error(`swisstopo would not give ${url.split('/').pop()} (${r.status}).`);
-   const parts = await readZip(new Uint8Array(await r.arrayBuffer()));
-   // swissSURFACE3D's LAS states no grid in its header (checked 1 November
-   // 2026); its catalogue and its name say LV95 (EPSG 2056).
-   for (const [name, bytes] of parts) if (/[.]la[sz]$/i.test(name)) { const src = await openSource(name, bytes, {lazModule}); if (!src.crs?.epsg && !src.crs?.wkt) src.crs = {epsg: 2056, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false}; out.push({...src, name, downloaded: true}); }
+   let bytes = await kept(file); const was = !!bytes;
+   if (!bytes) { const r = await get(url); if (!r.ok) throw Error(`${who} would not give ${file} (${r.status}).`); bytes = new Uint8Array(await r.arrayBuffer()); }
+   const extra = was ? {kept: true, keptAs: file} : {keep: {name: file, bytes}};
+   if (found.source === 'ign') { out.push({...(await openSource(file, bytes, {lazModule})), name: file, downloaded: true, ...extra}); continue; }
+   // Each swisstopo tile a ZIP holding one LAS, whose header states no grid
+   // (checked 1 November 2026): placed by its name (gridByName). The ZIP is
+   // what is kept.
+   for (const [name, las] of await readZip(bytes)) if (/[.]la[sz]$/i.test(name)) { const src = await openSource(name, las, {lazModule}); if (!src.crs?.epsg && !src.crs?.wkt) src.crs = gridByName(file) ?? gridByName('swisssurface3d'); out.push({...src, name, downloaded: true, ...extra}); }
   }
   return out;
  }
@@ -194,8 +199,8 @@ async function searchSwisstopo(box, get) {
 // to UTM (the square's middle's zone, NAD83(2011): what 3DEP's own tiles use)
 // as they are read.
 async function downloadEpt(found, box, {get, lazModule, onProgress}) {
- if (!found.ept) throw Error('This survey has no copy that downloads by the square: download its whole tiles.');
- const er = await get(found.ept); if (!er.ok) throw Error(`This survey's square copy did not answer (${er.status}): download its whole tiles.`);
+ if (!found.ept) throw Error('This survey has no copy that downloads by the square: download all its tiles.');
+ const er = await get(found.ept); if (!er.ok) throw Error(`This survey's square copy did not answer (${er.status}): download all its tiles.`);
  const ept = await er.json(), root =found.ept.replace(/ept\.json$/, '');
  if (ept.dataType !== 'laszip') throw Error(`This survey's copy is stored as ${ept.dataType}, which the builder does not read.`);
  const a = lonLatToMerc(box.lon0, box.lat0), b = lonLatToMerc(box.lon1, box.lat1);
@@ -205,20 +210,53 @@ async function downloadEpt(found, box, {get, lazModule, onProgress}) {
  for (const [n, node] of nodes.entries()) {
   onProgress(n / nodes.length, `piece ${n + 1} of ${nodes.length}`);
   const r = await get(`${root}ept-data/${node.key}.laz`); if (!r.ok) throw Error(`A piece of the survey would not load (${r.status}).`);
-  parts.push(new Uint8Array(await r.arrayBuffer()));
+  parts.push({key: node.key, bytes: new Uint8Array(await r.arrayBuffer())});
  }
  onProgress(1, 'done');
- const lon = (box.lon0 + box.lon1) / 2, zone = zoneOf(lon), epsg = 6329 + zone;
+ const meta = {title: found.title, box, minZ: ept.bounds[2], maxZ: ept.bounds[5], count: nodes.reduce((s, x) => s + x.points, 0)};
+ return [{...eptSource(meta, parts.map(p => p.bytes), lazModule), keep: {name: squareName(found, box), bytes: await eptZip(meta, parts)}}];
+}
+// The square's pieces as door 2 reads a source.
+function eptSource(meta, parts, lazModule) {
+ const {box} = meta, lon = (box.lon0 + box.lon1) / 2, zone = zoneOf(lon), epsg = 6329 + zone;
  const c0 = toUtm(box.lat0, box.lon0, zone), c1 = toUtm(box.lat1, box.lon1, zone), c2 = toUtm(box.lat0, box.lon1, zone), c3 = toUtm(box.lat1, box.lon0, zone);
- const count = nodes.reduce((s, x) => s + x.points, 0), bytes = parts.reduce((s, p) => s + p.length, 0);
- return [{kind: 'points', form: 'ept', name: `${found.title} (USGS 3DEP)`, downloaded: true, bytes, pieces: nodes.length, count,
+ return {kind: 'points', form: 'ept', name: `${meta.title} (USGS 3DEP)`, downloaded: true, bytes: parts.reduce((s, p) => s + p.length, 0), pieces: parts.length, count: meta.count,
   crs: {epsg, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false},
-  bounds: {minX: Math.min(c0.x, c3.x), maxX: Math.max(c1.x, c2.x), minY: Math.min(c0.y, c2.y), maxY: Math.max(c1.y, c3.y), minZ: ept.bounds[2], maxZ: ept.bounds[5]},
+  bounds: {minX: Math.min(c0.x, c3.x), maxX: Math.max(c1.x, c2.x), minY: Math.min(c0.y, c2.y), maxY: Math.max(c1.y, c3.y), minZ: meta.minZ, maxZ: meta.maxZ},
   async each(f, opts = {}) {
    for (const [n, bytes] of parts.entries()) {
     const header = parseHeader(bytes);
     await readPoints(bytes, header, p => { const g = mercToLonLat(p.x, p.y), u = toUtm(g.lat, g.lon, zone); p.x = u.x; p.y = u.y; f(p); }, {lazModule, ...opts, onProgress: opts.onProgress ? q => opts.onProgress((n + q) / parts.length) : null});
    }
-  }}];
+  }};
 }
+
+// ---- KEEPING WHAT IS DOWNLOADED (the owner, 1 November 2026: "make sure
+// that they go somewhere local always. We don't want the user needing to re
+// download the files"). Every download carries `keep: {name, bytes}`, the
+// file door 2 writes to the player's LIDAR folder (lidar-folder.js) -- a
+// tile as the source sent it, or a USGS square as a ZIP of its Entwine pieces
+// (LAZ, stored as they came, with `fairway-ept.json` saying the square: a
+// quarter the size of the same points as a plain LAS) -- and that door 2 reads
+// back instead of downloading again, by the same name. A square's name says
+// the survey, its middle and its size, so the same search finds it again.
+export function squareName(found, box) {
+ const lat = (box.lat0 + box.lat1) / 2, lon = (box.lon0 + box.lon1) / 2, m = Math.round((box.lat1 - box.lat0) * 111320);
+ return `${found.id}_${lat.toFixed(4)}_${lon.toFixed(4)}_${m}m.ept.zip`;
+}
+const EPT_META = 'fairway-ept.json';
+async function eptZip(meta, parts) {
+ const {writeZip} = await import('../zip.js');
+ return writeZip([{name: EPT_META, data: JSON.stringify(meta)}, ...parts.map(p => ({name: `ept-data/${p.key}.laz`, data: p.bytes, store: true}))]);
+}
+export const isEptZip = parts => parts.has(EPT_META);
+// A kept square back as a source (`parts`: readZip's Map).
+export function eptZipSource(parts, lazModule) {
+ const meta = JSON.parse(new TextDecoder().decode(parts.get(EPT_META)));
+ return eptSource(meta, [...parts].filter(([n]) => n.endsWith('.laz')).map(([, b]) => b), lazModule);
+}
+// A survey whose files state no map grid, placed by its name: swisstopo's
+// swissSURFACE3D tiles are LV95 (EPSG 2056; its catalogue, checked 1 November
+// 2026), and say so only in their name.
+export const gridByName = name => /swisssurface3d/i.test(name) ? {epsg: 2056, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false} : null;
 export {nodeBox};

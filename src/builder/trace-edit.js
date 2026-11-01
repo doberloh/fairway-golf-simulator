@@ -120,6 +120,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
   // height and crown from the given ranges, never on mown ground or water.
   addTree(t) { step(() => { keepTrees(); s.trees.push({x: t.x, z: t.z, h: t.h ?? 14, crown: t.crown ?? 4}); }); },
   removeTrees({x, z, radius}) { step(() => { keepTrees(); s.trees = s.trees.filter(t => Math.hypot(t.x - x, t.z - z) > radius); }); },
+  // Every tree replaced at once (door 2's choice of whose trees: osm.js
+  // mergeTrees), one step to undo.
+  setTrees(list) { step(() => { keepTrees(); s.trees = list.map(t => ({...t})); }); },
   treeZone(ring, {density = 120, height = [10, 22], crown = [2.5, 5], seed = 1} = {}) {
    let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
    const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]), spacing = Math.sqrt(1e4 / density);
@@ -139,8 +142,13 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
   // `density` trees a hectare, thinning from none at the line to full
   // `edge` metres out, where no tree already stands. The survey's own trees
   // there stay. (Past the land itself the game's landscape rings carry on, as
-  // round every generated course.)
-  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1} = {}) {
+  // round every generated course.) WHAT WAS THERE (the owner, 1 November
+  // 2026: "When filling outside the course boundaries, give the option to
+  // remove OSM data or keep it"): `keep` false takes every surface and house
+  // outside off (the neighbours' roads, ponds and gardens); `keep` true
+  // leaves each surface and house where it is, lays the floor only on bare
+  // ground, and plants no tree on a surface or a house.
+  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false} = {}) {
    if (!ring || ring.length < 3) return 0;
    const G = ground && ground !== 'rough' ? layerOf(ground) : null;
    let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -155,15 +163,18 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
      for (let p = 0, o = ring.length - 1; p < ring.length; o = p++) { const [ax, az] = ring[o], [bx, bz] = ring[p]; if ((az > z) !== (bz > z)) xs.push(ax + (z - az) / (bz - az) * (bx - ax)); }
      xs.sort((u, v) => u - v);
      for (let c = 0; c + 1 < xs.length; c += 2) for (let i = Math.max(0, Math.ceil((xs[c] + halfX) / cell)); i <= Math.min(nx - 1, Math.floor((xs[c + 1] + halfX) / cell)); i++) within[i] = 1;
-     for (let i = 0; i < nx; i++) { if (within[i]) continue; const k = j * nx + i; for (const K of others) put(K, k, 0); if (G) put(G, k, 1); }
+     for (let i = 0; i < nx; i++) { if (within[i]) continue; const k = j * nx + i; if (keep && layers.codes[k] && !(G && layers.mask(G)?.[k])) continue; for (const K of others) put(K, k, 0); if (G) put(G, k, 1); }
     }
     keepTrees();
+    const onHome = (x, z) => s.homes.some(h => Math.hypot(h.x - x, h.z - z) < Math.max(h.width, h.depth) / 2 + 3);
+    if (!keep) { keepHomes(); s.homes = s.homes.filter(h => inside(ring, h.x, h.z)); }
     const spacing = Math.sqrt(1e4 / density), stood = new Map(), at = (x, z) => `${Math.floor(x / spacing)},${Math.floor(z / spacing)}`;
     for (const t of s.trees) { const c = at(t.x, t.z); stood.set(c, (stood.get(c) || 0) + 1); }
     for (let z = -halfZ; z <= halfZ; z += spacing) for (let x = -halfX; x <= halfX; x += spacing) {
      const px = x + (rnd() - .5) * spacing * .9, pz = z + (rnd() - .5) * spacing * .9;
      if (Math.abs(px) > halfX || Math.abs(pz) > halfZ || inside(ring, px, pz) || stood.get(at(px, pz))) continue;
      if (rnd() > Math.min(1, segDist(px, pz) / edge)) continue;
+     if (keep) { const k = idx(px, pz); if (k >= 0 && layers.codes[k] && !(G && layers.mask(G)?.[k])) continue; if (onHome(px, pz)) continue; }
      s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])}); planted++;
     }
    });

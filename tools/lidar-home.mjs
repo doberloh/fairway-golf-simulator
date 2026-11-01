@@ -21,6 +21,7 @@ export const LIDAR_COURSES = {
  'battle-creek': {name: 'Battle Creek Golf Course, Tulalip WA', from: 'the owner\'s Downloads (BCGC): Washington DNR tiles and USGS WA Western QL1 2016, State Plane WA South (US feet)'},
  'salish-cliffs': {name: 'Salish Cliffs Golf Club, Kamilche WA', from: 'the owner\'s Downloads: Washington DNR Mason County refresh 2024 (2025), State Plane WA South (US feet), with its DTM and DSM'},
  snohomish: {name: 'Snohomish Golf Course, Snohomish WA', from: 'the owner\'s Downloads: Washington DNR Snohomish River Valley refresh 2024 (2025), State Plane WA South (US feet), with its DTM and DSM'},
+ 'nile-shrine': {name: 'Nile Shrine Golf Course, Mountlake Terrace WA', from: 'the owner\'s builder test (1 November 2026): four rockyweb tiles of USGS WA_KingCounty_2021_B21'},
 };
 
 export const lidarDir = key => path.join(LIDAR_HOME, LIDAR_FOLDERS[key] ?? key);

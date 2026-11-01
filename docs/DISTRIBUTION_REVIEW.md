@@ -1676,11 +1676,20 @@ named here so a release can say so). **Since 1 November 2026, LIDAR too**
 (tnmaccess.nationalmap.gov), IGN's WFS (data.geopf.fr) and swisstopo's STAC catalogue (data.geo.admin.ch); *Download the
 square here* reads USGS's Entwine copy on Amazon's open data
 (s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles or swisstopo's zipped LAS;
-*Download its whole tiles* asks Fairway's bridge on 127.0.0.1:1922 (its
+*Download all tiles* asks Fairway's bridge on 127.0.0.1:1922 (its
 `/lidar` route, which fetches rockyweb.usgs.gov and prd-tnm only, for local
 pages only) or makes ordinary browser downloads from rockyweb and reads them
-from the folder the player picks; state and national portals are plain
-links. 3DEP is public domain and LiDAR HD Licence Ouverte; a course built
+from the player's LIDAR folder; state and national portals are plain
+links (Washington's opens on the place, by its own `#lat:lon:zoom`).
+**The LIDAR folder** (amendment 15): every download is written to a folder
+the player picks with the browser's own folder dialog (File System Access,
+`showDirectoryPicker`; Chrome and Edge, which treat a `file://` page as a
+secure context), and read back from there instead of downloaded again; the
+browser keeps the folder's handle in IndexedDB and asks the player's leave
+again on a later visit. The page writes only there, only files it
+downloaded, and reads only LIDAR files from it. Where the browser has no
+folder dialog (Firefox, Safari), each download is an ordinary browser
+download. A ZIP brought in (a portal's download) is unpacked in memory. 3DEP is public domain and LiDAR HD Licence Ouverte; a course built
 from a survey carries the land, not the survey. Only when the player
 presses them; a key is kept in that browser's storage and sent only to its
 own provider; the picture is never saved in a course, and its credit is added

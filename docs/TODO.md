@@ -81,8 +81,8 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   builder-door-2 journey turns a bunker a quarter and undoes it).
 - [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
   amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
-  square or IGN tiles, rockyweb's tiles through the bridge or the downloads
-  folder, the 36 state portals), Save on every screen with Save again and
+  square or IGN tiles, rockyweb's tiles through the bridge or the browser's
+  downloads, the 36 state portals), Save on every screen with Save again and
   door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
   its smoothed surfaces, State Plane surveys placed. Checked: the
   builder-door-2 journey (search with the National Map stood in for, Save
@@ -90,11 +90,29 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
   square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
   real rockyweb range through a test bridge. **Not checked**: the rockyweb
-  download through the downloads folder (a browser download a script cannot
+  download read from the LIDAR folder (a browser download a script cannot
   watch), the bridge path from the page (the owner's running bridge needs a
   restart to have the route), IGN's in-page download end to end, a real
-  save dialog in Chrome, WASD feel. Swiss LV95 is not worked (swisstopo is a
-  link).
+  save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
+  same night: swissSURFACE3D found and downloaded in the page.)
+- [ ] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
+  owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
+  folder (every download saved there, read back instead of downloaded
+  again, Load from the folder, ZIPs unpacked), Washington's portal opened on
+  the place, Download all tiles, a tooltip on every button, places found as
+  buttons, the files' coverage in yellow, whose trees beside OpenStreetMap,
+  and Fill outside keeping or removing what is there. Checked: the
+  builder-lidar-folder journey (with a stand-in folder: the square
+  downloaded once and read back with nothing asked of USGS, listed ticked,
+  coverage drawn, every shown button with a tooltip, the result a button),
+  the builder-door-2-osm journey (whose trees three ways, outside kept and
+  removed), tests/lidar-folder, builder-tips, osm and trace-edit, and Nile
+  Shrine's own survey by script (RESEARCH, *Whose trees*). **To check by
+  hand**: Chrome's folder dialog, the leave-to-use prompt and the folder
+  remembered on a later visit (IndexedDB; a stand-in cannot be stored
+  there); Washington's portal from the link and its ZIP loaded; whether
+  2,362 of OpenStreetMap's wood trees added at Nile Shrine stand where trees
+  are; the tooltips' wording.
 - [ ] **The auto trace from the LIDAR alone, before the holes: started, far
   from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
   trace from the LIDAR alone*): mean overlap over the nine courses green 12,

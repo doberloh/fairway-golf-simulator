@@ -3,7 +3,7 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, osmHoles, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, osmHoles, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees} from '../src/builder/osm.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
 // Degrees to metres round 0,0 near enough for a test: a hundred-thousandth of
@@ -71,4 +71,15 @@ test('a building becomes a house: its smallest rectangle, turned to face the cou
  assert.ok(Math.abs(h.width * h.depth - 240) < 1e-6, `${h.width} x ${h.depth}`);
  assert.ok(Math.abs(Math.atan2(Math.sin(h.rotation - Math.PI / 2), Math.cos(h.rotation - Math.PI / 2))) <= Math.PI / 4 + 1e-9, `faces east: ${h.rotation}`);
  assert.equal(homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5], [0, 0]]), null, 'a 25 m² shed');
+});
+
+test('whose trees: the LIDAR\'s all kept, OpenStreetMap\'s added only where no LIDAR tree stands within 6 m; or either alone', () => {
+ const lidar = [{x: 0, z: 0, h: 20, crown: 4}, {x: 40, z: 0, h: 15, crown: 3}];
+ const osm = [{x: 3, z: 2, h: 14, crown: 4}, {x: 20, z: 0, h: 14, crown: 4}, {x: 44, z: 3, h: 14, crown: 4}, {x: 46.5, z: 0, h: 14, crown: 4}];
+ const merged = mergeTrees(lidar, osm);
+ assert.deepEqual(merged.map(t => [t.x, t.z]), [[0, 0], [40, 0], [20, 0], [46.5, 0]], 'the map\'s within 6 m of a measured tree left out');
+ assert.equal(merged[0].h, 20, 'the measured height kept');
+ assert.equal(mergeTrees(lidar, osm, 'lidar').length, 2); assert.equal(mergeTrees(lidar, osm, 'osm').length, 4);
+ assert.equal(mergeTrees([], osm).length, 4, 'no survey trees: the map\'s all');
+ merged[0].x = 99; assert.equal(lidar[0].x, 0, 'copies, not the same trees');
 });

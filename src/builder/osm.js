@@ -138,6 +138,27 @@ export function layOsm(model, feats, {pathWidth = 2.5, woodDensity = 150} = {}) 
  return laid;
 }
 
+// WHOSE TREES (the owner, 1 November 2026: "when i started building the
+// course i had tree data, but then after i imported open street maps i lost
+// the trees. We need to give the user options for tree data to be merged
+// with OSM"). Until then a map with any tree or wood of its own replaced
+// every tree the LIDAR found. Now door 2 offers three: 'merge' (the default)
+// keeps every LIDAR tree -- each one measured, where it stands and how tall
+// -- and adds OpenStreetMap's (its single trees and the woods it scatters)
+// only where no LIDAR tree stands within `gap` metres: a tree the survey
+// missed, or a wood planted since; 'lidar' keeps the survey's alone; 'osm'
+// the map's alone. `gap` 6 m: about one crown across, the closest two LIDAR
+// trees stand at the canopy's own spacing (PLACED).
+export const TREES_FROM = ['merge', 'lidar', 'osm'];
+export function mergeTrees(lidar, osm, how = 'merge', {gap = 6} = {}) {
+ if (how === 'lidar') return lidar.map(t => ({...t}));
+ if (how === 'osm') return osm.map(t => ({...t}));
+ const cells = new Map(), key = (i, j) => i * 73856093 ^ j * 19349663;
+ for (const t of lidar) { const k = key(Math.floor(t.x / gap), Math.floor(t.z / gap)); (cells.get(k) ?? cells.set(k, []).get(k)).push(t); }
+ const near = o => { const i = Math.floor(o.x / gap), j = Math.floor(o.z / gap); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const t of cells.get(key(i + a, j + b)) ?? []) if (Math.hypot(t.x - o.x, t.z - o.z) < gap) return true; return false; };
+ return [...lidar.map(t => ({...t})), ...osm.filter(o => !near(o)).map(t => ({...t}))];
+}
+
 // The holes OpenStreetMap numbers: each golf=hole line, tee first, green last,
 // with its bends -- as door 2's markers ({tees: [{x, z, set}], aims, green}),
 // by its `ref`. A line drawn green-first is turned round by the green nearest

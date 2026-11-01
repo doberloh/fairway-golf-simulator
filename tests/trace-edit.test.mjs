@@ -124,6 +124,28 @@ test('outside the boundary: every layer off, the landscape\'s floor laid, a wood
  t.undo(); assert.equal(t.kindAt(35, 0), 'fairway'); assert.equal(t.state.trees.length, 1, 'one undo step');
 });
 
+test('outside the boundary, keeping what is there: surfaces and houses stay, the floor goes on bare ground, no tree on a surface; removing takes houses too', () => {
+ const ring = [[-30, -30], [30, -30], [30, 30], [-30, 30]];
+ const make = () => { const t = createTrace(grid); t.fill([[[32, -10], [48, -10], [48, 10], [32, 10]]], 'water'); t.fill([[[-48, 32], [-32, 32], [-32, 48], [-48, 48]]], 'path'); t.addHome({x: -40, z: -40, rotation: 0, width: 12, depth: 10}); t.addHome({x: 0, z: 0, rotation: 0, width: 12, depth: 10}); return t; };
+ const kept = make(), n = kept.fillOutside(ring, {ground: 'pinestraw', density: 400, edge: 2, seed: 5, keep: true});
+ assert.equal(kept.kindAt(40, 0), 'water', 'the pond kept'); assert.equal(kept.kindAt(-40, 40), 'path', 'the path kept');
+ assert.equal(kept.kindAt(40, 40), 'pinestraw', 'bare ground floored');
+ assert.equal(kept.state.homes.length, 2, 'the houses kept');
+ assert.ok(n > 20, `${n} trees`);
+ assert.ok(!kept.state.trees.some(tr => kept.kindAt(tr.x, tr.z) === 'water' || kept.kindAt(tr.x, tr.z) === 'path'), 'no tree in the pond or on the path');
+ assert.ok(!kept.state.trees.some(tr => Math.hypot(tr.x + 40, tr.z + 40) < 9), 'none on the house');
+ const gone = make(); gone.fillOutside(ring, {ground: 'pinestraw', density: 400, edge: 2, seed: 5});
+ assert.equal(gone.kindAt(40, 0), 'pinestraw', 'the pond removed');
+ assert.deepEqual(gone.state.homes.map(h => [h.x, h.z]), [[0, 0]], 'the house outside removed, the one inside kept');
+ gone.undo(); assert.equal(gone.state.homes.length, 2, 'one undo step');
+});
+
+test('every tree replaced at once, one undo step', () => {
+ const t = createTrace(grid, {trees: [{x: 1, z: 1, h: 10, crown: 3}]});
+ t.setTrees([{x: 5, z: 5, h: 12, crown: 3}, {x: 9, z: 9, h: 12, crown: 3}]);
+ assert.equal(t.state.trees.length, 2); t.undo(); assert.deepEqual(t.state.trees.map(tr => tr.x), [1]);
+});
+
 test('houses: one faces the nearest fairway, a zone is lined with them on open ground only, undone at once', () => {
  const t = createTrace(grid);
  t.fill([[[-50, -8], [50, -8], [50, 8], [-50, 8]]], 'fairway');

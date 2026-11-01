@@ -11370,6 +11370,30 @@ in a survey pit, and the test golfers putted at it forty times: 168 strokes
 against par 71. With each outer ring a green of its own (built-world.js
 `greenParts`): 88.5 strokes, nothing stuck.
 
+## Whose trees, when OpenStreetMap is laid on the LIDAR (1 November 2026)
+
+The owner built Nile Shrine (Mountlake Terrace, WA) in the builder and lost
+the survey's trees when OpenStreetMap was fetched. The cause: door 2 kept the
+LIDAR's trees only where the map had no tree or wood of its own, so one
+mapped tree dropped every surveyed one. Measured on the owner's own four
+rockyweb tiles (USGS WA_KingCounty_2021_B21, EPSG 6597, 78.5 million
+points), a 1.7 km land at 0.5 m: **10,846 trees from the LIDAR**; the map
+has 86 single trees and 19 woods, which door 2 scatters into **5,114**.
+Before the fix the course kept the map's 5,114 and none of the survey's.
+Now the default (osm.js `mergeTrees`, 'merge') keeps all 10,846 and adds the
+map's where no LIDAR tree stands within 6 m -- **13,208** (2,362 of the
+map's, mostly the woods' scatter in gaps of the canopy); 'lidar' keeps the
+10,846, 'osm' the 5,114. **6 m is PLACED**: about one crown across, so a
+mapped tree beside a surveyed one is taken as the same tree. Not measured: how
+many of the 2,362 stand where trees really are (the map's woods are drawn
+loosely, and a wood felled since the map was drawn would be planted again --
+the choice of 'lidar' is there for that).
+
+Outside OpenStreetMap's course boundary at Nile Shrine, the map puts 967 of
+its 978 houses and some roads and ponds: Fill outside with **Remove what is
+there** took 34,101 surfaced cells (0.85 ha) and the 967 houses off;
+**Keep what is there** left all of them and floored only the bare ground.
+
 ## Finding LIDAR from the builder (1 November 2026)
 
 The owner asked for LIDAR searched for and downloaded inside the builder
@@ -11394,8 +11418,8 @@ The test courses' surveys came the Entwine way too (tools/lidar-fetch.mjs, each 
 
 **So rockyweb is reached two ways that need no reading by the page.** The
 browser DOWNLOADS from it like any site (a download is not a cross-origin
-read), and the builder reads the files from the folder the player picks
-once (`showDirectoryPicker`, Chrome and Edge); and **Fairway's bridge**, a
+read), and the builder reads the files from the player's LIDAR folder
+(`showDirectoryPicker`, Chrome and Edge; below); and **Fairway's bridge**, a
 program rather than a page, fetches it and hands the bytes on (`/lidar`,
 bridge/server.mjs, USGS's two hosts only, local pages only): a range request
 through a test bridge returned rockyweb's `LASF` header with the page's
@@ -11426,6 +11450,49 @@ Coast Data Access Viewer, added as a US coastal source. None of the state
 portals answers a page, so each is a link; most deliver State Plane in US
 feet, which the builder now places itself (below). Each state's box is loose
 (its extent rounded out), so a place near a border may list a neighbour.
+
+**Washington's portal, looked into for a direct download** (1 November 2026;
+the owner: "can we link directly to the downloads or does the user really
+need to do manual work?"). lidarportal.dnr.wa.gov's own script (js/lidar.js)
+shows its whole flow: `POST /query` with the box as GeoJSON answers the
+datasets over it (project, dataset name, files, bytes -- at Nile Shrine 34,
+among them North Puget 2017's Point Cloud, 2 files, 283 MB), and the
+download is one address, `download?geojson=<box>&ids=<dataset ids>`, a ZIP
+made to order (`custom_download.zip`). Neither can be used by the builder's
+page: `/query` sends no Access-Control-Allow-Origin, and the download
+answers 403 from the portal's load balancer unless the request carries the
+`dlgate` cookie the portal's page sets (HttpOnly, two hours). Checked in a
+browser that had opened the portal: the download link gave the ZIP's first
+bytes (`PK`) at once; the same request with cookies left out: 403. A
+script's request (curl) was refused 403 even with the cookie, and was not
+pushed further. What the builder does: the portal's address takes a place
+(`#lat:lon:zoom`), so its link opens on the course, and the ZIP it gives is
+read from the LIDAR folder (door 2 unpacks ZIPs). A possible next step, not
+built: the bridge asking `/query` for the page (a program needs no
+allow-origin), so door 2 could list Washington's datasets and give the
+download link itself, the browser fetching it with the portal's pass. The
+other 35 portals were not checked for an address that takes a place.
+
+**The LIDAR folder** (the owner, the same day: downloads must "go somewhere
+local always"). Until then a square downloaded in the page lived only in the
+page; a draft keeps the land built, not the LIDAR. Now every download is
+written to one folder the player picks once (lidar-folder.js; the browser
+keeps its handle in IndexedDB and asks leave again on a later visit), and a
+download already there by the same name is read instead: a USGS square as a
+ZIP of its Entwine pieces, stored as they came (LAZ) with the square in
+`fairway-ept.json`, named for the survey, its middle and its size; IGN's and
+swisstopo's tiles under their own names. A ZIP rather than one LAS of the
+points carried to UTM: the pieces are LAZ already, and the same points as
+plain LAS (point format 0, 20 bytes a point) are four times the size --
+the Worthington square's 3.29 million points are 16.6 MB as pieces, 66 MB as
+LAS. Tested against a fake folder (tests/lidar-folder.test.mjs: downloaded
+once, read back with no request) and in the page with a stand-in folder (the
+builder-lidar-folder journey). Where the browser has no folder picker
+(Firefox, Safari), each download is saved as a browser download instead.
+
+Overpass, asked from a Node script for Nile Shrine, answered 406 to Node's
+own User-Agent, and answered (after one busy 502) a request whose User-Agent names the script; a browser
+(the builder) is not affected. The script names itself.
 
 **State Plane, worked from the file.** The owner's Washington surveys are
 NAD83(HARN) / Washington South in US survey feet (EPSG 2927), and the builder

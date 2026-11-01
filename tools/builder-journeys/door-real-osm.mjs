@@ -3,8 +3,11 @@
 // survey of door-real.mjs, the place searched for, OpenStreetMap fetched --
 // stood in for by the journey (page.route) with the survey's nine holes drawn
 // as a mapper would: greens, fairways, a bunker, numbered hole lines with par
-// -- kept as drawn; the holes' markers already set from the map; the name;
-// the painted review; the editor; saved; and the game plays it.
+// -- kept as drawn; the holes' markers already set from the map; whose trees
+// (the survey's and the map's two, merged, or either alone); outside the
+// boundary filled keeping the map's pond and house there, undone, and filled
+// removing them; the name; the painted review; the editor; saved; and the
+// game plays it.
 // Registered by tools/builder-smoke.mjs.
 import path from 'node:path';
 import fs from 'node:fs';
@@ -27,6 +30,11 @@ function answer() {
  elements.push(way({golf: 'bunker'}, disc(-148, -104, 4)));
  // The course's boundary, and a house beside the eighth.
  elements.push(way({leisure: 'golf_course'}, rect(-190, -140, 190, 140)), way({building: 'house'}, rect(108, 20, 126, 34)));
+ // Outside the boundary, a pond and a neighbour's house (kept or removed when
+ // filling outside); two single trees, one 2 m from a tree the survey found
+ // (left out when merged), one in the open rough.
+ elements.push(way({natural: 'water'}, disc(200, 80, 6)), way({building: 'house'}, rect(195, -6, 209, 6)));
+ for (const [x, z] of [[-160, 152], [20, 60]]) elements.push({type: 'node', tags: {natural: 'tree'}, ...ll(x, z)});
  return {elements};
 }
 
@@ -61,11 +69,33 @@ export default function ({journey, SHOTS}) {
   if (got.green !== 'green' || got.sand !== 'sand' || got.fairway !== 'fairway') throw Error(`the map's surfaces should be laid where it draws them: ${JSON.stringify(got)}`);
   if (got.holes !== 9) throw Error(`the map's nine numbered holes should be set as markers, not ${got.holes}`);
   if (!got.credits.some(c => /OpenStreetMap/.test(c))) throw Error('OpenStreetMap should be credited');
+  // Whose trees (the owner, 1 November 2026: the survey's trees were lost
+  // when OpenStreetMap had any of its own): merged by default -- every tree
+  // the survey found, and the map's one in the open; the map's other stands
+  // 2 m from a survey tree and is left out.
+  const trees = () => page.evaluate(() => { const st = window.fairwayBuilder.door2; return {lidar: st.trees.length, now: st.model.state.trees.length}; });
+  const t0 = await trees();
+  if (!(t0.lidar > 0) || t0.now !== t0.lidar + 1) throw Error(`the survey's trees should stay, with the map's one in the open: ${JSON.stringify(t0)}`);
+  await page.locator('.cb-treesfrom').selectOption('osm');
+  if ((await trees()).now !== 2) throw Error('OpenStreetMap\'s only should be its two trees');
+  await page.locator('.cb-treesfrom').selectOption('lidar');
+  if ((await trees()).now !== t0.lidar) throw Error('the LIDAR\'s only should be the survey\'s trees');
+  await page.locator('.cb-treesfrom').selectOption('merge');
   await page.getByRole('button', {name: 'Keep it as drawn'}).click();
-  // Its boundary and its house came with it; outside the boundary, filled.
-  const kept = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {boundary: st.boundary?.length ?? 0, homes: st.model.state.homes.length, trees: st.model.state.trees.length}; });
-  if (!kept.boundary || kept.homes !== 1) throw Error(`OpenStreetMap's boundary and house should come with it: ${JSON.stringify(kept)}`);
+  if ((await trees()).now !== t0.lidar + 1) throw Error('Keep it as drawn should keep the merged trees');
+  // Its boundary and its houses came with it; outside the boundary, filled
+  // keeping what the map put there, then (after Undo) removing it.
+  const kept = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {boundary: st.boundary?.length ?? 0, homes: st.model.state.homes.length, trees: st.model.state.trees.length, pond: st.model.kindAt(200, 80)}; });
+  if (!kept.boundary || kept.homes !== 2 || kept.pond !== 'water') throw Error(`OpenStreetMap's boundary, houses and pond should come with it: ${JSON.stringify(kept)}`);
+  await page.locator('.cb-outside').selectOption('keep');
   await page.getByRole('button', {name: 'Fill outside it'}).click(); await idle();
+  const keptOut = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {homes: st.model.state.homes.length, pond: st.model.kindAt(200, 80), out: st.model.kindAt(-200, 0)}; });
+  if (keptOut.homes !== 2 || keptOut.pond !== 'water' || keptOut.out === 'fairway') throw Error(`filling outside and keeping should leave the map's pond and house: ${JSON.stringify(keptOut)}`);
+  await page.getByRole('button', {name: 'Undo', exact: true}).click();
+  await page.locator('.cb-outside').selectOption('remove');
+  await page.getByRole('button', {name: 'Fill outside it'}).click(); await idle();
+  const gone = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {homes: st.model.state.homes.length, pond: st.model.kindAt(200, 80)}; });
+  if (gone.homes !== 1 || gone.pond === 'water') throw Error(`filling outside and removing should take the map's pond and the house outside: ${JSON.stringify(gone)}`);
   const filled = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {trees: st.model.state.trees.length, out: st.model.kindAt(-200, 0), inside: st.model.kindAt(-160, 0)}; });
   if (!(filled.trees > kept.trees) || filled.inside !== 'fairway' || ['fairway', 'green', 'tee'].includes(filled.out)) throw Error(`outside the boundary should become the landscape's wood: ${JSON.stringify(filled)}`);
   await t.shot('osm');

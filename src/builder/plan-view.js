@@ -12,12 +12,13 @@
 // Last, at review, the course as it will be built ('course'). Each layer has
 // an opacity (`setAlpha`), and the relief and the picture can trade places
 // (`setOrder`): the LIDAR seen through the picture or over it, to line the
-// two up (the owner, 1 November 2026).
-const ORDER = ['relief', 'picture', 'codes', 'course'];
+// two up (the owner, 1 November 2026). Over the relief at step 1, where the
+// LIDAR files reach, in yellow ('coverage'; the owner, 1 November 2026).
+const ORDER = ['relief', 'coverage', 'picture', 'codes', 'course'];
 
 export function createPlanView(canvas, {onTool = null, overlay = null} = {}) {
  const ctx = canvas.getContext('2d');
- const v = {scale: 1, cx: 0, cz: 0, land: null, layers: {}, show: {relief: true, picture: true, codes: true, course: true}, alpha: {}, order: ORDER.slice(), shift: {}, tool: 'move', space: false};
+ const v = {scale: 1, cx: 0, cz: 0, land: null, layers: {}, show: {relief: true, coverage: true, picture: true, codes: true, course: true}, alpha: {}, order: ORDER.slice(), shift: {}, tool: 'move', space: false};
  let raf = 0, drag = null;
  const size = () => { const r = canvas.getBoundingClientRect(), d = window.devicePixelRatio || 1, w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d)); if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; } };
  const fitScale = () => Math.min(canvas.width / (2 * v.land.halfX), canvas.height / (2 * v.land.halfZ)) * .98;
