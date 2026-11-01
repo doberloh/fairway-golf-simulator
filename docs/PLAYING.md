@@ -462,7 +462,11 @@ the file to anyone else who has Fairway. It opens on three doors.
      XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
      file is read with it. Each file is listed with its form, its size, its map
-     grid and its units (feet are converted to metres).
+     grid and its units (feet are converted to metres). LIDAR of most of the
+     United States is free from the USGS National Map
+     (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
+     England from the Environment Agency, and of many other countries from
+     their mapping agencies.
   2. **The property**: drag a box round the course on the relief (up to 3 x 3
      km), then **Build the land**. It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it

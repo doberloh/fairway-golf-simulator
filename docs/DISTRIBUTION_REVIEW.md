@@ -1641,9 +1641,27 @@ and makes no request -- checked by its own smoke harness
 (`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it was
 107,941 bytes; at stage 3 906,624 (three.js and the course generator now
 ride in it, for door 1 and the editor), still no dependency of its own. **Stage 6 adds laz-perf 0.0.7** (Apache-2.0; npm, `laz-perf`), the LASzip decoder compiled to WebAssembly, to the builder's page only, its 214 KB of WebAssembly inlined (laz.js hands it in, so the loader never fetches its .wasm). In DEPENDENCY_INVENTORY.json (runtime), THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md. The game's page does not import it. The game's page is unchanged by stage 0.
-Later stages will add the LIDAR decoders (laz-perf, Apache-2.0; geotiff.js,
-MIT; proj4js, MIT) to the builder's page only, each recorded here, in
-ATTRIBUTION.md and THIRD_PARTY_NOTICES.txt as it lands.
+The study named geotiff.js and proj4js too; **neither was added** (stage 6):
+GeoTIFF is read by Fairway's own reader, and UTM and degrees by its own
+conversions, any other map grid lined up by matching points.
+
+**Stages 7-9 (31 October 2026).** Door 2 and the auto trace add no
+dependency. The builder's page is **1,374,268 bytes** (gzip about 461 KB):
+laz-perf's WebAssembly and the LIDAR readers since stage 3's 906,624. The
+game's page is 14,846,858 bytes against main's 14,820,197 built the same day
+(+26,661, 0.18%: the code that plays a built file -- built-world, the ZIP and
+document readers, the built store and the built-field shader branch); still
+one file. Door 2 reads only the files a player chooses (LIDAR, its .prj/.hdr,
+a picture and its world file), holds them in the page's memory, and keeps
+none of them in the course: a built file carries the land, outlines, holes and
+trees, never the survey or the picture (an aerial picture's licence may
+forbid passing it on). All five builder journeys pass with no network request,
+`builder-door-2` among them, which brings a LIDAR file in through the file
+picker, makes a course and plays it in the game by file://. **Owed before a
+release carrying the builder** (TODO): the website's `RELEASE_SHA256.txt`
+check confirmed to read `Fairway.html`'s line by name, now that the builder's
+line sits beside it; laz-perf's copyright line confirmed against its
+LICENSE; the owner's play of both programs.
 
 A built course file (`.fairway` version 2) is a ZIP written by hand
 (`src/zip.js`) and read only by Fairway's own code; it holds data, never

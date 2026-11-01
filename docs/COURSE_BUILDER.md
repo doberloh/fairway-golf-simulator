@@ -218,7 +218,7 @@ nor any built copy of the course (tests that need it skip when it is absent):
 | 6 | LIDAR readers; Worthington's ground and trees against the references | **Built** (below) |
 | 7 | Door 2 end to end on Worthington | **Built** (below); not played by a person |
 | 8 | Auto trace, LIDAR first, measured three ways | **Built** (below) |
-| 9 | Release-ready: docs sweep, distribution review, notices | |
+| 9 | Release-ready: docs sweep, distribution review, notices | **Done** (below); not merged or released |
 
 ### Stage 0 (31 October 2026)
 
@@ -557,6 +557,31 @@ courses for greens and fairways, not for sand, and not on Worthington. The
 LIDAR alone cannot find a green's collar (it runs on into the approach) or a
 fairway's edge -- what the picture is for. A trace takes 2-3 s.
 
+### Stage 9 (31 October 2026): ready for the owner
+
+- **The documents swept** for the builder: the player's guide (PLAYING.md,
+  *Fairway Course Builder*: the three doors, door 2's six steps, where LIDAR
+  can be had, the editor), the portable README's line for the second page,
+  the distribution review (sizes, offline proof, what a built file carries and
+  what it never does, what is owed before a release), REFERENCES (the data
+  the builder was measured against), and the design's claims the build
+  overturned, corrected where they stood (bright sand, proj4js, the
+  classifier, paths and buildings).
+- **Sizes**: the builder's page 1,374,268 bytes; the game's 14,846,858 against
+  main's 14,820,197 built the same day (+0.18%), still one file.
+- **Checks at the end**: `npm test` (1,291 pass, the real-LAZ test skipped
+  without the owner's folder named); both fingerprints silent -- no
+  generated course moved at any stage, so no generator or schema number was
+  bumped (`BUILT_VERSION` was introduced at 1 and how the game reads a built
+  file has not changed since); `npm run build`; every builder journey.
+- **Not done here, and why**: the release zips were not made (they need the
+  server programs built, and nothing is being released); the free-GPU rule in
+  AGENTS.md stays until the merge, where it is removed with its pointers and
+  TESTING.md's sentence, as it says.
+- **Owed before a release carrying the builder** (TODO): the owner's play of
+  both programs; the website's `RELEASE_SHA256.txt` check confirmed to read
+  `Fairway.html`'s line by name; laz-perf's copyright line confirmed.
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the
@@ -635,8 +660,9 @@ minute apart; the card read before each), 31 October 2026:
   (https://lidarmag.com/?p=6066) and rapidlasso's LASliberator
   (https://rapidlasso.de/new-lasliberator-frees-lidar-from-closed-format/);
   libE57Format, BSL-1.0 (https://dfsg-new-queue.debian.org/reviews/libe57format);
-  geotiff.js, MIT (https://geotiffjs.github.io/); proj4js, MIT, NTv2
-  (https://github.com/proj4js/proj4js); another simulator's builders on a 2 m
+  geotiff.js, MIT (https://geotiffjs.github.io/) and proj4js, MIT, NTv2
+  (https://github.com/proj4js/proj4js) -- both considered and not added
+  (stage 6); another simulator's builders on a 2 m
   grid for green contours (https://www.linkscorner.org/phpBB/viewtopic.php?p=22916,
   a forum post: weak).
 - USGS 3DEP 1 m DEM for the test course, USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21

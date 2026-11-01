@@ -35,11 +35,6 @@ check.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
-- [ ] **Stage 9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
-  release-readiness sweep. Stages 0-8 are built: the page and file format, the
-  game playing a built file, pins per round, door 1, real-time shaping, the
-  editor's tools, checks and a test round, the LIDAR readers, door 2 and the
-  auto trace.
 - [ ] **A real course's holes run straight from back tee to green** until the
   player adds bends: door 2 does not yet draw a dogleg's bend from the traced
   fairway. Worthington's test round, 96 against par 71 (a generated Midwest
@@ -1585,6 +1580,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+- [x] **Stages 0-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
+  page and file format, the game playing a built file, pins per round, door
+  1, real-time shaping, the editor's tools, checks and a test round, the
+  LIDAR readers and Worthington's ground, door 2 end to end, the auto trace
+  LIDAR first, and the release-readiness sweep (the documents, the
+  distribution review's sizes and offline proof, the player's guide in
+  PLAYING.md). Not merged, pushed or released; not played by a person (the
+  open items above).
 
 ## Release 0.9.6 (31 October)
 
