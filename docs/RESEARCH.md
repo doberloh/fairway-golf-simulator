@@ -11343,3 +11343,50 @@ https://www.swisstopo.admin.ch/en/terms-and-conditions (free since 1 March
 (Esri's tracing grant). The licences were read in summaries and OSM's wiki
 pages, not each provider's full legal text: worth the owner's own read
 before a release names them.
+
+## The auto trace from the picture, iteration by iteration (31 October - 1 November 2026)
+
+The owner's amended goal (docs/COURSE_BUILDER.md, *The amended goal*): door 2
+traces before any hole is marked, so the auto trace must find the course's
+surfaces in the picture alone; iterate on it (up to fifty times, then up to
+fifty on the LIDAR), on real courses matching Fairway's landscapes, with no
+jagged or pock-marked edges. Measured by `tools/imagery-bench.mjs` on the
+courses `tools/imagery-fetch.mjs` fetched -- NAIP 2023 (0.3-0.6 m, red,
+green, blue, near-infrared), OpenStreetMap's golf features as the reference,
+the land flat with no LIDAR: Sahalee (Pacific Northwest, an October picture
+with long tree shadows), TPC Scottsdale Stadium (Desert), Breckenridge's Bear
+nine (Mountain); the rest join as their downloads finish. Overlap is
+intersection over union with OpenStreetMap's outlines, per cent; specks and
+pocks are patches and holes under 10 m² in what the course is made of;
+ragged is a surface's edge length against the same surface smoothed over
+1.5 m (1.00 smooth). Means over the courses:
+
+| # | What changed | Green | Tee | Fairway | Semi | Sand | Water | Specks/pocks | Ragged (fairway, sand) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | the trace as it stood, no holes marked | 0 | 0 | 0 | -- | 0 | 15 | 0/3 | -- |
+| 1 | mown turf found in the picture: green, bright, smooth at a metre, in patches; it stands in for the hole lines | 0 | 0 | 10 | -- | 18 | 10 | 0/230 | 1.16, 1.26 |
+| 2 | turf at the middle texture, enclosed gaps filled; rough pocks under 30 m² filled; dark still water; rectangles refused as sand (roofs); first greens | 0 | 0 | 11 | -- | 22 | 8 | 0/0 | 1.07, 1.19 |
+| 3 | texture as spread over brightness (shadows); near-infrared must agree on dark water; turf split in two (fairway, semi) | 8 | 0 | 10 | -- | 24 | 9 | 4/8 | 1.08, 1.21 |
+| 4 | plant ground by an absolute bar (NDVI 0.15) -- Sahalee's greens were not "plant" against its trees; water with algae (darker and less green than the fairway); semi scored against OSM's rough | 11 | 0 | 16 | 20 | 32 | 24 | 61/42 | 1.10, 1.18 |
+| 5 | greens by contrast with their surroundings over 21 m (failed: a green is that wide); sand must be warm (failed, dropped); specks raised to 10 m² | 0 | 0 | 16 | 20 | 29 | 24 | 0/0 | 1.08, 1.19 |
+| 5b-c | surroundings over 41 m; either cue | 12 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.10, 1.18 |
+| 6 | greens LIGHTER, LESS GREEN and SMOOTHER than the turf within 20 m, each in its own spread; the top 7% | 15 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.09, 1.18 |
+| 7 | candidates opened 2.5 m apart; tees as small squared pads (more real greens kept, more false ones: fell) | 7 | 1 | 16 | 20 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 8 | only as many greens as the turf has room for (1 per 2 ha), the strongest (fell: the strongest were bare ground and paths) | 4 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.10, 1.18 |
+| 9 | a green must be a plant (NDVI over 0.15) | 10 | 1 | 16 | 20 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 10 | the REFERENCE fixed: OSM's rough was painted last and hid nearly every green TPC maps; larger surfaces now go down first | 20 | 1 | 18 | 17 | 32 | 24 | 0/0 | 1.11, 1.18 |
+
+By course at iteration 10: Breckenridge green 30, fairway 24, sand 40; TPC
+Scottsdale green 15, semi 52, sand 36, water 59; Sahalee green 15, fairway
+22, sand 22, water 14. **What each surface looks like** (medians inside
+OSM's outlines; brightness 0-255, NDVI, texture as spread over brightness):
+Sahalee greens 152 / 0.28 / 0.026, fairways 68 / 0.41 / 0.029 (shadowed),
+water 43 / -0.21; TPC greens 110 / 0.31 / 0.025, fairways 103 / 0.33 /
+0.029, its rough 102 / 0.32 / 0.034 (fairway and rough alike to the camera),
+water 73 / 0.05 (algae); Breckenridge greens 133 / 0.24 / 0.028, fairways
+113 / 0.33 / 0.039. **The reference's limits**: OSM maps what a mapper drew --
+TPC's 9 fairways inside 60 ha of "rough", Breckenridge's picture holding two
+more nines OSM does not map at all -- so overlap understates a trace that
+draws those right; the pictures in bench/shots/imagery/<course>/trace.png
+(local) are looked at with each iteration. Every number in the rules is
+PLACED (trace.js, *mownTurf* and the markless greens).

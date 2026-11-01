@@ -76,9 +76,13 @@ test('LIDAR first: the picture fills only what the LIDAR cannot see', () => {
  assert.ok(iou(b.codes, both.truth, 'fairway') > .7);
 });
 
-test('nothing is traced under the tree, and no hole marked means no fairway', () => {
+// Door 2 traces before any hole is marked (the owner's order, 31 October
+// 2026): the mown turf is then found in the picture itself.
+test('with no hole marked the fairway is found from the picture; nothing under the tree', () => {
  const h = hole(), r = trace(h.land, {picture: h.picture, holes: [], mode: 'both'});
- assert.equal(r.codes.filter(c => c === TRACE.indexOf('fairway')).length, 0);
+ const mown = iou(r.codes, h.truth, 'fairway') + iou(r.codes, h.truth, 'semi');
+ assert.ok(r.codes.some(c => c === TRACE.indexOf('fairway')), 'no fairway found');
+ assert.ok(mown > .4, 'fairway ' + mown);
  const k = Math.round((40 + 150) / .5) * 401 + Math.round((50 + 100) / .5);
  assert.equal(TRACE[r.codes[k]], 'rough');
 });

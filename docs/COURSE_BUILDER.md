@@ -219,8 +219,10 @@ After trying the builder, the owner amended the goal:
    zones and single trees, water -- everything -- with brushes that paint as
    well as outlines, and smoothing on shapes.
 3. **Zoom and drag on the tracing and LIDAR views**, for precision.
-4. **Ten iterations on the auto trace's detection of course features, the
-   picture first** (the LIDAR in a later loop), on real courses from
+4. **Up to fifty iterations on the auto trace's detection of course
+   features from the picture, then up to fifty from the LIDAR** (first asked
+   as ten, the picture first; the owner raised it to fifty each later the
+   same night), on real courses from
    different parts of the world matching Fairway's landscapes, Haunted Hollow
    aside -- and **no jagged or pock-marked edges** on what is drawn.
 

@@ -48,7 +48,9 @@ export function holesFromOsm(ways, card, log = () => {}) {
 
 // OpenStreetMap's outlines rasterised on a grid ({nx, nz, cell, halfX, halfZ}):
 // each cell 'green', 'tee', 'fairway', 'sand', 'water' or null.
-export const KINDS = {green: ['green'], tee: ['tee'], fairway: ['fairway'], sand: ['bunker'], water: ['water_hazard']};
+// OpenStreetMap's golf=rough is the grass mapped beside the fairways -- what
+// the trace calls semi-rough -- scored only where a course maps it.
+export const KINDS = {green: ['green'], tee: ['tee'], fairway: ['fairway'], semi: ['rough'], sand: ['bunker'], water: ['water_hazard']};
 export function truthGrid(ways, grid) {
  const {nx, nz, cell, halfX, halfZ} = grid, truth = new Array(nx * nz).fill(null);
  const fillRing = (ring, kind) => {
@@ -58,7 +60,10 @@ export function truthGrid(ways, grid) {
    xs.sort((u, v) => u - v);
    for (let k = 0; k + 1 < xs.length; k += 2) for (let i = Math.max(0, Math.ceil((xs[k] + halfX) / cell)); i <= Math.min(nx - 1, Math.floor((xs[k + 1] + halfX) / cell)); i++) truth[j * nx + i] = kind; }
  };
- for (const [kind, tags] of Object.entries(KINDS)) for (const w of ways) if (tags.includes(w.tags.golf) || (kind === 'water' && w.tags.natural === 'water' && w.tags.water === 'pond')) fillRing(w.ring, kind);
+ // Larger surfaces first, so what lies on them is painted over them: a
+ // course's rough outline wraps its fairways and greens (painted last, it
+ // hid nearly every green TPC Scottsdale maps; imagery iteration 10).
+ for (const kind of ['semi', 'fairway', 'water', 'tee', 'green', 'sand']) for (const w of ways) if (KINDS[kind].includes(w.tags.golf) || (kind === 'water' && w.tags.natural === 'water' && w.tags.water === 'pond')) fillRing(w.ring, kind);
  return truth;
 }
 // Overlap (intersection over union) of each kind: `kindAt(k)` the traced or

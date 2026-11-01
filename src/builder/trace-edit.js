@@ -15,8 +15,13 @@ import {GROUND_KINDS} from '../grounds.js';
 export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k))];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
 // Patches smaller than this are specks and holes smaller than this are pocks
-// (PLACED: 4 m², a small pot bunker is about 10).
-export const SPECK = 4;
+// (PLACED: 10 m², the smallest pot bunker; at 4 m² the imagery iterations
+// still left specks and pocks the owner had asked to be rid of).
+export const SPECK = 10;
+// A hole of rough inside one surface under this is a pock, and filled
+// (PLACED: 30 m²; the imagery iterations' fairways were moth-eaten with them).
+// Only rough: a pot bunker inside a fairway is a feature, not a pock.
+export const POCK = 30;
 
 export function createTrace(grid, {codes = null, trees = []} = {}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
@@ -103,8 +108,8 @@ const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length 
 // Specks merged into their surroundings and pocks filled, in place (`put(k,
 // code)` writes; the default writes straight into `codes`). Exported for the
 // auto trace and for making a course, which tidy the same way.
-export function tidyCodes(codes, nx, nz, cell, minArea = SPECK, put = (k, c) => { codes[k] = c; }) {
- const N = nx * nz, seen = new Uint8Array(N), minCells = Math.max(1, Math.round(minArea / (cell * cell))), list = [];
+export function tidyCodes(codes, nx, nz, cell, minArea = SPECK, put = (k, c) => { codes[k] = c; }, pockArea = POCK) {
+ const N = nx * nz, seen = new Uint8Array(N), minCells = Math.max(1, Math.round(minArea / (cell * cell))), pockCells = Math.round(pockArea / (cell * cell)), list = [];
  for (let pass = 0; pass < 2; pass++) {
   seen.fill(0);
   for (let s0 = 0; s0 < N; s0++) {
@@ -119,7 +124,8 @@ export function tidyCodes(codes, nx, nz, cell, minArea = SPECK, put = (k, c) => 
      if (!seen[n]) { seen[n] = 1; list.push(n); }
     }
    }
-   if (list.length >= minCells || !border.size) continue;
+   const pock = c === 0 && border.size === 1 && list.length < pockCells && !list.some(k => { const i = k % nx; return i === 0 || i === nx - 1 || k < nx || k >= N - nx; });
+   if ((list.length >= minCells && !pock) || !border.size) continue;
    let best = c, n = -1; for (const [b, v] of border) if (v > n) { n = v; best = b; }
    for (const k of list) put(k, best);
   }
