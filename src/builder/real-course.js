@@ -11,7 +11,8 @@
 // Local metres throughout: x east of the property's middle, z south of it.
 import {createGridder, findTrees} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
-import {maskRings, simplify} from '../contour.js';
+import {maskRings, simplify, smoothRing} from '../contour.js';
+import {PALETTE, SPECK, tidyCodes} from './trace-edit.js';
 import {TRACE, boxMean} from '../lidar/trace.js';
 import {GRID_MARGIN} from '../built-world.js';
 
@@ -137,13 +138,22 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
  const r2 = v => Math.round(v * 100) / 100;
  const surfaces = {green: [], fairway: [], tee: [], sand: [], semi: [], path: []};
  const water = [];
- const codeAt = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return traced && i >= 0 && j >= 0 && i < nx && j < nz ? TRACE[traced.codes[j * nx + i]] : 'rough'; };
- if (traced) {
-  for (const kind of TRACE) {
+ // THE OUTLINES, SMOOTH (the owner, 31 October 2026: "features should not
+ // have jagged or pock marked edges"). The codes tidied first -- every patch
+ // under SPECK joins its surroundings, every hole under it is filled -- then
+ // each outline traced round the cells, its staircase taken out (simplified
+ // to 0.6 of a cell, PLACED) and its corners rounded (two passes of corner
+ // cutting). The codes are door 2's palette: the auto trace's surfaces and
+ // every ground type the player can trace by hand.
+ const codes = traced ? Uint8Array.from(traced.codes) : null;
+ if (codes) tidyCodes(codes, nx, nz, cell, SPECK);
+ const codeAt = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return codes && i >= 0 && j >= 0 && i < nx && j < nz ? PALETTE[codes[j * nx + i]] : 'rough'; };
+ if (codes) {
+  for (const kind of PALETTE) {
    if (kind === 'rough') continue;
-   const c = TRACE.indexOf(kind);
-   const rings = maskRings((i, j) => traced.codes[j * nx + i] === c, nx, nz, -halfX, -halfZ, cell)
-    .map(r => simplify(r, cell * .35).map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3 && ringArea(r) > cell * cell * 4);
+   const c = PALETTE.indexOf(kind);
+   const rings = maskRings((i, j) => codes[j * nx + i] === c, nx, nz, -halfX, -halfZ, cell)
+    .map(r => smoothRing(simplify(r, cell * .6)).map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3 && ringArea(r) > SPECK);
    if (!rings.length) continue;
    if (kind !== 'water') { surfaces[kind] = [rings]; continue; }
    // Water: a body a ring not inside another, its islands with it; its level
@@ -155,7 +165,7 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
     const isl = rings.filter(r => r !== o && inside(o, r[0]));
     const shore = o.map(([x, z]) => sampleGrid(ground, land, x, z)).sort((a, b) => a - b), level = shore[Math.floor(shore.length * .1)] - .15;
     water.push({rings: [o, ...isl], level: r2(level), kind: 'pond'});
-    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) if (traced.codes[j * nx + i] === c) {
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) if (codes[j * nx + i] === c) {
      const x = -halfX + i * cell, z = -halfZ + j * cell;
      if (inside(o, [x, z]) && !isl.some(s => inside(s, [x, z]))) ground[j * nx + i] = Math.min(ground[j * nx + i], level - 1);
     }

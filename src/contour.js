@@ -85,5 +85,19 @@ function dp(pts, tol) {
  return pts.filter((_, i) => keep[i]);
 }
 
+// A ring rounded (Chaikin's corner cutting, `times` passes): each edge keeps
+// its middle half, so a corner becomes a curve and a grid's staircase a
+// smooth line. Each pass doubles the points; the area shrinks a little at
+// the corners.
+export function smoothRing(ring, times = 2) {
+ let r = ring;
+ for (let t = 0; t < times; t++) {
+  const out = [];
+  for (let i = 0; i < r.length; i++) { const [ax, az] = r[i], [bx, bz] = r[(i + 1) % r.length]; out.push([ax * .75 + bx * .25, az * .75 + bz * .25], [ax * .25 + bx * .75, az * .25 + bz * .75]); }
+  r = out;
+ }
+ return r;
+}
+
 // The area a ring encloses, m² (positive whichever way it runs).
 export const ringArea = ring => { let a = 0; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) a += ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1]; return Math.abs(a) / 2; };

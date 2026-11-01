@@ -457,8 +457,10 @@ the file to anyone else who has Fairway. It opens on three doors.
   studio setting, grow the course, and press **Take it over**: from then on
   everything on it is yours to change.
 - **Generate a real life course.** Build a course from LIDAR of a real
-  place, in six steps down the left of the screen:
-  1. **Bring the land**: LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
+  place, in six steps (the buttons along the top of the left side), on a plan
+  of the land: **the wheel zooms, the right button or Space drags the view**,
+  and **Whole land** brings it all back.
+  1. **LIDAR**: LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
      XYZ/TXT/CSV points, or height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT). Several tiles at once; a .prj or .hdr beside a
      file is read with it. Each file is listed with its form, its size, its map
@@ -466,30 +468,50 @@ the file to anyone else who has Fairway. It opens on three doors.
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
-     their mapping agencies.
-  2. **The property**: drag a box round the course on the relief (up to 3 x 3
-     km), then **Build the land**. It says how the ground was found, how much
+     their mapping agencies. Then **drag a box round the course** on the
+     relief with the left button (up to 3 x 3 km).
+  2. **Land**: **Build the land**. It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it
      found.
-  3. **A picture** (optional): an aerial photograph to trace over. A GeoTIFF
-     lines itself up; a PNG, JPEG or WebP with its world file (.pgw, .jgw,
-     .wld) and .prj does too. Choose several tiles one after another and each
-     fills what the others left. A picture that says nothing of where it is
-     is lined up by hand: click a point on the relief, then the same point on
-     the picture, three times or more, spread out; the builder says how far
-     off the worst pair is. **Use the LIDAR's own** shows the survey's colour
-     (or its laser brightness). Check the picture's terms: Google, Bing and
-     Esri imagery may forbid tracing; NAIP (the US) is public domain. The
-     picture is never saved in the course.
-  4. **Mark the holes**: for each hole its back tee (and middle and front if
-     you like) and its green, clicked on the plan, then **Next hole**. 9 or 18.
-  5. **Trace the course** (optional): **LIDAR first** draws the greens and
-     tees round your marks, the fairways along the holes, the sand and the
-     water -- from the survey where it can tell, from the picture where it
-     cannot. **LIDAR alone** and **Picture alone** show what each sees by
-     itself. It is a starting point to correct, not an answer.
-  6. **The landscape and the name**, a credit for the data, and **Open in the
-     editor**.
+  3. **Trace**: first a picture to trace over (it is never saved in the
+     course):
+     - **Fetch imagery for this land**: free national aerial photographs
+       where they cover the place -- USGS in the United States (coarse,
+       about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
+       Spain, swisstopo in Switzerland -- or **Google** or **Bing** with your
+       own key (kept in this browser only; their terms limit tracing, and the
+       builder says so). It is sized and placed by itself; if the survey
+       does not say where it is, **Find** the place by name first.
+       **Align (drag)** moves it into line with the relief by hand; **Undo
+       align** puts it back. This is the only thing in the builder that goes
+       online, and only when you press it.
+     - **A picture file**: a GeoTIFF places itself; a PNG, JPEG or WebP with
+       its world file (.pgw, .jgw, .wld) and .prj does too; several tiles one
+       after another fill each other's gaps. One that says nothing of where it
+       is is lined up by clicking a point on the land, then the same point on
+       the picture, three times or more.
+     - **The LIDAR's own**: the survey's colour, or its laser brightness.
+
+     Then **Auto trace** (the greens, tees, fairways, sand and water found
+     for you) or **Manual trace** (a blank course to draw), and the same
+     tools for either: **Brush** paints the surface or ground type chosen
+     below it, **Erase** paints rough, **Outline** fills a shape (click its
+     corners; double-click or Enter closes it, Esc drops it), **Smooth
+     brush** rounds edges under it, **Tree** places one (its height set
+     below), **Tree zone** scatters trees through an outline at the density
+     set below (never on fairway, greens, tees, sand, water or path),
+     **Clear trees** takes them away under the brush, and **Smooth all
+     edges** and **Tidy specks** clean the whole trace. Undo and Redo (Ctrl+Z,
+     Ctrl+Y) cover every stroke.
+  4. **Holes**: for each hole, left-click its **Back tee** (the middle and
+     front if you like), any **Aim points** where it bends, in order, and its
+     **Green**; then **Next hole**. 9 or 18.
+  5. **Name**: the name, the landscape, and the credits for the data (an
+     imagery provider's is added for you).
+  6. **Review**: the whole course painted as it will be built -- every
+     surface smoothed, in the landscape's colours, with the trees and the
+     holes -- its card, and the checks. Go back to any step to change
+     anything, or **Open in the editor**.
 - **Open a course file** to carry on with one you saved or one somebody gave
   you.
 

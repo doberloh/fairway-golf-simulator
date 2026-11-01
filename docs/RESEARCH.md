@@ -11300,3 +11300,46 @@ Computer (https://planetarycomputer.microsoft.com/api/stac/v1, collection
 naip; public domain; local only); OpenStreetMap's golf features through the
 Overpass API (https://overpass-api.de; ODbL; local only, as a reference); the
 club's scorecard as GolfPass lists it (par 71, blue 6,282 yards).
+
+## Free aerial imagery for the builder (31 October 2026)
+
+The owner asked for free imagery beside Google's. What a golf course needs:
+about 0.5 m a pixel or finer (a green is 25-40 m across, a bunker 5-15 m), so
+the free satellite sets -- Sentinel-2 at 10 m, Landsat at 30 m -- are far too
+coarse. The free sources fine enough are national aerial photography, served
+as Web Mercator tiles. Each was tried with one tile (31 October 2026, no key):
+
+| Source | Covers | Finest | Licence | Credit asked | Tried |
+| --- | --- | --- | --- | --- | --- |
+| USGS The National Map, USGSImageryOnly (NAIP underneath) | the United States | zoom 16 cached (about 1.7 m a pixel at 44° N; the service stops at 1:9,028) | US government work; the service asks for attribution | "USDA, USGS The National Map: Orthoimagery" | 200 at zoom 16, 404 at 17 |
+| IGN France, Géoplateforme WMTS, ORTHOIMAGERY.ORTHOPHOTOS | France | about 0.2 m | Licence Ouverte (Etalab) 2.0 since 1 January 2021 -- CC-BY-like | IGN | 200 at zoom 17 |
+| PDOK, Beeldmateriaal Nederland, Actueel_orthoHR | the Netherlands | 7.5-8 cm | CC BY 4.0 | Beeldmateriaal.nl / PDOK | 200 at zoom 17 |
+| IGN España, PNOA máxima actualidad WMTS | Spain | 0.25-0.5 m | CC BY 4.0 | "PNOA cedido por © Instituto Geográfico Nacional" | 200 at zoom 17 |
+| swisstopo, SWISSIMAGE WMTS | Switzerland | 10 cm (25 cm in the Alps) | free for every use, commercial too, since 1 March 2021; the source named | swisstopo | 200 at zoom 17 |
+
+**Read and not used**: Esri World Imagery -- free to trace only for editing
+OpenStreetMap, other uses under Esri's terms (OSM wiki's summary of Esri's
+grant). USGS's NAIP image service (imagery.nationalmap.gov,
+USGSNAIPImagery/ImageServer, 0.6 m, `exportImage`) answers its description but
+timed out on an export twice -- the full-resolution US source if it holds up;
+not built yet. Microsoft's Planetary Computer serves NAIP as whole 400 MB
+tiles (what the trace was tuned on), too big for a page to fetch. Google
+(Maps Platform terms 3.2.3) and Bing need a key and limit tracing; the owner
+asked for them, and they are offered with that said.
+
+**Sources**: https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer
+(its JSON: 24 levels listed, maxScale 9,027.98, the credit above);
+https://www.usgs.gov/faqs/what-are-base-map-services-or-urls-used-national-map;
+https://ignf.github.io/geopf-extensions-openlayers/jsdoc/ol.source.GeoportalWMTS.html
+(layer and endpoint); https://next.ink/brief-article/les-donnees-publiques-de-lign-libres-et-gratuites-des-le-1er-janvier-2021/
+and https://wiki.openstreetmap.org/wiki/FR:Sources_de_donn%C3%A9es_potentielles/France
+(BD ORTHO under Licence Ouverte 2.0 from 1 January 2021);
+https://data.overheid.nl/dataset/77581-luchtfoto-beeldmateriaal-2026-5cm---8cm-rgb-open-data
+(the PDOK WMTS, CC BY 4.0); https://www.idee.es/csw-codsi-idee/srv/api/records/spaignwmts_pnoa-ma
+(PNOA WMTS, CC BY 4.0) and https://wiki.openstreetmap.org/wiki/PNOA (the
+credit wording); https://shop.swisstopo.admin.ch/en/free-geodata and
+https://www.swisstopo.admin.ch/en/terms-and-conditions (free since 1 March
+2021, the source the one condition); https://wiki.openstreetmap.org/wiki/Esri
+(Esri's tracing grant). The licences were read in summaries and OSM's wiki
+pages, not each provider's full legal text: worth the owner's own read
+before a release names them.

@@ -41,6 +41,14 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   eighteen plays at par), is partly the golfers aiming through trees on
   doglegs; its yardages are short of the card by a median 22 yards for the same
   reason.
+- [ ] **Google and Bing imagery not tried with a real key** (door 2, *Fetch
+  imagery for this land*): their session, metadata and tile addresses follow
+  the providers' documentation and are tested against a fake fetch; the free
+  providers each answered one tile by hand (31 October 2026), and the journey
+  stands in for USGS and Nominatim. The owner's own key is the check.
+- [ ] **Door 2's new steps are not played by a person** (the owner's order of
+  31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
+  review): the builder-door-2 journey drives every control once.
 - [ ] **The trace does not yet draw paths or buildings**, has no review layer
   in the editor (each cell's source is kept, and door 2 reports the share), no
   automatic alignment nudge after a picture is lined up, and no classifier

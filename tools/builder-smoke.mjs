@@ -60,11 +60,13 @@ async function run() {
   for (const name of names) {
    const context = await browser.newContext({viewport: {width: 1600, height: 900}, acceptDownloads: true});
    const page = await context.newPage();
-   const errors = [], requests = [];
+   const errors = [], requests = [], allow = [];
    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
    page.on('console', m => { if (m.type() === 'error') errors.push('console.error: ' + m.text()); });
-   page.on('request', r => { const u = r.url(); if (!u.startsWith('file:') && !u.startsWith('data:') && !u.startsWith('blob:')) requests.push(u); });
-   const t = {page, context, ROOT, SHOTS, shot: n => page.screenshot({path: path.join(SHOTS, `${name}-${n}.png`)})};
+   // A journey that stands in for an imagery provider (page.route) names its
+   // addresses in `t.allow`; every other request fails it, as ever.
+   page.on('request', r => { const u = r.url(); if (!u.startsWith('file:') && !u.startsWith('data:') && !u.startsWith('blob:') && !allow.some(a => a.test(u))) requests.push(u); });
+   const t = {page, context, ROOT, SHOTS, allow, shot: n => page.screenshot({path: path.join(SHOTS, `${name}-${n}.png`)})};
    const start = Date.now();
    try {
     await page.goto(pathToFileURL(PAGE).href);

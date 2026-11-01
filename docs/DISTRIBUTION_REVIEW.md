@@ -1657,7 +1657,16 @@ none of them in the course: a built file carries the land, outlines, holes and
 trees, never the survey or the picture (an aerial picture's licence may
 forbid passing it on). All five builder journeys pass with no network request,
 `builder-door-2` among them, which brings a LIDAR file in through the file
-picker, makes a course and plays it in the game by file://. **Owed before a
+picker, makes a course and plays it in the game by file://. **The one network use (the owner's amended goal, 31 October 2026)**:
+door 2's *Fetch imagery for this land* and *Find* ask an imagery provider --
+USGS, IGN France, PDOK, PNOA, swisstopo with no key, Google or Bing with the
+player's own -- for map tiles over the land, and OpenStreetMap's Nominatim
+(the free providers' place search) for a place by name. Only when the player
+presses them; a key is kept in that browser's storage and sent only to its
+own provider; the picture is never saved in a course, and its credit is added
+to the course's credits. Everything else in both pages stays offline, and the
+smoke journeys still fail on any request but the stand-ins a journey names.
+**Owed before a
 release carrying the builder** (TODO): the website's `RELEASE_SHA256.txt`
 check confirmed to read `Fairway.html`'s line by name, now that the builder's
 line sits beside it; laz-perf's copyright line confirmed against its

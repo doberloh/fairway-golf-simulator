@@ -62,3 +62,17 @@ button,input,select{font:inherit;color:inherit}
 .cb-side ul{margin:0;padding-left:16px}
 .cb-side li{margin:3px 0;cursor:pointer}
 .cb-status{position:absolute;left:244px;right:304px;bottom:12px;background:var(--panel);border:1px solid var(--line);padding:6px 12px;font-size:12px;color:var(--soft);z-index:4;pointer-events:none}
+/* Door 2: the steps down the left, the plan filling the rest. */
+.cb-door2{position:absolute;inset:0;display:grid;grid-template-columns:400px 1fr;background:#061513}
+.cb-door2 .cb-steps{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--line)}
+.cb-door2 .cb-stepnav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.cb-door2 .cb-stepnav .cb-btn{padding:6px 4px;font-size:12px}
+.cb-door2 .cb-btns{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.cb-door2 .cb-btns .cb-btn{padding:6px 6px;font-size:13px}
+.cb-door2 .cb-planbox{position:relative;display:flex;flex-direction:column;min-width:0}
+.cb-door2 canvas.cb-plan{flex:1;width:100%;min-height:0;display:block;background:#0b1f1c;touch-action:none}
+.cb-door2 .cb-planbar{display:flex;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--soft)}
+.cb-door2 .cb-planbar .cb-btn{padding:4px 8px;font-size:12px}
+.cb-door2 ul{margin:4px 0;padding-left:18px;font-size:13px}
+.cb-door2 li.cb-cur{color:var(--hot)}
+.cb-door2 .cb-swatch{display:inline-block;width:10px;height:10px;margin-right:6px;border:1px solid #0006;vertical-align:-1px}

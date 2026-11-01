@@ -205,6 +205,39 @@ nor any built copy of the course (tests that need it skip when it is absent):
   NAIP aerial pictures of Nobles County, and the club's published scorecard
   (downloaded or read during the goal; none committed).
 
+## The amended goal (the owner, 31 October 2026, after testing)
+
+After trying the builder, the owner amended the goal:
+
+1. **Door 2 in this order**: load the LIDAR; build the land; **choose auto
+   trace or manual trace**; place each hole's **tee, aim and green markers**;
+   name the course; edit mode. The picture to trace over is part of tracing.
+   So the auto trace now runs **before** any hole is marked: it must find
+   greens and fairways from the picture and the land alone, and the markers
+   come after, onto what was traced.
+2. **Manual trace is built**: the player traces any ground type, places tree
+   zones and single trees, water -- everything -- with brushes that paint as
+   well as outlines, and smoothing on shapes.
+3. **Zoom and drag on the tracing and LIDAR views**, for precision.
+4. **Ten iterations on the auto trace's detection of course features, the
+   picture first** (the LIDAR in a later loop), on real courses from
+   different parts of the world matching Fairway's landscapes, Haunted Hollow
+   aside -- and **no jagged or pock-marked edges** on what is drawn.
+
+5. **Google and Bing imagery for the picture**, searched for by place,
+   **sized automatically** onto the land and **dragged into line by hand**
+   where needed (the owner, later the same day). Both need the player's own
+   key and both limit tracing in their terms; the builder goes online only
+   when the player asks for imagery -- an exception to "no network in either
+   page" that the owner's request makes, kept to that one button.
+6. **Research free imagery to use beside Google** (the owner): findings in
+   RESEARCH.md, *Free aerial imagery for the builder*; the open services found
+   are offered in the builder where they cover the land, with no key.
+
+The four parts of the study's tracing design not yet built -- paths and
+buildings in the trace, the alignment nudge, a review layer, a classifier
+learnt from corrections -- wait for that later loop (TODO).
+
 ## Stages
 
 | # | Stage | Status |
