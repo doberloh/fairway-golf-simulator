@@ -232,6 +232,12 @@ After trying the builder, the owner amended the goal:
    key and both limit tracing in their terms; the builder goes online only
    when the player asks for imagery -- an exception to "no network in either
    page" that the owner's request makes, kept to that one button.
+7. **Layers** (the owner, 1 November 2026): "the concept of layers so things
+   can be easily painted in the trace step" -- each surface its own layer, so
+   painting one never wipes another -- "exposed in the editor as well in real
+   time".
+8. **The whole painted course seen before the editor** (the owner): door 2's
+   sixth step, *Review*.
 6. **Research free imagery to use beside Google** (the owner): findings in
    RESEARCH.md, *Free aerial imagery for the builder*; the open services found
    are offered in the builder where they cover the land, with no key.

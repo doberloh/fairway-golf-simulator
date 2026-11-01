@@ -32,6 +32,7 @@ import {createGridder} from '../lidar/land.js';
 import {trace} from '../lidar/trace.js';
 import {sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE} from './trace-edit.js';
+import {LAYER_ORDER} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
 import {createPlanView} from './plan-view.js';
 import {validateDoc} from '../course-doc.js';
@@ -52,7 +53,7 @@ const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee
 const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bpw|gfw)$/i;
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
-const BRUSHES = ['brush', 'erase', 'smooth', 'treeErase'];
+const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase'];
 
 export function open() {
  setTitle('Real life course');
@@ -102,11 +103,11 @@ export function open() {
  const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 120; } else d[o + 3] = 0; };
  function paintCodes() {
   if (!st.land || !st.model) { plan.clearLayer('codes'); return; }
-  const c = st.model.state.codes;
+  const c = st.model.state.layers.view;
   plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
  }
  function patchCodes(x, z, r) {
-  const {cell, halfX, halfZ, nx} = st.land, c = st.model.state.codes, w = 2 * r / cell + 4;
+  const {cell, halfX, halfZ, nx} = st.land, c = st.model.state.layers.view, w = 2 * r / cell + 4;
   plan.patchLayer('codes', (x - r + halfX) / cell - 2, (z - r + halfZ) / cell - 2, w, w, (d, a, b, W, H) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) codeTexel(d, (j * W + i) * 4, c[(b + j) * nx + a + i]); });
  }
 
@@ -167,7 +168,8 @@ export function open() {
     if (type === 'down') m.beginStroke();
     if (type === 'down' || type === 'drag') {
      if (t === 'brush') m.paint({x: p.x, z: p.z, radius: st.size, kind: st.kind});
-     else if (t === 'erase') m.erase({x: p.x, z: p.z, radius: st.size});
+     else if (t === 'erase') m.erase({x: p.x, z: p.z, radius: st.size, kind: st.kind === 'rough' ? null : st.kind});
+     else if (t === 'eraseAll') m.erase({x: p.x, z: p.z, radius: st.size});
      else if (t === 'smooth') m.smooth({x: p.x, z: p.z, radius: Math.max(1, st.size / 3), area: st.size});
      else m.removeTrees({x: p.x, z: p.z, radius: st.size});
      if (t !== 'treeErase') patchCodes(p.x, p.z, st.size + 2);
@@ -298,8 +300,18 @@ export function open() {
  }
 
  // 3. Trace: the picture, then auto or manual, then the tools.
- const countText = el('small');
- const refreshCount = () => { if (!st.model) return; const n = new Map(); for (const c of st.model.state.codes) n.set(c, (n.get(c) || 0) + 1); const a = st.land.cell ** 2; countText.textContent = [...n].filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees`; };
+ const countText = el('small'), layerBox = el('ul', {class: 'cb-layers', style: 'list-style:none;padding:0'});
+ // THE LAYERS (the owner, 1 November 2026): each surface its own, top first;
+ // click one to paint it, the eye to hide it from view.
+ function layersList() {
+  if (!st.model) return;
+  const L = st.model.state.layers, a = st.land.cell ** 2, shown = [...new Set([...L.present(), st.kind].filter(k => k !== 'rough'))].sort((p, q) => LAYER_ORDER.indexOf(p) - LAYER_ORDER.indexOf(q));
+  layerBox.replaceChildren(...shown.map(k => { const m = L.masks.get(k), n = m ? m.reduce((t, v) => t + v, 0) : 0, col = COLOUR[k] ?? [128, 128, 128];
+   return el('li', {class: k === st.kind ? 'cb-cur' : '', 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); }},
+    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 6px;font-size:11px', onclick: e => { e.stopPropagation(); st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }}, L.hidden.has(k) ? 'hidden' : 'shown'),
+    el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), `${LABEL(k)} ${(n * a / 1e4).toFixed(2)} ha`); }));
+ }
+ const refreshCount = () => { if (!st.model) return; layersList(); const n = new Map(); for (const c of st.model.state.codes) n.set(c, (n.get(c) || 0) + 1); const a = st.land.cell ** 2; countText.textContent = [...n].filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees`; };
  // Local metres to degrees: by the survey's map grid, or round a place the
  // player searched for when the survey states none.
  const lonLatOfLocal = () => {
@@ -317,7 +329,7 @@ export function open() {
   const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move'], ['brush', 'Brush'], ['erase', 'Erase'], ['outline', 'Outline'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees']];
+  const tools = [['move', 'Move'], ['brush', 'Brush'], ['erase', 'Erase layer'], ['eraseAll', 'Erase all'], ['outline', 'Outline'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees']];
   toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
   const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => { if (!st.pics.length) return say('Bring a picture with a position first.', true); setTool('align'); say('Drag the picture into line with the relief (Move, the wheel and right-drag still move the view).'); }}, 'Align (drag)');
   toolButtons.push(alignBtn);
@@ -333,7 +345,8 @@ export function open() {
     el('small', {}, 'Auto: greens, tees, fairways, sand and water found for you to correct. Manual: draw them yourself. The same tools either way.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: autoTrace}, st.traceMode === 'auto' ? 'Auto trace again' : 'Auto trace'), el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: manualTrace}, 'Manual trace'))),
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'), el('div', {class: 'cb-btns'}, ...toolButtons.slice(0, -1)),
-    el('small', {}, 'Surface or ground type'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; }}, PALETTE.map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
+    el('small', {}, 'The layer you paint, outline, erase and smooth'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); }}, LAYER_ORDER.map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
+    el('small', {}, 'Layers (top first; the eye hides one from view, the course keeps it)'), layerBox,
     el('small', {}, 'Brush size (metres)'), el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; }}),
     el('small', {}, 'A tree\'s height, and a zone\'s trees a hectare'),
     el('div', {class: 'cb-btns'}, el('input', {type: 'number', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; }}), el('input', {type: 'number', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; }})),
@@ -495,7 +508,7 @@ export function open() {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {codes: st.model.state.codes}, holes, trees: st.model.state.trees, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
+   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.pics.length ? 'placed' : st.picture ? 'lidar' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};

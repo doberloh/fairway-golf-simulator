@@ -50,7 +50,7 @@ export function createView(parent, editor, {onReady = () => {}} = {}) {
  tex.magFilter = T.NearestFilter; tex.minFilter = T.LinearFilter; tex.colorSpace = T.SRGBColorSpace;
  const paintCells = (i0, i1, j0, j1, into = tex.image.data, w = r.nx, ox = 0, oz = 0) => {
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-   const c = colours[r.codes[j * r.nx + i]], o = ((j - oz) * w + (i - ox)) * 4;
+   const c = colours[r.layers.view[j * r.nx + i]], o = ((j - oz) * w + (i - ox)) * 4;
    into[o] = c[0]; into[o + 1] = c[1]; into[o + 2] = c[2]; into[o + 3] = 255;
   }
  };

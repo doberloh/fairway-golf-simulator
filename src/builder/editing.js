@@ -19,6 +19,7 @@
 // THE LAND is the document's own grid and patches, changed in place; every
 // brush is a weight that falls off smoothly to nothing at its edge.
 import {GROUND_KINDS} from '../grounds.js';
+import {createLayers, LAYER_ORDER} from './layers.js';
 import {maskRings, simplify} from '../contour.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
@@ -35,8 +36,9 @@ function rasterSize(ex, ez) {
  const cell = Math.max(RASTER.cell, 2 * Math.max(ex, ez) / RASTER.maxSide);
  return {cell, nx: Math.ceil(2 * ex / cell), nz: Math.ceil(2 * ez / cell), x0: -ex, z0: -ez};
 }
-// Every cell centre inside `poly` (rings, even-odd), by scanline.
-function fill(r, poly, code) {
+// Every cell centre inside `poly` (rings, even-odd), by scanline, onto a
+// layer's mask (`v` 1 to cover, 0 to take off).
+function fill(r, poly, mask, v = 1) {
  let zmin = Infinity, zmax = -Infinity;
  for (const ring of poly) for (const [, z] of ring) { zmin = Math.min(zmin, z); zmax = Math.max(zmax, z); }
  const j0 = Math.max(0, Math.ceil((zmin - r.z0) / r.cell - .5)), j1 = Math.min(r.nz - 1, Math.floor((zmax - r.z0) / r.cell - .5));
@@ -49,7 +51,7 @@ function fill(r, poly, code) {
   xs.sort((p, q) => p - q);
   for (let k = 0; k + 1 < xs.length; k += 2) {
    const i0 = Math.max(0, Math.ceil((xs[k] - r.x0) / r.cell - .5)), i1 = Math.min(r.nx - 1, Math.floor((xs[k + 1] - r.x0) / r.cell - .5));
-   r.codes.fill(code, j * r.nx + i0, j * r.nx + i1 + 1);
+   mask.fill(v, j * r.nx + i0, j * r.nx + i1 + 1);
   }
  }
 }
@@ -59,12 +61,17 @@ function fill(r, poly, code) {
 export function createEditor(doc) {
  const ex = doc.halfX + GRID_MARGIN, ez = doc.halfZ + GRID_MARGIN;
  const r = {...rasterSize(ex, ez)};
- r.codes = new Uint8Array(r.nx * r.nz);
- for (const kind of PAINT) {
-  if (kind === 'rough') continue;
+ // THE SURFACES IN LAYERS (layers.js; the owner, 1 November 2026): each its
+ // own mask, the topmost shown -- in the game's order, so the course plays
+ // what is shown. `r.codes` is every layer's composite (what a ball lies on),
+ // `r.layers.view` the visible layers' (what the view draws).
+ r.layers = createLayers(r.nx, r.nz, PAINT);
+ for (const kind of LAYER_ORDER) {
   const polys = kind === 'water' ? (doc.water || []).map(w => w.rings) : doc.surfaces?.[kind] || [];
-  for (const poly of polys) fill(r, poly, CODE[kind]);
+  for (const poly of polys) fill(r, poly, r.layers.mask(kind, true));
  }
+ r.layers.recompose();
+ r.codes = r.layers.codes;
  const copyGrid = g => ({...g, heights: Float32Array.from(g.heights)});
  const land = copyGrid(doc.land), patches = (doc.patches || []).map(copyGrid);
  const original = {land: Float32Array.from(doc.land.heights), patches: patches.map(p => Float32Array.from(p.heights))};
@@ -96,9 +103,9 @@ export function createEditor(doc) {
    return {g, i0, i1, j0, j1, rows};
   });
   else if (kind === 'paint') {
-   const [i0, i1, j0, j1] = cellBox(x0, x1, z0, z1), rows = [];
-   for (let j = j0; j <= j1; j++) rows.push(r.codes.slice(j * r.nx + i0, j * r.nx + i1 + 1));
-   step.cells = {i0, i1, j0, j1, rows}; step.surfacesEdited = state.surfacesEdited;
+   const [i0, i1, j0, j1] = cellBox(x0, x1, z0, z1), layers = new Map();
+   for (const [k, m] of r.layers.masks) { const rows = []; for (let j = j0; j <= j1; j++) rows.push(m.slice(j * r.nx + i0, j * r.nx + i1 + 1)); layers.set(k, rows); }
+   step.cells = {i0, i1, j0, j1, layers}; step.surfacesEdited = state.surfacesEdited;
   } else step.snapshot = records();
   state.undo.push(step); state.redo.length = 0;
   if (state.undo.length > 200) state.undo.shift();
@@ -111,7 +118,7 @@ export function createEditor(doc) {
  // Swaps a step's stored state with the present (undo and redo are the same act).
  const swap = step => {
   if (step.parts) { for (const p of step.parts) p.rows = p.rows.map((row, k) => { const at = (p.j0 + k) * p.g.nx + p.i0, now = p.g.heights.slice(at, at + row.length); p.g.heights.set(row, at); return now; }); resample(); }
-  if (step.cells) { const c = step.cells; c.rows = c.rows.map((row, k) => { const at = (c.j0 + k) * r.nx + c.i0, now = r.codes.slice(at, at + row.length); r.codes.set(row, at); return now; }); const was = state.surfacesEdited; state.surfacesEdited = step.surfacesEdited; step.surfacesEdited = was; }
+  if (step.cells) { const c = step.cells; for (const [kind, rows] of c.layers) { const m = r.layers.mask(kind, true); c.layers.set(kind, rows.map((row, k) => { const at = (c.j0 + k) * r.nx + c.i0, now = m.slice(at, at + row.length); m.set(row, at); return now; })); } r.layers.recompose(c.i0, c.i1, c.j0, c.j1); const was = state.surfacesEdited; state.surfacesEdited = step.surfacesEdited; step.surfacesEdited = was; }
   if (step.snapshot) { const now = records(); Object.assign(state, step.snapshot); step.snapshot = now; }
   return step;
  };
@@ -121,6 +128,10 @@ export function createEditor(doc) {
   height: (x, z) => sample(x, z),
   codeAt(x, z) { const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); return i < 0 || j < 0 || i >= r.nx || j >= r.nz ? 0 : r.codes[j * r.nx + i]; },
   surfaceAt(x, z) { return PAINT[api.codeAt(x, z)]; },
+  // The layers: those holding anything (top first), and hiding one from view.
+  layersPresent: () => r.layers.present(),
+  isHidden: kind => r.layers.hidden.has(kind),
+  setHidden(kind, hide) { r.layers.setHidden(kind, hide); },
 
   // ---- the ground. `op`: raise, lower, smooth, flatten (to `level`),
   // roughen, restore (to the land it started as), ramp (from `a` to `b`, a
@@ -161,23 +172,20 @@ export function createEditor(doc) {
   },
 
   // ---- the surfaces. Paint a disc of `kind`; fill an outline with it.
+  // A disc onto `kind`'s layer; 'rough' takes every layer off there, and
+  // `erase` takes one layer (or, with no kind, every one) off.
   paint({kind, x, z, radius = 3, group = null}) {
-   const code = CODE[kind]; if (code === undefined) throw Error(`No surface called ${kind}.`);
-   const box = [x - radius, x + radius, z - radius, z + radius];
-   if (!group?.step) { const st = remember('paint', ...box); if (group) group.step = st; } else extendPaint(group.step, box);
-   state.surfacesEdited = true;
-   const [i0, i1, j0, j1] = cellBox(...box);
-   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    const px = r.x0 + (i + .5) * r.cell, pz = r.z0 + (j + .5) * r.cell;
-    if (Math.hypot(px - x, pz - z) <= radius) r.codes[j * r.nx + i] = code;
-   }
-   return box;
+   if (CODE[kind] === undefined) throw Error(`No surface called ${kind}.`);
+   return brush(kind === 'rough' ? null : kind, kind === 'rough' ? 0 : 1, x, z, radius, group);
   },
+  erase({kind = null, x, z, radius = 3, group = null}) { return brush(kind, 0, x, z, radius, group); },
   fillOutline({kind, ring}) {
    const code = CODE[kind]; if (code === undefined || ring.length < 3) throw Error('An outline needs a surface and three points.');
    const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]), box = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+   if (kind !== 'rough') r.layers.mask(kind, true);
    remember('paint', ...box); state.surfacesEdited = true;
-   fill(r, [ring], code);
+   if (kind === 'rough') for (const m of r.layers.masks.values()) fill(r, [ring], m, 0); else fill(r, [ring], r.layers.mask(kind));
+   recomposeBox(box);
    return box;
   },
 
@@ -199,8 +207,9 @@ export function createEditor(doc) {
    const lv = level ?? Math.min(...ring.map(([x, z]) => sample(x, z))) - .3;
    state.water.push({rings: [ring], level: lv, kind: 'pond'});
    const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]);
+   r.layers.mask('water', true);
    const st = remember('paint', Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)); state.undo.pop(); state.undo.at(-1).cells = st.cells; state.undo.at(-1).surfacesEdited = state.surfacesEdited; state.undo.at(-1).box = st.box;
-   state.surfacesEdited = true; fill(r, [ring], CODE.water);
+   state.surfacesEdited = true; fill(r, [ring], r.layers.mask('water', true)); recomposeBox(st.box);
    return lv;
   },
   setLandscape(key) { remember('records', 0, 0, 0, 0); state.landscape = key; },
@@ -209,7 +218,7 @@ export function createEditor(doc) {
   // under it, deepest at the middle with a lip at the edge -- one undo.
   digBunker({x, z, radius = 5, depth = .6}) {
    const box = [x - radius - 1, x + radius + 1, z - radius - 1, z + radius + 1];
-   const st = remember('land', ...box), pt = remember('paint', ...box); state.undo.pop(); st.cells = pt.cells; st.surfacesEdited = state.surfacesEdited;
+   const sand = r.layers.mask('sand', true), st = remember('land', ...box), pt = remember('paint', ...box); state.undo.pop(); st.cells = pt.cells; st.surfacesEdited = state.surfacesEdited;
    state.surfacesEdited = true; noteEdit(box);
    for (const [g, i0, i1, j0, j1] of gridsIn(...box)) {
     const cz = g.cellZ ?? g.cell;
@@ -220,7 +229,8 @@ export function createEditor(doc) {
    }
    resample();
    const [i0, i1, j0, j1] = cellBox(...box);
-   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (Math.hypot(r.x0 + (i + .5) * r.cell - x, r.z0 + (j + .5) * r.cell - z) <= radius) r.codes[j * r.nx + i] = CODE.sand;
+   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (Math.hypot(r.x0 + (i + .5) * r.cell - x, r.z0 + (j + .5) * r.cell - z) <= radius) sand[j * r.nx + i] = 1;
+   r.layers.recompose(i0, i1, j0, j1);
    return box;
   },
 
@@ -277,15 +287,17 @@ export function createEditor(doc) {
    let surfaces = doc.surfaces, water = state.water;
    if (state.surfacesEdited) {
     surfaces = Object.fromEntries(Object.keys(doc.surfaces).map(k => [k, []]));
-    // Each code's box first, so a code is traced over where it is, not the course.
-    const box = PAINT.map(() => [Infinity, -1, Infinity, -1]);
-    for (let j = 0; j < r.nz; j++) for (let i = 0; i < r.nx; i++) { const b = box[r.codes[j * r.nx + i]]; if (i < b[0]) b[0] = i; if (i > b[1]) b[1] = i; if (j < b[2]) b[2] = j; if (j > b[3]) b[3] = j; }
+    // Each LAYER traced from its own mask (overlaps kept: the game reads them
+    // in the layers' order), over its own box, not the course.
     const traced = {};
-    PAINT.forEach((kind, code) => {
-     if (kind === 'rough' || box[code][1] < 0) return;
-     onStep(`Tracing the ${kind}`, code / PAINT.length);
-     const [i0, i1, j0, j1] = box[code], w = i1 - i0 + 1, h = j1 - j0 + 1;
-     const rings = maskRings((i, j) => r.codes[(j + j0) * r.nx + i + i0] === code, w, h, r.x0 + (i0 + .5) * r.cell, r.z0 + (j0 + .5) * r.cell, r.cell)
+    LAYER_ORDER.forEach((kind, n) => {
+     const m = r.layers.masks.get(kind); if (!m) return;
+     let i0 = Infinity, i1 = -1, j0 = Infinity, j1 = -1;
+     for (let j = 0; j < r.nz; j++) for (let i = 0; i < r.nx; i++) if (m[j * r.nx + i]) { if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+     if (i1 < 0) return;
+     onStep(`Tracing the ${kind}`, n / LAYER_ORDER.length);
+     const w = i1 - i0 + 1, h = j1 - j0 + 1;
+     const rings = maskRings((i, j) => m[(j + j0) * r.nx + i + i0] === 1, w, h, r.x0 + (i0 + .5) * r.cell, r.z0 + (j0 + .5) * r.cell, r.cell)
       .map(ring => simplify(ring, r.cell * .35).map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100])).filter(ring => ring.length >= 3);
      traced[kind] = rings;
     });
@@ -309,6 +321,22 @@ export function createEditor(doc) {
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, landEdits: state.landEdits.map(b => [...b])};
   },
  };
+ // A brush onto one layer (or every layer, `kind` null) -- covering (v 1) or
+ // taking off (v 0) -- one undo step for a whole drag.
+ function brush(kind, v, x, z, radius, group) {
+  const box = [x - radius, x + radius, z - radius, z + radius];
+  if (kind) r.layers.mask(kind, true);
+  if (!group?.step) { const st = remember('paint', ...box); if (group) group.step = st; } else extendPaint(group.step, box);
+  state.surfacesEdited = true;
+  const masks = kind ? [r.layers.mask(kind)] : [...r.layers.masks.values()], [i0, i1, j0, j1] = cellBox(...box);
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+   const px = r.x0 + (i + .5) * r.cell, pz = r.z0 + (j + .5) * r.cell;
+   if (Math.hypot(px - x, pz - z) <= radius) for (const m of masks) m[j * r.nx + i] = v;
+  }
+  r.layers.recompose(i0, i1, j0, j1);
+  return box;
+ }
+ function recomposeBox(box) { const [i0, i1, j0, j1] = cellBox(...box); r.layers.recompose(i0, i1, j0, j1); }
  // A shaped box joins the one it overlaps, else is added; past 400 boxes the
  // two nearest are merged, so a long afternoon's shaping stays a short list.
  function noteEdit([x0, x1, z0, z1]) {
@@ -335,7 +363,7 @@ export function createEditor(doc) {
   if (nb.every((v, i) => v === step.box[i])) return;
   const fresh = remember('paint', ...nb); state.undo.pop();
   const q = step.cells, p = fresh.cells;
-  q.rows.forEach((row, k) => p.rows[q.j0 + k - p.j0].set(row, q.i0 - p.i0));
+  for (const [kind, rows] of q.layers) { const pr = p.layers.get(kind); if (pr) rows.forEach((row, k) => pr[q.j0 + k - p.j0].set(row, q.i0 - p.i0)); }
   step.cells = p; step.box = nb;
  }
  return api;

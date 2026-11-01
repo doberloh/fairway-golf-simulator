@@ -494,8 +494,14 @@ the file to anyone else who has Fairway. It opens on three doors.
 
      Then **Auto trace** (the greens, tees, fairways, sand and water found
      for you) or **Manual trace** (a blank course to draw), and the same
-     tools for either: **Brush** paints the surface or ground type chosen
-     below it, **Erase** paints rough, **Outline** fills a shape (click its
+     tools for either. **Every surface is its own layer**, top first in the
+     game's own order (water, sand, green, tee, path, fairway, semi, then the
+     ground types): painting a fairway never covers a bunker above it, and
+     the fairway runs on under the bunker. The **Layers** list shows each
+     with its area; click one to paint it, and its **shown/hidden** button
+     hides it from view (the course keeps it). **Brush** paints the chosen
+     layer, **Erase layer** takes the chosen layer off (what lies under it
+     shows), **Erase all** takes every layer off, **Outline** fills a shape (click its
      corners; double-click or Enter closes it, Esc drops it), **Smooth
      brush** rounds edges under it, **Tree** places one (its height set
      below), **Tree zone** scatters trees through an outline at the density
@@ -515,7 +521,10 @@ the file to anyone else who has Fairway. It opens on three doors.
 - **Open a course file** to carry on with one you saved or one somebody gave
   you.
 
-**The editor** is the same for all three. Left-drag moves round the course,
+**The editor** is the same for all three, and has the same **Layers**: every
+surface the course holds, top first, its area kept up to date as you paint,
+with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
+surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
 right-drag turns, the wheel zooms; **From above** and **This hole** jump the
 view. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); **Paint** any

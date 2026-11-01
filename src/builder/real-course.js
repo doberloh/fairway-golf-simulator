@@ -12,8 +12,9 @@
 import {createGridder, findTrees} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
 import {maskRings, simplify, smoothRing} from '../contour.js';
-import {PALETTE, SPECK, tidyCodes} from './trace-edit.js';
-import {TRACE, boxMean} from '../lidar/trace.js';
+import {PALETTE, SPECK, POCK} from './trace-edit.js';
+import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
+import {boxMean} from '../lidar/trace.js';
 import {GRID_MARGIN} from '../built-world.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
@@ -113,12 +114,26 @@ export function affineFromPairs(pairs) {
 // five past it -- the USGA's men's guide, rounded).
 export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 
-// The built document. `traced` (trace.js) may be null: then -- and wherever
+// The built document. `traced` -- the trace's layers ({layers}, layers.js),
+// or a composite ({codes}, the auto trace's) -- may be null: then -- and wherever
 // the trace drew no green or tee under a mark -- a green is a 12 m disc round
 // its mark and a tee a 6 x 10 m pad (PLACED), for the player to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
 // line?}] in local metres. `trees` as land.js finds them.
 export function docFromLand({land, traced = null, holes, trees = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
+ // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
+ // jagged or pock marked edges"): on each layer, patches under SPECK go and
+ // holes under POCK fill. Each layer is then traced as its own outlines --
+ // overlapping where the layers overlap, as the game reads a built course's
+ // surfaces in the layers' own order (layers.js) -- so a fairway runs on
+ // unbroken under its bunkers.
+ const L = traced ? createLayers(nx, nz, PALETTE) : null;
+ if (traced) {
+  const from = traced.layers ?? createLayers(nx, nz, PALETTE).fromCodes(traced.codes);
+  for (const [kind, m] of from.masks) { const c = Uint8Array.from(m); tidyMask(c, nx, nz, Math.round(SPECK / (cell * cell)), Math.round(POCK / (cell * cell))); L.masks.set(kind, c); }
+  L.recompose();
+ }
+ const codes = L ? L.codes : null;
  // MOWN GROUND SMOOTHED. A survey's ground is a few points a cell, each a
  // centimetre or two off: on a green that is a pit a putted ball cannot climb
  // out of (Worthington's first test round stuck 70 cm from two cups). A
@@ -128,7 +143,7 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
  const greenAt = (x, z) => holes.some(h => Math.hypot(x - h.green.x, z - h.green.z) < 14);
  const smoothR = new Uint8Array(nx * nz);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
-  const k = j * nx + i, t = traced ? TRACE[traced.codes[k]] : greenAt(-halfX + i * cell, -halfZ + j * cell) ? 'green' : 'rough';
+  const k = j * nx + i, t = codes ? PALETTE[codes[k]] : greenAt(-halfX + i * cell, -halfZ + j * cell) ? 'green' : 'rough';
   smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' ? 1 : 0;
  }
  for (const r of [1, 2]) {
@@ -138,21 +153,14 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
  const r2 = v => Math.round(v * 100) / 100;
  const surfaces = {green: [], fairway: [], tee: [], sand: [], semi: [], path: []};
  const water = [];
- // THE OUTLINES, SMOOTH (the owner, 31 October 2026: "features should not
- // have jagged or pock marked edges"). The codes tidied first -- every patch
- // under SPECK joins its surroundings, every hole under it is filled -- then
- // each outline traced round the cells, its staircase taken out (simplified
- // to 0.6 of a cell, PLACED) and its corners rounded (two passes of corner
- // cutting). The codes are door 2's palette: the auto trace's surfaces and
- // every ground type the player can trace by hand.
- const codes = traced ? Uint8Array.from(traced.codes) : null;
- if (codes) tidyCodes(codes, nx, nz, cell, SPECK);
+ // THE OUTLINES, SMOOTH: each layer's traced round its cells, its staircase
+ // taken out (simplified to 0.6 of a cell, PLACED) and its corners rounded
+ // (two passes of corner cutting).
  const codeAt = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return codes && i >= 0 && j >= 0 && i < nx && j < nz ? PALETTE[codes[j * nx + i]] : 'rough'; };
  if (codes) {
-  for (const kind of PALETTE) {
-   if (kind === 'rough') continue;
-   const c = PALETTE.indexOf(kind);
-   const rings = maskRings((i, j) => codes[j * nx + i] === c, nx, nz, -halfX, -halfZ, cell)
+  for (const kind of LAYER_ORDER) {
+   const m = L.masks.get(kind); if (!m) continue;
+   const rings = maskRings((i, j) => m[j * nx + i] === 1, nx, nz, -halfX, -halfZ, cell)
     .map(r => smoothRing(simplify(r, cell * .6)).map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3 && ringArea(r) > SPECK);
    if (!rings.length) continue;
    if (kind !== 'water') { surfaces[kind] = [rings]; continue; }
@@ -165,7 +173,7 @@ export function docFromLand({land, traced = null, holes, trees = [], name = 'Rea
     const isl = rings.filter(r => r !== o && inside(o, r[0]));
     const shore = o.map(([x, z]) => sampleGrid(ground, land, x, z)).sort((a, b) => a - b), level = shore[Math.floor(shore.length * .1)] - .15;
     water.push({rings: [o, ...isl], level: r2(level), kind: 'pond'});
-    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) if (codes[j * nx + i] === c) {
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) if (m[j * nx + i]) {
      const x = -halfX + i * cell, z = -halfZ + j * cell;
      if (inside(o, [x, z]) && !isl.some(s => inside(s, [x, z]))) ground[j * nx + i] = Math.min(ground[j * nx + i], level - 1);
     }

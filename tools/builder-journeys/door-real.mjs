@@ -122,6 +122,16 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // Layers: a fairway painted over the bunker leaves the bunker on top; the
+  // sand layer hidden shows the fairway under it in the view, not the course.
+  await page.locator('.cb-kind').selectOption('fairway');
+  [x0, y0] = await at(-62, 40); [x1, y1] = await at(-48, 40);
+  await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
+  if (await kindAt(-55, 40) !== 'sand') throw Error('painting the fairway layer should not cover the bunker');
+  await page.locator('[data-eye="sand"]').click();
+  const shown = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((40 + L.halfZ) / L.cell) * L.nx + Math.round((-55 + L.halfX) / L.cell); return [st.model.state.layers.palette[st.model.state.layers.view[k]], st.model.kindAt(-55, 40)]; });
+  if (shown[0] !== 'fairway' || shown[1] !== 'sand') throw Error(`hiding the sand layer should show the fairway in the view and keep the bunker in the course: ${shown}`);
+  await page.locator('[data-eye="sand"]').click();
   await page.locator('[data-tool="outline"]').click(); await page.locator('.cb-kind').selectOption('heather');
   for (const [x, z] of [[100, 80], [130, 80], [130, 100], [100, 100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
@@ -163,6 +173,12 @@ export default function ({journey, SHOTS}) {
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   await page.waitForTimeout(800);
   await t.shot('editor');
+  // The same layers in the editor, kept up to date as it is painted.
+  const layers = await page.locator('.cb-layers li').evaluateAll(li => li.map(l => l.dataset.layer));
+  if (!layers.includes('sand') || !layers.includes('fairway') || !layers.includes('heather')) throw Error(`the editor should list the course's layers: ${layers}`);
+  await page.locator('.cb-layers [data-eye="heather"]').click();
+  if (!await page.evaluate(() => window.fairwayBuilder.editor.editor.isHidden('heather'))) throw Error('the editor should hide the heather layer');
+  await page.locator('.cb-layers [data-eye="heather"]').click();
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.getByRole('button', {name: 'Save as a .fairway file'}).click()]);
   const file = path.join(SHOTS, 'builder-door-2.fairway');
   await download.saveAs(file);

@@ -80,3 +80,19 @@ test('trees: one placed, a zone scattered off the mown ground, removed, undone',
  assert.equal(t.state.trees.length, 0);
  t.undo(); assert.equal(t.state.trees.length, n);
 });
+
+test('layers: a fairway painted through a bunker keeps the bunker; erasing one layer leaves the rest', () => {
+ const t = createTrace(grid);
+ t.paint({x: 0, z: 0, radius: 4, kind: 'sand'});
+ t.fill([[[-20, -10], [20, -10], [20, 10], [-20, 10]]], 'fairway');
+ assert.equal(t.kindAt(0, 0), 'sand', 'the bunker stays on top');
+ assert.deepEqual(t.layersPresent(), ['sand', 'fairway']);
+ t.erase({x: 0, z: 0, radius: 5, kind: 'sand'});
+ assert.equal(t.kindAt(0, 0), 'fairway', 'under the bunker, the fairway ran on');
+ t.undo(); assert.equal(t.kindAt(0, 0), 'sand');
+ t.setHidden('sand', true);
+ assert.equal(PALETTE[t.state.layers.view[100 * 201 + 100]], 'fairway', 'a hidden layer is left out of the view');
+ assert.equal(t.kindAt(0, 0), 'sand', 'and kept in the course');
+ t.erase({x: 0, z: 0, radius: 5});
+ assert.equal(t.kindAt(0, 0), 'rough', 'Erase with no layer takes every layer off');
+});

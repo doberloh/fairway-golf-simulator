@@ -44,7 +44,8 @@ export function openEditor(doc, {from = 'file'} = {}) {
  const HINT = {
   navigate: () => 'Left-drag moves, right-drag turns, the wheel zooms.',
   shape: t => t.op === 'ramp' ? 'Click the low end, then the high end: the ground between is graded.' : `${t.op[0].toUpperCase() + t.op.slice(1)}: drag over the ground. Size and strength on the left.`,
-  paint: t => `Paint ${label(t.surface)}: drag over the ground.`,
+  paint: t => `Paint ${label(t.surface)}: drag over the ground. It goes on the ${label(t.surface).toLowerCase()} layer and covers nothing beneath it.`,
+  erase: t => `Erase the ${label(t.surface).toLowerCase()} layer: drag over the ground; what lies under it shows.`,
   outline: t => `Outline ${label(t.surface)}: click its corners, double-click or press Enter to fill it.`,
   pond: () => 'Draw a pond: click its edge, double-click or press Enter. Its level is set just under its lowest bank.',
   creek: () => 'Draw a creek from its head to its foot: click along it, double-click or press Enter. Its channel is cut and its water falls downstream.',
@@ -58,6 +59,19 @@ export function openEditor(doc, {from = 'file'} = {}) {
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
  const landscapeKinds = () => PAINT.filter(k => k !== 'water');
+ // THE LAYERS (the owner, 1 November 2026: "exposed in the editor as well in
+ // real time"): every surface the course holds, top first, its area kept up
+ // to date as it is painted; the eye hides one from the view (the course
+ // keeps it); Erase takes one off under the brush.
+ const layerList = el('ul', {style: 'list-style:none;padding:0;margin:0;font-size:12px'});
+ function refreshLayers() {
+  const a = s.raster.cell ** 2;
+  layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
+   return el('li', {'data-layer': k, style: 'display:flex;gap:4px;align-items:center;margin:2px 0'},
+    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: () => { editor.setHidden(k, !hid); view.refreshSurface([-s.ex, s.ex, -s.ez, s.ez]); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
+    el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
+    button('Erase', {kind: 'erase', surface: k}, {style: 'padding:2px 5px;font-size:11px'})); }));
+ }
  const paintButtons = (kind) => el('div', {class: 'cb-btns'}, landscapeKinds().map(k => button(label(k), {kind, surface: k})));
  tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
@@ -71,6 +85,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
   el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
+  el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
    button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}))),
@@ -110,7 +125,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   el('h4', {style: 'margin-top:10px'}, 'Holes'), holeList, holeTools,
   el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList,
   el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);
- refreshHoles();
+ refreshHoles(); refreshLayers();
  topTools(
   el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (!s.changed || confirm('Leave this course? Anything not saved is lost.')) { current?.view.dispose(); current = null; home(); } }}, 'Close'),
   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: save}, 'Save as a .fairway file'));
@@ -122,6 +137,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
    if (first) down.level = editor.height(p.x, p.z);
    view.refreshLand(editor.shape({op: tool.op, x: p.x, z: p.z, radius, strength, level: down.level, group: down.group}));
   } else if (tool.kind === 'paint') view.refreshSurface(editor.paint({kind: tool.surface, x: p.x, z: p.z, radius, group: down.group}));
+  else if (tool.kind === 'erase') view.refreshSurface(editor.erase({kind: tool.surface, x: p.x, z: p.z, radius, group: down.group}));
   else if (tool.kind === 'plant') {
    if (!first && Math.hypot(p.x - down.last.x, p.z - down.last.z) < Math.max(4, radius * .6)) return;
    const h = 10 + strength * 20;
@@ -148,12 +164,12 @@ export function openEditor(doc, {from = 'file'} = {}) {
  canvas.addEventListener('pointermove', e => {
   const p = view.pick(e);
   if (p) {
-   view.cursor(['shape', 'paint', 'clear', 'plant'].includes(tool.kind) ? p.x : null, p.z, radius);
+   view.cursor(['shape', 'paint', 'erase', 'clear', 'plant'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
  });
- canvas.addEventListener('pointerup', () => { if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } } });
+ canvas.addEventListener('pointerup', () => { if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
  const finishOutline = () => {
   if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
   if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
@@ -161,7 +177,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
   else editor.fillOutline({kind: tool.surface, ring: draft});
   const xs = draft.map(q => q[0]), zs = draft.map(q => q[1]);
   view.refreshSurface([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]);
-  draft = []; view.draft([]);
+  draft = []; view.draft([]); refreshLayers();
  };
  canvas.addEventListener('dblclick', () => { if (tool.kind === 'outline' || tool.kind === 'pond' || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
  const onKey = e => {
@@ -175,7 +191,7 @@ export function openEditor(doc, {from = 'file'} = {}) {
  function after(step) {
   if (!step) return;
   if (step.parts) view.refreshLand(step.box);
-  if (step.cells) view.refreshSurface(step.box);
+  if (step.cells) { view.refreshSurface(step.box); refreshLayers(); }
   if (step.snapshot) { landscape.value = s.landscape; view.refreshAll(); refreshHoles(); }
   else if (step.parts && step.cells) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }

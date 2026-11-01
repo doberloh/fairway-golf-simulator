@@ -134,3 +134,18 @@ test('the document it gives back is a valid course that plays what was edited', 
  const untouched = createEditor(doc()).toDoc();
  assert.deepEqual(untouched.surfaces.green, doc().surfaces.green, 'an unpainted course keeps its own outlines');
 });
+
+test('layers: painting a fairway through a bunker keeps the bunker; erasing one layer shows what is under; hiding is the view only', () => {
+ const e = createEditor(doc());
+ e.paint({kind: 'sand', x: 0, z: 0, radius: 4});
+ e.paint({kind: 'fairway', x: 0, z: 0, radius: 12});
+ assert.equal(e.surfaceAt(0, 0), 'sand', 'the bunker stays');
+ assert.ok(e.layersPresent().includes('sand') && e.layersPresent().includes('fairway'));
+ e.erase({kind: 'sand', x: 0, z: 0, radius: 6});
+ assert.equal(e.surfaceAt(0, 0), 'fairway', 'the fairway ran on under the bunker');
+ e.undo(); assert.equal(e.surfaceAt(0, 0), 'sand', 'undo puts the bunker back');
+ e.setHidden('sand', true); assert.ok(e.isHidden('sand'));
+ assert.equal(e.surfaceAt(0, 0), 'sand', 'a hidden layer is still in the course');
+ const out = e.toDoc();
+ assert.ok(out.surfaces.sand.length && out.surfaces.fairway.length, 'both layers saved, overlapping');
+});
