@@ -96,9 +96,12 @@ export async function benchCourse(key, {shots = false} = {}) {
  }
  // What the course would be made of: tidied as docFromLand tidies it.
  const codes = Uint8Array.from(r.codes); tidyCodes(codes, land.nx, land.nz, CELL, SPECK);
+ // Found (of what OSM maps, how much is drawn) and right (of what is drawn,
+ // how much OSM maps): which says whether a shortfall is the trace's or the map's.
+ const fr = Object.fromEntries(Object.keys(KINDS).map(kind => { const c = TRACE.indexOf(kind); let hit = 0, all = 0, tot = 0; for (let k = 0; k < N; k++) { const t = truth[k] === kind, q = codes[k] === c; if (t) tot++; if (q) all++; if (t && q) hit++; } return [kind, {found: tot ? hit / tot : null, right: all ? hit / all : null}]; }));
  const score = scoreCodes(truth, codes), edges = Object.fromEntries(Object.keys(KINDS).map(k => [k, edgeStats(codes, land.nx, land.nz, CELL, TRACE.indexOf(k))]));
  if (shots) writeShot(path.join(dir, 'trace.png'), land, picture, codes, truth);
- return {key, name: meta.name, cover, secs, score, edges, size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
+ return {key, name: meta.name, cover, secs, score, edges, fr, size: `${(2 * land.halfX).toFixed(0)} x ${(2 * land.halfZ).toFixed(0)} m`};
 }
 
 // The trace over the picture at a metre a pixel, OpenStreetMap's outlines white.
@@ -122,18 +125,18 @@ function writeShot(file, land, picture, codes, truth) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const have = COURSES.map(c => c.key).filter(k => fs.existsSync(path.join(OUT, k, 'course.json')) && (!want.length || want.includes(k)));
  const kinds = Object.keys(KINDS), mean = Object.fromEntries(kinds.map(k => [k, []])), rag = Object.fromEntries(kinds.map(k => [k, []]));
- let specks = 0, pocks = 0;
+ let specks = 0, pocks = 0; const found = Object.fromEntries(kinds.map(k => [k, []])), right = Object.fromEntries(kinds.map(k => [k, []]));
  console.log(`course      cover  ${kinds.map(k => k.padStart(7)).join('')}   specks pocks  ragged (green fairway sand water)`);
  for (const key of have) {
   try {
    const r = await benchCourse(key, {shots: flag('shots')});
-   for (const k of kinds) { if (r.score[k] != null) mean[k].push(r.score[k]); if (r.edges[k].ragged != null) rag[k].push(r.edges[k].ragged); }
+   for (const k of kinds) { if (r.fr[k].found != null) found[k].push(r.fr[k].found); if (r.fr[k].right != null && r.fr[k].found != null) right[k].push(r.fr[k].right); if (r.score[k] != null) mean[k].push(r.score[k]); if (r.edges[k].ragged != null) rag[k].push(r.edges[k].ragged); }
    const sp = kinds.reduce((s, k) => s + r.edges[k].specks, 0), po = kinds.reduce((s, k) => s + r.edges[k].pocks, 0); specks += sp; pocks += po;
    console.log(`${key.padEnd(11)} ${(100 * r.cover).toFixed(0).padStart(4)}%  ${kinds.map(k => fmt(r.score[k]).padStart(7)).join('')}   ${String(sp).padStart(6)} ${String(po).padStart(5)}  ${['green', 'fairway', 'sand', 'water'].map(k => r.edges[k].ragged?.toFixed(2) ?? '-').join(' ')}   (${r.size}, ${r.secs.toFixed(1)} s)`);
   } catch (e) { console.log(`${key.padEnd(11)} FAILED: ${e.message}`); }
  }
  const avg = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
- const line = `${new Date().toISOString().slice(0, 16)} ${opt('label') ?? ''} | ${have.length} courses | overlap ${kinds.map(k => `${k} ${fmt(avg(mean[k])).trim()}`).join(', ')} | specks ${specks}, pocks ${pocks} | ragged ${kinds.map(k => `${k} ${avg(rag[k])?.toFixed(2) ?? '-'}`).join(', ')}`;
+ const line = `${new Date().toISOString().slice(0, 16)} ${opt('label') ?? ''} | ${have.length} courses | overlap ${kinds.map(k => `${k} ${fmt(avg(mean[k])).trim()}`).join(', ')} | found ${kinds.map(k => `${k} ${fmt(avg(found[k])).trim()}`).join(', ')} | right ${kinds.map(k => `${k} ${fmt(avg(right[k])).trim()}`).join(', ')} | specks ${specks}, pocks ${pocks} | ragged ${kinds.map(k => `${k} ${avg(rag[k])?.toFixed(2) ?? '-'}`).join(', ')}`;
  console.log('\n' + line);
  fs.appendFileSync(path.join(OUT, 'log.txt'), line + '\n');
 }

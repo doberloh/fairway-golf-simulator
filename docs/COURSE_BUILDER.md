@@ -232,6 +232,16 @@ After trying the builder, the owner amended the goal:
    key and both limit tracing in their terms; the builder goes online only
    when the player asks for imagery -- an exception to "no network in either
    page" that the owner's request makes, kept to that one button.
+   **Then: until the trace matches OpenStreetMap, with no limit on the
+   iterations** (the owner, 1 November 2026: "iterate till we match open
+   street map to a percentage across the biomes ... no iteration limit. Set
+   the percentage to 90% and let's start there"), for the picture and the
+   LIDAR alike: **90% overlap with OpenStreetMap across the landscapes**, with
+   no specks, pocks or jagged edges. OpenStreetMap's outlines are hand-drawn
+   and sometimes missing (TPC Scottsdale maps 9 fairways in 60 ha of rough),
+   so beside the overlap the bench reports how much of what OpenStreetMap
+   maps is found and how much of what is drawn is mapped -- which says
+   whether a shortfall is the trace's or the map's.
 7. **Layers** (the owner, 1 November 2026): "the concept of layers so things
    can be easily painted in the trace step" -- each surface its own layer, so
    painting one never wipes another -- "exposed in the editor as well in real

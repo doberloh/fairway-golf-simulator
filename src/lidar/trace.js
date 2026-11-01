@@ -467,6 +467,11 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   const score = new Float32Array(N).fill(-Infinity);
   // A green is a plant: bare ground, paths and roofs stand out the same way
   // (iteration 9: ranked by score alone, they were all that was kept).
+  // (Iterations 32-34, for Ekwanok's pale greens -- NDVI 0.07 against its
+  // fairways' 0.16 in June 2023 -- set this bar from the fairway's own
+  // greenness, let greens lie 40 m from the turf, and measured a green with no
+  // turf near against everything near: greens fell 29 to 24 and Ekwanok's
+  // stayed at 3. Not kept.)
   const plantBar = P.nir ? .15 : .04;
   for (let k = 0; k < N; k++) if (pix(k) && off[k] < 12 && G[k] > plantBar && codes[k] !== C.sand && codes[k] !== C.water) score[k] = (nL[k] - wL[k]) / sL + (wG[k] - nG[k]) / sG + 2 * (wT[k] - nT[k]) / sT;
   const bar = (() => { const v = []; for (let k = 0; k < N; k += 7) if (turf[k] && score[k] > -Infinity) v.push(score[k]); v.sort((x, y) => x - y); return v[Math.floor(v.length * .9)] ?? Infinity; })();
@@ -491,8 +496,32 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
    found.sort((x, y) => y.mean - x.mean);
    const out = new Uint8Array(N); for (const f of found.slice(0, howMany)) for (const k of f.list) out[k] = 1; return out;
   };
-  const nGreens = Math.max(6, Math.min(36, Math.round(turfHa / 1.5)));
+  const nGreens = Math.max(9, Math.min(40, Math.round(turfHa / 1)));
   const greens = pick(opened, {minArea: 150, maxArea: 1500, thick: 3, maxLength: 60, keep: round}, nGreens);
+  // Each green found GROWN to its edge (iteration 30): the patch that stood
+  // out is often only part of a green (found 28%, right 70%), so it spreads
+  // to neighbouring cells as bright, as green and as smooth as itself (within
+  // 12 of brightness, 0.06 of greenness, half again its texture; PLACED), to
+  // 22 m from its middle, as the marked trace grows a green from a click.
+  { const seen = new Uint8Array(N), list = [];
+   for (let s0 = 0; s0 < N; s0++) {
+    if (!greens[s0] || seen[s0]) continue;
+    list.length = 0; list.push(s0); seen[s0] = 1;
+    for (let q = 0; q < list.length; q++) { const k = list[q], i = k % nx; for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (n >= 0 && n < N && greens[n] && !seen[n]) { seen[n] = 1; list.push(n); } }
+    let mL = 0, mG = 0, mT = 0, cx = 0, cz = 0; for (const k of list) { mL += L[k]; mG += G[k]; mT += turf.fine[k]; cx += k % nx; cz += Math.floor(k / nx); }
+    const n0 = list.length; mL /= n0; mG /= n0; mT /= n0; cx /= n0; cz /= n0;
+    const reach = (22 / cell) ** 2;
+    for (let q = 0; q < list.length; q++) { const k = list[q], i = k % nx;
+     for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) {
+      if (n < 0 || n >= N || seen[n] || codes[n] === C.sand || codes[n] === C.water) continue;
+      const ni = n % nx, nj = Math.floor(n / nx); if ((ni - cx) ** 2 + (nj - cz) ** 2 > reach) continue;
+      if (Math.abs(L[n] - mL) < 12 && Math.abs(G[n] - mG) < .06 && turf.fine[n] < mT * 1.5) { seen[n] = 1; greens[n] = 1; list.push(n); }
+     } }
+   }
+  }
+  // Grown, then rounded: closed over 2 m and a majority over 2.5 m, so the
+  // growing's frayed edge is a green's smooth one (it read 1.31 ragged).
+  { const g2 = majority(close(greens, nx, nz, Math.max(1, Math.round(2 / cell))), nx, nz, Math.max(1, Math.round(2.5 / cell))); for (let k = 0; k < N; k++) greens[k] = g2[k] && codes[k] !== C.sand && codes[k] !== C.water ? 1 : 0; }
   for (let k = 0; k < N; k++) if (greens[k]) set(k, C.green, SOURCE.picture, .85);
   // TEES with no mark: the same short cut as a green, in small squared-off
   // pads -- 30 to 450 m², filling most of their own box (PLACED; iteration 7).

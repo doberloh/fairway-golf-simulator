@@ -11394,6 +11394,27 @@ ragged is a surface's edge length against the same surface smoothed over
 | 27 | sand 30 brighter than the turf within 20 m, for bunkers in shade (fell 24 to 23: not kept) | 25 | 4 | 21 | 11 | 23 | 42 | 0/0 | 1.06, 1.23 |
 | 28 | FAIRWAYS AS SIMPLE SHAPES (the owner: "real fairways are one continuous shape"): pieces joined over 8 m, holes to 2,000 m² filled, spurs cut over 4 m, the outline rounded over 5 m, whole fairways only (2,000 m²); Ekwanok (Autumn) joins: seven courses | 22 | 3 | 28 | 8 | 27 | 44 | 0/0 | 1.04, 1.19 |
 
+**The target since 1 November** (the owner): no limit on iterations, until
+the trace matches OpenStreetMap at 90% across the landscapes. From here the
+bench reports, beside the overlap, how much of what OSM maps is found and how
+much of what is drawn is mapped (eight courses; Worthington, on 2023's 0.3 m
+NAIP, joins).
+
+| # | What changed | Green | Fairway | Sand | Water | Found (green, fairway, sand, water) | Right (same) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 28 | (as above, eight courses) | 23 | 31 | 28 | 42 | 25, 64, 45, 70 | 70, 44, 41, 74 |
+| 29 | a green per hectare of turf | 26 | 31 | 28 | 42 | 28, 63, 45, 70 | 70, 44, 41, 74 |
+| 30 | each green found GROWN to its edge while colour and smoothness hold (22 m at most) | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 62, 44, 41, 74 |
+| 31 | grown greens rounded (closed 2 m, majority 2.5 m: the growing frayed them, 1.31 ragged to 1.01) | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
+| 32-34 | for Ekwanok's pale greens (NDVI 0.07 against its fairways' 0.16, June 2023): the plant bar from the fairway's own greenness, greens to 40 m from turf, a green with no turf near measured against everything near -- fell to 24, Ekwanok 3: not kept | 24-26 | 31 | 28 | 42 | | |
+| 35 | back to 31 | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
+
+By course at 35: Worthington green 50, fairway 51; Arcadia Bluffs green
+42, fairway 38, water 77; Breckenridge green 43, fairway 42, sand 41, water
+65; Ekwanok fairway 71, sand 45 (greens 0: pale and not found); TPC
+Scottsdale sand 45, water 59; Sahalee water 53; Chambers Bay everything
+under 10 (one pale sweep of fescue and sand).
+
 **Found and right** (iteration 27, before the shaping): sand found 8-72% of
 the mapped, 4-80% of what it drew mapped; greens found 0-57%, but 59-98% of
 what was drawn a mapped green (the greens drawn are right, too few are
