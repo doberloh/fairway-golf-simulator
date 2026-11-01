@@ -11336,14 +11336,20 @@ ground's median.
 | 3 | several returns a pulse only count where something stands above the ground (Chambers Bay's fescue sent several on 44% of its fairway); the turf split in two by smoothness over 2 m, the smoother fairway, the other semi | 0, 3, 19, 5, 5, 17 |
 | 4 | sand with no hole: over 2 cm rough and 6% slope, no brighter than the turf, within 30 m of it (the old rule's absolute darkness, iF - 0.05, meant nothing on Breckenridge's 0-0.1 brightness scale) | 0, 3, 19, 5, 9, 17 |
 | 5 | water: a dark patch whose surface is level within 15 cm (10th to 90th percentile) over 200 m² is a pond, silent or not (Key West's ponds returned points of no class); and a topobathymetric survey's water classes (41, 42, 45) counted as water (land.js) | 0, 3, 19, 5, 9, **21** |
+| 6 | GREENS ARE BUILT UP: mapped greens stand 13-55 cm over the mean ground 25 m round (median) on seven of eight courses, fairways 1-19 cm under it (Chambers Bay's greens are laid into the dunes); turf over 15 cm above the ground 15 m round, compact 150-1,500 m² patches | 4, 3, 19, 5, 9, 21 |
+| 7 | a green's top is gentle (under 6% over 3 m) and round (over 55% of its box), to 2,500 m² -- hillsides had joined the greens' patches past 1,500 m² | 7, 3, 19, 5, 9, 21 |
+| 8 | the patches greens fall in are 75-100% green but irregular (40-55% of their box, 100-600 m²): over 35%, from 80 m², then grown 3 m over the turf (a green's edge stands lower than its middle) | **13**, 3, 19, 5, 9, 21 |
+| 9 | TEES stand higher still (20-61 cm, median) and flatter: a raised pad over 20 cm and under 3% is a tee as well as the flattest | 12, **5**, 19, 5, 9, 21 |
 
-By course at iteration 5: Sahalee fairway 46, sand 31, water 69; TPC
-Scottsdale tee 17, semi 22, water 56; Breckenridge fairway 31; Worthington
-fairway 19, water 18; Key West fairway 18, sand 16, water 25; Ekwanok
-fairway 26, sand 13; Arcadia Bluffs fairway 17, semi 17; Chambers Bay
-fairway 7 (its fescue is as rough as its rough); Northwood maps no fairway.
-**Greens 0 everywhere: the laser does not tell a green from its fairway**
-(the picture finds them at 30-66%; OpenStreetMap maps them). Checked not to
+By course at iteration 9: Sahalee green 17, fairway 46, sand 31, water 69;
+TPC Scottsdale green 9, tee 18, semi 22, water 56; Breckenridge fairway 31;
+Worthington green 28, tee 11, fairway 19, water 18; Key West green 16,
+fairway 18, sand 16, water 25; Ekwanok green 13, fairway 26, sand 13;
+Arcadia Bluffs fairway 17, semi 17; Chambers Bay green 7, fairway 7 (its
+fescue is as rough as its rough); Northwood maps no fairway. **To the
+laser a green is its fairway in every measure but one -- it is built up**
+(iteration 6), which is how the LIDAR alone finds greens at all; the
+picture finds them at 30-66%. Checked not to
 move the trace with holes: tools/trace-bench.mjs's nine synthetic
 courses scored the same before and after (lidar green 56, tee 75, fairway
 19, sand 33, water 79), and Worthington's scripted build's traces matched.

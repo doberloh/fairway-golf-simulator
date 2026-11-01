@@ -691,7 +691,11 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
  if (lturf) {
   const flat = boxMean(F.slope, nx, nz, Math.max(1, Math.round(1.5 / cell)));
   const fill = list => { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) > .6; };
-  const pads = blobs(majority(Uint8Array.from(flat, (s, k) => lturf[k] && s < 1.5 ? 1 : 0), nx, nz, 1), nx, nz, cell, {minArea: 40, maxArea: 900, thick: 1.5, maxLength: 50, accept: fill});
+  const dome = boxMean(land.ground, nx, nz, Math.max(1, Math.round(15 / cell)));
+  // A tee is also a RAISED pad (iteration 9): mapped tees stand 20-61 cm over
+  // the ground 25 m round (median), higher than greens -- over 20 cm and under
+  // 3% slope (PLACED), as well as the flattest.
+  const pads = blobs(majority(Uint8Array.from(flat, (s, k) => lturf[k] && (s < 1.5 || (s < 3 && land.ground[k] - dome[k] > .2)) ? 1 : 0), nx, nz, 1), nx, nz, cell, {minArea: 40, maxArea: 900, thick: 1.5, maxLength: 50, accept: fill});
   // FAIRWAY OR SEMI by smoothness over 2 m (a two-means, as the picture's
   // turf is split by texture): the smoother is fairway when the two differ
   // by a fifth (PLACED); else all of it.
@@ -700,6 +704,27 @@ export function trace(land, {picture = null, holes = [], mode = 'both', debug = 
   for (let it = 0; it < 12 && tv.length; it++) { const mid = (a + b) / 2; let s0 = 0, n0 = 0, s1 = 0, n1 = 0; for (const x of tv) if (x < mid) { s0 += x; n0++; } else { s1 += x; n1++; } a = n0 ? s0 / n0 : a; b = n1 ? s1 / n1 : b; }
   const cut = b > a * 1.2 ? (a + b) / 2 : Infinity;
   const fairM = Uint8Array.from(lturf, (t, k) => t && sm[k] < cut ? 1 : 0), fair = shapeFairways(blobs(majority(fairM, nx, nz, Math.max(1, Math.round(2.5 / cell))), nx, nz, cell, {minArea: 300, thick: 3}), nx, nz, cell);
+  // GREENS are BUILT UP (LIDAR iteration 6): on seven of eight courses a
+  // mapped green stands 13-55 cm over the mean ground 25 m round it (median)
+  // where a fairway lies 1-19 cm under it; only Chambers Bay's greens are
+  // laid into the dunes. So: turf more than 15 cm over the ground 15 m round
+  // (PLACED), in compact patches of 150 to 1,500 m² (a green's size), not a
+  // flat tee pad.
+  // (Iteration 7: the raised ground of a hillside ran into the greens'
+  // patches past 1,500 m², and Sahalee's, TPC Scottsdale's and
+  // Breckenridge's greens -- 87-97% in the turf, 26-54% raised -- were all
+  // thrown out. A green's TOP is gentle, a hill's flank is not: under 6%
+  // over 3 m (PLACED), and round -- filling over 55% of its box -- to 2,500 m².)
+  const flat3 = boxMean(F.slope, nx, nz, Math.max(1, Math.round(1.5 / cell)));
+  const raised = Uint8Array.from(lturf, (t, k) => t && !pads[k] && land.ground[k] - dome[k] > .15 && flat3[k] < 6 ? 1 : 0);
+  // (Iteration 8: the patches the greens fall in are 75-100% green but
+  // irregular -- filling 40-55% of their box, 100-600 m² -- so over 35% and
+  // from 80 m² (PLACED); then grown 3 m over the turf, a green's edge
+  // standing lower than its middle.)
+  const round = list => { let i0 = nx, i1 = 0, j0 = nz, j1 = 0; for (const k of list) { const i = k % nx, j = (k - i) / nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; } return list.length / ((i1 - i0 + 1) * (j1 - j0 + 1)) > .35; };
+  const cores = blobs(majority(raised, nx, nz, Math.max(1, Math.round(1.5 / cell))), nx, nz, cell, {minArea: 80, maxArea: 2500, thick: 2, maxLength: 70, accept: round});
+  const near = distanceFrom(cores, nx, nz, cell), greens = Uint8Array.from(near, (dd, k) => dd <= 3 && lturf[k] && !pads[k] ? 1 : 0);
+  for (let k = 0; k < N; k++) if (codes[k] === C.rough && greens[k]) set(k, C.green, SOURCE.lidar, .6);
   for (let k = 0; k < N; k++) if (codes[k] === C.rough && (pads[k] || lturf[k])) set(k, pads[k] ? C.tee : fair[k] ? C.fairway : C.semi, SOURCE.lidar, pads[k] ? .6 : .5);
   if (debug) Object.assign(debug, {lidarTurf: lturf, lidarTees: pads});
  }

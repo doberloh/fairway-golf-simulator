@@ -553,8 +553,8 @@ the file to anyone else who has Fairway. It opens on three doors.
 
      Or **Auto trace** (the greens, tees, fairways, sand and water found
      for you -- from the LIDAR alone, with no picture, the mown turf, the
-     flattest pads as tees, sand and water, but no greens: to the laser a
-     green is its fairway, so draw them, or fetch OpenStreetMap) or **Manual trace** (a blank course to draw), and the same
+     built-up pads as greens and tees, sand and water; a start to correct,
+     weaker than with a picture or OpenStreetMap) or **Manual trace** (a blank course to draw), and the same
      tools for either. First the **Landscape**: it decides which ground types
      are offered (rock and scree in the mountains, native grass and heather
      on a links, pine straw where needles fall) and is the course's look.

@@ -93,12 +93,12 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   link).
 - [ ] **The auto trace from the LIDAR alone, before the holes: started, far
   from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
-  trace from the LIDAR alone*): mean overlap over the nine courses green 0,
-  tee 3, fairway 19, semi 5, sand 9, water 21 (from 0 but water 13). The
-  laser tells fairway, green and rough apart by millimetres only; greens
-  need the picture, OpenStreetMap or the player. Next: greens by shape
-  (compact raised pads at the turf's ends, bunkers round them), fairway
-  corridors by width. Not seen in the builder's page.
+  trace from the LIDAR alone*): mean overlap over the nine courses green 12,
+  tee 5, fairway 19, semi 5, sand 9, water 21 (from 0 but water 13). The
+  laser tells fairway, green and rough apart by millimetres; greens and tees
+  are found because they are built up (iterations 6-9). Next: fairway
+  corridors by width and by their tees and greens at either end; a
+  green's bunkers round it. Not seen in the builder's page.
 - [ ] **The editor's saved outlines changed** (1 November 2026): it now saves
   door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
   to 0.35 of a cell, so a course saved again from the editor differs slightly
