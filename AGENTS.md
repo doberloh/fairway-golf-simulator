@@ -102,9 +102,15 @@ and quality)." So, for this goal:
 - **Held as they are:** frame rate and quality on every tier (a change that
   adds cost is profiled, Low first), and testing -- `npm test`, the round
   matrix, smoke, the bench invariants, all green.
-- **Architect and Haunted Hollow are being removed** (the owner, 2 November
-  2026); their rules here (*Three version numbers*' Architect lines, the
-  fingerprint's `--designer architect`) go with the code that removes them.
+- **Architect, Haunted Hollow, tournament week and the people are being
+  removed** (the owner, 2 November 2026); Architect's other world pieces
+  (paths and bridges, markings, walls, landmarks, wildlife) move into the
+  generator (PLAN.md 1b). Their rules here (*Three version numbers*'
+  Architect lines, the fingerprint's `--designer architect`) go with the
+  code that removes them.
+- **The graphics card and processor need no asking** for this goal ("computer
+  is open to you fully"), as on the rest of this branch; the precautions
+  of the section above stay.
 - **Every new model: at least 15 iterations** against its reference
   pictures, each logged (PLAN.md section 5). Pack contact sheets are made;
   the owner does not need to see them before the work goes on.

@@ -322,7 +322,10 @@ every model iterated at least fifteen times against real pictures. AGENTS.md
 not to stop recording it: a moved seed still owes its `GENERATOR_VERSION`
 line, because old saves still exist on the owner's own machine and the
 notice is how they learn. It deletes itself in the merge with the
-course-builder section.
+course-builder section. The same day the owner added that tournament week
+and the people go with Architect, while paths, bridges, markings, walls,
+landmarks and wildlife stay, and that the goal needs no asking for the
+graphics card or processor: "computer is open to you fully".
 
 ## The graphics profile
 

@@ -43,8 +43,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 - [ ] **Remove Architect** (the designer, its styles and hole design, hand
   tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
-  doc) and **move its world pieces into the generator** if the owner
-  confirms (PLAN.md 1b and question 1). Saved Architect courses migrate.
+  doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the
+  people** (`life.js`); **move into the generator** the paths and bridges,
+  clubhouse, markings, waterworks, walls, landmarks, wildlife, yardage book
+  and surface field, with **every path over water a bridge** (PLAN.md 1b).
+  Saved Architect courses migrate.
 - [ ] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
   date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
   meshes, names, tests, captures and fixtures. Saved courses migrate to New
@@ -53,9 +56,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   player names (study's data/names.json) with one `MIGRATIONS` entry from
   today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
   the partition shipped, door 2's suggestion, **the clickable map** in the
-  course card, studio and builder.
-- [ ] **Today's ten rebuilt as their new landscapes** (Links: owner's
-  question 2), with the models their research says they lack.
+  course card, studio and builder, and **a small globe in each landscape
+  thumbnail's corner** marking where it is.
+- [ ] **Today's ten rebuilt as their new landscapes** (Links stays, as
+  Scottish Links, outside the map), with the models their research says
+  they lack.
 - [ ] **The streets kit and the roads pass**: no road across a fairway (a
   bench invariant), the clubhouse and parking near an edge; roads anywhere
   in the builder (a `BUILT_VERSION` step).
