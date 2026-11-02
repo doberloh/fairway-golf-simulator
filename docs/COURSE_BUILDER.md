@@ -585,8 +585,49 @@ After trying the builder, the owner amended the goal:
       (PLACED) or standing on it taken out; one undo.
     - "In the editor, allow the user to adjust the tree height scale. show
       in real time" -- **Tree height**, 0.5 to 2 times, every tree redrawn as
-      it is dragged; saved into the trees' heights (and trunks) when the
-      course is saved (editing.js `treeScale`).
+      it is dragged; saved into the trees' heights, crowns and trunks when
+      the course is saved (editing.js `treeScale`). At first only the height
+      and trunk grew, so a 2x tree was as wide as before; asked "would tree
+      height adjustments also change the tree diameter?", the owner chose
+      the crown's width growing with the height (one slider, the whole tree
+      in proportion) over a second slider for width. The crown's width is
+      what a ball meets, so a bigger scale is also more tree to play
+      around. Clear trees from tees and greens measures at the scale, so the
+      crowns saved stop short of the green; raising the scale after clearing
+      can reach over it again.
+    - "let me be able to set scale per tree in the editor as well" --
+      **Size a tree**: click a tree (the one whose crown holds the point)
+      and **This tree**, 0.25 to 3 times (PLACED, the whole scale's bounds
+      widened), sizes it from what it was when picked -- height, crown and
+      trunk together, written into that tree's record, with Tree height
+      still applied on top when saved. The picked tree is ringed; a drag is
+      one Undo; Undo, Redo, Clear trees from tees and greens or another tool
+      lets it go (editing.js `treeAt`, `sizeTree`). One tree at a time, not
+      a brush: a brush of sizes was not asked for.
+    - "the edges of things are also extremely blurry in the 3d editor" and
+      "the traces i see in the 2d editor dont match the crispness of the
+      edges in the 3d editor" -- nothing had changed: the editor drew every
+      surface into one picture of the whole course, which on the owner's
+      Worthington file is a third of a metre a texel (12 million texels,
+      view.js `SMOOTH_TEXELS`), so close up each texel is a soft block and
+      an edge a soft staircase, where door 2's plan draws the outlines at
+      the screen's own pixels. Fixed with **a close-up sheet** (view.js
+      `closeUp`): the same outlines drawn again into 2048 texels a side over
+      a square round where the camera looks, its side twice the camera's
+      distance, 30 to 300 m (1.5 to 15 cm a texel), faded into the course's
+      picture at its edge, redrawn once the camera keeps still for 150 ms
+      (all PLACED). Rejected: a finer whole-course picture (four texels a
+      cell on an eighteen is 80 million texels, about 330 MB on the card,
+      too much for the machines Low is for), and outlines as draped meshes
+      (they would have to follow every hill). Measured on that file: the
+      redraw takes 1 ms at a 30 m square, 5 ms at 93 m, 35 ms at 300 m; an
+      800 m square took 270 ms for texels no finer than the course's, hence
+      the 300 m cap. 21 MB more on the card with its mipmaps.
+      `tools/builder-look.mjs <file>` photographs a hole's green from a few
+      heights and prints the square and its time.
+    - Found on the way: **"null" beside Close** in the top bar when a course
+      file was opened from the start page (a left-out Back to 2D button
+      written as text); builder.js `topTools` drops it.
     **Built that day, not yet played by a person** (the journeys drive each:
     builder-door-2, builder-door-2-osm, builder-lidar-folder, builder-tools).
 

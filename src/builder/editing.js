@@ -84,10 +84,11 @@ export function createEditor(doc) {
   homes: structuredClone(doc.homes || []),
   landscape: doc.landscape, name: doc.name,
   // THE TREES' HEIGHT SCALE (the owner, 1 November 2026: "allow the user to
-  // adjust the tree height scale. show in real time"): every tree's height
-  // and trunk times this, as drawn and as saved (toDoc); the trees keep their
-  // own heights, so it can go back to 1. A course saved at 1.2 opens at 1
-  // with its trees 1.2 times taller.
+  // adjust the tree height scale. show in real time"): every tree's height,
+  // crown width and trunk times this -- the whole tree in proportion (the
+  // owner's choice over a separate width) -- as drawn and as saved (toDoc);
+  // the trees keep their own sizes, so it can go back to 1. A course saved
+  // at 1.2 opens at 1 with its trees 1.2 times bigger.
   treeScale: 1,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
@@ -223,13 +224,33 @@ export function createEditor(doc) {
   setPar(hole, par) { api.editHoles(hs => { hs[hole].par = par; }); },
   addTree(tree) { remember('records', 0, 0, 0, 0); state.trees.push(tree); },
   setTreeScale(f) { state.treeScale = Math.max(.25, Math.min(3, f)); state.changed = true; },
+  // The tree whose crown holds a point (at least 1.5 m round its trunk), the
+  // nearest of several; -1 for none.
+  treeAt({x, z}) {
+   let ti = -1, td = Infinity; state.trees.forEach((t, q) => { const d = Math.hypot(t[0] - x, t[1] - z); if (d <= Math.max(1.5, t[3]) && d < td) { td = d; ti = q; } });
+   return ti;
+  },
+  // ONE TREE'S SIZE (the owner, 1 November 2026: "let me be able to set
+  // scale per tree in the editor as well"): tree `index` made `f` times the
+  // `base` record it had when picked -- height, crown and trunk together, as
+  // the whole-course scale does, which still applies on top. 0.25 to 3 times
+  // (PLACED, the whole scale's bounds). `first` starts one undo step, so a
+  // slider dragged on one pick is one Undo.
+  sizeTree(index, base, f, first = false) {
+   if (!state.trees[index]) return;
+   if (first) remember('records', 0, 0, 0, 0);
+   const k = Math.max(.25, Math.min(3, f));
+   state.trees[index] = [base[0], base[1], base[2] * k, base[3] * k, base[4] * k, ...base.slice(5)];
+  },
   // Crowns drawn in off the greens and tees, a tree with no room taken out
-  // (tree-clear.js); one undo step. Returns {shrunk, removed}.
+  // (tree-clear.js); one undo step. Returns {shrunk, removed}. Measured at
+  // the tree scale, as the crowns are drawn and saved, so a scaled crown
+  // stops short of the green too (raised afterwards, it can reach again).
   clearTreesFromTurf() {
-   const N = r.nx * r.nz, mask = new Uint8Array(N);
+   const N = r.nx * r.nz, mask = new Uint8Array(N), f = state.treeScale;
    for (const k of ['green', 'tee']) { const m = r.layers.masks.get(k); if (m) for (let q = 0; q < N; q++) if (m[q]) mask[q] = 1; }
    const got = clearTrees(state.trees, {nx: r.nx, nz: r.nz, cell: r.cell, x0: r.x0 + r.cell / 2, z0: r.z0 + r.cell / 2}, mask,
-    {get: t => ({x: t[0], z: t[1], crown: t[3]}), put: (t, crown) => { const n = [...t]; n[3] = crown; return n; }});
+    {get: t => ({x: t[0], z: t[1], crown: t[3] * f}), put: (t, crown) => { const n = [...t]; n[3] = crown / f; return n; }});
    if (!got.shrunk && !got.removed) return got;
    remember('records', 0, 0, 0, 0); state.trees = got.trees;
    return got;
@@ -261,7 +282,7 @@ export function createEditor(doc) {
   pickAt({x, z, kind = null}) {
    const hi = state.homes.findIndex(h => { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation), lx = (x - h.x) * c - (z - h.z) * sn, lz = (x - h.x) * sn + (z - h.z) * c; return Math.abs(lx) <= h.width / 2 && Math.abs(lz) <= h.depth / 2; });
    if (hi >= 0) return {type: 'home', index: hi};
-   let ti = -1, td = Infinity; state.trees.forEach((t, q) => { const d = Math.hypot(t[0] - x, t[1] - z); if (d <= Math.max(1.5, t[3]) && d < td) { td = d; ti = q; } });
+   const ti = api.treeAt({x, z});
    if (ti >= 0) return {type: 'tree', index: ti};
    const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); if (i < 0 || j < 0 || i >= r.nx || j >= r.nz) return null;
    const k0 = j * r.nx + i, want = kind && r.layers.masks.get(kind)?.[k0] ? kind : PAINT[r.layers.view[k0]];
@@ -412,7 +433,7 @@ export function createEditor(doc) {
     });
    }
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
-   state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3], t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
+   state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
    return {...doc, name: state.name, landscape: state.landscape, land: {...land, heights: Float32Array.from(land.heights)}, patches: patches.map(p => ({...p, heights: Float32Array.from(p.heights)})),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },

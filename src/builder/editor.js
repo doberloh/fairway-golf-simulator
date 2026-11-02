@@ -42,6 +42,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  let tool = {kind: 'navigate'}, radius = 8, strength = .5, selected = 0, draft = [], down = null, rampA = null;
  const setTool = t => {
   tool = t; draft = []; rampA = null; view.draft([]); view.setToolActive(t.kind !== 'navigate');
+  if (t.kind !== 'sizeTree') { unpick(); view.cursor(null); }
   for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t));
   status.textContent = HINT[t.kind]?.(t) ?? '';
  };
@@ -64,6 +65,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   clearHomes: () => 'Drag to take houses out.',
   moveShape: () => 'Drag a green, bunker, fairway, pond, tree or house to move it whole; Undo puts it back.',
   turnShape: () => 'Press on a green, bunker, pond or house and drag round its middle to turn it; Undo puts it back.',
+  sizeTree: () => 'Click a tree, then size it with This tree: its height, crown and trunk together. Undo puts it back.',
  };
  // Each tool's tooltip is its hint (HINT), as the status line gives it.
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), title: HINT[t.kind]?.(t) ?? text, onclick: () => setTool(t), ...extra}, text);
@@ -93,11 +95,33 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // The tree height scale, as the slider is dragged (editing.js treeScale).
  const scaleText = el('span', {}, `${s.treeScale.toFixed(2)}x`);
  let scaling = 0;
- const treeScale = el('input', {type: 'range', min: .5, max: 2, step: .05, value: s.treeScale, class: 'cb-treescale', title: 'Every tree\'s height, as drawn and as saved', oninput: e => {
+ const treeScale = el('input', {type: 'range', min: .5, max: 2, step: .05, value: s.treeScale, class: 'cb-treescale', title: 'Every tree\'s size -- height, crown width and trunk together -- as drawn and as saved', oninput: e => {
   editor.setTreeScale(+e.target.value); scaleText.textContent = `${s.treeScale.toFixed(2)}x`; refreshSave();
-  if (!scaling) scaling = requestAnimationFrame(() => { scaling = 0; view.refreshTrees(); });
+  if (sizing) sizeText();
+  if (!scaling) scaling = requestAnimationFrame(() => { scaling = 0; view.refreshTrees(); if (sizing) showPicked(); });
  }});
+ // One tree's size (editing.js sizeTree): Size a tree picks one, This tree
+ // sizes it from what it was when picked; one Undo for the drag. The picked
+ // tree is ringed. Undo, Redo or another tool lets it go.
+ let sizing = null;
+ const oneText = el('span', {}, '');
+ const showPicked = () => { const t = sizing && s.trees[sizing.index]; view.cursor(t ? t[0] : null, t?.[1], Math.max(1.5, (t?.[3] ?? 0) * s.treeScale)); };
+ const sizeText = () => { const t = s.trees[sizing.index], f = s.treeScale; oneText.textContent = `${(+oneTree.value).toFixed(2)}x · ${Math.round(t[2] * f)} m tall, ${Math.round(t[3] * f * 2)} m across`; };
+ const oneTree = el('input', {type: 'range', min: .25, max: 3, step: .05, value: 1, disabled: true, class: 'cb-onetree', title: 'The picked tree\'s size -- height, crown and trunk together -- from what it was when picked', oninput: e => {
+  if (!sizing) return;
+  editor.sizeTree(sizing.index, sizing.base, +e.target.value, !sizing.started); sizing.started = true; sizeText(); refreshSave();
+  if (!scaling) scaling = requestAnimationFrame(() => { scaling = 0; view.refreshTrees(); showPicked(); });
+ }});
+ function pickTree(p) {
+  const i = editor.treeAt(p);
+  if (i < 0) { status.textContent = 'No tree there: click on a tree\'s crown.'; return; }
+  sizing = {index: i, base: [...s.trees[i]], started: false};
+  oneTree.disabled = false; oneTree.value = 1; sizeText(); showPicked();
+  status.textContent = 'Size it with This tree on the left; Undo puts it back.';
+ }
+ function unpick() { sizing = null; oneTree.disabled = true; oneTree.value = 1; oneText.textContent = ''; }
  function clearTurfTrees() {
+  unpick(); showPicked();
   const got = editor.clearTreesFromTurf(); view.refreshTrees();
   status.textContent = got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.';
  }
@@ -118,7 +142,9 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
    button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Move shape', {kind: 'moveShape'}), button('Turn shape', {kind: 'turnShape'})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
-   el('label', {}, 'Tree height ', scaleText, treeScale)),
+   el('label', {}, 'Tree height ', scaleText, treeScale),
+   el('div', {class: 'cb-btns', style: 'margin-top:4px'}, button('Size a tree', {kind: 'sizeTree'})),
+   el('label', {}, 'This tree ', oneText, oneTree)),
  );
  buildTools();
 
@@ -214,6 +240,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    if (!mid) { let sx = 0, sz = 0; for (const k of pick.cells) { sx += r.x0 + (k % r.nx + .5) * r.cell; sz += r.z0 + (Math.floor(k / r.nx) + .5) * r.cell; } mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; }
    down = {pick, turn: true, mid: {x: mid.x, z: mid.z}, start: p, last: p}; return;
   }
+  if (tool.kind === 'sizeTree') { pickTree(p); return; }
   if (tool.kind === 'moveShape') { const pick = editor.pickAt({x: p.x, z: p.z}); if (!pick) { status.textContent = 'Nothing to move there: only rough.'; return; } down = {pick, start: p, last: p}; status.textContent = `Moving the ${pick.type === 'shape' ? pick.kind : pick.type === 'home' ? 'house' : 'tree'}: let go where it belongs.`; return; }
   down = {group: {}, last: p}; apply(p, true);
  });
@@ -221,7 +248,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  canvas.addEventListener('pointermove', e => {
   const p = view.pick(e);
   if (p) {
-   view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes'].includes(tool.kind) ? p.x : null, p.z, radius);
+   if (tool.kind === 'sizeTree') showPicked();
+   else view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
@@ -253,8 +281,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   else if (step.parts && step.cells) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }
  }
- function undo() { after(editor.undo()); }
- function redo() { after(editor.redo()); }
+ function undo() { unpick(); showPicked(); after(editor.undo()); }
+ function redo() { unpick(); showPicked(); after(editor.redo()); }
 
  // Save (the top bar's, and Ctrl+S): the course as a .fairway file; once
  // saved, again to the same file until it is renamed (saving.js).

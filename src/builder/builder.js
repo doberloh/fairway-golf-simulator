@@ -45,7 +45,7 @@ root.append(top, main, busy);
 
 export function setTitle(t) { document.getElementById('cbTitle').textContent = t || ''; }
 export function setBusy(text) { busy.textContent = text || ''; busy.hidden = !text; }
-export function topTools(...nodes) { const t = document.getElementById('cbTopTools'); t.replaceChildren(...nodes); }
+export function topTools(...nodes) { const t = document.getElementById('cbTopTools'); t.replaceChildren(...nodes.filter(n => n != null)); }   // a tool left out (null) is no tool, not the word
 export function show(node) { main.replaceChildren(node); }
 
 // SAVE, ON EVERY SCREEN (saving.js): the screen says what it would save --

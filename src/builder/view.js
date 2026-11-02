@@ -71,19 +71,22 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { g2.fillStyle = rgb(colours[r.layers.view[j * r.nx + i]]); g2.fillRect(i * F, j * F, F + .5, F + .5); }
  }
  const MARGIN = 8;   // cells round a redrawn part, so outlines there close outside it
- function drawSmooth(i0, i1, j0, j1) {
-  g2.save(); g2.beginPath(); g2.rect(i0 * F, j0 * F, (i1 - i0 + 1) * F, (j1 - j0 + 1) * F); g2.clip();
-  g2.fillStyle = rgb(colours[0]); g2.fillRect(i0 * F, j0 * F, (i1 - i0 + 1) * F, (j1 - j0 + 1) * F);
-  const px = x => (x - r.x0) / r.cell * F, pz = z => (z - r.z0) / r.cell * F;
+ // Cells [i0, i1] x [j0, j1] as outlines onto a sheet, `scale` texels a metre
+ // from (ox, oz) -- the whole course's sheet or the close-up one.
+ function drawOutlines(g, i0, i1, j0, j1, ox, oz, scale) {
+  const px = x => (x - ox) * scale, pz = z => (z - oz) * scale, ax = px(r.x0 + i0 * r.cell), az = pz(r.z0 + j0 * r.cell), w = (i1 - i0 + 1) * r.cell * scale, h = (j1 - j0 + 1) * r.cell * scale;
+  g.save(); g.beginPath(); g.rect(ax, az, w, h); g.clip();
+  g.fillStyle = rgb(colours[0]); g.fillRect(ax, az, w, h);
   for (const kind of [...LAYER_ORDER].reverse()) {
    if (!r.layers.masks.has(kind) || r.layers.hidden.has(kind)) continue;
    const rings = editor.outlines(kind, [i0, i1, j0, j1], MARGIN); if (!rings.length) continue;
-   g2.fillStyle = rgb(colours[PAINT.indexOf(kind)] ?? colours[0]); g2.beginPath();
-   for (const ring of rings) { ring.forEach(([x, z], q) => q ? g2.lineTo(px(x), pz(z)) : g2.moveTo(px(x), pz(z))); g2.closePath(); }
-   g2.fill('evenodd');
+   g.fillStyle = rgb(colours[PAINT.indexOf(kind)] ?? colours[0]); g.beginPath();
+   for (const ring of rings) { ring.forEach(([x, z], q) => q ? g.lineTo(px(x), pz(z)) : g.moveTo(px(x), pz(z))); g.closePath(); }
+   g.fill('evenodd');
   }
-  g2.restore();
+  g.restore();
  }
+ const drawSmooth = (i0, i1, j0, j1) => drawOutlines(g2, i0, i1, j0, j1, r.x0, r.z0, F / r.cell);
  // The sheet's part to the texture: the copy kept in memory, and only that
  // rectangle sent to the card.
  function upload(i0, i1, j0, j1, whole = false) {
@@ -103,9 +106,91 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  function smoothLater(i0, i1, j0, j1) {
   dirty = dirty ? [Math.min(dirty[0], i0), Math.max(dirty[1], i1), Math.min(dirty[2], j0), Math.max(dirty[3], j1)] : [i0, i1, j0, j1];
   clearTimeout(smoothTimer);
-  smoothTimer = setTimeout(() => { const d = dirty; dirty = null; if (!running || !d) return; drawSmooth(...d); upload(...d); }, 300);
+  smoothTimer = setTimeout(() => { const d = dirty; dirty = null; if (!running || !d) return; drawSmooth(...d); upload(...d); closeUp.redraw(d); }, 300);
  }
  const material = new T.MeshLambertMaterial({map: tex});
+
+ // THE CLOSE-UP SHEET (the owner, 1 November 2026: "the traces i see in the
+ // 2d editor dont match the crispness of the edges in the 3d editor"): the
+ // course's sheet is a third of a metre a texel on an eighteen, so close up an
+ // edge is a soft staircase, where door 2's plan draws its outlines at the
+ // screen's own pixels. So the same outlines are drawn again, CLOSE texels a
+ // side, over a square round where the camera looks -- its side about twice
+ // the camera's distance (PLACED: 30 to 300 m, so 1.5 to 15 cm a texel;
+ // farther out it stays 300 m round the middle of the view: a wider square
+ // took 270 ms to draw at 800 m on an eighteen, for texels no finer than the
+ // course's own) --
+ // and the ground shows that sheet inside the square, fading to the course's
+ // over its last twentieth. Redrawn once the camera has kept still a moment
+ // (PLACED: 150 ms) and has moved a quarter of the square or zoomed by a
+ // half; a brush's cells go on it at once and its outlines with the course's.
+ // 16 MB on the card, a third more with its mipmaps (PLACED).
+ const CLOSE = 2048;
+ const closeUp = (() => {
+  const sheet = document.createElement('canvas'); sheet.width = sheet.height = CLOSE;
+  const g = sheet.getContext('2d', {willReadFrequently: true});
+  const t = new T.CanvasTexture(sheet); t.flipY = false; t.colorSpace = T.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  // (x0, z0, side, on): the square in metres.
+  const box = new T.Vector4(0, 0, 1, 0);
+  let timer = 0, wantX = 0, wantZ = 0, wantSide = 0;
+  // The cells under the square (and the margin round it).
+  const cellsOf = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)), Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
+  const scale = () => CLOSE / box.z;
+  // Cells [i0, i1] x [j0, j1] of the course onto the sheet; `smooth` as
+  // outlines, else as cells (a brush stroke); the part sent to the card.
+  function draw(c, smooth) {
+   const [i0, i1, j0, j1] = c; if (i1 < i0 || j1 < j0) return;
+   const k = scale();
+   if (smooth) drawOutlines(g, i0, i1, j0, j1, box.x, box.y, k);
+   else for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { g.fillStyle = rgb(colours[r.layers.view[j * r.nx + i]]); g.fillRect((r.x0 + i * r.cell - box.x) * k, (r.z0 + j * r.cell - box.y) * k, r.cell * k + .5, r.cell * k + .5); }
+   const x = Math.max(0, Math.floor((r.x0 + i0 * r.cell - box.x) * k)), y = Math.max(0, Math.floor((r.z0 + j0 * r.cell - box.y) * k));
+   const w = Math.min(CLOSE, Math.ceil((r.x0 + (i1 + 1) * r.cell - box.x) * k)) - x, h = Math.min(CLOSE, Math.ceil((r.z0 + (j1 + 1) * r.cell - box.y) * k)) - y;
+   if (w <= 0 || h <= 0) return;
+   if (w * h > CLOSE * CLOSE / 4) { t.needsUpdate = true; return; }
+   const part = g.getImageData(x, y, w, h).data, src = new T.DataTexture(new Uint8Array(part.buffer, part.byteOffset, part.length), w, h, T.RGBAFormat);
+   src.colorSpace = T.SRGBColorSpace; src.needsUpdate = true;
+   try { renderer.copyTextureToTexture(src, t, null, new T.Vector2(x, y)); } catch { t.needsUpdate = true; }
+   src.dispose();
+  }
+  // The cells a box of metres (or cells) reaches inside the square.
+  const inside = ([i0, i1, j0, j1]) => { const c = cellsOf(box.x, box.x + box.z, box.y, box.y + box.z); return [Math.max(i0, c[0]), Math.min(i1, c[1]), Math.max(j0, c[2]), Math.min(j1, c[3])]; };
+  let ms = 0;
+  function place() {
+   const t0 = performance.now();
+   box.set(wantX - wantSide / 2, wantZ - wantSide / 2, wantSide, 1);
+   g.fillStyle = rgb(colours[0]); g.fillRect(0, 0, CLOSE, CLOSE);
+   draw(cellsOf(box.x, box.x + box.z, box.y, box.y + box.z), true); t.needsUpdate = true;
+   ms = performance.now() - t0;
+  }
+  return {
+   texture: t, box, ms: () => ms,
+   // Each frame: where the camera looks, and whether the square should follow.
+   check() {
+    const tg = controls.target, side = Math.max(30, Math.min(300, camera.position.distanceTo(tg) * 2));
+    const far = !box.w || Math.hypot(tg.x - (box.x + box.z / 2), tg.z - (box.y + box.z / 2)) > box.z / 4 || side / box.z > 1.5 || box.z / side > 1.5;
+    if (!far) { clearTimeout(timer); timer = 0; return; }
+    if (wantX === tg.x && wantZ === tg.z && wantSide === side && timer) return;
+    wantX = tg.x; wantZ = tg.z; wantSide = side;
+    clearTimeout(timer); timer = setTimeout(() => { timer = 0; if (running) place(); }, 150);
+   },
+   cells: c => { if (box.w) draw(inside(c), false); },
+   redraw: c => { if (box.w) draw(inside(c), true); },
+   all: () => { if (box.w) place(); },
+   dispose: () => { clearTimeout(timer); t.dispose(); },
+  };
+ })();
+ material.onBeforeCompile = sh => {
+  sh.uniforms.closeMap = {value: closeUp.texture}; sh.uniforms.closeBox = {value: closeUp.box};
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGroundXZ;')
+   .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGroundXZ = (modelMatrix * vec4(transformed, 1.0)).xz;');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D closeMap;\nuniform vec4 closeBox;\nvarying vec2 vGroundXZ;')
+   .replace('#include <map_fragment>', `#include <map_fragment>
+ if (closeBox.w > 0.5) {
+  vec2 cuv = (vGroundXZ - closeBox.xy) / closeBox.z;
+  float edge = min(min(cuv.x, 1.0 - cuv.x), min(cuv.y, 1.0 - cuv.y));
+  if (edge > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(closeMap, cuv).rgb, smoothstep(0.0, 0.05, edge));
+ }`);
+ };
 
  // ---- the land.
  const stride = Math.max(1, Math.ceil(Math.sqrt(L.nx * L.nz / MAX_VERTS)));
@@ -178,12 +263,11 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : s.landscape === 'haunted' ? '#3a3036' : '#5b4634'}), n);
   const m = new T.Matrix4(), q = new T.Quaternion(), own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
   for (let i = 0; i < n; i++) {
-   // The shape at the tree's own height, then stretched up by the scale (a
-   // shrub capped by its width grows with it too).
-   const [x, z, h0, cr0, trunk] = s.trees[i], h = Math.max(.8, h0), cr = Math.max(.6, cr0) * wide, y = editor.height(x, z);
-   const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)) * f, y0 = y + h * base * f;
+   // The whole tree at the scale -- height, crown and trunk -- as toDoc saves it.
+   const [x, z, h0, cr0, trunk] = s.trees[i], h = Math.max(.8, h0 * f), cr = Math.max(.6, cr0 * f) * wide, y = editor.height(x, z);
+   const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)), y0 = y + h * base;
    m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(i, m);
-   const tr = Math.max(.12, (trunk || h * .02) * f * (s.landscape === 'redwood' ? 1.6 : 1));
+   const tr = Math.max(.12, (trunk ? trunk * f : h * .02) * (s.landscape === 'redwood' ? 1.6 : 1));
    m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(i, m);
    // Each tree its own shade: a hash of where it stands.
    const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
@@ -284,7 +368,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   camera.position.add(move); controls.target.add(move);
  }
  let running = true, last = performance.now();
- (function frame(now = performance.now()) { if (!running) return; fly(Math.min(.1, (now - last) / 1000)); last = now; controls.update(); renderer.render(scene, camera); requestAnimationFrame(frame); })();
+ (function frame(now = performance.now()) { if (!running) return; fly(Math.min(.1, (now - last) / 1000)); last = now; controls.update(); closeUp.check(); renderer.render(scene, camera); requestAnimationFrame(frame); })();
  onReady();
 
  return {
@@ -313,15 +397,15 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    const i0 = Math.max(0, Math.floor((x0 - r.x0) / r.cell)), i1 = Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell));
    const j0 = Math.max(0, Math.floor((z0 - r.z0) / r.cell)), j1 = Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell));
    if (i1 < i0 || j1 < j0) return;
-   drawCells(i0, i1, j0, j1); upload(i0, i1, j0, j1);
+   drawCells(i0, i1, j0, j1); upload(i0, i1, j0, j1); closeUp.cells([i0, i1, j0, j1]);
    smoothLater(i0, i1, j0, j1);
   },
   // Every surface redrawn smooth (a layer hidden or shown, the landscape changed).
-  refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); },
-  refreshAll() { setSky(); colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
-  texels: () => ({width: W, height: H, perCell: F}),
+  refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); },
+  refreshAll() { setSky(); colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
+  texels: () => ({width: W, height: H, perCell: F, close: closeUp.box.w ? {side: closeUp.box.z, cm: closeUp.box.z / CLOSE * 100, ms: closeUp.ms()} : null}),
   refreshWater, refreshTrees, refreshHomes, refreshHoles, frameHole, planView,
   held, fly,
-  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
+  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); closeUp.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
  };
 }

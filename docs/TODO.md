@@ -99,7 +99,9 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   owner's second list of 1 November 2026): the scorecard (par and index
   set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
   Back to 2D, Close and Back asking twice, the editor's landscape-only paint
-  and its landscape look, Tree height, Clear trees from tees and greens,
+  and its landscape look, Tree height (the whole tree since), Size a tree,
+  the editor's close-up sheet (sharp edges near the camera; seen only in
+  tools/builder-look.mjs pictures), Clear trees from tees and greens,
   Fill outside removing the trees too, the views following the window.
   Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
   and builder-tools journeys and tests/tree-clear.test.mjs. **To check by

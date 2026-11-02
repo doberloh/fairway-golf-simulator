@@ -681,9 +681,15 @@ Pacific Northwest's pines, the mountains' spruces and the redwoods; round
 crowns for the oak landscapes, copper and gold in Autumn; palms on the
 Island; low spreading trees in the Desert; squat shrubs on a links) -- and
 offers only that landscape's own ground types to paint (another landscape
-picked, the tools change with it). **Tree height** scales every tree's
-height at once, as you drag, and the course is saved at that scale;
-**Clear trees from tees and greens** does what it does in door 2. It is the
+picked, the tools change with it). **Tree height** scales every tree
+whole -- taller, wider crowns, thicker trunks -- at once, as you drag, and
+the course is saved at that scale; **Clear trees from tees and greens**
+does what it does in door 2, at the scale set (raise the scale after
+clearing and crowns can reach over a green again; clear once more).
+**Size a tree** picks one tree with a click (it is ringed) and **This
+tree** makes it a quarter to three times the size it was -- taller, wider
+and thicker together; Tree height still applies on top, and Undo puts it
+back. It is the
 same for all three doors, and has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
 with **shown/hidden** and an **Erase** brush for each; **Paint** puts a

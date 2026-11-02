@@ -46,8 +46,30 @@ test('in the editor: one press, one undo; the tree height scale saved with the t
  e.setTreeScale(1.5);
  const d = e.toDoc();
  assert.equal(d.trees[2], 15 * 1.5); assert.equal(d.trees[2 * TREE_STRIDE + 2], 14 * 1.5, 'every tree, heights times the scale');
- assert.equal(s.trees[0][2], 15, 'the trees keep their own heights');
+ assert.equal(d.trees[3], 8 * 1.5, 'the crown wider in proportion'); assert.ok(Math.abs(d.trees[4] - .4 * 1.5) < 1e-6, 'and the trunk');
+ assert.equal(s.trees[0][2], 15, 'the trees keep their own heights'); assert.equal(s.trees[0][3], 8, 'and crowns');
  assert.ok(s.changed);
+});
+
+test('in the editor: one tree sized from what it was when picked, the whole scale on top, one undo for the drag', () => {
+ const e = createEditor(doc()), s = e.state;
+ const i = e.treeAt({x: 60, z: 2}); assert.equal(i, 2, 'the tree whose crown holds the point');
+ assert.equal(e.treeAt({x: 200, z: 200}), -1);
+ const base = [...s.trees[i]], steps = s.undo.length;
+ e.sizeTree(i, base, 1.5, true); e.sizeTree(i, base, 2);
+ assert.deepEqual(s.trees[i].slice(2, 5).map(v => +v.toFixed(4)), [28, 8, .8], 'twice: height, crown and trunk');
+ assert.deepEqual(s.trees[0].slice(2, 5), [15, 8, Math.fround(.4)], 'the others as they were');
+ assert.equal(s.undo.length, steps + 1, 'one undo step');
+ e.setTreeScale(1.5); assert.equal(e.toDoc().trees[i * TREE_STRIDE + 2], 28 * 1.5, 'the whole scale on top');
+ e.sizeTree(i, base, 9); assert.equal(s.trees[i][2], 14 * 3, 'at most 3 times');
+ e.undo(); assert.equal(s.trees[i][2], 14, 'undone whole');
+});
+
+test('in the editor: clearing measured at the tree scale, so the crowns saved stop short of the green', () => {
+ const plain = createEditor(doc()); plain.clearTreesFromTurf();
+ const e = createEditor(doc()); e.setTreeScale(1.5); e.clearTreesFromTurf();
+ const room = plain.state.trees[0][3];
+ assert.ok(Math.abs(e.toDoc().trees[3] - room) < 1e-4, `the saved crown ${e.toDoc().trees[3]} as the room ${room}`);
 });
 
 test('a hole\'s yards as the game measures them: along the line through its bends; a bend going back skipped; white and red the nearer tees', () => {

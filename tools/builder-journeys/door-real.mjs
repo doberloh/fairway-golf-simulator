@@ -323,12 +323,31 @@ export default function ({journey, SHOTS}) {
   const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') shape = 'round'; else if (o.isInstancedMesh && o.geometry.type === 'ConeGeometry' && !shape) shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
   if (look.sky !== '#c8d7df' || look.shape !== 'round') throw Error(`the editor should look like a links: ${JSON.stringify(look)}`);
   // The tree height scale, at once in the view.
-  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; } }); return top; });
-  const top0 = await crownTop();
+  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0, wide = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; wide = m.elements[0]; } }); return [top, wide]; });
+  const [top0, wide0] = await crownTop();
   await page.locator('.cb-treescale').fill('1.5'); await page.waitForTimeout(200);
-  const top1 = await crownTop();
-  if (await page.evaluate(() => window.fairwayBuilder.editor.editor.state.treeScale) !== 1.5 || !(top1 > top0)) throw Error(`the tree height scale should grow the trees at once: ${top0} -> ${top1}`);
+  const [top1, wide1] = await crownTop();
+  if (await page.evaluate(() => window.fairwayBuilder.editor.editor.state.treeScale) !== 1.5 || !(top1 > top0) || !(wide1 > wide0)) throw Error(`the tree height scale should grow the trees, taller and wider, at once: ${top0} -> ${top1}, ${wide0} -> ${wide1}`);
   await page.locator('.cb-treescale').fill('1');
+  // One tree sized: Size a tree, a click on a tree where the camera sees it,
+  // This tree to 2 -- that tree twice as tall, the rest as they were.
+  await page.locator('[data-tool="sizeTree:"]').click();
+  const heights = () => page.evaluate(() => window.fairwayBuilder.editor.editor.state.trees.map(t => t[2]));
+  const h0 = await heights();
+  const treeAt = await page.evaluate(() => {
+   const {editor, view} = window.fairwayBuilder.editor, box = view.canvas.getBoundingClientRect(), V = view.camera.position.constructor;
+   for (const t of editor.state.trees) { const v = new V(t[0], editor.height(t[0], t[1]), t[1]).project(view.camera); if (Math.abs(v.x) < .8 && Math.abs(v.y) < .8 && v.z < 1) return {x: box.left + (v.x + 1) / 2 * box.width, y: box.top + (1 - v.y) / 2 * box.height}; }
+   return null;
+  });
+  if (!treeAt) throw Error('the journey needs a tree in view to size');
+  await page.mouse.click(treeAt.x, treeAt.y);
+  if (await page.locator('.cb-onetree').isDisabled()) throw Error(`clicking a tree should pick it to size: ${await page.locator('.cb-status').textContent()}`);
+  await page.locator('.cb-onetree').fill('2'); await page.waitForTimeout(200);
+  const h1 = await heights(), grown = h1.map((h, k) => h / h0[k]).filter(r => Math.abs(r - 1) > 1e-6);
+  if (grown.length !== 1 || Math.abs(grown[0] - 2) > 1e-3) throw Error(`This tree should size one tree, twice as tall: ${grown}`);
+  await page.getByRole('button', {name: 'Undo'}).click();
+  if ((await heights()).some((h, k) => h !== h0[k]) || !(await page.locator('.cb-onetree').isDisabled())) throw Error('Undo should put the tree back and let it go');
+  await page.locator('[data-tool="navigate:"]').click();
   await page.getByRole('button', {name: 'Clear trees from tees and greens'}).click();
   if (!/greens and tees|reaches over a green/.test(await page.locator('.cb-status').textContent())) throw Error('clearing trees should say what it did');
   // The window resized: the view follows.

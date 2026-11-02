@@ -11370,6 +11370,37 @@ in a survey pit, and the test golfers putted at it forty times: 168 strokes
 against par 71. With each outer ring a green of its own (built-world.js
 `greenParts`): 88.5 strokes, nothing stuck.
 
+## The editor's close-up sheet (1 November 2026)
+
+The owner found the 3D editor's edges "extremely blurry" against door 2's
+plan. Measured with `tools/builder-look.mjs` on the owner's Worthington file
+(1114 x 1154 m, the editing grid 0.5 m, 2228 x 2308 cells): the editor's one
+picture of the whole course held 3403 x 3527 texels -- 1.53 texels a cell,
+**0.33 m a texel** -- capped by the 12-million-texel budget (view.js
+`SMOOTH_TEXELS`, PLACED, unchanged since it was set on 31 October). Photographed from 12 m
+and 40 m above hole 1's green, the green's and bunker's edges were soft
+staircases a third of a metre a step. Door 2's plan draws the same outlines
+as vectors at the screen's pixels, hence the difference.
+
+The fix draws the outlines a second time into a 2048-texel square round
+where the camera looks (view.js `closeUp`; every number PLACED): the side
+twice the camera's distance from what it looks at, within 30 to 300 m, so
+**1.5 to 14.6 cm a texel**; faded into the whole picture over the square's
+last twentieth; redrawn 150 ms after the camera stops, once it has moved a
+quarter of the square or zoomed by half. Redraw times on that file, with the
+card idle: 0.9 ms (30 m square, from 8 m up), 5 ms (93 m, from 40 m), 35 ms
+(300 m, from 150 m and 400 m). With an 800 m cap it took **270 ms** at 800 m,
+for 39 cm texels -- coarser than the whole picture's 33 cm -- so the cap is
+300 m. The time is the outlines traced over the square (editing.js
+`outlines`), which grows with its area. Cost on the card: 2048 x 2048 x 4
+bytes = 16.8 MB, about 22 MB with mipmaps, and one more texture read per
+ground pixel; nothing was measured on Low or a weak machine, since the
+editor is not the game.
+
+Rejected: the whole picture at four texels a cell (9112 x 9232, 84 million
+texels, about 336 MB) and the outlines as meshes laid on the ground (every
+edge would have to follow the land, and be rebuilt under every brush).
+
 ## A built course's yards, and the builder's card (1 November 2026)
 
 The owner found an imported course's yards "off". Measured on the
