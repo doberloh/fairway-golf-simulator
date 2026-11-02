@@ -63,8 +63,8 @@ const sameGrid = (a, b) => {
 };
 
 for (const settings of [
- {seed: 'PARALLEL', biome: 'pnw', holes: 9},
- {seed: 'PARALLEL', biome: 'island', holes: 9},
+ {seed: 'PARALLEL', biome: 'puget', holes: 9},
+ {seed: 'PARALLEL', biome: 'keys', holes: 9},
  {seed: 'PARALLEL', biome: 'links', holes: 18},
 ]) {
  test(`${settings.biome} ${settings.holes}: the pooled grid is the serial grid, byte for byte`, async () => {
@@ -78,7 +78,7 @@ for (const settings of [
 }
 
 test('a pool that fails falls back to computing here, and gets the same grid', async () => {
- const settings = {seed: 'PARALLEL', biome: 'pnw', holes: 9};
+ const settings = {seed: 'PARALLEL', biome: 'puget', holes: 9};
  const serial = generateWorld(settings);
  const broken = {rows: async () => null, extras: async () => null};
  sameGrid(serial.groundGrid, (await drive(settings, {gridPool: broken})).groundGrid);
@@ -98,7 +98,7 @@ const referenceAtlas = (w, ex, ez, Sx, Sz) => {
  for (let j = 0; j < Sz; j++) for (let i = 0; i < Sx; i++) {const x = ((i + .5) / Sx * 2 - 1) * ex, z = ((j + .5) / Sz * 2 - 1) * ez, k = (j * Sx + i) * 4; const lake = w.lakeOwner(x, z, 7); owners[k] = (lake || w.nearest(x, z).h).hole; owners[k + 1] = w.groundCover(x, z) === 'straw' ? 1 : 0; owners[k + 2] = (w.streams.at(x, z)?.id ?? -1) + 1; owners[k + 3] = lake ? 1 : 0;}
  return owners;
 };
-for (const settings of [{seed: 'PARALLEL', biome: 'links', holes: 9}, {seed: 'PARALLEL', biome: 'island', holes: 9}]) {
+for (const settings of [{seed: 'PARALLEL', biome: 'links', holes: 9}, {seed: 'PARALLEL', biome: 'keys', holes: 9}]) {
  test(`${settings.biome}: the ownership atlas from the workers is the one ground.js built`, () => {
   const w = generateWorld(settings), ex = w.groundGrid.halfX, ez = w.groundGrid.halfZ, {Sx, Sz} = ownerAtlasSize(ex, ez);
   const reference = referenceAtlas(w, ex, ez, Sx, Sz);

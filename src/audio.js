@@ -29,6 +29,7 @@ const FAMILY_C_SCORES=new Set(['ace','eagle','birdie','par','bogey']);
 const CHIP_GAIN=CHIP_LEVELS.moment,UI_GAIN=CHIP_LEVELS.ui;
 import {crownRadius} from './species.js';
 import {GROUNDS} from './grounds.js';
+import {regionOf} from './regions.js';
 
 const KEY='fairway-sound-v1';
 // Volumes are percentages. `on` is the one switch for everything.
@@ -125,7 +126,7 @@ export function createGameAudio(){
   // only a change of biome restarts anything.
   setScene({biome,wind,tempC,night,waterDist,waterKind=null,waterPan=0}){
    sceneState={wind,tempC,night,waterDist,waterKind,waterPan};
-   const next=SCENES[biome]?biome:'midwest';
+   const next=SCENES[biome]?biome:SCENES[regionOf(biome)]?regionOf(biome):'midwest';
    if(next!==scene){scene=next;if(amb)startScene();return;}
    if(amb)amb.set(sceneState);
   },

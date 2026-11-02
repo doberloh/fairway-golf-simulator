@@ -16,7 +16,7 @@ function shotAt(h, target, back) {
 }
 
 test('a ball rolled into a boulder does not pass through it', () => {
- const w = world({holes: 9, biome: 'mountain', seed: 'rocks'});
+ const w = world({holes: 9, biome: 'rockies', seed: 'rocks'});
  assert.ok(w.rocks.length > 100, `only ${w.rocks.length} rocks generated`);
  let tested = 0, through = 0;
  for (const h of w.holes) {
@@ -37,7 +37,7 @@ test('a ball rolled into a boulder does not pass through it', () => {
 });
 
 test('rocks carry the reach and crown height physics needs', () => {
- for (const biome of ['mountain', 'desert', 'pnw']) {
+ for (const biome of ['rockies', 'sonoran', 'puget']) {
   const w = world({holes: 9, biome, seed: 'rocks-' + biome});
   for (const r of w.rocks) {
    assert.ok(r.reach > 0, 'a rock with no reach cannot be hit');
@@ -48,7 +48,7 @@ test('rocks carry the reach and crown height physics needs', () => {
 });
 
 test('an unlit floodlight pole is not there to hit, and a lit one is', () => {
- const w = world({holes: 9, biome: 'midwest', seed: 'poles'});
+ const w = world({holes: 9, biome: 'heartland', seed: 'poles'});
  const h = w.holes[0];
  const back = {x: h.center(70), z: 70};
  const ahead = {x: h.center(120), z: 120};

@@ -39,7 +39,7 @@ test('the report names the build, the versions and where the player was', () => 
  const text = diagnosticReport({
   build: {label: 'abc1234 (2026-09-25 13:40)'},
   app: {generator: 32, schema: 8, mode: 'play', course: 'Sitka Bluff', hole: '7 of 18',
-        biome: 'pnw', tier: 'high', frameCap: 60},
+        biome: 'puget', tier: 'high', frameCap: 60},
  });
  assert.match(text, /version\s+abc1234/);
  assert.match(text, /generator\s+32/);
@@ -176,7 +176,7 @@ test('a report assembled from real-shaped facts holds together', () => {
  const text = diagnosticReport({
   build: {label: 'abc1234 (2026-09-25 13:40)'},
   app: {generator: 32, schema: 8, mode: 'play', course: 'Leeward Cay', hole: '3 of 9',
-        biome: 'island', tier: 'medium', frameCap: 0},
+        biome: 'keys', tier: 'medium', frameCap: 0},
   device: deviceFacts({navigator: {userAgent: 'TestBrowser/1.0', hardwareConcurrency: 8,
                                    maxTouchPoints: 0, language: 'en-GB'},
                        screen: {width: 2560, height: 1440}, innerWidth: 1280, innerHeight: 720,

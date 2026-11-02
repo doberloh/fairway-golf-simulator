@@ -9,6 +9,7 @@ import {show, setTitle, setBusy, topTools, home, ui, setSaver} from './builder.j
 import {courseFile, fileName} from '../course-file.js';
 import {SETTINGS, CATEGORIES, DEFAULT_COURSE, validateSettings, bound} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
+import {landscapeMap} from '../ui-map.js';
 import {generateWorldSteps} from '../course.js';
 import {freezeWorld} from '../freeze.js';
 import {GROUNDS} from '../grounds.js';
@@ -58,7 +59,10 @@ function field(f, s, onChange) {
   input = el('input', {id, type: 'range', min, max, step: f.step ?? 1, value: v, oninput: e => { out.textContent = `${e.target.value}${f.unit || ''}`; }, onchange: e => onChange(+e.target.value)});
   return el('div', {class: 'cb-field', title: f.tip || ''}, el('label', {for: id}, f.label), input, out);
  }
- return el('div', {class: 'cb-field', title: f.tip || ''}, el('label', {for: id}, f.label), input, f.tip ? el('small', {}, f.tip.length > 120 ? f.tip.slice(0, 117) + '…' : f.tip) : null);
+ // The landscape also as the map (the US landscapes goal): a region pressed
+ // picks it, as the list does.
+ const map = f.key === 'biome' ? landscapeMap(document, {built: f.options, chosen: v, onPick: k => { input.value = k; onChange(k); }}).el : null;
+ return el('div', {class: 'cb-field', title: f.tip || ''}, el('label', {for: id}, f.label), map, input, f.tip ? el('small', {}, f.tip.length > 120 ? f.tip.slice(0, 117) + '…' : f.tip) : null);
 }
 
 export function open(start = null) {

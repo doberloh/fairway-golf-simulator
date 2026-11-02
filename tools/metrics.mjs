@@ -581,25 +581,19 @@ METRICS.farSeated = {
 //     placed them with);
 //   - the walk from each green to the next hole's back tee, in metres;
 //   - nines that return: the 9th green (and the 18th) within 200 m of the 1st
-//     tee, PLACED as "in sight of the clubhouse" until phase 4 builds one;
-//   - variety: how many different concepts and templates a course uses
-//     (Architect only; Classic has none).
-// One invariant: an Architect hazard without a recorded reason.
+//     tee, PLACED as "in sight of the clubhouse".
+// (The variety of concepts and templates, and the invariant that every
+// hazard had a reason, were Architect's and went with it.)
 METRICS.design = {
- describe: 'bunkers where drives land, green-to-tee walks, returning nines, and the variety of an Architect course',
+ describe: 'bunkers where drives land, green-to-tee walks and returning nines',
  run(w) {
-  const counts = {fairwayBunkers: 0, nearLanding: 0, nines: 0, returning: 0}, invariants = {hazardWithoutReason: 0};
-  const series = {walk: [], concepts: [], templates: []};
+  const counts = {fairwayBunkers: 0, nearLanding: 0, nines: 0, returning: 0};
+  const series = {walk: []};
   for (const h of w.holes) {
    const zones = landingZones(h);
    for (const b of h.bunkers) if (!b.greenSide) {
     counts.fairwayBunkers++;
     if (Math.min(Math.abs(b.z - zones.good), Math.abs(b.z - zones.average)) <= 30) counts.nearLanding++;
-   }
-   if (h.design) {
-    const why = h.design.reasons || [];
-    h.bunkers.forEach((_, i) => { if (!why.some(r => r.kind === 'bunker' && r.i === i)) invariants.hazardWithoutReason++; });
-    h.ponds.forEach((_, i) => { if (!why.some(r => r.kind === 'pond' && r.i === i)) invariants.hazardWithoutReason++; });
    }
   }
   for (let i = 0; i + 1 < w.holes.length; i++) {
@@ -612,11 +606,7 @@ METRICS.design = {
    const g = w.holes[last].worldGreen;
    if (Math.hypot(g.x - home.x, g.z - home.z) <= 200) counts.returning++;
   }
-  if (w.holes.some(h => h.design)) {
-   series.concepts.push(new Set(w.holes.map(h => h.design?.concept)).size);
-   series.templates.push(new Set(w.holes.map(h => h.design?.template).filter(Boolean)).size);
-  }
-  return {series, counts, invariants};
+  return {series, counts, invariants: {}};
  },
 };
 

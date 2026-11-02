@@ -10,7 +10,7 @@ export async function fixture(SHOTS, name = 'shaping-fixture', settings = {}) {
  const {freezeWorld} = await import('../../src/freeze.js');
  const {writeBuiltFile} = await import('../../src/course-doc.js');
  const file = path.join(SHOTS, `${name}.fairway`);
- if (!fs.existsSync(file)) fs.writeFileSync(file, await writeBuiltFile(freezeWorld(generateWorld({...DEFAULT_COURSE, seed: 'SHAPING', biome: 'midwest', holes: 9, ...settings}), {name: 'Shaping test'}), 1));
+ if (!fs.existsSync(file)) fs.writeFileSync(file, await writeBuiltFile(freezeWorld(generateWorld({...DEFAULT_COURSE, seed: 'SHAPING', biome: 'heartland', holes: 9, ...settings}), {name: 'Shaping test'}), 1));
  return file;
 }
 

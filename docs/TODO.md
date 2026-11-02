@@ -54,12 +54,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   network without a stub, does every creek crossing have a bridge, do the
   animals move (High), and does the pause menu's *Yardage book* download?
   A ball hit onto a bridge and against a wall in a round (Node only).
-- [ ] **Foundations**: the `REGION` table and inheritance; the new keys and
-  player names (study's data/names.json) with one `MIGRATIONS` entry from
-  today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
-  the partition shipped, door 2's suggestion, **the clickable map** in the
-  course card, studio and builder, and **a small globe in each landscape
-  thumbnail's corner** marking where it is.
+- [ ] **Not yet played by a person: the map, the globes and the new names**
+  (step 2, 2 November 2026; SCHEMA_VERSION 17, GENERATOR_VERSION 56). Seen
+  in the smoke journey's pictures (Course studio, desktop and phone: the map
+  over the pictures, a region pressed picks it, Scottish Links beside it, a
+  globe in every picture's corner) and driven by `landscape-map`,
+  `every-landscape` and the builder's Worthington journey (door 2 suggested
+  Heartland). Not seen: Endless's landscape step with its map, the builder's
+  door 1 map, the globes at a glance on a real screen, an old save or course
+  file opening on its new landscape in the game. To check: Play, Endless,
+  pick a landscape on the map; open a course saved before today.
 - [ ] **Today's ten rebuilt as their new landscapes** (Links stays, as
   Scottish Links, outside the map), with the models their research says
   they lack.
@@ -1653,6 +1657,23 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## US landscapes (branch `course-builder`, from 2 November 2026)
 
+- [x] **Foundations**: the `REGION` table and inheritance; the new keys and
+  player names (study's data/names.json) with one `MIGRATIONS` entry from
+  today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
+  the partition shipped, door 2's suggestion, **the clickable map** in the
+  course card, studio and builder, and **a small globe in each landscape
+  thumbnail's corner** marking where it is.
+  **Built** (step 2): regions.js (every landscape, its region, place and
+  the old keys), biomes.js keyed by region with each landscape's `LAND` over
+  it, the new keys and names with MIGRATIONS 16 (schema 17) and the old keys
+  read in course files, profiles and endless seeds (generator 56: the seven
+  renamed landscapes' world pieces moved), tests/landscapes-complete.test.mjs,
+  seasons.js (summer only until step 9; the turf palettes come with the
+  seasons), the partition shipped (us-map-data.js, 215 KB, tools/us-map.mjs),
+  the clickable map in Course studio, Endless and the builder's doors 1 and
+  2, a globe on every landscape picture, door 2's suggestion from where the
+  survey lies. Not seen by a person: the open entry *the map, the globes and
+  the new names*.
 - [x] **Remove Architect** (the designer, its styles and hole design, hand
   tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
   doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the

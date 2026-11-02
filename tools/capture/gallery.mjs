@@ -13,24 +13,24 @@ const OUT = `${process.env.MEDIA_OUT || 'bench/shots/media'}/gallery`;
 const behind = {fromPin: 70, around: 170, height: 22, pitch: -14};
 const tee = h => ({hole: h, along: 0, height: 9, look: 'pin', pitch: -6});
 export const SHOTS = [
- {name: 'pacific-northwest-morning', biome: 'pnw', seed: 'CEDAR', hole: 1, when: 'morning', cam: behind},
- {name: 'pacific-northwest-golden', biome: 'pnw', seed: 'CEDAR', hole: 3, when: 'golden', cam: tee(3)},
- {name: 'desert-golden', biome: 'desert', seed: 'MESA', hole: 1, when: 'golden', cam: behind},
- {name: 'desert-midday', biome: 'desert', seed: 'MESA', hole: 2, when: 'noon', cam: {...behind, around: 190, height: 26}},
- {name: 'mountain-morning', biome: 'mountain', seed: 'SUMMIT', hole: 1, when: 'morning', cam: tee(1)},
- {name: 'mountain-afternoon', biome: 'mountain', seed: 'SUMMIT', hole: 4, when: 'afternoon', cam: {...behind, around: 205, height: 28}},
+ {name: 'pacific-northwest-morning', biome: 'puget', seed: 'CEDAR', hole: 1, when: 'morning', cam: behind},
+ {name: 'pacific-northwest-golden', biome: 'puget', seed: 'CEDAR', hole: 3, when: 'golden', cam: tee(3)},
+ {name: 'desert-golden', biome: 'sonoran', seed: 'MESA', hole: 1, when: 'golden', cam: behind},
+ {name: 'desert-midday', biome: 'sonoran', seed: 'MESA', hole: 2, when: 'noon', cam: {...behind, around: 190, height: 26}},
+ {name: 'mountain-morning', biome: 'rockies', seed: 'SUMMIT', hole: 1, when: 'morning', cam: tee(1)},
+ {name: 'mountain-afternoon', biome: 'rockies', seed: 'SUMMIT', hole: 4, when: 'afternoon', cam: {...behind, around: 205, height: 28}},
  {name: 'links-golden', biome: 'links', seed: 'DUNE', hole: 1, when: 'golden', cam: behind},
  {name: 'links-morning', biome: 'links', seed: 'DUNE', hole: 2, when: 'morning', cam: {...behind, around: 160}},
- {name: 'midwest-midday', biome: 'midwest', seed: 'MEADOW', hole: 1, when: 'noon', cam: behind},
- {name: 'midwest-golden', biome: 'midwest', seed: 'MEADOW', hole: 3, when: 'golden', cam: tee(3)},
- {name: 'island-afternoon', biome: 'island', seed: 'LAGOON', hole: 1, when: 'afternoon', cam: {...behind, around: 150}},
- {name: 'island-morning', biome: 'island', seed: 'LAGOON', hole: 2, when: 'morning', cam: {hole: 2, along: 18, height: 13, look: 'pin', pitch: -8}},
+ {name: 'midwest-midday', biome: 'heartland', seed: 'MEADOW', hole: 1, when: 'noon', cam: behind},
+ {name: 'midwest-golden', biome: 'heartland', seed: 'MEADOW', hole: 3, when: 'golden', cam: tee(3)},
+ {name: 'island-afternoon', biome: 'keys', seed: 'LAGOON', hole: 1, when: 'afternoon', cam: {...behind, around: 150}},
+ {name: 'island-morning', biome: 'keys', seed: 'LAGOON', hole: 2, when: 'morning', cam: {hole: 2, along: 18, height: 13, look: 'pin', pitch: -8}},
  {name: 'giant-redwood-morning', biome: 'redwood', seed: 'GIANT', hole: 1, when: 'morning', cam: tee(1)},
  {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 2, when: 'afternoon', cam: {hole: 2, along: 30, height: 5, look: 'pin', pitch: -3}},
- {name: 'autumn-afternoon', biome: 'autumn', seed: 'MAPLE', hole: 1, when: 'afternoon', cam: behind},
- {name: 'autumn-golden', biome: 'autumn', seed: 'MAPLE', hole: 2, when: 'golden', cam: tee(2)},
+ {name: 'autumn-afternoon', biome: 'newengland', seed: 'MAPLE', hole: 1, when: 'afternoon', cam: behind},
+ {name: 'autumn-golden', biome: 'newengland', seed: 'MAPLE', hole: 2, when: 'golden', cam: tee(2)},
  {name: 'night-links', biome: 'links', seed: 'DUNE', hole: 3, hour: 22, flood: true, cam: {...behind, height: 16}},
- {name: 'night-pacific-northwest', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, cam: tee(2)},
+ {name: 'night-pacific-northwest', biome: 'puget', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, cam: tee(2)},
 ];
 const want = process.argv.slice(2);
 const b = await launch();

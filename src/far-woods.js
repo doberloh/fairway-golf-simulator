@@ -38,6 +38,7 @@
 // reach. PLACED: every number.
 import {drawnGround, drawnVertices} from './landscape-edge.js';
 import {biomeOf} from './biomes.js';
+import {regionOf} from './regions.js';
 
 const glslHash = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 const smooth = (a, b, t) => { const u = Math.max(0, Math.min(1, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
@@ -79,7 +80,7 @@ export const FAR_SHAPES = {
 // draws as spruces and cones among the broadleaves, Autumn's pines and
 // hemlocks, in its fourth colour).
 const CONIFER_FAR = new Set(['pnw', 'mountain', 'redwood']);
-export const farShapes = (biome, f) => f?.scrub ? {near: 'scrub', grove: 'scrub'} : f?.dead ? {near: 'snags', grove: 'snags'} : CONIFER_FAR.has(biome) ? {near: 'spruce', grove: 'cone'} : {near: 'cluster', grove: 'dome'};
+export const farShapes = (biome, f) => f?.scrub ? {near: 'scrub', grove: 'scrub'} : f?.dead ? {near: 'snags', grove: 'snags'} : CONIFER_FAR.has(regionOf(biome)) ? {near: 'spruce', grove: 'cone'} : {near: 'cluster', grove: 'dome'};
 // Far off, an evergreen among broadleaves is a dark crown in the canopy, not a
 // cone (round 7 of the far land: Autumn's cones, twice as tall as wide,
 // stood up past its horizon as a row of pale spikes).

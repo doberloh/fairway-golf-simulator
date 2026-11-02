@@ -45,7 +45,7 @@ export function seeded(seed) {
 // no longer does, the seed moves on (`CHALLENGE-2`), written down in RESEARCH
 // like a generator bump; records and medals are kept across it.
 export const CHALLENGE_SEED = 'CHALLENGE-1';
-export const CHALLENGE_BIOME = 'pnw';
+export const CHALLENGE_BIOME = 'puget';
 export const challengeCourseSettings = () => validateSettings({...DEFAULT_COURSE, seed: CHALLENGE_SEED, biome: CHALLENGE_BIOME, holes: 18});
 export const CHALLENGE_COURSE_NAME = 'The Challenge Course';
 

@@ -101,7 +101,7 @@ test('damaged, foreign and future codes are refused with a reason',()=>{
 test('a code from an older schema migrates on import; a newer one is refused',()=>{
  useStorage();
  // Hand-built version 1 payload: dead tee toggles, no pond size.
- const rec=importCourse(makeCode({v:1,g:1,n:'Old Timer',d:{seed:'ANCIENT',biome:'autumn',teeBlue:true,teeRed:false,water:70}}));
+ const rec=importCourse(makeCode({v:1,g:1,n:'Old Timer',d:{seed:'ANCIENT',biome:'newengland',teeBlue:true,teeRed:false,water:70}}));
  assert.equal(rec.name,'Old Timer');
  assert.equal(rec.settings.seed,'ANCIENT');
  assert.equal(rec.settings.water,70);

@@ -1,3 +1,5 @@
+import {LANDSCAPES, REGIONS, currentKey} from './regions.js';
+
 // EVERY BIOME IS ONE RECORD.
 //
 // It was seven tables and forty-eight conditionals across eight files: the
@@ -153,6 +155,15 @@ const DEFAULTS = {
  rockStyle: 'round', rockMoss: null,
 };
 
+// THE REGIONS AND THEIR LANDSCAPES (the US landscapes goal, 2 November 2026;
+// regions.js). The tables below -- TRAITS, PALETTES, INTERFACE, WORLD -- are
+// keyed by REGION (regions.js REGIONS): each holds what its region's
+// landscapes share. A landscape's own differences are its entry in LAND, at
+// the end, laid over its region's: {...DEFAULTS, ...PALETTES[region],
+// ...TRAITS[region], ...LAND[key]}. The nine landscapes before the goal each
+// became their region's record (Island's is Florida's, Autumn's the
+// Northeast's), so a region with one landscape built has an empty LAND entry.
+
 // Only what differs from the defaults above.
 const TRAITS = {
  pnw: {light: {shade: '#7f93b0'},
@@ -252,7 +263,7 @@ const TRAITS = {
    under: {spacing: 8.5, plants: [['shrub', .5], ['bracken', .5]]},
    plants: [['oak', .5], ['maple', .35], ['aspen', .15]]},
   plants: [['oak', .5], ['aspen', .18], ['maple', .22], ['shrub', .1]]},
- island: {light: {shade: '#6fa0bf'},
+ florida: {light: {shade: '#6fa0bf'},
   longGrass: {families: [['grassplume', 1, 1.3]], count: 1800, near: 20, leaf: '#5d8f45', accent: '#efe4c4'},
   farForest: {cover: .8, size: 10, colors: ['#3f7a35', '#4d8a3a', '#62983f']},
   bank: '#aaad7a', ringLift: 0, ringFace: null, ringIslands: 5, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
@@ -308,7 +319,7 @@ const TRAITS = {
   plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
    ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
    ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
- autumn: {light: {shade: '#9a7fa6'},
+ northeast: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
   // Round 3 of the far landscape: a few of the far woods evergreen (6%; pine and
   // hemlock among the maples), and the far land rising to the low mountains
@@ -379,9 +390,9 @@ const PALETTES = {
  mountain:{name:'Mountain',title:'Alpine Reserve',tag:'Glacial peaks. Clear alpine lakes.',rough:'#65714c',semi:'#557843',fairway:'#639847',fringe:'#86a65d',green:'#a3ba78',tree:'#24473b',sky:'#adcfeb',sand:'#dfddd1',water:'#24647b',rock:'#8a9495',altitude:1800,temperature:11,treeKind:'spruce',sun:36},
  links:{name:'Links',title:'North Sea Links',tag:'Golden fescue, dunes, and Atlantic light.',rough:'#a89d65',semi:'#7e9050',fairway:'#6d9149',fringe:'#91a75b',green:'#acbd73',tree:'#89945e',sky:'#c8d7df',sand:'#e9dcb7',water:'#436e80',rock:'#8b8977',altitude:15,temperature:14,treeKind:'shrub',sun:23},
  midwest:{name:'Midwest',title:'Prairie Run',tag:'Parkland oaks beneath an endless sky.',rough:'#69783b',semi:'#50803d',fairway:'#599743',fringe:'#83a451',green:'#a0be6a',tree:'#46732f',sky:'#b8d7e9',sand:'#e8ddc3',water:'#41766a',rock:'#83846c',altitude:230,temperature:22,treeKind:'oak',sun:39},
- island:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
+ florida:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
  redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
- autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
+ northeast:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
  // Altitude is Lake Michigan's surface, about 177 m; 23 C a July evening on
  // its south-east shore. `sun` 20 is a long warm evening rather than the true
  // 71-degree midsummer noon at 42 N (RESEARCH).
@@ -406,21 +417,19 @@ const INTERFACE = {
  mountain: {panel: 'rgba(15,23,42,.88)', a1: '#93c5fd', a2: '#2563eb', hot: '#fcd34d', soft: '#b3c6e6', onHot: '#0b1530'},
  links:    {panel: 'rgba(22,34,22,.88)', a1: '#d9f99d', a2: '#65a30d', hot: '#fef08a', soft: '#c5d8b0', onHot: '#142010'},
  midwest:  {panel: 'rgba(10,34,18,.88)', a1: '#4ade80', a2: '#15803d', hot: '#facc15', soft: '#a7d7b4', onHot: '#08240f'},
- island:   {panel: 'rgba(6,30,46,.88)',  a1: '#22d3ee', a2: '#0891b2', hot: '#ff8fa3', soft: '#a5d8e6', onHot: '#04202e'},
+ florida:  {panel: 'rgba(6,30,46,.88)',  a1: '#22d3ee', a2: '#0891b2', hot: '#ff8fa3', soft: '#a5d8e6', onHot: '#04202e'},
  redwood:  {panel: 'rgba(36,12,14,.88)', a1: '#f87171', a2: '#9f1239', hot: '#fde68a', soft: '#e6b3b3', onHot: '#2a0a0e'},
- autumn:   {panel: 'rgba(40,24,8,.88)',  a1: '#fbbf24', a2: '#c2410c', hot: '#ffffff', soft: '#ecc9a0', onHot: '#2a1606'},
+ northeast:{panel: 'rgba(40,24,8,.88)',  a1: '#fbbf24', a2: '#c2410c', hot: '#ffffff', soft: '#ecc9a0', onHot: '#2a1606'},
  // Lake blue and dune sand: not from a mockup (the biome came after them),
  // so PLACED to the same pattern, and held to the contrast test like the rest.
  lakeshore:{panel: 'rgba(8,30,42,.88)',  a1: '#7dd3fc', a2: '#0e7490', hot: '#fde68a', soft: '#b4d6e2', onHot: '#05202c'},
 };
 
-// Merged once. `scatter` and `hills` are replaced wholesale rather than merged
-// field by field, because a biome that sets one of them means all of it.
 // THE WORLD'S SIDE OF A LANDSCAPE: the pieces round a generated course's holes
 // -- its clubhouse, cart paths and bridges, dressed water, walls, buildings
 // and landmarks, and its animals -- in one block per landscape, so a new
-// landscape is one entry here (tests/biome-world.test.mjs fails until it has
-// one). Architect's side of a landscape until the designer was removed (the
+// landscape is one entry here (or its region's; tests/landscapes-complete.test.mjs
+// fails without one). Architect's side of a landscape until the designer was removed (the
 // owner, 2 November 2026); its `styles` and `signature` went with it, and the
 // two things the pieces read from the leading style became fields of their own:
 //
@@ -460,25 +469,44 @@ export const WORLD = {
  midwest: {edge: null, fountain: false, clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood',
   story: {walls: 'hedge', farm: true}, life: {grazers: ['deer', 3], geese: 6},
   colours: {clubhouse: {stone: '#f2efe6', bark: '#7a3d32', accent: '#ffffff', dirt: '#2e3a44'}, riprap: '#8f897e', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#bdb6a6'}},
- island: {edge: 'riprap', fountain: true, clubhouse: 'pavilion', path: 'shell', bridge: 'wood',
+ florida: {edge: 'riprap', fountain: true, clubhouse: 'pavilion', path: 'shell', bridge: 'wood',
   story: {walls: null, ruins: ['sugarmill']}, life: {fliers: ['gull', 3], heron: true},
   colours: {clubhouse: {stone: '#e8d7b5', bark: '#c7a35f', accent: '#9b7048', dirt: '#2b3a3a'}, riprap: '#4d4744', wall: '#c2b8a4', ruin: '#b3a48c', bridgeStone: '#bdb6a6'}},
  redwood: {edge: 'riprap', fountain: true, clubhouse: 'loglodge', path: 'bark', bridge: 'wood',
   story: {walls: null, ruins: ['cottage']}, life: {grazers: ['elk', 3]},
   colours: {clubhouse: {stone: '#9a6342', bark: '#3f4a3a', accent: '#d8c7a8', dirt: '#2a2e2c'}, riprap: '#837767', wall: '#c2b8a4', ruin: '#948a7a', bridgeStone: '#bdb6a6'}},
- autumn: {edge: null, fountain: false, clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
+ northeast: {edge: null, fountain: false, clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
   story: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
   colours: {clubhouse: {stone: '#f1ede2', bark: '#3d4044', accent: '#ffffff', dirt: '#2d3640'}, riprap: '#928b80', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#c4b9a6'}},
  lakeshore: {edge: null, fountain: false, clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
   story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}, life: {fliers: ['gull', 4], geese: 6},
   colours: {clubhouse: {stone: '#c4ab84', bark: '#6d6a63', accent: '#f4f1ea', dirt: '#2c3a46'}, riprap: '#9c937f', wall: '#c9bfa8', ruin: '#c4b9a2', bridgeStone: '#bdb6a6'}},
 };
-// A landscape's block, with the generic one under it.
-export const worldOf = key => ({...WORLD_GENERIC, ...(WORLD[key] || {})});
+// EACH BUILT LANDSCAPE: what it changes from its region's record -- palette
+// and traits flat, `ui` the interface colours, `world` its world block. Its
+// player name, region and place are regions.js LANDSCAPES. A key here is a
+// landscape a player can pick (settings-schema.js BIOME_KEYS, held to this
+// list by tests/landscapes-complete.test.mjs); the goal adds the rest region by
+// region.
+const LAND = {
+ puget: {}, sonoran: {}, rockies: {}, links: {}, heartland: {}, keys: {}, redwood: {},
+ newengland: {}, lakedunes: {},
+};
 
-export const BIOMES = Object.fromEntries(Object.entries(PALETTES).map(([key, palette]) => {
- const traits = TRAITS[key] || {};
- return [key, {...DEFAULTS, ...palette, ...traits, ui: INTERFACE[key], key, world: worldOf(key)}];
+// A landscape's world block: the generic one, its region's, its own.
+export const worldOf = key => {
+ const k = currentKey(key), region = LANDSCAPES[k]?.region;
+ return {...WORLD_GENERIC, ...(WORLD[region] || {}), ...(LAND[k]?.world || {})};
+};
+
+// Merged once. `scatter` and `hills` are replaced wholesale rather than merged
+// field by field, because a biome that sets one of them means all of it.
+export const BIOMES = Object.fromEntries(Object.entries(LAND).map(([key, own]) => {
+ const place = LANDSCAPES[key], region = place.region;
+ const {ui, world, ...rest} = own;
+ return [key, {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest,
+  name: place.name, region, regionName: REGIONS[region], where: place.where, tropical: place.tropical,
+  ui: {...INTERFACE[region], ...(ui || {})}, key, world: worldOf(key)}];
 }));
 
 // The stream bank colour, still reachable by its old name so streams.js and the
@@ -488,4 +516,5 @@ export const BANK_COLORS = Object.fromEntries(
 
 // A biome by key, never undefined: an unknown name falls back rather than
 // producing an object with no palette at all, which is a black course.
-export const biomeOf = key => BIOMES[key] || BIOMES.pnw;
+// An old key (pnw, desert, ...) finds the landscape it became.
+export const biomeOf = key => BIOMES[currentKey(key)] || BIOMES.puget;

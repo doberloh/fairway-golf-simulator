@@ -24,7 +24,7 @@ import {BUILT_VERSION} from '../src/settings-schema.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'bench', 'shots', 'freeze');
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : argv[i + 1]; };
-const biome = opt('biome', 'midwest'), seed = opt('seed', `FREEZE-${biome.toUpperCase()}-1`), holes = Number(opt('holes', 9)), quality = opt('quality', 'high');
+const biome = opt('biome', 'heartland'), seed = opt('seed', `FREEZE-${biome.toUpperCase()}-1`), holes = Number(opt('holes', 9)), quality = opt('quality', 'high');
 const settings = {seed, biome, holes};
 
 fs.mkdirSync(OUT, {recursive: true});

@@ -22,7 +22,7 @@ test('every landscape has its own animals', () => {
 });
 
 test('the animals stay out of play and out of the trees', () => {
- for (const biome of ['links', 'midwest', 'redwood', 'pnw']) {
+ for (const biome of ['links', 'heartland', 'redwood', 'puget']) {
   const w = course(biome);
   for (const l of w.life) {
    if (l.r !== undefined) { assert.ok(l.up >= 25, 'a bird low over play'); continue; }

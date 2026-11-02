@@ -529,7 +529,7 @@ test('every format plays a round on a generated course', async () => {
  const {world} = await import('./worlds.mjs');
  const {relativeToPar} = await import('../src/scoring.js');
  for (const designer of ['generator']) {
-  const w = world({seed: 'MATRIX-1', holes: 9, biome: 'midwest'});
+  const w = world({seed: 'MATRIX-1', holes: 9, biome: 'heartland'});
   const pars = w.holes.map(h => h.par);
   assert.equal(pars.length, 9);
   for (const cfg of configs({holes: 9}).filter(c => !c.endless && c.putting === 'holeout')) {

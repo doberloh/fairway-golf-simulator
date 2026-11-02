@@ -17,6 +17,8 @@
 // this adds the slab, the chip, the keys and the right-hand column, and
 // ui-sheets.css dresses the rest.
 
+import {landscapeMap, addGlobe} from './ui-map.js';
+
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const KINDS = new Set(['range', 'int', 'choice', 'toggle']);
 
@@ -101,9 +103,19 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
   if (!l) continue;
   const pic = make(doc, 'span', 'sd-pic');
   b.prepend(pic); queue.push({el: pic, settings: l.settings});
+  addGlobe(doc, pic, l.key, 26);
   b.closest('.option-grid').classList.add('sd-lands');
  }
  if (queue.length) pictures?.(queue, 160, 64);
+ // The map over the pictures (the US landscapes goal): a click on a region
+ // presses that landscape's button, so the studio's own choosing runs.
+ const lands = root.querySelector('.option-grid.sd-lands');
+ if (lands && !root.querySelector('.lmap')) {
+  const pick = key => lands.querySelector(`[data-biome="${key}"]`)?.click();
+  const map = landscapeMap(doc, {built: landscapes.map(l => l.key), chosen: lands.querySelector('.active')?.dataset.biome ?? null, onPick: pick});
+  lands.before(map.el);
+  lands.addEventListener('click', e => { const b = e.target.closest?.('[data-biome]'); if (b) map.choose(b.dataset.biome); });
+ }
  // How many settings each category holds, on its tab.
  for (const tab of root.querySelectorAll(':scope>.panel-tabs>.panel-tab')) {
   const s = sections.find(x => x.dataset.title === tab.textContent.trim());

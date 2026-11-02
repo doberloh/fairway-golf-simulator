@@ -30,7 +30,7 @@ function checkPdf(bytes) {
 }
 
 test('a page a hole, well formed, with each hole\'s name, par and carries', () => {
- const w = world({seed: 'BOOK-T', holes: 9, biome: 'midwest'});
+ const w = world({seed: 'BOOK-T', holes: 9, biome: 'heartland'});
  const doc = yardageBook(w);
  assert.equal(doc.pages.length, 9);
  const text = checkPdf(doc.bytes()), names = holeNames(w.holes, w.settings);

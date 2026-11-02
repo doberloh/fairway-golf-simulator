@@ -1991,6 +1991,71 @@ const JOURNEYS = [
   },
  },
 
+ // THE MAP OF THE LANDSCAPES (the US landscapes goal, 2 November 2026;
+ // ui-map.js): Course studio's landscapes have the map over them and a globe
+ // on every picture; a region pressed on the map picks its landscape, and the
+ // landscape outside the map is its own button.
+ {
+  name: 'landscape-map',
+  what: 'Course studio: the map of the landscapes picks one, every picture carries its globe',
+  async run(t) {
+   await menuReady(t);
+   const {BIOME_KEYS} = await import('../src/settings-schema.js');
+   await t.step('Course studio → the map over the landscapes, a globe on every picture', async () => {
+    await fromMenu(t, 'Course studio');
+    await t.until(() => t.page.evaluate(() => !!document.querySelector('#drawer .lmap-svg')), 'the map', 10 * SLOW);
+    const v = await t.page.evaluate(() => ({live: new Set([...document.querySelectorAll('#drawer .lmap-land.live')].map(p => p.dataset.land)).size,
+     coming: document.querySelectorAll('#drawer .lmap-land.coming').length, globes: document.querySelectorAll('#drawer .sd-pic .globe-corner svg').length}));
+    console.log(`       ${v.live} landscapes to pick on the map, ${v.coming} shapes coming, ${v.globes} globes`);
+    if (v.live !== BIOME_KEYS.length - 1) throw new Error(`${v.live} landscapes on the map, not ${BIOME_KEYS.length - 1} (Scottish Links is beside it)`);
+    if (v.globes !== BIOME_KEYS.length) throw new Error(`${v.globes} globes for ${BIOME_KEYS.length} landscapes`);
+   });
+   await t.step('a region pressed on the map picks its landscape', async () => {
+    await t.page.click('#drawer .lmap-land.live[data-land="sonoran"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="sonoran"]')?.classList.contains('active')), 'Sonoran chosen', 3 * SLOW);
+    await t.page.click('#drawer .lmap-chip[data-land="links"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="links"]')?.classList.contains('active')), 'Scottish Links chosen', 3 * SLOW);
+   });
+   await t.step('a landscape picture pressed moves the map with it', async () => {
+    await t.page.click('#drawer [data-biome="keys"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer .lmap-land.on')?.dataset.land === 'keys'), 'the Keys lit on the map', 3 * SLOW);
+    // Pictures to look at: the sheet on a desktop and on a phone.
+    await t.page.waitForTimeout(1500 * SLOW);
+    await t.page.screenshot({path: 'bench/shots/smoke/landscape-map.png'}).catch(() => {});
+    const was = t.page.viewportSize();
+    await t.page.setViewportSize({width: 390, height: 844});
+    await t.page.waitForTimeout(800 * SLOW);
+    await t.page.screenshot({path: 'bench/shots/smoke/landscape-map-phone.png'}).catch(() => {});
+    if (was) await t.page.setViewportSize(was);
+   });
+  },
+ },
+ // EVERY LANDSCAPE GROWS (the US landscapes goal): each one a player can pick,
+ // grown once in Course studio, with no error -- the cheapest proof a
+ // landscape's record, models and pictures are all there in the built game.
+ {
+  name: 'every-landscape',
+  what: 'Course studio grows every landscape once',
+  async run(t) {
+   await menuReady(t);
+   const {BIOME_KEYS} = await import('../src/settings-schema.js');
+   const {BIOMES} = await import('../src/biomes.js');
+   for (const [i, key] of BIOME_KEYS.entries()) {
+    const name = BIOMES[key].name.toUpperCase();
+    await t.step(`grow ${key}`, async () => {
+     if (i === 0) await fromMenu(t, 'Course studio');
+     else { await t.page.click('#studioSettings'); await t.until(() => t.drawerOpen(), 'the settings panel', 5 * SLOW); }
+     await t.page.click(`#drawer [data-biome="${key}"]`);
+     await t.press('Grow this landscape');
+     // Grown when the studio's slab names it, nothing is growing and no
+     // change waits to be grown.
+     await t.until(() => t.page.evaluate(n => document.getElementById('world')?.dataset.mode === 'studio'
+      && document.getElementById('generating')?.hidden !== false && document.getElementById('studioChip')?.hidden !== false
+      && (document.querySelector('#studioSlab small')?.textContent || '').startsWith(n), name), `${key} grown`, 120 * SLOW);
+    });
+   }
+  },
+ },
  // A HOLE PLAYED THROUGH AMONG THE COURSE'S PIECES: a saved generated course
  // -- its clubhouse, cart paths, walls, markings and animals, which every
  // generated course has since Architect was removed (2 November 2026) --
@@ -2002,7 +2067,7 @@ const JOURNEYS = [
   async run(t) {
    await menuReady(t);
    const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
-   const settings = {biome: 'midwest', holes: 9, seed: 'HT-2'};
+   const settings = {biome: 'heartland', holes: 9, seed: 'HT-2'};
    await t.step('the course in Saved courses, played', async () => {
     await t.page.evaluate(([s, g, v]) => {
      const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');

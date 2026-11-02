@@ -1345,3 +1345,15 @@ minute apart; the card read before each), 31 October 2026:
 - The real-courses study's sources (USGS 3DEP, the Environment Agency, NAIP,
   OpenStreetMap's golf tags and ODbL) are in RESEARCH.md once a stage uses
   them.
+
+## The landscapes' new keys and the map (2 November 2026)
+
+The US landscapes goal renamed seven landscapes' keys (regions.js
+`OLD_KEYS`). A `.fairway` file naming an old key opens on the new one
+(course-doc.js `validateDoc`), so no file needs rewriting and BUILT_VERSION
+does not move: how a stored course plays is unchanged. Door 1 shows the map
+of the landscapes over its landscape list; door 2 suggests the landscape
+from where the survey lies (landscape-map.js `landscapeAt` at the land's
+centre, taken unasked when the land is built unless one was chosen) and
+marks the survey on the map; a survey off the map, or in a landscape not
+built yet, says so.

@@ -11,15 +11,15 @@
 // enough to catch a rule that is outright broken -- and `full` is for the
 // answer you report. `standard` is the middle one for a change you believe in
 // but have not confirmed.
-export const BIOMES = ['pnw', 'desert', 'mountain', 'links', 'midwest', 'redwood', 'autumn', 'lakeshore'];
-export const COASTAL = ['island', 'links', 'lakeshore'];
+export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes'];
+export const COASTAL = ['keys', 'links', 'lakedunes'];
 
 // Water on, because most of what goes wrong goes wrong near water.
 export const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 const TIERS = {
- quick:    {biomes: ['pnw', 'mountain'], seeds: ['S1', 'S2']},
- standard: {biomes: ['pnw', 'mountain', 'links'], seeds: ['S1', 'S2', 'S3', 'S4']},
+ quick:    {biomes: ['puget', 'rockies'], seeds: ['S1', 'S2']},
+ standard: {biomes: ['puget', 'rockies', 'links'], seeds: ['S1', 'S2', 'S3', 'S4']},
  full:     {biomes: BIOMES, seeds: ['S1', 'S2', 'S3', 'S4', 'S5']},
 };
 

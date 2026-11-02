@@ -69,7 +69,7 @@ const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf
 // fourteen footprints by four tiers by every slider is a sweep nobody runs
 // twice. Each case below is here for a stated reason, and a run that takes a
 // few minutes is a run that gets used.
-const BIOMES = ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'lakeshore'];
+const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'lakedunes'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {
@@ -104,12 +104,12 @@ function matrix() {
  for (const [name, prefs] of [['water course, all on', {}],
                               ['water course, no reflections', {reflections: false}]])
   cases.push({group: 'water', name, arm: 'gpu', quality: 'ultra', prefs,
-   biome: 'midwest', holes: 9, seed: 'PROFILE', course: {water: 100, lakes: 3, rivers: 2, creeks: 3}});
+   biome: 'heartland', holes: 9, seed: 'PROFILE', course: {water: 100, lakes: 3, rivers: 2, creeks: 3}});
  // (The `architect` group -- Classic against Architect on Low -- went with the
  // designer, 2 November 2026: its paths, markings, clubhouse and wear are on
  // every generated course now, so every group measures them.)
  // `--landscapes all` (or a list, a,b,c) measures more than the usual three.
- const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['midwest', 'pnw', 'links'];
+ const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['heartland', 'puget', 'links'];
  // BUILT COURSES (the course builder, 31 October 2026; docs/COURSE_BUILDER.md):
  // the same landscape and seed on Low, grown from its seed against its frozen
  // copy played from a .fairway file (freeze.js, built-world.js). The goal's
@@ -117,7 +117,7 @@ function matrix() {
  // `--built-file <x.fairway>`: a course from a file (a real one, door 2's)
  // against a generated Midwest eighteen on the same tier.
  if (flag('built-file', null)) for (const kind of ['generated', 'built'])
-  cases.push({group: 'built', name: kind === 'built' ? `${String(flag('built-file')).split(/[\\/]/).pop()} · built` : 'midwest 18 · generated', arm: 'gpu', quality: flag('built-tier', 'low'), biome: 'midwest', holes: 18, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {path: flag('built-file')}} : {})});
+  cases.push({group: 'built', name: kind === 'built' ? `${String(flag('built-file')).split(/[\\/]/).pop()} · built` : 'midwest 18 · generated', arm: 'gpu', quality: flag('built-tier', 'low'), biome: 'heartland', holes: 18, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {path: flag('built-file')}} : {})});
  else for (const biome of archBiomes) for (const kind of ['generated', 'built'])
   cases.push({group: 'built', name: `${biome} · ${kind}`, arm: 'gpu', quality: flag('built-tier', 'low'), biome, holes: 9, seed: 'PROFILE', ...(kind === 'built' ? {builtFrom: {biome, holes: 9, seed: 'PROFILE'}} : {})});
  // FACING THE SUN. The god rays draw only with the sun in shot, so every other
@@ -127,7 +127,7 @@ function matrix() {
  // Midwest is an open course for contrast. High and Ultra are the tiers with
  // god rays.
  for (const quality of ['high', 'ultra'])
-  for (const biome of ['redwood', 'midwest'])
+  for (const biome of ['redwood', 'heartland'])
    cases.push({group: 'sun', name: `${quality} · ${biome} · facing the sun`, arm: 'gpu', quality, ...base, biome,
     camera: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'}});
  // Pixel ratio on its own. It is the biggest fill lever the tiers have and
@@ -139,7 +139,7 @@ function matrix() {
  // stand-in for "no graphics card", and it is the only arm on this machine
  // that can fail to hold a budget.
  for (const quality of ['low', 'medium'])
-  cases.push({group: 'weak', name: `${quality} · software`, arm: 'software', quality, ...base, biome: 'pnw'});
+  cases.push({group: 'weak', name: `${quality} · software`, arm: 'software', quality, ...base, biome: 'puget'});
  return ONLY ? cases.filter(c => c.group === ONLY) : cases;
 }
 

@@ -61,7 +61,7 @@ test('only a biome that asks for it shares fairways or routes side by side', () 
  for (const [key, bio] of Object.entries(BIOMES)) if (key !== 'links') {
   assert.ok(!bio.sharedFairways && !bio.routeParallel && !bio.fairwayScale, `${key} shares`);
  }
- const w = generateWorld({seed: 'overhaul', biome: 'pnw', holes: 18, trees: 60, homes: true});
+ const w = generateWorld({seed: 'overhaul', biome: 'puget', holes: 18, trees: 60, homes: true});
  assert.equal(w.holes.filter(h => h.sharedFairway).length, 0);
 });
 

@@ -13,7 +13,7 @@ import {worldFromDoc, builtSurface} from '../src/built-world.js';
 import {writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
 
-const w = generateWorld({...DEFAULT_COURSE, seed: 'FREEZE-TEST', biome: 'midwest', holes: 9, creeks: 1, lakes: 1});
+const w = generateWorld({...DEFAULT_COURSE, seed: 'FREEZE-TEST', biome: 'heartland', holes: 9, creeks: 1, lakes: 1});
 const doc = freezeWorld(w, {name: 'Freeze test'});
 const bytes = await writeBuiltFile(doc, BUILT_VERSION);
 const back = await readBuiltFile(bytes);

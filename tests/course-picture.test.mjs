@@ -5,12 +5,12 @@ import {courseLayout, layoutFor, fitLayout, drawCoursePicture} from '../src/cour
 // Course pictures are drawn from the course's own routing: the holes the
 // generator makes, placed as generateWorld places them.
 test('a course picture lays out every hole, and the same course the same way', () => {
- const a = courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'midwest'}), b = courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'midwest'});
+ const a = courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'heartland'}), b = courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'heartland'});
  assert.equal(a.holes.length, 9);
  assert.deepEqual(a.bounds, b.bounds);
  for (const v of Object.values(a.bounds)) assert.ok(Number.isFinite(v));
  assert.equal(courseLayout({seed: 'X', holes: 18}).holes.length, 18);
- assert.equal(layoutFor({seed: 'HEMLOCK', holes: 9, biome: 'midwest'}), layoutFor({seed: 'HEMLOCK', holes: 9, biome: 'midwest'}));
+ assert.equal(layoutFor({seed: 'HEMLOCK', holes: 9, biome: 'heartland'}), layoutFor({seed: 'HEMLOCK', holes: 9, biome: 'heartland'}));
 });
 
 test('the picture fills its frame, turned a quarter when that fits better', () => {
@@ -25,7 +25,7 @@ test('the picture fills its frame, turned a quarter when that fits better', () =
 test('drawing touches only the frame it is given', () => {
  const calls = [];
  const ctx = new Proxy({}, {get: (o, k) => (k in o ? o[k] : (...args) => calls.push([k, ...args])), set: (o, k, v) => { o[k] = v; return true; }});
- drawCoursePicture(ctx, courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'desert'}), 200, 120);
+ drawCoursePicture(ctx, courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'sonoran'}), 200, 120);
  const pts = calls.filter(c => c[0] === 'lineTo' || c[0] === 'moveTo').map(c => [c[1], c[2]]);
  assert.ok(pts.length > 100);
  assert.ok(pts.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y) && x > -60 && x < 260 && y > -60 && y < 180));

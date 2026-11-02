@@ -152,7 +152,7 @@ if (argv.includes('--trace-only')) process.exit(0);
 // A test course without a card has no holes to mark: its traces are
 // measured above, and no course is made.
 if (![9, 18].includes(holes.length)) { console.log(`No course made: ${holes.length} holes known (a scorecard and OpenStreetMap's numbered holes are needed). ${secs()}`); process.exit(0); }
-const doc = docFromLand({land, traced: best, holes, trees, name: `${course.name} (test)`, landscape: courseKey ?? 'midwest', credits: ['Elevation: USGS 3D Elevation Program, public domain'], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}}});
+const doc = docFromLand({land, traced: best, holes, trees, name: `${course.name} (test)`, landscape: courseKey ?? 'heartland', credits: ['Elevation: USGS 3D Elevation Program, public domain'], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}}});
 const bytes = await writeBuiltFile(doc, BUILT_VERSION);
 if (out) fs.writeFileSync(out, bytes);
 const w = worldFromDoc(await readBuiltFile(bytes));

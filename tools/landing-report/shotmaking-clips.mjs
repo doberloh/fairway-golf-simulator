@@ -39,7 +39,7 @@ for (const [i, s] of plan.shots.entries()) {
   const r = window.__rigs[0], ball = v.ball.position;
   v.placeCamera(r.eye, ...window.__aimAt(r.eye, r.look === 'ball' ? ball : r.look));
   window.__lens(r.fov);
- }, [s, hourFor('pnw', 'afternoon')]);
+ }, [s, hourFor('puget', 'afternoon')]);
  await p.waitForTimeout(2500);
  await assertUltra(p, 1);
  const file = `${DIR}/${String(i + 1).padStart(2, '0')}-${s.name}`;

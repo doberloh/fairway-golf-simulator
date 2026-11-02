@@ -37,7 +37,7 @@ export const WIDTH = 960, QUALITY = .7, BUDGET = 3 * 1024 * 1024;
 
 // The seed each landscape is taken on: one whose holes show it well (chosen
 // in the rounds; a seed's course is the same on every copy of this version).
-const SEEDS = {pnw: 'CASCADE', desert: 'MESA', mountain: 'SUMMIT', links: 'DUNE', midwest: 'PRAIRIE', island: 'LAGOON', redwood: 'GROVE', autumn: 'MAPLE', lakeshore: 'BEACON'};
+const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUNE', heartland: 'PRAIRIE', keys: 'LAGOON', redwood: 'GROVE', newengland: 'MAPLE', lakedunes: 'BEACON'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -68,16 +68,16 @@ export const PICKS = {
  // tree or long grass in front), the green close to (a flat colour on a card),
  // golden hour at a tee (too dark); golden hour from above only where it is
  // clear (Desert, Autumn; elsewhere a brown haze).
- pnw: ['overview', 'h1-behind', 'h5-approach', 'h2-side', 'h3-high'],
- desert: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
- mountain: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ puget: ['overview', 'h1-behind', 'h5-approach', 'h2-side', 'h3-high'],
+ sonoran: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
+ rockies: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  links: ['overview', 'h1-behind', 'h3-high', 'h2-side'],
- midwest: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
- island: ['overview', 'h1-behind', 'h3-high', 'h2-side', 'h5-approach'],
+ heartland: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ keys: ['overview', 'h1-behind', 'h3-high', 'h2-side', 'h5-approach'],
  // Round 2: low views under the giants (the high ones stood in the crowns).
  redwood: ['overview', 'h2-low', 'h5-approach', 'h3-low', 'h1-tee'],
- autumn: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
- lakeshore: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ newengland: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
+ lakedunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 
 

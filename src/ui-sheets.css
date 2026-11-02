@@ -528,6 +528,25 @@
  #drawer .sd-root .sd-lands>.option{text-shadow:var(--outline)}
  #drawer .sd-root .sd-lands>.option:focus-visible{outline:none}
  #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic{outline:3px solid var(--cursor);outline-offset:-3px}
+ /* THE MAP OF THE LANDSCAPES and the thumbnails' globes (the US landscapes
+    goal, 2 November 2026; ui-map.js). Built regions solid in the theme,
+    coming ones dim; the chosen one and the pointed-at one in --hot. */
+ #drawer .lmap{display:grid;gap:6px;margin:4px 0 10px}
+ #drawer .lmap-svg{display:block;width:100%;height:auto;max-height:300px}
+ #drawer .lmap-land{stroke:rgba(0,0,0,.45);stroke-width:.6;stroke-linejoin:round;transition:fill .12s}
+ #drawer .lmap-land.live{fill:var(--a2);cursor:pointer}
+ #drawer .lmap-land.coming{fill:rgba(255,255,255,.14)}
+ #drawer .lmap-land.over{stroke:rgba(255,255,255,.55);stroke-dasharray:3 2}
+ #drawer .lmap-land.live:hover,#drawer .lmap-land.live:focus-visible{fill:var(--a1);outline:none}
+ #drawer .lmap-land.coming:hover{fill:rgba(255,255,255,.26)}
+ #drawer .lmap-land.on{fill:var(--hot)}
+ #drawer .lmap-name{display:flex;gap:10px;align-items:baseline;min-height:20px;font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;color:#fff;text-shadow:var(--outline)}
+ #drawer .lmap-name small{font:600 12px/1 var(--font-ui),sans-serif;font-style:normal;letter-spacing:.06em;color:var(--soft);text-transform:uppercase}
+ #drawer .lmap-abroad{display:flex;gap:8px;flex-wrap:wrap}
+ #drawer .lmap-chip{display:inline-flex;gap:6px;align-items:center;padding:4px 10px 4px 4px;border:0;background:rgba(255,255,255,.08);color:#fff;font:800 italic 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;cursor:pointer}
+ #drawer .lmap-chip.on{background:var(--hot);color:var(--on-hot)}
+ #drawer .lmap-mark{fill:#ff5a4f;stroke:#fff;stroke-width:2;pointer-events:none}
+ #drawer .globe-corner{position:absolute;right:4px;bottom:4px;z-index:1;line-height:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));pointer-events:none}
  #drawer .sd-root .control-label{margin:6px 0 2px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
  #drawer .sd-root label.field:has(>select#footprint){display:none}
  #drawer .sd-root .footprint-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}

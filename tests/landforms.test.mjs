@@ -29,7 +29,7 @@ test('every recipe names ground types that exist, and a biome with blowouts leav
 });
 
 test('the field is baked on the ground atlas grid and read back as a linear filter reads it', () => {
- const r = landformOf(BIOMES.mountain, 'L1'), f = wildField(r, 900, 700, () => 0);
+ const r = landformOf(BIOMES.rockies, 'L1'), f = wildField(r, 900, 700, () => 0);
  assert.deepEqual({Sx: f.Sx, Sz: f.Sz}, ownerAtlasSize(900, 700));
  for (const [i, j] of [[3, 5], [100, 200], [f.Sx - 1, f.Sz - 1]]) {
   const x = ((i + .5) / f.Sx * 2 - 1) * f.ex, z = ((j + .5) / f.Sz * 2 - 1) * f.ez;
@@ -39,8 +39,8 @@ test('the field is baked on the ground atlas grid and read back as a linear filt
 });
 
 test('a seed bakes its own field, the same every time', () => {
- const flat = () => 0, a = wildField(landformOf(BIOMES.desert, 'L1'), 600, 600, flat), b = wildField(landformOf(BIOMES.desert, 'L1'), 600, 600, flat);
- const c = wildField(landformOf(BIOMES.desert, 'L2'), 600, 600, flat);
+ const flat = () => 0, a = wildField(landformOf(BIOMES.sonoran, 'L1'), 600, 600, flat), b = wildField(landformOf(BIOMES.sonoran, 'L1'), 600, 600, flat);
+ const c = wildField(landformOf(BIOMES.sonoran, 'L2'), 600, 600, flat);
  assert.deepEqual(a.a, b.a); assert.deepEqual(a.b, b.b);
  // Channel b, the washes: on flat test ground the cliffs (a) are steepness
  // and so empty for every seed.
@@ -63,7 +63,7 @@ test('the gates keep every ground type off the playing lines', () => {
 });
 
 test('the driving range stays flat and plain whatever its biome', () => {
- for (const biome of ['mountain', 'desert', 'links']) {
+ for (const biome of ['rockies', 'sonoran', 'links']) {
   const w = generateWorld({seed: 'L1', biome, range: true});
   assert.equal(w.wild, null, `${biome} range has a ground field`);
  }
@@ -72,8 +72,8 @@ test('the driving range stays flat and plain whatever its biome', () => {
 const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 test('each landscape has the ground its recipe asks for, and only where the lie rules allow', () => {
- const want = {mountain: ['rock', 'scree'], desert: ['rock', 'waste', 'hardpan'], links: ['native', 'heather'],
-  midwest: ['native'], autumn: ['rock', 'litter'], pnw: ['pinestraw'], lakeshore: ['native']};
+ const want = {rockies: ['rock', 'scree'], sonoran: ['rock', 'waste', 'hardpan'], links: ['native', 'heather'],
+  heartland: ['native'], newengland: ['rock', 'litter'], puget: ['pinestraw'], lakedunes: ['native']};
  for (const [biome, kinds] of Object.entries(want)) {
   const w = generateWorld({seed: SEEDS[0], biome, holes: 9, trees: 60, homes: true, ...WATER});
   const seen = new Set();
@@ -98,7 +98,7 @@ test('each landscape has the ground its recipe asks for, and only where the lie 
 });
 
 test('fallen needles are played from the bytes the straw is painted with', () => {
- const w = generateWorld({seed: SEEDS[0], biome: 'pnw', holes: 9, trees: 60, homes: true});
+ const w = generateWorld({seed: SEEDS[0], biome: 'puget', holes: 9, trees: 60, homes: true});
  assert.ok(w.fallenField, 'pine straw is baked');
  let straw = 0;
  for (let x = -w.halfX; x < w.halfX; x += 7) for (let z = -w.halfZ; z < w.halfZ; z += 7) {

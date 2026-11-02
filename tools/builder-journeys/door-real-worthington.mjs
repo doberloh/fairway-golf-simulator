@@ -65,6 +65,11 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.getByRole('button', {name: 'Auto trace'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.model, null, {timeout: 600000}); await idle();
   const traceSays = await page.locator('.cb-note').first().textContent();
+  // The landscape suggested from where the survey lies (the US landscapes
+  // goal): Worthington, Minnesota, is Heartland, taken unasked.
+  const suggest = await page.locator('.cb-suggest').first().textContent().catch(() => '');
+  if (!/Heartland/.test(suggest) || await page.locator('.cb-landscape').inputValue() !== 'heartland') throw Error(`the landscape suggested: "${suggest}", chosen ${await page.locator('.cb-landscape').inputValue()}`);
+  say(`suggested: ${suggest}`);
   await t.shot('worthington-traced');
   await page.getByRole('button', {name: 'Next: the holes'}).click();
   // 4. The holes, clicked where OpenStreetMap and the card put them.

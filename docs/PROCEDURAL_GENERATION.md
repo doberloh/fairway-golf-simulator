@@ -60,6 +60,11 @@ For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO
 
 ## What a biome decides
 
+(Since 2 November 2026 a biome is a landscape: its region's record with its
+own differences over it -- biomes.js, regions.js; PROJECT_HANDOFF *Adding a
+biome*. The landscape's key is part of the seed of the world pieces and the
+course name.)
+
 Since the cartoon overhaul the redwood grove's plants are built in Blender (tools/blender/cartoon_redwood.py), like every other landscape's. Before it they were GROWN rather than imported: `tools/grow.mjs` (removed 27 October 2026) composed every one of them -- redwood, douglas fir, hemlock, red cedar, tanoak, seedlings, sword fern, salal, sorrel, plus nurse logs, stumps and boulders -- from a small geometry library, with shapes and colours measured from 315 photographs of real redwood forest. Each was a whole tree carrying its own fluted, buttressed trunk, so nothing is borrowed and nothing is drawn underneath. This replaced an earlier approach that drew a tapered cylinder and balanced a borrowed conifer crown on top, which existed only because no imported conifer is anything but conical to the ground and reads as a Christmas tree at redwood scale.
 
 Every tree draws at full detail. A two-level swap by camera distance was built here and removed: it was justified by arithmetic and then by a benchmark that was reading the display's vsync interval rather than the cost of the geometry. Measured honestly, a grove draws 33.6 M vertices a frame and still holds the refresh cap, while the swap made nearly every visible tree the thinned twin -- a forest that looked dead, and a boundary that popped.

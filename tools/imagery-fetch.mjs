@@ -23,17 +23,17 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT = path.join(ROOT, 'bench', 'shots', 'imagery');
 // The courses: the landscape each stands for, how OpenStreetMap knows it.
 export const COURSES = [
- {key: 'pnw', name: 'Sahalee Country Club, Sammamish WA', osm: 'way(1002185812)'},
- {key: 'desert', name: 'TPC Scottsdale Stadium Course, Scottsdale AZ', osm: 'way(78388948)'},
- {key: 'mountain', name: 'Breckenridge Golf Club, Bear nine, Breckenridge CO', osm: 'way(1571231453)'},
+ {key: 'puget', name: 'Sahalee Country Club, Sammamish WA', osm: 'way(1002185812)'},
+ {key: 'sonoran', name: 'TPC Scottsdale Stadium Course, Scottsdale AZ', osm: 'way(78388948)'},
+ {key: 'rockies', name: 'Breckenridge Golf Club, Bear nine, Breckenridge CO', osm: 'way(1571231453)'},
  {key: 'links', name: 'Chambers Bay, University Place WA', osm: 'way(26787026)'},
- {key: 'midwest', name: 'Worthington Country Club, Worthington MN', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]'},
+ {key: 'heartland', name: 'Worthington Country Club, Worthington MN', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]'},
  // Kapalua (Maui) was the first choice: Hawaii has no NAIP in the Planetary
  // Computer's collection, so a tropical island course in Florida stands in.
- {key: 'island', name: 'Key West City Golf Club, Key West FL', osm: 'way(84902763)'},
+ {key: 'keys', name: 'Key West City Golf Club, Key West FL', osm: 'way(84902763)'},
  {key: 'redwood', name: 'Northwood Golf Club, Monte Rio CA', osm: 'way(1246462624)'},
- {key: 'autumn', name: 'Ekwanok Country Club, Manchester VT', osm: 'way(424514357)'},
- {key: 'lakeshore', name: 'Arcadia Bluffs Golf Club, Arcadia MI', osm: 'way(293247442)'},
+ {key: 'newengland', name: 'Ekwanok Country Club, Manchester VT', osm: 'way(424514357)'},
+ {key: 'lakedunes', name: 'Arcadia Bluffs Golf Club, Arcadia MI', osm: 'way(293247442)'},
 ];
 const UA = {'User-Agent': 'FairwayCourseBuilder/0.1 (testing; github.com/doberloh/fairway-golf-simulator)'};
 const wait = ms => new Promise(r => setTimeout(r, ms));

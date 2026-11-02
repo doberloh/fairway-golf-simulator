@@ -1,25 +1,25 @@
 {
- "generator": 55,
+ "generator": 56,
  "biomes": {
-  "pnw": "2dd86688cc4d740c",
-  "desert": "f63f1ad760a53062",
-  "mountain": "6c050e31112ff00b",
+  "puget": "52cc51aa9941884d",
+  "sonoran": "c045091b01bb787f",
+  "rockies": "0d62110b443719c0",
   "links": "47b61cab2f03207e",
-  "midwest": "9a1bccb8e9aa0217",
-  "island": "492f13b2c53dc871",
+  "heartland": "7e341023cdd2bdad",
+  "keys": "364a5d141ef30101",
   "redwood": "d0dec0db07e3ce28",
-  "autumn": "80d727ad6c5022a8",
-  "lakeshore": "5b4fe3bb82ef55ba"
+  "newengland": "4250ea77d6cfd6a9",
+  "lakedunes": "26ec983d629d3690"
  },
  "records": {
-  "pnw": "74d48fc1b5bd40de",
-  "desert": "fe7a4a90c72c5a5a",
-  "mountain": "a883088007374aba",
-  "links": "23d6b5be9838a900",
-  "midwest": "ef1551b1f28597de",
-  "island": "4643b7c0ba028648",
-  "redwood": "a82a50a863a40757",
-  "autumn": "ed334f0ea99a7aaa",
-  "lakeshore": "e9d065ee5f96219c"
+  "puget": "d286609147e5704d",
+  "sonoran": "55378fd38fdb82b1",
+  "rockies": "25cce1c5cf0ae763",
+  "links": "299a2abd7f55f856",
+  "heartland": "7f809ca78e7c85b1",
+  "keys": "fbad6ed25e6d18d8",
+  "redwood": "39ce6e744fef2d06",
+  "newengland": "597bbe4953de38d0",
+  "lakedunes": "e24633ca2f067656"
  }
 }

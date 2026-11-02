@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {regionOf} from './regions.js';
 
 // Height fog, and the mist that pools in the hollows at dawn.
 //
@@ -51,9 +52,9 @@ const PROFILES = {
  links: {haze: .72, sheet: .55, water: .85},
  midwest: {haze: .62, sheet: .62, water: .7},
  // Still, cold mornings. The best mist on the course.
- autumn: {haze: .75, sheet: .78, water: 1},
+ northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.
- island: {haze: .48, sheet: .22, water: .35},
+ florida: {haze: .48, sheet: .22, water: .35},
  // A summer evening by a big lake: a soft warm haze over everything and a
  // little lying on the water, never a sheet in the dune hollows. PLACED.
  lakeshore: {haze: .6, sheet: .3, water: .75},
@@ -62,11 +63,11 @@ const PROFILES = {
  desert: {haze: .26, sheet: 0, water: 0},
 };
 
-export const profileFor = biome => PROFILES[biome] || PROFILES.midwest;
+export const profileFor = biome => PROFILES[biome] || PROFILES[regionOf(biome)] || PROFILES.midwest;
 // Whether a biome has fog of its own. profileFor can never say no -- that is the
 // point of a fallback -- so a test asking it whether a profile exists could not
 // fail, and Giant Redwood went its whole life on Midwest's fog unnoticed.
-export const hasOwnProfile = biome => Object.hasOwn(PROFILES, biome);
+export const hasOwnProfile = biome => Object.hasOwn(PROFILES, biome) || Object.hasOwn(PROFILES, regionOf(biome) ?? '');
 
 // Densities, derived from how far you should be able to SEE rather than picked
 // by eye.

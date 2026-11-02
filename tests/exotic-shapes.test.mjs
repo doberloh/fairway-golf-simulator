@@ -9,7 +9,7 @@ import {world} from './worlds.mjs';
 // scaled at generation and both data textures pack whatever the hole and bunker
 // carry, so there is one set of numbers rather than two. The rest are here.
 
-const BIOMES = ['midwest', 'pnw', 'links'];
+const BIOMES = ['heartland', 'puget', 'links'];
 const at = (greenShape, bunkerShape, biome, seed) =>
  world({holes: 9, biome, seed, greenShape, bunkerShape});
 const SETTINGS = [[0, 0], [30, 30], [100, 100]];

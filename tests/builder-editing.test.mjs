@@ -10,7 +10,7 @@ const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
  const nx = 201, nz = 201, heights = new Float32Array(nx * nz).fill(100);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}, line: [[-5, -80], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Edit me', landscape: 'pnw', halfX: 100, halfZ: 100,
+ return validateDoc({type: 'built', name: 'Edit me', landscape: 'puget', halfX: 100, halfZ: 100,
   land: {x0: -100, z0: -100, cell: 1, nx, nz, heights},
   patches: [{x0: -15, z0: 65, cell: .25, nx: 121, nz: 121, heights: new Float32Array(121 * 121).fill(100)}],
   surfaces: {green: [box(-10, 70, 10, 90)], fairway: [box(-12, -60, 12, 60)], semi: [box(-18, -66, 18, 66)], sand: [box(20, 0, 26, 6)], heather: [box(50, -50, 90, 50)]},
@@ -92,7 +92,7 @@ test('holes, trees, water and the landscape are records with undo', () => {
  const level = e.addPond({ring: [[60, -90], [80, -90], [80, -75], [60, -75]]});
  assert.ok(level < 100); assert.equal(e.surfaceAt(70, -80), 'water'); assert.equal(e.state.water.length, 2);
  e.undo(); assert.equal(e.state.water.length, 1); assert.equal(e.surfaceAt(70, -80), 'rough', 'undoing a pond takes its water off the grid too');
- e.setLandscape('desert'); assert.equal(e.state.landscape, 'desert');
+ e.setLandscape('sonoran'); assert.equal(e.state.landscape, 'sonoran');
 });
 
 test('a dug bunker is sand in a hollow; a drawn creek is water in its channel, falling downstream; each one undo', () => {
@@ -119,7 +119,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  const e = createEditor(doc());
  e.paint({kind: 'sand', x: 0, z: 30, radius: 4});
  e.shape({op: 'raise', x: 0, z: 30, radius: 6, strength: 1});
- e.setLandscape('autumn');
+ e.setLandscape('newengland');
  const out = validateDoc(e.toDoc());
  const w = worldFromDoc(out);
  assert.equal(w.surface(0, 30), 'sand');
@@ -128,7 +128,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  assert.equal(w.surface(-50, 0), 'water');
  assert.equal(w.surface(70, 0), 'heather');
  assert.ok(w.height(0, 30) > 100.3);
- assert.equal(out.landscape, 'autumn'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'autumn'}).bio.name);
+ assert.equal(out.landscape, 'newengland'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'newengland'}).bio.name);
  assert.equal(out.water.length, 1); assert.equal(out.water[0].level, 99, 'the pond keeps its level');
  assert.equal(out.trees.length, 3 * TREE_STRIDE);
  const untouched = createEditor(doc()).toDoc();

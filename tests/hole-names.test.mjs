@@ -33,7 +33,7 @@ test('names hold no famous single hole\'s nickname', () => {
 });
 
 test('the crest is an SVG of the course', () => {
- const svg = crestSvg({name: 'Copper <Hollow> & Co', settings: {biome: 'autumn', seed: 'C'}});
+ const svg = crestSvg({name: 'Copper <Hollow> & Co', settings: {biome: 'newengland', seed: 'C'}});
  assert.match(svg, /^<svg[^>]*viewBox="0 0 100 106"/);
  assert.ok(!svg.includes('<Hollow>'), 'the name is escaped');
  assert.equal(monogram('The Copper Hollow'), 'CH');
@@ -42,7 +42,7 @@ test('the crest is an SVG of the course', () => {
 
 test('the flag says where the cup is cut: red front, white middle, blue back', () => {
  assert.deepEqual(Object.keys(PIN_FLAGS), ['front', 'middle', 'back']);
- const s = {seed: 'FLAG', holes: 9, biome: 'midwest'};
+ const s = {seed: 'FLAG', holes: 9, biome: 'heartland'};
  for (let i = 0; i < 6; i++) {
   const h = generateCourse(s, i), band = pinBandOf(h);
   // The cup's place along the green agrees with its band.

@@ -21,7 +21,7 @@ function doc(over = {}) {
  const nx = 241, nz = 241, heights = new Float32Array(nx * nz);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) heights[j * nx + i] = 300 + i * .05;
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -10 + i, z: -100, set: 'back'}, {x: -10 + i, z: -80, set: 'front'}], green: {x: 0, z: 90}, line: [[-10 + i, -100], [0, 0], [0, 90]]}));
- return {type: 'built', name: 'Hand', landscape: 'midwest', halfX: 120, halfZ: 120,
+ return {type: 'built', name: 'Hand', landscape: 'heartland', halfX: 120, halfZ: 120,
   land: {x0: -120, z0: -120, cell: 1, nx, nz, heights},
   patches: [{x0: -20, z0: 70, cell: .25, nx: 161, nz: 161, heights: new Float32Array(161 * 161).fill(310)}],
   surfaces: {green: [disc(0, 90, 12)], fairway: [box(-15, -60, 15, 70)], tee: [box(-14, -104, 3, -96)], sand: [disc(20, 80, 4)], semi: [box(-22, -66, 22, 76)],
@@ -76,16 +76,16 @@ test('trees keep their sizes; the landscape picks what draws them', () => {
  const [t, s] = world.trees;
  assert.equal(t.h, 18); assert.equal(t.radius, .5); assert.ok(['oak', 'aspen', 'maple'].includes(t.kind));
  assert.equal(s.kind, 'shrub');
- assert.equal(speciesFor(biomeOf('pnw'), 'conifer', 20, 1, 2) === 'pine' || speciesFor(biomeOf('pnw'), 'conifer', 20, 1, 2) === 'cedar', true);
- assert.ok(['palm', 'hala'].includes(speciesFor(biomeOf('island'), 'palm', 9, 3, 4)));
+ assert.equal(speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'pine' || speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'cedar', true);
+ assert.ok(['palm', 'hala'].includes(speciesFor(biomeOf('keys'), 'palm', 9, 3, 4)));
  assert.ok(speciesFor(biomeOf('links'), 'tree', 12, 0, 0), 'a landscape with no trees still draws one');
 });
 
 test('any landscape: the same file in Desert keeps every lie', () => {
- const d = worldFromDoc({...doc(), landscape: 'desert'});
+ const d = worldFromDoc({...doc(), landscape: 'sonoran'});
  for (const [x, z] of [[0, 90], [0, 0], [80, 0], [-80, 0], [-50, 0], [20, 80]]) assert.equal(d.surface(x, z), at(x, z));
  assert.equal(d.trees[0].h, 18); assert.equal(d.trees[0].radius, .5);
- assert.equal(d.bio.name, biomeOf('desert').name);
+ assert.equal(d.bio.name, biomeOf('sonoran').name);
 });
 
 test('stored houses stand where the file puts them, the same street every time, and none in an old file', () => {

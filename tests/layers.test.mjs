@@ -38,10 +38,10 @@ test('a mask is tidied: small patches go, small holes fill', () => {
 });
 
 test('a landscape offers every turf layer, its own ground types, and rough last', () => {
- const mountain = layersFor(BIOMES.mountain), links = layersFor(BIOMES.links);
+ const mountain = layersFor(BIOMES.rockies), links = layersFor(BIOMES.links);
  for (const L of [mountain, links]) { assert.deepEqual(L.slice(0, 7), ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi']); assert.equal(L.at(-1), 'rough'); }
  assert.ok(mountain.includes('rock') && mountain.includes('scree') && !mountain.includes('heather'), mountain.join());
  assert.ok(links.includes('native') && links.includes('heather') && !links.includes('rock'), links.join());
- assert.ok(layersFor(BIOMES.pnw).includes('pinestraw'), 'what falls under its trees');
+ assert.ok(layersFor(BIOMES.puget).includes('pinestraw'), 'what falls under its trees');
  assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 7), 'rough']);
 });

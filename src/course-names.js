@@ -36,7 +36,7 @@ import {rng as random} from './course-plan.js';
 // The original lists let both halves overlap, and "Cedar Hollow" was reachable
 // from both the Pacific Northwest and the Midwest.
 export const NAME_WORDS = {
- pnw: [
+ puget: [
   ['Cedar', 'Sitka', 'Harbour', 'Cascade', 'Douglas', 'Salmon', 'Fern', 'Tofino',
    'Quinault', 'Skagit', 'Chinook', 'Hemlock', 'Driftwood', 'Cannon', 'Orca',
    'Madrona', 'Nootka', 'Tillamook', 'Alder', 'Rainier', 'Nehalem', 'Yaquina',
@@ -46,7 +46,7 @@ export const NAME_WORDS = {
    'Landing', 'Cove', 'Inlet', 'Narrows', 'Bend', 'Spit', 'Shore', 'Timber',
    'Crossing', 'Hook', 'Bar', 'Passage', 'Rise'],
  ],
- desert: [
+ sonoran: [
   ['Mesa', 'Coyote', 'Adobe', 'Sonora', 'Agave', 'Rincon', 'Vermilion', 'Cholla',
    'Mesquite', 'Javelina', 'Yucca', 'Caliche', 'Gila', 'Ironwood', 'Tinaja',
    'Roadrunner', 'Sandstone', 'Kiva', 'Estrella', 'Creosote', 'Bajada', 'Mirage',
@@ -56,7 +56,7 @@ export const NAME_WORDS = {
    'Draw', 'Buttes', 'Rim', 'Sands', 'Gulch', 'Playa', 'Bench', 'Crossing',
    'Hollow', 'Ridge', 'Bluffs', 'Pass'],
  ],
- mountain: [
+ rockies: [
   ['Alpine', 'Granite', 'Glacier', 'Summit', 'Larch', 'Aspen', 'Cirque', 'Tarn',
    'Chamonix', 'Moraine', 'Talus', 'Cornice', 'Snowmelt', 'Ptarmigan', 'Marmot',
    'Avalanche', 'Bighorn', 'Icefall', 'Scree', 'Sawback', 'Stonecrop', 'Gentian',
@@ -75,7 +75,7 @@ export const NAME_WORDS = {
    'Braes', 'Point', 'Howe', 'Hillock', 'Bank', 'Head', 'Bay', 'Crossing',
    'Hollow', 'Rise', 'Reach', 'Bend'],
  ],
- midwest: [
+ heartland: [
   ['Prairie', 'Sycamore', 'Elmhurst', 'Wheatfield', 'Tallgrass', 'Walnut',
    'Hawthorn', 'Bluestem', 'Hickory', 'Cottonwood', 'Ironweed', 'Milkweed',
    'Goldenrod', 'Switchgrass', 'Coneflower', 'Osage', 'Shagbark', 'Silo',
@@ -85,7 +85,7 @@ export const NAME_WORDS = {
    'Creek', 'Bottoms', 'Rise', 'Flats', 'Commons', 'Acres', 'Draw', 'Bend',
    'Ridge', 'Lane', 'Prairies', 'Stand'],
  ],
- island: [
+ keys: [
   ['Coral', 'Lagoon', 'Frangipani', 'Barracuda', 'Palm', 'Reef', 'Conch',
    'Windward', 'Leeward', 'Bonefish', 'Tarpon', 'Hibiscus', 'Plumeria',
    'Mangrove', 'Seagrape', 'Pelican', 'Frigate', 'Manta', 'Coconut', 'Banyan',
@@ -105,7 +105,7 @@ export const NAME_WORDS = {
    'Canopy', 'Bottom', 'Ring', 'Bench', 'Rise', 'Crossing', 'Bend', 'Ridge',
    'Cloister', 'Walk', 'Clearing', 'Aisle'],
  ],
- autumn: [
+ newengland: [
   ['Copper', 'Maple', 'Amber', 'Harvest', 'Sumac', 'Russet', 'Chestnut',
    'Bracken', 'Ember', 'Cider', 'Scarlet', 'Crimson', 'Tamarack', 'Sassafras',
    'Persimmon', 'Quince', 'Bittersweet', 'Witchhazel', 'Beechnut', 'Acorn',
@@ -122,7 +122,7 @@ export const NAME_WORDS = {
  // was searched with "golf" (23 October 2026, REFERENCES); Black Oak,
  // Starboard, Lakebreeze, Shoal, Agate and Lakeshore were dropped -- each is
  // a real course or the start of a famous one.
- lakeshore: [
+ lakedunes: [
   ['Beacon', 'Beachgrass', 'Sandreed', 'Sandcherry', 'Foredune', 'Blowout',
    'Lakewind', 'Seiche', 'Breakwater', 'Pierhead', 'Jackpine', 'Plover',
    'Sandbar', 'Freshwater', 'Duneline', 'Wavecrest', 'Bearberry', 'Puccoon',

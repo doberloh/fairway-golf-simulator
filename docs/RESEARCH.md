@@ -12043,3 +12043,61 @@ crossed a creek on foot: bridges were found when the network was routed, and
 the link is laid later. `findBridges` now runs again after it; the bridges
 it finds late had no deck height (the deck box sat at zero and a ball fell
 through it) until `setDecks` gave them one.
+
+## The landscapes' keys, the map and the globe (2 November 2026)
+
+The US landscapes goal's foundations (PLAN.md section 1-3, local; sources in
+REFERENCES). What was decided and measured:
+
+**The keys.** Seven landscapes took the keys the owner approved
+(data/names.json in the study): pnw puget, desert sonoran, mountain rockies,
+midwest heartland, island keys, autumn newengland, lakeshore lakedunes.
+Ground moved for those seven (generator 56: the key seeds the world pieces'
+streams and the course name); Links and Redwood Coast kept their keys and
+their fingerprints. The old keys are read everywhere one is stored
+(PROJECT_HANDOFF *A LANDSCAPE'S KEY IS FOREVER*).
+
+**Rejected:** keeping the old keys and changing only the names players see.
+It would have kept every save without a migration, but left keys that no
+longer say where a landscape is (`island` for the Keys, `autumn` for New
+England once autumn is a season everywhere), forever, and the owner asked
+for the heavy-handed version while there are no players.
+
+**Regions, then landscapes.** The nine landscapes' records became their
+regions' records unchanged (rendering and ground identical but for the key),
+so a new landscape in a region starts from its region's look and states
+only what differs.
+
+**The map.** The study's partition (EPA level III ecoregions grouped into
+39 landscapes, 1.09 MB) is shipped simplified: Douglas-Peucker at 0.45
+pixels of a 960 x 500 picture, pieces under 0.15 square pixels dropped
+(PLACED: invisible at the size the map is drawn), 21,421 points, 215 KB of
+module with the globe. Alaska and Hawaii were boxes in the partition and are
+Natural Earth's outlines. A place outside every shape takes the nearest
+within 6 pixels, about 50 km (PLACED: the Keys' islands are thinner than the
+simplified outline keeps; Key West lies 4-6 px from the nearest shape). The
+check: 15 reference courses find their own landscape; 37 of the 39
+landscapes' own places fall in their own shape -- Heartland's (the median of
+its courses, east to Michigan and west to Iowa, lands on Lake Michigan's
+shore: Lake Dunes) and North Woods' (on the Twin Cities' edge: Heartland)
+do not; a median is not a centre, and only the globe's dot uses it.
+
+**Each landscape's place** (`where`, the globe's dot) is the median of the
+study's reference courses for it that the map agrees with (PLACED: a
+polygon's centre put Puget Sound on the Oregon coast and the Lowcountry in
+Florida); Alaska is Anchorage, Hawaii Maui, Scottish Links St Andrews.
+
+**The globe** is orthographic, turned to 0.8 of the place's latitude
+(PLACED: keeps the polar cap out of view and the continent whole), Natural
+Earth's land at 0.9 degrees, cut at the horizon. Pressing hidden land to the
+rim was tried first and rejected: Hawaii's globe came out all land.
+
+**Seasons** are meteorological -- spring March-May, summer June-August,
+autumn September-November, winter December-February (PLACED: what weather
+services report, and simpler than the equinoxes) -- flipped south of the
+equator; the Keys and Hawaii have one look the year round. Until the
+seasons are drawn (the goal's step 9) every season resolves to summer.
+
+**Door 2's suggestion** is the map's landscape at the land's centre, taken
+unasked when the land is built unless the player has chosen one; the real
+Worthington survey (Minnesota) suggested Heartland.

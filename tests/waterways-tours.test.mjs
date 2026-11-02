@@ -4,7 +4,7 @@ import * as T from 'three';
 import {generateWorld,fairwayWidth} from '../src/course.js';
 import {downhillProfile,addStreams,STREAM_GRADE} from '../src/streams.js';
 import {fairwayAim,fairwayMiddle,teeAim,cameraInsideTree,makeHoleTour,MENU_ORBIT_RATE,FLYOVER_RATE} from '../src/camera-tours.js';
-let world;const getWorld=()=>world??=generateWorld({seed:'LAKE-QA',biome:'midwest',holes:9,lakes:2,lakeSize:140,water:0,trees:0,rivers:1,creeks:1,elevation:20});
+let world;const getWorld=()=>world??=generateWorld({seed:'LAKE-QA',biome:'heartland',holes:9,lakes:2,lakeSize:140,water:0,trees:0,rivers:1,creeks:1,elevation:20});
 test('channels descend without raised water or abrupt longitudinal grades in either direction',()=>{
  for(const sign of [-1,1]){const height=(x,z)=>30+sign*z*.02+Math.sin(z/35)*4,points=Array.from({length:101},(_,i)=>({x:0,z:i*10,nx:1,nz:0,width:8}));const {path}=downhillProfile(points,height);
  for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],distance=Math.hypot(b.x-a.x,b.z-a.z),slope=(a.level-b.level)/distance;assert(slope>=.00015-1e-9&&slope<=STREAM_GRADE+1e-9);assert(b.level<=height(b.x,b.z)-.199);assert(Math.abs(b.nx-(b.z-a.z)/distance)<1e-8);}
@@ -32,7 +32,7 @@ test('channels clear every bunker and never bend tighter than their own bank str
 test('each channel draws its own bearing instead of an offset copy of one curve',()=>{
  let spread=0,pairs=0;
  for(const seed of ['CHAN-2','CHAN-3','EVERGREEN','WANDER-42']){
-  const w=generateWorld({seed,biome:'midwest',holes:9,water:0,trees:0,rivers:1,creeks:1,streamBends:60});
+  const w=generateWorld({seed,biome:'heartland',holes:9,water:0,trees:0,rivers:1,creeks:1,streamBends:60});
   const bearings=w.streams.streams.map(s=>{const p=s.points;return (Math.atan2(p.at(-1).x-p[0].x,p.at(-1).z-p[0].z)*180/Math.PI+360)%180;});
   for(let i=0;i<bearings.length;i++)for(let j=i+1;j<bearings.length;j++){const d=Math.abs(bearings[i]-bearings[j]);spread+=Math.min(d,180-d);pairs++;}
  }
@@ -54,7 +54,7 @@ test('reflective channel geometry faces upward and agrees with channel water lev
  for(let i=0;i<pos.count;i++){assert(norm.getZ(i)>.5,'water must face above the terrain');assert(Math.abs(pos.getZ(i)+level-path[Math.floor(i/3)].level)<1e-5);assert.equal(shore.getX(i),[1,0,1][i%3]);}g.dispose();}});assert.equal(count,2);
 });
 test('tee markers square up to the fairway, not to the pin',()=>{
- const w=generateWorld({seed:'BRIDGE-SHOW',biome:'autumn',holes:9,courseYards:3660,doglegs:37,doglegAngle:35,width:50,trees:0,water:0});
+ const w=generateWorld({seed:'BRIDGE-SHOW',biome:'newengland',holes:9,courseYards:3660,doglegs:37,doglegAngle:35,width:50,trees:0,water:0});
  const deg=r=>r*180/Math.PI;
  let turned=0;
  for(const h of w.holes){
@@ -119,7 +119,7 @@ test('the flyover never flies through the ground or the trees',()=>{
  // hill unless the ring is lifted over it, and a canopy standing a few metres
  // off the flight line still gets in the way. Both are checked on the worst
  // terrain the generator makes: full mountain, and a forest at full planting.
- for(const extra of [{biome:'mountain',elevation:100,landform:100,trees:40},{trees:100,elevation:60}]){
+ for(const extra of [{biome:'rockies',elevation:100,landform:100,trees:40},{trees:100,elevation:60}]){
   const w=generateWorld({seed:'SHOULDERS',holes:9,water:0,homes:false,...extra});
   let ground=Infinity,canopy=Infinity;
   for(const h of w.holes){

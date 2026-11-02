@@ -114,3 +114,19 @@ button,input,select{font:inherit;color:inherit}
 .cb-door2{grid-template-rows:minmax(0,1fr)}
 .cb-door2 .cb-planbox{min-height:0;overflow:hidden}
 .cb-door2 canvas.cb-plan{height:0;flex:1 1 0}
+/* THE MAP OF THE LANDSCAPES (the US landscapes goal, 2 November 2026;
+   ui-map.js): door 1's landscape, and door 2's with the survey marked. */
+.lmap{display:grid;gap:4px}
+.lmap-svg{display:block;width:100%;height:auto;max-height:240px}
+.lmap-land{stroke:rgba(0,0,0,.45);stroke-width:.6;stroke-linejoin:round}
+.lmap-land.live{fill:var(--a2);cursor:pointer}
+.lmap-land.coming{fill:rgba(255,255,255,.12)}
+.lmap-land.over{stroke:rgba(255,255,255,.55);stroke-dasharray:3 2}
+.lmap-land.live:hover,.lmap-land.live:focus-visible{fill:var(--a1);outline:none}
+.lmap-land.on{fill:var(--hot)}
+.lmap-mark{fill:#ff5a4f;stroke:#fff;stroke-width:2;pointer-events:none}
+.lmap-name{display:flex;gap:8px;align-items:baseline;min-height:16px;font:800 14px/1 var(--head);text-transform:uppercase}
+.lmap-name small{font:600 11px/1 var(--body);color:var(--soft)}
+.lmap-abroad{display:flex;gap:6px;flex-wrap:wrap}
+.lmap-chip{display:inline-flex;gap:6px;align-items:center;padding:3px 8px 3px 3px;border:1px solid var(--line);background:none;font:800 12px/1 var(--head);text-transform:uppercase;cursor:pointer}
+.lmap-chip.on{background:var(--hot);color:var(--on-hot)}

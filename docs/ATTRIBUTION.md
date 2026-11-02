@@ -118,3 +118,21 @@ and the licence is reproduced in THIRD_PARTY_NOTICES.txt.
 "Saira" is a Reserved Font Name: a modified copy would have to be renamed.
 Fairway ships the files unmodified. Distribution review, *Addendum, 17 October
 2026: the 1.0 interface's typeface*, has what was checked.
+
+## The map of the landscapes and the globe: public-domain data
+
+Since 2 November 2026 (the US landscapes goal) the game carries
+`src/us-map-data.js`, written by `tools/us-map.mjs`:
+
+- **The landscapes' shapes** are the U.S. Environmental Protection Agency's
+  *Level III Ecoregions of the Continental United States* (us_eco_l3, 2013
+  edition; a U.S. government work, public domain), grouped into the
+  landscapes by the project's own study, simplified and projected.
+- **Alaska's and Hawaii's outlines and the globe's land** are Natural Earth's
+  1:50m states and provinces and 1:110m land (https://www.naturalearthdata.com,
+  public domain; Natural Earth asks no credit and welcomes one: "Made with
+  Natural Earth").
+- The map's projection uses the parallels and inset placings of d3-geo's
+  `geoAlbersUsa` (Mike Bostock, ISC licence) -- numbers only; the
+  projection is written here from Snyder's Albers equal-area formulas, and no
+  d3 code ships.

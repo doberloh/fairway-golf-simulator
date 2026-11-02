@@ -12,7 +12,14 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=16;
+export const SCHEMA_VERSION=17;
+// 17: the landscapes renamed for the regions of the USA (the owner, 2 November
+//     2026: "Lets change all of the base biomes names to match what they would
+//     be called under this new plan"). `biome`'s options take their new keys
+//     -- pnw puget, desert sonoran, mountain rockies, midwest heartland, island
+//     keys, autumn newengland, lakeshore lakedunes; redwood and links keep
+//     theirs -- and a save on an old key opens on its new one
+//     (regions.js OLD_KEYS; tests/settings-schema.test.mjs).
 // 16: Architect removed (the owner, 2 November 2026: "Architect mode needs to
 //     be removed. We are going to use the new builder and have real humans do
 //     the work"). `designer`, `archStyle`, `archClub`, `archAge` and
@@ -295,7 +302,12 @@ export const SCHEMA_VERSION=16;
 //     bridge, the clubhouse's link to the network included; that link stops
 //     at the first path it meets, and a join may climb 28% (paths.js
 //     JOIN_GRADE). The clubhouse keeps 10 m off the paths (was 3).
-export const GENERATOR_VERSION=55;
+// 56: the landscapes' new keys (the US landscapes goal, 2 November 2026;
+//     SCHEMA_VERSION 17). The key is part of the seed of the world pieces'
+//     streams and of the course name, so the seven renamed landscapes moved
+//     (puget, sonoran, rockies, heartland, keys, newengland, lakedunes);
+//     Links and Redwood Coast kept their keys and their ground.
+export const GENERATOR_VERSION=56;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -415,7 +427,10 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
-export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','lakeshore'];
+// The landscapes a player may pick: the built ones (biomes.js LAND), in the
+// order the nine before the US landscapes goal had, so an endless run or
+// Surprise me picking by index lands where it did. regions.js lists them all.
+export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -441,7 +456,7 @@ export const SETTINGS=[
  {key:'seed',category:'course',kind:'text',max:50,def:'EVERGREEN',label:'Course seed',tip:'The same seed and settings rebuild the same course, within one generator version.'},
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
- {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
+ {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'puget',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
@@ -602,6 +617,10 @@ const MIGRATIONS={
  // 15 -> 16: Architect removed; its designer and four dials go, and the course
  // is the generator's of the same seed (tests/settings-schema.test.mjs).
  15:s=>{const {designer,archStyle,archClub,archAge,archStory,...rest}=s;return rest;},
+ // 16 -> 17: the landscapes' new keys (regions.js OLD_KEYS, held equal to this
+ // by tests/landscapes-complete.test.mjs; written out so this module imports
+ // nothing).
+ 16:s=>{const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes'}[s.biome];return to?{...s,biome:to}:s;},
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

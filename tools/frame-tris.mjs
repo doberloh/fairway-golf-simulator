@@ -22,7 +22,7 @@ import {gpuGate, logRun, readCard} from './gpu-gate.mjs';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'), '..');
 const argv = process.argv.slice(2);
 const flag = (name, fallback) => { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : fallback; };
-const BUILD = flag('build', 'bench/shots/dist-exp/index.html'), TIER = flag('tier', 'high'), BIOME = flag('biome', 'autumn');
+const BUILD = flag('build', 'bench/shots/dist-exp/index.html'), TIER = flag('tier', 'high'), BIOME = flag('biome', 'newengland');
 const SPOT = flag('spot', 'tee1'), TOP = Number(flag('top', 25));
 const SPOTS = {tee1: {hole: 0, along: -4, height: 1.8, look: 'pin'}, tee5: {hole: 4, along: -4, height: 1.8, look: 'pin'},
  side2: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}};

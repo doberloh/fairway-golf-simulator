@@ -60,9 +60,9 @@ export const weekKey = (date = new Date(), generator = GENERATOR_VERSION) => `${
 // stood in for Haunted Hollow out of season since 26 October). The rotation
 // itself is untouched, so no other week moves.
 export const WEEKLY_ROTATION = {
- nine: ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'],
- eras: [{debut: 149, biome: 'lakeshore'}],
- retired: {haunted: 'autumn'},
+ nine: ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'haunted'],
+ eras: [{debut: 149, biome: 'lakedunes'}],
+ retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;

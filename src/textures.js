@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {random} from './course.js';
 import {biomeOf} from './biomes.js';
+import {regionOf} from './regions.js';
 // Locally generated, tileable albedo + relief. Different turf cuts have their
 // own blade scale and coverage; exposed land changes with the biome.
 // The scene's one toon ramp.
@@ -74,9 +75,9 @@ export function rimLit(material,strength=.35){
 }
 
 export function surfaceTextures(biome,kind){
- const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d'),rng=random(biome+':'+kind);
+ const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d'),rng=random((regionOf(biome)??biome)+':'+kind);
  const sand=['sand','shore','lip'].includes(kind)||kind==='land'&&biomeOf(biome).sandLand,rough=['land','rough'].includes(kind),short=['green','fringe','tee'].includes(kind);
- const density={pnw:1.4,island:1.2,links:.8,mountain:.95,desert:.85,autumn:1,midwest:1.15}[biome]||1;const bladeScale={pnw:1.15,island:1.45,links:1.8,mountain:.8,desert:.8,autumn:1,midwest:1.1}[biome]||1;
+ const region=regionOf(biome)??biome,density={pnw:1.4,florida:1.2,links:.8,mountain:.95,desert:.85,northeast:1,midwest:1.15}[region]||1;const bladeScale={pnw:1.15,florida:1.45,links:1.8,mountain:.8,desert:.8,northeast:1,midwest:1.1}[region]||1;
  const base=sand?194:rough?156:182;ctx.fillStyle=`rgb(${base},${base},${base})`;ctx.fillRect(0,0,512,512);
  const dots=sand?25000:10000*density;for(let i=0;i<dots;i++){
   const x=rng()*512,y=rng()*512,v=base-50+rng()*100;ctx.strokeStyle=`rgba(${v},${v},${v},.7)`;ctx.fillStyle=ctx.strokeStyle;

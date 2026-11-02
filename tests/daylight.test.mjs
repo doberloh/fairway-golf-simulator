@@ -8,10 +8,10 @@ import {
 import {generateWorld, DEFAULT_COURSE} from '../src/course.js';
 import * as T from 'three';
 
-const BIOME_SUN = {pnw: 28, desert: 24, mountain: 36, links: 23, midwest: 39, island: 47, autumn: 19};
+const BIOME_SUN = {puget: 28, sonoran: 24, rockies: 36, links: 23, heartland: 39, keys: 47, newengland: 19};
 
 test('the sun rises, peaks near midday and sets', () => {
- const sun = BIOME_SUN.pnw;
+ const sun = BIOME_SUN.puget;
  const at = h => solarState(h, sun).elevation;
 
  assert.ok(at(SUNRISE) < .5, 'sun is on the horizon at sunrise');
@@ -33,7 +33,7 @@ test('the sun rises, peaks near midday and sets', () => {
 });
 
 test('shadows sweep because the azimuth moves', () => {
- const sun = BIOME_SUN.midwest;
+ const sun = BIOME_SUN.heartland;
  const morning = solarState(8, sun).direction, evening = solarState(17, sun).direction;
  assert.ok(morning.x * evening.x < 0, 'the sun crosses from one side of the sky to the other');
  // The old renderer froze the azimuth, so every shadow on a course pointed the
@@ -42,7 +42,7 @@ test('shadows sweep because the azimuth moves', () => {
 });
 
 test('light warms at the horizon and is neutral overhead', () => {
- const sun = BIOME_SUN.pnw;
+ const sun = BIOME_SUN.puget;
  const noon = solarState((SUNRISE + SUNSET) / 2, sun), dusk = solarState(SUNSET - .3, sun);
 
  assert.equal(noon.keyTintAmount, 0, 'midday takes no tint, so a biome keeps its own sun colour');
@@ -65,7 +65,7 @@ test('the default hour reproduces the light each biome already had', () => {
 });
 
 test('scales reach exactly one by day and never fall to zero at night', () => {
- const sun = BIOME_SUN.island;
+ const sun = BIOME_SUN.keys;
  const noon = solarState(12.75, sun), midnight = solarState(1, sun);
 
  assert.equal(noon.keyScale, 1);
@@ -100,7 +100,7 @@ test('the clock reads the way a clock reads', () => {
 });
 
 test('each preset lands in the phase its label claims', () => {
- const sun = BIOME_SUN.pnw, at = h => phaseName(solarState(h, sun));
+ const sun = BIOME_SUN.puget, at = h => phaseName(solarState(h, sun));
  assert.equal(at(12.75), 'day');
  assert.equal(at(8.5), 'day');
  assert.equal(at(23), 'night');
@@ -110,10 +110,10 @@ test('each preset lands in the phase its label claims', () => {
 });
 
 test('hourForElevation inverts the sun path', () => {
- const peak = peakElevation(BIOME_SUN.mountain);
+ const peak = peakElevation(BIOME_SUN.rockies);
  for (const target of [5, 20, 40]) {
   const hour = hourForElevation(target, peak);
-  assert.ok(Math.abs(solarState(hour, BIOME_SUN.mountain).elevation - target) < .01);
+  assert.ok(Math.abs(solarState(hour, BIOME_SUN.rockies).elevation - target) < .01);
   assert.ok(hour > SUNRISE && hour < SUNSET, 'and stays inside daylight');
  }
  assert.ok(solarPhase(12) > 0 && solarPhase(12) < Math.PI, 'midday is in the day half of the arc');

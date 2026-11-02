@@ -16,15 +16,15 @@ import {rng} from './course-plan.js';
 // The landscape's own words for its country, used where a hole has nothing of
 // its own to be named for.
 const LAND = {
- pnw: ['Cedars', 'Fern Gully', 'Mossbank', 'The Sound', 'Hemlock', 'Driftwood', 'Salal', 'Sitka', 'Mist'],
- desert: ['Mesa', 'Sagebrush', 'Red Rock', 'Arroyo', 'Sundial', 'Coyote', 'Quail', 'Ocotillo', 'Dry Wash'],
- mountain: ['Summit', 'Scree', 'Snowmelt', 'High Meadow', 'Larch', 'Lookout', 'Tarn', 'Marmot', 'Cirque'],
+ puget: ['Cedars', 'Fern Gully', 'Mossbank', 'The Sound', 'Hemlock', 'Driftwood', 'Salal', 'Sitka', 'Mist'],
+ sonoran: ['Mesa', 'Sagebrush', 'Red Rock', 'Arroyo', 'Sundial', 'Coyote', 'Quail', 'Ocotillo', 'Dry Wash'],
+ rockies: ['Summit', 'Scree', 'Snowmelt', 'High Meadow', 'Larch', 'Lookout', 'Tarn', 'Marmot', 'Cirque'],
  links: ['Dunes', 'Gorse', 'Whins', 'Marram', 'Seaside', 'Skylark', 'Sandhills', 'Tide', 'Lang Whang'],
- midwest: ['Prairie', 'Bur Oak', 'Big Sky', 'Bluestem', 'Meadowlark', 'Windbreak', 'Cornerpost', 'Thunder', 'Homestead'],
- island: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
+ heartland: ['Prairie', 'Bur Oak', 'Big Sky', 'Bluestem', 'Meadowlark', 'Windbreak', 'Cornerpost', 'Thunder', 'Homestead'],
+ keys: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],
- autumn: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
- lakeshore: ['Beacon', 'Dune Ridge', 'Beach Grass', 'Cottonwood', 'Shoreline', 'Gull', 'Juniper', 'Breakwater', 'Lake View'],
+ newengland: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
+ lakedunes: ['Beacon', 'Dune Ridge', 'Beach Grass', 'Cottonwood', 'Shoreline', 'Gull', 'Juniper', 'Breakwater', 'Lake View'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 
@@ -36,7 +36,7 @@ function candidates(h, i, n, biome) {
  if (n === 18 && i === 8) out.push('Halfway', 'The Turn');
  if (i === 0) out.push(['First', 'Starter', 'Opening', 'Off We Go'][Math.floor((h.length || 0) * 7) % 4]);
  if (h.ponds?.length) {
-  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'island' ? ['Lagoon', 'Salt Pond'] : biome === 'mountain' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
+  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'keys' ? ['Lagoon', 'Salt Pond'] : biome === 'rockies' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
   out.push(...water);
  }
  const bend = Math.abs(h.doglegAngle || 0);
@@ -78,3 +78,6 @@ export function holeNames(holes = [], settings = {}) {
  });
  return names;
 }
+
+// For tests/landscapes-complete.test.mjs: every landscape has its words.
+export {LAND as LAND_WORDS};

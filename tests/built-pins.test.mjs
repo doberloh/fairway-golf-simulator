@@ -8,7 +8,7 @@ import {worldFromDoc, placeBuiltPins} from '../src/built-world.js';
 import {Round} from '../src/game.js';
 import {makeRivalCode, readRivalCode} from '../src/rival.js';
 
-const doc = freezeWorld(generateWorld({...DEFAULT_COURSE, seed: 'PINS-TEST', biome: 'autumn', holes: 9}), {name: 'Pins'});
+const doc = freezeWorld(generateWorld({...DEFAULT_COURSE, seed: 'PINS-TEST', biome: 'newengland', holes: 9}), {name: 'Pins'});
 const slope = (h, x, z) => { const e = .4; return Math.hypot((h.height(x + e, z) - h.height(x - e, z)) / (2 * e), (h.height(x, z + e) - h.height(x, z - e)) / (2 * e)) * 100; };
 
 test('every cup is on its green, with room from the edge, on ground a ball can rest on', () => {

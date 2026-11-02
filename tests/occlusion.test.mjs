@@ -29,7 +29,7 @@ test('overlapping crowns deepen the shade without ever reaching full dark', () =
 });
 
 test('a real course bakes without error and shades somewhere, on the ownership atlas grid', () => {
- const w = generateWorld({seed: 'OCCLUSION', biome: 'pnw', holes: 9});
+ const w = generateWorld({seed: 'OCCLUSION', biome: 'puget', holes: 9});
  const ex = w.groundGrid.halfX, ez = w.groundGrid.halfZ, {Sx, Sz} = ownerAtlasSize(ex, ez);
  const occ = occlusionAtlas(w, ex, ez, Sx, Sz);
  assert.equal(occ.length, Sx * Sz);

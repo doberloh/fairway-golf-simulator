@@ -41,20 +41,20 @@ const UA = 'FairwayCourseBuilder/0.1 (testing; github.com/doberloh/fairway-golf-
 // Every course: its folder under bench/lidar, OpenStreetMap's golf_course
 // (way or relation), the landscape it is built as.
 export const COURSES = {
- worthington: {name: 'Worthington Country Club', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]', landscape: 'midwest'},
- sahalee: {name: 'Sahalee Country Club', osm: 'way(1002185812)', landscape: 'pnw'},
- 'tpc-scottsdale': {name: 'TPC Scottsdale (Stadium)', osm: 'way(78388948)', landscape: 'desert'},
- breckenridge: {name: 'Breckenridge Golf Club', osm: 'way(1571231453)', landscape: 'mountain'},
+ worthington: {name: 'Worthington Country Club', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]', landscape: 'heartland'},
+ sahalee: {name: 'Sahalee Country Club', osm: 'way(1002185812)', landscape: 'puget'},
+ 'tpc-scottsdale': {name: 'TPC Scottsdale (Stadium)', osm: 'way(78388948)', landscape: 'sonoran'},
+ breckenridge: {name: 'Breckenridge Golf Club', osm: 'way(1571231453)', landscape: 'rockies'},
  'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'links'},
- 'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'island'},
+ 'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'keys'},
  northwood: {name: 'Northwood Golf Club', osm: 'way(1246462624)', landscape: 'redwood'},
- ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'autumn'},
- 'arcadia-bluffs': {name: 'Arcadia Bluffs', osm: 'way(293247442)', landscape: 'lakeshore'},
- 'battle-creek': {name: 'Battle Creek Golf Course', osm: 'way(54454203)', landscape: 'pnw'},
- 'salish-cliffs': {name: 'Salish Cliffs Golf Club', osm: 'way(226885836)', landscape: 'pnw'},
- snohomish: {name: 'Snohomish Golf Course', osm: 'way(235184973)', landscape: 'pnw'},
- 'nile-shrine': {name: 'Nile Shrine Golf Course', osm: 'way(35451043)', landscape: 'pnw'},
- 'druids-glen': {name: 'Druids Glen Golf Course', osm: 'way(350237324)', landscape: 'pnw'},
+ ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'newengland'},
+ 'arcadia-bluffs': {name: 'Arcadia Bluffs', osm: 'way(293247442)', landscape: 'lakedunes'},
+ 'battle-creek': {name: 'Battle Creek Golf Course', osm: 'way(54454203)', landscape: 'puget'},
+ 'salish-cliffs': {name: 'Salish Cliffs Golf Club', osm: 'way(226885836)', landscape: 'puget'},
+ snohomish: {name: 'Snohomish Golf Course', osm: 'way(235184973)', landscape: 'puget'},
+ 'nile-shrine': {name: 'Nile Shrine Golf Course', osm: 'way(35451043)', landscape: 'puget'},
+ 'druids-glen': {name: 'Druids Glen Golf Course', osm: 'way(350237324)', landscape: 'puget'},
 };
 
 const wait = ms => new Promise(r => setTimeout(r, ms));

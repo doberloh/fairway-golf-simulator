@@ -1720,3 +1720,9 @@ local PDF download as before. No dependency added or removed; still one
 file, still no network request in the game. Not yet released, so no player
 sees it; the US landscapes goal grows the page again (the owner: game size
 may grow).
+
+**Step 2, the same day**: the page is **13,797,198 bytes (7.11 MB
+gzipped)**, +235 KB: the map of the landscapes and the globe's land
+(src/us-map-data.js, 215 KB; EPA ecoregions and Natural Earth, both public
+domain -- ATTRIBUTION), the region table and the map's code. Still one file,
+no network request.

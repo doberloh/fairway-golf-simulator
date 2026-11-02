@@ -52,6 +52,10 @@ import {worldFromDoc, builtLine, GRID_MARGIN} from '../built-world.js';
 import {createEditor} from './editing.js';
 import {checkCourse} from './checks.js';
 import {clearTrees} from './tree-clear.js';
+import {regionOf, LANDSCAPES} from '../regions.js';
+import {landscapeAt} from '../landscape-map.js';
+import {US_SHAPES} from '../us-map-data.js';
+import {landscapeMap} from '../ui-map.js';
 
 const {el} = ui;
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -68,7 +72,7 @@ const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bp
 // hectare where needles or leaves fall, 15 on a links, a desert or an island,
 // 80 elsewhere (PLACED: by eye against the generated courses' edges).
 const outsideGround = bio => bio.fallen?.kind ?? bio.landform?.kinds?.floor ?? (['native', 'heather'].includes(bio.landform?.kinds?.a) ? bio.landform.kinds.a : null);
-const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'island'].includes(key) ? 15 : 80;
+const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'florida'].includes(regionOf(key)) ? 15 : 80;
 const MARK_NAME = {back: 'back tee', middle: 'middle tee', front: 'front tee', aim: 'aim point', green: 'green'};
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
@@ -81,7 +85,7 @@ export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
-  name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
+  name: 'My real course', landscape: 'heartland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
   picShow: null, picOffsets: {}, landEdits: null, creeks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
@@ -696,6 +700,7 @@ export function open(draft = null) {
    // the mode changes): placed by position, they lie on new land as on old;
    // one lined up by matched points was matched to the old land, and goes.
    Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, landEdits: null, creeks: [], pics: st.pics.filter(p => p.provider || p.file), picture: null});
+   suggestLandscape();
    if (st.picShow === 'matched') st.picShow = null;
    landText.textContent = `${(2 * r.land.halfX).toFixed(0)} x ${(2 * r.land.halfZ).toFixed(0)} m at ${r.land.cell} m; ground ${r.land.method === 'classified' ? 'from the survey\'s own classes' : 'found by a ground filter'}; ${(100 * r.land.filled.reduce((s, v) => s + v, 0) / r.land.filled.length).toFixed(1)}% filled where no laser reached the ground; ${r.trees.length.toLocaleString()} trees.`;
    say(landText.textContent);
@@ -764,6 +769,20 @@ export function open(draft = null) {
   return null;
  };
  st.lonLatOfLocal = lonLatOfLocal;
+ // THE LANDSCAPE SUGGESTED FROM WHERE THE SURVEY LIES (the US landscapes goal,
+ // PLAN.md section 2): the map's landscape at the land's centre, taken as the
+ // course's landscape when the land is built unless the player has already
+ // chosen one. A place outside the map, or a landscape not built yet, leaves
+ // the choice as it was and says so.
+ const surveyPlace = () => { const ll = lonLatOfLocal(); return ll ? ll(0, 0) : null; };
+ const suggestion = () => { const c = surveyPlace(); return c ? landscapeAt(US_SHAPES, c.lat, c.lon) : null; };
+ const suggestLandscape = () => { const k = suggestion(); if (k && BIOME_KEYS.includes(k) && !st.landscapePicked) st.landscape = k; };
+ const suggestionLine = () => {
+  const k = suggestion();
+  if (!k) return surveyPlace() ? 'This survey lies outside the map of the landscapes: choose the look nearest it.' : null;
+  const name = LANDSCAPES[k].name;
+  return BIOME_KEYS.includes(k) ? `Where the survey lies: ${name}.` : `Where the survey lies: ${name}, not built yet -- choose the look nearest it.`;
+ };
  function stepTrace() {
   const ll = lonLatOfLocal(), centre = ll ? ll(0, 0) : null, offer = centre ? providersAt(centre.lon, centre.lat) : Object.keys(PROVIDERS);
   let keys = {}; try { keys = JSON.parse(localStorage.getItem(KEYS) || '{}'); } catch { /* private window */ }
@@ -831,7 +850,9 @@ export function open(draft = null) {
    // layers offer, and is step 5's look.
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Landscape'),
     el('small', {}, 'Which ground types the layers offer -- rock and scree in the mountains, heather and native grass on a links -- and the course\'s look.'),
-    el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))) : null,
+    suggestionLine() ? el('small', {class: 'cb-suggest'}, suggestionLine()) : null,
+    landscapeMap(document, {built: BIOME_KEYS, chosen: st.landscape, mark: (c => c && [c.lat, c.lon])(surveyPlace()), onPick: k => { st.landscape = k; st.landscapePicked = true; go(2); }}).el,
+    el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))) : null,
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'), el('div', {class: 'cb-btns'}, ...toolButtons.slice(0, -1)),
     el('small', {}, 'The layer you paint, outline, erase and smooth (Rough takes every layer off)'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); showHint(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
     el('small', {}, 'Layers, top first: one higher in the list shows over one lower (sand painted on rough or fairway is sand). The eye hides one from view; the course keeps it.'), layerBox,

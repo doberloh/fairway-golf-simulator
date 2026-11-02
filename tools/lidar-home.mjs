@@ -12,8 +12,8 @@ export const LIDAR_HOME = path.join(ROOT, 'bench', 'lidar');
 
 // The imagery bench's test courses (imagery-fetch.mjs COURSES, by landscape)
 // to their folders.
-export const LIDAR_FOLDERS = {pnw: 'sahalee', desert: 'tpc-scottsdale', mountain: 'breckenridge', links: 'chambers-bay', midwest: 'worthington',
- island: 'key-west', redwood: 'northwood', autumn: 'ekwanok', lakeshore: 'arcadia-bluffs'};
+export const LIDAR_FOLDERS = {puget: 'sahalee', sonoran: 'tpc-scottsdale', rockies: 'breckenridge', links: 'chambers-bay', heartland: 'worthington',
+ keys: 'key-west', redwood: 'northwood', newengland: 'ekwanok', lakedunes: 'arcadia-bluffs'};
 // Every course here, with where its survey came from (the folders the owner
 // brought in, 1 November 2026, identified from the files' own position).
 export const LIDAR_COURSES = {

@@ -39,14 +39,14 @@ test('it stands on clear ground, faces the first tee, and nothing grows on it or
 });
 
 test('the path runs to its door', () => {
- const w = A('midwest'), b = w.buildings[0], door = w.paths.find(p => p.door)?.door;
+ const w = A('heartland'), b = w.buildings[0], door = w.paths.find(p => p.door)?.door;
  assert.ok(door, 'the path knows the door');
  assert.ok(pathIndex(w.paths).onPath(door.x, door.z), 'the path reaches it');
  assert.ok(Math.hypot(door.x - b.x, door.z - b.z) < b.depth / 2 + 8);
 });
 
 test('a ball hit at the clubhouse stops against it, and is never out of bounds for it', () => {
- const w = A('midwest'), b = w.buildings[0], h = w.holes[0];
+ const w = A('heartland'), b = w.buildings[0], h = w.holes[0];
  // From 40 m in front of the door, straight at it, along the ground's own frame.
  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation);
  const from = h.toLocal({x: b.x + fx * (b.depth / 2 + 40), z: b.z + fz * (b.depth / 2 + 40)}), at = h.toLocal({x: b.x, z: b.z});

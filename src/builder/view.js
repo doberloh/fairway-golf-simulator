@@ -13,6 +13,7 @@ import {GROUNDS} from '../grounds.js';
 import {PAINT} from './editing.js';
 import {TEE_COLORS} from '../course-plan.js';
 import {LAYER_ORDER} from './layers.js';
+import {regionOf} from '../regions.js';
 
 // The land's mesh: chunks of CHUNK samples a side, every `stride`-th sample of
 // the stored grid (1 m stored; a course past about 1 km a side drawn at 2 or
@@ -279,7 +280,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(i, m);
    // Each tree its own shade: a hash of where it stands.
    const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
-   if (s.landscape === 'autumn') col.copy(AUTUMN[Math.floor(u * AUTUMN.length)]);
+   if (regionOf(s.landscape) === 'northeast') col.copy(AUTUMN[Math.floor(u * AUTUMN.length)]);
    else { own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3)))); }
    mesh.setColorAt(i, col);
   }

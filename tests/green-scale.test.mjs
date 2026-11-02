@@ -9,11 +9,11 @@ import {world} from './worlds.mjs';
 // bumps on a green scale with it (GREEN_REF), so a bigger green is not a
 // steeper one.
 
-const at = (greenScale, seed = 'GREEN-SCALE', biome = 'midwest') => world({holes: 9, biome, seed, greenScale});
+const at = (greenScale, seed = 'GREEN-SCALE', biome = 'heartland') => world({holes: 9, biome, seed, greenScale});
 
 test('100% is the greens there were before the slider', () => {
  assert.equal(DEFAULT_COURSE.greenScale, 100);
- const plain = world({holes: 9, biome: 'midwest', seed: 'GREEN-SCALE'}), scaled = at(100);
+ const plain = world({holes: 9, biome: 'heartland', seed: 'GREEN-SCALE'}), scaled = at(100);
  plain.holes.forEach((h, i) => assert.equal(scaled.holes[i].greenSize, h.greenSize));
 });
 

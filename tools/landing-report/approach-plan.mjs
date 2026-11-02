@@ -16,7 +16,7 @@ import {turfConfig} from '../../src/turf.js';
 
 const OUT = 'docs/reports/chipping';
 fs.mkdirSync(OUT, {recursive: true});
-const COURSE = {biome: 'pnw', seed: 'REPORT1', holes: 9, wind: 0}, HOLE = 3;
+const COURSE = {biome: 'puget', seed: 'REPORT1', holes: 9, wind: 0}, HOLE = 3;
 const w = generateWorld({...DEFAULT_COURSE, ...COURSE}), h = w.holes[HOLE], turf = turfConfig({}), DEG = 180 / Math.PI;
 const pin = h.pin, tdx = h.tee.x - pin.x, tdz = h.tee.z - pin.z, td = Math.hypot(tdx, tdz), ux = tdx / td, uz = tdz / td;
 // The front of the green on this line, for the chips.

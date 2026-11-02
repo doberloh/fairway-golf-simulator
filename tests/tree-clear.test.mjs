@@ -31,7 +31,7 @@ const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
  const nx = 201, nz = 201, heights = new Float32Array(nx * nz).fill(100);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}, line: [[-5, -80], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Trees', landscape: 'pnw', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights},
+ return validateDoc({type: 'built', name: 'Trees', landscape: 'puget', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights},
   surfaces: {green: [box(-10, 70, 10, 90)], tee: [box(-8, -84, -2, -76)], fairway: [box(-12, -60, 12, 60)]}, water: [], holes,
   // One reaching over the green, one on the tee, one far off.
   trees: new Float32Array([16, 80, 15, 8, .4, 2, -1, -5, -80, 12, 3, .3, 2, -1, 60, 0, 14, 4, .4, 2, -1]), treeKinds: []});
@@ -92,7 +92,7 @@ test('door 2\'s par, unless set, from the yards along the line: a dogleg is long
  // dogleg (356 yd: a par 4).
  const hole = {number: 1, tees: [{x: 0, z: 110, set: 'back'}], green: {x: 0, z: -110}, line: [[0, 110], [120, 0], [0, -110]]};
  let made;
- made = docFromLand({land, traced: {codes}, holes: [hole], trees: [], name: 'Par', landscape: 'midwest'});
+ made = docFromLand({land, traced: {codes}, holes: [hole], trees: [], name: 'Par', landscape: 'heartland'});
  assert.equal(made.holes[0].par, 4, `along the dogleg (${Math.round(builtLine(made.holes[0]).yards.blue)} yd) a par 4, though 241 yd straight`);
- assert.equal(docFromLand({land, traced: {codes}, holes: [{...hole, par: 3}], trees: [], name: 'Par', landscape: 'midwest'}).holes[0].par, 3, 'a par set by hand kept');
+ assert.equal(docFromLand({land, traced: {codes}, holes: [{...hole, par: 3}], trees: [], name: 'Par', landscape: 'heartland'}).holes[0].par, 3, 'a par set by hand kept');
 });

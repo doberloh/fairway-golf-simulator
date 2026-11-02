@@ -28,12 +28,12 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  // Haunted Hollow's turn (removed 2 November 2026) goes to Autumn.
  const seen = Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12)));
  assert.equal(new Set(seen).size, 8);
- assert.equal(seen.filter(b => b === 'autumn').length, 2);
+ assert.equal(seen.filter(b => b === 'newengland').length, 2);
  // From it, ten weeks running visit every landscape, Autumn twice.
  const after = Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12)));
  assert.equal(new Set(after).size, BIOME_KEYS.length);
  assert.ok(!after.includes('haunted'));
- assert.equal(after.filter(b => b === 'autumn').length, 2);
+ assert.equal(after.filter(b => b === 'newengland').length, 2);
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');
 });
 
@@ -42,11 +42,13 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
 // nine, the debut week is the newcomer's, and the week after shows what the
 // debut week would have shown.
 test('the tenth landscape joins on its own week and moves no earlier week', () => {
- const old = w => ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'autumn'][((w % 9) + 9) % 9];
+ // (The keys are the landscapes' new ones since 2 November 2026; the rotation
+ // is the same landscapes in the same order.)
+ const old = w => ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'newengland'][((w % 9) + 9) % 9];
  assert.deepEqual(WEEKLY_ROTATION.nine.slice(0, 8), BIOME_KEYS.slice(0, 8), 'the old rotation is the first eight keys, in order, then the retired one');
  for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
  assert.equal(weekIndex(at('2026-11-09')), 149);
- assert.equal(weeklyBiome(at('2026-11-09')), 'lakeshore');
+ assert.equal(weeklyBiome(at('2026-11-09')), 'lakedunes');
  assert.equal(weeklyBiome(at('2026-11-08')), old(148), 'the Sunday before is still the old rotation');
  assert.equal(weeklyBiome(at('2026-11-16')), old(149), 'the week after shows what the debut week would have');
  // Then a ten-week cycle, each landscape once.

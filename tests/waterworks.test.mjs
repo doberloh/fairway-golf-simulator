@@ -12,7 +12,7 @@ import {WORLD} from '../src/biomes.js';
 // Redwood dresses its ponds with stone and may have a fountain; Midwest
 // leaves its ponds as found.
 const stone = world({seed: 'WW-1', holes: 9, biome: 'redwood', water: 80});
-const soft = world({seed: 'WW-1', holes: 9, biome: 'midwest', water: 80});
+const soft = world({seed: 'WW-1', holes: 9, biome: 'heartland', water: 80});
 
 test('each landscape dresses its water its own way', () => {
  assert.equal(WORLD.redwood.edge, 'riprap');

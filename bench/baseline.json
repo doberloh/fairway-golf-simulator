@@ -15,8 +15,8 @@
  ],
  "set": {},
  "courses": 40,
- "wallSeconds": 31.1,
- "buildSeconds": 529.2,
+ "wallSeconds": 32.2,
+ "buildSeconds": 548.3,
  "invariants": {
   "tees.teeBelowTheOneInFront": 0,
   "tees.padOnGroundItMayNotUse": 0,
@@ -36,7 +36,6 @@
   "seated.floatingPlant": 0,
   "farSeated.farFloating": 0,
   "farSeated.farInWater": 0,
-  "design.hazardWithoutReason": 0,
   "paths.pathOverWater": 0
  },
  "counts": {
@@ -50,8 +49,8 @@
   "teeclear.rocks": 0,
   "teeclear.trees": 0,
   "teeclear.rocksChecked": 7833,
-  "teeclear.treesChecked": 185884,
-  "teeclear.bushesChecked": 249771,
+  "teeclear.treesChecked": 186634,
+  "teeclear.bushesChecked": 250586,
   "teeclear.housesChecked": 0,
   "blind.blockedOver1m": 38,
   "blind.blockedOver3m": 14,
@@ -73,7 +72,7 @@
   "ponds.bitingIn": 15,
   "ponds.terminal": 7,
   "bunkers.bunkers": 736,
-  "seated.plantsChecked": 435681,
+  "seated.plantsChecked": 437246,
   "farSeated.farCrowns": 735963,
   "design.fairwayBunkers": 246,
   "design.nearLanding": 71,
@@ -244,19 +243,19 @@
    "max": 12.236384067682643
   },
   "seated.seatDepth": {
-   "n": 435681,
+   "n": 437246,
    "min": 0.08420584362368547,
-   "p05": 0.09090584131191862,
-   "median": 0.11640111928701108,
-   "p95": 0.8864989896106382,
+   "p05": 0.09090410066406004,
+   "median": 0.11641153798325372,
+   "p95": 0.8858014076087973,
    "max": 6.949485455402245
   },
   "seated.gap": {
-   "n": 435681,
+   "n": 437246,
    "min": -3.3410307590589206,
-   "p05": -0.20692365324075013,
-   "median": -0.08549972549459994,
-   "p95": -0.08163378838356294,
+   "p05": -0.20678625836504239,
+   "median": -0.08550139931601564,
+   "p95": -0.08163358521568398,
    "max": 0.012291208491316041
   },
   "farSeated.farGap": {
@@ -274,18 +273,6 @@
    "median": 95.98450141520446,
    "p95": 191.20870501097025,
    "max": 264.8686622651056
-  },
-  "design.concepts": {
-   "n": 0,
-   "p05": null,
-   "median": null,
-   "p95": null
-  },
-  "design.templates": {
-   "n": 0,
-   "p05": null,
-   "median": null,
-   "p95": null
   }
  }
 }

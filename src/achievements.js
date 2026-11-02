@@ -20,6 +20,7 @@
 //                       profile's own (challenges.js).
 
 import {CHALLENGES} from './challenges.js';
+import {currentKey} from './regions.js';
 
 export const ACHIEVEMENTS = [
  {id: 'first-birdie', name: 'First birdie', how: 'Make a birdie.', xp: 50},
@@ -53,7 +54,9 @@ export function normaliseProgress(d) {
  const p = blankProgress();
  if (!d || typeof d !== 'object') return p;
  if (Number.isInteger(d.rounds) && d.rounds >= 0) p.rounds = d.rounds;
- if (Array.isArray(d.biomes)) p.biomes = [...new Set(d.biomes.filter(b => typeof b === 'string' && b.length <= 20))].slice(0, 30);
+ // The landscapes finished in, an old key read as its new one (2 November
+ // 2026); room for every landscape the goal adds.
+ if (Array.isArray(d.biomes)) p.biomes = [...new Set(d.biomes.filter(b => typeof b === 'string' && b.length <= 20).map(currentKey))].slice(0, 64);
  if (Array.isArray(d.weeks)) p.weeks = [...new Set(d.weeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
  if (Array.isArray(d.chalWeeks)) p.chalWeeks = [...new Set(d.chalWeeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
  if (Array.isArray(d.once)) p.once = d.once.filter(k => typeof k === 'string' && k.length <= 120).slice(-ONCE_KEEP);

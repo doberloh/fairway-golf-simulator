@@ -10,7 +10,7 @@ import {ovalRadius} from '../src/course.js';
 // Decoration, never in water, on a path, a green, a tee or in sand.
 
 const YARD = .9144;
-const arch = world({seed: 'MARK-T', holes: 9, biome: 'midwest'});
+const arch = world({seed: 'MARK-T', holes: 9, biome: 'heartland'});
 
 test('a course has every kind of marking', () => {
  const kinds = new Set(arch.markers.map(m => m.kind));

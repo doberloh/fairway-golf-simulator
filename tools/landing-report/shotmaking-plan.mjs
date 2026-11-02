@@ -14,7 +14,7 @@ import {FIRMNESS_PRESETS} from '../../src/firmness.js';
 
 const OUT = 'docs/reports/shotmaking';
 fs.mkdirSync(OUT, {recursive: true});
-const COURSE = {biome: 'pnw', seed: 'REPORT1', holes: 9, wind: 0};
+const COURSE = {biome: 'puget', seed: 'REPORT1', holes: 9, wind: 0};
 const w = generateWorld({...DEFAULT_COURSE, ...COURSE}), DEG = 180 / Math.PI;
 // The back tee box itself: the hole's nominal tee point can sit on the bank below it.
 const fromTee = h => ({x: h.tees.blue.x, z: h.tees.blue.z});

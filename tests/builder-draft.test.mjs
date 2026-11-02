@@ -13,7 +13,7 @@ test('a draft keeps the land, the layers, the trees, houses and holes so far, an
   water: new Uint8Array(N), building: new Uint8Array(N), multi: new Uint8Array(N).fill(3), noReturns: new Uint8Array(N), filled: Uint8Array.from({length: N}, (_, k) => k < 5 ? 1 : 0), rgb: null};
  const sand = new Uint8Array(N); sand[44] = sand[45] = 1;
  const green = new Uint8Array(N); green[100] = 1;
- const d = {step: 3, name: 'Worthington', landscape: 'midwest', credits: ['NAIP'], holesN: 18, hole: 1, holes: [{tees: [{x: 1, z: 2, set: 'back'}], aims: [], green: {x: 3, z: 4}}],
+ const d = {step: 3, name: 'Worthington', landscape: 'heartland', credits: ['NAIP'], holesN: 18, hole: 1, holes: [{tees: [{x: 1, z: 2, set: 'back'}], aims: [], green: {x: 3, z: 4}}],
   boundary: [[-5, -4], [5, -4], [5, 4]], traceMode: 'osm', box: {x0: 1, x1: 2, y0: 3, y1: 4}, sources: [{name: 'a.laz', crs: {epsg: 6344, units: {h: 'metre', v: 'metre'}}}],
   view: {lidarView: 'slope', picAlpha: .4}, picOffsets: {usgs: {x: 2.5, z: -1}}, trees: [{x: 1, z: 1, h: 12, crown: 3}],
   osm: {codes: Uint8Array.from({length: N}, (_, k) => k % 3), trees: [], homes: [], said: 'Laid: 2 green'},

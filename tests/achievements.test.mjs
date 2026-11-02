@@ -55,7 +55,7 @@ test('counted achievements, streaks, and each earned only once', () => {
 });
 
 test('stored progress is cleaned on the way in', () => {
- assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['pnw', 'pnw', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['pnw'], weeks: [2, 3], chalWeeks: [], once: ['a']});
+ assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['puget', 'puget', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['puget'], weeks: [2, 3], chalWeeks: [], once: ['a']});
  assert.deepEqual(normaliseProgress({chalWeeks: [9, 8, 8, 'x']}).chalWeeks, [8, 9]);
  assert.deepEqual(normaliseEarned({ace: 5, bogus: 1, sandy: 'x'}), {ace: 5});
 });

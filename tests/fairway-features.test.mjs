@@ -11,7 +11,7 @@ import {measured} from './worlds.mjs';
 // `measured`; the testing audit, 31 October 2026 -- one thread, they were two
 // minutes). Each test's loop over a course is in tests/measure/fairway-features.mjs.
 
-const BIOMES = ['midwest', 'pnw', 'links', 'mountain'], SEEDS = ['a', 'b', 'c'], SHARES = [0, 25, 100];
+const BIOMES = ['heartland', 'puget', 'links', 'rockies'], SEEDS = ['a', 'b', 'c'], SHARES = [0, 25, 100];
 const list = SHARES.flatMap(share => BIOMES.flatMap(biome => SEEDS.map(seed => ({holes: 9, biome, seed, fairwayFeature: share}))));
 const all = await measured(list, './measure/fairway-features.mjs');
 const at = share => all.filter((_, i) => list[i].fairwayFeature === share);
@@ -52,7 +52,7 @@ test('no feature crowds the green', () => {
 });
 
 test('features are solid, like everything else that looks solid', () => {
- const m = all[list.findIndex(s => s.fairwayFeature === 100 && s.biome === 'midwest' && s.seed === 'a')];
+ const m = all[list.findIndex(s => s.fairwayFeature === 100 && s.biome === 'heartland' && s.seed === 'a')];
  assert.ok(m.features > 0, 'nothing to check');
  assert.deepEqual(m.solid, []);
  // Feature trees ride in world.trees, so physics indexes them with every other

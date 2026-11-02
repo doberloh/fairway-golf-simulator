@@ -9,7 +9,7 @@ import {tierOf} from '../src/graphics.js';
 // The far woods (the polish goal): scenery crowns from the property line out
 // past the ground's edge, closing the bare band before the painted forest.
 test('far woods stand outside the course, out of the water, the same every time', () => {
- const w = generateWorld({seed: 'FARWOODS', biome: 'autumn', holes: 9});
+ const w = generateWorld({seed: 'FARWOODS', biome: 'newengland', holes: 9});
  const a = farWoodSites(w), b = farWoodSites(w);
  assert.ok(a.length > 2000, `${a.length} crowns`);
  assert.deepEqual(a, b, 'deterministic');
@@ -38,7 +38,7 @@ test('far woods stand outside the course, out of the water, the same every time'
 // own triangles), not on the fine relief it was placed by. The bench's
 // `farSeated` checks every course; this holds the pieces together.
 test('far crowns sit on the drawn ground, their base no higher than it anywhere under them', () => {
- const w = generateWorld({seed: 'FARWOODS', biome: 'mountain', holes: 9}), at = drawnGround(w);
+ const w = generateWorld({seed: 'FARWOODS', biome: 'rockies', holes: 9}), at = drawnGround(w);
  for (const groves of [false, true]) {
   const sites = farWoodSites(w, {groves});
   assert.ok(sites.length > 1000);
@@ -54,7 +54,7 @@ test('far crowns sit on the drawn ground, their base no higher than it anywhere 
 });
 
 test('the drawn ground reproduces the ring\'s own vertices', () => {
- const w = generateWorld({seed: 'FARWOODS', biome: 'lakeshore', holes: 9}), at = drawnGround(w), m = ringMesh(w);
+ const w = generateWorld({seed: 'FARWOODS', biome: 'lakedunes', holes: 9}), at = drawnGround(w), m = ringMesh(w);
  for (let v = m.count; v < m.positions.length / 3; v += 13) {
   const x = m.positions[v * 3], y = m.positions[v * 3 + 1], z = m.positions[v * 3 + 2];
   assert.ok(Math.abs(at(x, z) - y) < .01, `vertex ${v}: ${at(x, z)} against ${y}`);
@@ -76,7 +76,7 @@ test('Island, all sea round it, grows far woods only on its far islets; Low and 
  // Round 3 of the far landscape: Island's far sea carries islets (2.5-6 km
  // out); its far woods stand on them and nowhere nearer -- the sea round the
  // course stays open.
- const w = generateWorld({seed: 'FARWOODS', biome: 'island', holes: 9}), isle = farWoodSites(w);
+ const w = generateWorld({seed: 'FARWOODS', biome: 'keys', holes: 9}), isle = farWoodSites(w);
  assert.ok(isle.length > 0, 'the islets are wooded');
  for (const s of isle) assert.ok(Math.hypot(Math.max(0, Math.abs(s.x) - w.halfX), Math.max(0, Math.abs(s.z) - w.halfZ)) > 1500, `a far crown ${s.x.toFixed(0)},${s.z.toFixed(0)} short of the islets`);
  assert.equal(tierOf('low').farWoods, 'groves');

@@ -39,6 +39,7 @@
 // finds the runs. Pure: tested in Node (tests/course-doc.test.mjs).
 import {writeZip, readZip, isZip} from './zip.js';
 import {BIOME_KEYS} from './settings-schema.js';
+import {currentKey} from './regions.js';
 import {GROUND_KINDS} from './grounds.js';
 
 export const FILE_KIND = 'fairway-course';
@@ -119,6 +120,9 @@ export function validateDoc(doc) {
  if (!doc || doc.type !== 'built') plainError('This is not a built Fairway course.');
  const name = String(doc.name ?? '').trim();
  if (!name || name.length > 60) plainError('This course has no usable name (1-60 characters).');
+ // A file from before the landscapes' new keys (2 November 2026) names its
+ // landscape by the old one: read it as the new.
+ doc.landscape = currentKey(doc.landscape);
  if (!BIOME_KEYS.includes(doc.landscape)) plainError(`This course's landscape (${doc.landscape}) is not one Fairway knows.`);
  num(doc.halfX, 'the width'); num(doc.halfZ, 'the depth');
  gridOk(doc.land, 'land', LIMITS.samples);

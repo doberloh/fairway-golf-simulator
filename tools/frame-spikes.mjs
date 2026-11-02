@@ -26,7 +26,7 @@ import {gpuGate, logRun, readCard} from './gpu-gate.mjs';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'), '..');
 const argv = process.argv.slice(2);
 const flag = (name, fallback) => { const i = argv.indexOf('--' + name); return i < 0 ? fallback : argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true; };
-const BUILD = flag('build', 'bench/shots/dist-exp/index.html'), TIER = flag('tier', 'high'), BIOME = flag('biome', 'autumn');
+const BUILD = flag('build', 'bench/shots/dist-exp/index.html'), TIER = flag('tier', 'high'), BIOME = flag('biome', 'newengland');
 const FRAMES = Number(flag('frames', 600)), OVER = Number(flag('over', 20)), ORBIT = !!flag('orbit', false);
 const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit',
  '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'];

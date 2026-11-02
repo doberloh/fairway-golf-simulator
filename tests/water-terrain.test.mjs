@@ -28,9 +28,9 @@ test('an island has no inland water at all, whatever the settings say', () => {
  // every side, so a pond is both redundant and the hardest thing to site. The
  // controls keep their values -- switching a course to island and back returns
  // the water it had -- so this is asserted at the MAXIMUM of every one of them.
- assert.ok(NO_INLAND_WATER.has('island'));
+ assert.ok(NO_INLAND_WATER.has('keys'));
  for (const seed of ['A', 'B', 'C']) {
-  const w = buildWorld({seed, biome: 'island', holes: 9,
+  const w = buildWorld({seed, biome: 'keys', holes: 9,
    water: 100, lakes: 3, rivers: 2, creeks: 3});
   assert.equal(w.holes.reduce((n, h) => n + h.ponds.length, 0), 0, 'ponds on an island');
   assert.equal((w.largeLakes || []).length, 0, 'lakes on an island');
@@ -98,7 +98,7 @@ test('the beach claims rough only, never mown turf', () => {
  // hazard is sitting on it. Lateral proxies for "this ought to be fairway" all
  // leak: the stretch between the tee and mowStart is genuinely rough, and a
  // point inside one hole's corridor can be owned by a neighbouring hole.
- for (const biome of ['island', 'links']) {
+ for (const biome of ['keys', 'links']) {
   let cells = 0;
   for (const seed of ['A', 'B', 'C']) {
    const w = buildWorld({seed, biome, holes: 9, trees: 0});
@@ -116,7 +116,7 @@ test('the beach claims rough only, never mown turf', () => {
 
 test('and there is still a beach to walk on', () => {
  // The obvious way to fix sand fairways is to stop making sand.
- const w = buildWorld({seed: 'A', biome: 'island', holes: 9, trees: 0});
+ const w = buildWorld({seed: 'A', biome: 'keys', holes: 9, trees: 0});
  let widths = [];
  for (let z = -w.halfZ + 40; z < w.halfZ; z += 160) {
   for (let x = -w.halfX; x < w.halfX; x += 4) {

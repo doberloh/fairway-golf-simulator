@@ -84,7 +84,7 @@ async function fetchCourseEpt(key) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && !process.argv.includes('--tiles')) {
  const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
- for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
+ for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'heartland' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
   if ((!process.argv.includes('--ept') && lidarFiles(lidarDir(c.key)).length) || fs.existsSync(path.join(lidarDir(c.key), 'survey.json'))) { console.log(`${c.key}: already here`); continue; }
   try { await fetchCourseEpt(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
  }
@@ -93,7 +93,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
  // Worthington's tiles are the owner's survey, copied to bench/lidar/worthington: not fetched.
- for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'midwest' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
+ for (const c of COURSES.filter(c => (!want.length || want.includes(c.key)) && c.key !== 'heartland' && fs.existsSync(path.join(OUT, c.key, 'course.json')))) {
   try { await fetchCourse(c.key); } catch (e) { console.log(`${c.key}: FAILED -- ${e.message}`); }
  }
 }
