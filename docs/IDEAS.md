@@ -175,15 +175,20 @@ bottomland, Florida, Texas Hill Country and Gulf, West Texas), the Plains
 (Nebraska Sandhills, shortgrass prairie), the Intermountain West (sagebrush,
 red rock, Mojave, Coachella, ponderosa), California's coast (Monterey, SoCal
 canyons, oak woodland), the Appalachians, Northeast summer parkland, Long
-Island heathland, the north woods, Hawaii, Alaska and Bandon's US links. The
-plan: a sub-landscape (a record with a `base` that overrides a few fields),
-then the South's four trees (longleaf pine, live oak with moss, cabbage palm,
-bald cypress), then the West's (Joshua tree, fan palm, juniper, ponderosa,
-Monterey cypress, eucalyptus, sagebrush, yucca); about seven regions need no
-new models at all. Each could get a real test course from
-tools/build-courses.mjs, and the builder could suggest a landscape from where
-the LIDAR lies. Several entries below (Heathland, Volcanic Coast, Lowcountry,
-Nordic Birch, Red Rock Canyon) are parts of it.
+Island heathland, the north woods, Hawaii, Alaska and Bandon's US links.
+Researched the night of 1-2 November 2026 for the owner's review (the
+folder's PLAN.md): **39 sub-landscapes under 18 parent regions**, the USA
+partitioned by the EPA's 85 Level III ecoregions plus hand-drawn coastal
+overlays (a lookup gives any latitude and longitude its sub-landscape; 167
+real example courses each confirmed in its own), **210 new models and
+variants** each with a spec and four seasons' colours, about 55 bare winter
+variants, roads, sidewalks and parking lots (no cars), and every new
+landscape in Classic, Architect and the builder alike (a completeness test
+over `BIOME_KEYS`). A sub-landscape is a record with a `base` that inherits
+the parent's and states what differs; adding them moves no existing seed;
+the roads pass would be one `GENERATOR_VERSION` step. Several entries below
+(Heathland, Volcanic Coast, Lowcountry, Nordic Birch, Red Rock Canyon,
+Winter, Spring Blossom, Countryside) are parts of it.
 
 **Settings only, no new assets**
 
