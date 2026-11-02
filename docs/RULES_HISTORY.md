@@ -309,6 +309,21 @@ the gate's busy check (a game running), one graphics job at a time, nothing
 left open, and the overhaul's retry-once on a hung run. Software rendering is
 unlocked as in the 1.0 polish, run alone.
 
+**The US landscapes goal lifts the landscape limits, 2 November 2026.** After
+reviewing the study of every region of the USA, the owner kept it on the
+course-builder branch ("This is all in line with that") and set its terms:
+"All agents restrictions are off for these (except for performance
+targeting and testing where we need to stay the same for FPS and quality)",
+the base landscapes renamed and reorganised "heavy handed" because there are
+no users yet, Architect removed ("We are going to use the new builder and
+have real humans do the work here instead"), Haunted Hollow removed, and
+every model iterated at least fifteen times against real pictures. AGENTS.md
+*The US landscapes goal* reads "restrictions off" as freedom to move ground,
+not to stop recording it: a moved seed still owes its `GENERATOR_VERSION`
+line, because old saves still exist on the owner's own machine and the
+notice is how they learn. It deletes itself in the merge with the
+course-builder section.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

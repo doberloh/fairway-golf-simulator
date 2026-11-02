@@ -86,6 +86,31 @@ from the crashes stay:
   that says "GPU allowed"*, and TESTING.md's sentence), so main's rules are
   as before. RULES_HISTORY.md keeps the story.
 
+## The US landscapes goal (on this branch, from 2 November 2026)
+
+Every region of the USA as a landscape (TODO.md *US landscapes*; the plan
+and the owner's answers are local, docs/studies/us-landscapes/PLAN.md).
+The owner: "All agents restrictions are off for these (except for
+performance targeting and testing where we need to stay the same for FPS
+and quality)." So, for this goal:
+
+- **Landscapes may move.** Today's ten may be renamed, rebuilt and
+  reorganised, and given new models; a seed need not keep its course. What
+  stays is the record: every change to generated output is still a
+  `GENERATOR_VERSION` step with its line, the fingerprint run and the moved
+  landscapes named in it (*Three version numbers*).
+- **Held as they are:** frame rate and quality on every tier (a change that
+  adds cost is profiled, Low first), and testing -- `npm test`, the round
+  matrix, smoke, the bench invariants, all green.
+- **Architect and Haunted Hollow are being removed** (the owner, 2 November
+  2026); their rules here (*Three version numbers*' Architect lines, the
+  fingerprint's `--designer architect`) go with the code that removes them.
+- **Every new model: at least 15 iterations** against its reference
+  pictures, each logged (PLAN.md section 5). Pack contact sheets are made;
+  the owner does not need to see them before the work goes on.
+- **Nothing ships early**: no landscape goes out on stand-in models.
+- **Delete this section in the merge** with the course-builder section.
+
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;

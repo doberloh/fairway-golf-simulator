@@ -166,34 +166,19 @@ choosing, because picking by file name has been wrong twice. Altitude and
 temperature are biome fields and feed the air the ball flies through, so
 several of these play differently as well as look different.
 
-**Every region of the USA** (the owner, 1 November 2026: "a biome and sub
-biomes for all regions of the USA"; the full study is local,
-docs/studies/us-landscapes/ (README.md the index)). The landscapes cover the West Coast, the
-Sonoran desert, the Rockies, the Midwest, New England and the Great Lakes;
-missing are the whole South (Carolina Sandhills, Piedmont, Lowcountry,
-bottomland, Florida, Texas Hill Country and Gulf, West Texas), the Plains
-(Nebraska Sandhills, shortgrass prairie), the Intermountain West (sagebrush,
-red rock, Mojave, Coachella, ponderosa), California's coast (Monterey, SoCal
-canyons, oak woodland), the Appalachians, Northeast summer parkland, Long
-Island heathland, the north woods, Hawaii, Alaska and Bandon's US links.
-Researched the night of 1-2 November 2026 for the owner's review (the
-folder's PLAN.md): **39 sub-landscapes under 18 parent regions**, the USA
-partitioned by the EPA's 85 Level III ecoregions plus hand-drawn coastal
-overlays (a lookup gives any latitude and longitude its sub-landscape; 167
-real example courses each confirmed in its own), **210 new models and
-variants** each with a spec and four seasons' colours, about 55 bare winter
-variants, roads, sidewalks and parking lots (no cars), and every new
-landscape in Classic, Architect and the builder alike (a completeness test
-over `BIOME_KEYS`). A sub-landscape is a record with a `base` that inherits
-the parent's and states what differs; adding them moves no existing seed;
-the roads pass would be one `GENERATOR_VERSION` step. Several entries below
-(Heathland, Volcanic Coast, Lowcountry, Nordic Birch, Red Rock Canyon,
-Winter, Spring Blossom, Countryside) are parts of it.
+**Picked: every region of the USA** (the owner, 2 November 2026). The idea of
+1 November -- 39 landscapes under 18 regions, with seasons, roads and a
+clickable map -- is now the goal on the `course-builder` branch: TODO.md
+*US landscapes*, the local study docs/studies/us-landscapes/ (PLAN.md). The
+ideas it covers left this list with it: Heathland / Sandbelt (the Pine
+Barrens), Volcanic Coast (Hawaii), Winter (the winter season, snow for looks
+only), Nordic Birch (the North Woods), Lowcountry Marsh, Spring Blossom (the
+spring season's flowering), Countryside (the Heartland's fields) and Red
+Rock Canyon. Haunted Hollow, built from this list, is being removed (the
+owner, 2 November 2026).
 
 **Settings only, no new assets**
 
-- **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
-- **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
 - **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
 - **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
 
@@ -203,20 +188,14 @@ before then, and the packs are CC0 and still published); an idea below now
 means building its models in Blender (docs/BLENDER_ASSETS.md) or fetching a
 pack again, with its credit put back in ATTRIBUTION.md.
 
-- **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
-- **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
 - **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
 - **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
-- **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
 
 **Some new building**
 
-- **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
 - **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
 - **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be built in Blender, as every model is now (the redwoods were once grown by `tools/grow.mjs`, removed 27 October 2026). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
-- **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
 - **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
-- **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
 
 ## Turned down
 

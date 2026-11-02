@@ -31,6 +31,45 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## US landscapes (branch `course-builder`, from 2 November 2026)
+
+Every region of the USA as a landscape, picked by the owner on 2 November
+2026 from the study of 1-2 November (local: docs/studies/us-landscapes/,
+PLAN.md the plan with the owner's answers, catalogue.json the source of
+truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
+*The US landscapes goal* holds its rules: the usual limits on moving
+landscapes are off, performance and testing are not. In order (PLAN.md
+section 6); nothing ships early -- the branch merges when all of it is done.
+
+- [ ] **Remove Architect** (the designer, its styles and hole design, hand
+  tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
+  doc) and **move its world pieces into the generator** if the owner
+  confirms (PLAN.md 1b and question 1). Saved Architect courses migrate.
+- [ ] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
+  date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
+  meshes, names, tests, captures and fixtures. Saved courses migrate to New
+  England in autumn.
+- [ ] **Foundations**: the `REGION` table and inheritance; the new keys and
+  player names (study's data/names.json) with one `MIGRATIONS` entry from
+  today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
+  the partition shipped, door 2's suggestion, **the clickable map** in the
+  course card, studio and builder.
+- [ ] **Today's ten rebuilt as their new landscapes** (Links: owner's
+  question 2), with the models their research says they lack.
+- [ ] **The streets kit and the roads pass**: no road across a fairway (a
+  bench invariant), the clubhouse and parking near an edge; roads anywhere
+  in the builder (a `BUILT_VERSION` step).
+- [ ] **The new landscapes by region**: the South; Texas and the deserts;
+  California and the mountains; the rest (PLAN.md 6, phases 5-8).
+- [ ] **Every model at least 15 iterations** against its reference pictures
+  (the study's photos/models/), each with its log and side-by-side picture;
+  a contact sheet a pack, not waited on.
+- [ ] **Seasons on**: chosen at the round's start (today's or picked), saved
+  with the round; bare winter variants; snow for looks only.
+- [ ] **Chambers Bay** built in the builder on its new landscape and played
+  through; **the showcase** of every landscape, generated, several pictures
+  each (a capture tool committed, the document local).
+
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
