@@ -422,12 +422,6 @@ const clean = g => ({
  // the switch carries the key, so everyone starts off. Drawing only: the ball
  // hits the real stick either way.
  distantFlags: bool(g?.distantFlags, false),
- // HAUNTED HOLLOW ALL YEAR (seasons.js): off, so the landscape is offered
- // only from 1 October to 7 November; on, any time. A player's preference,
- // not a course setting: in the course schema it would ride inside every
- // saved course and shared code. A record saved before it has no key, so
- // every player starts with the season.
- hauntedAllYear: bool(g?.hauntedAllYear, false),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every

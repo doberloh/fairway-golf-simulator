@@ -37,7 +37,7 @@ test('each landscape tells its own story', () => {
 });
 
 test('the story stands out of play: off every played surface, the paths and the water', () => {
- for (const biome of ['midwest', 'links', 'haunted', 'mountain', 'autumn']) {
+ for (const biome of ['midwest', 'links', 'mountain', 'autumn']) {
   const w = lots(biome);
   for (const b of w.buildings.filter(b => b.story)) {
    assert.ok(!PLAYED.includes(w.surface(b.x, b.z)), `${biome}: a ${b.kind} on ${w.surface(b.x, b.z)}`);

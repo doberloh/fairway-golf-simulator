@@ -60,10 +60,6 @@ export const CLIPS = [
  {name: 'night-floodlit', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
   keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
    {fromPin: 105, around: 210, height: 40, pitch: -17}]},
- // Added for 1.0: the ninth landscape at dusk, the fog in, the lanterns lit.
- {name: 'haunted-hollow-dusk', biome: 'haunted', seed: 'GLOAMING', hole: 1, hour: 19.2, seconds: 9,
-  keys: [{fromPin: 220, around: 6, height: 28, pitch: -11}, {fromPin: 140, around: 3, height: 24, pitch: -12},
-   {fromPin: 60, around: 0, height: 15, pitch: -14}]},
  // Added for 1.0: a drive with the round screen on -- the meter, the golfer
  // chips, the shot flying and the shot card coming up over its apex. The whole
  // page is recorded (the interface is not on the canvas).

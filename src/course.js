@@ -19,7 +19,7 @@ import {applyHand,designerHand} from './hand-tools.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {placeOccasion} from './occasion.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
-import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS,COVER_STEEPEST} from './species.js';
+import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
 // conditionals in other files. Re-exported because everything imports it from
@@ -2845,72 +2845,6 @@ export function* generateWorldSteps(settings={},options={}){
    }
   }
  }
- // HAUNTED HOLLOW'S GIANT PUMPKINS AND TOADSTOOLS, AND THEY ARE SOLID.
- //
- // They began as forest-floor decoration drawn by the renderer, like the logs.
- // Asked for at three to five times life size and solid, they had to move here
- // for the same reason boulders did: physics can only collide with what the
- // world knows about. Each is a vertical cylinder as wide as its model (see
- // PROP_MODELS) and as tall as it is drawn.
- //
- // Their own stream of numbers, drawn only when the biome asks for props, so
- // no other biome's course moves. Counts are PER HOLE so an 18 is as full as a
- // 9. Pumpkins grow in PATCHES -- a few round a centre, the way a field of them
- // reads -- and toadstools come up near trunks, where rot feeds them.
- //
- // Sizes are the old floor sizes times three to five, as the owner asked:
- // pumpkin 0.3-0.7 m and toadstool 0.25-0.55 m, each times 3 + 2u squared, so
- // most stay near three times and a few reach five. Siting obeys the rules a
- // boulder does -- rough only, clear of every tee shot and tee fan -- plus
- // room from the corridor, trunks, boulders, houses and each other.
- const props=[];
- {
-  const want=bio.props||{};
-  if(Object.values(want).some(Boolean)){
-   const pRng=random(s.seed+':props'),CELL=16,cells=new Map();
-   const add=(x,z,r)=>{const k=Math.floor(x/CELL)+','+Math.floor(z/CELL);if(!cells.has(k))cells.set(k,[]);cells.get(k).push({x,z,r});};
-   const crowded=(x,z,r)=>{const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);
-    for(let i=cx-1;i<=cx+1;i++)for(let j=cz-1;j<=cz+1;j++)for(const o of cells.get(i+','+j)||[])
-     if(Math.hypot(o.x-x,o.z-z)<o.r+r+.6)return true;
-    return false;};
-   for(const t of trees)if(!GROUND_PLANTS.has(t.kind))add(t.x,t.z,Math.min(t.h*.027,3.6)+.5);
-   for(const r of rocks)add(r.x,r.z,r.reach);
-   const anchors=trees.filter(t=>!GROUND_PLANTS.has(t.kind));
-   const place=(kind,x,z,size)=>{
-    const [model,ratio]=PROP_MODELS[kind][Math.floor(pRng()*PROP_MODELS[kind].length)];
-    const lean=[(pRng()-.5)*.12,(pRng()-.5)*.12],lantern=kind==='pumpkin'&&pRng()<(want.lanterns??0),shade=pRng();
-    const reach=size*ratio;
-    if(!allows(surface(x,z),'shrubs')||crowded(x,z,reach))return false;
-    const n=nearest(x,z);
-    if(n.d<reach+4||homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+reach+3))return false;
-    const y=height(x,z);
-    if(blocksLaunch(launch,x,z,y,y+size,reach)||inTeeFan(fans,x,z,reach))return false;
-    // Faces the nearest corridor, so a lantern grins at the golfer rather than
-    // at the trees behind it.
-    const zz=clamp(n.p.z,0,n.h.length),aim=n.h.toWorld({x:n.h.center(zz),z:zz});
-    const yaw=Math.atan2(aim.x-x,aim.z-z)+(pRng()-.5)*.6;
-    props.push({kind,model,x,z,y,h:size,reach,yaw,lean,lantern,shade});
-    add(x,z,reach);
-    return true;
-   };
-   const holesN=holes.length;
-   for(let made=0,tries=0;made<(want.pumpkin||0)*holesN&&tries<(want.pumpkin||0)*holesN*8;tries++){
-    const cx=(pRng()-.5)*halfX*2,cz=(pRng()-.5)*halfZ*2,patch=3+Math.floor(pRng()*5);
-    if(!allows(surface(cx,cz),'shrubs'))continue;
-    for(let k=0;k<patch;k++){
-     const a=pRng()*6.28,r=Math.sqrt(pRng())*11,size=(.3+pRng()*.4)*(3+2*pRng()**2);
-     if(place('pumpkin',cx+Math.cos(a)*r,cz+Math.sin(a)*r,size))made++;
-    }
-   }
-   for(let made=0,tries=0;made<(want.toadstool||0)*holesN&&tries<(want.toadstool||0)*holesN*8;tries++){
-    let x,z;
-    if(anchors.length&&pRng()<.75){const t=anchors[Math.floor(pRng()*anchors.length)],a=pRng()*6.28,r=Math.min(t.h*.027,3.6)+2+pRng()*6;x=t.x+Math.cos(a)*r;z=t.z+Math.sin(a)*r;}
-    else{x=(pRng()-.5)*halfX*2;z=(pRng()-.5)*halfZ*2;}
-    const size=(.25+pRng()*.3)*(3+2*pRng()**2);
-    if(place('toadstool',x,z,size))made++;
-   }
-  }
- }
  // FALLEN NEEDLES AND LEAVES under the species the biome names (`fallen`):
  // pine straw under the conifers, leaves under Autumn's hardwoods. Patches as
  // they always were (an oval per tree, most trees), then baked onto the ground
@@ -2932,7 +2866,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=isArchitect(s)&&!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=isArchitect(s)&&!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,occasion,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,props,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,occasion,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

@@ -135,6 +135,15 @@ test('migrating an already current save is a no-op, and gaps fall back to defaul
  assert.doesNotThrow(()=>validateSettings(sparse));
 });
 
+// HAUNTED HOLLOW WAS REMOVED (the owner, 2 November 2026): a save on it opens
+// on Autumn, the landscape that stood in for it out of season.
+test('a save on Haunted Hollow opens on Autumn',()=>{
+ const s=migrateSettings({...DEFAULT_COURSE,seed:'GLOAM',biome:'haunted'},14);
+ assert.equal(s.biome,'autumn');
+ assert.equal(validateSettings(s).biome,'autumn');
+ assert.ok(!BIOME_KEYS.includes('haunted'));
+});
+
 test('a surprise course is always valid, always a nine, and never the same twice',()=>{
  const seeds=new Set(),biomes=new Set();
  for(let i=0;i<60;i++){

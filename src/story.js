@@ -2,17 +2,16 @@
 // docs/ARCHITECT_COURSES.md, *Phase 6*): what the land held before the
 // course, left where the architect found it.
 //
-//   walls       dry-stone field walls (Links, Autumn, Mountain), a leaning
-//               moor wall (Haunted Hollow), hedgerows (Midwest, PNW)
+//   walls       dry-stone field walls (Links, Autumn, Mountain), hedgerows
+//               (Midwest, PNW); a leaning wall is a kind any landscape may ask
+//               for (Haunted Hollow's moor had it until 2 November 2026)
 //   buildings   a farmstead -- barn, silo, windpump (Midwest, Autumn); a
-//               roofless chapel or cottage (Links, Haunted Hollow, Lakeshore,
-//               Desert, PNW, Redwood), a mine head (Mountain), a sugar-mill
-//               tower (Island)
+//               roofless chapel or cottage (Links, Lakeshore, Desert, PNW,
+//               Redwood), a mine head (Mountain), a sugar-mill tower (Island)
 //   landmarks   a lighthouse (Links, Lakeshore) or a church spire (Autumn)
 //               beyond the course on the line of a hole, to aim at
-//   props       a stone circle on the moor (Haunted Hollow), lanterns along
-//               its paths (never graves: the owner), the Dell's white aiming
-//               stone on its dune
+//   props       the Dell's white aiming stone on its dune (never graves: the
+//               owner)
 //
 // How much by The land's story: none, a little, a lot. Everything stands
 // out of play, beyond the semi-rough, off paths, water and the clubhouse,
@@ -151,25 +150,6 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
     x = nx; z = nz;
    }
    close();
-  }
- }
- // The moor's stone circle; lanterns along Haunted Hollow's paths.
- if (set.circle) {
-  const at = site({width: 16, depth: 16});
-  // Iteration 9: a clearing round it (the wood grew up to the stones).
-  if (at) out.clearings.push({x: at.x, z: at.z, r: 16});
-  if (at) for (let k = 0; k < 9; k++) { const a = k * Math.PI * 2 / 9; out.props.push({kind: 'stone', x: at.x + Math.cos(a) * 7, z: at.z + Math.sin(a) * 7, rot: rnd() * Math.PI, size: .8 + rnd() * .5}); }
- }
- if (set.lanterns) for (const path of paths) {
-  let run = 0;
-  for (let i = 1; i < path.points.length; i++) {
-   const p = path.points[i], o = path.points[i - 1], l = Math.hypot(p.x - o.x, p.z - o.z) || 1;
-   run += l;
-   if (run < 28) continue;
-   run = 0;
-   const nx = -(p.z - o.z) / l, nz = (p.x - o.x) / l, side = (path.width / 2 + 1.2);
-   const x = p.x + nx * side, z = p.z + nz * side;
-   if (!PLAYED.has(surface(x, z))) out.props.push({kind: 'lantern', x, z, rot: Math.atan2(nx, nz), size: 1});
   }
  }
  return out;

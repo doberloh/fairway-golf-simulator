@@ -263,7 +263,7 @@ and the procedural ocotillo and agave.
 `tools/blender/cartoon_grass.py`, 17 clumps of long grass, a family each:
 `grassfescue`, `grassmarram`, `grassbluestem` (three-fingered "turkey foot"
 heads), `grassalpine` (with flowers), `grassbunch` (desert), `grasssedge`,
-`grasstussock` (Haunted Hollow) and `grassplume` (Island). Each is 40-200
+`grasstussock` (Haunted Hollow's; built, not shipped since it was removed) and `grassplume` (Island). Each is 40-200
 faces of two-sided blades (`fb.blade`) round a low mound, green at the root
 and the accent toward the tip, painted by height, normals straight up (the
 game lights grass like the ground). Decoration only: vegetation.js
@@ -291,18 +291,6 @@ and the procedural hala. Their leaves are single faces, so vegetation.js draws
 the leaf part two-sided (`THIN_LEAVES`; also bracken and ocotillo). No far
 twins: flat leaves gain nothing from one.
 
-### cartoon_haunted
-
-`tools/blender/cartoon_haunted.py`, 10 dead trees from one crooked branching
-helper (`crooked`, `branch`): `Blender_Gnarled_*` (a short twisted trunk, thick
-limbs hooking up and clawing down), `Blender_Snag_*` (a broken conifer: jagged
-top, stubs, bark peeling to pale wood -- the accent), `Blender_DeadWillow_*`
-(a split trunk, long whips hanging) and `Blender_DeadOak_*` (`deadoaktree`, a
-twisted spreading skeleton). 320-950 faces each. They replace the MegaKit's
-gnarled oaks (about 7,500 vertices each), the Ultimate Stylized snags,
-Kenney's dead willows and the Kenney dead hardwoods (`arid`, now gone); the
-model module is about 650 KB smaller for it.
-
 ### cartoon_houses
 
 `tools/blender/cartoon_houses.py`, 8 fairway homes, two of each form homes.js
@@ -317,17 +305,6 @@ box, measured off the walls' own part and recentred on them (`wallExtents`:
 the ingest centres a model on its whole box and scales it to unit height,
 chimney included); the eaves and a porch roof overhang it. They replace
 Kenney's building kit, whose texture atlases (about 63 KB) no longer ship.
-
-### cartoon_props
-
-`tools/blender/cartoon_props.py`, Haunted Hollow's props: `Blender_Pumpkin_1..3`
-(a ribbed lathe, 8-12 ribs, a twisted stem) and `Blender_Toadstool_RedGroup`,
-`_RedTall` and `_TanGroup` (domed caps flecked with white warts, stout stalks
-with a ring). Built to the Kenney models' proportions, because two things are
-laid on them: the collision radius (species.js `PROP_MODELS`, re-measured --
-pumpkins 0.71, the groups 0.65 and 0.77, the single 0.35) and the lantern face
-(haunts.js `faceGeometry`, on a body 0.67-0.70 of its height in half-width), so
-every pumpkin is round, not squashed. haunts.js draws them painted.
 
 ### cartoon_deadfall
 
@@ -445,12 +422,12 @@ study's landscape table): a timber lodge (PNW), an adobe with a tower and
 vigas (Desert), a chalet (Mountain), a twin-gabled stone links house (Links),
 a two-storey farmhouse with a porch (Midwest), an open hipped pavilion
 (Island), a log lodge (Giant Redwood), a clapboard house with a cupola
-(Autumn), a crooked manor with a turret (Haunted Hollow) and a shingled house
+(Autumn), a crooked manor with a turret (Haunted Hollow's, built but not shipped since 2 November 2026) and a shingled house
 with dormers (Lakeshore Dunes); each with fascia and ridge trim, a flag by
 the door. Built round a 26 x 16 m footprint, front at -Y; ingested as the
 `clubhouse` family with its own scale (`q`); renderer.js
 `addBuildings` fits each to its building's box and inks it, coloured per
-landscape (walls, roof, trim, glass -- Haunted Hollow's windows lit), and
+landscape (walls, roof, trim, glass), and
 draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
 is each model's height for its width, measured off the ingested model; a
 test holds it to the models, so **re-measure it whenever a clubhouse changes

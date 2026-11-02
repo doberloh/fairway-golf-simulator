@@ -228,12 +228,9 @@ export const FAMILY_OF = {
  // The cartoon overhaul's brush (tools/blender/cartoon_brush.py).
  creosote: 'creosotebush', brittlebush: 'brittlebush', sagebrush: 'sagebrush', bracken: 'brackenfern',
  huckleberry: 'huckleberrybush',
- // Haunted Hollow: everything is dead, and since the cartoon overhaul one
- // hand (tools/blender/cartoon_haunted.py): four families of its own.
- gnarled: 'gnarled', snag: 'snag', deadwillow: 'deadwillow', deadoak: 'deadoaktree',
- // The cartoon overhaul's shrubs (tools/blender/cartoon_shrubs.py): six
+ // The cartoon overhaul's shrubs (tools/blender/cartoon_shrubs.py): five
  // plants that were one Kenney `bush` family, each its own now.
- shrub: 'shrubbush', gorse: 'gorsebush', heather: 'heatherbush', naupaka: 'naupakabush', fern: 'fernbush', bramble: 'bramblebush',
+ shrub: 'shrubbush', gorse: 'gorsebush', heather: 'heatherbush', naupaka: 'naupakabush', fern: 'fernbush',
  // Lakeshore Dunes: built in Blender (tools/blender/lakeshore.py). The
  // creeping juniper mats and the common juniper's vase are two families
  // because one is sized by its spread and the other by its height.

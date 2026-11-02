@@ -25,11 +25,11 @@
 // understory), because no seat could hold a fern on a wall.
 export const COVER_STEEPEST = Math.tan(40 * Math.PI / 180);
 
-export const SPREAD_SIZED = new Set(['swordfern', 'salal', 'sorrel', 'fern', 'dunegrass', 'juniper', 'heatherbush', 'naupakabush', 'fernbush', 'bramblebush', 'agaveplant']);
+export const SPREAD_SIZED = new Set(['swordfern', 'salal', 'sorrel', 'fern', 'dunegrass', 'juniper', 'heatherbush', 'naupakabush', 'fernbush', 'agaveplant']);
 
 export const GROUND_PLANTS = new Set([
  'fern', 'swordfern', 'salal', 'sorrel', 'gorse', 'heather', 'agave',
- 'naupaka', 'shrub', 'bramble', 'dunegrass', 'juniper', 'commonjuniper', 'cholla',
+ 'naupaka', 'shrub', 'dunegrass', 'juniper', 'commonjuniper', 'cholla',
  'creosote', 'brittlebush', 'sagebrush', 'bracken', 'huckleberry',
 ]);
 
@@ -49,21 +49,6 @@ export const GROUND_PLANTS = new Set([
 const CROWN_FRACTION = {redwood: .095, fir: .17, hemlock: .17, redcedar: .19};
 export const crownFraction = kind => CROWN_FRACTION[kind] || 0;
 export const crownRadius = tree => CROWN_FRACTION[tree.kind] ? CROWN_FRACTION[tree.kind] * tree.h : tree.r;
-
-// HAUNTED HOLLOW'S PROPS, and the model each one is drawn from.
-//
-// Generation decides a prop's model, because it has to know how wide the thing
-// is to collide with it, and the renderer must draw exactly that model. The
-// number is the model's widest half-extent as a fraction of its own height,
-// MEASURED off the ingested geometry (src/asset-meshes.js), not guessed: a
-// Kenney pumpkin was 0.69 as wide as it is tall, the red toadstool clump 0.65,
-// the single tall toadstool 0.29. The collision cylinder is that wide.
-// Since the cartoon overhaul the models are tools/blender/cartoon_props.py,
-// built to the same proportions and measured again (generator 43).
-export const PROP_MODELS = {
- pumpkin: [['Blender_Pumpkin_1', .711], ['Blender_Pumpkin_2', .710], ['Blender_Pumpkin_3', .711]],
- toadstool: [['Blender_Toadstool_RedGroup', .651], ['Blender_Toadstool_RedTall', .346], ['Blender_Toadstool_TanGroup', .767]],
-};
 
 // Has no trunk worth colliding with. The ground plants, plus the ocotillo:
 // tall, but a handful of canes with gaps a ball goes straight through.

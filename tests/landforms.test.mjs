@@ -73,7 +73,7 @@ const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 test('each landscape has the ground its recipe asks for, and only where the lie rules allow', () => {
  const want = {mountain: ['rock', 'scree'], desert: ['rock', 'waste', 'hardpan'], links: ['native', 'heather'],
-  midwest: ['native'], haunted: ['heather'], autumn: ['rock', 'litter'], pnw: ['pinestraw'], lakeshore: ['native']};
+  midwest: ['native'], autumn: ['rock', 'litter'], pnw: ['pinestraw'], lakeshore: ['native']};
  for (const [biome, kinds] of Object.entries(want)) {
   const w = generateWorld({seed: SEEDS[0], biome, holes: 9, trees: 60, homes: true, ...WATER});
   const seen = new Set();

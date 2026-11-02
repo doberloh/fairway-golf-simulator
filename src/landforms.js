@@ -247,7 +247,8 @@ const RECIPES = {
    treeKeep: () => 1,
   };
  },
- // A MOOR: dead heather in great dark drifts (Haunted Hollow).
+ // A MOOR: heather in great dark drifts (Haunted Hollow's until it was removed,
+ // 2 November 2026; any heath may ask for it).
  moor(o, seed) {
   const sm = saltOf(seed, 'moor');
   return {

@@ -56,16 +56,10 @@ const DEFAULTS = {
  // What that floor is made of, as [family, share]. A family is a PICK entry in
  // tools/build-meshes.mjs; vegetation.js knows how to size and colour each.
  floor: [['log', .40], ['stump', .24], ['mossrock', .36]],
- // SOLID props the generator places, per hole: {pumpkin, toadstool, lanterns},
- // the last being the share of pumpkins carved and lit. Empty means none, and
- // a biome with none draws nothing from their random stream. See course.js.
- props: {},
- // Ghosts drifting over the course, per hole. Drawn and moved by haunts.js;
- // they are not part of the course and nothing collides with them.
- ghosts: 0,
  // The Cartoon ground lifts every rough 23% toward this colour (renderer.js).
- // An olive suits every grass there is; it turned Haunted Hollow's violet rough
- // to mud, so a biome can say what its rough should lift toward.
+ // An olive suits every grass there is; it turned a violet rough (Haunted
+ // Hollow's, removed 2 November 2026) to mud, so a biome can say what its
+ // rough should lift toward.
  roughTint: '#b6bc65',
  // The 2D course and hole maps draw semi-rough, fairway and green in these,
  // whatever the biome, so a map reads the same everywhere -- until a biome's
@@ -76,10 +70,6 @@ const DEFAULTS = {
  // the sky is exactly what it was; the small pale disc the sun's disc becomes
  // after dark is separate and every biome keeps it.
  moon: null,
- // Haunted Hollow's night creatures, per hole: flocks of bats round the tall
- // trees and will-o'-the-wisps over water and hollows. Both come out as the
- // light goes (solar.lamplight) and are drawn by haunts.js.
- bats: 0, wisps: 0,
  // How much of their combined crown radius two trees may share before one of
  // them is moved elsewhere. Zero is off, which is where every biome but
  // redwood stands -- not because they would not benefit, but because their
@@ -336,60 +326,6 @@ const TRAITS = {
    under: {spacing: 8, plants: [['bracken', .6], ['shrub', .4]]},
    plants: [['maple', .42], ['oak', .25], ['aspen', .2], ['spruce', .13]]},
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},
- // HAUNTED HOLLOW: THE REDWOOD TRICK AGAIN, WITH NOTHING ALIVE IN IT.
- //
- // A Halloween course. Like the grove, the mood is numbers the engine already
- // reads: the sun at 10 degrees and orange, a dusky mauve sky that the fog
- // takes its colour from, and the heaviest mist of any biome. What is new is
- // only what grows -- every tree is dead: gnarled oaks, tall pale snags, bare
- // willows and the desert's dead hardwoods -- with dark bramble under them
- // and pumpkins and toadstools among the fallen timber.
- //
- // Trees are on the short side (9 to 22 m) and a little denser than parkland,
- // because a bare tree hides far less than a leafy one and the silhouettes are
- // the point. The gnarled oak leads the list, so it is the tree that stands in
- // a fairway when a hole gets a feature tree.
- //
- // FULL FANTASY SINCE THE OWNER'S SECOND PASS. The turf is no longer dead
- // grass: purple fairways leading to slime-green greens, violet rough, ash
- // bunkers and green-black water. Pumpkins and toadstools are three to five
- // times life size and solid (`props`), most pumpkins are carved lanterns that
- // light up at dusk, and ghosts drift over the holes (`ghosts`).
- haunted: {light: {shade: '#8a70b0'},
-  longGrass: {families: [['grasstussock', 1, .55]], count: 3500, near: 18, leaf: '#4c4a3f', accent: '#8a6f6a'},
-  // Round 5 of the far landscape: dead trunks to the horizon (`dead`), not
-  // living canopy mounds; the painted floor faint and grey (round 7: .25, was
-  // .45 -- its round patches read as cobbles over the moor).
-  farForest: {cover: .7, size: 9, dead: true, paint: .25, colors: ['#5a5058', '#4a4248', '#3a3438']},
-  bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
-  canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
-  waterTint: '#2f6b46', waterMurk: .25, spray: '#6a5a7a', sunColor: '#ffc29a',
-  leafLitter: true,
-  scatter: {rocks: 260, grass: 70000, tufts: 1400, tallGrass: false,
-   rockScale: 1.2, bladeLength: .75, bladeWidth: .8, bladeTint: '#5a3f7a',
-   flowers: ['#e0812c', '#8fd14f']},
-  deadfall: 300,
-  rockStyle: 'angular',
-  floor: [['stump', .5], ['log', .5]],
-  props: {pumpkin: 26, toadstool: 18, lanterns: .6},
-  ghosts: 2,
-  roughTint: '#6b5590',
-  // A HARVEST MOON: low, huge and orange as it rises opposite the setting sun,
-  // paling as it climbs. About nine times the real moon's half-degree across.
-  moon: {size: 2.3, low: '#ff8a2a', high: '#ffe2b0', day: .25},
-  bats: 1, wisps: 3,
-  mapTurf: {semi: '#8f78b3', fairway: '#7f55b8', green: '#8fcb55'},
-  // A moor: dead heather in dark drifts.
-  landform: {type: 'moor', tussock: 3, cover: .5, kinds: {a: 'heather'}, gates: {a: {near: 9, ramp: 14}}},
-  fallen: null,
-  // Bramble rather than heather under them: heather's purple and its blossom
-  // read as bright pink blocks against dead grass, which is cheerful, not
-  // haunted. Bramble is the bush family in a dark thorny brown.
-  // A thicket of dead and gnarled wood round the moor.
-  stands: {edge: 60, wobble: 25, ramp: 22, patch: .15, scale: 200, near: 40, spacing: 9, share: .5,
-   under: {spacing: 8, plants: [['bramble', .7], ['bracken', .3]]}},
-  plants: [['gnarled', .30], ['snag', .18], ['deadwillow', .16], ['deadoak', .12],
-   ['bramble', .24]]},
  // LAKESHORE DUNES (23 October 2026, the owner's photograph of a Harbor
  // Shores dune hole; RESEARCH, *Lakeshore Dunes, the tenth biome*).
  //
@@ -446,7 +382,6 @@ const PALETTES = {
  island:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
  redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
  autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
- haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#3c2856',semi:'#553c7c',fairway:'#7f55b8',fringe:'#9270c6',green:'#86c24f',tree:'#2a2030',sky:'#a4949a',sand:'#b9b2a6',water:'#1f3d2e',rock:'#4f4a58',altitude:200,temperature:9,treeKind:'oak',sun:10},
  // Altitude is Lake Michigan's surface, about 177 m; 23 C a July evening on
  // its south-east shore. `sun` 20 is a long warm evening rather than the true
  // 71-degree midsummer noon at 42 N (RESEARCH).
@@ -474,7 +409,6 @@ const INTERFACE = {
  island:   {panel: 'rgba(6,30,46,.88)',  a1: '#22d3ee', a2: '#0891b2', hot: '#ff8fa3', soft: '#a5d8e6', onHot: '#04202e'},
  redwood:  {panel: 'rgba(36,12,14,.88)', a1: '#f87171', a2: '#9f1239', hot: '#fde68a', soft: '#e6b3b3', onHot: '#2a0a0e'},
  autumn:   {panel: 'rgba(40,24,8,.88)',  a1: '#fbbf24', a2: '#c2410c', hot: '#ffffff', soft: '#ecc9a0', onHot: '#2a1606'},
- haunted:  {panel: 'rgba(26,12,42,.9)',  a1: '#c084fc', a2: '#7c3aed', hot: '#fb923c', soft: '#cdb4f0', onHot: '#1a0a2e'},
  // Lake blue and dune sand: not from a mockup (the biome came after them),
  // so PLACED to the same pattern, and held to the contrast test like the rest.
  lakeshore:{panel: 'rgba(8,30,42,.88)',  a1: '#7dd3fc', a2: '#0e7490', hot: '#fde68a', soft: '#b4d6e2', onHot: '#05202c'},
@@ -531,9 +465,6 @@ export const ARCHITECT = {
  autumn: {styles: ['raynor', 'golden', 'parkland'], signature: ['redan', 'road'], clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
   story: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
   colours: {clubhouse: {stone: '#f1ede2', bark: '#3d4044', accent: '#ffffff', dirt: '#2d3640'}, riprap: '#928b80', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#c4b9a6'}},
- haunted: {styles: ['heathland', 'links'], signature: ['pit'], clubhouse: 'manor', path: 'gravel', bridge: 'stone',
-  story: {walls: 'leaning', ruins: ['chapel', 'cottage'], circle: true, lanterns: true}, life: {fliers: ['raven', 4]},
-  colours: {clubhouse: {stone: '#6b6274', bark: '#2f2838', accent: '#b9b2a6', dirt: '#e9a640'}, riprap: '#5f5868', wall: '#857c90', ruin: '#6f6878', bridgeStone: '#7d7584'}},
  lakeshore: {styles: ['links', 'sandhills', 'minimalist'], signature: ['dell'], clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
   story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}, life: {fliers: ['gull', 4], geese: 6},
   colours: {clubhouse: {stone: '#c4ab84', bark: '#6d6a63', accent: '#f4f1ea', dirt: '#2c3a46'}, riprap: '#9c937f', wall: '#c9bfa8', ruin: '#c4b9a2', bridgeStone: '#bdb6a6'}},

@@ -107,11 +107,11 @@ test('text is escaped; a golfer named <b> stays a name', () => {
 });
 
 test('the root wears the palette and the canvas frame', () => {
- const p = screenPalette({screen: 'round', course: {biome: 'haunted'}});
+ const p = screenPalette({screen: 'round', course: {biome: 'redwood'}});
  const html = kit.kitRoot(p, '', {frame: canvasFrame({width: 1920, height: 1080})});
  assert.match(html, /class="uk uk-canvas"/);
- assert.match(html, /--panel:rgba\(26,12,42,\.9\)/);
- assert.match(html, /--on-hot:#1a0a2e/);
+ assert.match(html, /--panel:rgba\(36,12,14,\.88\)/);
+ assert.match(html, /--on-hot:#2a0a0e/);
  assert.match(html, /width:1280px;height:720px;transform:scale\(1\.5\)/);
  assert.match(kit.kitRoot(null, ''), /^<div class="uk" style="">/);
 });

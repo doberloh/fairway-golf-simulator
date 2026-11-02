@@ -30,7 +30,6 @@ export const ACHIEVEMENTS = [
  {id: 'beat-the-index', name: 'Beat the Index', how: 'Finish a round under your sim handicap.', xp: 150},
  {id: 'night-owl', name: 'Night Owl', how: 'Finish a round under the floodlights.', xp: 100, title: 'Night Owl'},
  {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round in Giant Redwood.', xp: 75, title: 'Fog Walker'},
- {id: 'ghost-hunter', name: 'Ghost Hunter', how: 'Finish a round in Haunted Hollow.', xp: 75, title: 'Ghost Hunter'},
  {id: 'globetrotter', name: 'Globetrotter', how: 'Finish a round in nine different landscapes.', xp: 250, title: 'Globetrotter', progress: 'biomes', goal: 9},
  {id: 'centurion', name: 'Centurion', how: 'Finish 100 rounds.', xp: 300, title: 'Centurion', progress: 'rounds', goal: 100},
  {id: 'streak', name: 'Streak', how: 'Finish the course of the week four weeks running.', xp: 150, progress: 'streak', goal: 4},
@@ -122,7 +121,6 @@ export function roundAchievements({holes = [], index = null, floodlit = false, b
  if (Number.isFinite(index) && over < index * played.length / 18) out.push('beat-the-index');
  if (floodlit) out.push('night-owl');
  if (biome === 'redwood') out.push('fog-walker');
- if (biome === 'haunted') out.push('ghost-hunter');
  return out;
 }
 // What the counters and the progress have reached.

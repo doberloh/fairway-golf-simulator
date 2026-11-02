@@ -18,7 +18,7 @@ up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 
 Every `vendor/blender-cartoon_*/` folder (the painted broadleaves, conifers,
 redwoods, boulders, shrubs, grasses, brush, desert and island plants,
-Haunted Hollow's trees and props, Lakeshore's plants, the deadfall, the
+Lakeshore's plants, the deadfall, the
 houses and their gardens, the wildflowers and the course furniture, and the
 far twins) is written by `tools/blender/cartoon_*.py`, `tools/blender/cartoon.py`
 and `tools/blender/fairway_blender.py`, this project's own scripts, run in

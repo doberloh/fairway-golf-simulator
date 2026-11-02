@@ -34,7 +34,6 @@ export const LANDSCAPES = [
  {name: 'island', biome: 'island', seed: 'LAGOON', hole: 1, cam: {...behind, around: 130}},
  {name: 'giant-redwood', biome: 'redwood', seed: 'GIANT', hole: 1, cam: {...behind, around: 210}},
  {name: 'autumn', biome: 'autumn', seed: 'MAPLE', hole: 1, cam: behind},
- {name: 'haunted-hollow', biome: 'haunted', seed: 'GLOAMING', hole: 1, cam: behind},
  // Picked from angles.mjs's sheet (23 October 2026): a fairway ribbon between
  // grassed dunes with sand torn into their faces, woods behind.
  {name: 'lakeshore-dunes', biome: 'lakeshore', seed: 'BEACON', hole: 2, cam: {...behind, height: 34, pitch: -18}},

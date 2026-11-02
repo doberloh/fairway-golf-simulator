@@ -54,9 +54,6 @@ const PROFILES = {
  autumn: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.
  island: {haze: .48, sheet: .22, water: .35},
- // Haunted Hollow: the most of everything. Fog is most of what the biome is,
- // and it pools in the hollows and over the black water.
- haunted: {haze: 1, sheet: 1, water: 1},
  // A summer evening by a big lake: a soft warm haze over everything and a
  // little lying on the water, never a sheet in the dune hollows. PLACED.
  lakeshore: {haze: .6, sheet: .3, water: .75},

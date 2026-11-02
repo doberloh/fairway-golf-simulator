@@ -94,7 +94,6 @@ const PICK = {
  grassalpine: ['blender:Blender_Alpine_1', 'blender:Blender_Alpine_2'],
  grassbunch: ['blender:Blender_Bunch_1', 'blender:Blender_Bunch_2'],
  grasssedge: ['blender:Blender_Sedge_1', 'blender:Blender_Sedge_2'],
- grasstussock: ['blender:Blender_Tussock_1', 'blender:Blender_Tussock_2'],
  grassplume: ['blender:Blender_Plume_1', 'blender:Blender_Plume_2'],
  // Kenney's `rock`, `grass` and `flower` families and the grown `litter` are
  // no longer taken (the cartoon overhaul): nothing drew them once the
@@ -106,7 +105,6 @@ const PICK = {
  heatherbush: ['blender:Blender_Heather_1', 'blender:Blender_Heather_2', 'blender:Blender_Heather_3'],
  naupakabush: ['blender:Blender_Naupaka_1', 'blender:Blender_Naupaka_2', 'blender:Blender_Naupaka_3'],
  fernbush: ['blender:Blender_Fern_1', 'blender:Blender_Fern_2', 'blender:Blender_Fern_3'],
- bramblebush: ['blender:Blender_Bramble_1', 'blender:Blender_Bramble_2', 'blender:Blender_Bramble_3'],
  // THE FOREST FLOOR (tools/blender/cartoon_deadfall.py): old-growth reads from
  // what has fallen as much as from what is standing -- logs, stumps and mossy
  // stones, in one hand with the rest.
@@ -126,18 +124,6 @@ const PICK = {
  salal: ['blender:Blender_Salal_1', 'blender:Blender_Salal_2'],
  sorrel: ['blender:Blender_Sorrel_1'],
  seedling: ['blender:Blender_Seedling_1', 'blender:Blender_Seedling_2'],
- // HAUNTED HOLLOW, remade in one hand (tools/blender/cartoon_haunted.py, the
- // cartoon overhaul): until then three packs -- the MegaKit's gnarled dead
- // oaks, the Ultimate Stylized snags, Kenney's dead willows and dead
- // hardwoods (`arid`, which also stood in for palo verde and mesquite).
- gnarled: ['blender:Blender_Gnarled_1', 'blender:Blender_Gnarled_2', 'blender:Blender_Gnarled_3'],
- snag: ['blender:Blender_Snag_1', 'blender:Blender_Snag_2', 'blender:Blender_Snag_3'],
- deadwillow: ['blender:Blender_DeadWillow_1', 'blender:Blender_DeadWillow_2'],
- deadoaktree: ['blender:Blender_DeadOak_1', 'blender:Blender_DeadOak_2'],
- // The forest floor's Halloween: pumpkins and toadstools among the deadfall.
- // THE CARTOON PROPS (tools/blender/cartoon_props.py), replacing Kenney's.
- pumpkin: ['blender:Blender_Pumpkin_1', 'blender:Blender_Pumpkin_2', 'blender:Blender_Pumpkin_3'],
- toadstool: ['blender:Blender_Toadstool_RedGroup', 'blender:Blender_Toadstool_RedTall', 'blender:Blender_Toadstool_TanGroup'],
  // LAKESHORE DUNES (tools/blender/cartoon_lakeshore.py). Every name starting
  // `Blender_` comes out of a script in tools/blender/ and lives in a
  // `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how to remake
@@ -170,14 +156,14 @@ const PICK = {
  coursemarkings: ['blender:Blender_Stake_1', 'blender:Blender_ObStake_1', 'blender:Blender_YardagePost_1', 'blender:Blender_Rake_1'],
  // AN ARCHITECT COURSE'S CLUBHOUSE (tools/blender/architect_clubhouses.py), one
  // per landscape, fitted to its box by renderer.js addBuildings.
- clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'manor', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
+ clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
  // AN ARCHITECT COURSE'S BUILT WATER (tools/blender/architect_water.py;
  // architect-courses, phase 5): bridge bays (renderer.js addPaths), rip-rap,
  // tie walls and fountains (waterworks.js, renderer.js addWaterworks).
  // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
  // walls, the farmstead, ruins and landmarks (story.js, renderer.js
  // addBuildings and addStory).
- storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Lantern_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals and distant people, placed by life.js, moved by renderer.js addLife.
  lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1'].map(k => `blender:Blender_${k}`),
@@ -195,15 +181,11 @@ const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1
 // skipped at draw time.
 const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
 
-// Families whose material names mislead ROLE_OF. Kenney's pumpkin is
-// `leafsFall` (the body) and `grass` (the stem), so by name it is all leaf and
-// paints one colour; the toadstools are `colorRed`/`colorTan` caps on a
-// `_defaultMat` stalk, all accent. Named here per family, so ROLE_OF -- which
-// every shipped model already went through -- is untouched.
-const ROLE_OVERRIDE = {
- pumpkin: {leafsFall: 'accent', grass: 'leaf'},
- toadstool: {colorRed: 'accent', colorTan: 'accent', _defaultMat: 'bark'},
-};
+// Families whose material names mislead ROLE_OF, named here per family so
+// ROLE_OF -- which every shipped model already went through -- is untouched.
+// None now: Kenney's pumpkin and toadstools had them, and went with Haunted
+// Hollow (2 November 2026).
+const ROLE_OVERRIDE = {};
 
 // Families whose texture the game actually ships, and therefore the only ones
 // whose texture coordinates are worth carrying. Houses have their atlas;

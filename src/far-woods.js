@@ -69,16 +69,17 @@ export const FAR_SHAPES = {
  spruce: {foot: .8, tall: 3.38, scale: [.8, 3.4], tilt: false},   // two stacked tiers
  dome: {foot: .86, tall: .5, scale: [1, .42], tilt: true},         // a grove of broadleaves
  cone: {foot: .55, tall: 2, scale: [.55, 2], tilt: false},         // a grove of conifers
- snags: {foot: .75, tall: 1.6, scale: [1, 1.6], tilt: false},      // dead trunks, Haunted Hollow
+ snags: {foot: .75, tall: 1.6, scale: [1, 1.6], tilt: false},      // dead trunks (`dead`; winter's bare far woods)
  scrub: {foot: 1.01, tall: .54, scale: [1, .45], tilt: false},     // low clumps, Desert and Links
 };
 // Which shapes a landscape's far woods take (round 3 of the far landscape:
-// Haunted Hollow's near crowns as clumps of bare dead trunks -- its purple
+// a `dead` far forest's near crowns as clumps of bare dead trunks (Haunted
+// Hollow's, removed 2 November 2026; kept for bare winter woods) -- purple
 // lumps read as living woods; an `evergreen` share in the far forest's record
 // draws as spruces and cones among the broadleaves, Autumn's pines and
 // hemlocks, in its fourth colour).
 const CONIFER_FAR = new Set(['pnw', 'mountain', 'redwood']);
-export const farShapes = (biome, f) => f?.scrub ? {near: 'scrub', grove: 'scrub'} : f?.dead ? {near: 'snags', grove: 'snags'} : CONIFER_FAR.has(biome) ? {near: 'spruce', grove: 'cone'} : biome === 'haunted' ? {near: 'snags', grove: 'dome'} : {near: 'cluster', grove: 'dome'};
+export const farShapes = (biome, f) => f?.scrub ? {near: 'scrub', grove: 'scrub'} : f?.dead ? {near: 'snags', grove: 'snags'} : CONIFER_FAR.has(biome) ? {near: 'spruce', grove: 'cone'} : {near: 'cluster', grove: 'dome'};
 // Far off, an evergreen among broadleaves is a dark crown in the canopy, not a
 // cone (round 7 of the far land: Autumn's cones, twice as tall as wide,
 // stood up past its horizon as a row of pale spikes).

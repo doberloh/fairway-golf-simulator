@@ -205,7 +205,7 @@ the courses several suites share, and builds many at once on worker threads
   `course-variety`, `course-living`, `course-names`, `atmosphere-routing`,
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
   `tee-corridor`, `water-*`, `waterways-tours`, `vegetation-variety`,
-  `generation-steps`, `parallel-ground`, `settings-schema`, `haunted-props`,
+  `generation-steps`, `parallel-ground`, `settings-schema` (also: a save on the removed Haunted Hollow opens on Autumn),
   `far-heath` (the heath past the near tiles: domes only on heather, at the ground, in the cushions' colours, no shadow; every patch found, one a 2.6 m square within 10% of a full scan; a moor spaced out to the cap; thinner on Low, none without heather or without a reach; the grow-in and sink really in the compiled toon shader),
   `corridor-seam` (no bank where two holes' corridors meet: on played ground where the nearest hole changes, clear of sand, water, paths and tee pads, the sharpest bend under 0.3 -- Classic Lakeshore HZ-2 and Architect Links ST-1, which bend 0.94 and 0.56 with the fade off),
   `blowouts` (Lakeshore Dunes' sand: the field baked on the atlas grid and read back as a linear filter reads it, the gate off the playing lines, water clearance, about a tenth of the dune rough, nothing planted on it, no other biome building a field, and the ground shader asking the same questions in the same order -- a structure check, since no test runs the shader),
@@ -219,7 +219,7 @@ the courses several suites share, and builds many at once on worker threads
   choice writes every cue, and an old record adopts it once), `glsl-reserved`,
   `three-namespace`, `flood-shadows` (five samplers since the tables were packed), `instance-cull` (also: a mesh with a reach drops
   whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
-  `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
+  `mist`, `daylight`, `floodlights`, `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`, `toon-ramp` (the overhaul's coloured
   ramp: grey without a shade colour, brighter step by step in every landscape,
   a shade colour moving the hue and not the brightness).

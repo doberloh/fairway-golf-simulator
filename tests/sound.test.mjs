@@ -79,7 +79,7 @@ test('every contact the physics reports maps to a sound, in the order it happene
   }
  }
  assert(kinds.size>=2,`only ${[...kinds]} reported`);
- const known=new Set([...Object.keys(IMPACTS),'pole','prop']);
+ const known=new Set([...Object.keys(IMPACTS),'pole']);
  for(const k of kinds)assert(known.has(k),`no sound for contact "${k}"`);
 });
 

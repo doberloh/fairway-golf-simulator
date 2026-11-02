@@ -6,7 +6,7 @@
 //               Mountain); elk (Redwood, Mountain); a roadrunner (Desert)
 //   water birds geese on the far bank of a pond; a heron by a pond or creek
 //   fliers      gulls circling over Links, Lakeshore and Island; ravens over
-//               Haunted Hollow (which has its own bats)
+//               nowhere else
 //   people      a group of three walking a stretch of the cart path; a
 //               greenkeeper on a ride-on mower in the rough between holes
 //

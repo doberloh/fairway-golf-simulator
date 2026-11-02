@@ -19,7 +19,7 @@ import {onDrive} from './homes.js';
 // instanced mesh with, for each instance, the object it belongs to as
 // `viewBlocker` reads it -- the same object for every part of one house, so
 // a house goes whole. clearCameraTrees tests each object once. Exported for
-// homes.js and haunts.js.
+// homes.js.
 export function addViewBlockers(view,mesh,matrices,owners){
  if(!mesh||!owners?.length)return;
  const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
@@ -126,15 +126,14 @@ function addModelSpecies(view,kind,trees){
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
  const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55',palo:'#9aa64e',mesquite:'#6c804b',cholla:'#6f8f5e',ocotillo:'#6f7a45',agave:'#7caa9b',creosote:'#5d6b39',brittlebush:'#a9b39b',sagebrush:'#9aa58c',bracken:'#5d8a3a',huckleberry:'#3f5f34',hala:'#678f3d',redwood:'#3d5a35',fir:'#355a3a',hemlock:'#4a6b3e',redcedar:'#3f6a40',tanoak:'#4f6b38',seedling:'#4a7041',swordfern:'#3f6e33',salal:'#3e5f30',sorrel:'#5f8a3e'};
- // Bark is one brown unless a species says otherwise. The dead trees do: a
- // haunted wood is told apart by its bark, since it has no leaves to do it.
- const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b',palo:'#8fa553',mesquite:'#4d3d31',cholla:'#5a5040',ocotillo:'#7a6e5c',creosote:'#5a4a3a',bracken:'#6b5a3a',sagebrush:'#6a5d4e',huckleberry:'#5a4636',palm:'#93876a',hala:'#8a7b66',redwood:'#7a5242',fir:'#5d4636',hemlock:'#5a4a3e',redcedar:'#735040',tanoak:'#6e6256',sorrel:'#6f8a4e'};
+ // Bark is one brown unless a species says otherwise.
+ const barks={aspen:'#d5d2b5',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b',palo:'#8fa553',mesquite:'#4d3d31',cholla:'#5a5040',ocotillo:'#7a6e5c',creosote:'#5a4a3a',bracken:'#6b5a3a',sagebrush:'#6a5d4e',huckleberry:'#5a4636',palm:'#93876a',hala:'#8a7b66',redwood:'#7a5242',fir:'#5d4636',hemlock:'#5a4a3e',redcedar:'#735040',tanoak:'#6e6256',sorrel:'#6f8a4e'};
  // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
  // does: its blade tips are a second part, straw over green, which is what
  // American beachgrass looks like by midsummer.
  // The cartoon aspen's accent is the dark "eyes" on its pale trunk.
  // The cartoon shrubs' flowers and berries (tools/blender/cartoon_shrubs.py).
- const accents={dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',bramble:'#2c1f2e',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
+ const accents={dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
  const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
@@ -406,9 +405,7 @@ export function addVegetation(view){
 // fallen log. Worth knowing before anyone makes them bigger.
 //
 // What it is made of is the biome's `floor`: the grove's logs, stumps and mossy
-// boulders, Haunted Hollow's logs and stumps. Haunted Hollow's pumpkins and
-// toadstools were here once; they are solid now, so generation places them and
-// haunts.js draws them.
+// boulders.
 function addDeadfall(view) {
  const {world} = view, {deadfall: count, floor: mix} = biomeOf(world.settings.biome);
  if (!count) return;
@@ -592,7 +589,8 @@ export function farWoodGeometry(kind){
  else if(kind==='cluster'||kind==='scrub'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
   const p=geo.attributes.position;for(let i=0;i<p.count;i++)if(p.getY(i)<-.295)p.setY(i,-.295);}
  else if(kind==='cone')geo=new T.ConeGeometry(1,1,6,1);
- // Haunted Hollow's dead trunks (round 3 of the far landscape): three bare
+ // A `dead` far forest's trunks (round 3 of the far landscape, for Haunted
+ // Hollow, since removed; kept for bare winter woods): three bare
  // spikes leaning a little apart, each with two broken limbs, on one floor.
  else if(kind==='snags'){const parts=[];for(const [x,z,h,lean] of [[0,0,1,.04],[.42,.2,.78,-.08],[-.3,-.36,.66,.07]]){
    const t=new T.ConeGeometry(.07,h,5,1).translate(0,h/2,0).rotateZ(lean).translate(x,0,z);parts.push(t);
@@ -697,7 +695,7 @@ function addLongGrass(view){
 // landscape's heather blooms, grey-brown on a dead moor. The near cushions
 // (addNearbyGrass) and the far heath (addFarHeath) both paint with them, so
 // one turns into the other without a change of colour.
-const heathColours=biome=>biome==='haunted'?{leaf:'#4a403c',accent:'#6c5862'}:{leaf:'#5a5a3c',accent:'#a86aa8'};
+const heathColours=()=>({leaf:'#5a5a3c',accent:'#a86aa8'});
 // A BUILT course (built-world.js) has no landform: its heather is its own
 // outlines, whatever the landscape (and so the lie the cushions stand on).
 const hasHeath=w=>!!(w.holes.length&&(w.built?w.builtOutlines?.heather?.length:Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather')));

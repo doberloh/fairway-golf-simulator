@@ -87,7 +87,6 @@ import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describ
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {leaderboard} from './leaderboard.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
-import {hauntedInSeason,offered,markOffSeason} from './seasons.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -1105,14 +1104,12 @@ function applyRoundCamera(saved){
 // never part of what the seed decides. `style` is deliberately NOT carried:
 // endless forces cartoon, which is the mode's own choice and not a loss.
 const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),...playScope(from)});
-// SEASONAL LANDSCAPES (seasons.js). Whether Haunted Hollow is offered now, and
-// a fresh endless run's seed -- marked when it is not, so the run never rolls it.
-const hauntedOffered=()=>offered('haunted',{allYear:!!graphics?.hauntedAllYear});
-const freshRunSeed=()=>{const s=newRunSeed();return hauntedOffered()?s:markOffSeason(s);};
-// A picker's landscapes now: those in season, and the one already chosen.
-const seasonalBiomes=keep=>Object.entries(BIOMES).filter(([k])=>k===keep||offered(k,{allYear:!!graphics?.hauntedAllYear}));
-// Surprise me rolls again rather than land on a landscape out of season.
-const surpriseSettings=()=>{let s=randomSettings(Math.random);for(let i=0;i<20&&!offered(s.biome,{allYear:!!graphics?.hauntedAllYear});i++)s=randomSettings(Math.random);return s;};
+// A fresh endless run's seed, a picker's landscapes and Surprise me. (Haunted
+// Hollow's season -- seasons.js, its date switch -- went with the landscape,
+// 2 November 2026; every landscape is offered all year.)
+const freshRunSeed=()=>newRunSeed();
+const seasonalBiomes=()=>Object.entries(BIOMES);
+const surpriseSettings=()=>randomSettings(Math.random);
 // Carrying the keys is only half of it -- they have to be made live. Boot and
 // import each did this by hand and `resumeRound` did not, so resuming a round
 // saved under a different bag played it with the CURRENT one while the bag panel
@@ -6377,8 +6374,6 @@ function renderPanel(name,content){
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
-  <label class="check"><input id="gfxHauntedAllYear" type="checkbox" ${graphics.hauntedAllYear?'checked':''}> Haunted Hollow all year</label>
-  <p class="note">Haunted Hollow is a seasonal landscape: offered from 1 October to 7 November${hauntedInSeason()?' (in season now)':''}. On, it is offered all year. A saved round or course, or a shared code, on Haunted Hollow opens any time either way.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -6423,7 +6418,6 @@ function renderPanel(name,content){
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
-  $('gfxHauntedAllYear').onchange=()=>{graphics=saveGraphics({...graphics,hauntedAllYear:$('gfxHauntedAllYear').checked});};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new

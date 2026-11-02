@@ -23,9 +23,9 @@
 //    (contour.js), each ground type its own outlines.
 //  - Every tree a ball can meet, with its trunk and crown, and its species.
 //  - NOT TAKEN (the first version): houses, the clubhouse, boulders, the
-//    haunted props, walls, cart-path furniture, markings, life. Boulders and
-//    props were solid, so a frozen course plays without them; said when an
-//    Architect or Haunted course is taken over.
+//    walls, cart-path furniture, markings, life. Boulders were solid, so a
+//    frozen course plays without them; said when an Architect course is
+//    taken over.
 import {greenPoint, greenRadius, ovalRadius, teePad, TEE_PAD, TEE_ROUND, TEE_APRON, TEE_APRON_SCALE, fairwayWidth} from './course.js';
 import {trunkRadius} from './physics.js';
 import {GROUND_PLANTS} from './species.js';

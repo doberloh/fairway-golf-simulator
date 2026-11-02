@@ -612,13 +612,6 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   rather than sticking out level; nothing looks sunk (a tree on a steep slope
   is drawn up to 15% of its height lower). The wait as a course loads is
   0.1-0.15 s longer here.
-- [ ] **Haunted Hollow's season has been tested, not played** (seasons.js;
-  CARTOON_OVERHAUL *Haunted Hollow is seasonal*). Check: with the computer's
-  date out of season, Course studio, Surprise me and the Endless picker do not
-  offer it, and the menu's backdrop never grows it; Settings, Graphics,
-  "Haunted Hollow all year" brings it back at once (a picker open at the time
-  redraws when reopened); a saved course on Haunted Hollow still opens and
-  shows it selected; in season (today, until 7 November) everything offers it.
 - [ ] **The gardens have been seen only in captures** (cartoon_garden.py,
   homes.js): fences stand on the ground on a sloping lot (they were never
   fitted to it, before or now); the shrubs do not stand in the driveway or
@@ -655,7 +648,7 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   landscapes: the rim on the crowns does not shimmer or crawl as the camera
   moves (it is a view-angle term); a ball is easy to find at noon, dusk and
   night; the lavender blue hour after sunset and the afterglow under the set
-  sun look like evening, not a filter; Haunted Hollow still reads spooky; the
+  sun look like evening, not a filter; the
   colour grade does not make the HUD's tiny course models or the menu cards
   garish (they share the renderer). Frame cost of the rim and the eight-step
   ramp is unmeasured (a few instructions on painted crowns) -- the frame-rate
@@ -1853,6 +1846,10 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
 
+- [x] **Haunted Hollow's season has been tested, not played** (seasons.js) --
+  CLOSED UNPLAYED, 2 November 2026: Haunted Hollow and its date switch were
+  removed (the owner; the US landscapes goal), so there is no season left to
+  check. Every landscape is offered all year.
 - [x] **`endless-round` failed once on the cartoon-overhaul branch** (26
   October, seed HARROW-4021): **the harness was wrong, not the game.** Replayed
   on the far-landscape goal (27 October) with `--endless-seed HARROW-4021`,

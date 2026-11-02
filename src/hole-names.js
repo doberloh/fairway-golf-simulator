@@ -25,7 +25,6 @@ const LAND = {
  island: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],
  autumn: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
- haunted: ['Lantern', 'Hollow', 'Raven', 'Gloaming', 'Will-o\'-Wisp', 'Bog', 'Moonrise', 'Crooked', 'Owl'],
  lakeshore: ['Beacon', 'Dune Ridge', 'Beach Grass', 'Cottonwood', 'Shoreline', 'Gull', 'Juniper', 'Breakwater', 'Lake View'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
@@ -40,7 +39,7 @@ function candidates(h, i, n, biome) {
  const t = h.design?.template;
  if (t && TEMPLATE_NAMES[t]) out.push(TEMPLATE_NAMES[t], `The ${TEMPLATE_NAMES[t]}`);
  if (h.ponds?.length) {
-  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'island' ? ['Lagoon', 'Salt Pond'] : biome === 'mountain' ? ['Tarn', 'Snowmelt Pond'] : biome === 'haunted' ? ['Black Pool', 'Bog'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
+  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'island' ? ['Lagoon', 'Salt Pond'] : biome === 'mountain' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
   out.push(...water);
  }
  const bend = Math.abs(h.doglegAngle || 0);

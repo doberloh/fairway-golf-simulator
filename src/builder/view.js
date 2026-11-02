@@ -252,8 +252,8 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // the landscape's tree (biomes.js `treeKind`) in its own colour, varied
  // tree by tree, on a trunk -- conifers as cones (the Pacific Northwest's
  // pines, the mountains' narrower spruces, the redwoods' on red trunks), a
- // round crown on the oak landscapes (autumn's in copper, orange and gold,
- // Haunted Hollow's dark), a palm's flat head on a tall trunk, the desert's
+ // round crown on the oak landscapes (autumn's in copper, orange and gold),
+ // a palm's flat head on a tall trunk, the desert's
  // low spreading mesquite, a links' squat shrub. The game draws the real
  // models; these say what grows where. Heights times the editor's tree scale.
  const cone = new T.ConeGeometry(1, 1, 8); cone.translate(0, .5, 0);
@@ -268,7 +268,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   clear(layers.trees);
   if (!s.trees.length) return;
   const bio = biomeOf(s.landscape), kind = SHAPE[bio.treeKind] ? bio.treeKind : 'oak', [geo, base, wide, cap] = SHAPE[kind], f = s.treeScale ?? 1;
-  const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : s.landscape === 'haunted' ? '#3a3036' : '#5b4634'}), n);
+  const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : '#5b4634'}), n);
   const m = new T.Matrix4(), q = new T.Quaternion(), own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
   for (let i = 0; i < n; i++) {
    // The whole tree at the scale -- height, crown and trunk -- as toDoc saves it.

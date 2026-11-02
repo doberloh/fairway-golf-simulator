@@ -24,13 +24,14 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  assert.equal(a.seed, 'WEEK-2026-42');
  assert.equal(a.holes, 18);
  assert.equal(weekKey(at('2026-10-14')), `WEEK-2026-42@g${GENERATOR_VERSION}`);
- // Before Lakeshore Dunes' debut, nine weeks running visit the nine.
- const seen = new Set(Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12))));
- assert.equal(seen.size, 9);
- // From it, ten weeks running visit every landscape but Haunted Hollow, whose
- // turn falls out of its season (seasons.js) and goes to Autumn.
+ // Before Lakeshore Dunes' debut, nine weeks running visit eight landscapes:
+ // Haunted Hollow's turn (removed 2 November 2026) goes to Autumn.
+ const seen = Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12)));
+ assert.equal(new Set(seen).size, 8);
+ assert.equal(seen.filter(b => b === 'autumn').length, 2);
+ // From it, ten weeks running visit every landscape, Autumn twice.
  const after = Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12)));
- assert.equal(new Set(after).size, BIOME_KEYS.length - 1);
+ assert.equal(new Set(after).size, BIOME_KEYS.length);
  assert.ok(!after.includes('haunted'));
  assert.equal(after.filter(b => b === 'autumn').length, 2);
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');
@@ -41,8 +42,8 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
 // nine, the debut week is the newcomer's, and the week after shows what the
 // debut week would have shown.
 test('the tenth landscape joins on its own week and moves no earlier week', () => {
- const old = w => ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'][((w % 9) + 9) % 9];
- assert.deepEqual(WEEKLY_ROTATION.nine, BIOME_KEYS.slice(0, 9), 'the old rotation is the first nine keys, in order');
+ const old = w => ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'autumn'][((w % 9) + 9) % 9];
+ assert.deepEqual(WEEKLY_ROTATION.nine.slice(0, 8), BIOME_KEYS.slice(0, 8), 'the old rotation is the first eight keys, in order, then the retired one');
  for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
  assert.equal(weekIndex(at('2026-11-09')), 149);
  assert.equal(weeklyBiome(at('2026-11-09')), 'lakeshore');

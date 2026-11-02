@@ -55,7 +55,6 @@ import {MESH_MODELS} from './asset-meshes.js';
 // quarter now, so land reads by its shading.
 const HEMI=.95,SUN=3.05;
 import * as T from 'three';
-import {addHaunts} from './haunts.js';
 import {fountainDrops,dropAt,ringAt,jetAt} from './fountain.js';
 // PEOPLE IN THEIR OWN CLOTHES (the owner's review: "more variety"). One body
 // model makes many people: each part is one role (tools/blender/figures.py),
@@ -1068,7 +1067,7 @@ export class GolfView{
  disposeCourse(){this.pendingFurniture=[];this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1174,8 +1173,6 @@ export class GolfView{
    this.mirror=makeWaterMirror(this,{farWoodGeometry,colors:(bio.farForest?.colors??[bio.tree??'#3c6b33']).map(c=>new T.Color(c))});
    if(this.mirror){this.mirrorUniforms.mirrorMap.value=this.mirror.target.texture;this.mirrorUniforms.mirrorOn.value=1;this.mirrorUniforms.mirrorWind.value=Math.min(1,(this.world.settings.wind||0)/15);}
   }
-  // Haunted Hollow's pumpkins, lanterns and ghosts; null on every other biome.
-  this.haunts=addHaunts(this);
   this.addFloodlights();
   // Every mesh instanced across the course -- trees, deadfall, rocks, ground
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
@@ -1639,7 +1636,7 @@ export class GolfView{
   // That exists for closed see-through shapes; a flat strip has nothing behind
   // itself to sort, so once is the same picture.
   // Round 19 of the waves: a quarter of the water's own colour in its foam --
-  // one blue-white on every pond stood out on Haunted Hollow's green-black water.
+  // one blue-white on every pond stood out on a green-black water (Haunted Hollow's, since removed).
   const foamTint=new T.Color('#dde8e2').lerp(new T.Color(this.world?.bio?.water??'#4f88a3'),.25);
   const mat=new T.MeshToonMaterial({color:foamTint,transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
   const time=this.waterTime??=({value:0});
@@ -2219,7 +2216,7 @@ export class GolfView{
  // the landscape's clubhouse (tools/blender/architect_clubhouses.py), its
  // model fitted to the box physics stops the ball against -- width, depth and
  // height -- and inked like the furniture. Colours by landscape: walls, roof,
- // trim and glass (Haunted Hollow's windows are lit).
+ // trim and glass.
  addBuildings(w){
   if(!w?.buildings?.length||this.style!=='cartoon')return;
   // The clubhouse's colours are its landscape's architect block's (biomes.js).
@@ -2374,10 +2371,8 @@ export class GolfView{
   draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
   draw('Blender_StoryWall_Hedge',sections('hedge'),{leaf:'#4f7a3a'},false,wallPlace(1.6));
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
-  draw('Blender_StandingStone_1',props.filter(p=>p.kind==='stone'),{stone:key==='haunted'?'#7b7486':'#9d968a'},true,at(2.0));
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
-  draw('Blender_Lantern_1',props.filter(p=>p.kind==='lantern'),{bark:'#2b2630',leaf:'#ffcc66'},false,at(2.12));
   // A Restored course's felled avenue (phase 6's history): the shipped stumps.
   draw('Blender_Stump_1',props.filter(p=>p.kind==='stump'),{bark:'#6b5440',leaf:'#8a6e52',stone:'#8a6e52',dirt:'#4a3a2e',accent:'#c9a77c'},true,at(.7));
  }
@@ -3533,8 +3528,6 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // One queued pond photograph a frame (stepWaterProbes), here so the cull's
   // update further down puts back what the photograph had to show.
   this.stepWaterProbes();
-  // Haunted Hollow: ghosts on their rounds, lanterns lit by the same dusk.
-  this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
   // Life on an Architect course (phase 6): never on Low.
   if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   this.fountains?.update(dt,this.elapsed);

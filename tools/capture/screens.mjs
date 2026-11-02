@@ -69,7 +69,6 @@ export const SCREENS = [
   await p.evaluate(() => { for (const id of ['readSlope', 'readHeat']) document.getElementById(id).click(); });
   await wait(p, 2500);
  }},
- {name: 'haunted-round', go: async p => { await round(p, {biome: 'haunted', seed: 'GLOAMING', hole: 1, hour: 18.6}); }},
  {name: 'driving-range', go: async p => {
   await click(p, 'menuRange'); await wait(p, 1200);
   await pressText(p, 'Open the driving range').catch(async () => { await step(p, 'The range'); await wait(p, 600); await pressText(p, 'Open the driving range'); });

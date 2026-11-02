@@ -14,7 +14,9 @@
 //                     architect-courses branch, 30 October 2026). Classic
 //                     courses never read it. See `generatorFor` below and
 //                     PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*.
-export const SCHEMA_VERSION=14;
+export const SCHEMA_VERSION=15;
+// 15: Haunted Hollow removed (the owner, 2 November 2026: the US landscapes
+//     goal). `biome` loses an option; a save on it opens on Autumn.
 // 14: `archHand` removed (the owner, 31 October 2026: "leave those tools for
 //     the architect to use"). The studio's Hand tools are gone; the architect
 //     still lays its own hand-made signatures from the seed. A save that
@@ -278,7 +280,11 @@ export const SCHEMA_VERSION=14;
 //     sited on that ground with it.
 //     Architect's ground unchanged (it had the fade); its stamp moves with
 //     this number.
-export const GENERATOR_VERSION=53;
+// 54: Haunted Hollow removed (the owner, 2 November 2026; the US landscapes
+//     goal). No other landscape's ground moved (the fingerprints), but an
+//     endless run and Surprise me roll their landscape from one fewer, so
+//     the same run seed grows other holes.
+export const GENERATOR_VERSION=54;
 
 // THE ARCHITECT'S OWN VERSION. Bump it whenever an ARCHITECT course changes
 // for an unchanged seed and Classic does not; a change that moves both (shared
@@ -404,7 +410,7 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
-export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','haunted','lakeshore'];
+export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','lakeshore'];
 // The Architect's dials. Held here for the same reason as the biome keys;
 // tests/architect.test.mjs asserts STYLE_KEYS matches architect-styles.js.
 export const DESIGNER_KEYS=['classic','architect'];
@@ -604,6 +610,9 @@ const MIGRATIONS={
  // 13 -> 14: the studio's Hand tools withdrawn; whatever they shaped goes
  // (tests/hand-tools.test.mjs loads a save that carried some).
  13:s=>{const {archHand,...rest}=s;return rest;},
+ // 14 -> 15: Haunted Hollow removed; a course on it opens on Autumn, the
+ // landscape that stood in for it out of season (tests/settings-schema.test.mjs).
+ 14:s=>s.biome==='haunted'?{...s,biome:'autumn'}:s,
 };
 // Whether a control belongs on screen for this course: Architect shows only
 // what it is chosen by (ARCHITECT_KEEPS); Classic shows everything but the

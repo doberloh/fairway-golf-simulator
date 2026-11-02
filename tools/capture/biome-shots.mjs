@@ -37,7 +37,7 @@ export const WIDTH = 960, QUALITY = .7, BUDGET = 3 * 1024 * 1024;
 
 // The seed each landscape is taken on: one whose holes show it well (chosen
 // in the rounds; a seed's course is the same on every copy of this version).
-const SEEDS = {pnw: 'CASCADE', desert: 'MESA', mountain: 'SUMMIT', links: 'DUNE', midwest: 'PRAIRIE', island: 'LAGOON', redwood: 'GROVE', autumn: 'MAPLE', haunted: 'GLOAMING', lakeshore: 'BEACON'};
+const SEEDS = {pnw: 'CASCADE', desert: 'MESA', mountain: 'SUMMIT', links: 'DUNE', midwest: 'PRAIRIE', island: 'LAGOON', redwood: 'GROVE', autumn: 'MAPLE', lakeshore: 'BEACON'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -77,7 +77,6 @@ export const PICKS = {
  // Round 2: low views under the giants (the high ones stood in the crowns).
  redwood: ['overview', 'h2-low', 'h5-approach', 'h3-low', 'h1-tee'],
  autumn: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
- haunted: ['h1-behind', 'h2-side', 'overview', 'h5-approach'],
  lakeshore: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 

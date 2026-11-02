@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of ten biomes, Cartoon art style only.
+landscape holding 9 or 18 holes, in one of nine biomes (Haunted Hollow was removed on 2 November 2026; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -93,7 +93,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
 - `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
-- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week and the challenge of the week from the date (Haunted Hollow's turn out of season goes to Autumn); `src/seasons.js` -- Haunted Hollow's season (1 October - 7 November), what the pickers offer, and an endless run's off-season mark; `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course, and the rules every challenge plays (`CHALLENGE_RULES`, `challengeGroup`); `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
+- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week and the challenge of the week from the date (a retired landscape's weeks go to the one named in `retired`); `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course, and the rules every challenge plays (`CHALLENGE_RULES`, `challengeGroup`); `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
 - `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 - `src/chiptune.js` -- the 1.0 interface's chiptune (prog metal, clean, family C): the moments and interface sounds as data, and their player; wired in through audio.js (17 October 2026), the marimba stings deleted
@@ -109,7 +109,6 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/tv-camera.js` -- a full shot filmed by a tee camera and a landing camera, and the whole-shot view after it
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
-- `src/haunts.js` -- Haunted Hollow's giant pumpkins and toadstools (placed by course.js, solid), lantern faces, ghosts, bats and will-o'-the-wisps
 
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop

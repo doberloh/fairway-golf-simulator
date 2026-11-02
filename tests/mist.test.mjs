@@ -71,7 +71,7 @@ test('the sheet is thick in banks and clear between them', () => {
  // Reference photographs of PNW courses at dawn show the opposite -- a fairway
  // you can see across running into a treeline you cannot -- so what matters is
  // that the fog is genuinely thick in a bank AND genuinely clear in a gap.
- const worst = ['pnw', 'mountain', 'autumn', 'links', 'midwest', 'island', 'haunted'];
+ const worst = ['pnw', 'mountain', 'autumn', 'links', 'midwest', 'island'];
 
  for (const biome of worst) {
   const d = mistDensities(profileFor(biome), 1, 1);

@@ -25,9 +25,10 @@ export const CLUBHOUSE_SIZE = {
 };
 // Each model's height for its width, as built (tools/blender/
 // architect_clubhouses.py, measured off the ingested models): the building is
-// as tall as its own model is for the club's width, so a manor keeps its turret
-// and a pavilion stays low (iteration 4: one height for all squashed the manor).
-export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, manor: .731, shingle: .414};
+// as tall as its own model is for the club's width, so a tall house keeps its
+// roof and a pavilion stays low (iteration 4: one height for all squashed
+// Haunted Hollow's manor, since removed).
+export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, shingle: .414};
 // The landscape's build (the study's landscape table); the model's name.
 // Each landscape's clubhouse is its architect block's (biomes.js).
 export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.clubhouse]));

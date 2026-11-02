@@ -1,5 +1,5 @@
 {
- "generator": 53,
+ "generator": 54,
  "architect": 20,
  "biomes": {
   "pnw": "9cca00cc97745d4c",
@@ -10,7 +10,6 @@
   "island": "996b029405107e18",
   "redwood": "43e96d8929f4ebd9",
   "autumn": "69f0e39b38923031",
-  "haunted": "b86e5e4b48c48d88",
   "lakeshore": "0131096a66793b8e"
  },
  "records": {
@@ -22,7 +21,6 @@
   "island": "4643b7c0ba028648",
   "redwood": "a82a50a863a40757",
   "autumn": "ed334f0ea99a7aaa",
-  "haunted": "75e9ffb1f535fce9",
   "lakeshore": "e9d065ee5f96219c"
  }
 }

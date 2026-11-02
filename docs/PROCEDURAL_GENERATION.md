@@ -86,7 +86,7 @@ A hole may also be given a **specimen**: a feature tree or a cluster of stones s
 
 **Boulders are generation output, not decoration.** They used to be placed by the renderer from a stream the generator never saw, so the world did not know where they were and nothing could collide with one. They carry their reach and crown height now, and the renderer reads them.
 
-**Haunted Hollow's giant pumpkins and toadstools are generation output for the same reason.** They are solid, so the world has to know where they are. A biome asks for them per hole (`props`: 26 pumpkins and 18 toadstool clumps a hole for Haunted Hollow), drawn from a stream of their own so no other biome moves. Pumpkins grow in patches of three to seven round a centre; three quarters of the toadstools come up a few metres from a trunk. Each is three to five times life size -- 0.9 to 3.5 m for a pumpkin, 0.75 to 2.75 m for a clump, most near the small end -- and as wide as the model it will be drawn with. Siting follows the boulder rules (rough only, out of every tee shot and tee fan) plus room from the corridor, trunks, boulders, houses and each other. A share of pumpkins (60%) is marked to be carved as lanterns, and each is turned to face the nearest fairway.
+**Haunted Hollow's giant pumpkins and toadstools** were generation output too, solid and placed per hole from their own stream; they went with the landscape on 2 November 2026 (generator 54).
 
 Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
 
@@ -159,7 +159,7 @@ from what lies between the holes on real courses of its kind
 - **dunes** (Links, Lakeshore Dunes): rumpled ground and dune crests carrying
   marram (native grass), heather on the settled ground behind (Links).
 - **prairie** (Midwest), **coral** (the Island's ironshore just above the
-  beach), **moor** (Haunted Hollow's dead heather).
+  beach), **moor** (heather in drifts; Haunted Hollow's until it was removed, and any heath's).
 
 The relief is added to the raw landform and fades to nothing toward the
 corridors over the recipe's `reach` -- not with the tee area's returned relief,

@@ -56,14 +56,14 @@ export function headSpeedMph(kind,ballMs){
  const k=String(kind||''),smash=k==='putter'?1.6:k==='driver'?1.48:k.startsWith('wood')?1.45:k.startsWith('hybrid')?1.4:k.startsWith('iron')?1.33:1.2;
  return ballMs/0.44704/smash;
 }
-// What each contact sounds like. Rocks, a floodlight mast and Haunted Hollow's
-// props share the hard sounds that exist; any surface name sound.js does not
+// What each contact sounds like. Rocks and a floodlight mast share the hard
+// sounds that exist; any surface name sound.js does not
 // know is rough.
 // The overhaul's ground types (grounds.js `sound`) borrow these signed-off
 // sounds: rock and scree the hard one, hardpan a tee's, pine straw and heather
 // the rough's, waste sand a bunker's. No new sound was made for them.
 const CONTACT={green:'green',fringe:'fringe',fairway:'fairway',tee:'tee',semi:'semi',rough:'rough',sand:'sand',water:'water',
- trunk:'trunk',rock:'rock',pole:'rock',prop:'trunk',flagstick:'flagstick',house:'house',canopy:'canopy',cup:'cup',
+ trunk:'trunk',rock:'rock',pole:'rock',flagstick:'flagstick',house:'house',canopy:'canopy',cup:'cup',
  ...Object.fromEntries(Object.entries(GROUNDS).map(([k,g])=>[k,g.sound]))};
 // Below this, a contact is too soft to hear and is skipped (m/s).
 const QUIET=.8;
