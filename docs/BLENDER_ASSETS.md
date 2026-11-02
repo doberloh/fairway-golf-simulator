@@ -481,3 +481,72 @@ renderer.js `addWaterworks` draws them instanced. **The tube helper draws one
 ring a radius** (`add_tube`): give it a radius for every point, or the tube
 stops after the first stretch -- the old fountain's streams were invisible
 for eight iterations.
+
+## The US landscapes packs (from 2 November 2026)
+
+The models the US landscapes goal adds (the owner's plan, docs/studies/
+us-landscapes/PLAN.md section 5, local): one pack a region, built in the
+cartoon hand from `cartoon.py`, each model iterated **at least fifteen times
+against its reference pictures** (the owner: "All Models need to be
+iterated on at minimum 15 times while comparing to real pictures").
+
+**How a round runs.** `node tools/blender/iterate.mjs <pack> <round>`
+builds the pack, keeps each model's sheet tile (`FAIRWAY_TILES` in
+fairway_blender.py) and lays every model beside the first three of the
+study's pictures for it (photos/models/<id>/, local) on one sheet,
+bench/shots/blender/iter/<pack>/r<round>.png, with each model's own row
+saved as <id>-r<round>.png (local). `--season spring|autumn|winter` draws
+the pack in that season's colours (the pack's `LOOK` table, from the
+study's models/<id>.md *Seasons*); `--far` puts each far twin beside its
+model. What was wrong and what changed go into tools/blender/logs/<id>.md,
+one line a round (`--log notes.json`), committed; a model is not done
+below fifteen lines. The pack names its models' study ids in
+`# REFS id=Model,...` comment lines.
+
+**Sheet changes for it.** A plant under a third of the post's height gets a
+30 cm post (the 0.35 m iris was invisible beside 1.8 m); a pack may give
+each model its own sheet colours (`export(..., tints=)`), so a yellow broom
+and a pink rhododendron are not both drawn in the pack's one accent. Both
+are sheet-only: the game paints roles from the species tables.
+
+**Budgets** (PLACED, from the overhaul's packs, `inspect.mjs`): a tree
+about 4,500-5,500 triangles (the cartoon oak 5,100), a shrub 2,000-3,500,
+a flower a few hundred. Two traps found on the way: `cloud_crown`'s lobes
+are cheapest at its default (`subdiv=3` draws a 12 x 7 sphere, 144
+triangles; `subdiv=2` is a 320-face icosphere), and every `cloud_crown`
+adds a 320-face filled core, most of the cost of a small clump -- so
+`cloud_crown(..., core=False)` (added for these packs; the default keeps
+every earlier pack's bytes).
+
+### cartoon_pacific
+
+`tools/blender/cartoon_pacific.py`, 14 models and 8 far twins: what Puget
+Sound and Redwood Coast lacked. Seventeen rounds for the dogwood, fifteen
+for the rest; each log says what each round found.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Madrone_2` (`_1`, three stems, 6,700, not shipped) | `madrone` | Two leaning red stems, crooked limbs, an open domed evergreen crown of clumps with the limbs showing; white flowers in spring, orange-red berries in autumn (accent) | 4,600 |
+| `Blender_GarryOak_1` | `garryoak` | A short heavy trunk, crooked limbs, a broad lumpy crown wider than tall | 4,700 |
+| `Blender_BigleafMaple_1` | `bigleafmaple` | A heavy trunk under a tall broad oval crown | 4,400 |
+| `Blender_PacificDogwood_1` | `pacificdogwood` | Three tiers of flat sprays, cream four-petal bracts over and round them (accent) | 4,100 |
+| `Blender_BayLaurel_1` | `baylaurel` | Several leaning stems under a dense dome reaching toward the ground | 4,500 |
+| `Blender_VineMaple_1` | `vinemaple` | Eight splayed stems, a full rounded mass of leaves | 1,000 |
+| `Blender_OregonGrape_1` | `oregongrape` | Upright holly-leaved clumps, yellow flowers or blue berries (accent) | 2,600 |
+| `Blender_ScotchBroom_1` | `scotchbroom` | A rounded mound of fine switches, solid yellow in flower (accent) | 2,800 |
+| `Blender_PacificRhododendron_1` | `rhododendron` | Leggy stems with leaf whorls down them, pink trusses (accent) | 1,800 |
+| `Blender_DouglasIris_1` | `douglasiris` | An arching clump of grassy leaves, lavender flowers among the tips | 750 |
+
+**Count triangles, not Blender's faces** (`inspect.mjs`): the lobes are
+mostly quads, so a model's triangles run 1.6-1.8 times its faces. The pack
+met its budgets by faces after round 12 and was still double by triangles;
+round 18 was the second cost pass, after the game's A/B.
+
+The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) still
+owe their bare winter variants (PLAN section 3, the seasons step).
+
+**One variant each of the madrone (`_2`), Garry oak, bigleaf maple and bay
+laurel ships** (tools/build-meshes.mjs): a variant is a draw call per part, full and far,
+in the frame and the shadow pass, and with both variants Puget Sound's Low
+frame rose 24% (RESEARCH, *The Pacific pack*). The others stay in the
+pack.

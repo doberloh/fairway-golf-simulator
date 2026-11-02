@@ -238,6 +238,11 @@ export const FAMILY_OF = {
  // and `maple`, which six biomes draw from the Kenney broadleaf family.
  cottonwood: 'cottonwood', blackoak: 'blackoak', sugarmaple: 'sugarmaple',
  dunegrass: 'dunegrass', juniper: 'juniper', commonjuniper: 'juniperbush',
+ // The US landscapes goal's Pacific pack (tools/blender/cartoon_pacific.py):
+ // Puget Sound's and Redwood Coast's own trees and shrubs.
+ madrone: 'madrone', garryoak: 'garryoak', bigleafmaple: 'bigleafmaple', pacificdogwood: 'pacificdogwood',
+ baylaurel: 'baylaurel', vinemaple: 'vinemaple', oregongrape: 'oregongrape', scotchbroom: 'scotchbroom',
+ pacificrhododendron: 'rhododendron', douglasiris: 'douglasiris',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

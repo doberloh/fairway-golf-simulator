@@ -2468,7 +2468,11 @@ export function* generateWorldSteps(settings={},options={}){
  // plants, metres (RESEARCH, *The overhaul's brush*): creosote 1.2-3, brittle-
  // bush 0.3-1.5, big sagebrush up to about 2 (field means 0.2-0.7), bracken
  // 1-2, evergreen huckleberry 1.2-4 in the woods. PLACED within those.
- const BRUSH_SIZE={creosote:[1.2,2.6],brittlebush:[.5,1.2],sagebrush:[.5,1.4],bracken:[.8,1.7],huckleberry:[1.2,2.8]};
+ // The Pacific pack's shrubs (the US landscapes goal; the study's specs):
+ // vine maple 2-6 m, Oregon grape 0.5-2, Scotch broom 1-3, Pacific
+ // rhododendron 2-6, Douglas iris 0.3. PLACED within those.
+ const BRUSH_SIZE={creosote:[1.2,2.6],brittlebush:[.5,1.2],sagebrush:[.5,1.4],bracken:[.8,1.7],huckleberry:[1.2,2.8],
+  vinemaple:[2,4.8],oregongrape:[.6,1.8],scotchbroom:[1,2.6],pacificrhododendron:[2,4.6],douglasiris:[.25,.4]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand

@@ -1726,3 +1726,7 @@ gzipped)**, +235 KB: the map of the landscapes and the globe's land
 (src/us-map-data.js, 215 KB; EPA ecoregions and Natural Earth, both public
 domain -- ATTRIBUTION), the region table and the map's code. Still one file,
 no network request.
+
+**Step 3, the Pacific pack**: the page is **14,496,972 bytes (7.47 MB
+gzipped)**, +700 KB: ten Blender models for Puget Sound and Redwood Coast
+and four far twins (the model module 7.05 to 7.75 MB). Still one file.

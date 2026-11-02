@@ -31,6 +31,8 @@ export const GROUND_PLANTS = new Set([
  'fern', 'swordfern', 'salal', 'sorrel', 'gorse', 'heather', 'agave',
  'naupaka', 'shrub', 'dunegrass', 'juniper', 'commonjuniper', 'cholla',
  'creosote', 'brittlebush', 'sagebrush', 'bracken', 'huckleberry',
+ // The US landscapes goal's Pacific pack: shrubs and a flower.
+ 'vinemaple', 'oregongrape', 'scotchbroom', 'pacificrhododendron', 'douglasiris',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

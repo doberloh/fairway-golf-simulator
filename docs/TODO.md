@@ -67,6 +67,23 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Today's ten rebuilt as their new landscapes** (Links stays, as
   Scottish Links, outside the map), with the models their research says
   they lack.
+  Progress (the 40 models the nine lack, by pack; each model fifteen
+  rounds or more, logged in tools/blender/logs/):
+  - [x] `cartoon_pacific` -- Puget Sound and Redwood Coast's ten (madrone,
+    Garry oak, bigleaf maple, Pacific dogwood, bay laurel, vine maple,
+    Oregon grape, Scotch broom, Pacific rhododendron, Douglas iris), in the
+    game since generator 57; Puget Sound's Low frame +2% after two cost
+    passes (RESEARCH, *The Pacific pack*). Seen in captures (Puget Sound,
+    Redwood Coast); not seen by a person in play.
+  - [ ] `cartoon_mountain` -- the Rockies' six (lodgepole, blue spruce,
+    willow thicket, split-rail fence, columbine, lupine).
+  - [ ] Sonoran's two (ironwood, jojoba); Heartland's six (American elm,
+    shagbark hickory, cornfield, red barn, bur oak, prairie forbs); the
+    Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,
+    bougainvillea, traveler's palm, hibiscus, banyan); New England's six
+    (paper birch, white pine, dry-stone wall, covered bridge, balsam fir,
+    American beech); Lake Dunes' two (lighthouse, sand cherry).
+  - [ ] Bare winter variants of the deciduous ones -- owed to *Seasons on*.
 - [ ] **The streets kit and the roads pass**: no road across a fairway (a
   bench invariant), the clubhouse and parking near an edge; roads anywhere
   in the builder (a `BUILT_VERSION` step).

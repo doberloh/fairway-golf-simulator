@@ -50,6 +50,20 @@ test('every built landscape has its record, interface, world, names, crest and p
  }
 });
 
+test('every species a landscape plants has its models in the game', async () => {
+ const {FAMILY_OF} = await import('../src/mesh-assets.js');
+ const {MESH_MODELS} = await import('../src/asset-meshes.js');
+ const families = new Set(Object.values(MESH_MODELS).map(m => m.family));
+ for (const k of BIOME_KEYS) {
+  const b = BIOMES[k];
+  const planted = [...(b.plants || []), ...(b.stands?.plants || []), ...(b.stands?.under?.plants || [])].map(p => p[0]);
+  for (const s of planted) {
+   assert.ok(FAMILY_OF[s], `${k} plants ${s}, which has no family (mesh-assets.js FAMILY_OF)`);
+   assert.ok(families.has(FAMILY_OF[s]), `${k} plants ${s}, whose family ${FAMILY_OF[s]} has no models (tools/build-meshes.mjs)`);
+  }
+ }
+});
+
 test('no two landscapes share a course name word list', () => {
  const seen = new Map();
  for (const k of BIOME_KEYS) {

@@ -175,8 +175,18 @@ const TRAITS = {
    kinds: {a: 'rock'}, gates: {a: {near: 14, ramp: 16}}},
   rockStyle: 'angular', rockMoss: '#5d7a3e',
   stands: {edge: 50, wobble: 22, ramp: 20, patch: .18, scale: 260, near: 40, spacing: 9, share: .6,
+   // (Vine maple and Oregon grape were tried in this understorey and taken
+   // out: there they replaced sub-1,000-triangle ferns by the thousand and put
+   // Low's triangles up 28% -- RESEARCH, *The Pacific pack*.)
    under: {spacing: 8, plants: [['fern', .5], ['huckleberry', .5]]}},
-  plants: [['pine', .38], ['cedar', .3], ['alder', .17], ['fern', .15]]},
+  // Puget Sound's own trees and shrubs (the US landscapes goal's Pacific
+  // pack): bigleaf maple in the woods, madrone and Garry oak on the dry
+  // ground, dogwood under them, Scotch broom in the open rough. The third
+  // number scales the height (the region's 12-27 m): madrone 6-20 m, Garry
+  // oak 10-20, dogwood 6-15 (the study's specs). Weights PLACED.
+  plants: [['pine', .3], ['cedar', .23], ['alder', .1], ['bigleafmaple', .08], ['madrone', .06, .7],
+   ['garryoak', .05, .75], ['pacificdogwood', .03, .5], ['fern', .08], ['vinemaple', .03], ['oregongrape', .02],
+   ['scotchbroom', .02]]},
  desert: {light: {shade: '#a78aa6', exposure: .9},
   longGrass: {families: [['grassbunch', 1, .8]], count: 2600, near: 20, leaf: '#a9a06a', accent: '#d9c88f'},
   // Round 5 of the far landscape: scrub, not woods (low clumps thinning with
@@ -318,7 +328,11 @@ const TRAITS = {
   // scale, which is how the understorey stays under the canopy.
   plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
    ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
-   ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
+   ['swordfern', .17], ['salal', .09], ['sorrel', .07],
+   // Redwood Coast's own (the US landscapes goal's Pacific pack): bay
+   // laurel in the mid-storey (8-25 m of the grove's 42-116), Pacific
+   // rhododendron and Douglas iris on the floor. Weights PLACED.
+   ['baylaurel', .04, .2], ['pacificrhododendron', .03], ['douglasiris', .02]]},
  northeast: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
   // Round 3 of the far landscape: a few of the far woods evergreen (6%; pine and

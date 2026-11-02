@@ -65,6 +65,7 @@ const PICK = {
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
+  'Madrone_2', 'GarryOak_1', 'BigleafMaple_1', 'BayLaurel_1',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -135,6 +136,23 @@ const PICK = {
  juniper: ['blender:Blender_LakeJuniper_1', 'blender:Blender_LakeJuniper_2'],
  juniperbush: ['blender:Blender_LakeJuniper_3'],
  driftwood: ['blender:Blender_LakeDriftwood_1', 'blender:Blender_LakeDriftwood_2', 'blender:Blender_LakeDriftwood_3'],
+ // THE PACIFIC PACK (the US landscapes goal; tools/blender/cartoon_pacific.py,
+ // fifteen rounds a model against the study's pictures: tools/blender/logs/).
+ // One variant each of the less common trees: every variant is a draw per
+ // part, full and far, in the frame and the shadow pass, and the first cut
+ // put Puget Sound's Low frame up 24% (RESEARCH, *The Pacific pack*). The
+ // others stay in the pack, not shipped (the madrone's two-stem `_2` ships:
+ // the three-stem `_1` is 6,700 triangles).
+ madrone: ['blender:Blender_Madrone_2'],
+ garryoak: ['blender:Blender_GarryOak_1'],
+ bigleafmaple: ['blender:Blender_BigleafMaple_1'],
+ pacificdogwood: ['blender:Blender_PacificDogwood_1'],
+ baylaurel: ['blender:Blender_BayLaurel_1'],
+ vinemaple: ['blender:Blender_VineMaple_1'],
+ oregongrape: ['blender:Blender_OregonGrape_1'],
+ scotchbroom: ['blender:Blender_ScotchBroom_1'],
+ rhododendron: ['blender:Blender_PacificRhododendron_1'],
+ douglasiris: ['blender:Blender_DouglasIris_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',

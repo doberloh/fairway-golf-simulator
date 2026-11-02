@@ -12101,3 +12101,67 @@ seasons are drawn (the goal's step 9) every season resolves to summer.
 **Door 2's suggestion** is the map's landscape at the land's centre, taken
 unasked when the land is built unless the player has chosen one; the real
 Worthington survey (Minnesota) suggested Heartland.
+## The Pacific pack: fifteen rounds against the pictures (2 November 2026)
+
+The first pack of the US landscapes goal (BLENDER_ASSETS *The US landscapes
+packs*): Puget Sound's and Redwood Coast's ten missing models. Every round
+put the models beside three of the study's reference pictures for each
+(local photos, picked by eye on 2 November); each model's log is
+tools/blender/logs/<id>.md. What the rounds taught, beyond each model:
+
+- **A crown is clumps, not a cloud, for the open trees.** Madrone and Garry
+  oak both started as one cloud crown and read as lollipops; clumps on
+  the limb ends read as the real trees once the clumps were big enough to
+  join (madrone round 5) and a raised centre domed the top (round 10). A
+  broad flattened layer "joining" the clumps made a table top for six
+  rounds before it was found and removed.
+- **Look in every season.** Spring (rounds 7, 11, 15), autumn (8, 13) and
+  winter (14) sheets caught what summer hides: the madrone's berries were
+  missing, and the season colours from the study's specs (bigleaf maple's
+  yellow, vine maple's and dogwood's reds, Oregon grape's red-purple
+  winter) all read true without change.
+- **Count the triangles, then measure in the game.** By round 11 four
+  models were two to six times their budget (the dogwood 18,665 faces).
+  The causes were library defaults -- `subdiv=2` is the costly sphere,
+  every clump carries a 320-face core -- and the cost pass (round 12) cut
+  them 2-6 times, after which two shapes needed restoring (rounds 13-14).
+  But Blender counts faces, mostly quads: in triangles the pack was still
+  double (the madrone 9,800 beside the region's 3,400-triangle pine).
+
+**The A/B in the game** (tools/frame-ab.mjs, Puget Sound, the step 2 build
+against this one, alternating, two rounds of 150 frames at three tees; the
+card an RTX 4090, so the numbers are headroom, not a weak machine's):
+
+| | Low frame | Medium frame | Draws (Low) | Triangles (Low) |
+| --- | --- | --- | --- | --- |
+| First cut (two variants, shrubs in the understorey) | +24% (0.81 to 1.00 ms) | +11.5% | 163-185 to 229-253 | +24-28% |
+| One variant of the four less common trees | +16% | -- | +44 | +28% |
+| Vine maple and Oregon grape out of the stands' understorey | +12% | -- | +44 | +18% |
+| Second cost pass (round 18: trees 4,100-4,700 triangles, shrubs 1,000-2,800; the two-stem madrone) | +2.3% (0.87 to 0.89 ms) | +0.3% | +18-28% | +10% |
+
+**Accepted** at the last row: the frame is within the runs' noise on Low and
+Medium. **Rejected:** keeping the understorey shrubs (they replace sub-1,000
+triangle ferns by the thousand) and shipping two variants of every tree (each
+variant is a draw a part, full and far, in the frame and the shadow pass).
+**Still open:** the draws, about 45 more on a Puget Sound tee, cost little on
+this card and more on a weak processor; the landscapes to come carry about as
+many species each, so the next packs ship one variant of their less common
+trees from the start.
+
+**Budgets** (PLACED, measured off the overhaul's packs with inspect.mjs):
+a tree about 4,500-5,500 triangles, a shrub 2,000-3,500, a flower a few
+hundred. **Planting** (PLACED, biomes.js): Puget Sound bigleaf maple .08,
+madrone .06 (0.7 of the region's 12-27 m), Garry oak .05 (0.75), dogwood
+.03 (0.5), vine maple .03, Oregon grape .02, Scotch broom .02, and vine
+maple and Oregon grape in the stands' understorey; Redwood Coast bay laurel
+.04 (0.2 of the grove's 42-116 m), rhododendron .03, iris .02. Shrub
+heights within the specs (course.js `BRUSH_SIZE`). Until the seasons are
+drawn the game paints them in summer, with the broom and rhododendron in
+their June flower and Oregon grape's berries (PLACED).
+
+**Size:** as first cut the model module grew 1.55 MB (22 models with the
+far twins); as shipped, after the cost passes and one variant of the less
+common trees, 0.70 MB (7.05 to 7.75 MB; 10 models, 4 far twins), the page
+13.80 to 14.50 MB (7.11 to 7.47 MB gzipped). At that rate the 40 models of
+step 3 add about 3 MB and all 210 about 15 MB, inside the plan's 15-25 MB
+estimate.

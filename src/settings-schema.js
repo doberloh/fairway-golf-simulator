@@ -307,7 +307,11 @@ export const SCHEMA_VERSION=17;
 //     streams and of the course name, so the seven renamed landscapes moved
 //     (puget, sonoran, rockies, heartland, keys, newengland, lakedunes);
 //     Links and Redwood Coast kept their keys and their ground.
-export const GENERATOR_VERSION=56;
+// 57: the Pacific pack (the US landscapes goal, step 3): Puget Sound plants
+//     madrone, Garry oak, bigleaf maple, Pacific dogwood, vine maple, Oregon
+//     grape and Scotch broom among its pines and cedars; Redwood Coast bay
+//     laurel, Pacific rhododendron and Douglas iris. Both moved.
+export const GENERATOR_VERSION=57;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
