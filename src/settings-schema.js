@@ -10,11 +10,14 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-//   ARCHITECT_VERSION the behaviour of the Architect designer alone (the
-//                     architect-courses branch, 30 October 2026). Classic
-//                     courses never read it. See `generatorFor` below and
-//                     PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*.
-export const SCHEMA_VERSION=15;
+//   (ARCHITECT_VERSION, the Architect designer's own number, went with the
+//   designer on 2 November 2026: the owner. Its history is kept below.)
+export const SCHEMA_VERSION=16;
+// 16: Architect removed (the owner, 2 November 2026: "Architect mode needs to
+//     be removed. We are going to use the new builder and have real humans do
+//     the work"). `designer`, `archStyle`, `archClub`, `archAge` and
+//     `archStory` go; a save that carried them opens as the generator's
+//     course of the same seed (tests/settings-schema.test.mjs).
 // 15: Haunted Hollow removed (the owner, 2 November 2026: the US landscapes
 //     goal). `biome` loses an option; a save on it opens on Autumn.
 // 14: `archHand` removed (the owner, 31 October 2026: "leave those tools for
@@ -284,13 +287,18 @@ export const SCHEMA_VERSION=15;
 //     goal). No other landscape's ground moved (the fingerprints), but an
 //     endless run and Surprise me roll their landscape from one fewer, so
 //     the same run seed grows other holes.
-export const GENERATOR_VERSION=54;
+// 55: Architect removed (the owner, 2 November 2026); its world pieces come
+//     to every generated course -- the clubhouse, cart paths and bridges,
+//     markings and divots, dressed water, walls, buildings and landmarks,
+//     animals (tournament week and people gone) -- so every landscape moved
+//     (houses and trees keep off the new pieces). Every path over water is a
+//     bridge, the clubhouse's link to the network included; that link stops
+//     at the first path it meets, and a join may climb 28% (paths.js
+//     JOIN_GRADE). The clubhouse keeps 10 m off the paths (was 3).
+export const GENERATOR_VERSION=55;
 
-// THE ARCHITECT'S OWN VERSION. Bump it whenever an ARCHITECT course changes
-// for an unchanged seed and Classic does not; a change that moves both (shared
-// code: terrain, water, the mesh) bumps GENERATOR_VERSION instead, which moves
-// both. `node tools/biome-fingerprint.mjs --check --designer architect`
-// decides, beside the Classic check, which must stay silent.
+// THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
+// (the owner). Its history, kept for the record of what Architect built:
 // 1: Architect exists (phase 0): a course chosen by style, club, age, story and
 //    seed, built for now exactly as Classic builds its defaults.
 // 2: phase 1, purpose: the dials become settings (twelve styles, four clubs,
@@ -378,15 +386,12 @@ export const GENERATOR_VERSION=54;
 //    "weird hole"); a path's stub past a junction cut back, its ends kept
 //    from folding back on themselves, and the clubhouse's path run up to its
 //    front.
-export const ARCHITECT_VERSION=20;
+// ARCHITECT_VERSION ended at 20 (retired with the designer, 2 November 2026).
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
-// `generator`, and has since long before there were two designers; every
-// reader checks `Number.isInteger`. So an Architect course's stamp folds both
-// versions into that one integer -- GENERATOR_VERSION*1000 + ARCHITECT_VERSION
-// -- rather than adding a second field that every format would have to learn.
-// A Classic course's stamp is GENERATOR_VERSION exactly, as it always was, so
-// nothing a Classic player has saved changes. A shared change moves both
-// stamps; an Architect-only change moves Architect's alone.
+// `generator`; every reader checks `Number.isInteger`. A generated course's
+// stamp is GENERATOR_VERSION. (An Architect course's stamp was
+// GENERATOR_VERSION*1000 + ARCHITECT_VERSION; one saved before 2 November 2026
+// never matches a stamp made now, so it is shown the version notice.)
 // BUILT_VERSION: how the game turns a BUILT course -- a file from Fairway
 // Course Builder, its land, outlines and trees all stored (course-doc.js) --
 // into a world. A built course never runs the generator, so neither number
@@ -400,28 +405,17 @@ export const ARCHITECT_VERSION=20;
 //     hole's green was every green the file stored in one set, so its size
 //     and cups moved; now the one under its mark.
 export const BUILT_VERSION=2;
-export const isArchitect=s=>s?.designer==='architect';
 // A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
 // it, so neither generator number may flag it, and only BUILT_VERSION can.
 export const BUILT_STAMP=1000000;
-export const generatorFor=s=>s?.built?BUILT_STAMP+BUILT_VERSION:isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
-// How a stamp reads to a person: "52", "52 · Architect 1" or "Built 1".
+export const generatorFor=s=>s?.built?BUILT_STAMP+BUILT_VERSION:GENERATOR_VERSION;
+// How a stamp reads to a person: "52", "Built 1", or an old Architect
+// course's "52 · Architect 1".
 export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_STAMP}`:Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
 export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','lakeshore'];
-// The Architect's dials. Held here for the same reason as the biome keys;
-// tests/architect.test.mjs asserts STYLE_KEYS matches architect-styles.js.
-export const DESIGNER_KEYS=['classic','architect'];
-export const STYLE_KEYS=['auto','golden','raynor','links','heathland','sandhills','parkland','modern','stadium','minimalist','desert','mountain','tropical'];
-export const CLUB_KEYS=['municipal','members','resort','championship'];
-export const AGE_KEYS=['new','mature','old','restored'];
-export const STORY_KEYS=['none','some','lots'];
-// What an Architect course is chosen by. Everything else the architect
-// decides; Classic's other controls are hidden while Architect is chosen, and
-// ignored by its generation (`designSettings` in designer.js).
-export const ARCHITECT_KEEPS=['designer','holes','seed','biome','archStyle','archClub','archAge','archStory','wind','windDirection','pinDay'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -430,7 +424,6 @@ export const CATEGORIES=[
  // No note (the 1.0 polish, studio round 2): it was about yardage and sat
  // over the landscapes; the length's own help says the same.
  ['course','Course'],
- ['architect','Architect (beta)','The architect designs every hole from these four and the seed: where each hazard goes and why, the greens, the length, the trees and the water.'],
  ['landscape','Land & routing','Left and right turns are balanced across the course, and each turning point varies up to 22 points either side of your setting.'],
  ['turf','Fairways, greens & bunkers'],
  ['water','Water','The depths set each pond and lake at its deepest; every shore still slopes to nothing at the bank. Rivers and creeks are new: they may cross fairways but go round tees, greens, ponds and bunkers, and a course with no room for one gets fewer.'],
@@ -449,13 +442,6 @@ export const SETTINGS=[
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
  {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
- // THE DESIGNER (architect-courses, 30 October 2026). `names` are what a
- // player reads; the option values are what saves and codes carry.
- {key:'designer',category:'course',kind:'choice',options:DESIGNER_KEYS,def:'classic',names:{classic:'Classic',architect:'Architect (beta)'},label:'How the course is made',tip:'Classic grows every course from the sliders below, as Fairway always has. Architect (beta) designs it: each hole gets a plan, every bunker and pond is placed against the shots golfers play, and the style, club, age and story you choose decide the rest. Classic courses never change when Architect does.'},
- {key:'archStyle',category:'architect',kind:'choice',options:STYLE_KEYS,def:'auto',architect:true,names:{auto:'By landscape',golden:'Golden Age',raynor:'Raynor & Macdonald',links:'Links',heathland:'Heathland & Sandbelt',sandhills:'Sandhills',parkland:'Parkland',modern:'Modern championship',stadium:'Stadium',minimalist:'Minimalist',desert:'Desert target',mountain:'Mountain',tropical:'Tropical resort'},label:'Style',tip:'Whose hand designed it. By landscape picks one that suits the land from the seed. Each style has its own bunkers, greens, fairways and planting.',describe:{"auto":"Picks a style that suits this landscape, from the seed -- the styles it leans toward are listed in the landscape's own notes.","golden":"Golden Age (MacKenzie, Tillinghast): wide fairways, bold contoured greens, big ragged bunkers with flashed sand, chocolate-drop mounds, few trees in play.","raynor":"Raynor & Macdonald: template holes more than any other style (Redan, Eden, Biarritz, Road, Alps), geometric greens on steep straight banks, flat-bottomed bunkers.","links":"Seaside links: firm fairways that run into one another, small pot bunkers, no ponds, little planting, natural pond banks; Dells, Capes and the Pit.","heathland":"Heathland & Sandbelt: large ragged bunker complexes flashed up to the greens, heather and pine framing the holes.","sandhills":"Sandhills: holes laid on dunes inland, huge natural bunkers, wide fairways, hardly a tree, the land as found.","parkland":"Parkland: tree-lined holes and avenues in rolling ground, framing mounds, ponds edged in stone, a fountain on a members' or resort course.","modern":"Modern championship: long holes, framing mounds, big bunker complexes with capes and bays, water in play edged in stone.","stadium":"Stadium (Dye): railway-tie walls on the ponds, grassy spectator banks behind the greens, pot bunkers, heroic carries over water.","minimalist":"Minimalist: little earth moved, holes that follow the land, bunkers where the ground suggested them.","desert":"Desert target: islands of turf in native desert, carries over sand and arroyos, ponds edged in stone, the Barranca.","mountain":"Mountain: holes across steep ground, high tees and shelf greens, the land as found, a mine head in the woods.","tropical":"Tropical resort: palms and sea views, water features edged in stone, fountains, wide paths."}},
- {key:'archClub',category:'architect',kind:'choice',options:CLUB_KEYS,def:'members',architect:true,names:{municipal:'Municipal',members:"Members' club",resort:'Resort',championship:'Championship venue'},label:'Club',tip:'Who runs it, and so how long it plays and how much is spent on it: a municipal course is shorter, plainer and well worn; a championship venue is long, tight and dressed for a tournament on its pin days.',describe:{"municipal":"Public course: about 6,250 yards for eighteen, plainer bunkers, narrow paths, worn tees and more divots, bunkers grassed over to save the raking.","members":"Members' club: about 6,650 yards, well kept -- stakes and yardage posts, a rake in every bunker, a fountain in a big pond on the dressed styles.","resort":"Resort: about 6,850 yards, wide paths, fountains and dressed water, a pavilion of a clubhouse.","championship":"Championship venue: about 7,250 yards, long and tight. Tournament week: stands round the last green, a scoreboard and TV towers, ropes and a crowd that grows from Thursday to Sunday with the pin day."}},
- {key:'archAge',category:'architect',kind:'choice',options:AGE_KEYS,def:'mature',architect:true,names:{new:'New',mature:'Mature',old:'Old',restored:'Restored'},label:'Age',tip:'How long it has been there. New courses have young trees and crisp edges; old ones have grown trees, added back tees and bunkers grassed over; a restored course has its mid-century trees felled and its old bunkers back.',describe:{"new":"Built recently: trees about two thirds grown, crisp edges, few divots, no avenues.","mature":"Twenty or thirty years in: full-grown trees, avenues down some holes on the parkland styles.","old":"Generations old: tall trees and long avenues, well-worn tees, old bunkers grassed over into hollows.","restored":"An old course put back: the mid-century trees felled, their stumps scattered in the rough, the views opened, old bunkers grassed over."}},
- {key:'archStory',category:'architect',kind:'choice',options:STORY_KEYS,def:'some',architect:true,names:{none:'None',some:'A little',lots:'A lot'},label:'Heritage',tip:'What the land held before the course: stone walls, an old farm, a ruin, a landmark to aim at, a creek. (The setting was The land’s story; renamed in the owner’s review.)',describe:{"none":"Nothing before the course: no walls, ruins or farm, and no creek added.","some":"A little: a few field walls and a ruin or a farmstead, out of play.","lots":"A lot: more walls, a farmstead or ruins, a lighthouse or spire lined up behind a green, a creek through the land."}},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
@@ -613,11 +599,10 @@ const MIGRATIONS={
  // 14 -> 15: Haunted Hollow removed; a course on it opens on Autumn, the
  // landscape that stood in for it out of season (tests/settings-schema.test.mjs).
  14:s=>s.biome==='haunted'?{...s,biome:'autumn'}:s,
+ // 15 -> 16: Architect removed; its designer and four dials go, and the course
+ // is the generator's of the same seed (tests/settings-schema.test.mjs).
+ 15:s=>{const {designer,archStyle,archClub,archAge,archStory,...rest}=s;return rest;},
 };
-// Whether a control belongs on screen for this course: Architect shows only
-// what it is chosen by (ARCHITECT_KEEPS); Classic shows everything but the
-// Architect's own dials.
-export const shownFor=(f,s)=>isArchitect(s)?ARCHITECT_KEEPS.includes(f.key):!f.architect;
 
 // Play-scope keys (turf, club yardages, art style) ride along in
 // the same object and are validated by their own modules, so they are preserved

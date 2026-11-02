@@ -22,13 +22,13 @@ working*).
 | | |
 | --- | --- |
 | **The program** | `Fairway Builder.html`, a second single-file page beside `Fairway.html` in each of the four zips, built from the same source by `vite.builder.config.js`. Offline: it reads the files a player brings and writes `.fairway` files; it fetches nothing |
-| **Door 1: Generate and modify a course** | Any landscape, Classic or Architect, every studio setting; grow it as often as wanted, then *take it over*: the world is frozen into a course document and every tool works on it |
+| **Door 1: Generate and modify a course** | Any landscape, every studio setting (Architect too until it was removed, 2 November 2026); grow it as often as wanted, then *take it over*: the world is frozen into a course document and every tool works on it |
 | **Door 2: Generate a real life course** | LIDAR of a real place (every open form) and an aerial picture; the property chosen; tees and greens marked by hand; an auto trace that tries the LIDAR first and falls back on the picture; any landscape for the look |
 | **Door 3: Open a course file** | A built file continues in the editor; a seeded file opens in door 1 with its settings filled in |
 | **The editor** | Real-time ground shaping, surface paint and outlines, holes, water, trees, checks, a test round, save |
 | **The game** | Plays a course from a seed (as today) **or from a built file**; places pins itself at the start of each round on a built course; marks such a course "built" or "real land" |
 
-**Nothing here changes a generated course.** Classic and Architect generation,
+**Nothing here changes a generated course.** Generation,
 the course of the week, Endless, challenges and the range are untouched; both
 fingerprints stay silent at every stage.
 
@@ -82,7 +82,7 @@ and the game's cache key.
 
 **`BUILT_VERSION`** (settings-schema.js) is how the game turns a built
 document into a world. A built course never runs the generator, so
-`GENERATOR_VERSION` and `ARCHITECT_VERSION` cannot move it; `BUILT_VERSION`
+`GENERATOR_VERSION` cannot move it (nor could `ARCHITECT_VERSION`, retired with Architect); `BUILT_VERSION`
 can, and is bumped with a line whenever a built course's ground, lie or trees
 would change for an unchanged file. **2** since 1 November 2026: each green on
 its own (built-world.js `greenParts`) -- a file stores all its greens as one set
@@ -119,7 +119,7 @@ land as a height texture displacing a tiled mesh, so a stroke is a small
 texture update and the next frame shows it. Surface paint and outlines,
 holes (tees, green, the line, bends, par, stroke index, renumbering), water
 (outline and level), trees (place, remove, thin, paint a wood), bunker and
-green shaping from the architect's recipes, checks with fly-to, a test round
+green shaping by recipe (the generator's own), checks with fly-to, a test round
 by the virtual golfer, undo and redo, plan and 3D views, autosave.
 
 ## Real land: LIDAR
@@ -177,7 +177,7 @@ LIDAR cannot decide.
 
 **No LIDAR at all**: a course still goes through door 2 on a picture alone --
 every surface from the picture, the land from the generator under the
-outlines, greens and bunkers by the architect's recipes; the builder and the
+outlines, greens and bunkers by the generator's recipes; the builder and the
 card say the land is not the real land. **Measured three ways**: LIDAR alone,
 picture alone, LIDAR first with the picture as fallback, surface by surface.
 
@@ -934,8 +934,8 @@ the builder has been played by a person (TODO lists what to check).
 ### Stage 3 (31 October 2026): the builder's shell and door 1
 
 - **Door 1** (`src/builder/door-generate.js`): the game's own settings
-  schema as a form (every setting, by category, Architect's shown for
-  Architect), *Grow this course* in slices so the page keeps painting, a
+  schema as a form (every setting, by category), *Grow this course* in
+  slices so the page keeps painting, a
   picture from above, *Take it over* (freeze.js) into the editor.
 - **The editor** (`editor.js`, `view.js`, `editing.js`, `checks.js`): a
   working 3D view (the land as plain meshes, every stored sample to about

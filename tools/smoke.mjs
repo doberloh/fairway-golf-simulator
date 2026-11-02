@@ -1991,27 +1991,28 @@ const JOURNEYS = [
   },
  },
 
- // AN ARCHITECT HOLE PLAYED THROUGH: a saved Architect course, played from
- // Saved courses to the hole-out, with no error. (It was the hand tools'
- // journey, `architect-hand-round`, until the owner withdrew them on 31
- // October 2026; the architect's own signatures still shape holes.)
+ // A HOLE PLAYED THROUGH AMONG THE COURSE'S PIECES: a saved generated course
+ // -- its clubhouse, cart paths, walls, markings and animals, which every
+ // generated course has since Architect was removed (2 November 2026) --
+ // played from Saved courses to the hole-out, with no error. (It was
+ // `architect-round`, an Architect course, until then.)
  {
-  name: 'architect-round',
-  what: 'A saved Architect course, hole 1 played through to the hole-out',
+  name: 'course-pieces-round',
+  what: 'A saved generated course, hole 1 played through to the hole-out',
   async run(t) {
    await menuReady(t);
    const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
-   const settings = {designer: 'architect', biome: 'midwest', holes: 9, seed: 'HT-2', archStyle: 'parkland'};
-   await t.step('the Architect course in Saved courses, played', async () => {
+   const settings = {biome: 'midwest', holes: 9, seed: 'HT-2'};
+   await t.step('the course in Saved courses, played', async () => {
     await t.page.evaluate(([s, g, v]) => {
      const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');
-     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-architect');
-     d.courses.unshift({id: 'smoke-architect', name: 'Smoke Architect', created: 1, generator: g, schema: v, settings: s});
+     d.courses = (d.courses || []).filter(c => c.id !== 'smoke-pieces');
+     d.courses.unshift({id: 'smoke-pieces', name: 'Smoke Pieces', created: 1, generator: g, schema: v, settings: s});
      localStorage.setItem(key, JSON.stringify(d));
     }, [settings, generatorFor(settings), SCHEMA_VERSION]);
     await fromMenu(t, 'Saved courses');
     await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
-    await t.page.click('[data-play="smoke-architect"]');
+    await t.page.click('[data-play="smoke-pieces"]');
     await t.inPlay(150 * SLOW);
    });
    await t.step('hole 1 played and holed out', async () => {
@@ -2038,90 +2039,6 @@ const JOURNEYS = [
   },
  },
 
- // ARCHITECT COURSES (architect-courses, 30 October 2026): the studio's
- // second designer. Choosing Architect swaps the sliders it decides for its
- // four dials, the card stays without its length slider, an Architect course
- // grows, and it is saved as Architect.
- {
-  name: 'architect-studio',
-  what: 'Course studio grows and saves an Architect course',
-  async run(t) {
-   await menuReady(t);
-   await t.step('Course studio → How the course is made: Architect', async () => {
-    await fromMenu(t, 'Course studio');
-    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
-    await t.page.selectOption('#designer', 'architect');
-    await t.until(() => t.page.evaluate(() => !!document.getElementById('archStyle') && !document.getElementById('width')
-     && !document.getElementById('courseYards') && !!document.getElementById('planCard')),
-     'the Architect dials in place of the sliders it decides', 10 * SLOW);
-    // The dials are under their own heading, a tab of the sheet.
-    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
-    await t.page.selectOption('#archStyle', 'links');
-    await t.page.selectOption('#archClub', 'championship');
-    // Each dial says what its choice does, and follows the choice.
-    await t.until(() => t.page.evaluate(() => /pot bunkers/.test(document.getElementById('archStyleNote')?.textContent || '')
-     && /Tournament week/.test(document.getElementById('archClubNote')?.textContent || '')), 'the dials\' sentences', 5 * SLOW);
-   });
-   await t.step('Classic again brings the sliders back', async () => {
-    await t.page.locator('.panel-tab', {hasText: 'Course'}).first().click();
-    await t.page.selectOption('#designer', 'classic');
-    await t.until(() => t.page.evaluate(() => !!document.getElementById('width') && !document.getElementById('archStyle')),
-     'the Classic sliders', 10 * SLOW);
-    await t.page.selectOption('#designer', 'architect');
-    await t.until(() => t.page.evaluate(() => document.getElementById('archStyle')?.value === 'links'),
-     'the dials kept through the switch', 10 * SLOW);
-   });
-   await t.step('grow it', async () => {
-    await t.press('Grow this landscape');
-    await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
-     && document.getElementById('generating')?.hidden !== false), 'the Architect landscape', 120 * SLOW);
-   });
-   // The owner's review: the yardage book from the studio, and a sentence
-   // under each dial saying what it does.
-   await t.step('the yardage book from the studio', async () => {
-    await t.until(() => t.page.locator('#studioBook').isVisible(), 'the Yardage book button', 5 * SLOW);
-    const [pdf] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#studioBook')]);
-    const file = await pdf.path(), head = fs.readFileSync(file).subarray(0, 5).toString();
-    if (head !== '%PDF-') throw new Error(`the book is not a PDF (${JSON.stringify(head)})`);
-   });
-   // No hand tools for the player (the owner, 31 October 2026: "leave those
-   // tools for the architect to use"): the Architect tab holds the dials only.
-   await t.step('the Architect tab has no hand tools', async () => {
-    await t.page.click('#studioSettings');
-    await t.page.locator('.panel-tab', {hasText: 'Architect (beta)'}).first().click();
-    await t.until(() => t.page.locator('#archStyle').isVisible(), 'the Architect dials', 5 * SLOW);
-    if (await t.page.locator('#handTools').count()) throw new Error('the Hand tools are back in the studio');
-    await t.closeDrawer();
-   });
-   let name = '';
-   await t.step('save it, and it is Architect in Saved courses', async () => {
-    await t.page.click('#studioSave');
-    await t.until(() => t.page.locator('#leaveNotice').isVisible(), 'the name box', 5 * SLOW);
-    name = await t.page.inputValue('#leaveName');
-    await t.page.click('#leaveSave');
-    await t.until(async () => !await t.page.locator('#leaveNotice').isVisible(), 'the name box to close', 5 * SLOW);
-    const saved = await t.page.evaluate(n => {
-     const d = JSON.parse(localStorage.getItem('fairway-courses-v1') || '{}');
-     return (d.courses || []).find(c => c.name === n) || null;
-    }, name);
-    if (!saved) throw new Error(`"${name}" was not saved`);
-    if (saved.settings.designer !== 'architect' || saved.settings.archStyle !== 'links' || saved.settings.archClub !== 'championship')
-     throw new Error(`saved as ${JSON.stringify({designer: saved.settings.designer, style: saved.settings.archStyle, club: saved.settings.archClub})}`);
-    if (!(saved.generator >= 1000)) throw new Error(`saved with the stamp ${saved.generator}, not an Architect one`);
-    if ('archHand' in saved.settings) throw new Error('saved with a hand-tools list; the setting is gone');
-    await t.page.click('#studioExit');
-    await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
-   });
-   // Never the default (the owner, 31 October 2026): back in the studio
-   // after growing an Architect course, it starts on Classic.
-   await t.step('a fresh visit to the studio starts on Classic', async () => {
-    await fromMenu(t, 'Course studio');
-    await t.until(() => t.page.locator('#designer').count().then(n => n > 0), 'the designer choice', 10 * SLOW);
-    const chosen = await t.page.inputValue('#designer');
-    if (chosen !== 'classic') throw new Error(`the studio opened on ${chosen}`);
-   });
-  },
- },
 
  {
   name: 'hud-reachable',
@@ -3202,8 +3119,11 @@ const JOURNEYS = [
     const v = await t.page.evaluate(() => ({framed: !!document.querySelector('.profile-id img.ball-avatar.framed'), level: document.querySelector('.profile-level small')?.textContent, ach: document.querySelectorAll('.achievement').length, earned: document.querySelectorAll('.achievement.earned').length}));
     if (!v.framed) throw new Error('no frame on the picture');
     if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
-    // Thirteen from the spec and five for the challenges (16 October 2026).
-    if (v.ach !== 18 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+    // Every achievement the game has (thirteen from the spec and five for the
+    // challenges, 16 October 2026; one fewer since Haunted Hollow's went, 2
+    // November 2026) -- counted from the list, not written here.
+    const {ACHIEVEMENTS} = await import('../src/achievements.js');
+    if (v.ach !== ACHIEVEMENTS.length || v.earned !== 1) throw new Error(`${v.ach} achievements listed of ${ACHIEVEMENTS.length}, ${v.earned} earned`);
     await t.press('Locker'); // the look is the hub's Locker tab (1.0, 17 October 2026)
    });
    for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {

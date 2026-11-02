@@ -1,48 +1,13 @@
 // A COURSE'S IDENTITY (architect-courses, phase 2; the study, workstream P):
-// a crest drawn from its name and landscape, and -- for an Architect course,
-// which has a style, a club and an age -- the year it was founded and the
-// architect who laid it out. The crest is a free extra both designers get;
-// the year and the architect only Architect has the facts for.
+// a crest drawn from its name and landscape. (An Architect course's crest
+// also said the year it was founded, and its results the made-up architect
+// who laid it out, until the designer was removed, 2 November 2026.)
 //
 // Nothing here is generated ground: it is read from settings and a name, so
 // nothing is fingerprinted or versioned. Pure (an SVG string, no DOM):
-// tests/crest.test.mjs.
-//
-// THE ARCHITECTS ARE MADE UP. No real architect's name appears: a style is
-// whose HAND it is, never a claim that a real person drew this course. The
-// names below were chosen to sound of their era and searched with "golf
-// course architect" to rule out a real one (RESEARCH *Architect courses:
-// people*).
+// tests/hole-names.test.mjs.
 import {rng} from './course-plan.js';
 import {BIOMES} from './biomes.js';
-import {styleOf} from './architect-styles.js';
-import {isArchitect} from './settings-schema.js';
-
-const ARCHITECTS = {
- golden: ['Alastair Penrose', 'Hollis Wren', 'C. Everard Maitland'],
- raynor: ['Josiah Harrow', 'Cornelius Tate', 'R. Whitcombe Dunn'],
- links: ['Old Ewan Baird', 'Tam Drummond', 'Hector Lyall'],
- heathland: ['Harold Fenwick', 'Clement Ashdown', 'E. Lindsay Rowe'],
- sandhills: ['Wes Calder', 'June Merriman', 'Dale Ostrow'],
- parkland: ['Edwin Harcourt', 'Bertram Lisle', 'Arthur Penhallow'],
- modern: ['Brent Kessler', 'Lauren Voss', 'Grant Ellery'],
- stadium: ['Pierce Dalton', 'Rhett Mallory', 'Kip Varden'],
- minimalist: ['Nell Ashby', 'Ross Whitlow', 'Ada Kinloch'],
- desert: ['Tomas Vela', 'Ray Calloway', 'Dina Sorrell'],
- mountain: ['Anton Brekke', 'Lise Halvorsen', 'Moritz Fahl'],
- tropical: ['Kai Mahoe', 'Celia Barrow', 'Rafael Quinto'],
-};
-// The year a course was founded, by its age (PLACED): a new course this
-// century, a mature one mid-century, an old one in golf's first boom, a
-// restored one an old one brought back.
-const YEARS = {new: [2005, 2024], mature: [1955, 1995], old: [1895, 1932], restored: [1898, 1930]};
-
-export function courseIdentity(settings = {}) {
- if (!isArchitect(settings)) return {year: null, architect: null};
- const r = rng(`${settings.seed || 'EVERGREEN'}|identity|${settings.biome || ''}`);
- const [lo, hi] = YEARS[settings.archAge] || YEARS.mature, list = ARCHITECTS[styleOf(settings)] || ARCHITECTS.modern;
- return {year: Math.round(lo + r() * (hi - lo)), architect: list[Math.floor(r() * list.length)]};
-}
 
 // A motif per landscape, drawn in a 40 x 40 box centred on 50,52.
 const MOTIFS = {
@@ -64,9 +29,9 @@ export function monogram(name = '') {
 }
 
 // The crest as an SVG string: a shield in the landscape's colours, a band, the
-// motif, the monogram and -- for an Architect course -- the year.
+// motif and the monogram.
 export function crestSvg({name = '', settings = {}, size = 64} = {}) {
- const bio = BIOMES[settings.biome] || BIOMES.pnw, id = courseIdentity(settings);
+ const bio = BIOMES[settings.biome] || BIOMES.pnw;
  const r = rng(`${settings.seed || 'EVERGREEN'}|crest|${name}`);
  const field = bio.fairway, band = bio.green, ink = '#fbf6e6', edge = bio.tree;
  const diagonal = r() < .5;
@@ -78,7 +43,6 @@ export function crestSvg({name = '', settings = {}, size = 64} = {}) {
   + `<path d="${shield}" fill="${field}" stroke="${edge}" stroke-width="5"/>`
   + `<path d="${bandPath}" fill="${band}" opacity=".85"/>`
   + `<path d="${motif}" transform="translate(0 -6) scale(1)" fill="${filled ? ink : 'none'}" stroke="${ink}" stroke-width="${filled ? 0 : 3}" stroke-linecap="round" opacity=".95"/>`
-  + `<text x="50" y="${id.year ? 84 : 88}" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="15" fill="${ink}">${esc(monogram(name))}</text>`
-  + (id.year ? `<text x="50" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="8" fill="${ink}" opacity=".9">EST. ${id.year}</text>` : '')
+  + `<text x="50" y="88" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="15" fill="${ink}">${esc(monogram(name))}</text>`
   + `</svg>`;
 }

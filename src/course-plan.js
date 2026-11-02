@@ -1,7 +1,3 @@
-import {designSettings} from './designer.js';
-import {isArchitect} from './settings-schema.js';
-import {sequenceCourse} from './architect.js';
-import {archStream} from './architect-styles.js';
 // Yardages are measured along the playing line; the blue tee is the reference.
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // THE ONE SEEDED GENERATOR. course.js re-exports this as `random` rather than
@@ -120,7 +116,6 @@ function orderPars(counts,n,random){
 }
 
 export function planCourse(s={}){
- s=designSettings(s);
  // One hole is the menu backdrop, not a playable course: it is fast to grow and
  // enough to look at. Nine and eighteen remain the only choices a player sees.
  const n=s.holes===18?18:s.holes===1?1:9,random=rng((s.seed||'EVERGREEN')+':plan');
@@ -158,9 +153,6 @@ export function planCourse(s={}){
  const reach=(k)=>pars.reduce((v,p)=>v+PAR_YARDS[p][k],0);
  const target=clamp(requested,reach('min'),reach('max'));
  const holes=fitYardages(pars,target,random);
- // AN ARCHITECT'S SEQUENCE (architect.js `sequenceCourse`), on its own stream:
- // Classic's card is untouched.
- if(isArchitect(s))sequenceCourse(holes,archStream(s.seed||'EVERGREEN','arch','sequence'),PAR_YARDS);
  const eligible=holes.map((h,i)=>({h,i,rank:random()})).filter(({h})=>h.par!==3).sort((a,b)=>a.rank-b.rank),count=Math.round(eligible.length*clamp(s.doglegs??65,0,100)/100),sign=random()<.5?-1:1;
  eligible.slice(0,count).forEach(({h},i)=>h.turnSign=sign*(i%2?-1:1));
  const yards=Math.round(holes.reduce((v,h)=>v+h.yards,0));
@@ -286,7 +278,6 @@ export function holeLine(s,planned,rng){
 // The full card, before anything is built. Same seed, same numbers as the
 // course that will be grown from it.
 export function planScorecard(s={}){
- s=designSettings(s);
  const plan=planCourse(s),seed=s.seed||'EVERGREEN';
  const holes=plan.holes.map((h,i)=>{
   const line=holeLine(s,h,rng(seed+':'+i));
@@ -448,27 +439,6 @@ function greenRecipe(h){
  // size against GREEN_REF, the old average, so the slopes a putt feels stay
  // what they were, over a smaller surface. No draw is added or moved.
  r.k=reach/GREEN_REF;
- // AN ARCHITECT'S GREEN (architect-courses; architect.js `greenPlan`). Only a
- // hole with a `design` carries one, so a Classic green is never touched, and
- // every draw above has already been made -- an override replaces a value, it
- // never skips a draw.
- const plan=h.design?.green;
- if(plan){
-  // Drainage off a front corner, higher at the back: water leaves at least two
-  // ways and never all off the front (the study, *The green, designed*).
-  if(plan.drainCorner){const a=Math.PI/2+plan.drainCorner*between(.45,.8);r.tx=Math.cos(a)*tilt;r.tz=Math.sin(a)*tilt;}
-  // The Redan: the green falls away from the tee on a diagonal.
-  if(plan.tiltAway){const a=-Math.PI/2-(plan.tiltSide||1)*.7,t=Math.max(tilt,.026);r.tx=Math.cos(a)*t;r.tz=Math.sin(a)*t;}
-  for(const k of ['character','ridgeAmp','ridgeAngle','ridgeAt','ridgeHalf'])if(plan[k]!==undefined&&plan[k]!=='tilted')r[k]=plan[k];
-  if(plan.character==='ridged'||plan.character==='tiered')r.dish=0;
-  r.pedestal=plan.pedestal||null;
-  // A green turned to its approach (architect.js approachTurn) turns its fall,
-  // ridge and tier with it, so the corner it drains to is still the corner
-  // the collection area was put beside.
-  const t=h.greenTurn;
-  if(t){const cs=Math.cos(t),sn=Math.sin(t),tx=r.tx;r.tx=tx*cs-r.tz*sn;r.tz=tx*sn+r.tz*cs;
-   if(r.ridgeAngle!==undefined)r.ridgeAngle+=t;if(r.tierAngle!==undefined)r.tierAngle+=t;}
- }
  r.zero=greenShape(r,0,0);
  RECIPES.set(h,r);
  return r;

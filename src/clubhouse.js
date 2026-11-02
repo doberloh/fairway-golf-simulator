@@ -1,5 +1,6 @@
 // THE CLUBHOUSE (architect-courses, phase 2; the study, workstreams F and G).
-// An Architect course's clubhouse stands where an architect would put it:
+// A course's clubhouse (every generated course since Architect was removed, 2
+// November 2026) stands where an architect would put it:
 // near the first tee, as near the last green as the land allows, on flat
 // ground clear of every corridor and every tee shot, facing the first tee
 // (ASGCA: the clubhouse is sited first and the 1st and 10th tees and the 9th
@@ -14,8 +15,8 @@
 
 // Footprint and height by club, metres (PLACED: a modest municipal clubhouse
 // to a championship venue's).
-import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
-const ARCHITECT_GENERIC_CLUBHOUSE = ARCHITECT_GENERIC.clubhouse;
+import {WORLD, WORLD_GENERIC} from './biomes.js';
+const GENERIC_CLUBHOUSE = WORLD_GENERIC.clubhouse;
 
 export const CLUBHOUSE_SIZE = {
  municipal: {width: 18, depth: 12, height: 7},
@@ -30,8 +31,8 @@ export const CLUBHOUSE_SIZE = {
 // Haunted Hollow's manor, since removed).
 export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, shingle: .414};
 // The landscape's build (the study's landscape table); the model's name.
-// Each landscape's clubhouse is its architect block's (biomes.js).
-export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.clubhouse]));
+// Each landscape's clubhouse is its world block's (biomes.js).
+export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.clubhouse]));
 
 const corners = (c, w, d, rot) => {
  const cs = Math.cos(rot), sn = Math.sin(rot), out = [];
@@ -52,7 +53,7 @@ export function siteClubhouse({holes, s, surface, nearest, height, blocked, clea
  // The club's own size first; a steep landscape that finds nowhere for it
  // falls back to a municipal footprint on ground falling up to 6.5 m
  // (Mountain, iteration 6). Proper levelling is phase 5's earthworks.
- for (const [size, fall] of [[CLUBHOUSE_SIZE[s.archClub] || CLUBHOUSE_SIZE.members, 4.5], [CLUBHOUSE_SIZE.municipal, 6.5]]) {
+ for (const [size, fall] of [[CLUBHOUSE_SIZE.members, 4.5], [CLUBHOUSE_SIZE.municipal, 6.5]]) {
   const found = siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall});
   if (found) return found;
  }
@@ -86,7 +87,7 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
  }
  }
  if (!best) return null;
- const model = CLUBHOUSE_KIND[s.biome] || ARCHITECT_GENERIC_CLUBHOUSE;
+ const model = CLUBHOUSE_KIND[s.biome] || GENERIC_CLUBHOUSE;
  return {kind: 'clubhouse', model, club: true,
   x: best.c.x, z: best.c.z, y: best.hi - .3, base: best.lo, rotation: best.rot, ...size, height: +(size.width * (CLUBHOUSE_ASPECT[model] ?? .42)).toFixed(2)};
 }

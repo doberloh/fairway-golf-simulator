@@ -32,7 +32,6 @@ import {GROUND_PLANTS} from './species.js';
 import {GROUND_KINDS} from './grounds.js';
 import {maskRings, simplify} from './contour.js';
 import {CREEK_FIELDS} from './course-doc.js';
-import {isArchitect} from './settings-schema.js';
 
 export const FREEZE = {patch: .25, raster: 1, tol: .12, greenPoints: 128, ovalPoints: 64};
 const TAU = Math.PI * 2;
@@ -166,7 +165,7 @@ export function freezeWorld(w, {name = 'Frozen course', onStep = () => {}} = {})
   trees.push(t.x, t.z, t.h, t.r, t.radius ?? trunkRadius(t), roleOf(t.kind) | (t.stand ? 8 : 0) | (t.under ? 16 : 0), kindIndex.get(t.kind));
  }
  onStep('Done', 1);
- return {type: 'built', name, landscape: s.biome, designer: isArchitect(s) ? 'architect' : 'classic', halfX: w.halfX, halfZ: w.halfZ,
+ return {type: 'built', name, landscape: s.biome, designer: 'classic', halfX: w.halfX, halfZ: w.halfZ,
   fringe: s.fringe, semiRough: s.semiRough, sea: w.bio.sea ? {level: w.waterLevel} : null,
   land, patches, surfaces, water, creeks, holes, trees: new Float32Array(trees), treeKinds: kindsOf,
   credits: [], source: {kind: 'generated'}, from: {seed: s.seed, settings: {...s}, generator: w.settings.generator ?? null}, picture: null};

@@ -15,7 +15,7 @@ import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
-import {architectOf,biomeOf} from './biomes.js';
+import {worldOf,biomeOf} from './biomes.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -2052,7 +2052,7 @@ export class GolfView{
   // spanned wall to wall -- was some 60 meshes and Autumn's Architect course
   // drew 163 more calls than Classic on Low). Now one InstancedMesh per part,
   // and one for its ink, for every bay of every bridge.
-  const bridgeOf=k=>architectOf(k),key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+  const bridgeOf=k=>worldOf(k),key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
   const parts=modelParts(name),info=MESH_MODELS[name];
   if(parts&&info&&w.bridges?.length){
    const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:bridgeOf(key).colours.bridgeStone}:{bark:'#8f6a45',stone:'#6b4a2f'};
@@ -2080,7 +2080,7 @@ export class GolfView{
   if(!w?.waterworks?.length||this.style!=='cartoon')return;
   const key=w.bio?.key||w.settings?.biome;
   // Iteration 4: a shade darker than the sheet's -- pale stone went pink-white in the afternoon sun.
-  const ROCK={[key]:architectOf(key).colours.riprap};
+  const ROCK={[key]:worldOf(key).colours.riprap};
   const KINDS=[
    ...[1,2,3].map(v=>({kind:'riprap',variant:v-1,model:'Blender_RipRap_'+v,height:.34,colours:{stone:ROCK[key]||'#a8a298'}})),
    {kind:'bulkhead',model:'Blender_Bulkhead_1',height:.9,inked:true,colours:{bark:'#5e4733',stone:'#8b8a85'}},
@@ -2199,10 +2199,10 @@ export class GolfView{
  addBuildings(w){
   if(!w?.buildings?.length||this.style!=='cartoon')return;
   // The clubhouse's colours are its landscape's architect block's (biomes.js).
-  const look=architectOf(w.bio?.key||w.settings?.biome).colours.clubhouse;
+  const look=worldOf(w.bio?.key||w.settings?.biome).colours.clubhouse;
   // THE LAND'S STORY'S BUILDINGS (phase 6; story.js, tools/blender/architect_story.py):
   // fitted to their boxes the same way, coloured by piece and landscape.
-  const key=w.bio?.key||w.settings?.biome,ruinStone=architectOf(key).colours.ruin;
+  const key=w.bio?.key||w.settings?.biome,ruinStone=worldOf(key).colours.ruin;
   const STORY={
    barn:{bark:'#b8463a',stone:'#7a7470',dirt:'#4d4a50',accent:'#f4f1ea'},
    silo:{stone:'#d9d4c8',accent:'#9aa0a6',dirt:'#7d8a96'},
@@ -2253,7 +2253,7 @@ export class GolfView{
  addStory(w){
   if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length))return;
   const key=w.bio?.key||w.settings?.biome;
-  const STONE=architectOf(key).colours.wall;
+  const STONE=worldOf(key).colours.wall;
   const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
   const draw=(model,list,colours,inked,place)=>{
    if(!list.length)return;

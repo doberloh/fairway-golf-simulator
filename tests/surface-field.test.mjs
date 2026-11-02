@@ -4,7 +4,6 @@ import {world} from './worlds.mjs';
 import {markOverflow, surfaceField, fieldAt, isFieldSand, bunkerDistance, HAZARD_SLOTS, FIELD_RANGE} from '../src/surface-field.js';
 import {packTables, TABLE_WIDTH, HOLE_ATLAS} from '../src/ground.js';
 import {greenDistance, greenPoint, greenRadius} from '../src/course.js';
-import {approachTurn} from '../src/architect.js';
 
 const flat = (n, extra = {}) => ({bunkers: Array.from({length: n}, (_, i) => ({x: i * 20, z: 0, rx: 4, rz: 3, phase: 0, wave2: 0, wave3: .05})), ponds: [], collections: [], ...extra});
 
@@ -42,23 +41,6 @@ test('the baked field reads sand inside a field bunker and grass outside it', ()
  assert.ok(fieldAt(f, 30, -10) <= 1 && FIELD_RANGE > 0);
 });
 
-test('a world with field bunkers plays them as sand, as it paints them', () => {
- // Sandhills HZ-2 overfills holes 3 and 8 by itself (tests/hand-tools.test.mjs).
- const w = world({seed: 'HZ-2', holes: 18, biome: 'midwest', designer: 'architect', archStyle: 'sandhills'});
- const h = w.holes.find(h => h.bunkers.some(b => b.field)), over = h.bunkers.filter(b => b.field);
- assert.ok(over.length > 0, 'the hole overflows its slots');
- assert.ok(w.surfaceField, 'and the world baked a field');
- let sand = 0, checked = 0;
- for (const b of over) {
-  const c = h.toWorld({x: b.x, z: b.z});
-  const own = w.surface(c.x, c.z);
-  checked++;if (own === 'sand') sand++;
- }
- assert.ok(sand / checked > .8, `${sand} of ${checked} field bunker centres play as sand`);
- // A Classic world bakes none.
- assert.equal(world({seed: 'FIELD-1', holes: 9, biome: 'midwest'}).surfaceField, null);
-});
-
 test('the packed tables keep each table where the shader looks for it', () => {
  const N = 3, W = HOLE_ATLAS.width, streamCount = 5;
  const curves = new Float32Array(N * 1024 * 4).map((_, i) => i + .25);
@@ -93,19 +75,3 @@ test('a turned green is one shape to the lie and to everything that draws it', (
  assert.equal(greenDistance(g, p.x, p.z), Math.hypot(dx, dz) - greenRadius(g, Math.atan2(dz, dx)));
 });
 
-test('a green turns to where its approach is played, and a strategic one opens to its side', () => {
- const center = z => z > 150 ? (z - 150) * .5 : 0, tees = {blue: {x: 0, z: 0}};
- const base = {par: 4, center, tees, length: 380, green: {x: center(380), z: 380}, goodZ: 250, layZ: null, template: null, preferred: 1};
- const t = approachTurn({...base, concept: 'penal'});
- // The approach from (50, 250) to (115, 380) leans toward +x; the oval's
- // depth axis (0, 1) turned by t points the same way.
- const depth = {x: -Math.sin(t), z: Math.cos(t)}, way = {x: 115 - 50, z: 130}, n = Math.hypot(way.x, way.z);
- assert.ok(depth.x * way.x / n + depth.z * way.z / n > .99);
- const straight = {...base, center: () => 0, green: {x: 0, z: 380}};
- assert.ok(Math.abs(approachTurn({...straight, concept: 'penal'})) < 1e-12, 'a straight hole leaves the green square');
- // Preferred side +x (the player's left): the diagonal turns the green by -0.35.
- assert.ok(Math.abs(approachTurn({...straight, concept: 'strategic'}) + .35) < 1e-9);
- assert.ok(Math.abs(approachTurn({...straight, concept: 'strategic', preferred: -1}) - .35) < 1e-9);
- // Never past the cap.
- assert.ok(Math.abs(approachTurn({...base, center: z => z, green: {x: 380, z: 380}, concept: 'heroic'})) <= .6);
-});

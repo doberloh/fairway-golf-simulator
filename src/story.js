@@ -18,9 +18,10 @@
 // except what a template puts in play (the Dell's stone). Walls and buildings
 // are SOLID: a wall is a run of boxes and a building a box in the houses' grid
 // (physics.js), never out of bounds. Props are decoration. All sizes and
-// counts PLACED. Architect only. Pure: tests/story.test.mjs.
-import {styleOf, archStream} from './architect-styles.js';
-import {ARCHITECT} from './biomes.js';
+// counts PLACED. Every generated course (Architect's until it was removed,
+// 2 November 2026). Pure: tests/story.test.mjs.
+import {worldStream} from './world-stream.js';
+import {WORLD} from './biomes.js';
 
 // Each landscape's remains. Sizes are footprints in metres (width across
 // the front, depth, height to the ridge or top); the models
@@ -37,7 +38,7 @@ export const STORY_PIECES = {
  church: {model: 'Church', width: 9, depth: 16, height: 24},
 };
 // Each landscape's story is its architect block's (biomes.js).
-export const STORY_SET = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.story]));
+export const STORY_SET = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.story]));
 const AMOUNT = {none: 0, some: 1, lots: 2};
 // Out of play: this far outside a hole's corridor (its raw half width) at least.
 const CLEAR_WALL = 14, CLEAR_BUILDING = 38;
@@ -45,9 +46,9 @@ const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'wa
 
 export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, buildings = [], blocked = () => false, earthworks = [], paths = []}) {
  const out = {walls: [], buildings: [], props: [], clearings: []};
- const amount = AMOUNT[s.archStory ?? 'some'] ?? 1;
+ const amount = AMOUNT.some;
  const set = STORY_SET[s.biome] || {};
- const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'story', s.biome || '');
+ const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'story', s.biome || '');
  // The Dell's aiming stone is the hole's, whatever the story.
  for (const e of earthworks) if (e.aim) {
   const mx = (e.ax + e.bx) / 2, mz = (e.az + e.bz) / 2;

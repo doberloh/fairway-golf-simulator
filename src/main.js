@@ -56,7 +56,7 @@ import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui
 import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
 import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,sheetScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
 import {holeNames} from './hole-names.js';
-import {crestSvg,courseIdentity} from './crest.js';
+import {crestSvg} from './crest.js';
 import {yardageBook} from './yardage-book.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
@@ -98,7 +98,7 @@ import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief} from './relief.js';
-import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor,shownFor,isArchitect} from './settings-schema.js';
+import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
@@ -2263,24 +2263,18 @@ function takePathRelief(result){
  toast('On the cart path: free relief, dropped beside it (no penalty).');
 }
 function arriveAtHole(){
- if(freshHole()){view.arriveAtHole(round.position,aim);architectNote();}
+ if(freshHole())view.arriveAtHole(round.position,aim);
  else view.flyCamera(round.position,aim);
 }
-// THE HOLE'S NAMES AND THE ARCHITECT'S NOTE (architect-courses, phase 2;
-// hole-names.js). Names are read from the built holes, once a world, for both
-// designers; an endless run grows one hole at a time and has none. The note
-// is an Architect hole's own (architect.js `designHole`), said once as the
-// hole is arrived at.
+// THE HOLE'S NAMES (architect-courses, phase 2; hole-names.js). Names are read
+// from the built holes, once a world; an endless run grows one hole at a time
+// and has none. (An Architect hole's note, said as the hole was arrived at,
+// went with the designer, 2 November 2026.)
 let namedWorld=null,courseHoleNames=[];
 function holeNameOf(hole){
  if(!world||round?.endless||rangeMode)return '';
  if(namedWorld!==world){courseHoleNames=holeNames(world.holes,settings);namedWorld=world;}
  return courseHoleNames[worldHole(hole)]||'';
-}
-function architectNote(){
- const note=course?.design?.note;
- if(!note||round.endless||rangeMode)return;
- toast(`${holeNameOf(round.hole)||`Hole ${round.hole+1}`}: ${note}`);
 }
 function advanceHole(){
  cancelAdvance();endHoleSummary();
@@ -3803,7 +3797,7 @@ function toggleStudioPause(show){
   {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
   {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
   {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
-  ...(world&&isArchitect(world.settings)?[{id:'book',label:'Yardage book',sub:'A PDF, a page a hole',act:()=>{toggleStudioPause(false);downloadYardageBook();}}]:[]),
+  ...(world&&!world.built?[{id:'book',label:'Yardage book',sub:'A PDF, a page a hole',act:()=>{toggleStudioPause(false);downloadYardageBook();}}]:[]),
   {id:'graphics',label:'Graphics & sound',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
   {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
  ]});
@@ -3813,7 +3807,7 @@ function toggleStudioPause(show){
 function updateStudioState(){
  if(appMode!=='studio')return;
  const el=$('studioState');el.classList.toggle('dirty',studioDirty);
- if($('studioBook'))$('studioBook').hidden=!world||!isArchitect(world.settings);
+ if($('studioBook'))$('studioBook').hidden=!world||!!world.built;
  studioHud($('world'));
  paintStudioHud({facts:{biome:BIOMES[settings.biome]?.name||settings.biome,holes:settings.holes},changes:studioDirty?studioChanges():[],regenerate:()=>$('studioRegenerate').click()});
  el.textContent=studioDirty?'Settings changed — regenerate to see them.':panel?'Close the settings panel to fly around with W A S D.':'Fly around with W A S D. Drag to look.';
@@ -4164,12 +4158,6 @@ function openStudioSetup(){
  // throw away the choices just made in the panel.
  rangeMode=false;closeRangeBox();restoreCourse();
  settings=courseOnly(settings);
- // ARCHITECT IS NEVER THE DEFAULT (the owner, 31 October 2026: "only
- // accessible in the course studio, and should not be the default"): a fresh
- // visit starts on Classic, whatever was played or grown last. Choosing
- // Architect lasts while the studio is open. The play modes never grow one
- // (tests/designer.test.mjs, *every play mode grows Classic*).
- if(isArchitect(settings))settings={...settings,designer:'classic'};
  studioSetup=true;
  openPanel('course');
 }
@@ -5067,8 +5055,8 @@ function roundCompleteHtml(){
  const share=canSendCards();
  // The course's crest beside the title, and an Architect course's founding
  // (crest.js; architect-courses, phase 2).
- const id=round.endless?{}:courseIdentity(settings),crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
- return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes${id.year?` \u00b7 founded ${id.year}, laid out by ${escape(id.architect)}`:''}</small></div>`
+ const crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
+ return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></div>`
   +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
@@ -5086,16 +5074,18 @@ function drawPauseInfo(){
  const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
  setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
   return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
- // THE YARDAGE BOOK (architect-courses, phase 7; yardage-book.js): an
- // Architect course's page a hole, from the menu while a round is paused.
- if($('pauseBook'))$('pauseBook').hidden=rangeMode||!isArchitect(settings);
+ // THE YARDAGE BOOK (architect-courses, phase 7; yardage-book.js): a generated
+ // course's page a hole, from the menu while a round is paused (Architect's
+ // only until the designer was removed, 2 November 2026; not a built course's,
+ // a range's or an endless run's).
+ if($('pauseBook'))$('pauseBook').hidden=rangeMode||!(world&&!world.built&&!round?.endless);
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
-// The yardage book of the course on screen, as a PDF (an Architect course's
-// page a hole: yardage-book.js), from the round's menu or the studio.
+// The yardage book of the course on screen, as a PDF (a page a hole:
+// yardage-book.js), from the round's menu or the studio.
 function downloadYardageBook(){
  // The BUILT course's settings: the studio's may have changed unbuilt.
- if(world&&isArchitect(world.settings))download(`fairway-yardage-book-${String(world.settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');
+ if(world&&!world.built)download(`fairway-yardage-book-${String(world.settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');
 }
 function setPause(on){
  const app=$('app');
@@ -5858,9 +5848,6 @@ function renderPanel(name,content){
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   // An Architect dial says what its choice does to the course, under the
-   // list (the owner's review: "what's changing?"), and keeps saying it as
-   // the choice changes (`describeChoice`, below).
    if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${escape(String(f.names?.[o]??o))}</option>`).join('')}</select></label>${f.describe?`<p class="choice-note" id="${k}Note" aria-live="polite">${escape(f.describe[settings[k]]||'')}</p>`:''}`;
    // A field with `warn` in the schema turns red past its threshold, and says
    // why in a bubble that pops out over the panel when the slider is let go
@@ -5878,7 +5865,7 @@ function renderPanel(name,content){
    // now, and the card is the whole card rather than a par count.
    courseYards:()=>`<div class="course-plan" id="coursePlan" aria-live="polite">
     <div class="plan-summary" id="planSummary"></div>
-    ${isArchitect(settings)?'<p class="research-label">The architect sets the length from the style and the club.</p>':`<label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
+    ${`<label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>`}
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
@@ -5942,14 +5929,9 @@ function renderPanel(name,content){
    // THE LANDSCAPE FIRST (the 1.0 polish, studio round 1): the studio says
    // "choose the landscape you want, then grow it", so its pictures lead the
    // first menu; the rest keep the schema's order.
-   // The designer before everything (architect-courses): it decides which
-   // controls exist at all.
-   const lead=key==='course'?['designer','biome']:[],rank=k=>{const i=lead.indexOf(k);return i<0?lead.length:i;};
-   // TWO DESIGNERS (architect-courses): an Architect course shows only what it
-   // is chosen by, a Classic one everything but the Architect's dials
-   // (settings-schema.js `shownFor`). A heading with nothing under it is left out.
-   // The card stays for an Architect course, without its length controls.
-   const members=SETTINGS.filter(f=>f.category===key&&(shownFor(f,settings)||isArchitect(settings)&&f.key==='courseYards')).sort((a,b)=>rank(a.key)-rank(b.key));
+   const lead=key==='course'?['biome']:[],rank=k=>{const i=lead.indexOf(k);return i<0?lead.length:i;};
+   // A heading with nothing under it is left out.
+   const members=SETTINGS.filter(f=>f.category===key).sort((a,b)=>rank(a.key)-rank(b.key));
    const main=[],more=[];
    for(const f of members){
     let html;
@@ -6012,9 +5994,6 @@ function renderPanel(name,content){
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').innerHTML='<kbd>?</kbd>'+(tipsOpen?'Hide all descriptions':'Show all descriptions');};
   $('openLibrary').onclick=()=>openPanel('library');
-  // Choosing the designer changes which controls exist, so the panel is drawn
-  // again from what is set so far.
-  if($('designer'))$('designer').onchange=()=>{if(applyStudioSettings()){markStudioDirty();openPanel('course');}};
   // Setup only: apply what was chosen, then build once and enter the studio.
   // In the studio, regrow: regenerateStudio reads the controls before its first
   // await, so the sheet can close straight after.
@@ -6028,17 +6007,14 @@ function renderPanel(name,content){
   // the builder runs, over the same seeded stream, so every yardage here is
   // the yardage that gets built -- checked to within the rounding.
   const previewPlan=(syncNumber=true)=>{
-   // An Architect course has no length controls: the architect's own length
-   // is what was asked for (designer.js resolves it inside planScorecard).
-   const arch=!$('courseYards');
-   if(syncNumber&&!arch)$('courseYardsNumber').value=$('courseYards').value;
+   if(syncNumber)$('courseYardsNumber').value=$('courseYards').value;
    // THE WHOLE SETTINGS OBJECT, not just the three fields on screen. The hole
    // skeleton reads doglegs, dogleg angle and turning point, and a card built
    // with the defaults while the studio is set to something else would be
    // quietly wrong about every yardage on a bending hole.
    const p=planScorecard({...settings,holes:Number($('courseHoles').value),
-    ...(arch?{}:{courseYards:Number($('courseYards').value)}),seed:$('seed').value});
-   const asked=arch?p.yards:Number($('courseYards').value);
+    courseYards:Number($('courseYards').value),seed:$('seed').value});
+   const asked=Number($('courseYards').value);
    const n=p.holes.length,half=Math.min(9,n),yd=v=>v.toLocaleString('en-US');
    // Said out loud when the bands cannot reach what was asked for, rather than
    // stretching holes out of shape to make the number come out.
@@ -6669,7 +6645,7 @@ function renderPanel(name,content){
  // categories, rows, what has changed, the landscapes as pictures, in the
  // colours of the landscape being shaped (ui-studio.js).
  studioSheet=name==='course'&&content.id==='drawerContent'
-  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:$('courseYards')?Number($('courseYards').value):isArchitect(settings)?planScorecard({...settings,holes:Number($('courseHoles')?.value)||settings.holes,seed:$('seed')?.value||settings.seed}).yards:settings.courseYards,seed:$('seed')?.value||settings.seed}),
+  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:$('courseYards')?Number($('courseYards').value):settings.courseYards,seed:$('seed')?.value||settings.seed}),
    setup:()=>studioSetup,landscapes:seasonalBiomes(settings.biome).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
  if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
  // Challenges, the course of the week and saved courses, the same way

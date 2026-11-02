@@ -1,5 +1,6 @@
 import {greenApproaches, GREEN} from '../src/course.js';
-import {landingZones} from '../src/architect.js';
+import {landingZones} from '../src/markings.js';
+import {unbridgedWater} from '../src/paths.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
@@ -573,11 +574,11 @@ METRICS.farSeated = {
  },
 };
 
-// THE ARCHITECT'S MEASURES (architect-courses; docs/ARCHITECT_COURSES.md), on
-// either designer, so Classic is the baseline Architect has to beat:
+// THE ARCHITECT'S MEASURES (architect-courses), kept on the generator after the
+// designer was removed (2 November 2026):
 //   - fairway bunkers within 30 m (along the hole) of where a good or an
-//     average drive comes down (architect.js `landingZones`, the same
-//     function the architect places them with);
+//     average drive comes down (markings.js `landingZones`, which Architect
+//     placed them with);
 //   - the walk from each green to the next hole's back tee, in metres;
 //   - nines that return: the 9th green (and the 18th) within 200 m of the 1st
 //     tee, PLACED as "in sight of the clubhouse" until phase 4 builds one;
@@ -616,6 +617,17 @@ METRICS.design = {
    series.templates.push(new Set(w.holes.map(h => h.design?.template).filter(Boolean)).size);
   }
   return {series, counts, invariants};
+ },
+};
+
+// EVERY PATH OVER WATER IS A BRIDGE (the owner, 2 November 2026; paths.js
+// `findBridges`): a cart path's point, every 2 m, on water and on no bridge.
+METRICS.paths = {
+ describe: 'cart paths: their length, their bridges, and no path over water off a bridge',
+ run(w) {
+  const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length};
+  const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length};
+  return {series: {}, counts, invariants};
  },
 };
 

@@ -1,7 +1,5 @@
 import {FOOTPRINTS,footprintCurve} from './footprints.js';
 import {biomeOf} from './biomes.js';
-import {designSettings} from './designer.js';
-import {isArchitect} from './settings-schema.js';
 // Seeded corridor packing: successive tees follow greens, with a compact,
 // collision-checked routing instead of rows of parallel holes.
 export function placeHole(h,origin,rotation){
@@ -17,30 +15,12 @@ export function footprintGuide(holes,s,random){
  return {kind,points,distance};
 }
 export function routeHoles(holes,s,random){
- s=designSettings(s);
  const footprint=footprintGuide(holes,s,random);let best=null;
- // ROUTED FROM THE CLUBHOUSE (architect-courses, phase 4; the study,
- // workstream F; ASGCA: the clubhouse first, the 1st and 10th tees and the 9th
- // and 18th greens round it). The first tee stands at the origin, where the
- // clubhouse is sited (clubhouse.js). An Architect course pulls each nine's
- // holes home harder the nearer the turn they are, starts the 10th back at
- // the clubhouse, and weighs the front nine's last green in choosing the
- // routing; it tries more routings to find one. Classic is untouched: `arch`
- // is false and every number below is what it was.
- const arch=isArchitect(s),nine=holes.length>=18?9:holes.length;
- const PULL=[0,0,0,.05,.15,.35,.75,1.4,2.6];
- const homeArch=(i,end,origin)=>{if(!arch)return 0;const j=i%nine,p=PULL[Math.round(j*8/Math.max(1,nine-1))]||0;
-  // A nine's last green past 150 m from home pays steeply: a links's pull to
-  // run out and back beside itself otherwise carried it 200-550 m away.
-  // And from the first hole, never further out than the holes left in the
-  // nine could walk back: about 300 m a hole, the turn coming by itself.
-  const d=Math.hypot(end.x,end.z),reach=(nine-1-j)*300+140,last=Math.max(0,d-reach)*(j===nine-1?16:8);
-  // The green before the last about one last hole's length from home, so the
-  // last hole can play in (a links's 8th finished 66 m out, and its 9th had
-  // to head away again).
-  const penult=j===nine-2?Math.abs(d-holes[i+1].length*.92)*2.5:0;
-  return d*p+last+penult+(holes.length>=18&&i===nine?Math.hypot(origin.x,origin.z)*1.2:0);};
- for(let trial=0;trial<(arch?12:5);trial++){
+ // (An Architect course was routed from its clubhouse -- each nine's holes
+ // pulled home, the 10th back at the clubhouse -- until the designer was
+ // removed, 2 November 2026. A generated course's clubhouse is sited round the
+ // routing, clubhouse.js.)
+ for(let trial=0;trial<5;trial++){
   const rng=random(s.seed+':routing:'+trial),placed=[],samples=[];let penalty=0;
   for(let i=0;i<holes.length;i++){
    const h=holes[i],local=[];for(let z=0;z<=h.length+1;z+=16)local.push({x:h.center(z),z,r:z<18?10:z>h.length-28?(h.greenSize*h.greenAspect*1.2)+s.fringe+s.semiRough:h.width(z)+s.semiRough});// The disc the green occupies, so corridors do not overlap it. Centred on the
@@ -90,15 +70,13 @@ export function routeHoles(holes,s,random){
        }
        if(!origin)continue;
        const walk=Math.hypot(origin.x-from.x,origin.z-from.z),end=points.at(-1),mid=points[Math.floor(points.length/2)];
-       const score=footprint.distance(mid)*2.3+footprint.distance(end)*1.7+Math.hypot(end.x-guide.x,end.z-guide.z)*.45+Math.hypot(end.x,end.z)*homeWeight+walk*.9-pull.weight*(j===partner&&dir<0?2:1)+homeArch(i,end,origin);
+       const score=footprint.distance(mid)*2.3+footprint.distance(end)*1.7+Math.hypot(end.x-guide.x,end.z-guide.z)*.45+Math.hypot(end.x,end.z)*homeWeight+walk*.9-pull.weight*(j===partner&&dir<0?2:1);
        if(!chosen||score<chosen.score)chosen={origin,rot,points,pin:end,score,walk,beside:true};
       }
      }
     }
    }
-   // An Architect nine's last three holes look three times as hard for a way
-   // home: round the clubhouse the land is already the front nine's.
-   const tries=!i?1:arch&&i%nine>=nine-3?450:150;
+   const tries=!i?1:150;
    for(let k=0;k<tries;k++){
     const previous=placed.at(-1),a=i?rng()*Math.PI*2:0,walk=i?(i%3===0?biomeOf(s.biome).hop:58)+rng()*55+Math.max(0,Math.min(k,150)-115)*5:0;
     // Walked from the CENTRE of the last green, not from its cup. A hole location
@@ -125,10 +103,6 @@ export function routeHoles(holes,s,random){
       if(near<pull.gap){score-=pull.weight;break;}
      }
     }
-    // An Architect course pays for the walk to the tee three times over (the end of
-    // the goal: routing home had lengthened the longest walks, p95 191 ->
-    // 283 m, the late holes' extra tries all made at the longest walk).
-    score+=homeArch(i,end,origin)+(arch?walk*1.8:0);
     if(!chosen||score<chosen.score)chosen={origin,rot,points,pin:end,score,walk};
    }
    if(!chosen){const previous=placed.at(-1),origin={x:Math.max(...samples.map(p=>p.x+p.r))+Math.max(...local.map(p=>Math.abs(p.x)+p.r))+s.spacing+25,z:(previous.green??previous.pin).z-h.length/2},rot=0;chosen={origin,rot,points:local.map(p=>({...p,x:p.x+origin.x,z:p.z+origin.z})),pin:{x:origin.x+h.pin.x,z:origin.z+h.pin.z},score:1e6,walk:350};penalty+=1e6;}
@@ -136,8 +110,7 @@ export function routeHoles(holes,s,random){
   }
   const xs=samples.map(p=>p.x),zs=samples.map(p=>p.z),bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
   const pull=biomeOf(s.biome).routeParallel,pairs=pull?placed.filter(p=>p.beside).length*pull.weight:0;
-  const score=(bounds.maxX-bounds.minX)*(bounds.maxZ-bounds.minZ)/1800+penalty-pairs+Math.hypot((placed.at(-1).green??placed.at(-1).pin).x,(placed.at(-1).green??placed.at(-1).pin).z)*2
-   +(arch&&holes.length>=18?Math.hypot((placed[nine-1].green??placed[nine-1].pin).x,(placed[nine-1].green??placed[nine-1].pin).z)*2:0);
+  const score=(bounds.maxX-bounds.minX)*(bounds.maxZ-bounds.minZ)/1800+penalty-pairs+Math.hypot((placed.at(-1).green??placed.at(-1).pin).x,(placed.at(-1).green??placed.at(-1).pin).z)*2;
   if(!best||score<best.score)best={placed,bounds,score};
  }
  const dx=(best.bounds.minX+best.bounds.maxX)/2,dz=(best.bounds.minZ+best.bounds.maxZ)/2;

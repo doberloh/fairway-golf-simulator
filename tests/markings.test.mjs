@@ -3,17 +3,16 @@ import assert from 'node:assert/strict';
 import {world} from './worlds.mjs';
 import {ovalRadius} from '../src/course.js';
 
-// AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js):
-// red stakes round water, white ones where the boundary nears play, yardage
-// posts at 100, 150 and 200 yd, a rake by each bunker. Decoration, never in
-// water, on a path, a green, a tee or in sand. Classic has none.
+// A COURSE'S MARKINGS (architect-courses, phase 2; markings.js): red stakes
+// round water, white ones where the boundary nears play, yardage posts at
+// 100, 150 and 200 yd, a rake by each bunker, on every generated course (an
+// Architect course's alone until the designer was removed, 2 November 2026).
+// Decoration, never in water, on a path, a green, a tee or in sand.
 
 const YARD = .9144;
-const arch = world({seed: 'MARK-T', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
-const classic = world({seed: 'MARK-T', holes: 9, biome: 'midwest'});
+const arch = world({seed: 'MARK-T', holes: 9, biome: 'midwest'});
 
-test('Classic has no markings; an Architect course has every kind', () => {
- assert.equal(classic.markers.length, 0);
+test('a course has every kind of marking', () => {
  const kinds = new Set(arch.markers.map(m => m.kind));
  for (const k of ['stake', 'obstake', 'post100', 'post150', 'post200', 'rake']) assert.ok(kinds.has(k), `no ${k}`);
 });

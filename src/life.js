@@ -12,20 +12,21 @@
 // Everything stands or moves out of play: grazers 30 m outside every
 // corridor, birds 25 m up. Decoration: nothing here is solid or changes a lie, and the study's
 // rule -- never in the line of a shot -- holds by placement. Drawn and moved
-// by renderer.js `addLife`, never on Low. All counts PLACED. Architect only;
+// by renderer.js `addLife`, never on Low. All counts PLACED. Every generated
+// course (Architect's until it was removed, 2 November 2026);
 // rendering only, so no version moves for it (the fingerprint reads ground).
 // Pure: tests/life.test.mjs.
-import {archStream} from './architect-styles.js';
-import {ARCHITECT} from './biomes.js';
+import {worldStream} from './world-stream.js';
+import {WORLD} from './biomes.js';
 import {ovalRadius} from './course.js';
 
-// Each landscape's animals are its architect block's (biomes.js).
-export const LIFE_SET = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.life]));
+// Each landscape's animals are its world block's (biomes.js).
+export const LIFE_SET = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.life]));
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
 export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [], trees = []}) {
  const out = [], set = LIFE_SET[s.biome] || {};
- const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'life', s.biome || '');
+ const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'life', s.biome || '');
  // Clear of trunks too (iteration 7: the mower was put in a wood). The trees
  // are planted by now; a coarse grid of them, built once.
  const cell = 8, grid = new Map();

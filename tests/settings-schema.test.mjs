@@ -144,6 +144,15 @@ test('a save on Haunted Hollow opens on Autumn',()=>{
  assert.ok(!BIOME_KEYS.includes('haunted'));
 });
 
+// ARCHITECT WAS REMOVED (the owner, 2 November 2026): a save that carried the
+// designer and its four dials opens as the generator's course of its seed.
+test('a save from an Architect course opens as a generated one',()=>{
+ const s=migrateSettings({...DEFAULT_COURSE,seed:'ARCH',biome:'links',designer:'architect',archStyle:'links',archClub:'championship',archAge:'old',archStory:'lots'},15);
+ for(const k of ['designer','archStyle','archClub','archAge','archStory'])assert.ok(!(k in s),`${k} kept`);
+ assert.equal(s.seed,'ARCH');assert.equal(s.biome,'links');
+ assert.doesNotThrow(()=>validateSettings(s));
+});
+
 test('a surprise course is always valid, always a nine, and never the same twice',()=>{
  const seeds=new Set(),biomes=new Set();
  for(let i=0;i<60;i++){

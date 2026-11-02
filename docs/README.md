@@ -45,11 +45,6 @@ the change that made it stale, not a follow-up.
   recognise one (`tools/blender/`, `vendor/blender-<pack>/`, `Blender_*`),
   the headless pipeline and its contact sheet, what the game keeps from a
   model, and the packs so far (Lakeshore Dunes).
-- **[ARCHITECT_COURSES.md](ARCHITECT_COURSES.md)** — Architect courses,
-  the second designer beside Classic (branch `architect-courses`, begun 30
-  October 2026): what is built, the owner's and the study's decisions, what
-  was rejected, where the build departed from its study, the measures, and the
-  GPU and Blender logs. Read it first when working on Architect.
 - **[COURSE_BUILDER.md](COURSE_BUILDER.md)** — Fairway Course Builder,
   the second program in every download (branch `course-builder`, begun 31
   October 2026): generate a course and reshape it, or build one from LIDAR

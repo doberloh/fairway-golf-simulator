@@ -1706,3 +1706,17 @@ A built course file (`.fairway` version 2) is a ZIP written by hand
 code, and every part is checked against limits before use
 (`src/course-doc.js` `LIMITS`), so a file handed between players cannot ask
 the game for more memory than a 3 x 3 km course needs.
+
+## Addendum, 2 November 2026: Architect, Haunted Hollow, tournament week and the people removed (branch, not released)
+
+On `course-builder`, the first step of the US landscapes goal. **The game's
+page is 13,562,273 bytes (7.01 MB gzipped)**, 1.28 MB under the 14,846,858
+of the builder's stages 7-9: Haunted Hollow's models, the people and
+tournament week's pack (`architect_occasion`, `figures.py`), and the
+Architect code (designer, styles, the architect, hand tools) left the
+bundle. Architect's world pieces stayed and are now on every generated
+course; the yardage book is offered for every generated course, the same
+local PDF download as before. No dependency added or removed; still one
+file, still no network request in the game. Not yet released, so no player
+sees it; the US landscapes goal grows the page again (the owner: game size
+may grow).

@@ -7,7 +7,7 @@
 // growing again.
 import {show, setTitle, setBusy, topTools, home, ui, setSaver} from './builder.js';
 import {courseFile, fileName} from '../course-file.js';
-import {SETTINGS, CATEGORIES, DEFAULT_COURSE, validateSettings, shownFor, bound} from '../settings-schema.js';
+import {SETTINGS, CATEGORIES, DEFAULT_COURSE, validateSettings, bound} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {generateWorldSteps} from '../course.js';
 import {freezeWorld} from '../freeze.js';
@@ -72,7 +72,7 @@ export function open(start = null) {
  const set = (k, v) => { try { s = validateSettings({...s, [k]: v}); } catch (e) { facts.textContent = e.message; } world = null; take.disabled = true; render(); };
  function render() {
   const groups = CATEGORIES.map(([cat, title, note]) => {
-   const fs = SETTINGS.filter(f => f.category === cat && shownFor(f, s));
+   const fs = SETTINGS.filter(f => f.category === cat);
    if (!fs.length) return null;
    return el('section', {}, el('h3', {}, title), note ? el('p', {class: 'cb-note', style: 'text-align:left'}, note) : null, el('div', {class: 'cb-grid'}, fs.map(f => field(f, s, v => set(f.key, v)))));
   });

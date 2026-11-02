@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {landformOf, wildField, wildAt, wildGate, wildGround, fallenAt, WILD_WATER} from '../src/landforms.js';
-import {GROUNDS, allows} from '../src/grounds.js';
+import {GROUNDS, allows, isNatural} from '../src/grounds.js';
 import {BIOMES} from '../src/biomes.js';
 import {generateWorld} from '../src/course.js';
 import {ownerAtlasSize} from '../src/owner-atlas.js';
@@ -79,7 +79,10 @@ test('each landscape has the ground its recipe asks for, and only where the lie 
   const seen = new Set();
   for (let x = -w.halfX; x < w.halfX; x += 9) for (let z = -w.halfZ; z < w.halfZ; z += 9) {
    const s = w.surface(x, z);
-   if (!GROUNDS[s]) continue;
+   // The landform's own ground (a cart path is a ground too, but laid by
+   // people and bridged over the creeks it crosses: every generated course
+   // has paths since 2 November 2026).
+   if (!GROUNDS[s] || !isNatural(s)) continue;
    seen.add(s);
    const n = w.nearest(x, z);
    // Clear of the corridor envelope by the gate, and of water.
@@ -121,12 +124,11 @@ test('the ground shader asks the lie\'s questions in the lie\'s order', () => {
  assert.match(block, /cv\.a\*smoothstep\(wildGateA\.x,wildGateA\.x\+wildGateA\.y,hd\)/);
  assert.match(block, /cv\.b\*smoothstep\(wildGateB\.x,wildGateB\.x\+wildGateB\.y,hd\)/);
  assert.match(block, /float ff=fallenOn>\.5&&wildKinds\.w>\.5\?cv\.g:0\.;/);
- // Each channel through wildEdge with its own code (Architect's native line,
- // below), in the same order.
+ // Each channel through wildEdge with its own code, in the same order.
  assert.match(block, /wildEdge\(wildKinds\.w,ff\)\);[\s\S]*wildEdge\(wildKinds\.z,fz\)\);[\s\S]*wildEdge\(wildKinds\.y,fy\)\);[\s\S]*wildEdge\(wildKinds\.x,fx\)\);/);
  // And the colour's soft edge straddles the 0.5 the lie switches at.
  assert.match(src, /float wildSoft\(float f\)\{return smoothstep\(\.34,\.66,f\);\}/);
- // On an Architect course native grass (code 9) takes a mower's edge, still
- // centred on the lie's 0.5; every other type, and all of Classic, the soft one.
- assert.match(src, /float wildEdge\(float code,float f\)\{return archGround>\.5&&code==9\.\?smoothstep\(\.48,\.52,f\):wildSoft\(f\);\}/);
+ // Every ground type takes the soft edge (an Architect course's native grass
+ // took a mower's crisp one until the designer was removed, 2 November 2026).
+ assert.match(src, /float wildEdge\(float code,float f\)\{return wildSoft\(f\);\}/);
 });

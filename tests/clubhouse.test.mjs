@@ -6,26 +6,23 @@ import {simulateShot} from '../src/physics.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 import {pathIndex} from '../src/paths.js';
 
-// THE CLUBHOUSE (architect-courses, phase 2; clubhouse.js): every Architect
-// course has one, on clear ground near its first tee and last green, facing the
-// first tee, sized by its club; nothing grows in it or on its lawn; the path
-// reaches its door; and it is solid -- a ball stops against it and is never
-// out of bounds for it. Classic has none.
+// THE CLUBHOUSE (architect-courses, phase 2; clubhouse.js): every generated
+// course has one (an Architect course's alone until the designer was removed,
+// 2 November 2026), on clear ground near its first tee and last green, facing
+// the first tee; nothing grows in it or on its lawn; the path reaches its
+// door; and it is solid -- a ball stops against it and is never out of bounds
+// for it. The range has none.
 
-const A = biome => world({seed: 'CLUB-T', holes: 9, biome, designer: 'architect'});
+const A = biome => world({seed: 'CLUB-T', holes: 9, biome});
 
-// Twenty-seven courses, built on worker threads and measured there (worlds.mjs
-// `measured`; the testing audit, 31 October 2026 -- one thread, the file took
-// a minute and a half). What each test reads is in tests/measure/clubhouse.mjs.
-const EVERY = BIOME_KEYS.map(biome => ({seed: 'CLUB-T', holes: 9, biome, designer: 'architect'}));
-const HOME = ['pnw', 'desert', 'midwest', 'autumn'].flatMap(biome => ['HOME-1', 'HOME-2'].flatMap(seed =>
- [{seed, biome, holes: 9, designer: 'architect'}, {seed, biome, holes: 9}]));
-const LIST = [{seed: 'CLUB-T', holes: 9, biome: 'midwest'}, ...EVERY, ...HOME];
-const M = await measured(LIST, './measure/clubhouse.mjs');
-const of = s => M[LIST.indexOf(s)];
+// Every landscape's course, built on worker threads and measured there
+// (worlds.mjs `measured`; the testing audit, 31 October 2026). What each test
+// reads is in tests/measure/clubhouse.mjs.
+const EVERY = BIOME_KEYS.map(biome => ({seed: 'CLUB-T', holes: 9, biome}));
+const M = await measured(EVERY, './measure/clubhouse.mjs');
+const of = s => M[EVERY.indexOf(s)];
 
-test('every landscape\'s Architect course has its clubhouse; Classic has none', () => {
- assert.equal(M[0].buildings, 0);
+test('every landscape\'s course has its clubhouse', () => {
  for (const s of EVERY) {
   const biome = s.biome, b = of(s).building;
   assert.ok(b, `${biome}: no clubhouse`);
@@ -37,9 +34,7 @@ test('every landscape\'s Architect course has its clubhouse; Classic has none', 
 
 test('it stands on clear ground, faces the first tee, and nothing grows on it or its lawn', () => {
  // Its front (local -z) points at the tee; nothing grows or is built on it or
- // its lawn; it is not on a green, tee, sand or water. Every landscape (was
- // midwest, links, mountain and redwood: measured with the rest, the others
- // cost nothing more).
+ // its lawn; it is not on a green, tee, sand or water. Every landscape.
  assert.deepEqual(EVERY.flatMap(s => of(s).clear), []);
 });
 
@@ -64,16 +59,4 @@ test('a ball hit at the clubhouse stops against it, and is never out of bounds f
   const end = h.toWorld(r.end);
   assert.ok(!inBuilding(b, end.x, end.z), 'it did not finish inside the walls');
  }
-});
-
-// PHASE 4: ROUTED FROM THE CLUBHOUSE (routing.js `homeArch`). An Architect
-// nine comes home: most of its last greens within 200 m of the first tee,
-// where the clubhouse is, and far more than Classic's.
-test('an Architect course\'s nines come home, far more often than Classic\'s', () => {
- let a = 0, c = 0, n = 0;
- for (const biome of ['pnw', 'desert', 'midwest', 'autumn']) for (const seed of ['HOME-1', 'HOME-2']) {
-  n++; a += of(HOME.find(s => s.seed === seed && s.biome === biome && s.designer)).home; c += of(HOME.find(s => s.seed === seed && s.biome === biome && !s.designer)).home;
- }
- assert.ok(a >= n * .75, `Architect: ${a} of ${n} nines home`);
- assert.ok(a > c, `Architect ${a} against Classic ${c}`);
 });

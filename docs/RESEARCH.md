@@ -11992,3 +11992,54 @@ more nines OSM does not map at all -- so overlap understates a trace that
 draws those right; the pictures in bench/shots/imagery/<course>/trace.png
 (local) are looked at with each iteration. Every number in the rules is
 PLACED (trace.js, *mownTurf* and the markless greens).
+
+## Architect removed; its world on every course (2 November 2026)
+
+The owner's decision, the US landscapes goal (PLAN.md 1b, local): "Architect
+mode needs to be removed. We are going to use the new builder and have real
+humans do the work here instead"; tournament week and the people go; cart
+paths and bridges, markings, walls, landmarks and wildlife stay, and "ensure
+paths going over water turn into bridges". No outside source was read for
+this step; the numbers below are the build's.
+
+**What moved.** The clubhouse, paths and bridges, markings and divots, the
+land's story, built water and the animals now run on every generated course
+but the driving range (GENERATOR_VERSION 55: every landscape's fingerprint
+moved, because houses and trees keep off the new pieces). The bench (full
+tier, every landscape, 9 and 18 holes) found 26 bridges and no path point
+over water off a bridge (`paths.pathOverWater`, a new invariant, zero).
+The game's page shrank 1.28 MB to 13,562,273 bytes (DISTRIBUTION_REVIEW).
+
+**Rejected:** keeping Architect's per-course amounts as settings. The
+story's amount, the clubhouse's size and the wear's density each had a
+dial (Heritage, Club, Age); with the dials gone each takes one value rather
+than becoming three new studio sliders, which the owner did not ask for.
+
+**PLACED, each a judgement to revisit with the landscapes' rebuild:**
+
+- **The story's amount** is Architect's *A little* (story.js `AMOUNT.some`)
+  on every course: walls, a farm, ruins and a landmark where the landscape
+  has them, without *A lot*'s second landmark.
+- **The clubhouse is a members' club's size** (clubhouse.js `CLUBHOUSE_SIZE.members`), falling back to a municipal
+  footprint on steep land as before.
+- **Wear at the Mature density** (`placeWear` k = 1): 3-5 divots a tee, 14
+  on a par 3's, 9 in each landing zone.
+- **Edge and fountain per landscape** (biomes.js `WORLD`, which had them by
+  style): rip-rap on Desert, Mountain, Island, Redwood and the generic kit;
+  a natural bank on PNW, Links, Midwest, Autumn and Lakeshore Dunes;
+  fountains allowed on Island, Redwood and the generic kit.
+- **A path end may climb 28% to join** (paths.js `JOIN_GRADE`, against the
+  route's 22% `MAX_GRADE`): Classic's rougher ground left ends a metre or two
+  short of a join over a steeper lip. The steeper grade applies to the join's few metres only.
+- **The clubhouse keeps 10 m off the paths** (course.js, was 3 m): at 3 m the
+  network ran across its lawn on Classic's tighter land.
+- **The clubhouse's link** stops at the first path it crosses, drops a stub
+  under 12 m past that junction, extends a loose end within 8 m only over
+  walkable ground, and falls back to a straight line only when it is 40 m or
+  less and walkable (Mountain W-3 drew a 150 m straight line down a slope).
+
+**What a subtle bug looked like.** On Mountain W-3 the clubhouse's link
+crossed a creek on foot: bridges were found when the network was routed, and
+the link is laid later. `findBridges` now runs again after it; the bridges
+it finds late had no deck height (the deck box sat at zero and a ball fell
+through it) until `setDecks` gave them one.

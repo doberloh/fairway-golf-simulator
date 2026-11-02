@@ -41,8 +41,8 @@ function sharpestOnSeams(w) {
 
 for (const [settings, before] of [
  [{seed: 'HZ-2', holes: 18, biome: 'lakeshore'}, .94],
- [{seed: 'ST-1', holes: 9, biome: 'links', designer: 'architect', archStyle: 'links', archClub: 'members', archAge: 'old', archStory: 'lots'}, .56],
-]) test(`no bank where two corridors meet: ${settings.designer || 'classic'} ${settings.biome} ${settings.seed} (was ${before})`, () => {
+ [{seed: 'ST-1', holes: 9, biome: 'links'}, .56],
+]) test(`no bank where two corridors meet: ${settings.biome} ${settings.seed} (was ${before})`, () => {
  const {worst, seams} = sharpestOnSeams(world(settings));
  assert.ok(seams > 8, `only ${seams} points where the nearest hole changes -- the course no longer tests a seam`);
  assert.ok(worst < .3, `the played ground bends ${worst.toFixed(2)} where two corridors meet`);

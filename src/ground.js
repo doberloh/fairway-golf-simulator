@@ -9,7 +9,6 @@ import {occlusionAtlas} from './occlusion.js';
 import {BLOWOUT_NEAR,BLOWOUT_RAMP,BLOWOUT_WATER} from './blowouts.js';
 import {WILD_WATER} from './landforms.js';
 import {TURF_DETAIL} from './turf-detail.js';
-import {isArchitect} from './settings-schema.js';
 import {FIELD_RANGE} from './surface-field.js';
 import {BUILT_FIELD} from './built-world.js';
 import {GROUNDS} from './grounds.js';
@@ -320,7 +319,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),archGround:{value:isArchitect(w.settings)?1:0},field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -349,7 +348,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
- uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom,archGround;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
+ uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
  uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
@@ -448,12 +447,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The colour's soft edge either side of the 0.5 the lie switches at (round
  // 2: .42-.58 left hard-edged blobs of heather on the links).
  float wildSoft(float f){return smoothstep(.34,.66,f);}
- // THE MOWER'S LINE (Architect, phase 3; the study, D: "a crisp mower's line
- // where mown rough meets native"). A mower leaves a clean edge, not a
- // two-metre blend, so on an Architect course native grass starts within a
- // few hundredths of the 0.5 the lie switches at. Every other ground type,
- // and every Classic course (archGround is 0), keeps the soft edge above.
- float wildEdge(float code,float f){return archGround>.5&&code==9.?smoothstep(.48,.52,f):wildSoft(f);}
+ // (An Architect course's native grass took a mower's crisp edge here until the
+ // designer was removed, 2 November 2026; every ground type keeps the soft
+ // edge above.)
+ float wildEdge(float code,float f){return wildSoft(f);}
  // Distance to one channel station, with its width, channel index and valley
  // shoulder. Returned as xyzw so the shore bands can size themselves from the
  // same numbers the CPU carve and contact queries use.
@@ -662,12 +659,13 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   turf=shoreTint(turf,hd,ps,pb);if(hd<pb.y)kind=6.;}
  else if(hd<0.){turf=tint_sand;kind=5.;}
  else if(hd<.35){turf=mix(turf,tint_sand,.20);}}}
- // THE SURFACE FIELD'S SAND (surface-field.js): an Architect hole's bunkers
+ // THE SURFACE FIELD'S SAND (surface-field.js): a hole's bunkers
  // past the twelve slots, painted as a slot bunker is -- sand inside, a
  // sandy lip 0.35 m out -- over the rough, semi-rough and fairway, which is
  // where course.js surface reads the same bytes as sand. A tee's ground is
- // left alone: a field bunker is a hand's or a lobe, and both are kept 10 m
- // from a tee (hand-tools.js clearOfPlay), so the lie never meets one there.
+ // left alone: a field bunker was Architect's hand or a lobe, both kept 10 m
+ // from a tee (its hand-tools.js clearOfPlay, removed 2 November 2026), and
+ // whatever adds one again must keep it off the tees, or the lie meets it.
  if(fieldOn>.5&&kind<2.5&&teeGround<.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   float fd=(.5-texture2D(field,(wp/extent+1.)*.5).r)*${(2*FIELD_RANGE).toFixed(1)};
   if(fd<=0.){turf=tint_sand;kind=5.;}
@@ -784,14 +782,6 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(fy>0.)c=mix(c,groundPaint(wildKinds.y,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.y,fy));
   if(fx>0.)c=mix(c,groundPaint(wildKinds.x,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.x,fx));
   turf=c;
-  // The line itself: the mown side darkened where the uncut grass stands
-  // over it, the native side lit where its seed heads catch the sun. Read
-  // from whichever channel holds native grass. Strengths PLACED, by eye.
-  if(archGround>.5){
-   float nf=max(max(wildKinds.x==9.?fx:0.,wildKinds.y==9.?fy:0.),max(wildKinds.z==9.?fz:0.,wildKinds.w==9.?ff:0.));
-   if(nf>.38&&nf<.5)turf*=1.-.2*smoothstep(.38,.5,nf);
-   else if(nf>=.5&&nf<.58)turf*=1.+.1*(1.-smoothstep(.5,.58,nf));
-  }
   // Which ground the lie says this is, for the detail atlas below.
   wildTop=fx>=.5?wildKinds.x:fy>=.5?wildKinds.y:fz>=.5?wildKinds.z:ff>=.5?wildKinds.w:0.;
  }
@@ -1238,39 +1228,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    turf*=1.-occ*vec3(.95,.9,.78);
   }
  }
- // HEIGHTS READ AS HEIGHTS (Architect, phase 3; the study, D). Green about
- // 0.15 in, fringe and fairway about 0.4, first cut 1.5, rough 2.5 (USGA,
- // RESEARCH.md *Mowing heights*): where a shorter cut meets a taller one, the
- // taller grass stands over the edge as a little wall -- a shadow on the short
- // side, its lit tips on the tall side -- so the eye reads a step, not a seam
- // of two greens. Each step's strength follows the difference in height
- // (PLACED, by eye); a line a few centimetres wide is widened to two pixels and fades out where even that is too small to hold. Not on tees,
- // which are their own ground. Classic (archGround 0) never comes here.
- // (The pixel size is taken before the per-fragment test: a derivative inside
- // a branch that differs between neighbouring pixels is undefined.)
- if(archGround>.5){float mpp=length(fwidth(wp));if(teeGround<.5&&kind>.5&&kind<4.5){
-  float band=max(.4,mpp*2.),fade=1.-smoothstep(.5,1.5,mpp);
-  // Signed distance to the edge of this band against the next taller one
-  // (negative inside the shorter), and how big that step is.
-  float semiD=min(max(max(abs(p.x-curve.x)-outerWidth,start-p.y),p.y-end),greenD-(info.z+info.w));
-  // The fairway's edge only along its own length (fw runs the whole hole).
-  float fwIn=p.y>mowStart&&p.y<info.x+8.?fw:1e3;bool onFairway=fwIn<0.;
-  float e=0.,rise=0.;
-  if(kind==4.){e=greenD;rise=.35;}
-  else if(kind==3.){e=greenD-info.z;rise=onFairway?0.:.6;if(greenD<-e){e=greenD;rise=-.35;}}
-  else if(kind==2.){e=fw;rise=.75;}
-  else if(kind==1.){
-   // The first cut: its own outer edge to the rough, and its inner edge, lit,
-   // where the fairway or fringe below it ends.
-   float inner=min(fwIn,greenD-info.z);
-   if(-semiD<inner){e=semiD;rise=.45;}else{e=-inner;rise=-.75;}
-  }
-  float near=1.-smoothstep(0.,band,abs(e));
-  // A positive step: this band is the shorter, in the taller one's shadow;
-  // a negative one: this is the taller, its tips lit at the edge.
-  // (Round 2: at 16% either way it could not be seen at eye height.)
-  turf*=1.-(rise>0.?.3:.2)*rise*near*fade;
- }}
+ // (An Architect course drew each mown band's edge as a small step -- a shadow
+ // on the short side, lit tips on the tall side -- until the designer was
+ // removed, 2 November 2026.)
  // THE TURF DETAIL ATLAS (the cartoon overhaul; tools/turf-detail.mjs): the
  // hand-made texture of each surface, one channel each -- R grass strokes for
  // rough and the grassy grounds, G a mown nap for fairway, fringe, tee and

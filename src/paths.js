@@ -1,5 +1,5 @@
 // CART PATHS (architect-courses, phase 2; the study, workstream H; absorbs the
-// IDEAS entry *Cart paths*). An Architect course's paths: down each hole on
+// IDEAS entry *Cart paths*). A course's paths: down each hole on
 // its bail-out side, out of play beyond the rough, round its hazards, past the
 // green to a pull-off, and on to the next tee -- where a cart path at a real
 // course runs (USGA: near where shots land but out of play, close to tees, a
@@ -7,19 +7,20 @@
 //
 // A path is world data: the lie is "Cart path" (grounds.js `path`), trees and
 // houses keep off it, the renderer lays a strip along it, and a ball that
-// comes to rest on it gets free relief (relief.js `pathRelief`). Classic has
-// none -- generation only builds paths for an Architect course.
+// comes to rest on it gets free relief (relief.js `pathRelief`). Every
+// generated course has them since Architect was removed (2 November 2026);
+// before, only an Architect course did. The range has none.
 //
 // Pure: no DOM, no three.js. tests/paths.test.mjs.
 
-import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
+import {WORLD, WORLD_GENERIC} from './biomes.js';
 
 // Width by club (PLACED within the study's 8 ft norm and the 48 in accessible
 // route): a municipal course's narrower, a resort's wide enough for two carts.
 const WIDTH = {municipal: 2.1, members: 2.4, resort: 3.0, championship: 2.6};
 // What the path is made of, by landscape (PLACED): the study's paths table.
 // Each landscape's path surface is its architect block's (biomes.js).
-export const PATH_KINDS = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.path]));
+export const PATH_KINDS = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.path]));
 // THE PATH NETWORK, ROUTED (the owner's review, 30 October 2026: "spaghetti",
 // paths across greens, tees and fairways, unnatural turns, unwalkable
 // slopes). A cost grid over the course, CELL metres a side, and A* across it:
@@ -38,7 +39,7 @@ export const PATH_KINDS = Object.fromEntries(Object.entries(ARCHITECT).map(([k, 
 // All weights PLACED.
 
 export const CELL = 6;
-export const MAX_GRADE = .22;
+export const MAX_GRADE = .22, JOIN_GRADE = .28;
 const BLOCKED = new Set(['green', 'fringe', 'tee', 'sand']);
 const DEAR = {fairway: 9, semi: 5};
 
@@ -254,7 +255,7 @@ function waypoints(h, s) {
 export const SPUR = 3 * CELL;
 export function routePaths({holes, s, surface, streams, ravines = [], height = null}) {
  if (!holes?.length) return {paths: [], bridges: [], connect: () => null, block: () => {}};
- const width = WIDTH[s.archClub] ?? WIDTH.members, kind = PATH_KINDS[s.biome] || ARCHITECT_GENERIC.path;
+ const width = WIDTH.members, kind = PATH_KINDS[s.biome] || WORLD_GENERIC.path;
  const grid = costGrid({holes, s, surface, streams, height, ravines});
  const pieces = [];
  const cellAt = p => { const [i, j] = grid.cellOf(p); return i < 0 || j < 0 || i >= grid.nx || j >= grid.nz ? -1 : j * grid.nx + i; };
@@ -277,7 +278,14 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  };
  // A straight line crossing only open ground; how sharply a line turns at b
 // (the cosine: -1 straight back).
- const open = (a, b) => { const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 0; t <= n; t++) if (!Number.isFinite(grid.costAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n))) return false; return true; };
+ // Open: nothing blocked on the way, and nothing climbed steeper than
+ // MAX_GRADE (2 November 2026: an end run on to the network took a 35% step
+ // on Redwood ST-1 and 41% on Mountain PA-3, where only blocked ground was
+ // asked; the same rule as segmentCost).
+// A JOIN may climb a little more than a route (JOIN_GRADE, PLACED: a few
+ // steps up to the path it meets), so an end no longer stops short of the
+ // network for want of a grade.
+ const open = (a, b, limit = MAX_GRADE) => { const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 2)); let prev = grid.heightAt(a.x, a.z); for (let t = 0; t <= n; t++) { const x = a.x + (b.x - a.x) * t / n, z = a.z + (b.z - a.z) * t / n; if (!Number.isFinite(grid.costAt(x, z))) return false; if (t) { const h = grid.heightAt(x, z); if (Math.abs(h - prev) / (d / n) > limit && !grid.spanAt?.(x, z)) return false; prev = h; } } return true; };
  const segDistance = (p, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)); return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t); };
  const turn = (a, b, c) => { const ux = b.x - a.x, uz = b.z - a.z, vx = c.x - b.x, vz = c.z - b.z; return (ux * vx + uz * vz) / ((Math.hypot(ux, uz) * Math.hypot(vx, vz)) || 1); };
  const join = (line, at) => {
@@ -395,7 +403,7 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  // is a jog the network no longer needs.
  for (const line of pieces) for (const at of [0, line.length - 1]) {
   const n = nearestOther(line[at], line);
-  if (!n || n.d < .05 || n.d > CELL * 1.5 || !open(line[at], n.q)) continue;
+  if (!n || n.d < .05 || n.d > CELL * 1.5 || !open(line[at], n.q, JOIN_GRADE)) continue;
   // Stopping at the first piece the run on crosses (the capture
   // `rev-club-above`: it ran on across one path to reach another).
   {const p = line[at], dx = n.q.x - p.x, dz = n.q.z - p.z;
@@ -412,7 +420,7 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
   // that moves and the ground straight to it is open.
   const prev = line[at ? at - 1 : 1];
   const joinsHere = pieces.some(o => o !== line && [o[0], o[o.length - 1]].some(e => segDistance(e, prev, line[at]) < .05 && Math.hypot(e.x - prev.x, e.z - prev.z) > .05));
-  if (line.length > 1 && turn(prev, line[at], n.q) < -.17 && !joinsHere && open(prev, n.q)) line[at] = n.q;
+  if (line.length > 1 && turn(prev, line[at], n.q) < -.17 && !joinsHere && open(prev, n.q, JOIN_GRADE)) line[at] = n.q;
   else if (at) line.push(n.q); else line.unshift(n.q);
  }
  const joinedBoth = line => [line[0], line[line.length - 1]].every(p => (nearestOther(p, line)?.d ?? Infinity) < .05);
@@ -433,30 +441,19 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
    // Or, where that stretch carries a join, the end joined afresh from the
    // point before the fold -- unless another piece's end meets this one.
    const n = nearestOther(b, line), shared = pieces.some(o => o !== line && [o[0], o[o.length - 1]].some(e => Math.hypot(e.x - a.x, e.z - a.z) < .05));
-   if (!shared && !onIt(a, b) && n && n.d < CELL * 1.5 && open(b, n.q) && turn(n.q, b, c) >= -.17) line[end ? line.length - 1 : 0] = n.q;
+   if (!shared && !onIt(a, b) && n && n.d < CELL * 1.5 && open(b, n.q, JOIN_GRADE) && turn(n.q, b, c) >= -.17) line[end ? line.length - 1 : 0] = n.q;
    break;
   }
  }
  const paths = pieces.filter(p => p.length >= 2).map(points => ({points, width, kind}));
- // Bridges: a run of points over a creek or a ravine, on each piece.
- const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r; });
- const wet = p => { const st = streams?.at?.(p.x, p.z); return (!!st && st.edge <= 0) || inRavine(p); };
- const bridges = [];
- for (const path of paths) {
-  // Resampled every 2 m so a narrow creek between two points is not missed.
-  const pts = [];
-  path.points.forEach((p, k) => { if (k) { const o = path.points[k - 1], n = Math.max(1, Math.ceil(Math.hypot(p.x - o.x, p.z - o.z) / 2)); for (let t = 1; t <= n; t++) pts.push({x: o.x + (p.x - o.x) * t / n, z: o.z + (p.z - o.z) * t / n}); } else pts.push(p); });
-  let start = -1;
-  for (let i = 0; i <= pts.length; i++) {
-   const w = i < pts.length && wet(pts[i]);
-   if (w && start < 0) start = i;
-   if (!w && start >= 0) {
-    const a = pts[Math.max(0, start - 1)], b = pts[Math.min(pts.length - 1, i)];
-    bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
-    start = -1;
-   }
-  }
- }
+ // Bridges: a run of points over water -- a creek, a pond or a lake -- or a
+ // ravine, on each piece. EVERY PATH OVER WATER IS A BRIDGE (the owner, 2
+ // November 2026): the router keeps off ponds and lakes, but a rounded line
+ // or a joined end can still pass over an edge of one, and only creeks were
+ // tested; `surface` here is the ground before any path was laid, so it says
+ // water wherever there is water. The bench holds it (`pathOverWater`) and
+ // tests/paths.test.mjs.
+ const bridges = findBridges(paths, {surface, streams, ravines, width});
  // The link ends ON the network (it ended on its last cell's centre, a few
  // metres off it), and its own drawn cells join the network after it.
  // Cut back, like the legs, to a path it crosses near its end (the capture
@@ -558,7 +555,10 @@ export function pathIndex(paths, cell = 16) {
 // front, a few metres out -- to the nearest point of the network, routed like
 // the rest (a straight line from the door crossed whatever lay between). A
 // piece of its own; `door` marks it.
-export function linkBuilding(paths, b, connect) {
+export function linkBuilding(paths, b, connect, height = null) {
+ // Walkable: no step steeper than MAX_GRADE along it, every 2 m (true where no
+ // height is given).
+ const walkable = (p, q, limit = MAX_GRADE) => { if (!height) return true; const d = Math.hypot(q.x - p.x, q.z - p.z), n = Math.max(1, Math.ceil(d / 2)); let prev = height(p.x, p.z); for (let t = 1; t <= n; t++) { const h = height(p.x + (q.x - p.x) * t / n, p.z + (q.z - p.z) * t / n); if (Math.abs(h - prev) / (d / n) > limit) return false; prev = h; } return true; };
  const cs = Math.cos(b.rotation), sn = Math.sin(b.rotation), out = b.depth / 2 + 6;
  // The front is the building's local -z (clubhouse.js faces it to the tee).
  const door = {x: b.x - sn * out, z: b.z - cs * out};
@@ -574,11 +574,96 @@ export function linkBuilding(paths, b, connect) {
  // Routed round the building (routePaths `block`). A straight line only
  // where the router found nothing and the line misses the building.
  let line = connect?.(door, near.q);
- if (!line) { line = [door, near.q]; if (pathTouches([{points: line, width: paths[0].width}], b, .5)) return null; }
+ // The straight fallback only where it is short and walkable (Mountain
+ // overhaul, 2 November 2026: a 150 m line straight down a 46% slope).
+ if (!line) { line = [door, near.q]; if (pathTouches([{points: line, width: paths[0].width}], b, .5) || near.d > 40 || !walkable(door, near.q)) return null; }
  // Up to the front itself (the capture `arch-club`: it stopped 6 m short,
  // in the grass), then out to the routed line.
  const face = {x: b.x - sn * (b.depth / 2 + .3), z: b.z - cs * (b.depth / 2 + .3)};
- const piece = {points: [face, door, ...line.slice(1)], width: paths[0].width, kind: paths[0].kind, door};
+ let pts = [face, door, ...line.slice(1)];
+ // THE LINK ENDS WHERE IT FIRST MEETS THE NETWORK (2 November 2026: on a
+ // generated course, where the clubhouse stands among the first and last
+ // holes' paths, the routed link crossed a path and ran on to join another
+ // -- Autumn PATHS-T crossed four, each a few metres short of its end). Cut
+ // at the first crossing, walking out from the door.
+ const crossing = (a, c) => { let best = null; for (const p of paths) for (let k = 1; k < p.points.length; k++) { const u = p.points[k - 1], v = p.points[k], dx = c.x - a.x, dz = c.z - a.z, ex = v.x - u.x, ez = v.z - u.z, den = dx * ez - dz * ex; if (Math.abs(den) < 1e-9) continue; const t = ((u.x - a.x) * ez - (u.z - a.z) * ex) / den, w = ((u.x - a.x) * dz - (u.z - a.z) * dx) / den; if (t > 1e-3 && t <= 1 && w >= 0 && w <= 1 && (!best || t < best)) best = t; } return best; };
+ for (let k = 2; k < pts.length; k++) { const t = crossing(pts[k - 1], pts[k]); if (t !== null) { const a = pts[k - 1], c = pts[k]; pts = [...pts.slice(0, k), {x: a.x + (c.x - a.x) * t, z: a.z + (c.z - a.z) * t}]; break; } }
+ // Where it meets a piece within 12 m of that piece's loose end, the end
+ // past the junction is a stub to nowhere (Autumn PATHS-T, 10 m): cut off.
+ {const j = pts[pts.length - 1];
+  for (const o of paths) for (let k = 1; k < o.points.length; k++) {
+   const u = o.points[k - 1], v = o.points[k], dx = v.x - u.x, dz = v.z - u.z, l = Math.hypot(dx, dz) || 1, t = ((j.x - u.x) * dx + (j.z - u.z) * dz) / (l * l);
+   if (t < -1e-6 || t > 1 + 1e-6 || Math.abs((j.x - u.x) * dz - (j.z - u.z) * dx) / l > .05) continue;
+   const loose = e => { for (const p of paths) if (p !== o) for (let m = 1; m < p.points.length; m++) { const a = p.points[m - 1], c = p.points[m], ex = c.x - a.x, ez = c.z - a.z, l2 = ex * ex + ez * ez || 1, s = Math.max(0, Math.min(1, ((e.x - a.x) * ex + (e.z - a.z) * ez) / l2)); if (Math.hypot(e.x - a.x - ex * s, e.z - a.z - ez * s) < .05) return false; } return true; };
+   let before = t * l; for (let m = 1; m < k; m++) before += Math.hypot(o.points[m].x - o.points[m - 1].x, o.points[m].z - o.points[m - 1].z);
+   let after = (1 - t) * l; for (let m = k + 1; m < o.points.length; m++) after += Math.hypot(o.points[m].x - o.points[m - 1].x, o.points[m].z - o.points[m - 1].z);
+   const q = {x: j.x, z: j.z};
+   if (before < 12 && before > .05 && loose(o.points[0])) o.points.splice(0, k, q);
+   else if (after < 12 && after > .05 && loose(o.points[o.points.length - 1])) o.points.splice(k, o.points.length - k, q);
+   break;
+  }}
+ const piece = {points: pts, width: paths[0].width, kind: paths[0].kind, door};
+ // And a loose end the link now passes close by (an end that stopped in the
+ // open, 0.3-8 m from the new line) runs on to it, as the router's own ends
+ // do (*NO STUB PAST A JUNCTION*), stopping at any path on the way.
+ const segDist = (p, a, c) => { const dx = c.x - a.x, dz = c.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)); return {d: Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t), q: {x: a.x + dx * t, z: a.z + dz * t}}; };
+ const toNetwork = (e, self) => { let d = Infinity; for (const o of paths) if (o.points !== self) for (let k = 1; k < o.points.length; k++) d = Math.min(d, segDist(e, o.points[k - 1], o.points[k]).d); return d; };
+ for (const o of paths) for (const at of [0, o.points.length - 1]) {
+  const e = o.points[at];
+  if (toNetwork(e, o.points) < .05) continue;
+  let near = null; for (let k = 1; k < pts.length; k++) { const s2 = segDist(e, pts[k - 1], pts[k]); if (!near || s2.d < near.d) near = s2; }
+  if (!near || near.d > 8 || near.d < .05 || crossing(e, near.q) !== null && crossing(e, near.q) < .999 || !walkable(e, near.q, JOIN_GRADE)) continue;
+  if (at) o.points.push(near.q); else o.points.unshift(near.q);
+ }
  paths.push(piece);
  return piece;
+}
+
+// Whether (x, z) is on a bridge's deck: within its span along its line and its
+// width across (the bench's `pathOverWater`, tests/paths.test.mjs).
+export function onBridge(bridges, x, z, pad = 0) {
+ for (const b of bridges || []) {
+  const ax = Math.sin(b.angle), az = Math.cos(b.angle), dx = x - b.x, dz = z - b.z;
+  if (Math.abs(dx * ax + dz * az) <= b.span / 2 + pad && Math.abs(dx * az - dz * ax) <= b.width / 2 + pad) return true;
+ }
+ return false;
+}
+
+// Every point of every path, every 2 m, that stands on water and on no bridge:
+// none should (the owner, 2 November 2026: every path over water is a bridge).
+// `water(x, z)` is the world's own test: its surface says water.
+export function unbridgedWater(paths, bridges, water) {
+ const out = [];
+ for (const path of paths || []) for (let k = 1; k < path.points.length; k++) {
+  const o = path.points[k - 1], p = path.points[k], n = Math.max(1, Math.ceil(Math.hypot(p.x - o.x, p.z - o.z) / 2));
+  for (let t = 0; t <= n; t++) { const x = o.x + (p.x - o.x) * t / n, z = o.z + (p.z - o.z) * t / n; if (water(x, z) && !onBridge(bridges, x, z, 1)) out.push({x, z}); }
+ }
+ return out;
+}
+
+// THE BRIDGES OF A NETWORK: a run of points over water or a ravine, on each
+// piece (routePaths, above, and again once the clubhouse's link is laid --
+// course.js -- which a creek between the door and the network once crossed
+// dry-shod: Mountain W-3, 2 November 2026). `surface` must be the ground
+// before any path was laid.
+export function findBridges(paths, {surface, streams, ravines = [], width}) {
+ const inRavine = p => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((p.x - r.ax) * dx + (p.z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(p.x - r.ax - dx * t, p.z - r.az - dz * t) < r.r; });
+ const wet = p => { const st = streams?.at?.(p.x, p.z); return (!!st && st.edge <= 0) || surface(p.x, p.z) === 'water' || inRavine(p); };
+ const bridges = [];
+ for (const path of paths) {
+  // Resampled every 2 m so a narrow creek between two points is not missed.
+  const pts = [];
+  path.points.forEach((p, k) => { if (k) { const o = path.points[k - 1], n = Math.max(1, Math.ceil(Math.hypot(p.x - o.x, p.z - o.z) / 2)); for (let t = 1; t <= n; t++) pts.push({x: o.x + (p.x - o.x) * t / n, z: o.z + (p.z - o.z) * t / n}); } else pts.push(p); });
+  let start = -1;
+  for (let i = 0; i <= pts.length; i++) {
+   const w = i < pts.length && wet(pts[i]);
+   if (w && start < 0) start = i;
+   if (!w && start >= 0) {
+    const a = pts[Math.max(0, start - 1)], b = pts[Math.min(pts.length - 1, i)];
+    bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
+    start = -1;
+   }
+  }
+ }
+ return bridges;
 }

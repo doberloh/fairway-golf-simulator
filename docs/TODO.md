@@ -41,17 +41,19 @@ truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
 landscapes are off, performance and testing are not. In order (PLAN.md
 section 6); nothing ships early -- the branch merges when all of it is done.
 
-- [ ] **Remove Architect** (the designer, its styles and hole design, hand
-  tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
-  doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the
-  people** (`life.js`); **move into the generator** the paths and bridges,
-  clubhouse, markings, waterworks, walls, landmarks, wildlife, yardage book
-  and surface field, with **every path over water a bridge** (PLAN.md 1b).
-  Saved Architect courses migrate.
-- [ ] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
-  date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
-  meshes, names, tests, captures and fixtures. Saved courses migrate to New
-  England in autumn.
+- [ ] **Not yet played by a person: the world round the holes on every
+  generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
+  clubhouse, cart paths and bridges, markings and divots, the land's story,
+  fountains and rip-rap, and the animals were Architect's and are now on every
+  course but the range. Tested in Node (every landscape: a clubhouse, one path
+  network, every path over water a bridge -- the bench's `pathOverWater` is
+  zero on every course) and driven by the smoke journey `course-pieces-round`
+  (a saved generated course played to the hole-out). Not seen by eye: none
+  of it captured or played on the new ground. To check: a Midwest and a
+  Mountain eighteen -- does each clubhouse sit well, does its path reach the
+  network without a stub, does every creek crossing have a bridge, do the
+  animals move (High), and does the pause menu's *Yardage book* download?
+  A ball hit onto a bridge and against a wall in a round (Node only).
 - [ ] **Foundations**: the `REGION` table and inheritance; the new keys and
   player names (study's data/names.json) with one `MIGRATIONS` entry from
   today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
@@ -227,103 +229,6 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
   game's does not confuse it (tell the owner).
 
-## Architect courses (branch `architect-courses`, from 30 October 2026)
-
-The owner's goal: build the whole local study, phases 0-7; the record is
-[ARCHITECT_COURSES.md](ARCHITECT_COURSES.md). Picked from IDEAS.md, with
-*Cart paths*, *Bridges over creeks*, *Scalloped bunker edges* and *Routing
-quality measures*, which it absorbs.
-
-**The play checks below block nothing** (the owner, 31 October 2026): the
-owner plays them as and when, and the branch moves on without waiting.
-
-- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
-  October 2026, the owner's third word on the branch; rendering only, no
-  version moves). Built and tested in Node only -- no capture, no frame
-  measured. To check on Links (an 18-hole course, Medium and Low): from a
-  tee, looking across heather -- past about 48 m the cushions should give way
-  to low purple-and-olive domes rather than flat purple ground, with no ring
-  where one becomes the other, and the domes sinking away at the tier's
-  long-grass reach (Low 90 m, Medium 130 m); Haunted Hollow's moor the same in
-  dark brown, sparser. And the eleven models whole: tussocks and logs
-  (Haunted, Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
-  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
-  triangles in reach of a Links tee on Medium (32,000 on Haunted), against the
-  long grass's millions -- a `profile --only biomes` would settle it.
-- [ ] **Not yet played by a person: the studio's *How the course is made*.**
-  Choose Architect (beta): the sliders the architect decides should go, the
-  *Architect (beta)* heading with Style, Club, Age and Heritage should
-  appear, each with its sentence under it changing as the choice changes
-  (built in the owner's review; not seen), and the card should stay without its length slider; choose Classic
-  again and everything returns. Save the course and export its code: both
-  should come back as Architect. (Phase 0: Node tests, and the
-  `architect-studio` smoke journey drives all of it but the code export.)
-- [ ] **Not yet played by a person: phase 1, holes designed against the
-  shots.** Seen from above (CPU maps) and from four GPU views of one Midwest
-  course: bunkers where drives land, fairways that tuck round them, avenues.
-  To check: a few Architect rounds in different styles -- do the holes read as
-  designed, and do they play fairly (the virtual golfer, at the end of the
-  goal: 0.82 strokes per 18 harder than Classic, 0.17 after the owner's
-  review; hardest on Haunted Hollow and PNW at the goal's end; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
-- [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
-  their bridges (seen in GPU captures), free relief when a ball stops on a
-  path (Node only: no ball was played onto one in the game), the hole's name
-  in the hole panel and the architect's note as a hole is arrived at (built,
-  not seen), the crest and founding line on the final scorecard (not seen),
-  flags by pin position (seen: a white middle flag).
-- [ ] **Not yet played by a person: phases 2 (rest) to 5.** Seen in GPU
-  captures only: stakes, posts and rakes; the clubhouse in every landscape;
-  collection areas, lobes and divots; mounds, rip-rap, tie walls, fountains
-  and the bridge kit (timber and stone). Not seen at all: a ball landing on a
-  bridge in a round (Node only: one dropped on a deck stops there and is
-  called in the water) and a round's nines coming home (measured, not seen).
-  To check: play an Architect Parkland or Stadium course with water and
-  creeks (story "A lot"); hit one at a bridge.
-- [ ] **Not yet played by a person: phase 6's first half.** Seen in GPU
-  captures: the farmstead, the walls, the ruins, the lighthouse on its line,
-  the stone circle; the Dell, the Alps, the Barranca and the Pit. Not seen:
-  a ball against a wall or the Pit's wall in a round (Node only), a carry
-  over a barranca. To check: an Architect Links or Golden Age course with a
-  lot of story.
-- [ ] **Not yet played by a person: phase 6's second half.** Seen in GPU
-  captures: sheep, deer, elk, geese, a heron, a roadrunner, a raven, the
-  walkers and the mower; none on Low; hollows and stumps. Not seen: the
-  animals moving in a round (they turn and circle; the captures are stills),
-  gulls (Lakeshore's flew out of frame). To check: a round on an Architect
-  Links course on High, watching the flock and the gulls.
-- [ ] **Not yet played by a person: phase 7.** Seen in GPU captures:
-  tournament week on Midwest, Links and PNW, Thursday to Sunday, none of the
-  crowd on Low. Seen as a PDF: the yardage book. Not seen: the pause menu's
-  *Yardage book* item clicked in the game, a ball hit at a stand in a round.
-  To check: an Architect Championship course on Sunday; pause, Yardage book.
-- [ ] **Not yet played by a person: the owner's review (30 October 2026).**
-  Seen in GPU captures: the cart paths (six iterations), the fountain moving
-  (five; a drop measured rising), the people, crowd and mower (ten each), the
-  Alps as a broad hill, Links ST-1's fairways in two pairs. Seen in Node
-  only: rakes in the sand, divots toward the green, scattered stumps, trees
-  by age, a path bridging a barranca. Driven by the smoke journey: the
-  dials' sentences and the studio's yardage book. Not seen at all: the paths
-  on the map, the walkers' bob in
-  motion. (The scoreboard following a played round is now driven by the
-  smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
-  Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
-- [ ] **Not yet played by a person: the owner's second review** (31 October
-  2026, ARCHITECT_VERSION 20, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
-  owner's second review*). Seen in captures (Midwest and Links ST-1: the
-  clubhouse and its path, a pull-off, the path over the dunes, the shared
-  fairways, the sharpest bend left) and driven by the smoke journeys
-  `architect-studio` and `architect-round`. Not seen: the owner's own
-  Midwest and Links holes (seeds unknown) -- to check, look at them again.
-- [ ] **Not yet played by a person: the surface field and the turned greens**
-  (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
-  in GPU captures only: a green turned to its approach from above, the
-  mowing-height step at a fairway's edge, the mower's line at native grass
-  on Midwest, a bunker drawn from the field (sixteen hand bunkers on a hole).
-  Tested in Node: field bunkers play as sand. Not seen: a ball played out of
-  a field bunker, a putt on a turned green, the native line on Links and
-  Lakeshore (the capture view landed on a path). To check: put more than
-  twelve bunkers on a hole in the studio, play into the last ones; play a
-  dogleg's approach to its turned green.
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
 - [x] **The drop bar and the Tools window: three lines low on their own
@@ -446,7 +351,7 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   as tables with red-rock sides, its scrub in clumps with bare sand between,
   and its hardpan runs past the course's edge with no line; Lakeshore's far
   land dune woodland, not a carpet; Island's islets sit on the horizon;
-  Haunted Hollow's far trunks read dead; Autumn's evergreens dark crowns in
+  Autumn's evergreens dark crowns in
   the canopy, no spikes on the horizon. The wait as a course loads is
   0.3-0.5 s longer on the wooded landscapes (measured, not felt).
 - [ ] **Links' double fairways have been judged from above and in captures,
@@ -484,9 +389,8 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
   the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,
   agave -- generator 41; does a ball still hit a saguaro where it is drawn?),
-  the Island's palms and hala, Haunted Hollow's dead trees, the houses
-  (does a ball off a wall bounce where the wall is drawn?), the pumpkins and
-  toadstools (do lantern faces sit on the skin?), the redwood grove and
+  the Island's palms and hala, the houses
+  (does a ball off a wall bounce where the wall is drawn?), the redwood grove and
   the deadfall,
   built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
   packs*). Check in a round: crowns light as one soft body with no speckle;
@@ -1242,6 +1146,18 @@ are in the archived section of the same name.
 
 ## Graphics
 
+- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
+  October 2026, the owner's third word on Architect's branch; rendering only, no
+  version moves). Built and tested in Node only -- no capture, no frame
+  measured. To check on Links (an 18-hole course, Medium and Low): from a
+  tee, looking across heather -- past about 48 m the cushions should give way
+  to low purple-and-olive domes rather than flat purple ground, with no ring
+  where one becomes the other, and the domes sinking away at the tier's
+  long-grass reach (Low 90 m, Medium 130 m). And the eleven models whole: tussocks and logs
+  (Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
+  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
+  triangles in reach of a Links tee on Medium, against the
+  long grass's millions -- a `profile --only biomes` would settle it.
 - [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it.**
   Smoke journeys run with the owner's go-ahead (23 October), one at a time,
   the card checked before each: `hud-reachable`, `range`, `endless-round`,
@@ -1545,7 +1461,7 @@ per category.
   ball-light-hole-out, boot, range pass; fingerprint unchanged. **Not run:
   `npm run profile`** -- vegetation.js now tests every boulder, log, house and
   prop when the camera moves (about ten minutes on the graphics card; ask
-  first). Not seen: a house or pumpkin cleared in play, the menu camera
+  first). Not seen: a house cleared in play, the menu camera
   clearing a fir (it needs the right showcase hole).
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
@@ -1618,7 +1534,7 @@ green everywhere, and every mode but the range under one Play.
   owner's three reviews; the smoke journeys `architect-studio` and
   `architect-round` last ran on the branch on 31 October, before the far
   heath and the models. Not seen in the game: the far heath, the eleven
-  unwrapped models (Architect section above). Website redeployed with it.
+  unwrapped models (Graphics, above). Website redeployed with it.
 
 ## Release 0.9.5 (27 October)
 
@@ -1734,6 +1650,45 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## US landscapes (branch `course-builder`, from 2 November 2026)
+
+- [x] **Remove Architect** (the designer, its styles and hole design, hand
+  tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
+  doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the
+  people** (`life.js`); **move into the generator** the paths and bridges,
+  clubhouse, markings, waterworks, walls, landmarks, wildlife, yardage book
+  and surface field, with **every path over water a bridge** (PLAN.md 1b).
+  Saved Architect courses migrate.
+- [x] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
+  date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
+  meshes, names, tests, captures and fixtures. Saved courses migrate to New
+  England in autumn.
+  **Built** (commits 53c4aa2, ee77600 and step 1c): Haunted Hollow, its date
+  switch and assets gone, saves opening on Autumn (SCHEMA_VERSION 15); the
+  people and tournament week gone; Architect gone -- designer.js,
+  architect.js, architect-styles.js, hand-tools.js, `ARCHITECT_VERSION`, the
+  studio's choice, four suites, two smoke journeys, architect-difficulty.mjs
+  and the Architect fingerprint store; an Architect save loads as an ordinary
+  course (SCHEMA_VERSION 16, the version notice shown). The world pieces run
+  on every generated course from their own streams (world-stream.js), each
+  landscape's kit its `WORLD` block; `findBridges` makes every path over
+  water a bridge, the clubhouse's link included, held by a test on every
+  landscape and the bench's `pathOverWater` invariant. GENERATOR_VERSION 55.
+  Not seen by a person: the open entry *the world round the holes*.
+
+## Architect courses (branch `architect-courses`, from 30 October 2026)
+
+- [x] **Closed unplayed on 2 November 2026: Architect was removed** (the US
+  landscapes goal). The open play checks -- the studio's *How the course is
+  made*, phase 1's designed holes, phases 2-7 (paths, relief, hole names and
+  the architect's note, the crest's founding line, markings, the clubhouse,
+  collection areas, mounds, waterworks, the story and the land's templates,
+  life, tournament week, the yardage book), the owner's two reviews, and the
+  surface field and turned greens -- were never played by a person. What
+  survives the removal is checked under *US landscapes*, *the world round the
+  holes*; the far heath entry moved to *Graphics*. The entries' text is in
+  git history (this file before step 1c).
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 

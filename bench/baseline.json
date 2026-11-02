@@ -7,12 +7,16 @@
   "blind",
   "channels",
   "ponds",
-  "bunkers"
+  "bunkers",
+  "seated",
+  "farSeated",
+  "design",
+  "paths"
  ],
  "set": {},
- "courses": 35,
- "wallSeconds": 15.1,
- "buildSeconds": 350.1,
+ "courses": 40,
+ "wallSeconds": 31.1,
+ "buildSeconds": 529.2,
  "invariants": {
   "tees.teeBelowTheOneInFront": 0,
   "tees.padOnGroundItMayNotUse": 0,
@@ -21,105 +25,122 @@
   "teeclear.rockInTheTeeView": 0,
   "teeclear.treeInATeeShot": 0,
   "teeclear.treeInTheTeeView": 0,
+  "teeclear.bushInTheTeeView": 0,
+  "teeclear.houseInTheTeeView": 0,
   "channels.stationInsideAFairway": 0,
   "channels.stationOnAGreen": 0,
   "channels.waterInsideAnotherBody": 0,
   "ponds.pondCrossesAFairway": 0,
   "ponds.overlappingBodies": 0,
-  "bunkers.bunkerOnAnotherHolesGround": 0
+  "bunkers.bunkerOnAnotherHolesGround": 0,
+  "seated.floatingPlant": 0,
+  "farSeated.farFloating": 0,
+  "farSeated.farInWater": 0,
+  "design.hazardWithoutReason": 0,
+  "paths.pathOverWater": 0
  },
  "counts": {
-  "tees.holes": 315,
-  "tees.tees": 945,
-  "tees.sited": 912,
-  "tees.needsWork": 31,
-  "tees.raised": 138,
-  "tees.pairs": 945,
+  "tees.holes": 360,
+  "tees.tees": 1080,
+  "tees.sited": 1046,
+  "tees.needsWork": 23,
+  "tees.raised": 175,
+  "tees.pairs": 1080,
   "tees.pairsInLine": 6,
   "teeclear.rocks": 0,
   "teeclear.trees": 0,
-  "teeclear.rocksChecked": 8000,
-  "teeclear.treesChecked": 0,
-  "blind.blockedOver1m": 25,
-  "blind.blockedOver3m": 7,
-  "blind.shots": 945,
+  "teeclear.rocksChecked": 7833,
+  "teeclear.treesChecked": 185884,
+  "teeclear.bushesChecked": 249771,
+  "teeclear.housesChecked": 0,
+  "blind.blockedOver1m": 38,
+  "blind.blockedOver3m": 14,
+  "blind.shots": 1080,
   "blind.blockedInside30m": 0,
   "blind.blocked30to80m": 0,
-  "blind.blockedBeyond80m": 25,
-  "blind.nearOver15cm": 2,
-  "blind.nearOver50cm": 0,
-  "channels.requested": 105,
-  "channels.placed": 105,
-  "channels.endEdge": 75,
+  "blind.blockedBeyond80m": 38,
+  "blind.nearOver15cm": 5,
+  "blind.nearOver50cm": 1,
+  "channels.requested": 120,
+  "channels.placed": 118,
+  "channels.endEdge": 87,
   "channels.endSink": 16,
   "channels.endSea": 0,
-  "channels.endTrimmed": 10,
-  "channels.endConfluence": 4,
+  "channels.endTrimmed": 9,
+  "channels.endConfluence": 6,
   "channels.endStall": 0,
-  "ponds.bodies": 270,
+  "ponds.bodies": 264,
   "ponds.bitingIn": 15,
-  "ponds.terminal": 4,
-  "bunkers.bunkers": 647
+  "ponds.terminal": 7,
+  "bunkers.bunkers": 736,
+  "seated.plantsChecked": 435681,
+  "farSeated.farCrowns": 735963,
+  "design.fairwayBunkers": 246,
+  "design.nearLanding": 71,
+  "design.nines": 40,
+  "design.returning": 23,
+  "paths.pieces": 758,
+  "paths.bridges": 26
  },
  "summary": {
   "tees.step": {
-   "n": 630,
-   "min": 0.029916763305664062,
-   "p05": 0.12292861938476562,
-   "median": 0.7699079513549805,
-   "p95": 6.853055953979492,
-   "max": 22.927873611450195
+   "n": 720,
+   "min": 0.008741378784179688,
+   "p05": 0.10147857666015625,
+   "median": 0.5944499969482422,
+   "p95": 4.998422622680664,
+   "max": 21.432037353515625
   },
   "tees.padSpread": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.000052229682463433846,
-   "max": 0.003938267740643653
+   "p95": 0.000045877938990912526,
+   "max": 0.0024846368051889556
   },
   "tees.collarRelief": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
-   "p05": 5.086421417388465e-7,
-   "median": 0.00004126548056149204,
-   "p95": 0.0003948753242184466,
-   "max": 0.030811554319203793
+   "p05": 8.195409648692475e-7,
+   "median": 0.000039266704980889244,
+   "p95": 0.00041915350956145403,
+   "max": 0.006497328829443205
   },
   "tees.normalJump": {
-   "n": 945,
-   "min": 0.045840069343604455,
-   "p05": 0.21177502138184767,
-   "median": 0.6428955126723566,
-   "p95": 1.3319608948590989,
-   "max": 7.219762701212826
+   "n": 1080,
+   "min": 0.03154329396911944,
+   "p05": 0.17082447588439312,
+   "median": 0.6334945533368005,
+   "p95": 1.3235687528735638,
+   "max": 5.586943756993139
   },
   "tees.groundSlope": {
-   "n": 945,
-   "min": 0.5461143576709837,
-   "p05": 2.4805389511214018,
-   "median": 7.549948409331736,
-   "p95": 14.980458399593369,
-   "max": 37.23044455963289
+   "n": 1080,
+   "min": 0.253716456714807,
+   "p05": 1.857100951812332,
+   "median": 6.979444990785426,
+   "p95": 14.630920054793949,
+   "max": 37.614343114188124
   },
   "tees.siteSpread": {
-   "n": 945,
-   "min": 0.001665599953998509,
-   "p05": 0.09821573142181705,
-   "median": 0.4866620298086204,
-   "p95": 1.1915820458509465,
-   "max": 4.601196653389081
+   "n": 1080,
+   "min": 0,
+   "p05": 0.09914344877376635,
+   "median": 0.4135158258334837,
+   "p95": 1.0880560821439715,
+   "max": 5.620377234820033
   },
   "tees.slid": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
-   "p05": 4.202011180585451,
-   "median": 20.50118195742236,
-   "p95": 39.539487670691614,
-   "max": 48.00695895121255
+   "p05": 4.562216378182759,
+   "median": 21.562652240486038,
+   "p95": 40.76137150809129,
+   "max": 50.60587215610821
   },
   "tees.lift": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
    "p05": 0,
    "median": 0,
@@ -127,100 +148,144 @@
    "max": 3.5
   },
   "tees.lateral": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
-   "p05": 0.43843346647918224,
-   "median": 13.523775367066264,
-   "p95": 37.50223334878683,
-   "max": 39.974795347079635
+   "p05": 0.3845841996371746,
+   "median": 15.970840910449622,
+   "p95": 38.62215009517968,
+   "max": 39.98574058525264
   },
   "tees.pairAcross": {
-   "n": 945,
-   "min": 5.28259265116214,
-   "p05": 10.156728353906487,
-   "median": 20.438240515631385,
-   "p95": 54.00606349761904,
-   "max": 88.74817533076131
+   "n": 1080,
+   "min": 7.801222589918169,
+   "p05": 10.190179608762264,
+   "median": 20.51317897499534,
+   "p95": 57.45497089588436,
+   "max": 94.23064892232168
   },
   "blind.blue": {
-   "n": 315,
+   "n": 360,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.12494977854881384,
-   "max": 3.0973265817902984
+   "p95": 0.08436238095193005,
+   "max": 2.8136309296468056
   },
   "blind.white": {
-   "n": 315,
+   "n": 360,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.3947253337358312,
-   "max": 3.69193572748517
+   "p95": 0.40284471436078206,
+   "max": 7.1899605625069505
   },
   "blind.red": {
-   "n": 315,
+   "n": 360,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 1.1319425380043775,
-   "max": 3.3851684948016967
+   "p95": 2.37883150591788,
+   "max": 10.689769368569024
   },
   "blind.blockedAt": {
-   "n": 25,
-   "min": 98,
-   "p05": 126,
-   "median": 164,
-   "p95": 188,
-   "max": 188
+   "n": 38,
+   "min": 116,
+   "p05": 138,
+   "median": 180,
+   "p95": 184,
+   "max": 184
   },
   "blind.nearOver": {
-   "n": 945,
+   "n": 1080,
    "min": 0,
    "p05": 0,
    "median": 0,
    "p95": 0,
-   "max": 0.3241752049147877
+   "max": 0.6765161342809378
   },
   "channels.length": {
-   "n": 105,
-   "min": 154.69613269525286,
-   "p05": 207.05120354071877,
-   "median": 432.9419491141147,
-   "p95": 836.0892409636218,
-   "max": 920.0548588514807
+   "n": 118,
+   "min": 122.52343611039122,
+   "p05": 184.16518820170205,
+   "median": 455.10553960235853,
+   "p95": 844.4782413313347,
+   "max": 998.3424770541659
   },
   "channels.turning": {
-   "n": 105,
-   "min": 0.11508068161191275,
-   "p05": 0.5580715612420182,
-   "median": 1.5231528912968024,
-   "p95": 2.7514926110668516,
-   "max": 3.9927944058526115
+   "n": 118,
+   "min": 0.1764090003173365,
+   "p05": 0.5570605043717041,
+   "median": 1.568193939073479,
+   "p95": 3.023571109922427,
+   "max": 4.703589174130193
   },
   "channels.greenClearance": {
-   "n": 315,
-   "min": 18.852433622789288,
-   "p05": 30.70095465935131,
-   "median": 283.14085457082336,
-   "p95": 794.273601709352,
-   "max": 1181.6776229529285
+   "n": 360,
+   "min": 16.58438431086252,
+   "p05": 36.88245624879272,
+   "median": 245.8325591633179,
+   "p95": 661.7621255679485,
+   "max": 1162.2259557546424
   },
   "channels.pondGap": {
-   "n": 266,
-   "min": 24.25549110070798,
-   "p05": 30.88881600367322,
-   "median": 246.84879924634805,
-   "p95": 656.9491141281617,
-   "max": 977.89800768924
+   "n": 257,
+   "min": 22.754210994096216,
+   "p05": 30.485377889359285,
+   "median": 207.70143818797402,
+   "p95": 589.2558285079685,
+   "max": 947.395502383176
   },
   "ponds.bite": {
    "n": 15,
    "min": 1.2111034139282921,
    "p05": 1.2111034139282921,
    "median": 6.5780161335494505,
-   "p95": 8.327156064987552,
-   "max": 8.327156064987552
+   "p95": 12.236384067682643,
+   "max": 12.236384067682643
+  },
+  "seated.seatDepth": {
+   "n": 435681,
+   "min": 0.08420584362368547,
+   "p05": 0.09090584131191862,
+   "median": 0.11640111928701108,
+   "p95": 0.8864989896106382,
+   "max": 6.949485455402245
+  },
+  "seated.gap": {
+   "n": 435681,
+   "min": -3.3410307590589206,
+   "p05": -0.20692365324075013,
+   "median": -0.08549972549459994,
+   "p95": -0.08163378838356294,
+   "max": 0.012291208491316041
+  },
+  "farSeated.farGap": {
+   "n": 735963,
+   "min": -23.449486058528066,
+   "p05": -6.185441114406956,
+   "median": -0.47741601630600883,
+   "p95": -0.1362437695968488,
+   "max": -0.036557338041738774
+  },
+  "design.walk": {
+   "n": 320,
+   "min": 36.29746121602369,
+   "p05": 56.78122468643188,
+   "median": 95.98450141520446,
+   "p95": 191.20870501097025,
+   "max": 264.8686622651056
+  },
+  "design.concepts": {
+   "n": 0,
+   "p05": null,
+   "median": null,
+   "p95": null
+  },
+  "design.templates": {
+   "n": 0,
+   "p05": null,
+   "median": null,
+   "p95": null
   }
  }
 }

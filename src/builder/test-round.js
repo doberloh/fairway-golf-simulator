@@ -1,7 +1,7 @@
 // A TEST ROUND (the course builder, stage 5; docs/COURSE_BUILDER.md, *The
 // editor*): the virtual golfer (tests/virtual-golfer.mjs -- a Swing Meter
-// golfer through the game's own ball and rules, the one the challenges and
-// tools/architect-difficulty.mjs play) plays the course being edited, and the
+// golfer through the game's own ball and rules, the one the challenges
+// play) plays the course being edited, and the
 // builder reports strokes against par hole by hole and any hole it could not
 // finish. The golfer lives with the tests because the tests made it; the
 // builder borrows it unchanged.

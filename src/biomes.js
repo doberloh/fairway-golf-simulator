@@ -416,65 +416,69 @@ const INTERFACE = {
 
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged
 // field by field, because a biome that sets one of them means all of it.
-// THE ARCHITECT'S SIDE OF A LANDSCAPE (architect-courses; PROJECT_HANDOFF
-// *Adding a biome*, the Architect side). Everything an Architect course reads
-// from its landscape, in one block per landscape, so a new landscape is one
-// entry here (tests/biome-architect.test.mjs fails until it has one):
+// THE WORLD'S SIDE OF A LANDSCAPE: the pieces round a generated course's holes
+// -- its clubhouse, cart paths and bridges, dressed water, walls, buildings
+// and landmarks, and its animals -- in one block per landscape, so a new
+// landscape is one entry here (tests/biome-world.test.mjs fails until it has
+// one). Architect's side of a landscape until the designer was removed (the
+// owner, 2 November 2026); its `styles` and `signature` went with it, and the
+// two things the pieces read from the leading style became fields of their own:
 //
-//   styles     the styles it leans toward, most likely first (By landscape)
-//   signature  the templates its land suggests (the study's landscape
-//              table); their odds are raised on its holes
+//   edge       a pond's dressed edge on the side play comes from (waterworks.js):
+//              'riprap' stones, 'bulkhead' railway ties, or null, soft grass
+//   fountain   whether a large open pond may have an aerating fountain
 //   clubhouse  the clubhouse model (tools/blender/architect_clubhouses.py)
 //   path       the cart path's surface (paths.js)
 //   bridge     'wood' or 'stone' bridge bays (renderer.js addPaths)
-//   story      the land's story (story.js): walls, farm, ruins, landmark,
-//              a stone circle, lanterns
+//   story      the land's story (story.js): walls, farm, ruins, landmark
 //   life       its animals (life.js): grazers, geese, a heron, fliers
 //   colours    the clubhouse's walls, roof, trim and glass; rip-rap, field
 //              wall, ruin and stone-bridge stone
 //
-// A landscape without an entry falls back to ARCHITECT_GENERIC -- a modern
-// parkland course, a farmhouse, asphalt, wood, no story and no animals --
-// which builds, but reads as nowhere in particular.
-export const ARCHITECT_GENERIC = {
- styles: ['modern', 'parkland'], signature: [], clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood', story: {}, life: {},
+// A landscape without an entry falls back to WORLD_GENERIC -- rip-rap and a
+// fountain, a farmhouse, asphalt, wood, no story and no animals -- which
+// builds, but reads as nowhere in particular. The edges and fountains are
+// PLACED from each landscape's leading Architect style (rip-rap for Desert,
+// Mountain, Island and Redwood; a fountain for Island and Redwood).
+export const WORLD_GENERIC = {
+ edge: 'riprap', fountain: true, clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood', story: {}, life: {},
  colours: {clubhouse: {stone: '#f2efe6', bark: '#7a3d32', accent: '#ffffff', dirt: '#2e3a44'}, riprap: '#a8a298', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#bdb6a6'},
 };
-export const ARCHITECT = {
- pnw: {styles: ['heathland', 'golden', 'parkland'], signature: ['alps'], clubhouse: 'lodge', path: 'bark', bridge: 'wood',
+export const WORLD = {
+ pnw: {edge: null, fountain: false, clubhouse: 'lodge', path: 'bark', bridge: 'wood',
   story: {walls: 'hedge', ruins: ['cottage']}, life: {grazers: ['deer', 3], heron: true},
   colours: {clubhouse: {stone: '#8b6a4a', bark: '#4f5b46', accent: '#ddd2bb', dirt: '#2c3438'}, riprap: '#7d7972', wall: '#c2b8a4', ruin: '#8f8c7e', bridgeStone: '#bdb6a6'}},
- desert: {styles: ['desert', 'stadium', 'minimalist'], signature: ['barranca'], clubhouse: 'adobe', path: 'granite', bridge: 'wood',
+ desert: {edge: 'riprap', fountain: false, clubhouse: 'adobe', path: 'granite', bridge: 'wood',
   story: {walls: null, ruins: ['cottage']}, life: {grazers: ['roadrunner', 2]},
   colours: {clubhouse: {stone: '#d7a77a', bark: '#7d5a3c', accent: '#8a5a36', dirt: '#3a2c26'}, riprap: '#b5865c', wall: '#c2b8a4', ruin: '#cfa27a', bridgeStone: '#bdb6a6'}},
- mountain: {styles: ['mountain'], signature: ['redan'], clubhouse: 'chalet', path: 'gravel', bridge: 'wood',
+ mountain: {edge: 'riprap', fountain: false, clubhouse: 'chalet', path: 'gravel', bridge: 'wood',
   story: {walls: 'stone', ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 2], heron: true},
   colours: {clubhouse: {stone: '#b88d5e', bark: '#5a4436', accent: '#efe6d2', dirt: '#2b3036'}, riprap: '#87817a', wall: '#b4ac9f', ruin: '#a49c90', bridgeStone: '#bdb6a6'}},
- links: {styles: ['links', 'minimalist', 'heathland'], signature: ['dell', 'cape'], clubhouse: 'stonehouse', path: 'gravel', bridge: 'stone',
+ links: {edge: null, fountain: false, clubhouse: 'stonehouse', path: 'gravel', bridge: 'stone',
   story: {walls: 'stone', ruins: ['chapel', 'cottage'], landmark: 'lighthouse'}, life: {grazers: ['sheep', 9], fliers: ['gull', 3]},
   colours: {clubhouse: {stone: '#c3bfb2', bark: '#5b6168', accent: '#ece8de', dirt: '#2a3036'}, riprap: '#99948a', wall: '#cfc8b6', ruin: '#bdb7a8', bridgeStone: '#bdb6a6'}},
- midwest: {styles: ['golden', 'raynor', 'parkland', 'sandhills'], signature: ['redan', 'eden', 'biarritz'], clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood',
+ midwest: {edge: null, fountain: false, clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood',
   story: {walls: 'hedge', farm: true}, life: {grazers: ['deer', 3], geese: 6},
   colours: {clubhouse: {stone: '#f2efe6', bark: '#7a3d32', accent: '#ffffff', dirt: '#2e3a44'}, riprap: '#8f897e', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#bdb6a6'}},
- island: {styles: ['tropical', 'stadium'], signature: ['cape'], clubhouse: 'pavilion', path: 'shell', bridge: 'wood',
+ island: {edge: 'riprap', fountain: true, clubhouse: 'pavilion', path: 'shell', bridge: 'wood',
   story: {walls: null, ruins: ['sugarmill']}, life: {fliers: ['gull', 3], heron: true},
   colours: {clubhouse: {stone: '#e8d7b5', bark: '#c7a35f', accent: '#9b7048', dirt: '#2b3a3a'}, riprap: '#4d4744', wall: '#c2b8a4', ruin: '#b3a48c', bridgeStone: '#bdb6a6'}},
- redwood: {styles: ['parkland', 'golden'], signature: [], clubhouse: 'loglodge', path: 'bark', bridge: 'wood',
+ redwood: {edge: 'riprap', fountain: true, clubhouse: 'loglodge', path: 'bark', bridge: 'wood',
   story: {walls: null, ruins: ['cottage']}, life: {grazers: ['elk', 3]},
   colours: {clubhouse: {stone: '#9a6342', bark: '#3f4a3a', accent: '#d8c7a8', dirt: '#2a2e2c'}, riprap: '#837767', wall: '#c2b8a4', ruin: '#948a7a', bridgeStone: '#bdb6a6'}},
- autumn: {styles: ['raynor', 'golden', 'parkland'], signature: ['redan', 'road'], clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
+ autumn: {edge: null, fountain: false, clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
   story: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
   colours: {clubhouse: {stone: '#f1ede2', bark: '#3d4044', accent: '#ffffff', dirt: '#2d3640'}, riprap: '#928b80', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#c4b9a6'}},
- lakeshore: {styles: ['links', 'sandhills', 'minimalist'], signature: ['dell'], clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
+ lakeshore: {edge: null, fountain: false, clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
   story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}, life: {fliers: ['gull', 4], geese: 6},
   colours: {clubhouse: {stone: '#c4ab84', bark: '#6d6a63', accent: '#f4f1ea', dirt: '#2c3a46'}, riprap: '#9c937f', wall: '#c9bfa8', ruin: '#c4b9a2', bridgeStone: '#bdb6a6'}},
 };
 // A landscape's block, with the generic one under it.
-export const architectOf = key => ({...ARCHITECT_GENERIC, ...(ARCHITECT[key] || {})});
+export const worldOf = key => ({...WORLD_GENERIC, ...(WORLD[key] || {})});
 
 export const BIOMES = Object.fromEntries(Object.entries(PALETTES).map(([key, palette]) => {
  const traits = TRAITS[key] || {};
- return [key, {...DEFAULTS, ...palette, ...traits, ui: INTERFACE[key], key, architect: architectOf(key)}];
+ return [key, {...DEFAULTS, ...palette, ...traits, ui: INTERFACE[key], key, world: worldOf(key)}];
 }));
 
 // The stream bank colour, still reachable by its old name so streams.js and the

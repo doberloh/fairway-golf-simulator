@@ -1,19 +1,18 @@
 // A NAME FOR EVERY HOLE (architect-courses, phase 2; the study, workstream P).
 // "The Cape", "Long Pond", "Home": real clubs name their holes for what they
-// are -- a template, the water, the bend, the length -- or for the land. A free
-// extra both designers get: a name is read from a hole that is already built,
+// are -- the water, the bend, the length -- or for the land. (An Architect
+// course's template holes -- the Redan, the Cape -- were named for their
+// template until the designer was removed, 2 November 2026.) A name is read
+// from a hole that is already built,
 // so nothing generated moves (it is not in the world and not fingerprinted).
 //
 // SEEDED, so the same course names its holes the same way every time; every
 // name on a course is different. Pure: tests/hole-names.test.mjs.
 //
-// NO NAME HERE MAY BE A FAMOUS HOLE'S OWN. Template names (Redan, Eden,
-// Biarritz, Cape, Road) are the generic names architects use for a kind of
-// hole; a single hole's nickname -- the Postage Stamp, Amen Corner, the Road
+// NO NAME HERE MAY BE A FAMOUS HOLE'S OWN. A single hole's nickname -- the Postage Stamp, Amen Corner, the Road
 // Hole, Hell -- is someone's, and is not used.
 import {rng} from './course-plan.js';
 
-const TEMPLATE_NAMES = {redan: 'Redan', eden: 'Eden', biarritz: 'Biarritz', punchbowl: 'Punchbowl', plateau: 'Plateau', road: 'Road', cape: 'Cape', nose: 'Nose', leven: 'Leven', long: 'Long'};
 // The landscape's own words for its country, used where a hole has nothing of
 // its own to be named for.
 const LAND = {
@@ -29,15 +28,13 @@ const LAND = {
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 
-// What a hole can be called, best first: its template; its water; its bend;
+// What a hole can be called, best first: its water; its bend;
 // its length; then the land.
 function candidates(h, i, n, biome) {
  const out = [];
  if (i === n - 1) out.push('Home');
  if (n === 18 && i === 8) out.push('Halfway', 'The Turn');
  if (i === 0) out.push(['First', 'Starter', 'Opening', 'Off We Go'][Math.floor((h.length || 0) * 7) % 4]);
- const t = h.design?.template;
- if (t && TEMPLATE_NAMES[t]) out.push(TEMPLATE_NAMES[t], `The ${TEMPLATE_NAMES[t]}`);
  if (h.ponds?.length) {
   const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'island' ? ['Lagoon', 'Salt Pond'] : biome === 'mountain' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
   out.push(...water);
@@ -65,7 +62,7 @@ export function holeNames(holes = [], settings = {}) {
  holes.forEach((h, i) => {
   const list = candidates(h, i, n, settings.biome);
   // The land's words and the generic ones come last; shuffle them, keep the
-  // hole's own (its template, water, bend, length) first.
+  // hole's own (its water, bend, length) first.
   const own = LAND[settings.biome] || GENERIC, tailFrom = list.findIndex(x => own.includes(x) || GENERIC.includes(x));
   const head = tailFrom < 0 ? list : list.slice(0, tailFrom), tail = tailFrom < 0 ? [] : list.slice(tailFrom);
   // The land's own words before the generic ones, each shuffled.
@@ -73,7 +70,7 @@ export function holeNames(holes = [], settings = {}) {
   tail.splice(0, tail.length, ...shuffle(tail.filter(x => own.includes(x))), ...shuffle(tail.filter(x => !own.includes(x))));
   // One in three holes skips its own feature for a word of the land, so a
   // course is not all Ponds and Corners.
-  const order = head.length && !['Home', 'Halfway', 'First', 'Starter', 'Opening', 'Off We Go'].includes(head[0]) && r() < .33 && !h.design?.template ? [...tail, ...head] : [...head, ...tail];
+  const order = head.length && !['Home', 'Halfway', 'First', 'Starter', 'Opening', 'Off We Go'].includes(head[0]) && r() < .33 ? [...tail, ...head] : [...head, ...tail];
   let name = order.find(x => !used.has(x));
   if (!name) { let k = 2; while (used.has(`${own[0]} ${k}`)) k++; name = `${own[0]} ${k}`; }
   used.add(name);

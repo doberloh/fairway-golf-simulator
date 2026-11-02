@@ -4,7 +4,6 @@
 //   node tools/profile.mjs                 the default sweep
 //   node tools/profile.mjs --only tiers    one group (tiers, views, biomes,
 //                                          ablation, water, pixels, sun, weak,
-//                                          architect: Classic against Architect on Low;
 //                                          built: a seeded course against its frozen copy on Low;
 //                                          --built-file <x.fairway> instead: that course (a real
 //                                          one from door 2) against a generated Midwest eighteen
@@ -106,17 +105,11 @@ function matrix() {
                               ['water course, no reflections', {reflections: false}]])
   cases.push({group: 'water', name, arm: 'gpu', quality: 'ultra', prefs,
    biome: 'midwest', holes: 9, seed: 'PROFILE', course: {water: 100, lakes: 3, rivers: 2, creeks: 3}});
- // ARCHITECT COURSES (architect-courses, 30 October 2026): the same landscape
- // and seed on Low, Classic against Architect -- paths, markings, the
- // clubhouse, wear and the hazard kinds all drawn. The goal's limit: Architect
- // within 10% of Classic's frame time on Low.
- // `--landscapes all` (or a list, a,b,c) measures more than the usual three:
- // the goal asks for every landscape.
+ // (The `architect` group -- Classic against Architect on Low -- went with the
+ // designer, 2 November 2026: its paths, markings, clubhouse and wear are on
+ // every generated course now, so every group measures them.)
+ // `--landscapes all` (or a list, a,b,c) measures more than the usual three.
  const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['midwest', 'pnw', 'links'];
- for (const biome of archBiomes) for (const designer of ['classic', 'architect'])
-  // `--arch-tier medium` and `--arch-course '{"archClub":"championship","pinDay":"Sunday"}'`:
-  // another tier, and Architect dials (Classic ignores them) -- a crowd, say.
-  cases.push({group: 'architect', name: `${biome} · ${designer}`, arm: 'gpu', quality: flag('arch-tier', 'low'), biome, holes: 9, seed: 'PROFILE', course: {designer, ...(designer === 'architect' ? JSON.parse(flag('arch-course', '{}')) : {})}});
  // BUILT COURSES (the course builder, 31 October 2026; docs/COURSE_BUILDER.md):
  // the same landscape and seed on Low, grown from its seed against its frozen
  // copy played from a .fairway file (freeze.js, built-world.js). The goal's

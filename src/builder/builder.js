@@ -90,7 +90,7 @@ export async function readCourseAny(file) {
 }
 
 const doors = [
- {key: 'generate', title: 'Generate and modify a course', text: 'Pick a landscape, a designer and every studio setting; grow it, then take it over and reshape anything.', go: () => import('./door-generate.js').then(m => m.open())},
+ {key: 'generate', title: 'Generate and modify a course', text: 'Pick a landscape and every studio setting; grow it, then take it over and reshape anything.', go: () => import('./door-generate.js').then(m => m.open())},
  {key: 'real', title: 'Generate a real life course', text: 'Bring LIDAR of a real place and an aerial picture; mark the tees and greens, let the auto trace start the rest.', go: () => import('./door-real.js').then(m => m.open())},
  {key: 'open', title: 'Open a course file', text: 'Carry on with a course or a draft you saved, or open a .fairway file somebody gave you.', go: openFile},
 ];

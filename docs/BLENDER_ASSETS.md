@@ -384,11 +384,15 @@ cloud), black oak, sugar maple (with far twins), creeping and vase junipers,
 dune grass patches of splayed tussocks, and bleached driftwood (now drawn
 painted).
 
-## The Architect packs (architect-courses, from 30 October 2026)
+## The world packs (Architect's, from 30 October 2026)
 
-Models an Architect course places (docs/ARCHITECT_COURSES.md). Each model is
-iterated at least ten times, on the contact sheet and in the game, and every
-iteration is logged in ARCHITECT_COURSES.md, *Blender iteration log*.
+Models every generated course places round its holes -- the clubhouse,
+markings, bridges, the land's story, its animals. Built for Architect
+courses (30 October 2026; docs/ARCHITECT_COURSES.md, in git history, holds
+their iteration log) and kept when Architect was removed on 2 November 2026,
+so the packs keep their `architect_` names. Each model was iterated at least
+ten times; under the US landscapes goal a model gets at least fifteen, each
+logged in tools/blender/logs/<id>.md.
 
 **A model longer than two of its own heights** -- a rake lying on the grass
 -- does not fit the ingest's int16 box (positions are stored at 16384 a
@@ -450,7 +454,7 @@ stones went black).
 
 ### architect_life
 
-`tools/blender/architect_life.py`: life on an Architect course, each
+`tools/blender/architect_life.py`: life on a course, each
 facing -Y at its real size -- a sheep (a fleece of lumps on short legs, a dark
 face), a goose, a doe and a bull elk (inset coat-coloured legs, a full body),
 a heron, a roadrunner and a gliding bird (a gull white, a raven black).
@@ -462,8 +466,8 @@ November 2026: the owner.)
 
 ### architect_water
 
-`tools/blender/architect_water.py`: what a builder puts at an Architect
-course's water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
+`tools/blender/architect_water.py`: what a builder puts at a course's
+water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
 stringers, nine planks, a post each corner, two rails) and stone (3.1 m, 1.08
 m: a slab, parapets with a coping) -- the deck's top 0.30 m up both; renderer.js
 `addPaths` lays as many as a span needs, fitted to the path's width and to
