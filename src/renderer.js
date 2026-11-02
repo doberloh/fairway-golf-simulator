@@ -56,27 +56,6 @@ import {MESH_MODELS} from './asset-meshes.js';
 const HEMI=.95,SUN=3.05;
 import * as T from 'three';
 import {fountainDrops,dropAt,ringAt,jetAt} from './fountain.js';
-// PEOPLE IN THEIR OWN CLOTHES (the owner's review: "more variety"). One body
-// model makes many people: each part is one role (tools/blender/figures.py),
-// drawn white and coloured per figure from these -- skin, shirt, trousers or
-// skirt, a hat with its bag or umbrella, hair with the shoes. Each role is
-// picked by a hash of the figure, its body and the role (iteration 7: a
-// stride per role lined up across the five bodies, and a gallery stood in
-// the same navy shirt side by side).
-const PEOPLE_PALETTE={
- stone:['#f1c9a5','#e0b48e','#c99470','#a8704a','#7d5236','#5c3a27'],
- accent:['#f2efe6','#c0503a','#3f6fb0','#2f7a55','#e8c84a','#d8789a','#7a5aa8','#2e3440','#e88a3a','#8fc0e0','#b9d36a'],
- bark:['#3d4a5c','#2e2e33','#c9b48a','#7a7f88','#ece8de','#4a5a3a','#5a4636'],
- leaf:['#f4f1e6','#1f3550','#b03a2e','#e8c84a','#2e2e33','#5b8fc9','#2f5d48','#e07a9a'],
- dirt:['#2a2522','#4a3426','#1a1a1c','#6b4a2e','#9a9590','#7a5530'],
-};
-const ROLE_SEED={stone:101,accent:211,bark:307,leaf:401,dirt:503};
-function dressPeople(mesh,role,n,salt){
- const list=PEOPLE_PALETTE[role];if(!list)return;
- const c=new T.Color();
- for(let i=0;i<n;i++){let h=Math.imul(i+1,2654435761)^Math.imul(salt+7,40503)^Math.imul(ROLE_SEED[role],2246822519);h^=h>>>15;h=Math.imul(h,2246822519);h^=h>>>13;c.set(list[(h>>>0)%list.length]);mesh.setColorAt(i,c);}
- mesh.instanceColor.needsUpdate=true;
-}
 
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
 import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
@@ -1064,10 +1043,10 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){this.pendingFurniture=[];this.board=null;this.pendingBoard=null;if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
+ disposeCourse(){this.pendingFurniture=[];if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.life=null;this.occasion=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.life=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1165,7 +1144,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.occasion=this.addOccasion(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.addBuildings(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -2233,11 +2212,6 @@ export class GolfView{
    sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
    lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
-   // Tournament week (phase 7; occasion.js): the event's green.
-   stand:{stone:'#b9bec4',accent:'#1f5a3a',leaf:'#f6f6f2',bark:'#3c4a63'},
-   scoreboard:{stone:'#8d949b',accent:'#1f5a3a',leaf:'#f8f8f4',bark:'#2a2f38',dirt:'#c0503a'},
-   tower:{stone:'#a9afb6',accent:'#1f5a3a',leaf:'#f2f2ee',dirt:'#2a2d33'},
-   marquee:{leaf:'#fbfbf8',accent:'#1f5a3a',bark:'#3a3f47',stone:'#b9bec4'},
   };
   for(const b of w.buildings){
    const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
@@ -2260,7 +2234,6 @@ export class GolfView{
    g.scale.set(b.width/(2*info.rx),b.height,b.depth/(2*info.rz));
    g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);
    this.group.add(g);
-   if(b.kind==='scoreboard')this.addBoardFace(b);
    // THE TERRACE: on sloping ground the floor is level with the high side
    // (clubhouse.js), so a stone wall runs down to the lowest ground under it.
    const drop=b.y-(b.base??b.y)+.6;
@@ -2270,77 +2243,6 @@ export class GolfView{
     this.group.add(wall);this.resources.push(wall.geometry,wall.material);
    }
   }
- }
- // THE SCOREBOARD'S FACE, LIVE (the owner's review: "actually show the
- // players score"; leaderboard.js says what is on it, main.js feeds it). A
- // canvas over the model's white face -- 11.2 x 3.3 m, 3.3-6.6 m up, its
- // front 1 m out from the board's centre (occasion.js FOOTPRINT, depth 2) --
- // in an unscaled group turned as the building is. Redrawn only when what it
- // says changes. The model's painted bars stay behind it, unseen.
- addBoardFace(b){
-  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=302;
-  const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;
-  const mat=new T.MeshBasicMaterial({map:tex,toneMapped:false}),face=new T.Mesh(new T.PlaneGeometry(11.2,3.3),mat);
-  const g=new T.Group();g.rotation.y=b.rotation+Math.PI;g.position.set(b.x,b.y,b.z);face.position.set(0,4.95,b.depth/2+.04);g.add(face);
-  this.group.add(g);this.resources.push(mat,face.geometry,tex);
-  this.board={canvas,tex,said:''};
-  this.setLeaderboard(this.pendingBoard||{title:'LEADERS',rows:[]});
- }
- hasBoard(){return !!this.board;}
- setLeaderboard(board){
-  this.pendingBoard=board;
-  const B=this.board;if(!B)return;
-  const said=JSON.stringify(board);if(said===B.said)return;B.said=said;
-  // What the board says, on the page too (the smoke journey
-  // `architect-tournament` reads it: the texture cannot be read back).
-  if(this.canvas?.dataset)this.canvas.dataset.leaderboard=said;
-  const c=B.canvas.getContext('2d'),W=B.canvas.width,H=B.canvas.height;
-  c.fillStyle='#f8f8f4';c.fillRect(0,0,W,H);
-  c.fillStyle='#1f5a3a';c.fillRect(0,0,W,46);
-  c.fillStyle='#f8f8f4';c.font='700 30px Arial, sans-serif';c.textBaseline='middle';c.textAlign='left';c.fillText(board.title||'LEADERS',18,24);
-  c.textAlign='right';c.font='700 22px Arial, sans-serif';c.fillText('TODAY',W-150,25);c.fillText('THRU',W-24,25);
-  const rows=board.rows||[],rh=(H-52)/Math.max(8,rows.length);
-  rows.forEach((r,i)=>{
-   const y=52+rh*(i+.5);
-   if(r.you){c.fillStyle='#fff1b8';c.fillRect(0,y-rh/2,W,rh);}
-   c.fillStyle='#2a2f38';c.font='700 26px Arial, sans-serif';c.textAlign='left';c.fillText(r.pos,18,y);
-   c.font=(r.you?'700 ':'600 ')+'27px Arial, sans-serif';c.fillText(String(r.name).toUpperCase().slice(0,22),110,y);
-   c.textAlign='right';c.fillStyle=r.under?'#c8281e':'#2a2f38';c.font='700 28px Arial, sans-serif';c.fillText(r.score,W-150,y);
-   c.fillStyle='#2a2f38';c.font='600 26px Arial, sans-serif';c.fillText(r.thru,W-24,y);
-  });
-  B.tex.needsUpdate=true;
- }
- // TOURNAMENT WEEK'S ROPES AND CROWD (phase 7; occasion.js): gallery ropes in
- // 6 m sections, and spectators -- in three shirt colours, by turns -- behind
- // them and in the stands. The crowd is hidden on Low (the frame loop).
- addOccasion(w){
-  const o=w?.occasion;if(!o||this.style!=='cartoon'||(!o.ropes.length&&!o.crowd.length))return null;
-  const group=new T.Group();group.name='Occasion';this.group.add(group);
-  const crowd=new T.Group();crowd.name='Crowd';group.add(crowd);
-  const m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3();
-  // A spectator turns a little on their own (iteration 6: a gallery all
-  // facing one exact way read as soldiers); by index, so it never moves.
-  const turn=(it,i,dress)=>dress==null?0:Math.sin(i*12.9898+dress*78.233)*.25;
-  const draw=(parent,model,list,colours,h,len,dress)=>{
-   const parts=modelParts(model),info=MESH_MODELS[model];if(!parts||!info||!list.length)return;
-   for(const p of parts){
-    const mat=this.surfaceMaterial(colours?colours[p.role]??'#ffffff':'#ffffff',{vertexColors:p.painted}),mesh=new T.InstancedMesh(p.geometry,mat,list.length);if(!colours)dressPeople(mesh,p.role,list.length,dress);
-    list.forEach((it,i)=>{q.setFromAxisAngle(up,(it.rot||0)+turn(it,i,colours?null:dress));pos.set(it.x,it.y??w.height(it.x,it.z),it.z);if(len)sc.set(h,h,len/(2*info.rz));else sc.setScalar(h);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
-    mesh.castShadow=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();parent.add(mesh);this.resources.push(mat);
-   }
-  };
-  draw(group,'Blender_GalleryRope_1',o.ropes,{stone:'#e9e6dc',accent:'#1f5a3a',dirt:'#f2d34a'},1.0,6);
-  // Five bodies taken in turn, every spectator dressed from the palette
-  // (the owner's review: "crowds need more variety"; were one body in
-  // three shirts).
-  // Each at its own height: a child is a child, an umbrella stands over
-  // its holder (all five had been stretched to 1.75 m).
-  // Umbrellas only in the standing gallery (iteration 8: a fifth of a stand
-  // under umbrellas hid the rows behind); in a stand (`seated`) that body
-  // is a spectator in a cap.
-  const body=(c,i)=>{const v=i%5;return v===2&&c.seated?0:v;};
-  for(let v=0;v<5;v++){const model='Blender_Spectator_'+(v+1);draw(crowd,model,o.crowd.filter((c,i)=>body(c,i)===v),null,MESH_MODELS[model]?.tall??1.75,0,v*11+1);}
-  return {group,crowd};
  }
  // THE LAND'S STORY'S WALLS AND PROPS (phase 6; story.js): a wall is 2 m
  // sections laid end to end along each run, stone or hedge, a moor wall's
@@ -2377,8 +2279,8 @@ export class GolfView{
   draw('Blender_Stump_1',props.filter(p=>p.kind==='stump'),{bark:'#6b5440',leaf:'#8a6e52',stone:'#8a6e52',dirt:'#4a3a2e',accent:'#c9a77c'},true,at(.7));
  }
  // LIFE ON AN ARCHITECT COURSE (phase 6; life.js, tools/blender/architect_life.py):
- // grazers turning slowly where they stand, birds circling, walkers along
- // the path and a mower going out and back along their stretch. One instanced mesh per model
+ // grazers turning slowly where they stand and birds circling (the walkers
+ // and the mower went on 2 November 2026: the owner). One instanced mesh per model
  // part, their matrices rewritten thirty times a second; the group is hidden
  // on Low (the frame loop). Decoration: nothing here is solid.
  addLife(w){
@@ -2395,48 +2297,22 @@ export class GolfView{
    roadrunner:{model:'Blender_Roadrunner_1',h:.7,colours:{stone:'#8a7a62',bark:'#3a332c',dirt:'#2a2522',accent:'#5a6a8a'}},
    gull:{model:'Blender_Bird_1',h:.42,colours:{stone:'#f6f6f2',bark:'#3a3d42',accent:'#e5b54a'}},
    raven:{model:'Blender_Bird_1',h:.45,colours:{stone:'#24242c',bark:'#141418',accent:'#2a2a30'}},
-   walker:{model:'Blender_Walker_1',h:1.85},
-   // A five-unit fairway mower, 2.3 m to its roll bar, drawn a little large
-   // as the rest; green paint, grey reels, a hi-vis shirt.
-   mower:{model:'Blender_Mower_1',h:(MESH_MODELS.Blender_Mower_1?.tall??2.32)*1.05,colours:{dirt:'#26272a',leaf:'#3f7f3a',bark:'#8d939a',accent:'#d9ee4a',stone:'#d9a982'}},
   };
   const group=new T.Group();group.name='Life';this.group.add(group);
   const sets=[];
-  // The walkers in four bodies, taken in turn, each dressed from the
-  // palette (the owner's review: "more variety"); the rest one body a kind.
   const jobs=[];
-  for(const [kind,spec] of Object.entries(SPEC)){
-   const list=w.life.filter(l=>l.kind===kind);if(!list.length)continue;
-   // Each at its own height, a twentieth larger than life as the rest (a
-   // body pushing a trolley stands lower than one with a bag on its back).
-   if(kind==='walker')for(let v=0;v<4;v++){const model='Blender_Walker_'+(v+1);jobs.push({kind,spec:{...spec,model,h:(MESH_MODELS[model]?.tall??1.78)*1.05},list:list.filter((l,i)=>i%4===v),dress:v});}
-   else jobs.push({kind,spec,list});
-  }
-  for(const {kind,spec,list,dress} of jobs){
+  for(const [kind,spec] of Object.entries(SPEC)){const list=w.life.filter(l=>l.kind===kind);if(list.length)jobs.push({kind,spec,list});}
+  for(const {kind,spec,list} of jobs){
    if(!list.length)continue;
    const parts=modelParts(spec.model);if(!parts)continue;
-   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(dress!=null?'#ffffff':spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);if(dress!=null)dressPeople(m,p.role,list.length,dress*7+3);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
+   const meshes=parts.map(p=>{const mat=this.surfaceMaterial(spec.colours[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length);m.castShadow=kind!=='gull'&&kind!=='raven';m.receiveShadow=true;m.frustumCulled=false;// They move, so the instance cull must leave them alone (PROJECT_HANDOFF
     // *ANYTHING INSTANCED THAT MOVES MUST SET userData.noCull*).
     m.userData.noCull=true;group.add(m);this.resources.push(mat);return m;});
    sets.push({spec,list,meshes});
   }
   const m4=new T.Matrix4(),q=new T.Quaternion(),e=new T.Euler(0,0,0,'YXZ'),pos=new T.Vector3(),sc=new T.Vector3();
   const place=t=>{for(const set of sets){set.list.forEach((l,i)=>{
-   if(l.line){
-    // Out and back along the path's own points, facing the way it goes.
-    if(!l.run){l.run=[0];for(let k=1;k<l.line.length;k++)l.run.push(l.run[k-1]+Math.hypot(l.line[k].x-l.line[k-1].x,l.line[k].z-l.line[k-1].z));}
-    // One way round and back to the start on a loop (the owner: walking backwards had no reason); out and back otherwise.
-    const len=l.run[l.run.length-1]||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),d=l.loop?s%len:(s<len?s:2*len-s),dir=l.loop||s<len?1:-1;
-    let k=1;while(k<l.run.length-1&&l.run[k]<d)k++;
-    const p0=l.line[k-1],p1=l.line[k],seg=(l.run[k]-l.run[k-1])||1,u=(d-l.run[k-1])/seg,dx=(p1.x-p0.x)/seg,dz=(p1.z-p0.z)/seg;
-    const x=p0.x+(p1.x-p0.x)*u-dz*l.side,z=p0.z+(p1.z-p0.z)*u+dx*l.side;
-    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
-   }else if(l.ax!==undefined){
-    // Out and back along a stretch, facing the way it goes.
-    const len=Math.hypot(l.bx-l.ax,l.bz-l.az)||1,s=(((t+l.phase)*l.speed-l.lag)%(2*len)+2*len)%(2*len),u=(s<len?s:2*len-s)/len,dir=s<len?1:-1,dx=(l.bx-l.ax)/len,dz=(l.bz-l.az)/len;
-    const x=l.ax+(l.bx-l.ax)*u-dz*l.side,z=l.az+(l.bz-l.az)*u+dx*l.side;
-    pos.set(x,w.height(x,z),z);e.set(0,Math.atan2(dx*dir,dz*dir),0);
-   }else if(l.r!==undefined){
+   if(l.r!==undefined){
     // Circling, banked into the turn.
     const g=Math.sign(l.speed)||1,a=l.phase+t*l.speed,x=l.x+Math.cos(a)*l.r,z=l.z+Math.sin(a)*l.r;
     pos.set(x,w.height(x,z)+l.up,z);e.set(0,Math.atan2(-Math.sin(a)*g,Math.cos(a)*g),-.35*g);
@@ -2444,9 +2320,6 @@ export class GolfView{
     // Grazing: a slow turn where it stands.
     pos.set(l.x,w.height(l.x,l.z),l.z);e.set(0,l.rot+Math.sin(t*.3+l.phase)*.35,0);
    }
-   // A walker's step: a bob of a few centimetres twice a stride and a
-   // little sway (iteration 5; they glided like statues).
-   if(l.line){const ph=(t+l.phase)*l.speed*2.6;pos.y+=Math.abs(Math.sin(ph))*.045*set.spec.h/1.85;e.z=Math.sin(ph)*.035;}
    q.setFromEuler(e);sc.setScalar(set.spec.h);m4.compose(pos,q,sc);for(const m of set.meshes)m.setMatrixAt(i,m4);
   });for(const m of set.meshes)m.instanceMatrix.needsUpdate=true;}};
   place(0);
@@ -3532,8 +3405,6 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   this.fountains?.update(dt,this.elapsed);
   if(this.markings)this.markings.visible=this.quality!==tierOf('low');
-  // Tournament week's crowd (phase 7): never on Low either.
-  if(this.occasion)this.occasion.crowd.visible=this.quality!==tierOf('low');
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and

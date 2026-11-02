@@ -448,44 +448,17 @@ and landscape) and `addStory` instances the walls in 2 m sections, the
 stones and the lanterns. The walls are drawn uninked (inked, their small
 stones went black).
 
-### architect_occasion
-
-`tools/blender/architect_occasion.py`: tournament week, each drawn to
-occasion.js's footprint (front, toward play, at -Y): a grandstand (20 x 9 m,
-six stepped rows, an event-green skirt, a canopy and pennants: 8.6 m), a
-scoreboard on 3 m legs (12 x 2, 7.6 m), a scaffold TV tower with a hooded
-camera (4 x 4, 12 m), a peaked marquee (10 x 10, 5.5 m), 6 m of gallery rope
-and five spectators from the shared body (`figures.py`, below): a cap, a sun
-hat and skirt, a golf umbrella, clapping in a visor, a child cheering.
-Ingested as `occasionpieces` with its own scale; renderer.js fits the
-buildings to their boxes and `addOccasion` instances the ropes and the crowd,
-each spectator dressed from `PEOPLE_PALETTE` and drawn at its own height.
-
-### figures.py: one body for every person
-
-`tools/blender/figures.py` (the owner's review, 30 October 2026) builds a
-cartoon person into a mesh -- poses walk, stand, clap, cheer, push, pull,
-umbrella and seated; hats cap, visor, sun hat and bucket; a skirt and
-ponytail; a carry bag, push and pull trolleys, an umbrella. Each part is one
-role -- skin `stone`, shirt `accent`, trousers `bark`, shoes and hair `dirt`,
-hat with its bag or umbrella `leaf` -- because the game colours each role per
-figure (instance colours), so one model is many people. The ingest records a
-person's true height (`tall`, build-meshes.mjs `PEOPLE`): every model is
-normalised to one unit tall, and a child and someone under an umbrella were
-stretched to the same height until it did.
-
 ### architect_life
 
 `tools/blender/architect_life.py`: life on an Architect course, each
 facing -Y at its real size -- a sheep (a fleece of lumps on short legs, a dark
 face), a goose, a doe and a bull elk (inset coat-coloured legs, a full body),
-a heron, a roadrunner, a gliding bird (a gull white, a raven black), four
-walking golfers from `figures.py` (a bag, a push trolley, a pull trolley, a
-bucket hat and bag) and a five-unit fairway reel mower (2.58 x 2.59 m, 2.32 m
-to its sunshade; RESEARCH, *A fairway mower*) with a greenkeeper aboard.
+a heron, a roadrunner and a gliding bird (a gull white, a raven black).
 Ingested as the `lifeforms` family with its own scale; renderer.js `addLife`
-draws them instanced, the animals a quarter to a half larger than life and
-the people a twentieth, and moves them, never on Low.
+draws them instanced, a quarter to a half larger than life, and moves them,
+never on Low. (The four walking golfers, the mower, tournament week's pack
+`architect_occasion.py` and the shared body `figures.py` were removed on 2
+November 2026: the owner.)
 
 ### architect_water
 

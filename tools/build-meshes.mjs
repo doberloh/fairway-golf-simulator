@@ -165,16 +165,13 @@ const PICK = {
  // addBuildings and addStory).
  storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
- // animals and distant people, placed by life.js, moved by renderer.js addLife.
- lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1'].map(k => `blender:Blender_${k}`),
- // TOURNAMENT WEEK (tools/blender/architect_occasion.py; phase 7): a
- // Championship venue's stands, scoreboard, towers, marquees, ropes and crowd.
- occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `blender:Blender_${k}`),
+ // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
+ // the mower, and tournament week's stands, board and crowd -- the pack
+ // architect_occasion.py -- were removed on 2 November 2026: the owner.)
+ lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1'].map(k => `blender:Blender_${k}`),
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
 
-// People, whose real height the game keeps (`tall`, below).
-const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `Blender_${k}`));
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and
@@ -317,12 +314,9 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    parts.push(part);
   }
-  // `tall`: the model's own height in metres, for the people (the owner's
-  // review): a child and someone under an umbrella were both stretched to
-  // the one height the game drew every spectator at. Recorded for the
-  // figure families only, so every other entry is written as before.
-  const tall = PEOPLE.has(name) ? {tall: +height.toFixed(3)} : {};
-  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), ...tall, parts};
+  // (`tall`, a figure's own height in metres, went with the people on 2
+  // November 2026.)
+  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), parts};
   taken++;
  }
 }

@@ -445,7 +445,7 @@ export function worldFromDoc(doc, settings = {}) {
    ...(role & 8 ? {stand: true} : {}), ...(role & 16 ? {under: true} : {})});
  }
  const homes = builtHomes(doc, height, nearest);
- const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], occasion: null, walls: [], wallBoxes: [],
+ const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], walls: [], wallBoxes: [],
   storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: [], props: [], paths: [], bridges: [], markers: [], wear: [], streams,
   footprint: null, groundGrid, groundCover: (x, z) => { const g = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null; return g === 'pinestraw' || g === 'litter' ? 'straw' : bio.cover; }, straw: [], blowouts: null, wild: null, fallenField: null, surfaceField: null, landform: null,
   settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,

@@ -17,7 +17,6 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {applyHand,designerHand} from './hand-tools.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
-import {placeOccasion} from './occasion.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -2453,20 +2452,16 @@ export function* generateWorldSteps(settings={},options={}){
   if(club){buildings.push(club);if(paths.length){pathBlock(club);linkBuilding(paths,club,pathConnect);pathIdx=pathIndex(paths);}}
  }
  // THE LAND'S STORY (story.js; architect-courses, phase 6): field walls, a
- // farmstead, ruins, a landmark, a stone circle and lanterns, by The land's
+ // farmstead, ruins and a landmark, by The land's
  // story -- placed before the houses and the trees, which keep off them. Its
  // buildings join `buildings` (solid, never out of bounds); its walls are
  // solid too (`wallBoxes`, physics.js).
- let walls=[],storyProps=[],clearings=[],occasion={ropes:[],crowd:[]};
+ let walls=[],storyProps=[],clearings=[];
  if(isArchitect(s)&&!s.range){
   const fans1=teeFans(holes);
   const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,earthworks,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3});
   buildings.push(...story.buildings);walls=story.walls;storyProps=story.props;clearings=story.clearings;
   // A template's own wall (the Pit): in play by design, whatever the story.
-  // TOURNAMENT WEEK (occasion.js; phase 7): a Championship venue's stands,
-  // scoreboard, towers and marquees (solid, never out of bounds), its ropes
-  // and its crowd by the pin day.
-  const week=placeOccasion({holes,s,surface,nearest,height,buildings,clear:b=>!pathTouches(paths,b,2)});buildings.push(...week.buildings);occasion={ropes:week.ropes,crowd:week.crowd};
   for(const h of holes)for(const dw of h.design?.walls||[]){const c=h.center(dw.z),a=h.toWorld({x:c-dw.half,z:dw.z}),b=h.toWorld({x:c+dw.half,z:dw.z});walls.push({kind:'stone',ax:a.x,az:a.z,bx:b.x,bz:b.z,pit:true,hole:h.hole});}
  }
  // A house keeps off the paths too (Architect only: Classic has none, and
@@ -2866,7 +2861,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=isArchitect(s)&&!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=isArchitect(s)&&!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,occasion,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,mounds,earthworks,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

@@ -85,7 +85,6 @@ import {framedForBall} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
-import {leaderboard} from './leaderboard.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
@@ -1227,7 +1226,7 @@ const worldHole=n=>round.endless?0:n;
 function loadCourse(){
  stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced){lastShot=null;priorShot=null;}
  const key=settleSettings();
- if(!world||key!==worldKey){lastShot=null;priorShot=null;world=worldNow(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));updateBoard();}else view.setHole(worldHole(round.hole));
+ if(!world||key!==worldKey){lastShot=null;priorShot=null;world=worldNow(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));}else view.setHole(worldHole(round.hole));
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
  const holeIndex=worldHole(round.hole);
@@ -4791,19 +4790,7 @@ function flashTurn(tries=0){
  el.hidden=true;void el.offsetWidth;el.hidden=false;
  clearTimeout(flashTurn.timer);flashTurn.timer=setTimeout(()=>{el.hidden=true;},1900);
 }
-// THE SCOREBOARD BY THE LAST GREEN follows the scores (the owner's review;
-// leaderboard.js, Renderer.setLeaderboard): on a Championship venue only,
-// where there is a board; a scramble's teams as one line each.
-function updateBoard(){
- if(!view?.hasBoard?.()||rangeMode)return;
- const pars=roundPars();if(!pars.length)return;
- const entries=round.mode==='scramble'
-  ?[...new Set(round.players.map(p=>p.team))].map(team=>({name:round.players.filter(p=>p.team===team).map(p=>p.name).join(' & '),card:round.teamCards[team]}))
-  :round.players.map((p,i)=>({name:p.name||`Player ${i+1}`,card:round.cards[i]}));
- view.setLeaderboard(leaderboard({players:entries,pars,seed:settings.seed,day:pinDayOf(settings)}));
-}
 function drawScoreChips(){
- updateBoard();
  const host=$('scoreChips');if(!host)return;
  const others=round.players.length-1;
  // In skins each chip also says how many skins its golfer has won.
