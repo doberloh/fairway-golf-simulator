@@ -5788,8 +5788,13 @@ function renderPanel(name,content){
     const f=$('courseFile').files[0];
     // A BUILT course (Fairway Course Builder): a ZIP of its land, outlines and
     // trees, kept by its hash (built-store.js), its record in the library.
-    if(f&&f.size<=64000000){const head=new Uint8Array(await f.slice(0,4).arrayBuffer());if(isBuiltFile(head)){
+    // The same file opened again is the course already here (by its hash),
+    // not a second copy of it (until 1 November 2026 each open added one).
+    if(f){const head=new Uint8Array(await f.slice(0,4).arrayBuffer());if(isBuiltFile(head)){
+     if(f.size>64000000)throw Error(`That built course is ${(f.size/1e6).toFixed(0)} MB; Fairway opens built courses up to 64 MB.`);
      const {hash,doc,kept}=await builtStore.put(new Uint8Array(await f.arrayBuffer()));
+     const had=listCourses().find(c=>c.built===hash);
+     if(had){openPanel('library');toast(`“${had.name}” is already in Saved courses.`);return;}
      const saved=saveCourse({name:doc.name,settings:{biome:doc.landscape,holes:doc.holes.length},built:hash});
      if(doc.picture&&pictureOk(doc.picture)){coursePics.set(saved.id,doc.picture);pictureStore.put(saved.id,doc.picture);}
      openPanel('library');toast(`Opened “${saved.name}”, built in the course builder${kept?'':' (kept for this visit only: this browser will not store it)'}.`);return;}}

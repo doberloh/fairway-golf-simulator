@@ -11443,6 +11443,97 @@ Nothing the game reads changed: a saved file keeps its outlines, so
 `BUILT_VERSION` stays; a course made or saved again from now has the smoother
 ones. Both landscape fingerprints were unchanged.
 
+## OpenStreetMap's holes on the ground (1 November 2026)
+
+Building every course in bench/lidar (tools/build-courses.mjs; COURSE_BUILDER
+amendment 17) showed door 2's holes from OpenStreetMap could sit off the
+course. The causes and the fixes (src/builder/osm-course.js):
+
+- **Refining moved the map, not its holes.** `refineTrace` lines the map up
+  with the LIDAR by a whole shift (lineUp, to 6 m); measured shifts: Chambers
+  Bay 1.0, 0.5 m; Breckenridge 2.0, 1.0; Worthington 3.0, -1.5; Northwood
+  -4.5, -6.5; the rest none (the gain under 10%). The holes and boundary now
+  move by the same shift.
+- **Two courses at one club** each number holes 1-18 (TPC Scottsdale's
+  Stadium and Champions, Sahalee's three nines, Breckenridge's Bear, Beaver
+  and Elk, Ekwanok beside the Equinox's course). Read together, the later
+  line overwrote the earlier. A hole now belongs to the leisure=golf_course
+  holding most of its line's points; the course with most holes is offered
+  first.
+- **One tee a hole**: a hole line starts at one tee. Tee boxes whose middle
+  lies within 25 m of the line, no farther along it than 60%, and no more
+  than 40 m behind its start (150 m for a guessed tee; 15 m off the line
+  there) are the hole's, farthest first; and none that makes a hole longer
+  than its par allows (par 3 250 yd, 4 500, 5 640). PLACED, all. Sahalee's
+  2nd took a box 150 m back (665 yards) until the 40 m limit for drawn
+  lines.
+- **The par was thrown away** (door 2 kept tees, aims, green): kept now.
+
+**Numbered greens, no hole lines** (Worthington: 18 numbered greens, one hole
+line, 25 tee boxes for 18 holes). Each green needs a tee; scored against the
+card (golfpass, as read 31 October 2026), holes within 10% of the card's back
+yards:
+
+| Choosing the tee | Within 10% |
+| --- | --- |
+| first come, nearest the green before | not scored; by eye 7 holes clearly wrong (hole 2 227 yd for 173, 18 581 for 390) |
+| best pairing over all holes, walk + mown share past 230 m | 6 |
+| + the share under trees (LIDAR canopy over 4 m), mown share for all | 6 |
+| + back tees found 150 m behind | 7 |
+| + the hole's fairway: a tee near its far end (25 m past) | 8 |
+| the same, 70 m past the fairway's end | 9 |
+| + the scorecard's yards | 11 |
+
+The first-come rule was dropped for the holes it got badly wrong. The pairing is the Hungarian method over (holes x tee boxes plus one
+made tee per hole at its fairway's end). The 70 m is placed from Worthington
+alone: its fairway ends lay 55 to 110 m short of the card's tees. What it
+cannot find is a tee the map never drew -- Worthington's 2, 3, 6, 8, 9, 10,
+14 -- and a dogleg measured straight. A map with hole lines needs none of
+it.
+
+**Lining up, checked against a card**: TPC Scottsdale's Stadium Course, from
+its hole lines: 15th 551 yd (the card 553), 16th 161 (163), 17th 329 (332),
+18th 443 (442); 7,251 yd par 71 against 7,261 par 71. **The card's numbers
+are from memory, not fetched** (the Stadium Course's widely published back
+tees); to be checked against tpc.com's scorecard.
+
+## Greens a putt can hold (1 November 2026)
+
+Measured on the built files (a local script: the slope over half a metre at
+every point 3 m or more inside a green, within 15 m of the hole's green
+mark): Arcadia Bluffs' 2nd green up to 17% and 56% of it over 4%, TPC
+Scottsdale's 3rd 10% at the mark itself, Chambers Bay's greens 19-46% over
+4%. A green on a real course is rarely over 3-4% where a cup can be cut; the
+survey's ground, averaged over 2.5 m, kept ridges a stride long. Arcadia's
+test round: 167 strokes against par 72, the golfers stuck on the 2nd green
+(40 and 45 strokes on the 2nd and 3rd). Greens are now averaged over 5 m,
+eased into the ground round them over 3 m outside (docFromLand, PLACED):
+Arcadia 87 strokes, no hole over 7. The tilt stays -- the 2nd still reads
+5% at the mark and 15% at its steepest inside, 60% over 4% -- so these are
+still steep greens, as Arcadia's are; what went is the bump. Tees and
+fairways are as before (2.5 m and 1.5 m).
+
+## Every course in bench/lidar, built (1 November 2026)
+
+Built by tools/build-courses.mjs from each folder's survey (Druids Glen's fetched from 3DEP's Entwine copy; its property is over 2.25 km², so its land is at 1 m) and OpenStreetMap refined with the LIDAR; test rounds replayed with the test round as it is now (two virtual golfers, white tees). "Map shift" is how far refining moved the map; "greens on" counts green marks on a traced green after fitting; "tee boxes" all tees given to holes. Par is the map's where it tags it, else worked out (Battle Creek's map tags none: 70 here, 73 on its card -- from memory). Breckenridge is its Bear nine (the Beaver and Elk nines are not fully numbered in the map), Northwood its nine. The courses are not committed (bench/courses/, other people's data).
+
+| Course | Landscape | Holes, par, yards (back) | Map shift | Greens on / tee boxes | Test round | Stuck |
+| --- | --- | --- | --- | --- | --- | --- |
+| Arcadia Bluffs | lakeshore | 18, par 72, 7,237 yd | 0.0, 0.0 m | 18 of 18 / 49 | 87.0 / 72 | none |
+| Battle Creek Golf Course | pnw | 18, par 70, 6,313 yd | 0.0, 0.0 m | 18 of 18 / 48 | 94.5 / 70 | none |
+| Breckenridge Golf Club | mountain | 9, par 36, 3,668 yd | 2.0, 1.0 m | 9 of 9 / 32 | 46.5 / 36 | none |
+| Chambers Bay | links | 18, par 72, 7,455 yd | 1.0, 0.5 m | 18 of 18 / 48 | 88.5 / 72 | none |
+| Druids Glen Golf Course | pnw | 18, par 72, 6,947 yd | 0.0, 0.0 m | 18 of 18 / 64 | 86.5 / 72 | none |
+| Ekwanok Country Club | autumn | 18, par 70, 6,553 yd | 0.0, 0.0 m | 18 of 18 / 71 | 101.0 / 70 | none |
+| Key West Golf Club | island | 18, par 70, 6,242 yd | 0.0, 0.0 m | 18 of 18 / 49 | 97.5 / 70 | none (the 5th, a pond short-left of the green, 21.5 strokes) |
+| Nile Shrine Golf Course | pnw | 18, par 67, 4,769 yd | 0.0, 0.0 m | 18 of 18 / 19 | 77.0 / 67 | none |
+| Northwood Golf Club | redwood | 9, par 35, 2,802 yd | -4.5, -6.5 m | 9 of 9 / 12 | 52.5 / 35 | none |
+| Sahalee Country Club | pnw | 18, par 72, 6,877 yd | 0.0, 0.0 m | 18 of 18 / 60 | 87.0 / 72 | none |
+| Salish Cliffs Golf Club | pnw | 18, par 72, 6,998 yd | 0.0, 0.0 m | 18 of 18 / 67 | 89.0 / 72 | none |
+| Snohomish Golf Course | pnw | 18, par 72, 6,276 yd | 0.0, 0.0 m | 18 of 18 / 36 | 76.5 / 72 | none |
+| TPC Scottsdale (Stadium) | desert | 18, par 71, 7,251 yd | 0.0, 0.0 m | 18 of 18 / 62 | 79.0 / 71 | none |
+| Worthington Country Club | midwest | 18, par 72, 6,318 yd | 3.0, -1.5 m | 18 of 18 / 25 | 91.5 / 72 | none |
+
 ## A built course's yards, and the builder's card (1 November 2026)
 
 The owner found an imported course's yards "off". Measured on the

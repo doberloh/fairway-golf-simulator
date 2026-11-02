@@ -159,20 +159,5 @@ export function mergeTrees(lidar, osm, how = 'merge', {gap = 6} = {}) {
  return [...lidar.map(t => ({...t})), ...osm.filter(o => !near(o)).map(t => ({...t}))];
 }
 
-// The holes OpenStreetMap numbers: each golf=hole line, tee first, green last,
-// with its bends -- as door 2's markers ({tees: [{x, z, set}], aims, green}),
-// by its `ref`. A line drawn green-first is turned round by the green nearest
-// one of its ends.
-export function osmHoles(feats) {
- const greens = feats.areas.filter(a => a.tags.golf === 'green').map(a => { const r = a.rings[0]; return {x: r.reduce((s, p) => s + p[0], 0) / r.length, z: r.reduce((s, p) => s + p[1], 0) / r.length}; });
- const out = [];
- for (const l of feats.lines) {
-  if (l.tags.golf !== 'hole' || !/^\d+$/.test(l.tags.ref || '')) continue;
-  let pts = l.points;
-  const near = p => Math.min(Infinity, ...greens.map(g => Math.hypot(g.x - p[0], g.z - p[1])));
-  if (greens.length && near(pts[0]) < near(pts.at(-1))) pts = [...pts].reverse();
-  const n = +l.tags.ref;
-  out[n - 1] = {tees: [{x: pts[0][0], z: pts[0][1], set: 'back'}], aims: pts.slice(1, -1).map(([x, z]) => ({x, z})), green: {x: pts.at(-1)[0], z: pts.at(-1)[1]}, par: +l.tags.par || null};
- }
- return out;
-}
+// The holes OpenStreetMap numbers are read by osm-course.js (osmHoles), which
+// also picks the course and lines them up with the ground.

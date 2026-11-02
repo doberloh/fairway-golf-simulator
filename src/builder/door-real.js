@@ -33,7 +33,8 @@ import {converter} from '../lidar/geo.js';
 import {crsOf, toMetres, parseHeader} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
-import {fetchOsm, osmFeatures, layOsm, osmHoles, osmBoundary, mergeTrees, OSM_CREDIT} from './osm.js';
+import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT} from './osm.js';
+import {osmCourses, osmHoles, shiftHoles, fitHoles} from './osm-course.js';
 import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
@@ -808,6 +809,11 @@ export function open(draft = null) {
     el('small', {}, 'Many courses are already drawn in OpenStreetMap: its greens, fairways, tees, bunkers, water, paths, woods and numbered holes, laid as layers and markers. Credited in the course (ODbL). Goes online only when pressed.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
     st.osm ? el('small', {}, st.osm.said) : null,
+    // WHICH COURSE (osm-course.js osmCourses): a club with two or more, each
+    // its own holes and boundary.
+    st.osm?.courses?.length > 1 ? el('small', {}, 'Course') : null,
+    st.osm?.courses?.length > 1 ? el('select', {class: 'cb-osmcourse', style: 'width:100%', title: 'Which of the club\'s courses to build: its holes and its boundary', onchange: e => pickCourse(e.target.value)},
+     st.osm.courses.map(c => el('option', {value: c.id, selected: c.id === st.osm.course}, `${c.name} (${c.holes} hole${c.holes === 1 ? '' : 's'} numbered)`))) : null,
     // WHOSE TREES (osm.js mergeTrees; the owner, 1 November 2026).
     st.osm ? el('small', {}, 'Trees') : null,
     st.osm ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
@@ -973,17 +979,17 @@ export function open(draft = null) {
    let json;
    if (fromFile) { const [file] = await pickFile('.json,application/json'); if (!file) return; json = JSON.parse(await file.text()); }
    else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))]); }
-   const feats = osmFeatures(json, toLocal), edge = osmBoundary(json, toLocal);
-   if (edge) st.boundary = edge;
+   const feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats), edge = osmBoundary(json, toLocal);
    st.model = createTrace(st.land, {trees: []}); st.traceMode = 'openstreetmap';
    const laid = layOsm(st.model, feats), osmTrees = st.model.state.trees;
    // Whose trees (osm.js mergeTrees): the LIDAR's and the map's, by the choice.
    st.model.state.trees = mergeTrees(st.trees, osmTrees, st.treesFrom ?? 'merge');
    st.model.state.undo.length = 0;
-   const holes = osmHoles(feats);
-   if (holes.filter(Boolean).length) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green} : undefined); st.holesN = holes.length > 9 ? 18 : 9; }
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
-   st.osm = {codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), said: `Laid: ${Object.entries(laid).map(([k, n]) => `${n} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${holes.filter(Boolean).length} holes numbered${edge ? '; the course boundary' : ''}.`};
+   st.osm = {codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
+    courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
+   const n = osmCourseHoles();
+   st.osm.said = `Laid: ${Object.entries(laid).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${n} holes numbered${courses.length > 1 ? ` on ${courses[0].name} (${courses.length} courses here: pick below)` : ''}${st.boundary ? '; the course boundary' : ''}.`;
    paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
    say(st.osm.said);
   } catch (e) { say('OpenStreetMap: ' + e.message, true); }
@@ -996,7 +1002,30 @@ export function open(draft = null) {
   if (st.model) { st.model.setTrees(list); plan.draw(); refreshCount(); }
   say(`Trees: ${{merge: 'the LIDAR\'s, and OpenStreetMap\'s where it has none', lidar: 'the LIDAR\'s only', osm: 'OpenStreetMap\'s only'}[how]} -- ${list.length.toLocaleString()} (${st.trees.length.toLocaleString()} from the LIDAR, ${(st.osm.osmTrees ?? []).length.toLocaleString()} from OpenStreetMap; ${was.toLocaleString()} before). Undo takes it back.`);
  }
- function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
+ // THE CHOSEN COURSE'S HOLES AND BOUNDARY (osm-course.js): its numbered holes
+ // (hole lines, else numbered greens and the tees that fit them), moved by the
+ // map's shift when it was refined, then put on the trace's greens and tees.
+ // Returns how many holes. Replaces the marks only when the map numbers some.
+ function osmCourseHoles() {
+  // A draft keeps the map's trace, not its features (draft.js): its holes
+  // stay as marked.
+  const o = st.osm; if (!o?.feats) return 0;
+  const c = o.courses.find(q => q.id === o.course), sh = o.shift ?? {x: 0, z: 0};
+  const ring = c?.rings[0] ?? o.edge;
+  st.boundary = ring ? ring.map(([x, z]) => [x + sh.x, z + sh.z]) : st.boundary;
+  const raw = osmHoles(o.feats, {within: c?.rings ?? null, codes: o.codes, land: st.land});
+  const holes = fitHoles(shiftHoles(raw, sh), st.model.state.codes, st.land), n = holes.filter(Boolean).length;
+  // Eighteen when all eighteen are numbered; nine when 1 to 9 are and the
+  // back nine is not (a club's nine with a stray number beside it).
+  if (n) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null} : undefined); st.holesN = holes.slice(0, 18).filter(Boolean).length < 18 && holes.slice(0, 9).filter(Boolean).length === 9 ? 9 : holes.length > 9 ? 18 : 9; }
+  return n;
+ }
+ function pickCourse(id) {
+  if (!st.osm) return;
+  st.osm.course = id; const n = osmCourseHoles(), c = st.osm.courses.find(q => q.id === id);
+  go(2); say(`${c?.name ?? 'The course'}: ${n} holes numbered, and its boundary.`);
+ }
+ function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; st.osm.shift = {x: 0, z: 0}; osmCourseHoles(); paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
  async function refineOsm(mode) {
   if (!st.osm) return;
   if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
@@ -1004,9 +1033,12 @@ export function open(draft = null) {
   try {
    const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
    st.model = createTrace(st.land, {codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
-   paintCodes(); go(2); refreshCount();
+   // The holes and the boundary were drawn on the same map: they move with it
+   // (until 1 November 2026 they stayed where the map lay).
    const sh = refineTrace.lastShift;
-   say(`Refined from the ${mode === 'picture' ? 'picture' : 'LIDAR'}${sh ? `: the map moved ${Math.hypot(sh.x, sh.z).toFixed(1)} m to line up` : ''}. Keep it as drawn puts OpenStreetMap's back.`);
+   st.osm.shift = sh ?? {x: 0, z: 0}; osmCourseHoles();
+   paintCodes(); go(2); refreshCount();
+   say(`Refined from the ${mode === 'picture' ? 'picture' : 'LIDAR'}${sh ? `: the map, its holes and its boundary moved ${Math.hypot(sh.x, sh.z).toFixed(1)} m to line up` : ''}. Keep it as drawn puts OpenStreetMap's back.`);
   } finally { setBusy(''); }
  }
  async function autoTrace() {
@@ -1070,9 +1102,21 @@ export function open(draft = null) {
    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.hole = Math.max(0, st.hole - 1); st.mark = 'back'; go(3); }}, 'Previous hole'),
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { st.hole = Math.min(st.holesN - 1, st.hole + 1); st.mark = 'back'; go(3); }}, 'Next hole'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole] = {tees: [], aims: [], green: null}; go(3); }}, 'Clear this hole'),
-    el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole]?.aims.pop(); go(3); }}, 'Drop last aim')), list),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole]?.aims.pop(); go(3); }}, 'Drop last aim')),
+   // FIT TO THE TRACE (osm-course.js fitHoles): every hole's green mark on
+   // the traced green it reaches, and the tee boxes along its line as its
+   // back, middle and front tees -- after an auto trace, a hand correction or
+   // holes marked by hand. One Undo-free step; marks can be moved after.
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Put each green mark on its traced green and give each hole the tee boxes along its line', onclick: fitToTrace}, 'Fit holes to the trace')), list),
   scorecard(),
   next(4, 'Next: the name')];
+ }
+ function fitToTrace() {
+  if (!st.model) return;
+  const want = st.holes.slice(0, st.holesN), fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.state.codes, st.land);
+  let greens = 0, tees = 0;
+  fit.forEach((h, n) => { if (!h) return; if (h.fit.green === 'moved') greens++; tees += h.fit.tees; st.holes[n] = {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null, index: want[n].index ?? null}; });
+  go(3); say(`Fitted: ${greens} green mark${greens === 1 ? '' : 's'} moved onto a green; ${tees} tee boxes given to holes. Move any mark by clicking again.`);
  }
  function markAt(p) {
   const h = st.holes[st.hole] ??= {tees: [], aims: [], green: null};

@@ -35,10 +35,30 @@ export async function testRound(doc, {golfers = GOLFERS, onHole = () => {}, paus
   let stuck = null;
   for (const {round: r, golfer} of rounds) {
    r.pars[r.hole] = h.par; if (!r.teePlaced) r.placeTee(h.tees);
-   let n = 0;
+   // LAYING UP (1 November 2026): a virtual golfer is the same golfer every
+   // time, so a drive into a pond from the tee went into it again after the
+   // drop at the tee -- Battle Creek's 13th and 14th were 40 strokes "stuck on
+   // the tee", the pond 240 m out on the line the game aims down. After a
+   // second penalty from one spot it changes the shot, as a player would: a
+   // ball that went for the green -- 80% or more of the way -- and fell short
+   // (Key West's 5th, a pond in front of the green) takes more club, aimed
+   // 12% past the flag; one that went long or wide lays up, aimed at 70% of the way to where it went in; each penalty
+   // after from the same spot one step more (24%, 49%...; PLACED -- Key
+   // West's golfer pulls left into the pond until 25% past).
+   let n = 0, again = 0, lastFrom = null, lastEnd = null;
    for (; !r.holeComplete && n < STUCK; n++) {
-    if (r.relief) { r.takeRelief({spot: {...r.relief.from}, penalty: 1}, h.pin); continue; }
-    const lie = lieOf(h, r.position.x, r.position.z), s = golfer.shot({hole: played(h), from: {...r.position}});
+    if (r.relief) {
+     const from = r.relief.from;
+     again = lastFrom && Math.hypot(from.x - lastFrom.x, from.z - lastFrom.z) < .5 ? again + 1 : 1; lastFrom = {...from};
+     r.takeRelief({spot: {...from}, penalty: 1}, h.pin); continue;
+    }
+    const lie = lieOf(h, r.position.x, r.position.z), here = {...r.position};
+    const retry = again >= 2 && lastEnd && lastFrom && Math.hypot(here.x - lastFrom.x, here.z - lastFrom.z) < .5, toPin = Math.hypot(h.pin.x - here.x, h.pin.z - here.z);
+    const went = retry ? Math.hypot(lastEnd.x - here.x, lastEnd.z - here.z) : 0;
+    const up = 1 + .12 * (again - 1), down = .7 ** (again - 1);
+    const layUp = !retry ? null : went < toPin && went > .8 * toPin ? {x: here.x + (h.pin.x - here.x) * up, z: here.z + (h.pin.z - here.z) * up} : {x: here.x + (lastEnd.x - here.x) * down, z: here.z + (lastEnd.z - here.z) * down};
+    const s = golfer.shot({hole: played(h), from: here, aimAt: layUp});
+    lastEnd = s.result.end ? {x: s.result.end.x, z: s.result.end.z} : null;
     r.takeShot({...s.result, puttStroke: lie === 'green', onGreen: s.result.onGreen}, h.pin);
    }
    if (!r.holeComplete) { const p = h.toWorld(r.position); stuck = {x: p.x, z: p.z, on: h.surface(r.position.x, r.position.z)}; }

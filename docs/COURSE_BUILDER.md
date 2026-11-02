@@ -681,6 +681,68 @@ After trying the builder, the owner amended the goal:
       when the editor opens again); not played by a person.
     **Built that day, not yet played by a person** (the journeys drive each:
     builder-door-2, builder-door-2-osm, builder-lidar-folder, builder-tools).
+17. **Every course in the LIDAR folder, built** (the owner, 1 November 2026:
+    "build me a working version of every course in the LiDAR folder ...
+    also build Druids glen golf course in Washington state ... think about
+    the flow that the user will take building a course from start to finish
+    and clean up any inconsistency in the builder as well as the main sim
+    ... Prefer open street map tracing with LiDAR cleanup ... Make sure that
+    open street maps holes actually line up with the holes on the real
+    courses"). **`tools/build-courses.mjs`** builds each course as door 2
+    does, with door 2's own modules: the course's boundary from
+    OpenStreetMap, the land from its survey (3DEP's Entwine copy fetched
+    where the folder has none: Druids Glen), the map laid as layers,
+    refined with the LIDAR, the holes picked, moved and fitted, the trees
+    merged, the course made, read back as the game reads it, and played by
+    the virtual golfers. The courses, their map answers, a plan picture each
+    and a report go to the git-ignored `bench/courses/<course>/`;
+    **`tools/play-built.mjs`** opens each in the built game and plays a tee
+    shot. What building them found and changed:
+    - **OpenStreetMap's holes did not line up** in four ways, all fixed in
+      a new module, `osm-course.js`, which door 2 and the tool share:
+      refining moved the map by a shift (up to 6.5 m: Northwood) and left
+      its holes where they were (`shiftHoles`); a club's second course
+      overwrote the first's hole numbers (`osmCourses`, door 2's new
+      **Course** choice); the map's par was read and thrown away; and every
+      hole had one tee, the line's first point. **`fitHoles`** now puts each
+      green mark on the green it reaches and gives each hole the tee boxes
+      along its line -- back, middle, front -- so white and red are real
+      tees. Door 2's holes step has **Fit holes to the trace** for holes
+      marked by hand or after an auto trace.
+    - **A map with numbered greens and no hole lines** (Worthington's): each
+      green's tee is chosen for all holes at once (the Hungarian method,
+      `assign`) by the walk from the green before, the share of the line
+      over mown ground and under trees, the far end of the hole's fairway,
+      and a scorecard when there is one (`card.json` beside the course, or
+      `osmHoles({card})`). Against Worthington's card: 11 of 18 holes within
+      10% with the card, 9 without; the rest are holes whose tee the map
+      never drew. RESEARCH, *OpenStreetMap's holes on the ground*.
+    - **Holes that line up**: checked against the real Stadium Course,
+      TPC Scottsdale's 15th to 18th were built at 551, 161, 329 and 443
+      yards (the card: 553, 163, 332, 442), the course 7,251 yards par 71
+      (7,261, par 71).
+    - **Greens a putt can hold**: Arcadia Bluffs' greens kept ridges of up
+      to 17% inside them, and the golfers took 40 and 45 strokes on two;
+      `docFromLand` now averages a green over 5 m, eased into the ground
+      round it over 3 m (RESEARCH, *Greens a putt can hold*). 167 strokes
+      against par 72 before, 87 after.
+    - **The test round laid up** (test-round.js): its golfer is the same
+      golfer every shot, so a drive into a pond replayed from the tee went
+      into it again -- Battle Creek's 13th and 14th, 40 strokes each. After
+      a second penalty from one spot it changes the shot: more club, aimed
+      12% past the flag, when it went for the green and fell short; else a
+      lay-up at 70% of the way; one step more each penalty after (PLACED).
+      Battle Creek 183 strokes before, 94.5 after; Key West 129 before, 97.5
+      after (its 5th, a pond short-left of the green, still 21.5).
+    - **A club's nine**: Breckenridge's Bear nine is numbered 1-9 with a
+      stray 12 beside it; a course with 1-9 and not all 18 is built as nine
+      (door 2 and the tool).
+    - **The game**: opening the same built file twice added it to Saved
+      courses twice; it is now recognised by its hash. A built file over 64
+      MB was told "smaller than 2 MB"; it is told its size and the limit.
+    The courses built, and what each report says, are in RESEARCH, *Every
+    course in bench/lidar, built*. **Not played by a person**, nor any of
+    the door 2 changes above.
 
 **The work remaining** (written into the goal at the owner's request, 1
 November 2026), in the order it will be done:

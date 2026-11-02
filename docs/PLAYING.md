@@ -563,7 +563,14 @@ the file to anyone else who has Fairway. It opens on three doors.
      **Fetch OpenStreetMap** (or **An OpenStreetMap file**, an Overpass JSON
      answer you saved) lays its greens, fairways, tees, bunkers, water, cart
      paths, woods and buildings (as houses) as layers and sets its numbered
-     holes as step 4's markers, and its course boundary when it has one; the course is credited "© OpenStreetMap contributors (ODbL)",
+     holes as step 4's markers -- with the map's par, each green mark put on
+     its green and each hole given the tee boxes along it as its back, middle
+     and front tees -- and its course boundary when it has one. A club with
+     two or more courses (TPC Scottsdale's Stadium and Champions) offers a
+     **Course** choice: each has its own holes and boundary. A map that
+     numbers its greens but draws no hole lines gets a tee for each green
+     worked out from the walk from the green before and the hole's fairway;
+     check those. The course is credited "© OpenStreetMap contributors (ODbL)",
      and a course you share that is built from it falls under that licence.
      Then **Keep it as drawn**, or **Refine with the picture** / **with the
      LIDAR**: the map is lined up with the picture or the ground first --
@@ -571,7 +578,8 @@ the file to anyone else who has Fairway. It opens on three doors.
      bunkers', ponds' and greens' edges, and clear greens it left out are
      added; its shapes are kept as drawn. On test courses it put a map moved
      up to 8 m back within half a metre. **Refine with the LIDAR** is the
-     recommended path when you have a survey.
+     recommended path when you have a survey. The holes and the boundary move
+     with the map when it is lined up.
      **Trees** (beside it): **the LIDAR's, and OpenStreetMap's where the
      LIDAR has none** (the default: every tree the survey measured, and the
      map's single trees and woods only where no surveyed tree stands within
@@ -651,6 +659,9 @@ the file to anyone else who has Fairway. It opens on three doors.
      green to change them. Players start on the white tees, so a hole with a
      middle tee plays shorter than its back tee for most rounds; a hole with
      one tee plays the same from all three. Out, In and Total add up.
+     **Fit holes to the trace** puts each hole's green mark on the traced
+     green it reaches and gives each hole the traced tee boxes along its
+     line -- after an auto trace, a correction, or holes you marked yourself.
   5. **Name**: the name, the landscape, and the credits for the data (an
      imagery provider's is added for you).
   6. **Review**: the whole course painted as it will be built -- every

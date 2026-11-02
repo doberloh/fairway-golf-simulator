@@ -3,7 +3,8 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, osmHoles, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees} from '../src/builder/osm.js';
+import {osmHoles} from '../src/builder/osm-course.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
 // Degrees to metres round 0,0 near enough for a test: a hundred-thousandth of

@@ -95,6 +95,16 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   restart to have the route), IGN's in-page download end to end, a real
   save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
   same night: swissSURFACE3D found and downloaded in the page.)
+- [ ] **Not played by a person: amendment 17** (docs/COURSE_BUILDER.md; every
+  course in bench/lidar built, 1 November 2026): the fourteen courses in
+  bench/courses (built by tools/build-courses.mjs, opened in the game by
+  tools/play-built.mjs -- see RESEARCH *Every course in bench/lidar, built*
+  for which played and what each report says); door 2's Course choice,
+  holes moved with the refined map, Fit holes to the trace, the map's par
+  kept; Saved courses not adding a built file twice. **To check by hand**:
+  play a few holes on each course; Worthington's holes 2, 3, 6, 8, 9, 10,
+  14, whose tees the map never drew; Key West's 2nd (a straight map line
+  across water); the TPC Scottsdale card numbers quoted from memory.
 - [ ] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
   owner's second list of 1 November 2026): the scorecard (par and index
   set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,

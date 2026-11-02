@@ -14,7 +14,7 @@ import {toMetres} from '../lidar/las.js';
 import {maskRings, simplify, smoothRing, relaxRing} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
-import {boxMean, features} from '../lidar/trace.js';
+import {boxMean, features, distanceFrom} from '../lidar/trace.js';
 import {GRID_MARGIN, builtLine} from '../built-world.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
@@ -208,6 +208,18 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  for (const r of [1, 2]) {
   const m = boxMean(land.ground, nx, nz, Math.max(1, Math.round(r * 1.25 / cell / 2)));
   for (let k = 0; k < m.length; k++) if (smoothR[k] === r) ground[k] = m[k];
+ }
+ // GREENS TRUER STILL (1 November 2026, building every course in bench/lidar):
+ // averaged over 2.5 m, the survey's greens kept ridges a putt cannot hold --
+ // 17% inside Arcadia Bluffs' second, 10% at TPC Scottsdale's third green's
+ // mark, the virtual golfers stuck on two of Arcadia's greens. A green's
+ // ground is averaged over 5 m (PLACED: its tilt and tiers stay, a bump under
+ // a stride goes), eased into the ground round it over 3 m outside, so its
+ // collar keeps no lip. RESEARCH, *Greens a putt can hold*.
+ {
+  const isGreen = Uint8Array.from({length: nx * nz}, (_, k) => codes ? (PALETTE[codes[k]] === 'green' ? 1 : 0) : (greenAt(-halfX + (k % nx) * cell, -halfZ + Math.floor(k / nx) * cell) ? 1 : 0));
+  const out = distanceFrom(isGreen, nx, nz, cell), m = boxMean(ground, nx, nz, Math.max(1, Math.round(2.5 / cell))), EASE = 3;
+  for (let k = 0; k < m.length; k++) { const w = isGreen[k] ? 1 : out[k] < EASE ? 1 - out[k] / EASE : 0; if (w > 0) ground[k] = ground[k] * (1 - w) + m[k] * w; }
  }
  // THE 3D EDITOR'S SHAPING (round-trip.js): a difference on this grid, added
  // to the ground as the survey and the smoothing leave it -- before the ponds

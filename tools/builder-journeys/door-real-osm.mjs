@@ -17,7 +17,8 @@ import {playOneShot} from './door-generate.mjs';
 const GEO = {lat: 43.63, lon: -95.62};
 // Local metres to degrees as door 2 does round a place found by name.
 const ll = (x, z) => ({lat: GEO.lat - z / 111320, lon: GEO.lon + x / (111320 * Math.cos(GEO.lat * Math.PI / 180))});
-const way = (tags, pts) => ({type: 'way', tags, geometry: pts.map(([x, z]) => ll(x, z))});
+let wayId = 0;
+const way = (tags, pts) => ({type: 'way', id: ++wayId, tags, geometry: pts.map(([x, z]) => ll(x, z))});
 const disc = (x, z, r) => { const p = Array.from({length: 24}, (_, k) => [x + r * Math.cos(k / 24 * 2 * Math.PI), z + r * Math.sin(k / 24 * 2 * Math.PI)]); return [...p, p[0]]; };
 const rect = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]];
 function answer() {
@@ -35,6 +36,9 @@ function answer() {
  // (left out when merged), one in the open rough.
  elements.push(way({natural: 'water'}, disc(200, 80, 6)), way({building: 'house'}, rect(195, -6, 209, 6)));
  for (const [x, z] of [[-160, 152], [20, 60]]) elements.push({type: 'node', tags: {natural: 'tree'}, ...ll(x, z)});
+ // A second course at the club, its own hole 1 (osm-course.js: one course's
+ // number 1 must not overwrite the other's).
+ elements.push(way({leisure: 'golf_course', name: 'The short course'}, rect(215, -70, 270, 70)), way({golf: 'green'}, disc(240, -50, 8)), way({golf: 'hole', ref: '1', par: '3'}, [[240, 50], [240, -50]]));
  return {elements};
 }
 
@@ -68,6 +72,14 @@ export default function ({journey, SHOTS}) {
   const got = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {layers: st.model.layersPresent(), green: st.model.kindAt(-160, -110), sand: st.model.kindAt(-148, -104), fairway: st.model.kindAt(-160, 0), holes: st.holes.filter(h => h?.green).length, credits: st.credits}; });
   if (got.green !== 'green' || got.sand !== 'sand' || got.fairway !== 'fairway') throw Error(`the map's surfaces should be laid where it draws them: ${JSON.stringify(got)}`);
   if (got.holes !== 9) throw Error(`the map's nine numbered holes should be set as markers, not ${got.holes}`);
+  // The course with the most holes first, its hole 1 its own and on its
+  // green, the map's par kept; the club's other course a choice away.
+  const first = await page.evaluate(() => { const h = window.fairwayBuilder.door2.holes[0]; return {x: h.green.x, z: h.green.z, par: h.par, options: document.querySelectorAll('.cb-osmcourse option').length}; });
+  if (Math.abs(first.x + 160) > 2 || Math.abs(first.z + 110) > 3 || first.par !== 4 || first.options !== 2) throw Error(`hole 1 should be the first course's, on its green, par 4, with a choice of two courses: ${JSON.stringify(first)}`);
+  await page.locator('.cb-osmcourse').selectOption({index: 1});
+  const other = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {x: st.holes[0].green.x, par: st.holes[0].par, n: st.holesN}; });
+  if (Math.abs(other.x - 240) > 2 || other.par !== 3) throw Error(`the short course's hole 1 should be its own: ${JSON.stringify(other)}`);
+  await page.locator('.cb-osmcourse').selectOption({index: 0});
   if (!got.credits.some(c => /OpenStreetMap/.test(c))) throw Error('OpenStreetMap should be credited');
   // Whose trees (the owner, 1 November 2026: the survey's trees were lost
   // when OpenStreetMap had any of its own): merged by default -- every tree

@@ -166,6 +166,25 @@ choosing, because picking by file name has been wrong twice. Altitude and
 temperature are biome fields and feed the air the ball flies through, so
 several of these play differently as well as look different.
 
+**Every region of the USA** (the owner, 1 November 2026: "a biome and sub
+biomes for all regions of the USA"; the full study is local,
+docs/studies/us-landscapes/ (README.md the index)). The landscapes cover the West Coast, the
+Sonoran desert, the Rockies, the Midwest, New England and the Great Lakes;
+missing are the whole South (Carolina Sandhills, Piedmont, Lowcountry,
+bottomland, Florida, Texas Hill Country and Gulf, West Texas), the Plains
+(Nebraska Sandhills, shortgrass prairie), the Intermountain West (sagebrush,
+red rock, Mojave, Coachella, ponderosa), California's coast (Monterey, SoCal
+canyons, oak woodland), the Appalachians, Northeast summer parkland, Long
+Island heathland, the north woods, Hawaii, Alaska and Bandon's US links. The
+plan: a sub-landscape (a record with a `base` that overrides a few fields),
+then the South's four trees (longleaf pine, live oak with moss, cabbage palm,
+bald cypress), then the West's (Joshua tree, fan palm, juniper, ponderosa,
+Monterey cypress, eucalyptus, sagebrush, yucca); about seven regions need no
+new models at all. Each could get a real test course from
+tools/build-courses.mjs, and the builder could suggest a landscape from where
+the LIDAR lies. Several entries below (Heathland, Volcanic Coast, Lowcountry,
+Nordic Birch, Red Rock Canyon) are parts of it.
+
 **Settings only, no new assets**
 
 - **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
