@@ -98,14 +98,17 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 - [ ] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
   owner's second list of 1 November 2026): the scorecard (par and index
   set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
-  Back to 2D, Close and Back asking twice, the editor's landscape-only paint
+  Back to 2D carrying the 3D work home (round-trip.js: layers, shaping,
+  holes, trees, houses, creeks), Close and Back asking twice, the editor's landscape-only paint
   and its landscape look, Tree height (the whole tree since), Size a tree,
-  the editor's close-up sheet (sharp edges near the camera; seen only in
+  the editor's close-up sheet (sharp edges near the camera, lined up with
+  the whole picture, outlines without notches; seen only in
   tools/builder-look.mjs pictures), Clear trees from tees and greens,
   Fill outside removing the trees too, the views following the window.
   Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
-  and builder-tools journeys and tests/tree-clear.test.mjs. **To check by
-  hand**: a window dragged to a second screen of another scaling (the
+  and builder-tools journeys and tests/tree-clear.test.mjs and
+  tests/round-trip.test.mjs. **To check by hand**: several trips between 2D
+  and 3D on a real course (the journey makes one, with sand and a hill); a window dragged to a second screen of another scaling (the
   journeys only resize); how the editor's stand-in trees read against the
   game's; clearing trees on a real course (not yet measured how many it
   draws in at Worthington or Nile Shrine).
@@ -138,7 +141,9 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 - [ ] **The editor's saved outlines changed** (1 November 2026): it now saves
   door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
   to 0.35 of a cell, so a course saved again from the editor differs slightly
-  at its edges from the same course saved before. A file already saved plays
+  at its edges from the same course saved before; and later that day
+  `layerRings` itself relaxes the staircase before simplifying (RESEARCH,
+  *Outlines without notches*), moving every edge again by centimetres. A file already saved plays
   as before (`BUILT_VERSION` unchanged). Not yet compared on a course by
   measurement (tools/freeze-compare.mjs round trip).
 - [ ] **The trace has no review layer

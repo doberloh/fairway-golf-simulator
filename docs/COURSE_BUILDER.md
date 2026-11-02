@@ -293,8 +293,9 @@ After trying the builder, the owner amended the goal:
     Decided, with what was turned down:
     - **Finer tracing: the outlines drawn, not a finer grid.** The game never
       saw the cells: each layer goes into the course as smoothed outlines
-      (simplified to 0.6 of a cell, two passes of corner cutting), so the
-      tracer now draws exactly those (`layerRings`, real-course.js). A grid
+      (since 1 November 2026 relaxed eight passes, simplified to a tenth of
+      a cell, one pass of corner cutting; until then simplified to 0.6 of a
+      cell, two passes), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
       four times finer would have cost sixteen times the memory and every
       brush stroke's time on a 3 km property, and still shown steps.
     - **A green's fringe is not an extrapolated layer**: the game already
@@ -558,10 +559,10 @@ After trying the builder, the owner amended the goal:
       (view.js). Stand-ins still: the game draws the real models.
     - "add a button to go back to the 2d editor from the 3d editor" --
       **Back to 2D**, when the course came from door 2: door 2 shown again
-      as it was left, at the review. **Decided**: what was changed in 3D is
-      not carried back (the trace is cells, the editor's course outlines and
-      a shaped land; carrying one into the other is its own piece of work),
-      so it asks first when anything changed.
+      as it was left, at the review. First decided that what was changed in
+      3D was not carried back, so it asked first; the owner then asked for
+      both directions the same day, and since then the work goes with it
+      (below, *Back and forth*) and it asks nothing.
     - "close needs a double confirm if its going to fully close the project
       in the builder" -- Close asks twice, the second time saying what is
       unsaved; door 2's Back to the start asks twice once there is work.
@@ -628,6 +629,56 @@ After trying the builder, the owner amended the goal:
     - Found on the way: **"null" beside Close** in the top bar when a course
       file was opened from the start page (a left-out Back to 2D button
       written as text); builder.js `topTools` drops it.
+    - "some sort of issue with meshes lining up properly in the 3d editor"
+      (a screenshot: a green's edge doubled, a soft strip beside a sharp
+      one) -- the land itself had no step there (measured across hole 1's
+      green on the owner's file: a centimetre a quarter metre at most). The
+      whole-course picture was mapped onto the ground as a share of the
+      editor's width, but the grid is a whole number of cells and the
+      picture a whole number of texels, neither quite that width: its edges
+      sat up to half a metre off the close-up's. Mapped texel for texel now
+      (view.js). The dark ring the screenshot also shows round that green is
+      the trace's own: a metre of fairway collar.
+    - "some sort of edge smoothing issue ... This kind of thing is all
+      over" -- notches along every edge: `layerRings` simplified the
+      traced staircase away (0.6 of a cell) and then rounded it, and a stair
+      corner simplifying kept turned into a notch. It now relaxes the
+      staircase first (each point to its neighbours, eight passes),
+      simplifies to a tenth of a cell and rounds once (all PLACED). Measured
+      on shapes rasterised at half a metre: a 12 m circle 29 cm off with an
+      18-degree notch before, 16 cm and none after; an ellipse 25 cm and 31
+      degrees, 15 cm and 4.5; a band 12 cm and 11 degrees, 7 cm and 2. One
+      routine, so the trace step, the editor and a saved course all change
+      together; a file already saved plays as before (`BUILT_VERSION`
+      unchanged, nothing the game reads moved).
+    - The close-up square is now centred halfway between the ground under
+      the camera and what it looks at, its side 2.2 times the camera's
+      distance: centred on the target, the ground just below the camera
+      -- the biggest on the screen -- sat at the square's fading edge.
+    - "Do the work to allow the user to go back and forth between 2d and 3d
+      work. while keeping changes made in both directions" -- **Back and
+      forth** (round-trip.js `fromEditor`, door-real.js `remount`). Back
+      to 2D brings home, against the course as the editor opened it: each
+      layer the editor changed (its outlines filled onto the trace's grid;
+      a layer it did not touch stays exactly as traced, since filling
+      outlines back smooths a little each time); the shaping, as a height
+      difference on the land's own grid (`st.landEdits`, added after the
+      survey is smoothed and before ponds are carved, so a hill raised in
+      3D stays where it was raised when a green is moved in 2D); the holes
+      (tees, aim points, greens; a par or index set in 3D stays set, one it
+      did not touch stays worked out); the trees, Tree height baked in,
+      with those the editor planted, moved or sized marked `kept` so the
+      course keeps them wherever they stand (the others meet door 2's rule
+      again: none on turf, sand or water); houses; creeks, which door 2
+      cannot draw and carries through to the course; the name and the
+      landscape. Hidden layers come back hidden. A draft keeps the shaping
+      and creeks (draft version 2); building the land anew from the LIDAR
+      drops them, as they belong to that land. Not carried: a pond's level
+      set in 3D (worked out again from its shore) and land detail finer
+      than the land's grid (door 2's courses have no finer patches).
+      Measured in tests/round-trip.test.mjs and the builder-door-2 journey
+      (sand painted and a hill raised in 3D, back in the trace, both there
+      when the editor opens again); not played by a person.
     **Built that day, not yet played by a person** (the journeys drive each:
     builder-door-2, builder-door-2-osm, builder-lidar-folder, builder-tools).
 
@@ -1142,9 +1193,11 @@ owner can overrule them:
 - The editor: the land drawn at every stored sample to about 1 km a side,
   coarser past it (under 2.2 million vertices); the surfaces edited at half a
   metre (coarser past 4096 cells a side), traced back as door 2 does since 1
-  November 2026 (`layerRings`: simplified to 0.6 of a cell, corners rounded;
-  until then 0.35 of a cell, the staircase kept); the 3D view's surfaces drawn
-  from those outlines at up to 4 texels a cell and 12 million texels; a brush's raise or lower 0.5 m a dab at full strength.
+  November 2026 (`layerRings`: the staircase relaxed, simplified to a tenth of
+  a cell, corners rounded; first 0.35 of a cell with the staircase kept, then
+  0.6 of a cell, which left notches); the 3D view's surfaces drawn from those
+  outlines at up to 4 texels a cell and 12 million texels, and again round
+  the camera at 1.5 to 15 cm a texel (`closeUp`); a brush's raise or lower 0.5 m a dab at full strength.
 - The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%
   average slope is too steep to putt.
 - The game's mesh refined where it misses the land by over 6 cm (shaped or

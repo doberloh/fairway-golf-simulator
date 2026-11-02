@@ -74,6 +74,10 @@ export function createEditor(doc) {
  }
  r.layers.recompose();
  r.codes = r.layers.codes;
+ // Each layer as it opened, as a fingerprint: what Back to 2D carries home is
+ // the layers changed since (round-trip.js).
+ const printOf = m => { let h = 2166136261 >>> 0; for (let k = 0; k < m.length; k++) if (m[k]) h = Math.imul(h ^ k, 16777619) >>> 0; return h; };
+ const opened = new Map([...r.layers.masks].map(([k, m]) => [k, printOf(m)]));
  const copyGrid = g => ({...g, heights: Float32Array.from(g.heights)});
  const land = copyGrid(doc.land), patches = (doc.patches || []).map(copyGrid);
  const original = {land: Float32Array.from(doc.land.heights), patches: patches.map(p => Float32Array.from(p.heights))};
@@ -152,6 +156,14 @@ export function createEditor(doc) {
  const api = {
   state,
   outlines,
+  // The layers changed since the editor opened: kind -> its outlines (none
+  // for a layer emptied), for door 2 to take back (round-trip.js fromEditor).
+  changedLayers() {
+   const out = new Map();
+   for (const k of new Set([...opened.keys(), ...r.layers.masks.keys()])) { const m = r.layers.masks.get(k), p = m ? printOf(m) : printOf([]); if (p !== (opened.get(k) ?? printOf([]))) out.set(k, m ? outlines(k) : []); }
+   return out;
+  },
+  hiddenLayers: () => [...r.layers.hidden],
   height: (x, z) => sample(x, z),
   codeAt(x, z) { const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); return i < 0 || j < 0 || i >= r.nx || j >= r.nz ? 0 : r.codes[j * r.nx + i]; },
   surfaceAt(x, z) { return PAINT[api.codeAt(x, z)]; },

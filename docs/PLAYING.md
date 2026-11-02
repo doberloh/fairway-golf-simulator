@@ -657,8 +657,9 @@ the file to anyone else who has Fairway. It opens on three doors.
      surface smoothed, in the landscape's colours, with the trees and the
      holes -- its card, and the checks. Go back to any step to change
      anything, or **Open in the editor**; the editor's **Back to 2D** comes
-     back here with the trace as you left it (what you changed in 3D is not
-     carried back, and it asks first if you changed anything). **Back**
+     back here bringing what you did in 3D with it -- the layers you painted,
+     the ground you shaped, holes, pars you set, trees, houses and creeks --
+     so you can carry on in 2D and open the editor again with both. **Back**
      (top right) to the builder's start asks twice once there is work in
      the course.
 - **Open a course file** to carry on with one you saved or one somebody gave

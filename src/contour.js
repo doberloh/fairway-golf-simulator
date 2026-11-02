@@ -85,6 +85,18 @@ function dp(pts, tol) {
  return pts.filter((_, i) => keep[i]);
 }
 
+// A traced ring relaxed: each point moved toward its two neighbours (1/4,
+// 1/2, 1/4), `passes` times -- a grid's staircase becomes the line it
+// stepped along before anything is thrown away, so simplifying leaves no
+// stair corners to show as notches (the owner, 1 November 2026: "some sort
+// of edge smoothing issue ... all over"). A curve moves in by about
+// passes/2 x spacing^2 / its radius: centimetres on a green.
+export function relaxRing(ring, passes) {
+ let r = ring;
+ for (let p = 0; p < passes; p++) r = r.map((q, i) => { const a = r[(i - 1 + r.length) % r.length], b = r[(i + 1) % r.length]; return [(a[0] + 2 * q[0] + b[0]) / 4, (a[1] + 2 * q[1] + b[1]) / 4]; });
+ return r;
+}
+
 // A ring rounded (Chaikin's corner cutting, `times` passes): each edge keeps
 // its middle half, so a corner becomes a curve and a grid's staircase a
 // smooth line. Each pass doubles the points; the area shrinks a little at

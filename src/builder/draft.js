@@ -11,7 +11,11 @@
 // each picture's lining up IS kept). The game does not open a draft.
 import {writeZip, readZip, isZip} from '../zip.js';
 
-export const DRAFT_KIND = 'fairway-draft', DRAFT_VERSION = 1, DRAFT_EXT = '.fairway-draft';
+// Version 2 (1 November 2026): what the 3D editor sent back (round-trip.js) --
+// its shaping as a height difference (edits/land.bin, a float a land cell)
+// and its creeks. A version 1 draft reads as one with neither.
+
+export const DRAFT_KIND = 'fairway-draft', DRAFT_VERSION = 2, DRAFT_EXT = '.fairway-draft';
 // The land's grids kept (`surface` is ground plus canopy, made again on reading).
 const F32 = ['ground', 'canopy', 'intensity'], U8 = ['water', 'building', 'multi', 'noReturns', 'filled'];
 const text = new TextDecoder();
@@ -19,12 +23,14 @@ const bytesOf = a => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
 // `d`: {step, name, landscape, credits, holes, holesN, hole, boundary,
 // traceMode, box, sources: [{name, crs}], view, picOffsets, osm, land|null,
-// trees, trace: {masks: Map kind -> Uint8Array, hidden: [kind], trees, homes}|null}.
+// trees, trace: {masks: Map kind -> Uint8Array, hidden: [kind], trees, homes}|null,
+// landEdits: Float32Array|null, creeks}.
 export async function writeDraft(d) {
  const parts = [], land = d.land;
  const json = {kind: DRAFT_KIND, version: DRAFT_VERSION, step: d.step, name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN, hole: d.hole ?? 0,
   boundary: d.boundary ?? null, traceMode: d.traceMode ?? null, box: d.box ?? null, sources: (d.sources ?? []).map(s => ({name: s.name, crs: s.crs ?? null})), view: d.view ?? {}, picOffsets: d.picOffsets ?? {}, osm: d.osm ? {said: d.osm.said ?? '', trees: d.osm.trees ?? [], homes: d.osm.homes ?? []} : null,
-  trees: d.trees ?? [], land: null, trace: null};
+  trees: d.trees ?? [], land: null, trace: null, creeks: d.creeks ?? [], landEdits: !!(land && d.landEdits)};
+ if (land && d.landEdits) parts.push({name: 'edits/land.bin', data: bytesOf(d.landEdits)});
  if (land) {
   json.land = {nx: land.nx, nz: land.nz, cell: land.cell, halfX: land.halfX, halfZ: land.halfZ, center: land.center, unit: land.unit, method: land.method, points: land.points ?? 0, rgb: !!land.rgb, grids: [...F32, ...U8].filter(k => land[k])};
   for (const k of json.land.grids) parts.push({name: `land/${k}.bin`, data: bytesOf(land[k])});
@@ -63,5 +69,6 @@ export async function readDraft(bytes) {
   trace = {masks, hidden: j.trace.hidden, trees: j.trace.trees, homes: j.trace.homes};
  }
  const osm = j.osm && land && parts.has('osm/codes.bin') ? {...j.osm, codes: part('osm/codes.bin', land.nx * land.nz).slice()} : null;
- return {...j, land, trace, osm};
+ const landEdits = j.landEdits && land ? new Float32Array(part('edits/land.bin', land.nx * land.nz * 4).slice().buffer) : null;
+ return {...j, land, trace, osm, landEdits, creeks: j.creeks ?? []};
 }

@@ -193,9 +193,10 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // then asks again -- the second time saying what is not saved.
  const leave = () => { current?.view.dispose(); current = null; document.removeEventListener('keydown', onKey); };
  topTools(
-  back ? el('button', {class: 'cb-btn', type: 'button', title: 'Back to door 2\'s steps, the trace as you left it (what was changed here in 3D is not carried back)', onclick: () => {
-   if (s.changed && !confirm('Go back to the 2D steps? What you changed here in the 3D editor is not carried back: the course is made again from the trace when you return.')) return;
-   leave(); back();
+  // Back to 2D takes what was done here with it (door-real.js remount,
+  // round-trip.js), so it asks nothing.
+  back ? el('button', {class: 'cb-btn', type: 'button', title: 'Back to door 2\'s steps, taking what you changed here with you: painted layers, shaping, holes, trees and houses', onclick: () => {
+   leave(); back(editor);
   }}, 'Back to 2D') : null,
   el('button', {class: 'cb-btn', type: 'button', onclick: () => {
    if (!confirm('Close this course and go back to the builder\'s start?')) return;

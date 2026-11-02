@@ -11,7 +11,7 @@
 // Local metres throughout: x east of the property's middle, z south of it.
 import {createGridder, findTrees} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
-import {maskRings, simplify, smoothRing} from '../contour.js';
+import {maskRings, simplify, smoothRing, relaxRing} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features} from '../lidar/trace.js';
@@ -163,17 +163,22 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // its mark and a tee a 6 x 10 m pad (PLACED), for the player to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
 // line?}] in local metres. `trees` as land.js finds them.
 // One layer's outlines as a course gets them: traced round its cells, the
-// staircase taken out (simplified to 0.6 of a cell, PLACED) and the corners
-// rounded (two passes of corner cutting); scraps under SPECK dropped. The
+// staircase relaxed away (eight passes), simplified to a tenth of a cell and
+// the corners rounded (one pass of corner cutting) -- all PLACED; scraps
+// under SPECK dropped. Until 1 November 2026 the staircase was simplified
+// away (0.6 of a cell) and two passes rounded it, which kept a stair corner
+// here and there as a notch the 3D editor showed close up: on a 12 m circle
+// at half a metre, 29 cm off and an 18-degree notch then, 16 cm and none now
+// (RESEARCH, *Outlines without notches*). The
 // trace step draws these too, so what is painted is seen as it will play.
 // `x0`, `z0`: the first cell's middle, when the grid is not centred (the
 // editor's raster, a part of it).
 export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -halfZ}) {
  return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, x0, z0, cell)
-  .map(r => smoothRing(simplify(r, cell * .6))).filter(r => r.length >= 3 && ringArea(r) > SPECK);
+  .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'midwest', credits = [], source = {}, landEdits = null, creeks = []}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -204,6 +209,10 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   const m = boxMean(land.ground, nx, nz, Math.max(1, Math.round(r * 1.25 / cell / 2)));
   for (let k = 0; k < m.length; k++) if (smoothR[k] === r) ground[k] = m[k];
  }
+ // THE 3D EDITOR'S SHAPING (round-trip.js): a difference on this grid, added
+ // to the ground as the survey and the smoothing leave it -- before the ponds
+ // are carved, which take the lower of the two.
+ if (landEdits?.length === ground.length) for (let k = 0; k < ground.length; k++) ground[k] += landEdits[k];
  const r2 = v => Math.round(v * 100) / 100;
  const surfaces = {green: [], fairway: [], tee: [], sand: [], semi: [], path: []};
  const water = [];
@@ -254,13 +263,15 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // height as physics.js sizes one, conifer when narrow for their height
  // (PLACED: a crown under a fifth of the height).
  const treeData = [];
+ // A tree the 3D editor planted, moved or sized (round-trip.js, `kept`) stays
+ // wherever it stands, with its own trunk and role.
  for (const t of trees) {
   const lie = codeAt(t.x, t.z);
-  if (['green', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
-  treeData.push(t.x, t.z, t.h, t.crown, Math.min(3.6, Math.max(.14, t.h * .027)), t.crown / t.h < .2 ? 1 : 2, -1);
+  if (!t.kept && ['green', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
+  treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), t.role ?? (t.crown / t.h < .2 ? 1 : 2), -1);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
-  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [], holes: recs,
+  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: structuredClone(creeks), holes: recs,
   trees: new Float32Array(treeData), treeKinds: [], homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };

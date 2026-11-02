@@ -355,12 +355,28 @@ export default function ({journey, SHOTS}) {
   const fit = await page.evaluate(() => { const c = window.fairwayBuilder.editor.view.canvas, p = c.parentElement; return [c.width / devicePixelRatio, p.clientWidth]; });
   if (Math.abs(fit[0] - fit[1]) > 2) throw Error(`the 3D view should follow the window: ${fit}`);
   await page.setViewportSize({width: 1600, height: 1000});
-  // Back to 2D (asks, as the tree scale changed the course), the review
-  // shown again, then the editor once more.
+  // Work in 3D to take back: sand painted and the ground raised where the
+  // view's middle falls.
+  const mid = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view, b = v.canvas.getBoundingClientRect(), p = v.pick({clientX: b.left + b.width / 2, clientY: b.top + b.height / 2}); return {sx: b.left + b.width / 2, sy: b.top + b.height / 2, ...p}; });
+  const heightAt = () => page.evaluate(([x, z]) => window.fairwayBuilder.editor.editor.height(x, z), [mid.x, mid.z]);
+  const h3d0 = await heightAt();
+  for (const tool of ['paint:sand', 'shape:raise']) {
+   await page.locator(`[data-tool="${tool}"]`).click();
+   await page.mouse.move(mid.sx - 20, mid.sy); await page.mouse.down(); await page.mouse.move(mid.sx + 20, mid.sy, {steps: 6}); await page.mouse.up(); await page.waitForTimeout(150);
+  }
+  const h3d1 = await heightAt();
+  if (!(h3d1 > h3d0 + .05) || await page.evaluate(([x, z]) => window.fairwayBuilder.editor.editor.surfaceAt(x, z), [mid.x, mid.z]) !== 'sand') throw Error(`the journey's sand and hill should be in the editor: ${h3d0} -> ${h3d1}`);
+  await page.locator('[data-tool="navigate:"]').click();
+  // Back to 2D (it asks nothing: the work goes with it), the review shown
+  // again with the sand in the trace and the hill kept, then the editor once
+  // more, which has both.
   const asked0 = asked.length;
   await page.getByRole('button', {name: 'Back to 2D'}).click();
   await page.waitForFunction(() => document.querySelector('.cb-door2') && window.fairwayBuilder.door2.step === 5 && window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
-  if (asked.length !== asked0 + 1) throw Error('going back to 2D with changes should ask once');
+  if (asked.length !== asked0) throw Error('going back to 2D should not ask: the work goes with it');
+  const in2d = await page.evaluate(([x, z]) => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((z + L.halfZ) / L.cell) * L.nx + Math.round((x + L.halfX) / L.cell); return {sand: st.model.state.layers.masks.get('sand')?.[k], edit: st.landEdits?.[k] ?? 0}; }, [mid.x, mid.z]);
+  if (in2d.sand !== 1 || !(in2d.edit > .05)) throw Error(`the 3D sand and hill should come back to the trace: ${JSON.stringify(in2d)}`);
+  if (!/Back from the 3D editor with .*layer/.test(await page.locator('.cb-note').textContent())) throw Error('door 2 should say what came back');
   const planFit = await page.evaluate(() => { const c = document.querySelector('canvas.cb-plan'); return [c.width, Math.round(c.getBoundingClientRect().width * devicePixelRatio)]; });
   if (Math.abs(planFit[0] - planFit[1]) > 2) throw Error(`door 2's plan should fill its place again: ${planFit}`);
   // ...and its bar and notes inside the window (a stale canvas size once
@@ -370,6 +386,8 @@ export default function ({journey, SHOTS}) {
   await t.shot('back-to-2d');
   await page.getByRole('button', {name: 'Open in the editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view && document.querySelector('.cb-view canvas'), null, {timeout: 120000});
+  const again = await page.evaluate(([x, z]) => { const e = window.fairwayBuilder.editor.editor; return {kind: e.surfaceAt(x, z), h: e.height(x, z)}; }, [mid.x, mid.z]);
+  if (again.kind !== 'sand' || Math.abs(again.h - h3d1) > .05) throw Error(`the editor again should have the sand and the hill: ${JSON.stringify(again)} against ${h3d1}`);
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const file = path.join(SHOTS, 'builder-door-2.fairway');
   await download.saveAs(file);

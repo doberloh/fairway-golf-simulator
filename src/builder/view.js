@@ -115,8 +115,8 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // course's sheet is a third of a metre a texel on an eighteen, so close up an
  // edge is a soft staircase, where door 2's plan draws its outlines at the
  // screen's own pixels. So the same outlines are drawn again, CLOSE texels a
- // side, over a square round where the camera looks -- its side about twice
- // the camera's distance (PLACED: 30 to 300 m, so 1.5 to 15 cm a texel;
+ // side, over a square round the ground between the camera and where it looks --
+ // its side 2.2 times the camera's distance (PLACED: 30 to 300 m, so 1.5 to 15 cm a texel;
  // farther out it stays 300 m round the middle of the view: a wider square
  // took 270 ms to draw at 800 m on an eighteen, for texels no finer than the
  // course's own) --
@@ -132,7 +132,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   const t = new T.CanvasTexture(sheet); t.flipY = false; t.colorSpace = T.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   // (x0, z0, side, on): the square in metres.
   const box = new T.Vector4(0, 0, 1, 0);
-  let timer = 0, wantX = 0, wantZ = 0, wantSide = 0;
+  let timer = 0, wantX = 0, wantZ = 0, wantSide = 0, on = true;
   // The cells under the square (and the margin round it).
   const cellsOf = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)), Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
   const scale = () => CLOSE / box.z;
@@ -166,16 +166,21 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    texture: t, box, ms: () => ms,
    // Each frame: where the camera looks, and whether the square should follow.
    check() {
-    const tg = controls.target, side = Math.max(30, Math.min(300, camera.position.distanceTo(tg) * 2));
-    const far = !box.w || Math.hypot(tg.x - (box.x + box.z / 2), tg.z - (box.y + box.z / 2)) > box.z / 4 || side / box.z > 1.5 || box.z / side > 1.5;
+    if (!on) return;
+    // Centred halfway between the ground under the camera and what it looks
+    // at, so the near ground -- the biggest on the screen -- is inside too.
+    const tg = controls.target, cp = camera.position, mx = (tg.x + cp.x) / 2, mz = (tg.z + cp.z) / 2, side = Math.max(30, Math.min(300, cp.distanceTo(tg) * 2.2));
+    const far = !box.w || Math.hypot(mx - (box.x + box.z / 2), mz - (box.y + box.z / 2)) > box.z / 4 || side / box.z > 1.5 || box.z / side > 1.5;
     if (!far) { clearTimeout(timer); timer = 0; return; }
-    if (wantX === tg.x && wantZ === tg.z && wantSide === side && timer) return;
-    wantX = tg.x; wantZ = tg.z; wantSide = side;
+    if (wantX === mx && wantZ === mz && wantSide === side && timer) return;
+    wantX = mx; wantZ = mz; wantSide = side;
     clearTimeout(timer); timer = setTimeout(() => { timer = 0; if (running) place(); }, 150);
    },
    cells: c => { if (box.w) draw(inside(c), false); },
    redraw: c => { if (box.w) draw(inside(c), true); },
    all: () => { if (box.w) place(); },
+   // Off for comparing (tools/builder-look.mjs --compare); back on, it places itself.
+   setOn(v) { on = v; if (!v) { clearTimeout(timer); timer = 0; box.w = 0; } },
    dispose: () => { clearTimeout(timer); t.dispose(); },
   };
  })();
@@ -194,7 +199,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
 
  // ---- the land.
  const stride = Math.max(1, Math.ceil(Math.sqrt(L.nx * L.nz / MAX_VERTS)));
- const cz = L.cellZ ?? L.cell, ex = s.ex, ez = s.ez;
+ const cz = L.cellZ ?? L.cell;
  const sx = Math.floor((L.nx - 1) / stride), sz = Math.floor((L.nz - 1) / stride);
  const chunks = [];
  for (let cj = 0; cj < sz; cj += CHUNK) for (let ci = 0; ci < sx; ci += CHUNK) {
@@ -202,7 +207,10 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   const g = new T.PlaneGeometry(1, 1, w, h), pos = g.attributes.position, uv = g.attributes.uv;
   for (let b = 0; b <= h; b++) for (let a = 0; a <= w; a++) {
    const k = b * (w + 1) + a, x = L.x0 + (ci + a) * stride * L.cell, z = L.z0 + (cj + b) * stride * cz;
-   pos.setXYZ(k, x, 0, z); uv.setXY(k, (x + ex) / (2 * ex), (z + ez) / (2 * ez));
+   // The texel under a point exactly as the sheet was drawn: the grid is a
+   // whole number of cells and the sheet a whole number of texels, neither
+   // quite 2ex, so a share of 2ex put edges up to half a metre off.
+   pos.setXYZ(k, x, 0, z); uv.setXY(k, (x - r.x0) * F / r.cell / W, (z - r.z0) * F / r.cell / H);
   }
   // PlaneGeometry's rows run down its y; laid here with rows running up z,
   // its triangles (a, b, d) already face up: (b - a) x (d - a) is +y.
@@ -372,7 +380,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  onReady();
 
  return {
-  renderer, scene, camera, controls, canvas: renderer.domElement, stride,
+  renderer, scene, camera, controls, canvas: renderer.domElement, stride, closeUp,
   // The ground point under a mouse event, or null.
   pick(e) {
    const b = renderer.domElement.getBoundingClientRect();

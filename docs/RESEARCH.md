@@ -11401,6 +11401,48 @@ Rejected: the whole picture at four texels a cell (9112 x 9232, 84 million
 texels, about 336 MB) and the outlines as meshes laid on the ground (every
 edge would have to follow the land, and be rebuilt under every brush).
 
+The same day the owner sent a low view of a green with its edge doubled.
+Measured first: the land has no step there (across hole 1's green on the
+owner's file, never more than 1 cm a quarter metre). The cause was the whole
+picture's mapping: the ground's texture coordinate was a share of 2 x the
+editor's half-width, while the grid is a whole number of 0.5 m cells
+(2228 for 1114.3 m) and the picture a whole number of texels (3403 for 2228
+x 1.53) -- so the picture's edges sat up to half a metre off the close-up's,
+which is exact. Mapped texel for texel now. The square was also moved: it is
+centred halfway between the ground below the camera and what the camera
+looks at, its side 2.2 times the camera's distance, because centred on the
+target the near ground sat in the fade.
+
+## Outlines without notches (1 November 2026)
+
+Every surface's outline in a door 2 course, in door 2's smooth view and in
+the 3D editor is `layerRings` (real-course.js): the cells traced (contour.js
+`maskRings`, a staircase at 45 degrees through edge midpoints), the staircase
+removed, the corners rounded. Until this day it simplified the staircase
+(Douglas-Peucker at 0.6 of a cell) then cut corners twice; the owner found
+notches "all over" in the editor -- a stair corner the simplifying kept,
+rounded into a small dent. Now the traced ring is relaxed first (each point
+to 1/4, 1/2, 1/4 of itself and its neighbours, eight passes), simplified at
+a tenth of a cell and cut once. All PLACED.
+
+Measured with shapes rasterised at 0.5 m and traced (a local script, the
+worst distance from the true edge, the worst notch -- a turn one way then
+straight back -- and the points kept):
+
+| Shape | Before: off, notch, points | After (8 passes) |
+| --- | --- | --- |
+| circle, 12 m radius | 0.288 m, 18.4 deg, 116 | 0.158 m, 0.0 deg, 86 |
+| ellipse, 30 x 9 m | 0.251 m, 31.0 deg, 148 | 0.147 m, 4.5 deg, 122 |
+| band 6 m wide at 17 deg | 0.117 m, 10.6 deg, 344 | 0.067 m, 2.0 deg, 196 |
+
+Four and six passes were tried: four left the ellipse a 6.6-degree notch,
+six 5.4; eight was the smallest notch on every shape without moving the
+edge more. Relaxing pulls a curve inward by about passes/2 x spacing squared
+over its radius -- under a centimetre on a 12 m circle at half a metre.
+Nothing the game reads changed: a saved file keeps its outlines, so
+`BUILT_VERSION` stays; a course made or saved again from now has the smoother
+ones. Both landscape fingerprints were unchanged.
+
 ## A built course's yards, and the builder's card (1 November 2026)
 
 The owner found an imported course's yards "off". Measured on the

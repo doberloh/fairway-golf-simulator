@@ -25,6 +25,7 @@
 // pictures), lidar/trace.js (the auto trace).
 import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave} from './builder.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
+import {fromEditor} from './round-trip.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -80,7 +81,7 @@ export function open(draft = null) {
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
   name: 'My real course', landscape: 'midwest', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
-  picShow: null, picOffsets: {}, lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
+  picShow: null, picOffsets: {}, landEdits: null, creeks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
@@ -693,7 +694,7 @@ export function open(draft = null) {
    // The pictures stay (the owner, 1 November 2026: keep the imagery when
    // the mode changes): placed by position, they lie on new land as on old;
    // one lined up by matched points was matched to the old land, and goes.
-   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, pics: st.pics.filter(p => p.provider || p.file), picture: null});
+   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, landEdits: null, creeks: [], pics: st.pics.filter(p => p.provider || p.file), picture: null});
    if (st.picShow === 'matched') st.picShow = null;
    landText.textContent = `${(2 * r.land.halfX).toFixed(0)} x ${(2 * r.land.halfZ).toFixed(0)} m at ${r.land.cell} m; ground ${r.land.method === 'classified' ? 'from the survey\'s own classes' : 'found by a ground filter'}; ${(100 * r.land.filled.reduce((s, v) => s + v, 0) / r.land.filled.length).toFixed(1)}% filled where no laser reached the ground; ${r.trees.length.toLocaleString()} trees.`;
    say(landText.textContent);
@@ -1103,7 +1104,7 @@ export function open(draft = null) {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits,
+   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
@@ -1119,7 +1120,7 @@ export function open(draft = null) {
    card.replaceChildren(el('small', {}, `${doc.holes.length} holes, par ${w.holes.reduce((a, h) => a + h.par, 0)}, ${Math.round(w.holes.reduce((a, h) => a + (h.tees.blue?.yards ?? 0), 0)).toLocaleString()} yards from the back; ${(doc.trees.length / 7).toLocaleString()} trees, ${doc.water.length} ponds.`), el('ul', {}, rows.map(r => el('li', {}, r))));
    const issues = checkCourse(createEditor(doc));
    found.replaceChildren(...(issues.length ? issues.map(c => el('li', {style: c.at ? 'cursor:pointer' : '', onclick: () => c.at && plan.look(c.at.x, c.at.z, Math.max(plan.view.scale, 2))}, c.text)) : [el('li', {}, 'Nothing breaks a rule.')]));
-   say('The course as it will be built. Open it in the editor, or go back to change anything.');
+   say(st.cameBack ?? 'The course as it will be built. Open it in the editor, or go back to change anything.'); st.cameBack = null;
   } catch (e) { say('Could not make the course: ' + e.message, true); }
   finally { setBusy(''); }
  }
@@ -1129,18 +1130,36 @@ export function open(draft = null) {
  const snapshot = () => ({step: st.step, name: st.name, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box,
   sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
   view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView},
-  picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land,
+  picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land, landEdits: st.landEdits, creeks: st.creeks,
   trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes} : null});
  const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
   said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
  setSaver(saver);
  // BACK FROM THE 3D EDITOR (the owner, 1 November 2026: "add a button to go
- // back to the 2d editor from the 3d editor"): door 2 shown again as it was
- // left -- the same plan, layers, pictures and steps -- at the review.
- function remount() {
+ // back to the 2d editor from the 3d editor", then "go back and forth between
+ // 2d and 3d work. while keeping changes made in both directions"): door 2
+ // shown again -- the same plan, pictures and steps -- with the editor's work
+ // taken into the trace (round-trip.js fromEditor): the layers it changed,
+ // its shaping (st.landEdits, added when the course is made), holes, trees,
+ // houses, creeks, name and landscape. Then at the review.
+ function remount(editor = null) {
   show(section); setTitle('Real life course'); topTools(backButton()); setSaver(saver);
+  let told = 'the trace as you left it';
+  if (editor && st.doc && st.model) {
+   const got = fromEditor({base: st.doc, now: editor.toDoc(), grid: st.land, changed: editor.changedLayers(), holesBefore: st.holes}), L = st.model.state.layers;
+   for (const [kind, m] of got.masks) L.masks.set(kind, m);
+   L.hidden = new Set(editor.hiddenLayers()); L.recompose(); st.model.state.codes = L.codes;
+   if (got.landEdits) { if (st.landEdits) for (let k = 0; k < got.landEdits.length; k++) st.landEdits[k] += got.landEdits[k]; else st.landEdits = got.landEdits; }
+   st.holes.splice(0, got.holes.length, ...got.holes); st.holesN = got.holes.length;
+   st.model.setTrees(got.trees); st.model.state.homes = got.homes;
+   Object.assign(st, {creeks: got.creeks, name: got.name, landscape: got.landscape});
+   told = [got.masks.size ? `${got.masks.size} layer${got.masks.size === 1 ? '' : 's'} as painted there` : '', got.landEdits ? 'the ground as shaped' : '', 'the holes, trees and houses'].filter(Boolean).join(', ');
+   dirtyVec(); refreshSave();
+  }
+  // Said now, and again by the review once it has painted (paintCourse).
+  st.cameBack = `Back from the 3D editor with ${told}. Change anything in the steps; Open in the editor makes the course from both.`;
+  say(st.cameBack);
   go(can(5) ? 5 : 3); plan.fit();
-  say('Back from the 3D editor: the trace as you left it. Change anything in the steps, then Open in the editor again.');
  }
  if (draft) restore(draft);
  else { go(0); say('Start with the LIDAR files.'); }
@@ -1150,7 +1169,7 @@ export function open(draft = null) {
   // grid, so the place is known (imagery, OpenStreetMap); building the land
   // anew needs the files again.
   Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box,
-   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], ...(d.view ?? {})});
+   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], ...(d.view ?? {})});
   if (d.land) {
    const L = d.land, u = L.unit ?? {h: 1, v: 1};
    st.land = L;
