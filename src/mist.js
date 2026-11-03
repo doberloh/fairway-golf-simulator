@@ -65,6 +65,9 @@ const PROFILES = {
  monterey: {haze: 1, sheet: .95, water: 1},
  // The high desert: thin dry air, the clearest sky in the game (PLACED).
  highdesert: {haze: .35, sheet: .15, water: .4},
+ // Appalachia: the blue haze the Blue Ridge and the Smokies are named for,
+ // mist in the hollows (PLACED).
+ appalachia: {haze: 1, sheet: .85, water: .9},
  // Still, cold mornings. The best mist on the course.
  northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.

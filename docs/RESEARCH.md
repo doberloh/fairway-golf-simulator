@@ -12691,3 +12691,51 @@ SCHEMA 22 adds the three keys; generator 68 moved High Plains and the Sand
 Hills. The grain elevator's and shelterbelt's far twins are built into the
 model module but not drawn: a landmark and a story prop draw their full
 model at every distance.
+
+
+## Appalachia and the Northeast's own models (phase 8b, 3 November 2026)
+
+PLAN.md's phase 8, second part: the Appalachia and Northeast parkland packs
+(tools/blender/cartoon_appalachia.py, cartoon_neparkland.py; 12 species and
+five buildings and fences, every variant, seven far twins). Every value
+PLACED from the study's pages (subs/appalachia/, subs/northeast/, local)
+and the packs' specs.
+
+- **A new region, `appalachia`** (from New England's record, but in summer:
+  no leaf fall): hills base 50 m, severity 120; stands of chestnut oak .3,
+  tulip poplar .2, oak and hemlock .15, maple and shortleaf pine .1, under
+  rosebay rhododendron .4, mountain laurel .35 and flame azalea .25; in the
+  open chestnut oak .15, rhododendron .12, mountain laurel .1, flame azalea
+  .08. Flame azalea drawn in its June flower on the ridges (#e0782e). A log
+  lodge, split-rail fences (#7a6a52), a log cabin with its stone chimney
+  for the ruin (8.5 by 7 m, 6.1 m tall). Fog haze 1, sheet .85 -- the blue
+  haze. **Blue Ridge** is the region as it is.
+- **Ozarks**: limestone stone (#c8c0a8), hills 40 / 90; oak .16, shortleaf
+  pine .14, hickory .1, red cedar, sassafras, dogwood, redbud and chestnut
+  oak .08 each.
+- **Bluegrass**: hills 20 / 35, trees at 0.5 (pasture), the rough green
+  (#6e8a44); bur oak .15, oak .12; black four-board fences (1.4 m, a wall
+  kind like the barbed wire, in 9 m sections), a black tobacco barn as the
+  farm's barn (16.5 by 21.7 m, 11.5 m tall), a clapboard clubhouse.
+- **The Old Northeast** (generator 69): copper beech .06 in the open and .08
+  of the stands, hydrangea .05; a Tudor clubhouse (height .361 of width,
+  cream and dark timber).
+- **The Pine Barrens** (generator 69): pitch pine for the stand-in pine
+  (.35), scrub oak .15 (a shrub, 1-2.5 m), bayberry .08, beach rose .06 with
+  its red hips; a shingled Long Island windmill (14 m) for the lighthouse.
+- **Names**: clashes (Grandfather, Sassafras, Sinkhole) and two real
+  courses (Linville, Blowing Rock) replaced. Debut weeks 185-187.
+
+SCHEMA 23 adds the three keys; generator 69 moved the Old Northeast and the
+Pine Barrens. A first wiring named the Appalachian rhododendron's family
+`rhododendron`, already the Puget pack's: one object, so the later key
+silently took Puget Sound's rhododendron. It is `rosebay` now.
+
+**No autumn leaf ground in summer** (the first pictures): New England's
+record lays fallen-leaf ground (`fallen`: maple, oak and aspen, kind
+`litter`) round its trees, orange for its autumn; inherited by Appalachia,
+and carried by the Old Northeast since phase 3, it read as orange paint
+under summer trees. Both have `fallen: null` now. The Bluegrass's first
+pictures were closed forest: it takes the plains' stands whole and their
+tree density (0.5), pasture round the holes. The woods left between holes
+are the generator's between-corridor planting, the same on High Plains.

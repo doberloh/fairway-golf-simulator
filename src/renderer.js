@@ -2311,6 +2311,10 @@ export class GolfView{
    windmill:{bark:'#9a9a94',accent:'#b04a32',stone:'#8a8c86',leaf:'#4a5e58'},
    grainelevator:{stone:'#d8d4c8',bark:'#4a4846',accent:'#9a5a3a',leaf:'#b0b2ae'},
    pumpjack:{bark:'#3a3a3a',accent:'#b04a32',stone:'#6a6a6a',leaf:'#a8a8a4'},
+   // Appalachia's and the Northeast parkland's.
+   stonecabin:{bark:'#7a5a3a',stone:'#8a8a80',leaf:'#6e665c',accent:'#2a2622'},
+   tobaccobarn:{bark:'#1e1e1e',leaf:'#7a7672',accent:'#9a7040'},
+   shingledwindmill:{stone:'#9a9488',bark:'#6e6a64',accent:'#ece8e0',dirt:'#34383c'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){
@@ -2379,6 +2383,8 @@ export class GolfView{
   draw('Blender_SplitRailFence_1',sections('rail'),{bark:worldOf(key).colours.rail??'#8a7a62'},true,wallPlace(1.1));
   // Barbed wire on cedar posts (the plains pack): its model runs along x, in
   // sections of about 8 m (its own length at 1.2 m tall).
+  // The Bluegrass's black four-board fence: along x as the wire, 9 m sections.
+  draw('Blender_HorseFence_1',sections('board',9),{bark:'#1a1a1a'},true,(s,info)=>{q.setFromAxisAngle(up,s.rot+Math.PI/2);pos.set(s.x,s.y,s.z);sc.set(s.len/(2*info.rx),1.4,1.4);});
   draw('Blender_BarbedWireFence_1',sections('wire',8),{bark:'#6a5a4a',stone:'#4e5848',accent:'#8a8a8a'},true,(s,info)=>{q.setFromAxisAngle(up,s.rot+Math.PI/2);pos.set(s.x,s.y,s.z);sc.set(s.len/(2*info.rx),1.2,1.2);});
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.

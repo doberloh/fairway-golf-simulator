@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=22;
+export const SCHEMA_VERSION=23;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -372,7 +372,12 @@ export const SCHEMA_VERSION=22;
 //     barbed-wire fences, a shelterbelt behind the farm; a windmill for the
 //     landmark (a grain elevator on High Plains). Moved High Plains and the
 //     Sand Hills.
-export const GENERATOR_VERSION=68;
+// 69: the Old Northeast and the Pine Barrens on their own pack (phase 8b):
+//     copper beech and hydrangea, a Tudor clubhouse; pitch pine for the
+//     stand-in pine, scrub oak, bayberry and beach rose, a shingled windmill
+//     for the lighthouse; no autumn leaf ground under the Old Northeast's
+//     summer trees. Moved the Old Northeast and the Pine Barrens.
+export const GENERATOR_VERSION=69;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -505,7 +510,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 7 (SCHEMA 21): California and the western mountains.
  'monterey','socal','winecountry','cascades','sierra','ponderosa',
  // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
- 'sagebrush','redrock','crosstimbers'];
+ 'sagebrush','redrock','crosstimbers',
+ // Phase 8b (SCHEMA 23): Appalachia.
+ 'blueridge','ozarks','bluegrass'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -707,6 +714,8 @@ const MIGRATIONS={
  20:s=>s,
  // 21 -> 22: three more landscapes (the high desert, the Cross Timbers); no save changes shape.
  21:s=>s,
+ // 22 -> 23: three more landscapes (Appalachia); no save changes shape.
+ 22:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

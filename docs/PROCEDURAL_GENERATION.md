@@ -250,7 +250,7 @@ in biomes.js.
   its first junction, with no stub past it).
 - **The land's story** (story.js), after the clubhouse and before the houses
   and trees, a middling amount (Architect's *A little*): field walls (stone,
-  fieldstone, split-rail or barbed wire), a farmstead (with a shelterbelt
+  fieldstone, split-rail, barbed wire or four-board), a farmstead (with a shelterbelt
   behind it on the plains), ruins, a landmark on a hole's line (a lighthouse,
   church, windmill, grain elevator, pump jack...), a stone circle and
   lanterns, as the landscape has them.

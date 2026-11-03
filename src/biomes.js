@@ -571,6 +571,24 @@ PALETTES.highdesert = {...PALETTES.desert, name: 'High Desert', title: 'Slickroc
  rough: '#a8946a', rock: '#c06a3a', sky: '#c8d8ea', altitude: 1500, temperature: 26, treeKind: 'pine', sun: 38};
 INTERFACE.highdesert = {panel: 'rgba(40,20,14,.88)', a1: '#fdba74', a2: '#c2410c', hot: '#fff7ed', soft: '#e8ccb8', onHot: '#2a1006'};
 WORLD.highdesert = {...WORLD.desert, clubhouse: 'adobe', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2]}};
+// Appalachia (phase 8b; from New England's record, in summer): hardwood
+// ridges fading blue into the haze -- chestnut oak, tulip poplar, hemlock,
+// shortleaf pine over rhododendron, mountain laurel and flame azalea; a log
+// cabin with its stone chimney. Every value PLACED from the study's pages
+// (subs/appalachia/).
+// No fallen-leaf ground under the trees: New England's is its autumn, and in
+// a summer landscape it read as orange paint (the first pictures).
+TRAITS.appalachia = {...TRAITS.northeast, leafFall: false, leafLitter: false, fallen: null, light: {shade: '#8a96bc'},
+ hills: {base: 50, severity: 120, reach: 85},
+ farForest: {cover: .9, size: 11, colors: ['#3e6232', '#4a6e38', '#567a3e']},
+ stands: {...TRAITS.northeast.stands, under: {spacing: 8, plants: [['rosebay', .4], ['mountainlaurelshrub', .35], ['flameazalea', .25]]},
+  plants: [['chestnutoak', .3], ['tulippoplar', .2], ['oak', .15], ['hemlock', .15], ['maple', .1], ['shortleafpine', .1]]},
+ plants: [['chestnutoak', .15], ['tulippoplar', .1], ['oak', .1], ['hemlock', .08], ['maple', .08], ['shortleafpine', .07], ['sassafras', .07], ['floweringdogwood', .05], ['rosebay', .12], ['mountainlaurelshrub', .1], ['flameazalea', .08]]};
+PALETTES.appalachia = {...PALETTES.midwest, name: 'Appalachia', title: 'Blue Haze Hollow', tag: 'Hardwood ridges fading blue into the haze.',
+ rough: '#6a7a3e', semi: '#4f8a3e', fairway: '#549a44', tree: '#3e6430', sky: '#bcd2e4', altitude: 900, temperature: 24, treeKind: 'oak', sun: 42};
+INTERFACE.appalachia = {panel: 'rgba(18,26,36,.88)', a1: '#c7e0f4', a2: '#1e5a8a', hot: '#fef3c7', soft: '#bccad8', onHot: '#081828'};
+WORLD.appalachia = {...WORLD.northeast, clubhouse: 'loglodge', path: 'asphalt', bridge: 'wood',
+ story: {walls: 'rail', ruins: ['stonecabin']}, life: {grazers: ['deer', 4]}, colours: {...WORLD.northeast.colours, rail: '#7a6a52'}};
 // Alaska: the Rockies' crags close behind, spruce and birch, a long low sun.
 TRAITS.alaska = {...TRAITS.mountain, light: {shade: '#7c8cb8'}, treeDensity: 3,
  stands: {...TRAITS.mountain.stands, plants: [['spruce', .55], ['paperbirch', .3, .6], ['aspen', .15]]},
@@ -666,13 +684,17 @@ const LAND = {
   world: {story: {walls: 'wire', landmark: 'windmill'}}},
  // The Old Northeast: New England's region in high summer -- stately oaks,
  // maples, elms and beeches, stone clubhouses (the Golden Age courses).
- oldnortheast: {leafFall: false, rough: '#73803f', semi: '#5a8a42', tree: '#3f6a30', sky: '#b9d3e8',
+ // No autumn leaf ground either (phase 8b; it read as orange paint).
+ oldnortheast: {leafFall: false, leafLitter: false, fallen: null, rough: '#73803f', semi: '#5a8a42', tree: '#3f6a30', sky: '#b9d3e8',
   farForest: {cover: .85, size: 11, colors: ['#3f6a30', '#4a7436', '#56803a']},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]], count: 3500, near: 22, leaf: '#7a8a46', accent: '#a07a3e'},
-  stands: {...TRAITS.northeast.stands, plants: [['oak', .35], ['maple', .3], ['americanbeech', .15, .9], ['americanelm', .1], ['whitepine', .1, 1.2]]},
-  plants: [['oak', .3], ['maple', .25], ['americanelm', .15], ['americanbeech', .15, .9], ['whitepine', .1, 1.2], ['shrub', .05]],
+  // Phase 8b: the old estates' copper beech, hydrangeas by the clubhouse.
+  stands: {...TRAITS.northeast.stands, plants: [['oak', .35], ['maple', .25], ['americanbeech', .12, .9], ['copperbeech', .08], ['americanelm', .1], ['whitepine', .1, 1.2]]},
+  plants: [['oak', .26], ['maple', .22], ['americanelm', .13], ['americanbeech', .13, .9], ['copperbeech', .06], ['whitepine', .1, 1.2], ['hydrangea', .05], ['shrub', .05]],
   ui: {panel: 'rgba(14,32,20,.88)', a1: '#bbf7d0', a2: '#166534', hot: '#fde68a', soft: '#b6d4bc', onHot: '#0a1f10'},
-  world: {clubhouse: 'stonehouse', bridge: 'stone', story: {walls: 'field', ruins: ['cottage'], landmark: 'church'}}},
+  // A Tudor clubhouse (phase 8b), cream and dark timber.
+  world: {clubhouse: 'tudor', bridge: 'stone', story: {walls: 'field', ruins: ['cottage'], landmark: 'church'},
+   colours: {...WORLD.northeast.colours, clubhouse: {stone: '#f2ece0', bark: '#6a3a2a', accent: '#4a3a2a', dirt: '#2a3038'}}}},
  // The Pine Barrens: pitch pine and scrub oak on sand, heath and fescue,
  // salt wind (Shinnecock, Pine Valley).
  pinebarrens: {leafFall: false, rough: '#9a9460', semi: '#6e8a4a', tree: '#3c5a34', sand: '#ece0bc', treeDensity: 2,
@@ -680,10 +702,13 @@ const LAND = {
    kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
   longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 1, 1.0]], count: 6000, near: 14, leaf: '#93945a', accent: '#c9b06a'},
   farForest: {cover: .7, size: 9, colors: ['#3c5a34', '#4a6638', '#5e6f3c']},
-  stands: {...TRAITS.northeast.stands, plants: [['pine', .6], ['blackoak', .4]], under: {spacing: 8, plants: [['shrub', .5], ['heather', .5]]}},
-  plants: [['pine', .35], ['blackoak', .2], ['heather', .2], ['shrub', .1], ['commonjuniper', .1], ['dunegrass', .05]],
+  // Phase 8b: pitch pine for the stand-in pine, scrub oak, bayberry and the
+  // beach rose under it.
+  stands: {...TRAITS.northeast.stands, plants: [['pitchpine', .6], ['blackoak', .4]], under: {spacing: 8, plants: [['scruboak', .5], ['heather', .3], ['bayberry', .2]]}},
+  plants: [['pitchpine', .35], ['blackoak', .12], ['scruboak', .15], ['heather', .12], ['bayberry', .08], ['beachrose', .06], ['commonjuniper', .07], ['dunegrass', .05]],
   ui: {panel: 'rgba(30,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#cfd4ae', onHot: '#181a08'},
-  world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}}},
+  // A Long Island shingled windmill for the landmark (phase 8b).
+  world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'shingledwindmill'}}},
  alaska: {},
  // Phase 5: the South (the US landscapes goal's South packs).
  piedmont: {},
@@ -836,6 +861,26 @@ const LAND = {
   plants: [['postoak', .2], ['blackjackoak', .15], ['easternredcedar', .1], ['shrub', .1], ['prairieforbs', .2], ['buffalograss', .05], ['wildsunflower', .05], ['soapweedyucca', .05], ['cedarelm', .05], ['redbud', .05]],
   ui: {panel: 'rgba(34,22,14,.88)', a1: '#fda4af', a2: '#be123c', hot: '#fff1f2', soft: '#e4c4c8', onHot: '#2a0810'},
   world: {story: {walls: 'wire', farm: true, landmark: 'pumpjack'}}},
+ // Phase 8b: Appalachia.
+ blueridge: {},
+ // The Ozarks: oak-hickory and shortleaf pine on limestone hills, red cedar
+ // glades, dogwood and redbud.
+ ozarks: {rockStyle: 'limestone', rock: '#c8c0a8', hills: {base: 40, severity: 90, reach: 85},
+  stands: {...TRAITS.appalachia.stands, under: {spacing: 8, plants: [['shrub', .6], ['mountainlaurelshrub', .4]]},
+   plants: [['oak', .35], ['shortleafpine', .3], ['shagbark', .2], ['easternredcedar', .15]]},
+  plants: [['oak', .16], ['shagbark', .1], ['shortleafpine', .14], ['easternredcedar', .08], ['sassafras', .08], ['floweringdogwood', .08], ['redbud', .08], ['chestnutoak', .08], ['shrub', .1], ['prairieforbs', .1]],
+  ui: {panel: 'rgba(30,22,16,.88)', a1: '#e9c9a0', a2: '#8a4a1a', hot: '#fef3c7', soft: '#dccbb8', onHot: '#241406'}},
+ // The Bluegrass: Kentucky horse country -- rolling pasture, bur oaks and
+ // hickories, black four-board fences, a black tobacco barn.
+ bluegrass: {treeDensity: .5, rough: '#6e8a44', semi: '#4e8e40', hills: {base: 20, severity: 35, reach: 80},
+  // Pasture, not woods: open stands as the plains' (the first pictures were
+  // closed forest).
+  farForest: {cover: .45, size: 11, colors: ['#3e6232', '#4a6e38', '#567a3e']},
+  stands: {...TRAITS.plains.stands, under: {spacing: 9, plants: [['shrub', 1]]},
+   plants: [['buroak', .35], ['oak', .3], ['shagbark', .2], ['americanelm', .15]]},
+  plants: [['buroak', .15], ['oak', .12], ['americanelm', .1], ['maple', .1], ['sassafras', .06], ['shagbark', .08], ['tulippoplar', .08], ['shrub', .12], ['prairieforbs', .09], ['floweringdogwood', .05], ['redbud', .05]],
+  ui: {panel: 'rgba(14,24,30,.88)', a1: '#d4e8f8', a2: '#2a5f8a', hot: '#fef3c7', soft: '#c0d0dc', onHot: '#06141e'},
+  world: {clubhouse: 'clapboard', story: {walls: 'board', farm: 'tobaccobarn', ruins: ['stonecabin']}}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

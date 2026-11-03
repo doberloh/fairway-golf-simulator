@@ -50,6 +50,9 @@ const LAND = {
  sagebrush: ['Sagebrush', 'Rimrock', 'Coulee', 'Balsamroot', 'Bunchgrass', 'Juniper', 'Rabbitbrush', 'Scabland', 'Dry Falls'],
  redrock: ['Hoodoo', 'Slickrock', 'Pinyon', 'Cliffrose', 'Red Fin', 'Arch View', 'Blackbrush', 'Desert Varnish', 'Globemallow'],
  crosstimbers: ['Post Oak', 'Blackjack', 'Pump Jack', 'Red Dirt', 'Red Cedar', 'Barbed Wire', 'Indian Blanket', 'Section Line', 'Creek Bottom'],
+ blueridge: ['Blue Haze', 'Rhododendron', 'Laurel', 'Chestnut Oak', 'Flame Azalea', 'Stone Chimney', 'Hemlock', 'Overlook', 'Split Rail'],
+ ozarks: ['Shortleaf', 'Glade', 'Limestone Bluff', 'Spring', 'Dogwood', 'Redbud', 'Cedar', 'Sinkhole', 'Float Trip'],
+ bluegrass: ['Four Board', 'Paddock', 'Tobacco Barn', 'Bur Oak', 'Limestone', 'Yearling', 'Bluegrass', 'Stone Fence', 'Homestretch'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

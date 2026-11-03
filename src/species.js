@@ -41,6 +41,8 @@ export const GROUND_PLANTS = new Set([
  'prairieforbs',
  // ... and the Keys' shrubs.
  'seagrape', 'bougainvillea', 'hibiscus',
+ // ... Appalachia's and the Northeast parkland's.
+ 'rosebay', 'mountainlaurelshrub', 'flameazalea', 'scruboak', 'bayberry', 'beachrose', 'hydrangea',
  // ... the high desert's and the plains'.
  'rabbitbrush', 'blackbrush', 'cliffrose', 'balsamroot', 'globemallow', 'cheatgrass', 'soapweedyucca', 'buffalograss', 'wildsunflower',
  // ... California's and the western mountains'.

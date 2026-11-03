@@ -707,6 +707,10 @@ families, the sea stacks offshore and the volcano as a horizon backdrop
 `cartoon_plains` with phase 8a, the rimrock and hoodoos as boulder
 families and the ranch pieces as story pieces (story.js), the plains' red
 cedar as `easternredcedar`, apart from the redwood pack's western
-`RedCedar`): `cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,
+`RedCedar`; `cartoon_appalachia` and `cartoon_neparkland` with phase 8b, the
+Appalachian rhododendron as `rosebay` (the Puget pack's Pacific one keeps
+the family `rhododendron`), the cabin, tobacco barn and shingled windmill
+as story pieces, the horse fence a wall kind, the Tudor clubhouse a
+clubhouse kind): `cartoon_north`,
 `cartoon_hawaii`. Each script's header and `LOOK`/`BARK` tables hold its
 colours and roles; each model's log holds its rounds.

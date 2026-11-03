@@ -254,6 +254,8 @@ export const FAMILY_OF = {
  royalpalm: 'royalpalm', travelerspalm: 'travelerspalm', seagrape: 'seagrape', mangrove: 'mangrove',
  gumbolimbo: 'gumbolimbo', banyan: 'banyan', bougainvillea: 'bougainvillea', hibiscus: 'hibiscus',
  // The South's packs.
+ // Appalachia and the Northeast parkland.
+ rosebay: 'rosebay', mountainlaurelshrub: 'mountainlaurelshrub', flameazalea: 'flameazalea', chestnutoak: 'chestnutoak', shortleafpine: 'shortleafpine', sassafras: 'sassafras', copperbeech: 'copperbeech', pitchpine: 'pitchpine', scruboak: 'scruboak', bayberry: 'bayberry', beachrose: 'beachrose', hydrangea: 'hydrangea',
  // The high desert and the plains.
  westernjuniper: 'westernjuniper', utahjuniper: 'utahjuniper', pinyonpine: 'pinyonpine', rabbitbrush: 'rabbitbrush', blackbrush: 'blackbrush', cliffrose: 'cliffrose', russianolive: 'russianolive', balsamroot: 'balsamroot', globemallow: 'globemallow', cheatgrass: 'cheatgrass', soapweedyucca: 'soapweedyucca', easternredcedar: 'easternredcedar', buffalograss: 'buffalograss', wildsunflower: 'wildsunflower',
  // California and the western mountains.

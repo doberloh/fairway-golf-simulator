@@ -73,7 +73,9 @@ export const WEEKLY_ROTATION = {
   // Phase 7, California and the western mountains (PLACED, one a week on).
   {debut: 176, biome: 'monterey'}, {debut: 177, biome: 'socal'}, {debut: 178, biome: 'winecountry'}, {debut: 179, biome: 'cascades'}, {debut: 180, biome: 'sierra'}, {debut: 181, biome: 'ponderosa'},
   // Phase 8a (PLACED, one a week on).
-  {debut: 182, biome: 'sagebrush'}, {debut: 183, biome: 'redrock'}, {debut: 184, biome: 'crosstimbers'}],
+  {debut: 182, biome: 'sagebrush'}, {debut: 183, biome: 'redrock'}, {debut: 184, biome: 'crosstimbers'},
+  // Phase 8b (PLACED, one a week on).
+  {debut: 185, biome: 'blueridge'}, {debut: 186, biome: 'ozarks'}, {debut: 187, biome: 'bluegrass'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

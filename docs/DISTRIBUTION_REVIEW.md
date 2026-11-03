@@ -1779,3 +1779,9 @@ bytes (17.80 MB gzipped)**, +2.1 MB: the two packs' 14 species, stone and
 ranch pieces (the model module 20.5 MB, +1.5 MB), and five landscapes'
 card pictures (611 KB, two of them retaken). Still one file, no network
 request.
+
+**Phase 8b, Appalachia and the Northeast's own**: the page is
+**34,788,010 bytes (18.96 MB gzipped)**, +2.0 MB: the two packs' 12 species
+and five buildings and fences (the model module 21.95 MB, +1.5 MB), and five
+landscapes' card pictures (661 KB, two retaken). Still one file, no network
+request.

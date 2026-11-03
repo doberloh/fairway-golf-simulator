@@ -32,7 +32,9 @@ export const CLUBHOUSE_SIZE = {
 export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, shingle: .414,
  // The South's plantation house (tools/blender/cartoon_southcoast.py: 17.1 m to
  // its cupola on 39.2 m of front).
- plantation: .436};
+ plantation: .436,
+ // The Old Northeast's Tudor clubhouse (tools/blender/cartoon_neparkland.py).
+ tudor: .361};
 // The landscape's build (the study's landscape table); the model's name.
 // Each landscape's clubhouse is its world block's (biomes.js).
 // Looked up by landscape through worldOf, never by the key in a table: the
@@ -41,7 +43,8 @@ export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stoneho
 export const clubhouseKind = key => worldOf(key).clubhouse || GENERIC_CLUBHOUSE;
 // A kind's model (the South's plantation house came from its own pack, under
 // its own name).
-export const clubhouseModel = kind => (kind === 'plantation' ? 'Blender_PlantationClubhouse_1' : `Blender_Clubhouse_${kind}`);
+const OWN_MODEL = {plantation: 'Blender_PlantationClubhouse_1', tudor: 'Blender_TudorClubhouse_1'};
+export const clubhouseModel = kind => OWN_MODEL[kind] ?? `Blender_Clubhouse_${kind}`;
 
 const corners = (c, w, d, rot) => {
  const cs = Math.cos(rot), sn = Math.sin(rot), out = [];

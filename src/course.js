@@ -2498,6 +2498,8 @@ export function* generateWorldSteps(settings={},options={}){
   prairieforbs:[.6,1.2],
   // The Keys' shrubs: sea grape 2.5-5 m, bougainvillea 2-4, hibiscus 1.5-2.6.
   seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6],
+  // Appalachia's and the Northeast parkland's (PLACED within their specs).
+  rosebay:[2.5,4.5],mountainlaurelshrub:[1.8,3],flameazalea:[1.8,2.6],scruboak:[1,2.5],bayberry:[1.4,2.2],beachrose:[1,1.6],hydrangea:[1.1,1.6],
   // The high desert's and the plains' (PLACED within their specs).
   rabbitbrush:[0.8,1.6],blackbrush:[0.6,1.2],cliffrose:[1.8,3],balsamroot:[0.4,0.7],globemallow:[0.4,0.8],cheatgrass:[0.25,0.5],soapweedyucca:[0.6,1.2],buffalograss:[0.12,0.25],wildsunflower:[1.2,2.4],
   // California's and the western mountains' (PLACED within their specs).
@@ -2509,6 +2511,8 @@ export function* generateWorldSteps(settings={},options={}){
  // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
  // and crown radius r0-r1 m.
  const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15],
+  // Appalachia's and the Northeast parkland's (PLACED within their specs).
+  chestnutoak:[18,26,7,10],shortleafpine:[20,28,4,6],sassafras:[8,13,3,4.5],copperbeech:[18,26,9,12],pitchpine:[9,16,4,6],
   // The high desert's and the plains' (PLACED within their specs).
   westernjuniper:[6,10,4,5.5],utahjuniper:[3.5,6,2.5,3.5],pinyonpine:[4,8,3,4.5],russianolive:[6,9,3.5,5],easternredcedar:[5,9,2,3],
   // California's and the western mountains' (PLACED within their specs).

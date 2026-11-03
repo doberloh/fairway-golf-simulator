@@ -139,7 +139,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   triangles +33%, draws 20% fewer), Monterey 0.84 and Wine Country 0.82,
   level with the Heartland. The high desert and plains (phase 8a): Red
   Rock 0.80 against the Sonoran's 0.71 (+13%; triangles +19%), High Plains
-  0.71. Candidates:
+  0.71. Appalachia and the Northeast (phase 8b): the Blue Ridge 1.00
+  against the Heartland's 0.81 (+23%; triangles +40%, its closed hardwood
+  woods), the Old Northeast 0.87 (+7%). One frame-ab run (the Heartland,
+  3 November) hung 40 minutes with the card idle and was killed; the retry
+  took its usual 90 s. Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
   a landscape's species into fewer draws; the grain elevator's and
   shelterbelt's far twins, built but not drawn (a landmark and a story prop
@@ -159,7 +163,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
   170-175 (5 April to 10 May 2027), California and the mountains' at
   176-181 (17 May to 21 June 2027), phase 8a's at 182-184 (28 June to
-  12 July 2027;
+  12 July 2027), phase 8b's at 185-187 (19 July to 2 August 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
@@ -241,7 +245,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   (eastern red cedar, soapweed yucca, buffalo grass, sunflowers, barbed
   wire, a shelterbelt, a windmill or grain elevator; Cross Timbers' pump
   jack). Seen in captures; not seen by a person in play.
-- [ ] **The new landscapes by region**: the South, Texas and the deserts, California and the mountains, the high desert and plains (done, above); Texas and the deserts;
+- [x] **Appalachia and the Northeast's own** (phase 8b; SCHEMA 23,
+  generator 69): Blue Ridge, Ozarks and Bluegrass (a new `appalachia` region
+  from New England's record in summer; a log-cabin ruin, a four-board horse
+  fence, a tobacco barn) on the Appalachia pack; the Old Northeast (copper
+  beech, hydrangea, a Tudor clubhouse) and the Pine Barrens (pitch pine, scrub
+  oak, bayberry, beach rose, a shingled windmill) on the Northeast parkland
+  pack. Seen in captures; not seen by a person in play.
+- [ ] **The new landscapes by region**: the South, Texas and the deserts, California and the mountains, the high desert and plains, Appalachia (done, above); Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;

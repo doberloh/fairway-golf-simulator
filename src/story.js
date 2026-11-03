@@ -51,6 +51,13 @@ export const STORY_PIECES = {
  windmill: {model: 'Windmill_1', width: 6.5, depth: 5.9, height: 10},
  grainelevator: {model: 'GrainElevator_1', width: 32.3, depth: 11, height: 30},
  pumpjack: {model: 'PumpJack_1', width: 7.7, depth: 2.8, height: 4.4},
+ // Appalachia's log cabin with its fieldstone chimney (a ruin) and the
+ // Bluegrass's black tobacco barn (a farm's barn); the Pine Barrens' Long
+ // Island shingled windmill (a landmark). Heights PLACED from the packs'
+ // specs, width and depth the models' own for them.
+ stonecabin: {model: 'StoneCabin_1', width: 8.5, depth: 7, height: 6.1},
+ tobaccobarn: {model: 'TobaccoBarn_1', width: 16.5, depth: 21.7, height: 11.5},
+ shingledwindmill: {model: 'ShingledWindmill_1', width: 13.2, depth: 9.5, height: 14},
 };
 // Each landscape's story is its architect block's (biomes.js).
 export const storySet = key => worldOf(key).story || {};
@@ -219,7 +226,9 @@ export function segDist(w, x, z) {
 // thick, its height by kind (a hedge stands taller).
 export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1, field: 1.05,
  // The plains pack's barbed wire on cedar posts (PLACED).
- wire: 1.2};
+ wire: 1.2,
+ // The Bluegrass's black four-board horse fence (PLACED).
+ board: 1.4};
 // How wide a wall's solid box is. A split-rail fence (the US landscapes goal's
 // mountain pack) zig-zags 30 degrees either side of its run, so its rails
 // reach about 0.6 m out each way. PLACED.

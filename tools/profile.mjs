@@ -74,7 +74,8 @@ const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 're
  'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
  'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
- 'sagebrush', 'redrock', 'crosstimbers'];
+ 'sagebrush', 'redrock', 'crosstimbers',
+ 'blueridge', 'ozarks', 'bluegrass'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {

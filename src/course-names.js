@@ -267,6 +267,19 @@ export const NAME_WORDS = {
   ['Post Oak','Blackjack','Cross Timbers','Red Dirt','Kiamichi','Canadian','Washita','Osage Hills','Arbuckle','Wichita','Pump Jack','Oil Patch','Section Line','Red Cedar','Mistletoe','Greater Prairie','Chisholm','Boomer','Sooner','Indian Blanket'],
   ['Timbers','Hills','Creek','Crossing','Ranch','Bend','Ridge','Lake','Bottoms','Station','Prairie','Woods','Trail','Fork','Springs','Hollow','Grove','Knob','Flats','Draw'],
  ],
+ // Phase 8b: Appalachia.
+ blueridge: [
+  ['Blue Haze','Chestnut Oak','Rosebay','Laurel Hell','Flame Azalea','Hemlock Cove','Beech Mountain','Wiseman','Roan','Craggy','Balsam Gap','Pisgah','Watauga','Doughton','Rough Ridge','Whitetop','Looking Glass','Shining Rock','Graveyard Fields','Tanawha'],
+  ['Gap','Knob','Cove','Hollow','Ridge','Bald','Falls','Creek','Branch','Overlook','Laurel','Run','Notch','Summit','Fork','Meadow','Spring','Mill','Bluff','Lodge'],
+ ],
+ ozarks: [
+  ['Shortleaf','Glade','Buffalo River','White River','Current River','Big Piney','Gasconade','Eleven Point','Hercules','Mark Twain','Bull Shoals','Table Rock','Taneycomo','Boston Mountain','Chinquapin','Persimmon Hollow','Spring Fed','Karst','Losing Stream','Calico Rock'],
+  ['Hollow','Bluff','Spring','Ridge','Knob','Creek','Bottoms','Glade','Ford','Bend','Mill','Cave','Shoals','Mountain','Fork','Branch','Lake','Run','Crossing','Valley'],
+ ],
+ bluegrass: [
+  ['Thoroughbred','Paddock','Four Board','Tobacco Barn','Limestone Spring','Elkhorn','Kentucky River','Versailles','Paris Pike','Iron Works','Stallion','Yearling','Bourbon','Rickhouse','Bur Oak','Hickory Hall','Stone Fence','Clark County','Keeneland','Saddlebred'],
+  ['Farm','Pike','Stables','Downs','Run','Meadow','Hill','Spring','Hall','Station','Pasture','Crossing','Bend','Grove','Barn','Lane','Paddock','Ridge','Creek','Manor'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.
