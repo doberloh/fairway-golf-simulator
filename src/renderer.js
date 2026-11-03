@@ -2326,6 +2326,8 @@ export class GolfView{
    tobaccobarn:{bark:'#1e1e1e',leaf:'#7a7672',accent:'#9a7040'},
    shingledwindmill:{stone:'#9a9488',bark:'#6e6a64',accent:'#ece8e0',dirt:'#34383c'},
    logcabin:{bark:'#7a5a3a',leaf:'#5e4e42',stone:'#9a948a',accent:'#2a2e30'},
+   // The streets kit's cart barn (tools/blender/cartoon_streets.py).
+   cartbarn:{stone:'#e4ded0',bark:'#5c666c',accent:'#a9aeb2',leaf:'#f4f2ea'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){

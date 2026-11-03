@@ -198,8 +198,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Seen in a capture (the Heartland's lot). Not done: a tree in each
   island, the cart barn and mailboxes placed, streets for the fairway
   homes, each landscape's own road surface -- open below.
-- [ ] **The rest of the streets kit**: a landscape tree in each lot island,
-  the cart barn by the clubhouse, mailboxes and streets for the fairway
+- [x] **The lot's island trees and the cart barn** (generator 71): the
+  landscape's most-planted tree in each island, 5.5 m at most, kept out of
+  the tee views; the cart barn (40 by 15.2 m) beside a long side or an end
+  of the lot where it fits (on 9 of 17 courses tried), a building. Seen in a
+  capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
+- [ ] **The rest of the streets kit**: mailboxes and streets for the fairway
   homes, each landscape's road surface (catalogue `streets`).
 - [ ] **Roads in the builder**: drawn anywhere, a parking-lot tool, from
   OpenStreetMap in door 2 (`highway=*`, `amenity=parking`), stored in the

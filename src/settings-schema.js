@@ -379,7 +379,11 @@ export const SCHEMA_VERSION=25;
 //     summer trees. Moved the Old Northeast and the Pine Barrens.
 // 70: Alaska on the north pack (phase 8c): black spruce, fireweed for the
 //     stand-in lupine, devil's club and cottongrass. Moved Alaska.
-export const GENERATOR_VERSION=70;
+// 71: the streets kit's cart barn beside the lot (roads.js placeCartBarn, a
+//     building) and a tree in each lot island (the landscape's most-planted
+//     tree, kept out of the tee views). Moved every landscape -- the
+//     buildings and trees after them shift where a barn stands.
+export const GENERATOR_VERSION=71;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

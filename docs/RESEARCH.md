@@ -12840,3 +12840,15 @@ frame; Medium crashed its page ("Target crashed"), twice, the second run
 alone -- in the baseline it drew, slowly (3.8 s a frame). Not diagnosed
 (TODO, *Performance pass*); no smoke --software run (it took the machine
 down on 13 October).
+
+**The lot's island trees and the cart barn** (generator 71, 3 November
+2026; roads.js `placeCartBarn`, course.js): the cart barn 40 by 15.2 m and
+6.85 m to the ridge, its model's own proportions for a 40 m front (PLACED,
+the streets pack's spec), squared to the lot beside a long side or an end,
+4, 12 or 20 m off it, on the first site that is out of play (12 m from a
+corridor), off the paths and the clubhouse, the ground under it within 3 m
+-- 9 of 17 courses tried had one (the first site on RD-1 had the clubhouse
+on one side and the drive on the other). A tree in each lot island, the
+landscape's most-planted tree, at most 5.5 m tall and 2.2 m of crown
+(PLACED), never in a tee shot or a tee's fan of view (the full bench found
+one under a Lake Dunes tee).

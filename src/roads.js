@@ -197,6 +197,35 @@ export function streetFurniture({lot, roads = [], club}) {
  return out;
 }
 
+// THE CART BARN (tools/blender/cartoon_streets.py; the streets kit, PLAN 4):
+// 40 by 15.2 m and 6.85 m to the ridge (its model's own proportions),
+// squared to the lot beside a long side or an end, 4, 12 or 20 m off it --
+// the first that is open, out of play (12 m from any corridor), off the cart paths and the
+// clubhouse, the ground under it within 3 m. A building: physics stops the
+// ball against it. None where neither side fits. Sizes PLACED.
+export const CART_BARN = {width: 40, depth: 15.2, height: 6.85};
+export function placeCartBarn({lot, club, surface, nearest, height, paths = [], pathTouches = () => false}) {
+ if (!lot) return null;
+ const rc = Math.cos(lot.rotation), rs = Math.sin(lot.rotation), {width: w, depth: d} = CART_BARN;
+ // Beside either long side or either end, 4 m off and then 8 and 16 m further
+ // (the first site on RD-1 had the clubhouse on one side, the drive the other).
+ const sites = [];
+ for (const extra of [0, 8, 16]) for (const [su, sv] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) sites.push([su * (lot.width / 2 + 4 + w / 2 + extra), sv * (lot.depth / 2 + 4 + d / 2 + extra)]);
+ for (const [u0, v] of sites) {
+  const c = {x: lot.x + u0 * rc + v * rs, z: lot.z - u0 * rs + v * rc};
+  const rect = {x: c.x, z: c.z, rotation: lot.rotation, width: w, depth: d};
+  let ok = true, lo = Infinity, hi = -Infinity;
+  for (let u = -.5; u <= .5 + 1e-9 && ok; u += .125) for (let t = -.5; t <= .5 + 1e-9; t += .25) {
+   const x = c.x + u * w * rc + t * d * rs, z = c.z - u * w * rs + t * d * rc;
+   if (PLAYED.has(surface(x, z)) || surface(x, z) === 'road' || (nearest(x, z)?.d ?? 999) < 12 || (club && inBuilding(club, x, z, 4))) { ok = false; break; }
+   const y = height(x, z); lo = Math.min(lo, y); hi = Math.max(hi, y);
+  }
+  if (!ok || hi - lo > 3 || pathTouches(paths, rect, 2)) continue;
+  return {kind: 'cartbarn', model: 'CartBarn_1', club: true, story: true, x: c.x, z: c.z, y: lo, base: lo, rotation: lot.rotation, ...CART_BARN};
+ }
+ return null;
+}
+
 // Is (x, z) on a road or the lot? `index` is a paths.js pathIndex of the roads.
 export function onRoad(index, lot, x, z) {
  return !!(index?.onPath(x, z) || (lot && inBuilding(lot, x, z, 0)));

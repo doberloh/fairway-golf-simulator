@@ -55,3 +55,24 @@ test('the lot has its streets kit: a wheel stop a stall, islands at the rows, po
   if (w.roads.some(r => r.kind === 'drive' && r.points.length > 1)) assert.ok(n('streetlight') >= 0);
  }
 });
+
+// THE CART BARN AND THE ISLAND TREES (generator 71): the barn stands off
+// play and off the clubhouse wherever it is placed; every island tree is in
+// the lot's ring of islands and is the landscape's own.
+test('the cart barn stands off play, and the lot\'s islands carry the landscape\'s trees', () => {
+ let barns = 0;
+ for (const biome of ['heartland', 'sonoran', 'keys']) {
+  const w = world({biome, holes: 9, seed: 'RD-1'}), barn = w.buildings.find(b => b.kind === 'cartbarn');
+  if (barn) {
+   barns++;
+   const rc = Math.cos(barn.rotation), rs = Math.sin(barn.rotation);
+   for (const [u, v] of [[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5], [0, 0]]) {
+    const x = barn.x + u * barn.width * rc + v * barn.depth * rs, z = barn.z - u * barn.width * rs + v * barn.depth * rc;
+    assert.ok(!['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water'].includes(w.surface(x, z)), `${biome}: the barn on ${w.surface(x, z)}`);
+    assert.ok(!inBuilding(w.buildings[0], x, z, 0), `${biome}: the barn in the clubhouse`);
+   }
+  }
+  for (const t of w.trees.filter(t => t.island)) assert.ok(w.bio.plants.some(([k]) => k === t.kind) && t.h <= 5.5, `${biome}: an island tree ${t.kind} ${t.h}`);
+ }
+ assert.ok(barns >= 1, 'a barn somewhere');
+});

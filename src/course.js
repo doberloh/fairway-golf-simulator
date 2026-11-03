@@ -14,7 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
-import {placeRoads,onRoad,streetFurniture} from './roads.js';
+import {placeRoads,onRoad,streetFurniture,placeCartBarn} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -2405,6 +2405,9 @@ export function* generateWorldSteps(settings={},options={}){
  let roads=[],boundary=null;
  if(!s.range&&buildings[0]?.kind==='clubhouse'){({roads,lot:roadLot,boundary}=placeRoads({holes,s,surface,nearest,height,halfX,halfZ,club:buildings[0],paths,streams,pathTouches}));roadIdx=pathIndex(roads);}
  const nearRoad=(x,z,pad)=>!!roadIdx&&((roadIdx.at(x,z)?.d??Infinity)<pad+4.5||(roadLot&&inBuilding(roadLot,x,z,pad)));
+ // The cart barn beside the lot (roads.js placeCartBarn), a building: the
+ // trees, houses and story keep off it as off the clubhouse.
+ {const barn=placeCartBarn({lot:roadLot,club:buildings[0]?.kind==='clubhouse'?buildings[0]:null,surface,nearest,height,paths,pathTouches});if(barn)buildings.push(barn);}
  // THE LAND'S STORY (story.js; architect-courses, phase 6; every generated
  // course since 2 November 2026): field walls, a farmstead, ruins and a
  // landmark -- placed before the houses and the trees, which keep off them.
@@ -2646,6 +2649,26 @@ export function* generateWorldSteps(settings={},options={}){
    const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
    if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r))continue;
    trees.push(tree);
+  }
+ }
+ // THE LOT'S ISLAND TREES (the streets kit, PLAN 4): one in each planted
+ // island at the ends of the lot's rows, the landscape's most-planted tree,
+ // kept to an island's size (5.5 m tall, 2.2 m of crown at most; PLACED: drawn
+ // 10 m tall, a Heartland oak keeps its own wide crown and eight of them roofed
+ // the lot over). A
+ // tree like any other: solid, and drawn as its species.
+ if(roadLot){
+  const tall=bio.plants.filter(([k])=>!GROUND_PLANTS.has(k)).sort((a,b)=>b[1]-a[1]),kind=tall[0]?.[0];
+  if(kind)for(const p of streetFurniture({lot:roadLot,roads,club:buildings[0]}).filter(p=>p.kind==='island')){
+   const {h,r}=treeSize(kind,.5,.5),n=nearest(p.x,p.z),y=height(p.x,p.z);
+   // Never in a tee shot or its view, as every other tree (the full bench:
+   // a lot below a Lake Dunes tee).
+   // Only where a tree may stand, and off the clubhouse and its lawn (the tests:
+   // a Sonoran island on the drive's ground, a Keys palm on the lawn).
+   const club=buildings[0]?.kind==='clubhouse'?buildings[0]:null;
+   if(!allows(surface(p.x,p.z),'trees')||(club&&(inBuilding(club,p.x,p.z,2)||inForecourt(club,p.x,p.z))))continue;
+   if(blocksView(launch,p.x,p.z,y+Math.min(h,5.5),Math.min(r,2.2))||inTeeFan(teeFans(holes),p.x,p.z,Math.min(h*.027,3.6)))continue;
+   trees.push({x:p.x,z:p.z,y:height(p.x,p.z),h:Math.min(h,5.5),r:Math.min(r,2.2),shade:.3,kind,hole:n.h.hole,island:true});
   }
  }
  // BOULDERS ARE WORLD DATA NOW, NOT DECORATION.
