@@ -2310,7 +2310,7 @@ export function* generateWorldSteps(settings={},options={}){
  };
  // The course's cart paths (paths.js), set once the holes are built and before
  // anything is planted; none on the range.
- let pathIdx=null,paths=[],bridges=[],pathConnect=null,pathBlock=null;
+ let pathIdx=null,paths=[],bridges=[],pathConnect=null,pathBlock=null,pathShapeOf=null;
  // The roads and the lot (roads.js), known once the clubhouse is sited.
  let roadIdx=null,roadLot=null;
  function surface(x,z){
@@ -2370,7 +2370,7 @@ export function* generateWorldSteps(settings={},options={}){
  // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
  // that follow ask `surface`, which now knows where the paths run.
  const setDecks=bs=>{for(const b of bs){const ca=Math.sin(b.angle),cb=Math.cos(b.angle);b.deck=Math.max(height(b.x+ca*b.span/2,b.z+cb*b.span/2),height(b.x-ca*b.span/2,b.z-cb*b.span/2),height(b.x,b.z))+.45;}};
- if(!s.range){({paths,bridges,connect:pathConnect,block:pathBlock}=routePaths({holes,s,surface,streams,height,ravines:[]}));pathIdx=pathIndex(paths);
+ if(!s.range){({paths,bridges,connect:pathConnect,block:pathBlock,shape:pathShapeOf}=routePaths({holes,s,surface,streams,height,ravines:[]}));pathIdx=pathIndex(paths);
   // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
   // and its middle, decided here once so the drawn deck and the solid one
   // (physics.js) are the same plank.
@@ -2394,6 +2394,10 @@ export function* generateWorldSteps(settings={},options={}){
   // ground is still unpathed here, so the surface says water where there is.
   if(club){buildings.push(club);if(paths.length){pathBlock(club);linkBuilding(paths,club,pathConnect,height);bridges=findBridges(paths,{surface,streams,width:paths[0].width});setDecks(bridges);pathIdx=pathIndex(paths);}}
  }
+ // NO RIGHT ANGLES, NO DEAD ENDS (paths.js `shape`; the owner, 2 November
+ // 2026): the whole network, the clubhouse's link included, rounded and its
+ // dead ends looped; its bridges found again after.
+ if(pathShapeOf&&paths.length){pathShapeOf(paths,buildings);bridges=findBridges(paths,{surface,streams,width:paths[0].width});setDecks(bridges);pathIdx=pathIndex(paths);}
  // THE ROADS (roads.js; the US landscapes goal, phase 4): the public road
  // along the clubhouse's side of the property, the lot beside the clubhouse
  // and the drive between them, never across play; before the story, the

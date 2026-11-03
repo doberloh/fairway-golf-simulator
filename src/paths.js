@@ -41,6 +41,25 @@ export const pathKind = key => worldOf(key).path || WORLD_GENERIC.path;
 // again -- a rounding that touches anything blocked keeps the pulled line.
 // All weights PLACED.
 
+// THE NETWORK'S SHAPE (the owner, 2 November 2026: no right angles, no dead
+// ends; `shape` in routePaths). PLACED: no 4 m of path turns more than
+// MAX_TURN degrees (a radius of about 5 m); a join steeper than JOIN_MERGE
+// slides MERGE_RUN metres along the path it meets; a turnaround loop's
+// radius, tried largest first.
+export const MAX_TURN = 45, JOIN_MERGE = 50, MERGE_RUN = 8, LOOP_R = [7, 6, 5, 4.5, 3.5];
+// A rounded corner or a loop may climb a little steeper than a route over
+// its few metres (PLACED).
+export const SHAPE_GRADE = .28;
+// The sharpest turn a line makes over 4 m (resampled every 2 m first).
+export function worstTurn(pts) {
+ let worst = 0;
+ for (let i = 2; i + 2 < pts.length; i++) {
+  const a = pts[i - 2], b = pts[i], c = pts[i + 2], ux = b.x - a.x, uz = b.z - a.z, vx = c.x - b.x, vz = c.z - b.z;
+  const l = Math.hypot(ux, uz) * Math.hypot(vx, vz);
+  if (l > 1e-9) worst = Math.max(worst, Math.acos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / l))) * 180 / Math.PI);
+ }
+ return worst;
+}
 export const CELL = 6;
 export const MAX_GRADE = .22, JOIN_GRADE = .28;
 const BLOCKED = new Set(['green', 'fringe', 'tee', 'sand']);
@@ -466,6 +485,221 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  // `rev-club-above`: the clubhouse's path crossed the path it met, ran on
  // 4 m and hooked back onto it -- a wedge).
  const connect = (a, b) => { const cells = grid.route(a, b); if (!cells?.length) return null; const line = lineOf(grid, cells); join(line, line.length - 1); const cut = cutOf(line, 1, false); if (cut) apply(line, 1, cut); mark(line); return line; };
+ // NO RIGHT ANGLES, NO DEAD ENDS (the owner amended the goal, 2 November
+ // 2026: "No right angles or dead ends. make sure all corners are rounded
+ // and where a dead end would sit, make the path smoothly loop back on
+ // itself"). Run once the whole network is laid, the clubhouse's link
+ // included (course.js), before its bridges are found:
+ //   joins     a piece meeting another steeper than JOIN_MERGE slides its end
+ //             along the other, so the two merge at a shallow angle
+ //   corners   every piece resampled every 2 m and smoothed (ends fixed)
+ //             until no 4 m of it turns more than MAX_TURN, a pass kept
+ //             only where the smoothed line still crosses open ground
+ //   ends      an end that joins nothing (a pull-off by a green) runs on
+ //             into a teardrop loop that comes back along itself -- sized
+ //             and turned to fit the open ground; an end at a building (the
+ //             clubhouse's door) stays
+ // tests/paths.test.mjs and the bench (`pathSharp`, `pathDeadEnd`) hold it.
+ // Open ground, and the router's 10 m berth round every green kept.
+ const berth = holes.map(h => ({g: h.worldGreen ?? h.toWorld(h.green), r: (h.greenSize ?? 15) * (h.greenAspect ?? 1.1) + 10.5}));
+ const fits = (pts, limit = JOIN_GRADE) => pts.every((p, i) => Number.isFinite(grid.costAt(p.x, p.z)) && !berth.some(b => Math.hypot(p.x - b.g.x, p.z - b.g.z) < b.r) && (i === 0 || open(pts[i - 1], p, limit)));
+ const shape = (paths, buildings = []) => {
+  const nearestOn = (p, skip) => {
+   let best = null;
+   for (const other of paths) {
+    if (other === skip) continue;
+    const pts = other.points;
+    for (let k = 1; k < pts.length; k++) {
+     const a = pts[k - 1], b = pts[k], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1;
+     const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}, d = Math.hypot(q.x - p.x, q.z - p.z);
+     if (!best || d < best.d) { const l = Math.sqrt(l2); best = {d, q, h: {x: dx / l, z: dz / l}, path: other, k, t}; }
+    }
+   }
+   return best;
+  };
+  // A loop keeps 2.5 m off every other path (one crossed a neighbour and
+  // ran on past it).
+  const clearOf = (pts, self) => pts.every(p => (nearestOn(p, self)?.d ?? 99) > 2.5);
+  const atBuilding = p => buildings.some(b => Math.hypot(p.x - b.x, p.z - b.z) < Math.max(b.width, b.depth) / 2 + 14);
+  // 1. Joins merge at a shallow angle.
+  for (const path of paths) for (const end of [0, 1]) {
+   const pts = path.points;
+   if (pts.length < 2) continue;
+   const P = end ? pts[pts.length - 1] : pts[0], back = end ? pts[Math.max(0, pts.length - 4)] : pts[Math.min(pts.length - 1, 3)];
+   const host = nearestOn(P, path);
+   if (!host || host.d > 1.5) continue;
+   const dx = P.x - back.x, dz = P.z - back.z, dl = Math.hypot(dx, dz) || 1, cos = (dx * host.h.x + dz * host.h.z) / dl;
+   if (Math.abs(cos) > Math.cos(JOIN_MERGE * Math.PI / 180)) continue;
+   const s = cos >= 0 ? 1 : -1, hp = host.path.points;
+   // The point MERGE_RUN metres on along the host, the way the piece heads.
+   let left = MERGE_RUN, k = host.k, at = host.q, ok = true;
+   for (;;) {
+    const nk = s > 0 ? k : k - 1, nxt = hp[nk];
+    if (!nxt) { ok = false; break; }
+    const d = Math.hypot(nxt.x - at.x, nxt.z - at.z);
+    if (d >= left) { at = {x: at.x + (nxt.x - at.x) * left / d, z: at.z + (nxt.z - at.z) * left / d}; break; }
+    left -= d; at = nxt; k = s > 0 ? k + 1 : k - 1;
+   }
+   if (!ok || !fits([P, at])) continue;
+   if (end) pts.push(at); else pts.unshift(at);
+  }
+  const resample = pts => {
+   const out = [pts[0]];
+   for (let k = 1; k < pts.length; k++) { const a = pts[k - 1], b = pts[k], n = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 1; t <= n; t++) out.push({x: a.x + (b.x - a.x) * t / n, z: a.z + (b.z - a.z) * t / n}); }
+   return out;
+  };
+  // No fold: a point where the line turns back (past 120 degrees) on a
+  // stretch under 1.5 m goes.
+  const unfold = path => {
+   const p = path.points;
+   for (let again = true; again;) {
+    again = false;
+    for (let i = 1; i + 1 < p.length; i++) {
+     const ux = p[i].x - p[i - 1].x, uz = p[i].z - p[i - 1].z, vx = p[i + 1].x - p[i].x, vz = p[i + 1].z - p[i].z, lu = Math.hypot(ux, uz), lv = Math.hypot(vx, vz);
+     if ((lu < 1.5 || lv < 1.5) && lu * lv > 1e-12 && (ux * vx + uz * vz) / (lu * lv) < -.5) { p.splice(i, 1); again = true; break; }
+    }
+   }
+  };
+  // Corners rounded, point by point: a smoothed point is kept only where it
+  // and the ground to its neighbours are open (a pass all or nothing left
+  // every corner of a piece sharp for one point by a green); up to 30 passes
+  // (ten left the sharpest corners).
+  const round = path => {
+   let pts = resample(path.points);
+   for (let pass = 0; pass < 30 && worstTurn(pts) > MAX_TURN; pass++) {
+    // The ends stay; the points beside them smooth on a narrower kernel.
+    const next = pts.map((p, i) => (i < 1 || i > pts.length - 2 ? p : i < 2 || i > pts.length - 3 ? {x: (pts[i - 1].x + p.x * 2 + pts[i + 1].x) / 4, z: (pts[i - 1].z + p.z * 2 + pts[i + 1].z) / 4} : {x: (pts[i - 2].x + pts[i - 1].x * 2 + p.x * 2 + pts[i + 1].x * 2 + pts[i + 2].x) / 8, z: (pts[i - 2].z + pts[i - 1].z * 2 + p.z * 2 + pts[i + 1].z * 2 + pts[i + 2].z) / 8}));
+    pts = next.map((q, i) => (q === pts[i] || fits([pts[i - 1], q, pts[i + 1]], SHAPE_GRADE) ? q : pts[i]));
+   }
+   path.points = pts;
+  };
+  // 2. Folds out, corners rounded.
+  for (const path of paths) { unfold(path); round(path); }
+  // 3. Every dead end loops back on itself: straight on from the end (a
+  // loop turned off the heading would start with a kink), the largest that
+  // fits, either side -- from the end, or where none fits there, from a
+  // point up to 24 m back along the path (the stretch beyond it dropped).
+  for (const path of paths) for (const end of [0, 1]) {
+   let pts = path.points;
+   if (pts.length < 3) continue;
+   const tip = end ? pts[pts.length - 1] : pts[0];
+   const host = nearestOn(tip, path);
+   if ((host && host.d <= 1.5) || atBuilding(tip)) continue;
+   let done = false;
+   for (let back = 0; back <= 30 && !done && back + 4 < pts.length; back += 3) {
+    const k = end ? pts.length - 1 - back : back, E = pts[k], B = pts[end ? Math.max(0, k - 3) : Math.min(pts.length - 1, k + 3)];
+    const dl = Math.hypot(E.x - B.x, E.z - B.z) || 1, d = {x: (E.x - B.x) / dl, z: (E.z - B.z) / dl};
+    for (const R of LOOP_R) for (const side of [1, -1]) {
+     if (done) break;
+     const n = {x: -d.z * side, z: d.x * side};
+     // A teardrop: leaves along d and comes back along it, its far end
+     // round (u = L(1 - cos t)/2, v = W sin t (1 - cos t)/2; widest about
+     // 0.65 W).
+     const L = 2.6 * R, W = R / .65, cand = [];
+     for (let i = 1; i <= 36; i++) { const t = i / 36 * Math.PI * 2, u = L * (1 - Math.cos(t)) / 2, v = W * Math.sin(t) * (1 - Math.cos(t)) / 2; cand.push({x: E.x + d.x * u + n.x * v, z: E.z + d.z * u + n.z * v}); }
+     if (!fits([E, ...cand], SHAPE_GRADE) || !clearOf(cand, path)) continue;
+     if (end) path.points = [...pts.slice(0, k + 1), ...cand];
+     else path.points = [...cand.reverse(), ...pts.slice(k)];
+     done = true;
+    }
+   }
+  }
+  // 3a. A dead end where no loop fits anywhere along its last 60 m is cut
+  // back to the junction it came from, within 80 m (a pull-off on ground too
+  // steep or tight to turn on goes; no dead end stays).
+  for (const path of paths) for (const end of [0, 1]) {
+   const pts = path.points;
+   if (pts.length < 3) continue;
+   const tip = end ? pts[pts.length - 1] : pts[0];
+   if (atBuilding(tip)) continue;
+   const host = nearestOn(tip, path);
+   if (host && host.d <= 1.5) continue;
+   // Already looped: its own line comes back to it.
+   const seq = end ? [...pts].reverse() : pts;
+   let run = 0, looped = false;
+   for (let k = 1; k < seq.length && !looped; k++) { run += Math.hypot(seq[k].x - seq[k - 1].x, seq[k].z - seq[k - 1].z); if (run >= 12 && Math.hypot(seq[k].x - tip.x, seq[k].z - tip.z) <= (path.width ?? 2.4)) looped = true; }
+   if (looped) continue;
+   run = 0;
+   for (let k = 1; k < seq.length; k++) {
+    run += Math.hypot(seq[k].x - seq[k - 1].x, seq[k].z - seq[k - 1].z);
+    if (run > 80) break;
+    const on = nearestOn(seq[k], path);
+    if (on && on.d <= 1.5) { const kept = seq.slice(k); path.points = end ? kept.reverse() : kept; break; }
+   }
+  }
+  // 3b. A hairpin -- a leg out to a pull-off and straight back along itself,
+  // which no rounding can turn -- turns in a teardrop loop at its tip too.
+  const teardrop = (E, d, prev, self) => {
+   for (const R of LOOP_R) for (const side of [1, -1]) {
+    const n = {x: -d.z * side, z: d.x * side}, L = 2.6 * R, W = R / .65, cand = [];
+    for (let i = 1; i <= 36; i++) { const t = i / 36 * Math.PI * 2, u = L * (1 - Math.cos(t)) / 2, v = W * Math.sin(t) * (1 - Math.cos(t)) / 2; cand.push({x: E.x + d.x * u + n.x * v, z: E.z + d.z * u + n.z * v}); }
+    if (fits([prev, E, ...cand], SHAPE_GRADE) && clearOf(cand, self)) return cand;
+   }
+   return null;
+  };
+  for (const path of paths) {
+   let pts = resample(path.points), loops = 0;
+   // At most eight a piece, each moving the scan on past it (a loop that
+   // left a sharp turn behind it began another, without end: Puget Sound
+   // FINGER-1 never finished).
+   for (let i = 2; i + 2 < pts.length && loops < 8; i++) {
+    if (worstTurn(pts.slice(i - 2, i + 3)) <= 100) continue;
+    // The tip: the sharpest point near here.
+    let tip = i, best = 0;
+    for (let j = i; j < Math.min(pts.length - 2, i + 4); j++) { const t = worstTurn(pts.slice(j - 2, j + 3)); if (t > best) { best = t; tip = j; } }
+    // At the tip, or where there is no room there, a few points before it.
+    let loop = null;
+    for (const back of [0, 2, 4, 6]) {
+     if (tip - back < 2) break;
+     const E = pts[tip - back], A = pts[tip - back - 2], dl = Math.hypot(E.x - A.x, E.z - A.z) || 1;
+     loop = teardrop(E, {x: (E.x - A.x) / dl, z: (E.z - A.z) / dl}, A, path);
+     if (loop) { tip -= back; break; }
+    }
+    if (loop) { pts = [...pts.slice(0, tip + 1), ...loop, ...pts.slice(tip + 1)]; i = Math.max(i, tip) + loop.length + 8; loops++; }
+   }
+   path.points = pts;
+  }
+  // 4. And once more: folds out, corners rounded.
+  for (const path of paths) { unfold(path); round(path); }
+  // 5. Ends settled (tests/paths.test.mjs): an end that runs along the path
+  // it joined is cut back to where the two first touch (2 m apart); an end
+  // within 2.5 m
+  // of another path lands exactly on it; one within 8 m runs on to it where
+  // the ground is open.
+  // A crossing within an end's last 8 m: where its segment meets another
+  // path's, the end is cut there (no stub past a crossing).
+  const crossing = (a, b, self, tMax = 1) => {
+   for (const o of paths) { if (o === self) continue; const q = o.points; for (let k = 1; k < q.length; k++) {
+    const c = q[k - 1], d = q[k], den = (b.x - a.x) * (d.z - c.z) - (b.z - a.z) * (d.x - c.x); if (Math.abs(den) < 1e-9) continue;
+    const t = ((c.x - a.x) * (d.z - c.z) - (c.z - a.z) * (d.x - c.x)) / den, u = ((c.x - a.x) * (b.z - a.z) - (c.z - a.z) * (b.x - a.x)) / den;
+    if (t > 1e-6 && t <= tMax && u >= 0 && u <= 1) return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t};
+   } }
+   return null;
+  };
+  for (let settle = 0; settle < 4; settle++) for (const path of paths) for (const end of [0, 1]) {
+   let pts = path.points;
+   if (pts.length < 3) continue;
+   const at = i => (end ? pts[pts.length - 1 - i] : pts[i]);
+   // Cut at a crossing in the last 8 m.
+   { let run = 0; for (let k = 1; k < pts.length - 1 && run < 8; k++) { const a = at(k), b = at(k - 1); const x = crossing(a, b, path); if (x) { pts = end ? [...pts.slice(0, pts.length - k), x] : [x, ...pts.slice(k)]; path.points = pts; break; } run += Math.hypot(b.x - a.x, b.z - a.z); } }
+   let n = 0;
+   while (n + 3 < pts.length) { const h = nearestOn(at(n + 1), path); if (!h || h.d > 2) break; n++; }
+   if (n > 0) { pts = end ? pts.slice(0, pts.length - n) : pts.slice(n); path.points = pts; }
+   const E = at(0), h = nearestOn(E, path);
+   if (!h || h.d < .05 || h.d > 8) continue;
+   if (h.d <= 2.5) { if (end) pts[pts.length - 1] = h.q; else pts[0] = h.q; }
+   else if (fits([E, h.q]) && !crossing(E, h.q, path, .98)) { if (end) pts.push(h.q); else pts.unshift(h.q); }
+  }
+  // A short piece joined at both ends is a jog the network does not need
+  // (as the router's own rule).
+  for (let i = paths.length - 1; i >= 0; i--) {
+   const p = paths[i], pts = p.points;
+   if (p.door || pts.length < 2) continue;
+   let len = 0; for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].z - pts[k - 1].z);
+   const a = nearestOn(pts[0], p), b = nearestOn(pts[pts.length - 1], p);
+   if (len < SPUR && a && b && a.d < .05 && b.d < .05) paths.splice(i, 1);
+  }
+ };
  // A building's ground closed to the router, `pad` metres round it, with
  // the cell-wide dear margin everything blocked has (the owner, 31 October
  // 2026: the clubhouse's own path was routed straight under it, the router
@@ -480,7 +714,7 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
    else if (inBox(b, p.x, p.z, pad + CELL * 1.5)) grid.cost[k] = Math.max(grid.cost[k], 15);
   }
  };
- return {paths, bridges, connect, block};
+ return {paths, bridges, connect, block, shape};
 }
 
 // Inside a footprint {x, z, rotation, width, depth}, padded (clubhouse.js
@@ -672,4 +906,45 @@ export function findBridges(paths, {surface, streams, ravines = [], width}) {
   }
  }
  return bridges;
+}
+
+// THE SHAPE THE OWNER ASKED FOR, MEASURED (tests/paths.test.mjs, the bench's
+// `pathSharp` and `pathDeadEnd`): each piece resampled every 2 m; a sharp
+// corner is a 4 m stretch turning more than MAX_TURN (and a little, for the
+// resampling); a loose end is an end on no other piece (1.5 m) and not back
+// on its own line 12 m or more behind it, within the path's width (a
+// turnaround loop, whose rounding may ease its join a metre off), and not at a
+// building (the clubhouse's door).
+export function pathShape(paths, buildings = []) {
+ const resample = pts => {
+  const out = [pts[0]];
+  for (let k = 1; k < pts.length; k++) { const a = pts[k - 1], b = pts[k], n = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.z - a.z) / 2)); for (let t = 1; t <= n; t++) out.push({x: a.x + (b.x - a.x) * t / n, z: a.z + (b.z - a.z) * t / n}); }
+  return out;
+ };
+ const segD = (p, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)); return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t); };
+ const sharp = [], looseEnds = [];
+ let worst = 0;
+ for (const path of paths) {
+  if ((path.points?.length ?? 0) < 2) continue;
+  const pts = resample(path.points), t = worstTurn(pts);
+  worst = Math.max(worst, t);
+  if (t > MAX_TURN + 5) sharp.push({turn: Math.round(t), at: pts[0]});
+  for (const end of [0, 1]) {
+   const E = end ? path.points[path.points.length - 1] : path.points[0];
+   if (buildings.some(b => Math.hypot(E.x - b.x, E.z - b.z) < Math.max(b.width, b.depth) / 2 + 14)) continue;
+   let joined = false;
+   for (const other of paths) {
+    const op = other.points;
+    if (other === path) {
+     // Its own line, 20 m or more behind this end.
+     let run = 0;
+     const seq = end ? [...op].reverse() : op;
+     for (let k = 1; k < seq.length && !joined; k++) { run += Math.hypot(seq[k].x - seq[k - 1].x, seq[k].z - seq[k - 1].z); if (run >= 12 && segD(E, seq[k - 1], seq[k]) <= (path.width ?? 2.4)) joined = true; }
+    } else for (let k = 1; k < op.length && !joined; k++) if (segD(E, op[k - 1], op[k]) <= 1.5) joined = true;
+    if (joined) break;
+   }
+   if (!joined) looseEnds.push(E);
+  }
+ }
+ return {sharp, looseEnds, worstTurn: worst};
 }

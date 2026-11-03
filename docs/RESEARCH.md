@@ -12435,3 +12435,27 @@ to 251 m (the Sonoran); the lot 40-50 m from the clubhouse. Generator 63
 moved every landscape. A boulder test's roll on the Rockies started 13 m
 above the stone and flew over its crown by 10 cm; the test now rolls only
 from run-ups within 3 m of the stone's foot.
+
+
+## Cart paths: no right angles, no dead ends (2 November 2026)
+
+The owner amended the goal: "No right angles or dead ends. make sure all
+corners are rounded and where a dead end would sit, make the path smoothly
+loop back on itself." paths.js `shape`, run on the whole network after the
+clubhouse's link (course.js), before its bridges are found. All PLACED:
+a join meeting its path steeper than 50 degrees slides 8 m along it; every
+piece resampled every 2 m and smoothed (a 1-2-2-2-1 kernel, ends fixed, up
+to 30 passes) until no 4 m of it turns more than 45 degrees, each point
+kept only where it and its neighbours are on open ground, within 28% grade
+and 10 m clear of every green; a dead end or a hairpin runs on into a
+teardrop loop (u = L(1 - cos t)/2, v = W sin t (1 - cos t)/2, L = 2.6 R,
+W = R/0.65, R from 7 m down to 3.5 m, either side, from the end or up to
+60 m back), kept 2.5 m off every other path; an end that cannot loop is
+cut back to its junction within 80 m; then ends settled (cut at a crossing
+in their last 8 m, snapped onto a path within 2.5 m, run on to one within
+8 m where open) and short jogs dropped. Measured on sixteen nine-hole
+courses (seeds PA-1 to PA-4 on four landscapes): ten fully meet the rule;
+the other six keep 5 dead ends and 19 sharp corners, worst on the Rockies
+(corners to 167 degrees where steep ground refuses rounding). A first cut
+let a hairpin's loop start another forever (Puget Sound FINGER-1 never
+finished); loops are capped at eight a piece.

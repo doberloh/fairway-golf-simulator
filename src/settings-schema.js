@@ -350,7 +350,12 @@ export const SCHEMA_VERSION=18;
 //     parking lot beside the clubhouse and the drive between, never across
 //     play; the clubhouse leans toward the property's edge. Trees, houses
 //     and the story keep off them. Every landscape moved.
-export const GENERATOR_VERSION=63;
+// 64: cart paths with no right angles and no dead ends (the owner amended
+//     the goal, 2 November 2026; paths.js `shape`): joins merge at a shallow
+//     angle, corners are rounded, a dead end or a hairpin turns in a teardrop
+//     loop, an end that cannot loop is cut back to its junction. Every
+//     landscape moved.
+export const GENERATOR_VERSION=64;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

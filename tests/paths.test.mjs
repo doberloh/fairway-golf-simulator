@@ -233,3 +233,27 @@ test('every path over water is a bridge', () => {
   assert.equal(bad.length, 0, `${biome} ${seed}: ${bad.length} path points on water off a bridge`);
  }
 });
+
+// NO RIGHT ANGLES, NO DEAD ENDS (the owner, 2 November 2026; paths.js
+// `shape`, `pathShape`). Where a path would end it loops back on itself, and
+// its corners are rounded. Not yet perfect everywhere (TODO): held here on
+// the courses that are, and as a budget on the rest.
+test('cart paths loop back instead of ending, and round their corners', async () => {
+ const {pathShape} = await import('../src/paths.js');
+ const {world} = await import('./worlds.mjs');
+ const clean = [['heartland', 'PA-2'], ['heartland', 'PA-4'], ['puget', 'PA-1'], ['puget', 'PA-2'], ['puget', 'PA-3'], ['links', 'PA-4']];
+ for (const [biome, seed] of clean) {
+  const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
+  assert.equal(s.looseEnds.length, 0, `${biome} ${seed}: a dead end`);
+  assert.equal(s.sharp.length, 0, `${biome} ${seed}: a sharp corner (${Math.round(s.worstTurn)} degrees)`);
+ }
+ let ends = 0, sharp = 0, pieces = 0;
+ for (const [biome, seed] of [['heartland', 'PA-1'], ['heartland', 'PA-3'], ['puget', 'PA-4'], ['rockies', 'PA-1'], ['rockies', 'PA-2'], ['rockies', 'PA-3'], ['rockies', 'PA-4'], ['links', 'PA-1'], ['links', 'PA-2'], ['links', 'PA-3']]) {
+  const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
+  ends += s.looseEnds.length; sharp += s.sharp.length; pieces += w.paths.length;
+ }
+ // 2 November 2026: 5 dead ends and 19 sharp corners in 169 pieces on these
+ // ten. The budget only tightens.
+ assert.ok(ends <= 5, `${ends} dead ends on ten courses`);
+ assert.ok(sharp <= 19, `${sharp} sharp corners in ${pieces} pieces`);
+});

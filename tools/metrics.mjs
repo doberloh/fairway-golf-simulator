@@ -1,6 +1,6 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {landingZones} from '../src/markings.js';
-import {unbridgedWater} from '../src/paths.js';
+import {unbridgedWater, pathShape} from '../src/paths.js';
 import {roadOnPlay} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
@@ -616,7 +616,10 @@ METRICS.design = {
 METRICS.paths = {
  describe: 'cart paths: their length, their bridges, and no path over water off a bridge',
  run(w) {
-  const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length};
+  // Dead ends and sharp corners (the owner, 2 November 2026: none; paths.js
+  // `pathShape`): counted, not yet held at zero (TODO).
+  const shape = pathShape(w.paths || [], w.buildings || []);
+  const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length, pathDeadEnd: shape.looseEnds.length, pathSharp: shape.sharp.length};
   const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length};
   return {series: {}, counts, invariants};
  },

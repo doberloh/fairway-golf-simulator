@@ -154,7 +154,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   edge. Seen in captures; not seen by a person in play.
 - [ ] **Cart paths with no right angles and no dead ends** (the owner's
   amendment, 2 November 2026): every corner rounded; where a path ends, a
-  smooth loop back on itself instead.
+  smooth loop back on itself instead. Built (generator 64; paths.js `shape`):
+  joins merge at a shallow angle, corners rounded, dead ends and hairpins
+  turn in teardrop loops, ends that cannot loop are cut back. **Not yet
+  everywhere**: on sixteen nine-hole courses, ten fully meet it; the rest
+  keep 5 dead ends and 19 sharp corners between them, mostly on the steep
+  Rockies where no loop or rounding fits the ground (tests/paths.test.mjs
+  holds the clean ten and that budget; the bench counts `pathDeadEnd`,
+  `pathSharp`). Not seen in the game yet.
 - [ ] **The streets kit placed**: the models are made (tools/blender/
   cartoon_streets.py: street lamp, mailbox, lot light pole, wheel stop, bag
   drop, planted island, cart barn); the lot's poles, islands (with the
