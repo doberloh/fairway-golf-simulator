@@ -76,14 +76,29 @@ function doc() {
  let missing = 0;
  const sections = [...byRegion].map(([region, keys]) => `<h2>${esc(REGIONS[region] || region)}</h2>` + keys.map(key => {
   const l = LANDSCAPES[key] || {}, shots = shotsFor(key);
-  const figs = shots.map(s => { if (!fs.existsSync(s.file)) { missing++; return ''; } return `<figure><img loading="lazy" src="${rel(s.file)}" alt="${esc(`${BIOMES[key].name}, ${s.season}`)}"><figcaption>${s.season}, ${s.view.replace('-', ' ')}</figcaption></figure>`; }).join('');
+  const figs = shots.map(s => { if (!fs.existsSync(s.file)) { missing++; return ''; } return `<figure><a href="${rel(s.file)}" target="_blank"><img loading="lazy" src="${rel(s.file)}" alt="${esc(`${BIOMES[key].name}, ${s.season}, ${s.view.replace('-', ' ')}`)}"></a><figcaption>${s.season}, ${s.view.replace('-', ' ')}</figcaption></figure>`; }).join('');
   return `<section><h3>${esc(BIOMES[key].name)}</h3><p>${esc(BIOMES[key].tag || '')}${l.where ? ` &middot; ${l.where[0].toFixed(1)}, ${l.where[1].toFixed(1)}` : ''}</p><div class="grid">${figs}</div></section>`;
  }).join('')).join('');
  fs.mkdirSync(path.dirname(DOC), {recursive: true});
  fs.writeFileSync(DOC, `<!doctype html><meta charset="utf-8"><title>Fairway landscapes</title>
-<style>body{font:15px/1.5 system-ui,sans-serif;margin:24px auto;max-width:1400px;padding:0 16px;color:#1f2a24;background:#f6f5f0}h1{margin:0 0 4px}h2{margin:40px 0 8px;border-bottom:2px solid #c9c3b2}h3{margin:20px 0 2px}p{margin:0 0 8px;color:#5a6058}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}figure{margin:0}img{width:100%;border-radius:6px;display:block}figcaption{font-size:12px;color:#6a7066}</style>
-<h1>Every landscape</h1><p>${BIOME_KEYS.length} landscapes, each a generated nine (seed SHOW-&lt;key&gt;), in summer from three views and in spring, autumn and winter from one (the tropics stay in summer). Made by tools/capture/us-showcase.mjs.</p>
-${sections}`);
+<style>body{font:15px/1.5 system-ui,sans-serif;margin:24px auto;max-width:1400px;padding:0 16px;color:#1f2a24;background:#f6f5f0}h1{margin:0 0 4px}h2{margin:40px 0 8px;border-bottom:2px solid #c9c3b2}h3{margin:20px 0 2px}p{margin:0 0 8px;color:#5a6058}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}figure{margin:0}img{width:100%;border-radius:6px;display:block}figcaption{font-size:12px;color:#6a7066}img{cursor:zoom-in}
+#box{position:fixed;inset:0;background:rgba(10,12,10,.93);display:none;align-items:center;justify-content:center;z-index:9;flex-direction:column}#box.on{display:flex}#box img{max-width:96vw;max-height:88vh;width:auto;cursor:default;border-radius:4px}#box p{color:#e8e6dc;margin:10px 0 0}#box button{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;font-size:32px;width:56px;height:56px;border-radius:28px;cursor:pointer}#box button:hover{background:rgba(255,255,255,.25)}#prev{left:16px;top:calc(50% - 28px)}#next{right:16px;top:calc(50% - 28px)}#shut{right:16px;top:16px}</style>
+<h1>Every landscape</h1><p>${BIOME_KEYS.length} landscapes, each a generated nine (seed SHOW-&lt;key&gt;), in summer from three views and in spring, autumn and winter from one (the tropics stay in summer). Click a picture to see it full size; arrow keys or the side buttons step through them, Escape closes. Made by tools/capture/us-showcase.mjs.</p>
+${sections}
+<div id="box" role="dialog" aria-modal="true" aria-label="Picture, full size"><img alt=""><p></p><button id="prev" aria-label="Previous picture">&#8249;</button><button id="next" aria-label="Next picture">&#8250;</button><button id="shut" aria-label="Close">&#215;</button></div>
+<script>
+// Full size on a click (the owner, 3 November 2026: the pictures could not be
+// enlarged). Each picture is also a plain link, so it opens without script.
+const links=[...document.querySelectorAll('figure a')],box=document.getElementById('box'),big=box.querySelector('img'),cap=box.querySelector('p');let at=-1;
+const show=i=>{at=(i+links.length)%links.length;const a=links[at],im=a.querySelector('img');big.src=a.href;big.alt=im.alt;cap.textContent=im.alt;box.classList.add('on');};
+const shut=()=>{box.classList.remove('on');at=-1;};
+links.forEach((a,i)=>a.addEventListener('click',e=>{e.preventDefault();show(i);}));
+document.getElementById('prev').onclick=e=>{e.stopPropagation();show(at-1);};
+document.getElementById('next').onclick=e=>{e.stopPropagation();show(at+1);};
+document.getElementById('shut').onclick=shut;
+box.addEventListener('click',e=>{if(e.target===box)shut();});
+addEventListener('keydown',e=>{if(at<0)return;if(e.key==='Escape')shut();else if(e.key==='ArrowLeft')show(at-1);else if(e.key==='ArrowRight')show(at+1);});
+</script>`);
  console.log(`${DOC}: ${BIOME_KEYS.length} landscapes${missing ? `, ${missing} pictures not taken yet` : ''}`);
 }
 
