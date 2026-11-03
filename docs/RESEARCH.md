@@ -12824,3 +12824,19 @@ tables, via tools/blender/dump-tints.mjs: 172 species).
 
 SCHEMA 25 adds the Season setting (default today's); no generator step --
 the fingerprint is unchanged.
+
+**The full profile at the goal's end** (3 November 2026, tools/profile.mjs
+--since, real GPU, an RTX 4090 with headroom): every case on the card is
+well under the stored baseline -- but that baseline was taken on 28
+September, before the cartoon look and the frame-rate goal, so "no worse
+than the baseline" is met by an old yardstick. Graphics-card time, ms a
+frame (now against the baseline): tiers Low 0.83 (5.63), Medium 1.34
+(8.82), High 2.50 (14.12), Ultra 2.89 (15.36); the overview on Ultra 5.21
+(27.23); the landscapes on High 2.52 (Redwood Coast) to 6.07 (Florida
+Flatwoods), the heaviest the Flatwoods, the Lowcountry 5.70 and the Pine
+Barrens 5.48 -- against 5.0-14.4 for the nine in the baseline. **The
+software renderer** (SwiftShader, no graphics card): Low 3.3 ms of work a
+frame; Medium crashed its page ("Target crashed"), twice, the second run
+alone -- in the baseline it drew, slowly (3.8 s a frame). Not diagnosed
+(TODO, *Performance pass*); no smoke --software run (it took the machine
+down on 13 October).

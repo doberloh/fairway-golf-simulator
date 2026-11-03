@@ -147,7 +147,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   0.92 (+14%), Hawaii about 0.97 (+20%; one of its runs read 1.36 at tee 1
   against 1.08, so noisy). Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
-  a landscape's species into fewer draws; the grain elevator's and
+  a landscape's species into fewer draws; **the software renderer on Medium
+  crashes its page** (the full profile of 3 November, retried alone: "Target
+  crashed" at weak/medium on Puget Sound, every time; Low runs, 3.3 ms) --
+  a machine with no graphics card cannot run Medium now, probably the
+  model module's memory (23 MB of models) under SwiftShader, not measured;
+  the grain elevator's and
   shelterbelt's far twins, built but not drawn (a landmark and a story prop
   draw their full model at every distance). The profile against
   bench/profile-baseline.json is due here.
