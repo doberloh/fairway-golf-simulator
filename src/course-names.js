@@ -254,6 +254,19 @@ export const NAME_WORDS = {
   ['Ponderosa','Gambel Oak','Mogollon','Coconino','Kaibab','Humphreys','Cinder','Sunset Crater','Abert','Elk Park','Bitterbrush','Mahogany','Lava Flow','Mormon Lake','Woody Mountain','Fort Valley','Snowbowl','Mount Elden','Walnut Canyon','Oak Creek'],
   ['Park','Rim','Mesa','Meadow','Ridge','Canyon','Flat','Springs','Draw','Lake','Pines','Crossing','Tank','Peak','Butte','Valley','Lodge','Ranch','Trail','Hollow'],
  ],
+ // Phase 8a: the high desert and the Cross Timbers.
+ sagebrush: [
+  ['Sagebrush','Wheatgrass','Rimrock','Coulee','Ritzville','Balsamroot','Bitterroot','Scabland','Channeled','Steptoe','Sage Grouse','Rattlesnake Ridge','Juniper Draw','Lava Rim','Columbia','Horse Heaven','Frenchman','Dry Falls','Owyhee','Snake River'],
+  ['Coulee','Rim','Flats','Draw','Bench','Butte','Springs','Ridge','Breaks','Basin','Canyon','Crossing','Hills','Mesa','Station','Ranch','Lake','Point','Gap','Plateau'],
+ ],
+ redrock: [
+  ['Slickrock','Hoodoo','Pinyon','Cliffrose','Blackbrush','Canyonlands','Arches','Fisher Towers','Castle Valley','Navajo','Kayenta','Wingate','Entrada','Cedar Mesa','Comb Ridge','Moab','Bluff','Indian Creek','Valley of Gods','Moki'],
+  ['Mesa','Canyon','Rim','Arch','Fin','Wash','Butte','Tower','Bench','Spire','Reef','Point','Narrows','Alcove','Gulch','Tank','Window','Park','Overlook','Bluffs'],
+ ],
+ crosstimbers: [
+  ['Post Oak','Blackjack','Cross Timbers','Red Dirt','Kiamichi','Canadian','Washita','Osage Hills','Arbuckle','Wichita','Pump Jack','Oil Patch','Section Line','Red Cedar','Mistletoe','Greater Prairie','Chisholm','Boomer','Sooner','Indian Blanket'],
+  ['Timbers','Hills','Creek','Crossing','Ranch','Bend','Ridge','Lake','Bottoms','Station','Prairie','Woods','Trail','Fork','Springs','Hollow','Grove','Knob','Flats','Draw'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.

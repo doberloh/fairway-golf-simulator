@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=21;
+export const SCHEMA_VERSION=22;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -367,7 +367,12 @@ export const SCHEMA_VERSION=21;
 //     into decks that follow it (paths.js findBridges; the full bench's
 //     pathOverWater on Bluebonnet Prairie and Hill Country). Moved the Pine
 //     Barrens' fingerprint seed; other bent crossings elsewhere too.
-export const GENERATOR_VERSION=67;
+// 68: the plains on their own pack (phase 8a): eastern red cedar for the
+//     stand-in juniper, soapweed yucca, buffalo grass, wild sunflowers;
+//     barbed-wire fences, a shelterbelt behind the farm; a windmill for the
+//     landmark (a grain elevator on High Plains). Moved High Plains and the
+//     Sand Hills.
+export const GENERATOR_VERSION=68;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -498,7 +503,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 6 (SCHEMA 20): Texas and the deserts.
  'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
  // Phase 7 (SCHEMA 21): California and the western mountains.
- 'monterey','socal','winecountry','cascades','sierra','ponderosa'];
+ 'monterey','socal','winecountry','cascades','sierra','ponderosa',
+ // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
+ 'sagebrush','redrock','crosstimbers'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -698,6 +705,8 @@ const MIGRATIONS={
  19:s=>s,
  // 20 -> 21: six more landscapes (California and the western mountains); no save changes shape.
  20:s=>s,
+ // 21 -> 22: three more landscapes (the high desert, the Cross Timbers); no save changes shape.
+ 21:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

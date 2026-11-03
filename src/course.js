@@ -2498,6 +2498,8 @@ export function* generateWorldSteps(settings={},options={}){
   prairieforbs:[.6,1.2],
   // The Keys' shrubs: sea grape 2.5-5 m, bougainvillea 2-4, hibiscus 1.5-2.6.
   seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6],
+  // The high desert's and the plains' (PLACED within their specs).
+  rabbitbrush:[0.8,1.6],blackbrush:[0.6,1.2],cliffrose:[1.8,3],balsamroot:[0.4,0.7],globemallow:[0.4,0.8],cheatgrass:[0.25,0.5],soapweedyucca:[0.6,1.2],buffalograss:[0.12,0.25],wildsunflower:[1.2,2.4],
   // California's and the western mountains' (PLACED within their specs).
   iceplant:[0.15,0.3],coastalsage:[0.8,1.5],chaparral:[1.5,3.5],grapevine:[1.4,1.8],californiapoppy:[0.25,0.4],manzanita:[1.5,3],bitterbrush:[0.8,1.8],mulesear:[0.4,0.8],beargrass:[0.6,1.5],
   // Texas's and the deserts' (PLACED within their specs).
@@ -2507,6 +2509,8 @@ export function* generateWorldSteps(settings={},options={}){
  // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
  // and crown radius r0-r1 m.
  const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15],
+  // The high desert's and the plains' (PLACED within their specs).
+  westernjuniper:[6,10,4,5.5],utahjuniper:[3.5,6,2.5,3.5],pinyonpine:[4,8,3,4.5],russianolive:[6,9,3.5,5],easternredcedar:[5,9,2,3],
   // California's and the western mountains' (PLACED within their specs).
   montereycypress:[10,20,5,9],montereypine:[18,30,5,8],coastliveoak:[10,16,6,9],eucalyptus:[25,40,5,8],sycamore:[15,25,6,9],torreypine:[10,16,5,8],valleyoak:[18,28,9,13],blueoak:[8,14,4,6],buckeye:[5,9,4,6],olivetree:[6,10,3.5,5],jacaranda:[8,14,5,7],peppertree:[8,13,5,7],ponderosa:[25,40,5,8],sugarpine:[35,55,6,9],incensecedar:[25,40,4,6],redfir:[30,45,4,6],noblefir:[30,50,4,6],westernlarch:[25,40,4,6],gambeloak:[5,10,3,5],mountainmahogany:[3,6,2,3.5],
   // Texas's and the deserts' (PLACED within their specs).

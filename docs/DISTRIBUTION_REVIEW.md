@@ -1773,3 +1773,9 @@ network request.
 species in every variant with 16 far twins, basalt and granite boulders,
 two sea stacks and the volcano (the model module 19.0 MB, +2.8 MB), and six
 landscapes' card pictures (913 KB). Still one file, no network request.
+
+**Phase 8a, the high desert and the plains**: the page is **32,757,120
+bytes (17.80 MB gzipped)**, +2.1 MB: the two packs' 14 species, stone and
+ranch pieces (the model module 20.5 MB, +1.5 MB), and five landscapes'
+card pictures (611 KB, two of them retaken). Still one file, no network
+request.

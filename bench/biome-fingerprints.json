@@ -1,5 +1,5 @@
 {
- "generator": 67,
+ "generator": 68,
  "biomes": {
   "puget": "f803da4c79d7bcdb",
   "sonoran": "590746e7c89a92ab",
@@ -10,8 +10,8 @@
   "redwood": "16b076785f07dc5f",
   "newengland": "d902d76df9a6c7e1",
   "lakedunes": "1d500ce47fd489f7",
-  "highplains": "19d0840cdd4f01a3",
-  "sandhills": "15922a48cebbb2b5",
+  "highplains": "e2f8d83edbe60bd5",
+  "sandhills": "d4992cb586b38360",
   "oldnortheast": "da70f4b6438e1f86",
   "pinebarrens": "6c35710274ece286",
   "alaska": "690a6e50a16ad75e",
@@ -31,7 +31,10 @@
   "winecountry": "37492de9437e104d",
   "cascades": "8fefac30c16415ef",
   "sierra": "d15d40fa3267e6ba",
-  "ponderosa": "faa936ffb5ca60c0"
+  "ponderosa": "faa936ffb5ca60c0",
+  "redrock": "6f2e7e58b29021ac",
+  "sagebrush": "21af4a6db2ac7289",
+  "crosstimbers": "3f952d3e58010337"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -64,6 +67,9 @@
   "winecountry": "f422fbf13258aa21",
   "cascades": "120e7c5a387304fd",
   "sierra": "fed011b02982fc8f",
-  "ponderosa": "3b31f61c6fd20083"
+  "ponderosa": "3b31f61c6fd20083",
+  "redrock": "b8457d33728292df",
+  "sagebrush": "79774d7447cf3859",
+  "crosstimbers": "91ed5588153be7ad"
  }
 }

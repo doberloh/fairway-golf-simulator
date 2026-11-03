@@ -137,9 +137,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   has its wildflowers back since, so not like for like). California and
   the mountains (phase 7): the Cascades 0.85 against the Rockies' 0.80 (+6%;
   triangles +33%, draws 20% fewer), Monterey 0.84 and Wine Country 0.82,
-  level with the Heartland. Candidates:
+  level with the Heartland. The high desert and plains (phase 8a): Red
+  Rock 0.80 against the Sonoran's 0.71 (+13%; triangles +19%), High Plains
+  0.71. Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
-  a landscape's species into fewer draws. The profile against
+  a landscape's species into fewer draws; the grain elevator's and
+  shelterbelt's far twins, built but not drawn (a landmark and a story prop
+  draw their full model at every distance). The profile against
   bench/profile-baseline.json is due here.
 - [x] **Five landscapes on existing models** (PLAN.md 6, phase 3): High
   Plains and the Sand Hills (a new plains region: prairie or grassed dunes
@@ -154,7 +158,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   3's five are placed at weeks 160-164 (25 January to 22 February 2027),
   the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
   170-175 (5 April to 10 May 2027), California and the mountains' at
-  176-181 (17 May to 21 June 2027;
+  176-181 (17 May to 21 June 2027), phase 8a's at 182-184 (28 June to
+  12 July 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
@@ -229,7 +234,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **The vineyard is planted as scattered vines**: Wine Country's grape
   vines stand singly in the rough, not in rows. Rows want a planted block
   (a generator rule, like a stand, laid on a grid along the contour).
-- [ ] **The new landscapes by region**: the South, Texas and the deserts, California and the mountains (done, above); Texas and the deserts;
+- [x] **The high desert and the plains** (phase 8a; SCHEMA 22, generator
+  68): Sagebrush and Red Rock (a new `highdesert` region from the Sonoran's
+  record, rimrock and hoodoos as stone) and Cross Timbers on the high desert
+  and plains packs; High Plains and the Sand Hills on their own models now
+  (eastern red cedar, soapweed yucca, buffalo grass, sunflowers, barbed
+  wire, a shelterbelt, a windmill or grain elevator; Cross Timbers' pump
+  jack). Seen in captures; not seen by a person in play.
+- [ ] **The new landscapes by region**: the South, Texas and the deserts, California and the mountains, the high desert and plains (done, above); Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;

@@ -45,6 +45,12 @@ export const STORY_PIECES = {
  // (tools/blender/cartoon_heartland.py): its farmstead in place of barn and silo.
  redbarn: {model: 'RedBarn_1', width: 24, depth: 21, height: 18.4},
  church: {model: 'Church', width: 9, depth: 16, height: 24},
+ // The plains pack's ranch landmarks (tools/blender/cartoon_plains.py), each
+ // as wide and deep as its model is for its height (heights PLACED from the
+ // pack's specs): a ranch windmill, a concrete grain elevator, an oil pump jack.
+ windmill: {model: 'Windmill_1', width: 6.5, depth: 5.9, height: 10},
+ grainelevator: {model: 'GrainElevator_1', width: 32.3, depth: 11, height: 30},
+ pumpjack: {model: 'PumpJack_1', width: 7.7, depth: 2.8, height: 4.4},
 };
 // Each landscape's story is its architect block's (biomes.js).
 export const storySet = key => worldOf(key).story || {};
@@ -119,6 +125,14 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
      out.props.push({kind: 'corn', x: at.x, z: at.z, rot: at.rot, size: 1});
      out.clearings.push({x: at.x, z: at.z, r: 5});
     }
+   }
+   // A shelterbelt (the plains pack): a row of trees across the back of the
+   // farmstead, 40 m behind it, where all its length is open and out of play
+   // (the model's 21 m at 12 m tall; PLACED).
+   if (set.shelterbelt) {
+    const at = off(0, b.depth / 2 + 40), ends = [-10, -5, 0, 5, 10].map(u => off(u, b.depth / 2 + 40));
+    const fits = ends.every(p => !PLAYED.has(surface(p.x, p.z)) && (nearest(p.x, p.z)?.d ?? 999) >= CLEAR_WALL && !blocked(p.x, p.z, 4) && free(p.x, p.z, 4));
+    if (fits) { out.props.push({kind: 'shelterbelt', x: at.x, z: at.z, rot: at.rot, size: 1}); out.clearings.push({x: at.x, z: at.z, r: 12}); }
    }
    for (const [kind, lx, lz] of [['silo', b.width / 2 + 4.5, 2], ['windpump', -b.width / 2 - 9, -6]]) {
     if (kind === 'silo' && kindOfBarn === 'redbarn') continue;
@@ -203,7 +217,9 @@ export function segDist(w, x, z) {
 }
 // A wall as the boxes physics stops a ball against: one per segment, 0.7 m
 // thick, its height by kind (a hedge stands taller).
-export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1, field: 1.05};
+export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1, field: 1.05,
+ // The plains pack's barbed wire on cedar posts (PLACED).
+ wire: 1.2};
 // How wide a wall's solid box is. A split-rail fence (the US landscapes goal's
 // mountain pack) zig-zags 30 degrees either side of its run, so its rails
 // reach about 0.6 m out each way. PLACED.

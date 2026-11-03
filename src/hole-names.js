@@ -47,6 +47,9 @@ const LAND = {
  cascades: ['Noble Fir', 'Snow Cone', 'Beargrass', 'Basalt', 'Huckleberry', 'Larch', 'Glacier View', 'Timberline', 'Cloud Cap'],
  sierra: ['Sugar Pine', 'Granite', 'Red Fir', 'Manzanita', 'Incense Cedar', 'Mule Ear', 'Snowmelt', 'High Lake', 'Dome'],
  ponderosa: ['Ponderosa', 'Gambel Oak', 'Cinder', 'Basalt', 'Bitterbrush', 'Mahogany', 'Elk Tank', 'Rim View', 'Snowbowl'],
+ sagebrush: ['Sagebrush', 'Rimrock', 'Coulee', 'Balsamroot', 'Bunchgrass', 'Juniper', 'Rabbitbrush', 'Scabland', 'Dry Falls'],
+ redrock: ['Hoodoo', 'Slickrock', 'Pinyon', 'Cliffrose', 'Red Fin', 'Arch View', 'Blackbrush', 'Desert Varnish', 'Globemallow'],
+ crosstimbers: ['Post Oak', 'Blackjack', 'Pump Jack', 'Red Dirt', 'Red Cedar', 'Barbed Wire', 'Indian Blanket', 'Section Line', 'Creek Bottom'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

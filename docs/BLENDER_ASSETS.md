@@ -703,8 +703,10 @@ the pecans' and palms' far twins, the limestone as the boulder family
 `boulderlimestone`; `cartoon_calcoast`, `cartoon_calinland` and
 `cartoon_westmtn` with phase 7, the basalt and granite as boulder
 families, the sea stacks offshore and the volcano as a horizon backdrop
-(renderer.js `addSeaStacks`, `addBackdrop`)): `cartoon_highdesert`, `cartoon_plains` (its red cedar is
-`EasternRedCedar`, apart from the redwood pack's western `RedCedar`),
-`cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,
+(renderer.js `addSeaStacks`, `addBackdrop`); `cartoon_highdesert` and
+`cartoon_plains` with phase 8a, the rimrock and hoodoos as boulder
+families and the ranch pieces as story pieces (story.js), the plains' red
+cedar as `easternredcedar`, apart from the redwood pack's western
+`RedCedar`): `cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,
 `cartoon_hawaii`. Each script's header and `LOOK`/`BARK` tables hold its
 colours and roles; each model's log holds its rounds.

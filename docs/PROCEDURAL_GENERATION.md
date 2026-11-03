@@ -249,9 +249,11 @@ in biomes.js.
   trees keep off it and its 40 m lawn; the path is linked to its door (cut at
   its first junction, with no stub past it).
 - **The land's story** (story.js), after the clubhouse and before the houses
-  and trees, a middling amount (Architect's *A little*): field walls, a
-  farmstead, ruins, a landmark on a hole's line, a stone circle and lanterns,
-  as the landscape has them.
+  and trees, a middling amount (Architect's *A little*): field walls (stone,
+  fieldstone, split-rail or barbed wire), a farmstead (with a shelterbelt
+  behind it on the plains), ruins, a landmark on a hole's line (a lighthouse,
+  church, windmill, grain elevator, pump jack...), a stone circle and
+  lanterns, as the landscape has them.
 - **Markings** (markings.js), placed on the finished ground: red stakes
   every 11 m round each pond and along creeks within 60 m of play, white
   stakes every 13 m where the boundary comes within 120 m of a corridor,

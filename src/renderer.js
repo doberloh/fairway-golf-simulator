@@ -2307,6 +2307,10 @@ export class GolfView{
    lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
    redbarn:{accent:'#a8322a',stone:'#f2efe6',bark:'#6a6a6a'},
    pierlight:{stone:'#c8c4bc',accent:'#a8322a',bark:'#2a2a2a'},
+   // The plains pack's (tools/blender/cartoon_plains.py LOOK).
+   windmill:{bark:'#9a9a94',accent:'#b04a32',stone:'#8a8c86',leaf:'#4a5e58'},
+   grainelevator:{stone:'#d8d4c8',bark:'#4a4846',accent:'#9a5a3a',leaf:'#b0b2ae'},
+   pumpjack:{bark:'#3a3a3a',accent:'#b04a32',stone:'#6a6a6a',leaf:'#a8a8a4'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){
@@ -2363,7 +2367,7 @@ export class GolfView{
   };
   // Each run cut into sections of about 2 m; a section sits at the lower of
   // the ground under its ends, sunk a little so a slope shows no gap.
-  const sections=kind=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='leaning'?'stone':x.kind||'stone')===kind)){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/2)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot:rot+(wl.kind==='rail'?(i%2?.52:-.52):0),len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
+  const sections=(kind,step=2)=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='leaning'?'stone':x.kind||'stone')===kind)){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/step)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot:rot+(wl.kind==='rail'?(i%2?.52:-.52):0),len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
   const wallPlace=h=>(s,info)=>{q.setFromAxisAngle(up,s.rot);if(s.lean){q2.setFromAxisAngle(fwd,s.lean);q.multiply(q2);}pos.set(s.x,s.y,s.z);sc.set(h,h,s.len/(2*info.rz));};
   // Iteration 4: uninked -- inked, a wall's small stones went black.
   draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
@@ -2373,9 +2377,14 @@ export class GolfView{
   // A split-rail fence (the US landscapes goal's mountain pack): every other
   // 2 m panel turned 30 degrees each way, which makes the zig-zag.
   draw('Blender_SplitRailFence_1',sections('rail'),{bark:worldOf(key).colours.rail??'#8a7a62'},true,wallPlace(1.1));
+  // Barbed wire on cedar posts (the plains pack): its model runs along x, in
+  // sections of about 8 m (its own length at 1.2 m tall).
+  draw('Blender_BarbedWireFence_1',sections('wire',8),{bark:'#6a5a4a',stone:'#4e5848',accent:'#8a8a8a'},true,(s,info)=>{q.setFromAxisAngle(up,s.rot+Math.PI/2);pos.set(s.x,s.y,s.z);sc.set(s.len/(2*info.rx),1.2,1.2);});
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
+  // The plains' shelterbelt behind the farmstead, 12 m tall (story.js).
+  draw('Blender_Shelterbelt_1',props.filter(p=>p.kind==='shelterbelt'),{accent:'#436a36',bark:'#5e564c',leaf:'#4f7a36'},true,at(12));
   // THE STREETS KIT (roads.js streetFurniture; tools/blender/cartoon_streets.py),
   // each at its real height: decoration on the lot and along the drive.
   const sp=w.streetProps||[],kit=(kind,model,h,colours,inked)=>draw(model,sp.filter(p=>p.kind===kind),colours,inked,at(h));

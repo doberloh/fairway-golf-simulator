@@ -547,13 +547,30 @@ TRAITS.plains = {...TRAITS.midwest, light: {shade: '#8a9ac0'},
   under: {spacing: 9, plants: [['shrub', .7], ['prairieforbs', .3]]},
   // The band along the corridors is mostly brush (round 3: trees there
   // walled every hole in).
-  plants: [['shrub', .45], ['juniper', .25], ['cottonwood', .2], ['americanelm', .1]]},
- plants: [['cottonwood', .1], ['juniper', .08], ['americanelm', .04], ['shrub', .28], ['prairieforbs', .5]]};
+  plants: [['shrub', .45], ['easternredcedar', .25], ['cottonwood', .2], ['americanelm', .1]]},
+ // Phase 8: the plains pack's own -- eastern red cedar for the stand-in
+ // juniper, soapweed yucca, buffalo grass and wild sunflowers (PLACED).
+ plants: [['cottonwood', .1], ['easternredcedar', .08], ['americanelm', .04], ['shrub', .12], ['soapweedyucca', .06], ['buffalograss', .1], ['wildsunflower', .05], ['prairieforbs', .45]]};
 PALETTES.plains = {...PALETTES.midwest, name: 'Plains', title: 'Big Sky Links', tag: 'Grass to the horizon and wind in it.',
  rough: '#8a8a4a', semi: '#6e8a44', tree: '#4f6a34', sky: '#b9d4ec', altitude: 700, temperature: 21, treeKind: 'shrub', sun: 41};
 INTERFACE.plains = {panel: 'rgba(36,30,10,.88)', a1: '#fde68a', a2: '#ca8a04', hot: '#ffffff', soft: '#e8d9a8', onHot: '#231c06'};
 WORLD.plains = {...WORLD.midwest, clubhouse: 'farmhouse', path: 'gravel', bridge: 'wood',
- story: {walls: null, farm: true, landmark: 'windpump'}, life: {grazers: ['deer', 3]}};
+ story: {walls: 'wire', farm: true, shelterbelt: true, landmark: 'windmill'}, life: {grazers: ['deer', 3]}};
+// The High Desert (phase 8; from the Sonoran's record): pinyon and Utah
+// juniper over blackbrush and cliffrose on red sandstone, hoodoos and fins
+// for its stone -- Red Rock as it is. Every value PLACED from the study's
+// pages (subs/highdesert/).
+TRAITS.highdesert = {...TRAITS.desert, light: {shade: '#9a8ab0', exposure: .9},
+ longGrass: {families: [['grassbunch', 2, .7]], count: 3000, near: 20, leaf: '#a8a070', accent: '#d0c08a'},
+ farForest: {cover: .4, size: 6, scrub: true, paint: .2, colors: ['#56684a', '#62704e', '#6e7a52']},
+ rockStyle: 'hoodoo', rockMoss: '#e0b080', treeDensity: 1.4,
+ stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['blackbrush', .4], ['cliffrose', .3], ['sagebrush', .3]]},
+  plants: [['pinyonpine', .45], ['utahjuniper', .45], ['cliffrose', .1]]},
+ plants: [['pinyonpine', .15], ['utahjuniper', .18], ['blackbrush', .15], ['cliffrose', .1], ['globemallow', .08], ['sagebrush', .14], ['rabbitbrush', .08], ['cheatgrass', .07], ['russianolive', .05]]};
+PALETTES.highdesert = {...PALETTES.desert, name: 'High Desert', title: 'Slickrock Rim', tag: 'Pinyon, juniper and red rock.',
+ rough: '#a8946a', rock: '#c06a3a', sky: '#c8d8ea', altitude: 1500, temperature: 26, treeKind: 'pine', sun: 38};
+INTERFACE.highdesert = {panel: 'rgba(40,20,14,.88)', a1: '#fdba74', a2: '#c2410c', hot: '#fff7ed', soft: '#e8ccb8', onHot: '#2a1006'};
+WORLD.highdesert = {...WORLD.desert, clubhouse: 'adobe', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2]}};
 // Alaska: the Rockies' crags close behind, spruce and birch, a long low sun.
 TRAITS.alaska = {...TRAITS.mountain, light: {shade: '#7c8cb8'}, treeDensity: 3,
  stands: {...TRAITS.mountain.stands, plants: [['spruce', .55], ['paperbirch', .3, .6], ['aspen', .15]]},
@@ -631,7 +648,8 @@ const LAND = {
  puget: {}, sonoran: {}, rockies: {}, links: {}, heartland: {}, keys: {}, redwood: {},
  newengland: {}, lakedunes: {},
  // Phase 3, on existing models (see above).
- highplains: {},
+ // High Plains: wheat country -- a grain elevator for the landmark (phase 8).
+ highplains: {world: {story: {walls: 'wire', farm: true, shelterbelt: true, landmark: 'grainelevator'}}},
  // The Sand Hills: the plains grassed over dunes, sand blowing out of them,
  // almost no trees.
  // (Round 2 of its pictures: at half density with the plains' stands it
@@ -641,10 +659,11 @@ const LAND = {
   landform: {type: 'dunes', scale: 170, hummock: 42, height: 6, marram: .5, heather: 0,
    kinds: {a: 'native'}, gates: {a: {near: 9, ramp: 14}}},
   // Brush, not trees, along the corridors, as the Links' gorse (round 3).
-  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .4], ['juniper', .3], ['sandcherry', .3]]},
-  plants: [['dunegrass', .4], ['shrub', .15], ['juniper', .08], ['prairieforbs', .3], ['cottonwood', .02], ['sandcherry', .05]],
+  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .4], ['easternredcedar', .3], ['sandcherry', .3]]},
+  // Phase 8: soapweed yucca, the Sand Hills' own plant, and buffalo grass.
+  plants: [['dunegrass', .35], ['shrub', .1], ['easternredcedar', .08], ['prairieforbs', .25], ['cottonwood', .02], ['sandcherry', .05], ['soapweedyucca', .1], ['buffalograss', .05]],
   ui: {panel: 'rgba(40,32,14,.88)', a1: '#fcd9a8', a2: '#b45309', hot: '#fff7ed', soft: '#ead5b4', onHot: '#2a1c08'},
-  world: {story: {walls: null, landmark: 'windpump'}}},
+  world: {story: {walls: 'wire', landmark: 'windmill'}}},
  // The Old Northeast: New England's region in high summer -- stately oaks,
  // maples, elms and beeches, stone clubhouses (the Golden Age courses).
  oldnortheast: {leafFall: false, rough: '#73803f', semi: '#5a8a42', tree: '#3f6a30', sky: '#b9d3e8',
@@ -799,6 +818,24 @@ const LAND = {
   plants: [['ponderosa', .4], ['gambeloak', .15], ['mountainmahogany', .08], ['bitterbrush', .12], ['aspen', .05], ['lupine', .05], ['sagebrush', .1], ['mulesear', .05]],
   ui: {panel: 'rgba(36,22,16,.88)', a1: '#ffedd5', a2: '#9a3412', hot: '#fef3c7', soft: '#e4cfc0', onHot: '#2a1006'},
   world: {clubhouse: 'loglodge'}},
+ // Phase 8: the high desert and the Cross Timbers.
+ redrock: {},
+ // Sagebrush: the Columbia Plateau's steppe -- sage and bunchgrass on rolling
+ // basalt, rimrock for its stone, western juniper, balsamroot in flower.
+ sagebrush: {sandLand: false, rough: '#9a9a6a', rock: '#4a4440', rockStyle: 'rimrock', rockMoss: '#8e8a5a', altitude: 600, temperature: 24,
+  landform: TRAITS.midwest.landform,
+  stands: {...TRAITS.highdesert.stands, under: {spacing: 8, plants: [['sagebrush', .5], ['bitterbrush', .5]]},
+   plants: [['westernjuniper', .6], ['russianolive', .4]]},
+  plants: [['sagebrush', .3], ['westernjuniper', .1], ['rabbitbrush', .12], ['bitterbrush', .1], ['balsamroot', .1], ['cheatgrass', .13], ['russianolive', .05], ['globemallow', .05], ['shrub', .05]],
+  ui: {panel: 'rgba(26,30,24,.88)', a1: '#ecfccb', a2: '#65a30d', hot: '#fef3c7', soft: '#d0d8c0', onHot: '#141c08'}},
+ // Cross Timbers (the plains' region): the post oak and blackjack belt of
+ // Oklahoma between the prairies, red cedar coming in, an oil pump jack.
+ crosstimbers: {treeDensity: 1.6, rough: '#8a8448',
+  stands: {...TRAITS.plains.stands, share: .5, under: {spacing: 9, plants: [['shrub', 1]]},
+   plants: [['postoak', .5], ['blackjackoak', .35], ['easternredcedar', .15]]},
+  plants: [['postoak', .2], ['blackjackoak', .15], ['easternredcedar', .1], ['shrub', .1], ['prairieforbs', .2], ['buffalograss', .05], ['wildsunflower', .05], ['soapweedyucca', .05], ['cedarelm', .05], ['redbud', .05]],
+  ui: {panel: 'rgba(34,22,14,.88)', a1: '#fda4af', a2: '#be123c', hot: '#fff1f2', soft: '#e4c4c8', onHot: '#2a0810'},
+  world: {story: {walls: 'wire', farm: true, landmark: 'pumpjack'}}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

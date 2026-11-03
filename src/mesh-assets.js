@@ -254,6 +254,8 @@ export const FAMILY_OF = {
  royalpalm: 'royalpalm', travelerspalm: 'travelerspalm', seagrape: 'seagrape', mangrove: 'mangrove',
  gumbolimbo: 'gumbolimbo', banyan: 'banyan', bougainvillea: 'bougainvillea', hibiscus: 'hibiscus',
  // The South's packs.
+ // The high desert and the plains.
+ westernjuniper: 'westernjuniper', utahjuniper: 'utahjuniper', pinyonpine: 'pinyonpine', rabbitbrush: 'rabbitbrush', blackbrush: 'blackbrush', cliffrose: 'cliffrose', russianolive: 'russianolive', balsamroot: 'balsamroot', globemallow: 'globemallow', cheatgrass: 'cheatgrass', soapweedyucca: 'soapweedyucca', easternredcedar: 'easternredcedar', buffalograss: 'buffalograss', wildsunflower: 'wildsunflower',
  // California and the western mountains.
  montereycypress: 'montereycypress', montereypine: 'montereypine', coastliveoak: 'coastliveoak', eucalyptus: 'eucalyptus', sycamore: 'sycamore', torreypine: 'torreypine', iceplant: 'iceplant', coastalsage: 'coastalsage', chaparral: 'chaparral', valleyoak: 'valleyoak', blueoak: 'blueoak', buckeye: 'buckeye', grapevine: 'grapevine', californiapoppy: 'californiapoppy', olivetree: 'olivetree', jacaranda: 'jacaranda', peppertree: 'peppertree', ponderosa: 'ponderosa', sugarpine: 'sugarpine', incensecedar: 'incensecedar', redfir: 'redfir', noblefir: 'noblefir', westernlarch: 'westernlarch', manzanita: 'manzanita', gambeloak: 'gambeloak', mountainmahogany: 'mountainmahogany', bitterbrush: 'bitterbrush', mulesear: 'mulesear', beargrass: 'beargrass',
  // Texas and the deserts.

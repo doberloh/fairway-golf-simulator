@@ -48,6 +48,10 @@ const MOTIFS = {
  cascades: 'M20 74 L44 34 L50 28 L56 34 L80 74 Z M44 34 L48 40 L52 36 L56 42 L56 34 M30 74 L30 64 L26 66 L30 58 L34 66 Z',
  sierra: 'M22 74 C22 50 34 34 50 34 C66 34 78 50 78 74 Z M50 34 L50 74 M36 74 L36 66 L32 68 L36 60 L40 68 Z',
  ponderosa: 'M50 74 L50 30 M50 30 L40 38 L60 38 Z M50 40 L38 50 L62 50 Z M50 52 L40 60 L60 60 Z M28 74 L72 74',
+ // Phase 8a: a sage clump under a rim, a hoodoo, a pump jack.
+ sagebrush: 'M20 44 L80 44 L80 50 L20 50 Z M50 74 C36 74 30 66 36 60 C40 56 46 58 50 54 C54 58 60 56 64 60 C70 66 64 74 50 74',
+ redrock: 'M42 74 L44 52 L40 48 L46 42 L44 34 L50 26 L56 34 L54 42 L60 48 L56 52 L58 74 Z M36 36 L64 36',
+ crosstimbers: 'M24 74 L76 74 M34 74 L42 50 L50 74 M42 50 L66 40 M66 40 L70 44 L66 50 L62 44 Z M28 50 L46 46',
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Up to two letters from the course's name: its first two words' initials.

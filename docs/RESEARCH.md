@@ -12651,3 +12651,43 @@ landscape moved.
 No generator step (new keys, existing ground unchanged); SCHEMA 21. The
 weekly and palette tests now work out the last debut and the cycle from the
 rotation, so each phase's debuts need no edit there.
+
+
+## The high desert and the plains (phase 8a, 3 November 2026)
+
+PLAN.md's phase 8, first part: the high desert and plains packs
+(tools/blender/cartoon_highdesert.py, cartoon_plains.py; 14 species and
+eight pieces of stone and ranch, every variant, six far twins). Every value
+PLACED from the study's pages (subs/highdesert/, subs/plains/, local) and
+the packs' specs.
+
+- **A new region, `highdesert`** (from the Sonoran's record): pinyon .15
+  and Utah juniper .18 over blackbrush .15, sage .14, cliffrose .1,
+  rabbitbrush and globemallow .08, cheatgrass .07, Russian olive .05; stands
+  of pinyon and juniper; hoodoos and fins as its stone (#c06a3a, the bands'
+  #e0b080 as the accent); 1,500 m, 26 C; the thinnest fog in the game
+  (haze .35). **Red Rock** is the region as it is.
+- **Sagebrush**: the Midwest's prairie landform (rolling, no mesas inside
+  the course), no sand ground; sage .3, cheatgrass .13, rabbitbrush .12,
+  bitterbrush and balsamroot .1, western juniper .1; basalt rimrock as its
+  stone (#4a4440). Balsamroot and globemallow are drawn in flower (spring)
+  until seasons are on.
+- **The plains on their own pack** (generator 68): eastern red cedar for the
+  stand-in juniper (.08 in the open, .25 of the stands), soapweed yucca .06
+  (.1 on the Sand Hills), buffalo grass .1, wild sunflowers .05; barbed wire
+  for the fences (1.2 m, a ball stops against it as against a rail fence),
+  a shelterbelt 40 m behind the farmstead where all 21 m of it is open and
+  out of play, a ranch windmill for the landmark (10 m) and a concrete grain
+  elevator on High Plains (30 m).
+- **Cross Timbers** (the plains' region): post oak .2, blackjack oak .15,
+  red cedar .1, prairie flowers .2; stands of post oak and blackjack at half
+  the ground; an oil pump jack (4.4 m) for the landmark.
+- **Ranch pieces' sizes**: each as wide and deep as its model is for its
+  height -- windmill 6.5 by 5.9 m, elevator 32.3 by 11, pump jack 7.7 by 2.8.
+- **Names**: clashes (Bunchgrass, Bitterbrush, Cimarron) and one with a
+  hyphen replaced. Debut weeks 182-184.
+
+SCHEMA 22 adds the three keys; generator 68 moved High Plains and the Sand
+Hills. The grain elevator's and shelterbelt's far twins are built into the
+model module but not drawn: a landmark and a story prop draw their full
+model at every distance.
