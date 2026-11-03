@@ -69,8 +69,9 @@ from the crashes stay:
   every run (`bench/ab/gpu-runs.jsonl`). Above 30% busy, or a game, browser or
   Blender we did not start on the card: the owner is using the machine --
   wait, and say so.
-- **One graphics job at a time**, minutes rather than hours, at least a minute
-  apart; above 80 °C, stop and cool down 10 minutes.
+- **One graphics job at a time** (`tools/gpu-lock.mjs` holds it across
+  processes, so agents working packs queue their renders), minutes rather
+  than hours, at least a minute apart; above 80 °C, stop and cool down 10 minutes.
 - **After every job, leave nothing running**: browsers, built-in browser tabs,
   Blender and servers closed, the card checked (*Leave no processes running*
   still holds).

@@ -17,15 +17,18 @@
 // rendering only, so no version moves for it (the fingerprint reads ground).
 // Pure: tests/life.test.mjs.
 import {worldStream} from './world-stream.js';
-import {WORLD} from './biomes.js';
+import {worldOf} from './biomes.js';
 import {ovalRadius} from './course.js';
 
 // Each landscape's animals are its world block's (biomes.js).
-export const LIFE_SET = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.life]));
+export const lifeSet = key => worldOf(key).life || {};
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
 export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [], trees = []}) {
- const out = [], set = LIFE_SET[s.biome] || {};
+ const out = [], set = lifeSet(s.biome);
  const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'life', s.biome || '');
  // Clear of trunks too (iteration 7: the mower was put in a wood). The trees
  // are planted by now; a coarse grid of them, built once.

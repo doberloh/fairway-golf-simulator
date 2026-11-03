@@ -12165,3 +12165,59 @@ common trees, 0.70 MB (7.05 to 7.75 MB; 10 models, 4 far twins), the page
 13.80 to 14.50 MB (7.11 to 7.47 MB gzipped). At that rate the 40 models of
 step 3 add about 3 MB and all 210 about 15 MB, inside the plan's 15-25 MB
 estimate.
+
+## The mountain pack, and the world pieces found again (2 November 2026)
+
+The second pack of the US landscapes goal: the Rockies' six missing models
+(BLENDER_ASSETS *cartoon_mountain*), fifteen rounds each against the
+study's local pictures, logged in tools/blender/logs/<id>.md. Budgets were
+counted in triangles from round 1, after the Pacific pack's lesson, so no
+cost pass was needed: lodgepole 970-1,100, blue spruce 2,050, willow
+thicket 3,390, columbine 1,130, lupine 1,075, the fence panel 108. What
+the rounds taught:
+
+- **A lodgepole is its pole.** A narrow crown on the top third read as a
+  toy tree on a stick (round 2); the crown down the upper 40-50%, and dead
+  stubs up the bare lower pole, read as the pictures' dense stands.
+- **A flower model is the flower held above the leaves.** Columbine and
+  lupine both began as a solid mound under flat discs; broken leaf clumps,
+  short stems and florets standing proud of the spike read at a few
+  hundred triangles a part. A cost pass that smoothed lupine's florets into
+  cones lost it, and was undone.
+- **The split-rail fence is one straight panel, laid turned.** Every other
+  2 m section turns 30 degrees (0.52 rad) each way about the wall's line;
+  centred panels so turned meet at their ends, which is the zig-zag
+  (renderer.js addStory). A zig-zag built into the model could not follow
+  a wall's run. Its solid box is 1.3 m wide (story.js `WALL_WIDTH`, PLACED:
+  the zig-zag's reach), 1.1 m high.
+
+**Planting** (PLACED, biomes.js TRAITS.mountain): the stands spruce .4,
+lodgepole .3, pine .15, aspen .15; the open spruce .3, lodgepole .18 (1.1
+of the region's 12-27 m: the specs' 15-30), blue spruce .05 (0.9), pine
+.12, aspen .18, sagebrush .07, willow thicket .04, lupine .03, columbine
+.03. Two lodgepole variants ship (the common tree), one of the rest.
+
+**The A/B** (tools/frame-ab.mjs, the Rockies, step 3a's build against
+this one, two rounds of 150 frames at three tees, RTX 4090 headroom): Low
+frame by mean 0.86 to 0.88 ms (+1.8%; mean of spots +5.5%, p95 -3.9%),
+Medium 1.59 to 1.51 ms (-5.0%); draws +17-25%, triangles -3%. Accepted:
+within the runs' noise. The B build also has generator 59's world pieces
+(below), so the Rockies' fences, ruins and animals are in that figure.
+
+**The world pieces found again (generator 59).** Since generator 56 the
+story, the animals, the clubhouse's build and the path surface were looked
+up in tables made from biomes.js `WORLD`, which is keyed by region, by the
+landscape's key: only Links and Redwood Coast, whose keys are their
+regions', matched. The other seven drew no walls, ruins, farmstead or
+animals, the generic clubhouse and gravel paths -- found when a capture
+aimed at the Rockies' longest wall found none. The tests had passed
+because they made the same lookup (`STORY_SET[biome] || {}` expects
+nothing). Now through `worldOf(key)`. **Walls keep off bare rock and
+ground steeper than 30%** (story.js `WALL_GRADE`, PLACED: a 2 m section
+sits at the lower of its ends, so its high end is 0.6 m into such a
+slope): the first fence seen ran up a Rockies cliff with half its panels
+sunk. On seed `overhaul` the Rockies keep one 11 m fence; Links' walls
+moved too.
+
+**Size:** the model module 7.75 to 7.99 MB, the page 14.50 to 14.75 MB
+(7.47 to 7.59 MB gzipped) for six models, three far twins.

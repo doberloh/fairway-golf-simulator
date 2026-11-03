@@ -3,7 +3,8 @@
 // course, left where the architect found it.
 //
 //   walls       dry-stone field walls (Links, Autumn, Mountain), hedgerows
-//               (Midwest, PNW); a leaning wall is a kind any landscape may ask
+//               (Midwest, PNW), split-rail fences (Rockies, since the US
+//               landscapes goal); a leaning wall is a kind any landscape may ask
 //               for (Haunted Hollow's moor had it until 2 November 2026)
 //   buildings   a farmstead -- barn, silo, windpump (Midwest, Autumn); a
 //               roofless chapel or cottage (Links, Lakeshore, Desert, PNW,
@@ -21,7 +22,7 @@
 // counts PLACED. Every generated course (Architect's until it was removed,
 // 2 November 2026). Pure: tests/story.test.mjs.
 import {worldStream} from './world-stream.js';
-import {WORLD} from './biomes.js';
+import {worldOf} from './biomes.js';
 
 // Each landscape's remains. Sizes are footprints in metres (width across
 // the front, depth, height to the ridge or top); the models
@@ -38,16 +39,22 @@ export const STORY_PIECES = {
  church: {model: 'Church', width: 9, depth: 16, height: 24},
 };
 // Each landscape's story is its architect block's (biomes.js).
-export const STORY_SET = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.story]));
+export const storySet = key => worldOf(key).story || {};
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
 const AMOUNT = {none: 0, some: 1, lots: 2};
 // Out of play: this far outside a hole's corridor (its raw half width) at least.
 const CLEAR_WALL = 14, CLEAR_BUILDING = 38;
+// The steepest ground a wall crosses: a 2 m section sits at the lower of its
+// ends, so at 30% its high end is 0.6 m into the slope (PLACED).
+const WALL_GRADE = .3;
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
 export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, buildings = [], blocked = () => false, earthworks = [], paths = []}) {
  const out = {walls: [], buildings: [], props: [], clearings: []};
  const amount = AMOUNT.some;
- const set = STORY_SET[s.biome] || {};
+ const set = storySet(s.biome);
  const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'story', s.biome || '');
  // The Dell's aiming stone is the hole's, whatever the story.
  for (const e of earthworks) if (e.aim) {
@@ -130,9 +137,12 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
   }
  }
  // Walls: runs across the open ground between holes, broken wherever they
- // would reach play, a path, water or a building. Three lines a little, six a
+ // would reach play, a path, water, a building, bare rock or ground steeper
+ // than WALL_GRADE (the mountain pack, 2 November 2026: a fence ran up a
+ // cliff, half its panels sunk in the slope). Three lines a little, six a
  // lot; a run under 8 m is dropped.
  if (set.walls) {
+  const steep = (x, z) => Math.hypot(height(x + 1, z) - height(x - 1, z), height(x, z + 1) - height(x, z - 1)) / 2;
   for (let line = 0; line < amount * 3; line++) {
    let x = (rnd() * 2 - 1) * halfX * .9, z = (rnd() * 2 - 1) * halfZ * .9, a = rnd() * Math.PI * 2;
    const len = 50 + rnd() * 110;
@@ -142,7 +152,7 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
    // cross a creek narrower than its step), turning a little between runs.
    for (let d = 0; d < len; d += 1) {
     const nx = x + Math.sin(a), nz = z + Math.cos(a);
-    const ok = (nearest(nx, nz)?.d ?? 999) > CLEAR_WALL && !PLAYED.has(surface(nx, nz)) && !taken.some(b => inBox(b, nx, nz, 6)) && Math.abs(nx) < halfX + 100 && Math.abs(nz) < halfZ + 100;
+    const ok = (nearest(nx, nz)?.d ?? 999) > CLEAR_WALL && !PLAYED.has(surface(nx, nz)) && surface(nx, nz) !== 'rock' && steep(nx, nz) <= WALL_GRADE && !taken.some(b => inBox(b, nx, nz, 6)) && Math.abs(nx) < halfX + 100 && Math.abs(nz) < halfZ + 100;
     // A run starts at the first point that passes, not the one before it.
     if (ok) { if (!run) run = {kind: set.walls, ax: nx, az: nz, bx: nx, bz: nz}; else { run.bx = nx; run.bz = nz; } }
     else close();
@@ -163,11 +173,15 @@ export function segDist(w, x, z) {
 }
 // A wall as the boxes physics stops a ball against: one per segment, 0.7 m
 // thick, its height by kind (a hedge stands taller).
-export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6};
+export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1};
+// How wide a wall's solid box is. A split-rail fence (the US landscapes goal's
+// mountain pack) zig-zags 30 degrees either side of its run, so its rails
+// reach about 0.6 m out each way. PLACED.
+export const WALL_WIDTH = {rail: 1.3};
 export function wallBoxes(walls, height) {
  return walls.map(w => {
   const x = (w.ax + w.bx) / 2, z = (w.az + w.bz) / 2, len = Math.hypot(w.bx - w.ax, w.bz - w.az);
   const y = Math.min(height(w.ax, w.az), height(w.bx, w.bz), height(x, z)) - .2;
-  return {kind: 'wall', club: true, x, z, y, width: .7, depth: len, height: (WALL_HEIGHT[w.kind] ?? 1.1) + .2, rotation: Math.atan2(w.bx - w.ax, w.bz - w.az)};
+  return {kind: 'wall', club: true, x, z, y, width: WALL_WIDTH[w.kind] ?? .7, depth: len, height: (WALL_HEIGHT[w.kind] ?? 1.1) + .2, rotation: Math.atan2(w.bx - w.ax, w.bz - w.az)};
  });
 }

@@ -33,6 +33,8 @@ export const GROUND_PLANTS = new Set([
  'creosote', 'brittlebush', 'sagebrush', 'bracken', 'huckleberry',
  // The US landscapes goal's Pacific pack: shrubs and a flower.
  'vinemaple', 'oregongrape', 'scotchbroom', 'pacificrhododendron', 'douglasiris',
+ // ... and the mountain pack's.
+ 'willowthicket', 'columbine', 'lupine',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

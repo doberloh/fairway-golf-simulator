@@ -15,7 +15,7 @@
 
 // Footprint and height by club, metres (PLACED: a modest municipal clubhouse
 // to a championship venue's).
-import {WORLD, WORLD_GENERIC} from './biomes.js';
+import {worldOf, WORLD_GENERIC} from './biomes.js';
 const GENERIC_CLUBHOUSE = WORLD_GENERIC.clubhouse;
 
 export const CLUBHOUSE_SIZE = {
@@ -32,7 +32,10 @@ export const CLUBHOUSE_SIZE = {
 export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, shingle: .414};
 // The landscape's build (the study's landscape table); the model's name.
 // Each landscape's clubhouse is its world block's (biomes.js).
-export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.clubhouse]));
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
+export const clubhouseKind = key => worldOf(key).clubhouse || GENERIC_CLUBHOUSE;
 
 const corners = (c, w, d, rot) => {
  const cs = Math.cos(rot), sn = Math.sin(rot), out = [];
@@ -87,7 +90,7 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
  }
  }
  if (!best) return null;
- const model = CLUBHOUSE_KIND[s.biome] || GENERIC_CLUBHOUSE;
+ const model = clubhouseKind(s.biome);
  return {kind: 'clubhouse', model, club: true,
   x: best.c.x, z: best.c.z, y: best.hi - .3, base: best.lo, rotation: best.rot, ...size, height: +(size.width * (CLUBHOUSE_ASPECT[model] ?? .42)).toFixed(2)};
 }

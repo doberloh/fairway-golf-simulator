@@ -233,8 +233,13 @@ const TRAITS = {
   // A wall of spruce and pine round every fairway (the owner's photograph).
   stands: {edge: 45, wobble: 18, ramp: 18, patch: .2, scale: 240, near: 35, spacing: 8, share: .6,
    under: {spacing: 8, plants: [['huckleberry', .6], ['fern', .4]]},
-   plants: [['spruce', .55], ['pine', .3], ['aspen', .15]]},
-  plants: [['spruce', .4], ['pine', .28], ['aspen', .22], ['sagebrush', .1]]},
+   plants: [['spruce', .4], ['lodgepole', .3], ['pine', .15], ['aspen', .15]]},
+  // The Rockies' own (the US landscapes goal's mountain pack): lodgepole
+  // in the stands and the open, a few blue spruces, willow thickets, lupine
+  // and columbine in the meadows. Lodgepole 15-30 m (1.1 of the region's
+  // 12-27), blue spruce 15-25 (0.9). Weights PLACED.
+  plants: [['spruce', .3], ['lodgepole', .18, 1.1], ['bluespruce', .05, .9], ['pine', .12], ['aspen', .18],
+   ['sagebrush', .07], ['willowthicket', .04], ['lupine', .03], ['columbine', .03]]},
  links: {light: {shade: '#8a98b0'},
   longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 2, 1.0]], count: 7000, near: 14, leaf: '#8a9150', accent: '#d8c27a'},
   // Round 5: gorse and broom scrub on the dunes, the canopy painting faint.
@@ -475,8 +480,9 @@ export const WORLD = {
   story: {walls: null, ruins: ['cottage']}, life: {grazers: ['roadrunner', 2]},
   colours: {clubhouse: {stone: '#d7a77a', bark: '#7d5a3c', accent: '#8a5a36', dirt: '#3a2c26'}, riprap: '#b5865c', wall: '#c2b8a4', ruin: '#cfa27a', bridgeStone: '#bdb6a6'}},
  mountain: {edge: 'riprap', fountain: false, clubhouse: 'chalet', path: 'gravel', bridge: 'wood',
-  story: {walls: 'stone', ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 2], heron: true},
-  colours: {clubhouse: {stone: '#b88d5e', bark: '#5a4436', accent: '#efe6d2', dirt: '#2b3036'}, riprap: '#87817a', wall: '#b4ac9f', ruin: '#a49c90', bridgeStone: '#bdb6a6'}},
+  // Split-rail fences, not field walls (the US landscapes goal's mountain pack).
+  story: {walls: 'rail', ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 2], heron: true},
+  colours: {clubhouse: {stone: '#b88d5e', bark: '#5a4436', accent: '#efe6d2', dirt: '#2b3036'}, riprap: '#87817a', wall: '#b4ac9f', ruin: '#a49c90', bridgeStone: '#bdb6a6', rail: '#8a7a62'}},
  links: {edge: null, fountain: false, clubhouse: 'stonehouse', path: 'gravel', bridge: 'stone',
   story: {walls: 'stone', ruins: ['chapel', 'cottage'], landmark: 'lighthouse'}, life: {grazers: ['sheep', 9], fliers: ['gull', 3]},
   colours: {clubhouse: {stone: '#c3bfb2', bark: '#5b6168', accent: '#ece8de', dirt: '#2a3036'}, riprap: '#99948a', wall: '#cfc8b6', ruin: '#bdb7a8', bridgeStone: '#bdb6a6'}},

@@ -970,6 +970,9 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
+    // A seed whose tee shot finds water asks for relief first (2 November
+    // 2026: a pond beside a Puget Sound fairway); the meter comes back after.
+    await reliefFirst(t);
     // There is no Swing button: the meter is what comes back.
     if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the Swing Meter did not come back');
     // The swing's marks clear once the ball stops; the three numbers stay

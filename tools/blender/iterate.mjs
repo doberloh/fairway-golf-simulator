@@ -25,6 +25,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {chromium} from 'playwright';
+import {holdCard} from '../gpu-lock.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const [pack, roundArg, ...rest] = process.argv.slice(2);
@@ -73,8 +74,12 @@ const tiles = path.join(SHOTS, 'tiles');
 fs.rmSync(tiles, {recursive: true, force: true});
 fs.mkdirSync(tiles, {recursive: true});
 const sheet = path.join(ROOT, 'bench', 'shots', 'blender', `${pack}.png`);
+// One graphics job at a time across the agents working packs (gpu-lock.mjs);
+// the sheet below is laid out on the processor, so it is not held for that.
+const release = holdCard(`blender ${pack} r${round}${season !== 'summer' ? ' ' + season : ''}`);
 const run = spawnSync(findBlender(), ['-b', '--factory-startup', '--python', script, '--', path.join(ROOT, 'vendor', `blender-${pack}`), '--render', sheet],
  {encoding: 'utf8', maxBuffer: 64 << 20, env: {...process.env, FAIRWAY_TILES: tiles, FAIRWAY_SEASON: season}});
+release();
 const out = `${run.stdout}\n${run.stderr}`.split(/\r?\n/);
 for (const l of out) if (/^BUILT|Error|Traceback/.test(l)) console.log(l);
 // Blender exits 0 after a Python error in the pack, so a traceback fails too.

@@ -550,3 +550,22 @@ laurel ships** (tools/build-meshes.mjs): a variant is a draw call per part, full
 in the frame and the shadow pass, and with both variants Puget Sound's Low
 frame rose 24% (RESEARCH, *The Pacific pack*). The others stay in the
 pack.
+
+### cartoon_mountain
+
+`tools/blender/cartoon_mountain.py`, 6 models (two variants of each tree)
+and 4 far twins: what the Rockies lacked. Fifteen rounds each, logged.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Lodgepole_1`, `_2` | `lodgepole` | A tall straight pole with dead stubs up its bare lower half, a narrow uneven crown above | 970-1,100 |
+| `Blender_BlueSpruce_1` (`_2` not shipped) | `bluespruce` | A broad silver-blue cone to the ground, lighter new growth at the top | 2,050 |
+| `Blender_WillowThicket_1` | `willowthicket` | A rounded grey-green mound on fine red shoots | 3,390 |
+| `Blender_Columbine_1` | `columbine` | A low leafy spread, blue-and-white star flowers held above it (bark is the white cup, accent the blue) | 1,130 |
+| `Blender_Lupine_1` | `lupine` | Purple flower spikes, florets proud of them, over a palmate base (accent) | 1,075 |
+| `Blender_SplitRailFence_1` | `storyrail` (never planted) | One 2 m panel of six heavy split rails; the game lays panels along a wall's run, every other one turned 30 degrees each way, for the zig-zag | 108 |
+
+The fence is the Rockies' story wall (biomes.js WORLD.mountain
+`story.walls: 'rail'`): renderer.js addStory draws it, story.js gives it
+a 1.3 m wide solid box (`WALL_WIDTH`) so a ball meets the zig-zag's
+width. Willow thicket's bare winter stems are owed to the seasons step.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {world} from './worlds.mjs';
-import {LIFE_SET} from '../src/life.js';
+import {lifeSet} from '../src/life.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 
 // LIFE ON THE COURSE (architect-courses, phase 6; life.js): every landscape's
@@ -14,7 +14,7 @@ const course = biome => world({seed: 'LIFE-1', holes: 9, biome});
 
 test('every landscape has its own animals', () => {
  for (const biome of BIOME_KEYS) {
-  const w = course(biome), kinds = new Set(w.life.map(l => l.kind)), set = LIFE_SET[biome] || {};
+  const w = course(biome), kinds = new Set(w.life.map(l => l.kind)), set = lifeSet(biome);
   if (set.grazers) assert.ok(kinds.has(set.grazers[0]), `${biome}: no ${set.grazers[0]}`);
   if (set.fliers) assert.ok(kinds.has(set.fliers[0]), `${biome}: no ${set.fliers[0]}`);
   assert.ok(!kinds.has('walker') && !kinds.has('mower'), `${biome}: a person on the course`);

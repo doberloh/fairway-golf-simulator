@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {world} from './worlds.mjs';
 import {simulateShot} from '../src/physics.js';
-import {STORY_SET} from '../src/story.js';
+import {storySet} from '../src/story.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 
 // PHASE 6: THE LAND'S STORY (architect-courses; story.js). Walls, a farmstead,
@@ -16,7 +16,7 @@ const lots = biome => world({seed: 'ST-1', holes: 9, biome});
 
 test('each landscape tells its own story', () => {
  for (const biome of BIOME_KEYS) {
-  const w = lots(biome), set = STORY_SET[biome] || {}, kinds = new Set(w.buildings.filter(b => b.story).map(b => b.kind));
+  const w = lots(biome), set = storySet(biome), kinds = new Set(w.buildings.filter(b => b.story).map(b => b.kind));
   if (set.farm) assert.ok(kinds.has('barn'), `${biome}: no farmstead`);
   if (set.ruins?.length) assert.ok(set.ruins.some(r => kinds.has(r)), `${biome}: no ruin (${[...kinds]})`);
   if (set.walls) assert.ok(w.walls.some(x => x.kind === set.walls), `${biome}: no ${set.walls} walls`);

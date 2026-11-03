@@ -75,8 +75,17 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     game since generator 57; Puget Sound's Low frame +2% after two cost
     passes (RESEARCH, *The Pacific pack*). Seen in captures (Puget Sound,
     Redwood Coast); not seen by a person in play.
-  - [ ] `cartoon_mountain` -- the Rockies' six (lodgepole, blue spruce,
-    willow thicket, split-rail fence, columbine, lupine).
+  - [x] `cartoon_mountain` -- the Rockies' six (lodgepole, blue spruce,
+    willow thicket, split-rail fence, columbine, lupine), in the game since
+    generator 58; the fence is the Rockies' story wall, laid in zig-zag
+    sections (RESEARCH, *The mountain pack*). Seen in captures (the Rockies'
+    stands, a fence on a meadow shelf); not seen by a person in play.
+  - [x] Found on the way (generator 59): since the new keys, seven of the
+    nine landscapes had no walls, ruins, farmstead or animals, the generic
+    clubhouse and gravel paths -- the world pieces were looked up in the
+    regions' tables by the landscape's key. Fixed (through `worldOf`), and
+    walls keep off bare rock and steep banks. Seen: the Rockies' fence;
+    not seen: the other six landscapes' restored pieces in the game.
   - [ ] Sonoran's two (ironwood, jojoba); Heartland's six (American elm,
     shagbark hickory, cornfield, red barn, bur oak, prairie forbs); the
     Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,

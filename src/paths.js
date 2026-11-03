@@ -13,14 +13,17 @@
 //
 // Pure: no DOM, no three.js. tests/paths.test.mjs.
 
-import {WORLD, WORLD_GENERIC} from './biomes.js';
+import {worldOf, WORLD_GENERIC} from './biomes.js';
 
 // Width by club (PLACED within the study's 8 ft norm and the 48 in accessible
 // route): a municipal course's narrower, a resort's wide enough for two carts.
 const WIDTH = {municipal: 2.1, members: 2.4, resort: 3.0, championship: 2.6};
 // What the path is made of, by landscape (PLACED): the study's paths table.
 // Each landscape's path surface is its architect block's (biomes.js).
-export const PATH_KINDS = Object.fromEntries(Object.entries(WORLD).map(([k, a]) => [k, a.path]));
+export const pathKind = key => worldOf(key).path || WORLD_GENERIC.path;
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
 // THE PATH NETWORK, ROUTED (the owner's review, 30 October 2026: "spaghetti",
 // paths across greens, tees and fairways, unnatural turns, unwalkable
 // slopes). A cost grid over the course, CELL metres a side, and A* across it:
@@ -255,7 +258,7 @@ function waypoints(h, s) {
 export const SPUR = 3 * CELL;
 export function routePaths({holes, s, surface, streams, ravines = [], height = null}) {
  if (!holes?.length) return {paths: [], bridges: [], connect: () => null, block: () => {}};
- const width = WIDTH.members, kind = PATH_KINDS[s.biome] || WORLD_GENERIC.path;
+ const width = WIDTH.members, kind = pathKind(s.biome);
  const grid = costGrid({holes, s, surface, streams, height, ravines});
  const pieces = [];
  const cellAt = p => { const [i, j] = grid.cellOf(p); return i < 0 || j < 0 || i >= grid.nx || j >= grid.nz ? -1 : j * grid.nx + i; };

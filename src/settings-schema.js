@@ -311,7 +311,21 @@ export const SCHEMA_VERSION=17;
 //     madrone, Garry oak, bigleaf maple, Pacific dogwood, vine maple, Oregon
 //     grape and Scotch broom among its pines and cedars; Redwood Coast bay
 //     laurel, Pacific rhododendron and Douglas iris. Both moved.
-export const GENERATOR_VERSION=57;
+// 58: the mountain pack (step 3): the Rockies plant lodgepole pine (in the
+//     stands and the open), blue spruce, willow thickets, lupine and
+//     columbine, and its field walls are split-rail fences (a wider solid
+//     box). Rockies moved.
+// 59: the world pieces found their landscapes again. Since 56 the story
+//     (walls, farmstead, ruins, landmark), the animals, the clubhouse's
+//     build and the path surface were looked up in the regions' tables by
+//     the landscape's key, which matched only Links and Redwood Coast: the
+//     other seven had no walls, ruins or animals, the generic clubhouse and
+//     gravel paths. Looked up through worldOf now (story.js storySet,
+//     life.js lifeSet, clubhouse.js clubhouseKind, paths.js pathKind). The
+//     seven moved. And walls keep off bare rock and ground steeper than 30%
+//     (story.js WALL_GRADE; a Rockies fence ran up a cliff), which moved
+//     Links' walls too.
+export const GENERATOR_VERSION=59;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

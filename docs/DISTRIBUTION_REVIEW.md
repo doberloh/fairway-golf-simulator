@@ -1730,3 +1730,8 @@ no network request.
 **Step 3, the Pacific pack**: the page is **14,496,972 bytes (7.47 MB
 gzipped)**, +700 KB: ten Blender models for Puget Sound and Redwood Coast
 and four far twins (the model module 7.05 to 7.75 MB). Still one file.
+
+**Step 3, the mountain pack**: the page is **14,746,002 bytes (7.59 MB
+gzipped)**, +249 KB: six Blender models for the Rockies (two lodgepoles,
+a blue spruce, willow thicket, columbine, lupine, the split-rail fence)
+and three far twins (the model module 7.75 to 7.99 MB). Still one file.

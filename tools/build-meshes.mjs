@@ -65,7 +65,7 @@ const PICK = {
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
-  'Madrone_2', 'GarryOak_1', 'BigleafMaple_1', 'BayLaurel_1',
+  'Madrone_2', 'GarryOak_1', 'BigleafMaple_1', 'BayLaurel_1', 'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -153,6 +153,15 @@ const PICK = {
  scotchbroom: ['blender:Blender_ScotchBroom_1'],
  rhododendron: ['blender:Blender_PacificRhododendron_1'],
  douglasiris: ['blender:Blender_DouglasIris_1'],
+ // THE MOUNTAIN PACK (tools/blender/cartoon_mountain.py): the Rockies' own.
+ // Two lodgepoles (the common tree), one of the rest.
+ lodgepole: ['blender:Blender_Lodgepole_1', 'blender:Blender_Lodgepole_2'],
+ bluespruce: ['blender:Blender_BlueSpruce_1'],
+ willowthicket: ['blender:Blender_WillowThicket_1'],
+ columbine: ['blender:Blender_Columbine_1'],
+ lupine: ['blender:Blender_Lupine_1'],
+ // A story wall's panel (renderer.js addStory), never planted.
+ storyrail: ['blender:Blender_SplitRailFence_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',

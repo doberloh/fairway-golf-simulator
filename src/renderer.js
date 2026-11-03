@@ -2267,11 +2267,14 @@ export class GolfView{
   };
   // Each run cut into sections of about 2 m; a section sits at the lower of
   // the ground under its ends, sunk a little so a slope shows no gap.
-  const sections=kind=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='hedge')===(kind==='hedge'))){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/2)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot,len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
+  const sections=kind=>{const out=[];for(const wl of (w.walls||[]).filter(x=>(x.kind==='leaning'?'stone':x.kind||'stone')===kind)){const len=Math.hypot(wl.bx-wl.ax,wl.bz-wl.az),n=Math.max(1,Math.round(len/2)),rot=Math.atan2(wl.bx-wl.ax,wl.bz-wl.az);for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n,x0=wl.ax+(wl.bx-wl.ax)*t0,z0=wl.az+(wl.bz-wl.az)*t0,x1=wl.ax+(wl.bx-wl.ax)*t1,z1=wl.az+(wl.bz-wl.az)*t1;out.push({x:(x0+x1)/2,z:(z0+z1)/2,y:Math.min(w.height(x0,z0),w.height(x1,z1))-.12,rot:rot+(wl.kind==='rail'?(i%2?.52:-.52):0),len:len/n,lean:wl.kind==='leaning'?((i*7919%13)/13-.5)*.28:0});}}return out;};
   const wallPlace=h=>(s,info)=>{q.setFromAxisAngle(up,s.rot);if(s.lean){q2.setFromAxisAngle(fwd,s.lean);q.multiply(q2);}pos.set(s.x,s.y,s.z);sc.set(h,h,s.len/(2*info.rz));};
   // Iteration 4: uninked -- inked, a wall's small stones went black.
   draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
   draw('Blender_StoryWall_Hedge',sections('hedge'),{leaf:'#4f7a3a'},false,wallPlace(1.6));
+  // A split-rail fence (the US landscapes goal's mountain pack): every other
+  // 2 m panel turned 30 degrees each way, which makes the zig-zag.
+  draw('Blender_SplitRailFence_1',sections('rail'),{bark:worldOf(key).colours.rail??'#8a7a62'},true,wallPlace(1.1));
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
