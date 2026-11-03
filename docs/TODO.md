@@ -41,6 +41,73 @@ truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
 landscapes are off, performance and testing are not. In order (PLAN.md
 section 6); nothing ships early -- the branch merges when all of it is done.
 
+- [ ] **The machine went down at 12:14 on 3 November 2026, during Blender
+  work** -- graphics-card work stopped until the owner says otherwise.
+  Windows logged an unclean shutdown (Kernel-Power 41, event 6008 at
+  12:14:12) and no blue screen or display-driver error, so the cause is not
+  proven. It came as the prairie grass pack's round 2 started rendering --
+  the eighteenth Blender render in about two hours (the Badlands pack's
+  fifteen rounds and three season and far-twin renders, the grass pack's
+  round 1), run back to back with less than the minute's rest the branch's
+  rules ask, several started with the card at 31-39% busy (above the 30%
+  line), after the morning's captures. The iterate renders were not in
+  bench/ab/gpu-runs.jsonl (iterate.mjs takes the lock but does not log).
+  Nothing was lost: the Badlands models are done and exported; the grass
+  pack's round 1 is logged and its round 2 change saved, not rendered.
+
+**The owner's additions of 3 November 2026** (each part of the goal now):
+
+- [ ] **The Dakota Badlands, a forty-first landscape** ("can we add a new
+  biome, The north and south dakota Badlands? Do all of the research, data
+  gathering, model planning, pictures, and add to the us_landscapes report.
+  Then build out that biome as well"; "add bully pulpit to the course
+  research for badlands"). Done so far: the study (catalogue.json
+  `plains.badlands`, two overlays on the map -- the White River and the
+  Little Missouri badlands -- four courses located: Bully Pulpit, Watford
+  City, Wall, Lake Waggoner; nine models specced; 22 landscape pictures and
+  every model's references picked; tools/add-badlands.mjs, local); the
+  Blender pack tools/blender/cartoon_badlands.py (spires, sawtooth wall,
+  the horizon wall, Yellow Mounds, clinker butte, cannonball concretion,
+  Rocky Mountain juniper, green ash, chokecherry, leadplant, bison) in its
+  iterations; the game's record (biomes.js `badlands`, key, SCHEMA 26,
+  names, crest, the formations in course.js and physics.js formationSolids,
+  renderer.js addFormations and the backdrop's own colours). The plants and
+  the bison have their fifteen rounds and four seasons. **The rock
+  formations do not pass** (the owner, 3 November 2026: "the rock
+  formations for badlands need a lot more iteration. They dont look great.
+  And the shapes are off still"): turned cones read as party hats, not as
+  the knife-edged, fluted ridges with gullies between them in the pictures.
+  They are rebuilt as carved ridges -- a height field of crests and
+  gullies, not lathes -- and iterated again from round 16 until they read,
+  however many rounds that takes. Still to do: that, build-meshes, the
+  tests, the card pictures, captures, a frame-rate A/B on Low, docs,
+  commit.
+- [ ] **Bully Pulpit built in the builder at the end** (the owner, 3 November
+  2026), on the Badlands, the way Chambers Bay was (tools/build-courses.mjs:
+  OpenStreetMap way/245874307 at Medora, North Dakota, and the state's
+  LIDAR), played through by the virtual golfers and opened in the game.
+- [ ] **Tall fescue and the prairie grasses for every landscape that needs
+  them** ("do we have tall fescue and prairie grasses? if not, we should
+  retroactively build them"): tall fescue, little bluestem, switchgrass,
+  Indiangrass and blue grama (and the Badlands' western wheatgrass) as
+  long-grass families (tools/blender/cartoon_prairiegrass.py; biomes.js
+  GRASSES says who grows what -- seventeen landscapes). Still to do: the
+  pack's fifteen rounds, build-meshes, captures, docs, commit.
+- [ ] **A skill that matches a real course to a landscape, the last step**
+  (the owner, 3 November 2026: "turn the US landscapes docs into a skill
+  that I can send in a course, you would evaluate the course. Do research,
+  and recommend the best biome to match. If there is no matches, and we
+  need to build a new one, the skill would follow the research paths we
+  have set up to gather data about what would need to be built and put
+  together a plan to build it"). From the study's method: locate the course
+  (locate-courses.mjs, OpenStreetMap), find its landscape on the partition
+  (lookup.mjs `landscapeAt`), research its ground, trees and look (the
+  landscape pages, photos and catalogue), score it against every built
+  landscape, and recommend one -- or, when none fits, run the study's path
+  (catalogue entry, ecoregions or an overlay, model specs and searches,
+  photo sheets, picks, Blender pack plan) and write the plan to build it.
+  After everything else on this list.
+
 - [ ] **Not yet played by a person: the world round the holes on every
   generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
   clubhouse, cart paths and bridges, markings and divots, the land's story,

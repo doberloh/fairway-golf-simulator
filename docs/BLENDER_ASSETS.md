@@ -506,7 +506,13 @@ against its reference pictures** (the owner: "All Models need to be
 iterated on at minimum 15 times while comparing to real pictures").
 
 **How a round runs.** `node tools/blender/iterate.mjs <pack> <round>`
-builds the pack, keeps each model's sheet tile (`FAIRWAY_TILES` in
+first waits at the graphics card's gate (tools/gpu-gate.mjs, since 3
+November 2026, when the PC went down at the eighteenth of a two-hour run
+of renders started back to back, some with the card over 30% busy): two
+minutes' rest since the last graphics job (`FAIRWAY_GPU_REST`), the card
+under 30% busy and 75 °C over 30 seconds, nobody else's job on it; each
+render is logged in bench/ab/gpu-runs.jsonl under `FAIRWAY_GPU_GOAL`
+(us-landscapes). It then builds the pack, keeps each model's sheet tile (`FAIRWAY_TILES` in
 fairway_blender.py) and lays every model beside the first three of the
 study's pictures for it (photos/models/<id>/, local) on one sheet,
 bench/shots/blender/iter/<pack>/r<round>.png, with each model's own row

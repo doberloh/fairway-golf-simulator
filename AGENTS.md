@@ -126,6 +126,12 @@ and quality)." So, for this goal:
   built (BLENDER_ASSETS *Silhouette first*). Pack contact sheets are made;
   the owner does not need to see them before the work goes on.
 - **Nothing ships early**: no landscape goes out on stand-in models.
+- **Amended 3 November 2026** (the owner): the Dakota Badlands as a
+  forty-first landscape, Bully Pulpit built on it in the builder, tall
+  fescue and the prairie grasses for every landscape that needs them, and,
+  last, a skill that takes a real course, researches it and recommends the
+  landscape to match -- or plans a new one by the study's research path.
+  All four are TODO *US landscapes*, *The owner's additions*.
 - **Delete this section in the merge** with the course-builder section.
 
 ## Ideas live in IDEAS.md, and are read only when wanted

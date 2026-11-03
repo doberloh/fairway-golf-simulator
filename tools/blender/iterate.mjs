@@ -25,7 +25,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {chromium} from 'playwright';
-import {holdCard} from '../gpu-lock.mjs';
+import {gpuGate, logRun, readCard} from '../gpu-gate.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const [pack, roundArg, ...rest] = process.argv.slice(2);
@@ -74,12 +74,20 @@ const tiles = path.join(SHOTS, 'tiles');
 fs.rmSync(tiles, {recursive: true, force: true});
 fs.mkdirSync(tiles, {recursive: true});
 const sheet = path.join(ROOT, 'bench', 'shots', 'blender', `${pack}.png`);
-// One graphics job at a time across the agents working packs (gpu-lock.mjs);
-// the sheet below is laid out on the processor, so it is not held for that.
-const release = holdCard(`blender ${pack} r${round}${season !== 'summer' ? ' ' + season : ''}`);
+// THROUGH THE GATE (3 November 2026: the PC went down at the eighteenth
+// render of a two-hour run of these, back to back, some started with the
+// card over 30% busy -- this tool took the lock but never looked at the card
+// or logged). Now every render waits, as a capture does (gpu-gate.mjs): at
+// least FAIRWAY_GPU_REST minutes (2) since the last graphics job ended, the
+// card under 30% busy and 75 °C over 30 s, nobody else's job on it; it holds
+// the card (gpu-lock.mjs) until it is done and is logged in
+// bench/ab/gpu-runs.jsonl. The goal is FAIRWAY_GPU_GOAL (us-landscapes).
+const goal = process.env.FAIRWAY_GPU_GOAL || 'us-landscapes';
+const before = gpuGate({goal, cap: Infinity, restMin: +(process.env.FAIRWAY_GPU_REST || 2), utilMax: 30, tempMax: 75});
+const startedAt = new Date().toISOString();
 const run = spawnSync(findBlender(), ['-b', '--factory-startup', '--python', script, '--', path.join(ROOT, 'vendor', `blender-${pack}`), '--render', sheet],
  {encoding: 'utf8', maxBuffer: 64 << 20, env: {...process.env, FAIRWAY_TILES: tiles, FAIRWAY_SEASON: season}});
-release();
+logRun({goal, what: `blender ${pack} r${round}${season !== 'summer' ? ' ' + season : ''}${far ? ' far' : ''}`, started: startedAt, before, after: readCard()});
 const out = `${run.stdout}\n${run.stderr}`.split(/\r?\n/);
 for (const l of out) if (/^BUILT|Error|Traceback/.test(l)) console.log(l);
 // Blender exits 0 after a Python error in the pack, so a traceback fails too.
