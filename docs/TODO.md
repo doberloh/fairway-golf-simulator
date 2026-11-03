@@ -151,7 +151,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   crashes its page** (the full profile of 3 November, retried alone: "Target
   crashed" at weak/medium on Puget Sound, every time; Low runs, 3.3 ms) --
   a machine with no graphics card cannot run Medium now, probably the
-  model module's memory (23 MB of models) under SwiftShader, not measured;
+  model module's memory (23 MB of models) under SwiftShader, not measured.
+  Since 3 November such a machine STARTS on Low (graphics.js
+  isSoftwareRenderer, by the renderer's name) unless its player has chosen a
+  tier, so a first run no longer lands on the crash; the crash itself is
+  still to find;
   the grain elevator's and
   shelterbelt's far twins, built but not drawn (a landmark and a story prop
   draw their full model at every distance). The profile against

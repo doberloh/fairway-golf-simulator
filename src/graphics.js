@@ -437,6 +437,17 @@ const clean = g => ({
 });
 
 
+// A MACHINE WITH NO GRAPHICS CARD (the US landscapes goal's profile, 3
+// November 2026: on SwiftShader the Medium tier crashed its page, twice; Low
+// ran). WebGL there is a software renderer -- SwiftShader, llvmpipe or
+// softpipe (Mesa), Windows' Microsoft Basic Render Driver -- and its name says
+// so. Such a machine starts on Low unless its player has chosen a tier
+// (main.js); a choice is always kept.
+export const isSoftwareRenderer = name => /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name || '');
+// Whether the player has ever saved graphics settings (a chosen tier).
+export function hasSavedGraphics() {
+ try { return localStorage.getItem(KEY) !== null; } catch { return false; }
+}
 export function loadGraphics() {
  try {
   return clean(JSON.parse(localStorage.getItem(KEY) || 'null'));
