@@ -300,8 +300,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   7,455 yd; the virtual golfers played all 18 in 87, none stuck; opened in
   the game and a tee shot played (tools/play-built.mjs). Seen in the game's
   pictures; not played by a person.
-- [ ] **The showcase** of every landscape, generated, several pictures each
-  (a capture tool committed, the document local; step 10).
+- [x] **The showcase** of every landscape, generated, several pictures each
+  (step 10): tools/capture/us-showcase.mjs takes each landscape's generated
+  nine in summer from three views and in spring, autumn and winter from one
+  (the tropics summer only: 234 pictures, 3 November 2026) and writes
+  docs/reports/us-landscapes-showcase.html (local). No page error on any.
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
