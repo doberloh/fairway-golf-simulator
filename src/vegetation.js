@@ -118,6 +118,16 @@ function groundShaded(geometry,shade){
 }
 // DoubleSide flips the normal of a back face, which would turn half of every
 // clump's blades to face the ground. These keep the normal they were given.
+// SNOW ON THE TOPS (the seasons, winter where the region's winter is snow:
+// view.snowTops, renderer.js): every face turned up -- a crown's top, a
+// limb's upper side -- fades toward snow white, by how far it faces the sky
+// (world normal y from .45 to .8, 85% at most; PLACED). Looks only.
+function snowTopped(material){
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
+ material.customProgramCacheKey=()=>key.call(material)+'-snowtop';
+ material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_toon_fragment>','{vec3 snowN=normalize((vec4(normal,0.)*viewMatrix).xyz);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.97),smoothstep(.45,.8,snowN.y)*.85);}\n#include <lights_toon_fragment>');};
+ return material;
+}
 function groundLit(material){
  const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
  material.customProgramCacheKey=()=>key.call(material)+'-groundlit';
@@ -254,7 +264,8 @@ function addModelSpecies(view,kind,trees){
    const base=painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view),side:thin&&role==='leaf'?T.DoubleSide:T.FrontSide}):new T.MeshToonMaterial({color:'#ffffff'});
    const swayed=sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base;
    // A painted crown catches a rim of sky at its edges (textures.js rimLit).
-   materials.set(key,painted&&role==='leaf'?rimLit(swayed):swayed);
+   const lit=painted&&role==='leaf'?rimLit(swayed):swayed;
+   materials.set(key,view.snowTops?snowTopped(lit):lit);
   }
   return materials.get(key);
  };

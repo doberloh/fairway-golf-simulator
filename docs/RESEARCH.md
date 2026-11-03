@@ -12883,3 +12883,9 @@ block, the ground within 4 m; rows 3 m apart, a vine every 2 m (403 a
 block); the open planting keeps grape vines at .03 (from .3). Its own seeded
 stream, so nothing before it moves. All PLACED, not checked against a
 published spacing.
+
+**Snow on the tops** (3 November 2026, the seasons): in a winter whose
+region has snow (seasons.js WINTER), every tree material fades a face toward
+#eef2f4-ish white (.93, .95, .97) by how far its world normal faces up --
+from y .45 to .8, at most 85% (PLACED, from the first winter pictures of
+Alaska). Drawing only; buildings untouched.

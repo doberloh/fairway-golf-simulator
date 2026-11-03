@@ -312,11 +312,15 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   in the north and mountains, frost, dormant straw or green by region;
   the far woods turn with a broadleaf forest. Looks only. Seen in captures
   (a winter Heartland, an autumn Blue Ridge); not seen by a person.
-- [ ] **Seasons, still to do**: snow on the top faces of trees and buildings
-  (a shader term; only the ground whitens now), the far painted forest on
-  the horizon in winter (it stays greener than the bare woods near), a twig
-  layer on the bare crowns (PLAN 3), and each landscape's spring flowering
-  window beyond what the packs' spring colours give.
+- [x] **Snow on the trees, and the far woods in winter** (3 November 2026,
+  drawing only): in a snow winter every tree face turned up fades to snow
+  white (vegetation.js snowTopped), and the far woods of a broadleaf forest
+  turn grey-brown (seasons.js farWoodsInSeason, read by the ground shader
+  from the season's copy of the record). Seen in captures (Alaska's spruces
+  under snow, the Heartland's horizon).
+- [ ] **Seasons, still to do**: snow on roofs and walls (buildings keep their
+  colours), a twig layer on the bare crowns (PLAN 3), and each landscape's
+  spring flowering window beyond what the packs' spring colours give.
 - [x] **Chambers Bay** built in the builder on its new landscape and played
   through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
   OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --

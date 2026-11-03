@@ -17,7 +17,7 @@ import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
 import {worldOf,biomeOf} from './biomes.js';
 import {clubhouseModel} from './clubhouse.js';
-import {roundSeason,seasonPalette} from './seasons.js';
+import {roundSeason,seasonPalette,WINTER} from './seasons.js';
 import {regionOf,LANDSCAPES,currentKey} from './regions.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
@@ -1066,6 +1066,8 @@ export class GolfView{
   // summer record kept, so a rebuild never lays it twice. Looks only.
   this.season=roundSeason(world.settings.season??'today',{tropical:!!LANDSCAPES[currentKey(world.settings.biome)]?.tropical});
   world.summerBio??=world.bio;
+  // Snow on the trees' tops where the winter is snow (vegetation.js snowTopped).
+  this.snowTops=this.season==='winter'&&WINTER[regionOf(world.settings.biome)]==='snow';
   world.bio={...world.summerBio,...seasonPalette(world.summerBio,this.season,regionOf(world.settings.biome))};
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
