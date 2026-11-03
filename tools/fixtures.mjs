@@ -17,7 +17,8 @@ export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'red
  'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
  'sagebrush', 'redrock', 'crosstimbers',
- 'blueridge', 'ozarks', 'bluegrass'];
+ 'blueridge', 'ozarks', 'bluegrass',
+ 'northwoods', 'oregondunes', 'hawaii'];
 export const COASTAL = ['keys', 'links', 'lakedunes'];
 
 // Water on, because most of what goes wrong goes wrong near water.

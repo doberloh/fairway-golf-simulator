@@ -75,7 +75,9 @@ export const WEEKLY_ROTATION = {
   // Phase 8a (PLACED, one a week on).
   {debut: 182, biome: 'sagebrush'}, {debut: 183, biome: 'redrock'}, {debut: 184, biome: 'crosstimbers'},
   // Phase 8b (PLACED, one a week on).
-  {debut: 185, biome: 'blueridge'}, {debut: 186, biome: 'ozarks'}, {debut: 187, biome: 'bluegrass'}],
+  {debut: 185, biome: 'blueridge'}, {debut: 186, biome: 'ozarks'}, {debut: 187, biome: 'bluegrass'},
+  // Phase 8c (PLACED, one a week on).
+  {debut: 188, biome: 'northwoods'}, {debut: 189, biome: 'oregondunes'}, {debut: 190, biome: 'hawaii'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

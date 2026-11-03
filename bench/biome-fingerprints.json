@@ -1,5 +1,5 @@
 {
- "generator": 69,
+ "generator": 70,
  "biomes": {
   "puget": "f803da4c79d7bcdb",
   "sonoran": "590746e7c89a92ab",
@@ -14,7 +14,7 @@
   "sandhills": "d4992cb586b38360",
   "oldnortheast": "7b33b8e09abe4eb9",
   "pinebarrens": "54d703ff2f953a61",
-  "alaska": "690a6e50a16ad75e",
+  "alaska": "2cfcc04e8cc6df81",
   "piedmont": "5a221f2ec89e8ae9",
   "longleaf": "76a14437d5ffd953",
   "lowcountry": "10b0f5c2e375a868",
@@ -37,7 +37,10 @@
   "crosstimbers": "3f952d3e58010337",
   "blueridge": "494fd8ac66061ef1",
   "ozarks": "274b276c0073aaed",
-  "bluegrass": "5f154855cf3d5095"
+  "bluegrass": "5f154855cf3d5095",
+  "northwoods": "bf3578494650c254",
+  "hawaii": "71d2679ae83fabf4",
+  "oregondunes": "935d0c171e169d6c"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -76,6 +79,9 @@
   "crosstimbers": "91ed5588153be7ad",
   "blueridge": "d4c9329be2fe8149",
   "ozarks": "b5adb79ff2f7844c",
-  "bluegrass": "041201528e401d60"
+  "bluegrass": "041201528e401d60",
+  "northwoods": "04cb81921963e6e0",
+  "hawaii": "5ad36c803c53d3a7",
+  "oregondunes": "0fa14eb7716fe737"
  }
 }

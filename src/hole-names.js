@@ -53,6 +53,9 @@ const LAND = {
  blueridge: ['Blue Haze', 'Rhododendron', 'Laurel', 'Chestnut Oak', 'Flame Azalea', 'Stone Chimney', 'Hemlock', 'Overlook', 'Split Rail'],
  ozarks: ['Shortleaf', 'Glade', 'Limestone Bluff', 'Spring', 'Dogwood', 'Redbud', 'Cedar', 'Sinkhole', 'Float Trip'],
  bluegrass: ['Four Board', 'Paddock', 'Tobacco Barn', 'Bur Oak', 'Limestone', 'Yearling', 'Bluegrass', 'Stone Fence', 'Homestretch'],
+ northwoods: ['Red Pine', 'Loon Call', 'Tamarack', 'Birch', 'The Dock', 'Jack Pine', 'Portage', 'Wild Rice', 'North Star'],
+ oregondunes: ['Shore Pine', 'Gorse', 'Sitka', 'Beachgrass', 'Sea Stack', 'Salal', 'Fog Horn', 'Cape', 'Driftwood'],
+ hawaii: ['Monkeypod', 'Lava', 'Ohia', 'Ti Leaf', 'Plumeria', 'Heliconia', 'Trade Wind', 'Cook Pine', 'Whale Watch'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

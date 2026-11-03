@@ -68,6 +68,10 @@ const PROFILES = {
  // Appalachia: the blue haze the Blue Ridge and the Smokies are named for,
  // mist in the hollows (PLACED).
  appalachia: {haze: 1, sheet: .85, water: .9},
+ // The North Woods: mist on the lakes at dawn; Hawaii: clear trade-wind air,
+ // a little haze over the sea (PLACED).
+ northwoods: {haze: .7, sheet: .8, water: 1},
+ hawaii: {haze: .5, sheet: .3, water: .6},
  // Still, cold mornings. The best mist on the course.
  northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.

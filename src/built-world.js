@@ -266,7 +266,7 @@ export function builtHomes(doc, height, nearest) {
 // its height among the kinds that fit, hashed from where it stands so the
 // same file always draws the same wood. Drawing only: a tree's trunk and
 // crown are stored and play the same in every landscape.
-export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'aleppopine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine']);
+export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'aleppopine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);

@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld, shareFairways} from '../src/course.js';
 import {BIOMES} from '../src/biomes.js';
+import {regionOf} from '../src/regions.js';
 import {world} from './worlds.mjs';
 
 // Cached (worlds.mjs): five tests read the same eighteen-hole links, and each
@@ -58,7 +59,9 @@ test('a shared fairway always has a partner, and near fairways leave a strip or 
 });
 
 test('only a biome that asks for it shares fairways or routes side by side', () => {
- for (const [key, bio] of Object.entries(BIOMES)) if (key !== 'links') {
+ // The Links' region shares: the Scottish Links and, since phase 8c of the US
+ // landscapes goal, the Oregon Dunes (Bandon's links).
+ for (const [key, bio] of Object.entries(BIOMES)) if (regionOf(key) !== 'links') {
   assert.ok(!bio.sharedFairways && !bio.routeParallel && !bio.fairwayScale, `${key} shares`);
  }
  const w = generateWorld({seed: 'overhaul', biome: 'puget', holes: 18, trees: 60, homes: true});

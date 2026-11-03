@@ -41,6 +41,8 @@ export const GROUND_PLANTS = new Set([
  'prairieforbs',
  // ... and the Keys' shrubs.
  'seagrape', 'bougainvillea', 'hibiscus',
+ // ... the north's and Hawaii's.
+ 'fireweed', 'devilsclub', 'cottongrass', 'tiplant', 'heliconia',
  // ... Appalachia's and the Northeast parkland's.
  'rosebay', 'mountainlaurelshrub', 'flameazalea', 'scruboak', 'bayberry', 'beachrose', 'hydrangea',
  // ... the high desert's and the plains'.

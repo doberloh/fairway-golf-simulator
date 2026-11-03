@@ -75,6 +75,7 @@ const PICK = {
   'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
   'PinyonPine_1', 'PinyonPine_2', 'WesternJuniper_1', 'WesternJuniper_2', 'GrainElevator_1', 'Shelterbelt_1',
   'ChestnutOak_1', 'ChestnutOak_2', 'ShortleafPine_1', 'ShortleafPine_2', 'CopperBeech_1', 'CopperBeech_2', 'PitchPine_1',
+  'RedPine_1', 'RedPine_2', 'SitkaSpruce_1', 'Casuarina_1', 'CookPine_1', 'Monkeypod_1', 'Monkeypod_2',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -329,6 +330,27 @@ const PICK = {
  bayberry: ['blender:Blender_Bayberry_1'],
  beachrose: ['blender:Blender_BeachRose_1'],
  hydrangea: ['blender:Blender_Hydrangea_1'],
+ // THE NORTH AND HAWAII PACKS (tools/blender/cartoon_north.py,
+ // cartoon_hawaii.py): every variant; Hawaii's ironwood as `casuarina`
+ // (`ironwood` is the desert's); the lava as a boulder family; the log cabin
+ // and the dock are story pieces, picked in storypieces.
+ redpine: ['blender:Blender_RedPine_1', 'blender:Blender_RedPine_2'],
+ jackpine: ['blender:Blender_JackPine_1'],
+ tamarack: ['blender:Blender_Tamarack_1'],
+ blackspruce: ['blender:Blender_BlackSpruce_1', 'blender:Blender_BlackSpruce_2'],
+ sitkaspruce: ['blender:Blender_SitkaSpruce_1'],
+ shorepine: ['blender:Blender_ShorePine_1', 'blender:Blender_ShorePine_2'],
+ fireweed: ['blender:Blender_Fireweed_1'],
+ devilsclub: ['blender:Blender_DevilsClub_1'],
+ cottongrass: ['blender:Blender_Cottongrass_1'],
+ monkeypod: ['blender:Blender_Monkeypod_1', 'blender:Blender_Monkeypod_2'],
+ casuarina: ['blender:Blender_Casuarina_1'],
+ cookpine: ['blender:Blender_CookPine_1'],
+ ohia: ['blender:Blender_Ohia_1'],
+ plumeria: ['blender:Blender_Plumeria_1'],
+ tiplant: ['blender:Blender_TiPlant_1'],
+ heliconia: ['blender:Blender_Heliconia_1'],
+ boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -365,7 +387,9 @@ const PICK = {
   // The plains pack's ranch pieces (tools/blender/cartoon_plains.py).
   'Windmill_1', 'GrainElevator_1', 'PumpJack_1', 'BarbedWireFence_1', 'Shelterbelt_1',
   // Appalachia's and the Northeast parkland's.
-  'StoneCabin_1', 'HorseFence_1', 'TobaccoBarn_1', 'ShingledWindmill_1', 'TudorClubhouse_1'].map(k => `blender:Blender_${k}`),
+  'StoneCabin_1', 'HorseFence_1', 'TobaccoBarn_1', 'ShingledWindmill_1', 'TudorClubhouse_1',
+  // The north pack's.
+  'LogCabin_1', 'Dock_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack

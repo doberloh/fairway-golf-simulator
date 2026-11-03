@@ -58,6 +58,8 @@ export const STORY_PIECES = {
  stonecabin: {model: 'StoneCabin_1', width: 8.5, depth: 7, height: 6.1},
  tobaccobarn: {model: 'TobaccoBarn_1', width: 16.5, depth: 21.7, height: 11.5},
  shingledwindmill: {model: 'ShingledWindmill_1', width: 13.2, depth: 9.5, height: 14},
+ // The North Woods' lakeside log cabin (tools/blender/cartoon_north.py), a ruin.
+ logcabin: {model: 'LogCabin_1', width: 8, depth: 9, height: 5.8},
 };
 // Each landscape's story is its architect block's (biomes.js).
 export const storySet = key => worldOf(key).story || {};
@@ -212,6 +214,20 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
     x = nx; z = nz;
    }
    close();
+  }
+ }
+ // A wooden dock (the north pack's; the North Woods' lakes): on a pond's or
+ // lake's shore out of play, reaching 12 m over water that runs on at least
+ // 16 m. Last, so nothing placed before it moves for a landscape without
+ // one. Decoration: a prop, never collided with. Distances PLACED.
+ if (set.dock) {
+  for (let t = 0; t < 600; t++) {
+   const x = (rnd() - .5) * halfX * 1.8, z = (rnd() - .5) * halfZ * 1.8;
+   if (surface(x, z) === 'water' || (nearest(x, z)?.d ?? 999) < CLEAR_WALL || !free(x, z, 4)) continue;
+   const a = Math.floor(rnd() * 8) * Math.PI / 4, dx = Math.sin(a), dz = Math.cos(a);
+   if (surface(x + dx * 2, z + dz * 2) === 'water' || [8, 12, 16].some(d => surface(x + dx * d, z + dz * d) !== 'water')) continue;
+   out.props.push({kind: 'dock', x: x + dx * 6, z: z + dz * 6, rot: a, size: 1});
+   break;
   }
  }
  return out;

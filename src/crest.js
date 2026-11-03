@@ -56,6 +56,11 @@ const MOTIFS = {
  blueridge: 'M18 70 L34 48 L48 60 L64 40 L82 70 Z M18 58 L30 44 L44 52 L58 34 L76 50',
  ozarks: 'M24 74 L24 40 L52 40 L52 50 L60 50 L60 74 M64 74 Q70 66 76 74 M30 40 L30 30 M30 30 L24 36 L36 36 Z',
  bluegrass: 'M18 50 L82 50 M18 58 L82 58 M18 66 L82 66 M18 74 L82 74 M26 44 L26 76 M50 44 L50 76 M74 44 L74 76',
+ // Phase 8c: a red pine over a dock, a wind-shaped shore pine on a dune, a
+ // monkeypod's umbrella over lava.
+ northwoods: 'M40 74 L40 34 M40 34 L32 40 L48 40 Z M40 42 L30 50 L50 50 Z M50 66 L80 66 M56 66 L56 72 M66 66 L66 72 M76 66 L76 72',
+ oregondunes: 'M20 74 Q40 56 60 64 T84 74 Z M46 60 L48 40 M48 40 L30 34 L60 30 L66 36 Z',
+ hawaii: 'M50 74 L50 44 M50 44 C34 44 22 38 28 32 C38 26 62 26 72 32 C78 38 66 44 50 44 M22 74 L34 68 L46 74 L58 68 L72 74',
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Up to two letters from the course's name: its first two words' initials.

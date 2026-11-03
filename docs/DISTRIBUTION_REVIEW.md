@@ -1785,3 +1785,11 @@ request.
 and five buildings and fences (the model module 21.95 MB, +1.5 MB), and five
 landscapes' card pictures (661 KB, two retaken). Still one file, no network
 request.
+
+**Phase 8c, the north, the Pacific links and Hawaii** -- every landscape
+in: the page is **37,025,760 bytes (20.31 MB gzipped)**, +2.2 MB: the two
+packs' 16 species, the lava, cabin and dock (the model module 23.4 MB, +1.5
+MB), and four landscapes' card pictures (758 KB, Alaska's retaken). Since
+the goal's first step (13.8 MB) the page has grown 23.2 MB, of which the
+models are about 16 MB and the forty landscapes' pictures about 4 MB.
+Still one file, no network request.

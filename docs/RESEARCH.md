@@ -12739,3 +12739,38 @@ under summer trees. Both have `fallen: null` now. The Bluegrass's first
 pictures were closed forest: it takes the plains' stands whole and their
 tree density (0.5), pasture round the holes. The woods left between holes
 are the generator's between-corridor planting, the same on High Plains.
+
+
+## The north, the Pacific links and Hawaii (phase 8c, 3 November 2026)
+
+PLAN.md's phase 8, last part: the north and Hawaii packs
+(tools/blender/cartoon_north.py, cartoon_hawaii.py; 16 species, the lava, a
+log cabin and a dock, every variant, seven far twins). Every value PLACED
+from the study's pages (subs/northwoods/, subs/links/, subs/hawaii/,
+subs/alaska/, local) and the packs' specs.
+
+- **A new region, `northwoods`** (from New England's record, in summer):
+  red pine .2, birch .15, jack pine, white pine and aspen .1, balsam fir .08,
+  tamarack .07; the pines' needles as pine-straw ground; hills 25 / 45; a log
+  lodge, a log-cabin ruin (8 by 9 m) and a wooden dock (12 m) on a lake's
+  shore: a point out of play with water 8, 12 and 16 m out on one of eight
+  bearings, tried 600 times (three seeds of four found one). Lake mist (fog
+  sheet .8, water 1).
+- **Oregon Dunes** (the Links' region, so it shares fairways as the
+  Scottish Links does -- Bandon's are links): gorse .25, beachgrass .3, shore
+  pine .2, Sitka spruce .08, salal .07; stands of gorse with shore pine and
+  spruce at three-tenths; a shingled lodge and a lighthouse; 15 C.
+- **A new region, `hawaii`** (from the Heartland's record with a sea along
+  one side, `edgeCoast`, and peaks behind, `ringPeaks`, ring 700 m): palm
+  .14, ti .14, monkeypod, ironwood, ohia and heliconia .1, plumeria and
+  hibiscus .08, Cook pine .06, bougainvillea and hala .05; black lava (#3a3230,
+  mossed green) for its stone, 260 a course; a pavilion clubhouse, a sugar
+  mill ruin; 27 C, sun 52 degrees.
+- **Alaska on its own** (generator 70): black spruce .2 beside white spruce
+  .15, fireweed .1 for the stand-in lupine, devil's club and cottongrass .05.
+- **Names**: ten clashes with earlier landscapes' first words replaced
+  (Tamarack, Snowshoe, Sitka, Beachgrass, Driftwood, Salal, Yaquina, Puffin,
+  Plumeria, Lava Flow). Debut weeks 188-190.
+
+SCHEMA 24 adds the three keys -- forty landscapes with Scottish Links, the
+whole map. Generator 70 moved Alaska.

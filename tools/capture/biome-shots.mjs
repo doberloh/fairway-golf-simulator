@@ -48,7 +48,8 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  hillcountry: 'CEDARBREAK', bluebonnet: 'PAINTBRUSH', gulfcoast: 'SHELLROAD', mojave: 'JOSHUA', palms: 'OASIS', chihuahuan: 'SOTOL',
  monterey: 'SEASTACK', socal: 'BARRANCA', winecountry: 'OLDVINE', cascades: 'SNOWCONE', sierra: 'GRANITE', ponderosa: 'CINDER',
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
- blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD'};
+ blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
+ northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -117,6 +118,9 @@ export const PICKS = {
  blueridge: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
  ozarks: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  bluegrass: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ northwoods: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ oregondunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ hawaii: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
 };
 
 

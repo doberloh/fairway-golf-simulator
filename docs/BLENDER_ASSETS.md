@@ -691,10 +691,10 @@ m), bag drop (a hipped canopy 10.8 by 6.8 m), planted island (2.5 by 5.5 m,
 its middle clear for a tree) and cart barn (40 by 12 m). The game places
 all but the cart barn and mailbox (roads.js `streetFurniture`).
 
-### The packs made for the landscapes still to come (2-3 November 2026)
+### The packs made for the new landscapes (2-3 November 2026)
 
-Modelled by agents, fifteen rounds or more each, silhouette first, and not
-yet in the game -- each goes in with its landscapes (the South's four,
+Modelled by agents, fifteen rounds or more each, silhouette first, and all
+in the game since phase 8c, each with its landscapes (the South's four,
 `cartoon_southpines`, `cartoon_southoaks`, `cartoon_piedmont` and
 `cartoon_southcoast`, went in with phase 5: every variant, a far twin for
 each tree, the plantation clubhouse as `clubhouse.js` `clubhouseModel`;
@@ -711,6 +711,7 @@ cedar as `easternredcedar`, apart from the redwood pack's western
 Appalachian rhododendron as `rosebay` (the Puget pack's Pacific one keeps
 the family `rhododendron`), the cabin, tobacco barn and shingled windmill
 as story pieces, the horse fence a wall kind, the Tudor clubhouse a
-clubhouse kind): `cartoon_north`,
-`cartoon_hawaii`. Each script's header and `LOOK`/`BARK` tables hold its
+clubhouse kind; `cartoon_north` and `cartoon_hawaii` with phase 8c, Hawaii's
+ironwood as `casuarina` (`ironwood` is the desert's), the lava a boulder
+family, the log cabin a ruin and the dock a story prop). Each script's header and `LOOK`/`BARK` tables hold its
 colours and roles; each model's log holds its rounds.

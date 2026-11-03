@@ -591,14 +591,49 @@ WORLD.appalachia = {...WORLD.northeast, clubhouse: 'loglodge', path: 'asphalt', 
  story: {walls: 'rail', ruins: ['stonecabin']}, life: {grazers: ['deer', 4]}, colours: {...WORLD.northeast.colours, rail: '#7a6a52'}};
 // Alaska: the Rockies' crags close behind, spruce and birch, a long low sun.
 TRAITS.alaska = {...TRAITS.mountain, light: {shade: '#7c8cb8'}, treeDensity: 3,
- stands: {...TRAITS.mountain.stands, plants: [['spruce', .55], ['paperbirch', .3, .6], ['aspen', .15]]},
- plants: [['spruce', .35], ['paperbirch', .2, .6], ['aspen', .15], ['willowthicket', .15], ['lupine', .1], ['columbine', .05]]};
+ // Phase 8c: the north pack's black spruce, fireweed (for the stand-in
+ // lupine), devil's club and cottongrass.
+ stands: {...TRAITS.mountain.stands, plants: [['spruce', .3], ['blackspruce', .25], ['paperbirch', .3, .6], ['aspen', .15]]},
+ plants: [['spruce', .15], ['blackspruce', .2], ['paperbirch', .18, .6], ['aspen', .12], ['willowthicket', .12], ['fireweed', .1], ['devilsclub', .05], ['cottongrass', .05], ['columbine', .03]]};
 PALETTES.alaska = {...PALETTES.mountain, name: 'Alaska', title: 'Midnight Sun', tag: 'Spruce, birch and the long low light.',
  rough: '#6a7650', tree: '#2a4a38', sky: '#b4d0e6', altitude: 100, temperature: 13, sun: 16};
 INTERFACE.alaska = {panel: 'rgba(12,24,36,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fbcfe8', soft: '#b8d8e2', onHot: '#071820'};
 WORLD.alaska = {...WORLD.mountain, clubhouse: 'loglodge', path: 'gravel', bridge: 'wood',
  story: {walls: null, ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 3], heron: true}};
 
+// The North Woods (phase 8c; from New England's record, in summer): red and
+// jack pine, white pine, birch, aspen and tamarack round blue lakes, a log
+// cabin and a dock. Every value PLACED from the study's pages
+// (subs/northwoods/).
+TRAITS.northwoods = {...TRAITS.northeast, leafFall: false, leafLitter: false, fallen: {from: ['redpine', 'jackpine', 'whitepine'], kind: 'pinestraw'},
+ light: {shade: '#8494c0'}, hills: {base: 25, severity: 45, reach: 80},
+ farForest: {cover: .9, size: 10, colors: ['#2f5a32', '#3a6436', '#4a6e3a']},
+ stands: {...TRAITS.northeast.stands, under: {spacing: 8, plants: [['shrub', .5], ['bracken', .5]]},
+  plants: [['redpine', .35], ['whitepine', .2, 1.2], ['paperbirch', .2, .7], ['balsamfir', .15, .7], ['jackpine', .1]]},
+ plants: [['redpine', .2], ['jackpine', .1], ['whitepine', .1, 1.2], ['paperbirch', .15, .7], ['aspen', .1], ['tamarack', .07], ['balsamfir', .08, .7], ['shrub', .1], ['fern', .05], ['fireweed', .05]]};
+PALETTES.northwoods = {...PALETTES.midwest, name: 'North Woods', title: 'Loon Lake', tag: 'Red pine and birch round blue lakes.',
+ rough: '#6e7a44', semi: '#4f8a3e', tree: '#2f5a32', sky: '#b8d4ec', water: '#3a6a86', altitude: 400, temperature: 22, treeKind: 'pine', sun: 44};
+INTERFACE.northwoods = {panel: 'rgba(12,22,30,.88)', a1: '#bfe3f0', a2: '#155e75', hot: '#fef3c7', soft: '#b4ccd4', onHot: '#06161e'};
+WORLD.northwoods = {...WORLD.northeast, clubhouse: 'loglodge', path: 'gravel', bridge: 'wood',
+ story: {walls: null, ruins: ['logcabin'], dock: true}, life: {grazers: ['deer', 3], heron: true, geese: 4}};
+// Hawaii (phase 8c; from the Heartland's record, with the Keys' warmth): a
+// sea along one side, green volcanic slopes and peaks behind, black lava,
+// monkeypods, ironwoods, Cook pines, palms and ohia; ti and heliconia.
+TRAITS.hawaii = {...TRAITS.midwest, light: {shade: '#7ea0c4'}, sea: true, edgeCoast: true, shoreSand: true, warm: true,
+ hills: {base: 30, severity: 80, reach: 80}, ringLift: 700, ringPeaks: true, ringFace: 'rock', rockStyle: 'lava', rockMoss: '#4a7a3a',
+ longGrass: {families: [['grassbunch', 2, 1], ['grassfescue', 1, .8]], count: 3500, near: 20, leaf: '#6a9a44', accent: '#a8b060'},
+ farForest: {cover: .85, size: 11, colors: ['#2e6a34', '#3a7638', '#4a823e']},
+ scatter: {...DEFAULTS.scatter, rocks: 260},
+ stands: {...TRAITS.midwest.stands, under: {spacing: 8, plants: [['tiplant', .5], ['heliconia', .5]]},
+  plants: [['monkeypod', .3], ['casuarina', .25], ['ohia', .2], ['palm', .15], ['cookpine', .1]]},
+ plants: [['monkeypod', .1], ['casuarina', .1], ['cookpine', .06], ['ohia', .1], ['palm', .14], ['plumeria', .08], ['tiplant', .14], ['heliconia', .1], ['hibiscus', .08], ['bougainvillea', .05], ['hala', .05]]};
+PALETTES.hawaii = {...PALETTES.florida, name: 'Hawaii', title: 'Lava Point', tag: 'Green volcanic slopes, black lava and the Pacific.',
+ rough: '#5e8a40', semi: '#4f944a', fairway: '#4b9b58', tree: '#2e6a34', sky: '#b4dcee', sand: '#e8dcc0', water: '#1a8aa8', rock: '#3a3230',
+ altitude: 60, temperature: 27, treeKind: 'palm', sun: 52};
+INTERFACE.hawaii = {panel: 'rgba(10,28,22,.88)', a1: '#a7f3d0', a2: '#0f766e', hot: '#fecaca', soft: '#b0d4c8', onHot: '#04201a'};
+WORLD.hawaii = {...WORLD.midwest, clubhouse: 'pavilion', path: 'asphalt', bridge: 'wood',
+ story: {walls: null, ruins: ['sugarmill']}, life: {heron: true},
+ colours: {...WORLD.midwest.colours, clubhouse: {stone: '#efe6d4', bark: '#5a4636', accent: '#2e6a4a', dirt: '#2a3028', leaf: '#2a3028'}}};
 // The South (phase 5): the Heartland's rolling ground, humid haze, pines and
 // live oaks, a white plantation clubhouse. Every value PLACED from the
 // study's pages (subs/south/).
@@ -881,6 +916,15 @@ const LAND = {
   plants: [['buroak', .15], ['oak', .12], ['americanelm', .1], ['maple', .1], ['sassafras', .06], ['shagbark', .08], ['tulippoplar', .08], ['shrub', .12], ['prairieforbs', .09], ['floweringdogwood', .05], ['redbud', .05]],
   ui: {panel: 'rgba(14,24,30,.88)', a1: '#d4e8f8', a2: '#2a5f8a', hot: '#fef3c7', soft: '#c0d0dc', onHot: '#06141e'},
   world: {clubhouse: 'clapboard', story: {walls: 'board', farm: 'tobaccobarn', ruins: ['stonecabin']}}},
+ // Phase 8c: the north and Hawaii.
+ northwoods: {}, hawaii: {},
+ // Oregon Dunes (the Links' region): Bandon's dunes on the Pacific -- gorse,
+ // shore pine and Sitka spruce, beachgrass, salal; a shingled lodge.
+ oregondunes: {rough: '#9a9a62', sky: '#c4d4dc', temperature: 15, treeDensity: 1.4,
+  stands: {...TRAITS.links.stands, share: .3, plants: [['gorse', .5], ['shorepine', .35], ['sitkaspruce', .15]]},
+  plants: [['shorepine', .2], ['sitkaspruce', .08], ['gorse', .25], ['dunegrass', .3], ['shrub', .1], ['salal', .07]],
+  ui: {panel: 'rgba(16,26,28,.88)', a1: '#ccfbf1', a2: '#115e59', hot: '#fef3c7', soft: '#b8ccc8', onHot: '#06201c'},
+  world: {clubhouse: 'shingle', story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

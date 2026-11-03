@@ -2315,6 +2315,7 @@ export class GolfView{
    stonecabin:{bark:'#7a5a3a',stone:'#8a8a80',leaf:'#6e665c',accent:'#2a2622'},
    tobaccobarn:{bark:'#1e1e1e',leaf:'#7a7672',accent:'#9a7040'},
    shingledwindmill:{stone:'#9a9488',bark:'#6e6a64',accent:'#ece8e0',dirt:'#34383c'},
+   logcabin:{bark:'#7a5a3a',leaf:'#5e4e42',stone:'#9a948a',accent:'#2a2e30'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){
@@ -2391,6 +2392,8 @@ export class GolfView{
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
   // The plains' shelterbelt behind the farmstead, 12 m tall (story.js).
   draw('Blender_Shelterbelt_1',props.filter(p=>p.kind==='shelterbelt'),{accent:'#436a36',bark:'#5e564c',leaf:'#4f7a36'},true,at(12));
+  // The North Woods' dock, 12 m long on its posts (story.js), at the water's level.
+  draw('Blender_Dock_1',props.filter(p=>p.kind==='dock'),{bark:'#8a7a62',stone:'#3a3a3a',accent:'#b04a2e'},true,(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x-Math.sin(s.rot)*6,s.z-Math.cos(s.rot)*6)-.3,s.z);sc.setScalar(2.65);});
   // THE STREETS KIT (roads.js streetFurniture; tools/blender/cartoon_streets.py),
   // each at its real height: decoration on the lot and along the drive.
   const sp=w.streetProps||[],kit=(kind,model,h,colours,inked)=>draw(model,sp.filter(p=>p.kind===kind),colours,inked,at(h));

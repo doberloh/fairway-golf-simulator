@@ -253,7 +253,8 @@ in biomes.js.
   fieldstone, split-rail, barbed wire or four-board), a farmstead (with a shelterbelt
   behind it on the plains), ruins, a landmark on a hole's line (a lighthouse,
   church, windmill, grain elevator, pump jack...), a stone circle and
-  lanterns, as the landscape has them.
+  lanterns, a dock on a lake's shore (the North Woods), as the landscape has
+  them.
 - **Markings** (markings.js), placed on the finished ground: red stakes
   every 11 m round each pond and along creeks within 60 m of play, white
   stakes every 13 m where the boundary comes within 120 m of a corridor,

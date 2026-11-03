@@ -280,6 +280,19 @@ export const NAME_WORDS = {
   ['Thoroughbred','Paddock','Four Board','Tobacco Barn','Limestone Spring','Elkhorn','Kentucky River','Versailles','Paris Pike','Iron Works','Stallion','Yearling','Bourbon','Rickhouse','Bur Oak','Hickory Hall','Stone Fence','Clark County','Keeneland','Saddlebred'],
   ['Farm','Pike','Stables','Downs','Run','Meadow','Hill','Spring','Hall','Station','Pasture','Crossing','Bend','Grove','Barn','Lane','Paddock','Ridge','Creek','Manor'],
  ],
+ // Phase 8c: the north, the Pacific links and Hawaii.
+ northwoods: [
+  ['Red Pine','Jack Pine','Bemidji','Loon','Walleye','Muskie','Boundary Waters','Northwoods','Ojibwe','Wild Rice','Birch Bark','Portage','Voyageur','Iron Range','Mesabi','Gunflint','Chippewa','Lac du Flambeau','Pine Marten','Wolf Lake'],
+  ['Lake','Pines','Point','Bay','Narrows','Landing','Portage','Island','Shore','Lodge','Woods','Bog','Falls','Rapids','Ridge','Cove','Trail','Camp','Hollow','Flowage'],
+ ],
+ oregondunes: [
+  ['Shore Pine','Seven Devils','Bullards','Coquille','Cape Blanco','Sea Stack','Face Rock','Arago','Tidepool','Umpqua','Siuslaw','Coos','Heceta','Sunset Bay','Sea Lion Rock','Gray Whale','Tufted Puffin','Fog Horn','Myrtlewood','Port Orford'],
+  ['Dunes','Bluff','Head','Point','Strand','Links','Spit','Cove','Reach','Beach','Cape','Rock','Shore','Heath','Hollow','Ridge','Trail','Sound','Landing','Light'],
+ ],
+ hawaii: [
+  ['Monkeypod','Ohia','Lehua','Lei','Heliconia','Ti Leaf','Aa Field','Pahoehoe','Kiawe','Haleakala','Mauna','Kona Coast','Hana','Honokahua','Napili','Makena','Hapuna','Pololu','Nene','Trade Wind'],
+  ['Point','Bay','Ridge','Gulch','Cove','Beach','Bluffs','Valley','Plantation','Ranch','Heights','Coast','Shores','Falls','Crater','Reef','Rise','Gardens','Lookout','Landing'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.
