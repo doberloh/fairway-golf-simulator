@@ -21,7 +21,7 @@ test('every course has its lot beside the clubhouse, a road and a drive where a 
   const club = w.buildings.find(x => x.kind === 'clubhouse');
   assert.ok(w.lot, `${b}: no lot`);
   const full = lotSize(w.holes).stalls;
-  assert.ok([full, full / 2].includes(w.lot.stalls), `${b}: ${w.lot.stalls} stalls`);
+  assert.ok([full, Math.floor(full / 8) * 4].includes(w.lot.stalls), `${b}: ${w.lot.stalls} stalls`);
   assert.ok(Math.hypot(w.lot.x - club.x, w.lot.z - club.z) < 140, `${b}: the lot is far from the clubhouse`);
   assert.ok(!inBuilding(club, w.lot.x, w.lot.z, 2), `${b}: the lot under the clubhouse`);
   // The Keys' islands have no straight dry edge: no public road (PLACED).
@@ -42,4 +42,16 @@ test('a ball on a road plays as a road and takes relief; beyond the public road 
  const h = w.holes[0], course = {world: w, toWorld: p => h.toWorld(p)};
  const local = h.toLocal ? h.toLocal(out) : null;
  if (local) assert.ok(outOfBounds(course, local.x, local.z), 'past the road is out of bounds');
+});
+
+test('the lot has its streets kit: a wheel stop a stall, islands at the rows, poles, the bag drop', () => {
+ for (const [b, w] of Object.entries(worlds)) {
+  if (!w.lot) continue;
+  const n = k => w.streetProps.filter(p => p.kind === k).length;
+  assert.equal(n('wheelstop'), w.lot.stalls, `${b}: wheel stops`);
+  assert.equal(n('island'), 8, `${b}: islands`);
+  assert.ok(n('lightpole') >= 2, `${b}: light poles`);
+  assert.equal(n('bagdrop'), 1, `${b}: the bag drop`);
+  if (w.roads.some(r => r.kind === 'drive' && r.points.length > 1)) assert.ok(n('streetlight') >= 0);
+ }
 });

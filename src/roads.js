@@ -109,7 +109,8 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
  // breaking ties. A half-size lot where the full one fits nowhere.
  let lot = null;
  for (const scale of [1, .5]) {
-  const size = lotSize(holes), w = size.width * (scale < 1 ? .5 : 1), d = size.depth, stalls = Math.round(size.stalls * scale);
+  // Whole stalls a row (a half lot of 60 is 7 a row, 28 in all).
+  const size = lotSize(holes), perRow = Math.floor(size.stalls * scale / 4), w = +(perRow * STALL.width).toFixed(2), d = size.depth, stalls = perRow * 4;
   const r0 = Math.hypot(club.width, club.depth) / 2 + Math.min(w, d) / 2 + 6;
   for (let r = r0; r <= r0 + 90; r += 10) for (let k = 0; k < 16; k++) for (const turn of [0, Math.PI / 2]) {
    const a = k / 16 * Math.PI * 2, c = {x: club.x + Math.cos(a) * r, z: club.z + Math.sin(a) * r};
@@ -150,6 +151,41 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
   if (points) roads.push({kind: 'drive', width: ROAD_WIDTH.drive, points});
  }
  return {roads, lot, boundary};
+}
+
+// THE STREETS KIT PLACED (tools/blender/cartoon_streets.py; PLAN.md 4): the
+// lot's light poles down each aisle every 20 m, a planted island at both ends
+// of each row of stalls, a wheel stop in every stall, the bag drop at the
+// lot's edge nearest the clubhouse, and street lamps along the drive every
+// 30 m, 4 m off its side. Decoration: nothing collides with them. Positions
+// PLACED. `rot` turns a model's front (-Y, glTF +z) as the lot is turned.
+export function streetFurniture({lot, roads = [], club}) {
+ const out = [];
+ if (lot) {
+  const rc = Math.cos(lot.rotation), rs = Math.sin(lot.rotation), at = (u, v) => ({x: lot.x + u * rc + v * rs, z: lot.z - u * rs + v * rc});
+  const D = STALL.depth, A = STALL.aisle, rows = [-lot.depth / 2, -lot.depth / 2 + D + A, lot.depth / 2 - 2 * D - A, lot.depth / 2 - D];
+  // The aisles' middles: between the first two rows, and the last two.
+  for (const v of [-lot.depth / 2 + D + A / 2, lot.depth / 2 - D - A / 2]) for (let u = -lot.width / 2 + 10; u < lot.width / 2 - 5; u += 20) out.push({kind: 'lightpole', ...at(u, v), rot: lot.rotation});
+  for (const [i, v0] of rows.entries()) {
+   const face = i % 2 ? Math.PI : 0;
+   for (let u = -lot.width / 2 + STALL.width / 2; u < lot.width / 2; u += STALL.width) out.push({kind: 'wheelstop', ...at(u, v0 + (i % 2 ? .6 : D - .6)), rot: lot.rotation + face});
+   for (const side of [-1, 1]) out.push({kind: 'island', ...at(side * (lot.width / 2 + 1.4), v0 + D / 2), rot: lot.rotation});
+  }
+  if (club) {
+   const toClub = [[0, -lot.depth / 2 - 4], [0, lot.depth / 2 + 4], [-lot.width / 2 - 6, 0], [lot.width / 2 + 6, 0]].map(([u, v]) => at(u, v))
+    .sort((a, b) => Math.hypot(a.x - club.x, a.z - club.z) - Math.hypot(b.x - club.x, b.z - club.z))[0];
+   out.push({kind: 'bagdrop', ...toClub, rot: Math.atan2(club.x - toClub.x, club.z - toClub.z) + Math.PI});
+  }
+ }
+ for (const r of roads) if (r.kind === 'drive') {
+  let run = 0, next = 15;
+  for (let k = 1; k < r.points.length; k++) {
+   const a = r.points[k - 1], b = r.points[k], l = Math.hypot(b.x - a.x, b.z - a.z) || 1, nx = -(b.z - a.z) / l, nz = (b.x - a.x) / l;
+   while (run + l >= next) { const t = (next - run) / l; out.push({kind: 'streetlight', x: a.x + (b.x - a.x) * t + nx * (r.width / 2 + 4), z: a.z + (b.z - a.z) * t + nz * (r.width / 2 + 4), rot: 0}); next += 30; }
+   run += l;
+  }
+ }
+ return out;
 }
 
 // Is (x, z) on a road or the lot? `index` is a paths.js pathIndex of the roads.

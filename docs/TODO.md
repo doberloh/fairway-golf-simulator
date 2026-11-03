@@ -162,12 +162,15 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Rockies where no loop or rounding fits the ground (tests/paths.test.mjs
   holds the clean ten and that budget; the bench counts `pathDeadEnd`,
   `pathSharp`). Not seen in the game yet.
-- [ ] **The streets kit placed**: the models are made (tools/blender/
-  cartoon_streets.py: street lamp, mailbox, lot light pole, wheel stop, bag
-  drop, planted island, cart barn); the lot's poles, islands (with the
-  landscape's tree), wheel stops and bag drop, lamps along the drive, the
-  cart barn by the clubhouse are still to place; streets for the fairway
-  homes; each landscape's road surface (catalogue `streets`).
+- [x] **The streets kit placed** (generator 65; roads.js `streetFurniture`):
+  light poles down the lot's aisles, a planted island at each row end, a
+  wheel stop a stall, the bag drop by the clubhouse, lamps along the drive.
+  Seen in a capture (the Heartland's lot). Not done: a tree in each
+  island, the cart barn and mailboxes placed, streets for the fairway
+  homes, each landscape's own road surface -- open below.
+- [ ] **The rest of the streets kit**: a landscape tree in each lot island,
+  the cart barn by the clubhouse, mailboxes and streets for the fairway
+  homes, each landscape's road surface (catalogue `streets`).
 - [ ] **Roads in the builder**: drawn anywhere, a parking-lot tool, from
   OpenStreetMap in door 2 (`highway=*`, `amenity=parking`), stored in the
   course file (a `BUILT_VERSION` step); a built course's ground code 11 is

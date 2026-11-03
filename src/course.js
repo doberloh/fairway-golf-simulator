@@ -14,7 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
-import {placeRoads,onRoad} from './roads.js';
+import {placeRoads,onRoad,streetFurniture} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -2794,7 +2794,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,streetProps:streetFurniture({lot:roadLot,roads,club:buildings.find(b=>b.kind==='clubhouse')}),waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

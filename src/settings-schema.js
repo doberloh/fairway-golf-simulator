@@ -355,7 +355,10 @@ export const SCHEMA_VERSION=18;
 //     angle, corners are rounded, a dead end or a hairpin turns in a teardrop
 //     loop, an end that cannot loop is cut back to its junction. Every
 //     landscape moved.
-export const GENERATOR_VERSION=64;
+// 65: the streets kit placed (roads.js streetFurniture): light poles, islands,
+//     wheel stops, the bag drop and drive lamps; a half lot is whole stalls
+//     (7 a row), which moved Rockies, Keys and Alaska.
+export const GENERATOR_VERSION=65;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

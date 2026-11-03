@@ -681,3 +681,24 @@ unchanged. The pack sections above describe the trees before the pass.
 Left as they were: the madrone (already itself), the shrubs and flowers,
 the cacti, palms, conifers and ground plants. The reworks had fewer rounds
 than a new model's fifteen; they are reworks of models that had their own.
+
+### cartoon_streets
+
+`tools/blender/cartoon_streets.py`, 7 pieces at real size, fifteen rounds
+each, front -Y, origin on the ground at the footprint's centre: street lamp
+(acorn, 5 m), mailbox, lot light pole (9.2 m, two heads), wheel stop (1.83
+m), bag drop (a hipped canopy 10.8 by 6.8 m), planted island (2.5 by 5.5 m,
+its middle clear for a tree) and cart barn (40 by 12 m). The game places
+all but the cart barn and mailbox (roads.js `streetFurniture`).
+
+### The packs made for the landscapes still to come (2-3 November 2026)
+
+Modelled by agents, fifteen rounds or more each, silhouette first, and not
+yet in the game -- each goes in with its landscapes: `cartoon_southpines`,
+`cartoon_southoaks`, `cartoon_piedmont`, `cartoon_southcoast` (the South),
+`cartoon_texas`, `cartoon_deserts`, `cartoon_calcoast`, `cartoon_calinland`,
+`cartoon_westmtn`, `cartoon_highdesert`, `cartoon_plains` (its red cedar is
+`EasternRedCedar`, apart from the redwood pack's western `RedCedar`),
+`cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,
+`cartoon_hawaii`. Each script's header and `LOOK`/`BARK` tables hold its
+colours and roles; each model's log holds its rounds.

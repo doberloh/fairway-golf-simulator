@@ -2295,7 +2295,7 @@ export class GolfView{
  // furniture. The walls are solid (physics.js reads `wallBoxes`), the props
  // decoration.
  addStory(w){
-  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length))return;
+  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length&&!w?.streetProps?.length))return;
   const key=w.bio?.key||w.settings?.biome;
   const STONE=worldOf(key).colours.wall;
   const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
@@ -2324,6 +2324,14 @@ export class GolfView{
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
+  // THE STREETS KIT (roads.js streetFurniture; tools/blender/cartoon_streets.py),
+  // each at its real height: decoration on the lot and along the drive.
+  const sp=w.streetProps||[],kit=(kind,model,h,colours,inked)=>draw(model,sp.filter(p=>p.kind===kind),colours,inked,at(h));
+  kit('lightpole','Blender_LightPole_1',9.2,{bark:'#3a342e',stone:'#c8c4b8',accent:'#f4f0dc'},true);
+  kit('wheelstop','Blender_WheelStop_1',.15,{stone:'#c8c4b8',accent:'#e8c030'},false);
+  kit('island','Blender_ParkingIsland_1',.2,{stone:'#c8c4b8',bark:'#5a3e2a',leaf:'#4f7436'},false);
+  kit('bagdrop','Blender_BagDrop_1',5.3,{stone:'#ece6d8',bark:'#5e6266',leaf:'#4a3426',accent:'#b8302a'},true);
+  kit('streetlight','Blender_StreetLight_1',5,{bark:'#2a2a2a',accent:'#f2e6bc'},true);
   // The Heartland's corn behind its red barn (story.js), 2.4 m standing.
   draw('Blender_CornPatch_1',props.filter(p=>p.kind==='corn'),{leaf:'#4f8a34',accent:'#d8c070'},false,at(2.4));
   // A Restored course's felled avenue (phase 6's history): the shipped stumps.

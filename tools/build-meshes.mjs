@@ -222,7 +222,9 @@ const PICK = {
  // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
  // walls, the farmstead, ruins and landmarks (story.js, renderer.js
  // addBuildings and addStory).
- storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1', 'RedBarn_1', 'CornPatch_1', 'FieldWall_1', 'CoveredBridge_1'].map(k => `blender:Blender_${k}`),
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1', 'RedBarn_1', 'CornPatch_1', 'FieldWall_1', 'CoveredBridge_1',
+  // The streets kit (tools/blender/cartoon_streets.py; roads.js furniture).
+  'StreetLight_1', 'LightPole_1', 'WheelStop_1', 'BagDrop_1', 'ParkingIsland_1', 'CartBarn_1', 'Mailbox_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack

@@ -1,0 +1,19 @@
+# longleafpine: iterations (tools/blender/cartoon_southpines.py)
+
+One line a round: what was wrong beside the reference pictures, and what changed. The side-by-side of each round: bench/shots/blender/iter/cartoon_southpines/longleafpine-r<round>.png (local).
+
+- r1: First version: a tall bare pole (good) but the crown is one tight knot of blocky brushes at the top -- too small and too narrow against the pictures' open irregular crowns about a quarter of the height. The bursts all point the same way, so they read as boxes, not needle brushes. Next: sharper, randomly turned spikes; a wider crown of separate clusters with sky between.
+- r2: Crown wider and in clusters on crooked upswept limbs, sky between -- the open irregular top is coming -- but every brush is still a faceted ball: Blender's icosphere at subdivisions=1 is the bare icosahedron, so no vertex stayed in. Next: the brush built by hand, a stellated ball of 20 spikes.
+- r3: The hand-built brush works: every brush is now a spiky star. But alone, each reads as an asterisk -- the top looks like a cycad or a palm, not massed needles. Next: brushes in clumps of two, fatter bodies and shorter spikes.
+- r4: Clumped brushes: less of an asterisk, but the crown is still small and holly-like against the first two pictures, where it is about a third of the height across and massed. Next: brushes a third bigger so the clusters merge into irregular masses with spiky edges.
+- r5: Bigger brushes merge into clusters; the bare pole and small open top read as longleaf beside the first picture, but the crown is still a small leaning knot, holly-like, about a fifth of the height across. 2,600-3,200 triangles. Next: crown begins lower (62%), wider (10 m), nine limbs, brushes drawn out upward like the pictures' candles.
+- r6: Wider, lower crown of candle-shaped brushes: bigger and closer to the pictures, but now it is as full as the loblolly -- the two would be confused at a distance. Next: one puff of three brushes on each limb end only, nothing along the limbs, so the crown is open with sky and limbs between the puffs.
+- r7: One puff of candle-brushes at each limb end: an open, irregular crown with sky and limbs between the puffs on a very tall bare pole -- reads as the first picture's longleaf, and no longer like the loblolly or the game's pine. Holds; next checks the far twin later.
+- r8: Holds: open crown of brush puffs on a very tall bare pole. Next round is spring (silver candles).
+- r9: Spring: the lighter #7a9a48 needles read as the spec's flush. The accent is the cones under the brushes, so painting it the spec's silver made silver lumps under the crown; decided (PLACED): the cones stay brown in spring, the 'silver candles' are carried by the paler needle colour alone.
+- r10: Autumn: evergreen, unchanged (#6a8a42 as the spec). Holds.
+- r11: Winter: #668642, barely darker, as the spec (evergreen). The open crown of brush puffs on the tall pole holds. Next: the far twins.
+- r12: Far twins: the open crown and the pole survive, about a third of the triangles, but each far brush is a fat faceted box, so the twin's crown looks heavier and blockier than the model's. Next: the far brush's in-between vertices pulled in to the full brush's inner radius.
+- r13: Far brush fixed: the twins now carry the same spiky open crown at the same weight; 2,400 triangles (_1), 1,900 (_2), twins 1,100 and 900. Holds.
+- r14: Summer: checked at thumbnail size beside the other two pines -- the narrowest, tallest-poled, most open crown of the three, brush puffs with sky between; nothing like the game's pine or lodgepole. Holds.
+- r15: Summer, final: a very tall straight bare pole, a small open irregular crown of upright spiky brush puffs on crooked limb ends, sky between; 2,400 (_1) and 1,930 (_2) triangles, far twins 1,120 and 900. Done.
