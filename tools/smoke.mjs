@@ -2659,6 +2659,9 @@ const JOURNEYS = [
     await t.page.selectOption('#input0', 'meter');
     await t.page.click('#applyGroup');
     await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    // An earlier shot that found water leaves its relief to take first (a
+    // seed with a pond off the tee, 2 November 2026).
+    await reliefFirst(t);
     await t.until(() => shown('#swingMeter'), 'the Swing Meter', 5 * SLOW);
     await t.shot();
    });

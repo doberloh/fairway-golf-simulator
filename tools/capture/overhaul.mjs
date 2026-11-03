@@ -237,6 +237,11 @@ export const VIEWS = [
  {name: 'wall-far', hole: 0, when: 'afternoon', caption: 'A field wall from further off', cam: `w => { const l = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0] || {ax: 0, az: 0, bx: 1, bz: 1};
   const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz) || 1, side = w.height(mx + dz / n * 22, mz - dx / n * 22) > w.height(mx - dz / n * 22, mz + dx / n * 22) ? 1 : -1, x = mx + side * dz / n * 22 - dx / n * 8, z = mz - side * dx / n * 22 - dz / n * 8;
   return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: +(globalThis.WALLH ?? 5), pitch: Math.atan2(w.height(mx, mz) + 1 - w.height(x, z) - (globalThis.WALLH ?? 5), Math.hypot(mx - x, mz - z)) * 180 / Math.PI}; }`},
+ // The roads (phase 4): from above the lot's far side, looking over the
+ // lot at the clubhouse, the drive and the road beyond.
+ {name: 'roads-lot', hole: 0, when: 'afternoon', caption: 'The parking lot, the drive and the road', cam: `w => { const L = w.lot || {x: 0, z: 0}, c = (w.buildings || []).find(b => b.kind === 'clubhouse') || {x: L.x + 1, z: L.z};
+  const dx = L.x - c.x, dz = L.z - c.z, n = Math.hypot(dx, dz) || 1, x = L.x + dx / n * 55, z = L.z + dz / n * 55;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 32, pitch: -24}; }`},
  {name: 'arch-template', hole: 0, when: 'afternoon', caption: 'A hole shaped by the land', cam: `w => { const h = w.holes.find(k => k.design && ['dell', 'alps', 'barranca'].includes(k.design.template)) || w.holes[0], e = h.design?.earthworks?.[0] || {z: h.length * .6};
   const z0 = Math.max(0, e.z - 70), a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(Math.min(h.length, e.z + 40)), z: Math.min(h.length, e.z + 40)});
   return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},

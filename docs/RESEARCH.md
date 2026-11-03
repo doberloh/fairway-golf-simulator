@@ -12401,3 +12401,37 @@ No generator step: the fingerprint showed every existing landscape
 unchanged and five new. SCHEMA 18 adds the keys (no save changes shape).
 The settings test that walks every old version now gives a version-17 save
 a version-17 key (`pnw` was renamed going into 17).
+
+
+## The roads (phase 4, 2 November 2026)
+
+PLAN.md section 4: on a generated course, the clubhouse and its lot near an
+edge of the property, a public road along that edge, the drive from it, no
+road across a fairway ever (the owner's answer 8). Every figure PLACED:
+
+- **Widths**: the public road 7.3 m (a two-lane 24 ft road), the drive
+  6.1 m (20 ft). **A stall** 2.7 by 5.5 m (9 by 18 ft) on a 7.3 m (24 ft)
+  aisle -- common US dimensions, not a measured course's.
+- **The lot**: 60 stalls for nine holes, 120 for eighteen (PLAN's figures),
+  in two double rows: 40.5 by 36.6 m and 81 by 36.6 m; half that where the
+  full lot fits nowhere. Sought on rings 10 m apart, 16 directions, squared
+  to the clubhouse or turned a quarter, off its 30 m lawn, the cart paths
+  (2 m) and play (12 m from any corridor), the ground under it within 5 m;
+  scored by its distance from the clubhouse, a third of its distance from
+  the road and 8 a metre of fall.
+- **The public road**: straight, on the side of the holes' box (their tees
+  and greens) nearest the clubhouse, 70 m out to begin with and moved out
+  10 m at a time (to 270 m) until nothing played lies under it, from 120 m
+  before the box to 120 m past it, inside the world's edge. Out of bounds
+  past its outer edge. The Keys (islands) find no straight dry edge on any
+  side and have no public road.
+- **The clubhouse** leans toward the box's edge: 0.3 on its score for every
+  metre inside it (beside its distances to the first tee and last green).
+- **A ball on a road** plays as hardpan (PLAN: "a ball on a road plays as
+  hardpan") and takes a cart path's free relief.
+
+Measured on seed RD-1, nine holes: drives of 3 m (the lot against the road)
+to 251 m (the Sonoran); the lot 40-50 m from the clubhouse. Generator 63
+moved every landscape. A boulder test's roll on the Rockies started 13 m
+above the stone and flew over its crown by 10 cm; the test now rolls only
+from run-ups within 3 m of the stone's foot.

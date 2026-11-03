@@ -32,6 +32,7 @@ import {GROUND_PLANTS} from './species.js';
 import {GROUND_KINDS} from './grounds.js';
 import {maskRings, simplify} from './contour.js';
 import {CREEK_FIELDS} from './course-doc.js';
+import {CONIFERS, PALMS} from './built-world.js';
 
 export const FREEZE = {patch: .25, raster: 1, tol: .12, greenPoints: 128, ovalPoints: 64};
 const TAU = Math.PI * 2;
@@ -86,7 +87,9 @@ function pathRing(path) {
  }
  return left.length >= 2 ? [[...left, ...right.reverse()]] : null;
 }
-const roleOf = kind => GROUND_PLANTS.has(kind) ? 3 : ['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood'].includes(kind) ? 1 : ['palm', 'hala'].includes(kind) ? 4 : 2;
+// The roles built-world.js draws by (its CONIFERS and PALMS: one list, so a
+// species the goal adds is a conifer or a palm in both).
+const roleOf = kind => GROUND_PLANTS.has(kind) ? 3 : CONIFERS.has(kind) ? 1 : PALMS.has(kind) ? 4 : 2;
 
 // `onStep(what, fraction)`: progress, for the builder's wait.
 export function freezeWorld(w, {name = 'Frozen course', onStep = () => {}} = {}) {
@@ -134,6 +137,10 @@ export function freezeWorld(w, {name = 'Frozen course', onStep = () => {}} = {})
  }
  for (const l of w.largeLakes || []) water.push({rings: [ovalRing(l.h, l.p, 192)], level: l.p.level, kind: 'lake'});
  for (const p of w.paths || []) { const r = pathRing(p); if (r) surfaces.path.push(r); }
+ // The roads and the lot (roads.js), exact like the paths: from their lines
+ // and widths, and the lot's four corners.
+ for (const p of w.roads || []) { const r = pathRing(p); if (r) surfaces.road.push(r); }
+ if (w.lot) { const L = w.lot, c = Math.cos(L.rotation), sn = Math.sin(L.rotation); surfaces.road.push([[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => [r2(L.x + u * L.width / 2 * c + v * L.depth / 2 * sn), r2(L.z - u * L.width / 2 * sn + v * L.depth / 2 * c)])]); }
  const creeks = (w.streams?.streams || []).map(st => ({kind: st.kind, points: st.points.map(p => CREEK_FIELDS.map(k => p[k] ?? (k === 'miter' ? 1 : 0)))}));
  // What has no shape: the ground types, the beach and the blowouts, from the
  // lie itself on a 1 m grid. A bunker's own sand is excluded (it is traced
@@ -145,7 +152,7 @@ export function freezeWorld(w, {name = 'Frozen course', onStep = () => {}} = {})
   for (let i = 0; i < rx; i++) {
    const x = x0 + i * R, z = z0 + j * R, k = w.surface(x, z);
    const g = GROUND_KINDS.indexOf(k);
-   if (g >= 0 && k !== 'path') kinds[j * rx + i] = g + 1;
+   if (g >= 0 && k !== 'path' && k !== 'road') kinds[j * rx + i] = g + 1;
    else if (k === 'sand') { const n = w.nearest(x, z); if (!n.h.bunkers.some(b => { const v = n.p; const d = Math.hypot((v.x - b.x) / (b.rx + 1.5), (v.z - b.z) / (b.rz + 1.5)); return d < 1.6; })) kinds[j * rx + i] = SAND; }
   }
   if (j % 64 === 0) onStep('The landscape\'s ground', .4 + .4 * j / rz);

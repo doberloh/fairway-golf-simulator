@@ -26,6 +26,10 @@ test('a ball rolled into a boulder does not pass through it', () => {
    .sort((a, b) => b.reach - a.reach).slice(0, 3);
   for (const r of mine) {
    const back = {x: r.x, z: r.z - 26};
+   // A roll, not a fall: a run-up more than 3 m above the stone's foot sends
+   // the ball down a mountainside and over the top (generator 63, Rockies:
+   // 13 m above, it cleared the crown by 10 cm).
+   if (h.height(back.x, back.z) - r.y > 3) continue;
    const end = rollAt(h, back, shotAt(h, r, back));
    tested++;
    // Passing through shows up as finishing beyond the stone on the same line.

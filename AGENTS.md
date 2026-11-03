@@ -109,6 +109,9 @@ and quality)." So, for this goal:
   pass*; nothing is cut to meet a frame. **Every model made is used**: all
   variants and far twins ship, and no species is held back for cost ("I
   dont want to end up not using the models we create").
+- **Cart paths on generated courses: no right angles, no dead ends** (the
+  owner amended the goal, 2 November 2026): every corner rounded, and
+  where a path would end it loops smoothly back on itself.
 - **Architect, Haunted Hollow, tournament week and the people are removed**
   (the owner, 2 November 2026); Architect's other world pieces (paths and
   bridges, markings, walls, landmarks, wildlife) are the generator's (PLAN.md

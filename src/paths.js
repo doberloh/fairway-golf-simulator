@@ -56,7 +56,10 @@ function heap() {
  };
 }
 
-export function costGrid({holes, s, surface, streams, height, ravines = []}) {
+// `block`, `dear` and `pad` (the grid's reach past the holes) are the cart
+// paths' unless a caller says otherwise: the roads (roads.js) block fairway and
+// semi-rough outright and reach further out.
+export function costGrid({holes, s, surface, streams, height, ravines = [], block = BLOCKED, dear = DEAR, pad = 140}) {
  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
  const greens = [], tees = [];
  for (const h of holes) {
@@ -65,7 +68,7 @@ export function costGrid({holes, s, surface, streams, height, ravines = []}) {
   for (const t of Object.values(h.tees)) { const w = h.toWorld(t); tees.push(w); }
   for (const p of [g, ...tees.slice(-3)]) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
  }
- x0 -= 140; x1 += 140; z0 -= 140; z1 += 140;
+ x0 -= pad; x1 += pad; z0 -= pad; z1 += pad;
  const nx = Math.ceil((x1 - x0) / CELL) + 1, nz = Math.ceil((z1 - z0) / CELL) + 1;
  const cost = new Float32Array(nx * nz), y = new Float32Array(nx * nz), used = new Uint8Array(nx * nz);
  const inRavine = (x, z) => ravines.some(r => { const dx = r.bx - r.ax, dz = r.bz - r.az, t = Math.max(0, Math.min(1, ((x - r.ax) * dx + (z - r.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(x - r.ax - dx * t, z - r.az - dz * t) < r.r; });
@@ -77,8 +80,8 @@ export function costGrid({holes, s, surface, streams, height, ravines = []}) {
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
   const k = j * nx + i, x = x0 + i * CELL, z = z0 + j * CELL, sf = surface(x, z);
   y[k] = height ? height(x, z) : 0;
-  if (BLOCKED.has(sf)) { cost[k] = Infinity; continue; }
-  let c = DEAR[sf] ?? 1;
+  if (block.has(sf)) { cost[k] = Infinity; continue; }
+  let c = dear[sf] ?? 1;
   if (sf === 'water') { const st = streams?.at?.(x, z); c = st ? 30 : Infinity; }
   else if (inRavine(x, z)) { c = Math.max(c, 30); span[k] = 1; }
   for (const g of greens) { const d = Math.hypot(x - g.x, z - g.z) - g.r; if (d < 22) c += 8 * (1 - Math.max(0, d) / 22); }

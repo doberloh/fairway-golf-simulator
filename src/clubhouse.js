@@ -66,6 +66,9 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
  const first = holes[0], last = holes[holes.length - 1];
  const tee = first.toWorld(first.tees.blue || first.tee), home = last.worldGreen;
  const reach = Math.max(size.width, size.depth) / 2;
+ // The box round every tee and green: the property's edges, near enough.
+ let box = {x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity};
+ for (const h of holes) for (const p of [h.worldGreen ?? h.toWorld(h.green), ...Object.values(h.tees).map(t => h.toWorld(t))]) box = {x0: Math.min(box.x0, p.x), x1: Math.max(box.x1, p.x), z0: Math.min(box.z0, p.z), z1: Math.max(box.z1, p.z)};
  let best = null;
  // Out to 150 m first; a steep landscape that finds nothing there looks to 270.
  for (const far of [150, 270]) { if (best) break;
@@ -84,8 +87,11 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
   // down to the low side (renderer.js addBuildings). Iteration 5: Mountain
   // found nowhere within 3.5 m and had no clubhouse.
   if (!ok || hi - lo > fall || !clear({x: c.x, z: c.z, rotation: rot, width: size.width, depth: size.depth})) continue;
-  // Near the first tee and the last green, on level ground.
-  const score = Math.hypot(c.x - tee.x, c.z - tee.z) + Math.hypot(c.x - home.x, c.z - home.z) * .8 + (hi - lo) * 12;
+  // Near the first tee and the last green, on level ground -- and toward an
+  // edge of the property, so the drive from the public road is short (the
+  // US landscapes goal, phase 4; roads.js; weight PLACED).
+  const score = Math.hypot(c.x - tee.x, c.z - tee.z) + Math.hypot(c.x - home.x, c.z - home.z) * .8 + (hi - lo) * 12
+   + Math.max(0, Math.min(c.x - box.x0, box.x1 - c.x, c.z - box.z0, box.z1 - c.z)) * .3;
   if (!best || score < best.score) best = {score, c, rot, lo, hi};
  }
  }

@@ -85,11 +85,18 @@ export const GROUNDS = {
  path: {label: 'Cart path', word: 'cart path', like: 'fairway', sound: 'tee', map: '#d9d2c2', relief: 5,
   contact: {cor: .235, tilt: .02, mu: .32, ground: .004, canopy: .000, spin: 2.5},
   roll: .85, slide: .3, lie: .95, hop: .16},
+ // A ROAD OR THE PARKING LOT (roads.js; the US landscapes goal, phase 4): the
+ // owner's PLAN, "a ball on a road plays as hardpan" -- hardpan's bounce and
+ // roll; man-made like a cart path, so nothing grows on it and a ball at rest
+ // on it gets the same free relief (relief.js).
+ road: {label: 'Road', word: 'road', like: 'fairway', sound: 'tee', map: '#6b6f75', relief: 5,
+  contact: {cor: .155, tilt: .12, mu: .40, ground: .045, canopy: .005, spin: 2.5},
+  roll: 1.15, slide: .38, lie: .93, hop: .06},
 };
 
 export const GROUND_KINDS = Object.keys(GROUNDS);
 // The natural ground types: every row but the man-made path.
-const WILD = new Set(GROUND_KINDS.filter(k => k !== 'path'));
+const WILD = new Set(GROUND_KINDS.filter(k => k !== 'path' && k !== 'road'));
 // Every row is a ground a ball can lie on; all but the path are natural.
 const ALL = new Set(GROUND_KINDS);
 export const isGround = s => ALL.has(s);
@@ -111,6 +118,7 @@ const ALLOWS = {
  heather: {trees: true, boulders: true, grass: false, shrubs: true},
  native: {trees: true, boulders: true, grass: true, shrubs: true},
  path: {trees: false, boulders: false, grass: false, shrubs: false},
+ road: {trees: false, boulders: false, grass: false, shrubs: false},
 };
 export const allows = (surface, what) => surface === 'rough' || !!ALLOWS[surface]?.[what];
 

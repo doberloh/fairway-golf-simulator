@@ -147,9 +147,24 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
   nine's are still the masters of 27 October, under the old keys, with the
   old trees.
-- [ ] **The streets kit and the roads pass**: no road across a fairway (a
-  bench invariant), the clubhouse and parking near an edge; roads anywhere
-  in the builder (a `BUILT_VERSION` step).
+- [x] **The roads pass** (generator 63; roads.js): a public road along the
+  clubhouse's side of the property, out of bounds beyond it; the parking
+  lot beside the clubhouse; the drive between, never across play (the
+  bench's `roadOnPlay` invariant at zero); the clubhouse leans toward the
+  edge. Seen in captures; not seen by a person in play.
+- [ ] **Cart paths with no right angles and no dead ends** (the owner's
+  amendment, 2 November 2026): every corner rounded; where a path ends, a
+  smooth loop back on itself instead.
+- [ ] **The streets kit placed**: the models are made (tools/blender/
+  cartoon_streets.py: street lamp, mailbox, lot light pole, wheel stop, bag
+  drop, planted island, cart barn); the lot's poles, islands (with the
+  landscape's tree), wheel stops and bag drop, lamps along the drive, the
+  cart barn by the clubhouse are still to place; streets for the fairway
+  homes; each landscape's road surface (catalogue `streets`).
+- [ ] **Roads in the builder**: drawn anywhere, a parking-lot tool, from
+  OpenStreetMap in door 2 (`highway=*`, `amenity=parking`), stored in the
+  course file (a `BUILT_VERSION` step); a built course's ground code 11 is
+  already a road.
 - [ ] **The new landscapes by region**: the South; Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures

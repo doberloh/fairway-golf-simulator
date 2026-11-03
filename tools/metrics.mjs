@@ -1,6 +1,7 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {landingZones} from '../src/markings.js';
 import {unbridgedWater} from '../src/paths.js';
+import {roadOnPlay} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
@@ -618,6 +619,17 @@ METRICS.paths = {
   const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length};
   const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length};
   return {series: {}, counts, invariants};
+ },
+};
+
+// NO ROAD CROSSES A FAIRWAY, EVER (the owner's answer 8; roads.js): every
+// point of a road, every 3 m across its width, and of the lot on a 4 m grid,
+// on nothing played. The geometry is roads.js's own `roadOnPlay`.
+METRICS.roads = {
+ describe: 'roads and the parking lot: how many, and none on play',
+ run(w) {
+  const counts = {roads: (w.roads || []).length, lots: w.lot ? 1 : 0, publicRoads: (w.roads || []).filter(r => r.kind === 'boundary').length};
+  return {series: {}, counts, invariants: {roadOnPlay: roadOnPlay(w, (x, z) => w.surface(x, z)).length}};
  },
 };
 

@@ -3,6 +3,7 @@ import {bounceScale,tiltScale,gripScale,firmnessApplies,firmnessValue,NORMAL_FIR
 import {CUP_RADIUS as CUP_R,CUP_DEPTH} from './cup.js';
 import {bounce as compliantBounce,dampingFor} from './contact.js';
 import {NO_TRUNK} from './species.js';
+import {pastBoundary} from './roads.js';
 import {GROUNDS} from './grounds.js';
 // Restitution -> damping, remembered. The solve is sixty runs of a full contact,
 // and the same handful of (restitution, friction) pairs recur all shot long.
@@ -570,7 +571,8 @@ export function rollPreview(course,origin,aimDegrees,speed,options={}){
 // the flight and a relief drop (relief.js) cannot disagree about where it is.
 export function outOfBounds(course,x,z){
  const wp=course.world?course.toWorld({x,z}):null;
- return wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ):(Math.abs(x)>course.bounds.x||z<course.bounds.minZ||z>course.bounds.maxZ);
+ // Past the public road (roads.js; the US landscapes goal, phase 4) is out too.
+ return wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ||pastBoundary(course.world.boundary,wp.x,wp.z)>0):(Math.abs(x)>course.bounds.x||z<course.bounds.minZ||z>course.bounds.maxZ);
 }
 export function simulateShot(shot,course,options={}){
  // LEFT AND RIGHT ARE THE GOLFER'S, AS A LAUNCH MONITOR REPORTS THEM: positive

@@ -54,8 +54,9 @@ export const BUILT_FIELD = {range: 6, maxSide: 2048, minCell: .5};
 export const BUILT_CHANNELS = ['sand', 'green', 'fairway', 'tee', 'water', 'semi', 'groundCode', 'ground'];
 // The ground types' codes in the field: ground.js GROUND_CODE (which
 // groundPaint draws; tests/built-world.test.mjs holds the two the same), and
-// a cart path, which a generated course draws as its own strips instead.
-export const BUILT_GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, pinestraw: 6, litter: 7, heather: 8, native: 9, path: 10};
+// a cart path, which a generated course draws as its own strips instead, and
+// a road or parking lot (roads.js; the US landscapes goal, phase 4).
+export const BUILT_GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, pinestraw: 6, litter: 7, heather: 8, native: 9, path: 10, road: 11};
 const GROUND_OF_CODE = Object.fromEntries(Object.entries(BUILT_GROUND_CODE).map(([k, c]) => [c, k]));
 export const GRID_MARGIN = 150;
 // How far the coarse ground mesh may miss the stored land in a cell before
@@ -265,11 +266,11 @@ export function builtHomes(doc, height, nearest) {
 // its height among the kinds that fit, hashed from where it stands so the
 // same file always draws the same wood. Drawing only: a tree's trunk and
 // crown are stored and play the same in every landscape.
-const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir']);
+export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir']);
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);
-const PALMS = new Set(['palm', 'hala', 'royalpalm', 'travelerspalm']);
+export const PALMS = new Set(['palm', 'hala', 'royalpalm', 'travelerspalm']);
 export function speciesFor(bio, role, h, x, z) {
  const kinds = bio.plants.map(p => p[0]);
  const tall = kinds.filter(k => !GROUND_PLANTS.has(k));

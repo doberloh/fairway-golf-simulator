@@ -14,6 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
+import {placeRoads,onRoad} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -2310,6 +2311,8 @@ export function* generateWorldSteps(settings={},options={}){
  // The course's cart paths (paths.js), set once the holes are built and before
  // anything is planted; none on the range.
  let pathIdx=null,paths=[],bridges=[],pathConnect=null,pathBlock=null;
+ // The roads and the lot (roads.js), known once the clubhouse is sited.
+ let roadIdx=null,roadLot=null;
  function surface(x,z){
   if(lakeOwner(x,z))return 'water';
   const st=streams.at(x,z);
@@ -2335,6 +2338,9 @@ export function* generateWorldSteps(settings={},options={}){
   if(sandField&&(found==='rough'||found==='semi'||found==='fairway')&&isFieldSand(sandField,x,z))return 'sand';
   // A CART PATH (architect-courses, phase 2): over rough, semi-rough, fairway
   // or any ground type, never a green, its fringe, a tee, sand or water.
+  // A ROAD OR THE LOT (roads.js): only ever on unplayed ground, and over a
+  // cart path where the two cross.
+  if(roadIdx&&(found==='rough'||isNatural(found))&&onRoad(roadIdx,roadLot,x,z))return 'road';
   if(pathIdx&&(found==='rough'||found==='semi'||found==='fairway'||isNatural(found))&&pathIdx.onPath(x,z))return 'path';
   // The beach, on the two biomes that have a coast. `height` rather than `land`
   // because that is the field the ground mesh is actually built from, and the
@@ -2388,6 +2394,13 @@ export function* generateWorldSteps(settings={},options={}){
   // ground is still unpathed here, so the surface says water where there is.
   if(club){buildings.push(club);if(paths.length){pathBlock(club);linkBuilding(paths,club,pathConnect,height);bridges=findBridges(paths,{surface,streams,width:paths[0].width});setDecks(bridges);pathIdx=pathIndex(paths);}}
  }
+ // THE ROADS (roads.js; the US landscapes goal, phase 4): the public road
+ // along the clubhouse's side of the property, the lot beside the clubhouse
+ // and the drive between them, never across play; before the story, the
+ // houses and the trees, which keep off them.
+ let roads=[],boundary=null;
+ if(!s.range&&buildings[0]?.kind==='clubhouse'){({roads,lot:roadLot,boundary}=placeRoads({holes,s,surface,nearest,height,halfX,halfZ,club:buildings[0],paths,streams,pathTouches}));roadIdx=pathIndex(roads);}
+ const nearRoad=(x,z,pad)=>!!roadIdx&&((roadIdx.at(x,z)?.d??Infinity)<pad+4.5||(roadLot&&inBuilding(roadLot,x,z,pad)));
  // THE LAND'S STORY (story.js; architect-courses, phase 6; every generated
  // course since 2 November 2026): field walls, a farmstead, ruins and a
  // landmark -- placed before the houses and the trees, which keep off them.
@@ -2396,17 +2409,17 @@ export function* generateWorldSteps(settings={},options={}){
  let walls=[],storyProps=[],clearings=[];
  if(!s.range){
   const fans1=teeFans(holes);
-  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3});
+  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3||nearRoad(x,z,pad+2)});
   buildings.push(...story.buildings);walls=story.walls;storyProps=story.props;clearings=story.clearings;
  }
  // A house keeps off the paths too (the range has none, and `pathClearance` of
  // no paths is Infinity).
- const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8)||paths.length>0&&pathClearance(paths,x,z)<(pad||0)+4);
+ const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8)||paths.length>0&&pathClearance(paths,x,z)<(pad||0)+4||nearRoad(x,z,(pad||0)+4));
  // Built on already: a house or a building, with a margin.
  // A building keeps a clear forecourt: 15 m round it for trees (iteration 4: a
  // chalet stood hidden in its own wood).
  // Only the clubhouse keeps a lawn; a wall keeps a stride clear either side.
- const builtOn=(x,z,m=5)=>homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+m)||buildings.some(b=>inBuilding(b,x,z,m+(b.story?20:10))||(b.kind==='clubhouse'&&inForecourt(b,x,z)))||walls.some(w=>segDist(w,x,z)<m*.3+1.2)||clearings.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+m);
+ const builtOn=(x,z,m=5)=>homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+m)||buildings.some(b=>inBuilding(b,x,z,m+(b.story?20:10))||(b.kind==='clubhouse'&&inForecourt(b,x,z)))||walls.some(w=>segDist(w,x,z)<m*.3+1.2)||clearings.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+m)||nearRoad(x,z,m*.3);
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
  const fans=teeFans(holes);
@@ -2777,7 +2790,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

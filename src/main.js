@@ -97,7 +97,7 @@ import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRange
 import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
-import {reliefOptions,crossingPoint,OB_RULES,pathRelief} from './relief.js';
+import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
@@ -2256,7 +2256,7 @@ function freshHole(){
 // scramble, whose balls are chosen between rather than played.
 function takePathRelief(result){
  if(result.hazard||result.holed||round.holeComplete||round.mode==='scramble'||rangeMode)return;
- if(course.surface(result.end.x,result.end.z)!=='path')return;
+ if(!OBSTRUCTIONS.has(course.surface(result.end.x,result.end.z)))return;
  const r=pathRelief((x,z)=>course.surface(x,z),result.end,course.pin);if(!r)return;
  const i=round.positions.findIndex(p=>Math.abs(p.x-result.end.x)<1e-6&&Math.abs(p.z-result.end.z)<1e-6);if(i<0)return;
  round.positions[i]={...round.positions[i],x:r.spot.x,z:r.spot.z};

@@ -345,7 +345,12 @@ export const SCHEMA_VERSION=18;
 // 62: the Keys pack (step 3): royal palms, traveler's palms, gumbo limbo,
 //     sea grape, mangrove and banyan among the palms and hala, hibiscus and
 //     bougainvillea under them. Keys moved.
-export const GENERATOR_VERSION=62;
+// 63: roads (the US landscapes goal, phase 4; roads.js): a public road along
+//     the clubhouse's side of the property (out of bounds beyond it), a
+//     parking lot beside the clubhouse and the drive between, never across
+//     play; the clubhouse leans toward the property's edge. Trees, houses
+//     and the story keep off them. Every landscape moved.
+export const GENERATOR_VERSION=63;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

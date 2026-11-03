@@ -1751,3 +1751,6 @@ far twin, and the older trees reworked silhouette first. Still one file.
 **Step 3 done, and phase 3**: the page is **18,317,461 bytes (9.65 MB
 gzipped)**, +1.01 MB: five landscapes' card pictures (0.95 MB) and their
 records. Still one file, no network request.
+
+**Phase 4, the roads**: the page is **18,327,986 bytes (9.65 MB gzipped)**,
++10 KB of code (roads.js, the lot and road drawing). Still one file.

@@ -2004,6 +2004,8 @@ export class GolfView{
   if(kind==='boardwalk'){for(let y=0;y<128;y+=8){g.fillStyle=r()<.5?'#f2f2f2':'#dcdcdc';g.fillRect(0,y,64,7);g.fillStyle='#9a9a9a';g.fillRect(0,y+7,64,1);}g.fillStyle='#b0b0b0';g.fillRect(6,0,2,128);g.fillRect(56,0,2,128);}
   else if(kind==='concrete'){dots(160,1.2,'#f4f4f4','#d2d2d2');g.fillStyle='#b8b8b8';g.fillRect(0,0,64,1.5);g.fillRect(0,64,64,1.5);}
   else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
+  // A road (roads.js): asphalt, its edge lines, a dashed centre line.
+  else if(kind==='road'){dots(420,1.4,'#f2f2f2','#c4c4c4');g.fillStyle='#ffffff';g.fillRect(2,0,2,128);g.fillRect(60,0,2,128);g.fillRect(31,0,2,64);}
   else if(kind==='bark'){for(let i=0;i<220;i++){g.save();g.translate(r()*64,r()*128);g.rotate(r()*Math.PI);g.fillStyle=r()<.5?'#f0f0f0':'#c8c8c8';g.fillRect(-3,-1,6,2);g.restore();}}
   else dots(kind==='shell'?520:460,kind==='granite'?1:1.8,'#fafafa',kind==='shell'?'#d9d9d9':'#bdbdbd');
   // Darker at the edges, so the path's sides read against the grass.
@@ -2012,12 +2014,14 @@ export class GolfView{
   this.pathTextures[kind]=tex;this.resources.push(tex);return tex;
  }
  addPaths(w){
-  if(!w?.paths?.length)return;
-  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f'};
+  if(!w?.paths?.length&&!w?.roads?.length)return;
+  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f',road:'#55595e'};
   // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
   // twenty-odd draws on a course whose paths are many short pieces).
   const byKind=new Map();
-  for(const path of w.paths){
+  // The roads (roads.js; the US landscapes goal, phase 4) are laid as the
+  // paths are, darker asphalt.
+  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:'road'}))]){
    // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
    // "clipping through hills"): a straightened run's corners can be a hundred
    // metres apart, and a strip with points only there ran straight through
@@ -2041,6 +2045,25 @@ export class GolfView{
    // material's colour still sets the tone.
    const mat=this.surfaceMaterial(COLORS[path.kind]||COLORS.concrete,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,map:this.pathTexture(path.kind)});
    const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;mesh.userData.path=true;this.group.add(mesh);this.resources.push(g,mat);
+  }
+  // THE PARKING LOT (roads.js): an asphalt slab laid on the ground on a 4 m
+  // grid, and its stall lines -- four rows of stalls, two aisles.
+  if(w.lot){
+   const L=w.lot,rc=Math.cos(L.rotation),rs=Math.sin(L.rotation),at=(u,v)=>({x:L.x+u*rc+v*rs,z:L.z-u*rs+v*rc});
+   const nu=Math.max(1,Math.ceil(L.width/4)),nv=Math.max(1,Math.ceil(L.depth/4)),pos=[],uv=[],idx=[];
+   for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const p=at(-L.width/2+L.width*i/nu,-L.depth/2+L.depth*j/nv);pos.push(p.x,w.height(p.x,p.z)+.04,p.z);uv.push(i/nu*L.width/16,j/nv*L.depth/16);}
+   for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const k=j*(nu+1)+i;idx.push(k,k+nu+1,k+1,k+1,k+nu+1,k+nu+2);}
+   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+   const mat=this.surfaceMaterial(COLORS.road,{polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,map:this.pathTexture('lot')});
+   const mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;this.group.add(mesh);this.resources.push(g,mat);
+   // The lines: a 12 cm stripe at each stall's side, 5.5 m long, in the four
+   // stall rows (roads.js STALL; the rows at the lot's two edges and either
+   // side of its middle).
+   const lp=[],li=[],D=5.5,A=7.3,rows=[-L.depth/2,-L.depth/2+D+A,L.depth/2-2*D-A,L.depth/2-D];
+   for(const v0 of rows)for(let u=-L.width/2;u<=L.width/2+1e-6;u+=2.7){const b=lp.length/3;for(const [du,dv] of [[-.06,0],[.06,0],[-.06,D],[.06,D]]){const p=at(u+du,v0+dv);lp.push(p.x,w.height(p.x,p.z)+.06,p.z);}li.push(b,b+2,b+1,b+1,b+2,b+3);}
+   const lg=new T.BufferGeometry();lg.setAttribute('position',new T.Float32BufferAttribute(lp,3));lg.setIndex(li);lg.computeVertexNormals();
+   const lm=this.surfaceMaterial('#f2f0ea',{polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4});
+   const lines=new T.Mesh(lg,lm);this.group.add(lines);this.resources.push(lg,lm);
   }
   // THE BRIDGES (phase 5; tools/blender/architect_water.py): 2 m bays laid
   // end to end across the span, timber or stone by landscape, each fitted to
