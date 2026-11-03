@@ -1,5 +1,5 @@
 {
- "generator": 66,
+ "generator": 67,
  "biomes": {
   "puget": "f803da4c79d7bcdb",
   "sonoran": "590746e7c89a92ab",
@@ -13,13 +13,19 @@
   "highplains": "19d0840cdd4f01a3",
   "sandhills": "15922a48cebbb2b5",
   "oldnortheast": "da70f4b6438e1f86",
-  "pinebarrens": "482aa78446fca902",
+  "pinebarrens": "6c35710274ece286",
   "alaska": "690a6e50a16ad75e",
   "piedmont": "5a221f2ec89e8ae9",
   "longleaf": "76a14437d5ffd953",
   "lowcountry": "10b0f5c2e375a868",
   "bayou": "0a07fd98992b7a8d",
-  "flatwoods": "7955d4cb7bbb9232"
+  "flatwoods": "7955d4cb7bbb9232",
+  "hillcountry": "111c4e450d61a961",
+  "bluebonnet": "ac0549ca26dda626",
+  "gulfcoast": "048b6105ca839f3c",
+  "mojave": "67f8f99f153e5574",
+  "palms": "02a8a22710675fd8",
+  "chihuahuan": "0e1083a19cbee710"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -40,6 +46,12 @@
   "longleaf": "4bbaad82adead67f",
   "lowcountry": "35f41f8df74a020a",
   "bayou": "88ff04ef6b3b7631",
-  "flatwoods": "e22594b2c28d05bb"
+  "flatwoods": "e22594b2c28d05bb",
+  "hillcountry": "433457099cb34c00",
+  "bluebonnet": "2f4eaeb093a9fcc4",
+  "gulfcoast": "1c11d47bb5f4730b",
+  "mojave": "1a513db3ca1669f6",
+  "palms": "fa38977cbaf6055e",
+  "chihuahuan": "81d2bdfc929227cc"
  }
 }

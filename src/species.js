@@ -41,6 +41,8 @@ export const GROUND_PLANTS = new Set([
  'prairieforbs',
  // ... and the Keys' shrubs.
  'seagrape', 'bougainvillea', 'hibiscus',
+ // ... Texas's and the deserts'.
+ 'mountainlaurel', 'bluebonnet', 'mojaveyucca', 'oleander', 'sotol', 'lechuguilla', 'beavertail',
  // ... and the South's.
  'sawpalmetto', 'longleafgrass', 'wiregrass', 'cypressknees', 'azalea', 'yaupon', 'spartina', 'sawgrass', 'muhlygrass', 'waxmyrtle',
 ]);

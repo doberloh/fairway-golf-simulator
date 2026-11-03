@@ -71,6 +71,7 @@ const PICK = {
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
+  'Pecan_1', 'Pecan_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -224,6 +225,33 @@ const PICK = {
  muhlygrass: ['blender:Blender_MuhlyGrass_1'],
  waxmyrtle: ['blender:Blender_WaxMyrtle_1'],
  citrustree: ['blender:Blender_CitrusTree_1'],
+ // THE TEXAS AND DESERTS PACKS (tools/blender/cartoon_texas.py,
+ // cartoon_deserts.py): every variant; the Hill Country's limestone as a
+ // boulder family of its own (biomes.js rockStyle 'limestone').
+ ashejuniper: ['blender:Blender_AsheJuniper_1', 'blender:Blender_AsheJuniper_2'],
+ postoak: ['blender:Blender_PostOak_1', 'blender:Blender_PostOak_2'],
+ pecan: ['blender:Blender_Pecan_1', 'blender:Blender_Pecan_2'],
+ cedarelm: ['blender:Blender_CedarElm_1'],
+ osageorange: ['blender:Blender_OsageOrange_1'],
+ mountainlaurel: ['blender:Blender_MountainLaurel_1'],
+ redbud: ['blender:Blender_Redbud_1'],
+ bluebonnet: ['blender:Blender_Bluebonnet_1'],
+ joshuatree: ['blender:Blender_JoshuaTree_1', 'blender:Blender_JoshuaTree_2'],
+ mojaveyucca: ['blender:Blender_MojaveYucca_1'],
+ fanpalm: ['blender:Blender_FanPalm_1', 'blender:Blender_FanPalm_2'],
+ datepalm: ['blender:Blender_DatePalm_1', 'blender:Blender_DatePalm_2'],
+ aleppopine: ['blender:Blender_AleppoPine_1'],
+ oleander: ['blender:Blender_Oleander_1'],
+ tamarisk: ['blender:Blender_Tamarisk_1'],
+ smoketree: ['blender:Blender_SmokeTree_1'],
+ soaptreeyucca: ['blender:Blender_SoaptreeYucca_1'],
+ sotol: ['blender:Blender_Sotol_1'],
+ lechuguilla: ['blender:Blender_Lechuguilla_1'],
+ desertwillow: ['blender:Blender_DesertWillow_1'],
+ emoryoak: ['blender:Blender_EmoryOak_1'],
+ alligatorjuniper: ['blender:Blender_AlligatorJuniper_1', 'blender:Blender_AlligatorJuniper_2'],
+ beavertail: ['blender:Blender_Beavertail_1'],
+ boulderlimestone: ['blender:Blender_LimestoneBoulder_1', 'blender:Blender_LimestoneBoulder_2'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',

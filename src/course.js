@@ -2498,11 +2498,15 @@ export function* generateWorldSteps(settings={},options={}){
   prairieforbs:[.6,1.2],
   // The Keys' shrubs: sea grape 2.5-5 m, bougainvillea 2-4, hibiscus 1.5-2.6.
   seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6],
+  // Texas's and the deserts' (PLACED within their specs).
+  mountainlaurel:[3,5],bluebonnet:[0.3,0.45],mojaveyucca:[1.8,3.5],oleander:[2.5,4],sotol:[1,1.6],lechuguilla:[0.3,0.5],beavertail:[0.4,1],
   // The South's (the packs' reports, within their specs).
   sawpalmetto:[1,1.8],longleafgrass:[0.5,0.9],wiregrass:[0.3,0.6],cypressknees:[0.5,1],azalea:[1,1.6],yaupon:[3.5,5.5],spartina:[1.2,1.7],sawgrass:[1.6,2.6],muhlygrass:[0.75,1],waxmyrtle:[3,5]};
  // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
  // and crown radius r0-r1 m.
  const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15],
+  // Texas's and the deserts' (PLACED within their specs).
+  ashejuniper:[5,8,3,4.5],postoak:[9,14,4,6],pecan:[22,32,8,12],cedarelm:[11,16,4,6],osageorange:[9,13,4.5,6],redbud:[5,8,3.5,5],joshuatree:[5,9,2,3.5],fanpalm:[14,20,2,3],datepalm:[10,17,3,4.5],aleppopine:[10,15,4.5,6],tamarisk:[4.5,7,2.5,3.5],smoketree:[4,6,2.5,3.5],soaptreeyucca:[3.5,6,1,1.5],desertwillow:[5,8,2.5,4],emoryoak:[7,11,4,5.5],alligatorjuniper:[8,12,4,6],
   // The South's (PLACED within their specs).
   longleafpine:[22,32,4,6],loblollypine:[20,30,5,7],slashpine:[18,26,5,7],cabbagepalm:[9,15,2.5,3.5],liveoak:[12,17,12,16],liveoakmoss:[13,17,12,16],baldcypress:[20,32,4,6],blackjackoak:[6,10,3,4],turkeyoak:[6,10,3,4],watertupelo:[18,26,4,6],magnolia:[14,20,5,7],tulippoplar:[28,40,5,8],sweetgum:[18,28,5,7],floweringdogwood:[5,8,4,5],crapemyrtle:[4,7,2,3],citrustree:[4.5,6.5,2,2.5],kudzu:[9,13,6,8]};
  // A plant's height and spread from two uniform numbers -- drawn from the

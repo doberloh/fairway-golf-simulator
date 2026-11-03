@@ -130,7 +130,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). The South (phase 5;
   one build, against the Heartland on it, three tees): the Bayou level
   (0.81 against 0.82 ms of graphics card), the Lowcountry +34% (1.10 ms;
-  triangles +40%, the live oaks' moss; draws 12% fewer). Candidates:
+  triangles +40%, the live oaks' moss; draws 12% fewer). Texas and the
+  deserts (phase 6, same way): the Mojave 0.89 and Desert Palms 0.87 ms
+  against the Sonoran's 0.73 (+22%, +19%; triangles +33%, +7%), the Hill
+  Country 0.97 against the Heartland's 0.82 of phase 5 (+18%; the Heartland
+  has its wildflowers back since, so not like for like). Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
   a landscape's species into fewer draws. The profile against
   bench/profile-baseline.json is due here.
@@ -145,7 +149,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   phase. Seen in captures; not seen by a person in play.
 - [ ] **The new landscapes' debut weeks** in the course of the week: phase
   3's five are placed at weeks 160-164 (25 January to 22 February 2027),
-  the South's at 165-169 (1 to 29 March 2027;
+  the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
+  170-175 (5 April to 10 May 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
@@ -191,7 +196,20 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   cypresses stand beside its water, never in it; the Piedmont shows no red
   clay (the Heartland's ground). Each wants its landscape's ground or water
   rule (a generator step).
-- [ ] **The new landscapes by region**: the South (done, above); Texas and the deserts;
+- [ ] **Bluebonnet Prairie does not read as a bluebonnet field from the
+  camera**: the pack's clumps (0.3-0.45 m), the rough's flowers and the long
+  grass's blue heads show close to, not as the blue drifts the name
+  promises. Wants drifts of blue painted into the ground (the ground
+  shader's native drifts, or a flower-field ground kind), seen in the
+  pictures of 3 November.
+- [x] **Texas and the deserts** (phase 6; SCHEMA 20, generator 67): Hill
+  Country, Bluebonnet Prairie and Gulf Coast (a new `texas` region,
+  limestone boulders, a stone ranch-house clubhouse) and the Mojave, Desert
+  Palms and Chihuahuan (the Sonoran's region) on the Texas and deserts
+  packs. Seen in captures; not seen by a person in play. Found on the way:
+  a path along a winding creek ran off its one straight bridge (the full
+  bench's `pathOverWater`), fixed in generator 67 (decks split to follow it).
+- [ ] **The new landscapes by region**: the South and Texas and the deserts (done, above); Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;

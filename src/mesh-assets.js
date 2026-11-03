@@ -254,6 +254,8 @@ export const FAMILY_OF = {
  royalpalm: 'royalpalm', travelerspalm: 'travelerspalm', seagrape: 'seagrape', mangrove: 'mangrove',
  gumbolimbo: 'gumbolimbo', banyan: 'banyan', bougainvillea: 'bougainvillea', hibiscus: 'hibiscus',
  // The South's packs.
+ // Texas and the deserts.
+ ashejuniper: 'ashejuniper', postoak: 'postoak', pecan: 'pecan', cedarelm: 'cedarelm', osageorange: 'osageorange', mountainlaurel: 'mountainlaurel', redbud: 'redbud', bluebonnet: 'bluebonnet', joshuatree: 'joshuatree', mojaveyucca: 'mojaveyucca', fanpalm: 'fanpalm', datepalm: 'datepalm', aleppopine: 'aleppopine', oleander: 'oleander', tamarisk: 'tamarisk', smoketree: 'smoketree', soaptreeyucca: 'soaptreeyucca', sotol: 'sotol', lechuguilla: 'lechuguilla', desertwillow: 'desertwillow', emoryoak: 'emoryoak', alligatorjuniper: 'alligatorjuniper', beavertail: 'beavertail',
  longleafpine: 'longleafpine', loblollypine: 'loblollypine', slashpine: 'slashpine', cabbagepalm: 'cabbagepalm', sawpalmetto: 'sawpalmetto', longleafgrass: 'longleafgrass', wiregrass: 'wiregrass', liveoak: 'liveoak', liveoakmoss: 'liveoakmoss', turkeyoak: 'turkeyoak', blackjackoak: 'blackjackoak', baldcypress: 'baldcypress', cypressknees: 'cypressknees', watertupelo: 'watertupelo', floweringdogwood: 'floweringdogwood', azalea: 'azalea', magnolia: 'magnolia', tulippoplar: 'tulippoplar', crapemyrtle: 'crapemyrtle', kudzu: 'kudzu', sweetgum: 'sweetgum', yaupon: 'yaupon', spartina: 'spartina', sawgrass: 'sawgrass', muhlygrass: 'muhlygrass', waxmyrtle: 'waxmyrtle', citrustree: 'citrustree',
 };
 

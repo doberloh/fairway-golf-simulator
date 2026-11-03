@@ -12520,3 +12520,72 @@ strands lit nearly white and read as bones under the oaks; #78826e
 (frame-ab, one build, seed PROFILE, tees 1, 5 and 9, RTX 4090 headroom):
 the Heartland 0.82 ms of graphics card a frame, the Bayou 0.81, the
 Lowcountry 1.10 (+34%; 14.8 million triangles at tee 1 against 9.5).
+
+
+## Texas and the deserts (phase 6, 3 November 2026)
+
+PLAN.md's phase 6: six landscapes on the Texas and deserts packs
+(tools/blender/cartoon_texas.py, cartoon_deserts.py; 24 species, every
+variant, far twins for the pecans and palms). Every share, size and colour
+below is PLACED from the study's pages (subs/texas/, subs/desert/, local)
+and the packs' specs; none is measured on a course.
+
+- **A new region, `texas`** (from the Midwest's record): hills base 30 m,
+  severity 60 (rolling, between the Heartland's flat and the Sonoran's
+  mesas); 320 boulders a course drawn as the pack's pale layered limestone
+  (rockStyle `limestone`, #d8d0b8); stands of Ashe juniper .35, live oak
+  .25, post oak .2, cedar elm and mesquite .1 under mountain laurel; in the
+  open bluebonnets .2, live oak and juniper .15 each, post oak .1, mesquite
+  .08, mountain laurel .07, pecan, cedar elm and redbud .05. A limestone
+  ranch-house clubhouse (`stonehouse`), split-rail fences, a farm, a
+  windmill landmark, deer. 300 m, 30 C, sun 40 degrees; fog haze .55.
+  **Hill Country** is the region as it is.
+- **Bluebonnet Prairie**: hills 14 / 20 (near flat), 60 rounded boulders,
+  trees at 1.4; bluebonnets .3, pecan and cedar elm .12 each, Osage orange
+  .1, prairie flowers .15; a farmhouse and red barn.
+- **Gulf Coast**: hills 6 / 12 (flat), live oak .25, loblolly .15, cordgrass
+  (spartina) .12, wax myrtle .12, yaupon .1, pecan .08; 31 C; a clapboard
+  clubhouse, herons and geese.
+- **Mojave** (the Sonoran's region): Joshua tree .22, creosote .25, Mojave
+  yucca .12, cholla .1, beavertail .08, smoke tree .05; rounded granite
+  (#c8ac88); 900 m, 33 C.
+- **Desert Palms**: fan palm .2, date palm .12, oleander .12, creosote .2,
+  bougainvillea, desert willow and tamarisk .06 each, Aleppo pine .03; mesas
+  at half the Sonoran's chance; a pavilion clubhouse; 100 m, 34 C.
+- **Chihuahuan**: creosote .22, lechuguilla .14, sotol .12, soaptree yucca
+  .1, mesquite .1, ocotillo .08, Emory oak and alligator juniper .05 each;
+  angular stone; 1,200 m, 30 C.
+- **The bluebonnet is drawn in bloom** (its spring colours) until seasons
+  are on: in summer it is a seeded grey-green clump and the landscape is
+  named for it.
+- **Tree sizes** (height, crown radius, m): pecan 22-32 / 8-12, post oak
+  9-14 / 4-6, Ashe juniper 5-8, cedar elm 11-16, Osage orange 9-13, redbud
+  5-8, Joshua tree 5-9, fan palm 14-20, date palm 10-17, Aleppo pine 10-15,
+  alligator juniper 8-12, Emory oak 7-11.
+- **Names**: twenty first and twenty last words each; clashes with earlier
+  landscapes' first words (Meadowlark, Tarpon, Tortoise, Cathedral, Alpine,
+  Javelina, Roadrunner, then Pronghorn) and one real course (Ocotillo) were
+  replaced. Debut weeks 170-175.
+
+No generator step for the six (new keys); SCHEMA 20 adds them.
+
+**Generator 67, bridges that follow a bent crossing** (found by the full
+bench while checking this phase): on Bluebonnet Prairie S1 a cart path ran
+along a winding creek for about 80 m, and its one straight deck, laid from
+the last dry point to the next, left 98 sampled points of path in the
+water beside it (16 on Hill Country S4). `findBridges` now splits a run
+where it strays furthest from its deck until every point is on one; a run
+the one deck already covers is unchanged. The Pine Barrens' fingerprint
+seed moved.
+
+**The wildflowers came back** (vegetation.js `FLOWER_REGIONS`, rendering
+only): the rough's flowers were scattered where the landscape's KEY was
+midwest, mountain, links or desert, and the keys' rename on 2 November left
+only the Scottish Links with any -- the Heartland, the Rockies and the
+Sonoran had lost theirs, unnoticed in five phases of pictures. The test is
+now by region, and Texas joins it in bluebonnet blue (#3a5ac8) and Indian
+paintbrush red (#d8502e), 16% of the grass blades as everywhere (PLACED).
+Seen when Bluebonnet Prairie's first pictures had no bluebonnets in them:
+the pack's clumps are 0.3-0.45 m and read only close to. Its long grass's
+heads are bluebonnet blue too (#4a62c8, 6,000 tufts against Texas's 4,000;
+PLACED); still not a field from the camera (TODO).

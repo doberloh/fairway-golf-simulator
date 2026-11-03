@@ -697,8 +697,10 @@ Modelled by agents, fifteen rounds or more each, silhouette first, and not
 yet in the game -- each goes in with its landscapes (the South's four,
 `cartoon_southpines`, `cartoon_southoaks`, `cartoon_piedmont` and
 `cartoon_southcoast`, went in with phase 5: every variant, a far twin for
-each tree, the plantation clubhouse as `clubhouse.js` `clubhouseModel`):
-`cartoon_texas`, `cartoon_deserts`, `cartoon_calcoast`, `cartoon_calinland`,
+each tree, the plantation clubhouse as `clubhouse.js` `clubhouseModel`;
+`cartoon_texas` and `cartoon_deserts` with phase 6, every variant and
+the pecans' and palms' far twins, the limestone as the boulder family
+`boulderlimestone`): `cartoon_calcoast`, `cartoon_calinland`,
 `cartoon_westmtn`, `cartoon_highdesert`, `cartoon_plains` (its red cedar is
 `EasternRedCedar`, apart from the redwood pack's western `RedCedar`),
 `cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,

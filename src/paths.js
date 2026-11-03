@@ -902,8 +902,22 @@ export function findBridges(paths, {surface, streams, ravines = [], width}) {
    const w = i < pts.length && wet(pts[i]);
    if (w && start < 0) start = i;
    if (!w && start >= 0) {
-    const a = pts[Math.max(0, start - 1)], b = pts[Math.min(pts.length - 1, i)];
-    bridges.push({x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1});
+    // One straight deck from the last dry point to the next; a run that bends
+    // off it (a path along a winding creek, Bluebonnet Prairie S1, phase 6:
+    // 78 m of deck with the path beside it) is split where it strays furthest
+    // until every point is on a deck. A run the one deck covers is as before.
+    const deck = (j0, j1) => {
+     const a = pts[j0], b = pts[j1], br = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(b.x - a.x, b.z - a.z), span: Math.hypot(b.x - a.x, b.z - a.z) + 6, width: width + 1};
+     let worst = -1, far = 0;
+     if (j1 - j0 > 2) for (let j = j0 + 1; j < j1; j++) {
+      if (onBridge([br], pts[j].x, pts[j].z, 1)) continue;
+      const ax = Math.sin(br.angle), az = Math.cos(br.angle), off = Math.abs((pts[j].x - br.x) * az - (pts[j].z - br.z) * ax);
+      if (off > far) { far = off; worst = j; }
+     }
+     if (worst < 0) bridges.push(br);
+     else { deck(j0, worst); deck(worst, j1); }
+    };
+    deck(Math.max(0, start - 1), Math.min(pts.length - 1, i));
     start = -1;
    }
   }

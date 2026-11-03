@@ -580,6 +580,27 @@ INTERFACE.south = {panel: 'rgba(20,34,22,.88)', a1: '#fecdd3', a2: '#be185d', ho
 WORLD.south = {...WORLD.midwest, clubhouse: 'plantation', path: 'asphalt', bridge: 'wood',
  story: {walls: null, farm: true, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true, geese: 4},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#f2efe6', bark: '#5a5e62', accent: '#7a3a2a', dirt: '#2a3a2a', leaf: '#2a3a2a'}}};
+// Texas (phase 6): the Hill Country's rolling limestone, Ashe juniper and live
+// oak, post oak and pecan; bluebonnets in the rough; a limestone ranch house.
+// Every value PLACED from the study's pages (subs/texas/).
+TRAITS.texas = {...TRAITS.midwest, light: {shade: '#9890b0', exposure: .95},
+ longGrass: {families: [['grassbluestem', 3, 1.2], ['grassbunch', 1, .8]], count: 4000, near: 22, leaf: '#8a8a4e', accent: '#b0804a'},
+ farForest: {cover: .6, size: 9, colors: ['#3e5a36', '#4a6638', '#5a703e']},
+ bank: '#9a8a62', rockMoss: null, rockStyle: 'limestone', treeDensity: 2.2,
+ hills: {base: 30, severity: 60, reach: 80},
+ // Bluebonnet blue and Indian paintbrush red in the rough (vegetation.js
+ // FLOWER_REGIONS; PLACED).
+ scatter: {...DEFAULTS.scatter, rocks: 320, flowers: ['#3a5ac8', '#d8502e']},
+ stands: {...TRAITS.midwest.stands, under: {spacing: 8, plants: [['mountainlaurel', .4], ['shrub', .6]]},
+  plants: [['ashejuniper', .35], ['liveoak', .25], ['postoak', .2], ['cedarelm', .1], ['mesquite', .1]]},
+ plants: [['liveoak', .15], ['ashejuniper', .15], ['postoak', .1], ['mesquite', .08], ['pecan', .05], ['cedarelm', .05], ['redbud', .05], ['mountainlaurel', .07], ['bluebonnet', .2], ['shrub', .1]]};
+PALETTES.texas = {...PALETTES.midwest, name: 'Texas', title: 'Cedar Break', tag: 'Live oaks, limestone and bluebonnets.',
+ rough: '#8a8a4c', semi: '#5e8a40', fairway: '#5a9a44', tree: '#44602e', sky: '#c4d8e8', sand: '#ece0c4', water: '#4a7a72', rock: '#d8d0b8',
+ altitude: 300, temperature: 30, treeKind: 'oak', sun: 40};
+INTERFACE.texas = {panel: 'rgba(34,26,18,.88)', a1: '#fed7aa', a2: '#c2410c', hot: '#fef3c7', soft: '#e2cdb8', onHot: '#2a1408'};
+WORLD.texas = {...WORLD.midwest, clubhouse: 'stonehouse', path: 'asphalt', bridge: 'stone',
+ story: {walls: 'rail', farm: true, ruins: ['cottage'], landmark: 'windpump'}, life: {grazers: ['deer', 4], heron: true},
+ colours: {...WORLD.midwest.colours, clubhouse: {stone: '#e0d6bc', bark: '#6a5a48', accent: '#8a4a2a', dirt: '#3a3024', leaf: '#3a3024'}}};
 // The Florida region is the Keys' (islands, sea); the Flatwoods are inland:
 // these of its fields come from the Heartland's record instead (defaults
 // included: a field the Heartland leaves to DEFAULTS was copied undefined
@@ -656,6 +677,53 @@ const LAND = {
   plants: [['slashpine', .25, 1.1], ['sawpalmetto', .25], ['cabbagepalm', .15], ['sawgrass', .15], ['liveoakmoss', .08], ['baldcypress', .03], ['muhlygrass', .04], ['citrustree', .05]],
   ui: {panel: 'rgba(14,30,34,.88)', a1: '#bae6fd', a2: '#0369a1', hot: '#fde68a', soft: '#b4d0dc', onHot: '#061a24'},
   world: {clubhouse: 'plantation', bridge: 'wood', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2], heron: true}}},
+ // Phase 6: Texas and the deserts (the Texas and deserts packs).
+ hillcountry: {},
+ // Bluebonnet Prairie: the Blackland Prairie, flat and open, pecan and cedar
+ // elm along the creeks, Osage orange hedgerows, bluebonnets everywhere.
+ bluebonnet: {treeDensity: 1.4, rough: '#7e8a4a', hills: {base: 14, severity: 20, reach: 70},
+  // The field in bloom from a distance: the long grass's heads bluebonnet
+  // blue, half as many tufts again (rendering only; PLACED -- the pack's
+  // clumps are under half a metre and read only close to).
+  longGrass: {...TRAITS.texas.longGrass, count: 6000, accent: '#4a62c8'},
+  scatter: {...TRAITS.texas.scatter, rocks: 60}, rockStyle: 'round',
+  stands: {...TRAITS.texas.stands, under: {spacing: 9, plants: [['shrub', 1]]},
+   plants: [['pecan', .3], ['cedarelm', .3], ['osageorange', .2], ['postoak', .2]]},
+  plants: [['bluebonnet', .3], ['pecan', .12], ['cedarelm', .12], ['osageorange', .1], ['postoak', .06], ['prairieforbs', .15], ['shrub', .1], ['redbud', .05]],
+  ui: {panel: 'rgba(16,22,40,.88)', a1: '#bfdbfe', a2: '#1d4ed8', hot: '#fef3c7', soft: '#c0c8dc', onHot: '#0a1230'},
+  world: {clubhouse: 'farmhouse', bridge: 'wood', story: {walls: 'rail', farm: 'redbarn', ruins: ['cottage'], landmark: 'windpump'}}},
+ // Gulf Coast: flat and wet coastal prairie by Houston, live oaks and
+ // loblolly pines, yaupon and wax myrtle, cordgrass at the water.
+ gulfcoast: {treeDensity: 2.4, rough: '#6e7e40', sky: '#c8d6dc', temperature: 31, hills: {base: 6, severity: 12, reach: 70},
+  scatter: {...TRAITS.texas.scatter, rocks: 30}, rockStyle: 'round',
+  stands: {...TRAITS.texas.stands, under: {spacing: 8, plants: [['yaupon', .5], ['waxmyrtle', .5]]},
+   plants: [['liveoak', .4], ['loblollypine', .4], ['pecan', .2]]},
+  plants: [['liveoak', .25], ['loblollypine', .15], ['pecan', .08], ['waxmyrtle', .12], ['yaupon', .1], ['spartina', .12], ['crapemyrtle', .05], ['sawpalmetto', .05], ['shrub', .08]],
+  ui: {panel: 'rgba(14,30,30,.88)', a1: '#99f6e4', a2: '#0f766e', hot: '#fef3c7', soft: '#b4d2cc', onHot: '#061e1c'},
+  world: {clubhouse: 'clapboard', bridge: 'wood', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2], heron: true, geese: 4}}},
+ // Mojave: Joshua trees and creosote on a basin floor, rounded granite,
+ // Mojave yucca and beavertail, smoke trees in the washes.
+ mojave: {rough: '#c2ae84', sky: '#d4dce2', altitude: 900, temperature: 33, rock: '#c8ac88', rockStyle: 'round',
+  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['creosote', .6], ['beavertail', .2], ['brittlebush', .2]]},
+   plants: [['joshuatree', .55], ['smoketree', .1], ['cholla', .2], ['mojaveyucca', .15]]},
+  plants: [['joshuatree', .22], ['creosote', .25], ['mojaveyucca', .12], ['cholla', .1], ['beavertail', .08], ['brittlebush', .08], ['smoketree', .05], ['tamarisk', .02], ['agave', .03], ['jojoba', .05]],
+  ui: {panel: 'rgba(38,30,22,.88)', a1: '#fde4c0', a2: '#9a5b24', hot: '#fff7ed', soft: '#e6d4bc', onHot: '#2a1a0c'}},
+ // Desert Palms: the Coachella Valley's resorts -- fan and date palms,
+ // oleander and tamarisk windbreaks, bougainvillea, mountains behind.
+ palms: {rough: '#b8a878', semi: '#5e8a40', sky: '#d0dce6', temperature: 34, altitude: 100,
+  landform: {...TRAITS.desert.landform, chance: .2},
+  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['oleander', .5], ['creosote', .5]]},
+   plants: [['fanpalm', .4], ['datepalm', .3], ['tamarisk', .3]]},
+  plants: [['fanpalm', .2], ['datepalm', .12], ['oleander', .12], ['bougainvillea', .06], ['creosote', .2], ['brittlebush', .08], ['desertwillow', .06], ['tamarisk', .06], ['smoketree', .05], ['aleppopine', .03], ['agave', .02]],
+  ui: {panel: 'rgba(36,18,28,.88)', a1: '#fbcfe8', a2: '#be185d', hot: '#fef9c3', soft: '#e4c8d4', onHot: '#2a0a18'},
+  world: {clubhouse: 'pavilion'}},
+ // Chihuahuan: lechuguilla, sotol and soaptree yucca on limestone, ocotillo,
+ // mesquite, Emory oak and alligator juniper up the slopes (Big Bend).
+ chihuahuan: {rough: '#b0a07a', sky: '#d8dade', altitude: 1200, temperature: 30, rock: '#c0aa8a', rockStyle: 'angular',
+  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['lechuguilla', .4], ['sotol', .3], ['creosote', .3]]},
+   plants: [['mesquite', .35], ['alligatorjuniper', .25], ['emoryoak', .25], ['soaptreeyucca', .15]]},
+  plants: [['creosote', .22], ['lechuguilla', .14], ['sotol', .12], ['soaptreeyucca', .1], ['ocotillo', .08], ['mesquite', .1], ['cholla', .06], ['beavertail', .04], ['emoryoak', .05], ['alligatorjuniper', .05], ['agave', .04]],
+  ui: {panel: 'rgba(32,26,24,.88)', a1: '#fecaca', a2: '#9f1239', hot: '#fef3c7', soft: '#dccac4', onHot: '#260a10'}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

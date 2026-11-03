@@ -236,6 +236,7 @@ in biomes.js.
   water. The lie on one is `path`, and houses and trees keep off it.
 - **Bridges** (paths.js `findBridges`): every run of a path over a stream, a
   pond, a lake or a ravine is a bridge, timber or stone by the landscape --
+  straight decks, as many as the run's bends need --
   found once for the network and again after the clubhouse's link is laid.
   Each deck's height is fixed then, so the drawn deck and the solid one agree.
   The bench's `pathOverWater` holds it at zero.

@@ -35,6 +35,12 @@ const LAND = {
  lowcountry: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Spanish Moss', 'Rice Field', 'Marsh View'],
  bayou: ['Bald Cypress', 'Tupelo', 'Levee', 'Pirogue', 'Crawfish', 'Cypress Knees', 'Spanish Moss', 'Sugar Mill', 'Slow Water'],
  flatwoods: ['Slash Pine', 'Saw Palmetto', 'Cabbage Palm', 'Sawgrass', 'Cypress Dome', 'Gator Lake', 'Orange Grove', 'Sandhill Crane', 'White Sand'],
+ hillcountry: ['Cedar Break', 'Limestone', 'Live Oak', 'Mountain Laurel', 'Spring Fed', 'Caliche', 'Redbud', 'Low Water Crossing', 'Bluebonnet'],
+ bluebonnet: ['Bluebonnet', 'Paintbrush', 'Pecan Bottom', 'Hedge Row', 'Cedar Elm', 'Black Dirt', 'Meadowlark', 'Stock Tank', 'Big Sky'],
+ gulfcoast: ['Live Oak', 'Bayou Bend', 'Cordgrass', 'Heron', 'Loblolly', 'Wax Myrtle', 'Shell Road', 'Gulf Breeze', 'Spoonbill'],
+ mojave: ['Joshua Tree', 'Creosote', 'Dry Lake', 'Granite', 'Yucca', 'Smoke Tree', 'Tortoise', 'Beavertail', 'Long Shadow'],
+ palms: ['Fan Palm', 'Date Grove', 'Oleander', 'Oasis', 'Windbreak', 'Bougainvillea', 'Mountain View', 'Desert Willow', 'Palm Row'],
+ chihuahuan: ['Lechuguilla', 'Sotol', 'Soaptree', 'Ocotillo', 'Alligator Juniper', 'Caliche', 'Javelina', 'Emory Oak', 'Big Sky'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

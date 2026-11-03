@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=19;
+export const SCHEMA_VERSION=20;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -363,7 +363,11 @@ export const SCHEMA_VERSION=19;
 //     Pine Barrens sand, a lot corner in a Scottish Links pond). The
 //     fingerprint's seed moved its lot or drive in Puget, Sonoran, Heartland,
 //     Redwood, Lake Dunes and High Plains; other seeds elsewhere too.
-export const GENERATOR_VERSION=66;
+// 67: a path's run over water that bends off its one straight deck is split
+//     into decks that follow it (paths.js findBridges; the full bench's
+//     pathOverWater on Bluebonnet Prairie and Hill Country). Moved the Pine
+//     Barrens' fingerprint seed; other bent crossings elsewhere too.
+export const GENERATOR_VERSION=67;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -490,7 +494,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
  'highplains','sandhills','oldnortheast','pinebarrens','alaska',
  // Phase 5 (SCHEMA 19): the South.
- 'longleaf','piedmont','lowcountry','bayou','flatwoods'];
+ 'longleaf','piedmont','lowcountry','bayou','flatwoods',
+ // Phase 6 (SCHEMA 20): Texas and the deserts.
+ 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -686,6 +692,8 @@ const MIGRATIONS={
  17:s=>s,
  // 18 -> 19: five more landscapes (the South); no save changes shape.
  18:s=>s,
+ // 19 -> 20: six more landscapes (Texas and the deserts); no save changes shape.
+ 19:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

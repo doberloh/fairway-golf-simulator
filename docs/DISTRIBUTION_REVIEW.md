@@ -1761,3 +1761,9 @@ models, then the South's 26 species in every variant with 21 far twins,
 the plantation clubhouse and the alligator (the model module 14.35 MB),
 and the five landscapes' card pictures (836 KB of WebP). Still one file,
 no network request.
+
+**Phase 6, Texas and the deserts**: the page is **26,562,670 bytes (14.22
+MB gzipped)**, +3.3 MB: the two packs' 24 species in every variant with
+six far twins and the limestone boulders (the model module 16.19 MB, +2.2
+MB), and six landscapes' card pictures (750 KB). Still one file, no
+network request.

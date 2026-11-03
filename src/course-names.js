@@ -204,6 +204,31 @@ export const NAME_WORDS = {
   ['Slash Pine','Spanish Bayonet','Saw Palmetto','Gator','Sandhill Crane','Orange Grove','Cracker','Scrub Jay','Armadillo','Lake Wales','Cypress Dome','Kissimmee','Hammock','Flatwood','Turpentine Camp','Cattle Pen','Sinkhole','Wiregrass Prairie','Cabbage Palm','Sandspur Flats'],
   ['Flats','Lake','Prairie','Hammock','Pines','Ranch','Grove','Dome','Run','Slough','Crossing','Creek','Island','Pond','Woods','Springs','Ridge','Landing','Bluff','Groves'],
  ],
+ // Phase 6: Texas and the deserts.
+ hillcountry: [
+  ['Cedar Break','Limestone','Ashe','Live Oak Draw','Pedernales','Guadalupe','Blanco','Llano','Frio','Caprock','Spanish Oak','Mountain Laurel','Armadillo Flats','Bandera','Comal','Dripping Springs','Bee Cave','Wimberley','Painted Bunting','Goldencheek'],
+  ['Hills','Draw','Springs','Bluff','Ranch','Crossing','Bend','Creek','Hollow','Divide','Mesa','Gap','Ridge','Falls','Canyon','Pass','Station','Valley','Knob','Fork'],
+ ],
+ bluebonnet: [
+  ['Bluebonnet','Blackland','Indian Paintbrush','Bois d Arc','Pecan Creek','Cedar Elm','Trinity','Brazos','Waxahachie','Ennis','Scissortail','Dickcissel','Cottonseed','Gin House','Prairie Dog','Horned Lark','Primrose','Sorghum','Hedge Apple','Long Horn'],
+  ['Prairie','Fields','Meadow','Farms','Crossing','Station','Creek','Bottoms','Ranch','Run','Lake','Grove','Bend','Flats','Hill','Pond','Road','Mill','Fork','Downs'],
+ ],
+ gulfcoast: [
+  ['Galveston Bay','Buffalo Bayou','Cypress Creek','Brazoria','Matagorda','San Jacinto','Clear Lake','Kemah','Roseate','Whooping Crane','Shrimp Dock','Sugar Land','Rice Belt','Live Oak Point','Cordgrass','Gulf Breeze','Seabrook','Bolivar','Redfish','Nutria Point'],
+  ['Bayou','Landing','Shores','Point','Harbor','Marsh','Island','Prairie','Oaks','Pines','Inlet','Cove','Reach','Dock','Banks','Bend','Creek','Pass','Bay','Lake'],
+ ],
+ mojave: [
+  ['Joshua','Creosote Flat','Mojave','Amargosa','Calico','Kelso','Cima','Ivanpah','Desert Tortoise','Chuckwalla','Silver Lake','Dry Lake','Bristle','Beavertail','Smoke Tree','Coyote Wash','Burro','Pinto','Lucerne','Old Woman'],
+  ['Wash','Flats','Basin','Mesa','Springs','Valley','Pass','Butte','Dunes','Ridge','Wells','Station','Canyon','Playa','Range','Crossing','Rock','Point','Bajada','Gap'],
+ ],
+ palms: [
+  ['Date Grove','Fan Palm','Oasis','San Jacinto Peak','Coachella','Thousand Palms','Tamarisk Row','Oleander','Bougainvillea','Medjool','Agua Caliente','Chino Canyon','Windmill Pass','Salton','Mecca','Thermal','Cathedral City','Smoke Tree Ranch','Santa Rosa','Sunrise Palm'],
+  ['Palms','Oasis','Springs','Canyon','Grove','Ranch','Mesa','Cove','Wash','Villas','Gardens','Court','Pointe','Vista','Lakes','Hills','Park','Club','Terrace','Row'],
+ ],
+ chihuahuan: [
+  ['Lechuguilla','Sotol','Soaptree','Candlewood','Chisos','Davis','Guadalupe Peak','Franklin','Hueco','Organ','Tularosa','Jornada','Terlingua','Marfa','Fort Davis','Collared Peccary','Scaled Quail','Candelilla','Emory','Alligator Bark'],
+  ['Mesa','Draw','Basin','Tanks','Springs','Canyon','Flats','Peak','Wells','Ridge','Arroyo','Gap','Bajada','Bluff','Butte','Pass','Rim','Crossing','Ranch','Window'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.
