@@ -232,12 +232,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   #c4b468) at two-thirds of the ground, its water brackish -- it reads as
   open grass flats round live-oak woods; still no tidal creeks or marsh
   water, which want a water rule of their own.
-- [ ] **Bluebonnet Prairie does not read as a bluebonnet field from the
-  camera**: the pack's clumps (0.3-0.45 m), the rough's flowers and the long
-  grass's blue heads show close to, not as the blue drifts the name
-  promises. Wants drifts of blue painted into the ground (the ground
-  shader's native drifts, or a flower-field ground kind), seen in the
-  pictures of 3 November.
+- [x] **Bluebonnet Prairie reads as bluebonnet fields** (3 November 2026,
+  drawing only): its native-grass drifts beyond play are painted bluebonnet
+  blue (groundTints native #6276c4), with the blue-headed long grass and the
+  rough's flowers. Seen in a capture.
 - [x] **Texas and the deserts** (phase 6; SCHEMA 20, generator 67): Hill
   Country, Bluebonnet Prairie and Gulf Coast (a new `texas` region,
   limestone boulders, a stone ranch-house clubhouse) and the Mojave, Desert

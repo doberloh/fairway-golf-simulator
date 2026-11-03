@@ -788,6 +788,9 @@ const LAND = {
  // Bluebonnet Prairie: the Blackland Prairie, flat and open, pecan and cedar
  // elm along the creeks, Osage orange hedgerows, bluebonnets everywhere.
  bluebonnet: {treeDensity: 1.4, rough: '#7e8a4a', hills: {base: 14, severity: 20, reach: 70},
+  // The fields in bloom: the prairie's native drifts beyond play painted
+  // bluebonnet blue (drawing only; PLACED).
+  groundTints: {native: '#6276c4'},
   // The field in bloom from a distance: the long grass's heads bluebonnet
   // blue, half as many tufts again (rendering only; PLACED -- the pack's
   // clumps are under half a metre and read only close to).

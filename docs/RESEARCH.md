@@ -12588,7 +12588,9 @@ paintbrush red (#d8502e), 16% of the grass blades as everywhere (PLACED).
 Seen when Bluebonnet Prairie's first pictures had no bluebonnets in them:
 the pack's clumps are 0.3-0.45 m and read only close to. Its long grass's
 heads are bluebonnet blue too (#4a62c8, 6,000 tufts against Texas's 4,000;
-PLACED); still not a field from the camera (TODO).
+PLACED); still not a field from the camera -- until its native-grass drifts
+(over half the ground beyond play) were painted bluebonnet blue, #6276c4
+(PLACED; drawing only, the fingerprint unchanged).
 
 
 ## California and the western mountains (phase 7, 3 November 2026)
