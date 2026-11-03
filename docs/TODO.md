@@ -258,9 +258,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   (within 450 m of play) seldom appear. Pebble Beach's holes are on the
   cliffs: the routing wants to seek the coast for an `edgeCoast` landscape
   (a generator step).
-- [ ] **The vineyard is planted as scattered vines**: Wine Country's grape
-  vines stand singly in the rough, not in rows. Rows want a planted block
-  (a generator rule, like a stand, laid on a grid along the contour).
+- [x] **Wine Country's vines in rows** (generator 75): two blocks of 60 by
+  36 m off play, a vine every 2 m along rows 3 m apart (806 vines on three
+  seeds each), a few strays left in the open planting. Built and measured;
+  **not seen in a picture** -- the card cameras do not look where the blocks
+  fell. Check in play.
 - [x] **The high desert and the plains** (phase 8a; SCHEMA 22, generator
   68): Sagebrush and Red Rock (a new `highdesert` region from the Sonoran's
   record, rimrock and hoodoos as stone) and Cross Timbers on the high desert

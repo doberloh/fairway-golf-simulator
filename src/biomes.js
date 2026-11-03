@@ -855,7 +855,9 @@ const LAND = {
  winecountry: {hills: {base: 30, severity: 50, reach: 80}, rough: '#b4a464',
   stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .5], ['shrub', .5]]},
    plants: [['valleyoak', .4], ['blueoak', .3], ['coastliveoak', .2], ['buckeye', .1]]},
-  plants: [['grapevine', .3], ['valleyoak', .15], ['blueoak', .1], ['californiapoppy', .12], ['olivetree', .08], ['buckeye', .05], ['coastliveoak', .08], ['chaparral', .06], ['shrub', .06]],
+  // The vines stand in rows now (course.js, `vineyard`); a few strays.
+  vineyard: {blocks: 2},
+  plants: [['grapevine', .03], ['valleyoak', .2], ['blueoak', .14], ['californiapoppy', .2], ['olivetree', .08], ['buckeye', .05], ['coastliveoak', .08], ['chaparral', .06], ['shrub', .16]],
   ui: {panel: 'rgba(34,14,24,.88)', a1: '#f5d0fe', a2: '#86198f', hot: '#fef3c7', soft: '#e0c8dc', onHot: '#22061e'},
   world: {clubhouse: 'stonehouse'}},
  // Cascades (the Rockies' region): Douglas and noble fir, hemlock, western

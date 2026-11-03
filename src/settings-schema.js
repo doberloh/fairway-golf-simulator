@@ -391,7 +391,10 @@ export const SCHEMA_VERSION=25;
 // 74: the Lowcountry's salt marsh -- its drifts beyond play are cordgrass
 //     flats at two-thirds of the ground, its water brackish. Moved the
 //     Lowcountry.
-export const GENERATOR_VERSION=74;
+// 75: Wine Country's vines in rows -- two vineyard blocks of 60 by 36 m off
+//     play, a vine every 2 m along rows 3 m apart, the scattered vines down to
+//     a few strays (course.js, biomes.js `vineyard`). Moved Wine Country.
+export const GENERATOR_VERSION=75;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

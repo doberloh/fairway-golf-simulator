@@ -107,7 +107,7 @@ test('the corridor rejects candidates without thinning the forest', () => {
   const floor = SEA_LIMITED[biome];
   // The open scatter: the target is its count. A stand (stands.js) is planted
   // on top, from a grid, with no target of its own.
-  const open = w.trees.filter(t => !t.stand && !t.island);
+  const open = w.trees.filter(t => !t.stand && !t.island && !t.vineyard);
   if (floor === undefined)
    assert.equal(open.length, target, `${biome} placed ${open.length} of ${target}`);
   else
@@ -143,7 +143,7 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
    }
    // The open scatter, as tools/metrics.mjs measures it: a stand stands back
    // from every tee by design and would make every surround look clear-cut.
-   const open = w.trees.filter(t => !t.stand && !t.island);
+   const open = w.trees.filter(t => !t.stand && !t.island && !t.vineyard);
    const overall = open.length / ((w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4);
    let rr = 0, rn = 0;
    for (const t of tees) for (let i = 0; i < 700; i++) {

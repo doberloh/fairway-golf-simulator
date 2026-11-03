@@ -2676,6 +2676,27 @@ export function* generateWorldSteps(settings={},options={}){
    trees.push({x:p.x,z:p.z,y:height(p.x,p.z),h:Math.min(h,5.5),r:Math.min(r,2.2),shade:.3,kind,hole:n.h.hole,island:true});
   }
  }
+ // A VINEYARD IN ROWS (biomes.js `vineyard`; Wine Country, the US landscapes
+ // goal): up to `blocks` blocks of 60 by 36 m on open, near-level ground well
+ // off play (30 m from any corridor), each turned to its own bearing, a vine
+ // every 2 m along rows 3 m apart; the scattered trees inside a block are
+ // cleared. Its own stream, so nothing before it moves. Sizes PLACED.
+ if(bio.vineyard){
+  const vr=random(s.seed+':vineyard'),W=60,D=36,blocks=[];
+  for(let t=0;t<400&&blocks.length<(bio.vineyard.blocks||1);t++){
+   const cx=(vr()-.5)*halfX*1.6,cz=(vr()-.5)*halfZ*1.6,a=vr()*Math.PI,ca=Math.cos(a),sa=Math.sin(a);
+   const at=(u,v)=>({x:cx+u*ca+v*sa,z:cz-u*sa+v*ca});
+   let ok=true,lo=Infinity,hi=-Infinity;
+   for(let u=-W/2;u<=W/2&&ok;u+=10)for(let v=-D/2;v<=D/2;v+=9){const p=at(u,v),n=nearest(p.x,p.z);if(!allows(surface(p.x,p.z),'trees')||n.d<30||builtOn(p.x,p.z)||nearRoad(p.x,p.z,4)||blocks.some(b=>Math.hypot(b.cx-p.x,b.cz-p.z)<80)){ok=false;break;}const y=height(p.x,p.z);lo=Math.min(lo,y);hi=Math.max(hi,y);}
+   if(!ok||hi-lo>4)continue;
+   blocks.push({cx,cz,a,at});
+  }
+  for(const b of blocks){
+   const inside=(x,z)=>{const dx=x-b.cx,dz=z-b.cz,u=dx*Math.cos(b.a)-dz*Math.sin(b.a),v=dx*Math.sin(b.a)+dz*Math.cos(b.a);return Math.abs(u)<=W/2+2&&Math.abs(v)<=D/2+2;};
+   for(let i=trees.length-1;i>=0;i--)if(!trees[i].island&&inside(trees[i].x,trees[i].z))trees.splice(i,1);
+   for(let v=-D/2;v<=D/2;v+=3)for(let u=-W/2;u<=W/2;u+=2){const p=b.at(u,v),{h,r}=treeSize('grapevine',.5,.5);trees.push({x:p.x,z:p.z,y:height(p.x,p.z),h,r,shade:.4,kind:'grapevine',hole:nearest(p.x,p.z).h.hole,vineyard:true});}
+  }
+ }
  // BOULDERS ARE WORLD DATA NOW, NOT DECORATION.
  //
  // They were placed in vegetation.js at draw time, from an rng the generator
