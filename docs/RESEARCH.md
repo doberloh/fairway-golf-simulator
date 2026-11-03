@@ -12265,3 +12265,54 @@ tees (1.1 to 1.6 ms, 0.8 to 1.1) while two agents' sheet layouts ran on
 the processor beside it, so the frame by mean (+29%) is not this change's;
 not measured again on a quiet machine. **Size:** the page 14.75 to 14.88 MB
 (7.59 to 7.66 MB gzipped).
+
+## The Heartland and New England packs, and planting past one (2 November 2026)
+
+Twelve models (BLENDER_ASSETS *cartoon_heartland and cartoon_newengland*),
+modelled by two agents beside each other; the owner's "big green fluffy
+balls" note reached the Heartland's at round 15 and its three trees were
+rebuilt in rounds 16-23. What the rounds taught: **the silhouette is where
+the parts sit** -- the elm became a vase only once its limbs bent steeply
+from the fork and then flared, the bur oak only with small clumps on level
+limbs and gaps between; **flat ragged stars, not lumps, make shelves** (the
+white pine's tiers read as bonsai pads until each shelf was a flat star);
+**a broad crown stops being separate balls** when its lobes overlap closer
+than their size and their normals bend to the crown's centre (the beech);
+**a birch's stems start apart at the root**, or they fuse into one fat
+trunk.
+
+**Planting** (PLACED, biomes.js): the Heartland's stands bur oak .26 (0.9 of
+the region's 12-27 m), oak .26, maple .18, elm .12, shagbark .1, aspen .08;
+its open ground adds prairie flowers .06. New England's stands maple .3,
+white pine .17 (1.2), oak .15, beech .12 (0.9), birch .1 (0.7), balsam fir
+.08 (0.7), aspen and spruce .04. The red barn's corn: up to twelve 5 by
+6.4 m patches in four columns and three rows behind it, each only on open,
+out-of-play ground within 1.2 m of level (PLACED).
+
+**Planting past one.** The open scatter picks a species by walking the
+weights cumulatively, so a list summing past 1 never plants what lies past
+it: Redwood Coast's Douglas iris (since 57), Lake Dunes' sand cherry (60)
+and the Sonoran's ironwood were never planted, and jojoba only 52 times in
+about 10,000 plants. Every list sums to 1 now and tests/landscapes-complete
+fails one that does not; the Sonoran's jojoba is in its stands' understorey
+(791 on seed ST-1) and ironwood among its stands (351).
+
+**Leaf fall spared only spruce**, so New England's white pines and firs came
+out orange; vegetation.js `EVERGREEN` now names every conifer, and
+`FALL_HUE` gives birch and aspen yellow, beech bronze, maple red.
+
+**The A/B** (step 3c's build against this one, Low, RTX 4090): New England
++1.3% by mean frame; the Heartland +22% (0.86 to 1.04 ms; graphics +3-5%,
+draws 229 to 255 at its first tee, triangles +8-13%). Cut to four tree
+species the Heartland measured 30% faster than before, but the owner
+amended the goal the same evening -- costs are accepted and recorded, every
+model is used, and a performance pass comes at the end (TODO, *Performance
+pass*) -- so the six species stand. **Size:** the page 14.88 to 15.91 MB
+(7.66 to 8.18 MB gzipped), with the Pacific trees' silhouette rework and
+the ironwood.
+
+**Built courses** (Fairway Course Builder) draw a stored tree from its
+landscape's species by role: the new conifers join the conifer role, and
+flowers (columbine, lupine, prairie forbs, iris) are never a stored shrub
+(built-world.js; the Heartland's shrubs drew as prairie flowers). Drawing
+only, so no `BUILT_VERSION` step.

@@ -246,7 +246,10 @@ export const FAMILY_OF = {
  // The mountain pack (tools/blender/cartoon_mountain.py): the Rockies' own.
  lodgepole: 'lodgepole', bluespruce: 'bluespruce', willowthicket: 'willowthicket', columbine: 'columbine', lupine: 'lupine',
  // The dry-and-lake pack (tools/blender/cartoon_drylake.py).
- jojoba: 'jojoba', sandcherry: 'sandcherry',
+ ironwood: 'ironwood', jojoba: 'jojoba', sandcherry: 'sandcherry',
+ // The Heartland and New England packs.
+ americanelm: 'americanelm', shagbark: 'shagbark', buroak: 'buroak', prairieforbs: 'prairieforbs',
+ paperbirch: 'paperbirch', whitepine: 'whitepine', balsamfir: 'balsamfir', americanbeech: 'americanbeech',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

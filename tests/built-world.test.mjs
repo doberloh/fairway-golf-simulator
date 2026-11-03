@@ -74,7 +74,7 @@ test('the holes take their tees, green, par and frame from the records', () => {
 test('trees keep their sizes; the landscape picks what draws them', () => {
  assert.equal(world.trees.length, 2);
  const [t, s] = world.trees;
- assert.equal(t.h, 18); assert.equal(t.radius, .5); assert.ok(['oak', 'aspen', 'maple'].includes(t.kind));
+ assert.equal(t.h, 18); assert.equal(t.radius, .5); assert.ok(['oak', 'aspen', 'maple', 'buroak', 'americanelm', 'shagbark'].includes(t.kind));
  assert.equal(s.kind, 'shrub');
  assert.equal(speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'pine' || speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'cedar', true);
  assert.ok(['palm', 'hala'].includes(speciesFor(biomeOf('keys'), 'palm', 9, 3, 4)));

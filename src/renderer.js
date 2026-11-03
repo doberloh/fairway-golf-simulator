@@ -2053,6 +2053,25 @@ export class GolfView{
   // drew 163 more calls than Classic on Low). Now one InstancedMesh per part,
   // and one for its ink, for every bay of every bridge.
   const bridgeOf=k=>worldOf(k),key=w.bio?.key||w.settings?.biome,stone=bridgeOf(key).bridge==='stone',name=stone?'Blender_BridgeBay_Stone':'Blender_BridgeBay_Wood';
+  // A COVERED BRIDGE (New England; tools/blender/cartoon_newengland.py): one
+  // model a bridge, not bays -- its roof and portals cannot repeat. Drawn at
+  // its own size across (6.4 m) and height (9.1 m, abutments to ridge, the
+  // deck 2.6 m up), stretched along the span; the model spans its x.
+  if(bridgeOf(key).bridge==='covered'&&w.bridges?.length){
+   const cb='Blender_CoveredBridge_1',cparts=modelParts(cb),cinfo=MESH_MODELS[cb];
+   if(cparts&&cinfo){
+    const H=9.1,DECK=2.6,look={accent:'#a8322a',bark:'#7a7670',stone:'#b8b0a0'},m4=new T.Matrix4(),q=new T.Quaternion(),up=new T.Vector3(0,1,0),pos=new T.Vector3(),sc=new T.Vector3(),ink=this.inkMaterial(H);
+    const list=w.bridges.map(b=>({x:b.x,z:b.z,y:(b.deck??Math.max(w.height(b.x,b.z),0)+.45)-DECK,angle:b.angle+Math.PI/2,sx:(b.span+1)/(2*cinfo.rx),sz:H}));
+    cparts.forEach(p=>{
+     const mat=this.surfaceMaterial(look[p.role]??'#ffffff',{vertexColors:p.painted}),m=new T.InstancedMesh(p.geometry,mat,list.length),k=new T.InstancedMesh(p.geometry,ink,list.length);
+     list.forEach((b,i)=>{q.setFromAxisAngle(up,b.angle);pos.set(b.x,b.y,b.z);sc.set(b.sx,H,b.sz);m4.compose(pos,q,sc);m.setMatrixAt(i,m4);k.setMatrixAt(i,m4);});
+     m.castShadow=m.receiveShadow=true;k.castShadow=k.receiveShadow=false;
+     for(const x of [m,k]){x.instanceMatrix.needsUpdate=true;x.computeBoundingSphere();this.group.add(x);}
+     this.resources.push(mat);
+    });
+    return;
+   }
+  }
   const parts=modelParts(name),info=MESH_MODELS[name];
   if(parts&&info&&w.bridges?.length){
    const H=stone?1.08:1.25,DECK_TOP=.3,look=stone?{stone:bridgeOf(key).colours.bridgeStone}:{bark:'#8f6a45',stone:'#6b4a2f'};
@@ -2211,6 +2230,7 @@ export class GolfView{
    minehead:{bark:'#6b4f36',dirt:'#3a3a3e'},
    sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
    lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
+   redbarn:{accent:'#a8322a',stone:'#f2efe6',bark:'#6a6a6a'},
    pierlight:{stone:'#c8c4bc',accent:'#a8322a',bark:'#2a2a2a'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
@@ -2273,12 +2293,16 @@ export class GolfView{
   // Iteration 4: uninked -- inked, a wall's small stones went black.
   draw('Blender_StoryWall_Stone',sections('stone'),{stone:STONE},false,wallPlace(1.1));
   draw('Blender_StoryWall_Hedge',sections('hedge'),{leaf:'#4f7a3a'},false,wallPlace(1.6));
+  // New England's fieldstone wall (the New England pack): grey stones, some lichened.
+  draw('Blender_FieldWall_1',sections('field'),{stone:'#8a8a80',accent:'#8a9a6a'},false,wallPlace(1.05));
   // A split-rail fence (the US landscapes goal's mountain pack): every other
   // 2 m panel turned 30 degrees each way, which makes the zig-zag.
   draw('Blender_SplitRailFence_1',sections('rail'),{bark:worldOf(key).colours.rail??'#8a7a62'},true,wallPlace(1.1));
   const props=w.storyProps||[],at=(h)=>(s)=>{q.setFromAxisAngle(up,s.rot||0);pos.set(s.x,w.height(s.x,s.z)-.05,s.z);sc.setScalar(h*(s.size||1));};
   // Iteration 7: 1.3 m was a speck from the tee; a Dell's stone is there to be seen.
   draw('Blender_StandingStone_1',props.filter(p=>p.kind==='aimstone'),{stone:'#f7f5ee'},true,at(2.4));
+  // The Heartland's corn behind its red barn (story.js), 2.4 m standing.
+  draw('Blender_CornPatch_1',props.filter(p=>p.kind==='corn'),{leaf:'#4f8a34',accent:'#d8c070'},false,at(2.4));
   // A Restored course's felled avenue (phase 6's history): the shipped stumps.
   draw('Blender_Stump_1',props.filter(p=>p.kind==='stump'),{bark:'#6b5440',leaf:'#8a6e52',stone:'#8a6e52',dirt:'#4a3a2e',accent:'#c9a77c'},true,at(.7));
  }

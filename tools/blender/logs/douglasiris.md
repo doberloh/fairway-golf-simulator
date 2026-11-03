@@ -17,3 +17,4 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r13: Autumn: the olive clump; holds. Next: spring after the pass.
 - r14: Winter: the clump, as the spec. Next: spring.
 - r15: Spring, final: an arching clump with purple flowers among the tips, as the second picture; 594 faces. Done.
+- r19: Silhouette check: a grassy tuft; unchanged.

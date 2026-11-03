@@ -17,3 +17,4 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r13: Rounder whorls: less like lily pads but still top-heavy -- a crown of umbrellas on bare stems; the pictures carry leaves down the stems. Next: a second whorl partway up every stem.
 - r14: A second whorl on every stem: leaves run down the bush now, no longer umbrellas on sticks; 1,596 faces. Next: spring's trusses.
 - r15: Spring, final: leafy down its stems, pink trusses on top, as the first picture; 1,596 faces. Done.
+- r19: Silhouette check: leggy stems with whorls, not a ball; unchanged.

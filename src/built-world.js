@@ -265,12 +265,15 @@ export function builtHomes(doc, height, nearest) {
 // its height among the kinds that fit, hashed from where it stands so the
 // same file always draws the same wood. Drawing only: a tree's trunk and
 // crown are stored and play the same in every landscape.
-const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood']);
+const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir']);
+// Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
+// prairie flowers).
+const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);
 const PALMS = new Set(['palm', 'hala']);
 export function speciesFor(bio, role, h, x, z) {
  const kinds = bio.plants.map(p => p[0]);
  const tall = kinds.filter(k => !GROUND_PLANTS.has(k));
- const small = kinds.filter(k => GROUND_PLANTS.has(k));
+ const small = kinds.filter(k => GROUND_PLANTS.has(k) && !FLOWERS.has(k));
  const pick = list => list[Math.abs(Math.floor(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453)) % list.length];
  if (role === 'shrub') return small.length ? pick(small) : 'shrub';
  const want = role === 'conifer' ? tall.filter(k => CONIFERS.has(k)) : role === 'palm' ? tall.filter(k => PALMS.has(k))

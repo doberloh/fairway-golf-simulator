@@ -66,6 +66,7 @@ const PICK = {
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
   'Madrone_2', 'GarryOak_1', 'BigleafMaple_1', 'BayLaurel_1', 'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1',
+  'AmericanElm_1', 'Shagbark_1', 'BurOak_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'AmericanBeech_1', 'Ironwood_1',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -164,9 +165,23 @@ const PICK = {
  storyrail: ['blender:Blender_SplitRailFence_1'],
  // THE DRY-AND-LAKE PACK (tools/blender/cartoon_drylake.py): the Sonoran's
  // jojoba, Lake Dunes' sand cherry; the pier light is a story piece (above).
- // The ironwood waits for the silhouette pass (TODO, *Silhouette lineup*).
+ // The ironwood after the silhouette pass (one variant: the Sonoran's third tree).
+ ironwood: ['blender:Blender_Ironwood_1'],
  jojoba: ['blender:Blender_Jojoba_1'],
  sandcherry: ['blender:Blender_SandCherry_1'],
+ // THE HEARTLAND PACK (tools/blender/cartoon_heartland.py): one of each tree.
+ // The red barn and the corn are story pieces (above).
+ americanelm: ['blender:Blender_AmericanElm_1'],
+ shagbark: ['blender:Blender_Shagbark_1'],
+ buroak: ['blender:Blender_BurOak_1'],
+ prairieforbs: ['blender:Blender_PrairieForbs_1'],
+ // THE NEW ENGLAND PACK (tools/blender/cartoon_newengland.py): both white
+ // pines (the region's commonest tree), one of the rest. The field wall and
+ // the covered bridge are story pieces (above).
+ paperbirch: ['blender:Blender_PaperBirch_2'],
+ whitepine: ['blender:Blender_WhitePine_1', 'blender:Blender_WhitePine_2'],
+ balsamfir: ['blender:Blender_BalsamFir_1'],
+ americanbeech: ['blender:Blender_AmericanBeech_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -195,7 +210,7 @@ const PICK = {
  // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
  // walls, the farmstead, ruins and landmarks (story.js, renderer.js
  // addBuildings and addStory).
- storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1'].map(k => `blender:Blender_${k}`),
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1', 'RedBarn_1', 'CornPatch_1', 'FieldWall_1', 'CoveredBridge_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack

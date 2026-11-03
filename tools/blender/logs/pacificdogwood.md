@@ -20,3 +20,13 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r16: Bracts half as big again: white over every spray now, close to the second picture; seen from the side, as a golfer sees it, the sprays edges are still plain green where the third picture is white to the rim. Next: a third of the bracts on the sprays rims.
 - r17: A third of the bracts on the rims: white to the sprays edges from the side now, as the third picture; 3,353 faces. Done; its bare winter variant is owed to the seasons step.
 - r18: Second cost pass: ten bracts a spray, not sixteen -- the bracts were 3,000 of its 5,300 triangles; now 4,100. Still white across the sprays in spring, a little less dense.
+- r19: Silhouette lineup: the tiers are there but run together into a fuzzy cone. Next: three thin flat shelves with clear sky between them, wider at the bottom, sprays horizontal, the bracts on top.
+- r20: Silhouette: three level shelves with sky between, lowest widest -- reads as tiers now. The lowest shelf breaks into separate pads on sticks. Next: wider sprays so each tier is one lumpy shelf, a small cap on top.
+- r21: Silhouette: three level shelves and a small flat cap on the leader, sky between the tiers -- reads as a layered dogwood. Holds; no change.
+- r22: Silhouette: level tiers and a cap -- holds.
+- r23: Autumn: the red tiers read as layered shelves, distinct from the vine maple's red clumps beside it; holds.
+- r24: Spring: the tiers read, but the bracts are buried in the flattened shelves -- a few white specks where the pictures are white all over. Next: the bracts lifted above the lobes' tops, nine a spray instead of seven. 3,306 triangles (round 19: 4,130).
+- r25: Spring: the bracts now lie white on top of every shelf, so the tiers read as white layers -- the layered silhouette with its flowers on top, as in the third picture. Still more green than the pictures' white. Next: the bracts a third bigger.
+- r26: Far round (no far twin): the bracts a third bigger read as white on every shelf; holds.
+- r27: Holds (no far twin).
+- r28: Summer, final of the silhouette pass: a small tree of three thin level shelves, sky between, the lowest widest, a small cap -- the layered dogwood outline; in spring its bracts lie white on every shelf. 3,690 triangles (round 19: 4,130). Done.

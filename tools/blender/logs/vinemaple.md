@@ -18,3 +18,4 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r14: Winter: should be bare green stems -- owed to the seasons step. Form holds. Next: spring.
 - r15: Spring, final: a full, rounded light-green mass on splayed stems, as the second picture; 2,644 faces. Done; bare winter variant owed.
 - r18: Second cost pass: the shrub's lobes coarse (80-face) -- 4,600 to 1,000 triangles; the full rounded mass holds, the outline a little more faceted.
+- r19: Silhouette check: a spreading multi-stem shrub of flat clumps, not a ball; unchanged.

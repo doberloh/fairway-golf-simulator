@@ -100,9 +100,15 @@ and quality)." So, for this goal:
   stays is the record: every change to generated output is still a
   `GENERATOR_VERSION` step with its line, the fingerprint run and the moved
   landscapes named in it (*Three version numbers*).
-- **Held as they are:** frame rate and quality on every tier (a change that
-  adds cost is profiled, Low first), and testing -- `npm test`, the round
+- **Held as they are:** quality, and testing -- `npm test`, the round
   matrix, smoke, the bench invariants, all green.
+- **Frame-rate costs are accepted and recorded, then fixed at the end** (the
+  owner amended the goal, 2 November 2026: "Lets ignore performance issues
+  but document them so we can do a pass on that at the end"). Every pack
+  still gets its A/B on Low, and its figure goes into TODO *Performance
+  pass*; nothing is cut to meet a frame. **Every model made is used**: all
+  variants and far twins ship, and no species is held back for cost ("I
+  dont want to end up not using the models we create").
 - **Architect, Haunted Hollow, tournament week and the people are removed**
   (the owner, 2 November 2026); Architect's other world pieces (paths and
   bridges, markings, walls, landmarks, wildlife) are the generator's (PLAN.md
@@ -111,7 +117,10 @@ and quality)." So, for this goal:
   is open to you fully"), as on the rest of this branch; the precautions
   of the section above stay.
 - **Every new model: at least 15 iterations** against its reference
-  pictures, each logged (PLAN.md section 5). Pack contact sheets are made;
+  pictures, each logged (PLAN.md section 5). **And silhouette first** (the owner:
+  the trees read as "big green fluffy balls on the trunks"): every species
+  recognisable by its outline, the rule back-ported to every tree already
+  built (BLENDER_ASSETS *Silhouette first*). Pack contact sheets are made;
   the owner does not need to see them before the work goes on.
 - **Nothing ships early**: no landscape goes out on stand-in models.
 - **Delete this section in the merge** with the course-builder section.

@@ -331,7 +331,18 @@ export const SCHEMA_VERSION=17;
 //     "some" and a landmark needed "lots", so no course had its lighthouse
 //     or church spire; every landscape with one has it again. Sonoran, Lake
 //     Dunes, Links and New England moved.
-export const GENERATOR_VERSION=60;
+// 61: the Heartland and New England packs (step 3), and the ironwood after
+//     the silhouette pass. The Heartland plants bur oak, American elm,
+//     shagbark hickory and prairie flowers, and its farmstead is a red
+//     gambrel barn (its silo in the model) with corn behind it; New England
+//     plants white pine, beech, paper birch and balsam fir, its walls are
+//     fieldstone and its bridges covered; the Sonoran plants ironwood, and
+//     jojoba in its stands' understorey. And every planting list sums to 1
+//     (tests/landscapes-complete): the open pick is cumulative, so what lay
+//     past 1 was never planted -- Redwood Coast's Douglas iris (57), Lake
+//     Dunes' sand cherry (60). Heartland, New England, Sonoran, Redwood
+//     Coast and Lake Dunes moved.
+export const GENERATOR_VERSION=61;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

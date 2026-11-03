@@ -37,6 +37,8 @@ export const GROUND_PLANTS = new Set([
  'willowthicket', 'columbine', 'lupine',
  // ... and the dry-and-lake pack's.
  'jojoba', 'sandcherry',
+ // ... and the Heartland's.
+ 'prairieforbs',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

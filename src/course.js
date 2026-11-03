@@ -2476,7 +2476,9 @@ export function* generateWorldSteps(settings={},options={}){
   // The mountain pack's: willow thickets 1-4 m, columbine 0.3-0.6, lupine 0.4-1.
   willowthicket:[1.4,3.6],columbine:[.3,.6],lupine:[.4,.9],
   // The dry-and-lake pack's: jojoba 1.2-1.8 m, sand cherry 0.4-0.9.
-  jojoba:[1.2,1.8],sandcherry:[.4,.9]};
+  jojoba:[1.2,1.8],sandcherry:[.4,.9],
+  // The Heartland's prairie flowers 0.6-1.2 m.
+  prairieforbs:[.6,1.2]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
@@ -2484,7 +2486,7 @@ export function* generateWorldSteps(settings={},options={}){
  // (An Architect course's trees grew with its age dial until the designer was
  // removed, 2 November 2026.)
  const treeSize=(kind,a,b)=>baseTreeSize(kind,a,b);
- const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'?4+b*3:3+b*4};};
+ const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'||kind==='ironwood'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the

@@ -80,55 +80,93 @@ def madrone(height, spread, stems):
     return build
 
 
+def lump(mesh, rng, p, size, shade, crown, subdiv=3, squash=0.0):
+    """One soft lobe lit with its whole crown (round 20, the silhouette pass:
+    crowns built lobe by lobe where the outline must say the species)."""
+    # Round 27: a far twin's lobe is a twenty-face icosahedron whose faces
+    # sit inside the sphere; an eighth bigger, so the far crown does not
+    # open into separate chunks (the maple's did in round 26).
+    if ct.FAR:
+        size = tuple(v * 1.12 for v in size)
+    mesh.add_lump(p, size, 'leaf', rng, subdiv=subdiv, jitter=.08, crown=crown, blend=.8, shade=shade, flex=.9,
+                  squash_bottom=squash)
+
+
 def garryoak(height, spread, limbs):
-    """Oregon white oak: a short heavy trunk, crooked limbs, a broad dense
-    rounded crown that reaches low (round 2: separate flat clumps on thin
-    legs read as an acacia)."""
+    """Oregon white oak: a short heavy trunk, crooked limbs elbowing out
+    nearly level, a broad lumpy-edged dome much wider than tall with the limbs
+    showing under it (round 2: separate flat clumps on thin legs read as an
+    acacia; round 19, the silhouette lineup: one lumpy ball)."""
     def build(mesh, rng):
         H = height
-        fork = H * rng.uniform(.26, .3)
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), fork, H * .075, lean=drift(rng, H * .03), flare=1.8,
+        fork = H * rng.uniform(.22, .26)
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), fork, H * .08, lean=drift(rng, H * .03), flare=1.8,
                               sides=12, bend=H * .03)
         top = pts[-1]
         c = Vector((top.x, top.y, H * .6))
+        shade = ct.crown_shade(c, (spread * .5, spread * .5, H * .3))
         for i in range(limbs):
-            a = i / limbs * math.tau + rng.uniform(-.35, .35)
-            reach = spread * .5 * rng.uniform(.5, .7)
-            mid = top + Vector((math.cos(a) * reach * .5, math.sin(a) * reach * .5, H * rng.uniform(.08, .16)))
-            end = top + Vector((math.cos(a) * reach, math.sin(a) * reach, H * rng.uniform(.25, .36)))
-            ct.limb(mesh, rng, top, mid, H * .04, H * .025, bow=.15, sides=8)
-            ct.limb(mesh, rng, mid, end, H * .025, H * .012, bow=.25, sides=6)
-            s = spread * rng.uniform(.18, .3)
-            # Round 12, the cost pass: five bigger lobes a clump, not eight.
-            ct.cloud_crown(mesh, rng, end + Vector((0, 0, H * .02)), (s, s, s * .75), lobes=4, lobe_size=(.52, .66),
-                           flat_bottom=.45, shell=.72, core=False)
-        # Round 3: the central mass smaller and higher, so limbs show under it.
-        ct.cloud_crown(mesh, rng, c + Vector((0, 0, H * .08)), (spread * .28, spread * .28, H * .18), lobes=6,
-                       lobe_size=(.38, .52), flat_bottom=.45, shell=.8, core=False)
+            a = i / limbs * math.tau + rng.uniform(-.3, .3)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            reach = spread * .5 * rng.uniform(.62, .78)
+            # The crook: up steeply first, then an elbow out nearly level.
+            elbow = top + out * reach * .32 + Vector((0, 0, H * rng.uniform(.14, .2))) + drift(rng, H * .04)
+            end = top + out * reach + Vector((0, 0, H * rng.uniform(.2, .28)))
+            ct.limb(mesh, rng, top, elbow, H * .045, H * .028, bow=.1, sides=8)
+            ct.limb(mesh, rng, elbow, end, H * .028, H * .012, bow=-.05, sides=6)
+            s = spread * rng.uniform(.14, .21)
+            ct.cloud_crown(mesh, rng, end + Vector((0, 0, H * .07)), (s, s, s * .85), lobes=3, lobe_size=(.58, .74),
+                           flat_bottom=.6, shell=.75, core=False)  # round 24, cost: three lobes a clump
+            # Round 21: a lump between this limb and the next, out on the
+            # shoulder, so the edge is lumpy rather than scalloped pads.
+            a2 = a + math.pi / limbs
+            p = top + Vector((math.cos(a2), math.sin(a2), 0)) * reach * .62 + Vector((0, 0, H * rng.uniform(.36, .44)))
+            s2 = spread * rng.uniform(.1, .13)
+            lump(mesh, rng, p, (s2, s2, s2 * .85), shade, c)
+        # The dome's top: lumps over the middle, high enough that it domes.
+        for i in range(4):
+            p = c + drift(rng, spread * .17) + Vector((0, 0, H * rng.uniform(.14, .22)))
+            s = spread * rng.uniform(.12, .15)
+            lump(mesh, rng, p, (s, s, s * .85), shade, c, squash=.3)
     return build
 
 
 def bigleafmaple(height, spread):
-    """Bigleaf maple: a heavy trunk and a tall, broad oval crown (round 2:
-    the trunk was thin and the crown a squat ball)."""
+    """Bigleaf maple: a heavy trunk forking low into heavy ascending limbs,
+    a tall broad irregular crown of a few very large lobed masses with
+    notches between them (round 2: the trunk was thin and the crown a squat
+    ball; round 19, the silhouette lineup: a lollipop)."""
     def build(mesh, rng):
         H = height
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .4, H * .06, lean=drift(rng, H * .02), flare=1.4,
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .26, H * .06, lean=drift(rng, H * .02), flare=1.4,
                               sides=12)
         top = pts[-1]
-        for i in range(5):
-            a = i / 5 * math.tau + rng.uniform(-.3, .3)
-            end = top + Vector((math.cos(a) * spread * .3, math.sin(a) * spread * .3, H * .28))
-            ct.limb(mesh, rng, pts[-2], end, H * .03, H * .012, bow=.15, sides=7)
-        c = Vector((top.x, top.y, H * .63))
-        ct.cloud_crown(mesh, rng, c, (spread * .48, spread * .46, H * .36), lobes=23, lobe_size=(.27, .39),
-                       flat_bottom=.35, shell=.8)
-        shade = ct.crown_shade(c, (spread * .48, spread * .46, H * .36))
-        for i in range(3):
-            a = rng.uniform(0, math.tau)
-            p = c + Vector((math.cos(a) * spread * .34, math.sin(a) * spread * .32, H * rng.uniform(.12, .3)))
-            s = spread * rng.uniform(.13, .17)
-            mesh.add_lump(p, (s, s, s * .85), 'leaf', rng, subdiv=3, jitter=.08, crown=c, blend=.8, shade=shade, flex=.9)
+        c = Vector((top.x, top.y, H * .62))
+        shade = ct.crown_shade(c, (spread * .5, spread * .5, H * .38))
+        n = 4
+        for i in range(n):
+            a = i / n * math.tau + rng.uniform(-.35, .35)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            r = spread * rng.uniform(.27, .33)
+            z = H * rng.uniform(.48, .58)
+            end = top + out * r + Vector((0, 0, z - top.z))
+            ct.limb(mesh, rng, top, end, H * .038, H * .016, bow=.08, sides=8)
+            # A tall mass on each limb, its lobes stacked up the limb's line.
+            s = spread * rng.uniform(.15, .17)
+            for k in range(4):
+                p = end + out * s * rng.uniform(-.2, .5) + drift(rng, s * .45) + Vector((0, 0, s * (k * .8 - 1.0)))
+                k2 = s * rng.uniform(.95, 1.15) * (1 - .1 * k)
+                lump(mesh, rng, p, (k2, k2, k2 * 1.05), shade, c, squash=.4 if k == 0 else 0)
+        # Round 22: one mass in the middle, so no hole shows through the
+        # crown's heart (the notches belong at the edge).
+        # Round 23: lower and bigger, where the gap was.
+        s = spread * .2
+        lump(mesh, rng, c + Vector((0, 0, -H * .09)), (s, s, s * 1.15), shade, c)
+        # A crown top, off-centre, so the outline is not symmetric.
+        for k in range(3):
+            p = c + drift(rng, spread * .14) + Vector((0, 0, H * rng.uniform(.18, .3)))
+            s = spread * rng.uniform(.12, .15)
+            lump(mesh, rng, p, (s, s, s), shade, c)
     return build
 
 
@@ -156,52 +194,82 @@ def dogwood(height, spread):
                               sides=8, shade_low=.9, shade_high=1.1)
         # Round 12, the cost pass (18,665 faces): three tiers of four sprays,
         # coarse flat lobes, each bract four flat petals rather than a sphere.
+        # Round 20, the silhouette pass: three thin level shelves with sky
+        # between them, the lowest widest, so the tiers read at a glance
+        # (round 19's sprays ran together into a fuzzy cone).
         tiers = 3
         for t in range(tiers):
-            z = H * (.4 + .2 * t)
-            w = spread * (.5 - .09 * t)
+            z = H * (.36 + .23 * t)
+            w = spread * (.52 - .12 * t)
             j = min(len(pts) - 1, int((z / (H * .62)) * (len(pts) - 1)))
             for k in range(4):
                 a = k / 4 * math.tau + t * .7 + rng.uniform(-.3, .3)
-                end = Vector((pts[j].x + math.cos(a) * w * .8, pts[j].y + math.sin(a) * w * .8, z + H * .03))
-                ct.limb(mesh, rng, pts[j], end, H * .01, H * .004, bow=.05, sides=5)
-                s = w * .56
+                end = Vector((pts[j].x + math.cos(a) * w * .8, pts[j].y + math.sin(a) * w * .8, z + H * .02))
+                ct.limb(mesh, rng, pts[j], end, H * .01, H * .004, bow=.03, sides=4)
+                s = w * .66
                 c = end + Vector((0, 0, H * .01))
-                # Round 13: six lobes a spray, rounder, so the crown is full.
-                ct.cloud_crown(mesh, rng, c, (s, s, s * .45), lobes=6, lobe_size=(.48, .62), flat_bottom=.5, shell=.62, core=False, subdiv=1)
+                ct.cloud_crown(mesh, rng, c, (s, s, s * .26), lobes=5, lobe_size=(.5, .62), flat_bottom=.7, shell=.6, core=False, subdiv=1)
                 # The bracts lie on the spray's top: flat white stars.
-                for b in range(10):
+                for b in range(9):
                     e = rng.uniform(0, math.tau)
                     r = rng.uniform(.3, 1.0)
                     # Round 17: a third on the spray's rim, seen from the side.
                     if b % 3 == 0:
                         r = rng.uniform(.95, 1.1)
-                        q = c + Vector((math.cos(e) * s * r, math.sin(e) * s * r, s * rng.uniform(-.05, .12)))
+                        q = c + Vector((math.cos(e) * s * r, math.sin(e) * s * r, s * rng.uniform(.05, .2)))
                     else:
-                        q = c + Vector((math.cos(e) * s * r, math.sin(e) * s * r, s * .22 + s * .3 * (1.05 - r)))
-                    bract(mesh, rng, q, spread * .078)  # round 16: half as big again
+                        q = c + Vector((math.cos(e) * s * r, math.sin(e) * s * r, s * .34 + s * .1 * (1.05 - r)))  # round 25: above the flat lobes' tops
+                    bract(mesh, rng, q, spread * .1)  # round 16: half as big again; round 26 a third more
+        # Round 21: a small flat cap on the leader, so the top tier ends.
+        c = pts[-1] + Vector((0, 0, H * .06))
+        s = spread * .16
+        ct.cloud_crown(mesh, rng, c, (s, s, s * .4), lobes=3, lobe_size=(.55, .7), flat_bottom=.7, shell=.5, core=False, subdiv=1)
+        for b in range(4):
+            e = b / 4 * math.tau + rng.uniform(-.4, .4)
+            bract(mesh, rng, c + Vector((math.cos(e) * s * .6, math.sin(e) * s * .6, s * .25)), spread * .078)
     return build
 
 
 def baylaurel(height, spread, stems):
     """California bay laurel: several stems leaning out from one root under a
-    broad dense dome that comes down nearly to the ground (round 2: a ball
-    on short stems read as a lollipop)."""
+    broad dense haystack dome whose skirt comes down nearly to the ground
+    (round 2: a ball on short stems read as a lollipop; round 19, the
+    silhouette lineup: still a ball, the bigleaf maple's twin). Round 20:
+    the dome built in rings -- a hanging skirt, a shoulder, a crown -- wider
+    than tall, the leaning stems showing in the dark gap under the skirt."""
     def build(mesh, rng):
         H = height
-        for k in range(stems):
-            a = k / stems * math.tau + rng.uniform(-.5, .5)
-            ct.trunk(mesh, rng, Vector((math.cos(a) * .3, math.sin(a) * .3, 0)), H * .4, H * .03,
-                     lean=Vector((math.cos(a), math.sin(a), 0)) * H * .16, flare=1.4, sides=8, bend=H * .03)
-        c = Vector((0, 0, H * .46)) + drift(rng, spread * .08)
-        ct.cloud_crown(mesh, rng, c, (spread * .56, spread * .5, H * .4), lobes=24, lobe_size=(.24, .36),
-                       flat_bottom=.15, shell=.88)
-        shade = ct.crown_shade(c, (spread * .56, spread * .5, H * .4))
-        for i in range(4):
-            a = rng.uniform(0, math.tau)
-            p = c + Vector((math.cos(a) * spread * .45, math.sin(a) * spread * .4, H * rng.uniform(-.25, .3)))
-            s = spread * rng.uniform(.1, .14)
-            mesh.add_lump(p, (s, s, s * .85), 'leaf', rng, subdiv=3, jitter=.08, crown=c, blend=.8, shade=shade, flex=.9)
+        R = spread * .5
+        tops = []
+        for k in range(stems + 2):
+            a = k / (stems + 2) * math.tau + rng.uniform(-.4, .4)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            pts, radii = ct.trunk(mesh, rng, out * .3, H * rng.uniform(.4, .5), H * .028, lean=out * R * .5, flare=1.4,
+                                  sides=7, bend=H * .04, steps=6)
+            tops.append(pts[-1])
+        c = Vector((0, 0, H * .5)) + drift(rng, R * .1)
+        shade = ct.crown_shade(c, (R, R, H * .45), low=.4)
+        # The skirt: lobes hanging at the rim, their bottoms near the ground.
+        n = 11
+        for i in range(n):
+            a = i / n * math.tau + rng.uniform(-.15, .15)
+            r = R * rng.uniform(.86, .94)
+            p = Vector((math.cos(a) * r, math.sin(a) * r, H * rng.uniform(.25, .3)))
+            s = R * rng.uniform(.24, .28)
+            lump(mesh, rng, p, (s, s, s * 1.15), shade, c, squash=.5)
+        # The shoulder and the crown: the dome's top broad and only gently
+        # rounded, lumpy-edged.
+        n = 6
+        for i in range(n):
+            a = i / n * math.tau + rng.uniform(-.3, .3) + .5
+            r = R * rng.uniform(.55, .65)
+            p = Vector((math.cos(a) * r, math.sin(a) * r, H * rng.uniform(.5, .58)))
+            s = R * rng.uniform(.3, .36)
+            lump(mesh, rng, p, (s, s, s * .9), shade, c)
+        for i in range(3):
+            p = drift(rng, R * .28) + Vector((0, 0, H * rng.uniform(.68, .74)))
+            s = R * rng.uniform(.3, .36)
+            lump(mesh, rng, p, (s, s, s * .8), shade, c)
     return build
 
 

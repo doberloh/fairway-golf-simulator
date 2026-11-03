@@ -17,7 +17,8 @@ const lots = biome => world({seed: 'ST-1', holes: 9, biome});
 test('each landscape tells its own story', () => {
  for (const biome of BIOME_KEYS) {
   const w = lots(biome), set = storySet(biome), kinds = new Set(w.buildings.filter(b => b.story).map(b => b.kind));
-  if (set.farm) assert.ok(kinds.has('barn'), `${biome}: no farmstead`);
+  if (set.farm) assert.ok(kinds.has(typeof set.farm === 'string' ? set.farm : 'barn'), `${biome}: no farmstead`);
+  if (set.farm === 'redbarn') assert.ok(w.storyProps.some(p => p.kind === 'corn'), `${biome}: no corn by the barn`);
   if (set.ruins?.length) assert.ok(set.ruins.some(r => kinds.has(r)), `${biome}: no ruin (${[...kinds]})`);
   // A landmark was silently lost for a day (generator 55-59): the story was
   // fixed at "some" and a landmark needed "lots".

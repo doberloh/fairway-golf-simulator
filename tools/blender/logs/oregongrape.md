@@ -17,3 +17,4 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r13: Autumn after the cost pass: purple-brown with blue berries; holds. Next: winter.
 - r14: Winter: red-purple leaves, as the spec. Next: spring.
 - r15: Spring, final: upright holly-leaved clumps with yellow clusters, as the second picture; 1,644 faces. Done.
+- r19: Silhouette check: an upright leafy clump; unchanged.

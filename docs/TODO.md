@@ -92,12 +92,23 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     lost since 55) and a lane of no trees to them. Seen in captures (the pier
     light over the dune woods); not seen by a person in play. The ironwood
     is held for the silhouette pass.
-  - [ ] Heartland's six (American elm,
-    shagbark hickory, cornfield, red barn, bur oak, prairie forbs); the
-    Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,
-    bougainvillea, traveler's palm, hibiscus, banyan); New England's six
-    (paper birch, white pine, dry-stone wall, covered bridge, balsam fir,
-    American beech); Lake Dunes' two (lighthouse, sand cherry).
+  - [x] `cartoon_heartland` and `cartoon_newengland` -- the Heartland's
+    bur oak, elm, shagbark hickory, prairie flowers, red barn with corn;
+    New England's white pine, paper birch, beech, balsam fir, fieldstone
+    walls and covered bridges; the ironwood after its silhouette pass. In
+    the game since generator 61, with every planting list summing to one
+    (Redwood Coast's iris and Lake Dunes' sand cherry had never been
+    planted). Seen in captures (the barn, a covered bridge, New England's
+    shore); not seen by a person in play; the corn not caught in a capture.
+  - [ ] The Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,
+    bougainvillea, traveler's palm, hibiscus, banyan): modelled (fifteen
+    rounds, silhouette first), not yet wired -- waits for the silhouette
+    pass's last packs, so the model module is built once from finished work.
+  - [ ] **Every variant shipped** (the owner: "I dont want to end up not
+    using the models we create"): the second variants held back for cost
+    (Madrone_1, GarryOak_2, BigleafMaple_2, BayLaurel_2, BlueSpruce_2,
+    Ironwood_2, AmericanElm_2, Shagbark_2, BurOak_2, PaperBirch_1,
+    BalsamFir_2, AmericanBeech_2, RoyalPalm_2) and their far twins.
   - [ ] Bare winter variants of the deciduous ones -- owed to *Seasons on*.
   - [ ] **Silhouette lineup** (the owner, 2 November 2026: the trees read as
     "big green fluffy balls on the trunks"): every landscape's trees side by
@@ -109,6 +120,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     against its pictures, its fingerprint and A/B as a pack's
     (BLENDER_ASSETS, *Silhouette first*). Next in line for an agent, before
     the Keys pack.
+- [ ] **Performance pass, at the end of the goal** (the owner, 2 November
+  2026: accept the costs while building, record them, fix them in one pass).
+  Measured so far, Low, by mean frame against the build before (frame-ab,
+  RTX 4090, so headroom, not a weak machine): Pacific pack +2.3% (before
+  every variant shipped; to measure again), Rockies +1.8%, Lake Dunes not
+  measured cleanly (agents on the processor), Heartland +22% (six tree
+  species; draws +26, triangles +8-13%), New England +1.3%. Candidates:
+  fewer species drawn per landscape at range, far twins for shrubs, merging
+  a landscape's species into fewer draws. The profile against
+  bench/profile-baseline.json is due here.
 - [ ] **The streets kit and the roads pass**: no road across a fairway (a
   bench invariant), the clubhouse and parking near an edge; roads anywhere
   in the builder (a `BUILT_VERSION` step).

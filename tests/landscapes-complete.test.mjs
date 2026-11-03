@@ -4,6 +4,17 @@
 // BIOME_KEYS and fails on the first thing missing, naming the landscape. A
 // landscape the goal adds is not done until it passes here.
 import test from 'node:test';
+
+// The open scatter's pick walks the weights cumulatively, so a list summing
+// past 1 never plants what is past it (generator 61: Redwood Coast's iris,
+// Lake Dunes' sand cherry and the Sonoran's ironwood were never planted).
+test('every planting list sums to one', () => {
+ for (const [key, b] of Object.entries(BIOMES)) for (const [name, list] of [['plants', b.plants], ['stands', b.stands?.plants], ['under', b.stands?.under?.plants]]) {
+  if (!list) continue;
+  const sum = list.reduce((t, p) => t + p[1], 0);
+  if (Math.abs(sum - 1) > 1e-9) throw Error(`${key} ${name} sums to ${sum.toFixed(3)}`);
+ }
+});
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {BIOME_KEYS, migrateSettings, DEFAULT_COURSE, validateSettings} from '../src/settings-schema.js';

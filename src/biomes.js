@@ -210,11 +210,13 @@ const TRAITS = {
   // A mesquite bosque and cholla thicket where the desert was never cleared
   // -- the Sonoran Desert's densest country lies along its washes.
   stands: {edge: 75, wobble: 30, ramp: 25, patch: .14, scale: 220, near: 45, spacing: 10, share: .55,
-   under: {spacing: 8, plants: [['creosote', .5], ['brittlebush', .3], ['agave', .2]]},
-   plants: [['mesquite', .38], ['palo', .27], ['cholla', .2], ['cactus', .08], ['ocotillo', .07]]},
+   // Jojoba in the understorey and ironwood among the stands' trees as
+   // well as in the open (generator 61). Weights PLACED.
+   under: {spacing: 8, plants: [['creosote', .42], ['brittlebush', .25], ['agave', .18], ['jojoba', .15]]},
+   plants: [['mesquite', .33], ['palo', .25], ['ironwood', .08], ['cholla', .19], ['cactus', .08], ['ocotillo', .07]]},
   // Jojoba from the dry-and-lake pack (the US landscapes goal), taken from
   // creosote and brittlebush. Weight PLACED.
-  plants: [['cactus', .18], ['cholla', .1], ['palo', .18], ['mesquite', .14], ['ocotillo', .1], ['agave', .08], ['creosote', .11], ['brittlebush', .06], ['jojoba', .05]]},
+  plants: [['cactus', .18], ['cholla', .1], ['palo', .16], ['mesquite', .12], ['ocotillo', .1], ['agave', .08], ['creosote', .11], ['brittlebush', .06], ['jojoba', .05], ['ironwood', .04]]},
  mountain: {light: {shade: '#7c90c4'},
   longGrass: {families: [['grassalpine', 3, .4], ['grassfescue', 2, .6]], count: 3500, near: 18, leaf: '#6f8a48', accent: '#e8d36a'},
   farForest: {cover: .8, size: 9, line: 520, colors: ['#284c35', '#335c3c', '#466d3f']},
@@ -278,8 +280,14 @@ const TRAITS = {
   // Woodlots of oak and maple left round the farmland.
   stands: {edge: 60, wobble: 25, ramp: 25, patch: .15, scale: 260, near: 45, spacing: 11, share: .6,
    under: {spacing: 8.5, plants: [['shrub', .5], ['bracken', .5]]},
-   plants: [['oak', .5], ['maple', .35], ['aspen', .15]]},
-  plants: [['oak', .5], ['aspen', .18], ['maple', .22], ['shrub', .1]]},
+   // The Heartland's own (the US landscapes goal's Heartland pack): bur oak
+   // the savanna tree, elm and shagbark hickory. Heights: bur oak 0.9 of the
+   // region's 12-27 m, elm and hickory 1.0. Weights PLACED.
+   // Six tree species cost Low about 22% (the A/B; each species is its
+   // draws near and far): accepted until the goal's performance pass (the
+   // owner, 2 November 2026; TODO, *Performance pass*).
+   plants: [['buroak', .26, .9], ['oak', .26], ['maple', .18], ['americanelm', .12], ['shagbark', .1], ['aspen', .08]]},
+  plants: [['buroak', .2, .9], ['oak', .22], ['americanelm', .12], ['shagbark', .08], ['aspen', .1], ['maple', .14], ['shrub', .08], ['prairieforbs', .06]]},
  florida: {light: {shade: '#6fa0bf'},
   longGrass: {families: [['grassplume', 1, 1.3]], count: 1800, near: 20, leaf: '#5d8f45', accent: '#efe4c4'},
   farForest: {cover: .8, size: 10, colors: ['#3f7a35', '#4d8a3a', '#62983f']},
@@ -335,10 +343,12 @@ const TRAITS = {
   // scale, which is how the understorey stays under the canopy.
   plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
    ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
-   ['swordfern', .17], ['salal', .09], ['sorrel', .07],
+   ['swordfern', .15], ['salal', .08], ['sorrel', .06],
    // Redwood Coast's own (the US landscapes goal's Pacific pack): bay
    // laurel in the mid-storey (8-25 m of the grove's 42-116), Pacific
-   // rhododendron and Douglas iris on the floor. Weights PLACED.
+   // rhododendron and Douglas iris on the floor. Weights PLACED, taken from
+   // the floor's fern, salal and sorrel (generator 61: the list summed to
+   // 1.04 and the open pick, cumulative, never reached the iris).
    ['baylaurel', .04, .2], ['pacificrhododendron', .03], ['douglasiris', .02]]},
  northeast: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
@@ -356,8 +366,11 @@ const TRAITS = {
   // The autumn hillside of the owner's photograph: closed hardwood forest.
   stands: {edge: 50, wobble: 22, ramp: 20, patch: .2, scale: 240, near: 35, spacing: 9, share: .6,
    under: {spacing: 8, plants: [['bracken', .6], ['shrub', .4]]},
-   plants: [['maple', .42], ['oak', .25], ['aspen', .2], ['spruce', .13]]},
-  plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},
+   // New England's own (the New England pack): white pine (1.2 of the
+   // region's 12-27 m), beech (0.9), paper birch and balsam fir (0.7).
+   // Weights PLACED.
+   plants: [['maple', .3], ['whitepine', .17, 1.2], ['oak', .15], ['americanbeech', .12, .9], ['paperbirch', .1, .7], ['balsamfir', .08, .7], ['aspen', .04], ['spruce', .04]]},
+  plants: [['maple', .27], ['whitepine', .14, 1.2], ['oak', .16], ['americanbeech', .1, .9], ['paperbirch', .12, .7], ['balsamfir', .07, .7], ['aspen', .08], ['spruce', .06]]},
  // LAKESHORE DUNES (23 October 2026, the owner's photograph of a Harbor
  // Shores dune hole; RESEARCH, *Lakeshore Dunes, the tenth biome*).
  //
@@ -401,7 +414,7 @@ const TRAITS = {
   stands: {edge: 70, wobble: 25, ramp: 25, patch: .12, scale: 240, near: 50, spacing: 10, share: .6,
    under: {spacing: 8.5, plants: [['bracken', .5], ['shrub', .5]]},
    plants: [['blackoak', .4], ['cottonwood', .3], ['sugarmaple', .3]]},
-  plants: [['cottonwood', .17], ['dunegrass', .34], ['blackoak', .17], ['sugarmaple', .09],
+  plants: [['cottonwood', .17], ['dunegrass', .29], ['blackoak', .17], ['sugarmaple', .09],
    ['pine', .05], ['juniper', .12], ['commonjuniper', .06], ['sandcherry', .05]]},
 };
 
@@ -489,7 +502,9 @@ export const WORLD = {
   story: {walls: 'stone', ruins: ['chapel', 'cottage'], landmark: 'lighthouse'}, life: {grazers: ['sheep', 9], fliers: ['gull', 3]},
   colours: {clubhouse: {stone: '#c3bfb2', bark: '#5b6168', accent: '#ece8de', dirt: '#2a3036'}, riprap: '#99948a', wall: '#cfc8b6', ruin: '#bdb7a8', bridgeStone: '#bdb6a6'}},
  midwest: {edge: null, fountain: false, clubhouse: 'farmhouse', path: 'asphalt', bridge: 'wood',
-  story: {walls: 'hedge', farm: true}, life: {grazers: ['deer', 3], geese: 6},
+  // The red barn (with its silo and lean-to) and corn beside it (the
+  // Heartland pack).
+  story: {walls: 'hedge', farm: 'redbarn'}, life: {grazers: ['deer', 3], geese: 6},
   colours: {clubhouse: {stone: '#f2efe6', bark: '#7a3d32', accent: '#ffffff', dirt: '#2e3a44'}, riprap: '#8f897e', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#bdb6a6'}},
  florida: {edge: 'riprap', fountain: true, clubhouse: 'pavilion', path: 'shell', bridge: 'wood',
   story: {walls: null, ruins: ['sugarmill']}, life: {fliers: ['gull', 3], heron: true},
@@ -497,8 +512,9 @@ export const WORLD = {
  redwood: {edge: 'riprap', fountain: true, clubhouse: 'loglodge', path: 'bark', bridge: 'wood',
   story: {walls: null, ruins: ['cottage']}, life: {grazers: ['elk', 3]},
   colours: {clubhouse: {stone: '#9a6342', bark: '#3f4a3a', accent: '#d8c7a8', dirt: '#2a2e2c'}, riprap: '#837767', wall: '#c2b8a4', ruin: '#948a7a', bridgeStone: '#bdb6a6'}},
- northeast: {edge: null, fountain: false, clubhouse: 'clapboard', path: 'asphalt', bridge: 'stone',
-  story: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
+ // Fieldstone walls and covered bridges (the New England pack).
+ northeast: {edge: null, fountain: false, clubhouse: 'clapboard', path: 'asphalt', bridge: 'covered',
+  story: {walls: 'field', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
   colours: {clubhouse: {stone: '#f1ede2', bark: '#3d4044', accent: '#ffffff', dirt: '#2d3640'}, riprap: '#928b80', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#c4b9a6'}},
  lakeshore: {edge: null, fountain: false, clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
   // A Great Lakes pier light for its landmark (the dry-and-lake pack).

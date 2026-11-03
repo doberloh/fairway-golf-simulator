@@ -41,6 +41,9 @@ export const STORY_PIECES = {
  // Drawn 24 m (the model's 17 at 1.4; spec 15-30, PLACED): at 17 it hid among
  // the dune woods' 20 m trees.
  pierlight: {model: 'PierLight_1', width: 8.4, depth: 16.8, height: 24},
+ // The Heartland's red gambrel barn with its lean-to and silo, one model
+ // (tools/blender/cartoon_heartland.py): its farmstead in place of barn and silo.
+ redbarn: {model: 'RedBarn_1', width: 24, depth: 21, height: 18.4},
  church: {model: 'Church', width: 9, depth: 16, height: 24},
 };
 // Each landscape's story is its architect block's (biomes.js).
@@ -97,13 +100,28 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
   const p = STORY_PIECES[kind], b = {kind, model: p.model, club: true, story: true, x: at.x, z: at.z, y: at.lo, base: at.lo, rotation: at.rot, width: p.width, depth: p.depth, height: p.height};
   out.buildings.push(b); taken.push(b); return b;
  };
- // The farmstead: a barn, its silo beside it, the windpump in the yard.
+ // The farmstead: a barn, its silo beside it, the windpump in the yard. A
+ // landscape may name its own barn (`farm: 'redbarn'`, the Heartland's,
+ // whose model carries its silo), and that one has corn behind it.
  if (set.farm) {
-  const barn = site(STORY_PIECES.barn);
+  const kindOfBarn = typeof set.farm === 'string' ? set.farm : 'barn', barn = site(STORY_PIECES[kindOfBarn]);
   if (barn) {
-   const b = build('barn', barn), cs = Math.cos(b.rotation), sn = Math.sin(b.rotation);
+   const b = build(kindOfBarn, barn), cs = Math.cos(b.rotation), sn = Math.sin(b.rotation);
    const off = (lx, lz) => ({x: b.x + lx * cs + lz * sn, z: b.z - lx * sn + lz * cs, rot: b.rotation});
+   // The corn: patches of the model's 5 by 6.4 m in four columns and three
+   // rows behind the barn, each only on open, out-of-play, near-level ground
+   // (field size PLACED).
+   if (kindOfBarn === 'redbarn') {
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 3; r++) {
+     const at = off((c - 1.5) * 5.4, b.depth / 2 + 10 + r * 6.8), n = nearest(at.x, at.z);
+     const y = [[2.5, 3.2], [-2.5, -3.2], [2.5, -3.2], [-2.5, 3.2]].map(([u, v]) => height(at.x + u, at.z + v));
+     if (PLAYED.has(surface(at.x, at.z)) || (n?.d ?? 999) < CLEAR_WALL || blocked(at.x, at.z, 4) || !free(at.x, at.z, 4) || Math.max(...y) - Math.min(...y) > 1.2) continue;
+     out.props.push({kind: 'corn', x: at.x, z: at.z, rot: at.rot, size: 1});
+     out.clearings.push({x: at.x, z: at.z, r: 5});
+    }
+   }
    for (const [kind, lx, lz] of [['silo', b.width / 2 + 4.5, 2], ['windpump', -b.width / 2 - 9, -6]]) {
+    if (kind === 'silo' && kindOfBarn === 'redbarn') continue;
     if (kind === 'windpump' && amount < 2) continue;
     const at = off(lx, lz), y = height(at.x, at.z);
     if (!PLAYED.has(surface(at.x, at.z)) && (nearest(at.x, at.z)?.d ?? 999) > CLEAR_WALL) build(kind, {...at, lo: y});
@@ -185,7 +203,7 @@ export function segDist(w, x, z) {
 }
 // A wall as the boxes physics stops a ball against: one per segment, 0.7 m
 // thick, its height by kind (a hedge stands taller).
-export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1};
+export const WALL_HEIGHT = {stone: 1.1, leaning: 1.2, hedge: 1.6, rail: 1.1, field: 1.05};
 // How wide a wall's solid box is. A split-rail fence (the US landscapes goal's
 // mountain pack) zig-zags 30 degrees either side of its run, so its rails
 // reach about 0.6 m out each way. PLACED.

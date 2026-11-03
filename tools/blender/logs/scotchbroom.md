@@ -18,3 +18,4 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r14: Winter: green stems, a mound, as the spec. Next: spring yellow after the cost pass.
 - r15: Spring, final: a rounded mound solid with yellow, as the second picture; 3,248 faces. Done.
 - r18: Second cost pass: 22 switches, a coarse centre -- 4,100 to 2,800 triangles; the yellow mound holds.
+- r19: Silhouette check: a rounded mound, as a broom bush is in the pictures (yellow in spring); a shrub, left unchanged.

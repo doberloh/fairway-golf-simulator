@@ -600,3 +600,29 @@ rounds each: what the Sonoran and Lake Dunes lacked.
 The pier light is Lake Dunes' landmark (story.js `STORY_PIECES.pierlight`,
 drawn 24 m on an 8.4 by 16.8 m footing). Painting its accent #f2efe6
 makes a white light like St. Joseph's.
+
+### cartoon_heartland and cartoon_newengland
+
+Two packs worked by agents on 2 November 2026, silhouette first (the
+Heartland's trees from round 16 of 23, New England's from round 1 of 16).
+
+| Model | Species (family) | Outline | Triangles |
+| --- | --- | --- | --- |
+| `Blender_AmericanElm_1`, `_2` | `americanelm` | A vase: limbs fanning up from a low fork to an umbrella over the top quarter, sky under it | 4,060-4,780 |
+| `Blender_Shagbark_1`, `_2` | `shagbark` | A long straight trunk bare to 40%, a narrow ragged column of clumps on short level branches | 3,340 |
+| `Blender_BurOak_1`, `_2` | `buroak` | A massive short trunk, heavy level limbs crooking up, ragged clumps with gaps, far wider than tall | 4,310-5,060 |
+| `Blender_PrairieForbs_1` | `prairieforbs` | Grass with blazing star, coneflowers and black-eyed Susans (purple accent, gold stone, dark cones bark) | 860 |
+| `Blender_CornPatch_1` | story prop `corn` | Five rows of thirteen corn plants, 5 by 6.4 m, rows along Y | 2,730 |
+| `Blender_RedBarn_1` | story piece `redbarn` | A red gambrel barn, white trim, cupola, lean-to and a banded silo; 24 by 21 m, front -Y | 770 |
+| `Blender_PaperBirch_1`, `_2` | `paperbirch` | White stems with black marks splaying from one root, small clumps up the top half, sky between | 3,070-4,660 |
+| `Blender_WhitePine_1`, `_2` | `whitepine` | Separate level shelves of ragged tufts (flat stars) on a tall dark trunk; `_1` flagged to the lee | 4,390-4,960 |
+| `Blender_BalsamFir_1`, `_2` | `balsamfir` | A narrow regular sharp spire to the ground | 1,440-1,680 |
+| `Blender_AmericanBeech_1`, `_2` | `americanbeech` | A smooth grey trunk under a broad low dome on long level limbs | 4,470 |
+| `Blender_FieldWall_1` | story wall `field` | One 2 m section of tumbled fieldstone, lichen on a third (accent), 1.05 m | 550 |
+| `Blender_CoveredBridge_1` | bridge `covered` | A red board bridge, gabled roof, open portals, stone abutments; spans X, 24 m by 5 m, deck 2.6 m above its base | 330 |
+
+The barn replaces the farmstead's barn and silo in the Heartland (story.js
+`farm: 'redbarn'`), with up to twelve corn patches behind it; New England's
+walls are `field` and its bridges `covered` (renderer.js draws one covered
+bridge a crossing, stretched to the span, at its own width and height).
+Leaf fall turns only broadleaves (vegetation.js `EVERGREEN`, `FALL_HUE`).

@@ -1,0 +1,27 @@
+# buroak: iterations (tools/blender/cartoon_heartland.py)
+
+One line a round: what was wrong beside the reference pictures, and what changed. The side-by-side of each round: bench/shots/blender/iter/cartoon_heartland/buroak-r<round>.png (local).
+
+- r1: First build: a low flat table of clumps on short thin limbs, every clump at one height. The pictures are a broad rounded dome as tall as it is wide, on a massive short trunk with heavy crooked limbs reaching out. Next: limbs thicker and longer, clump heights varied and raised, a domed centre mass.
+- r2: Heavier limbs: the crooked limbs show, but it is still a mushroom -- a flat cap of clumps at one level. The pictures are a deep broad dome, foliage hanging from low on the limbs up to a high rounded top. Next: rounder clumps, a mass at each limb's middle as well as its end, a higher central dome.
+- r3: Mid-limb masses and a higher dome: now a broad deep dome on a short massive trunk, but so solid the heavy limbs vanish -- a generic oak. The first two pictures show the crooked limbs between open masses. Next: open gaps, smaller mid masses, a smaller central dome, so limbs show through.
+- r4: Smaller mid masses, smaller dome: limbs show through on Elm-like gaps now, but the crown's underside is still one flat line at half height -- a mushroom. The first picture's crown is wider than tall and its outer masses hang lower than the middle. Next: limbs reach further, their end masses lower, so the edge comes down.
+- r5: Limbs reach further, end masses lower: the edge now comes down at the sides and the outline is rugged like the second picture, but the masses are round separate balls and the tree is still no wider than tall; the first picture is half again as wide. Next: end masses stretched sideways, spread 28 m (and 24 m for _2).
+- r6: Spring, and the wider end masses: now a broad spreading crown wider than tall on its short trunk, limbs showing below -- close to the first picture -- but its top is flat where the pictures dome over the middle. Next: the central mass higher and taller.
+- r7: Autumn (#9a7a3a) and a raised central mass: the top now domes over the broad spread, short heavy trunk under it -- the first picture in yellow-brown. Holds. Next: winter, then the far twins.
+- r8: Winter: in leaf for now, colour check only; the bare rugged limbs (picture 18) are owed to the seasons step. Next: the far twins.
+- r9: Far twins: the broad dome on its short trunk survives in 1,100 triangles (full 5,100 and 4,400). Next: the cost pass on bark.
+- r10: Cost pass: trunk 10 sides, inner limbs 7 -- 5,030 and 4,320; the dome and heavy limbs read the same. _1 still 30 over 5,000. Next: one lobe off the central mass.
+- r11: Central mass three bigger lobes instead of four: 4,890 triangles, inside budget, and the domed top holds. Next: spring once more.
+- r12: Spring with the three-lobe centre: the broad dome holds. Next: autumn.
+- r13: Autumn: yellow-brown broad dome, holds. Next: far twins after the cost pass.
+- r14: Far twins with the three-lobe centre: the broad dome on its short trunk holds in 1,130 and 960 triangles (full 4,890 and 4,180). Next: summer final.
+- r15: Summer, against the owner's word: a mushroom of round puffs, too close to the elm's outline at thumbnail size. The bur oak's own outline is WIDE and FLAT-ish, broader than tall, heavy level limbs showing, a ragged edge. Next: 20 m tall by 28 m wide, limbs out nearly level then crooked up, many smaller lobes in loose clumps along and at the end of each limb, gaps between, a low flattish top.
+- r16: Silhouette rebuild: 20 m tall by 28 m wide, heavy limbs out nearly level then crooked up, small clumps sat on them, a low flat top. As a black thumbnail it is a wide flat candelabra -- unlike the elm's vase or the hickory's column. It is too sparse beside the pictures, the limbs heavier than the leaves. Next: clumps a fifth bigger, a little more fill between limbs; trim the trunk's sides to stay at 5,000.
+- r17: Clumps a fifth bigger: a wide, flat, ragged crown on heavy level limbs over a short massive trunk, wider than tall -- a black thumbnail reads as the savanna oak, not the elm (whose crown sits high on a narrow fan). The first picture's outer limbs dip lower at their ends than these. Next: some limb ends lower, so the edge droops.
+- r18: Some limb ends lower: the outer masses now droop below the middle, a broad rugged dome far wider than tall over a short massive trunk with heavy limbs showing -- close to the first and second pictures, and nothing like the elm's high umbrella. 5,060 triangles. Next: hold; spring.
+- r19: Spring on the rebuilt spread: holds -- wide, flat, ragged, heavy limbs showing. Next: autumn.
+- r20: Autumn (#9a7a3a): yellow-brown ragged spread on heavy dark limbs; holds. Next: winter.
+- r21: Winter (in leaf for now; bare rugged limbs owed): colour holds. Next: the far twins.
+- r22: Far twins: the wide ragged spread on heavy level limbs survives, 1,380 and 1,170 triangles (full 5,060 and 4,310). Side by side with the elm's twin the two still part at thumbnail size: the elm a tall narrow fan under a high umbrella, the oak low, half again as wide as tall. Next: summer final.
+- r23: Summer, final: 20 m by 28 m, a massive short trunk, heavy limbs out nearly level and crooked up, ragged clumps sat on them with gaps, outer masses drooping, a low flattish top -- the savanna oak of the first two pictures; as a thumbnail low and half again as wide as tall. 5,060 triangles (_2 4,310), far twins 1,380 and 1,170. Done.

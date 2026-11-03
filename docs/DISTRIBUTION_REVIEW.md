@@ -1739,3 +1739,7 @@ and three far twins (the model module 7.75 to 7.99 MB). Still one file.
 **Step 3, the dry-and-lake pack**: the page is **14,883,461 bytes (7.66
 MB gzipped)**, +137 KB: jojoba, sand cherry and the pier light (the
 ironwood held back). Still one file.
+
+**Step 3, Heartland and New England**: the page is **15,914,333 bytes
+(8.18 MB gzipped)**, +1.03 MB: twelve models and their far twins, the
+ironwood, and the Pacific trees reworked silhouette first. Still one file.
