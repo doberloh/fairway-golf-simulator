@@ -279,9 +279,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   one of that landscape's own. Seen in the game on the Oregon Dunes
   (Chambers Bay) and the nine; the other new landscapes not seen built. Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
-- [ ] **Every model at least 15 iterations** against its reference pictures
+- [x] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;
-  a contact sheet a pack, not waited on.
+  a contact sheet a pack, not waited on. Counted 3 November 2026: 202 model
+  logs in tools/blender/logs/, 3,213 rounds; every new model has fifteen or
+  more. Eleven older ones (the overhaul's oak, maple, sugar maple, aspen,
+  alder, black oak, cottonwood, tanoak, mesquite, palo verde, hala) have 7-10:
+  they were built before this goal and only took its silhouette pass.
 - [x] **Seasons on** (step 9; SCHEMA 25, no generator step): the Season
   setting (today's, or spring, summer, autumn, winter) fixed when a round
   starts and saved with it (main.js); every species in its own season's
