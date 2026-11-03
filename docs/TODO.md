@@ -220,9 +220,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Seen in captures; not seen by a person in play. Found on the way: the
   full bench's `roadOnPlay` on two courses, fixed in generator 66 (the
   drive's berth, the lot checked every 4 m).
-- [ ] **The South's look, three gaps seen in its pictures**: the Lowcountry
-  has spartina but no salt-marsh ground or tidal water; the Bayou's bald
-  cypresses stand beside its water, never in it; the Piedmont shows no red
+- [x] **The Bayou's bald cypresses stand in its water** (generator 72):
+  the cypress and their knees may stand in a pond's or lake's shallows,
+  within 8 m of the shore (course.js inShallows, biomes.js `inWater`); 6-14
+  a course. Seen in a capture.
+- [ ] **The South's look, two gaps seen in its pictures**: the Lowcountry
+  has spartina but no salt-marsh ground or tidal water; the Piedmont shows no red
   clay (the Heartland's ground). Each wants its landscape's ground or water
   rule (a generator step).
 - [ ] **Bluebonnet Prairie does not read as a bluebonnet field from the

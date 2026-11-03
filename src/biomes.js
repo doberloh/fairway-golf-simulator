@@ -762,7 +762,9 @@ const LAND = {
   plants: [['liveoakmoss', .18], ['cabbagepalm', .15], ['slashpine', .1], ['magnolia', .04], ['spartina', .21], ['muhlygrass', .1], ['sawpalmetto', .12], ['waxmyrtle', .1]],
   ui: {panel: 'rgba(18,32,28,.88)', a1: '#ccfbf1', a2: '#0f766e', hot: '#fde68a', soft: '#b8d4cc', onHot: '#06201c'}},
  // Bayou: bald cypress and its knees, tupelo, live oaks in moss, slow water.
- bayou: {rough: '#6a7a3e', water: '#5a5a3e', sky: '#c8d0c4', temperature: 28,
+ // Its bald cypress and their knees stand in the shallows too (course.js
+ // inShallows).
+ bayou: {inWater: ['baldcypress', 'cypressknees'], rough: '#6a7a3e', water: '#5a5a3e', sky: '#c8d0c4', temperature: 28,
   stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['cypressknees', .4], ['shrub', .3], ['waxmyrtle', .3]]},
    plants: [['baldcypress', .45], ['watertupelo', .2], ['liveoakmoss', .25], ['sweetgum', .1]]},
   plants: [['baldcypress', .2], ['liveoakmoss', .15], ['watertupelo', .1], ['cypressknees', .15], ['spartina', .15], ['shrub', .1], ['waxmyrtle', .1], ['sweetgum', .05]],

@@ -383,7 +383,10 @@ export const SCHEMA_VERSION=25;
 //     building) and a tree in each lot island (the landscape's most-planted
 //     tree, kept out of the tee views). Moved every landscape -- the
 //     buildings and trees after them shift where a barn stands.
-export const GENERATOR_VERSION=71;
+// 72: the Bayou's bald cypress and their knees stand in the shallows of its
+//     ponds and lakes, within 8 m of the shore (course.js inShallows,
+//     biomes.js `inWater`). Moved the Bayou.
+export const GENERATOR_VERSION=72;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

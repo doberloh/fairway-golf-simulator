@@ -14,7 +14,9 @@ test('mountains and dunes grow between holes, and every biome has mixed vegetati
   // scatter planting wandering onto a corridor.
   // Natural ground a tree may stand on (grounds.js `allows`): rough, or since
   // the cartoon overhaul hardpan, native grass, heather or its own straw.
-  assert(w.trees.filter(t=>!t.feature).every(t=>allows(w.surface(t.x,t.z),'trees')));
+  // Or, for a kind its landscape names (`inWater`: the Bayou's cypress), the
+  // shallows of a pond (generator 72).
+  assert(w.trees.filter(t=>!t.feature).every(t=>allows(w.surface(t.x,t.z),'trees')||(w.bio.inWater?.includes(t.kind)&&w.surface(t.x,t.z)==='water')));
   assert(w.trees.some(t=>!t.feature),'no scatter trees at all -- the assertion above is vacuous');
   if(['rockies','links'].includes(biome)){let peak=0;for(let x=-w.halfX;x<w.halfX;x+=40)for(let z=-w.halfZ;z<w.halfZ;z+=40)peak=Math.max(peak,w.height(x,z));assert(peak>(biome==='rockies'?80:30));}
  }

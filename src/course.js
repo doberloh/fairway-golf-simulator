@@ -2536,7 +2536,12 @@ export function* generateWorldSteps(settings={},options={}){
  // removed, 2 November 2026.)
  const treeSize=(kind,a,b)=>baseTreeSize(kind,a,b);
  const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(TREE_SIZE[kind]){const [h0,h1,r0,r1]=TREE_SIZE[kind];return {h:h0+a*(h1-h0),r:r0+b*(r1-r0)};}if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'||kind==='ironwood'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
- for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
+ // TREES IN THE SHALLOWS (biomes.js `inWater`; the Bayou's bald cypress and
+ // its knees, the US landscapes goal): a kind the landscape names may stand in
+ // a pond's or lake's water -- never the sea -- within 8 m of its shore
+ // (PLACED). Only a landscape that names one tests it, so no other moves.
+ const inShallows=(kind,x,z)=>!!bio.inWater?.includes(kind)&&surface(x,z)==='water'&&!isSea(x,z)&&[[8,0],[-8,0],[0,8],[0,-8]].some(([dx,dz])=>surface(x+dx,z+dz)!=='water');
+ for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!(allows(surface(x,z),'trees')||inShallows(kind,x,z))||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the
   // trees mass up farther back. Ground plants are exempt. The draw is taken

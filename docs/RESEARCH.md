@@ -12852,3 +12852,11 @@ on one side and the drive on the other). A tree in each lot island, the
 landscape's most-planted tree, at most 5.5 m tall and 2.2 m of crown
 (PLACED), never in a tee shot or a tee's fan of view (the full bench found
 one under a Lake Dunes tee).
+
+**Cypress in the Bayou's water** (generator 72, 3 November 2026): a
+landscape may name kinds that stand in the shallows (biomes.js `inWater`;
+the Bayou names bald cypress and cypress knees): on a pond's or lake's
+water, never the sea, where open ground lies 8 m off in one of the four
+directions (PLACED: about a crown's width from shore). 6, 11 and 14 stood
+in the water on three Bayou seeds. The ball meets them as any tree; they
+stand in a hazard already.
