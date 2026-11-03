@@ -13,6 +13,9 @@ import {launchCorridors,blocksLaunch,BEACH_RISE,teePad,TEE_APRON,TEE_APRON_SCALE
 import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 import {regionOf} from './regions.js';
+import {SEASON_TINTS} from './season-tints.js';
+import {bareInWinter} from './seasons.js';
+import {PALMS} from './built-world.js';
 // The regions with wildflowers in the rough. By region: the list was of
 // landscape keys until 2 November 2026, and the keys' rename (Midwest to
 // Heartland, Mountain to Rockies, Desert to Sonoran) left only the Links with
@@ -138,6 +141,17 @@ const EVERGREEN=new Set(['spruce','pine','fir','hemlock','redcedar','redwood','w
  'rosebay','mountainlaurelshrub','shortleafpine','pitchpine','bayberry',
  'redpine','jackpine','blackspruce','sitkaspruce','shorepine','casuarina','cookpine','ohia','tiplant']);
 const FALL_HUE={maple:0,aspen:.11,paperbirch:.12,americanbeech:.09};
+// THE SEASONS (the US landscapes goal, step 9; seasons.js). The round's
+// season is the view's (renderer.js sets it). Leaves turn in autumn
+// everywhere; a landscape with `leafFall` (New England, the autumn showcase)
+// wears its autumn as its summer too (PLACED). Kept in leaf through winter
+// beside the evergreens: the cacti and the desert's green-barked trees, and
+// the Pacific's evergreen broadleaves.
+const WINTER_LEAFY=new Set([...EVERGREEN,...STILL,'madrone','tanoak','baylaurel','ocotillo','ironwood','palo']);
+const BARE=new Set(['leaf','accent']);
+const seasonOfView=view=>view.season||'summer';
+const autumnLeaves=view=>{const s=seasonOfView(view);return s==='autumn'||(s==='summer'&&!!biomeOf(view.world.settings.biome).leafFall);};
+const bare=(view,kind)=>seasonOfView(view)==='winter'&&bareInWinter(kind,{evergreen:WINTER_LEAFY,palms:PALMS,ground:GROUND_PLANTS});
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -155,7 +169,12 @@ function addModelSpecies(view,kind,trees){
  // grape's blue berries; the madrone's berries and the dogwood's and iris's
  // spring flowers in leaf colour (PLACED: the seasons step paints them by date).
  const accents={jackpine:'#8a806a',fireweed:'#c8288a',devilsclub:'#c8281e',cottongrass:'#f2f0ea',monkeypod:'#d88aa8',ohia:'#d8302a',plumeria:'#f6f0dc',heliconia:'#d8302e',rosebay:'#c88ab8',mountainlaurelshrub:'#3e6234',flameazalea:'#e0782e',bayberry:'#a4a8a4',beachrose:'#d2508a',hydrangea:'#6a8ad0',rabbitbrush:'#9aa66a',blackbrush:'#6a6e62',cliffrose:'#d8d0c4',russianolive:'#b8bca8',balsamroot:'#e8c030',globemallow:'#e0782e',cheatgrass:'#d0b880',soapweedyucca:'#efe8c8',buffalograss:'#7a5a6a',wildsunflower:'#f0c020',eucalyptus:'#b8a07a',sycamore:'#b8a888',iceplant:'#c82a8a',chaparral:'#5a6e4a',buckeye:'#c8b88a',grapevine:'#4a3456',californiapoppy:'#f08a1e',jacaranda:'#9a8ad8',peppertree:'#d06a7a',sugarpine:'#a07e50',noblefir:'#7e7650',manzanita:'#6f826a',mountainmahogany:'#dcdad0',bitterbrush:'#7a8a5a',mulesear:'#e0b830',beargrass:'#f2efe4',osageorange:'#a8b84a',mountainlaurel:'#3f6a34',redbud:'#557e38',bluebonnet:'#3a5ac8',joshuatree:'#8a9a52',mojaveyucca:'#a89a6a',fanpalm:'#a8885a',datepalm:'#d8862e',oleander:'#e080a8',tamarisk:'#d890b0',smoketree:'#7a6aa8',soaptreeyucca:'#f2eedc',sotol:'#e8dcaa',lechuguilla:'#d89a3a',desertwillow:'#d890c8',beavertail:'#c82a7a',longleafpine:'#7a5a3a',loblollypine:'#7a5a3a',slashpine:'#7a5a3a',cabbagepalm:'#e6dcb4',sawpalmetto:'#4a5a3a',longleafgrass:'#c8c8b0',wiregrass:'#a8a070',liveoakmoss:'#78826e',floweringdogwood:'#6a8a42',azalea:'#5a8040',magnolia:'#f4f0e2',crapemyrtle:'#d0508a',kudzu:'#7a4a8a',yaupon:'#6e8a3e',spartina:'#a89a5a',sawgrass:'#8a4a2a',muhlygrass:'#a4ad74',waxmyrtle:'#56763c',citrustree:'#e8962a',royalpalm:'#7cae4c',seagrape:'#b0738a',bougainvillea:'#c8288a',hibiscus:'#d03a3a',ironwood:'#7d9070',prairieforbs:'#b05aa8',paperbirch:'#2a2a2a',sandcherry:'#3a1a2a',columbine:'#8aa8e0',lupine:'#6a5ac8',scotchbroom:'#e8c830',pacificrhododendron:'#d27aa8',oregongrape:'#4a5a8a',madrone:'#3a6a36',pacificdogwood:'#557e3a',douglasiris:'#5a7a42',dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
- const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
+ // Its own colours in the round's season (season-tints.js, the pack's specs);
+ // summer is the tables above, exactly as before.
+ const season=seasonOfView(view),own=season!=='summer'?SEASON_TINTS[kind]?.[season]:null;
+ if(own?.accent)accents[kind]=own.accent;
+ const leafBase=new T.Color(own?.leaf||shades[kind]||'#5b7f44'),barkBase=new T.Color(own?.bark||barks[kind]||'#6b5942');
+ const leafless=bare(view,kind),turns=autumnLeaves(view)&&!EVERGREEN.has(kind)&&!own;
  // A species whose stone role is a flower (the prairie forbs' gold), not rock.
  const stones={prairieforbs:'#e0b030',grapevine:'#9a9a96',beachrose:'#c8402a'};
  const stone=new T.Color(stones[kind]||world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
@@ -200,9 +219,9 @@ function addModelSpecies(view,kind,trees){
   // Leaf fall turns the broadleaves, never an evergreen (the New England pack:
   // its white pines and firs came out orange when only `spruce` was spared),
   // each in its own hue: maple red, birch and aspen yellow, beech bronze.
-  if(biomeOf(world.settings.biome).leafFall&&!EVERGREEN.has(kind))leaf.setHSL((FALL_HUE[kind]??.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(turns)leaf.setHSL((FALL_HUE[kind]??.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
-  entries.push({model,owner:t,matrix:dummy.matrix.clone(),
+  entries.push({model,owner:t,matrix:dummy.matrix.clone(),skip:leafless?BARE:null,
    color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
  }
  // White materials: the instance colour carries the whole tint, so one material
@@ -282,7 +301,7 @@ function addSpecies(view,kind,trees){
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
  for(const t of trees){currentTree=t;
   const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palo:'#8d9a47',mesquite:'#6c804b',ocotillo:'#7c8050',agave:'#7caa9b',naupaka:'#428546',hala:'#678f3d',gorse:'#718347',heather:'#79627c'};const tint=new T.Color(blue?'#a3d6cf':shades[kind]||world.bio.tree).multiplyScalar(.8+t.shade*.4);
-  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(autumnLeaves(view)&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   // Every tree used to stand perfectly upright on a trunk of identical
   // proportion, which is half of why a stand reads as one asset repeated.
   const leanX=(rng()-.5)*.085,leanZ=(rng()-.5)*.085,girth=.021+rng()*.013;
@@ -636,7 +655,8 @@ function addFarWoods(view){
  // and cones to its clusters and domes).
  const kinds=[...new Set(sites.map(s=>s.shape))];
  const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
- const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
+ // In the round's season (seasons.js seasonPalette, via world.bio).
+ const colors=(world.bio?.farForest?.colors??f.colors).map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
 
  // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
  // mesh with its own bounds, so the card skips every sector out of view --

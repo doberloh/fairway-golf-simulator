@@ -26,7 +26,8 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const mode = argv.shift();
-const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest');
+// `--season s`: the course in that season (seasons.js; summer, the cards', by default).
+const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
 // `encode --only a,b`: re-encode those landscapes' pictures alone, leaving the
 // others' files as they are (the US landscapes goal: new landscapes added
 // one phase at a time, from their own set of masters).
@@ -131,7 +132,7 @@ async function take(biomes) {
    const dir = path.join(ROOT, label, biome);
    fs.mkdirSync(dir, {recursive: true});
    const p = await openGame(b, {width: 1920, height: 1080, density: 2, quality: 'ultra'});
-   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: SEEDS[biome]});
+   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: SEEDS[biome], season});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
    for (const v of VIEWS.filter(v => !only || only.includes(v.name))) {

@@ -312,7 +312,8 @@ export function groundMaterial(view,palette){
  const builtBTex=new T.DataTexture(built?built.b:new Uint8Array(4),built?built.Sx:1,built?built.Sz:1,T.RGBAFormat,T.UnsignedByteType);
  builtBTex.minFilter=builtBTex.magFilter=T.LinearFilter;builtBTex.needsUpdate=true;view.resources.push(builtBTex);
  m.onBeforeCompile=shader=>{
- const bio=biomeOf(w.settings.biome);
+ // The record with the round's season laid over it (renderer.js build).
+ const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.

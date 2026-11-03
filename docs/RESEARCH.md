@@ -12784,3 +12784,43 @@ the links. Par 72, 7,455 yd from the back, 4,825 trees, 53 houses, a 6.1 MB
 file. The virtual golfers played it through in 87 against par 72 (the 4th
 the hardest, 8 on a par 5, then the 1st, 6 on a par 4; none stuck), and the game
 opened it and played a 136 m tee shot (tools/play-built.mjs).
+
+
+## The seasons (step 9, 3 November 2026)
+
+PLAN.md section 3, built. Every figure below is PLACED from the pictures,
+not measured; the species' colours are the packs' own (their specs' Seasons
+tables, via tools/blender/dump-tints.mjs: 172 species).
+
+- **Meteorological seasons** by whole months (spring March-May): simpler
+  than the equinoxes, and what weather services report. Tropical
+  landscapes (the Keys, Hawaii) are always summer.
+- **Winter by region** (seasons.js `WINTER`): snow -- Alaska, the
+  mountains, the North Woods, the Northeast, the Midwest, the plains, the
+  lakeshore; frost -- Appalachia, the high desert, the Pacific Northwest, the
+  redwoods, the links; dormant -- the South, Texas, the deserts, California;
+  green -- Florida and Hawaii.
+- **The turf in a season** (`seasonPalette`, the fraction of the way each
+  colour moves): spring toward #7ab84a, rough .18, semi .12, fairway .08;
+  autumn toward #c09a4a, rough .3, semi .12; snow toward #eef2f4, rough .85,
+  semi .45, bank .6, the fairway .15 toward frost; frost toward #b8c0b4,
+  rough .35, semi .2, fairway .1; dormant toward #c8b47a, rough .45, semi .3,
+  fairway .18. Greens never move. The far woods of a broadleaf region
+  (Northeast, Midwest, Appalachia, South, Texas, plains, lakeshore) toward
+  #b0703a by .45 in autumn and #7a6e62 by .55 in winter.
+- **Bare in winter**: a tree that is not evergreen, not a palm, not a ground
+  plant, and not a cactus or one of the desert's green-barked trees (palo
+  verde, desert ironwood, ocotillo) or the Pacific's evergreen broadleaves
+  (madrone, tanoak, bay laurel), drawn without its leaf and accent parts.
+  PLAN 3 asked for about 55 separate bare models; leaving the leaf parts out
+  of the models already built gives every deciduous tree its winter at no
+  model cost and no download, at the price of no twig layer on the bare
+  crowns (TODO). The cartoon models' limbs carry the silhouette (the first
+  winter Heartland: bur oaks wide and flat, elms a vase, shagbarks tall).
+- **New England keeps its autumn as its summer** (`leafFall`): PLAN 3 makes
+  autumn a season everywhere and New England its showcase; read as New
+  England's summer look staying the autumn the landscape was built as, with
+  spring green and winter bare like the rest.
+
+SCHEMA 25 adds the Season setting (default today's); no generator step --
+the fingerprint is unchanged.

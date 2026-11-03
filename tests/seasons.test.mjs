@@ -41,3 +41,19 @@ test('a choice is today or a season; a season\'s look is the record\'s own table
  assert.deepEqual(seasonLook(rec, 'winter'), {});
  assert.deepEqual(seasonLook({}, 'autumn'), {});
 });
+
+test('every region has its winter; a season moves the turf, never the greens, and summer nothing', async () => {
+ const {WINTER, seasonPalette, bareInWinter} = await import('../src/seasons.js');
+ const {REGIONS} = await import('../src/regions.js');
+ for (const r of Object.keys(REGIONS)) assert.ok(['snow', 'frost', 'dormant', 'green'].includes(WINTER[r]), `${r} has no winter`);
+ const bio = {rough: '#6e7a3c', semi: '#4f8a3e', fairway: '#549a44', green: '#a0be6a', bank: '#697348'};
+ assert.deepEqual(seasonPalette(bio, 'summer', 'midwest'), {});
+ const snow = seasonPalette(bio, 'winter', 'midwest');
+ assert.ok(!('green' in snow), 'a green is kept clear');
+ const lum = h => [1, 3, 5].reduce((a, i) => a + parseInt(h.slice(i, i + 2), 16), 0);
+ assert.ok(lum(snow.rough) > lum(bio.rough) + 300, 'snow whitens the rough');
+ assert.deepEqual(seasonPalette(bio, 'winter', 'hawaii'), {}, 'a green winter changes nothing');
+ for (const s of ['spring', 'autumn']) assert.ok(seasonPalette(bio, s, 'south').rough !== bio.rough, `${s} moves the rough`);
+ const sets = {evergreen: new Set(['pine']), palms: new Set(['palm']), ground: new Set(['shrub'])};
+ assert.ok(bareInWinter('oak', sets) && !bareInWinter('pine', sets) && !bareInWinter('palm', sets) && !bareInWinter('shrub', sets));
+});

@@ -526,6 +526,19 @@ def export(models, render=None, colours=None, far=False, figure=1.8, tints=None)
     names, those models' only (a small plant's twin saves next to nothing).
     `figure`: the contact sheet's height reference in metres (a person by
     default; a small pack passes something its own size)."""
+    # SEASONS FOR THE GAME (the US landscapes goal, step 9; tools/blender/
+    # dump-tints.mjs): with FAIRWAY_DUMP_TINTS set, write the pack's role
+    # colours in all four seasons (its `tints(season)`, as hex) to that file
+    # and stop -- the models are built lazily below, so nothing is built.
+    dump = os.environ.get('FAIRWAY_DUMP_TINTS')
+    if dump:
+        import json
+        tint = sys._getframe(1).f_globals.get('tints')
+        hexed = lambda c: '#' + ''.join('%02x' % round(max(0, min(1, v)) ** (1 / 2.2) * 255) for v in c[:3])
+        seasons = {s: {n: {r: hexed(c) for r, c in roles.items()} for n, roles in tint(s).items()} for s in ('spring', 'summer', 'autumn', 'winter')} if tint else {}
+        with open(dump, 'w') as f:
+            json.dump(seasons, f)
+        return
     out, render_path = fb.args()
     use_toon_sheet(colours)
     fb.Mesh = PaintMesh

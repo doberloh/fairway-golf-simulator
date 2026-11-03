@@ -17,6 +17,8 @@ import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
 import {worldOf,biomeOf} from './biomes.js';
 import {clubhouseModel} from './clubhouse.js';
+import {roundSeason,seasonPalette} from './seasons.js';
+import {regionOf,LANDSCAPES,currentKey} from './regions.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -1057,6 +1059,14 @@ export class GolfView{
   // One hidden mesh per such material, shown only while shaders are built
   // (withStandIns), so the warm-up compiles what the camera will meet later.
   this.standIns=[];
+  // THE ROUND'S SEASON (the US landscapes goal, step 9; seasons.js): today's
+  // or the one the round was started in (main.js writes it into the round's
+  // settings), a tropical landscape always summer. Its palette is laid over a
+  // copy of the landscape's record -- the turf, snow, the far woods -- and the
+  // summer record kept, so a rebuild never lays it twice. Looks only.
+  this.season=roundSeason(world.settings.season??'today',{tropical:!!LANDSCAPES[currentKey(world.settings.biome)]?.tropical});
+  world.summerBio??=world.bio;
+  world.bio={...world.summerBio,...seasonPalette(world.summerBio,this.season,regionOf(world.settings.biome))};
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
   this.renderer.toneMappingExposure=blue?1:toon?bio.light?.exposure??1:.94;

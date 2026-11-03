@@ -14,13 +14,14 @@
 // green look the year round, so its season is always summer and only its
 // flowering would change.
 //
-// Built in steps: until the seasons are drawn (the goal's step 9) every
-// season resolves to summer (`DRAWN`), so a round started in any season looks
-// as the game always has, and the choice is already saved with it.
+// All four are drawn since the goal's step 9 (3 November 2026): each species
+// in its own season's colours (src/season-tints.js, from the packs' specs),
+// deciduous trees bare in winter, the ground's turf and snow by region
+// (`seasonPalette`, below). Looks only: a season never changes a ball.
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 // The seasons the game can draw so far. Step 9 lists all four.
-export const DRAWN = ['summer'];
+export const DRAWN = SEASONS;
 
 const BY_MONTH = ['winter', 'winter', 'spring', 'spring', 'spring', 'summer',
  'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'];
@@ -52,3 +53,51 @@ export function seasonLook(record, season) {
  if (season === 'summer' || !record?.seasons) return {};
  return record.seasons[season] || {};
 }
+
+// WINTER BY REGION (PLAN.md section 3: snow, frost, dormant or green; PLACED
+// from the regions' climates). Snow lies on the rough of the north and the
+// mountains, frost greys the turf of the mild north-west and the uplands,
+// the South's and the deserts' bermuda goes dormant straw-gold, and the
+// tropics stay green (they never leave summer: roundSeason).
+export const WINTER = {
+ alaska: 'snow', mountain: 'snow', northwoods: 'snow', northeast: 'snow', midwest: 'snow', plains: 'snow', lakeshore: 'snow',
+ appalachia: 'frost', highdesert: 'frost', pnw: 'frost', redwood: 'frost', links: 'frost',
+ south: 'dormant', texas: 'dormant', desert: 'dormant', california: 'dormant',
+ florida: 'green', hawaii: 'green',
+};
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
+// THE GROUND IN A SEASON: the record's turf and tree colours moved toward the
+// season's (fractions PLACED from the pictures): spring a fresher green,
+// autumn the rough gone gold, winter by the region's WINTER -- snow whitens
+// the rough (fairways and greens are kept clear, so only a touch reaches
+// them), frost greys it, dormant turns it straw. Summer is the record.
+const SPRING = '#7ab84a', AUTUMN = '#c09a4a', SNOW = '#eef2f4', FROST = '#b8c0b4', STRAW = '#c8b47a';
+export function seasonPalette(bio, season, region) {
+ if (!bio || season === 'summer') return {};
+ const out = {}, put = (k, to, t) => { if (/^#[0-9a-f]{6}$/i.test(bio[k] || '')) out[k] = mix(bio[k].toLowerCase(), to, t); };
+ if (season === 'spring') { put('rough', SPRING, .18); put('semi', SPRING, .12); put('fairway', SPRING, .08); }
+ else if (season === 'autumn') { put('rough', AUTUMN, .3); put('semi', AUTUMN, .12); }
+ else if (season === 'winter') {
+  const w = WINTER[region] || 'frost';
+  if (w === 'snow') { put('rough', SNOW, .85); put('semi', SNOW, .45); put('bank', SNOW, .6); put('fairway', FROST, .15); }
+  else if (w === 'frost') { put('rough', FROST, .35); put('semi', FROST, .2); put('fairway', FROST, .1); }
+  else if (w === 'dormant') { put('rough', STRAW, .45); put('semi', STRAW, .3); put('fairway', STRAW, .18); }
+ }
+ const woods = farWoodsInSeason(bio, season, region);
+ if (woods) out.farForest = woods;
+ return out;
+}
+// The far woods of a broadleaf forest turn with it: gold-brown in autumn,
+// bare grey-brown in winter (PLACED). A conifer forest's stay green.
+const BROADLEAF_WOODS = new Set(['northeast', 'midwest', 'appalachia', 'south', 'texas', 'plains', 'lakeshore']);
+export function farWoodsInSeason(bio, season, region) {
+ const f = bio?.farForest;
+ if (!f?.colors || !BROADLEAF_WOODS.has(region) || (season !== 'autumn' && season !== 'winter')) return null;
+ const to = season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .55;
+ return {...f, colors: f.colors.map(c => (/^#[0-9a-f]{6}$/i.test(c) ? mix(c.toLowerCase(), to, t) : c))};
+}
+// Bare in winter: a broadleaf tree that drops its leaves -- not an evergreen,
+// a palm, a cactus or a ground plant (each set is the caller's: vegetation.js
+// knows its species). Drawn with no leaf or flower parts, the limbs only.
+export const bareInWinter = (kind, {evergreen, palms, ground}) => !evergreen.has(kind) && !palms.has(kind) && !ground.has(kind);

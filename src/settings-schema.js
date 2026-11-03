@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=24;
+export const SCHEMA_VERSION=25;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -543,6 +543,9 @@ export const SETTINGS=[
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
  {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'puget',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
+ // Looks only (the owner, 2 November 2026: snow is for looks): never part of
+ // the ground, so no generator step and no world key (seasons.js).
+ {key:'season',category:'course',kind:'choice',options:['today','spring','summer','autumn','winter'],def:'today',label:'Season',tip:'Today\'s season from the date, or one you pick: spring green, summer, autumn colour, or winter with bare trees and snow in the north. Looks only; the ball plays the same.'},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
@@ -722,6 +725,10 @@ const MIGRATIONS={
  22:s=>s,
  // 23 -> 24: three more landscapes (the North Woods, the Oregon Dunes, Hawaii); no save changes shape.
  23:s=>s,
+ // 24 -> 25: the round's season (the US landscapes goal, step 9). An old save
+ // has none: today's, the default, which is what it would have been drawn in
+ // had seasons existed; filled in by the defaults.
+ 24:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

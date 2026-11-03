@@ -6,6 +6,8 @@ import projectLicense from '../LICENSE?raw';
 // this line does not fail a test, it fails the build.
 import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
+import {roundSeason} from './seasons.js';
+import {LANDSCAPES,currentKey} from './regions.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLED_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {planShotCamera,planReview} from './tv-camera.js';
@@ -3437,6 +3439,9 @@ async function buildRoundOn(courseSettings,group,name){
  // anything is saved, and it is not in the world key, so naming a course can
  // never move a metre of its ground.
  next.courseName=String(name||'').trim()||suggestCourseName(next);
+ // The round's season, fixed now (seasons.js): 'today' becomes today's, so the
+ // saved round -- resumed next month -- still looks as it did.
+ next.season=roundSeason(next.season??'today',{tropical:!!LANDSCAPES[currentKey(next.biome)]?.tropical});
  // Build the Round first: an invalid group must fail before the overlay appears.
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building the course…',async report=>{
@@ -7168,7 +7173,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // A BUILT course's file handed in as bytes, kept as an import keeps it; the
   // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
   built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
-  course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
+  course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,season:'summer',...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.
    group||{players:[{name:'Bench',team:'A',hand:'RH'}],mode:'stroke',tee:'blue'}),

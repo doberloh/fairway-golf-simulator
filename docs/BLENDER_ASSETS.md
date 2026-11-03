@@ -557,8 +557,9 @@ mostly quads, so a model's triangles run 1.6-1.8 times its faces. The pack
 met its budgets by faces after round 12 and was still double by triangles;
 round 18 was the second cost pass, after the game's A/B.
 
-The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) still
-owe their bare winter variants (PLAN section 3, the seasons step).
+The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) go bare
+in winter by drawing without their leaf and flower parts (vegetation.js,
+the seasons step), not as separate models.
 
 **Every variant ships** (since 2 November 2026, the owner: "I dont want to
 end up not using the models we create"). For a day only one variant of the
@@ -584,7 +585,8 @@ and 4 far twins: what the Rockies lacked. Fifteen rounds each, logged.
 The fence is the Rockies' story wall (biomes.js WORLD.mountain
 `story.walls: 'rail'`): renderer.js addStory draws it, story.js gives it
 a 1.3 m wide solid box (`WALL_WIDTH`) so a ball meets the zig-zag's
-width. Willow thicket's bare winter stems are owed to the seasons step.
+width. Willow thicket is a ground plant and keeps its colour in winter; bare
+stems for it are still owed (TODO *Seasons, still to do*).
 
 ### Silhouette first (the owner, 2 November 2026)
 

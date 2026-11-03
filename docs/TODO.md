@@ -277,8 +277,22 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;
   a contact sheet a pack, not waited on.
-- [ ] **Seasons on**: chosen at the round's start (today's or picked), saved
-  with the round; bare winter variants; snow for looks only.
+- [x] **Seasons on** (step 9; SCHEMA 25, no generator step): the Season
+  setting (today's, or spring, summer, autumn, winter) fixed when a round
+  starts and saved with it (main.js); every species in its own season's
+  colours from its pack's specs (src/season-tints.js, 172 species, made by
+  tools/blender/dump-tints.mjs); autumn colour everywhere (New England keeps
+  its as its summer, PLACED); deciduous trees bare in winter -- drawn
+  without their leaf and flower parts rather than as separate bare models
+  (PLACED, a departure from PLAN 3's 55 bare variants); snow on the rough
+  in the north and mountains, frost, dormant straw or green by region;
+  the far woods turn with a broadleaf forest. Looks only. Seen in captures
+  (a winter Heartland, an autumn Blue Ridge); not seen by a person.
+- [ ] **Seasons, still to do**: snow on the top faces of trees and buildings
+  (a shader term; only the ground whitens now), the far painted forest on
+  the horizon in winter (it stays greener than the bare woods near), a twig
+  layer on the bare crowns (PLAN 3), and each landscape's spring flowering
+  window beyond what the packs' spring colours give.
 - [x] **Chambers Bay** built in the builder on its new landscape and played
   through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
   OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --

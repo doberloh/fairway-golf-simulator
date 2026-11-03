@@ -275,6 +275,8 @@ export function instanceModels(group, entries, materialFor, onMesh) {
   const parts = modelParts(entry.model);
   if (!parts) continue;
   for (const part of parts) {
+   // A part the entry leaves out (a tree bare in winter: no leaves, no flowers).
+   if (entry.skip?.has(part.role)) continue;
    const key = `${entry.model}|${part.role}|${entry.variant ?? 0}`;
    const bucket = buckets.get(key) || {part, model: entry.model, partIndex: parts.indexOf(part), variant: entry.variant ?? 0, matrices: [], colors: [], owners: []};
    bucket.matrices.push(entry.matrix);
