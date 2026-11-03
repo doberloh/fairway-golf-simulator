@@ -19,6 +19,9 @@ test('each landscape tells its own story', () => {
   const w = lots(biome), set = storySet(biome), kinds = new Set(w.buildings.filter(b => b.story).map(b => b.kind));
   if (set.farm) assert.ok(kinds.has('barn'), `${biome}: no farmstead`);
   if (set.ruins?.length) assert.ok(set.ruins.some(r => kinds.has(r)), `${biome}: no ruin (${[...kinds]})`);
+  // A landmark was silently lost for a day (generator 55-59): the story was
+  // fixed at "some" and a landmark needed "lots".
+  if (set.landmark) assert.ok(kinds.has(set.landmark), `${biome}: no ${set.landmark}`);
   if (set.walls) assert.ok(w.walls.some(x => x.kind === set.walls), `${biome}: no ${set.walls} walls`);
   else assert.equal(w.walls.filter(x => !x.pit).length, 0, `${biome}: walls where none belong`);
  }

@@ -162,6 +162,11 @@ const PICK = {
  lupine: ['blender:Blender_Lupine_1'],
  // A story wall's panel (renderer.js addStory), never planted.
  storyrail: ['blender:Blender_SplitRailFence_1'],
+ // THE DRY-AND-LAKE PACK (tools/blender/cartoon_drylake.py): the Sonoran's
+ // jojoba, Lake Dunes' sand cherry; the pier light is a story piece (above).
+ // The ironwood waits for the silhouette pass (TODO, *Silhouette lineup*).
+ jojoba: ['blender:Blender_Jojoba_1'],
+ sandcherry: ['blender:Blender_SandCherry_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -190,7 +195,7 @@ const PICK = {
  // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
  // walls, the farmstead, ruins and landmarks (story.js, renderer.js
  // addBuildings and addStory).
- storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack

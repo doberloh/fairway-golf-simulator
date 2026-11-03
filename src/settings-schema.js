@@ -325,7 +325,13 @@ export const SCHEMA_VERSION=17;
 //     seven moved. And walls keep off bare rock and ground steeper than 30%
 //     (story.js WALL_GRADE; a Rockies fence ran up a cliff), which moved
 //     Links' walls too.
-export const GENERATOR_VERSION=59;
+// 60: the dry-and-lake pack (step 3): the Sonoran plants jojoba, Lake Dunes
+//     sand cherry, and Lake Dunes' landmark is a Great Lakes pier light. And
+//     landmarks are back: since Architect went (55) the story was fixed at
+//     "some" and a landmark needed "lots", so no course had its lighthouse
+//     or church spire; every landscape with one has it again. Sonoran, Lake
+//     Dunes, Links and New England moved.
+export const GENERATOR_VERSION=60;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

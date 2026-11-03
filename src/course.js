@@ -2474,7 +2474,9 @@ export function* generateWorldSteps(settings={},options={}){
  const BRUSH_SIZE={creosote:[1.2,2.6],brittlebush:[.5,1.2],sagebrush:[.5,1.4],bracken:[.8,1.7],huckleberry:[1.2,2.8],
   vinemaple:[2,4.8],oregongrape:[.6,1.8],scotchbroom:[1,2.6],pacificrhododendron:[2,4.6],douglasiris:[.25,.4],
   // The mountain pack's: willow thickets 1-4 m, columbine 0.3-0.6, lupine 0.4-1.
-  willowthicket:[1.4,3.6],columbine:[.3,.6],lupine:[.4,.9]};
+  willowthicket:[1.4,3.6],columbine:[.3,.6],lupine:[.4,.9],
+  // The dry-and-lake pack's: jojoba 1.2-1.8 m, sand cherry 0.4-0.9.
+  jojoba:[1.2,1.8],sandcherry:[.4,.9]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand

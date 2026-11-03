@@ -36,6 +36,11 @@ export const STORY_PIECES = {
  minehead: {model: 'MineHead', width: 7, depth: 7, height: 13},
  sugarmill: {model: 'SugarMill', width: 7, depth: 7, height: 10},
  lighthouse: {model: 'Lighthouse', width: 6, depth: 6, height: 22},
+ // Grand Haven's red pierhead light on its concrete pier end (tools/blender/
+ // cartoon_drylake.py): Lake Dunes' landmark.
+ // Drawn 24 m (the model's 17 at 1.4; spec 15-30, PLACED): at 17 it hid among
+ // the dune woods' 20 m trees.
+ pierlight: {model: 'PierLight_1', width: 8.4, depth: 16.8, height: 24},
  church: {model: 'Church', width: 9, depth: 16, height: 24},
 };
 // Each landscape's story is its architect block's (biomes.js).
@@ -108,9 +113,11 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
  // Ruins: one a little, two a lot.
  const ruins = set.ruins || [];
  for (let i = 0; i < Math.min(ruins.length, amount); i++) { const at = site(STORY_PIECES[ruins[i]]); if (at) build(ruins[i], at); }
- // A landmark, a lot of story only: beyond a green, on its hole's line, out
- // past the course, so the hole is played toward it.
- if (set.landmark && amount >= 2) {
+ // A landmark: beyond a green, on its hole's line, out past the course, so
+ // the hole is played toward it. (A lot of story only, until Architect went
+ // and the story was fixed at some: from then no course had one, found 2
+ // November 2026; every course with a landmark has one now.)
+ if (set.landmark) {
   const order = holes.map((h, i) => i).sort(() => rnd() - .5);
   for (const i of order) {
    const h = holes[i], g = h.toWorld({x: h.center(h.length), z: h.length}), t = h.toWorld({x: h.center(h.length - 30), z: h.length - 30});
@@ -131,6 +138,11 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
     for (let u = .04; u < .97 && seen; u += .03) if (height(eye.x + (x - eye.x) * u, eye.z + (z - eye.z) * u) > ey + (top - ey) * u) seen = false;
     if (!seen) continue;
     build(set.landmark, {x, z, rot: Math.atan2(dx, dz), lo: y - .4}).hole = h.hole;
+    // A lane kept clear of trees from past the green to it, and a clearing
+    // round it (the dry-and-lake pack, 2 November 2026: the land let it be
+    // seen, the dune woods hid it). Lane width PLACED.
+    for (let d = 30; d < k; d += 15) out.clearings.push({x: g.x + dx / l * d, z: g.z + dz / l * d, r: 12});
+    out.clearings.push({x, z, r: piece.width + 10});
     placed = true; break;
    }
    if (placed) break;

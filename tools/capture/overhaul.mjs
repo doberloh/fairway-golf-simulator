@@ -313,10 +313,10 @@ export const VIEWS = [
  {name: 'arch-life-raven', hole: 0, when: 'afternoon', caption: 'Life: raven', cam: `w => { const a = (w.life || []).find(k => k.kind === 'raven') || {x: 0, z: 0, r: 30, up: 30};
   const x = a.x + a.r + 12, z = a.z;
   return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
- {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
+ {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => ['lighthouse', 'pierlight', 'church'].includes(k.kind)) || {x: 0, z: 0};
   const x = b.x + 45, z = b.z + 30;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},
- {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
+ {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => ['lighthouse', 'pierlight', 'church'].includes(k.kind)) || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
   const g = h.toWorld({x: h.center(h.length - 120), z: Math.max(0, h.length - 120)});
   return {x: g.x, z: g.z, yaw: Math.atan2(b.x - g.x, b.z - g.z) * 180 / Math.PI, height: 2, pitch: 1}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).

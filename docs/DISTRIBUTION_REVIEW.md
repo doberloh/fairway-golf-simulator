@@ -1735,3 +1735,7 @@ and four far twins (the model module 7.05 to 7.75 MB). Still one file.
 gzipped)**, +249 KB: six Blender models for the Rockies (two lodgepoles,
 a blue spruce, willow thicket, columbine, lupine, the split-rail fence)
 and three far twins (the model module 7.75 to 7.99 MB). Still one file.
+
+**Step 3, the dry-and-lake pack**: the page is **14,883,461 bytes (7.66
+MB gzipped)**, +137 KB: jojoba, sand cherry and the pier light (the
+ironwood held back). Still one file.

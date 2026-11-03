@@ -2211,6 +2211,7 @@ export class GolfView{
    minehead:{bark:'#6b4f36',dirt:'#3a3a3e'},
    sugarmill:{stone:'#b3a48c',dirt:'#3b3530'},
    lighthouse:{stone:'#f4f1ea',accent:'#c8372d',dirt:'#2f3437',leaf:'#ffe08a'},
+   pierlight:{stone:'#c8c4bc',accent:'#a8322a',bark:'#2a2a2a'},
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){

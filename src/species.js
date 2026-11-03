@@ -35,6 +35,8 @@ export const GROUND_PLANTS = new Set([
  'vinemaple', 'oregongrape', 'scotchbroom', 'pacificrhododendron', 'douglasiris',
  // ... and the mountain pack's.
  'willowthicket', 'columbine', 'lupine',
+ // ... and the dry-and-lake pack's.
+ 'jojoba', 'sandcherry',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

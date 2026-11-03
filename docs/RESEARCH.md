@@ -12221,3 +12221,47 @@ moved too.
 
 **Size:** the model module 7.75 to 7.99 MB, the page 14.50 to 14.75 MB
 (7.47 to 7.59 MB gzipped) for six models, three far twins.
+
+## The dry-and-lake pack, and the landmarks back (2 November 2026)
+
+Jojoba (the Sonoran) and sand cherry (Lake Dunes), seventeen rounds each,
+and a Great Lakes pier light for Lake Dunes' landmark (BLENDER_ASSETS
+*cartoon_drylake*). The first pack worked by an agent, two at a time with
+the main thread wiring and testing (tools/gpu-lock.mjs queues their
+renders). What the rounds taught: a shrub's shape is where its leaf
+flakes sit (on an ellipsoid the jojoba stood on a narrow foot, a ball on
+legs; on a mound profile widest a third of the way up it was the
+pictures' mound); accent blossoms placed at a leaf's centre vanish inside
+it, 7 cm aside they read; eight-triangle blossoms let the sand cherry
+carry twice as many for less. **The ironwood is held out of the game**: it
+read as tidy bonsai clumps on trunks, the owner's "big green fluffy balls"
+(BLENDER_ASSETS *Silhouette first*), and goes to the silhouette pass. Its
+spec's spring colour (#8a96a8) drew a blue-grey conifer, not a tree in
+lavender bloom; the pack uses #a49aa6 leaf and #c8a8d8 bloom, judged on
+the pictures (a departure from the spec, PLACED).
+
+**Planting** (PLACED, biomes.js): the Sonoran's open ground jojoba .05,
+taken from creosote (.14 to .11) and brittlebush (.08 to .06); Lake Dunes
+sand cherry .05. Heights within the specs (course.js `BRUSH_SIZE`): jojoba
+1.2-1.8 m, sand cherry 0.4-0.9.
+
+**The landmarks were lost for a day.** A landmark (story.js) was placed only
+when the story was "lots"; since Architect went (generator 55) it is fixed
+at "some", so from then no course had its lighthouse or church spire --
+which PLAYING.md still promised and the owner had asked to keep. Generator
+60 places one wherever the landscape names one, and tests/story.test.mjs
+now fails a landscape without its landmark. **The pier light is drawn 24 m**
+(PLACED within the spec's 15-30; the model is 17 m): at 17 it stood among
+Lake Dunes' 20 m trees and, seen from 120 m short of the green, showed as a
+red sliver. **A lane is kept clear of trees** from 30 m past the green to
+the landmark (circles of 12 m radius every 15 m, PLACED) and a clearing of
+the landmark's width plus 10 m round it: the placement already checked the
+land for a sight line, not the woods.
+
+**The A/B** (Lake Dunes, Low, step 3b's build against this one): graphics
+time unchanged (0.97/0.60/0.88 ms to 0.97/0.59/0.87 at the three tees),
+draws unchanged, triangles 1-2% fewer. The processor's time rose on two
+tees (1.1 to 1.6 ms, 0.8 to 1.1) while two agents' sheet layouts ran on
+the processor beside it, so the frame by mean (+29%) is not this change's;
+not measured again on a quiet machine. **Size:** the page 14.75 to 14.88 MB
+(7.59 to 7.66 MB gzipped).

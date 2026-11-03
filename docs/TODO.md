@@ -86,13 +86,29 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     regions' tables by the landscape's key. Fixed (through `worldOf`), and
     walls keep off bare rock and steep banks. Seen: the Rockies' fence;
     not seen: the other six landscapes' restored pieces in the game.
-  - [ ] Sonoran's two (ironwood, jojoba); Heartland's six (American elm,
+  - [x] `cartoon_drylake` -- jojoba (Sonoran), sand cherry and a Great Lakes
+    pier light as Lake Dunes' landmark, in the game since generator 60, with
+    the landmarks restored on every landscape that has one (they had been
+    lost since 55) and a lane of no trees to them. Seen in captures (the pier
+    light over the dune woods); not seen by a person in play. The ironwood
+    is held for the silhouette pass.
+  - [ ] Heartland's six (American elm,
     shagbark hickory, cornfield, red barn, bur oak, prairie forbs); the
     Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,
     bougainvillea, traveler's palm, hibiscus, banyan); New England's six
     (paper birch, white pine, dry-stone wall, covered bridge, balsam fir,
     American beech); Lake Dunes' two (lighthouse, sand cherry).
   - [ ] Bare winter variants of the deciduous ones -- owed to *Seasons on*.
+  - [ ] **Silhouette lineup** (the owner, 2 November 2026: the trees read as
+    "big green fluffy balls on the trunks"): every landscape's trees side by
+    side as black outlines, then the rule back-ported to EVERY tree already
+    built (the owner: "back port to all of our other models that are already
+    done") -- the Pacific and mountain packs, the ironwood (held out of the
+    game until then), and the cartoon overhaul's packs (broadleaf, conifer,
+    desert, island, lakeshore, redwood, shrubs) -- each reworked tree logged
+    against its pictures, its fingerprint and A/B as a pack's
+    (BLENDER_ASSETS, *Silhouette first*). Next in line for an agent, before
+    the Keys pack.
 - [ ] **The streets kit and the roads pass**: no road across a fairway (a
   bench invariant), the clubhouse and parking near an edge; roads anywhere
   in the builder (a `BUILT_VERSION` step).

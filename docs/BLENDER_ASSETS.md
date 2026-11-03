@@ -569,3 +569,34 @@ The fence is the Rockies' story wall (biomes.js WORLD.mountain
 `story.walls: 'rail'`): renderer.js addStory draws it, story.js gives it
 a 1.3 m wide solid box (`WALL_WIDTH`) so a ball meets the zig-zag's
 width. Willow thicket's bare winter stems are owed to the seasons step.
+
+### Silhouette first (the owner, 2 November 2026)
+
+"The trees all look like big green fluffy balls on the trunks... every
+tree is gonna end up looking kind of the same." The style stays (soft
+lobed clumps, flat colour, ink); what changes is that **every species is
+modelled to be recognised by its outline alone**, a black shape at
+thumbnail size, and not confused with another tree in the game: crown
+shape (vase, umbrella, spire, shelves, fan, broad and flat), how much
+trunk and limb shows, lobe scale and edge, and sky through an open crown.
+A tree's crown is never one default ellipsoid `cloud_crown`; it is built
+from parts placed to make its species' outline. The packs from New
+England on were briefed this way from their first round, Heartland from
+round 4; the Pacific, mountain and dry-and-lake packs were made before it
+(TODO, *Silhouette lineup*).
+
+### cartoon_drylake
+
+`tools/blender/cartoon_drylake.py`, 5 models and 2 far twins, seventeen
+rounds each: what the Sonoran and Lake Dunes lacked.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Ironwood_1`, `_2` | `ironwood` (not yet in the game) | Short split trunks under a dome of clumps; held back for the silhouette pass (it reads as bonsai pads) | 4,700-5,160 |
+| `Blender_Jojoba_1` | `jojoba` | A dense grey-green mound leafy to the ground, leaf flakes on its skin | 3,250 |
+| `Blender_SandCherry_1` | `sandcherry` | A low sprawl of thin dark stems, narrow leaves, small blossoms (accent: white in spring, dark cherries in summer) | 3,100 |
+| `Blender_PierLight_1` | story piece `pierlight` | Grand Haven's red pierhead light on its concrete pier end: red tower (accent), dark railed gallery and iron (bark), pale lantern and deck (stone); front -Y, pier along Y | 800 |
+
+The pier light is Lake Dunes' landmark (story.js `STORY_PIECES.pierlight`,
+drawn 24 m on an 8.4 by 16.8 m footing). Painting its accent #f2efe6
+makes a white light like St. Joseph's.

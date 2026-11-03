@@ -212,7 +212,9 @@ const TRAITS = {
   stands: {edge: 75, wobble: 30, ramp: 25, patch: .14, scale: 220, near: 45, spacing: 10, share: .55,
    under: {spacing: 8, plants: [['creosote', .5], ['brittlebush', .3], ['agave', .2]]},
    plants: [['mesquite', .38], ['palo', .27], ['cholla', .2], ['cactus', .08], ['ocotillo', .07]]},
-  plants: [['cactus', .18], ['cholla', .1], ['palo', .18], ['mesquite', .14], ['ocotillo', .1], ['agave', .08], ['creosote', .14], ['brittlebush', .08]]},
+  // Jojoba from the dry-and-lake pack (the US landscapes goal), taken from
+  // creosote and brittlebush. Weight PLACED.
+  plants: [['cactus', .18], ['cholla', .1], ['palo', .18], ['mesquite', .14], ['ocotillo', .1], ['agave', .08], ['creosote', .11], ['brittlebush', .06], ['jojoba', .05]]},
  mountain: {light: {shade: '#7c90c4'},
   longGrass: {families: [['grassalpine', 3, .4], ['grassfescue', 2, .6]], count: 3500, near: 18, leaf: '#6f8a48', accent: '#e8d36a'},
   farForest: {cover: .8, size: 9, line: 520, colors: ['#284c35', '#335c3c', '#466d3f']},
@@ -400,7 +402,7 @@ const TRAITS = {
    under: {spacing: 8.5, plants: [['bracken', .5], ['shrub', .5]]},
    plants: [['blackoak', .4], ['cottonwood', .3], ['sugarmaple', .3]]},
   plants: [['cottonwood', .17], ['dunegrass', .34], ['blackoak', .17], ['sugarmaple', .09],
-   ['pine', .05], ['juniper', .12], ['commonjuniper', .06]]},
+   ['pine', .05], ['juniper', .12], ['commonjuniper', .06], ['sandcherry', .05]]},
 };
 
 const PALETTES = {
@@ -499,7 +501,8 @@ export const WORLD = {
   story: {walls: 'stone', farm: true, ruins: ['cottage'], landmark: 'church'}, life: {grazers: ['deer', 4], geese: 4},
   colours: {clubhouse: {stone: '#f1ede2', bark: '#3d4044', accent: '#ffffff', dirt: '#2d3640'}, riprap: '#928b80', wall: '#c2b8a4', ruin: '#b5ab98', bridgeStone: '#c4b9a6'}},
  lakeshore: {edge: null, fountain: false, clubhouse: 'shingle', path: 'boardwalk', bridge: 'wood',
-  story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}, life: {fliers: ['gull', 4], geese: 6},
+  // A Great Lakes pier light for its landmark (the dry-and-lake pack).
+  story: {walls: null, ruins: ['cottage'], landmark: 'pierlight'}, life: {fliers: ['gull', 4], geese: 6},
   colours: {clubhouse: {stone: '#c4ab84', bark: '#6d6a63', accent: '#f4f1ea', dirt: '#2c3a46'}, riprap: '#9c937f', wall: '#c9bfa8', ruin: '#c4b9a2', bridgeStone: '#bdb6a6'}},
 };
 // EACH BUILT LANDSCAPE: what it changes from its region's record -- palette

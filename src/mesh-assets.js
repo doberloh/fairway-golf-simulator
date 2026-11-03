@@ -245,6 +245,8 @@ export const FAMILY_OF = {
  pacificrhododendron: 'rhododendron', douglasiris: 'douglasiris',
  // The mountain pack (tools/blender/cartoon_mountain.py): the Rockies' own.
  lodgepole: 'lodgepole', bluespruce: 'bluespruce', willowthicket: 'willowthicket', columbine: 'columbine', lupine: 'lupine',
+ // The dry-and-lake pack (tools/blender/cartoon_drylake.py).
+ jojoba: 'jojoba', sandcherry: 'sandcherry',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,
