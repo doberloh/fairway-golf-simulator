@@ -31,6 +31,8 @@ import {osmCourses, osmHoles, shiftHoles, fitHoles} from '../src/builder/osm-cou
 import {writeBuiltFile, readBuiltFile, validateDoc} from '../src/course-doc.js';
 import {worldFromDoc} from '../src/built-world.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
+import {createEditor} from '../src/builder/editing.js';
+import {BIOMES} from '../src/biomes.js';
 import {testRound} from '../src/builder/test-round.js';
 import {searchLidar, downloadLidar} from '../src/builder/lidar-search.js';
 import {lidarDir, lidarFiles, cachedGet, courseSources} from './lidar-home.mjs';
@@ -50,7 +52,7 @@ export const COURSES = {
  'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'oregondunes'},
  // The owner's addition of 3 November 2026: Bully Pulpit at Medora, North
  // Dakota, on the Badlands (its survey fetched from 3DEP).
- 'bully-pulpit': {name: 'Bully Pulpit', osm: 'way(245874307)', landscape: 'badlands'},
+ 'bully-pulpit': {name: 'Bully Pulpit', osm: 'way(245874307)', landscape: 'badlands', skin: true},
  'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'keys'},
  northwood: {name: 'Northwood Golf Club', osm: 'way(1246462624)', landscape: 'redwood'},
  ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'newengland'},
@@ -152,8 +154,16 @@ async function build(key) {
  if (![9, 18].includes(n) || holes.length !== n) { say(`NOT BUILT: holes numbered ${holes.map((h, i) => h ? i + 1 : null).filter(Boolean).join(',')}`); fs.writeFileSync(path.join(dir, 'report.txt'), log.join('\n') + '\n'); return; }
  // 5. The course.
  const recs = holes.map((h, i) => ({number: i + 1, par: h.par ?? null, index: null, tees: h.tees, green: h.green, line: [[h.tees[0].x, h.tees[0].z], ...h.aims.map(a => [a.x, a.z]), [h.green.x, h.green.z]]}));
- const doc = validateDoc(docFromLand({land, traced: {layers: traced.state.layers}, holes: recs, trees: traced.state.trees, homes: traced.state.homes, name: c.name, landscape: c.landscape,
+ let doc = validateDoc(docFromLand({land, traced: {layers: traced.state.layers}, holes: recs, trees: traced.state.trees, homes: traced.state.homes, name: c.name, landscape: c.landscape,
   credits: ['Elevation: USGS 3D Elevation Program (public domain)' + (crs.epsg === 2927 ? '; Washington DNR' : ''), OSM_CREDIT], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}, trace: 'openstreetmap+lidar', picture: 'none'}}));
+ // SKINNED FROM THE LAND (`skin: true`; the owner, 3 November 2026): the
+ // editor's own Skin from the land, as a player pressing it would -- the
+ // landscape's rock on the survey's steep ground, its apron below.
+ if (c.skin) {
+  const e = createEditor(doc), got = e.skinFromLand({bio: BIOMES[c.landscape]});
+  doc = validateDoc(await e.toDoc());
+  say(`skinned from the land: ${got.kinds.face} on ${got.cells.face.toLocaleString()} cells${got.kinds.apron ? `, ${got.kinds.apron} on ${got.cells.apron.toLocaleString()}` : ''}`);
+ }
  const bytes = await writeBuiltFile(doc, BUILT_VERSION), file = path.join(dir, `${c.name.replace(/[^\w ()-]+/g, '')}.fairway`);
  fs.writeFileSync(file, bytes);
  const w = worldFromDoc(await readBuiltFile(bytes));

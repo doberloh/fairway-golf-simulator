@@ -81,10 +81,17 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   green. Still to do: more rounds on the formations' look (taller, more
   spires, the far hills plain), a frame-rate A/B on Low, its seasons seen
   in a capture, and the builder side checked.
-- [ ] **Bully Pulpit built in the builder at the end** (the owner, 3 November
-  2026), on the Badlands, the way Chambers Bay was (tools/build-courses.mjs:
-  OpenStreetMap way/245874307 at Medora, North Dakota, and the state's
-  LIDAR), played through by the virtual golfers and opened in the game.
+- [ ] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
+  the Badlands, the way Chambers Bay was. **Built** (tools/build-courses.mjs
+  `bully-pulpit`): OpenStreetMap way/245874307 at Medora traced, the land
+  from 3DEP's survey (14.8 million points, 1 m, 100% surveyed) refined,
+  skinned from the land by the editor's own Skin from the land (`skin:
+  true`: rock on the survey's steep breaks, bare clay below), par 72,
+  7,113 yd from the back (the course lists 7,166); the virtual golfers
+  played all 18 in 83, none stuck. Still to do: open it in the game and
+  play a tee shot (tools/play-built.mjs), look at the skin in pictures (a
+  fifth rock, a third clay may be heavy), and send them to the owner. The
+  file is local (bench/courses/bully-pulpit), never committed.
 - [ ] **Tall fescue and the prairie grasses for every landscape that needs
   them** ("do we have tall fescue and prairie grasses? if not, we should
   retroactively build them"): tall fescue, little bluestem, switchgrass,
