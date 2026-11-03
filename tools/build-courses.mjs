@@ -45,7 +45,9 @@ export const COURSES = {
  sahalee: {name: 'Sahalee Country Club', osm: 'way(1002185812)', landscape: 'puget'},
  'tpc-scottsdale': {name: 'TPC Scottsdale (Stadium)', osm: 'way(78388948)', landscape: 'sonoran'},
  breckenridge: {name: 'Breckenridge Golf Club', osm: 'way(1571231453)', landscape: 'rockies'},
- 'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'links'},
+ // On the Oregon Dunes, the Pacific links (the US landscapes goal, step 10;
+ // PLACED: the study puts it "in the lowland, but built as Links").
+ 'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'oregondunes'},
  'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'keys'},
  northwood: {name: 'Northwood Golf Club', osm: 'way(1246462624)', landscape: 'redwood'},
  ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'newengland'},

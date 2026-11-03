@@ -12774,3 +12774,13 @@ subs/alaska/, local) and the packs' specs.
 
 SCHEMA 24 adds the three keys -- forty landscapes with Scottish Links, the
 whole map. Generator 70 moved Alaska.
+
+**Chambers Bay on the Oregon Dunes** (step 10, 3 November 2026): rebuilt by
+tools/build-courses.mjs as door 2 builds a course (OpenStreetMap way
+26787026 traced, the LIDAR's land at 0.5 m, the map refined against it, the
+holes fitted), on the Oregon Dunes -- PLACED: the study puts it "in the
+lowland, but built as Links", and of the new landscapes the Pacific links is
+the links. Par 72, 7,455 yd from the back, 4,825 trees, 53 houses, a 6.1 MB
+file. The virtual golfers played it through in 87 against par 72 (the 4th
+the hardest, 8 on a par 5, then the 1st, 6 on a par 4; none stuck), and the game
+opened it and played a 136 m tee shot (tools/play-built.mjs).

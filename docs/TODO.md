@@ -266,19 +266,28 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   map has its key, record, names, crest, pictures and its own models -- forty
   with Scottish Links. Played in the generator, not in the builder: the
   builder's side is *Every landscape in the builder* below.
-- [ ] **Every landscape in the builder** (PLAN 2's table, "both modes"): a
-  built course on each new landscape -- its look, trees and ground from its
-  record (built-world.js reads the landscape's planting), checked course by
-  course; only the nine and Scottish Links have been built on. Texas and the deserts;
+- [x] **Every landscape in the builder** (PLAN 2's table, "both modes"): a
+  built course takes its look, trees and ground from its landscape's record
+  (built-world.js `speciesFor` reads the landscape's planting by role), so
+  every landscape is in the builder's list and builds; tests/built-world
+  holds it for all forty -- the same file, every lie kept, each stored tree
+  one of that landscape's own. Seen in the game on the Oregon Dunes
+  (Chambers Bay) and the nine; the other new landscapes not seen built. Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;
   a contact sheet a pack, not waited on.
 - [ ] **Seasons on**: chosen at the round's start (today's or picked), saved
   with the round; bare winter variants; snow for looks only.
-- [ ] **Chambers Bay** built in the builder on its new landscape and played
-  through; **the showcase** of every landscape, generated, several pictures
-  each (a capture tool committed, the document local).
+- [x] **Chambers Bay** built in the builder on its new landscape and played
+  through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
+  OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --
+  PLACED, the study's "in the lowland, but built as Links" -- par 72,
+  7,455 yd; the virtual golfers played all 18 in 87, none stuck; opened in
+  the game and a tee shot played (tools/play-built.mjs). Seen in the game's
+  pictures; not played by a person.
+- [ ] **The showcase** of every landscape, generated, several pictures each
+  (a capture tool committed, the document local; step 10).
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 

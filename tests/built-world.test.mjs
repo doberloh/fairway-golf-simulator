@@ -88,6 +88,20 @@ test('any landscape: the same file in Desert keeps every lie', () => {
  assert.equal(d.bio.name, biomeOf('sonoran').name);
 });
 
+// THE BUILDER ON EVERY LANDSCAPE (the US landscapes goal, PLAN 2's "both
+// modes"): the same file builds on each of the forty, keeps every lie, and
+// draws each stored tree from that landscape's own planting -- a tree the
+// landscape has none of in that role falls back to one it plants.
+test('every landscape builds the same file, every lie kept, its trees its own', async () => {
+ const {BIOME_KEYS} = await import('../src/settings-schema.js');
+ for (const key of BIOME_KEYS) {
+  const d = worldFromDoc({...doc(), landscape: key}), planted = new Set(biomeOf(key).plants.map(p => p[0]));
+  for (const [x, z] of [[0, 90], [0, 0], [80, 0], [-50, 0]]) assert.equal(d.surface(x, z), at(x, z), `${key}: the lie at ${x}, ${z}`);
+  assert.equal(d.bio.name, biomeOf(key).name);
+  for (const t of d.trees) assert.ok(planted.has(t.kind) || t.kind === 'shrub' || t.kind === 'oak', `${key}: a stored tree draws ${t.kind}, which it does not plant`);
+ }
+});
+
 test('stored houses stand where the file puts them, the same street every time, and none in an old file', () => {
  assert.deepEqual(world.homes, [], 'a file without houses has none');
  const homes = [{x: 60, z: 20, rotation: 1.2, width: 20, depth: 14}, {x: -60, z: -20, rotation: -.4, width: 18, depth: 16}];

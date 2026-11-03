@@ -436,7 +436,9 @@ the same course making the same file, broken files refused in plain words).
 A world from a built file: `tests/built-world.test.mjs` (a hand-made document's lie
 in the generator's order, field edges to a few centimetres, a patch fading
 into the land, holes from records, trees keeping their sizes in any
-landscape, the field's ground codes equal to ground.js's), `tests/freeze.test.mjs`
+landscape, the field's ground codes equal to ground.js's, and since the US
+landscapes goal the same file on every one of the forty landscapes, each
+stored tree drawn from that landscape's own planting), `tests/freeze.test.mjs`
 (a generated nine with a creek and a lake, frozen, written, read and rebuilt:
 surfaces over 99% the same at every 3 m, the ground within 1 cm at the 95th
 percentile and greens within 0.5 cm at the median, every hole's par, tees,
