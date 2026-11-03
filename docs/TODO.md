@@ -227,9 +227,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [x] **The Piedmont's red clay** (generator 73): its prairie drifts beyond
   play are bare red clay banks (hardpan painted #9c6048) at a quarter of the
   ground. Seen in a capture.
-- [ ] **The South's look, one gap left**: the Lowcountry
-  has spartina but no salt-marsh ground or tidal water -- it wants its own
-  ground or water rule (a generator step).
+- [ ] **The Lowcountry's salt marsh, partly** (generator 74): open now (trees
+  halved, 1.5), its drifts beyond play cordgrass flats (native grass painted
+  #c4b468) at two-thirds of the ground, its water brackish -- it reads as
+  open grass flats round live-oak woods; still no tidal creeks or marsh
+  water, which want a water rule of their own.
 - [ ] **Bluebonnet Prairie does not read as a bluebonnet field from the
   camera**: the pack's clumps (0.3-0.45 m), the rough's flowers and the long
   grass's blue heads show close to, not as the blue drifts the name

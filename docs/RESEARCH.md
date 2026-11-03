@@ -12866,3 +12866,10 @@ is the South's prairie with the drifts beyond play as hardpan (bare clay;
 it plays as hardpan) at a quarter of the ground (the Midwest's native
 drifts are .56), painted #9c6048 (PLACED: the first pictures' #a8583a read
 too orange).
+
+**The Lowcountry's salt marsh, partly** (generator 74, 3 November 2026):
+its drifts beyond play are cordgrass flats (native grass at .68 of the
+ground, painted #c4b468; #a4a65a read as the rough), its trees halved (1.5
+from the South's 3, stands at .35 of the ground: the flats lay under the
+woods), its water brackish (#4e6a5e). PLACED. Open grass flats round
+live-oak woods now; tidal creeks are still to do.

@@ -388,7 +388,10 @@ export const SCHEMA_VERSION=25;
 //     biomes.js `inWater`). Moved the Bayou.
 // 73: the Piedmont's red clay -- its prairie drifts beyond play are bare red
 //     clay (hardpan) at a quarter of the ground. Moved the Piedmont.
-export const GENERATOR_VERSION=73;
+// 74: the Lowcountry's salt marsh -- its drifts beyond play are cordgrass
+//     flats at two-thirds of the ground, its water brackish. Moved the
+//     Lowcountry.
+export const GENERATOR_VERSION=74;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

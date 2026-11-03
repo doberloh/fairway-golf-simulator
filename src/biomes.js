@@ -758,8 +758,12 @@ const LAND = {
   // Pine straw's amber.
   ui: {panel: 'rgba(36,28,14,.88)', a1: '#fde68a', a2: '#a16207', hot: '#fef9c3', soft: '#e0d2ae', onHot: '#221a06'}},
  // Lowcountry: live oaks in Spanish moss, salt marsh, palmettos, slash pine.
- lowcountry: {rough: '#7a8a46', sky: '#c8d8de', temperature: 28,
-  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
+ // Salt marsh (generator 74): the drifts beyond play are wide cordgrass flats
+ // (native grass, painted the marsh's gold-green, two-thirds of the ground),
+ // the water brackish (PLACED).
+ lowcountry: {landform: {...TRAITS.south.landform, cover: .68, kinds: {a: 'native'}}, groundTints: {native: '#c4b468'}, water: '#4e6a5e',
+  rough: '#7a8a46', sky: '#c8d8de', temperature: 28, treeDensity: 1.5,
+  stands: {...TRAITS.south.stands, share: .35, under: {spacing: 8, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
    plants: [['liveoakmoss', .45], ['slashpine', .2], ['cabbagepalm', .2], ['magnolia', .1], ['waxmyrtle', .05]]},
   plants: [['liveoakmoss', .18], ['cabbagepalm', .15], ['slashpine', .1], ['magnolia', .04], ['spartina', .21], ['muhlygrass', .1], ['sawpalmetto', .12], ['waxmyrtle', .1]],
   ui: {panel: 'rgba(18,32,28,.88)', a1: '#ccfbf1', a2: '#0f766e', hot: '#fde68a', soft: '#b8d4cc', onHot: '#06201c'}},
