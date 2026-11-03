@@ -12879,5 +12879,5 @@ blocks (biomes.js `vineyard`) of 60 by 36 m, each on its own bearing, on
 ground where trees may stand, 30 m off any corridor and 80 m from the other
 block, the ground within 4 m; rows 3 m apart, a vine every 2 m (403 a
 block); the open planting keeps grape vines at .03 (from .3). Its own seeded
-stream, so nothing before it moves. All PLACED (California vineyards plant
-rows 2.4-3.7 m apart, vines 1.2-2.4 m: within that).
+stream, so nothing before it moves. All PLACED, not checked against a
+published spacing.
