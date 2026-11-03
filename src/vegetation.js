@@ -122,7 +122,7 @@ function groundShaded(geometry,shade){
 // view.snowTops, renderer.js): every face turned up -- a crown's top, a
 // limb's upper side -- fades toward snow white, by how far it faces the sky
 // (world normal y from .45 to .8, 85% at most; PLACED). Looks only.
-function snowTopped(material){
+export function snowTopped(material){
  const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
  material.customProgramCacheKey=()=>key.call(material)+'-snowtop';
  material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_toon_fragment>','{vec3 snowN=normalize((vec4(normal,0.)*viewMatrix).xyz);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.97),smoothstep(.45,.8,snowN.y)*.85);}\n#include <lights_toon_fragment>');};

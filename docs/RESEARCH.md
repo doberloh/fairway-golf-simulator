@@ -12888,4 +12888,12 @@ published spacing.
 region has snow (seasons.js WINTER), every tree material fades a face toward
 #eef2f4-ish white (.93, .95, .97) by how far its world normal faces up --
 from y .45 to .8, at most 85% (PLACED, from the first winter pictures of
-Alaska). Drawing only; buildings untouched.
+Alaska). Drawing only. The same fade is laid on the buildings (the
+clubhouse, the story's pieces, the cart barn, the houses), so their roofs
+whiten and their walls do not. Under the snow, every natural ground's colour
+(leaf litter, pine straw, native grass, heather, hardpan; grounds.js
+GROUND_TINT and the record's groundTints) goes .75 of the way to snow, rock
+and scree .35 (PLACED, from New England's winter picture, where orange leaf
+litter read as autumn through the snow). The far broadleaf woods go .85 of
+the way to #7a6e62 in winter, .45 to #b0703a in autumn (PLACED; .55 left New
+England's orange autumn record still orange).

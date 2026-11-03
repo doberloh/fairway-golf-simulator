@@ -38,6 +38,9 @@
 // Restitution (`cor`) is the elasto-plastic value; physics multiplies it by up
 // to ELASTIC_GAIN (3.5) for a slow contact, so anything above about 0.24 would
 // return more than it was dropped from. Rock sits just under that ceiling.
+// The colours a ground type paints with where its landscape names none
+// (ground.js groundTints; seasons.js lays snow over them). PLACED.
+export const GROUND_TINT = {coral: '#e6dcc2', pinestraw: '#8b5e34', litter: '#b4692f', heather: '#7a5b78', native: '#b3a35a'};
 export const GROUNDS = {
  rock: {label: 'Rock', word: 'rock', like: 'rough', sound: 'rock', map: '#9a958a', relief: 4,
   contact: {cor: .22, tilt: .10, mu: .30, ground: .020, canopy: .000, spin: 2.5},

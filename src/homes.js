@@ -3,7 +3,7 @@ import {familyModels,modelExtents,modelParts,meshAtlas,instanceModels} from './m
 import {toonRamp} from './textures.js';
 import {allows} from './grounds.js';
 import {biomeOf} from './biomes.js';
-import {addViewBlockers} from './vegetation.js';
+import {addViewBlockers,snowTopped} from './vegetation.js';
 import {viewBlocker} from './camera-tours.js';
 // Fairway homes. Sites must be dry, gently sloping rough, clear of tee and green
 // complexes and spaced from one another. Each house draws its own form, roof,
@@ -204,8 +204,10 @@ export function addHomes(view){
  const shared=new Map();
  const materialFor=(role,variant=0,painted=false)=>{
   const key=painted?'p':variant;
-  if(!shared.has(key))shared.set(key,painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:ramp??toonRamp(view)})
-   :new T.MeshToonMaterial({map:meshAtlas(variant),color:'#ffffff'}));
+  // In a snow winter the roofs whiten like the trees' tops (renderer.js snowTops).
+  const snow=m=>view.snowTops?snowTopped(m):m;
+  if(!shared.has(key))shared.set(key,snow(painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:ramp??toonRamp(view)})
+   :new T.MeshToonMaterial({map:meshAtlas(variant),color:'#ffffff'})));
   return shared.get(key);
  };
  // A house in the way of the camera goes whole, every part of it (UI/UX pass V2).

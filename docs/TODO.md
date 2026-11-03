@@ -318,9 +318,18 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   turn grey-brown (seasons.js farWoodsInSeason, read by the ground shader
   from the season's copy of the record). Seen in captures (Alaska's spruces
   under snow, the Heartland's horizon).
-- [ ] **Seasons, still to do**: snow on roofs and walls (buildings keep their
-  colours), a twig layer on the bare crowns (PLAN 3), and each landscape's
-  spring flowering window beyond what the packs' spring colours give.
+- [x] **Snow on the roofs and the ground under the trees** (3 November 2026,
+  drawing only): in a snow winter the clubhouse, the story's buildings, the
+  cart barn and every house whiten on their up-facing faces as the trees do
+  (snowTopped on their materials); leaf litter, pine straw and the other
+  natural grounds go under snow (seasons.js lays snow over grounds.js
+  GROUND_TINT, and ground.js now reads the round's season copy); the far
+  broadleaf woods in winter go .85 of the way to bare grey-brown (New
+  England's autumn record read orange at .55). Seen in captures (Heartland's
+  barn, New England's winter).
+- [ ] **Seasons, still to do**: a twig layer on the bare crowns (PLAN 3),
+  and each landscape's spring flowering window beyond what the packs'
+  spring colours give. Walls (stone, wire, board) do not take snow yet.
 - [x] **Chambers Bay** built in the builder on its new landscape and played
   through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
   OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --

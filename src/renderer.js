@@ -62,7 +62,7 @@ import {fountainDrops,dropAt,ringAt,jetAt} from './fountain.js';
 
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
 import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
-import {addVegetation,farWoodGeometry} from './vegetation.js';
+import {addVegetation,farWoodGeometry,snowTopped} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
@@ -2346,7 +2346,8 @@ export class GolfView{
      for(let i=0;i<n;i++){col[i*3]=c.r*(paint?paint.getX(i):1);col[i*3+1]=c.g*(paint?paint.getY(i):1);col[i*3+2]=c.b*(paint?paint.getZ(i):1);}
      const out=new T.BufferGeometry();out.setAttribute('position',src.attributes.position);out.setAttribute('normal',src.attributes.normal);out.setAttribute('color',new T.BufferAttribute(col,3));return out;});
     const merged=mergeGeometries(geos);for(const x of geos)x.dispose();
-    const m=new T.Mesh(merged,this.surfaceMaterial('#ffffff',{vertexColors:true}));m.castShadow=m.receiveShadow=true;g.add(m);
+    // Snow on its roof in a snowy winter (vegetation.js snowTopped).
+    const bm=this.surfaceMaterial('#ffffff',{vertexColors:true}),m=new T.Mesh(merged,this.snowTops?snowTopped(bm):bm);m.castShadow=m.receiveShadow=true;g.add(m);
     const ink=new T.Mesh(merged,this.inkMaterial(b.height));ink.castShadow=ink.receiveShadow=false;g.add(ink);}
    // The model's front is glTF +z (its Blender -y); the building's front is
    // its local -z, toward the first tee -- hence the half turn.

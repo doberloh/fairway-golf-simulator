@@ -11,7 +11,7 @@ import {WILD_WATER} from './landforms.js';
 import {TURF_DETAIL} from './turf-detail.js';
 import {FIELD_RANGE} from './surface-field.js';
 import {BUILT_FIELD} from './built-world.js';
-import {GROUNDS} from './grounds.js';
+import {GROUNDS,GROUND_TINT} from './grounds.js';
 
 // The turf detail atlas (tools/turf-detail.mjs) as a texture: tiling, mip-
 // mapped and sharp at a glancing angle. Data, not colour, so no sRGB step.
@@ -44,7 +44,7 @@ export const GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, p
 // The colours each type paints with, before its pattern: from the biome's own
 // palette where it has one (its rock, its sand, its rough), otherwise these.
 // A biome can override any of them (`groundTints` in biomes.js). PLACED.
-const GROUND_TINT = {coral: '#e6dcc2', pinestraw: '#8b5e34', litter: '#b4692f', heather: '#7a5b78', native: '#b3a35a'};
+// The defaults are grounds.js GROUND_TINT (seasons.js snows them).
 function groundTints(bio) {
  const c = v => new T.Color(v), t = {...GROUND_TINT, ...(bio.groundTints || {})};
  return {
@@ -58,7 +58,7 @@ function groundTints(bio) {
 function wildUniforms(w, hasWild, hasFallen) {
  const r = w.landform || {kinds: {}, gates: {}}, kinds = r.kinds || {}, gates = r.gates || {};
  const code = k => GROUND_CODE[k] || 0, gate = g => new T.Vector2(g?.near ?? 0, g?.ramp ?? 1);
- const tints = groundTints(biomeOf(w.settings.biome));
+ const tints = groundTints({...biomeOf(w.settings.biome), ...(w.bio || {})}); // w.bio: the round's season (seasons.js)
  return {
   wildOn: {value: hasWild ? 1 : 0}, fallenOn: {value: hasFallen ? 1 : 0},
   wildKinds: {value: new T.Vector4(code(kinds.a), code(kinds.b), code(kinds.floor), code(w.bio.fallen?.kind))},

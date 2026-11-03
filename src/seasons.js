@@ -19,6 +19,7 @@
 // deciduous trees bare in winter, the ground's turf and snow by region
 // (`seasonPalette`, below). Looks only: a season never changes a ball.
 
+import {GROUND_TINT} from './grounds.js';
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 // The seasons the game can draw so far. Step 9 lists all four.
 export const DRAWN = SEASONS;
@@ -80,7 +81,15 @@ export function seasonPalette(bio, season, region) {
  else if (season === 'autumn') { put('rough', AUTUMN, .3); put('semi', AUTUMN, .12); }
  else if (season === 'winter') {
   const w = WINTER[region] || 'frost';
-  if (w === 'snow') { put('rough', SNOW, .85); put('semi', SNOW, .45); put('bank', SNOW, .6); put('fairway', FROST, .15); }
+  if (w === 'snow') {
+   put('rough', SNOW, .85); put('semi', SNOW, .45); put('bank', SNOW, .6); put('fairway', FROST, .15);
+   // The natural grounds under the snow too (grounds.js GROUND_TINT and the
+   // record's groundTints): a winter with orange leaf litter under bare
+   // trees read as autumn through the snow (3 November 2026). Rock keeps
+   // more of itself. Fractions PLACED from the New England picture.
+   out.groundTints = Object.fromEntries(Object.entries({...GROUND_TINT, ...(bio.groundTints || {})})
+    .map(([k, v]) => [k, mix(v.toLowerCase(), SNOW, k === 'rock' || k === 'scree' ? .35 : .75)]));
+  }
   else if (w === 'frost') { put('rough', FROST, .35); put('semi', FROST, .2); put('fairway', FROST, .1); }
   else if (w === 'dormant') { put('rough', STRAW, .45); put('semi', STRAW, .3); put('fairway', STRAW, .18); }
  }
@@ -94,7 +103,9 @@ const BROADLEAF_WOODS = new Set(['northeast', 'midwest', 'appalachia', 'south', 
 export function farWoodsInSeason(bio, season, region) {
  const f = bio?.farForest;
  if (!f?.colors || !BROADLEAF_WOODS.has(region) || (season !== 'autumn' && season !== 'winter')) return null;
- const to = season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .55;
+ // Winter at .85: New England's summer record is already its autumn, and
+ // .55 of the way from orange still read orange (3 November 2026).
+ const to = season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
  return {...f, colors: f.colors.map(c => (/^#[0-9a-f]{6}$/i.test(c) ? mix(c.toLowerCase(), to, t) : c))};
 }
 // Bare in winter: a broadleaf tree that drops its leaves -- not an evergreen,

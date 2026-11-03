@@ -57,3 +57,19 @@ test('every region has its winter; a season moves the turf, never the greens, an
  const sets = {evergreen: new Set(['pine']), palms: new Set(['palm']), ground: new Set(['shrub'])};
  assert.ok(bareInWinter('oak', sets) && !bareInWinter('pine', sets) && !bareInWinter('palm', sets) && !bareInWinter('shrub', sets));
 });
+
+test('snow covers the natural grounds and greys the far broadleaf woods', async () => {
+ // New England's winter showed orange leaf litter and autumn far woods
+ // through the snow (3 November 2026).
+ const {seasonPalette} = await import('../src/seasons.js');
+ const bright = h => [1, 3, 5].reduce((s, i) => s + parseInt(h.slice(i, i + 2), 16), 0) / 3;
+ const bio = {rough: '#4a7a3a', groundTints: {native: '#b3a35a'}, farForest: {colors: ['#b8482c', '#d67c34', '#cfa443']}};
+ const snow = seasonPalette(bio, 'winter', 'northeast');
+ assert.ok(bright(snow.groundTints.litter) > 200, `litter under snow is ${snow.groundTints.litter}`);
+ assert.ok(bright(snow.groundTints.native) > 200, `native grass under snow is ${snow.groundTints.native}`);
+ // New England's own autumn woods: at least four fifths of the orange gone.
+ const warmth = h => parseInt(h.slice(1, 3), 16) - parseInt(h.slice(5, 7), 16);
+ bio.farForest.colors.forEach((c, i) => assert.ok(warmth(snow.farForest.colors[i]) <= warmth(c) * .2 + 24,
+  `the far woods in winter are still orange: ${c} became ${snow.farForest.colors[i]}`));
+ assert.equal(seasonPalette(bio, 'winter', 'south').groundTints, undefined, 'a dormant winter keeps its grounds');
+});
