@@ -169,9 +169,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   8c's at 188-190 (9 to 23 August 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
-- [ ] **Every landscape's card pictures retaken** once its models are in: the
-  nine's are still the masters of 27 October, under the old keys, with the
-  old trees.
+- [x] **Every landscape's card pictures retaken** once its models are in:
+  the nine originals retaken on 3 November 2026 (biome-shots, label rt9),
+  every other landscape when its phase went in.
 - [x] **The roads pass** (generator 63; roads.js): a public road along the
   clubhouse's side of the property, out of bounds beyond it; the parking
   lot beside the clubhouse; the drive between, never across play (the
