@@ -564,6 +564,29 @@ INTERFACE.alaska = {panel: 'rgba(12,24,36,.88)', a1: '#a5f3fc', a2: '#0e7490', h
 WORLD.alaska = {...WORLD.mountain, clubhouse: 'loglodge', path: 'gravel', bridge: 'wood',
  story: {walls: null, ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 3], heron: true}};
 
+// The South (phase 5): the Heartland's rolling ground, humid haze, pines and
+// live oaks, a white plantation clubhouse. Every value PLACED from the
+// study's pages (subs/south/).
+TRAITS.south = {...TRAITS.midwest, light: {shade: '#8a98b4'},
+ longGrass: {families: [['grassbluestem', 2, 1.2], ['grassfescue', 2, .8]], count: 4200, near: 22, leaf: '#7a8a46', accent: '#b07a3e'},
+ farForest: {cover: .8, size: 12, colors: ['#3e6232', '#4a6e36', '#567a3a']},
+ bank: '#6e6a44', rockMoss: '#8a9a58', treeDensity: 3,
+ stands: {...TRAITS.midwest.stands, under: {spacing: 8, plants: [['azalea', .4], ['yaupon', .3], ['shrub', .3]]},
+  plants: [['loblollypine', .35], ['tulippoplar', .2], ['sweetgum', .15], ['oak', .15], ['magnolia', .1], ['floweringdogwood', .05]]},
+ plants: [['loblollypine', .15], ['oak', .05], ['tulippoplar', .1], ['sweetgum', .1], ['magnolia', .1], ['floweringdogwood', .12], ['crapemyrtle', .08], ['azalea', .15], ['shrub', .1], ['kudzu', .05]]};
+PALETTES.south = {...PALETTES.midwest, name: 'The South', title: 'Magnolia Run', tag: 'Pines, live oaks and a warm humid haze.',
+ rough: '#6e7a3c', semi: '#4f8a3e', fairway: '#549a44', tree: '#3e6a30', sky: '#c4d6e2', sand: '#ece2c8', water: '#4a6e5e', altitude: 150, temperature: 27, treeKind: 'pine', sun: 44};
+INTERFACE.south = {panel: 'rgba(20,34,22,.88)', a1: '#fecdd3', a2: '#be185d', hot: '#fef3c7', soft: '#d8c8c4', onHot: '#2a0f18'};
+WORLD.south = {...WORLD.midwest, clubhouse: 'plantation', path: 'asphalt', bridge: 'wood',
+ story: {walls: null, farm: true, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true, geese: 4},
+ colours: {...WORLD.midwest.colours, clubhouse: {stone: '#f2efe6', bark: '#5a5e62', accent: '#7a3a2a', dirt: '#2a3a2a', leaf: '#2a3a2a'}}};
+// The Florida region is the Keys' (islands, sea); the Flatwoods are inland:
+// these of its fields come from the Heartland's record instead (defaults
+// included: a field the Heartland leaves to DEFAULTS was copied undefined
+// and crashed the generator, phase 5).
+const INLAND = Object.fromEntries(['bank', 'coastal', 'sea', 'inlandWater', 'ringLift', 'ringFace', 'ringIslands', 'hop', 'shoreSand', 'mapWater',
+ 'litter', 'fallen', 'landform', 'farForest', 'longGrass', 'light', 'rockMoss'].map(k => [k, ({...DEFAULTS, ...PALETTES.midwest, ...TRAITS.midwest})[k]]));
+
 const LAND = {
  puget: {}, sonoran: {}, rockies: {}, links: {}, heartland: {}, keys: {}, redwood: {},
  newengland: {}, lakedunes: {},
@@ -603,6 +626,36 @@ const LAND = {
   ui: {panel: 'rgba(30,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#cfd4ae', onHot: '#181a08'},
   world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}}},
  alaska: {},
+ // Phase 5: the South (the US landscapes goal's South packs).
+ piedmont: {},
+ // Longleaf Pines: tall bare longleafs over wiregrass, turkey oaks, pine
+ // straw and sandy waste (Pinehurst).
+ longleaf: {treeDensity: 2.4, rough: '#8a8a52',
+  stands: {...TRAITS.south.stands, share: .5, under: {spacing: 9, plants: [['wiregrass', .5], ['longleafgrass', .3], ['yaupon', .2]]},
+   plants: [['longleafpine', .6, 1.1], ['loblollypine', .15], ['turkeyoak', .15], ['blackjackoak', .1]]},
+  plants: [['longleafpine', .3, 1.1], ['loblollypine', .05], ['wiregrass', .25], ['longleafgrass', .15], ['turkeyoak', .12], ['yaupon', .08], ['blackjackoak', .05]],
+  // Pine straw's amber.
+  ui: {panel: 'rgba(36,28,14,.88)', a1: '#fde68a', a2: '#a16207', hot: '#fef9c3', soft: '#e0d2ae', onHot: '#221a06'}},
+ // Lowcountry: live oaks in Spanish moss, salt marsh, palmettos, slash pine.
+ lowcountry: {rough: '#7a8a46', sky: '#c8d8de', temperature: 28,
+  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
+   plants: [['liveoakmoss', .45], ['slashpine', .2], ['cabbagepalm', .2], ['magnolia', .1], ['waxmyrtle', .05]]},
+  plants: [['liveoakmoss', .18], ['cabbagepalm', .15], ['slashpine', .1], ['magnolia', .04], ['spartina', .21], ['muhlygrass', .1], ['sawpalmetto', .12], ['waxmyrtle', .1]],
+  ui: {panel: 'rgba(18,32,28,.88)', a1: '#ccfbf1', a2: '#0f766e', hot: '#fde68a', soft: '#b8d4cc', onHot: '#06201c'}},
+ // Bayou: bald cypress and its knees, tupelo, live oaks in moss, slow water.
+ bayou: {rough: '#6a7a3e', water: '#5a5a3e', sky: '#c8d0c4', temperature: 28,
+  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['cypressknees', .4], ['shrub', .3], ['waxmyrtle', .3]]},
+   plants: [['baldcypress', .45], ['watertupelo', .2], ['liveoakmoss', .25], ['sweetgum', .1]]},
+  plants: [['baldcypress', .2], ['liveoakmoss', .15], ['watertupelo', .1], ['cypressknees', .15], ['spartina', .15], ['shrub', .1], ['waxmyrtle', .1], ['sweetgum', .05]],
+  ui: {panel: 'rgba(28,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#c8ccae', onHot: '#141808'}},
+ // Florida Flatwoods: slash pine over saw palmetto, cabbage palms, cypress
+ // domes, sawgrass, lakes -- inland (INLAND above), in the Keys' region.
+ flatwoods: {...INLAND, tropical: false, rough: '#8a8a50', sand: '#f2ead4', treeDensity: 2.2,
+  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['sawpalmetto', .7], ['waxmyrtle', .3]]},
+   plants: [['slashpine', .55, 1.1], ['cabbagepalm', .2], ['liveoakmoss', .15], ['baldcypress', .1]]},
+  plants: [['slashpine', .25, 1.1], ['sawpalmetto', .25], ['cabbagepalm', .15], ['sawgrass', .15], ['liveoakmoss', .08], ['baldcypress', .03], ['muhlygrass', .04], ['citrustree', .05]],
+  ui: {panel: 'rgba(14,30,34,.88)', a1: '#bae6fd', a2: '#0369a1', hot: '#fde68a', soft: '#b4d0dc', onHot: '#061a24'},
+  world: {clubhouse: 'plantation', bridge: 'wood', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2], heron: true}}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

@@ -43,7 +43,8 @@ export const WIDTH = 960, QUALITY = .7, BUDGET = 3 * 1024 * 1024;
 // in the rounds; a seed's course is the same on every copy of this version).
 const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUNE', heartland: 'PRAIRIE', keys: 'LAGOON', redwood: 'GROVE', newengland: 'MAPLE', lakedunes: 'BEACON',
  // Phase 3 of the US landscapes goal (first seeds, not yet chosen in rounds).
- highplains: 'BIGSKY', sandhills: 'BLOWOUT', oldnortheast: 'ELMWALK', pinebarrens: 'PITCHPINE', alaska: 'FIREWEED'};
+ highplains: 'BIGSKY', sandhills: 'BLOWOUT', oldnortheast: 'ELMWALK', pinebarrens: 'PITCHPINE', alaska: 'FIREWEED',
+ longleaf: 'PINESTRAW', piedmont: 'REDCLAY', lowcountry: 'MARSH', bayou: 'CYPRESS', flatwoods: 'PALMETTO'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -89,6 +90,11 @@ export const PICKS = {
  oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ longleaf: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ piedmont: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ lowcountry: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ bayou: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ flatwoods: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 
 

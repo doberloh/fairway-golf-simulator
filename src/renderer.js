@@ -16,6 +16,7 @@ import {createGreenReading} from './green-reading.js';
 import {TEE_COLORS,greenGradient} from './course-plan.js';
 import {greenDistance} from './course.js';
 import {worldOf,biomeOf} from './biomes.js';
+import {clubhouseModel} from './clubhouse.js';
 import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
@@ -2258,7 +2259,7 @@ export class GolfView{
    church:{stone:'#e9e4d8',dirt:'#5b5f66',leaf:'#9fc3d8',accent:'#d9b24a',bark:'#7a4a32'},
   };
   for(const b of w.buildings){
-   const club=b.kind==='clubhouse',name=club?'Blender_Clubhouse_'+b.model:'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
+   const club=b.kind==='clubhouse',name=club?clubhouseModel(b.model):'Blender_'+b.model,parts=modelParts(name),info=MESH_MODELS[name];if(!parts||!info)continue;
    const tone=club?look:(STORY[b.kind]||{});
    // ONE MESH A BUILDING (the owner's review, measured: a part a mesh, each
    // inked and in the shadow pass, made Autumn's Architect course on Low draw

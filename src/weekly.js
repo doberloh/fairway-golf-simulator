@@ -65,7 +65,9 @@ export const WEEKLY_ROTATION = {
  // week 160, 25 January 2027 (PLACED, well after the goal's release is
  // likely; move them on if it lands later -- TODO).
  eras: [{debut: 149, biome: 'lakedunes'}, {debut: 160, biome: 'highplains'}, {debut: 161, biome: 'sandhills'},
-  {debut: 162, biome: 'oldnortheast'}, {debut: 163, biome: 'pinebarrens'}, {debut: 164, biome: 'alaska'}],
+  {debut: 162, biome: 'oldnortheast'}, {debut: 163, biome: 'pinebarrens'}, {debut: 164, biome: 'alaska'},
+  // Phase 5, the South (PLACED, one a week on).
+  {debut: 165, biome: 'longleaf'}, {debut: 166, biome: 'piedmont'}, {debut: 167, biome: 'lowcountry'}, {debut: 168, biome: 'bayou'}, {debut: 169, biome: 'flatwoods'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

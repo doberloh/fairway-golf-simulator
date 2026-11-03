@@ -30,6 +30,11 @@ const LAND = {
  oldnortheast: ['Copper Beech', 'Elm Walk', 'Fieldstone', 'Gatehouse', 'Old Oak', 'Ivy', 'Quarry', 'Carriage Road', 'Steeple'],
  pinebarrens: ['Pitch Pine', 'Scrub Oak', 'Bayberry', 'Heath', 'Windmill', 'Salt Meadow', 'Cranberry Bog', 'Sound View', 'Sand Road'],
  alaska: ['Fireweed', 'Black Spruce', 'Glacier View', 'Moose Run', 'Birch', 'Muskeg', 'Midnight Sun', 'Willow', 'Raven'],
+ longleaf: ['Longleaf', 'Wiregrass', 'Pine Straw', 'Turkey Oak', 'Sandhill', 'Bobwhite', 'Firebreak', 'Gopher Hole', 'Resin'],
+ piedmont: ['Red Clay', 'Dogwood', 'Magnolia', 'Tulip Poplar', 'Azalea', 'Mill Creek', 'Kudzu', 'Shoals', 'Sweetgum'],
+ lowcountry: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Spanish Moss', 'Rice Field', 'Marsh View'],
+ bayou: ['Bald Cypress', 'Tupelo', 'Levee', 'Pirogue', 'Crawfish', 'Cypress Knees', 'Spanish Moss', 'Sugar Mill', 'Slow Water'],
+ flatwoods: ['Slash Pine', 'Saw Palmetto', 'Cabbage Palm', 'Sawgrass', 'Cypress Dome', 'Gator Lake', 'Orange Grove', 'Sandhill Crane', 'White Sand'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

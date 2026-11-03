@@ -253,6 +253,8 @@ export const FAMILY_OF = {
  // The Keys pack.
  royalpalm: 'royalpalm', travelerspalm: 'travelerspalm', seagrape: 'seagrape', mangrove: 'mangrove',
  gumbolimbo: 'gumbolimbo', banyan: 'banyan', bougainvillea: 'bougainvillea', hibiscus: 'hibiscus',
+ // The South's packs.
+ longleafpine: 'longleafpine', loblollypine: 'loblollypine', slashpine: 'slashpine', cabbagepalm: 'cabbagepalm', sawpalmetto: 'sawpalmetto', longleafgrass: 'longleafgrass', wiregrass: 'wiregrass', liveoak: 'liveoak', liveoakmoss: 'liveoakmoss', turkeyoak: 'turkeyoak', blackjackoak: 'blackjackoak', baldcypress: 'baldcypress', cypressknees: 'cypressknees', watertupelo: 'watertupelo', floweringdogwood: 'floweringdogwood', azalea: 'azalea', magnolia: 'magnolia', tulippoplar: 'tulippoplar', crapemyrtle: 'crapemyrtle', kudzu: 'kudzu', sweetgum: 'sweetgum', yaupon: 'yaupon', spartina: 'spartina', sawgrass: 'sawgrass', muhlygrass: 'muhlygrass', waxmyrtle: 'waxmyrtle', citrustree: 'citrustree',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

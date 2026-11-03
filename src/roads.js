@@ -117,7 +117,10 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
    const rect = {x: c.x, z: c.z, rotation: club.rotation + turn, width: w, depth: d};
    const rc = Math.cos(rect.rotation), rs = Math.sin(rect.rotation);
    let ok = true, ylo = Infinity, yhi = -Infinity;
-   for (let u = -.5; u <= .5 + 1e-9 && ok; u += .25) for (let v = -.5; v <= .5 + 1e-9; v += .25) {
+   // Every 4 m or closer, as the invariant samples it (phase 5: a quarter-
+   // width grid let a pond's edge in between its samples).
+   const su = 1 / Math.max(4, Math.ceil(w / 4)), sv = 1 / Math.max(4, Math.ceil(d / 4));
+   for (let u = -.5; u <= .5 + 1e-9 && ok; u += su) for (let v = -.5; v <= .5 + 1e-9; v += sv) {
     const p = {x: c.x + u * w * rc + v * d * rs, z: c.z - u * w * rs + v * d * rc};
     if (PLAYED.has(surface(p.x, p.z)) || (nearest(p.x, p.z)?.d ?? 999) < 12 || inBuilding(club, p.x, p.z, 4) || inForecourt(club, p.x, p.z, 30)) { ok = false; break; }
     const y = height(p.x, p.z); ylo = Math.min(ylo, y); yhi = Math.max(yhi, y);
@@ -138,7 +141,7 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
   const from = [[0, -.5], [0, .5], [-.5, 0], [.5, 0]].map(([u, v]) => ({x: lot.x + u * lot.width * rc + v * lot.depth * rs, z: lot.z - u * lot.width * rs + v * lot.depth * rc}))
    .sort((a, b) => toward(a) - toward(b))[0];
   const onRoad = side.axis === 'x' ? {x: laid.at, z: Math.max(laid.lo, Math.min(laid.hi, from.z))} : {x: Math.max(laid.lo, Math.min(laid.hi, from.x)), z: laid.at};
-  const grid = costGrid({holes, s, surface, streams, height, block: NO_DRIVE, dear: {}, pad: ROAD_MARGIN + 240});
+  const grid = costGrid({holes, s, surface, streams, height, block: NO_DRIVE, dear: {}, pad: ROAD_MARGIN + 240, berth: true});
   const cells = grid.route(from, onRoad);
   let points = null;
   if (cells?.length) points = [from, ...lineOf(grid, cells).slice(1, -1), onRoad];

@@ -55,6 +55,8 @@ const PROFILES = {
  plains: {haze: .5, sheet: .3, water: .5},
  // Alaska: cold still air over the lakes, cloud on the peaks (PLACED).
  alaska: {haze: .9, sheet: .85, water: 1},
+ // The South: warm humid haze, mist on the water at dawn (PLACED).
+ south: {haze: .8, sheet: .45, water: .9},
  // Still, cold mornings. The best mist on the course.
  northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.

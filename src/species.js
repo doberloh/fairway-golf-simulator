@@ -41,6 +41,8 @@ export const GROUND_PLANTS = new Set([
  'prairieforbs',
  // ... and the Keys' shrubs.
  'seagrape', 'bougainvillea', 'hibiscus',
+ // ... and the South's.
+ 'sawpalmetto', 'longleafgrass', 'wiregrass', 'cypressknees', 'azalea', 'yaupon', 'spartina', 'sawgrass', 'muhlygrass', 'waxmyrtle',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

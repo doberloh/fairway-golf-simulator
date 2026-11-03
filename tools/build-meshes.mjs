@@ -70,6 +70,7 @@ const PICK = {
   'BurOak_1', 'BurOak_2', 'PaperBirch_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'BalsamFir_2',
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
+  'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -194,6 +195,35 @@ const PICK = {
  banyan: ['blender:Blender_Banyan_1'],
  bougainvillea: ['blender:Blender_Bougainvillea_1'],
  hibiscus: ['blender:Blender_Hibiscus_1'],
+ // THE SOUTH'S PACKS (tools/blender/cartoon_southpines.py, cartoon_southoaks.py,
+ // cartoon_piedmont.py, cartoon_southcoast.py): every variant.
+ longleafpine: ['blender:Blender_LongleafPine_1', 'blender:Blender_LongleafPine_2'],
+ loblollypine: ['blender:Blender_LoblollyPine_1', 'blender:Blender_LoblollyPine_2'],
+ slashpine: ['blender:Blender_SlashPine_1', 'blender:Blender_SlashPine_2'],
+ cabbagepalm: ['blender:Blender_CabbagePalm_1', 'blender:Blender_CabbagePalm_2'],
+ sawpalmetto: ['blender:Blender_SawPalmetto_1'],
+ longleafgrass: ['blender:Blender_LongleafGrass_1'],
+ wiregrass: ['blender:Blender_Wiregrass_1'],
+ liveoak: ['blender:Blender_LiveOak_1', 'blender:Blender_LiveOak_2'],
+ liveoakmoss: ['blender:Blender_LiveOakMoss_1', 'blender:Blender_LiveOakMoss_2'],
+ turkeyoak: ['blender:Blender_TurkeyOak_1'],
+ blackjackoak: ['blender:Blender_BlackjackOak_1'],
+ baldcypress: ['blender:Blender_BaldCypress_1', 'blender:Blender_BaldCypress_2'],
+ cypressknees: ['blender:Blender_CypressKnees_1'],
+ watertupelo: ['blender:Blender_WaterTupelo_1'],
+ floweringdogwood: ['blender:Blender_FloweringDogwood_1'],
+ azalea: ['blender:Blender_Azalea_1'],
+ magnolia: ['blender:Blender_Magnolia_1', 'blender:Blender_Magnolia_2'],
+ tulippoplar: ['blender:Blender_TulipPoplar_1', 'blender:Blender_TulipPoplar_2'],
+ crapemyrtle: ['blender:Blender_CrapeMyrtle_1'],
+ kudzu: ['blender:Blender_Kudzu_1'],
+ sweetgum: ['blender:Blender_Sweetgum_1', 'blender:Blender_Sweetgum_2'],
+ yaupon: ['blender:Blender_Yaupon_1'],
+ spartina: ['blender:Blender_Spartina_1'],
+ sawgrass: ['blender:Blender_Sawgrass_1'],
+ muhlygrass: ['blender:Blender_MuhlyGrass_1'],
+ waxmyrtle: ['blender:Blender_WaxMyrtle_1'],
+ citrustree: ['blender:Blender_CitrusTree_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -224,7 +254,9 @@ const PICK = {
  // addBuildings and addStory).
  storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1', 'RedBarn_1', 'CornPatch_1', 'FieldWall_1', 'CoveredBridge_1',
   // The streets kit (tools/blender/cartoon_streets.py; roads.js furniture).
-  'StreetLight_1', 'LightPole_1', 'WheelStop_1', 'BagDrop_1', 'ParkingIsland_1', 'CartBarn_1', 'Mailbox_1'].map(k => `blender:Blender_${k}`),
+  'StreetLight_1', 'LightPole_1', 'WheelStop_1', 'BagDrop_1', 'ParkingIsland_1', 'CartBarn_1', 'Mailbox_1',
+  // The South's plantation clubhouse and its alligator (tools/blender/cartoon_southcoast.py).
+  'PlantationClubhouse_1', 'Alligator_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack

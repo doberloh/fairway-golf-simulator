@@ -1,20 +1,25 @@
 {
- "generator": 65,
+ "generator": 66,
  "biomes": {
-  "puget": "fec5d8fb0e4631f6",
-  "sonoran": "9a27f56f9831049c",
+  "puget": "f803da4c79d7bcdb",
+  "sonoran": "590746e7c89a92ab",
   "rockies": "de47d4f1eb8fbc42",
   "links": "7cc4b331ad81a6a2",
-  "heartland": "fa3c4dad3ccda960",
+  "heartland": "e6f584e5326617ac",
   "keys": "f52b0098fe5b6e7b",
-  "redwood": "ae033c5aa72481b7",
+  "redwood": "16b076785f07dc5f",
   "newengland": "d902d76df9a6c7e1",
-  "lakedunes": "d3fcf247d1f704f5",
-  "highplains": "6e4085e904c69467",
+  "lakedunes": "1d500ce47fd489f7",
+  "highplains": "19d0840cdd4f01a3",
   "sandhills": "15922a48cebbb2b5",
   "oldnortheast": "da70f4b6438e1f86",
   "pinebarrens": "482aa78446fca902",
-  "alaska": "690a6e50a16ad75e"
+  "alaska": "690a6e50a16ad75e",
+  "piedmont": "5a221f2ec89e8ae9",
+  "longleaf": "76a14437d5ffd953",
+  "lowcountry": "10b0f5c2e375a868",
+  "bayou": "0a07fd98992b7a8d",
+  "flatwoods": "7955d4cb7bbb9232"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -30,6 +35,11 @@
   "sandhills": "10a425a23de3a056",
   "oldnortheast": "416d1ef540960e25",
   "pinebarrens": "6286f0bcbd268e81",
-  "alaska": "815d54fa376db91c"
+  "alaska": "815d54fa376db91c",
+  "piedmont": "a3ecfb556cde2202",
+  "longleaf": "4bbaad82adead67f",
+  "lowcountry": "35f41f8df74a020a",
+  "bayou": "88ff04ef6b3b7631",
+  "flatwoods": "e22594b2c28d05bb"
  }
 }

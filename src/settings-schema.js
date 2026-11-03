@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=18;
+export const SCHEMA_VERSION=19;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -358,7 +358,12 @@ export const SCHEMA_VERSION=18;
 // 65: the streets kit placed (roads.js streetFurniture): light poles, islands,
 //     wheel stops, the bag drop and drive lamps; a half lot is whole stalls
 //     (7 a row), which moved Rockies, Keys and Alaska.
-export const GENERATOR_VERSION=65;
+// 66: the drive keeps a cell's berth off everything it may not cross, and the
+//     lot is checked every 4 m (the full bench's roadOnPlay: a drive's edge on
+//     Pine Barrens sand, a lot corner in a Scottish Links pond). The
+//     fingerprint's seed moved its lot or drive in Puget, Sonoran, Heartland,
+//     Redwood, Lake Dunes and High Plains; other seeds elsewhere too.
+export const GENERATOR_VERSION=66;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -483,7 +488,9 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 // Surprise me picking by index lands where it did. regions.js lists them all.
 export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes',
  // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
- 'highplains','sandhills','oldnortheast','pinebarrens','alaska'];
+ 'highplains','sandhills','oldnortheast','pinebarrens','alaska',
+ // Phase 5 (SCHEMA 19): the South.
+ 'longleaf','piedmont','lowcountry','bayou','flatwoods'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -677,6 +684,8 @@ const MIGRATIONS={
  // 17 -> 18: five landscapes added to the choice (High Plains, Sand Hills,
  // Old Northeast, Pine Barrens, Alaska); no save changes shape.
  17:s=>s,
+ // 18 -> 19: five more landscapes (the South); no save changes shape.
+ 18:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

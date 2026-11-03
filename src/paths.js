@@ -78,7 +78,10 @@ function heap() {
 // `block`, `dear` and `pad` (the grid's reach past the holes) are the cart
 // paths' unless a caller says otherwise: the roads (roads.js) block fairway and
 // semi-rough outright and reach further out.
-export function costGrid({holes, s, surface, streams, height, ravines = [], block = BLOCKED, dear = DEAR, pad = 140}) {
+// `berth`: the margin cells are blocked too, not only dear -- a road six
+// metres wide keeps its edges off what is blocked (the drive, phase 5: its
+// edge clipped a dune waste's sand from the margin).
+export function costGrid({holes, s, surface, streams, height, ravines = [], block = BLOCKED, dear = DEAR, pad = 140, berth = false}) {
  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
  const greens = [], tees = [];
  for (const h of holes) {
@@ -114,7 +117,7 @@ export function costGrid({holes, s, surface, streams, height, ravines = [], bloc
   if (Number.isFinite(cost[j * nx + i])) continue;
   for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < nx && jj < nz && Number.isFinite(cost[jj * nx + ii])) margin.push(jj * nx + ii); }
  }
- for (const k of margin) cost[k] = Math.max(cost[k], 15);
+ for (const k of margin) cost[k] = berth ? Infinity : Math.max(cost[k], 15);
  const cellOf = p => [Math.round((p.x - x0) / CELL), Math.round((p.z - z0) / CELL)];
  const at = (i, j) => ({x: x0 + i * CELL, z: z0 + j * CELL});
  const costAt = (x, z) => { const [i, j] = cellOf({x, z}); return i < 0 || j < 0 || i >= nx || j >= nz ? Infinity : cost[j * nx + i]; };

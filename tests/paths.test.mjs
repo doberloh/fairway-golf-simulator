@@ -106,13 +106,13 @@ test('a creek the path crosses gets a bridge', () => {
  }
 });
 
-import {CLUBHOUSE_ASPECT} from '../src/clubhouse.js';
+import {CLUBHOUSE_ASPECT, clubhouseModel} from '../src/clubhouse.js';
 import {MESH_MODELS} from '../src/asset-meshes.js';
 test('every clubhouse keeps its model\'s own proportions (clubhouse.js CLUBHOUSE_ASPECT)', () => {
  // The table is the ingested model's height for its width; a model rebuilt
  // without re-measuring it would be drawn stretched or squashed.
  for (const [k, a] of Object.entries(CLUBHOUSE_ASPECT)) {
-  const m = MESH_MODELS[`Blender_Clubhouse_${k}`];
+  const m = MESH_MODELS[clubhouseModel(k)];
   assert.ok(m, `no model for ${k}`);
   assert.ok(Math.abs(a - 1 / (2 * m.rx)) < .002, `${k}: the table says ${a}, the model ${(1 / (2 * m.rx)).toFixed(3)}`);
  }

@@ -127,7 +127,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   every variant shipped; with them and the silhouette rework Puget Sound
   measured 10% faster), Rockies +1.8%, Lake Dunes not
   measured cleanly (agents on the processor), Heartland +22% (six tree
-  species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). Candidates:
+  species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). The South (phase 5;
+  one build, against the Heartland on it, three tees): the Bayou level
+  (0.81 against 0.82 ms of graphics card), the Lowcountry +34% (1.10 ms;
+  triangles +40%, the live oaks' moss; draws 12% fewer). Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
   a landscape's species into fewer draws. The profile against
   bench/profile-baseline.json is due here.
@@ -141,7 +144,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   existing landscape unchanged). Each gets its own models in its region's
   phase. Seen in captures; not seen by a person in play.
 - [ ] **The new landscapes' debut weeks** in the course of the week: phase
-  3's five are placed at weeks 160-164 (25 January to 22 February 2027,
+  3's five are placed at weeks 160-164 (25 January to 22 February 2027),
+  the South's at 165-169 (1 to 29 March 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
@@ -175,7 +179,19 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   OpenStreetMap in door 2 (`highway=*`, `amenity=parking`), stored in the
   course file (a `BUILT_VERSION` step); a built course's ground code 11 is
   already a road.
-- [ ] **The new landscapes by region**: the South; Texas and the deserts;
+- [x] **The South** (phase 5; SCHEMA 19, no generator step): Piedmont,
+  Longleaf Pines, Lowcountry, Bayou and Florida Flatwoods on the South's own
+  packs (every variant and far twin), a new `south` region with a
+  plantation clubhouse, names, crests, pictures and debut weeks 165-169.
+  Seen in captures; not seen by a person in play. Found on the way: the
+  full bench's `roadOnPlay` on two courses, fixed in generator 66 (the
+  drive's berth, the lot checked every 4 m).
+- [ ] **The South's look, three gaps seen in its pictures**: the Lowcountry
+  has spartina but no salt-marsh ground or tidal water; the Bayou's bald
+  cypresses stand beside its water, never in it; the Piedmont shows no red
+  clay (the Heartland's ground). Each wants its landscape's ground or water
+  rule (a generator step).
+- [ ] **The new landscapes by region**: the South (done, above); Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;

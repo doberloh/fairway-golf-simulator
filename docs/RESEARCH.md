@@ -12459,3 +12459,64 @@ the other six keep 5 dead ends and 19 sharp corners, worst on the Rockies
 (corners to 167 degrees where steep ground refuses rounding). A first cut
 let a hairpin's loop start another forever (Puget Sound FINGER-1 never
 finished); loops are capped at eight a piece.
+
+
+## The South (phase 5, 2 November 2026)
+
+PLAN.md's phase 5: five landscapes on the South's own packs
+(tools/blender/cartoon_southpines.py, cartoon_southoaks.py,
+cartoon_piedmont.py, cartoon_southcoast.py; 26 species, every variant and a
+far twin for each tree). Every share, size and colour below is PLACED from
+the study's pages (docs/studies/us-landscapes/subs/, local) and the packs'
+reports; none is measured on a course.
+
+- **A new region, `south`** (from the Midwest's record): loblolly pine,
+  tulip poplar, sweetgum, magnolia, oak and dogwood in the stands under
+  azalea and yaupon; in the open the same with crape myrtle, azalea, kudzu
+  at a twentieth. A plantation clubhouse (17.1 m to its cupola on 39.2 m of
+  front: height .436 of width), asphalt paths, wooden bridges, a farm, a
+  chapel ruin, deer and herons. Fog: haze .8, ground sheet .45, mist on
+  water .9 (warm humid haze).
+- **Piedmont**: the region as it is (red clay hills, the Midwest's ground).
+- **Longleaf Pines** (Pinehurst's country): longleaf .3 of the open
+  planting, wiregrass .25, longleaf grass stage .15, turkey oak .12,
+  yaupon .08, loblolly and blackjack oak .05; stands half the ground,
+  longleaf .6 under wiregrass. Pine straw's amber interface.
+- **Lowcountry**: live oak in moss .18, cabbage palm .15, slash pine .1,
+  magnolia .04, spartina .21, saw palmetto .12, muhly grass .1, wax myrtle
+  .1; 28 C, a pale coastal sky.
+- **Bayou**: bald cypress .2 with its knees .15, live oak in moss .15,
+  tupelo .1, spartina .15, sweetgum .05; brown slow water (#5a5a3e).
+- **Florida Flatwoods** (the Keys' region, inland): slash pine .25 over saw
+  palmetto .25, cabbage palm .15, sawgrass .15, live oak .08, cypress .03,
+  muhly .04, citrus .05; white sand. Its water, landform and grasses come
+  from the Heartland's record, defaults included -- a first cut copied the
+  Heartland's own fields only and left `coastal`, `sea` and ten more
+  undefined, which crashed the generator.
+- **Tree sizes** (height and crown, m): longleaf 22-32 / 4-6, loblolly
+  20-30, slash 18-26, cabbage palm 9-15, live oak 12-17 high by 12-16
+  wide, bald cypress 20-32, tulip poplar 28-40, magnolia 14-20, sweetgum
+  18-28, dogwood 5-8, crape myrtle 4-7, citrus 4.5-6.5.
+- **Names**: twenty first words and twenty last a landscape, none a real
+  golf destination (Kiawah and Sawgrass were caught by the test and
+  replaced); hole names and crests their own. Debut weeks 165-169 in the
+  course of the week, one a week after Alaska.
+
+No generator step for the five (new keys); SCHEMA 19 adds them (no save
+changes shape).
+
+**Generator 66, the roads' berth** (found by the full bench while checking
+this phase): a drive routed on the 6 m path grid kept its centre on open
+cells but its edges, 3 m out, clipped a Pine Barrens sand waste; and the
+lot, checked on a quarter-width grid (about 9 m), sat a corner in a
+Scottish Links pond. The drive's grid now blocks the cell margin round
+anything it may not cross (paths.js `costGrid` `berth`), and the lot is
+checked every 4 m, as the invariant samples it. Six landscapes' fingerprint
+seeds moved their lot or drive.
+
+**The moss's colour**: drawn at the pack's grey-green (#9aa092) the
+strands lit nearly white and read as bones under the oaks; #78826e
+(PLACED, from the first pictures) reads as moss. **The cost** on Low
+(frame-ab, one build, seed PROFILE, tees 1, 5 and 9, RTX 4090 headroom):
+the Heartland 0.82 ms of graphics card a frame, the Bayou 0.81, the
+Lowcountry 1.10 (+34%; 14.8 million triangles at tee 1 against 9.5).

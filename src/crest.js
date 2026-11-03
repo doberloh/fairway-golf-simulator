@@ -26,6 +26,12 @@ const MOTIFS = {
  oldnortheast: 'M50 74 L50 62 M50 62 C40 62 32 54 36 46 C30 42 34 32 42 34 C42 26 50 24 50 24 C50 24 58 26 58 34 C66 32 70 42 64 46 C68 54 60 62 50 62 Z',
  pinebarrens: 'M50 74 L50 50 M50 50 L38 44 L46 42 L36 34 L48 34 L50 26 L52 34 L64 34 L54 42 L62 44 Z M30 74 L70 74',
  alaska: 'M26 72 L46 34 L56 50 L62 40 L76 72 Z M40 44 L46 34 L52 44 M64 72 L64 60 M64 60 L58 64 L64 52 L70 64 Z',
+ // Phase 5: a longleaf, a magnolia bloom, a mossy live oak, a cypress in water, a palm over palmetto.
+ longleaf: 'M50 74 L50 36 M50 36 L42 30 L46 28 L40 24 L50 26 L52 20 L56 26 L62 24 L56 30 L60 32 Z M30 74 L70 74',
+ piedmont: 'M50 66 C40 66 32 58 36 50 C30 44 38 36 46 40 C46 30 54 30 54 40 C62 36 70 44 64 50 C68 58 60 66 50 66 Z M50 66 L50 74',
+ lowcountry: 'M48 74 L48 52 C36 52 26 48 26 40 C26 32 40 30 50 32 C60 30 74 32 74 40 C74 48 64 52 52 52 L52 74 M34 48 L34 58 M44 50 L44 62 M58 50 L58 60 M68 46 L68 56',
+ bayou: 'M46 70 L48 34 L52 34 L54 70 Z M40 34 L60 34 L56 26 L44 26 Z M28 72 Q38 68 48 72 T70 72 M38 70 L40 64 L42 70 M60 70 L62 64 L64 70',
+ flatwoods: 'M50 74 L52 34 M52 34 L40 28 M52 34 L64 28 M52 34 L44 22 M52 34 L60 22 M30 74 L36 64 L42 74 M58 74 L64 64 L70 74',
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Up to two letters from the course's name: its first two words' initials.

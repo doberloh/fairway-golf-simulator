@@ -183,6 +183,27 @@ export const NAME_WORDS = {
    'Landing', 'Station', 'Bluff', 'Basin', 'Hollow', 'Crossing', 'Run',
    'Reach', 'Moraine', 'Cirque', 'Sound', 'Fork'],
  ],
+ // Phase 5 of the US landscapes goal: the South.
+ longleaf: [
+  ['Wiregrass','Longleaf','Pinestraw','Turkeyoak','Sandhill','Candlestick','Bobwhite','Woodpecker','Pinecone','Sand Pine','Gopher','Fox Squirrel','Sandspur','Resin','Turpentine','Naval Stores','Tarheel','Carolina','Pinewood','Sandy Run'],
+  ['Pines','Ridge','Hollow','Run','Branch','Hills','Crossing','Glade','Flats','Station','Bend','Lake','Creek','Field','Woods','Grove','Barrens','Savanna','Pond','Gap'],
+ ],
+ piedmont: [
+  ['Red Clay','Dogwood','Magnolia','Tulip','Sweetgum','Azalea','Mockingbird','Peachtree','Mill Creek','Kudzu','Shoals','Fall Line','Catawba','Chattahoochee','Hickory Nut','Honeysuckle','Muscadine','Cotton Mill','Brick Kiln','Sourwood'],
+  ['Hills','Run','Creek','Ridge','Hollow','Bend','Shoals','Mill','Branch','Crossing','Farms','Grove','Lake','Knob','Fork','Springs','Gap','Woods','Meadow','Station'],
+ ],
+ lowcountry: [
+  ['Spartina','Oyster','Palmetto','Marsh Hen','Egret','Fiddler Crab','Live Oak','Spanish Moss','Sea Island','Rice Field','Indigo','Plough Mud','Pluff','Shrimp Boat','Heron','Sweetgrass','Tabby','Wando','Edisto','Marsh Tacky'],
+  ['Marsh','Creek','Landing','Island','Plantation','Point','Neck','Bluff','Sound','Hammock','Inlet','Cove','Reach','Dock','Banks','Oaks','Ferry','Harbor','Shoals','Woods'],
+ ],
+ bayou: [
+  ['Cypress','Tupelo','Pirogue','Crawfish','Levee','Batture','Cottonmouth','Nutria','Bousillage','Chenier','Acadiana','Boudreaux','Spillway','Teche','Atchafalaya','Cane Brake','Pecan Bottom','Sugar Mill','Mudbug','Zydeco'],
+  ['Bayou','Landing','Levee','Swamp','Bend','Island','Bottoms','Point','Ridge','Crossing','Lake','Pass','Cove','Brake','Chute','Oaks','Ferry','Parish','Mill','Woods'],
+ ],
+ flatwoods: [
+  ['Slash Pine','Spanish Bayonet','Saw Palmetto','Gator','Sandhill Crane','Orange Grove','Cracker','Scrub Jay','Armadillo','Lake Wales','Cypress Dome','Kissimmee','Hammock','Flatwood','Turpentine Camp','Cattle Pen','Sinkhole','Wiregrass Prairie','Cabbage Palm','Sandspur Flats'],
+  ['Flats','Lake','Prairie','Hammock','Pines','Ranch','Grove','Dome','Run','Slough','Crossing','Creek','Island','Pond','Woods','Springs','Ridge','Landing','Bluff','Groves'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.

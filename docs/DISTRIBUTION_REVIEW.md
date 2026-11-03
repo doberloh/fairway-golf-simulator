@@ -1754,3 +1754,10 @@ records. Still one file, no network request.
 
 **Phase 4, the roads**: the page is **18,327,986 bytes (9.65 MB gzipped)**,
 +10 KB of code (roads.js, the lot and road drawing). Still one file.
+
+**Phase 5, the South** (with phase 4b's streets kit): the page is
+**23,295,540 bytes (12.32 MB gzipped)**, +5.0 MB: the streets kit's eight
+models, then the South's 26 species in every variant with 21 far twins,
+the plantation clubhouse and the alligator (the model module 14.35 MB),
+and the five landscapes' card pictures (836 KB of WebP). Still one file,
+no network request.

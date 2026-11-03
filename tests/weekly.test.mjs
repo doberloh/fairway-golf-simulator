@@ -56,10 +56,10 @@ test('the tenth landscape joins on its own week and moves no earlier week', () =
  assert.equal(weeklyBiome(at('2026-11-08')), old(148), 'the Sunday before is still the old rotation');
  assert.equal(weeklyBiome(at('2026-11-16')), old(149), 'the week after shows what the debut week would have');
  // Then a ten-week cycle, each landscape once, until the next debut
- // (week 160, the US landscapes goal's phase 3), and a fifteen-week one after
- // the last (164).
+ // (week 160, the US landscapes goal's phase 3), and a twenty-week one after
+ // the last (169, phase 5).
  for (let w = 149; w + 10 < 160; w++) assert.equal(biomeForWeek(w + 10, WEEKLY_ROTATION), biomeForWeek(w, WEEKLY_ROTATION));
- for (let w = 164; w < 204; w++) assert.equal(biomeForWeek(w + 15, WEEKLY_ROTATION), biomeForWeek(w, WEEKLY_ROTATION));
+ for (let w = 169; w < 229; w++) assert.equal(biomeForWeek(w + 20, WEEKLY_ROTATION), biomeForWeek(w, WEEKLY_ROTATION));
  // The splash runs the same function from its source text (vite.config.js).
  const copy = new Function(`return ${biomeForWeek.toString()}`)();
  for (let w = 100; w < 200; w++) assert.equal(copy(w, JSON.parse(JSON.stringify(WEEKLY_ROTATION))), biomeForWeek(w, WEEKLY_ROTATION));

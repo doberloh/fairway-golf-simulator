@@ -2497,10 +2497,14 @@ export function* generateWorldSteps(settings={},options={}){
   // The Heartland's prairie flowers 0.6-1.2 m.
   prairieforbs:[.6,1.2],
   // The Keys' shrubs: sea grape 2.5-5 m, bougainvillea 2-4, hibiscus 1.5-2.6.
-  seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6]};
+  seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6],
+  // The South's (the packs' reports, within their specs).
+  sawpalmetto:[1,1.8],longleafgrass:[0.5,0.9],wiregrass:[0.3,0.6],cypressknees:[0.5,1],azalea:[1,1.6],yaupon:[3.5,5.5],spartina:[1.2,1.7],sawgrass:[1.6,2.6],muhlygrass:[0.75,1],waxmyrtle:[3,5]};
  // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
  // and crown radius r0-r1 m.
- const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15]};
+ const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15],
+  // The South's (PLACED within their specs).
+  longleafpine:[22,32,4,6],loblollypine:[20,30,5,7],slashpine:[18,26,5,7],cabbagepalm:[9,15,2.5,3.5],liveoak:[12,17,12,16],liveoakmoss:[13,17,12,16],baldcypress:[20,32,4,6],blackjackoak:[6,10,3,4],turkeyoak:[6,10,3,4],watertupelo:[18,26,4,6],magnolia:[14,20,5,7],tulippoplar:[28,40,5,8],sweetgum:[18,28,5,7],floweringdogwood:[5,8,4,5],crapemyrtle:[4,7,2,3],citrustree:[4.5,6.5,2,2.5],kudzu:[9,13,6,8]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
