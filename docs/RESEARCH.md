@@ -12146,7 +12146,8 @@ variant is a draw a part, full and far, in the frame and the shadow pass).
 **Still open:** the draws, about 45 more on a Puget Sound tee, cost little on
 this card and more on a weak processor; the landscapes to come carry about as
 many species each, so the next packs ship one variant of their less common
-trees from the start.
+trees from the start. (Reversed the same day: the owner amended the goal to
+ship every variant and pay the frame cost in one pass at the end.)
 
 **Budgets** (PLACED, measured off the overhaul's packs with inspect.mjs):
 a tree about 4,500-5,500 triangles, a shrub 2,000-3,500, a flower a few
@@ -12233,8 +12234,8 @@ flakes sit (on an ellipsoid the jojoba stood on a narrow foot, a ball on
 legs; on a mound profile widest a third of the way up it was the
 pictures' mound); accent blossoms placed at a leaf's centre vanish inside
 it, 7 cm aside they read; eight-triangle blossoms let the sand cherry
-carry twice as many for less. **The ironwood is held out of the game**: it
-read as tidy bonsai clumps on trunks, the owner's "big green fluffy balls"
+carry twice as many for less. **The ironwood was held out of the game** until
+its silhouette pass (generator 61): it read as tidy bonsai clumps on trunks, the owner's "big green fluffy balls"
 (BLENDER_ASSETS *Silhouette first*), and goes to the silhouette pass. Its
 spec's spring colour (#8a96a8) drew a blue-grey conifer, not a tree in
 lavender bloom; the pack uses #a49aa6 leaf and #c8a8d8 bloom, judged on
@@ -12316,3 +12317,87 @@ landscape's species by role: the new conifers join the conifer role, and
 flowers (columbine, lupine, prairie forbs, iris) are never a stored shrub
 (built-world.js; the Heartland's shrubs drew as prairie flowers). Drawing
 only, so no `BUILT_VERSION` step.
+
+## The Keys pack, every variant shipped, and the silhouette pass (2 November 2026)
+
+**The Keys** (BLENDER_ASSETS *cartoon_keys*): eight species, fifteen
+rounds each, silhouette first. What the rounds taught: large single lobes
+read as pads or balls however they are placed, and an open fine-leaved
+crown (gumbo limbo) reads right as flat ragged rosettes at uneven heights
+on visible limbs; a royal palm's crownshaft shows only when the low fronds
+leave nearly level and fall at their outer half; a spilling shrub
+(bougainvillea) cannot be separate canes at this size -- their tips land as
+magenta feet -- but a mound to the ground with short tongues and many small
+ragged sprays reads. Three season colours depart from the specs, judged on
+the pictures (PLACED, in the script): sea grape's autumn #74703a (the spec's
+rust turned the whole shrub rust; it means some red leaves), bougainvillea's
+winter bracts duller rather than fewer (a mesh cannot lose them), gumbo
+limbo in leaf in spring (its brief bare spell is not modelled).
+**Planting** (PLACED, biomes.js): stands palm .24, royal palm .18, gumbo
+limbo .14, sea grape .12, hala .13, mangrove .08, traveler's palm .06,
+banyan .05, under them naupaka .4, sea grape .3, hibiscus and bougainvillea
+.15 each; the open ground likewise, mangrove and banyan .02. Sizes (course.js
+`TREE_SIZE`, PLACED within the specs): royal palm 15-21 m, traveler's palm
+6-9, mangrove 4-7, gumbo limbo 8-13, banyan 14-20 m with a 10-15 m crown.
+Mangroves are not yet placed at the water's edge, where they belong.
+
+**Every variant ships** (the owner's amendment): the second variants held
+back for cost, and their far twins, are in the game -- madrone, Garry oak,
+bigleaf maple, bay laurel, blue spruce, ironwood, elm, shagbark, bur oak,
+paper birch, balsam fir, beech, royal palm.
+
+**The silhouette pass** on the trees made before the goal (BLENDER_ASSETS
+*The silhouette pass on the packs before the goal*), three agents, every
+model at or below its old count. Lessons beyond the packs': one flat-
+bottomed lobe per limb end reads as bonsai pads or an acacia umbrella --
+masses with lobes riding up their tops and limb ends at stepped heights
+fixed it; clumps set alternately up a stem make a column (small ones peas
+on a stick, big ones a spire) -- an oval came only when the crown was widest
+at 0.4 of its height with one blunt top; a far twin's cost is mostly its
+thin limbs (a tube never drops below four sides), so twins drop twigs and
+limbs, drawing what they skip from their own random streams so the rest of
+the tree stays put.
+
+**The A/B** (step 3d's build against this one, Low, RTX 4090): the Keys
++47% by mean frame (1.28 to 1.88 ms; draws 173 to 243 at the first tee,
+eight new species); Puget Sound -10% (1.72 to 1.54 ms: its reworked trees
+are cheaper even with both variants). Accepted until the performance pass
+(TODO). **Size:** the page 15.91 to 17.31 MB (8.18 to 8.90 MB gzipped);
+the model module 10.3 MB.
+
+## Five landscapes on existing models (phase 3, 2 November 2026)
+
+PLAN.md's phase 3: landscapes built from models already in the game, to
+prove the pipeline end to end before each region gets its own models
+(their own come in their region's phase). Every value below is PLACED from
+the study's page for the landscape (docs/studies/us-landscapes/subs/,
+local) and the nearest region's record; none is measured.
+
+- **High Plains** (a new region, `plains`, from the Midwest's record):
+  shortgrass and bluestem (long grass bluestem 2 : fescue 3, 5,200 tufts,
+  straw-coloured), few trees (density 1.1 against the Midwest's default
+  2.8), stands of cottonwood .5, cedar (`juniper`) .25 and elm .25 at a
+  twentieth of the ground, the open cottonwood .2, cedar .2, elm .1, shrub
+  .2, prairie flowers .3. A farmstead and a windmill (`windpump`) as the
+  landmark. Sun 41 degrees, 700 m, 21 C.
+- **Sand Hills** (plains): the Links' dunes landform (scale 170, hummock 42,
+  height 6, no heather) with blowouts .25 (Lake Dunes' .29), trees at half
+  density, mostly grass, prairie flowers, cedar and a few cottonwoods; the
+  windmill landmark, no farm.
+- **Old Northeast** (New England's region): no leaf fall, summer greens,
+  oak .3, maple .25, elm .15, beech .15, white pine .1, a stone clubhouse,
+  fieldstone walls, a church landmark.
+- **Pine Barrens** (New England's region): pine .35, scrub oak (the dune
+  woods' black oak) .2, heather .2, shrub .1, common juniper .1, dune grass
+  .05 on a low dunes landform with heath; a shingled clubhouse and a
+  lighthouse.
+- **Alaska** (a new region, `alaska`, from the Rockies' record): spruce .35,
+  paper birch .2 (0.6 of the region's height), aspen .15, willow thicket
+  .15, lupine .1 (fireweed's stand-in until its model), columbine .05; sun 16
+  degrees (the long low light), 100 m, 13 C; a log lodge, a mine head ruin,
+  elk.
+
+No generator step: the fingerprint showed every existing landscape
+unchanged and five new. SCHEMA 18 adds the keys (no save changes shape).
+The settings test that walks every old version now gives a version-17 save
+a version-17 key (`pnw` was renamed going into 17).

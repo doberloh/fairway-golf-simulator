@@ -22,6 +22,7 @@
 # CROWN WIDTHS ARE THE GENERATOR'S. course.js plants these at spacings from
 # species.js CROWN_FRACTION (half-width over height: redwood 0.095, fir and
 # hemlock 0.17, red cedar 0.19), so each crown is built that wide.
+# REFS tanoak=Blender_Tanoak_1,Blender_Tanoak_2
 import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
@@ -126,15 +127,53 @@ def redcedar(height):
     return build
 
 
-def tanoak(height, width):
+def tanoak(height, width, limbs=6):
     def build(mesh, rng):
+        # SILHOUETTE (the US landscapes back-port, 2 November 2026): round 1
+        # was one cloud on a bare pole, a lollipop. A tanoak under redwoods is
+        # tall and narrow: a straight leader nearly to the top, short limbs
+        # sweeping upward off it, each holding a dense rounded clump, the
+        # clumps stacked into a tall irregular egg with trunk and sky showing
+        # between them -- an upswept column of clumps, not a dome (oak,
+        # beech), a vase (elm) or a spire (the conifers around it).
         H, W = height, width
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .5, H * .035, flare=1.5, sides=9, lean=drift(rng, H * .05),
-                              bend=H * .03)
-        c = Vector((pts[-1].x, pts[-1].y, H * .66))
-        # Round 2: lobes of 320 triangles, not 1,280 (round 1 was 7,000 faces).
-        ct.cloud_crown(mesh, rng, c, (W * .5, W * .46, H * .32), lobes=22, lobe_size=(.26, .36), flat_bottom=.4, shell=.82,
-                       low=.45, high=1.1, subdiv=2)
+        R = W * .5
+        steps = 6
+        g = 1.15 if ct.FAR else 1   # a far twin's 20-face lobes sit inside the round ones' outline
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .88, H * .03, flare=1.5, sides=6, steps=steps,
+                              lean=drift(rng, H * .04), bend=H * .03)
+        c = Vector((pts[-1].x * .5, pts[-1].y * .5, H * .6))
+        shade = ct.crown_shade(c, (R, R, H * .35), low=.45, high=1.1)
+
+        def on_trunk(f):
+            k = f / .88 * steps
+            i = min(steps - 1, int(k))
+            return pts[i].lerp(pts[i + 1], k - i)
+        a0 = rng.uniform(0, math.tau)
+        for i in range(limbs):
+            f = .25 + .55 * i / (limbs - 1) + rng.uniform(-.03, .03)
+            base = on_trunk(f)
+            a = a0 + i * 2.4 + rng.uniform(-.3, .3)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            reach = R * max(.32, min(.72, .82 - .8 * (f - .3)))
+            end = base + out * reach + Vector((0, 0, reach * .8))
+            lr = random.Random(rng.random())   # own stream: the far twin skips the limb
+            if not ct.FAR:
+                ct.limb(mesh, lr, base, end, H * .012, H * .006, bow=.15, sides=4, shade=.8)
+            s = R * (.62 - .3 * (f - .3)) * g
+            mesh.add_lump(end + Vector((0, 0, s * .2)), (s, s * .9, s * .7), 'leaf', rng, subdiv=3, jitter=.12, crown=c,
+                          blend=.75, shade=shade, flex=.8, squash_bottom=.5)
+            side = Vector((-out.y, out.x, 0)) * rng.choice((-1, 1))
+            q = end + out * s * .5 + side * s * .5 - Vector((0, 0, s * .25))
+            mesh.add_lump(q, (s * .6, s * .6, s * .5), 'leaf', rng, subdiv=2, jitter=.18, crown=c, blend=.75,
+                          shade=shade, flex=.75)
+        # The top: a narrow rounded cap over the leader.
+        top = pts[-1]
+        s = R * .38 * g
+        mesh.add_lump(top + Vector((0, 0, s * .5)), (s * .9, s * .9, s * 1.35), 'leaf', rng, subdiv=3, jitter=.1, crown=c,
+                      blend=.75, shade=shade, flex=.9)
+        mesh.add_lump(top + Vector((0, 0, s * 1.5)), (s * .55, s * .55, s * .6), 'leaf', rng, subdiv=2, jitter=.12,
+                      crown=c, blend=.75, shade=shade, flex=1.0)
     return build
 
 
@@ -221,8 +260,8 @@ MODELS = [
     ('Blender_Hemlock_2', hemlock(40)),
     ('Blender_RedCedar_1', redcedar(50)),
     ('Blender_RedCedar_2', redcedar(45)),
-    ('Blender_Tanoak_1', tanoak(20, 14)),
-    ('Blender_Tanoak_2', tanoak(17, 12)),
+    ('Blender_Tanoak_1', tanoak(20, 11)),
+    ('Blender_Tanoak_2', tanoak(17, 9.5, 6)),
     ('Blender_Seedling_1', seedling(3)),
     ('Blender_Seedling_2', seedling(2.4)),
     ('Blender_SwordFern_1', swordfern(18)),
@@ -233,6 +272,9 @@ MODELS = [
 ]
 
 ct.export(MODELS, colours={'leaf': (0.22, 0.38, 0.22), 'bark': (0.5, 0.28, 0.2)},
+          # The tanoak's sheet colours (the game paints roles itself): olive
+          # leaf against the conifers' blue-green, grey-brown bark.
+          tints={n: {'leaf': (0.3, 0.42, 0.2), 'bark': (0.42, 0.36, 0.3)} for n in ('Blender_Tanoak_1', 'Blender_Tanoak_2')},
           far={'Blender_Redwood_1', 'Blender_Redwood_2', 'Blender_Redwood_3', 'Blender_Fir_1', 'Blender_Fir_2',
                'Blender_Hemlock_1', 'Blender_Hemlock_2', 'Blender_RedCedar_1', 'Blender_RedCedar_2', 'Blender_Tanoak_1',
                'Blender_Tanoak_2'})

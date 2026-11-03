@@ -11,7 +11,8 @@
 // enough to catch a rule that is outright broken -- and `full` is for the
 // answer you report. `standard` is the middle one for a change you believe in
 // but have not confirmed.
-export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes'];
+export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes',
+ 'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska'];
 export const COASTAL = ['keys', 'links', 'lakedunes'];
 
 // Water on, because most of what goes wrong goes wrong near water.

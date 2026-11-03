@@ -199,6 +199,9 @@ Every sheet a round draws is copied to `bench/shots/overhaul/rounds/<pack>-r<n>.
 
 ### cartoon_broadleaf
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_broadleaf.py`, 11 models: `Blender_Oak_1`-`_3`
 (family `oaktree`), `Blender_Maple_1`-`_3` (`mapletree`), `Blender_Aspen_1`-`_3`
 (`aspentree`), `Blender_Alder_1`, `_2` (`aldertree`). 3,500-6,500 vertices
@@ -244,6 +247,9 @@ heather. 33,700 vertices for all eighteen.
 
 ### cartoon_desert
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_desert.py`, 18 models: `Blender_Palo_*` (`palotree`:
 several low green trunks, an airy crown of small lobes on twigs, yellow
 flowers), `Blender_Mesquite_*` (`mesquitetree`: a crooked trunk, arching
@@ -283,6 +289,9 @@ stands and fill the open Desert and Mountain.
 
 ### cartoon_island
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_island.py`, 7 trees: `Blender_Palm_*` (`palm`: a curved
 ringed column, a crown of 15-20 arching fronds of overlapping leaflets,
 coconuts) and `Blender_Hala_*` (`halatree`: prop roots, a forked trunk, a
@@ -319,6 +328,9 @@ moss cap). They replace the grown nurse logs, stumps and boulders. Kenney's
 any more, are no longer taken.
 
 ### cartoon_redwood
+
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
 
 `tools/blender/cartoon_redwood.py`, the Giant Redwood's forest in the
 overhaul's hand: `Blender_Redwood_*` (a fluted, flared red column bare for
@@ -375,6 +387,9 @@ real height (the ingest makes every model one unit tall). Decoration: nothing
 a ball hits, as the sign never was. The plain shapes stay as the fallback.
 
 ### cartoon_lakeshore
+
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
 
 `tools/blender/cartoon_lakeshore.py` remakes Lakeshore Dunes' set (lakeshore.py,
 built before the overhaul with no paint or bent normals) in the overhaul's
@@ -526,7 +541,7 @@ for the rest; each log says what each round found.
 
 | Model | Species (family) | What it is | Triangles |
 | --- | --- | --- | --- |
-| `Blender_Madrone_2` (`_1`, three stems, 6,700, not shipped) | `madrone` | Two leaning red stems, crooked limbs, an open domed evergreen crown of clumps with the limbs showing; white flowers in spring, orange-red berries in autumn (accent) | 4,600 |
+| `Blender_Madrone_1` (three stems), `_2` | `madrone` | Two leaning red stems, crooked limbs, an open domed evergreen crown of clumps with the limbs showing; white flowers in spring, orange-red berries in autumn (accent) | 4,600 |
 | `Blender_GarryOak_1` | `garryoak` | A short heavy trunk, crooked limbs, a broad lumpy crown wider than tall | 4,700 |
 | `Blender_BigleafMaple_1` | `bigleafmaple` | A heavy trunk under a tall broad oval crown | 4,400 |
 | `Blender_PacificDogwood_1` | `pacificdogwood` | Three tiers of flat sprays, cream four-petal bracts over and round them (accent) | 4,100 |
@@ -545,11 +560,12 @@ round 18 was the second cost pass, after the game's A/B.
 The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) still
 owe their bare winter variants (PLAN section 3, the seasons step).
 
-**One variant each of the madrone (`_2`), Garry oak, bigleaf maple and bay
-laurel ships** (tools/build-meshes.mjs): a variant is a draw call per part, full and far,
-in the frame and the shadow pass, and with both variants Puget Sound's Low
-frame rose 24% (RESEARCH, *The Pacific pack*). The others stay in the
-pack.
+**Every variant ships** (since 2 November 2026, the owner: "I dont want to
+end up not using the models we create"). For a day only one variant of the
+madrone, Garry oak, bigleaf maple and bay laurel shipped: a variant is a
+draw call per part, full and far, in the frame and the shadow pass, and
+with both Puget Sound's Low frame had risen 24% (RESEARCH, *The Pacific
+pack*); that cost waits for the goal's performance pass (TODO).
 
 ### cartoon_mountain
 
@@ -559,7 +575,7 @@ and 4 far twins: what the Rockies lacked. Fifteen rounds each, logged.
 | Model | Species (family) | What it is | Triangles |
 | --- | --- | --- | --- |
 | `Blender_Lodgepole_1`, `_2` | `lodgepole` | A tall straight pole with dead stubs up its bare lower half, a narrow uneven crown above | 970-1,100 |
-| `Blender_BlueSpruce_1` (`_2` not shipped) | `bluespruce` | A broad silver-blue cone to the ground, lighter new growth at the top | 2,050 |
+| `Blender_BlueSpruce_1`, `_2` | `bluespruce` | A broad silver-blue cone to the ground, lighter new growth at the top | 2,050 |
 | `Blender_WillowThicket_1` | `willowthicket` | A rounded grey-green mound on fine red shoots | 3,390 |
 | `Blender_Columbine_1` | `columbine` | A low leafy spread, blue-and-white star flowers held above it (bark is the white cup, accent the blue) | 1,130 |
 | `Blender_Lupine_1` | `lupine` | Purple flower spikes, florets proud of them, over a palmate base (accent) | 1,075 |
@@ -592,7 +608,7 @@ rounds each: what the Sonoran and Lake Dunes lacked.
 
 | Model | Species (family) | What it is | Triangles |
 | --- | --- | --- | --- |
-| `Blender_Ironwood_1`, `_2` | `ironwood` (not yet in the game) | Short split trunks under a dome of clumps; held back for the silhouette pass (it reads as bonsai pads) | 4,700-5,160 |
+| `Blender_Ironwood_1`, `_2` | `ironwood` | After the silhouette pass: short split trunks and crooked limbs forking into twigs, many small ragged sprays making a broad open grey-green dome with sky through it | 4,510-5,070 |
 | `Blender_Jojoba_1` | `jojoba` | A dense grey-green mound leafy to the ground, leaf flakes on its skin | 3,250 |
 | `Blender_SandCherry_1` | `sandcherry` | A low sprawl of thin dark stems, narrow leaves, small blossoms (accent: white in spring, dark cherries in summer) | 3,100 |
 | `Blender_PierLight_1` | story piece `pierlight` | Grand Haven's red pierhead light on its concrete pier end: red tower (accent), dark railed gallery and iron (bark), pale lantern and deck (stone); front -Y, pier along Y | 800 |
@@ -626,3 +642,42 @@ The barn replaces the farmstead's barn and silo in the Heartland (story.js
 walls are `field` and its bridges `covered` (renderer.js draws one covered
 bridge a crossing, stretched to the span, at its own width and height).
 Leaf fall turns only broadleaves (vegetation.js `EVERGREEN`, `FALL_HUE`).
+
+### cartoon_keys
+
+`tools/blender/cartoon_keys.py`, 9 models and 5 far twins, fifteen rounds
+each, silhouette first; every one ships (generator 62).
+
+| Model | Species (family) | Outline | Triangles |
+| --- | --- | --- | --- |
+| `Blender_RoyalPalm_1`, `_2` | `royalpalm` | A tall smooth pale-grey column swelling mid-way, a fat bright-green crownshaft (accent), a round head of arching fronds | 1,100-1,200 |
+| `Blender_TravelersPalm_1` | `travelerspalm` | A flat 190-degree fan of ragged paddle leaves in one plane on a ringed post | 1,380 |
+| `Blender_SeaGrape_1` | `seagrape` | A broad dome scalloped by round leaf plates, rose grape strings under its edge (accent) | 2,470 |
+| `Blender_Mangrove_1` | `mangrove` | A dark rounded cap low over a cage of arching prop roots | 3,410 |
+| `Blender_GumboLimbo_1` | `gumbolimbo` | Thick crooked copper limbs carrying loose flat leaf rosettes, sky between | 4,830 |
+| `Blender_Banyan_1` | `banyan` | A fused trunk, level limbs and sixteen root columns under a broad low canopy, about 30 m across | 4,460 |
+| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent) with green showing | 3,340 |
+| `Blender_Hibiscus_1` | `hibiscus` | A vase of glossy leaf masses on splayed stems, big red flowers (accent) | 2,750 |
+
+### The silhouette pass on the packs before the goal (2 November 2026)
+
+The owner's note that the trees read as "big green fluffy balls on the
+trunks" was back-ported to every broadleaf already in the game, by three
+agents (logs in tools/blender/logs/<id>.md; the pictures they worked from
+are the study's photos/models/<id>/, fetched for the pass). Every reworked
+model is at or below its old triangle count; names and variants are
+unchanged. The pack sections above describe the trees before the pass.
+
+| Pack | Trees reworked (rounds) | Outline now |
+| --- | --- | --- |
+| cartoon_pacific | Garry oak, bigleaf maple, dogwood, bay laurel (10 more each) | oak wider than tall on elbowed limbs; maple four big lobed masses on a Y fork; dogwood thin level shelves; bay a haystack with a hanging skirt |
+| cartoon_drylake | ironwood (8 more) | an open, ragged, twiggy dome with sky through it |
+| cartoon_broadleaf | oak, maple, aspen, alder (10) | oak a few heavy masses with notches; maple a dense upright egg, the only gapless crown; aspen a narrow ragged column on a white pole; alder a pointed loose oval |
+| cartoon_lakeshore | cottonwood, black oak, sugar maple (10) | cottonwood a huge two-tier open crown on four great limbs; black oak crooked, leaning, lopsided; sugar maple broad, dense and round-topped |
+| cartoon_desert | palo verde, mesquite (9) | palo verde a see-through umbrella of specks on green limbs; mesquite low, wide, flat-topped and dark with hanging tassels |
+| cartoon_island | hala (7) | a leaning trunk on a cone of prop roots, candelabra arms ending in drooping spiky mops |
+| cartoon_redwood | tanoak (9) | a tall narrow ragged column of olive shelves (narrower: 11 and 9.5 m) |
+
+Left as they were: the madrone (already itself), the shrubs and flowers,
+the cacti, palms, conifers and ground plants. The reworks had fewer rounds
+than a new model's fifteen; they are reworks of models that had their own.

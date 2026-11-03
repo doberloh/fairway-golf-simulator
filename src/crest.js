@@ -20,6 +20,12 @@ const MOTIFS = {
  redwood: 'M46 72 L46 40 L50 28 L54 40 L54 72 Z M42 46 L58 46 M40 54 L60 54',
  newengland: 'M50 30 L54 42 L66 38 L58 48 L68 56 L55 56 L52 70 L48 70 L45 56 L32 56 L42 48 L34 38 L46 42 Z',
  lakedunes: 'M46 72 L48 40 L52 40 L54 72 Z M44 40 L56 40 L54 34 L46 34 Z M46 34 L50 28 L54 34 M30 72 Q40 66 50 72 T70 72',
+ // Phase 3: a grain elevator, a windmill, an oak leaf, a pitch pine, a peak and spruce.
+ highplains: 'M40 72 L40 38 L50 30 L60 38 L60 72 Z M60 50 L72 50 L72 72 L60 72 M28 72 L76 72',
+ sandhills: 'M49 72 L49 42 M51 72 L51 42 M50 40 L50 26 M50 40 L64 34 M50 40 L58 52 M50 40 L42 52 M50 40 L36 34 M28 72 Q40 62 52 72 Q64 64 74 72',
+ oldnortheast: 'M50 74 L50 62 M50 62 C40 62 32 54 36 46 C30 42 34 32 42 34 C42 26 50 24 50 24 C50 24 58 26 58 34 C66 32 70 42 64 46 C68 54 60 62 50 62 Z',
+ pinebarrens: 'M50 74 L50 50 M50 50 L38 44 L46 42 L36 34 L48 34 L50 26 L52 34 L64 34 L54 42 L62 44 Z M30 74 L70 74',
+ alaska: 'M26 72 L46 34 L56 50 L62 40 L76 72 Z M40 44 L46 34 L52 44 M64 72 L64 60 M64 60 L58 64 L64 52 L70 64 Z',
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Up to two letters from the course's name: its first two words' initials.

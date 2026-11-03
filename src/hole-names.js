@@ -25,6 +25,11 @@ const LAND = {
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],
  newengland: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
  lakedunes: ['Beacon', 'Dune Ridge', 'Beach Grass', 'Cottonwood', 'Shoreline', 'Gull', 'Juniper', 'Breakwater', 'Lake View'],
+ highplains: ['Elevator', 'Shelterbelt', 'Big Sky', 'Grama', 'Windbreak', 'Section Line', 'Pumpjack', 'Thunderhead', 'Creekside'],
+ sandhills: ['Windmill', 'Blowout', 'Stock Tank', 'Soapweed', 'Choppy Sand', 'Lone Cedar', 'Sharptail', 'Hay Meadow', 'Ranch Gate'],
+ oldnortheast: ['Copper Beech', 'Elm Walk', 'Fieldstone', 'Gatehouse', 'Old Oak', 'Ivy', 'Quarry', 'Carriage Road', 'Steeple'],
+ pinebarrens: ['Pitch Pine', 'Scrub Oak', 'Bayberry', 'Heath', 'Windmill', 'Salt Meadow', 'Cranberry Bog', 'Sound View', 'Sand Road'],
+ alaska: ['Fireweed', 'Black Spruce', 'Glacier View', 'Moose Run', 'Birch', 'Muskeg', 'Midnight Sun', 'Willow', 'Raven'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

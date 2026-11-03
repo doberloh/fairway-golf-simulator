@@ -250,6 +250,9 @@ export const FAMILY_OF = {
  // The Heartland and New England packs.
  americanelm: 'americanelm', shagbark: 'shagbark', buroak: 'buroak', prairieforbs: 'prairieforbs',
  paperbirch: 'paperbirch', whitepine: 'whitepine', balsamfir: 'balsamfir', americanbeech: 'americanbeech',
+ // The Keys pack.
+ royalpalm: 'royalpalm', travelerspalm: 'travelerspalm', seagrape: 'seagrape', mangrove: 'mangrove',
+ gumbolimbo: 'gumbolimbo', banyan: 'banyan', bougainvillea: 'bougainvillea', hibiscus: 'hibiscus',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

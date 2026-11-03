@@ -1,15 +1,20 @@
 {
- "generator": 61,
+ "generator": 62,
  "biomes": {
   "puget": "b29baa4c3b6b9176",
   "sonoran": "71b00a003461a769",
   "rockies": "b9995c0bbe02f31d",
   "links": "068283e9abf24500",
   "heartland": "cb0b20088f387887",
-  "keys": "4ec8b33222a81cdf",
+  "keys": "f462125a0a54a3c4",
   "redwood": "f64eee4b3363a066",
   "newengland": "0c0f6117aac59b6d",
-  "lakedunes": "3c7b548840f4b4ea"
+  "lakedunes": "3c7b548840f4b4ea",
+  "highplains": "72bfe5b5ffbab035",
+  "sandhills": "40cfc69e0726ac55",
+  "oldnortheast": "27fee3dee969077d",
+  "pinebarrens": "8ebee46b01f5c656",
+  "alaska": "8fda9f3da8397625"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -20,6 +25,11 @@
   "keys": "fbad6ed25e6d18d8",
   "redwood": "39ce6e744fef2d06",
   "newengland": "597bbe4953de38d0",
-  "lakedunes": "e24633ca2f067656"
+  "lakedunes": "e24633ca2f067656",
+  "highplains": "595522ca5237b6b3",
+  "sandhills": "10a425a23de3a056",
+  "oldnortheast": "416d1ef540960e25",
+  "pinebarrens": "6286f0bcbd268e81",
+  "alaska": "815d54fa376db91c"
  }
 }

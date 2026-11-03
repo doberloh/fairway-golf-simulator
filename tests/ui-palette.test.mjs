@@ -61,8 +61,9 @@ test('a round wears its course, the lobby and studio the course being chosen, th
 
 test('the menus change colour with the week, through every biome', () => {
  const seen = new Set();
- // Ten weeks: the rotation is ten long, Autumn twice (weekly.js `retired`).
- for (let w = 0; w < BIOME_KEYS.length + 1; w++) {
+ // Thirty weeks from 19 October 2026: past every landscape's debut and a
+ // whole rotation after it (weekly.js `eras`).
+ for (let w = 0; w < 30; w++) {
   const date = new Date(2026, 9, 19 + 7 * w); // Mondays from 19 October 2026
   const p = screenPalette({screen: 'menu', date});
   assert.equal(p.biome, weeklyBiome(date));

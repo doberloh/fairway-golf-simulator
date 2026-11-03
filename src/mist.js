@@ -51,6 +51,10 @@ const PROFILES = {
  // Sea fret rather than valley fog: thinner, but it comes in off the water.
  links: {haze: .72, sheet: .55, water: .85},
  midwest: {haze: .62, sheet: .62, water: .7},
+ // The plains: dry wind, a little haze over the grass, no ground fog (PLACED).
+ plains: {haze: .5, sheet: .3, water: .5},
+ // Alaska: cold still air over the lakes, cloud on the peaks (PLACED).
+ alaska: {haze: .9, sheet: .85, water: 1},
  // Still, cold mornings. The best mist on the course.
  northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.

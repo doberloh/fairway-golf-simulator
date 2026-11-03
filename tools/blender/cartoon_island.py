@@ -13,6 +13,7 @@
 #                 branches, thick prop roots at the foot, strap leaves 0.9-1.7
 #                 m in spiralling tufts at the branch tips, a pineapple-like
 #                 fruit (the accent)
+# REFS hala=Blender_Hala_1,Blender_Hala_2,Blender_Hala_3
 import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
@@ -102,28 +103,46 @@ def palm_built(height, lean, fronds, nuts):
     return build
 
 
+def drift(rng, amount):
+    return Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), 0)) * amount
+
+
 def strap_tuft(mesh, rng, top, leaves, length):
     """A hala rosette: long strap leaves spiralling out of a branch tip,
     rising then drooping."""
+    # SILHOUETTE (the US landscapes back-port, 2 November 2026): round 1's
+    # tufts were small upright brushes. A hala's strap leaves arch out and
+    # hang: a few stand up in the middle, most bow out and fall below the
+    # branch tip, so each tuft is a spiky mop and the crown a ragged,
+    # drooping umbrella of mops.
     for i in range(leaves):
         a = i * ct.GOLDEN + rng.uniform(-.15, .15)
-        up = rng.uniform(.25, .8)
-        fb.blade(mesh, top, a, 1.2 - up, length * rng.uniform(.75, 1.05), length * .06, rng, segments=3,
-                 tip_from=1.1, droop=.6 - up * .4)
+        k = i / leaves
+        if k < .2:
+            lean, droop, segs = .35, .3, 3
+        elif k < .6:
+            lean, droop, segs = .9, 1.15, 4
+        else:
+            lean, droop, segs = .8, 1.6, 4
+        fb.blade(mesh, top, a, lean * rng.uniform(.85, 1.15), length * rng.uniform(.8, 1.05), length * .08, rng,
+                 segments=segs, tip_from=1.1, droop=droop * rng.uniform(.85, 1.1))
 
 
 def hala(height, branches):
     def build(mesh, rng):
         H = height
         fork = H * rng.uniform(.35, .45)
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, H * .12)), fork - H * .12, H * .035, lean=Vector((0, 0, 0)),
-                              flare=1.1, sides=8, shade_low=.75, shade_high=1.0)
+        lean = drift(rng, H * .1)
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, H * .18)), fork - H * .18, H * .042, lean=lean,
+                              flare=1.1, sides=7, steps=6, shade_low=.75, shade_high=1.0)
         # Prop roots: thick stilts from low on the trunk to the ground round it.
-        for i in range(rng.randint(5, 8)):
-            a = i / 7 * math.tau + rng.uniform(-.3, .3)
-            start = Vector((0, 0, H * rng.uniform(.12, .22)))
-            end = Vector((math.cos(a) * H * .12, math.sin(a) * H * .12, -H * .02))
-            ct.limb(mesh, rng, start, end, H * .018, H * .012, bow=-.08, sides=5, shade=.7)
+        # Round 2: more of them, splayed wider -- a cone of stilts.
+        n = rng.randint(7, 9)
+        for i in range(n):
+            a = i / n * math.tau + rng.uniform(-.25, .25)
+            start = Vector((0, 0, H * rng.uniform(.2, .32))) + lean * .08
+            end = Vector((math.cos(a) * H * .13, math.sin(a) * H * .13, -H * .02))
+            ct.limb(mesh, rng, start, end, H * .014, H * .01, bow=-.08, sides=4, shade=.7)
         top = pts[-1]
         # Round 2: round 1's branches were long and bare under small tufts;
         # a hala's crown is a dense rounded mass of tufts, so shorter
@@ -131,20 +150,21 @@ def hala(height, branches):
         for i in range(branches):
             a = i / branches * math.tau + rng.uniform(-.4, .4)
             out = Vector((math.cos(a), math.sin(a), 0))
-            mid = top + out * H * .12 + Vector((0, 0, H * .12))
-            ct.limb(mesh, rng, top, mid, H * .026, H * .02, bow=.1, sides=6, shade=.85)
+            mid = top + out * H * .16 + Vector((0, 0, H * .11))
+            ct.limb(mesh, rng, top, mid, H * .026, H * .02, bow=.1, sides=5, shade=.85)
             for k in range(2):
                 b = a + (k - .5) * rng.uniform(.6, 1.0)
                 o2 = Vector((math.cos(b), math.sin(b), 0))
-                end = mid + o2 * H * rng.uniform(.1, .16) + Vector((0, 0, H * rng.uniform(.14, .24)))
-                ct.limb(mesh, rng, mid, end, H * .018, H * .013, bow=.1, sides=5, shade=.9)
-                strap_tuft(mesh, rng, end, 22, H * .26)
+                end = mid + o2 * H * rng.uniform(.15, .22) + Vector((0, 0, H * rng.uniform(.12, .22)))
+                ct.limb(mesh, rng, mid, end, H * .018, H * .013, bow=.1, sides=4, shade=.9)
+                strap_tuft(mesh, rng, end, 18, H * .34)
                 if rng.random() < .35:
                     mesh.add_lump(end + Vector((0, 0, -H * .04)), (H * .03, H * .03, H * .04), 'accent', rng, subdiv=1, jitter=.1)
         for v in mesh.bm.verts:
             if v not in mesh.paint:
                 t = max(0, min(1, v.co.z / H))
-                m = .65 + .5 * t
+                m = .5 + .4 * t   # round 3: darker, the reference's deep green
+                m *= .82 + .18 * min(1, v.co.xy.length / (H * .35))   # round 6: inner mops in shadow
                 mesh.paint[v] = (m, m, m, .5 + .5 * t)
     return build
 

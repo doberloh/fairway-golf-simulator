@@ -64,7 +64,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   door 1 map, the globes at a glance on a real screen, an old save or course
   file opening on its new landscape in the game. To check: Play, Endless,
   pick a landscape on the map; open a course saved before today.
-- [ ] **Today's ten rebuilt as their new landscapes** (Links stays, as
+- [x] **Today's ten rebuilt as their new landscapes** (Links stays, as
   Scottish Links, outside the map), with the models their research says
   they lack.
   Progress (the 40 models the nine lack, by pack; each model fifteen
@@ -100,36 +100,53 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     (Redwood Coast's iris and Lake Dunes' sand cherry had never been
     planted). Seen in captures (the barn, a covered bridge, New England's
     shore); not seen by a person in play; the corn not caught in a capture.
-  - [ ] The Keys' eight (royal palm, sea grape, mangrove, gumbo limbo,
-    bougainvillea, traveler's palm, hibiscus, banyan): modelled (fifteen
-    rounds, silhouette first), not yet wired -- waits for the silhouette
-    pass's last packs, so the model module is built once from finished work.
-  - [ ] **Every variant shipped** (the owner: "I dont want to end up not
-    using the models we create"): the second variants held back for cost
-    (Madrone_1, GarryOak_2, BigleafMaple_2, BayLaurel_2, BlueSpruce_2,
-    Ironwood_2, AmericanElm_2, Shagbark_2, BurOak_2, PaperBirch_1,
-    BalsamFir_2, AmericanBeech_2, RoyalPalm_2) and their far twins.
-  - [ ] Bare winter variants of the deciduous ones -- owed to *Seasons on*.
-  - [ ] **Silhouette lineup** (the owner, 2 November 2026: the trees read as
-    "big green fluffy balls on the trunks"): every landscape's trees side by
-    side as black outlines, then the rule back-ported to EVERY tree already
-    built (the owner: "back port to all of our other models that are already
-    done") -- the Pacific and mountain packs, the ironwood (held out of the
-    game until then), and the cartoon overhaul's packs (broadleaf, conifer,
-    desert, island, lakeshore, redwood, shrubs) -- each reworked tree logged
-    against its pictures, its fingerprint and A/B as a pack's
-    (BLENDER_ASSETS, *Silhouette first*). Next in line for an agent, before
-    the Keys pack.
+  - [x] `cartoon_keys` -- royal palm, traveler's palm, sea grape, mangrove,
+    gumbo limbo, banyan, bougainvillea, hibiscus, in the game since
+    generator 62 (Low +47% on the Keys, recorded for the performance pass).
+    Seen in a capture (a Keys hole); not seen by a person in play.
+    Mangroves are not yet placed at the water's edge.
+  - [x] **Every variant shipped** (the owner: "I dont want to end up not
+    using the models we create"): Madrone_1, GarryOak_2, BigleafMaple_2,
+    BayLaurel_2, BlueSpruce_2, Ironwood_2, AmericanElm_2, Shagbark_2,
+    BurOak_2, PaperBirch_1, BalsamFir_2, AmericanBeech_2, RoyalPalm_2, with
+    their far twins.
+  - [x] **Silhouette pass** (the owner, 2 November 2026: the trees read as
+    "big green fluffy balls on the trunks"; "back port to all of our other
+    models that are already done"): every pack from New England on modelled
+    silhouette first, and every broadleaf already in the game reworked --
+    the Pacific trees, the ironwood, the overhaul's oak, maple, aspen,
+    alder, cottonwood, black oak, sugar maple, palo verde, mesquite, hala
+    and tanoak (BLENDER_ASSETS, *The silhouette pass on the packs before the
+    goal*); conifers, palms, cacti and shrubs judged and left. Seen in
+    captures (the Keys, Lake Dunes, the Sonoran). A lineup of every tree as
+    black outlines side by side was not made.
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   Measured so far, Low, by mean frame against the build before (frame-ab,
   RTX 4090, so headroom, not a weak machine): Pacific pack +2.3% (before
-  every variant shipped; to measure again), Rockies +1.8%, Lake Dunes not
+  every variant shipped; with them and the silhouette rework Puget Sound
+  measured 10% faster), Rockies +1.8%, Lake Dunes not
   measured cleanly (agents on the processor), Heartland +22% (six tree
-  species; draws +26, triangles +8-13%), New England +1.3%. Candidates:
+  species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
   a landscape's species into fewer draws. The profile against
   bench/profile-baseline.json is due here.
+- [x] **Five landscapes on existing models** (PLAN.md 6, phase 3): High
+  Plains and the Sand Hills (a new plains region: prairie or grassed dunes
+  with blowouts, cottonwood, cedar and elm, a windmill for a landmark), the
+  Old Northeast and the Pine Barrens (New England's region in summer green,
+  and pitch pine, scrub oak and heath on sand), Alaska (a new region: the
+  Rockies' crags, spruce, birch and willow, a long low sun). Pickable
+  (SCHEMA 18), with names, crests and pictures; no generator step (every
+  existing landscape unchanged). Each gets its own models in its region's
+  phase. Seen in captures; not seen by a person in play.
+- [ ] **The new landscapes' debut weeks** in the course of the week: phase
+  3's five are placed at weeks 160-164 (25 January to 22 February 2027,
+  weekly.js `eras`); move them on if the goal's release lands later, and
+  give every later landscape its own week the same way.
+- [ ] **Every landscape's card pictures retaken** once its models are in: the
+  nine's are still the masters of 27 October, under the old keys, with the
+  old trees.
 - [ ] **The streets kit and the roads pass**: no road across a fairway (a
   bench invariant), the clubhouse and parking near an edge; roads anywhere
   in the builder (a `BUILT_VERSION` step).

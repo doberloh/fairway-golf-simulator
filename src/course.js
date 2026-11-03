@@ -2478,7 +2478,12 @@ export function* generateWorldSteps(settings={},options={}){
   // The dry-and-lake pack's: jojoba 1.2-1.8 m, sand cherry 0.4-0.9.
   jojoba:[1.2,1.8],sandcherry:[.4,.9],
   // The Heartland's prairie flowers 0.6-1.2 m.
-  prairieforbs:[.6,1.2]};
+  prairieforbs:[.6,1.2],
+  // The Keys' shrubs: sea grape 2.5-5 m, bougainvillea 2-4, hibiscus 1.5-2.6.
+  seagrape:[2.5,5],bougainvillea:[2,4],hibiscus:[1.5,2.6]};
+ // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
+ // and crown radius r0-r1 m.
+ const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
@@ -2486,7 +2491,7 @@ export function* generateWorldSteps(settings={},options={}){
  // (An Architect course's trees grew with its age dial until the designer was
  // removed, 2 November 2026.)
  const treeSize=(kind,a,b)=>baseTreeSize(kind,a,b);
- const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'||kind==='ironwood'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
+ const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(TREE_SIZE[kind]){const [h0,h1,r0,r1]=TREE_SIZE[kind];return {h:h0+a*(h1-h0),r:r0+b*(r1-r0)};}if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'||kind==='ironwood'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!allows(surface(x,z),'trees')||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the

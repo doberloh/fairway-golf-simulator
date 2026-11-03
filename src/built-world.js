@@ -269,7 +269,7 @@ const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);
-const PALMS = new Set(['palm', 'hala']);
+const PALMS = new Set(['palm', 'hala', 'royalpalm', 'travelerspalm']);
 export function speciesFor(bio, role, h, x, z) {
  const kinds = bio.plants.map(p => p[0]);
  const tall = kinds.filter(k => !GROUND_PLANTS.has(k));

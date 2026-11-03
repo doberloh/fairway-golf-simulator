@@ -1743,3 +1743,11 @@ ironwood held back). Still one file.
 **Step 3, Heartland and New England**: the page is **15,914,333 bytes
 (8.18 MB gzipped)**, +1.03 MB: twelve models and their far twins, the
 ironwood, and the Pacific trees reworked silhouette first. Still one file.
+
+**Step 3, the Keys and every variant**: the page is **17,308,566 bytes
+(8.90 MB gzipped)**, +1.39 MB: the Keys pack, every held-back variant and
+far twin, and the older trees reworked silhouette first. Still one file.
+
+**Step 3 done, and phase 3**: the page is **18,317,461 bytes (9.65 MB
+gzipped)**, +1.01 MB: five landscapes' card pictures (0.95 MB) and their
+records. Still one file, no network request.

@@ -77,7 +77,7 @@ test('every schema version between 1 and the current one has a migration',()=>{
  // setting means bumping SCHEMA_VERSION and writing the step that supplies it --
  // this is the assertion that notices when only the first half was done.
  for(let v=1;v<SCHEMA_VERSION;v++){
-  const migrated=migrateSettings({seed:'STEP',biome:'pnw'},v);
+  const migrated=migrateSettings({seed:'STEP',biome:v<17?'pnw':'puget'},v); // the keys were renamed going into 17
   assert.doesNotThrow(()=>validateSettings(migrated),`a version ${v} save does not survive migration`);
   for(const f of SETTINGS)
    assert.notEqual(migrated[f.key],undefined,`a version ${v} save comes through without ${f.key}`);

@@ -1,0 +1,14 @@
+# oak: iterations (tools/blender/cartoon_broadleaf.py)
+
+One line a round: what was wrong beside the reference pictures, and what changed. The side-by-side of each round: bench/shots/blender/iter/cartoon_broadleaf/oak-r<round>.png (local).
+
+- r1: Lineup, the overhaul's oak as it ships (5,100 tris): a flat-bottomed lumpy mushroom dome on a short trunk -- a fluffy ball, no gaps, the same outline as every other broadleaf. Next: heavy limbs climbing as they spread, a separate heavy mass on each at its own height and reach, so the crown is broad and irregular with notches.
+- r2: Masses on the limb ends work (gaps, notches, heavy limbs showing) but each is a flat pad and the whole is an umbrella of bonsai pads -- wider than tall, nothing over the middle. Next: rounder taller masses (side lobes ride higher), limbs shorter and lower, two big masses up the leader so the crown is as tall as wide.
+- r3: Overcorrected: the leader masses made a tall lumpy egg, limbs hidden, narrower than the pictures' broad oaks -- and it now looks like the maple. Next: limb masses further out (0.56-0.7 of the half spread) and lower, side lobes flatter, leader masses lower and smaller: broad, about as wide as tall, notches between masses.
+- r4: Broad and irregular now, several heavy masses with notches, about as wide as tall: reads as an oak, not the maple's egg. Still symmetric-ish and Oak_3 has a knob on top. Next: one long low limb so one side steps down (the open-grown oak's sweep), the upper leader mass lower.
+- r5: Reads as a broad white/red oak: heavy uneven masses, a high middle, one long low limb stepping the outline down -- distinct from Garry oak's even dome and bur oak's flat top. The low limb's mass now hangs level with the fork and hides the trunk's top. Next: lift it to 0.41 H.
+- r6: Silhouette holds (broad, uneven masses, a stepped low side) but the limbs vanish into the masses, where the pictures show heavy limbs under the crown. Next: each mass set higher on its limb so the limb's end shows.
+- r7: Reads as the pictures' oak now: stout trunk, heavy limbs showing under a broad irregular crown of a few big masses with notches, as wide as tall, one side stepping lower. 3,970-4,700 triangles (shipped 5,100-5,260). Holds; next an autumn round.
+- r8: Autumn: the russet reads, the masses and limbs hold their outline in colour; a touch orange beside a red oak's deep red-brown, so the sheet's autumn leaf goes to #8a4426.
+- r9: Far twins (876-1,040 triangles, shipped 1,036-1,120): the same broad uneven masses on visible limbs, facets only. Holds.
+- r10: Final, summer, unchanged since round 7: a stout trunk, heavy limbs showing, a broad irregular crown of a few big masses with notches, as wide as tall, one side stepping down -- an eastern oak, apart from bur oak (flat), Garry oak (even dome) and the maple (smooth egg).

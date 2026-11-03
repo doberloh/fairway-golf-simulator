@@ -10,7 +10,7 @@
 //       every candidate view of each landscape, at Ultra, 3840 x 2160 (a 1920 x
 //       1080 page at density 2, HUD hidden), as PNG masters in
 //       bench/shots/biome-shots/<label>/<biome>/<view>.png, and a contact sheet
-//   node tools/capture/biome-shots.mjs encode [--from <label>]
+//   node tools/capture/biome-shots.mjs encode [--from <label>] [--only biome,...]
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
 //
@@ -27,6 +27,10 @@ const argv = process.argv.slice(2);
 const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const mode = argv.shift();
 const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest');
+// `encode --only a,b`: re-encode those landscapes' pictures alone, leaving the
+// others' files as they are (the US landscapes goal: new landscapes added
+// one phase at a time, from their own set of masters).
+const onlyBiomes = opt('--only')?.split(',');
 const ROOT = path.join('bench', 'shots', 'biome-shots');
 
 // What the cards are drawn at: about 380 px wide at 1280 x 720, so about 1140
@@ -37,7 +41,9 @@ export const WIDTH = 960, QUALITY = .7, BUDGET = 3 * 1024 * 1024;
 
 // The seed each landscape is taken on: one whose holes show it well (chosen
 // in the rounds; a seed's course is the same on every copy of this version).
-const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUNE', heartland: 'PRAIRIE', keys: 'LAGOON', redwood: 'GROVE', newengland: 'MAPLE', lakedunes: 'BEACON'};
+const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUNE', heartland: 'PRAIRIE', keys: 'LAGOON', redwood: 'GROVE', newengland: 'MAPLE', lakedunes: 'BEACON',
+ // Phase 3 of the US landscapes goal (first seeds, not yet chosen in rounds).
+ highplains: 'BIGSKY', sandhills: 'BLOWOUT', oldnortheast: 'ELMWALK', pinebarrens: 'PITCHPINE', alaska: 'FIREWEED'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -78,6 +84,11 @@ export const PICKS = {
  redwood: ['overview', 'h2-low', 'h5-approach', 'h3-low', 'h1-tee'],
  newengland: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
  lakedunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ highplains: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ sandhills: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
 };
 
 
@@ -113,12 +124,13 @@ async function take(biomes) {
 async function encode() {
  const out = path.join('src', 'shots');
  fs.mkdirSync(out, {recursive: true});
- for (const f of fs.readdirSync(out)) if (f.endsWith('.webp')) fs.rmSync(path.join(out, f));
+ for (const f of fs.readdirSync(out)) if (f.endsWith('.webp') && (!onlyBiomes || onlyBiomes.includes(f.replace(/-[0-9]+[.]webp$/, '')))) fs.rmSync(path.join(out, f));
  const b = await launch();
  let total = 0;
  try {
   const p = await (await b.newContext()).newPage();
   for (const [biome, views] of Object.entries(PICKS)) {
+   if (onlyBiomes && !onlyBiomes.includes(biome)) continue;
    let n = 0;
    for (const v of views) {
     const src = path.join(ROOT, from, biome, `${v}.png`);
@@ -150,4 +162,4 @@ if (mode === 'take') {
  for (const k of biomes) if (!BIOMES[k] || !SEEDS[k]) throw Error(`unknown landscape ${k}`);
  await take(biomes);
 } else if (mode === 'encode') await encode();
-else console.log('usage: biome-shots.mjs take [biome ...] [--views a,b] [--label r1] | encode [--from label]');
+else console.log('usage: biome-shots.mjs take [biome ...] [--views a,b] [--label r1] | encode [--from label] [--only a,b]');

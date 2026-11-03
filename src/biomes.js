@@ -298,9 +298,13 @@ const TRAITS = {
   fallen: null,
   // Uncleared coastal jungle: palms and hala, naupaka below.
   stands: {edge: 50, wobble: 22, ramp: 20, patch: .15, scale: 220, near: 35, spacing: 8, share: .55,
-   under: {spacing: 8, plants: [['naupaka', 1]]},
-   plants: [['palm', .5], ['hala', .35], ['naupaka', .15]]},
-  plants: [['palm', .45], ['hala', .25], ['naupaka', .3]]},
+   // The Keys' own (the US landscapes goal's Keys pack): royal palms, gumbo
+   // limbo, sea grape, a few mangroves and banyans among the palms and hala,
+   // hibiscus and bougainvillea under them. Weights PLACED.
+   under: {spacing: 8, plants: [['naupaka', .4], ['seagrape', .3], ['hibiscus', .15], ['bougainvillea', .15]]},
+   plants: [['palm', .24], ['royalpalm', .18], ['gumbolimbo', .14], ['seagrape', .12], ['mangrove', .08], ['banyan', .05], ['travelerspalm', .06], ['hala', .13]]},
+  plants: [['palm', .22], ['royalpalm', .14], ['hala', .1], ['naupaka', .18], ['seagrape', .1], ['gumbolimbo', .06], ['travelerspalm', .05],
+   ['hibiscus', .06], ['bougainvillea', .05], ['mangrove', .02], ['banyan', .02]]},
  // MOODY IS A SET OF NUMBERS, NOT A MATERIAL.
  //
  // The sun sits at 18 degrees rather than the usual 28, which rakes light
@@ -527,9 +531,78 @@ export const WORLD = {
 // landscape a player can pick (settings-schema.js BIOME_KEYS, held to this
 // list by tests/landscapes-complete.test.mjs); the goal adds the rest region by
 // region.
+// THE NEW REGIONS ON EXISTING MODELS (the US landscapes goal, phase 3: the
+// pipeline proved end to end before a region gets its own models). Each is
+// the nearest region's record with what differs laid over it; every value
+// here is PLACED from the study's page for the landscape.
+// The Great Plains: shortgrass and bluestem, cottonwoods along the creeks,
+// cedar and elm shelterbelts, a windmill for a landmark.
+TRAITS.plains = {...TRAITS.midwest, light: {shade: '#8a9ac0'},
+ longGrass: {families: [['grassbluestem', 2, 1.1], ['grassfescue', 3, .7]], count: 5200, near: 20, leaf: '#8c8a4c', accent: '#b8743c'},
+ farForest: {cover: .14, size: 10, colors: ['#4f6a34', '#5d7638', '#6e7f3e']},
+ // Round 2 of its pictures: at density 1.1 it stood in parkland; open
+ // grass now, trees a few and mostly in the stands.
+ bank: '#7d7648', treeDensity: .5, rockMoss: '#9c9a62',
+ stands: {...TRAITS.midwest.stands, patch: .03, spacing: 12, share: .3,
+  under: {spacing: 9, plants: [['shrub', .7], ['prairieforbs', .3]]},
+  // The band along the corridors is mostly brush (round 3: trees there
+  // walled every hole in).
+  plants: [['shrub', .45], ['juniper', .25], ['cottonwood', .2], ['americanelm', .1]]},
+ plants: [['cottonwood', .1], ['juniper', .08], ['americanelm', .04], ['shrub', .28], ['prairieforbs', .5]]};
+PALETTES.plains = {...PALETTES.midwest, name: 'Plains', title: 'Big Sky Links', tag: 'Grass to the horizon and wind in it.',
+ rough: '#8a8a4a', semi: '#6e8a44', tree: '#4f6a34', sky: '#b9d4ec', altitude: 700, temperature: 21, treeKind: 'shrub', sun: 41};
+INTERFACE.plains = {panel: 'rgba(36,30,10,.88)', a1: '#fde68a', a2: '#ca8a04', hot: '#ffffff', soft: '#e8d9a8', onHot: '#231c06'};
+WORLD.plains = {...WORLD.midwest, clubhouse: 'farmhouse', path: 'gravel', bridge: 'wood',
+ story: {walls: null, farm: true, landmark: 'windpump'}, life: {grazers: ['deer', 3]}};
+// Alaska: the Rockies' crags close behind, spruce and birch, a long low sun.
+TRAITS.alaska = {...TRAITS.mountain, light: {shade: '#7c8cb8'}, treeDensity: 3,
+ stands: {...TRAITS.mountain.stands, plants: [['spruce', .55], ['paperbirch', .3, .6], ['aspen', .15]]},
+ plants: [['spruce', .35], ['paperbirch', .2, .6], ['aspen', .15], ['willowthicket', .15], ['lupine', .1], ['columbine', .05]]};
+PALETTES.alaska = {...PALETTES.mountain, name: 'Alaska', title: 'Midnight Sun', tag: 'Spruce, birch and the long low light.',
+ rough: '#6a7650', tree: '#2a4a38', sky: '#b4d0e6', altitude: 100, temperature: 13, sun: 16};
+INTERFACE.alaska = {panel: 'rgba(12,24,36,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fbcfe8', soft: '#b8d8e2', onHot: '#071820'};
+WORLD.alaska = {...WORLD.mountain, clubhouse: 'loglodge', path: 'gravel', bridge: 'wood',
+ story: {walls: null, ruins: ['minehead', 'cottage']}, life: {grazers: ['elk', 3], heron: true}};
+
 const LAND = {
  puget: {}, sonoran: {}, rockies: {}, links: {}, heartland: {}, keys: {}, redwood: {},
  newengland: {}, lakedunes: {},
+ // Phase 3, on existing models (see above).
+ highplains: {},
+ // The Sand Hills: the plains grassed over dunes, sand blowing out of them,
+ // almost no trees.
+ // (Round 2 of its pictures: at half density with the plains' stands it
+ // stood in a wood; now a few cedars and cottonwoods in the valleys.)
+ sandhills: {treeDensity: .2, blowouts: .25, farForest: {cover: .04, size: 8, scrub: true, paint: .3, colors: ['#5d6a38', '#6e7a3e', '#7f8a44']},
+  // Channel b is the blowouts' (landforms.js), so the dunes paint only a.
+  landform: {type: 'dunes', scale: 170, hummock: 42, height: 6, marram: .5, heather: 0,
+   kinds: {a: 'native'}, gates: {a: {near: 9, ramp: 14}}},
+  // Brush, not trees, along the corridors, as the Links' gorse (round 3).
+  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .4], ['juniper', .3], ['sandcherry', .3]]},
+  plants: [['dunegrass', .4], ['shrub', .15], ['juniper', .08], ['prairieforbs', .3], ['cottonwood', .02], ['sandcherry', .05]],
+  ui: {panel: 'rgba(40,32,14,.88)', a1: '#fcd9a8', a2: '#b45309', hot: '#fff7ed', soft: '#ead5b4', onHot: '#2a1c08'},
+  world: {story: {walls: null, landmark: 'windpump'}}},
+ // The Old Northeast: New England's region in high summer -- stately oaks,
+ // maples, elms and beeches, stone clubhouses (the Golden Age courses).
+ oldnortheast: {leafFall: false, rough: '#73803f', semi: '#5a8a42', tree: '#3f6a30', sky: '#b9d3e8',
+  farForest: {cover: .85, size: 11, colors: ['#3f6a30', '#4a7436', '#56803a']},
+  longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]], count: 3500, near: 22, leaf: '#7a8a46', accent: '#a07a3e'},
+  stands: {...TRAITS.northeast.stands, plants: [['oak', .35], ['maple', .3], ['americanbeech', .15, .9], ['americanelm', .1], ['whitepine', .1, 1.2]]},
+  plants: [['oak', .3], ['maple', .25], ['americanelm', .15], ['americanbeech', .15, .9], ['whitepine', .1, 1.2], ['shrub', .05]],
+  ui: {panel: 'rgba(14,32,20,.88)', a1: '#bbf7d0', a2: '#166534', hot: '#fde68a', soft: '#b6d4bc', onHot: '#0a1f10'},
+  world: {clubhouse: 'stonehouse', bridge: 'stone', story: {walls: 'field', ruins: ['cottage'], landmark: 'church'}}},
+ // The Pine Barrens: pitch pine and scrub oak on sand, heath and fescue,
+ // salt wind (Shinnecock, Pine Valley).
+ pinebarrens: {leafFall: false, rough: '#9a9460', semi: '#6e8a4a', tree: '#3c5a34', sand: '#ece0bc', treeDensity: 2,
+  landform: {type: 'dunes', scale: 160, hummock: 30, height: 4, marram: .35, heather: .55,
+   kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
+  longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 1, 1.0]], count: 6000, near: 14, leaf: '#93945a', accent: '#c9b06a'},
+  farForest: {cover: .7, size: 9, colors: ['#3c5a34', '#4a6638', '#5e6f3c']},
+  stands: {...TRAITS.northeast.stands, plants: [['pine', .6], ['blackoak', .4]], under: {spacing: 8, plants: [['shrub', .5], ['heather', .5]]}},
+  plants: [['pine', .35], ['blackoak', .2], ['heather', .2], ['shrub', .1], ['commonjuniper', .1], ['dunegrass', .05]],
+  ui: {panel: 'rgba(30,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#cfd4ae', onHot: '#181a08'},
+  world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}}},
+ alaska: {},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

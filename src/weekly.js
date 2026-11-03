@@ -61,7 +61,11 @@ export const weekKey = (date = new Date(), generator = GENERATOR_VERSION) => `${
 // itself is untouched, so no other week moves.
 export const WEEKLY_ROTATION = {
  nine: ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'haunted'],
- eras: [{debut: 149, biome: 'lakedunes'}],
+ // The US landscapes goal's phase 3 (2 November 2026): a debut a week from
+ // week 160, 25 January 2027 (PLACED, well after the goal's release is
+ // likely; move them on if it lands later -- TODO).
+ eras: [{debut: 149, biome: 'lakedunes'}, {debut: 160, biome: 'highplains'}, {debut: 161, biome: 'sandhills'},
+  {debut: 162, biome: 'oldnortheast'}, {debut: 163, biome: 'pinebarrens'}, {debut: 164, biome: 'alaska'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

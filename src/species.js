@@ -39,6 +39,8 @@ export const GROUND_PLANTS = new Set([
  'jojoba', 'sandcherry',
  // ... and the Heartland's.
  'prairieforbs',
+ // ... and the Keys' shrubs.
+ 'seagrape', 'bougainvillea', 'hibiscus',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

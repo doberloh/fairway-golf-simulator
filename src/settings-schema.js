@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=17;
+export const SCHEMA_VERSION=18;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -342,7 +342,10 @@ export const SCHEMA_VERSION=17;
 //     past 1 was never planted -- Redwood Coast's Douglas iris (57), Lake
 //     Dunes' sand cherry (60). Heartland, New England, Sonoran, Redwood
 //     Coast and Lake Dunes moved.
-export const GENERATOR_VERSION=61;
+// 62: the Keys pack (step 3): royal palms, traveler's palms, gumbo limbo,
+//     sea grape, mangrove and banyan among the palms and hala, hibiscus and
+//     bougainvillea under them. Keys moved.
+export const GENERATOR_VERSION=62;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -465,7 +468,9 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 // The landscapes a player may pick: the built ones (biomes.js LAND), in the
 // order the nine before the US landscapes goal had, so an endless run or
 // Surprise me picking by index lands where it did. regions.js lists them all.
-export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes'];
+export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes',
+ // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
+ 'highplains','sandhills','oldnortheast','pinebarrens','alaska'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -656,6 +661,9 @@ const MIGRATIONS={
  // by tests/landscapes-complete.test.mjs; written out so this module imports
  // nothing).
  16:s=>{const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes'}[s.biome];return to?{...s,biome:to}:s;},
+ // 17 -> 18: five landscapes added to the choice (High Plains, Sand Hills,
+ // Old Northeast, Pine Barrens, Alaska); no save changes shape.
+ 17:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

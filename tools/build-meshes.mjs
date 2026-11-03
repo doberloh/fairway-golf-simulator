@@ -65,8 +65,11 @@ const PICK = {
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
-  'Madrone_2', 'GarryOak_1', 'BigleafMaple_1', 'BayLaurel_1', 'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1',
-  'AmericanElm_1', 'Shagbark_1', 'BurOak_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'AmericanBeech_1', 'Ironwood_1',
+  'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'BigleafMaple_1', 'BigleafMaple_2', 'BayLaurel_1', 'BayLaurel_2',
+  'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1', 'BlueSpruce_2', 'AmericanElm_1', 'AmericanElm_2', 'Shagbark_1', 'Shagbark_2',
+  'BurOak_1', 'BurOak_2', 'PaperBirch_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'BalsamFir_2',
+  'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
+  'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -144,11 +147,11 @@ const PICK = {
  // put Puget Sound's Low frame up 24% (RESEARCH, *The Pacific pack*). The
  // others stay in the pack, not shipped (the madrone's two-stem `_2` ships:
  // the three-stem `_1` is 6,700 triangles).
- madrone: ['blender:Blender_Madrone_2'],
- garryoak: ['blender:Blender_GarryOak_1'],
- bigleafmaple: ['blender:Blender_BigleafMaple_1'],
+ madrone: ['blender:Blender_Madrone_1', 'blender:Blender_Madrone_2'],
+ garryoak: ['blender:Blender_GarryOak_1', 'blender:Blender_GarryOak_2'],
+ bigleafmaple: ['blender:Blender_BigleafMaple_1', 'blender:Blender_BigleafMaple_2'],
  pacificdogwood: ['blender:Blender_PacificDogwood_1'],
- baylaurel: ['blender:Blender_BayLaurel_1'],
+ baylaurel: ['blender:Blender_BayLaurel_1', 'blender:Blender_BayLaurel_2'],
  vinemaple: ['blender:Blender_VineMaple_1'],
  oregongrape: ['blender:Blender_OregonGrape_1'],
  scotchbroom: ['blender:Blender_ScotchBroom_1'],
@@ -157,7 +160,7 @@ const PICK = {
  // THE MOUNTAIN PACK (tools/blender/cartoon_mountain.py): the Rockies' own.
  // Two lodgepoles (the common tree), one of the rest.
  lodgepole: ['blender:Blender_Lodgepole_1', 'blender:Blender_Lodgepole_2'],
- bluespruce: ['blender:Blender_BlueSpruce_1'],
+ bluespruce: ['blender:Blender_BlueSpruce_1', 'blender:Blender_BlueSpruce_2'],
  willowthicket: ['blender:Blender_WillowThicket_1'],
  columbine: ['blender:Blender_Columbine_1'],
  lupine: ['blender:Blender_Lupine_1'],
@@ -166,22 +169,31 @@ const PICK = {
  // THE DRY-AND-LAKE PACK (tools/blender/cartoon_drylake.py): the Sonoran's
  // jojoba, Lake Dunes' sand cherry; the pier light is a story piece (above).
  // The ironwood after the silhouette pass (one variant: the Sonoran's third tree).
- ironwood: ['blender:Blender_Ironwood_1'],
+ ironwood: ['blender:Blender_Ironwood_1', 'blender:Blender_Ironwood_2'],
  jojoba: ['blender:Blender_Jojoba_1'],
  sandcherry: ['blender:Blender_SandCherry_1'],
  // THE HEARTLAND PACK (tools/blender/cartoon_heartland.py): one of each tree.
  // The red barn and the corn are story pieces (above).
- americanelm: ['blender:Blender_AmericanElm_1'],
- shagbark: ['blender:Blender_Shagbark_1'],
- buroak: ['blender:Blender_BurOak_1'],
+ americanelm: ['blender:Blender_AmericanElm_1', 'blender:Blender_AmericanElm_2'],
+ shagbark: ['blender:Blender_Shagbark_1', 'blender:Blender_Shagbark_2'],
+ buroak: ['blender:Blender_BurOak_1', 'blender:Blender_BurOak_2'],
  prairieforbs: ['blender:Blender_PrairieForbs_1'],
  // THE NEW ENGLAND PACK (tools/blender/cartoon_newengland.py): both white
  // pines (the region's commonest tree), one of the rest. The field wall and
  // the covered bridge are story pieces (above).
- paperbirch: ['blender:Blender_PaperBirch_2'],
+ paperbirch: ['blender:Blender_PaperBirch_1', 'blender:Blender_PaperBirch_2'],
  whitepine: ['blender:Blender_WhitePine_1', 'blender:Blender_WhitePine_2'],
- balsamfir: ['blender:Blender_BalsamFir_1'],
- americanbeech: ['blender:Blender_AmericanBeech_1'],
+ balsamfir: ['blender:Blender_BalsamFir_1', 'blender:Blender_BalsamFir_2'],
+ americanbeech: ['blender:Blender_AmericanBeech_1', 'blender:Blender_AmericanBeech_2'],
+ // THE KEYS PACK (tools/blender/cartoon_keys.py), silhouette first.
+ royalpalm: ['blender:Blender_RoyalPalm_1', 'blender:Blender_RoyalPalm_2'],
+ travelerspalm: ['blender:Blender_TravelersPalm_1'],
+ seagrape: ['blender:Blender_SeaGrape_1'],
+ mangrove: ['blender:Blender_Mangrove_1'],
+ gumbolimbo: ['blender:Blender_GumboLimbo_1'],
+ banyan: ['blender:Blender_Banyan_1'],
+ bougainvillea: ['blender:Blender_Bougainvillea_1'],
+ hibiscus: ['blender:Blender_Hibiscus_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
