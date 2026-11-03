@@ -386,7 +386,9 @@ export const SCHEMA_VERSION=25;
 // 72: the Bayou's bald cypress and their knees stand in the shallows of its
 //     ponds and lakes, within 8 m of the shore (course.js inShallows,
 //     biomes.js `inWater`). Moved the Bayou.
-export const GENERATOR_VERSION=72;
+// 73: the Piedmont's red clay -- its prairie drifts beyond play are bare red
+//     clay (hardpan) at a quarter of the ground. Moved the Piedmont.
+export const GENERATOR_VERSION=73;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

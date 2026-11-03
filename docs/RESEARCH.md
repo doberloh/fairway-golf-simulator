@@ -12860,3 +12860,9 @@ water, never the sea, where open ground lies 8 m off in one of the four
 directions (PLACED: about a crown's width from shore). 6, 11 and 14 stood
 in the water on three Bayou seeds. The ball meets them as any tree; they
 stand in a hazard already.
+
+**The Piedmont's red clay** (generator 73, 3 November 2026): its landform
+is the South's prairie with the drifts beyond play as hardpan (bare clay;
+it plays as hardpan) at a quarter of the ground (the Midwest's native
+drifts are .56), painted #9c6048 (PLACED: the first pictures' #a8583a read
+too orange).

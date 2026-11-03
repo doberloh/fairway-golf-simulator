@@ -224,10 +224,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   the cypress and their knees may stand in a pond's or lake's shallows,
   within 8 m of the shore (course.js inShallows, biomes.js `inWater`); 6-14
   a course. Seen in a capture.
-- [ ] **The South's look, two gaps seen in its pictures**: the Lowcountry
-  has spartina but no salt-marsh ground or tidal water; the Piedmont shows no red
-  clay (the Heartland's ground). Each wants its landscape's ground or water
-  rule (a generator step).
+- [x] **The Piedmont's red clay** (generator 73): its prairie drifts beyond
+  play are bare red clay banks (hardpan painted #9c6048) at a quarter of the
+  ground. Seen in a capture.
+- [ ] **The South's look, one gap left**: the Lowcountry
+  has spartina but no salt-marsh ground or tidal water -- it wants its own
+  ground or water rule (a generator step).
 - [ ] **Bluebonnet Prairie does not read as a bluebonnet field from the
   camera**: the pack's clumps (0.3-0.45 m), the rough's flowers and the long
   grass's blue heads show close to, not as the blue drifts the name

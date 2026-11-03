@@ -746,7 +746,9 @@ const LAND = {
   world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'shingledwindmill'}}},
  alaska: {},
  // Phase 5: the South (the US landscapes goal's South packs).
- piedmont: {},
+ // The Piedmont's red clay: the prairie drifts beyond play are bare clay
+ // banks instead, at under half the cover (hardpan, painted red; PLACED).
+ piedmont: {landform: {...TRAITS.south.landform, cover: .25, kinds: {a: 'hardpan'}}, groundTints: {hardpan: '#9c6048'}},
  // Longleaf Pines: tall bare longleafs over wiregrass, turkey oaks, pine
  // straw and sandy waste (Pinehurst).
  longleaf: {treeDensity: 2.4, rough: '#8a8a52',
