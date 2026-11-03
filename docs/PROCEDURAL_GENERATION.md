@@ -159,6 +159,24 @@ from what lies between the holes on real courses of its kind
 - **mesas** (Desert): flat-topped sandstone buttes on a seeded grid of cells,
   cliffs on their sides and a talus apron, and dry washes winding between them.
   Every remaining rough more than a few metres past the corridor is hardpan.
+- **badlands** (the Badlands, 3 November 2026): clusters of carved clay
+  between the holes -- a ridged field cubed into sawtooth crests with spires
+  where they meet, gullies cut down the faces, small ledges -- bare rock on
+  the steep faces and a hardpan apron round them; every rock face painted
+  in level beds of the landscape's colours (ground.js strata, biomes.js
+  `strata`).
+- **Terrain true to place** (generator 76, the owner's amendment of 3
+  November 2026): eighteen landscapes have their own recipe from their
+  geology (biomes.js `TERRAIN`; RESEARCH *Terrain true to place*): **steps**
+  (the Hill Country's limestone staircases, Monterey's marine terraces),
+  **karst** (the Bluegrass's shallow sinkholes), **glacial** (the North
+  Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
+  (granite knobs and washes in the Mojave and Desert Palms, the High
+  Sierra's domes), **channels** (Sagebrush coulees, Ozark hollows, Piedmont
+  gullies, SoCal barrancas), **volcanic** (Ponderosa's and Hawaii's cinder
+  cones and lava flows), **sandridges** (Longleaf) and **lowland** (the
+  Bayou's, Flatwoods' and Gulf Coast's levees and backswamps, on a corridor
+  roll scaled down by `baseRoll`).
 - **dunes** (Links, Lakeshore Dunes): rumpled ground and dune crests carrying
   marram (native grass), heather on the settled ground behind (Links).
 - **prairie** (Midwest), **coral** (the Island's ironshore just above the

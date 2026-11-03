@@ -26,6 +26,7 @@ const LAND = {
  newengland: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
  lakedunes: ['Beacon', 'Dune Ridge', 'Beach Grass', 'Cottonwood', 'Shoreline', 'Gull', 'Juniper', 'Breakwater', 'Lake View'],
  highplains: ['Elevator', 'Shelterbelt', 'Big Sky', 'Grama', 'Windbreak', 'Section Line', 'Pumpjack', 'Thunderhead', 'Creekside'],
+ badlands: ['Sawtooth', 'Yellow Mounds', 'Sod Table', 'Clinker', 'Bison Wallow', 'Wheatgrass', 'Juniper Draw', 'Pinnacles', 'Prairie Dog Town'],
  sandhills: ['Windmill', 'Blowout', 'Stock Tank', 'Soapweed', 'Choppy Sand', 'Lone Cedar', 'Sharptail', 'Hay Meadow', 'Ranch Gate'],
  oldnortheast: ['Copper Beech', 'Elm Walk', 'Fieldstone', 'Gatehouse', 'Old Oak', 'Ivy', 'Quarry', 'Carriage Road', 'Steeple'],
  pinebarrens: ['Pitch Pine', 'Scrub Oak', 'Bayberry', 'Heath', 'Windmill', 'Salt Meadow', 'Cranberry Bog', 'Sound View', 'Sand Road'],

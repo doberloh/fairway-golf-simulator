@@ -259,6 +259,8 @@ export const FAMILY_OF = {
  // Appalachia and the Northeast parkland.
  rosebay: 'rosebay', mountainlaurelshrub: 'mountainlaurelshrub', flameazalea: 'flameazalea', chestnutoak: 'chestnutoak', shortleafpine: 'shortleafpine', sassafras: 'sassafras', copperbeech: 'copperbeech', pitchpine: 'pitchpine', scruboak: 'scruboak', bayberry: 'bayberry', beachrose: 'beachrose', hydrangea: 'hydrangea',
  // The high desert and the plains.
+ // The Badlands pack (cartoon_badlands.py).
+ rmjuniper: 'rmjuniper', greenash: 'greenash', chokecherry: 'chokecherry', leadplant: 'leadplant',
  westernjuniper: 'westernjuniper', utahjuniper: 'utahjuniper', pinyonpine: 'pinyonpine', rabbitbrush: 'rabbitbrush', blackbrush: 'blackbrush', cliffrose: 'cliffrose', russianolive: 'russianolive', balsamroot: 'balsamroot', globemallow: 'globemallow', cheatgrass: 'cheatgrass', soapweedyucca: 'soapweedyucca', easternredcedar: 'easternredcedar', buffalograss: 'buffalograss', wildsunflower: 'wildsunflower',
  // California and the western mountains.
  montereycypress: 'montereycypress', montereypine: 'montereypine', coastliveoak: 'coastliveoak', eucalyptus: 'eucalyptus', sycamore: 'sycamore', torreypine: 'torreypine', iceplant: 'iceplant', coastalsage: 'coastalsage', chaparral: 'chaparral', valleyoak: 'valleyoak', blueoak: 'blueoak', buckeye: 'buckeye', grapevine: 'grapevine', californiapoppy: 'californiapoppy', olivetree: 'olivetree', jacaranda: 'jacaranda', peppertree: 'peppertree', ponderosa: 'ponderosa', sugarpine: 'sugarpine', incensecedar: 'incensecedar', redfir: 'redfir', noblefir: 'noblefir', westernlarch: 'westernlarch', manzanita: 'manzanita', gambeloak: 'gambeloak', mountainmahogany: 'mountainmahogany', bitterbrush: 'bitterbrush', mulesear: 'mulesear', beargrass: 'beargrass',

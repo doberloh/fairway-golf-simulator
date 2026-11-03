@@ -1793,3 +1793,11 @@ MB), and four landscapes' card pictures (758 KB, Alaska's retaken). Since
 the goal's first step (13.8 MB) the page has grown 23.2 MB, of which the
 models are about 16 MB and the forty landscapes' pictures about 4 MB.
 Still one file, no network request.
+
+**The Badlands and the prairie grasses (3 November 2026)** -- the page is
+**37,891,844 bytes (19.82 MB gzipped as measured by gzip -c)**, +0.87 MB
+on phase 8c: the Badlands pack's six species and the grass pack's twelve
+clumps (the model module 24.0 MB), the Badlands' four card pictures
+(89 KB). The Badlands' formations are the ground's (a landform and a
+shader rule), so they add no model weight. Still one file, no network
+request.

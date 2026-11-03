@@ -25,6 +25,7 @@ import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
 import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
 import {clearTrees} from './tree-clear.js';
+import {skinFromHeights, SKIN} from './skin.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
@@ -226,6 +227,31 @@ export function createEditor(doc) {
    if (kind === 'rough') for (const m of r.layers.masks.values()) fill(r, [ring], m, 0); else fill(r, [ring], r.layers.mask(kind));
    recomposeBox(box);
    return box;
+  },
+
+  // SKIN THE LAND FROM ITS HEIGHTS (skin.js; the owner, 3 November 2026):
+  // the landscape's rock on the steep ground and its apron below, read off
+  // the land as shaped now, added to the layers (or replacing those two
+  // kinds' painting with `replace`); never on the holes' turf, sand, paths
+  // or water, nor within the skin's `clear` metres of them. One undo step.
+  // Returns what it painted: {kinds, cells}.
+  skinFromLand({bio, replace = false} = {}) {
+   const nx = r.nx, nz = r.nz, ground = new Float32Array(nx * nz);
+   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = sample(r.x0 + (i + .5) * r.cell, r.z0 + (j + .5) * r.cell);
+   const land = {nx, nz, cell: r.cell, halfX: -r.x0, halfZ: -r.z0, ground};
+   const PLAYED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
+   const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.surfaceAt(x + dx, z + dz)));
+   const skin = skinFromHeights(land, bio, keepOut);
+   // The layers made before the undo snapshot, so undo knows them (as
+   // fillOutline does).
+   for (const kind of Object.keys(skin.masks)) r.layers.mask(kind, true);
+   remember('paint', r.x0, -r.x0, r.z0, -r.z0); state.surfacesEdited = true;
+   for (const [kind, m] of Object.entries(skin.masks)) {
+    const into = r.layers.mask(kind, true);
+    for (let k = 0; k < m.length; k++) if (m[k]) into[k] = 1; else if (replace) into[k] = 0;
+   }
+   r.layers.recompose();
+   return {kinds: skin.kinds, cells: skin.cells};
   },
 
   // ---- holes, water, trees: records, each change one undo step.

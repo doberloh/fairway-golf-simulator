@@ -2437,6 +2437,8 @@ export class GolfView{
    goose:{model:'Blender_Goose_1',h:1.0,colours:{stone:'#b9ad9a',bark:'#2b2a28',accent:'#f7f3ea'}},
    deer:{model:'Blender_Deer_1',h:1.8,colours:{stone:'#a2724a',dirt:'#2e2622',accent:'#efe6d6'}},
    elk:{model:'Blender_Elk_1',h:3.0,colours:{stone:'#9a7350',dirt:'#4a3a2e',accent:'#d9c9a8',bark:'#4f3a2a'}},
+   // The Badlands' bison (cartoon_badlands.py): to 1.86 m at the shoulder, the hump above it.
+   bison:{model:'Blender_Bison_1',h:2.0,colours:{stone:'#5a3e28',bark:'#3a2a1e',dirt:'#1e1a16',accent:'#3a2a1e'}},
    heron:{model:'Blender_Heron_1',h:1.35,colours:{stone:'#a9b0b6',bark:'#3b3f45',dirt:'#5b5248',accent:'#e5b54a'}},
    roadrunner:{model:'Blender_Roadrunner_1',h:.7,colours:{stone:'#8a7a62',bark:'#3a332c',dirt:'#2a2522',accent:'#5a6a8a'}},
    gull:{model:'Blender_Bird_1',h:.42,colours:{stone:'#f6f6f2',bark:'#3a3d42',accent:'#e5b54a'}},

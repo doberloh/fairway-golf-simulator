@@ -12897,3 +12897,248 @@ and scree .35 (PLACED, from New England's winter picture, where orange leaf
 litter read as autumn through the snow). The far broadleaf woods go .85 of
 the way to #7a6e62 in winter, .45 to #b0703a in autumn (PLACED; .55 left New
 England's orange autumn record still orange).
+
+## The Dakota Badlands (the owner's addition, 3 November 2026)
+
+A forty-first landscape, `badlands` (region plains): South Dakota's White
+River badlands and North Dakota's Little Missouri badlands, drawn on the
+map as two overlays (the study's catalogue.json, local; their outlines
+PLACED by hand from the park maps). Its courses, located in OpenStreetMap:
+Bully Pulpit (Medora, way/245874307, 46.874 N 103.534 W), Watford City Golf
+Course, Wall Golf Course, and Lake Waggoner (Philip; in OpenStreetMap
+without a name, way/177851293, placed by hand). Kadoka Golf Course and
+"Wall Community Golf Course" were listed by directories but not found in
+OpenStreetMap, and dropped.
+
+**Sources.**
+
+- [Badlands National Park](https://en.wikipedia.org/wiki/Badlands_National_Park)
+  (Wikipedia): the White River Group deposited about 37-23 million years
+  ago, the Brule Formation 32-26 Ma, the Sharps capping the highest peaks,
+  the Yellow Mounds a weathered old soil on the Pierre Shale; erosion up to
+  about 2.5 cm a year on bare ground; Red Shirt Table the highest point,
+  1,020 m; the largest undisturbed mixed-grass prairie in the US, western
+  wheatgrass the commonest grass (1-3 ft); bison released 1963 from
+  Theodore Roosevelt NP, the herd over 1,200; at Interior, 498 mm of rain a
+  year, 97 cm of snow, January mean 2.8 / -9.9 °C, July 32.9 / 16.8 °C.
+  No heights for single buttes or spires: the formations' sizes are PLACED.
+- [Theodore Roosevelt National Park](https://en.wikipedia.org/wiki/Theodore_Roosevelt_National_Park)
+  (Wikipedia): the Fort Union Group's Bullion Creek (yellowish-brown
+  siltstone, to 180 m) and Sentinel Butte (grey to brown, with lignite)
+  formations; clinker baked where the HT Butte lignite burned (the Buck
+  Hill burn, 1951-1977); hoodoos and pedestals capped by cannonball
+  concretions; 363-388 mm of rain; visitor centres at 670 and 726 m.
+- [NPS, Theodore Roosevelt's geologic formations](https://www.nps.gov/thro/learn/nature/geologicformations.htm):
+  clinker ("scoria") red from the iron in the burned coal; porcelanite caps
+  many buttes. [NPS, its plants](https://www.nps.gov/thro/learn/nature/plants.htm):
+  north slopes forested and cooler, south faces sunny and dry; cottonwood
+  gold in late September; over 400 species. Bentonite's blue-grey and the
+  sandstones' tan and brown come from the park's Coal Vein trail sheet as
+  the search results quoted it (not fetched); the colours used are PLACED
+  from the study's pictures all the same.
+- NPS Badlands handbooks and vegetation pages (through search; the pages
+  themselves answered 404 or reset): western wheatgrass the most abundant
+  grass, blue grama and buffalograss with it on clay; leadplant, wild rose,
+  sand cherry and small soapweed common; "the few trees include Rocky
+  Mountain juniper and Great Plains cottonwood"; woody draws of cottonwood
+  and green ash on north- and east-facing escarpments; wild cherry thickets
+  in draws. North Dakota Game and Fish's badlands page (gf.nd.gov) agrees:
+  juniper scattered on bare hills, shortgrass on the buttes' tops.
+- USGS vegetation descriptions (through search): Rocky Mountain juniper
+  stands "almost exclusively on steep (30-70%) north-facing slopes" in the
+  northern Great Plains. Buffaloberry, searched for, was not confirmed by
+  any source and is not planted.
+- The models' own figures, from Wikipedia: [Rocky Mountain juniper](https://en.wikipedia.org/wiki/Juniperus_scopulorum)
+  4.6-6.1 m in open woodland (to 20), a narrow pyramid young, irregular
+  old, a blue-grey cast; [green ash](https://en.wikipedia.org/wiki/Fraxinus_pennsylvanica)
+  12-25 m (here 8-15 in a draw, PLACED), golden-yellow from early
+  September; [chokecherry](https://en.wikipedia.org/wiki/Prunus_virginiana)
+  1-6 m, white racemes 4-11 cm in late spring, cherries 6-14 mm red to
+  black; [leadplant](https://en.wikipedia.org/wiki/Amorpha_canescens)
+  0.3-1 m, grey-green, purple spikes late June to September;
+  [American bison](https://en.wikipedia.org/wiki/American_bison) to 1.86 m
+  at the shoulder and 3.5 m long (plains bulls), a dark-brown winter coat;
+  [western wheatgrass](https://en.wikipedia.org/wiki/Pascopyrum_smithii) a
+  sod-forming rhizomatous grass (its height from the NPS figure above).
+- [Bully Pulpit](https://medora.com/bullypulpit): Hurdzan's course of 2004
+  at Medora, its last holes routed through the badlands; par 72 and 7,166
+  yards in most listings, par 71 and 6,873 in one (GolfPass, wander.golf).
+  The builder reads its par from the map when it is built.
+
+**The formations are the ground's** (the owner, 3 November 2026: "I would
+prefer the landscape to generate the mountain, butte, spire like
+formations for badlands rather than building a model"). Models came
+first -- banded spires, a sawtooth wall, a clinker butte, a horizon wall
+and a cannonball concretion, sixteen rounds in Blender -- and were cut: a
+turned spire read as a party hat, and models standing in the rough are not
+the land. The `badlands` landform (landforms.js) raises clusters of carved
+clay between the holes, gathered by a broad mask as the crags are: inside,
+a ridged field cubed at a 46 m scale gives sawtooth crests with spires
+where crests meet; a 14 m ridged field's troughs cut gullies 45% deep into
+the faces; seven weak terraces leave ledges; 40 m tall at the most on a
+plinth of 12%. Rock where the finished ground is steeper than about
+0.42-0.56 (rise over run, wandering with noise), hardpan for the gentler
+clay round it. Measured on three nine-hole seeds: 75-82 m of relief across
+the course, 14-17% of the ground bare rock faces, 12-13% washed apron,
+11-13% steeper than 35 degrees.
+
+**The strata** (ground.js `strataColour`, biomes.js `strata`): every rock
+face, every steep hardpan bank and the far ring's faces painted in level
+beds 1.8 m thick, warped a little, each bed by a hash of its number -- the
+rock's own tan 37%, pink (#d4b0a0) 30%, grey (#a8a49c) 20%, the red fossil
+soils (#b06a50) 8%, the white ash (#ece6dc) 5% -- with a light lip and a
+shadow at each bed's edge. All PLACED from the study's pictures. The far
+land rises as mesas (ringMesas). The cannonball concretion is cut ("the big
+round ball thing is not needed").
+
+**The planting** (PLACED from the sources above): open mixed-grass
+prairie -- yucca, sage, leadplant and forbs scattered, the odd juniper --
+with small juniper stands (Rocky Mountain juniper 70%, green ash and
+chokecherry 15% each) only past 260 m from the holes or in patches of 3%
+of the country. The first capture walled every hole in green woods (the
+plains' stands at 30%, closing everything 50 m out). Green ash is the
+fairway's specimen tree: a full-size lone juniper stood oversized. The long
+grass is western wheatgrass and blue grama. Five bison graze (life.js).
+
+## Tall fescue and the prairie grasses (the owner, 3 November 2026)
+
+"Do we have tall fescue and prairie grasses? if not, we should
+retroactively build them for all landscapes that need them." The game had
+a fine fescue, big bluestem, buffalo grass, a desert bunchgrass and the
+regional ones; now tall fescue, little bluestem, switchgrass, Indiangrass,
+blue grama and western wheatgrass as long-grass families
+(tools/blender/cartoon_prairiegrass.py), and biomes.js `GRASSES` names who
+grows what -- seventeen landscapes. Sources, Wikipedia: [tall fescue](https://en.wikipedia.org/wiki/Festuca_arundinacea)
+(flowering stems to 165 cm, flat blades to 10 mm, open panicles to 40 cm,
+cool-season, Kentucky 31 light green, the transition zone's grass);
+[little bluestem](https://en.wikipedia.org/wiki/Schizachyrium_scoparium)
+(clumps 0.6-0.9 m, stalks 1.2-1.5 m, blue-green, copper-orange to red in
+autumn, redder on sand); [switchgrass](https://en.wikipedia.org/wiki/Panicum_virgatum)
+(to 2.7 m, panicles to 60 cm, golden-brown in autumn); [Indiangrass](https://en.wikipedia.org/wiki/Sorghastrum_nutans)
+(1-2 m, golden-brown plumes, tallgrass prairie and the longleaf country);
+[blue grama](https://en.wikipedia.org/wiki/Bouteloua_gracilis) (0.15-0.3
+m, stems to 0.46, usually two comb-like spikes, the shortgrass steppe's
+dominant). Tall fescue as golf rough: [USGA Green Section Record](https://www.usga.org/content/usga/home-page/course-care/green-section-record/62/issue-13/got-shade--tall-fescue-to-the-rescue-.html)
+(transition-zone courses converting the rough under trees to it) and
+[Penn State Extension](https://extension.psu.edu/naturalized-grass-stands-for-golf-courses)
+(less favoured for naturalised stands for its coarse texture; fine fescues
+preferred there). Who grows what, and each family's share and height, are
+PLACED from these ranges. The grass pack's models: round 1 rendered and
+logged; the rest of its fifteen rounds to come.
+
+## Terrain true to place (the owner's amendment, 3 November 2026; generator 76)
+
+"Do all of these new landscapes have different terrain generation based on
+their location and research? ... We want to make sure that the terrain is
+also lifelike to the regions where the courses are built!" They did not:
+most shared their region's landform recipe -- the South's and Texas's on
+the prairie roll, the western mountains and Appalachia on the Rockies'
+crags, the Mojave and Desert Palms on the Sonoran's mesas. Eighteen now
+have their own (biomes.js `TERRAIN`, landforms.js); the rest are judged to
+fit their region's recipe for now (TODO lists the ones still to look at).
+Every shape and number below is PLACED from these sources and the study's
+pictures unless a figure is quoted.
+
+- **Hill Country -- stepped limestone** (`steps`: six steps, 26 m, pale
+  ledges #d8d0b8 on the risers). [Glen Rose Formation](https://en.wikipedia.org/wiki/Glen_Rose_Formation)
+  and the [UT Austin field guide](https://www.geo.utexas.edu/courses/303/303_Lab/FieldTripLab303.html):
+  harder limestone over soft marl; the marl weathers back, the beds above
+  fall, and the hillsides stand as staircases "for many miles". Wilding and
+  others (Environmental Earth Sciences, 2008; abstract only, not fetched)
+  argue the hard/soft explanation is wrong; the look -- many low ledges --
+  is not in dispute, and that is what is drawn.
+- **Monterey -- marine terraces** (`steps`: three broad steps, 12 m). [USGS
+  OFR 2016-1110](https://pubs.usgs.gov/publication/ofr20161110): the
+  peninsula is "largely low marine terraces" on granitic bedrock, level
+  wave-cut platforms with bluffs between. No bluff height found.
+- **Bluegrass -- karst** (`karst`: a roll of 8 m, sinkholes 12-30 m across
+  and 2-6 m deep in about half of 140 m cells). [KGS RI-07-11](https://kgs.uky.edu/kgsweb/olops/pub/kgs/ri07_11.pdf):
+  local relief generally under 150 ft (50 m), sinkholes seldom over 100 ft
+  (30 m) deep and many too shallow to map; [USGS PP 1151-H](https://pubs.usgs.gov/pp/p1151h/physiography.html):
+  "very low relief, abundant shallow sinkholes ... sparse outcrops". No
+  density per area found (the KGS sinkhole GIS was not read).
+- **Ozarks -- dissected plateau** (`channels`: hollows 22 m deep with
+  branches, limestone on their steep walls). [Ozark Highlands](https://en.wikipedia.org/wiki/Ozark_Highlands_(ecoregion))
+  and the [Ozarks](https://en.wikipedia.org/wiki/Ozarks): erosionally
+  dissected plateaus, steep valley walls, narrow bottoms; the Boston
+  Mountains' valleys 150-470 m deep, the Springfield Plateau nearly level to
+  rolling, sharply incised; bluffs where streams cut the Boone chert.
+- **North Woods and Old Northeast -- glacial** (`glacial`: hummocks of 7 m,
+  kettles 25-55 m across and 4-9 m deep holding bog grass, an esker of 6 m,
+  granite where the moraine breaks steep; the Old Northeast the same at
+  about half). [WGNHS bulletins](https://wgnhs.wisc.edu/pubshare/B099.pdf):
+  northern moraines a broad band of hills and hollows, poorly drained,
+  dotted with lakes, marshes and bogs; kettles from stranded ice; eskers
+  tracing old streams under the ice. USDA ESD 095X: local relief mainly
+  8 m, moraines and drumlins 25-100 m. Moraines from 30 to 250-300 ft.
+- **Mojave and Desert Palms -- knobs** (`knobs`: rounded granite knobs
+  10-28 m on a gentle floor, shallow washes, hardpan beyond; Desert Palms a
+  flatter floor, fewer knobs, and steep bare ranges on the far ring, 1,100 m
+  and peaked). [USGS OF 2004-1007](https://pubs.usgs.gov/of/2004/1007/fans.html)
+  and LibreTexts *Geology of California* 13.06: Mojave pediments mostly on
+  granite, gentle enough not to gully; inselbergs the sparsely jointed
+  residuals; fans coalescing into bajadas. [Coachella Valley](https://en.wikipedia.org/wiki/Coachella_Valley)
+  and [USGS Bulletin 845](https://www.nps.gov/parkhistory/online_books/geology/publications/bul/845/sec27.htm):
+  a wide flat alluvial plain from the foot of the Santa Rosa Mountains; San
+  Jacinto Peak 10,804-10,834 ft above Palm Springs (about 479 ft). The first
+  Mojave capture read its knobs as sand dunes: bare from a gentler slope now
+  (0.1), grey granite (#a8a294).
+- **High Sierra -- granite domes** (`knobs` with a dome profile, 15-40 m,
+  bare slabs, scree below). [NPS Yosemite geology](https://www.nps.gov/yose/learn/nature/geology-exhibits.htm):
+  joints frame the land; exfoliation sheets round ridges into domes (Half
+  Dome, Lembert Dome); glaciers polished what they buried.
+- **Sagebrush -- coulees** (`channels`: box-walled coulees 18 m deep with
+  basalt rimrock). [Channeled Scablands](https://en.wikipedia.org/wiki/Channeled_Scablands):
+  flat-lying basalt cut by dry flood channels, coulees branching round
+  isolated mesas of basalt and loess; loess scarps about 30 degrees.
+- **Piedmont -- gullies** (`channels`: red-clay gullies 4 m deep, branching).
+  [Georgia Encyclopedia](https://www.georgiaencyclopedia.org/articles/geography-environment/piedmont-geographic-region/),
+  the Forest Encyclopedia and Rock Hawk: low rolling hills and narrow
+  valleys, saprolite (the red clay) up to 40 m deep; cotton and tobacco
+  stripped 144 mm (North Carolina) to 244 mm (South Carolina) of soil since
+  1700 on average and cut gullies with headcuts. The bench found a far grove
+  floating over a 3-4 m gully its slope test stepped across: the gullies are
+  broader now (scale 180, width .04).
+- **SoCal Canyons -- barrancas** (`channels` with V walls, 20 m) -- from
+  the landscape's own page (its "barrancas"); no geology source fetched yet.
+- **Ponderosa and Hawaii -- volcanic** (`volcanic`: truncated cinder cones
+  with a crater, red-brown cinder on their flanks, bare of trees; black
+  basalt flow lobes 2-2.5 m proud). [USGS, San Francisco volcanic field](https://www.usgs.gov/volcanoes/san-francisco-volcanic-field/geology-and-history):
+  over 600 volcanoes, most monogenetic basalt cinder cones under 300 m,
+  flows running for kilometres; the in-course cones (25-60 m) are scaled
+  down, PLACED. [GolfPass on "lava golf"](https://www.golfpass.com/travel-advisor/articles/lava-golf-still-flowing-strong-after-50-years-on-the-big-island-of-hawaii):
+  the Kohala coast's courses carved from black lava fields, Mauna Kea the
+  first (1964). The first Ponderosa capture read its cone as a pit: steeper
+  now, a narrower crater, its trees cleared.
+- **Longleaf -- sand ridges** (`sandridges`: broad rounded ridges of 9 m,
+  bare sand on the highest). [Georgia Encyclopedia, sandhills](https://www.georgiaencyclopedia.org/articles/geography-environment/sandhills/):
+  gentle rounded hills of quartz sand along the Fall Line, old dunes and
+  shorelines, islands of bare sand; longleaf, turkey oak and wiregrass on
+  the dry ridge tops. A first try had a third of the course bare sand: the
+  bare threshold is 0.84 now (about 4%).
+- **Bayou, Flatwoods and Gulf Coast -- lowland** (`lowland`: levees 1-2.5 m
+  along sinuous bayous, backswamp hollows of marsh grass, and the corridors'
+  broad roll scaled to a fifth or less, course.js `baseRoll`). [USDA MLRA
+  131A](https://jornada-edt.nmsu.edu/catalogs/esd/131A): the lower
+  Mississippi's alluvial plain has a maximum local relief of about 5 m,
+  much less over most of it; natural levees about 4.5 m above the floodplain
+  on the river itself, smaller along smaller streams. Before, the Bayou's
+  ground spread 14 m from low to high like the Heartland's, almost all of it
+  the corridors' roll that every landscape shared; now 4-6 m.
+
+**Tall trees on lips** (found by the bench on the new Piedmont): course.js
+onLip let a tree stand over a drop of 15% of its height under its foot --
+2.7 m for a magnolia, which floated over a creek bank. Now 2 m at most. That
+moved every landscape's planting a little (thirty fingerprints).
+
+## The builder skins the land from its heights (3 November 2026)
+
+The editor's Skin from the land (src/builder/skin.js; docs/COURSE_BUILDER.md)
+paints a landscape's rock on steep built ground and its apron below. Its
+four numbers are PLACED, none from a source: a face from a slope of 0.6
+(31 degrees; the generator's crags turn to rock between about 0.45 and 0.7,
+so a built course reads like a generated one), an apron from 0.22 within
+12 m below a face, and 6 m kept clear of the holes' turf, sand, paths and
+water. Which kinds: the first rock-like kind (rock, hardpan, scree, coral)
+the landscape's landform names is its face, the next (scree, hardpan, waste,
+native, heather) its apron; a landscape naming none gets rock and no apron.

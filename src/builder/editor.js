@@ -120,6 +120,18 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   status.textContent = 'Size it with This tree on the left; Undo puts it back.';
  }
  function unpick() { sizing = null; oneTree.disabled = true; oneTree.value = 1; oneText.textContent = ''; }
+ // SKIN FROM THE LAND (skin.js; the owner, 3 November 2026): the
+ // landscape's rock painted on the steep ground and its apron below it, read
+ // from the land as shaped now; painting by hand still works over it, and
+ // Undo takes it back in one step.
+ function skinLand() {
+  const got = editor.skinFromLand({bio: BIOMES[s.landscape]});
+  view.refreshAll(); refreshLayers(); refreshSave();
+  const name = k => GROUNDS[k]?.label?.toLowerCase?.() || k;
+  status.textContent = got.cells.face || got.cells.apron
+   ? `Skinned from the land: ${name(got.kinds.face)} on the steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} below it` : ''}. Paint over it or Undo.`
+   : 'Nothing here is steep enough to skin; paint the ground by hand instead.';
+ }
  function clearTurfTrees() {
   unpick(); showPicked();
   const got = editor.clearTreesFromTurf(); view.refreshTrees();
@@ -135,7 +147,9 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   el('div', {class: 'cb-group'}, el('b', {}, 'Brush'),
    range('Size', 1, 60, 1, radius, v => { radius = v; }), range('Strength', .05, 1, .05, strength, v => { strength = v; })),
   el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint')),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint'),
+   el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
+    title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},

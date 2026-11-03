@@ -71,7 +71,21 @@ function wildUniforms(w, hasWild, hasFallen) {
   ringFaceFrom: {value: biomeOf(w.settings.biome).ringMesas ? .86 : .74},
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   ...Object.fromEntries(Object.entries(tints).map(([k, v]) => ['gt_' + k, {value: v}])),
+  ...strataUniforms(biomeOf(w.settings.biome).strata),
  };
+}
+// BANDED STRATA (the Badlands, 3 November 2026; biomes.js `strata`): a
+// landscape whose rock is layered clay paints its rock faces -- and its
+// steep hardpan banks and the far ring's faces, which take the rock's
+// painting -- in level beds `spacing` metres thick, each bed one of the
+// landscape's colours by a hash of its number: the rock's own tone most
+// often, then `colors` [pink, grey, red, white] at their `shares`. PLACED
+// from the study's pictures.
+function strataUniforms(st) {
+ const c = (st?.colors || []).map(v => new T.Color(v)), sh = st?.shares || [.3, .18, .08, .05];
+ while (c.length < 4) c.push(new T.Color('#ffffff'));
+ return {strataOn: {value: st ? 1 : 0}, strataSpacing: {value: st?.spacing || 2}, strataShares: {value: new T.Vector4(...sh)},
+  st_a: {value: c[0]}, st_b: {value: c[1]}, st_c: {value: c[2]}, st_d: {value: c[3]}};
 }
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
@@ -351,8 +365,19 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
  uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
  uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
+ uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
+ // The bed a height lies in (strataUniforms): level, a little warped so a
+ // bed is not ruled, its colour by a hash of its number.
+ vec3 strataColour(float y,vec2 q,vec3 base){
+  float ys=y/strataSpacing+.18*patchNoise(q/41.),k=floor(ys),h=hashGround(vec2(k,17.3));
+  vec4 e=vec4(strataShares.x,strataShares.x+strataShares.y,strataShares.x+strataShares.y+strataShares.z,strataShares.x+strataShares.y+strataShares.z+strataShares.w);
+  vec3 c=h<e.x?st_a:h<e.y?st_b:h<e.z?st_c:h<e.w?st_d:base;
+  // A light lip at the top of each bed, a shadow under it: the bed weathering back.
+  float fy=fract(ys);
+  return c*(1.+.07*smoothstep(.9,.98,fy)-.09*smoothstep(0.,.05,fy)*(1.-smoothstep(.05,.12,fy)));
+ }
  // THE OVERHAUL'S GROUND TYPES, PAINTED (GROUND_CODE in this file): a colour
  // and a flat cartoon pattern in world metres for each. q is the world
  // position, y the height, n the surface normal, rough the colour beneath.
@@ -368,7 +393,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // a face (Mountain, PNW); now mostly a soft tone between neighbouring
    // planes, with only a hint of the step left.
    float facet=mix(hashGround(floor(w)),patchNoise(w),.7),soft=patchNoise(q/5.);
-   vec3 c=gt_rock*(.84+.18*facet+.08*soft);
+   vec3 c=(strataOn>.5?strataColour(y,q,gt_rock):gt_rock)*(.84+.18*facet+.08*soft);
    // Strata as broad alternating bands of tone, not lines (round 3: thin
    // lines every few metres read as contour lines drawn on the cliff).
    float ys=y/6.5+.7*patchNoise(q/17.),fy=fract(ys),strata=smoothstep(.35,.65,abs(fy-.5)*2.);
@@ -406,7 +431,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // layers instead -- bands of the landscape's rock in the floor's colour, a
    // light lip at the top of each and a shadow under it, as a mesa's side does.
    float ys=y/2.4+.6*patchNoise(q/11.),fy=fract(ys),band=smoothstep(.35,.65,abs(fy-.5)*2.);
-   vec3 face=mix(gt_hardpan,gt_rock,.55)*(.86+.14*band)*(1.+.12*smoothstep(.9,.97,fy)-.14*smoothstep(.0,.06,fy)*(1.-smoothstep(.06,.14,fy)));
+   vec3 face=(strataOn>.5?strataColour(y,q,gt_rock):mix(gt_hardpan,gt_rock,.55)*(.86+.14*band))*(1.+.12*smoothstep(.9,.97,fy)-.14*smoothstep(.0,.06,fy)*(1.-smoothstep(.06,.14,fy)));
    return mix(pan,face,steep);
   }
   if(code<5.5){float r=sin((q.x*.8+q.y*.35)*2.4+patchNoise(q/5.)*4.);return gt_waste*(.95+.05*r);}

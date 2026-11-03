@@ -66,22 +66,21 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Little Missouri badlands -- four courses located: Bully Pulpit, Watford
   City, Wall, Lake Waggoner; nine models specced; 22 landscape pictures and
   every model's references picked; tools/add-badlands.mjs, local); the
-  Blender pack tools/blender/cartoon_badlands.py (spires, sawtooth wall,
-  the horizon wall, Yellow Mounds, clinker butte, cannonball concretion,
-  Rocky Mountain juniper, green ash, chokecherry, leadplant, bison) in its
-  iterations; the game's record (biomes.js `badlands`, key, SCHEMA 26,
-  names, crest, the formations in course.js and physics.js formationSolids,
-  renderer.js addFormations and the backdrop's own colours). The plants and
-  the bison have their fifteen rounds and four seasons. **The rock
-  formations do not pass** (the owner, 3 November 2026: "the rock
-  formations for badlands need a lot more iteration. They dont look great.
-  And the shapes are off still"): turned cones read as party hats, not as
-  the knife-edged, fluted ridges with gullies between them in the pictures.
-  They are rebuilt as carved ridges -- a height field of crests and
-  gullies, not lathes -- and iterated again from round 16 until they read,
-  however many rounds that takes. Still to do: that, build-meshes, the
-  tests, the card pictures, captures, a frame-rate A/B on Low, docs,
-  commit.
+  Blender pack tools/blender/cartoon_badlands.py -- Yellow Mounds, Rocky
+  Mountain juniper, green ash, chokecherry, leadplant and bison, fifteen
+  rounds each and the four seasons; the game's record (biomes.js
+  `badlands`, key, SCHEMA 26, names, crest, hole names, debut week 191,
+  card pictures, the map's two shapes). **Its formations are the
+  ground's**, not models (the owner: "the rock formations ... dont look
+  great. And the shapes are off still", then "I would prefer the landscape
+  to generate the mountain, butte, spire like formations"): the spire,
+  wall, butte, horizon-wall and concretion models were cut, and the
+  `badlands` landform (landforms.js) with banded strata on every rock face
+  (ground.js) replaces them -- RESEARCH *The Dakota Badlands*. Seen in
+  three rounds of captures sent to the owner; tests and the full bench
+  green. Still to do: more rounds on the formations' look (taller, more
+  spires, the far hills plain), a frame-rate A/B on Low, its seasons seen
+  in a capture, and the builder side checked.
 - [ ] **Bully Pulpit built in the builder at the end** (the owner, 3 November
   2026), on the Badlands, the way Chambers Bay was (tools/build-courses.mjs:
   OpenStreetMap way/245874307 at Medora, North Dakota, and the state's
@@ -93,6 +92,57 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   long-grass families (tools/blender/cartoon_prairiegrass.py; biomes.js
   GRASSES says who grows what -- seventeen landscapes). Still to do: the
   pack's fifteen rounds, build-meshes, captures, docs, commit.
+- [ ] **Every landscape's terrain true to its place** (the owner, 3 November
+  2026: "Do all of these new landscapes have different terrain generation
+  based on their location and research? Similar to the badlands? If not.
+  Please amend the goal to account for that. We want to make sure that the
+  terrain is also lifelike to the regions where the courses are built!").
+  Today most share their region's landform recipe (landforms.js): the
+  South's and Texas's on the prairie roll, the western mountains and
+  Appalachia on the Rockies' crags, the Mojave and Desert Palms on the
+  Sonoran's mesas. Each landscape's ground gets researched from its real
+  geology (sources in RESEARCH.md and LANDSCAPE_RESEARCH.md, the study's
+  pages) and its own recipe or tuning where the shared one is wrong -- at
+  least: flat wet ground (Bayou, Flatwoods, Lowcountry with its tidal
+  creeks), sandhill ridges (Longleaf), red-clay hills and gullies
+  (Piedmont), stair-stepped limestone (Hill Country), coastal bluffs and
+  headlands (Monterey, the Oregon Dunes), lava flows and cinder (Hawaii,
+  Ponderosa), basalt coulees and rimrock (Sagebrush), alluvial fans and
+  granite domes (Mojave), a flat valley under steep ranges (Desert Palms),
+  glaciated granite (Sierra), karst with sinkholes (Bluegrass, Ozarks),
+  glacial kettles and moraines (North Woods), ridge and valley (Blue
+  Ridge). Each a GENERATOR_VERSION step naming the landscapes it moves;
+  each seen in captures sent to the owner as it lands.
+  **Done so far (generator 76):** eighteen landscapes on their own recipes
+  -- Hill Country, Monterey, Bluegrass, Ozarks, North Woods, Old Northeast,
+  Mojave, Desert Palms, High Sierra, Sagebrush, Piedmont, SoCal Canyons,
+  Ponderosa, Hawaii, Longleaf, Bayou, Flatwoods, Gulf Coast (biomes.js
+  TERRAIN, landforms.js; RESEARCH *Terrain true to place*;
+  tests/terrain-true.test.mjs); the bench, the tests and the fingerprints
+  green; captures of fourteen sent to the owner. Still to do: the
+  Lowcountry's tidal creeks, the Blue Ridge's coves and ridges, Monterey's
+  bluffs to the sea, SoCal's barrancas from a geology source, and a second
+  look at the landscapes judged to fit their region's recipe (Bluebonnet,
+  Cross Timbers, Wine Country, Chihuahuan, Pine Barrens, High Plains, Sand
+  Hills); more rounds where the pictures say so; a frame-rate A/B on Low.
+- [ ] **The builder skins the land from its heights** (the owner, 3 November
+  2026: "In the builder, we should add an option that the user can click to
+  do a best effort at skinning the landscape based on height. For example
+  if the LIDAR shows something that looks like a mountain or a butte. We
+  should skin it that way. Allow the user to paint it or indicate as such
+  if they dont want to auto paint it. for all landscapes"). A button in the
+  editor reads the built land's heights and slopes (the LIDAR's) and paints
+  what the landscape's own landform would there -- steep faces as its rock
+  (with the Badlands' strata, the crags' bands), the gentler ground at their
+  feet as its apron (hardpan, scree, waste), flat tops left grass -- outside
+  the holes' turf; and a paint tool (or a mark-as tool) for those who would
+  rather do it by hand. Every landscape. **Built** (3 November 2026):
+  src/builder/skin.js and the editor's Skin from the land button (under
+  Paint), tested in Node; painting by hand was already there (Paint,
+  Outline). No BUILT_VERSION step: a file changes only when the button is
+  pressed. Still to do: see it in the builder (the builder's smoke
+  journey and a capture), and try it on a real survey (Chambers Bay's
+  dunes, Bully Pulpit's buttes).
 - [ ] **A skill that matches a real course to a landscape, the last step**
   (the owner, 3 November 2026: "turn the US landscapes docs into a skill
   that I can send in a course, you would evaluate the course. Do research,
@@ -242,7 +292,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   170-175 (5 April to 10 May 2027), California and the mountains' at
   176-181 (17 May to 21 June 2027), phase 8a's at 182-184 (28 June to
   12 July 2027), phase 8b's at 185-187 (19 July to 2 August 2027), phase
-  8c's at 188-190 (9 to 23 August 2027;
+  8c's at 188-190 (9 to 23 August 2027), the Badlands at 191 (30 August
+  2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [x] **Every landscape's card pictures retaken** once its models are in:

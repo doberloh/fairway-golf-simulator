@@ -717,6 +717,42 @@ const LAND = {
   plants: [['dunegrass', .35], ['shrub', .1], ['easternredcedar', .08], ['prairieforbs', .25], ['cottonwood', .02], ['sandcherry', .05], ['soapweedyucca', .1], ['buffalograss', .05]],
   ui: {panel: 'rgba(40,32,14,.88)', a1: '#fcd9a8', a2: '#b45309', hot: '#fff7ed', soft: '#ead5b4', onHot: '#2a1c08'},
   world: {story: {walls: 'wire', landmark: 'windmill'}}},
+ // The Badlands (the owner, 3 November 2026; the study's plains.badlands):
+ // South Dakota's White River badlands and North Dakota's Little Missouri --
+ // mixed-grass prairie tables broken into banded clay. Western wheatgrass and
+ // blue grama over leadplant, yucca and sage; Rocky Mountain juniper dark on
+ // the slopes, green ash, cottonwood and chokecherry in the draws (NPS and
+ // Wikipedia, RESEARCH.md *The Badlands*). The badlands themselves are the
+ // ground's, not models (the owner, 3 November 2026): the `badlands`
+ // landform carves clusters of sawtooth ridges, spires and gullies between
+ // the holes, bare clay faces (rock) over a washed apron (hardpan); the far
+ // land rises as mesas and buttes; every rock face is painted in level
+ // beds (`strata`, ground.js). Bison on the tables. Every figure not in
+ // RESEARCH is PLACED from the study's pictures.
+ badlands: {title: 'Badlands Wall', tag: 'Banded spires over the mixed-grass prairie.',
+  rough: '#9a9868', rock: '#c8b8a4', sky: '#bed6ec', altitude: 750, temperature: 22, sun: 45, treeKind: 'pine',
+  rockStyle: 'badlands', rockMoss: '#c8a050', treeDensity: .5, hills: {base: 30, severity: 60, reach: 80},
+  ringLift: 170, ringFace: 'rock', ringMesas: true,
+  landform: {type: 'badlands', scale: 220, crest: 46, gully: 14, height: 40, cut: .45, ledges: 7, swale: 3, from: .36, to: .72, cluster: .4, reach: 90,
+   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: {near: 14, ramp: 18}, b: {near: 10, ramp: 16}}},
+  groundTints: {hardpan: '#c8b8a0', rock: '#c4b4a0'},
+  // The beds (ground.js strataUniforms): tan rock most often, then pink,
+  // grey, the red fossil soils and the white ash, 1.8 m a bed. PLACED.
+  strata: {spacing: 1.8, colors: ['#d4b0a0', '#a8a49c', '#b06a50', '#ece6dc'], shares: [.3, .2, .08, .05]},
+  longGrass: {...TRAITS.plains.longGrass, families: [['grasswheat', 3, .8], ['grassgrama', 2, .35]], leaf: '#8a9a7a', accent: '#c0b080'},
+  farForest: {cover: .05, size: 7, scrub: true, paint: .3, colors: ['#4e6458', '#5a6c58', '#6a7a5a']},
+  // Round 2 (the first capture): the plains' stands at .3 walled the holes
+  // in green woods; the badlands are open grass, junipers dotted in the
+  // draws, ash and chokecherry along a creek.
+  stands: {...TRAITS.plains.stands, edge: 260, wobble: 40, share: .06, patch: .03, spacing: 14, under: {spacing: 12, plants: [['chokecherry', .5], ['shrub', .5]]},
+   plants: [['rmjuniper', .7], ['greenash', .15], ['chokecherry', .15]]},
+  // Round 2: the open grass is prairie -- yucca, sage, leadplant and forbs
+  // -- with only the odd tree; the trees are the stands' (in the draws).
+  // Green ash first: the specimen tree in a fairway is the first species
+  // (course.js featureTree), and a full-size lone juniper stood oversized.
+  plants: [['greenash', .01], ['rmjuniper', .06], ['cottonwood', .01], ['chokecherry', .02], ['soapweedyucca', .14], ['leadplant', .2], ['sagebrush', .14], ['prairieforbs', .26], ['buffalograss', .06], ['shrub', .1]],
+  ui: {panel: 'rgba(40,26,22,.88)', a1: '#fecdd3', a2: '#b4533a', hot: '#fff7ed', soft: '#e8d0c4', onHot: '#2a100a'},
+  world: {clubhouse: 'loglodge', story: {walls: 'wire', ruins: ['logcabin'], landmark: 'windmill'}, life: {grazers: ['bison', 5]}}},
  // The Old Northeast: New England's region in high summer -- stately oaks,
  // maples, elms and beeches, stone clubhouses (the Golden Age courses).
  // No autumn leaf ground either (phase 8b; it read as orange paint).
@@ -948,9 +984,111 @@ export const worldOf = key => {
 
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged
 // field by field, because a biome that sets one of them means all of it.
+// TALL FESCUE AND THE PRAIRIE GRASSES (the owner, 3 November 2026: "do we have
+// tall fescue and prairie grasses? if not, we should retroactively build them
+// for all landscapes that need them"; tools/blender/cartoon_prairiegrass.py).
+// A landscape listed here grows these long-grass families in place of its
+// region's: [family, share, height in metres]. Who grows what follows each
+// grass's range (RESEARCH.md *Tall fescue and the prairie grasses*): tall
+// fescue the transition zone's rough, little bluestem, Indiangrass and
+// switchgrass the tall- and mixed-grass prairie, blue grama the shortgrass
+// and the south-west's uplands. Shares and heights PLACED within the specs.
+// Drawing only (vegetation.js addLongGrass): no ground moves.
+const GRASSES = {
+ heartland: [['grassbluestem', 3, 1.5], ['grassindian', 2, 1.7], ['grassswitch', 2, 1.5], ['grasslittlebluestem', 2, 1.1], ['grasstallfescue', 2, .9]],
+ bluegrass: [['grasstallfescue', 3, .9], ['grassbluestem', 1, 1.2]],
+ ozarks: [['grasstallfescue', 2, .9], ['grasslittlebluestem', 2, 1.1], ['grassbluestem', 1, 1.2]],
+ blueridge: [['grasstallfescue', 2, .9], ['grassfescue', 2, .8]],
+ piedmont: [['grasstallfescue', 2, .9], ['grassbluestem', 1, 1.2], ['grassfescue', 1, .8]],
+ crosstimbers: [['grasslittlebluestem', 3, 1.1], ['grassindian', 2, 1.7], ['grassswitch', 1, 1.5], ['grasstallfescue', 1, .9]],
+ oldnortheast: [['grasstallfescue', 2, .9], ['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]],
+ sandhills: [['grasslittlebluestem', 3, 1.0], ['grassswitch', 1, 1.4], ['grassbluestem', 1, 1.1], ['grassfescue', 1, .7]],
+ hillcountry: [['grasslittlebluestem', 3, 1.0], ['grassindian', 2, 1.6], ['grassbunch', 1, .8]],
+ bluebonnet: [['grasslittlebluestem', 2, 1.0], ['grassindian', 2, 1.7], ['grassswitch', 1, 1.5], ['grassbluestem', 1, 1.2]],
+ lakedunes: [['grassmarram', 2, 1], ['grasslittlebluestem', 1, .9], ['grassfescue', 1, .7]],
+ highplains: [['grassgrama', 3, .35], ['grasswheat', 2, .7], ['grasslittlebluestem', 1, .9]],
+ gulfcoast: [['grassswitch', 2, 1.5], ['grassbluestem', 2, 1.2], ['grassbunch', 1, .8]],
+ longleaf: [['grassindian', 2, 1.6], ['grassbluestem', 1, 1.2], ['grassfescue', 1, .8]],
+ ponderosa: [['grassgrama', 2, .35], ['grassalpine', 2, .4], ['grassfescue', 1, .6]],
+ chihuahuan: [['grassgrama', 2, .35], ['grassbunch', 1, .8]],
+ redrock: [['grassbunch', 2, .7], ['grassgrama', 1, .35]],
+};
+// TERRAIN TRUE TO PLACE (the owner, 3 November 2026: "make sure that the
+// terrain is also lifelike to the regions where the courses are built").
+// A landscape listed here gets its own ground in place of its region's
+// recipe (landforms.js; RESEARCH *Terrain true to place* for each one's
+// sources): `landform` replaces the recipe, `hills` and `groundTints` are
+// laid over the record's. Every number PLACED from the sources and the
+// study's pictures. A change here moves generated ground: GENERATOR_VERSION.
+const gate = (near, ramp) => ({near, ramp});
+const TERRAIN = {
+ // Stair-stepped limestone hills, pale ledges on the risers (Glen Rose).
+ hillcountry: {landform: {type: 'steps', scale: 260, height: 26, steps: 6, riser: .35, from: .3, to: .78, ledge: .25, reach: 80,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, groundTints: {rock: '#d8d0b8'}},
+ // Low marine terraces stepping down, low granite bluffs between.
+ monterey: {landform: {type: 'steps', scale: 380, height: 12, steps: 3, riser: .18, from: .3, to: .85, ledge: .3, reach: 60,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 10)}}},
+ // A gentle roll pocked with shallow sinkholes, sparse limestone.
+ bluegrass: {landform: {type: 'karst', roll: 8, cell: 140, chance: .55, radius: [12, 30], size: [2, 6], reach: 60,
+  kinds: {a: 'rock'}, gates: {a: gate(12, 10)}}},
+ // A dissected plateau: steep hollows branching through it, limestone bluffs.
+ ozarks: {landform: {type: 'channels', scale: 300, width: .05, wall: .35, depth: 22, table: 6, branches: .7, rim: .45, bare: .3, reach: 80,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
+ // Hummocky moraine, kettles holding bog, an esker, granite breaking through.
+ northwoods: {landform: {type: 'glacial', hummock: 7, cell: 160, chance: .5, radius: [25, 55], size: [4, 9], esker: 220, eskerHeight: 6, reach: 70,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 10), b: gate(10, 12)}}, groundTints: {native: '#8a8a50'}},
+ // The Golden Age parkland of the glacial north-east (Long Island's
+ // moraines and kettles under its courses): the same, gentler.
+ oldnortheast: {landform: {type: 'glacial', hummock: 4, cell: 200, chance: .3, radius: [25, 50], size: [3, 6], esker: 260, eskerHeight: 3, reach: 70,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 10), b: gate(12, 12)}}},
+ // Granite knobs on a gentle floor, shallow sandy washes, hardpan beyond.
+ // Round 2: the knobs read as sand dunes -- bare from a gentler slope, and
+ // grey granite rather than the desert's tan rock.
+ mojave: {landform: {type: 'knobs', cell: 200, chance: .5, radius: [25, 60], size: [10, 28], profile: 1.3, round: .6, floor: 3,
+  wash: 240, washWidth: .02, washDepth: 1.2, bare: .1, reach: 80,
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#a8a294'}},
+ // A flat valley floor, the odd knob, steep bare ranges behind.
+ palms: {landform: {type: 'knobs', cell: 260, chance: .22, radius: [20, 45], size: [6, 16], profile: 1.3, round: .6, floor: 1.5,
+  wash: 300, washWidth: .015, washDepth: .8, bare: .2, reach: 80,
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}},
+  hills: {base: 6, severity: 15, reach: 80}, ringLift: 1100, ringPeaks: true, ringMesas: false},
+ // Bare glaciated granite domes and whaleback slabs, scree at their feet.
+ sierra: {landform: {type: 'knobs', cell: 230, chance: .5, radius: [40, 90], size: [15, 40], profile: 2.2, round: .5, floor: 6, wash: 0, bare: .18, reach: 90,
+  kinds: {a: 'rock', b: 'scree'}, gates: {a: gate(10, 12), b: gate(10, 12)}}},
+ // Box-walled coulees cut into the basalt, rimrock along their rims.
+ sagebrush: {landform: {type: 'channels', scale: 420, width: .04, wall: .15, depth: 18, table: 4, branches: 0, rim: .4, bare: .6, reach: 85,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
+ // Red-clay gullies cut back into the rolling saprolite.
+ piedmont: {landform: {type: 'channels', scale: 180, width: .04, wall: .3, depth: 4, table: 3, branches: .8, rim: .35, bare: .7, reach: 60,
+  kinds: {a: 'hardpan'}, gates: {a: gate(12, 10)}}},
+ // SoCal's barrancas: steep V canyons through the chaparral hills.
+ socal: {landform: {type: 'channels', scale: 260, width: .05, wall: .8, depth: 20, table: 8, branches: .6, rim: .5, bare: .4, reach: 80,
+  kinds: {a: 'hardpan'}, gates: {a: gate(12, 12)}}, groundTints: {hardpan: '#b89a72'}},
+ // Cinder cones of red-brown cinder and black basalt flows.
+ ponderosa: {landform: {type: 'volcanic', cell: 300, chance: .45, radius: [50, 110], size: [25, 60], flows: .62, flowHeight: 2.5, roll: 5, reach: 90,
+  kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#8a4a36', rock: '#3a3632'}},
+ // Black lava flows down to the sea, a few cinder cones.
+ hawaii: {landform: {type: 'volcanic', cell: 320, chance: .25, radius: [40, 80], size: [15, 35], flows: .56, flowHeight: 2, roll: 6, reach: 80,
+  kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#6a3a2a', rock: '#2e2a28'}},
+ // Rounded sand ridges, bare sand on their tops.
+ longleaf: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
+ // Dead flat: levees along the bayous, backswamp hollows of marsh grass.
+ bayou: {landform: {type: 'lowland', scale: 300, levee: 2.5, hollow: 1.5, swamp: .52, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
+  hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
+ flatwoods: {landform: {type: 'lowland', scale: 340, levee: 1, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
+  hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
+ gulfcoast: {landform: {type: 'lowland', scale: 320, levee: 1.5, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}}, baseRoll: .3},
+};
 export const BIOMES = Object.fromEntries(Object.entries(LAND).map(([key, own]) => {
  const place = LANDSCAPES[key], region = place.region;
  const {ui, world, ...rest} = own;
+ const merged = {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest};
+ if (GRASSES[key]) rest.longGrass = {...merged.longGrass, families: GRASSES[key]};
+ if (TERRAIN[key]) {
+  const {groundTints, ...t} = TERRAIN[key];
+  Object.assign(rest, t);
+  if (groundTints) rest.groundTints = {...(merged.groundTints || {}), ...groundTints};
+ }
  return [key, {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest,
   name: place.name, region, regionName: REGIONS[region], where: place.where, tropical: place.tropical,
   ui: {...INTERFACE[region], ...(ui || {})}, key, world: worldOf(key)}];

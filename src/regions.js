@@ -65,6 +65,7 @@ export const LANDSCAPES = {
  sandhills: {name: 'Sand Hills', region: 'plains', where: [41.9, -100.8]},
  highplains: {name: 'High Plains', region: 'plains', where: [38.1, -97.8]},
  crosstimbers: {name: 'Cross Timbers', region: 'plains', where: [36.1, -97.2]},
+ badlands: {name: 'Badlands', region: 'plains', where: [43.8, -102.3]},
  hillcountry: {name: 'Hill Country', region: 'texas', where: [30.5, -98.1]},
  bluebonnet: {name: 'Bluebonnet Prairie', region: 'texas', where: [32.7, -96.7]},
  gulfcoast: {name: 'Gulf Coast', region: 'texas', where: [29.8, -95.5]},

@@ -723,3 +723,20 @@ clubhouse kind; `cartoon_north` and `cartoon_hawaii` with phase 8c, Hawaii's
 ironwood as `casuarina` (`ironwood` is the desert's), the lava a boulder
 family, the log cabin a ruin and the dock a story prop). Each script's header and `LOOK`/`BARK` tables hold its
 colours and roles; each model's log holds its rounds.
+
+**The owner's additions of 3 November 2026.** `cartoon_badlands`: the
+Yellow Mounds (the Badlands' boulder family `boulderbadlands`), Rocky
+Mountain juniper (far twins), green ash (far twin), chokecherry,
+leadplant and the bison (lifeforms), fifteen rounds each and the four
+seasons. Its spires, sawtooth wall, clinker butte, horizon wall and
+cannonball concretion were built (sixteen rounds) and **cut**: the owner
+wants the landscape's formations generated from the ground, as the other
+landscapes' are (landforms.js `badlands`, ground.js strata); their logs
+close with the reason. The lesson for the next rock: a turned (lathed)
+shape reads as a cone however it is banded, and stripes coloured face by
+face zigzag on a slope -- slice the faces at each bed's level instead
+(tried in round 17, dropped with the models). `cartoon_prairiegrass`:
+tall fescue, little bluestem, switchgrass, Indiangrass, blue grama and
+western wheatgrass as long-grass families (`grasstallfescue`,
+`grasslittlebluestem`, `grassswitch`, `grassindian`, `grassgrama`,
+`grasswheat`; biomes.js `GRASSES`), in its rounds.

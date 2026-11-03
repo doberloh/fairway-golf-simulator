@@ -77,7 +77,9 @@ export const WEEKLY_ROTATION = {
   // Phase 8b (PLACED, one a week on).
   {debut: 185, biome: 'blueridge'}, {debut: 186, biome: 'ozarks'}, {debut: 187, biome: 'bluegrass'},
   // Phase 8c (PLACED, one a week on).
-  {debut: 188, biome: 'northwoods'}, {debut: 189, biome: 'oregondunes'}, {debut: 190, biome: 'hawaii'}],
+  {debut: 188, biome: 'northwoods'}, {debut: 189, biome: 'oregondunes'}, {debut: 190, biome: 'hawaii'},
+  // The owner's addition of 3 November 2026 (PLACED, the week after).
+  {debut: 191, biome: 'badlands'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

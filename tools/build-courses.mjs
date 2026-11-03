@@ -48,6 +48,9 @@ export const COURSES = {
  // On the Oregon Dunes, the Pacific links (the US landscapes goal, step 10;
  // PLACED: the study puts it "in the lowland, but built as Links").
  'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'oregondunes'},
+ // The owner's addition of 3 November 2026: Bully Pulpit at Medora, North
+ // Dakota, on the Badlands (its survey fetched from 3DEP).
+ 'bully-pulpit': {name: 'Bully Pulpit', osm: 'way(245874307)', landscape: 'badlands'},
  'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'keys'},
  northwood: {name: 'Northwood Golf Club', osm: 'way(1246462624)', landscape: 'redwood'},
  ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'newengland'},

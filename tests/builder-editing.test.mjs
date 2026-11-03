@@ -197,3 +197,24 @@ test('turning one shape in the editor: a bunker a quarter turn, a house its faci
  ed.turnShape(ed.pickAt({x: 60, z: -80}), .5); assert.ok(Math.abs(ed.state.homes.at(-1).rotation + .5) < 1e-9);
  assert.equal(ed.turnShape(ed.pickAt({x: 31, z: 30}), 1), null, 'a tree is round');
 });
+
+test('skinning the land paints a butte\'s sides the landscape\'s rock, in one undo step', async () => {
+ // The owner, 3 November 2026: a button that skins the land from its
+ // heights (skin.js). A butte east of the fairway, 20 m high, steep-sided.
+ const {BIOMES} = await import('../src/biomes.js');
+ const d = doc(), {nx, nz, heights} = d.land;
+ for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+  const x = -100 + i, z = -100 + j, r = Math.hypot(x - 60, z + 40);
+  heights[j * nx + i] = 100 + (r < 10 ? 20 : r < 22 ? 20 * (1 - (r - 10) / 12) : 0);
+ }
+ const e = createEditor(d);
+ const before = e.surfaceAt(75, -40);
+ const done = e.skinFromLand({bio: BIOMES.badlands});
+ assert.equal(done.kinds.face, 'rock');
+ assert.ok(done.cells.face > 50, `the butte's sides were painted (${done.cells.face} cells)`);
+ assert.equal(e.surfaceAt(75, -40), 'rock', 'a steep side is rock');
+ assert.notEqual(e.surfaceAt(60, -40), 'rock', 'its flat top is not');
+ assert.equal(e.surfaceAt(0, 0), 'fairway', 'the fairway is untouched');
+ e.undo();
+ assert.equal(e.surfaceAt(75, -40), before, 'one undo takes it all back');
+});

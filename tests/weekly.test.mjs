@@ -34,8 +34,9 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  assert.equal(new Set(after).size, 9);
  assert.ok(!after.includes('haunted'));
  assert.equal(after.filter(b => b === 'newengland').length, 2);
- // After the last debut (22 February 2027) a rotation visits every landscape.
- const later = Array.from({length: BIOME_KEYS.length + 1}, (_, i) => weeklyBiome(new Date(2027, 1, 22 + 7 * i, 12)));
+ // After the last debut (week 191, 30 August 2027) a rotation visits every
+ // landscape.
+ const later = Array.from({length: BIOME_KEYS.length + 1}, (_, i) => weeklyBiome(new Date(2027, 7, 30 + 7 * i, 12)));
  for (const k of BIOME_KEYS) assert.ok(later.includes(k), k);
  assert.ok(!later.includes('haunted'));
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');

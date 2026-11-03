@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=25;
+export const SCHEMA_VERSION=26;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -394,7 +394,22 @@ export const SCHEMA_VERSION=25;
 // 75: Wine Country's vines in rows -- two vineyard blocks of 60 by 36 m off
 //     play, a vine every 2 m along rows 3 m apart, the scattered vines down to
 //     a few strays (course.js, biomes.js `vineyard`). Moved Wine Country.
-export const GENERATOR_VERSION=75;
+// 76: terrain true to place (the owner, 3 November 2026) -- each landscape's
+//     ground from its region's geology (biomes.js TERRAIN, landforms.js):
+//     stepped limestone (Hill Country), marine terraces (Monterey), karst
+//     sinkholes (Bluegrass), dissected hollows (Ozarks), glacial kettles and
+//     eskers (North Woods, Old Northeast), granite knobs and washes (Mojave,
+//     Desert Palms, with a flat floor and ranges behind), granite domes
+//     (High Sierra), coulees (Sagebrush), red-clay gullies (Piedmont),
+//     barrancas (SoCal Canyons), cinder cones and lava flows (Ponderosa,
+//     Hawaii), sand ridges (Longleaf), and the lowlands' levees and
+//     backswamps on a near-flat base roll (Bayou, Flatwoods, Gulf Coast;
+//     course.js `baseRoll`). Moved those eighteen. And a tall tree no longer
+//     stands on a lip with more than 2 m of drop under its foot (course.js
+//     onLip allowed 15% of the tree's height -- 2.7 m for a magnolia, which
+//     the bench found floating over a creek bank on the new Piedmont). That
+//     moved every landscape's planting a little: thirty of them.
+export const GENERATOR_VERSION=76;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -531,7 +546,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 8b (SCHEMA 23): Appalachia.
  'blueridge','ozarks','bluegrass',
  // Phase 8c (SCHEMA 24): the North Woods, the Oregon Dunes and Hawaii.
- 'northwoods','oregondunes','hawaii'];
+ 'northwoods','oregondunes','hawaii',
+ // The owner's addition, 3 November 2026 (SCHEMA 26): the Dakota Badlands.
+ 'badlands'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -744,6 +761,8 @@ const MIGRATIONS={
  // has none: today's, the default, which is what it would have been drawn in
  // had seasons existed; filled in by the defaults.
  24:s=>s,
+ // 25 -> 26: one more landscape (the Badlands); no save changes shape.
+ 25:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

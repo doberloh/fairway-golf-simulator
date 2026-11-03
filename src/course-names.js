@@ -132,6 +132,18 @@ export const NAME_WORDS = {
    'Pier', 'Light', 'Hollow', 'Reach', 'Bay', 'Bowl', 'Crest', 'Overlook',
    'Sands', 'Woods', 'Narrows', 'Cove'],
  ],
+ // The owner's addition (3 November 2026): the Dakota Badlands.
+ badlands: [
+  ['Sawtooth', 'Pinnacles', 'Yellowmound', 'Sodtable', 'Clinker', 'Scoria',
+   'Bison', 'Notch', 'Juniper', 'Chokecherry', 'Leadplant', 'Cannonball',
+   'Brule', 'Sage Creek', 'Cedar Pass', 'Badger', 'Tatanka', 'Medora',
+   'Little Missouri', 'Painted Canyon', 'Red Shirt', 'Conata', 'Fossil',
+   'Saddle Pass', 'Gumbo', 'Window', 'Buffalo Gap', 'Sheep Mountain',
+   'Cliff Shelf', 'Bully'],
+  ['Wall', 'Table', 'Breaks', 'Butte', 'Draw', 'Pass', 'Basin', 'Spires',
+   'Overlook', 'Gap', 'Coulee', 'Flats', 'Divide', 'Rim', 'Mounds', 'Badlands',
+   'Point', 'Bench', 'Fork', 'Ridge'],
+ ],
  // Phase 3 of the US landscapes goal (2 November 2026).
  highplains: [
   ['Buffalo', 'Grama', 'Shortgrass', 'Elevator', 'Pumpjack', 'Shelterbelt',

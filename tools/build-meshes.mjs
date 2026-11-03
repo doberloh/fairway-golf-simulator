@@ -102,6 +102,14 @@ const PICK = {
  grassfescue: ['blender:Blender_Fescue_1', 'blender:Blender_Fescue_2', 'blender:Blender_Fescue_3'],
  grassmarram: ['blender:Blender_Marram_1', 'blender:Blender_Marram_2'],
  grassbluestem: ['blender:Blender_Bluestem_1', 'blender:Blender_Bluestem_2'],
+ // Tall fescue and the prairie grasses (tools/blender/cartoon_prairiegrass.py;
+ // the owner, 3 November 2026), long-grass families like these.
+ grasstallfescue: ['blender:Blender_TallFescue_1', 'blender:Blender_TallFescue_2'],
+ grasslittlebluestem: ['blender:Blender_LittleBluestem_1', 'blender:Blender_LittleBluestem_2'],
+ grassswitch: ['blender:Blender_Switchgrass_1', 'blender:Blender_Switchgrass_2'],
+ grassindian: ['blender:Blender_Indiangrass_1', 'blender:Blender_Indiangrass_2'],
+ grassgrama: ['blender:Blender_BlueGrama_1', 'blender:Blender_BlueGrama_2'],
+ grasswheat: ['blender:Blender_Wheatgrass_1', 'blender:Blender_Wheatgrass_2'],
  grassalpine: ['blender:Blender_Alpine_1', 'blender:Blender_Alpine_2'],
  grassbunch: ['blender:Blender_Bunch_1', 'blender:Blender_Bunch_2'],
  grasssedge: ['blender:Blender_Sedge_1', 'blender:Blender_Sedge_2'],
@@ -351,6 +359,15 @@ const PICK = {
  tiplant: ['blender:Blender_TiPlant_1'],
  heliconia: ['blender:Blender_Heliconia_1'],
  boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
+ // THE BADLANDS PACK (tools/blender/cartoon_badlands.py; the owner, 3
+ // November 2026): its plants; the Yellow Mounds as its boulder family; the
+ // bison in lifeforms. Its spires, walls and buttes are the ground's
+ // (landforms.js `badlands`), not models.
+ rmjuniper: ['blender:Blender_RMJuniper_1', 'blender:Blender_RMJuniper_2'],
+ greenash: ['blender:Blender_GreenAsh_1'],
+ chokecherry: ['blender:Blender_Chokecherry_1'],
+ leadplant: ['blender:Blender_Leadplant_1'],
+ boulderbadlands: ['blender:Blender_BadlandsMound_1', 'blender:Blender_BadlandsMound_2'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -394,7 +411,7 @@ const PICK = {
  // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
  // the mower, and tournament week's stands, board and crowd -- the pack
  // architect_occasion.py -- were removed on 2 November 2026: the owner.)
- lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1'].map(k => `blender:Blender_${k}`),
+ lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Bison_1'].map(k => `blender:Blender_${k}`),
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
 

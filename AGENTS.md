@@ -131,7 +131,19 @@ and quality)." So, for this goal:
   fescue and the prairie grasses for every landscape that needs them, and,
   last, a skill that takes a real course, researches it and recommends the
   landscape to match -- or plans a new one by the study's research path.
-  All four are TODO *US landscapes*, *The owner's additions*.
+  And every landscape's terrain true to its place, researched from its
+  geology (the Badlands' formations are the ground's, not models); and in
+  the builder, a button that skins the land from its heights (a mountain,
+  a butte, a badland face painted as the landscape's own) or a tool to paint
+  it by hand, for every landscape. All are TODO *US landscapes*, *The
+  owner's additions*.
+- **Graphics work is throttled** (the owner, 3 November 2026, after the PC
+  went down during a long run of Blender renders: "GPU work needs to be
+  throttled properly ... make sure not to over load the desktop"): every
+  render and capture waits at the gate (tools/gpu-gate.mjs: two minutes'
+  rest, under 30% busy and 75 °C), one at a time, logged.
+- **Send pictures as work lands** (the owner: "keep sending pictures to
+  the output so i can review in real time").
 - **Delete this section in the merge** with the course-builder section.
 
 ## Ideas live in IDEAS.md, and are read only when wanted

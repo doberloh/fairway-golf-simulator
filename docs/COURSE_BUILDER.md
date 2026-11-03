@@ -1239,6 +1239,25 @@ fairway's edge -- what the picture is for. A trace takes 2-3 s.
   both programs; the website's `RELEASE_SHA256.txt` check confirmed to read
   `Fairway.html`'s line by name; laz-perf's copyright line confirmed.
 
+### Skin from the land (3 November 2026)
+
+The owner: "In the builder, we should add an option that the user can
+click to do a best effort at skinning the landscape based on height ...
+Allow the user to paint it or indicate as such if they dont want to auto
+paint it. for all landscapes." The editor's **Skin from the land** (under
+Paint; src/builder/skin.js, editing.js `skinFromLand`) reads the land as
+shaped now: ground steeper than 0.6 (31 degrees) is the landscape's face
+-- the first rock-like kind its landform names (rock for the Badlands, the
+crags, the mesas, the lava; hardpan for the Piedmont's and SoCal's clay) --
+and gentler ground (from 0.22) within 12 m below a face is its apron (the
+landform's second kind: scree, hardpan, waste). Never within 6 m of the
+holes' turf, sand, paths or water. Added to the layers beside what was
+painted, one undo step; painting by hand needs nothing new -- the Paint
+brushes and Outline were always there. All four thresholds PLACED. A file
+only changes when the button is pressed, so no BUILT_VERSION step. Tested
+in Node (tests/builder-skin.test.mjs, tests/builder-editing.test.mjs); not
+seen in the builder by a person.
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the

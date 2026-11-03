@@ -76,6 +76,33 @@ function terrace(t, steps, riser = .26) {
  return {h: (k + smooth(1 - riser, 1, f)) / steps, f};
 }
 
+// A SCATTER OF ROUND FEATURES on a seeded grid of `o.cell` metre cells, one
+// in each with chance `o.chance` (sinkholes, kettles, cinder cones, granite
+// knobs): `near(x, z)` gives the nearest one's normalised distance d (0 at
+// its centre, 1 at its rim, wobbled so none is a circle) and the feature
+// {cx, cz, r, size}. `o.radius` and `o.size` are [min, max] metres.
+function scatter(o, seed, what) {
+ const s = saltOf(seed, what), cell = o.cell;
+ const at = (ci, cj) => {
+  if (hash(ci, cj, s) > o.chance) return null;
+  const r = o.radius[0] + hash(ci, cj, s + 1) * (o.radius[1] - o.radius[0]);
+  const size = o.size[0] + hash(ci, cj, s + 2) * (o.size[1] - o.size[0]);
+  return {cx: (ci + .2 + .6 * hash(ci, cj, s + 3)) * cell, cz: (cj + .2 + .6 * hash(ci, cj, s + 4)) * cell, r, size};
+ };
+ return (x, z) => {
+  const ci = Math.floor(x / cell), cj = Math.floor(z / cell);
+  let best = null, bd = Infinity;
+  for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) {
+   const m = at(i, j);
+   if (!m) continue;
+   const wob = 1 + .18 * (fbm(x / 27, z / 27, s + 9, 2) - .5) * 2;
+   const d = Math.hypot(x - m.cx, z - m.cz) / (m.r * wob);
+   if (d < bd) { bd = d; best = m; }
+  }
+  return bd < 1 ? {d: bd, m: best} : {d: bd, m: null};
+ };
+}
+
 // ---------------------------------------------------------------- recipes
 //
 // Each returns {lift, raw, treeKeep, needsHeight}. `lift(x, z)` metres;
@@ -154,6 +181,58 @@ const RECIPES = {
     return [rock, scree];
    },
    treeKeep: (x, z) => 1 - .85 * smooth(.25, .75, massif(x, z)),
+  };
+ },
+ // THE BADLANDS (the owner, 3 November 2026: "I would prefer the landscape to
+ // generate the mountain, butte, spire like formations for badlands rather
+ // than building a model. Other landscapes do this"). Clusters of carved
+ // clay between the holes, as the crags gather theirs: inside a cluster a
+ // network of knife-edged ridges (a sharp ridged field, cubed, so its crests
+ // are sawtooth aretes and the ground between them falls away), rising to
+ // spires where two crests meet; gullies cut across the faces at a finer
+ // scale; small ledges every `ledge` share of the height where the beds
+ // weather back (the strata the ground shader paints, ground.js
+ // `strataOn`). Bare clay faces are rock (A) where the finished ground is
+ // steep, and the gentler clay round their feet and on the low ground
+ // between is hardpan (B), the washed apron. The prairie table keeps its
+ // grass between the clusters. Every number PLACED from the study's
+ // pictures (subs/plains/plains.badlands.md, local).
+ badlands(o, seed) {
+  const s1 = saltOf(seed, 'badl'), s2 = saltOf(seed, 'badl-crest'), s3 = saltOf(seed, 'badl-gully'), s4 = saltOf(seed, 'badl-cluster');
+  const scale = o.scale;
+  const massif = (x, z) => smooth(o.from ?? .4, o.to ?? .85, fbm(x / scale, z / scale, s1, 2))
+   * smooth(o.cluster ?? .45, (o.cluster ?? .45) + .18, fbm(x / (scale * 2.4), z / (scale * 2.4), s4, 2));
+  // The crests: a sharp ridged field at the crest scale, cubed -- sawtooth
+  // ridges with spires where they meet.
+  const crest = (x, z) => { const r = ridged(x / o.crest, z / o.crest, s2, 3); return r * r * r; };
+  // Gullies: a finer ridged field's troughs, cut into the faces.
+  const gully = (x, z) => 1 - ridged(x / o.gully, z / o.gully, s3, 2);
+  const shape = (x, z) => {
+   const m = massif(x, z);
+   if (m <= 0) return 0;
+   const c = crest(x, z), g = gully(x, z);
+   // A low plinth under the whole cluster, the crests standing on it.
+   // Round 2: a lower plinth (was .22) so the crests stand clear of it as
+   // ridges and spires; the first capture read as rounded banded humps.
+   let h = m * (.12 + .88 * c * smooth(.1, .5, m));
+   h *= 1 - (o.cut ?? .3) * g * g * smooth(.15, .5, m);
+   // Ledges where a bed weathers back: a gentle terrace on the steep faces.
+   if (o.ledges) { const t = terrace(h, o.ledges, .7); h = h * .7 + t.h * .3; }
+   return h;
+  };
+  return {
+   needsSlope: true,
+   lift: (x, z) => o.height * shape(x, z) + o.swale * (fbm(x / 160, z / 160, s1 + 3, 2) - .5),
+   raw: (x, z, y, slope = 0) => {
+    const m = massif(x, z);
+    if (m <= 0) return [0, 0];
+    const n = fbm(x / 23, z / 23, s3 + 11, 2);
+    const t = .42 + .14 * (n - .5) * 2;
+    const face = smooth(t, t + .18, slope) * smooth(.04, .16, m);
+    const apron = smooth(.06, .22, m) * (1 - face) * smooth(.4, .6, n * .5 + m * .7);
+    return [face, apron];
+   },
+   treeKeep: (x, z) => 1 - .92 * smooth(.08, .4, massif(x, z)),
   };
  },
  // THE DESERT: flat-topped sandstone mesas and buttes on a seeded grid of
@@ -244,6 +323,218 @@ const RECIPES = {
    needsHeight: true,
    lift: () => 0,
    raw: (x, z, y) => [y === undefined ? 0 : smooth(o.low, o.low + .4, y) * (1 - smooth(o.high - .8, o.high, y)) * smooth(.3, .42, fbm(x / 17, z / 17, sc, 2)), 0],
+   treeKeep: () => 1,
+  };
+ },
+ // ---------------------------------------------------------------- terrain true to place
+ //
+ // THE OWNER'S AMENDMENT OF 3 NOVEMBER 2026: "make sure that the terrain is
+ // also lifelike to the regions where the courses are built". Until then
+ // most landscapes shared their region's recipe -- the South and Texas the
+ // prairie roll, the western mountains and Appalachia the Rockies' crags.
+ // These recipes come from each region's geology (RESEARCH, *Terrain true
+ // to place*); every shape and number in them is PLACED from those sources
+ // and the study's pictures. Shared helpers first.
+ //
+ // A SCATTER OF ROUND FEATURES on a seeded grid of cells (sinkholes, kettles,
+ // cinder cones, granite knobs): the nearest one's normalised distance d (0
+ // at its centre, 1 at its rim), its size and its own two random numbers.
+ // STEPPED HILLS: the Texas Hill Country's limestone, where marl beds weather
+ // back under harder ones into a staircase of low ledges up every hillside
+ // (Glen Rose Formation; the UT Austin field guide); and, with few broad
+ // steps, Monterey's marine terraces -- level wave-cut platforms with low
+ // bluffs between (USGS OFR 2016-1110).
+ steps(o, seed) {
+  const s1 = saltOf(seed, 'steps'), s2 = saltOf(seed, 'steps-wander');
+  const hill = (x, z) => smooth(o.from ?? .35, o.to ?? .8, fbm(x / o.scale, z / o.scale, s1, 3));
+  const at = (x, z) => terrace(Math.min(1, hill(x, z) + .05 * (fbm(x / 37, z / 37, s2, 2) - .5) * 2), o.steps, o.riser ?? .3);
+  return {
+   needsSlope: true,
+   lift: (x, z) => o.height * at(x, z).h,
+   // A ledge of bare limestone along each riser where it stands steep.
+   raw: (x, z, y, slope = 0) => {
+    const {f} = at(x, z);
+    return [smooth(.6, .85, f) * smooth(o.ledge ?? .3, (o.ledge ?? .3) + .2, slope) * smooth(.02, .1, hill(x, z)), 0];
+   },
+   treeKeep: () => 1,
+  };
+ },
+ // KARST: the Inner Bluegrass -- a gently rolling upland, local relief under
+ // about 50 m, pocked with shallow sinkholes, many too shallow to map, and
+ // sparse outcrops (KGS RI-07-11; USGS PP 1151-H).
+ karst(o, seed) {
+  const s1 = saltOf(seed, 'karst'), s2 = saltOf(seed, 'karst-rock'), near = scatter(o, seed, 'sink');
+  return {
+   needsSlope: true,
+   lift: (x, z) => {
+    const roll = o.roll * (fbm(x / 240, z / 240, s1, 2) - .5) * 2;
+    const {d, m} = near(x, z);
+    const sink = m ? -m.size * Math.pow(Math.max(0, 1 - d * d), 2) : 0;
+    return roll + sink;
+   },
+   // A little grey limestone where the ground breaks steep, as at a sink's lip.
+   raw: (x, z, y, slope = 0) => [smooth(.35, .55, slope) * smooth(.55, .7, fbm(x / 29, z / 29, s2, 2)), 0],
+   treeKeep: () => 1,
+  };
+ },
+ // GLACIAL: the North Woods -- hummocky moraine, "hills and hollows", kettles
+ // where stranded ice melted, poorly drained hollows of bog, a sinuous esker
+ // tracing an old stream under the ice, boulders strewn (WGNHS; USDA ESD
+ // 095X: local relief mainly about 8 m, moraines to 25-100 m).
+ glacial(o, seed) {
+  const s1 = saltOf(seed, 'glacial'), s2 = saltOf(seed, 'esker'), s3 = saltOf(seed, 'bog'), near = scatter(o, seed, 'kettle');
+  const esker = (x, z) => {
+   const wx = fbm(x / 500, z / 500, s2 + 1, 2) - .5;
+   const n = fbm(x / o.esker + wx * 1.6, z / (o.esker * 3), s2, 2);
+   return 1 - smooth(.004, .02, Math.abs(n - .5));
+  };
+  return {
+   needsSlope: true,
+   lift: (x, z) => {
+    const hum = o.hummock * (fbm(x / 70, z / 70, s1, 3) - .5) * 2;
+    const {d, m} = near(x, z);
+    const kettle = m ? -m.size * Math.pow(Math.max(0, 1 - d * d), 1.5) : 0;
+    return hum + kettle + o.eskerHeight * esker(x, z);
+   },
+   // A: grey granite where the moraine breaks steep (erratics, outcrops);
+   // B: the bog's native grass in the hollows.
+   raw: (x, z, y, slope = 0) => {
+    const {d, m} = near(x, z);
+    return [smooth(.4, .6, slope) * smooth(.6, .75, fbm(x / 23, z / 23, s3 + 4, 2)), m ? 1 - smooth(.45, .7, d) : 0];
+   },
+   treeKeep: (x, z) => { const {d, m} = near(x, z); return m ? smooth(.4, .7, d) : 1; },
+  };
+ },
+ // KNOBS: rounded granite knobs and domes standing out of a gentle floor.
+ // The Mojave's pediments and inselbergs -- residual granite, rounded, on a
+ // gentle floor crossed by shallow washes (USGS OF 2004-1007); the High
+ // Sierra's exfoliation domes and whaleback slabs, glacier-polished (NPS
+ // Yosemite); Desert Palms' fans at a mountain front. `profile` sets the
+ // shape: below 1 a steep-sided knob, above 1 a broad dome.
+ knobs(o, seed) {
+  const sw = saltOf(seed, 'knob-wash'), near = scatter(o, seed, 'knob');
+  const washOf = (x, z) => {
+   if (!o.wash) return 0;
+   const wx = fbm(x / 400, z / 400, sw + 3, 2) - .5, wz = fbm(x / 400 + 9, z / 400 - 4, sw + 4, 2) - .5;
+   const n = fbm(x / o.wash + wx * 1.4, z / o.wash + wz * 1.4, sw, 2);
+   return 1 - smooth(o.washWidth * .5, o.washWidth, Math.abs(n - .5));
+  };
+  return {
+   needsSlope: true,
+   lift: (x, z) => {
+    const {d, m} = near(x, z);
+    const knob = m ? m.size * Math.pow(Math.max(0, 1 - Math.pow(d, o.profile ?? 1.6)), o.round ?? .7) : 0;
+    return knob + o.floor * (fbm(x / 300, z / 300, sw + 9, 2) - .5) * 2 - (o.washDepth || 0) * washOf(x, z);
+   },
+   // A: bare granite on the knob where it is steep enough to shed its soil;
+   // B: the washes' sand.
+   raw: (x, z, y, slope = 0) => {
+    const {d, m} = near(x, z);
+    return [m ? (1 - smooth(.8, 1, d)) * smooth(o.bare ?? .25, (o.bare ?? .25) + .2, slope) : 0, washOf(x, z)];
+   },
+   treeKeep: (x, z) => { const {d, m} = near(x, z); return m ? smooth(.7, 1, d) : 1; },
+  };
+ },
+ // CHANNELS CUT INTO A TABLE: the Columbia Plateau's coulees -- dry flood
+ // channels with basalt rimrock walls cut into flat-lying flows (the
+ // Channeled Scablands); the Ozarks' hollows -- a dissected plateau, steep
+ // valley walls and narrow bottoms, limestone bluffs (the Ozark Highlands);
+ // the Piedmont's gullies -- red saprolite exposed and cut back in headcuts
+ // (Georgia Encyclopedia; the Sumter National Forest paper). `wall` near 0
+ // is a box canyon, near 1 a V.
+ channels(o, seed) {
+  const s1 = saltOf(seed, 'channel'), s2 = saltOf(seed, 'channel-warp'), s3 = saltOf(seed, 'channel-2');
+  const cut = (x, z) => {
+   const wx = fbm(x / 520, z / 520, s2, 2) - .5, wz = fbm(x / 520 + 7, z / 520 - 3, s2 + 1, 2) - .5;
+   const a = Math.abs(fbm(x / o.scale + wx * 1.5, z / o.scale + wz * 1.5, s1, 2) - .5);
+   // A finer second network, the side hollows feeding the main ones.
+   const b = o.branches ? Math.abs(fbm(x / (o.scale * .45) + wz, z / (o.scale * .45) + wx, s3, 2) - .5) : 1;
+   const w = o.width, inner = w * (o.wall ?? .4);
+   return Math.max(1 - smooth(inner, w, a), o.branches ? (1 - smooth(inner * .6, w * .6, b)) * o.branches : 0);
+  };
+  return {
+   needsSlope: true,
+   lift: (x, z) => o.table * (fbm(x / 260, z / 260, s1 + 5, 2) - .5) * 2 - o.depth * cut(x, z),
+   // A: the walls' rock (rimrock, bluff, red clay) where steep; B: the
+   // bottom's ground (a coulee's sage, a hollow's gravel, a gully's clay).
+   raw: (x, z, y, slope = 0) => {
+    const c = cut(x, z);
+    return [smooth(o.rim ?? .45, (o.rim ?? .45) + .25, slope) * smooth(.05, .3, c), o.floorKind ? smooth(.85, .97, c) : 0];
+   },
+   // Nothing on the walls (the bench's first run found plants floating off
+   // the steep sides of SoCal's, the Piedmont's and the Ozarks' channels);
+   // the bottoms keep `1 - bare` of theirs.
+   // Looked for 4 m round the point too: a stand tree's footprint (2.5 m)
+   // beside a narrow gully hung over its lip (the bench, round 2).
+   treeKeep: (x, z) => {
+    const c = Math.max(cut(x, z), cut(x + 4, z), cut(x - 4, z), cut(x, z + 4), cut(x, z - 4));
+    return 1 - smooth(.01, .12, c) * (1 - smooth(.88, .97, cut(x, z)) * (1 - (o.bare ?? .5)));
+   },
+  };
+ },
+ // VOLCANIC: cinder cones and lava flows. The San Francisco volcanic field
+ // round Flagstaff -- over 600 volcanoes, most of them basalt cinder cones
+ // under 300 m, flows running for kilometres (USGS) -- and Hawaii's Kohala
+ // coast, its courses carved from black lava fields (GolfPass). Cones are
+ // truncated, a crater in the top; flows are broad lobes standing a metre or
+ // three proud of the ground, a steep rough front at their edge.
+ volcanic(o, seed) {
+  const sf = saltOf(seed, 'flow'), near = scatter(o, seed, 'cone');
+  const flow = (x, z) => smooth(o.flows, o.flows + .04, fbm(x / 260, z / 260, sf, 3) + .06 * (fbm(x / 23, z / 23, sf + 2, 2) - .5));
+  return {
+   needsSlope: true,
+   lift: (x, z) => {
+    const {d, m} = near(x, z);
+    let cone = 0;
+    if (m) {
+     // Round 2 (the first capture read as a pit in the forest): a steeper
+     // cone, a narrow crater in its top, its flanks bare cinder.
+     cone = m.size * Math.pow(Math.max(0, 1 - Math.max(d, .14)) / .86, 1.15);
+     cone -= m.size * .22 * (1 - smooth(.04, .14, d));
+    }
+    return cone + o.flowHeight * flow(x, z) + o.roll * (fbm(x / 300, z / 300, sf + 7, 2) - .5) * 2;
+   },
+   // A: the flows' black rock; B: the cones' cinder (hardpan, tinted).
+   raw: (x, z) => {
+    const {d, m} = near(x, z);
+    return [flow(x, z), m ? 1 - smooth(.85, 1, d) : 0];
+   },
+   treeKeep: (x, z) => { const {d, m} = near(x, z); return (1 - .8 * flow(x, z)) * (m ? .05 + .95 * smooth(.85, 1.05, d) : 1); },
+  };
+ },
+ // SAND RIDGES: the Fall Line sandhills -- gentle rounded hills of deep
+ // quartz sand, old dunes and shorelines, bare sand on the dry ridge tops,
+ // the moister swales between (Georgia Encyclopedia; the Carolina Sandhills
+ // refuge).
+ sandridges(o, seed) {
+  const s1 = saltOf(seed, 'sandridge'), s2 = saltOf(seed, 'sandbare');
+  const ridge = (x, z) => Math.sqrt(ridged(x / o.scale, z / (o.scale * 1.6), s1, 2));
+  return {
+   lift: (x, z) => o.height * ridge(x, z),
+   raw: (x, z) => [smooth(o.bare, o.bare + .12, ridge(x, z) * .8 + .2 * fbm(x / 31, z / 31, s2, 2)), 0],
+   treeKeep: () => 1,
+  };
+ },
+ // LOWLAND: the Mississippi's alluvial plain and the Gulf and Florida flats
+ // -- maximum local relief about 5 m, most of it far less; natural levees a
+ // few metres high along the bayous, flat poorly drained backswamps between
+ // (USDA MLRA 131A). Low ridges along sinuous channels of the field, broad
+ // hollows of marsh grass behind them.
+ lowland(o, seed) {
+  const s1 = saltOf(seed, 'levee'), s2 = saltOf(seed, 'swamp');
+  const bayou = (x, z) => {
+   const wx = fbm(x / 600, z / 600, s1 + 2, 2) - .5;
+   const n = fbm(x / o.scale + wx * 1.8, z / o.scale, s1, 2);
+   return Math.abs(n - .5);
+  };
+  const swamp = (x, z) => smooth(o.swamp, o.swamp + .1, fbm(x / 180, z / 180, s2, 3));
+  return {
+   lift: (x, z) => {
+    const b = bayou(x, z);
+    const levee = o.levee * smooth(.03, .012, b) * smooth(0, .006, b);
+    return levee - o.hollow * swamp(x, z) + .6 * (fbm(x / 40, z / 40, s2 + 3, 2) - .5);
+   },
+   raw: (x, z) => [swamp(x, z), 0],
    treeKeep: () => 1,
   };
  },
