@@ -134,7 +134,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   deserts (phase 6, same way): the Mojave 0.89 and Desert Palms 0.87 ms
   against the Sonoran's 0.73 (+22%, +19%; triangles +33%, +7%), the Hill
   Country 0.97 against the Heartland's 0.82 of phase 5 (+18%; the Heartland
-  has its wildflowers back since, so not like for like). Candidates:
+  has its wildflowers back since, so not like for like). California and
+  the mountains (phase 7): the Cascades 0.85 against the Rockies' 0.80 (+6%;
+  triangles +33%, draws 20% fewer), Monterey 0.84 and Wine Country 0.82,
+  level with the Heartland. Candidates:
   fewer species drawn per landscape at range, far twins for shrubs, merging
   a landscape's species into fewer draws. The profile against
   bench/profile-baseline.json is due here.
@@ -150,7 +153,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **The new landscapes' debut weeks** in the course of the week: phase
   3's five are placed at weeks 160-164 (25 January to 22 February 2027),
   the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
-  170-175 (5 April to 10 May 2027;
+  170-175 (5 April to 10 May 2027), California and the mountains' at
+  176-181 (17 May to 21 June 2027;
   weekly.js `eras`); move them on if the goal's release lands later, and
   give every later landscape its own week the same way.
 - [ ] **Every landscape's card pictures retaken** once its models are in: the
@@ -209,7 +213,23 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   packs. Seen in captures; not seen by a person in play. Found on the way:
   a path along a winding creek ran off its one straight bridge (the full
   bench's `pathOverWater`), fixed in generator 67 (decks split to follow it).
-- [ ] **The new landscapes by region**: the South and Texas and the deserts (done, above); Texas and the deserts;
+- [x] **California and the western mountains** (phase 7; SCHEMA 21, no
+  generator step): Monterey, SoCal Canyons and Wine Country (a new
+  `california` region on golden summer hills) and the Cascades, High Sierra
+  and Ponderosa (the Rockies' region) on the California coast, California
+  inland and western mountains packs. Monterey's sea stacks stand offshore
+  and the Cascades' snow volcano on the horizon (renderer.js
+  `addSeaStacks`, `addBackdrop`); basalt and granite are boulder families.
+  Seen in captures; not seen by a person in play.
+- [ ] **Monterey's holes stay inland**: the coast runs along one edge, past
+  the woods, and on most seeds no hole plays along it -- so the sea stacks
+  (within 450 m of play) seldom appear. Pebble Beach's holes are on the
+  cliffs: the routing wants to seek the coast for an `edgeCoast` landscape
+  (a generator step).
+- [ ] **The vineyard is planted as scattered vines**: Wine Country's grape
+  vines stand singly in the rough, not in rows. Rows want a planted block
+  (a generator rule, like a stand, laid on a grid along the contour).
+- [ ] **The new landscapes by region**: the South, Texas and the deserts, California and the mountains (done, above); Texas and the deserts;
   California and the mountains; the rest (PLAN.md 6, phases 5-8).
 - [ ] **Every model at least 15 iterations** against its reference pictures
   (the study's photos/models/), each with its log and side-by-side picture;

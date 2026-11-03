@@ -1145,7 +1145,7 @@ export class GolfView{
    // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
-  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.addBuildings(this.world);this.addWear(this.world);
+  addVegetation(this);addHomes(this);this.addPaths(this.world);this.addMarkings(this.world);this.addWaterworks(this.world);this.addStory(this.world);this.life=this.addLife(this.world);this.addBuildings(this.world);this.addSeaStacks(this.world);this.addBackdrop(this.world);this.addWear(this.world);
   // TREES IN STILL WATER (water-mirror.js; the far-landscape goal): on the
   // tiers that draw it (graphics.js `mirrorTwins`), Cartoon only.
   if(this.waterBodies.length&&this.quality.mirrorTwins&&this.style==='cartoon'){
@@ -2233,6 +2233,57 @@ export class GolfView{
     if(kind!=='rake'){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(spec.height),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();marks.add(ink);}
    }
   }
+ }
+ // One model's parts merged into one vertex-coloured geometry, each part's
+ // role colour times its paint (as addBuildings bakes a building); `haze`
+ // lerps every colour toward `sky` (a far backdrop, pre-hazed).
+ bakedModel(name,tone,haze=0,sky=null){
+  const parts=modelParts(name);if(!parts)return null;
+  const geos=parts.map(p=>{
+   const src=p.geometry.index?p.geometry.toNonIndexed():p.geometry.clone(),n=src.attributes.position.count,c=new T.Color(tone[p.role]??'#ffffff'),col=new Float32Array(n*3),paint=p.painted?src.attributes.color:null;
+   if(haze&&sky)c.lerp(sky,haze);
+   for(let i=0;i<n;i++){col[i*3]=c.r*(paint?paint.getX(i):1);col[i*3+1]=c.g*(paint?paint.getY(i):1);col[i*3+2]=c.b*(paint?paint.getZ(i):1);}
+   const out=new T.BufferGeometry();out.setAttribute('position',src.attributes.position);out.setAttribute('normal',src.attributes.normal);out.setAttribute('color',new T.BufferAttribute(col,3));return out;});
+  const merged=mergeGeometries(geos);for(const x of geos)x.dispose();return merged;
+ }
+ // SEA STACKS OFFSHORE (the US landscapes goal, phase 7; tools/blender/
+ // cartoon_calcoast.py): a landscape with `seaStacks` stands that many spires
+ // and arches in its sea, 60-450 m off the nearest hole, where the water is at
+ // least 2 m deep (the sea as audio.js tells it: the landscape has a sea, the
+ // ground is under its level, no lake owns the spot). Scenery: nothing
+ // collides with them -- a ball that reaches one is in the sea already.
+ // Heights 12-22 m and positions PLACED.
+ addSeaStacks(w){
+  const bio=biomeOf(w.settings.biome),want=bio.seaStacks|0;
+  if(!want||!w.bio?.sea||!Number.isFinite(w.waterLevel)||this.style!=='cartoon')return;
+  const names=['Blender_SeaStack_1','Blender_SeaStack_2'].filter(n=>MESH_MODELS[n]&&modelParts(n));if(!names.length)return;
+  const tone={stone:'#5a5650',accent:'#e8e4dc',leaf:'#5a6e40',dirt:'#5a5650',bark:'#5a5650'};
+  const rng=random(w.seed+':seastacks'),g=new T.Group();g.name='Sea stacks';
+  const geos=new Map(names.map(n=>[n,this.bakedModel(n,tone)]));
+  for(let t=0,placed=0;t<600&&placed<want;t++){
+   const x=(rng()-.5)*w.halfX*1.9,z=(rng()-.5)*w.halfZ*1.9,d=w.nearest(x,z).d;
+   if(d<60||d>450||!(w.height(x,z)<w.waterLevel-2)||w.lakeOwner?.(x,z))continue;
+   const name=names[placed%names.length],geo=geos.get(name),h=12+rng()*10;
+   const m=new T.Mesh(geo,this.surfaceMaterial('#ffffff',{vertexColors:true}));m.castShadow=m.receiveShadow=true;
+   const ink=new T.Mesh(geo,this.inkMaterial(h));ink.castShadow=ink.receiveShadow=false;
+   const s=new T.Group();s.add(m,ink);s.scale.setScalar(h);s.rotation.y=rng()*Math.PI*2;s.position.set(x,w.height(x,z)-1,z);g.add(s);placed++;
+  }
+  this.group.add(g);
+ }
+ // A SNOW VOLCANO ON THE HORIZON (the US landscapes goal, phase 7; tools/
+ // blender/cartoon_westmtn.py): a landscape with `backdrop` names its model,
+ // drawn 5.2 km out on a bearing from the course's seed, 900 m tall -- about
+ // ten degrees of sky from the course, as Rainier or Hood stands over a
+ // Cascades course on a clear day. Past every tier's fog (Low's closes at 3.5
+ // km), so it is drawn unfogged and pre-hazed instead: every colour 40% of
+ // the way to the landscape's sky. No shadow, no ink. Figures PLACED.
+ addBackdrop(w){
+  const bio=biomeOf(w.settings.biome);if(!bio.backdrop||this.style!=='cartoon')return;
+  const name='Blender_'+bio.backdrop;if(!MESH_MODELS[name])return;
+  const geo=this.bakedModel(name,{stone:'#6a7a8a',accent:'#e8eef4'},.4,new T.Color(w.bio.sky||bio.sky||'#c4d6e2'));if(!geo)return;
+  const rng=random(w.seed+':backdrop'),a=rng()*Math.PI*2,mat=new T.MeshLambertMaterial({vertexColors:true,fog:false});
+  const m=new T.Mesh(geo,mat);m.castShadow=m.receiveShadow=false;m.scale.setScalar(900);m.position.set(Math.cos(a)*5200,-60,Math.sin(a)*5200);m.name='Backdrop';
+  this.group.add(m);this.resources.push(mat);
  }
  // AN ARCHITECT COURSE'S BUILDINGS (architect-courses, phase 2; clubhouse.js):
  // the landscape's clubhouse (tools/blender/architect_clubhouses.py), its

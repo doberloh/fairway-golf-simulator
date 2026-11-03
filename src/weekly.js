@@ -69,7 +69,9 @@ export const WEEKLY_ROTATION = {
   // Phase 5, the South (PLACED, one a week on).
   {debut: 165, biome: 'longleaf'}, {debut: 166, biome: 'piedmont'}, {debut: 167, biome: 'lowcountry'}, {debut: 168, biome: 'bayou'}, {debut: 169, biome: 'flatwoods'},
   // Phase 6, Texas and the deserts (PLACED, one a week on).
-  {debut: 170, biome: 'hillcountry'}, {debut: 171, biome: 'bluebonnet'}, {debut: 172, biome: 'gulfcoast'}, {debut: 173, biome: 'mojave'}, {debut: 174, biome: 'palms'}, {debut: 175, biome: 'chihuahuan'}],
+  {debut: 170, biome: 'hillcountry'}, {debut: 171, biome: 'bluebonnet'}, {debut: 172, biome: 'gulfcoast'}, {debut: 173, biome: 'mojave'}, {debut: 174, biome: 'palms'}, {debut: 175, biome: 'chihuahuan'},
+  // Phase 7, California and the western mountains (PLACED, one a week on).
+  {debut: 176, biome: 'monterey'}, {debut: 177, biome: 'socal'}, {debut: 178, biome: 'winecountry'}, {debut: 179, biome: 'cascades'}, {debut: 180, biome: 'sierra'}, {debut: 181, biome: 'ponderosa'}],
  retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {

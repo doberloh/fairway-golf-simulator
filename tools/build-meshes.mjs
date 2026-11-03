@@ -72,6 +72,7 @@ const PICK = {
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
   'Pecan_1', 'Pecan_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
+  'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -252,6 +253,44 @@ const PICK = {
  alligatorjuniper: ['blender:Blender_AlligatorJuniper_1', 'blender:Blender_AlligatorJuniper_2'],
  beavertail: ['blender:Blender_Beavertail_1'],
  boulderlimestone: ['blender:Blender_LimestoneBoulder_1', 'blender:Blender_LimestoneBoulder_2'],
+ // THE CALIFORNIA AND WESTERN MOUNTAINS PACKS (tools/blender/
+ // cartoon_calcoast.py, cartoon_calinland.py, cartoon_westmtn.py): every
+ // variant; their stones as boulder families (biomes.js rockStyle), the sea
+ // stacks offshore (renderer.js addSeaStacks), the volcano on the horizon
+ // (renderer.js addBackdrop).
+ montereycypress: ['blender:Blender_MontereyCypress_1', 'blender:Blender_MontereyCypress_2'],
+ montereypine: ['blender:Blender_MontereyPine_1'],
+ coastliveoak: ['blender:Blender_CoastLiveOak_1', 'blender:Blender_CoastLiveOak_2'],
+ eucalyptus: ['blender:Blender_Eucalyptus_1', 'blender:Blender_Eucalyptus_2'],
+ sycamore: ['blender:Blender_Sycamore_1'],
+ torreypine: ['blender:Blender_TorreyPine_1'],
+ iceplant: ['blender:Blender_IcePlant_1'],
+ coastalsage: ['blender:Blender_CoastalSage_1'],
+ chaparral: ['blender:Blender_Chaparral_1'],
+ valleyoak: ['blender:Blender_ValleyOak_1', 'blender:Blender_ValleyOak_2'],
+ blueoak: ['blender:Blender_BlueOak_1', 'blender:Blender_BlueOak_2'],
+ buckeye: ['blender:Blender_Buckeye_1'],
+ grapevine: ['blender:Blender_GrapeVine_1'],
+ californiapoppy: ['blender:Blender_CaliforniaPoppy_1'],
+ olivetree: ['blender:Blender_OliveTree_1'],
+ jacaranda: ['blender:Blender_Jacaranda_1'],
+ peppertree: ['blender:Blender_PepperTree_1'],
+ ponderosa: ['blender:Blender_Ponderosa_1', 'blender:Blender_Ponderosa_2'],
+ sugarpine: ['blender:Blender_SugarPine_1'],
+ incensecedar: ['blender:Blender_IncenseCedar_1'],
+ redfir: ['blender:Blender_RedFir_1'],
+ noblefir: ['blender:Blender_NobleFir_1'],
+ westernlarch: ['blender:Blender_WesternLarch_1'],
+ manzanita: ['blender:Blender_Manzanita_1'],
+ gambeloak: ['blender:Blender_GambelOak_1'],
+ mountainmahogany: ['blender:Blender_MountainMahogany_1'],
+ bitterbrush: ['blender:Blender_Bitterbrush_1'],
+ mulesear: ['blender:Blender_MulesEar_1'],
+ beargrass: ['blender:Blender_Beargrass_1'],
+ boulderbasalt: ['blender:Blender_BasaltBoulder_1', 'blender:Blender_BasaltBoulder_2'],
+ bouldergranite: ['blender:Blender_GraniteSlab_1', 'blender:Blender_GraniteSlab_2'],
+ seastack: ['blender:Blender_SeaStack_1', 'blender:Blender_SeaStack_2'],
+ volcano: ['blender:Blender_Volcano_1'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',

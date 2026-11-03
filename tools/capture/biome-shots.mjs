@@ -45,7 +45,8 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  // Phase 3 of the US landscapes goal (first seeds, not yet chosen in rounds).
  highplains: 'BIGSKY', sandhills: 'BLOWOUT', oldnortheast: 'ELMWALK', pinebarrens: 'PITCHPINE', alaska: 'FIREWEED',
  longleaf: 'PINESTRAW', piedmont: 'REDCLAY', lowcountry: 'MARSH', bayou: 'CYPRESS', flatwoods: 'PALMETTO',
- hillcountry: 'CEDARBREAK', bluebonnet: 'PAINTBRUSH', gulfcoast: 'SHELLROAD', mojave: 'JOSHUA', palms: 'OASIS', chihuahuan: 'SOTOL'};
+ hillcountry: 'CEDARBREAK', bluebonnet: 'PAINTBRUSH', gulfcoast: 'SHELLROAD', mojave: 'JOSHUA', palms: 'OASIS', chihuahuan: 'SOTOL',
+ monterey: 'SEASTACK', socal: 'BARRANCA', winecountry: 'OLDVINE', cascades: 'SNOWCONE', sierra: 'GRANITE', ponderosa: 'CINDER'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -102,6 +103,12 @@ export const PICKS = {
  mojave: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
  palms: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  chihuahuan: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ monterey: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ socal: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ winecountry: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ cascades: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ sierra: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ ponderosa: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 
 

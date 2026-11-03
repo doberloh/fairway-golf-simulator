@@ -125,6 +125,12 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
     if (PLAYED.has(surface(p.x, p.z)) || (nearest(p.x, p.z)?.d ?? 999) < 12 || inBuilding(club, p.x, p.z, 4) || inForecourt(club, p.x, p.z, 30)) { ok = false; break; }
     const y = height(p.x, p.z); ylo = Math.min(ylo, y); yhi = Math.max(yhi, y);
    }
+   // And on the invariant's own grid, metre for metre (`roadOnPlay`: from
+   // one corner every 4 m), so the two cannot disagree -- phase 7's Monterey
+   // coast put a sliver of sea between the grid above's samples.
+   if (ok) for (let u = -w / 2; u <= w / 2 && ok; u += 4) for (let v = -d / 2; v <= d / 2; v += 4) {
+    if (PLAYED.has(surface(c.x + u * rc + v * rs, c.z - u * rs + v * rc))) { ok = false; break; }
+   }
    if (!ok || yhi - ylo > 5 || pathTouches(paths, rect, 2)) continue;
    const score = r + toward(c) * .3 + (yhi - ylo) * 8;
    if (!lot || score < lot.score) lot = {...rect, stalls, y: (ylo + yhi) / 2, score};

@@ -229,6 +229,31 @@ export const NAME_WORDS = {
   ['Lechuguilla','Sotol','Soaptree','Candlewood','Chisos','Davis','Guadalupe Peak','Franklin','Hueco','Organ','Tularosa','Jornada','Terlingua','Marfa','Fort Davis','Collared Peccary','Scaled Quail','Candelilla','Emory','Alligator Bark'],
   ['Mesa','Draw','Basin','Tanks','Springs','Canyon','Flats','Peak','Wells','Ridge','Arroyo','Gap','Bajada','Bluff','Butte','Pass','Rim','Crossing','Ranch','Window'],
  ],
+ // Phase 7: California and the western mountains.
+ monterey: [
+  ['Sand Dollar','Lone Cypress','Carmel','Asilomar','Point Lobos','Otter Cove','Sea Lion','Kelp','Abalone','Fog Bank','Big Sur','Moss Beach','Seal Rock','Bird Rock','Fanshell','Huckleberry Hill','Kelp Forest','Pescadero','Stillwater','Sea Otter'],
+  ['Point','Cove','Links','Headland','Bluffs','Reach','Shore','Rocks','Beach','Landing','Cliffs','Overlook','Bay','Sound','Cypress','Pines','Hill','Dunes','Strand','Harbor'],
+ ],
+ socal: [
+  ['Barranca','Chaparral','Santa Ana','Arroyo Seco','Sycamore Canyon','Topanga','Malibu Creek','Ocean Bluff','Jacaranda','Mission Road','San Gabriel','Laguna','Encinitas','Rancho','Sage Scrub','Coyote Hills','Eucalyptus Row','Pepper Tree','Red Tile','Agoura'],
+  ['Canyon','Ranch','Mesa','Hills','Arroyo','Ridge','Vista','Heights','Springs','Oaks','Grove','Bluff','Point','Trail','Estates','Park','Valley','Crest','Highlands','Gardens'],
+ ],
+ winecountry: [
+  ['Cabernet','Zinfandel','Chardonnay','Vintner','Cooperage','Crush Pad','Valley Oak','Blue Oak','Mayacamas','Carneros','Russian River','Alexander','Rutherford','Oakville','Stags Leap','Napa River','Poppy','Olive Press','Barrel Room','Old Vine'],
+  ['Vineyard','Estate','Ranch','Cellars','Hills','Valley','Bench','Slope','Oaks','Creek','Knoll','Crossing','Terrace','Row','Grange','Meadow','Ridge','Springs','Glen','Mill'],
+ ],
+ cascades: [
+  ['Noble Fir','Subalpine Larch','Beargrass','Thimbleberry','Columnar','Snow Cone','Hood View','Pinnacle','St Helens','Adams','Glacier Creek','Timberline','Cloudcap','Lava Bed','Silver Fir','Paradise Meadow','Sahale','Ohanapecosh','Wy East','Tamanawas'],
+  ['Ridge','Meadow','Falls','Lodge','Pass','Basin','Lake','Creek','Divide','Lookout','Fork','Crossing','Peak','Hollow','Glade','Springs','Trail','Butte','Run','Camp'],
+ ],
+ sierra: [
+  ['Sugar Pine','Incense Cedar','Red Fir','Manzanita','Mule Ear','Granite Dome','Tahoe','Donner','Tuolumne','Mono','Kings Canyon','Mineral King','Lodgepole Flat','Echo Summit','Ebbetts','Sonora Pass','Mariposa','Glacier Point','Half Dome','Desolation'],
+  ['Meadow','Dome','Lake','Summit','Pass','Basin','Falls','Ridge','Creek','Valley','Springs','Lodge','Crest','Peak','Bowl','Fork','Camp','Flat','Spire','Station'],
+ ],
+ ponderosa: [
+  ['Ponderosa','Gambel Oak','Mogollon','Coconino','Kaibab','Humphreys','Cinder','Sunset Crater','Abert','Elk Park','Bitterbrush','Mahogany','Lava Flow','Mormon Lake','Woody Mountain','Fort Valley','Snowbowl','Mount Elden','Walnut Canyon','Oak Creek'],
+  ['Park','Rim','Mesa','Meadow','Ridge','Canyon','Flat','Springs','Draw','Lake','Pines','Crossing','Tank','Peak','Butte','Valley','Lodge','Ranch','Trail','Hollow'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.

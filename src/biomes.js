@@ -601,6 +601,25 @@ INTERFACE.texas = {panel: 'rgba(34,26,18,.88)', a1: '#fed7aa', a2: '#c2410c', ho
 WORLD.texas = {...WORLD.midwest, clubhouse: 'stonehouse', path: 'asphalt', bridge: 'stone',
  story: {walls: 'rail', farm: true, ruins: ['cottage'], landmark: 'windpump'}, life: {grazers: ['deer', 4], heron: true},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#e0d6bc', bark: '#6a5a48', accent: '#8a4a2a', dirt: '#3a3024', leaf: '#3a3024'}}};
+// California (phase 7): oak woodland on hills gone gold in the dry summer,
+// chaparral and coastal sage, a mission-style clubhouse. Every value PLACED
+// from the study's pages (subs/california/).
+TRAITS.california = {...TRAITS.midwest, light: {shade: '#9a94b4', exposure: .95},
+ longGrass: {families: [['grassbunch', 2, .9], ['grassfescue', 2, .7]], count: 4500, near: 22, leaf: '#b0a060', accent: '#d8c080'},
+ farForest: {cover: .5, size: 10, colors: ['#4a6238', '#56703e', '#6a7a44']},
+ bank: '#a08a5a', rockMoss: null, rockStyle: 'round', treeDensity: 1.8,
+ hills: {base: 35, severity: 70, reach: 80},
+ scatter: {...DEFAULTS.scatter, rocks: 120},
+ stands: {...TRAITS.midwest.stands, under: {spacing: 8, plants: [['chaparral', .5], ['coastalsage', .3], ['shrub', .2]]},
+  plants: [['coastliveoak', .45], ['valleyoak', .2], ['blueoak', .15], ['sycamore', .1], ['buckeye', .1]]},
+ plants: [['coastliveoak', .18], ['valleyoak', .1], ['blueoak', .1], ['sycamore', .05], ['buckeye', .05], ['chaparral', .14], ['coastalsage', .12], ['californiapoppy', .12], ['eucalyptus', .06], ['olivetree', .04], ['peppertree', .04]]};
+PALETTES.california = {...PALETTES.midwest, name: 'California', title: 'Golden Hills', tag: 'Oak woodland on golden summer hills.',
+ rough: '#b0a060', semi: '#6e8a40', fairway: '#5a9a44', tree: '#4a6a34', sky: '#c8dcec', sand: '#ece2c4', water: '#3e7a86', rock: '#a8a090',
+ altitude: 200, temperature: 26, treeKind: 'oak', sun: 42};
+INTERFACE.california = {panel: 'rgba(36,30,14,.88)', a1: '#fef08a', a2: '#ca8a04', hot: '#fffbeb', soft: '#e8d8a8', onHot: '#2a1f06'};
+WORLD.california = {...WORLD.midwest, clubhouse: 'adobe', path: 'asphalt', bridge: 'wood',
+ story: {walls: null, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true},
+ colours: {...WORLD.midwest.colours, clubhouse: {stone: '#efe6d4', bark: '#6a5040', accent: '#b4553a', dirt: '#3a2c24', leaf: '#3a2c24'}}};
 // The Florida region is the Keys' (islands, sea); the Flatwoods are inland:
 // these of its fields come from the Heartland's record instead (defaults
 // included: a field the Heartland leaves to DEFAULTS was copied undefined
@@ -724,6 +743,62 @@ const LAND = {
    plants: [['mesquite', .35], ['alligatorjuniper', .25], ['emoryoak', .25], ['soaptreeyucca', .15]]},
   plants: [['creosote', .22], ['lechuguilla', .14], ['sotol', .12], ['soaptreeyucca', .1], ['ocotillo', .08], ['mesquite', .1], ['cholla', .06], ['beavertail', .04], ['emoryoak', .05], ['alligatorjuniper', .05], ['agave', .04]],
   ui: {panel: 'rgba(32,26,24,.88)', a1: '#fecaca', a2: '#9f1239', hot: '#fef3c7', soft: '#dccac4', onHot: '#260a10'}},
+ // Phase 7: California and the western mountains.
+ // Monterey: the Pebble Beach shore -- Monterey cypress and pine on the
+ // headlands, ice plant, coastal sage, the sea along one side with stacks
+ // standing in it (renderer.js addSeaStacks), cool fog.
+ monterey: {sea: true, edgeCoast: true, shoreSand: false, hills: {base: 16, severity: 45, reach: 50}, treeDensity: 1.6,
+  rough: '#7a8a4e', sky: '#c8d6de', temperature: 18, rockStyle: 'angular', seaStacks: 6,
+  longGrass: {...TRAITS.california.longGrass, leaf: '#8a9056', accent: '#b8a870'},
+  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['coastalsage', .5], ['shrub', .5]]},
+   plants: [['montereypine', .5], ['montereycypress', .3], ['coastliveoak', .2]]},
+  plants: [['montereycypress', .2], ['montereypine', .15], ['coastliveoak', .1], ['iceplant', .18], ['coastalsage', .15], ['chaparral', .07], ['californiapoppy', .05], ['shrub', .1]],
+  ui: {panel: 'rgba(14,26,34,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fef3c7', soft: '#b8d4da', onHot: '#06202a'}},
+ // SoCal Canyons: chaparral hills and barrancas -- sycamores and coast live
+ // oaks in the canyons, eucalyptus windbreaks, Torrey pines, jacarandas in
+ // bloom and pepper trees round the clubhouse, ice plant on the banks.
+ socal: {hills: {base: 40, severity: 110, reach: 80}, rough: '#b8a468',
+  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .6], ['coastalsage', .4]]},
+   plants: [['coastliveoak', .4], ['sycamore', .25], ['eucalyptus', .25], ['torreypine', .1]]},
+  plants: [['coastliveoak', .15], ['sycamore', .1], ['eucalyptus', .12], ['chaparral', .18], ['coastalsage', .15], ['torreypine', .05], ['jacaranda', .06], ['peppertree', .06], ['olivetree', .05], ['iceplant', .08]],
+  ui: {panel: 'rgba(40,24,30,.88)', a1: '#e9d5ff', a2: '#7e22ce', hot: '#fef3c7', soft: '#dccce4', onHot: '#200a28'},
+  world: {clubhouse: 'pavilion'}},
+ // Wine Country: rolling vineyards between valley oaks and blue oaks,
+ // poppies, olives, a stone winery clubhouse.
+ winecountry: {hills: {base: 30, severity: 50, reach: 80}, rough: '#b4a464',
+  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .5], ['shrub', .5]]},
+   plants: [['valleyoak', .4], ['blueoak', .3], ['coastliveoak', .2], ['buckeye', .1]]},
+  plants: [['grapevine', .3], ['valleyoak', .15], ['blueoak', .1], ['californiapoppy', .12], ['olivetree', .08], ['buckeye', .05], ['coastliveoak', .08], ['chaparral', .06], ['shrub', .06]],
+  ui: {panel: 'rgba(34,14,24,.88)', a1: '#f5d0fe', a2: '#86198f', hot: '#fef3c7', soft: '#e0c8dc', onHot: '#22061e'},
+  world: {clubhouse: 'stonehouse'}},
+ // Cascades (the Rockies' region): Douglas and noble fir, hemlock, western
+ // larch, beargrass and huckleberry, basalt, a snow volcano on the horizon
+ // (renderer.js addBackdrop) over a lower range.
+ cascades: {ringLift: 600, rockStyle: 'basalt', backdrop: 'Volcano', sky: '#bccfe0',
+  stands: {...TRAITS.mountain.stands, under: {spacing: 8, plants: [['huckleberry', .5], ['beargrass', .3], ['fern', .2]]},
+   plants: [['fir', .35], ['noblefir', .25], ['hemlock', .25], ['westernlarch', .15]]},
+  plants: [['fir', .25], ['hemlock', .15], ['noblefir', .15], ['westernlarch', .08], ['redcedar', .07], ['beargrass', .1], ['huckleberry', .1], ['fern', .05], ['vinemaple', .05]],
+  ui: {panel: 'rgba(14,28,26,.88)', a1: '#a7f3d0', a2: '#047857', hot: '#fef3c7', soft: '#b4d4c8', onHot: '#06201a'},
+  world: {clubhouse: 'lodge'}},
+ // High Sierra: sugar pine, incense cedar, red fir and ponderosa over
+ // manzanita and mule's ear, glaciated granite slabs.
+ sierra: {rockStyle: 'granite', sky: '#b8d2ec',
+  stands: {...TRAITS.mountain.stands, under: {spacing: 8, plants: [['manzanita', .6], ['mulesear', .4]]},
+   plants: [['redfir', .3], ['sugarpine', .25], ['incensecedar', .25], ['ponderosa', .2]]},
+  plants: [['sugarpine', .15], ['incensecedar', .15], ['redfir', .12], ['ponderosa', .1], ['lodgepole', .08], ['manzanita', .15], ['mulesear', .08], ['lupine', .05], ['willowthicket', .05], ['aspen', .07]],
+  ui: {panel: 'rgba(20,24,34,.88)', a1: '#c7d2fe', a2: '#4338ca', hot: '#fef3c7', soft: '#c4c8dc', onHot: '#0c0a2a'},
+  // No split-rail fences on the granite (phase 7: too steep for one to
+  // stand on the test course, and none in the high country; PLACED).
+  world: {story: {walls: null, ruins: ['minehead', 'cottage']}}},
+ // Ponderosa: the open ponderosa park of the Mogollon Rim -- tall
+ // orange-barked pines far apart, Gambel oak, mountain mahogany,
+ // bitterbrush and sage, black basalt.
+ ponderosa: {rockStyle: 'basalt', treeDensity: 2.4, rough: '#8a8a5a', altitude: 2100, temperature: 24, hills: {base: 40, severity: 90, reach: 90},
+  stands: {...TRAITS.mountain.stands, under: {spacing: 9, plants: [['bitterbrush', .5], ['sagebrush', .5]]},
+   plants: [['ponderosa', .75], ['gambeloak', .25]]},
+  plants: [['ponderosa', .4], ['gambeloak', .15], ['mountainmahogany', .08], ['bitterbrush', .12], ['aspen', .05], ['lupine', .05], ['sagebrush', .1], ['mulesear', .05]],
+  ui: {panel: 'rgba(36,22,16,.88)', a1: '#ffedd5', a2: '#9a3412', hot: '#fef3c7', soft: '#e4cfc0', onHot: '#2a1006'},
+  world: {clubhouse: 'loglodge'}},
 };
 
 // A landscape's world block: the generic one, its region's, its own.

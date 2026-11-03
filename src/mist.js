@@ -59,6 +59,10 @@ const PROFILES = {
  south: {haze: .8, sheet: .45, water: .9},
  // Texas: a dry clear sky inland, a little morning mist on the creeks (PLACED).
  texas: {haze: .55, sheet: .25, water: .6},
+ // California: dry gold haze inland; Monterey's sea fog its own, the
+ // thickest on the coast (PLACED).
+ california: {haze: .6, sheet: .35, water: .7},
+ monterey: {haze: 1, sheet: .95, water: 1},
  // Still, cold mornings. The best mist on the course.
  northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.

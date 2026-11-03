@@ -40,6 +40,14 @@ const MOTIFS = {
  mojave: 'M50 74 L50 50 M50 50 L38 40 L36 30 M50 50 L60 42 L64 32 M50 56 L44 48 M36 30 L32 26 L36 24 L40 26 Z M64 32 L60 28 L64 24 L68 28 Z M44 48 L40 44 L44 42 L48 44 Z',
  palms: 'M50 74 L50 34 M50 34 L36 28 M50 34 L64 28 M50 34 L40 22 M50 34 L60 22 M50 34 L50 20 M46 40 L54 40 M46 46 L54 46 M30 74 L70 74',
  chihuahuan: 'M50 72 L50 60 M50 60 L36 34 M50 60 L42 30 M50 60 L50 26 M50 60 L58 30 M50 60 L64 34 M50 26 L50 16 M28 72 L72 72',
+ // Phase 7: a lone cypress on its rock, a barranca's sycamore, a vine row,
+ // a snow cone, a granite dome, a tall ponderosa.
+ monterey: 'M44 74 L48 56 L56 56 L60 74 Z M52 56 L50 42 M50 42 C38 42 30 36 34 30 C42 26 58 26 66 30 C70 36 62 42 50 42 M24 74 Q34 70 44 74 M60 74 Q70 70 78 74',
+ socal: 'M24 74 L38 50 L46 58 L54 44 L64 56 L76 74 Z M50 74 L50 60 M50 60 C42 60 38 54 42 50 C46 46 54 46 58 50 C62 54 58 60 50 60',
+ winecountry: 'M28 70 L72 70 M28 58 L72 58 M28 46 L72 46 M32 70 L32 44 M50 70 L50 44 M68 70 L68 44 M40 54 L42 50 L44 54 Z M58 66 L60 62 L62 66 Z',
+ cascades: 'M20 74 L44 34 L50 28 L56 34 L80 74 Z M44 34 L48 40 L52 36 L56 42 L56 34 M30 74 L30 64 L26 66 L30 58 L34 66 Z',
+ sierra: 'M22 74 C22 50 34 34 50 34 C66 34 78 50 78 74 Z M50 34 L50 74 M36 74 L36 66 L32 68 L36 60 L40 68 Z',
+ ponderosa: 'M50 74 L50 30 M50 30 L40 38 L60 38 Z M50 40 L38 50 L62 50 Z M50 52 L40 60 L60 60 Z M28 74 L72 74',
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Up to two letters from the course's name: its first two words' initials.

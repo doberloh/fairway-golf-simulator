@@ -41,6 +41,12 @@ const LAND = {
  mojave: ['Joshua Tree', 'Creosote', 'Dry Lake', 'Granite', 'Yucca', 'Smoke Tree', 'Tortoise', 'Beavertail', 'Long Shadow'],
  palms: ['Fan Palm', 'Date Grove', 'Oleander', 'Oasis', 'Windbreak', 'Bougainvillea', 'Mountain View', 'Desert Willow', 'Palm Row'],
  chihuahuan: ['Lechuguilla', 'Sotol', 'Soaptree', 'Ocotillo', 'Alligator Juniper', 'Caliche', 'Javelina', 'Emory Oak', 'Big Sky'],
+ monterey: ['Lone Cypress', 'Sea Stack', 'Ice Plant', 'Headland', 'Fog Bank', 'Kelp Bed', 'Sea Otter', 'Monterey Pine', 'Breakers'],
+ socal: ['Barranca', 'Sycamore', 'Chaparral', 'Jacaranda', 'Santa Ana', 'Torrey Pine', 'Eucalyptus', 'Coastal Sage', 'Canyon Rim'],
+ winecountry: ['Old Vine', 'Valley Oak', 'Blue Oak', 'Poppy', 'Crush', 'Olive Row', 'Barrel', 'Harvest', 'Terroir'],
+ cascades: ['Noble Fir', 'Snow Cone', 'Beargrass', 'Basalt', 'Huckleberry', 'Larch', 'Glacier View', 'Timberline', 'Cloud Cap'],
+ sierra: ['Sugar Pine', 'Granite', 'Red Fir', 'Manzanita', 'Incense Cedar', 'Mule Ear', 'Snowmelt', 'High Lake', 'Dome'],
+ ponderosa: ['Ponderosa', 'Gambel Oak', 'Cinder', 'Basalt', 'Bitterbrush', 'Mahogany', 'Elk Tank', 'Rim View', 'Snowbowl'],
 };
 const GENERIC = ['Meadow', 'Ridge', 'Hollow', 'Brook', 'Glen', 'Crest', 'Knoll', 'Spinney', 'Copse'];
 

@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=20;
+export const SCHEMA_VERSION=21;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -496,7 +496,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 5 (SCHEMA 19): the South.
  'longleaf','piedmont','lowcountry','bayou','flatwoods',
  // Phase 6 (SCHEMA 20): Texas and the deserts.
- 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan'];
+ 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
+ // Phase 7 (SCHEMA 21): California and the western mountains.
+ 'monterey','socal','winecountry','cascades','sierra','ponderosa'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -694,6 +696,8 @@ const MIGRATIONS={
  18:s=>s,
  // 19 -> 20: six more landscapes (Texas and the deserts); no save changes shape.
  19:s=>s,
+ // 20 -> 21: six more landscapes (California and the western mountains); no save changes shape.
+ 20:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

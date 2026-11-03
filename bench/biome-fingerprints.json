@@ -25,7 +25,13 @@
   "gulfcoast": "048b6105ca839f3c",
   "mojave": "67f8f99f153e5574",
   "palms": "02a8a22710675fd8",
-  "chihuahuan": "0e1083a19cbee710"
+  "chihuahuan": "0e1083a19cbee710",
+  "monterey": "9c1561bd3eafe794",
+  "socal": "3e51c2c9e664ec61",
+  "winecountry": "37492de9437e104d",
+  "cascades": "8fefac30c16415ef",
+  "sierra": "d15d40fa3267e6ba",
+  "ponderosa": "faa936ffb5ca60c0"
  },
  "records": {
   "puget": "d286609147e5704d",
@@ -52,6 +58,12 @@
   "gulfcoast": "1c11d47bb5f4730b",
   "mojave": "1a513db3ca1669f6",
   "palms": "fa38977cbaf6055e",
-  "chihuahuan": "81d2bdfc929227cc"
+  "chihuahuan": "81d2bdfc929227cc",
+  "monterey": "0242e2be131ee853",
+  "socal": "5d70d4f0dfdd6a4a",
+  "winecountry": "f422fbf13258aa21",
+  "cascades": "120e7c5a387304fd",
+  "sierra": "fed011b02982fc8f",
+  "ponderosa": "3b31f61c6fd20083"
  }
 }

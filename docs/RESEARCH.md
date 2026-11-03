@@ -12589,3 +12589,65 @@ Seen when Bluebonnet Prairie's first pictures had no bluebonnets in them:
 the pack's clumps are 0.3-0.45 m and read only close to. Its long grass's
 heads are bluebonnet blue too (#4a62c8, 6,000 tufts against Texas's 4,000;
 PLACED); still not a field from the camera (TODO).
+
+
+## California and the western mountains (phase 7, 3 November 2026)
+
+PLAN.md's phase 7: six landscapes on the California coast, California
+inland and western mountains packs (tools/blender/cartoon_calcoast.py,
+cartoon_calinland.py, cartoon_westmtn.py; 29 species, every variant, 16 far
+twins). Every share, size and colour below is PLACED from the study's pages
+(subs/california/, subs/mountain/, local) and the packs' specs; none is
+measured on a course.
+
+- **A new region, `california`** (from the Midwest's record): hills base 35
+  m, severity 70; the rough gold (#b0a060, the dry summer), long grass gold;
+  stands of coast live oak .45, valley oak .2, blue oak .15, sycamore and
+  buckeye .1 under chaparral and coastal sage; in the open coast live oak
+  .18, chaparral .14, coastal sage and poppies .12, valley and blue oak .1,
+  eucalyptus .06. An adobe (mission) clubhouse with a terracotta roof, a
+  chapel ruin, deer. Fog haze .6.
+- **Monterey**: the sea along one side (`sea` and `edgeCoast`, as Lake
+  Dunes' lake: `sea` alone gave ponds in oak woods and no coast at all; hills
+  16 / 45 as the Links'),
+  Monterey cypress .2, Monterey pine .15, ice plant .18, coastal sage .15;
+  18 C; six sea stacks offshore; the thickest fog in the game (haze 1,
+  sheet .95: the sea fog).
+- **SoCal Canyons**: hills 40 / 110 (barrancas); chaparral .18, coast live
+  oak and coastal sage .15, eucalyptus .12, sycamore .1, jacaranda and
+  pepper tree .06, Torrey pine .05; a pavilion clubhouse. **The jacaranda
+  is drawn in bloom** (its spring purple) until seasons are on.
+- **Wine Country**: hills 30 / 50; grape vines .3, valley oak .15,
+  poppies .12, blue oak .1; a stone winery clubhouse. The vines stand singly
+  (TODO: rows).
+- **Cascades** (the Rockies' region): far ring lifted 600 m (the Rockies'
+  950) so the volcano stands over it; Douglas fir .25, hemlock and noble
+  fir .15, beargrass and huckleberry .1, western larch .08, red cedar .07;
+  basalt boulders; a lodge.
+- **High Sierra**: sugar pine and incense cedar .15, red fir .12,
+  ponderosa .1, manzanita .15, mule's ear .08; glaciated granite slabs; no
+  split-rail fences (none stood on the test course's granite, and none
+  belong there).
+- **Ponderosa**: ponderosa .4, Gambel oak .15, bitterbrush .12, sage .1,
+  mountain mahogany .08; trees at 2.4 (the open park); 2,100 m, 24 C;
+  basalt; a log lodge.
+- **The sea stacks**: 6 a course, 12-22 m tall, in water 2 m deep or more,
+  60-450 m from the nearest hole; scenery, never collided with.
+- **The volcano**: 900 m tall at 5.2 km on a bearing from the seed -- about
+  ten degrees of sky, as a Cascades peak stands over a course on a clear
+  day; unfogged and every colour 40% of the way to the sky, because every
+  tier's fog has closed by then (Low's at 3.5 km).
+- **Names**: twenty and twenty a landscape; clashes (Larch, Huckleberry,
+  Basalt, Rainier, Sequoia, Sonora) and real courses (Torrey Pines, Cypress
+  Point, Spanish Bay, Del Monte, Mission Hills, Silverado) replaced. Debut
+  weeks 176-181.
+
+**The lot checks the invariant's own grid too** (roads.js): Monterey's coast
+put a sliver of sea between the lot search's samples (spaced by the lot's
+own width) and the invariant's (every 4 m from a corner). Both grids now
+reject a lot; a lot that passed both is where it was, and no existing
+landscape moved.
+
+No generator step (new keys, existing ground unchanged); SCHEMA 21. The
+weekly and palette tests now work out the last debut and the cycle from the
+rotation, so each phase's debuts need no edit there.

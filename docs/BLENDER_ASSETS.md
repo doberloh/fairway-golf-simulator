@@ -700,8 +700,10 @@ yet in the game -- each goes in with its landscapes (the South's four,
 each tree, the plantation clubhouse as `clubhouse.js` `clubhouseModel`;
 `cartoon_texas` and `cartoon_deserts` with phase 6, every variant and
 the pecans' and palms' far twins, the limestone as the boulder family
-`boulderlimestone`): `cartoon_calcoast`, `cartoon_calinland`,
-`cartoon_westmtn`, `cartoon_highdesert`, `cartoon_plains` (its red cedar is
+`boulderlimestone`; `cartoon_calcoast`, `cartoon_calinland` and
+`cartoon_westmtn` with phase 7, the basalt and granite as boulder
+families, the sea stacks offshore and the volcano as a horizon backdrop
+(renderer.js `addSeaStacks`, `addBackdrop`)): `cartoon_highdesert`, `cartoon_plains` (its red cedar is
 `EasternRedCedar`, apart from the redwood pack's western `RedCedar`),
 `cartoon_appalachia`, `cartoon_neparkland`, `cartoon_north`,
 `cartoon_hawaii`. Each script's header and `LOOK`/`BARK` tables hold its

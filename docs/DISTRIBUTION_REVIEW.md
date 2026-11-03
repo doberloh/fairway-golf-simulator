@@ -1767,3 +1767,9 @@ MB gzipped)**, +3.3 MB: the two packs' 24 species in every variant with
 six far twins and the limestone boulders (the model module 16.19 MB, +2.2
 MB), and six landscapes' card pictures (750 KB). Still one file, no
 network request.
+
+**Phase 7, California and the western mountains**: the page is
+**30,705,270 bytes (16.68 MB gzipped)**, +4.1 MB: the three packs' 29
+species in every variant with 16 far twins, basalt and granite boulders,
+two sea stacks and the volcano (the model module 19.0 MB, +2.8 MB), and six
+landscapes' card pictures (913 KB). Still one file, no network request.
