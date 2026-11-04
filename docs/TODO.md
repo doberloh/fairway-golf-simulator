@@ -173,7 +173,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   locate, the partition, research, a scoring table against every
   landscape, the recommendation with how to build it (door 2, Skin from
   the land, tools/build-courses.mjs), and the Badlands' research path for
-  a new landscape. Not yet tried on a real course.
+  a new landscape. **Tried** (3 November 2026) on Whistling Straits:
+  found (OpenStreetMap way/205111637), the partition said Lake Dunes, the
+  research (eight holes on Lake Michigan, dunes pushed up on a flat site,
+  fescue, no trees on the Straits) scored Lake Dunes 28 of 39 and Scottish
+  Links 29 -- place against the Irish-links look Dye built; for a builder
+  course (the survey's own trees) Lake Dunes. The skill gained what the
+  trial taught (place and look can split; a builder course brings its own
+  trees; unsourced famous numbers stay unconfirmed); the record is local
+  (docs/studies/us-landscapes/trials/). Still to do: a trial where nothing
+  matches, so the new-landscape path runs end to end on paper.
 
 - [ ] **Not yet played by a person: the world round the holes on every
   generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The

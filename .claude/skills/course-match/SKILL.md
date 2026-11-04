@@ -71,6 +71,19 @@ Score each 0-3 and show the top three with their reasons -- what matches and
 what does not ("pines right, but its ground is flat where the course runs
 through 40 m breaks").
 
+What the first trial (Whistling Straits, 3 November 2026; the record is
+docs/studies/us-landscapes/trials/, local) showed:
+
+- **Place and look can split.** A course built to look like somewhere else
+  (Pete Dye's Irish links pushed up on a Wisconsin airfield) can score
+  highest on its place's landscape and on the look's, a point apart. Say
+  both, and let how it will be built decide.
+- **A builder course brings its own trees** (the survey's, `whose trees`),
+  so for one the trees row counts for less; for a generated course in the
+  course's spirit, the landscape's own planting is all there is.
+- Famous courses carry repeated numbers nobody sourced (bunker counts,
+  animals on the course): mark them unconfirmed rather than repeat them.
+
 ## 5. Recommend
 
 - **A good match** (the best scores at least 70% of the maximum and nothing
