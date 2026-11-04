@@ -292,8 +292,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   model module's memory (23 MB of models) under SwiftShader, not measured.
   Since 3 November such a machine STARTS on Low (graphics.js
   isSoftwareRenderer, by the renderer's name) unless its player has chosen a
-  tier, so a first run no longer lands on the crash; the crash itself is
-  still to find;
+  tier, so a first run no longer lands on the crash. **Retried 3 November
+  2026, evening, on the current build: it no longer crashes** -- the
+  profiler's weak group ran both cases (Low 259 draws, 11.7 M triangles;
+  Medium 315 draws, 13.5 M) and tools/software-crash.mjs built a course at
+  Medium and drew it. What fixed it is not known (the builds between carried
+  the Badlands, the terrain and the grasses; the crash ran with 37.0 MB of
+  page, this with 38.1); the start-on-Low guard stays. But software frames
+  are slow: 6.2 s a frame on Low and 6.7 on Medium by the presentation gap,
+  against 3.8 s in the September baseline -- a machine with no graphics
+  card cannot play either tier;
   the grain elevator's and
   shelterbelt's far twins, built but not drawn (a landmark and a story prop
   draw their full model at every distance). The profile against

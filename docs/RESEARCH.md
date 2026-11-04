@@ -13176,3 +13176,18 @@ and no asphalt (Bluebonnet Prairie, the Gulf Coast, Florida Flatwoods) or
 only gravel and dirt (the Sand Hills). Which of a landscape's listed
 surfaces goes where is PLACED. Colours PLACED: dirt #9c8466, red clay
 #a5583a, brick #9a4e3c, cobble #8a8478.
+
+## The software renderer on Medium, retried (3 November 2026, evening)
+
+The profile of 3 November crashed its page at weak/medium ("Target
+crashed") twice. Retried alone on the current build (16f737e and after),
+the profiler's weak group ran both cases: Low 2.7 ms of processor work, a
+frame presented every 6.2 s, 259 draws, 11.7 million triangles; Medium
+3.0 ms, 6.7 s, 315 draws, 13.5 million (SwiftShader through ANGLE's
+Vulkan, 1600 x 900 at 1x). tools/software-crash.mjs (new) built a Puget
+Sound nine straight at Medium and drew it, 312 draws and 9.0 million
+triangles at its tee, heap 157 MB. The crash is not reproduced and its cause
+not found; graphics.js still starts a software renderer on Low. The frames
+are the real finding: the September baseline drew Medium at 3.8 s a frame,
+so the landscapes' geometry roughly doubled the software cost, and neither
+tier is playable without a graphics card.
