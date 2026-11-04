@@ -55,6 +55,7 @@ function groundTints(bio) {
 }
 // The uniforms for one course: which type each channel holds, where its gate
 // starts and how far it ramps (landforms.js wildGate), and the colours.
+const c3 = c => new T.Color(c ?? '#ffffff');
 function wildUniforms(w, hasWild, hasFallen) {
  const r = w.landform || {kinds: {}, gates: {}}, kinds = r.kinds || {}, gates = r.gates || {};
  const code = k => GROUND_CODE[k] || 0, gate = g => new T.Vector2(g?.near ?? 0, g?.ramp ?? 1);
@@ -71,6 +72,9 @@ function wildUniforms(w, hasWild, hasFallen) {
   ringFaceFrom: {value: biomeOf(w.settings.biome).ringMesas ? .86 : .74},
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   ...Object.fromEntries(Object.entries(tints).map(([k, v]) => ['gt_' + k, {value: v}])),
+  // The landscape's spring bloom (seasons.js bloomIn, on the round's copy of
+  // the record): 0 out of bloom, and the drift below costs one comparison.
+  bloomOn: {value: w.bio?.bloom?.amount ?? 0}, bloomA: {value: c3(w.bio?.bloom?.colours[0])}, bloomB: {value: c3(w.bio?.bloom?.colours[1])},
   ...strataUniforms(biomeOf(w.settings.biome).strata),
  };
 }
@@ -365,6 +369,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
  uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
  uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
+ uniform float bloomOn;uniform vec3 bloomA,bloomB;
  uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
@@ -593,6 +598,29 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // with the other ground types below from the same bytes the lie reads.
  // The rough colour, after biome and litter shading, before any playing surface
  // overwrites it. Channels rebuild a softened classification starting here.
+ // THE SPRING BLOOM IN THE ROUGH (seasons.js BLOOM): drifts of flecks, painted,
+ // so a landscape in flower shows from the tee and from the air, where the
+ // flowers proper (0.3 m, and gone past two-fifths of the tier's long-grass
+ // reach) do not, at no geometry at all. Here, before any surface overwrites
+ // the rough, so it can never reach a fairway, a green or a tee. A round fleck
+ // anywhere in a 0.27 m cell, a third of the cells empty, most of them the
+ // first colour; past a cell on screen they settle to their average rather
+ // than shimmer. Drift sizes and shares PLACED, from the pictures: half-metre
+ // squares over four fifths of the rough (the first try) read as a carpet of
+ // pixels and turned a white bloom's rough to gravel, and 0.42 m dots read as
+ // polka dots from a tee.
+ if(bloomOn>0.){
+  float bloomField=patchNoise(wp/31.+vec2(3.7,1.3))*.72+patchNoise(wp/9.)*.28;
+  float bloomDrift=smoothstep(.64-.14*bloomOn,.82-.14*bloomOn,bloomField);
+  if(bloomDrift>0.){
+   vec2 bloomQ=wp/.27,bloomCell=floor(bloomQ);
+   float bloomX=hashGround(bloomCell),bloomY=hashGround(bloomCell+7.3);
+   float bloomDot=(1.-smoothstep(.2,.3,length(fract(bloomQ)-vec2(bloomX,bloomY)*.5-.25)))*step(.34,fract(bloomY*17.));
+   float bloomFine=clamp((fwidth(wp.x)+fwidth(wp.y))*2.,0.,1.);
+   vec3 bloomColour=mix(mix(bloomA,bloomB,step(.72,fract(bloomX*13.))),mix(bloomA,bloomB,.28),bloomFine);
+   turf=mix(turf,bloomColour,bloomDrift*mix(bloomDot,.2,bloomFine)*.92);
+  }
+ }
  vec3 roughTint=turf;
  if((p.y>start&&p.y<end&&abs(p.x-curve.x)<outerWidth)||greenD<info.z+info.w){turf=tint_semi;kind=1.;}
  if(p.y>mowStart&&p.y<info.x+8.&&fw<0.){turf=tint_fairway;kind=2.;}

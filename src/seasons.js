@@ -77,7 +77,23 @@ const SPRING = '#7ab84a', AUTUMN = '#c09a4a', SNOW = '#eef2f4', FROST = '#b8c0b4
 export function seasonPalette(bio, season, region) {
  if (!bio || season === 'summer') return {};
  const out = {}, put = (k, to, t) => { if (/^#[0-9a-f]{6}$/i.test(bio[k] || '')) out[k] = mix(bio[k].toLowerCase(), to, t); };
- if (season === 'spring') { put('rough', SPRING, .18); put('semi', SPRING, .12); put('fairway', SPRING, .08); }
+ if (season === 'spring') {
+  // A landscape whose record IS its autumn (`leafFall`, New England) goes much
+  // further: at .18 its spring had a gold rough, orange litter and orange
+  // hills (PLACED, from the first spring picture).
+  const autumnal = !!bio.leafFall;
+  put('rough', SPRING, autumnal ? .6 : .18); put('semi', SPRING, autumnal ? .4 : .12); put('fairway', SPRING, .08);
+  // The wild ground in flower from far off, as Bluebonnet Prairie's drifts
+  // are all summer: a third of the way to the bloom's colour at most (PLACED).
+  // `bloom` itself goes to the ground shader, which paints drifts of it in
+  // the rough (ground.js): the flowers proper are too small and stop too near
+  // to show a landscape in flower.
+  const bloom = bloomIn(bio.key, season), native = bio.groundTints?.native ?? GROUND_TINT.native;
+  const tints = {...bio.groundTints};
+  if (bloom) { tints.native = mix(native.toLowerCase(), bloom.colours[0], .34 * bloom.amount); out.bloom = bloom; }
+  if (autumnal) tints.litter = mix((tints.litter ?? GROUND_TINT.litter).toLowerCase(), '#8a7452', .75);
+  if (Object.keys(tints).length) out.groundTints = tints;
+ }
  else if (season === 'autumn') { put('rough', AUTUMN, .3); put('semi', AUTUMN, .12); }
  else if (season === 'winter') {
   const w = WINTER[region] || 'frost';
@@ -97,15 +113,52 @@ export function seasonPalette(bio, season, region) {
  if (woods) out.farForest = woods;
  return out;
 }
+// EACH LANDSCAPE'S SPRING BLOOM (3 November 2026; RESEARCH.md *The spring
+// bloom*): its wildflower months, first and last, 1-12, and their colours,
+// the first the one seen from far off. The packs' spring colours flower each
+// species (season-tints.js: a redbud pink, a dogwood white); this is the
+// place's own bloom in the rough, the long grass and the wild ground, which
+// comes when the place's spring does. The Sonoran's is over by May; the
+// Rockies' does not begin until June, so a Rockies spring has none. Months
+// anchored on a source are in RESEARCH; the rest, and every colour, PLACED.
+// The tropics have no spring (roundSeason), so no entry.
+export const BLOOM = {
+ puget: [4, 5, '#6a6ad0', '#f2efe0'], redwood: [3, 5, '#f2efe0', '#e0a0b8', '#8a6ac8'],
+ cascades: [7, 8, '#f2efe0', '#6a5ac8'], sierra: [6, 8, '#e8c030', '#6a5ac8'], rockies: [6, 8, '#6a5ac8', '#e8c030'], ponderosa: [5, 7, '#d8402e', '#e8c030'],
+ sagebrush: [4, 5, '#e8c030', '#6a5ac8'], redrock: [4, 5, '#e0782e', '#d8402e'],
+ sonoran: [3, 4, '#f0a020', '#6a5ac8', '#c85aa0'], mojave: [3, 5, '#f0d040', '#b85ab0'], palms: [2, 4, '#b85ab0', '#f2efe0'], chihuahuan: [3, 5, '#3a5ac8', '#f0c020'],
+ monterey: [3, 5, '#f08a20', '#6a5ac8'], socal: [3, 4, '#f08a20', '#6a7ad0'], winecountry: [3, 4, '#e8d030', '#f08a20'],
+ heartland: [4, 5, '#f2efe0', '#e8c850', '#a080d0'], sandhills: [5, 7, '#8a7ad0', '#f0d040'], highplains: [5, 6, '#e8b040', '#b05aa8'], crosstimbers: [4, 5, '#d8502e', '#f0c020'], badlands: [5, 6, '#b090d0', '#f0e040'],
+ hillcountry: [3, 4, '#3a5ac8', '#d8502e'], bluebonnet: [3, 4, '#3a5ac8', '#d8502e'], gulfcoast: [3, 4, '#e8a0c0', '#3a5ac8'],
+ longleaf: [3, 5, '#e8c840', '#f0d8e0'], piedmont: [3, 4, '#f2efe0', '#e070a0'], lowcountry: [3, 4, '#e070a0', '#f2efe0'], bayou: [3, 4, '#6a4ac0', '#e8c840'], flatwoods: [3, 5, '#f0e040', '#f2efe0'],
+ blueridge: [4, 5, '#f2efe0', '#8a7ad0'], ozarks: [4, 5, '#f2efe0', '#9a7ad0'], bluegrass: [4, 5, '#f0e040', '#f2efe0'],
+ newengland: [5, 6, '#f2efe0', '#f0d040', '#e0a0c8'], oldnortheast: [4, 5, '#f0d040', '#a080d0'], pinebarrens: [5, 6, '#f2efe0', '#e0a0c8'],
+ northwoods: [5, 6, '#f2efe0', '#e0a0c8'], lakedunes: [5, 6, '#f0d040', '#a080d0'], oregondunes: [4, 6, '#f0c020', '#e0a0c8'], alaska: [6, 7, '#6a5ac8', '#c8288a'], links: [5, 6, '#e0a0c8', '#f0d040'],
+};
+// A landscape's bloom in a season: how much of it falls in the spring months
+// (`amount`, 0-1) and its colours; null out of spring, or when none of it
+// does. Spring's look is one peak, not a date: a round is played in a season
+// (PLACED), so a window half in June is half a bloom.
+export function bloomIn(key, season) {
+ const w = BLOOM[key];
+ if (!w || season !== 'spring') return null;
+ const [first, last, ...colours] = w;
+ let spring = 0;
+ for (let m = first; m <= last; m++) if (m >= 3 && m <= 5) spring++;
+ return spring ? {amount: spring / (last - first + 1), colours} : null;
+}
+
 // The far woods of a broadleaf forest turn with it: gold-brown in autumn,
 // bare grey-brown in winter (PLACED). A conifer forest's stay green.
 const BROADLEAF_WOODS = new Set(['northeast', 'midwest', 'appalachia', 'south', 'texas', 'plains', 'lakeshore']);
 export function farWoodsInSeason(bio, season, region) {
  const f = bio?.farForest;
- if (!f?.colors || !BROADLEAF_WOODS.has(region) || (season !== 'autumn' && season !== 'winter')) return null;
+ const springGreen = season === 'spring' && bio.leafFall;
+ if (!f?.colors || !BROADLEAF_WOODS.has(region) || (season !== 'autumn' && season !== 'winter' && !springGreen)) return null;
  // Winter at .85: New England's summer record is already its autumn, and
- // .55 of the way from orange still read orange (3 November 2026).
- const to = season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
+ // .55 of the way from orange still read orange (3 November 2026). Its spring
+ // woods are green for the same reason (PLACED).
+ const to = springGreen ? '#7c9c52' : season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
  return {...f, colors: f.colors.map(c => (/^#[0-9a-f]{6}$/i.test(c) ? mix(c.toLowerCase(), to, t) : c))};
 }
 // Bare in winter: a broadleaf tree that drops its leaves -- not an evergreen,

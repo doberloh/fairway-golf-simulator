@@ -13324,3 +13324,101 @@ from 25 m), so play stays dry and stands on a cliff. Measured on five
 fairway or green; no play wet. First tries: 45 m beyond the easternmost
 point left every green 115-250 m from the sea; a line 60 m in without the
 corridor guard wet 40-181 cells of play. All numbers PLACED.
+
+## The twig layer, the spring bloom and snow on the walls (3 November 2026)
+
+The three seasons items left open by the seasons step. All drawing: the
+fingerprints did not move, no generator step. New models: none.
+
+**The twig layer** (src/twigs.js, mesh-assets.js `bareParts`). A bare tree
+was its bark part alone, and bark parts are small (a maple's 216 triangles:
+trunk and a few limbs) because leaves hid the rest. PLAN section 3 asked for
+some 55 bare variants, each owing fifteen Blender rounds; instead the branches
+are grown at run time from the model's own parts, by space colonisation
+(Runions, Lane and Prusinkiewicz, 2007, read at abstract level only): points
+in the crown pull the nearest branch end, are used up when reached, and a
+branch nothing pulls stops. The points are the leaf part's own vertices (230
+of them, evenly by vertex order), so the twigs fill that species' crown: the
+owner's silhouette rule holds by construction (tests/twigs.test.mjs: width
+within 75-115% of the crown, height 85-110%, on birch, aspen, elm, bur oak,
+maple). Thickness is the pipe model run back from the ends: a parent's width
+to the 2.3 is the sum of its children's, from .0026 of the tree's height (5 cm
+radius at 18 m) to at most .013. All PLACED against the pictures. A shrub's twig
+is thickened up to four times (18 m over its mean height), since its metres
+are few. The fine wood is painted darker than the bark and no paler than a
+dark grey-brown (.3 and .2 over the bark's lightness, at most .85 and .65):
+a birch's white trunk has near-black twigs, as it does in life.
+
+What the pictures taught, in order. **A fixed step grew nothing on a birch**:
+at .055 and a reach of .08 its whole crown lay within one reach of the trunk;
+the step now goes by the crown's width (.13 of it, .025-.055, the reach 1.4
+steps), and the bark no longer uses points up. **Forty-eight starts made a
+tuft on every limb**, nothing branching and no twin left to draw; sixteen
+starts, spread by farthest-point sampling from the highest, also finds every
+limb's end -- a plain sample left limbs stopping in mid-air where the leaves
+had hidden the cut. **Direction from the pull alone zig-zagged**: each step now
+carries .8 of the last step's heading. **Following points on the crown's skin
+ran branches round it in rings** (seen on a Heartland maple): each step leans
+.35 away from the trunk. **Spray ends at 0.05 and wide read as thorns**: now
+0.07 long, .5 spread, thinner at the foot.
+
+Cost, in the model: 500-2,700 triangles of wood a tree (mean 1.1 ms to
+grow one model and make both meshes, Node, this machine; about 40 models in a
+round, in winter only) against 2,000-4,560 of leaf part it replaces. A bare
+tree is under 85% of the tree in leaf on every species tested, most much
+under. The wood is merged INTO the bark, so a bare tree adds no draw call and
+drops the leaf part's. Its twin, far off and on Low, is the shipped `_Far`
+trunk plus the branches that carry two or more ends, 1.6 times as stout,
+with a point in place of the spray: 30-800 triangles.
+
+**The spring bloom** (seasons.js `BLOOM`, `bloomIn`). The packs' spring colours
+flower each species; this is the place's own wildflowers. Each landscape has
+its months and two or three colours, and `amount` is the share of those
+months in March-May, so a window half in June is half a bloom and one wholly
+in summer is none. Anchored on sources (REFERENCES.md): Hill Country and
+Bluebonnet Prairie March-April, the Wildflower Center's early-April peak in
+Central Texas; Monterey and SoCal March to April or May, after the Antelope
+Valley poppy reserve's late-March to mid-April peak (a desert-edge reserve, not
+those coasts; adapted); the Sonoran March-April, the Desert Museum's peak
+mid-March to late April in the Arizona Upland; the Mojave March-May, later than
+the Sonoran by the same source, which gives no months for it, so the last month
+is PLACED; Blue Ridge April-May, the Smokies' mid to late April low down and
+later high up; the Rockies June-August, June at 8,000-9,000 ft and July-August
+above (Lonely Planet, a travel source); Alaska June-July, peak near the
+solstice (a Kenai newspaper). **Every other landscape's months, and every
+colour, are PLACED** from the region's character and nobody has checked them:
+puget, redwood, cascades, sierra, ponderosa, sagebrush, redrock, palms,
+chihuahuan, winecountry, the Midwest, plains, South and Florida landscapes,
+ozarks, bluegrass, the Northeast, northwoods, lakedunes, oregondunes, links. A
+search for Pacific Northwest camas and New England trillium dates found
+nothing. The tropics have no spring (`roundSeason`), so no entry; PLAN's "with
+only the flowering changing" for them is not built. A big desert bloom is not
+annual (NPS, Mojave); the game draws a good year. A window is not read against
+a date: spring is one look, the peak, for a whole season (PLACED, a round is
+played in a season).
+
+The bloom is drawn three ways. Wildflowers in the rough, in every landscape,
+at .24 of the rough's blades times `amount` (the five FLOWER_REGIONS' .16
+year-round flowers are kept in summer and autumn), 1.7 times the size, none in
+winter or in a spring with no bloom: they used to stand in snow. Long grass
+heads, colony by colony, .7 of colonies times `amount`. **Neither shows a
+landscape in flower**: seen from the second tee the first picture was a few red
+specks. So the ground shader paints drifts in the rough (`bloomOn`): flecks in
+a 0.27 m cell, a third of cells empty, 72% the first colour, in drifts of about
+30 m and 9 m, settling to a 20% tint where a cell is under a pixel or so. It
+runs before any surface overwrites the rough, so it cannot reach a fairway,
+green or tee, and the wild `native` ground goes .34 of the way to the first
+colour times `amount`. First tries: half-metre squares over four fifths of the
+rough, a carpet of pixels that turned the Blue Ridge's white bloom to gravel;
+0.42 m round dots, polka dots from a tee. All PLACED.
+
+New England's spring needed its own line: its record is its autumn
+(`leafFall`), so at the general .18 its spring had a gold rough and orange
+hills. For a `leafFall` landscape the rough goes .6 and the semi .4 toward
+spring green, the litter .75 toward #8a7452 and the far woods .85 toward #7c9c52
+(PLACED). Its summer stays as the owner accepted it.
+
+**Snow on the walls.** Every wall, fence and yard piece the story draws
+(renderer.js `addStory`) takes the same fade as the roofs and trees
+(vegetation.js snowTopped), where the region's winter is snow. A Bluegrass board
+fence never shows it: Appalachia's winter is frost.

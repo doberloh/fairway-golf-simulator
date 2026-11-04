@@ -526,9 +526,18 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   broadleaf woods in winter go .85 of the way to bare grey-brown (New
   England's autumn record read orange at .55). Seen in captures (Heartland's
   barn, New England's winter).
-- [ ] **Seasons, still to do**: a twig layer on the bare crowns (PLAN 3),
-  and each landscape's spring flowering window beyond what the packs'
-  spring colours give. Walls (stone, wire, board) do not take snow yet.
+- [x] **The twig layer, the spring bloom, snow on the walls** (3 November
+  2026, drawing only, no generator step, no new models): a bare tree's
+  branches are grown from its own model's crown (src/twigs.js, mesh-assets.js
+  `bareParts`) and merged into its bark, so winter adds no draw call and each
+  species keeps its outline; each landscape has its spring bloom
+  (seasons.js `BLOOM`: months and colours, most of them PLACED) in the rough's
+  flowers, the long grass's heads and drifts painted in the rough; no
+  wildflowers in winter; New England's spring is green; walls, fences and yard
+  pieces whiten on top as the roofs do. RESEARCH *The twig layer, the spring
+  bloom and snow on the walls*. Seen in captures (below in that section); not
+  seen by a person. The tropics' "only the flowering changes" (PLAN 3) is not
+  built, and a bloom's window is not read against the date.
 - [x] **Chambers Bay** built in the builder on its new landscape and played
   through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
   OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --

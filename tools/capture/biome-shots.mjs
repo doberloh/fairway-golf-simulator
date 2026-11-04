@@ -74,6 +74,9 @@ const VIEWS = [
  // The streets kit (3 November 2026): above the parking lot, looking along
  // the drive to the clubhouse -- the road surfaces, the lot and the barn.
  {name: 'lot', hole: 0, when: 'afternoon', cam: `w => { const L = w.lot || {x: 0, z: 0}; return {x: L.x - 55, z: L.z - 55, yaw: 45, height: 40, pitch: -30}; }`},
+ // A landscape's longest wall or fence, from 12 m off and 4 m up (the seasons:
+ // snow along its top). A landscape with none gets the middle of the map.
+ {name: 'wall', hole: 0, when: 'afternoon', cam: `w => { const a = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0]; if (!a) return {x: 0, z: 0, yaw: 0, height: 60, pitch: -30}; const yaw = Math.atan2(a.bx - a.ax, a.bz - a.az) * 180 / Math.PI + 40, r = yaw * Math.PI / 180; return {x: (a.ax + a.bx) / 2 - Math.sin(r) * 12, z: (a.az + a.bz) / 2 - Math.cos(r) * 12, yaw, height: 4, pitch: -14}; }`},
  // The sea where it comes in among the holes (generator 80, the
  // Lowcountry's tidal creeks; Monterey's shore): the 10 m cell with the most
  // open sea round it inside the map, seen from 70 m off and 40 m up.

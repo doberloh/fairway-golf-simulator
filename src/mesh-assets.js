@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {MESH_MODELS, MESH_ATLASES, meshBytes} from './asset-meshes.js';
+import {growTwigs, twigMesh} from './twigs.js';
 
 // Runtime side of tools/build-meshes.mjs. Decodes the packed CC0 geometry and
 // hands the game instanced meshes it can paint from the biome palette.
@@ -100,6 +101,57 @@ export function farParts(name, keep = 1 / 3) {
   : parts.map(p => p.role === 'leaf' ? {role: p.role, geometry: thinSprays(p.geometry, keep)} : p);
  farCache.set(key, far);
  return far;
+}
+
+// A TREE BARE IN WINTER (the seasons; twigs.js): the model with its leaf and
+// flowers left out and the branches they hid grown into its bark -- into it,
+// so the wood costs no draw call of its own, and the tree stays cheaper than
+// in leaf (a maple's 4,560 leaf triangles against some 1,700 of twigs). Part
+// for part what `instanceModels` takes as an entry's `parts`. Each bark
+// carries its twin in `far`: the twin's trunk and the stronger branches, which
+// instance-cull.js draws where it would draw the leafy tree's twin. `keep`:
+// roles that stay on a bare tree (an aspen's "eyes" are on its trunk, not its
+// crown). `width`, `shade` and `tip`: twigs.js `twigMesh`.
+const bareCache = new Map();
+export function bareParts(name, {keep = [], ...twig} = {}) {
+ const key = name + JSON.stringify([keep, twig]);
+ if (bareCache.has(key)) return bareCache.get(key);
+ const parts = modelParts(name);
+ if (!parts) return null;
+ const leaf = parts.find(p => p.role === 'leaf'), bark = parts.find(p => p.role === 'bark');
+ const stays = parts.map((p, index) => ({...p, index})).filter(p => keep.includes(p.role));
+ let bare = stays;
+ if (leaf) {
+  const nodes = growTwigs({leaf: leaf.geometry.attributes.position.array, bark: bark?.geometry.attributes.position.array ?? [], seed: name});
+  const twinBark = hasShippedTwin(name) ? modelParts(name + '_Far')?.find(p => p.role === 'bark') : null;
+  bare = [{role: 'bark', painted: bark ? bark.painted : true, index: parts.indexOf(bark),
+   geometry: withTwigs(bark?.geometry, twigMesh(nodes, {...twig, seed: name})),
+   far: withTwigs((twinBark || bark)?.geometry, twigMesh(nodes, {...twig, seed: name, far: true}))}, ...stays];
+ }
+ bareCache.set(key, bare);
+ return bare;
+}
+
+// The wood of `mesh` (twigs.js) added to a bark geometry, in that geometry's
+// attributes (a texture coordinate a twig has no use for stays zero), or on
+// its own for a plant with no bark.
+function withTwigs(base, mesh) {
+ const old = base?.attributes.position.count ?? 0, added = mesh.position.length / 3, n = old + added;
+ const own = {position: mesh.position, normal: mesh.normal, color: mesh.shade, flex: mesh.flex};
+ const g = new T.BufferGeometry();
+ for (const name of base ? Object.keys(base.attributes) : Object.keys(own)) {
+  const src = base?.attributes[name], size = src?.itemSize ?? (name === 'position' || name === 'normal' || name === 'color' ? 3 : 1), to = new Float32Array(n * size);
+  if (src) to.set(src.array);
+  if (name === 'color') for (let i = 0; i < added; i++) to.fill(mesh.shade[i], (old + i) * 3, (old + i + 1) * 3);
+  else if (own[name]) to.set(own[name], old * size);
+  g.setAttribute(name, new T.BufferAttribute(to, size));
+ }
+ const oldIndex = base?.index?.array ?? [], index = new (n > 65535 ? Uint32Array : Uint16Array)(oldIndex.length + mesh.index.length);
+ index.set(oldIndex);
+ for (let i = 0; i < mesh.index.length; i++) index[oldIndex.length + i] = mesh.index[i] + old;
+ g.setIndex(new T.BufferAttribute(index, 1));
+ g.computeBoundingSphere();
+ return g;
 }
 
 export function thinSprays(geometry, keep) {
@@ -274,13 +326,12 @@ export const FAMILY_OF = {
 export function instanceModels(group, entries, materialFor, onMesh) {
  const buckets = new Map();
  for (const entry of entries) {
-  const parts = modelParts(entry.model);
+  // An entry's own parts, if it has them (a tree bare in winter: `bareParts`).
+  const parts = entry.parts ?? modelParts(entry.model);
   if (!parts) continue;
   for (const part of parts) {
-   // A part the entry leaves out (a tree bare in winter: no leaves, no flowers).
-   if (entry.skip?.has(part.role)) continue;
    const key = `${entry.model}|${part.role}|${entry.variant ?? 0}`;
-   const bucket = buckets.get(key) || {part, model: entry.model, partIndex: parts.indexOf(part), variant: entry.variant ?? 0, matrices: [], colors: [], owners: []};
+   const bucket = buckets.get(key) || {part, model: entry.model, partIndex: part.index ?? parts.indexOf(part), variant: entry.variant ?? 0, matrices: [], colors: [], owners: []};
    bucket.matrices.push(entry.matrix);
    bucket.colors.push(entry.color[part.role] || entry.color.accent);
    bucket.owners.push(entry.owner);
@@ -300,6 +351,7 @@ export function instanceModels(group, entries, materialFor, onMesh) {
   // What it draws, so the renderer can find this part's thinned twin
   // (`farParts`) without reverse-engineering it from the geometry.
   mesh.userData.model = model; mesh.userData.part = partIndex; mesh.userData.role = part.role;
+  if (part.far) mesh.userData.farGeometry = part.far;
   group.add(mesh);
   meshes.push(mesh);
   onMesh?.({mesh, matrices, owners});

@@ -73,3 +73,37 @@ test('snow covers the natural grounds and greys the far broadleaf woods', async 
   `the far woods in winter are still orange: ${c} became ${snow.farForest.colors[i]}`));
  assert.equal(seasonPalette(bio, 'winter', 'south').groundTints, undefined, 'a dormant winter keeps its grounds');
 });
+
+test('every landscape with a spring has a bloom, its months real and its colours hex', async () => {
+ const {BLOOM} = await import('../src/seasons.js');
+ const {LANDSCAPES} = await import('../src/regions.js');
+ for (const [key, l] of Object.entries(LANDSCAPES)) {
+  if (l.tropical) { assert.equal(BLOOM[key], undefined, `${key} has no spring`); continue; }
+  const [first, last, ...colours] = BLOOM[key] ?? [];
+  assert.ok(first >= 1 && last <= 12 && first <= last, `${key}: months ${first}-${last}`);
+  assert.ok(colours.length >= 2 && colours.every(c => /^#[0-9a-f]{6}$/.test(c)), `${key}: ${colours}`);
+ }
+});
+
+test('a bloom falls in the spring it falls in, and only there', async () => {
+ const {bloomIn} = await import('../src/seasons.js');
+ assert.equal(bloomIn('sonoran', 'spring').amount, 1);
+ assert.equal(bloomIn('newengland', 'spring').amount, .5, 'half of it is in June');
+ assert.equal(bloomIn('rockies', 'spring'), null, 'the Rockies bloom in summer');
+ assert.equal(bloomIn('alaska', 'spring'), null);
+ assert.equal(bloomIn('keys', 'spring'), null, 'the tropics have no spring');
+ for (const s of ['summer', 'autumn', 'winter']) assert.equal(bloomIn('sonoran', s), null);
+ assert.equal(bloomIn('nowhere', 'spring'), null);
+});
+
+test('the wild ground takes the bloom in spring, and no other season, and not the greens', async () => {
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const blue = h => parseInt(h.slice(5, 7), 16) - parseInt(h.slice(1, 3), 16);
+ const bio = biomeOf('hillcountry'), spring = seasonPalette(bio, 'spring', 'texas');
+ assert.ok(blue(spring.groundTints.native) > blue(bio.groundTints?.native ?? '#b3a35a'), 'bluebonnets blue the native ground');
+ assert.ok(!('green' in spring));
+ assert.equal(seasonPalette(biomeOf('rockies'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
+ assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
+ assert.deepEqual(seasonPalette(bio, 'summer', 'texas'), {});
+});

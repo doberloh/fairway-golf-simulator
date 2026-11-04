@@ -564,8 +564,12 @@ met its budgets by faces after round 12 and was still double by triangles;
 round 18 was the second cost pass, after the game's A/B.
 
 The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) go bare
-in winter by drawing without their leaf and flower parts (vegetation.js,
-the seasons step), not as separate models.
+in winter by drawing without their leaf and flower parts, their branches
+grown from the model's own leaf part when a round asks (src/twigs.js,
+mesh-assets.js `bareParts`), not as separate models: a pack makes no bare
+variant, and every deciduous model has its twig layer for nothing. A
+species' crown must still be its leaf part's outline, since that is what
+the twigs fill.
 
 **Every variant ships** (since 2 November 2026, the owner: "I dont want to
 end up not using the models we create"). For a day only one variant of the

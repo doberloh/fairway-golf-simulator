@@ -3,7 +3,7 @@ import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 import {farWoodSites,FAR_SHAPES} from './far-woods.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts,bareParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
 import {plantPose} from './tree-seat.js';
@@ -14,13 +14,20 @@ import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 import {regionOf} from './regions.js';
 import {SEASON_TINTS} from './season-tints.js';
-import {bareInWinter} from './seasons.js';
+import {bareInWinter,bloomIn} from './seasons.js';
 import {PALMS} from './built-world.js';
 // The regions with wildflowers in the rough. By region: the list was of
 // landscape keys until 2 November 2026, and the keys' rename (Midwest to
 // Heartland, Mountain to Rockies, Desert to Sonoran) left only the Links with
 // any (found 3 November, phase 6). Texas joins with its bluebonnets.
 const FLOWER_REGIONS=new Set(['midwest','mountain','links','desert','texas']);
+// A number from a place, the same every time and with no draw from a stream,
+// so a season's flowers never move the grass round them.
+const spotHash=(x,z)=>Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1;
+// Of the rough's blades, the share with a flower at a full spring bloom
+// (seasons.js bloomIn), against .16 the year round in FLOWER_REGIONS; and of
+// the long grass's colonies, the share whose heads are the bloom's. PLACED.
+const BLOOM_FLOWERS=.24,BLOOM_HEADS=.7;
 // A house drive keeps the rough's grass off it (homes.js; the cartoon overhaul's paths, round 5).
 import {onDrive} from './homes.js';
 
@@ -158,7 +165,9 @@ const FALL_HUE={maple:0,aspen:.11,paperbirch:.12,americanbeech:.09};
 // beside the evergreens: the cacti and the desert's green-barked trees, and
 // the Pacific's evergreen broadleaves.
 const WINTER_LEAFY=new Set([...EVERGREEN,...STILL,'madrone','tanoak','baylaurel','ocotillo','ironwood','palo']);
-const BARE=new Set(['leaf','accent']);
+// An aspen's "eyes" and a birch's bands are the accent role but on the trunk,
+// so they stay on a bare tree (a flower or a berry does not).
+const TRUNK_ACCENT=new Set(['aspen','paperbirch']);
 const seasonOfView=view=>view.season||'summer';
 const autumnLeaves=view=>{const s=seasonOfView(view);return s==='autumn'||(s==='summer'&&!!biomeOf(view.world.settings.biome).leafFall);};
 const bare=(view,kind)=>seasonOfView(view)==='winter'&&bareInWinter(kind,{evergreen:WINTER_LEAFY,palms:PALMS,ground:GROUND_PLANTS});
@@ -184,7 +193,14 @@ function addModelSpecies(view,kind,trees){
  const season=seasonOfView(view),own=season!=='summer'?SEASON_TINTS[kind]?.[season]:null;
  if(own?.accent)accents[kind]=own.accent;
  const leafBase=new T.Color(own?.leaf||shades[kind]||'#5b7f44'),barkBase=new T.Color(own?.bark||barks[kind]||'#6b5942');
- const leafless=bare(view,kind),turns=autumnLeaves(view)&&!EVERGREEN.has(kind)&&!own;
+ // THE BRANCHES OF A BARE TREE (twigs.js; mesh-assets.js bareParts), one set a
+ // model. A shrub's twig is thicker for its height than a tree's (PLACED: as
+ // thick as an 18 m tree's up to four times). Fine wood is darker than a trunk
+ // and no paler than a dark grey-brown, whatever the bark: a white birch's
+ // twigs are nearly black against the sky.
+ const leafless=bare(view,kind),meanHeight=trees.reduce((s,t)=>s+t.h,0)/Math.max(1,trees.length),barkLight=barkBase.getHSL({}).l;
+ const twig=leafless?{width:Math.round(Math.min(4,Math.max(1,18/meanHeight))*2)/2,shade:Math.round(Math.min(.85,.3/barkLight)*20)/20,tip:Math.round(Math.min(.65,.2/barkLight)*20)/20,keep:TRUNK_ACCENT.has(kind)?['accent']:[]}:null;
+ const turns=autumnLeaves(view)&&!EVERGREEN.has(kind)&&!own;
  // A species whose stone role is a flower (the prairie forbs' gold), not rock.
  const stones={prairieforbs:'#e0b030',grapevine:'#9a9a96',beachrose:'#c8402a'};
  const stone=new T.Color(stones[kind]||world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
@@ -231,7 +247,7 @@ function addModelSpecies(view,kind,trees){
   // each in its own hue: maple red, birch and aspen yellow, beech bronze.
   if(turns)leaf.setHSL((FALL_HUE[kind]??.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
-  entries.push({model,owner:t,matrix:dummy.matrix.clone(),skip:leafless?BARE:null,
+  entries.push({model,owner:t,matrix:dummy.matrix.clone(),parts:twig?bareParts(model,twig):null,
    color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
  }
  // White materials: the instance colour carries the whole tint, so one material
@@ -708,6 +724,9 @@ function addLongGrass(view){
  if(!kinds.length)return;
  const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
  const leaf=new T.Color(rec.leaf),accent=new T.Color(rec.accent),entries=[];
+ // The landscape's bloom in the heads, colony by colony, so it lies in drifts
+ // and reads from far off (no new mesh: the same tufts, painted).
+ const bloom=bloomIn(biomeOf(world.settings.biome).key,seasonOfView(view));
  const colonies=Math.round(rec.count*(view.quality?.grass??1));
  for(let tries=0,made=0;made<colonies&&tries<colonies*6;tries++){
   const cx=(rng()-.5)*world.halfX*2,cz=(rng()-.5)*world.halfZ*2;
@@ -717,6 +736,7 @@ function addLongGrass(view){
   if(rng()>drift*drift)continue;
   if(world.nearest(cx,cz).d<rec.near)continue;
   const kind=pickKind(),n=8+Math.floor(rng()*7);
+  const head=bloom&&spotHash(cx,cz)<bloom.amount*BLOOM_HEADS?new T.Color(bloom.colours[Math.floor(spotHash(cz,cx)*bloom.colours.length)]):accent;
   for(let k=0;k<n;k++){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
    if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
@@ -729,7 +749,7 @@ function addLongGrass(view){
    dummy.scale.set(h*(.9+rng()*.3),h,h*(.9+rng()*.3));
    dummy.updateMatrix();
    const tint=leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
-   entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:accent.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
+   entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:head.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
   }
   made++;
  }
@@ -879,6 +899,18 @@ function addGroundCover(view){
  // grows and its colour, so the grass after it is where it was; which of the
  // three, and its size, come from where it stands. The gem is the fallback.
  const flowerModels=familyModels('wildflower'),flowerEntries=[],stemTint=new T.Color('#5f8a45'),flowerEye=new T.Color('#f2c84b');
+ // WHICH FLOWERS (the seasons): none in winter, none in a spring before the
+ // landscape's bloom; in its bloom its own colours, at its own strength, in
+ // every landscape. The year's flowers keep their draws in every season, so
+ // the grass after them stands where it did.
+ const season=seasonOfView(view),bloom=bloomIn(biomeOf(world.settings.biome).key,season),yearRound=FLOWER_REGIONS.has(regionOf(world.settings.biome));
+ const bloomSize=bloom?1.7:1;// Bigger in bloom: PLACED, they were specks from a tee.
+ const wildflower=(x,z)=>{
+  let fc=null;
+  if(yearRound&&rng()<.16){const c=biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1];if(season!=='winter'&&season!=='spring')fc=new T.Color(blue?'#93d4de':c);}
+  if(bloom&&spotHash(z,x)<BLOOM_FLOWERS*bloom.amount)fc=new T.Color(bloom.colours[Math.floor(spotHash(x+z,z)*bloom.colours.length)]);
+  return fc;
+ };
  // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
  // world, because a rock the generator does not know about is a rock physics
  // cannot collide with -- which is what they were until they moved. Placing
@@ -939,7 +971,7 @@ function addGroundCover(view){
  const bladeFade=teeFade(world);
  // And short in a tee's carry where blades grow long (Links; carryFade).
  const tallBlades=!!biomeOf(world.settings.biome).scatter.tallGrass,bladeCarry=tallBlades?carryFade(world):null;
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(FLOWER_REGIONS.has(regionOf(world.settings.biome))&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());const fc=wildflower(x,z);if(fc){if(flowerModels.length){const u=spotHash(x,z),fh=(.2+u*.14)*bloomSize;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
  // Drawn only to two-fifths of the long grass's reach, sinking before it
  // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
