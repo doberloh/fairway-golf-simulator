@@ -7,6 +7,7 @@
 //   ... --season winter         the course in that season (summer by default)
 //   ... --device iphone-13      that device's screen and processor, its graphics scaled
 //   ... --shots                 a screenshot per spot, compared A against B
+//   ... --homes 45              the course with fairway homes at that density (its streets)
 //
 // WHY NOT tools/profile.mjs. The profiler measures ONE build against a saved
 // baseline from another day, and on this card that comparison is mostly noise:
@@ -42,7 +43,7 @@ if (!DEVICE) throw Error(`No device ${flag('device')}; one of ${Object.keys(DEVI
 const TIER = flag('tier', DEVICE.tier);
 const BIOME = flag('biome', 'redwood'), HOLES = Number(flag('holes', 9)), SEED = flag('seed', 'PROFILE'), SEASON = flag('season', 'summer');
 const ROUNDS = Number(flag('rounds', 2)), FRAMES = Number(flag('frames', 150)), SETTLE = Number(flag('settle', 40));
-const SHOTS = !!flag('shots', false), LABEL = flag('label', new Date().toISOString().replace(/[:.]/g, '-'));
+const HOMES = flag('homes', null), SHOTS = !!flag('shots', false), LABEL = flag('label', new Date().toISOString().replace(/[:.]/g, '-'));
 const PREFS = JSON.parse(flag('prefs', '{}'));
 
 // Where the camera stands. A tee, 4 m behind it at eye height, looking at the
@@ -151,7 +152,7 @@ async function measureBuild(file, tag, round) {
    for (let i = 0; i < 4 && await page.evaluate(() => document.getElementById('mainMenu').hidden); i++) { await page.keyboard.press('Escape'); await frames(page, 10); }
   }
   if (spotNames.every(n => 'menu' in SPOTS[n])) { out.errors = errors; return out; }
-  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED, season: SEASON});
+  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED, season: SEASON, ...(HOMES ? {homes: true, homeDensity: Number(HOMES)} : {})});
   const renderer = await page.evaluate(() => {
    const gl = document.createElement('canvas').getContext('webgl2');
    const d = gl && gl.getExtension('WEBGL_debug_renderer_info');

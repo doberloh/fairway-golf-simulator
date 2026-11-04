@@ -14,7 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
-import {placeRoads,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
+import {placeRoads,placeStreets,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 import {seatGap,FLOAT_TOLERANCE} from './tree-seat.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -2483,6 +2483,14 @@ export function* generateWorldSteps(settings={},options={}){
  // A house keeps off the paths too (the range has none, and `pathClearance` of
  // no paths is Infinity).
  const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad)||buildings.some(b=>inBuilding(b,x,z,(pad||0)+14))||walls.some(w=>segDist(w,x,z)<(pad||0)+8)||paths.length>0&&pathClearance(paths,x,z)<(pad||0)+4||nearRoad(x,z,(pad||0)+4));
+ // THE STREETS (roads.js placeStreets; generator 84): the houses are known now,
+ // so their streets are laid, joined to the road, before the trees keep off them.
+ if(homes.length){const {streets,lanes}=placeStreets({homes,roads,lot:roadLot,holes,s,surface,height,halfX,halfZ,buildings,walls});roads.push(...streets,...lanes);roadIdx=pathIndex(roads);}
+ // A ROAD OVER WATER IS A BRIDGE (the rule the cart paths keep): a creek thin
+ // enough to slip between the public road's samples, or one the club's drive
+ // routed across, gets its deck, as wide as the road. The streets are closed
+ // to water and need none.
+ for(const r of roads)if(r.kind==='boundary'||r.kind==='drive'){const decks=findBridges([r],{surface,streams,width:r.width});setDecks(decks);bridges.push(...decks);}
  // Built on already: a house or a building, with a margin.
  // A building keeps a clear forecourt: 15 m round it for trees (iteration 4: a
  // chalet stood hidden in its own wood).

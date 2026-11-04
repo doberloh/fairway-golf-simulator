@@ -701,7 +701,7 @@ each, front -Y, origin on the ground at the footprint's centre: street lamp
 (acorn, 5 m), mailbox, lot light pole (9.2 m, two heads), wheel stop (1.83
 m), bag drop (a hipped canopy 10.8 by 6.8 m), planted island (2.5 by 5.5 m,
 its middle clear for a tree) and cart barn (40 by 12 m). The game places
-all but the cart barn and mailbox (roads.js `streetFurniture`).
+all of them (roads.js `streetFurniture`, `placeCartBarn` and `mailboxAt`).
 
 ### The packs made for the new landscapes (2-3 November 2026)
 
