@@ -57,6 +57,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 **The owner's additions of 3 November 2026** (each part of the goal now):
 
+- [ ] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
+  exists in sort of a bowl with a creased rise of land between them. This
+  makes things look extremely unnatural, and also I believe this may have
+  been linked to prior issues we have had with tee boxes and greens ... we
+  need to remove the forced corridor/bowl effect on each hole." The land and
+  generated courses may move; tees and greens may move or change; iterate
+  over all landscapes. The owner's suspect is "Landscape character", which
+  may be folded into "elevation severity" if needed. Check: seen from low
+  and from above on every landscape, no crease between holes, and the tee
+  and green complaints it may have caused looked at again.
 - [ ] **The Dakota Badlands, a forty-first landscape** ("can we add a new
   biome, The north and south dakota Badlands? Do all of the research, data
   gathering, model planning, pictures, and add to the us_landscapes report.

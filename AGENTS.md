@@ -144,6 +144,14 @@ and quality)." So, for this goal:
   rest, under 30% busy and 75 °C), one at a time, logged.
 - **Send pictures as work lands** (the owner: "keep sending pictures to
   the output so i can review in real time").
+- **No hole sits in a bowl** (the owner, 4 November 2026): generated holes
+  had a forced corridor, each in a bowl with a creased rise of land between
+  it and the next. That goes, on every landscape: the land and the courses
+  may move, tees and greens may move or change, and "Landscape character"
+  may be folded into "elevation severity" if that is the root. Iterate over
+  all landscapes. TODO *The owner's additions*; PLAN.md section 0 item 30.
+- **One main agent from here** (the owner, 4 November 2026): when the agents
+  running that day are done, no more fanning out for this goal.
 - **Delete this section in the merge** with the course-builder section.
 
 ## Ideas live in IDEAS.md, and are read only when wanted

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SEASONS, DRAWN, seasonOf, roundSeason, validSeasonChoice, seasonLook} from '../src/seasons.js';
+import {SEASONS, DRAWN, seasonOf, roundSeason, validSeasonChoice, seasonLook, seasonPalette, UNDER_SNOW, dullInWinter} from '../src/seasons.js';
 
 test('a date falls in its meteorological season, flipped south of the equator', () => {
  const on = (m, d = 15) => new Date(2026, m, d);
@@ -106,4 +106,14 @@ test('the wild ground takes the bloom in spring, and no other season, and not th
  assert.equal(seasonPalette(biomeOf('rockies'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
  assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
  assert.deepEqual(seasonPalette(bio, 'summer', 'texas'), {});
+});
+
+test('a snowy winter leaves no bracken or flowers on the snow, and a leaf-fall record no cream', () => {
+ assert.ok(UNDER_SNOW.has('bracken') && UNDER_SNOW.has('fern'));
+ const orange = '#c8702a', dull = dullInWinter(orange);
+ const chroma = h => { const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); return Math.max(...v) - Math.min(...v); };
+ assert.ok(chroma(dull) < chroma(orange) / 2, dull);
+ const bio = {rough: '#b08a3a', semi: '#8a7a3a', bank: '#8a7a3a', fairway: '#4a7a3a'};
+ const plain = seasonPalette(bio, 'winter', 'northeast'), fall = seasonPalette({...bio, leafFall: true}, 'winter', 'northeast');
+ assert.ok(chroma(fall.rough) < chroma(plain.rough) / 2, fall.rough);
 });

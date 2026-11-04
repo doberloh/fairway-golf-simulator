@@ -98,13 +98,17 @@ export function seasonPalette(bio, season, region) {
  else if (season === 'winter') {
   const w = WINTER[region] || 'frost';
   if (w === 'snow') {
-   put('rough', SNOW, .85); put('semi', SNOW, .45); put('bank', SNOW, .6); put('fairway', FROST, .15);
+   // A landscape whose record IS its autumn goes further, as in spring: at
+   // .85 and .75 its snow was cream with orange showing through (4 November
+   // 2026, the picture of a New England wall; PLACED).
+   const autumnal = !!bio.leafFall;
+   put('rough', SNOW, autumnal ? .96 : .85); put('semi', SNOW, autumnal ? .6 : .45); put('bank', SNOW, .6); put('fairway', FROST, .15);
    // The natural grounds under the snow too (grounds.js GROUND_TINT and the
    // record's groundTints): a winter with orange leaf litter under bare
    // trees read as autumn through the snow (3 November 2026). Rock keeps
    // more of itself. Fractions PLACED from the New England picture.
    out.groundTints = Object.fromEntries(Object.entries({...GROUND_TINT, ...(bio.groundTints || {})})
-    .map(([k, v]) => [k, mix(v.toLowerCase(), SNOW, k === 'rock' || k === 'scree' ? .35 : .75)]));
+    .map(([k, v]) => [k, mix(v.toLowerCase(), SNOW, k === 'rock' || k === 'scree' ? .35 : autumnal ? .94 : .75)]));
   }
   else if (w === 'frost') { put('rough', FROST, .35); put('semi', FROST, .2); put('fairway', FROST, .1); }
   else if (w === 'dormant') { put('rough', STRAW, .45); put('semi', STRAW, .3); put('fairway', STRAW, .18); }
@@ -165,3 +169,10 @@ export function farWoodsInSeason(bio, season, region) {
 // a palm, a cactus or a ground plant (each set is the caller's: vegetation.js
 // knows its species). Drawn with no leaf or flower parts, the limbs only.
 export const bareInWinter = (kind, {evergreen, palms, ground}) => !evergreen.has(kind) && !palms.has(kind) && !ground.has(kind);
+// THE WILD GROUND IN A SNOW WINTER (4 November 2026, the first pictures of a
+// wall: orange bracken stood a metre wide on the snow, and lime shrubs and
+// yellow huckleberry flowers with it). A fern lies flat under the snow, so it
+// is not drawn; a plant with no winter of its own in its pack goes dull, with
+// no flower or berry. Drawing only: nothing a ball meets moves. PLACED.
+export const UNDER_SNOW = new Set(['fern', 'swordfern', 'bracken', 'sorrel']);
+export const dullInWinter = leaf => mix(leaf.toLowerCase(), '#6e6a54', .65);
