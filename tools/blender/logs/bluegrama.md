@@ -9,3 +9,11 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r5: Twice the blades: a fuller fine tuft under pale combs (5, 6). Holds.
 - r6: Holds.
 - r7: Autumn: tan, the combs pale. Holds.
+- r8: Spring: grey-green, before its August bloom. Holds.
+- r9: Winter: tan. Holds.
+- r10: Holds.
+- r11: Holds; the combs stand up -- in 15 they curl outward. Next: curl them out.
+- r12: Combs curl outward and down, eyelashes (15). Holds.
+- r13: Checked against its pictures again: holds.
+- r14: Checked against its pictures again: holds.
+- r15: Final: a fine grey-green tuft with pale eyelash combs curled outward; tan in autumn. Done.

@@ -1797,7 +1797,7 @@ Still one file, no network request.
 **The Badlands and the prairie grasses (3 November 2026)** -- the page is
 **37,891,844 bytes (19.82 MB gzipped as measured by gzip -c)**, +0.87 MB
 on phase 8c: the Badlands pack's six species and the grass pack's twelve
-clumps (the model module 24.0 MB), the Badlands' four card pictures
+clumps (the model module 24.1 MB once the grasses had their rounds; the page then 38,071,286 bytes), the Badlands' four card pictures
 (89 KB). The Badlands' formations are the ground's (a landform and a
 shader rule), so they add no model weight. Still one file, no network
 request.

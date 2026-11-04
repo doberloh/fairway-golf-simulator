@@ -13023,8 +13023,8 @@ dominant). Tall fescue as golf rough: [USGA Green Section Record](https://www.us
 [Penn State Extension](https://extension.psu.edu/naturalized-grass-stands-for-golf-courses)
 (less favoured for naturalised stands for its coarse texture; fine fescues
 preferred there). Who grows what, and each family's share and height, are
-PLACED from these ranges. The grass pack's models: round 1 rendered and
-logged; the rest of its fifteen rounds to come.
+PLACED from these ranges. The grass pack's models have their fifteen rounds
+(tools/blender/logs).
 
 ## Terrain true to place (the owner's amendment, 3 November 2026; generator 76)
 

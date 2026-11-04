@@ -9,3 +9,11 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r5: Holds (10, 9).
 - r6: Holds.
 - r7: Autumn: still green, a cool-season grass, heads gone straw. Holds.
+- r8: Spring: fresh light green, as 9. Holds.
+- r9: Winter: still green, a cool-season grass, heads straw. Holds.
+- r10: Holds.
+- r11: Holds; _1 carries only five thin panicles where the rough in 24 shows many. Next: eight.
+- r12: Eight panicles on _1 now, as the rough in 24 in head. Holds.
+- r13: Checked against its pictures again: holds.
+- r14: Checked against its pictures again: holds.
+- r15: Final: a broad low fountain of arching light-green blades, eight open panicles (_1), a dense tuft (_2); green in every season, a cool-season grass. Done. (Rounds 13-15 changed nothing: checks.)

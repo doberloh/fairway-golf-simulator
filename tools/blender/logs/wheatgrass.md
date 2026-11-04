@@ -9,3 +9,11 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r5: Twice the blades: a dense arching blue-green patch (1, 3). Holds.
 - r6: Holds.
 - r7: Autumn: straw, as 1's late-summer prairie. Holds.
+- r8: Spring: blue-green, as 3. Holds.
+- r9: Winter: straw. Holds.
+- r10: Holds.
+- r11: Holds.
+- r12: Holds.
+- r13: Checked against its pictures again: holds.
+- r14: Checked against its pictures again: holds.
+- r15: Final: a dense patch of arching blue-green blades with narrow spikes; straw from late summer. Done.

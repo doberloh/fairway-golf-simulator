@@ -97,8 +97,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   retroactively build them"): tall fescue, little bluestem, switchgrass,
   Indiangrass and blue grama (and the Badlands' western wheatgrass) as
   long-grass families (tools/blender/cartoon_prairiegrass.py; biomes.js
-  GRASSES says who grows what -- seventeen landscapes). Still to do: the
-  pack's fifteen rounds, build-meshes, captures, docs, commit.
+  GRASSES says who grows what -- seventeen landscapes). **Built**: fifteen
+  rounds each (tools/blender/logs; rounds 13-15 were checks with no
+  change), the four seasons, in the game's model data, seen in the
+  Heartland's rough (a capture sent to the owner). Still to do: a
+  frame-rate A/B on Low (long grass is drawn in colonies, so a cost is
+  possible), and the other sixteen landscapes seen in captures.
 - [ ] **Every landscape's terrain true to its place** (the owner, 3 November
   2026: "Do all of these new landscapes have different terrain generation
   based on their location and research? Similar to the badlands? If not.

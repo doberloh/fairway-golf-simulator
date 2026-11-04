@@ -98,7 +98,8 @@ def littlebluestem(height, n, stalks):
     root, with thin seed stalks standing out of it."""
     def build(mesh, rng):
         H = height
-        blades(mesh, rng, n, H, .28, .02, .1, .08, .55, stiff=True)
+        # Round 10: no mound (it read as a dark block under the blades).
+        blades(mesh, rng, n, H, .28, .02, .1, .08, .55, stiff=True, mound=False)
         for k in range(stalks):
             a = rng.uniform(0, math.tau)
             root = Vector((math.cos(a) * .04, math.sin(a) * .04, 0))
@@ -138,7 +139,7 @@ def indiangrass(height, n, plumes):
             a = rng.uniform(0, math.tau)
             root = Vector((math.cos(a) * .06, math.sin(a) * .06, 0))
             top = stalk(mesh, rng, root, a, H * rng.uniform(.85, 1.0), .1, .01)
-            mesh.add_lump(top - Vector((0, 0, H * .09)), (.022, .022, H * .1), 'accent', rng, subdiv=1, jitter=.15,
+            mesh.add_lump(top - Vector((0, 0, H * .12)), (.016, .016, H * .14), 'accent', rng, subdiv=1, jitter=.12,
                           flex=1.0)
         paint_blades(mesh, H)
     return build
@@ -158,7 +159,8 @@ def bluegrama(height, n, combs):
             for j in range(1 + (k % 2)):
                 b = a + (j - .5) * 1.2
                 d = Vector((math.cos(b), math.sin(b), 0))
-                tip = top + d * H * .14 + Vector((0, 0, -H * .03))
+                # Round 12: curled outward and down, an eyelash (15).
+                tip = top + d * H * .16 + Vector((0, 0, -H * .07))
                 mesh.add_tube([top, top + d * H * .07 + Vector((0, 0, H * .01)), tip], [.006, .006, .002], 4, 'accent',
                               rng=rng, cap_end=False)
         paint_blades(mesh, H)
@@ -182,14 +184,14 @@ def wheatgrass(height, n, spikes):
 
 
 MODELS = [
-    ('Blender_TallFescue_1', tallfescue(.55, 34, 5)),
+    ('Blender_TallFescue_1', tallfescue(.55, 34, 8)),
     ('Blender_TallFescue_2', tallfescue(.45, 28, 0)),
     ('Blender_LittleBluestem_1', littlebluestem(.75, 40, 12)),
     ('Blender_LittleBluestem_2', littlebluestem(.6, 32, 8)),
     ('Blender_Switchgrass_1', switchgrass(1.5, 30, 16)),
     ('Blender_Switchgrass_2', switchgrass(1.2, 24, 11)),
-    ('Blender_Indiangrass_1', indiangrass(1.7, 28, 9)),
-    ('Blender_Indiangrass_2', indiangrass(1.4, 22, 6)),
+    ('Blender_Indiangrass_1', indiangrass(1.7, 44, 9)),
+    ('Blender_Indiangrass_2', indiangrass(1.4, 34, 6)),
     ('Blender_BlueGrama_1', bluegrama(.35, 64, 16)),
     ('Blender_BlueGrama_2', bluegrama(.3, 52, 10)),
     ('Blender_Wheatgrass_1', wheatgrass(.75, 72, 8)),

@@ -739,4 +739,8 @@ face zigzag on a slope -- slice the faces at each bed's level instead
 tall fescue, little bluestem, switchgrass, Indiangrass, blue grama and
 western wheatgrass as long-grass families (`grasstallfescue`,
 `grasslittlebluestem`, `grassswitch`, `grassindian`, `grassgrama`,
-`grasswheat`; biomes.js `GRASSES`), in its rounds.
+`grasswheat`; biomes.js `GRASSES`), fifteen rounds each and the four
+seasons. Lessons: a clump reads only when dense (twice the blades of the
+old families) and wide at the root -- every reference is a fountain; a
+panicle is a cloud of short branches along the stem's top third, not a
+star at its tip.
