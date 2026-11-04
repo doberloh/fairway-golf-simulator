@@ -119,6 +119,17 @@ test('a street starts on a road or another street, and bends rather than corners
  assert.ok(shape.sharp.length <= streets.length / 2, `${shape.sharp.length} sharp corners on ${streets.length} streets`);
 });
 
+test('a street does not hang off another\'s tip and head back beside it', () => {
+ for (const w of ESTATES) {
+  const streets = w.roads.filter(r => r.kind === 'street');
+  for (const a of streets) for (const b of streets) {
+   if (a === b) continue;
+   const p = a.points, E = p[p.length - 1], D = p[Math.max(0, p.length - 3)], S = b.points[0], N = b.points[Math.min(b.points.length - 1, 2)];
+   assert.ok(Math.hypot(E.x - S.x, E.z - S.z) >= 3 || (E.x - D.x) * (N.x - S.x) + (E.z - D.z) * (N.z - S.z) >= 0, `${w.settings.biome}: a blunt join`);
+  }
+ }
+});
+
 test('a house turns its front to the street, away from the fairway, and its footprint stays', () => {
  for (const w of ESTATES) for (const h of w.homes) {
   const hole = w.holes.find(q => q.hole === h.hole), mid = hole.toWorld({x: hole.center(h.along), z: h.along});

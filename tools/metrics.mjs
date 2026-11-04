@@ -630,7 +630,15 @@ METRICS.roads = {
   // The ends judged against every road they may join; the corners, the streets' own.
   const ends = new Set(streets.flatMap(r => [r.points[0], r.points[r.points.length - 1]]));
   const looseEnds = pathShape(roads.filter(r => r.kind !== 'lane'), w.buildings || []).looseEnds.filter(p => ends.has(p));
-  const counts = {roads: roads.length, lots: w.lot ? 1 : 0, publicRoads: roads.filter(r => r.kind === 'boundary').length, streets: streets.length, lanes: lanes.length, streetSharp: pathShape(streets, []).sharp.length, streetDeadEnd: looseEnds.length};
+  // A street that leaves another's far end heading back along it: a blunt point
+  // no dead-end test sees, the two being joined.
+  let streetFold = 0;
+  for (const a of streets) for (const b of streets) {
+   if (a === b) continue;
+   const p = a.points, E = p[p.length - 1], D = p[Math.max(0, p.length - 3)], S = b.points[0], N = b.points[Math.min(b.points.length - 1, 2)];
+   if (Math.hypot(E.x - S.x, E.z - S.z) < 3 && (E.x - D.x) * (N.x - S.x) + (E.z - D.z) * (N.z - S.z) < 0) streetFold++;
+  }
+  const counts = {roads: roads.length, lots: w.lot ? 1 : 0, publicRoads: roads.filter(r => r.kind === 'boundary').length, streets: streets.length, lanes: lanes.length, streetSharp: pathShape(streets, []).sharp.length, streetDeadEnd: looseEnds.length, streetFold};
   return {series: {}, counts, invariants: {
    roadOnPlay: roadOnPlay(w, (x, z) => w.surface(x, z)).length,
    // No road over water but on a bridge (paths.js's own test), no drive that

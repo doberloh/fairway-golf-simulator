@@ -13319,10 +13319,11 @@ every figure PLACED, for the owner to overrule:
 - **What it costs.** The rough beside play is 8 times as dear to cross. Water is
   closed to a street altogether: a row a creek cuts off loses its drives rather
   than gaining a bridge, the simpler rule. Over the full bench with homes on
-  (195 courses, 1,583 houses): 558 streets and 663 lanes, 0 roads on play, 0
+  (195 courses, 1,583 houses): 558 streets and 661 lanes, 0 roads on play, 0
   on water, 0 drives to nowhere, 0 through a building; 78 streets keep a corner
-  sharper than the cart paths' limit and 66 stop short where no cul-de-sac fits
-  (bench counts `streetSharp`, `streetDeadEnd`). Courses are spread out, so a
+  sharper than the cart paths' limit, 49 stop short where no cul-de-sac fits and
+  7 still leave a tip heading back (bench counts `streetSharp`, `streetDeadEnd`,
+  `streetFold`). Courses are spread out, so a
   street can be long for what it serves: 2 to 3 km on a nine with ten garaged
   houses, and a lone house at the far end of the property keeps its long way
   to the road (PLACED: no cap, so that a drive still arrives). Laying them
@@ -13336,10 +13337,15 @@ every figure PLACED, for the owner to overrule:
   deck as wide as the road (course.js, `findBridges`), and both keep off the
   clubhouse; a drive tries the lot's next side when the first is walled by it.
   These are the only changes on a course with homes off.
-- **Seen, and a bug it showed.** The first pictures showed a lane laid under the
-  street coming through on a crown: a road's strip has two points across, so it
-  cuts straight over a rise that the lane follows. A lane now stops at the
-  street's edge; a road's strip lies 5 cm above the ground, the paths' 3.5.
+- **Seen, and the bugs it showed.** The first pictures showed a lane laid under
+  the street coming through on a crown: a road's strip has two points across,
+  so it cuts straight over a rise that the lane follows. A lane now stops at
+  the street's edge; a road's strip lies 5 cm above the ground, the paths' 3.5.
+  The Sonoran's showed two more no count had seen: a street hanging off another's
+  far end and running back beside it, a blunt point that reads as joined (a street
+  whose way out heads back now joins 40 m along, and the tip gets its cul-de-sac:
+  `streetFold` 54 to 7, dead ends 64 to 49), and a lane in
+  the warm landscapes' sand colour lost against the sand (concrete everywhere).
 
 ## The software renderer on Medium, retried (3 November 2026, evening)
 

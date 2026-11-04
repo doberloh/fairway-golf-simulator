@@ -2059,7 +2059,7 @@ export class GolfView{
   // A street is the public road's surface where that is not asphalt, else a
   // street's own; a house's lane is the drive it runs on from. A road lies a
   // finger above the paths and lanes, so a crossing does not shimmer.
-  const roadKind=r=>r.kind==='drive'?DRIVE[roadKey]||'road':r.kind==='lane'?(w.bio?.warm?'granite':'concrete'):PUBLIC[roadKey]||(r.kind==='street'?'street':'road');
+  const roadKind=r=>r.kind==='drive'?DRIVE[roadKey]||'road':r.kind==='lane'?'concrete':PUBLIC[roadKey]||(r.kind==='street'?'street':'road');
   for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:roadKind(r),lift:r.kind==='lane'?.035:.05}))]){
    // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
    // "clipping through hills"): a straightened run's corners can be a hundred

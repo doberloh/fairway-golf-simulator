@@ -400,8 +400,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   `street-high`, `mailbox`, `street-back`: the Heartland RD-1), the mailboxes
   among them. Not played in a round. Open for the owner: a house now shows the
   fairway its back wall (RESEARCH, *The fairway homes' streets*, has the
-  alternatives); the bench keeps 78 sharp corners and 66 streets that stop
-  short, across 195 courses and 558 streets; and a row a creek cuts off
+  alternatives); the bench keeps 78 sharp corners, 49 streets that stop short and 7 blunt
+  joins, across 195 courses and 558 streets; and a row a creek cuts off
   loses its drives rather than gaining a road bridge.
 - [x] **Roads in the builder** (3 November 2026): Road is in every
   landscape's Paint and Outline lists (layers.js `layersFor`) -- painted

@@ -362,9 +362,9 @@ export function placeStreets({homes, roads, lot = null, holes, s, surface, heigh
   for (const [su, sv] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { const u = su * (lot.width / 2 + 1.5), v = sv * (lot.depth / 2 + 1.5); net.push({x: lot.x + u * rc + v * rs, z: lot.z - u * rs + v * rc, dx: 0, dz: 0, own: lot}); }
  }
  if (!net.length) { for (const h of drives) h.garage = false; return out; }
- const nearestNet = (p, skip = null) => {
+ const nearestNet = (p, skip = null, tip = null) => {
   let best = null, d = Infinity;
-  for (const q of net) { if (q.own === skip) continue; const e = Math.hypot(q.x - p.x, q.z - p.z); if (e < d) { d = e; best = q; } }
+  for (const q of net) { if (q.own === skip || (tip && q.own === tip.own && Math.hypot(q.x - tip.x, q.z - tip.z) < 40)) continue; const e = Math.hypot(q.x - p.x, q.z - p.z); if (e < d) { d = e; best = q; } }
   return best && {...best, d};
  };
  // A street meets what it joins at a slant: on along the host, the way it
@@ -391,7 +391,19 @@ export function placeStreets({homes, roads, lot = null, holes, s, surface, heigh
   for (const r of pending) for (const end of [0, r.length - 1]) { const d = nearestNet(r[end].at).d; if (!best || d < best.d) best = {r, end, d}; }
   const row = best.end ? [...best.r].reverse() : best.r;
   pending = pending.filter(r => r !== best.r);
-  const j = nearestNet(row[0].at), head = line(j, row[0].at);
+  // A street does not hang off another's tip and head back beside it: that is
+  // a blunt point (the Sonoran's first picture). It joins 40 m back instead, and
+  // the tip gets its own turn below. The way out is what counts, not where the
+  // row lies: a route forward to a row beyond can still start backward.
+  let j = nearestNet(row[0].at), head = line(j, row[0].at);
+  const own = j.own.kind === 'street' ? j.own.points : null, T = own?.[own.length - 1];
+  if (head && T && Math.hypot(j.x - T.x, j.z - T.z) < 8) {
+   const out = every2(head), N = out[Math.min(out.length - 1, 6)];
+   if ((N.x - T.x) * j.dx + (N.z - T.z) * j.dz < 0) {
+    const back = nearestNet(row[0].at, null, {own: j.own, x: T.x, z: T.z}), other = back && line(back, row[0].at);
+    if (other) { j = back; head = other; }
+   }
+  }
   if (!head) { if (row.length > 1) pending.push(row.slice(1)); continue; }
   let pts = head, i = 1;
   for (; i < row.length; i++) { const leg = line(row[i - 1].at, row[i].at); if (!leg) break; pts = pts.concat(leg.slice(1)); }
