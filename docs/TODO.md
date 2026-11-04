@@ -363,7 +363,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   shell, the Old Northeast's brick, Desert Palms' cobble, concrete;
   renderer.js addPaths), and a mailbox at the street end of every
   garaged house's drive. Smoke every-landscape passes; the drives seen in
-  captures (biome-shots view : Longleaf's red clay, the Lowcountry's
+  captures (biome-shots view `lot`: Longleaf's red clay, the Lowcountry's
   shell); the mailboxes not yet seen in a picture.
   Still open: streets joining the fairway homes to the road (a
   generation change).
