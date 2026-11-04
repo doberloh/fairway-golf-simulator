@@ -146,14 +146,13 @@ const toOthers = (w, p, e) => { let d = Infinity; for (const o of w.paths) if (o
 const lengthOf = pts => pts.reduce((a, p, k) => a + (k ? Math.hypot(p.x - pts[k - 1].x, p.z - pts[k - 1].z) : 0), 0);
 test('the paths are one network, joined where they meet', () => {
  // PA-2 Midwest came in two halves: hole 10's pull-off sat in a pocket.
- // Not every course is one network yet: 31 of 84 sampled are in two or more
- // (43 before generator 85); TODO *Cart paths in pieces*.
+ // Every course is one network since generator 86 (the bench's `pathInParts`).
  for (const w of [world({seed: 'PA-3', holes: 18, biome: 'heartland'}), world({seed: 'PA-2', holes: 18, biome: 'heartland'})]) {
   const P = w.paths, par = P.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
   P.forEach((p, i) => {
    const ends = [p.points[0], p.points[p.points.length - 1]], d = ends.map(e => toOthers(w, p, e));
    d.forEach((v, k) => assert.ok(v < .05 || v > 8, `piece ${i}: an end stops ${v.toFixed(1)} m short of another path`));
-   if (!p.door) assert.ok(!(d[0] < .05 && d[1] < .05 && lengthOf(p.points) < SPUR), `piece ${i}: a ${lengthOf(p.points).toFixed(0)} m jog between two paths`);
+   if (!p.door && !p.link) assert.ok(!(d[0] < .05 && d[1] < .05 && lengthOf(p.points) < SPUR), `piece ${i}: a ${lengthOf(p.points).toFixed(0)} m jog between two paths`);
    ends.forEach(e => P.forEach((o, j) => { if (j !== i) for (let k = 1; k < o.points.length; k++) if (seg(e, o.points[k - 1], o.points[k]) < .05) par[f(i)] = f(j); }));
   });
   assert.equal(new Set(P.map((_, i) => f(i))).size, 1, 'the network is in more than one piece');

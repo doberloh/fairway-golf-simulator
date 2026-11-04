@@ -157,6 +157,10 @@ than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
 
+## One cart path network (generator 86)
+
+Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
+
 ## The country is one surface (generator 85)
 
 The hills and each landscape's landform stand everywhere. A hole lies on the

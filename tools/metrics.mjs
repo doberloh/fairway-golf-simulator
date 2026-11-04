@@ -1,6 +1,6 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {landingZones} from '../src/markings.js';
-import {unbridgedWater, pathShape} from '../src/paths.js';
+import {unbridgedWater, pathShape, partsOf} from '../src/paths.js';
 import {roadOnPlay, roadOnHouse} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {seatGap, FLOAT_TOLERANCE} from '../src/tree-seat.js';
@@ -617,7 +617,7 @@ METRICS.paths = {
   // `pathShape`): counted, not yet held at zero (TODO).
   const shape = pathShape(w.paths || [], w.buildings || []);
   const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length, pathDeadEnd: shape.looseEnds.length, pathSharp: shape.sharp.length};
-  const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length};
+  const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length, pathInParts: w.paths.length ? partsOf(w.paths).length - 1 : 0};
   return {series: {}, counts, invariants};
  },
 };

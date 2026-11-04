@@ -57,7 +57,6 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 **The owner's additions of 3 November 2026** (each part of the goal now):
 
-- [ ] **Cart paths in pieces** (found 4 November 2026): the paths on 31 of 84 sampled courses are in two or more networks that do not join (43 before generator 85), so a cart cannot drive the whole course. Not a dead end, and no rule catches it; tests/paths.test.mjs checks two courses that are whole.
 - [ ] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
   exists in sort of a bowl with a creased rise of land between them. This
   makes things look extremely unnatural, and also I believe this may have
@@ -2213,6 +2212,7 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   the friend's card; a friend's round on a code made from the course of the
   week does not count as the course of the week; and there is no way to delete
   a kept challenge (the 20 newest are kept, the oldest drop off).
+
 
 # Done
 

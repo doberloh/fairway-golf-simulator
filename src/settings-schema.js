@@ -460,7 +460,12 @@ export const SCHEMA_VERSION=26;
 //     crease stands between two holes; a green stands on the same long shape;
 //     a tee keeps its level under a pond's shelf; a landmark keeps off the road.
 //     Moved all 41 landscapes.
-export const GENERATOR_VERSION=85;
+// 86: the cart paths one network (paths.js `stitch`, `isLink`): 31 of 84
+//     sampled courses were in two or more parts no cart could drive between,
+//     most with a gap of 3-15 m where a short piece had been taken out as a
+//     jog. A piece that is the only link stays, and a part left over is joined
+//     straight or by the router. Moved the courses that were in parts.
+export const GENERATOR_VERSION=86;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

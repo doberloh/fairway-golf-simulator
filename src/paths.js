@@ -281,6 +281,33 @@ function waypoints(h, s) {
 // at both ends that is shorter than SPUR -- a jog between two points the
 // network already joins -- is not laid.
 export const SPUR = 3 * CELL;
+// The nearest point of a segment to `p`, and whether `p` lies on a line.
+const closestOn = (p, a, b) => { const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)), q = {x: a.x + dx * t, z: a.z + dz * t}; return {q, d: Math.hypot(q.x - p.x, q.z - p.z)}; };
+const onPoints = (p, pts) => { for (let k = 1; k < pts.length; k++) if (closestOn(p, pts[k - 1], pts[k]).d < .05) return true; return false; };
+// The parts of a network no cart can drive between, smallest first (the bench's
+// `pathInParts`).
+export const partsOf = paths => {
+ const part = paths.map((_, i) => i), find = i => part[i] === i ? i : (part[i] = find(part[i]));
+ paths.forEach((p, i) => [p.points[0], p.points[p.points.length - 1]].forEach(e => paths.forEach((o, j) => { if (j !== i && onPoints(e, o.points)) part[find(i)] = find(j); })));
+ const groups = new Map();
+ paths.forEach((p, i) => { const g = find(i); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(p); });
+ return [...groups.values()].sort((a, b) => a.length - b.length);
+};
+// IS THIS PIECE ALL THAT JOINS TWO PARTS OF THE NETWORK? Pieces meet where an
+// end of one lies on another; without `list[skip]`, do its two ends still lie
+// in one part? `line` reads a piece's points.
+export function isLink(list, skip, line) {
+ const onLine = onPoints;
+ const part = list.map((_, i) => i), find = i => part[i] === i ? i : (part[i] = find(part[i]));
+ list.forEach((piece, i) => {
+  if (i === skip) return;
+  const pts = line(piece);
+  for (const e of [pts[0], pts[pts.length - 1]]) list.forEach((other, j) => { if (j !== i && j !== skip && onLine(e, line(other))) part[find(i)] = find(j); });
+ });
+ const me = line(list[skip]), touching = end => list.map((other, j) => j).filter(j => j !== skip && onLine(end, line(list[j])));
+ const a = touching(me[0]), b = touching(me[me.length - 1]);
+ return a.length > 0 && b.length > 0 && !a.some(i => b.some(j => find(i) === find(j)));
+}
 export function routePaths({holes, s, surface, streams, ravines = [], height = null}) {
  if (!holes?.length) return {paths: [], bridges: [], connect: () => null, block: () => {}};
  const width = WIDTH.members, kind = pathKind(s.biome);
@@ -452,7 +479,10 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
   else if (at) line.push(n.q); else line.unshift(n.q);
  }
  const joinedBoth = line => [line[0], line[line.length - 1]].every(p => (nearestOther(p, line)?.d ?? Infinity) < .05);
- for (let k = pieces.length - 1; k >= 0; k--) if (length(pieces[k]) < SPUR && joinedBoth(pieces[k])) pieces.splice(k, 1);
+ // Not a piece that is all that holds two parts of the network together
+ // (`isLink`): taking those out left 31 of 84 courses in two or more networks
+ // a cart could not drive between, most with a gap of 3-15 m.
+ for (let k = pieces.length - 1; k >= 0; k--) if (length(pieces[k]) < SPUR && joinedBoth(pieces[k]) && !isLink(pieces, k, p => p)) pieces.splice(k, 1);
  // NO FOLD AT AN END (the same capture: the "spur" was a fold). An end moved
  // onto the network can land behind the point before it, and the strip
  // doubled back on itself into a point -- 17 of 228 ends on four eighteens.
@@ -508,7 +538,46 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  // The steepest 2 m step between two points, as `open` samples it.
  const gradeOf = (a, b) => { const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 2)); let g = 0, prev = grid.heightAt(a.x, a.z); for (let t = 1; t <= n; t++) { const h = grid.heightAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n); g = Math.max(g, Math.abs(h - prev) / (d / n || 1)); prev = h; } return g; };
  const fits = (pts, limit = JOIN_GRADE) => pts.every((p, i) => Number.isFinite(grid.costAt(p.x, p.z)) && !berth.some(b => Math.hypot(p.x - b.g.x, p.z - b.g.z) < b.r) && (i === 0 || open(pts[i - 1], p, limit)));
+ // ONE NETWORK (4 November 2026: 25 of 84 courses still in two or more once no
+ // link was taken out as a jog). A leg with no route, or an end cut back, leaves
+ // a part no cart can reach. The smallest part is joined to the nearest of the
+ // rest: straight where the ground is open, else by the router, and
+ // that part's next-nearest point if that fails. No join where the router has
+ // none, which is water or a wall: tests/paths.test.mjs.
+ const stitch = paths => {
+  for (let round = 0; round < 12; round++) {
+   const parts = partsOf(paths);
+   if (parts.length < 2) return;
+   let joined = false;
+   for (const mine of parts.slice(0, -1)) {
+    const others = parts.filter(o => o !== mine).flat(), near = [];
+    for (const p of mine) for (let k = 0; k < p.points.length; k += 2) {
+     const a = p.points[k];
+     let best = null;
+     for (const o of others) for (let m = 1; m < o.points.length; m++) { const q = closestOn(a, o.points[m - 1], o.points[m]); if (!best || q.d < best.d) best = q; }
+     if (best) near.push({a, q: best.q, d: best.d});
+    }
+    near.sort((x, y) => x.d - y.d);
+    // The four nearest, spaced apart, so one blocked spot does not end it.
+    const tried = [];
+    for (const n of near) {
+     if (tried.length >= 4) break;
+     if (tried.some(t => Math.hypot(t.x - n.a.x, t.z - n.a.z) < 30)) continue;
+     tried.push(n.a);
+     let line = fits([n.a, n.q]) ? [n.a, n.q] : null;
+     if (!line) { const cells = grid.route(n.a, n.q); if (cells?.length) { const mid = lineOf(grid, cells).slice(1, -1); if (mid.length) line = [n.a, ...mid, n.q]; } }
+     if (!line) continue;
+     paths.push({points: line, width, kind, link: true});
+     joined = true;
+     break;
+    }
+    if (joined) break;
+   }
+   if (!joined) return;
+  }
+ };
  const shape = (paths, buildings = []) => {
+  stitch(paths);
   const nearestOn = (p, skip) => {
    let best = null;
    for (const other of paths) {
@@ -717,8 +786,10 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
    if (p.door || pts.length < 2) continue;
    let len = 0; for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].z - pts[k - 1].z);
    const a = nearestOn(pts[0], p), b = nearestOn(pts[pts.length - 1], p);
-   if (len < SPUR && a && b && a.d < .05 && b.d < .05) paths.splice(i, 1);
+   if (len < SPUR && a && b && a.d < .05 && b.d < .05 && !isLink(paths, i, q => q.points)) paths.splice(i, 1);
+   else if (len < SPUR && a && b && a.d < .05 && b.d < .05) p.link = true;
   }
+  stitch(paths);
  };
  // A building's ground closed to the router, `pad` metres round it, with
  // the cell-wide dear margin everything blocked has (the owner, 31 October
