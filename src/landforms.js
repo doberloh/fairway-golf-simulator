@@ -325,15 +325,21 @@ const RECIPES = {
   return {
    sinks: true,
    needsSlope: true,
+   needsHeight: true,
    lift: (x, z, fade = 1) => shape(x, z, fade) + o.swale * (fbm(x / 160, z / 160, sc + 3, 2) - .5) * fade,
-   raw: (x, z, y, slope = 0) => {
+   raw: (x, z, y, slope = 0, height = null) => {
     const m = cluster(x, z);
     if (m <= 0) return [0, 0];
     const n = fbm(x / 23, z / 23, sf, 2), t = .4 + .1 * (n - .5) * 2;
-    const face = smooth(t, t + .14, slope);
+    // Broken ground or a plain bank: how far the ground bends over 12 m. The
+    // prairie's own roll reaches 0.4 of slope near a hole with the formations
+    // sunk out of it, an even bank that read bare as a slab beside the hole
+    // (round 6, RESEARCH); it stays grass, unless it stands steep in its own right.
+    const bend = height ? Math.abs(height(x + 12, z) + height(x - 12, z) - 2 * y) + Math.abs(height(x, z + 12) + height(x, z - 12) - 2 * y) : 9, own = smooth(1.2, 3, bend);
+    const face = smooth(t, t + .14, slope) * Math.max(own, smooth(.55, .7, slope));
     // The wash: only the shallower clay at a face's foot. A slope, not a
     // mask: the sunk ground near a hole is grass, not a stain.
-    return [face, smooth(.33, .4, slope) * (1 - face)];
+    return [face, smooth(.33, .4, slope) * (1 - face) * own];
    },
    treeKeep: (x, z) => 1 - .92 * smooth(.2, .6, cluster(x, z)),
   };
@@ -717,7 +723,7 @@ export function landformOf(bio, seed) {
 // Baked on the ground atlas's grid (owner-atlas.js), one byte per texel and
 // channel. `height(x, z)` is asked only by a recipe that needs it.
 // A recipe that `needsSlope` is also handed the finished ground's gradient
-// there, rise over run, from heights 1.5 m either side.
+// there, rise over run, from heights 1.5 m either side, and the height function.
 export function wildField(recipe, ex, ez, height) {
  const {Sx, Sz} = ownerAtlasSize(ex, ez), a = new Uint8Array(Sx * Sz), b = new Uint8Array(Sx * Sz);
  if (!recipe.kinds.a && !recipe.kinds.b) return null;
@@ -725,7 +731,7 @@ export function wildField(recipe, ex, ez, height) {
  for (let j = 0; j < Sz; j++) for (let i = 0; i < Sx; i++) {
   const x = ((i + .5) / Sx * 2 - 1) * ex, z = ((j + .5) / Sz * 2 - 1) * ez;
   const slope = recipe.needsSlope ? Math.hypot(height(x + E, z) - height(x - E, z), height(x, z + E) - height(x, z - E)) / (2 * E) : 0;
-  const [ra, rb] = recipe.raw(x, z, recipe.needsHeight ? height(x, z) : undefined, slope);
+  const [ra, rb] = recipe.raw(x, z, recipe.needsHeight ? height(x, z) : undefined, slope, height);
   a[j * Sx + i] = Math.round(Math.max(0, Math.min(1, ra)) * 255);
   b[j * Sx + i] = Math.round(Math.max(0, Math.min(1, rb)) * 255);
  }

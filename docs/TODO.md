@@ -80,14 +80,15 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   every round. **Generator 83** carved it again, by a drainage network
   (`carve`): ridges, pyramids, spires and flat-topped buttes up to about
   130 m of relief, sunk into the prairie near a hole, the road on a valley
-  floor, the far hills tables with fluted banded scarps (`ringCarve`). Five
+  floor, the far hills tables with fluted banded scarps (`ringCarve`). Six
   rounds of captures against the study's pictures; the Badlands' bench rules
   clear on twelve courses, the road and cart paths gentle on seven; winter
   and autumn seen in captures (snow on the tables, the beds bare on the
   faces; straw grass, gold ash). Bully Pulpit, built, opened in the game on
   this build: a 143 m tee shot played, the banded clay on the survey's
-  breaks and the carved tables on its horizon. FRAMEFIGURE Not played by a
-  person. Seen and left alone: the long grass (western wheatgrass, blue
+  breaks and the carved tables on its horizon. On Low the landscape
+  got cheaper, not dearer: 1.23 ms a frame to 0.70 at three tees (*Performance
+  pass*). Not played by a person. Seen and left alone: the long grass (western wheatgrass, blue
   grama) stays green in winter snow, a question for the grass pack's
   seasons; two or three small sunk cones near a green or tee read a little
   like hats from low down. No code left open here but the owner's eye on it.
@@ -291,7 +292,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   sea plane -0.6% (generator 80; that run's wait from start to the main
   menu was 18.8 s for the base build and 21.9 s for this one, with the
   whole afternoon's work between them -- worth a look in the pass); the Badlands alone 0.5-0.8 ms a frame
-  at its tees (the Heartland about 1.0). Earlier: Pacific pack +2.3% (before
+  at its tees (the Heartland about 1.0), and carved (generator 83) 0.70 ms against
+  1.23 for the same tees before it, -43%, triangles down too, the far ring's
+  155,000-180,000 triangles included. Earlier: Pacific pack +2.3% (before
   every variant shipped; with them and the silhouette rework Puget Sound
   measured 10% faster), Rockies +1.8%, Lake Dunes not
   measured cleanly (agents on the processor), Heartland +22% (six tree

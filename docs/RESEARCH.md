@@ -13045,19 +13045,28 @@ SAWTOOTH; local captures, bench/shots/biome-shots/):
 4. **Round 4**: the ring's rock rule narrowed, the wash only from 0.33 to 0.4
    of slope (rock from about .4), the rills sparser and irregular, thin
    and in patches. From the ground it reads as the place: the picture at h2-low.
-5. **Round 5**: the ring's threshold at .9 (rock from about 0.48 of slope) for
-   the ghosts; see *Still open* below.
+5. **Round 5**: the ring's threshold at .9 (rock from about 0.48 of slope):
+   the ghosts gone, seen in the winter and autumn overviews and here. The
+   slab was still there, 3,350 m2 of bare hardpan by hole 2.
+6. **Round 6**: what the slab was. A profile across it: not a sunk ramp, as
+   first assumed (a first fix, testing the carved land's own slope, moved it
+   nothing), but the prairie's own roll at 0.41 of slope with the formations
+   sunk out of it. An even bank and a broken face can have the same slope, so
+   the bake now hands the recipe the finished ground, and rock and wash want
+   the ground to bend, at least 1.2-3 m over 12 m, unless it stands steeper
+   than 0.55-0.7. The largest patch on the seed 500 m2. Final picture: h1-behind
+   against photo 8.
 
 Measured on seven courses (four of nine holes, three of eighteen): 89-129 m of
 relief across the course (75-82 m on the first recipe), 7-24% of the ground bare
-rock (14-17%), 1-2% hardpan (12-13%), 4-14% steeper than 40 degrees. The bench
+rock (14-17%), 0.5-1.5% hardpan (12-13%), 4-14% steeper than 40 degrees. The bench
 on twelve courses of the Badlands alone: every rule clear, no tee shot blocked
 inside 80 m, 9 of 324 shots with ground 1-3 m over the line past 80 m.
 
 **Near a hole, and the ground's rules.** Rock where the finished ground is
 steeper than about 0.40 (rise over run, wandering 0.3-0.5 with noise; rock
-in full 0.14 above that), hardpan from 0.33 to 0.4 at the foot of a face, grass
-below that, so a sunk bank is grass. All PLACED.
+in full 0.14 above that) and broken, hardpan from 0.33 to 0.4 at the foot of a
+face, grass below that and on a plain bank (round 6). All PLACED.
 
 **The far country** (biomes.js `ringCarve`, landscape-edge.js `ringRelief`):
 the course's 4 m carving would only alias into jags on the ring's rows, so over
@@ -13065,8 +13074,24 @@ the course's 4 m carving would only alias into jags on the ring's rows, so over
 tenth the resolution: 350 by 350 cells of 40 m, 14 km across, mirrored past
 that, a mask 1.3 km across, a cap at 110 m, for the tables of photo 5 and photo
 13's Wall. Rows of 70 m out to 3.6 km, where the haze takes them, then 220 m as
-the mesas had: about 155,000-180,000 triangles against the mesas' (see *The
-frame*). PLACED, all of it. The mesas (ringMesas) went from this landscape.
+the mesas had: 155,000-180,000 triangles in the ring. PLACED, all of it. The
+mesas (ringMesas) went from this landscape. A built course on the Badlands gets
+the same far country on its own land (scenery, so no BUILT_VERSION); nothing is
+taken off a built course's ground, which never had the carving.
+
+**The frame** (tools/frame-ab.mjs on Low, the card, this machine, seed SAWTOOTH,
+tees 1, 5 and 9, two rounds, before this work against after, 212 s on the card):
+the frame 1.23 ms to 0.70 ms, -43%; p95 1.80 to 1.17 ms; graphics card 0.66 to
+0.57, 0.51 to 0.51, 0.46 to 0.46 ms; draws 158-200 to 131-189; triangles 3.0-3.9 M
+to 2.9-3.0 M. Cheaper, not dearer, and the graphics card's share is flat; why the
+processor's fell by about two-fifths was not chased (the walls hiding what is
+behind them is a guess, and the holes are the same in both builds). Three tees of one course on Low, so no
+promise for Medium or the overview. Measured on the build before round 6, whose
+change is which ground type a bank bakes as, not anything drawn. The carving adds
+about a quarter of a second to the build of a course, in each worker that asks
+(248 ms alone; bench generation time for twelve courses 87.6 to 106.6 s between
+two runs on a busy machine, noise as much as anything); the start-up to the main
+menu was 34.8 s before and 31.6 s after, the same within its noise.
 
 **The strata** (ground.js `strataColour`, biomes.js `strata`): every rock
 face, every steep hardpan bank and the far ring's faces painted in level
