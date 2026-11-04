@@ -76,11 +76,21 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   to generate the mountain, butte, spire like formations"): the spire,
   wall, butte, horizon-wall and concretion models were cut, and the
   `badlands` landform (landforms.js) with banded strata on every rock face
-  (ground.js) replaces them -- RESEARCH *The Dakota Badlands*. Seen in
-  three rounds of captures sent to the owner; tests and the full bench
-  green. Still to do: more rounds on the formations' look (taller, more
-  spires, the far hills plain), a frame-rate A/B on Low, its seasons seen
-  in a capture, and the builder side checked.
+  (ground.js) replaces them -- RESEARCH *The Dakota Badlands*, which has
+  every round. **Generator 83** carved it again, by a drainage network
+  (`carve`): ridges, pyramids, spires and flat-topped buttes up to about
+  130 m of relief, sunk into the prairie near a hole, the road on a valley
+  floor, the far hills tables with fluted banded scarps (`ringCarve`). Five
+  rounds of captures against the study's pictures; the Badlands' bench rules
+  clear on twelve courses, the road and cart paths gentle on seven; winter
+  and autumn seen in captures (snow on the tables, the beds bare on the
+  faces; straw grass, gold ash). Bully Pulpit, built, opened in the game on
+  this build: a 143 m tee shot played, the banded clay on the survey's
+  breaks and the carved tables on its horizon. FRAMEFIGURE Not played by a
+  person. Seen and left alone: the long grass (western wheatgrass, blue
+  grama) stays green in winter snow, a question for the grass pack's
+  seasons; two or three small sunk cones near a green or tee read a little
+  like hats from low down. No code left open here but the owner's eye on it.
 - [ ] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
   the Badlands, the way Chambers Bay was. **Built** (tools/build-courses.mjs
   `bully-pulpit`): OpenStreetMap way/245874307 at Medora traced, the land

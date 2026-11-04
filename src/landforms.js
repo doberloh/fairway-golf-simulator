@@ -103,6 +103,116 @@ function scatter(o, seed, what) {
  };
 }
 
+// A LANDSCAPE CUT BY ITS OWN DRAINAGE (the Badlands). A grid of `o.grid` cells
+// across 2 * `o.tile` metres. Every cell the cluster mask calls prairie is an
+// outlet; a shortest-path tree grown in from the outlets, over step costs with
+// a heavy-tailed random part, is the drainage network: each cell's one parent
+// is where its water goes, and the tree branches as real gullies do. A cell's
+// area is every cell above it; its height is its parent's plus a slope that
+// falls with area, S = slope * uplift * area ^ -concavity, the steady state of
+// the stream-power law (RESEARCH): steep hillslopes on the divides, almost
+// flat along the big channels. One pass, no iterations of erosion; a light
+// blur takes the cell-to-cell jitter off the divides. Then the summits are
+// drawn up above `peakFrom` metres into spires (`peak`), and where a broad
+// field says so the land stops at a caprock, `cap` metres: a butte or table
+// with a flat sod top. Pure and seeded.
+function carve(o, seed, cluster, uplift) {
+ const N = o.grid, W = N + 1, n = W * W, dx = 2 * o.tile / N, sn = saltOf(seed, 'badl-net'), sb = saltOf(seed, 'badl-cap');
+ const cost = new Float32Array(n).fill(Infinity), parent = new Int32Array(n).fill(-1), done = new Uint8Array(n), order = new Int32Array(n), weight = new Float32Array(n);
+ let cap = n * 4, hk = new Int32Array(cap), hc = new Float32Array(cap), size = 0;
+ const push = (k, c) => {
+  if (size === cap) { cap *= 2; const a = new Int32Array(cap), b = new Float32Array(cap); a.set(hk); b.set(hc); hk = a; hc = b; }
+  let i = size++;
+  while (i > 0) { const p = (i - 1) >> 1; if (hc[p] <= c) break; hk[i] = hk[p]; hc[i] = hc[p]; i = p; }
+  hk[i] = k; hc[i] = c;
+ };
+ const pop = () => {
+  const top = hk[0], k = hk[--size], c = hc[size];
+  let i = 0;
+  for (;;) {
+   let m = 2 * i + 1;
+   if (m >= size) break;
+   if (m + 1 < size && hc[m + 1] < hc[m]) m++;
+   if (hc[m] >= c) break;
+   hk[i] = hk[m]; hc[i] = hc[m]; i = m;
+  }
+  hk[i] = k; hc[i] = c;
+  return top;
+ };
+ for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+  const k = j * W + i, r = hash(i, j, sn);
+  weight[k] = 1 + o.wander * r * r * r * r;
+  if (cluster(-o.tile + i * dx, -o.tile + j * dx) <= 0) { cost[k] = 0; push(k, 0); }
+ }
+ if (!size) { cost[0] = 0; push(0, 0); }
+ const STEP = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+ let c = 0;
+ while (size) {
+  const k = pop();
+  if (done[k]) continue;
+  done[k] = 1; order[c++] = k;
+  const i = k % W, j = (k - i) / W;
+  for (const [a, b, d] of STEP) {
+   const u = i + a, v = j + b;
+   if (u < 0 || v < 0 || u >= W || v >= W) continue;
+   const q = v * W + u;
+   if (done[q]) continue;
+   const nc = cost[k] + d * weight[q];
+   if (nc < cost[q]) { cost[q] = nc; parent[q] = k; push(q, nc); }
+  }
+ }
+ const area = new Float32Array(n).fill(1);
+ for (let e = c - 1; e >= 0; e--) { const k = order[e], p = parent[k]; if (p >= 0) area[p] += area[k]; }
+ let h = new Float32Array(n);
+ for (let e = 0; e < c; e++) {
+  const k = order[e], p = parent[k];
+  if (p < 0) continue;
+  const i = k % W, j = (k - i) / W, pi = p % W, pj = (p - pi) / W;
+  const s = o.slope * uplift(-o.tile + i * dx, -o.tile + j * dx) * Math.pow(area[k], -o.concavity);
+  h[k] = h[p] + Math.hypot(i - pi, j - pj) * dx * s;
+ }
+ for (let pass = 0; pass < o.blur; pass++) {
+  const b = new Float32Array(n);
+  for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+   const l = i ? i - 1 : i, r = i < N ? i + 1 : i, u = j ? j - 1 : j, d = j < N ? j + 1 : j;
+   b[j * W + i] = (4 * h[j * W + i] + 2 * (h[j * W + l] + h[j * W + r] + h[u * W + i] + h[d * W + i]) + h[u * W + l] + h[u * W + r] + h[d * W + l] + h[d * W + r]) / 16;
+  }
+  h = b;
+ }
+ for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) {
+  const k = j * W + i;
+  let t = h[k];
+  if (t > o.peakFrom) t += (t - o.peakFrom) * (o.peak - 1);
+  const open = smooth(o.capAt, o.capAt + .05, fbm((-o.tile + i * dx) / o.capScale, (-o.tile + j * dx) / o.capScale, sb, 2));
+  h[k] = Math.min(t, o.cap * (1 - open) + 1e4 * open);
+ }
+ return {h, N, dx};
+}
+
+// THE CARVED LAND AS A FIELD: `height(x, z)` metres, `cluster(x, z)` 0 on the
+// prairie, and past the tile the same tile mirrored, which meets itself
+// without a seam. Baked once a seed: the ground, the far ring and the workers
+// each ask for it, and it is a quarter of a second.
+const CARVED = new Map();
+export function carvedField(o, seed, what) {
+ const key = `${what}|${seed}`;
+ const had = CARVED.get(key);
+ if (had?.o === o) return had;
+ const sc = saltOf(seed, what + '-cluster'), su = saltOf(seed, what + '-uplift'), T = o.tile, span = 4 * T;
+ const fold = v => { const p = ((v + T) % span + span) % span; return (p < 2 * T ? p : span - p) - T; };
+ const plain = (x, z) => smooth(o.from, o.to, fbm(x / o.scale, z / o.scale, sc, 2));
+ const {h, N, dx} = carve(o, seed + what, plain, (x, z) => .55 + .9 * fbm(x / o.spine, z / o.spine, su, 2));
+ const W = N + 1;
+ const field = {o, cluster: (x, z) => plain(fold(x), fold(z)), height: (x, z) => {
+  const fx = Math.min(N - 1e-6, (fold(x) + T) / dx), fz = Math.min(N - 1e-6, (fold(z) + T) / dx);
+  const i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j, k = j * W + i;
+  return (h[k] * (1 - tx) + h[k + 1] * tx) * (1 - tz) + (h[k + W] * (1 - tx) + h[k + W + 1] * tx) * tz;
+ }};
+ if (CARVED.size >= 6) CARVED.clear();
+ CARVED.set(key, field);
+ return field;
+}
+
 // ---------------------------------------------------------------- recipes
 //
 // Each returns {lift, raw, treeKeep, needsHeight}. `lift(x, z)` metres;
@@ -185,54 +295,47 @@ const RECIPES = {
  },
  // THE BADLANDS (the owner, 3 November 2026: "I would prefer the landscape to
  // generate the mountain, butte, spire like formations for badlands rather
- // than building a model. Other landscapes do this"). Clusters of carved
- // clay between the holes, as the crags gather theirs: inside a cluster a
- // network of knife-edged ridges (a sharp ridged field, cubed, so its crests
- // are sawtooth aretes and the ground between them falls away), rising to
- // spires where two crests meet; gullies cut across the faces at a finer
- // scale; small ledges every `ledge` share of the height where the beds
- // weather back (the strata the ground shader paints, ground.js
- // `strataOn`). Bare clay faces are rock (A) where the finished ground is
- // steep, and the gentler clay round their feet and on the low ground
- // between is hardpan (B), the washed apron. The prairie table keeps its
- // grass between the clusters. Every number PLACED from the study's
- // pictures (subs/plains/plains.badlands.md, local).
+ // than building a model. Other landscapes do this"). Carved, as the real ones
+ // are, by a drainage network: a table of clay eaten back from its edges by
+ // gullies that branch and branch again, and what is left standing between
+ // the gullies is the ridges, pyramids and spires (`carvedField`, above).
+ // RESEARCH *The Dakota Badlands* has the rounds that led here: a ridged field
+ // reads as lumps at any height, and turned cones as gumdrops.
+ //
+ // SUNK, NOT SQUASHED (`sinks`, which course.js `land` honours): where every
+ // other recipe's relief is multiplied down near a corridor, this one is
+ // LOWERED into the prairie -- a share (1 - fade) taken off the top of the
+ // height -- so what stands near a hole keeps its steep faces and only the
+ // taller peaks reach the grass there. Squashed, the same ground was gentle
+ // banks of rock paint beside the fairways, the look the owner turned down.
+ // Bare clay faces are rock (A) where the finished ground is steep; hardpan
+ // (B) is the shallower wash at their feet. Every number PLACED from the study's pictures
+ // (subs/plains/plains.badlands.md, local).
  badlands(o, seed) {
-  const s1 = saltOf(seed, 'badl'), s2 = saltOf(seed, 'badl-crest'), s3 = saltOf(seed, 'badl-gully'), s4 = saltOf(seed, 'badl-cluster');
-  const scale = o.scale;
-  const massif = (x, z) => smooth(o.from ?? .4, o.to ?? .85, fbm(x / scale, z / scale, s1, 2))
-   * smooth(o.cluster ?? .45, (o.cluster ?? .45) + .18, fbm(x / (scale * 2.4), z / (scale * 2.4), s4, 2));
-  // The crests: a sharp ridged field at the crest scale, cubed -- sawtooth
-  // ridges with spires where they meet.
-  const crest = (x, z) => { const r = ridged(x / o.crest, z / o.crest, s2, 3); return r * r * r; };
-  // Gullies: a finer ridged field's troughs, cut into the faces.
-  const gully = (x, z) => 1 - ridged(x / o.gully, z / o.gully, s3, 2);
-  const shape = (x, z) => {
-   const m = massif(x, z);
-   if (m <= 0) return 0;
-   const c = crest(x, z), g = gully(x, z);
-   // A low plinth under the whole cluster, the crests standing on it.
-   // Round 2: a lower plinth (was .22) so the crests stand clear of it as
-   // ridges and spires; the first capture read as rounded banded humps.
-   let h = m * (.12 + .88 * c * smooth(.1, .5, m));
-   h *= 1 - (o.cut ?? .3) * g * g * smooth(.15, .5, m);
-   // Ledges where a bed weathers back: a gentle terrace on the steep faces.
-   if (o.ledges) { const t = terrace(h, o.ledges, .7); h = h * .7 + t.h * .3; }
-   return h;
+  const sc = saltOf(seed, 'badl-cluster'), sf = saltOf(seed, 'badl-floor');
+  const {height: carved, cluster} = carvedField(o, seed, 'near');
+  const shape = (x, z, fade) => {
+   let t = carved(x, z) - (1 - fade) * o.sink;
+   if (t <= 0) return 0;
+   // The foot rounds into the grass over a couple of metres.
+   t = t * t / (t + 2);
+   // Ledges where a bed weathers back.
+   return t * (1 - o.ledge) + Math.floor(t / o.ledges + .5) * o.ledges * o.ledge;
   };
   return {
+   sinks: true,
    needsSlope: true,
-   lift: (x, z) => o.height * shape(x, z) + o.swale * (fbm(x / 160, z / 160, s1 + 3, 2) - .5),
+   lift: (x, z, fade = 1) => shape(x, z, fade) + o.swale * (fbm(x / 160, z / 160, sc + 3, 2) - .5) * fade,
    raw: (x, z, y, slope = 0) => {
-    const m = massif(x, z);
+    const m = cluster(x, z);
     if (m <= 0) return [0, 0];
-    const n = fbm(x / 23, z / 23, s3 + 11, 2);
-    const t = .42 + .14 * (n - .5) * 2;
-    const face = smooth(t, t + .18, slope) * smooth(.04, .16, m);
-    const apron = smooth(.06, .22, m) * (1 - face) * smooth(.4, .6, n * .5 + m * .7);
-    return [face, apron];
+    const n = fbm(x / 23, z / 23, sf, 2), t = .4 + .1 * (n - .5) * 2;
+    const face = smooth(t, t + .14, slope);
+    // The wash: only the shallower clay at a face's foot. A slope, not a
+    // mask: the sunk ground near a hole is grass, not a stain.
+    return [face, smooth(.33, .4, slope) * (1 - face)];
    },
-   treeKeep: (x, z) => 1 - .92 * smooth(.08, .4, massif(x, z)),
+   treeKeep: (x, z) => 1 - .92 * smooth(.2, .6, cluster(x, z)),
   };
  },
  // THE DESERT: flat-topped sandstone mesas and buttes on a seeded grid of

@@ -730,21 +730,28 @@ const LAND = {
  // the slopes, green ash, cottonwood and chokecherry in the draws (NPS and
  // Wikipedia, RESEARCH.md *The Badlands*). The badlands themselves are the
  // ground's, not models (the owner, 3 November 2026): the `badlands`
- // landform carves clusters of sawtooth ridges, spires and gullies between
- // the holes, bare clay faces (rock) over a washed apron (hardpan); the far
- // land rises as mesas and buttes; every rock face is painted in level
- // beds (`strata`, ground.js). Bison on the tables. Every figure not in
- // RESEARCH is PLACED from the study's pictures.
+ // landform carves ridges, pyramids, spires and flat-topped buttes out of a
+ // drainage network between the holes, bare clay faces (rock) with a wash at
+ // their feet (hardpan); the far land is the same carving, coarser, its tables
+ // on the horizon; every rock face is painted in level beds (`strata`,
+ // ground.js). Bison on the tables. Every figure not in RESEARCH is PLACED
+ // from the study's pictures.
  badlands: {title: 'Badlands Wall', tag: 'Banded spires over the mixed-grass prairie.',
   rough: '#9a9868', rock: '#c8b8a4', sky: '#bed6ec', altitude: 750, temperature: 22, sun: 45, treeKind: 'pine',
   rockStyle: 'badlands', rockMoss: '#c8a050', treeDensity: .5, hills: {base: 30, severity: 60, reach: 80},
-  ringLift: 170, ringFace: 'rock', ringMesas: true,
-  landform: {type: 'badlands', scale: 220, crest: 46, gully: 14, height: 40, cut: .45, ledges: 7, swale: 3, from: .36, to: .72, cluster: .4, reach: 90,
+  ringLift: 34, ringFace: 'rock',
+  // The far country is the same carving ten times coarser (landscape-edge.js
+  // `ringRelief`), for the ring's rows to draw: tables with fluted scarps,
+  // the White River's Wall, standing out of the prairie. PLACED.
+  ringCarve: {tile: 7000, grid: 350, scale: 1300, from: .44, to: .5, spine: 900, slope: 1.2, concavity: .5, wander: 14, blur: 1,
+   peakFrom: 90, peak: 1.3, cap: 110, capAt: .52, capScale: 1200, near: 140, far: 700},
+  landform: {type: 'badlands', tile: 1500, grid: 750, scale: 300, from: .46, to: .54, spine: 260, slope: 1.9, concavity: .5, wander: 14, blur: 1,
+   peakFrom: 44, peak: 1.7, cap: 50, capAt: .42, capScale: 320, sink: 80, ledges: 2.2, ledge: .22, swale: 3, reach: 80,
    kinds: {a: 'rock', b: 'hardpan'}, gates: {a: {near: 14, ramp: 18}, b: {near: 10, ramp: 16}}},
   groundTints: {hardpan: '#c8b8a0', rock: '#c4b4a0'},
   // The beds (ground.js strataUniforms): tan rock most often, then pink,
   // grey, the red fossil soils and the white ash, 1.8 m a bed. PLACED.
-  strata: {spacing: 1.8, colors: ['#d4b0a0', '#a8a49c', '#b06a50', '#ece6dc'], shares: [.3, .2, .08, .05]},
+  strata: {spacing: 1.8, colors: ['#d4b0a0', '#a8a49c', '#b06a50', '#ece6dc'], shares: [.3, .2, .08, .035]},
   longGrass: {...TRAITS.plains.longGrass, families: [['grasswheat', 3, .8], ['grassgrama', 2, .35]], leaf: '#8a9a7a', accent: '#c0b080'},
   farForest: {cover: .05, size: 7, scrub: true, paint: .3, colors: ['#4e6458', '#5a6c58', '#6a7a5a']},
   // Round 2 (the first capture): the plains' stands at .3 walled the holes

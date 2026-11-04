@@ -437,7 +437,13 @@ export const SCHEMA_VERSION=26;
 // 82: the High Plains nearly treeless, as the Llano is: trees a fraction
 //     of the plains' (.15), brush and yucca round the holes, the far woods
 //     a thin scrub; the shelterbelts stay. Moved the High Plains.
-export const GENERATOR_VERSION=82;
+// 83: the Badlands carved by their own drainage (landforms.js `carve`): the
+//     ridged field and its ledges replaced by a branching gully network, with
+//     spires and flat-topped buttes, up to about 130 m of relief (was 80);
+//     sunk into the prairie near a hole rather than squashed, and clear of the
+//     four lines the public road can take; the far land carved the same way
+//     (`ringCarve`) in place of the mesas. Moved the Badlands.
+export const GENERATOR_VERSION=83;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

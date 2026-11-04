@@ -14,7 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
-import {placeRoads,onRoad,streetFurniture,placeCartBarn} from './roads.js';
+import {placeRoads,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 import {seatGap,FLOAT_TOLERANCE} from './tree-seat.js';
 // The biome table lives in its own module now: it had grown into the answer to
@@ -1530,6 +1530,19 @@ export function* generateWorldSteps(settings={},options={}){
  // The tee area's relief fades out across the line where the nearest hole
  // changes (land, *NO SEAM*): over SEAM metres, PLACED.
  const seams=!s.range,SEAM=12;
+ // THE ROAD'S VALLEY (a recipe that `sinks`, the Badlands). The public road is
+ // laid long after the ground (roads.js), straight, ROAD_MARGIN outside the box
+ // round the holes on whichever side the clubhouse ends up, and it drapes over
+ // what it meets: over a 60 m formation, a black ribbon up a wall. So the
+ // formations leave the four lines it can take, a valley 2 * ROAD_VALLEY wide
+ // running the length of each, the ground rising out of it over the recipe's
+ // own reach. PLACED.
+ const ROAD_VALLEY=26,roadLines=landform.sinks&&!s.range&&holes.length?(b=>[[b.x0-ROAD_MARGIN,b.z0-120,b.z1+120,0],[b.x1+ROAD_MARGIN,b.z0-120,b.z1+120,0],[b.z0-ROAD_MARGIN,b.x0-120,b.x1+120,1],[b.z1+ROAD_MARGIN,b.x0-120,b.x1+120,1]])(holesBox(holes)):null;
+ const roadValley=(x,z)=>{
+  let d=Infinity;
+  for(const [at,lo,hi,across] of roadLines){const u=across?x:z,v=across?z:x;d=Math.min(d,Math.hypot(v-at,Math.max(lo-u,0,u-hi)));}
+  return smooth((d-ROAD_VALLEY)/(landform.reach??bio.hills.reach));
+ };
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
@@ -1584,8 +1597,10 @@ export function* generateWorldSteps(settings={},options={}){
   // it a quarter of every crest and hummock came back round the tees and stood
   // in the tee shot -- blind shots blocked inside 80 m went from none to six
   // across the full bench.
-  const fade=smooth(n.d/(landform.reach??bio.hills.reach));
-  const lift=liftScale*landform.lift(x,z)*fade;
+  const fade=roadLines?Math.min(smooth(n.d/(landform.reach??bio.hills.reach)),roadValley(x,z)):smooth(n.d/(landform.reach??bio.hills.reach));
+  // A recipe that `sinks` takes the fade itself (the Badlands): its ground is
+  // lowered, so what stands near a hole keeps its steep faces.
+  const lift=liftScale*(landform.sinks?landform.lift(x,z,fade):landform.lift(x,z)*fade);
   let y=base(x,z)+hills+lift;
   // A recipe that sets ground to a height, not by a height (the Lowcountry's
   // marsh at the tide line and its creeks below it), does so last, faded in
