@@ -356,10 +356,15 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
 - [ ] **The rest of the streets kit**: mailboxes and streets for the fairway
   homes, each landscape's road surface (catalogue `streets`).
-- [ ] **Roads in the builder**: drawn anywhere, a parking-lot tool, from
-  OpenStreetMap in door 2 (`highway=*`, `amenity=parking`), stored in the
-  course file (a `BUILT_VERSION` step); a built course's ground code 11 is
-  already a road.
+- [x] **Roads in the builder** (3 November 2026): Road is in every
+  landscape's Paint and Outline lists (layers.js `layersFor`) -- painted
+  anywhere, and Outline Road is the parking-lot tool (draw the lot's edge);
+  door 2 reads OpenStreetMap's roads (`highway=*`, painted their width,
+  osm.js `ROAD_WIDTH`, PLACED from US lane widths) and parking lots
+  (`amenity=parking`) onto the road layer; stored as the course's `road`
+  surface, which the game already draws and plays as road (ground code 11).
+  No BUILT_VERSION step: no existing file plays differently. Tested in Node
+  (tests/osm.test.mjs); not seen in the builder by a person.
 - [x] **The South** (phase 5; SCHEMA 19, no generator step): Piedmont,
   Longleaf Pines, Lowcountry, Bayou and Florida Flatwoods on the South's own
   packs (every variant and far twin), a new `south` region with a

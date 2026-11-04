@@ -1239,6 +1239,19 @@ fairway's edge -- what the picture is for. A trace takes 2-3 s.
   both programs; the website's `RELEASE_SHA256.txt` check confirmed to read
   `Fairway.html`'s line by name; laz-perf's copyright line confirmed.
 
+### Roads (3 November 2026)
+
+The US landscapes plan (PLAN 4: "roads anywhere in the builder"). Road
+is offered in every landscape's Paint and Outline lists (layers.js) --
+Outline Road is the parking-lot tool -- and door 2's OpenStreetMap step lays
+roads (`highway=*` lines, painted their width: osm.js `ROAD_WIDTH`, from 5 m
+for a service drive to 14 for a motorway, PLACED from US lane widths of
+3-3.7 m; footways, tracks, cycleways and golf paths are not roads) and
+parking lots (`amenity=parking` areas, not underground or multi-storey) as
+the road layer. A course stores them as its `road` surface (ground code
+11), which the game already drew and played as road, so no BUILT_VERSION
+step.
+
 ### Skin from the land (3 November 2026)
 
 The owner: "In the builder, we should add an option that the user can

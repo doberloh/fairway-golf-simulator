@@ -84,3 +84,25 @@ test('whose trees: the LIDAR\'s all kept, OpenStreetMap\'s added only where no L
  assert.equal(mergeTrees([], osm).length, 4, 'no survey trees: the map\'s all');
  merged[0].x = 99; assert.equal(lidar[0].x, 0, 'copies, not the same trees');
 });
+
+test('roads and parking lots from the map become the road layer; footways and cart paths do not', async () => {
+ // The US landscapes goal, PLAN 4 (3 November 2026): roads anywhere in the
+ // builder, from OpenStreetMap in door 2.
+ const {roadWidth} = await import('../src/builder/osm.js');
+ const way = (id, tags, pts) => ({type: 'way', id, tags, geometry: pts.map(([x, z]) => ({lat: -z / 1e5, lon: x / 1e5}))});
+ const json = {elements: [
+  way(1, {highway: 'residential'}, [[-40, -60], [-40, 60]]),
+  way(2, {amenity: 'parking'}, [[10, 40], [40, 40], [40, 70], [10, 70], [10, 40]]),
+  way(3, {highway: 'footway'}, [[20, -60], [20, 0]]),
+ ]};
+ const t = createTrace({nx: 201, nz: 401, cell: .5, halfX: 50, halfZ: 100});
+ const laid = layOsm(t, osmFeatures(json, toLocal));
+ assert.equal(t.kindAt(-40, 0), 'road', 'the street');
+ assert.equal(t.kindAt(-37.5, 0), 'road', 'six metres wide');
+ assert.notEqual(t.kindAt(-35, 0), 'road');
+ assert.equal(t.kindAt(25, 55), 'road', 'the parking lot');
+ assert.notEqual(t.kindAt(20, -30), 'road', 'a footway is not a road');
+ assert.equal(laid.road, 2);
+ assert.equal(roadWidth({highway: 'path', golf: 'cartpath'}), 0);
+ assert.ok(overpassQuery([0, 0, 1, 1]).includes('"highway"') && overpassQuery([0, 0, 1, 1]).includes('"amenity"="parking"'));
+});

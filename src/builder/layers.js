@@ -26,7 +26,9 @@ export const LAYER_ORDER = ['water', 'sand', 'green', 'tee', 'path', 'fairway', 
 // so painting rough takes every layer off. A built course takes any ground
 // type in any landscape; this only keeps the list to what the place has.
 export function layersFor(biome) {
- const own = new Set(['path', ...Object.values(biome?.landform?.kinds ?? {}), biome?.fallen?.kind].filter(Boolean));
+ // Road everywhere (the US landscapes goal, PLAN 4: "roads anywhere in the
+ // builder"), as path is.
+ const own = new Set(['path', 'road', ...Object.values(biome?.landform?.kinds ?? {}), biome?.fallen?.kind].filter(Boolean));
  return [...LAYER_ORDER.filter(k => !GROUND_KINDS.includes(k) || own.has(k)), 'rough'];
 }
 

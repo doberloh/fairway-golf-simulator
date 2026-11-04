@@ -718,7 +718,8 @@ are drawn as the course will have them -- each one's outline smoothed --
 not in the editing grid's squares; while you paint, the squares show for a
 moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); **Paint** any
-surface or ground type; **Skin from the land** (under Paint) paints, in one
+surface or ground type -- **Road** among them in every landscape, and
+**Outline** with Road draws a parking lot by its edge; **Skin from the land** (under Paint) paints, in one
 go, the landscape's own rock on the land's steep ground -- a butte's or a
 mountain's sides, a badland face -- and its apron (scree, bare clay, sand)
 on the gentler ground just below, leaving flat tops, the holes' turf, sand,

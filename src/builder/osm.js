@@ -27,13 +27,22 @@ export const OSM_LAYERS = {
  sand: t => t.golf === 'bunker' || t.natural === 'sand' && t.golf != null,
  water: t => t.golf === 'water_hazard' || t.golf === 'lateral_water_hazard' || t.natural === 'water' || t.water === 'pond',
  path: t => t.golf === 'cartpath' || t.golf === 'path' || (t.highway === 'path' && t.golf != null),
+ // Roads and parking (the US landscapes goal, PLAN 4; 3 November 2026): a
+ // parking lot's area, and -- as lines, below -- the drives and streets.
+ road: t => t.amenity === 'parking' && t.parking !== 'underground' && t.parking !== 'multi-storey',
 };
+// A road's width by its kind, metres (PLACED from common US lane widths,
+// 3-3.7 m a lane): a two-lane road 7, a residential street or a service
+// drive 6 or 5, a parking aisle 6. Footways, paths and tracks are not roads.
+export const ROAD_WIDTH = {motorway: 14, trunk: 12, primary: 9, secondary: 8, tertiary: 7, unclassified: 6, residential: 6, living_street: 5, service: 5};
+export const roadWidth = t => (t.golf || t.highway === 'path' || t.highway === 'footway' || t.highway === 'track' || t.highway === 'cycleway') ? 0
+ : t.service === 'parking_aisle' ? 6 : ROAD_WIDTH[t.highway] || 0;
 
 // The Overpass query for every golf feature, water body and wood in a box
 // ([lon0, lat0, lon1, lat1]), with their shapes.
 export function overpassQuery([lon0, lat0, lon1, lat1]) {
  const b = `${lat0},${lon0},${lat1},${lon1}`;
- return `[out:json][timeout:90];(way["golf"](${b});relation["golf"](${b});way["natural"="water"](${b});way["natural"="wood"](${b});way["landuse"="forest"](${b});node["natural"="tree"](${b});way["leisure"="golf_course"](${b});way["building"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
+ return `[out:json][timeout:90];(way["golf"](${b});relation["golf"](${b});way["natural"="water"](${b});way["natural"="wood"](${b});way["landuse"="forest"](${b});node["natural"="tree"](${b});way["leisure"="golf_course"](${b});way["building"](${b});way["highway"](${b});way["amenity"="parking"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
 }
 export async function fetchOsm(box, get = fetch) {
  const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(overpassQuery(box))});
@@ -127,6 +136,13 @@ export function layOsm(model, feats, {pathWidth = 2.5, woodDensity = 150} = {}) 
   model.beginStroke();
   for (let i = 1; i < l.points.length; i++) { const [ax, az] = l.points[i - 1], [bx, bz] = l.points[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 1)); for (let s = 0; s <= n; s++) model.paint({x: ax + (bx - ax) * s / n, z: az + (bz - az) * s / n, radius: pathWidth / 2, kind: 'path'}); }
   model.endStroke(); laid.path = (laid.path || 0) + 1;
+ }
+ // Roads as lines, painted their width (roadWidth).
+ for (const l of feats.lines) {
+  const w = roadWidth(l.tags); if (!w) continue;
+  model.beginStroke();
+  for (let i = 1; i < l.points.length; i++) { const [ax, az] = l.points[i - 1], [bx, bz] = l.points[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2)); for (let s = 0; s <= n; s++) model.paint({x: ax + (bx - ax) * s / n, z: az + (bz - az) * s / n, radius: w / 2, kind: 'road'}); }
+  model.endStroke(); laid.road = (laid.road || 0) + 1;
  }
  for (const a of feats.areas) if (a.tags.natural === 'wood' || a.tags.landuse === 'forest') { model.treeZone(a.rings[0], {density: woodDensity, seed: (laid.woods = (laid.woods || 0) + 1)}); }
  for (const t of feats.trees) model.addTree({x: t.x, z: t.z, h: 14, crown: 4});

@@ -13157,3 +13157,11 @@ Rockies, Cascades, Alaska, Ozarks) from 58 to 45. Allowing 60 passes
 instead of 30 rounded two more of those and was not kept. The rest are
 switchbacks of about 120 degrees on slopes of 0.4-0.57: no walkable
 rounded turn fits there.
+
+## Roads in the builder (3 November 2026)
+
+OpenStreetMap's roads painted their width (src/builder/osm.js `ROAD_WIDTH`):
+motorway 14 m, trunk 12, primary 9, secondary 8, tertiary 7, unclassified
+and residential 6, living street and service 5, a parking aisle 6. PLACED
+from common US lane widths of about 3-3.7 m a lane (two lanes and a little
+shoulder for the smaller roads); no source fetched for the exact figures.
