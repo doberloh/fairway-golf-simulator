@@ -57,6 +57,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 **The owner's additions of 3 November 2026** (each part of the goal now):
 
+- [ ] **Cart paths in pieces** (found 4 November 2026): the paths on 31 of 84 sampled courses are in two or more networks that do not join (43 before generator 85), so a cart cannot drive the whole course. Not a dead end, and no rule catches it; tests/paths.test.mjs checks two courses that are whole.
 - [ ] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
   exists in sort of a bowl with a creased rise of land between them. This
   makes things look extremely unnatural, and also I believe this may have
@@ -66,7 +67,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   over all landscapes. The owner's suspect is "Landscape character", which
   may be folded into "elevation severity" if needed. Check: seen from low
   and from above on every landscape, no crease between holes, and the tee
-  and green complaints it may have caused looked at again.
+  and green complaints it may have caused looked at again. Built, generator
+  85 (RESEARCH *The country is one surface*): the bowl is gone by measure on
+  every landscape, tees need less earthwork, "Landscape character" stayed.
+  **Not seen by a person; to look at from the ground.**
 - [ ] **The Dakota Badlands, a forty-first landscape** ("can we add a new
   biome, The north and south dakota Badlands? Do all of the research, data
   gathering, model planning, pictures, and add to the us_landscapes report.

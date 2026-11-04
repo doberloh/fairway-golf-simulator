@@ -38,7 +38,11 @@ test('houses are solid: a ball cannot finish inside one',()=>{
 
 test('houses cost nothing by default, and only cost a stroke when the rule is on',()=>{
  const w=built();
- const forgiving=w.homes.slice(0,10).map(home=>shotInto(w,home).hazard);
+ // Houses well inside the boundary: a shot beside one near it starts, or ends,
+ // out of bounds, which says nothing about the house.
+ const inside=w.homes.filter(home=>Math.abs(home.x)<w.halfX-200&&Math.abs(home.z)<w.halfZ-200).slice(0,10);
+ assert(inside.length>=5,'enough houses inside');
+ const forgiving=inside.map(home=>shotInto(w,home).hazard);
  assert(forgiving.every(x=>x===null),'houses must not penalise until the course says so');
  const strict=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:0,water:0,residentialOB:true});
  assert.equal(strict.homes.length,w.homes.length,'the rule must not move a single house');

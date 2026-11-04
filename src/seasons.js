@@ -102,6 +102,8 @@ export function seasonPalette(bio, season, region) {
    // .85 and .75 its snow was cream with orange showing through (4 November
    // 2026, the picture of a New England wall; PLACED).
    const autumnal = !!bio.leafFall;
+   // No leaf litter through it either (ground.js litterAmount).
+   out.litter = null;
    put('rough', SNOW, autumnal ? .96 : .85); put('semi', SNOW, autumnal ? .6 : .45); put('bank', SNOW, .6); put('fairway', FROST, .15);
    // The natural grounds under the snow too (grounds.js GROUND_TINT and the
    // record's groundTints): a winter with orange leaf litter under bare
@@ -176,3 +178,9 @@ export const bareInWinter = (kind, {evergreen, palms, ground}) => !evergreen.has
 // no flower or berry. Drawing only: nothing a ball meets moves. PLACED.
 export const UNDER_SNOW = new Set(['fern', 'swordfern', 'bracken', 'sorrel']);
 export const dullInWinter = leaf => mix(leaf.toLowerCase(), '#6e6a54', .65);
+// Long grass with no winter of its own, in a snowy one: cured to pale straw,
+// its heads with it, and knocked down to this share of its height (PLACED: it
+// stood in New England's snow in the landscape's autumn orange, the Badlands'
+// wheatgrass green).
+export const curedInWinter = hex => mix(hex.toLowerCase(), '#c4b48c', .8);
+export const SNOW_GRASS_HEIGHT = .6;

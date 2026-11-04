@@ -165,7 +165,7 @@ export const METRICS = {
     if (t.spread > 1.5) counts.needsWork++;
     if (t.lift > .05) counts.raised++;
    }
-   const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0};
+   const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0, teeCollarTilted: 0};
    // IS A TEE DIRECTLY IN FRONT OF ANOTHER ONE? Measured as the sideways gap
    // between each pair on a hole, against the width of the mown collar: two
    // pads whose collars overlap sideways are in line, and the one behind looks
@@ -221,6 +221,8 @@ export const METRICS = {
      }
      series.padSpread.push(Math.max(...pad) - Math.min(...pad));
      series.collarRelief.push(Math.max(...collar) - Math.min(...collar));
+     // A mown collar stands flat round its pad (the country, generator 85).
+     if (Math.max(...collar) - Math.min(...collar) > .5) invariants.teeCollarTilted++;
      // The crease a square plateau leaves under an oval of paint.
      let jump = 0, slope = 0;
      for (const scale of [1.05, 1.3, 1.8, 2.4]) {

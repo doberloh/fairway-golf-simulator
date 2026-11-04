@@ -452,7 +452,15 @@ export const SCHEMA_VERSION=26;
 //     fairway homes on; with homes off, only courses whose public road or club
 //     drive ran through the clubhouse (now kept off it) or over a creek (now a
 //     bridge, as wide as the road).
-export const GENERATOR_VERSION=84;
+// 85: the country is one surface (country.js; the owner: "each hole exists
+//     in sort of a bowl with a creased rise of land between them"). Hills and
+//     landforms stand everywhere and a hole lies on the long shape of them,
+//     capped by elevation severity, rather than the land being pressed flat
+//     along every corridor; the fade is read from a softened distance, so no
+//     crease stands between two holes; a green stands on the same long shape;
+//     a tee keeps its level under a pond's shelf; a landmark keeps off the road.
+//     Moved all 41 landscapes.
+export const GENERATOR_VERSION=85;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -625,8 +633,8 @@ export const SETTINGS=[
  // Looks only (the owner, 2 November 2026: snow is for looks): never part of
  // the ground, so no generator step and no world key (seasons.js).
  {key:'season',category:'course',kind:'choice',options:['today','spring','summer','autumn','winter'],def:'today',label:'Season',tip:'Today\'s season from the date, or one you pick: spring green, summer, autumn colour, or winter with bare trees and snow in the north. Looks only; the ball plays the same.'},
- {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
- {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
+ {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How much the country around the holes stands out: its mountains, dunes, mesas or island channels. The land rises and falls on both sides of a hole.'},
+ {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors, taken from the land they lie on. At 0 every hole is level; at the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
 
  {key:'footprint',category:'landscape',kind:'choice',options:FOOTPRINT_KEYS,def:'organic',label:'Course footprint',tip:'A guiding shape for the whole routing. It steers land use; individual holes stay procedural, so the silhouette is an intention rather than a guarantee.'},

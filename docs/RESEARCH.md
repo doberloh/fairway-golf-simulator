@@ -13655,3 +13655,32 @@ had posts, though thin ones break into dashes at the far end of the hole. Not
 seen: snow on any wall or fence; the final 0.27 m flecks (their shader compiled,
 in the failed run's winter pages, but bloomOn was 0); the new `wall` capture
 view. Not seen by a person.
+
+## The country is one surface: no hole in a bowl (generator 85, 4 November 2026)
+
+**The owner**: "When you look at many of our GENERATED courses, you will see that each hole exists in sort of a bowl with a creased rise of land between them ... I believe this may have been linked to prior issues we have had with tee boxes and greens." The land, courses, tees and greens were free to move.
+
+**The cause.** `land` was `base + hills * fade + lift * fade`, the fade nothing on a corridor and growing with distance from it. Hills and lift are positive, so a multiplier that is zero on the hole is a trough along the hole. And the distance to the nearest of many corridors is the kind of field with a sharp ridge along the line of equal distance, which is the crease. Older entries here (*the base landscape puts a basin in the ground wherever a tee goes*) and generators 53's seam fade were this, seen from the tee. "Landscape character" was the size of that wall, but it was not the root and did not need folding into elevation: the two now mean separate things (the country's relief, and how much of it a hole takes).
+
+**The measure** (a probe, then tests/country.test.mjs; two eighteens a landscape): rise, the mean ground 60-100 m from a corridor less the mean on it, in metres; and crest, of the cells on the line between two corridors, the share with a change of slope of more than .12 across 24 m.
+
+| Landscape | Rise before | after | Crest before | after |
+|---|---|---|---|---|
+| Rockies | 40.7 | -1.1 | 78.9% | 14.5% |
+| High Sierra | 36.9 | -1.6 | 79.8% | 17.2% |
+| Hill Country | 24.4 | -1.0 | 79.1% | 14.4% |
+| Badlands | 22.4 | 6.6 | 63.3% | 7.6% |
+| Ponderosa | 20.6 | -0.1 | 68.5% | 11.6% |
+| SoCal Canyons | 17.1 | -0.3 | 75.6% | 12.9% |
+| Sand Hills | 14.8 | 0.4 | 69.2% | 5.9% |
+| Sonoran | 14.6 | -0.2 | 58.9% | 5.8% |
+| Puget Sound | 12.3 | -0.4 | 64.7% | 7.0% |
+| Heartland | 4.9 | 0.1 | 38.6% | 2.9% |
+
+Forty of the forty-one are within 3 m but for the Badlands (on purpose: it stands on a floor), Monterey (-6.9, the ground falling to the sea) and the Keys (-9.1, unchanged, the islands' own path). The crest's remainder in the mountains is mostly the rock recipes' own cliffs.
+
+**What the holes lost nothing by** (195 courses, full tier, before against after): tees needing real earthwork 106 to 22; tee shots blocked over 1 m 122 to 100, over 3 m 26 to 22; a tee's step down the hole at the 95th percentile 5.33 m to 3.85 m; sharp cart-path corners 190 to 70, dead ends 26 to 13; every bench rule clear. Fairway slope, median, before and after: Rockies 5.2% to 7.0%, High Sierra 5.2% to about 9%, Blue Ridge 5.2% to 7.3%, Puget Sound 5.8% to 4.4%, Sand Hills 5.4% to 3.6%, Heartland 4.7% to 3.1%; the steepest 20 m of a median hole in the Rockies 15.6% to 11.8%. Tee-to-green fall barely moves. The change is side-hill lies in the mountains, gentler holes everywhere else.
+
+**Rounds.** One: `floor + (country - floor) * fade`, the rise gone first time, but a tee at the tip of a corridor lay inside the softened distance and took the country back (a tee collar 1.34 m out of level); hence `CLEAR_EDGE`, 12 m. Two: fairways on the whole long shape were 12% at the median in the Rockies, and the cap as one standard deviation came from that: 18.5 m per unit of elevation severity (6.5 m at the default 35%), PLACED. A first cap of 5 + 18 per unit was not binding, and a share kept at no elevation (.3) broke the rule that elevation 0 is a level hole (tests/play.test.mjs, 0.1 m), so both numbers are now per unit of elevation. Three: six tees of 5,265 still had a tilted collar with no level to them: on rolling ground a pond's shelf ran 60 m, past the tee, and was laid after it; the pad is set back to its level after the basins, and `teeCollarTilted` is a bench rule. Rejected: folding "Landscape character" into "Elevation severity" (the owner's offer; not needed, and it would have cost a settings migration and the country's own size as a setting). PLACED: every constant in course.js *The country*, and the 3 m edge on a tee's level.
+
+**Two landmarks of the change.** A lighthouse could stand on the public road (Oregon Dunes S5): landmarks never asked; they do now. A cart-path network in pieces is not new and got no worse: 31 of 84 sampled courses are in two or more, against 43 before (TODO *Cart paths in pieces*).

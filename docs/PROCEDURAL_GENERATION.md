@@ -157,6 +157,17 @@ than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
 
+## The country is one surface (generator 85)
+
+The hills and each landscape's landform stand everywhere. A hole lies on the
+long shape of that country (softened over a few hundred metres, and eased
+toward the course's mean by elevation severity), so the ground beside it rises
+on one side and falls on the other, with no bowl round the hole and no crease
+between two holes. Near a corridor the country eases into that long shape over
+the recipe's reach. Elevation severity 0 is a level hole. The Badlands stand
+their formations on a prairie floor instead; the driving range and the islands
+keep their own flat base.
+
 ## The country between the holes (generator 37)
 
 Until generator 37 every landscape was the same rolling hills under three

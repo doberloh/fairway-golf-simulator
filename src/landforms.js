@@ -9,9 +9,10 @@
 //
 //  RELIEF (`lift`): crags with stepped cliff bands on a mountainside, sandstone
 //  mesas and dry washes in the desert, hummocky dunes on a links. Metres added
-//  to the raw landform, which course.js `land` fades to nothing near the
-//  playing corridors exactly as it fades the hills -- so the holes are never
-//  touched, and the country rises between them.
+//  to the raw landform. course.js `land` eases it, with the hills, into the
+//  long shape of the country near the playing corridors (generator 85,
+//  country.js) -- so the holes are never touched by a crag, and the ground
+//  beside them rises and falls rather than only rising.
 //
 //  GROUND (`raw`): two channels, A and B, of 0..1, each naming a ground type
 //  (grounds.js) -- rock on the cliff faces and scree below them, a wash's

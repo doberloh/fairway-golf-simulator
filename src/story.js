@@ -74,7 +74,7 @@ const CLEAR_WALL = 14, CLEAR_BUILDING = 38;
 const WALL_GRADE = .3;
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
-export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, buildings = [], blocked = () => false, earthworks = [], paths = []}) {
+export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, buildings = [], blocked = () => false, onRoad = () => false, earthworks = [], paths = []}) {
  const out = {walls: [], buildings: [], props: [], clearings: []};
  const amount = AMOUNT.some;
  const set = storySet(s.biome);
@@ -167,7 +167,7 @@ export function placeStory({holes, s, surface, nearest, height, halfX, halfZ, bu
    // Iteration 4: 220 m out it was a speck from the fairway.
    for (const k of [150, 180, 130, 210]) {
     const x = g.x + dx / l * k, z = g.z + dz / l * k;
-    if ((nearest(x, z)?.d ?? 999) < 60 || PLAYED.has(surface(x, z)) || !free(x, z, 14)) continue;
+    if ((nearest(x, z)?.d ?? 999) < 60 || PLAYED.has(surface(x, z)) || !free(x, z, 14) || onRoad(x, z, 12)) continue;
     // Seated on the lowest ground under it (iteration 5: on a dune it
     // floated over the slope), and only where its top half shows over the
     // land from 120 m short of the green (a dune hid the first one).

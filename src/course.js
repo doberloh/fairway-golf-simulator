@@ -14,6 +14,7 @@ import {placeStory,wallBoxes,segDist} from './story.js';
 import {placeLife} from './life.js';
 import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
+import {softField,fieldMean} from './country.js';
 import {placeRoads,placeStreets,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 import {seatGap,FLOAT_TOLERANCE} from './tree-seat.js';
@@ -1048,8 +1049,16 @@ const TEE_STAGGER_W=5;
 // doubles the steepness there, tapering to nothing at the sides so the bank
 // behind and beside the pad -- the part you actually look at -- is untouched.
 const TEE_FRONT_FALL=0.35;
-// How much of the countryside's relief the ground behind a tee keeps.
-const TEE_AREA_RELIEF=.25;
+// The country (land; country.js). PLACED, round by round: how far the long shape
+// is softened, in metres to a side of each of three passes; how far the
+// distance from a corridor is; how much of that distance counts as the
+// corridor still, so that a tee at its tip stays clear; how far past the
+// course the fields reach; and
+// how much of the long shape a hole keeps per unit of elevation, and the most
+// it may vary per unit, as one standard deviation in metres: on the whole of
+// the long shape a Rockies fairway was 12% at the median. No elevation, no
+// height change along a hole at all (tests/play.test.mjs).
+const COUNTRY_SOFT=50,CLEAR_SOFT=14,CLEAR_EDGE=12,COUNTRY_MARGIN=340,COUNTRY_KEEP=1.85,COUNTRY_SPREAD=18.5;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
 //
 // They used to be the same thing -- one fixed oval centred on every marker --
@@ -1480,27 +1489,6 @@ export function* generateWorldSteps(settings={},options={}){
     (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
    return {d, p};
  }
- // How much nearer the nearest hole's corridor is than any other hole's: zero
- // on the line where the nearest hole changes (land's seam, below). Nothing
- // past `cap` is wanted, so a hole that cannot come nearer is skipped, as in
- // `nearest` -- measuring every hole made a Classic eighteen 15% slower to
- // build. Its box bounds it only beside the centre line: past either end the
- // line carries straight on (`corridorDistance`) and can leave the box, so
- // there the bound is how far past the end the point lies. The box alone moved
- // two Architect landscapes; with this the answer is the same.
- function nearestMargin(x, z, n, cap = Infinity) {
-  let m = cap;
-  for (let i = 0; i < holes.length; i++) {
-   const h = holes[i];
-   if (h === n.h) continue;
-   const b = holeBoxes[i], p = h.toLocal({x, z});
-   const floor = p.z < 0 ? -p.z : p.z > h.length ? p.z - h.length :
-    Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ));
-   if (floor - b.reach - n.d >= m) continue;
-   m = Math.min(m, corridorDistance(i, x, z).d - n.d);
-  }
-  return m;
- }
  const nearby=(x,z)=>nearest(x,z).h;
  // THE BASE ROLL'S SHARE (`baseRoll`, terrain true to place, 3 November
  // 2026): the corridor's broad roll answers the elevation setting the same
@@ -1527,9 +1515,6 @@ export function* generateWorldSteps(settings={},options={}){
  // fringe, and handing the ground to the bunker's hole instead would cut the
  // neighbour's corridor. No draw is taken, so nothing generated after shifts.
  for(const h of holes)h.bunkers=h.bunkers.filter(b=>Array.from({length:48},(_,i)=>{const e=ovalRadius(b,i*Math.PI/24),v=h.toWorld({x:b.x+e.x*1.15,z:b.z+e.z*1.15});return nearby(v.x,v.z)===h;}).every(Boolean));
- // The tee area's relief fades out across the line where the nearest hole
- // changes (land, *NO SEAM*): over SEAM metres, PLACED.
- const seams=!s.range,SEAM=12;
  // THE ROAD'S VALLEY (a recipe that `sinks`, the Badlands). The public road is
  // laid long after the ground (roads.js), straight, ROAD_MARGIN outside the box
  // round the holes on whichever side the clubhouse ends up, and it drapes over
@@ -1543,65 +1528,32 @@ export function* generateWorldSteps(settings={},options={}){
   for(const [at,lo,hi,across] of roadLines){const u=across?x:z,v=across?z:x;d=Math.min(d,Math.hypot(v-at,Math.max(lo-u,0,u-hi)));}
   return smooth((d-ROAD_VALLEY)/(landform.reach??bio.hills.reach));
  };
- function land(x,z,n=nearest(x,z)){
-  const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
-  if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
-  // SOME OF THE COUNTRY COMES BACK BEHIND THE TEE.
-  //
-  // Hills grow only away from a playing corridor, which is what makes a hole
-  // read as a corridor -- and `nearest` counts the ground behind the tee as
-  // full corridor even though nothing is mown there, so the start of every
-  // hole was a flat scooped bowl. A quarter of the surrounding relief comes
-  // back there, which gives a tee real ground to be cut into rather than a
-  // saucer to be perched in.
-  //
-  // Judged wrongly the first time round. The sweep counted "sites needing real
-  // earthwork" as a cost and rejected every setting on that basis -- but
-  // earthwork is not the fault. A tee cut into a hillside is the thing being
-  // asked for. The only true cost is a blind shot, and siting now values a
-  // clear view highly enough to absorb most of that.
-  const mown=(n.h.mowStart??n.h.fairwayStart??22);
-  // SCALED BY THE ELEVATION SETTING, NOT JUST THE LANDFORM ONE. A tee is
-  // ground the player stands on, so it answers to "height change along the
-  // playing corridors" -- set that to zero and the start of a hole has to be
-  // as flat as the rest of it. Left on the landform setting alone, a course
-  // asked for dead level came back with 0.70 m of rise under its tees.
-  // ELEVATION ZERO IS A BASELINE, NOT A PROMISE OF DEAD LEVEL -- the owner's
-  // call. The tee area keeps its relief whatever the elevation setting says,
-  // and elevation raises the corridor from there.
-  //
-  // The DRIVING RANGE is the one exception and keeps its own flag for it.
-  // Flatness there is not a preference, it is the whole instrument: any tilt
-  // is a variable the player did not set, quietly added to every carry.
-  let unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
-  // NO SEAM WHERE TWO CORRIDORS MEET (the owner, 31 October 2026, Architect
-  // Links: "still have that weird hole"). The relief behind a tee is the
-  // nearest hole's, by how far along that hole the point is; where one hole's
-  // tee area lies against another's fairway, both inside their corridors, the
-  // nearest hole changes along a line and the relief switched with it -- a
-  // 2.4 m bank across 1.5 m of Links ST-1's first fairway. It now fades out
-  // over SEAM metres either side of that line, so both sides meet at the
-  // corridor's own ground. Architect had it first (ARCHITECT_VERSION 20);
-  // Classic followed at the owner's word (GENERATOR_VERSION 53), its worst a
-  // 4 m wall in 3 m at a lakeshore fairway's edge. Measured only where the
-  // relief could still beat the hills' own fade-in below (`open` takes the
-  // larger), since nowhere else can the fade change the ground: everywhere,
-  // it cost a Classic eighteen 15% more build time for nothing.
-  if(seams&&unmown>smooth(n.d/bio.hills.reach))unmown*=smooth(nearestMargin(x,z,n,SEAM)/SEAM);
-  const open=reach=>Math.max(smooth(n.d/reach),unmown);
-  // Four hand-written branches, now three numbers the biome states outright.
-  const hills=relief*(bio.hills.base+severity*bio.hills.severity)*rolling*open(bio.hills.reach);
-  // The recipe's relief fades in from the corridor just as the hills do, so a
-  // crag or a mesa rises between the holes and never inside one.
-  // Without the tee area's returned relief (`unmown`, which `open` adds): with
-  // it a quarter of every crest and hummock came back round the tees and stood
-  // in the tee shot -- blind shots blocked inside 80 m went from none to six
-  // across the full bench.
-  const fade=roadLines?Math.min(smooth(n.d/(landform.reach??bio.hills.reach)),roadValley(x,z)):smooth(n.d/(landform.reach??bio.hills.reach));
-  // A recipe that `sinks` takes the fade itself (the Badlands): its ground is
-  // lowered, so what stands near a hole keeps its steep faces.
-  const lift=liftScale*(landform.sinks?landform.lift(x,z,fade):landform.lift(x,z)*fade);
-  let y=base(x,z)+hills+lift;
+ // THE COUNTRY IS ONE SURFACE (country.js; the owner, 4 November 2026). Hills
+ // and landforms stand everywhere, and a hole lies on the long shape of them,
+ // softened over COUNTRY_SOFT metres and eased toward the course's mean by how
+ // much elevation was asked for: the ground beside it rises one way and falls
+ // the other. `fade` runs from that long shape on a corridor to the full
+ // country past the recipe's reach, read from a softened distance so that no
+ // line stands where two corridors are equally near. The driving range and
+ // the islands keep `base` under them: any tilt on a range is a variable the
+ // player did not set. A recipe that `sinks` stands its formations on the
+ // floor and takes the fade itself, and its lift is not part of the long shape.
+ const relief=s.landform/100;
+ const rollingAt=(x,z)=>.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71);
+ const hillsAt=(x,z)=>relief*(bio.hills.base+severity*bio.hills.severity)*rollingAt(x,z);
+ const countryAt=(x,z)=>base(x,z)+hillsAt(x,z)+(landform.sinks?0:liftScale*landform.lift(x,z));
+ const fieldBox=[-halfX-COUNTRY_MARGIN,-halfZ-COUNTRY_MARGIN,halfX+COUNTRY_MARGIN,halfZ+COUNTRY_MARGIN];
+ const longShape=s.range||coastal?null:softField(...fieldBox,24,countryAt,COUNTRY_SOFT);
+ const longMean=longShape?fieldMean(...fieldBox,60,longShape):0,longSpread=longShape?Math.sqrt(fieldMean(...fieldBox,60,(x,z)=>(longShape(x,z)-longMean)**2)):0;
+ const longKeep=Math.min(1,severity*COUNTRY_KEEP,severity*COUNTRY_SPREAD/(longSpread||1));
+ const floorAt=longShape?(x,z)=>longMean+longKeep*(longShape(x,z)-longMean):base;
+ const clearOf=s.range||coastal?(x,z)=>nearest(x,z).d:softField(...fieldBox,12,(x,z)=>nearest(x,z).d,CLEAR_SOFT);
+ function land(x,z,n){
+  if(coastal){n??=nearest(x,z);const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
+  const near=smooth((clearOf(x,z)-CLEAR_EDGE)/(landform.reach??bio.hills.reach));
+  const fade=roadLines?Math.min(near,roadValley(x,z)):near,floor=floorAt(x,z);
+  let y=floor+(countryAt(x,z)-floor)*fade;
+  if(landform.sinks)y+=liftScale*landform.lift(x,z,fade);
   // A recipe that sets ground to a height, not by a height (the Lowcountry's
   // marsh at the tide line and its creeks below it), does so last, faded in
   // from play as the lift is.
@@ -1610,7 +1562,7 @@ export function* generateWorldSteps(settings={},options={}){
   // envelope, and is sea from 25 m
   // (`nearest().d`, the real corridor, doglegs and all): the sea comes in
   // close and the holes' own ground stays a cliff above it.
-  if(bio.edgeCoast){const coast=smooth((x-(coastAt(z)+Math.sin(z/150)*30*(bio.coastSeek?.3:1)))/90)*(bio.coastSeek?smooth((n.d-5)/20):1);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
+  if(bio.edgeCoast){n??=nearest(x,z);const coast=smooth((x-(coastAt(z)+Math.sin(z/150)*30*(bio.coastSeek?.3:1)))/90)*(bio.coastSeek?smooth((n.d-5)/20):1);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
   return y;
  }
  // OPEN WATER, AS OPPOSED TO GROUND THAT MERELY SITS LOW.
@@ -1715,7 +1667,7 @@ export function* generateWorldSteps(settings={},options={}){
  // Raised and sunken greens (greenPedestal in course-plan.js): the green and its
  // collar lifted or dropped as one, with banks beyond the collar. Inside the
  // blend, so the shoulder still carries the terrain back to the land around it.
- const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);
+ const greenY=floorAt(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);
  if(blend>0)y=y*(1-blend)+greenY*blend;}
  return y;}
  // A tee is a terrace cut into whatever the rest of the shaping already
@@ -2242,6 +2194,17 @@ export function* generateWorldSteps(settings={},options={}){
   else if(shore<shelf)y=rim+(y-rim)*smooth((shore-WATER_LIP)/(shelf-WATER_LIP));
  }}
  else if(d<1.15){const blend=1-smooth((d-.62)/.53);y=y*(1-blend)+(b.floor+.08*(d*d))*blend;}}
+ // A TEE KEEPS ITS LEVEL UNDER A POND'S SHELF. On rolling ground a pond's shelf
+ // can run 60 m to meet the land, past a tee on the way, and the shelf is laid
+ // after the tee was: a pad with no level to it, on six tees of 5,265 (the bench's
+ // `teeCollarTilted`). The pad and its collar are set back to their level here,
+ // over a 3 m edge.
+ for(const pad of teePads){
+  if(Math.abs(x-pad.x)>14||Math.abs(z-pad.z)>14)continue;
+  const q=pad.h.toLocal({x,z}),f=teeFrame(q.x-pad.t.x,q.z-pad.localZ,pad.ux,pad.uz);
+  const out=Math.max(0,teeBox(f.across,f.along,TEE_APRON.x,pad.rz*TEE_APRON_SCALE,TEE_ROUND*TEE_APRON_SCALE));
+  if(out<3){const b=1-smooth(out/3);y=y*(1-b)+pad.y*b;}
+ }
  return streams.carve(x,z,y);}
  // THE SHORELINE IS REFINED LIKE ANY OTHER FEATURE.
  //
@@ -2477,7 +2440,7 @@ export function* generateWorldSteps(settings={},options={}){
  let walls=[],storyProps=[],clearings=[];
  if(!s.range){
   const fans1=teeFans(holes);
-  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,paths,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3||nearRoad(x,z,pad+2)});
+  const story=placeStory({holes,s,surface,nearest,height,halfX,halfZ,buildings,paths,onRoad:nearRoad,blocked:(x,z,pad)=>blocksView(launch,x,z,height(x,z)+12,pad)||inTeeFan(fans1,x,z,pad)||pathClearance(paths,x,z)<pad+3||nearRoad(x,z,pad+2)});
   buildings.push(...story.buildings);walls=story.walls;storyProps=story.props;clearings=story.clearings;
  }
  // A house keeps off the paths too (the range has none, and `pathClearance` of

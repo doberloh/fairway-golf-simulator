@@ -88,11 +88,13 @@ export function plantPose(t, height) {
   const a = k * Math.PI / 12, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
   rise = Math.max(rise, t.y + tilt.gx * dx + tilt.gz * dz - height(t.x + dx, t.z + dz));
  }
+ // A tenth over what the rings found, on a slope, for the dip between them
+ // (the country plan's first round: a 59 m sugar pine stood 9 cm proud), and
  // 8 cm under (round 2's 5 cm, after round 1's 2 cm left trunks 4-8 cm
  // proud between the sixteen points; round 3 still found one at 5); a cover
  // never more than 75% of its height (at 60%, one fern on bumpy ground still
  // stood 12 cm proud at an edge; the cap binds only on such rare spots).
- let depth = rise + R * SEAT_LEAN + .08;
+ let depth = rise * 1.1 + R * SEAT_LEAN + .08;
  if (isCover(t)) depth = Math.min(depth, (t.h || 1) * .75);
  return {depth, gx: tilt.gx, gz: tilt.gz};
 }

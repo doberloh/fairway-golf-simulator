@@ -67,6 +67,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/streams.js`, `src/lakes.js`, `src/water-bodies.js` -- rivers and creeks, large lakes, water for the renderer; `src/water-mirror.js` -- trees in still water: low-poly twins of the bank's trees turned over about each pond's level and drawn into a half-size picture each frame (High and Ultra, `mirrorTwins`), read by the pond where it is a mirror
 - `src/homes.js`, `src/vegetation.js` -- houses; trees, shrubs, grass and rocks, Lakeshore Dunes' beach driftwood, and the far heath (domes past the near heather cushions)
 - `src/blowouts.js` -- Lakeshore Dunes' wind-torn sand in the dune rough: one baked field the lie and the ground shader both read; tests/blowouts.test.mjs
+- `src/country.js` -- the soft fields `land` reads: the country's long shape, the distance from a corridor with no crease in it (generator 85)
 - `src/landforms.js` -- each biome's country between the holes (the cartoon overhaul): crags, mesas, dunes, prairie, coral, moor, and (generator 76, terrain true to place) steps, karst, glacial, knobs, channels, volcanic, sandridges, lowland and the Badlands' badlands (carved by a one-pass drainage network, `carve`, `carvedField`; the one recipe that `sinks` rather than fades), chosen per landscape by biomes.js TERRAIN; relief added to the landform and ground types baked on the atlas like the blowouts; tests/landforms.test.mjs, tests/terrain-true.test.mjs
 - `src/stands.js` -- uncleared forest and thicket round the property and between the holes (the cartoon overhaul): where a stand grows and the hashed grid it is planted from; tests/stands.test.mjs
 - `src/grounds.js` -- the ground types a ball plays from besides turf (rock, scree, hardpan, waste sand, pine straw, leaves, heather, native grass, coral): one row each that every surface table reads, and what may stand on each; tests/grounds.test.mjs
@@ -199,7 +200,7 @@ PROCEDURAL_GENERATION.md has the why):
 
 1. Plan par, yardage and each hole's skeleton from the seed; green contours, tees, hazard candidates.
 2. Route all holes together into the footprint.
-3. Shape the biome's landforms around the corridors; blend tees and greens in.
+3. Lay the holes on the long shape of the country (hills and landforms everywhere, country.js); blend tees and greens in.
 4. Level ground under ponds, place large lakes, fit every basin.
 5. Solve drainage once and read every river and creek off it.
 6. Build the adaptive ground mesh; physics reads the same triangles.
@@ -260,7 +261,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A built course (the course builder) is a world from a file: its lie and paint read one field in one order, its holes' frames face their greens, `settings.built` is its file's hash and must not leak into another round, and only `BUILT_VERSION` moves it -- PROJECT_HANDOFF *A BUILT COURSE IS A WORLD FROM A FILE*
 - The cart paths are what is drawn: joins land on drawn lines, nothing is built on a path, the strip has a point every 2 m -- PROJECT_HANDOFF *THE PATH NETWORK IS THE LINE DRAWN*
 - Every path over water or a ravine is a bridge, the clubhouse's link included (`findBridges` runs again once it is laid); the bench's `pathOverWater` must be zero -- PROJECT_HANDOFF *EVERY PATH OVER WATER IS A BRIDGE*
-- A per-hole term in `land` that is not zero inside a corridor makes a bank where the nearest hole changes -- PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*
+- A term added to `land` outside `countryAt`, or anything read from the nearest hole, brings the bowl and the crease back -- PROJECT_HANDOFF *THE COUNTRY IS ONE SURFACE*
 - A test file that builds many courses on one thread sets the whole suite's wait -- PROJECT_HANDOFF *A FILE IS ONE THREAD*
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.

@@ -14,7 +14,7 @@ import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 import {regionOf} from './regions.js';
 import {SEASON_TINTS} from './season-tints.js';
-import {bareInWinter,bloomIn,UNDER_SNOW,dullInWinter} from './seasons.js';
+import {bareInWinter,bloomIn,UNDER_SNOW,dullInWinter,curedInWinter,SNOW_GRASS_HEIGHT} from './seasons.js';
 import {PALMS} from './built-world.js';
 // The regions with wildflowers in the rough. By region: the list was of
 // landscape keys until 2 November 2026, and the keys' rename (Midwest to
@@ -744,7 +744,7 @@ function addLongGrass(view){
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const season=seasonOfView(view);
- const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height,look:grassLook(rec,family,season)})).filter(k=>k.models.length);
+ const kinds=rec.families.map(([family,weight,height])=>{const cured=view.snowTops&&!SEASON_TINTS[family]?.winter,look=grassLook(rec,family,season);if(cured){look.leaf=new T.Color(curedInWinter(`#${look.leaf.getHexString(T.SRGBColorSpace)}`));look.accent=new T.Color(curedInWinter(`#${look.accent.getHexString(T.SRGBColorSpace)}`));}return {models:familyModels(family),weight,height:height*(view.snowTops?SNOW_GRASS_HEIGHT:1),look};}).filter(k=>k.models.length);
  if(!kinds.length)return;
  const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
  const entries=[];
