@@ -17,7 +17,7 @@ import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {softField,fieldMean} from './country.js';
 import {placeRoads,placeStreets,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
-import {seatGap,FLOAT_TOLERANCE} from './tree-seat.js';
+import {gapAt,coverRadius,FLOAT_TOLERANCE} from './seat-core.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
 // conditionals in other files. Re-exported because everything imports it from
@@ -2519,7 +2519,7 @@ export function* generateWorldSteps(settings={},options={}){
  // slopes above average away, and its capped seat left it 6 cm proud
  // (generator 81). Asked only on a cut bank -- refusing every cover there
  // moved every landscape's planting for one shrub.
- const floatsOnCut=(x,z,r,kind,h)=>{const st=streams.at(x,z);return !!st&&st.edge<cutFor(st.width).lip+r&&seatGap({x,z,y:height(x,z),h,r,kind},height).worst>FLOAT_TOLERANCE;};
+ const floatsOnCut=(x,z,r,kind,h)=>{const st=streams.at(x,z);return !!st&&st.edge<cutFor(st.width).lip+r&&gapAt({x,z,y:height(x,z),h,r,kind},height,coverRadius({r})).worst>FLOAT_TOLERANCE;};
  const coverTooSteep=(x,z,r,kind,h)=>{const d=Math.max(.5,r*.6);return Math.max(slopeOver(x,z,d),slopeOver(x,z,Math.max(.3,d/2)))>COVER_STEEPEST||(kind!==undefined&&floatsOnCut(x,z,r,kind,h));};
  // A drop under the foot of more than 15% of the tree's height, or 2 m at
  // most (generator 76: a magnolia stood over a 2.5 m creek bank).

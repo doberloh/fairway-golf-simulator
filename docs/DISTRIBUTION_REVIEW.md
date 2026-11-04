@@ -1801,3 +1801,5 @@ clumps (the model module 24.1 MB once the grasses had their rounds; the page the
 (89 KB). The Badlands' formations are the ground's (a landform and a
 shader rule), so they add no model weight. Still one file, no network
 request.
+
+**4 November 2026, the page doubled its models and was put back.** From generator 81 to 85 the built page was 62.8 MB (33.2 MB gzipped): the generator's worker, inlined into the page, had come to import the models. Fixed: 38,130,402 bytes (20.87 MB gzipped), and tests/worker-imports.test.mjs now fails if the worker reaches them again. No release carried it.
