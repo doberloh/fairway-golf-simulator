@@ -355,7 +355,17 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   of the lot where it fits (on 9 of 17 courses tried), a building. Seen in a
   capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
 - [ ] **The rest of the streets kit**: mailboxes and streets for the fairway
-  homes, each landscape's road surface (catalogue `streets`).
+  homes, each landscape's road surface (catalogue `streets`). **Done
+  (3 November 2026, drawing only):** each landscape's road surface -- the
+  public road asphalt (concrete in Bluebonnet, the Gulf Coast and the
+  Flatwoods, gravel in the Sand Hills), the club's drive the place's own
+  (gravel, dirt, Longleaf's red clay, the Lowcountry's and Pine Barrens'
+  shell, the Old Northeast's brick, Desert Palms' cobble, concrete;
+  renderer.js addPaths), and a mailbox at the street end of every
+  garaged house's drive. Smoke every-landscape passes; **not seen in a
+  picture yet** (the captured views missed the drive and the houses).
+  Still open: streets joining the fairway homes to the road (a
+  generation change).
 - [x] **Roads in the builder** (3 November 2026): Road is in every
   landscape's Paint and Outline lists (layers.js `layersFor`) -- painted
   anywhere, and Outline Road is the parking-lot tool (draw the lot's edge);

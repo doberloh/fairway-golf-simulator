@@ -1,4 +1,4 @@
-import {addHomes} from './homes.js';
+import {addHomes,driveFrame} from './homes.js';
 import {phoneLift,liftsView} from './phone-view.js';
 import {addStreams} from './streams.js';
 import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
@@ -2019,6 +2019,8 @@ export class GolfView{
   else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
   // A road (roads.js): asphalt, its edge lines, a dashed centre line.
   else if(kind==='road'){dots(420,1.4,'#f2f2f2','#c4c4c4');g.fillStyle='#ffffff';g.fillRect(2,0,2,128);g.fillRect(60,0,2,128);g.fillRect(31,0,2,64);}
+  // Brick and cobble (the streets kit): laid courses of setts.
+  else if(kind==='brick'||kind==='cobble'){const bw=kind==='brick'?16:11,bh=kind==='brick'?8:11;g.fillStyle='#bcbcbc';for(let y=0;y<128;y+=bh)for(let x=-(y/bh%2)*bw/2;x<64;x+=bw)g.fillRect(x+1,y+1,bw-2,bh-2);}
   else if(kind==='bark'){for(let i=0;i<220;i++){g.save();g.translate(r()*64,r()*128);g.rotate(r()*Math.PI);g.fillStyle=r()<.5?'#f0f0f0':'#c8c8c8';g.fillRect(-3,-1,6,2);g.restore();}}
   else dots(kind==='shell'?520:460,kind==='granite'?1:1.8,'#fafafa',kind==='shell'?'#d9d9d9':'#bdbdbd');
   // Darker at the edges, so the path's sides read against the grass.
@@ -2028,13 +2030,25 @@ export class GolfView{
  }
  addPaths(w){
   if(!w?.paths?.length&&!w?.roads?.length)return;
-  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f',road:'#55595e'};
+  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f',road:'#55595e',
+   dirt:'#9c8466',redclay:'#a5583a',brick:'#9a4e3c',cobble:'#8a8478'};
+  // EACH LANDSCAPE'S ROAD SURFACE (the streets kit, PLAN 4; the study's
+  // catalogue `streets`): the public road asphalt -- concrete where the
+  // place builds in concrete, gravel in the Sand Hills -- and the club's
+  // drive the place's own country surface. Drawing only. PLACED from the
+  // catalogue's lists (RESEARCH, *Each landscape's road surface*).
+  const roadKey=w.bio?.key||w.settings?.biome;
+  const PUBLIC={bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete',sandhills:'gravel'};
+  const DRIVE={puget:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
+   winecountry:'gravel',heartland:'gravel',sandhills:'gravel',highplains:'gravel',crosstimbers:'dirt',badlands:'gravel',hillcountry:'dirt',longleaf:'redclay',lowcountry:'shell',
+   bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',
+   alaska:'gravel',palms:'cobble',bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete'};
   // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
   // twenty-odd draws on a course whose paths are many short pieces).
   const byKind=new Map();
   // The roads (roads.js; the US landscapes goal, phase 4) are laid as the
   // paths are, darker asphalt.
-  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:'road'}))]){
+  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:(r.kind==='drive'?DRIVE[roadKey]:PUBLIC[roadKey])||'road'}))]){
    // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
    // "clipping through hills"): a straightened run's corners can be a hundred
    // metres apart, and a strip with points only there ran straight through
@@ -2371,7 +2385,7 @@ export class GolfView{
  // furniture. The walls are solid (physics.js reads `wallBoxes`), the props
  // decoration.
  addStory(w){
-  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length&&!w?.streetProps?.length))return;
+  if(this.style!=='cartoon'||(!w?.walls?.length&&!w?.storyProps?.length&&!w?.streetProps?.length&&!w?.homes?.length))return;
   const key=w.bio?.key||w.settings?.biome;
   const STONE=worldOf(key).colours.wall;
   const m4=new T.Matrix4(),q=new T.Quaternion(),q2=new T.Quaternion(),up=new T.Vector3(0,1,0),fwd=new T.Vector3(0,0,1),pos=new T.Vector3(),sc=new T.Vector3();
@@ -2417,6 +2431,11 @@ export class GolfView{
   kit('island','Blender_ParkingIsland_1',.2,{stone:'#c8c4b8',bark:'#5a3e2a',leaf:'#4f7436'},false);
   kit('bagdrop','Blender_BagDrop_1',5.3,{stone:'#ece6d8',bark:'#5e6266',leaf:'#4a3426',accent:'#b8302a'},true);
   kit('streetlight','Blender_StreetLight_1',5,{bark:'#2a2a2a',accent:'#f2e6bc'},true);
+  // A MAILBOX AT EACH HOUSE'S DRIVE (the streets kit, PLAN 4): at the drive's
+  // street end, 2.3 m to its side, facing out (homes.js driveFrame). Drawing
+  // only; nothing a ball meets. 1.2 m on its post.
+  const boxes=(w.homes||[]).filter(h=>h.garage).map(h=>{const {gx,gz}=driveFrame(h),c=Math.cos(h.rotation),sn=Math.sin(h.rotation),lx=gx+(gx>0?2.3:-2.3),lz=gz+4.6;return {x:h.x+lx*c+lz*sn,z:h.z-lx*sn+lz*c,rot:h.rotation};});
+  draw('Blender_Mailbox_1',boxes,{bark:'#4a3a2e',stone:'#2e3438',accent:'#c8302a',leaf:'#2e3438'},true,at(1.2));
   // The Heartland's corn behind its red barn (story.js), 2.4 m standing.
   draw('Blender_CornPatch_1',props.filter(p=>p.kind==='corn'),{leaf:'#4f8a34',accent:'#d8c070'},false,at(2.4));
   // A Restored course's felled avenue (phase 6's history): the shipped stumps.

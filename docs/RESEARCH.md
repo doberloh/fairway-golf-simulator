@@ -13165,3 +13165,14 @@ motorway 14 m, trunk 12, primary 9, secondary 8, tertiary 7, unclassified
 and residential 6, living street and service 5, a parking aisle 6. PLACED
 from common US lane widths of about 3-3.7 m a lane (two lanes and a little
 shoulder for the smaller roads); no source fetched for the exact figures.
+
+## Each landscape's road surface (3 November 2026)
+
+From the study's catalogue (`subs[].streets`, local): where a landscape
+lists a country surface beside asphalt, the club's drive takes it (gravel,
+dirt, red clay, shell, brick, cobble or concrete; renderer.js addPaths
+`DRIVE`), and the public road stays asphalt unless the place lists concrete
+and no asphalt (Bluebonnet Prairie, the Gulf Coast, Florida Flatwoods) or
+only gravel and dirt (the Sand Hills). Which of a landscape's listed
+surfaces goes where is PLACED. Colours PLACED: dirt #9c8466, red clay
+#a5583a, brick #9a4e3c, cobble #8a8478.
