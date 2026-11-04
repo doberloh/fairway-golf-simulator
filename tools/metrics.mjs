@@ -1,7 +1,7 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {landingZones} from '../src/markings.js';
 import {unbridgedWater, pathShape} from '../src/paths.js';
-import {roadOnPlay} from '../src/roads.js';
+import {roadOnPlay, roadOnHouse} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {seatGap, FLOAT_TOLERANCE} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
@@ -626,8 +626,19 @@ METRICS.paths = {
 METRICS.roads = {
  describe: 'roads and the parking lot: how many, and none on play',
  run(w) {
-  const counts = {roads: (w.roads || []).length, lots: w.lot ? 1 : 0, publicRoads: (w.roads || []).filter(r => r.kind === 'boundary').length};
-  return {series: {}, counts, invariants: {roadOnPlay: roadOnPlay(w, (x, z) => w.surface(x, z)).length}};
+  const roads = w.roads || [], streets = roads.filter(r => r.kind === 'street'), lanes = roads.filter(r => r.kind === 'lane'), drives = (w.homes || []).filter(h => h.garage);
+  // The ends judged against every road they may join; the corners, the streets' own.
+  const ends = new Set(streets.flatMap(r => [r.points[0], r.points[r.points.length - 1]]));
+  const looseEnds = pathShape(roads.filter(r => r.kind !== 'lane'), w.buildings || []).looseEnds.filter(p => ends.has(p));
+  const counts = {roads: roads.length, lots: w.lot ? 1 : 0, publicRoads: roads.filter(r => r.kind === 'boundary').length, streets: streets.length, lanes: lanes.length, streetSharp: pathShape(streets, []).sharp.length, streetDeadEnd: looseEnds.length};
+  return {series: {}, counts, invariants: {
+   roadOnPlay: roadOnPlay(w, (x, z) => w.surface(x, z)).length,
+   // No road over water but on a bridge (paths.js's own test), no drive that
+   // ends in the rough, no road on a house (the streets, generator 84).
+   roadOverWater: unbridgedWater(roads, w.bridges, (x, z) => w.surface(x, z) === 'water').length,
+   driveToNowhere: drives.filter(h => !h.lane).length,
+   roadOnHouse: roadOnHouse(w).length,
+  }};
  },
 };
 

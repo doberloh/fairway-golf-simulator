@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {world} from './worlds.mjs';
-import {roadOnPlay, lotSize, pastBoundary, ROAD_WIDTH} from '../src/roads.js';
+import {roadOnPlay, roadOnHouse, lotSize, pastBoundary, ROAD_WIDTH, STREET, driveEnd, driveFrame, mailboxAt} from '../src/roads.js';
+import {pathIndex, pathShape, unbridgedWater} from '../src/paths.js';
 import {outOfBounds} from '../src/physics.js';
 import {inBuilding} from '../src/clubhouse.js';
 
@@ -75,4 +76,71 @@ test('the cart barn stands off play, and the lot\'s islands carry the landscape\
   for (const t of w.trees.filter(t => t.island)) assert.ok(w.bio.plants.some(([k]) => k === t.kind) && t.h <= 5.5, `${biome}: an island tree ${t.kind} ${t.h}`);
  }
  assert.ok(barns >= 1, 'a barn somewhere');
+});
+
+// THE STREETS (roads.js placeStreets, generator 84): every drive reaches a
+// street, every street reaches a road, and none of it touches what is played,
+// water or anything built.
+const ESTATES = ['heartland', 'newengland', 'sonoran', 'bayou', 'lowcountry', 'keys'].map(biome => world({seed: 'RD-1', holes: 9, biome, homes: true, homeDensity: 70, rivers: 1, creeks: 2, lakes: 1}));
+const ways = w => w.roads.filter(r => r.kind !== 'lane');
+
+test('every drive left reaches a street or a road, down a lane from its own end', () => {
+ let lanes = 0;
+ for (const w of ESTATES) {
+  const idx = pathIndex(ways(w));
+  for (const h of w.homes.filter(h => h.garage)) {
+   assert.ok(h.lane, `${w.settings.biome}: a drive with no lane`);
+   const E = driveEnd(h), lane = w.roads.find(r => r.kind === 'lane' && Math.hypot(r.points[0].x - E.x, r.points[0].z - E.z) < .01);
+   assert.ok(lane, `${w.settings.biome}: the lane does not start at the drive`);
+   assert.ok(Math.hypot(h.lane.x - E.x, h.lane.z - E.z) <= STREET.reach, 'a lane past its reach');
+   assert.ok(idx.at(h.lane.x, h.lane.z).d < .5, 'a lane that ends on nothing');
+   lanes++;
+  }
+ }
+ assert.ok(lanes >= 10, `only ${lanes} lanes across the fixtures`);
+});
+
+test('no street or lane on play, on water or through anything built', () => {
+ for (const w of ESTATES) {
+  assert.deepEqual(roadOnPlay(w, w.surface), [], w.settings.biome);
+  assert.deepEqual(roadOnHouse(w), [], w.settings.biome);
+  assert.deepEqual(unbridgedWater(w.roads, w.bridges, (x, z) => w.surface(x, z) === 'water'), [], w.settings.biome);
+ }
+});
+
+test('a street starts on a road or another street, and bends rather than corners', () => {
+ const w = ESTATES[0], streets = w.roads.filter(r => r.kind === 'street');
+ assert.ok(streets.length >= 3, 'a street or three');
+ for (const st of streets) {
+  const others = pathIndex(ways(w).filter(r => r !== st)), a = st.points[0], b = st.points[st.points.length - 1];
+  assert.ok(Math.min(others.at(a.x, a.z)?.d ?? 99, others.at(b.x, b.z)?.d ?? 99) < 4, 'a street joined to nothing');
+ }
+ const shape = pathShape(streets, w.buildings);
+ assert.ok(shape.sharp.length <= streets.length / 2, `${shape.sharp.length} sharp corners on ${streets.length} streets`);
+});
+
+test('a house turns its front to the street, away from the fairway, and its footprint stays', () => {
+ for (const w of ESTATES) for (const h of w.homes) {
+  const hole = w.holes.find(q => q.hole === h.hole), mid = hole.toWorld({x: hole.center(h.along), z: h.along});
+  assert.ok(Math.sin(h.rotation) * (h.x - mid.x) + Math.cos(h.rotation) * (h.z - mid.z) > 0, 'a house facing the fairway');
+ }
+});
+
+test('a mailbox stands on the verge beside its lane, off the street', () => {
+ let boxes = 0;
+ for (const w of ESTATES) for (const h of w.homes.filter(h => h.garage)) {
+  const m = mailboxAt(h), {gx} = driveFrame(h);
+  assert.ok(Math.hypot(m.x - h.lane.x, m.z - h.lane.z) < STREET.width / 2 + 5, 'a mailbox away from the street');
+  assert.ok(Math.hypot(m.x - h.lane.x, m.z - h.lane.z) > 2, 'a mailbox in the lane');
+  assert.ok(Number.isFinite(m.rot) && Number.isFinite(gx));
+  boxes++;
+ }
+ assert.ok(boxes >= 10);
+});
+
+test('with the homes off there are no streets, and the road stays off the clubhouse', () => {
+ const w = worlds.heartland;
+ assert.deepEqual([...new Set(w.roads.map(r => r.kind))].sort(), ['boundary', 'drive']);
+ assert.equal(world({seed: 'RD-1', holes: 9, biome: 'heartland', homes: false}).homes.length, 0);
+ assert.deepEqual(roadOnHouse(w), []);
 });

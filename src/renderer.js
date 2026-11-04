@@ -1,4 +1,5 @@
-import {addHomes,driveFrame} from './homes.js';
+import {addHomes} from './homes.js';
+import {mailboxAt} from './roads.js';
 import {phoneLift,liftsView} from './phone-view.js';
 import {addStreams} from './streams.js';
 import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
@@ -2022,6 +2023,10 @@ export class GolfView{
   else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
   // A road (roads.js): asphalt, its edge lines, a dashed centre line.
   else if(kind==='road'){dots(420,1.4,'#f2f2f2','#c4c4c4');g.fillStyle='#ffffff';g.fillRect(2,0,2,128);g.fillRect(60,0,2,128);g.fillRect(31,0,2,64);}
+  // A residential street (roads.js placeStreets): asphalt and a pale curb and
+  // gutter each side, no lines. The tone is in the tile, the curb being paler
+  // than the material's colour could make it.
+  else if(kind==='street'){g.fillStyle='#6d6f74';g.fillRect(0,0,64,128);dots(420,1.4,'#797b80','#62646a');g.fillStyle='#f4f2ea';g.fillRect(0,0,3,128);g.fillRect(61,0,3,128);}
   // Brick and cobble (the streets kit): laid courses of setts.
   else if(kind==='brick'||kind==='cobble'){const bw=kind==='brick'?16:11,bh=kind==='brick'?8:11;g.fillStyle='#bcbcbc';for(let y=0;y<128;y+=bh)for(let x=-(y/bh%2)*bw/2;x<64;x+=bw)g.fillRect(x+1,y+1,bw-2,bh-2);}
   else if(kind==='bark'){for(let i=0;i<220;i++){g.save();g.translate(r()*64,r()*128);g.rotate(r()*Math.PI);g.fillStyle=r()<.5?'#f0f0f0':'#c8c8c8';g.fillRect(-3,-1,6,2);g.restore();}}
@@ -2051,7 +2056,11 @@ export class GolfView{
   const byKind=new Map();
   // The roads (roads.js; the US landscapes goal, phase 4) are laid as the
   // paths are, darker asphalt.
-  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:(r.kind==='drive'?DRIVE[roadKey]:PUBLIC[roadKey])||'road'}))]){
+  // A street is the public road's surface where that is not asphalt, else a
+  // street's own; a house's lane is the drive it runs on from. A road lies a
+  // finger above the paths and lanes, so a crossing does not shimmer.
+  const roadKind=r=>r.kind==='drive'?DRIVE[roadKey]||'road':r.kind==='lane'?(w.bio?.warm?'granite':'concrete'):PUBLIC[roadKey]||(r.kind==='street'?'street':'road');
+  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:roadKind(r),lift:r.kind==='lane'?.035:.05}))]){
    // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
    // "clipping through hills"): a straightened run's corners can be a hundred
    // metres apart, and a strip with points only there ran straight through
@@ -2063,7 +2072,7 @@ export class GolfView{
    for(let i=0;i<p.length;i++){
     const a=p[Math.max(0,i-1)],b=p[Math.min(p.length-1,i+1)],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
     if(i)run+=Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z);
-    for(const s of [-1,1]){const x=p[i].x+nx*half*s,z=p[i].z+nz*half*s;pos.push(x,w.height(x,z)+.035,z);uv.push(s<0?0:1,run/4);}
+    for(const s of [-1,1]){const x=p[i].x+nx*half*s,z=p[i].z+nz*half*s;pos.push(x,w.height(x,z)+(path.lift??.035),z);uv.push(s<0?0:1,run/4);}
     if(i){const k=base+(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
    }
   }
@@ -2434,10 +2443,10 @@ export class GolfView{
   kit('island','Blender_ParkingIsland_1',.2,{stone:'#c8c4b8',bark:'#5a3e2a',leaf:'#4f7436'},false);
   kit('bagdrop','Blender_BagDrop_1',5.3,{stone:'#ece6d8',bark:'#5e6266',leaf:'#4a3426',accent:'#b8302a'},true);
   kit('streetlight','Blender_StreetLight_1',5,{bark:'#2a2a2a',accent:'#f2e6bc'},true);
-  // A MAILBOX AT EACH HOUSE'S DRIVE (the streets kit, PLAN 4): at the drive's
-  // street end, 2.3 m to its side, facing out (homes.js driveFrame). Drawing
-  // only; nothing a ball meets. 1.2 m on its post.
-  const boxes=(w.homes||[]).filter(h=>h.garage).map(h=>{const {gx,gz}=driveFrame(h),c=Math.cos(h.rotation),sn=Math.sin(h.rotation),lx=gx+(gx>0?2.3:-2.3),lz=gz+4.6;return {x:h.x+lx*c+lz*sn,z:h.z-lx*sn+lz*c,rot:h.rotation};});
+  // A MAILBOX AT EACH HOUSE'S DRIVE (the streets kit, PLAN 4; roads.js
+  // mailboxAt): on the street's verge beside the house's lane. Drawing only;
+  // nothing a ball meets. 1.2 m on its post.
+  const boxes=(w.homes||[]).filter(h=>h.garage).map(mailboxAt);
   draw('Blender_Mailbox_1',boxes,{bark:'#4a3a2e',stone:'#2e3438',accent:'#c8302a',leaf:'#2e3438'},true,at(1.2));
   // The Heartland's corn behind its red barn (story.js), 2.4 m standing.
   draw('Blender_CornPatch_1',props.filter(p=>p.kind==='corn'),{leaf:'#4f8a34',accent:'#d8c070'},false,at(2.4));

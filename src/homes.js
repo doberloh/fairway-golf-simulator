@@ -5,6 +5,8 @@ import {allows} from './grounds.js';
 import {biomeOf} from './biomes.js';
 import {addViewBlockers,snowTopped} from './vegetation.js';
 import {viewBlocker} from './camera-tours.js';
+import {driveFrame} from './roads.js';
+export {driveFrame};
 // Fairway homes. Sites must be dry, gently sloping rough, clear of tee and green
 // complexes and spaced from one another. Each house draws its own form, roof,
 // porch, garage, fence and garden from the same seeded stream, so a street reads
@@ -19,10 +21,14 @@ const WALLS_WARM=['#ecd7b5','#e3c49c','#f0e1c6','#dcc0a0'];
 // lilac, pink and blue mopheads. PLACED.
 const BLOOMS=['#f2f0ea','#c9a6d8','#f0b6c4','#9ab8e0'];
 const ROOFS_WARM=['#b5643f','#a5553a','#c2794d','#8f5a3e'];
+// A house stands with its back to the fairway and its front (+z), drive and
+// mailbox to the street behind it (roads.js placeStreets, generator 84): turned
+// half round from the way it stood, on the same footprint, so the collider and
+// the siting are as they were. `side` and `along` say which row it is in.
 // `viewBlocked(x, z, top, pad)` is the generator's tee-view test (course.js,
 // blocksView), passed in rather than imported because course.js imports this.
 export function generateHomes(s,holes,height,surface,random,viewBlocked=null){if(!s.homes)return[];const rng=random(s.seed+':homes'),homes=[];
- for(const h of holes)for(let z=45;z<h.length-42;z+=45)for(const side of [-1,1]){if(rng()*100>s.homeDensity)continue;const p=h.toWorld({x:h.center(z)+side*(h.width(z)+s.semiRough+s.homeSetback+13),z:z+(rng()-.5)*12}),target=h.toWorld({x:h.center(z),z}),rotation=Math.atan2(target.x-p.x,target.z-p.z),c=Math.cos(rotation),sn=Math.sin(rotation),width=16+rng()*9,depth=13+rng()*6,corners=[[-width/2-4,-depth/2-4],[-width/2-4,depth/2+4],[width/2+4,-depth/2-4],[width/2+4,depth/2+4],[0,0]].map(([x,z])=>({x:p.x+x*c+z*sn,z:p.z-x*sn+z*c}));
+ for(const h of holes)for(let z=45;z<h.length-42;z+=45)for(const side of [-1,1]){if(rng()*100>s.homeDensity)continue;const p=h.toWorld({x:h.center(z)+side*(h.width(z)+s.semiRough+s.homeSetback+13),z:z+(rng()-.5)*12}),target=h.toWorld({x:h.center(z),z}),rotation=Math.atan2(p.x-target.x,p.z-target.z),c=Math.cos(rotation),sn=Math.sin(rotation),width=16+rng()*9,depth=13+rng()*6,corners=[[-width/2-4,-depth/2-4],[-width/2-4,depth/2+4],[width/2+4,-depth/2-4],[width/2+4,depth/2+4],[0,0]].map(([x,z])=>({x:p.x+x*c+z*sn,z:p.z-x*sn+z*c}));
   if(corners.some(q=>!allows(surface(q.x,q.z),'trees'))||holes.some(other=>{const q=other.toLocal(p);return Math.hypot(q.x-(other.green??other.pin).x,q.z-(other.green??other.pin).z)<other.greenSize*other.greenAspect+30||Object.values(other.tees).some(t=>Math.hypot(q.x-t.x,q.z-t.z)<28);})||homes.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<42))continue;
   const levels=corners.map(q=>height(q.x,q.z));// Scaled with the footprint, not raised arbitrarily. The probe box grew from
   // about 16x15 m to 28x24 m, so holding the old 2.5 m drop would have been a
@@ -38,7 +44,7 @@ export function generateHomes(s,holes,height,surface,random,viewBlocked=null){if
   // at the tallest a house is built (11 m) and half the footprint's diagonal,
   // because the house's own height is drawn only once it is accepted.
   if(viewBlocked&&viewBlocked(p.x,p.z,base+11,Math.hypot(width,depth)/2))continue;
-  homes.push({...p,y:base,footing,rotation,width,depth,height:7+rng()*4,shade:rng(),hole:h.hole,
+  homes.push({...p,y:base,footing,rotation,width,depth,height:7+rng()*4,shade:rng(),hole:h.hole,side,along:z,
    form:FORMS[Math.floor(rng()*FORMS.length)],porch:rng()<.55,garage:rng()<.5,fence:rng()<.45,garden:rng()<.7,
    roofPitch:.8+rng()*.9,trim:rng(),wing:.42+rng()*.22});
  }return homes;
@@ -83,9 +89,6 @@ export function pavingTexture(base='#c4bfb1',pavers=false){
  return tex;
 }
 
-// WHERE A HOUSE'S DRIVE LIES: its centre in the house's own frame, 3.4 x 9 m.
-// Shared by the drive itself and by the grass scatter that keeps off it.
-export function driveFrame(h){return {gx:(h.width/2+2.4)*(h.trim>.5?1:-1),gz:-h.depth*.1+7.4};}
 // `onDrive(homes)` returns a test (x, z) => true on any garaged house's drive,
 // with a 0.3 m margin so no blade leans over its edge.
 export function onDrive(homes){

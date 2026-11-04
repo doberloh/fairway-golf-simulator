@@ -54,9 +54,22 @@ Ponds are generated against the fairway edge with a gap that may be negative, so
 
 River and creek controls request a bounded number of course-wide meandering corridors. Tees, greens and fitted ponds have protected clearance areas; accepted paths are rounded, given variable widths and terrain-fitted levels, and indexed spatially. That same path drives bed carving, water surfaces, water lies and map lines. Par threes are not given a fairway at all: the ball is played through the air to the green, so a full corridor down the hole is turf nobody uses and it swallows the tee complex. They get an approach instead, beginning at `mowStart` rather than `fairwayStart` — never wider than the green it fronts and never covering more than the last 45% of the hole — and every bunker on a par three is greenside, because there is no fairway to bunker. `fairwayStart` still anchors bunker and pond placement on every hole, so par threes keep their hazards. Rivers and creeks do not cross fairways, greens or other bodies of water. Corridors and greens are raised in the drainage model so routes go between the holes -- and the corridor ridge keeps rising inward rather than levelling off at the corridor edge, because a constant offset preserves the gradient underneath it and simply becomes a plateau that water runs through, and the finished curve is then pushed clear of anything it must not touch and re-smoothed, because meander and corner cutting are applied after the route is chosen and would otherwise undo it. Measured over 24 courses: no channel station inside a fairway, a minimum of 11 m past any green edge, and a minimum of 26 m from the edge of any pond or lake. Creek depths are 60% of river depth, and no bridges are generated yet. A channel runs only as far as it can stay within its cut budget, and fades out where it is trimmed.
 
-Optional homes are sampled along both sides of the fairways with occurrence and setback controls. Sites must be dry rough, gently sloping, spaced from other homes, clear of tee/green complexes, and out of what a tee sees: a house whose roof would rise above the line from a golfer's eye to the landing area, inside a tee's forward view, is not built (`blocksView`). Houses face their corridor and trees are excluded from their footprints. They are solid: a ball rebounds off them.
+Optional homes are sampled along both sides of the fairways with occurrence and setback controls. Sites must be dry rough, gently sloping, spaced from other homes, clear of tee/green complexes, and out of what a tee sees: a house whose roof would rise above the line from a golfer's eye to the landing area, inside a tee's forward view, is not built (`blocksView`). Houses have their backs to their corridor (their streets are below) and trees are excluded from their footprints. They are solid: a ball rebounds off them.
 
 For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO.md covers hydrology, routing quality, building collisions, performance and other future improvements.
+
+**The homes' streets (generator 84; roads.js `placeStreets`).** With fairway
+homes on, a house has its back to the fairway and its front, drive and mailbox
+to a street behind it. The garaged houses on one side of one hole make a row;
+rows are joined nearest first, each from its nearer end, from the public road,
+the club's drive, a street already laid, or the lot where there is no road. A
+street is routed on the cart paths' 6 m grid with water, everything played and
+everything built closed; the rough beside play is dear, so it goes round the
+end of a hole rather than across a carry. It is rounded, meets what it joins at
+a slant, and its far end runs on to the next street within 130 m or turns in a
+cul-de-sac. A lane runs from each drive's end along the drive's line to the
+street; a drive no street reaches is not built, so no drive ends in the rough.
+Nothing here draws on the seed: the same houses give the same streets.
 
 ## What a biome decides
 

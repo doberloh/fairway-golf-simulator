@@ -437,7 +437,16 @@ export const SCHEMA_VERSION=26;
 // 82: the High Plains nearly treeless, as the Llano is: trees a fraction
 //     of the plains' (.15), brush and yucca round the holes, the far woods
 //     a thin scrub; the shelterbelts stay. Moved the High Plains.
-export const GENERATOR_VERSION=82;
+// 84: the fairway homes' streets (roads.js placeStreets): a house turned
+//     round, its front, drive and mailbox to a street behind it (its footprint
+//     and collider as before), the streets joined to the public road, the
+//     club's drive or the lot, rounded, ending in a join or a cul-de-sac, with
+//     a lane from every drive; a drive no street reaches is not built. The
+//     trees and scatter keep off them. Moved every landscape's course with
+//     fairway homes on; with homes off, only courses whose public road or club
+//     drive ran through the clubhouse (now kept off it) or over a creek (now a
+//     bridge, as wide as the road).
+export const GENERATOR_VERSION=84;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

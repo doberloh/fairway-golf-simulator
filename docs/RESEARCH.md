@@ -13293,6 +13293,54 @@ only gravel and dirt (the Sand Hills). Which of a landscape's listed
 surfaces goes where is PLACED. Colours PLACED: dirt #9c8466, red clay
 #a5583a, brick #9a4e3c, cobble #8a8478.
 
+## The fairway homes' streets (generator 84, 3 November 2026)
+
+PLAN.md section 4: "the housing's streets serve the homes". No outside source;
+every figure PLACED, for the owner to overrule:
+
+- **Which way a house faces.** The houses faced the fairway, so a drive and
+  its mailbox ended on the fairway side, in the rough. Three ways out were
+  weighed. A street between house and fairway would lay asphalt 25-55 m off
+  the semi-rough, in the rough a sliced drive lands in: refused. Fronts kept to
+  the course with the drive moved to the back would give the street nothing but
+  back doors: refused. **Taken: the house turned half round**, as a golf
+  community's houses stand, backs to the course. The footprint is a rectangle
+  about its middle, so the collider, the siting and every seeded draw are as
+  they were; only `rotation`. What a player gives up: from the fairway a house
+  now shows its back wall (windows and shutters, no porch or garden).
+- **Sizes.** A street 6.1 m (20 ft, a common US residential width) with a pale
+  curb; a lane 3.4 m, the drive's width, up to 30 m long; a street's middle 7 m
+  past the drive's end (`STREET` in roads.js).
+- **Shape.** No 4 m stretch turning past 20 degrees where the ground allows (a
+  radius of about 11.5 m); a join squarer than 50 degrees runs 14 m along what
+  it joins; a far end joins another street within 130 m if the way is under 2.2
+  times the distance and does not double back, else a teardrop cul-de-sac of
+  radius 12, 10, 8 or 6.5 m within its last 30 m.
+- **What it costs.** The rough beside play is 8 times as dear to cross. Water is
+  closed to a street altogether: a row a creek cuts off loses its drives rather
+  than gaining a bridge, the simpler rule. Over the full bench with homes on
+  (195 courses, 1,583 houses): 558 streets and 663 lanes, 0 roads on play, 0
+  on water, 0 drives to nowhere, 0 through a building; 78 streets keep a corner
+  sharper than the cart paths' limit and 66 stop short where no cul-de-sac fits
+  (bench counts `streetSharp`, `streetDeadEnd`). Courses are spread out, so a
+  street can be long for what it serves: 2 to 3 km on a nine with ten garaged
+  houses, and a lone house at the far end of the property keeps its long way
+  to the road (PLACED: no cap, so that a drive still arrives). Laying them
+  adds about 0.5 s to a nine and 1.1 s to an eighteen (about a tenth), with
+  homes on only; measured on a loaded machine.
+- **Found on the way.** The bench's new `roadOverWater` and `roadOnHouse` read
+  non-zero before any street was laid: a public road or a club's drive could
+  cross a creek with no bridge (Sonoran S2), and the drive ran under the
+  clubhouse on about one course in forty (Longleaf S3, the Gulf Coast S2), the
+  public road through it once (Hill Country S4). A road over water now gets a
+  deck as wide as the road (course.js, `findBridges`), and both keep off the
+  clubhouse; a drive tries the lot's next side when the first is walled by it.
+  These are the only changes on a course with homes off.
+- **Seen, and a bug it showed.** The first pictures showed a lane laid under the
+  street coming through on a crown: a road's strip has two points across, so it
+  cuts straight over a rise that the lane follows. A lane now stops at the
+  street's edge; a road's strip lies 5 cm above the ground, the paths' 3.5.
+
 ## The software renderer on Medium, retried (3 November 2026, evening)
 
 The profile of 3 November crashed its page at weak/medium ("Target

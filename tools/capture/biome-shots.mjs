@@ -28,6 +28,10 @@ const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; c
 const mode = argv.shift();
 // `--season s`: the course in that season (seasons.js; summer, the cards', by default).
 const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
+// `--homes 60`: the course with fairway homes at that density, and `--seed s`
+// another course than the card's (the `street` views need houses; they are a
+// course setting, off by default).
+const homes = opt('--homes'), seedOverride = opt('--seed');
 // `encode --only a,b`: re-encode those landscapes' pictures alone, leaving the
 // others' files as they are (the US landscapes goal: new landscapes added
 // one phase at a time, from their own set of masters).
@@ -74,6 +78,16 @@ const VIEWS = [
  // The streets kit (3 November 2026): above the parking lot, looking along
  // the drive to the clubhouse -- the road surfaces, the lot and the barn.
  {name: 'lot', hole: 0, when: 'afternoon', cam: `w => { const L = w.lot || {x: 0, z: 0}; return {x: L.x - 55, z: L.z - 55, yaw: 45, height: 40, pitch: -30}; }`},
+ // The fairway homes' streets (roads.js placeStreets, generator 84), on the
+ // busiest stretch: the house with the most garaged neighbours within 130 m.
+ // `street` stands on the street and looks along it past the lanes and the
+ // mailboxes; `street-high` from 30 m up; `mailbox` up close at that house's
+ // lane; `street-back` from the hole's side, the houses' backs and the street
+ // beyond them.
+ {name: 'street', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {lane: {x: 0, z: 0}}, B = near(A)[0] || {lane: {x: A.lane.x + 1, z: A.lane.z + 1}}, dx = B.lane.x - A.lane.x, dz = B.lane.z - A.lane.z, l = Math.hypot(dx, dz) || 1; return {x: A.lane.x - dx / l * 24, z: A.lane.z - dz / l * 24, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: 5, pitch: -7}; }`},
+ {name: 'street-high', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {lane: {x: 0, z: 0}}, B = near(A)[0] || {lane: {x: A.lane.x + 1, z: A.lane.z + 1}}, dx = B.lane.x - A.lane.x, dz = B.lane.z - A.lane.z, l = Math.hypot(dx, dz) || 1; return {x: A.lane.x - dx / l * 40, z: A.lane.z - dz / l * 40, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: 30, pitch: -24}; }`},
+ {name: 'mailbox', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {x: 0, z: 0, rotation: 0, lane: {x: 0, z: 0}}, dx = Math.sin(A.rotation), dz = Math.cos(A.rotation); return {x: A.lane.x + dx * 9 + dz * 7, z: A.lane.z + dz * 9 - dx * 7, yaw: Math.atan2(A.lane.x - dx * 6 - (A.lane.x + dx * 9 + dz * 7), A.lane.z - dz * 6 - (A.lane.z + dz * 9 - dx * 7)) * 180 / Math.PI, height: 2.6, pitch: -9}; }`},
+ {name: 'street-back', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {x: 0, z: 0, rotation: 0}, dx = Math.sin(A.rotation), dz = Math.cos(A.rotation); return {x: A.x - dx * 62, z: A.z - dz * 62, yaw: A.rotation * 180 / Math.PI, height: 12, pitch: -8}; }`},
  // The sea where it comes in among the holes (generator 80, the
  // Lowcountry's tidal creeks; Monterey's shore): the 10 m cell with the most
  // open sea round it inside the map, seen from 70 m off and 40 m up.
@@ -141,7 +155,7 @@ async function take(biomes) {
    const dir = path.join(ROOT, label, biome);
    fs.mkdirSync(dir, {recursive: true});
    const p = await openGame(b, {width: 1920, height: 1080, density: 2, quality: 'ultra'});
-   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: SEEDS[biome], season});
+   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
    for (const v of VIEWS.filter(v => !only || only.includes(v.name))) {

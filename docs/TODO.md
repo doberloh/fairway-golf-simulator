@@ -273,7 +273,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   Measured so far, Low, by mean frame against the build before (frame-ab,
-  RTX 4090, so headroom, not a weak machine). **The owner's additions (3
+  RTX 4090, so headroom, not a weak machine). **The homes' streets (generator
+  84, homes on at 45%, the Heartland, RD-1):** no cost seen: draws +2 at tees 1 and 9 and -11 at tee 5, triangles level at tees 1 and 9 and +8.5% at tee 5 (where the trees moved); the mean frame read -33% (2.25 to 1.52 ms, A B B A), which nothing here explains, since no work was removed, so count it as level, not a saving. **The owner's additions (3
   November 2026), against 4784efd:** the prairie grasses in the Heartland
   -5.3% (noise: no cost), Hill Country's stepped terrain -1.4%, the Bayou's
   flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
@@ -392,9 +393,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   renderer.js addPaths), and a mailbox at the street end of every
   garaged house's drive. Smoke every-landscape passes; the drives seen in
   captures (biome-shots view `lot`: Longleaf's red clay, the Lowcountry's
-  shell); the mailboxes not yet seen in a picture.
-  Still open: streets joining the fairway homes to the road (a
-  generation change).
+  shell). **Done (3 November 2026, generator 84):** streets joining the
+  fairway homes to the road (roads.js `placeStreets`): houses turned to face
+  them, a lane from every drive, a cul-de-sac or a join at the far end, a
+  drive no street reaches not built. Seen in captures (biome-shots `street`,
+  `street-high`, `mailbox`, `street-back`: the Heartland RD-1), the mailboxes
+  among them. Not played in a round. Open for the owner: a house now shows the
+  fairway its back wall (RESEARCH, *The fairway homes' streets*, has the
+  alternatives); the bench keeps 78 sharp corners and 66 streets that stop
+  short, across 195 courses and 558 streets; and a row a creek cuts off
+  loses its drives rather than gaining a road bridge.
 - [x] **Roads in the builder** (3 November 2026): Road is in every
   landscape's Paint and Outline lists (layers.js `layersFor`) -- painted
   anywhere, and Outline Road is the parking-lot tool (draw the lot's edge);
