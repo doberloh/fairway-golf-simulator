@@ -13142,3 +13142,18 @@ so a built course reads like a generated one), an apron from 0.22 within
 water. Which kinds: the first rock-like kind (rock, hardpan, scree, coral)
 the landscape's landform names is its face, the next (scree, hardpan, waste,
 native, heather) its apron; a landscape naming none gets rock and no apron.
+
+## Cart-path corners on steep ground (generator 77, 3 November 2026)
+
+The owner's rule (2 November 2026): every corner rounded. What was left
+sat on ground steeper than SHAPE_GRADE (0.28): a rounded corner failed the
+grade test even where the corner it replaced was already steeper. Now a
+rounded point may be as steep as the old one plus 15% (the 2 m samples'
+spread), capped at 0.29 so every step stays under the walkable 30%
+(tests/paths.test.mjs), and a point that does not fit may move halfway. All
+three numbers PLACED. Across the full bench (195 courses) sharp corners
+went from 205 to 186; on the six steepest landscapes (SoCal, Sierra,
+Rockies, Cascades, Alaska, Ozarks) from 58 to 45. Allowing 60 passes
+instead of 30 rounded two more of those and was not kept. The rest are
+switchbacks of about 120 degrees on slopes of 0.4-0.57: no walkable
+rounded turn fits there.

@@ -88,10 +88,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   skinned from the land by the editor's own Skin from the land (`skin:
   true`: rock on the survey's steep breaks, bare clay below), par 72,
   7,113 yd from the back (the course lists 7,166); the virtual golfers
-  played all 18 in 83, none stuck. Still to do: open it in the game and
-  play a tee shot (tools/play-built.mjs), look at the skin in pictures (a
-  fifth rock, a third clay may be heavy), and send them to the owner. The
-  file is local (bench/courses/bully-pulpit), never committed.
+  played all 18 in 83, none stuck; opened in the game and a 142 m tee
+  shot played (tools/play-built.mjs), the banded clay seen on the survey's
+  real breaks; the picture and the file sent to the owner. Not played by a
+  person. The file is local (bench/courses/bully-pulpit), never committed.
 - [ ] **Tall fescue and the prairie grasses for every landscape that needs
   them** ("do we have tall fescue and prairie grasses? if not, we should
   retroactively build them"): tall fescue, little bluestem, switchgrass,
@@ -256,7 +256,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   Measured so far, Low, by mean frame against the build before (frame-ab,
-  RTX 4090, so headroom, not a weak machine): Pacific pack +2.3% (before
+  RTX 4090, so headroom, not a weak machine). **The owner's additions (3
+  November 2026), against 4784efd:** the prairie grasses in the Heartland
+  -5.3% (noise: no cost), Hill Country's stepped terrain -1.4%, the Bayou's
+  flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
+  Ponderosa's cones and flows -6.8%; the Badlands alone 0.5-0.8 ms a frame
+  at its tees (the Heartland about 1.0). Earlier: Pacific pack +2.3% (before
   every variant shipped; with them and the silhouette rework Puget Sound
   measured 10% faster), Rockies +1.8%, Lake Dunes not
   measured cleanly (agents on the processor), Heartland +22% (six tree
@@ -330,6 +335,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Rockies where no loop or rounding fits the ground (tests/paths.test.mjs
   holds the clean ten and that budget; the bench counts `pathDeadEnd`,
   `pathSharp`). Not seen in the game yet.
+  **Generator 77** (3 November 2026): a smoothed corner point that does
+  not fit may move halfway, and on ground already steeper than the shaping
+  grade a rounded corner may be as steep as the corner it replaces (never
+  past 29%, so still walkable): across the full bench, 205 sharp corners
+  -> 186, the six steepest landscapes 58 -> 45. What is left stands on
+  ground too steep for a walkable rounded turn (a 120-degree switchback on
+  a 50% hillside): rounding it would break the walkable-grade rule, and
+  that trade is the owner's call. Dead ends: 26-27 across the bench.
 - [x] **The streets kit placed** (generator 65; roads.js `streetFurniture`):
   light poles down the lot's aisles, a planted island at each row end, a
   wheel stop a stall, the bag drop by the clubhouse, lamps along the drive.

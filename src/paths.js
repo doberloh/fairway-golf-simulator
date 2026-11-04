@@ -505,6 +505,8 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
  // tests/paths.test.mjs and the bench (`pathSharp`, `pathDeadEnd`) hold it.
  // Open ground, and the router's 10 m berth round every green kept.
  const berth = holes.map(h => ({g: h.worldGreen ?? h.toWorld(h.green), r: (h.greenSize ?? 15) * (h.greenAspect ?? 1.1) + 10.5}));
+ // The steepest 2 m step between two points, as `open` samples it.
+ const gradeOf = (a, b) => { const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 2)); let g = 0, prev = grid.heightAt(a.x, a.z); for (let t = 1; t <= n; t++) { const h = grid.heightAt(a.x + (b.x - a.x) * t / n, a.z + (b.z - a.z) * t / n); g = Math.max(g, Math.abs(h - prev) / (d / n || 1)); prev = h; } return g; };
  const fits = (pts, limit = JOIN_GRADE) => pts.every((p, i) => Number.isFinite(grid.costAt(p.x, p.z)) && !berth.some(b => Math.hypot(p.x - b.g.x, p.z - b.g.z) < b.r) && (i === 0 || open(pts[i - 1], p, limit)));
  const shape = (paths, buildings = []) => {
   const nearestOn = (p, skip) => {
@@ -572,7 +574,22 @@ export function routePaths({holes, s, surface, streams, ravines = [], height = n
    for (let pass = 0; pass < 30 && worstTurn(pts) > MAX_TURN; pass++) {
     // The ends stay; the points beside them smooth on a narrower kernel.
     const next = pts.map((p, i) => (i < 1 || i > pts.length - 2 ? p : i < 2 || i > pts.length - 3 ? {x: (pts[i - 1].x + p.x * 2 + pts[i + 1].x) / 4, z: (pts[i - 1].z + p.z * 2 + pts[i + 1].z) / 4} : {x: (pts[i - 2].x + pts[i - 1].x * 2 + p.x * 2 + pts[i + 1].x * 2 + pts[i + 2].x) / 8, z: (pts[i - 2].z + pts[i - 1].z * 2 + p.z * 2 + pts[i + 1].z * 2 + pts[i + 2].z) / 8}));
-    pts = next.map((q, i) => (q === pts[i] || fits([pts[i - 1], q, pts[i + 1]], SHAPE_GRADE) ? q : pts[i]));
+    // Where the smoothed point does not fit (too steep, by a green), a
+    // point halfway to it may (generator 77: the steep landscapes kept sharp
+    // corners because a corner moved all the way or not at all).
+    // And on ground already steeper than SHAPE_GRADE (a switchback up a
+    // hillside), a rounded corner may be as steep as the corner it replaces
+    // (and 15% more, the 2 m samples' own spread), never past 29% -- still
+    // walkable (tests/paths.test.mjs holds every step under 30%). Held to
+    // the limit alone,
+    // every switchback on the Sierra's and the Rockies' slopes stayed sharp.
+    pts = next.map((q, i) => {
+     if (q === pts[i]) return q;
+     const limit = Math.min(.29, Math.max(SHAPE_GRADE, 1.15 * gradeOf(pts[i - 1], pts[i]), 1.15 * gradeOf(pts[i], pts[i + 1])));
+     if (fits([pts[i - 1], q, pts[i + 1]], limit)) return q;
+     const h = {x: (q.x + pts[i].x) / 2, z: (q.z + pts[i].z) / 2};
+     return fits([pts[i - 1], h, pts[i + 1]], limit) ? h : pts[i];
+    });
    }
    path.points = pts;
   };

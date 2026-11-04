@@ -409,7 +409,12 @@ export const SCHEMA_VERSION=26;
 //     onLip allowed 15% of the tree's height -- 2.7 m for a magnolia, which
 //     the bench found floating over a creek bank on the new Piedmont). That
 //     moved every landscape's planting a little: thirty of them.
-export const GENERATOR_VERSION=76;
+// 77: cart paths round more of their corners (paths.js `round`): a smoothed
+//     point that does not fit may move halfway, and on ground already
+//     steeper than SHAPE_GRADE a rounded corner may be as steep as the one
+//     it replaces, never past 29%. Sharp corners across the bench's 195
+//     courses 205 -> 186. Moved thirty-three landscapes' paths.
+export const GENERATOR_VERSION=77;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
