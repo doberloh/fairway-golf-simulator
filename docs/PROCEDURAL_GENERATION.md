@@ -159,12 +159,20 @@ from what lies between the holes on real courses of its kind
 - **mesas** (Desert): flat-topped sandstone buttes on a seeded grid of cells,
   cliffs on their sides and a talus apron, and dry washes winding between them.
   Every remaining rough more than a few metres past the corridor is hardpan.
-- **badlands** (the Badlands, 3 November 2026): clusters of carved clay
-  between the holes -- a ridged field cubed into sawtooth crests with spires
-  where they meet, gullies cut down the faces, small ledges -- bare rock on
-  the steep faces and a hardpan apron round them; every rock face painted
-  in level beds of the landscape's colours (ground.js strata, biomes.js
-  `strata`).
+- **badlands** (the Badlands, 3 November 2026; carved since generator 83):
+  a table of clay eaten back from the prairie by its own drainage
+  (landforms.js `carve`, baked once per seed: a branching gully network
+  grown in from the prairie, heights built up it, steep on the divides and
+  almost flat along the big channels), so what stands between the gullies
+  is ridges, pyramids and spires, the summits drawn up above 44 m and the
+  land stopped at a 50 m caprock in places, a flat-topped butte. Near a hole
+  it is SUNK into the prairie, not squashed (`sinks`): the peaks keep their
+  faces and only the tallest reach the grass. The four lines the public road
+  can take are kept clear as a valley (course.js `roadValley`). Bare rock on
+  the steep faces, a narrow hardpan wash at their feet, every rock face
+  painted in level beds of the landscape's colours (ground.js strata,
+  biomes.js `strata`). The far land is the same carving at a tenth the
+  resolution (`ringCarve`, landscape-edge.js): tables with fluted scarps.
 - **Terrain true to place** (generator 76, the owner's amendment of 3
   November 2026): eighteen landscapes have their own recipe from their
   geology (biomes.js `TERRAIN`; RESEARCH *Terrain true to place*): **steps**

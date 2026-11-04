@@ -12971,25 +12971,139 @@ formations for badlands rather than building a model"). Models came
 first -- banded spires, a sawtooth wall, a clinker butte, a horizon wall
 and a cannonball concretion, sixteen rounds in Blender -- and were cut: a
 turned spire read as a party hat, and models standing in the rough are not
-the land. The `badlands` landform (landforms.js) raises clusters of carved
-clay between the holes, gathered by a broad mask as the crags are: inside,
-a ridged field cubed at a 46 m scale gives sawtooth crests with spires
-where crests meet; a 14 m ridged field's troughs cut gullies 45% deep into
-the faces; seven weak terraces leave ledges; 40 m tall at the most on a
-plinth of 12%. Rock where the finished ground is steeper than about
-0.42-0.56 (rise over run, wandering with noise), hardpan for the gentler
-clay round it. Measured on three nine-hole seeds: 75-82 m of relief across
-the course, 14-17% of the ground bare rock faces, 12-13% washed apron,
-11-13% steeper than 35 degrees.
+the land.
+
+**Carved by a drainage network (generator 83).** The `badlands` landform
+(landforms.js `carve`, `carvedField`) makes the land the way the land was
+made: a table of clay eaten back from its edges by gullies that branch and
+branch. On a grid of 750 by 750 cells, 4 m each, 3 km across (the tile, mirrored
+past its edge), every cell a broad mask calls prairie is an outlet. A
+shortest-path tree grown in from the outlets, over step costs of 1 plus 14 times
+a random number to the fourth, is the drainage: each cell's one parent is where
+its water goes. A cell's area is the count of cells above it; its height is
+its parent's plus a step at slope S = 1.9 x U x area^-0.5, where U wanders
+.55-1.45 on a 260 m field. Steep on the divides, almost flat down the big
+channels, and what stands between the gullies is ridges, pyramids and spires
+with nothing having been told to make them. One pass, baked once a seed: a
+quarter of a second, 248 ms measured, a player's wait for an 18-hole course
+about 7-8 s in Node here. Above 44 m a summit is drawn up by 1.7 (the spires);
+where a 320 m field says so the land stops at a 50 m caprock, a butte with a
+flat grass top; ledges every 2.2 m, weak (22%), where a bed weathers back. Every
+one of those numbers is PLACED from the pictures, and the sizes are, too: no
+source gave heights for single formations.
+
+The law: [Stream power law](https://en.wikipedia.org/wiki/Stream_power_law)
+(Wikipedia): erosion E = K A^m S^n, with A the drainage area and S the slope,
+and m/n "around 0.5" for rivers in erosional steady state. Setting erosion
+equal to uplift U and n = 1 gives S = (U/K) A^-m, the step above; that
+rearrangement is ours, and K is folded into the 1.9. Taken: the form and the
+0.5. Not taken: time. [Braun and Willett 2013](https://doi.org/10.1016/j.geomorph.2012.10.008)
+(Geomorphology 180-181, 170-179; the title and method through its abstract and
+Landlab's FastScape documentation, the paper itself not read) solve the same
+equation in order-n steps along a receiver tree, implicitly, and reach the
+steady state in many; here the tree is drawn at random and the steady state
+written down at once, so there is no erosion run at all. Real badland slopes
+are not only rivers (rain splash, creep, mudflow), so the hillslope end of the
+same curve is a cartoon of them. Departure, recorded.
+
+**The rounds, each against the study's pictures** (05, 08 and 13 most; seed
+SAWTOOTH; local captures, bench/shots/biome-shots/):
+
+1. *What was wrong at the start*: the ridged field cubed made small spiky
+   lumps in islands, 30-40 m tall against photo 5's whole landscape of
+   pyramids; beside the holes the relief was squashed by the corridor fade
+   into gentle banks of rock paint, flat tiles beside the fairways; the far
+   hills were green with stripes on them. First try, not captured, seen in a
+   CPU sketch: separate fluted cones in three layers, the highest winning.
+   Better outlines, but gumdrops and witch's hats: the owner's "party hat"
+   again, from the ground instead of Blender. Turned shapes were the fault,
+   so the cones went. Second try, the drainage above: at once photo 8's
+   ridges, spurs and sharp valleys. **Round 1 (GPU)**: the look was right, the
+   formations 60-100 m. New faults: the public road ran up and over them as a
+   black ribbon, with its poles on the crest; the wash below the faces was
+   wide and bare; no rills; the far hills still plain.
+2. **Round 2**: SUNK, NOT SQUASHED (`sinks`, course.js): near a hole the
+   height is lowered by a share of 80 m, not multiplied down, so what stands
+   near a hole keeps its faces and only the tallest reach the grass. The first
+   big change from the ground: walls rise straight out of the prairie beside
+   the fairway. The road's valley: the road is laid long after the ground,
+   straight, 70 m outside the holes' box on whichever side the clubhouse
+   lands, so the formations leave all four of those lines, 26 m either side
+   and a rise over the recipe's 80 m reach (course.js `roadValley`, PLACED).
+   Measured on seven courses, 9 and 18 holes: the road's steepest stretch 0.19-0.36,
+   cart paths' 0.24-0.34, a lot found on every one. Buttes (the 50 m caprock)
+   and spires (the 1.7 stretch); the far land carved. New faults: the far
+   country still smooth, its slopes under what the ring paints as rock; beige
+   patches on the grass, read as stains; grass blotches on the ledges.
+3. **Round 3**: the far land's slope 0.42 to 1.2 and a 110 m cap: tables with
+   fluted scarps and banded faces on the horizon, the first time the far hills
+   were not plain; the floor patches gone, the wash narrowed; ledges weaker.
+   New faults: formations just past the property line turned to green ghosts
+   (the ring paints rock by a softer rule than the course); a large beige slab
+   on a gentle bank by a hole; a tartan cross-hatch on close faces, regular
+   rills against the bed lines.
+4. **Round 4**: the ring's rock rule narrowed, the wash only from 0.33 to 0.4
+   of slope (rock from about .4), the rills sparser and irregular, thin
+   and in patches. From the ground it reads as the place: the picture at h2-low.
+5. **Round 5**: the ring's threshold at .9 (rock from about 0.48 of slope):
+   the ghosts gone, seen in the winter and autumn overviews and here. The
+   slab was still there, 3,350 m2 of bare hardpan by hole 2.
+6. **Round 6**: what the slab was. A profile across it: not a sunk ramp, as
+   first assumed (a first fix, testing the carved land's own slope, moved it
+   nothing), but the prairie's own roll at 0.41 of slope with the formations
+   sunk out of it. An even bank and a broken face can have the same slope, so
+   the bake now hands the recipe the finished ground, and rock and wash want
+   the ground to bend, at least 1.2-3 m over 12 m, unless it stands steeper
+   than 0.55-0.7. The largest patch on the seed 500 m2. Final picture: h1-behind
+   against photo 8.
+
+Measured on seven courses (four of nine holes, three of eighteen): 89-129 m of
+relief across the course (75-82 m on the first recipe), 7-24% of the ground bare
+rock (14-17%), 0.5-1.5% hardpan (12-13%), 4-14% steeper than 40 degrees. The bench
+on twelve courses of the Badlands alone: every rule clear, no tee shot blocked
+inside 80 m, 9 of 324 shots with ground 1-3 m over the line past 80 m.
+
+**Near a hole, and the ground's rules.** Rock where the finished ground is
+steeper than about 0.40 (rise over run, wandering 0.3-0.5 with noise; rock
+in full 0.14 above that) and broken, hardpan from 0.33 to 0.4 at the foot of a
+face, grass below that and on a plain bank (round 6). All PLACED.
+
+**The far country** (biomes.js `ringCarve`, landscape-edge.js `ringRelief`):
+the course's 4 m carving would only alias into jags on the ring's rows, so over
+140-700 m past the property line the ring trades it for the same carving at a
+tenth the resolution: 350 by 350 cells of 40 m, 14 km across, mirrored past
+that, a mask 1.3 km across, a cap at 110 m, for the tables of photo 5 and photo
+13's Wall. Rows of 70 m out to 3.6 km, where the haze takes them, then 220 m as
+the mesas had: 155,000-180,000 triangles in the ring. PLACED, all of it. The
+mesas (ringMesas) went from this landscape. A built course on the Badlands gets
+the same far country on its own land (scenery, so no BUILT_VERSION); nothing is
+taken off a built course's ground, which never had the carving.
+
+**The frame** (tools/frame-ab.mjs on Low, the card, this machine, seed SAWTOOTH,
+tees 1, 5 and 9, two rounds, before this work against after, 212 s on the card):
+the frame 1.23 ms to 0.70 ms, -43%; p95 1.80 to 1.17 ms; graphics card 0.66 to
+0.57, 0.51 to 0.51, 0.46 to 0.46 ms; draws 158-200 to 131-189; triangles 3.0-3.9 M
+to 2.9-3.0 M. Cheaper, not dearer, and the graphics card's share is flat; why the
+processor's fell by about two-fifths was not chased (the walls hiding what is
+behind them is a guess, and the holes are the same in both builds). Three tees of one course on Low, so no
+promise for Medium or the overview. Measured on the build before round 6, whose
+change is which ground type a bank bakes as, not anything drawn. The carving adds
+about a quarter of a second to the build of a course, in each worker that asks
+(248 ms alone; bench generation time for twelve courses 87.6 to 106.6 s between
+two runs on a busy machine, noise as much as anything); the start-up to the main
+menu was 34.8 s before and 31.6 s after, the same within its noise.
 
 **The strata** (ground.js `strataColour`, biomes.js `strata`): every rock
 face, every steep hardpan bank and the far ring's faces painted in level
 beds 1.8 m thick, warped a little, each bed by a hash of its number -- the
-rock's own tan 37%, pink (#d4b0a0) 30%, grey (#a8a49c) 20%, the red fossil
-soils (#b06a50) 8%, the white ash (#ece6dc) 5% -- with a light lip and a
-shadow at each bed's edge. All PLACED from the study's pictures. The far
-land rises as mesas (ringMesas). The cannonball concretion is cut ("the big
-round ball thing is not needed").
+rock's own tan 38.5%, pink (#d4b0a0) 30%, grey (#a8a49c) 20%, the red fossil
+soils (#b06a50) 8%, the white ash (#ece6dc) 3.5% (5% until round 2) -- with a
+light lip and a shadow at each bed's edge. Past the property line the beds are
+four times as thick, as a far wall's show in photo 13; a bed under a pixel
+settles to the average, so nothing shimmers. Thin rills down the faces in
+patches (the first version, at a regular 1.9 m, made tartan with the beds).
+All PLACED from the study's pictures. The cannonball concretion is cut ("the
+big round ball thing is not needed").
 
 **The planting** (PLACED from the sources above): open mixed-grass
 prairie -- yucca, sage, leadplant and forbs scattered, the odd juniper --

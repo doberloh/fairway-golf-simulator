@@ -9,6 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {landformOf} from '../src/landforms.js';
 import {BIOMES} from '../src/biomes.js';
+import {ringRelief} from '../src/landscape-edge.js';
 import {world} from './worlds.mjs';
 
 const sample = (f, n = 120, span = 1400) => {
@@ -115,4 +116,35 @@ test('the High Plains are a flat table with dry playas; the Sand Hills stand tal
  assert.ok(pans > 100, `playas with bare floors (${pans} samples)`);
  const dunes = k => relief(sample(landformOf(BIOMES[k], 'SHAPE').lift));
  assert.ok(dunes('sandhills') > 2 * dunes('links'), `the Sand Hills (${dunes('sandhills').toFixed(1)} m) over the Links (${dunes('links').toFixed(1)} m)`);
+});
+
+test('the Badlands are carved: peaks off the prairie, sunk near a hole, the road on the floor', () => {
+ // Generator 83: landforms.js `carve`, a drainage network baked once a seed.
+ const o = BIOMES.badlands.landform, r = landformOf(BIOMES.badlands, 'SHAPE'), lifts = sample(r.lift);
+ assert.ok(r.sinks, 'the recipe takes the fade itself');
+ assert.ok(Math.max(...lifts) > 60, `formations stand tall (${Math.max(...lifts).toFixed(0)} m)`);
+ const open = lifts.filter(y => y < o.swale).length / lifts.length;
+ assert.ok(open > .2 && open < .75, `prairie between them (${(open * 100).toFixed(0)}%)`);
+ // Separate summits, not one lump: local tops at least 25 m tall.
+ const n = 120, tops = lifts.filter((y, i) => y > 25 && i > n && i < lifts.length - n && y >= lifts[i - 1] && y >= lifts[i + 1] && y >= lifts[i - n] && y >= lifts[i + n]).length;
+ assert.ok(tops > 40, `many summits (${tops})`);
+ // Sunk, not squashed: part way up the fade a tall point loses metres off
+ // its top, more than its share, and at a corridor it is gone.
+ let high = null, best = 0;
+ for (let x = -700; x < 700; x += 11) for (let z = -700; z < 700; z += 11) { const y = r.lift(x, z); if (y > best) { best = y; high = [x, z]; } }
+ const half = r.lift(...high, .5), none = r.lift(...high, 0);
+ assert.ok(best - half > 25 && half < best / 2 + o.swale, `lowered (${best.toFixed(0)} m to ${half.toFixed(0)} m)`);
+ assert.ok(Math.abs(none) < 1e-9, 'and gone at a corridor');
+ // A course: the road stays on gentle ground, the far land stands up.
+ const w = world({holes: 9, biome: 'badlands', seed: 'SAWTOOTH'}), road = w.roads.find(q => q.kind === 'boundary');
+ assert.ok(road, 'the road is laid');
+ for (let i = 1; i < road.points.length; i++) {
+  const a = road.points[i - 1], b = road.points[i], s = Math.abs(w.height(a.x, a.z) - w.height(b.x, b.z)) / Math.hypot(a.x - b.x, a.z - b.z);
+  assert.ok(s < .4, `the road climbs no formation (${s.toFixed(2)} at ${a.x.toFixed(0)},${a.z.toFixed(0)})`);
+ }
+ const ring = ringRelief(w), far = sample((x, z) => ring.at(x + 3000, z, 3000), 40, 3000);
+ assert.ok(relief(far) > 60, `the far country stands up (${relief(far).toFixed(0)} m)`);
+ // A built course's land is its own, so the ring has no carving to take off it.
+ const built = ringRelief({built: true, settings: {biome: 'badlands', seed: 'B'}});
+ assert.ok(Math.min(...sample((x, z) => built.at(x + 3000, z, 3000), 40, 3000)) >= 0, 'a built course\'s far land only rises');
 });

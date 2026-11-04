@@ -69,7 +69,9 @@ function wildUniforms(w, hasWild, hasFallen) {
   // Where the ring's faces turn to rock, as the ground's up-ness: a mesa
   // landscape's butte sides from gentler (round 7 of the far land: at .74 the
   // buttes, their sides 25-40 degrees on the coarse rows, stood as sand cones).
-  ringFaceFrom: {value: biomeOf(w.settings.biome).ringMesas ? .86 : .74},
+  // A carved far country: the course's own threshold (the ring keeps the rock
+  // going past the property line), narrower in the shader so its grass stays grass.
+  ringFaceFrom: {value: biomeOf(w.settings.biome).ringCarve ? .9 : biomeOf(w.settings.biome).ringMesas ? .86 : .74},
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   ...Object.fromEntries(Object.entries(tints).map(([k, v]) => ['gt_' + k, {value: v}])),
   // The landscape's spring bloom (seasons.js bloomIn, on the round's copy of
@@ -381,7 +383,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   vec3 c=h<e.x?st_a:h<e.y?st_b:h<e.z?st_c:h<e.w?st_d:base;
   // A light lip at the top of each bed, a shadow under it: the bed weathering back.
   float fy=fract(ys);
-  return c*(1.+.07*smoothstep(.9,.98,fy)-.09*smoothstep(0.,.05,fy)*(1.-smoothstep(.05,.12,fy)));
+  c*=1.+.07*smoothstep(.9,.98,fy)-.09*smoothstep(0.,.05,fy)*(1.-smoothstep(.05,.12,fy));
+  // Beds under a pixel settle to their average, so a far face does not shimmer.
+  return mix(c,st_a*strataShares.x+st_b*strataShares.y+st_c*strataShares.z+st_d*strataShares.w+base*(1.-e.w),smoothstep(.3,.8,fwidth(ys)));
  }
  // THE OVERHAUL'S GROUND TYPES, PAINTED (GROUND_CODE in this file): a colour
  // and a flat cartoon pattern in world metres for each. q is the world
@@ -414,6 +418,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    float along=dot(q,tang)/5.5+.8*patchNoise(q/13.),fj=fract(along);
    float joint=-.2*(1.-smoothstep(0.,.07,fj))+.08*smoothstep(.9,.99,fj);
    c*=mix(1.,1.+joint,steep*steep);
+   // Banded clay: rills down the face, thin and dark, in patches (photo 8).
+   if(strataOn>.5){float rill=abs(fract(dot(q,tang)/3.1+2.6*patchNoise(q/7.))-.5)*2.;c*=1.-.26*steep*smoothstep(.84,1.,rill)*smoothstep(.48,.72,patchNoise(q/4.3+11.));}
    c*=mix(1.,(.88+.12*strata)*(1.+ledge),steep*.45);
    c=mix(c,rough,(1.-steep)*.3);
    return c*(1.-.12*steep);
@@ -857,8 +863,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(ringFloor>.5)turf=mix(groundPaint(ringFloor,wp,groundPoint.y,gn,turf),RING_TINT(ringFloor),grain*.7);
   // Round 5: from a gentler steepness (the ring's facets are coarse, so a
   // mesa's cliff lies at 40-50 degrees on them; at .62-.8 its sides stayed sand).
-  float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+.16,gn.y):0.;
-  if(face>0.)turf=mix(turf,mix(groundPaint(ringFace,wp,groundPoint.y,gn,turf),RING_TINT(ringFace)*(ringFace>3.5?mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9:vec3(1.)),max(grain*.5,(1.-smoothstep(.25,.55,gn.y))*.85)),face);
+  float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+(strataOn>.5?.07:.16),gn.y):0.;
+  // Banded clay keeps its beds out here, four times as thick, as a far wall's
+  // show in the photographs; it is its faces' whole look.
+  if(face>0.)turf=mix(turf,mix(groundPaint(ringFace,wp,strataOn>.5?groundPoint.y*.25:groundPoint.y,gn,turf),RING_TINT(ringFace)*(ringFace>3.5?mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9:vec3(1.)),strataOn>.5?grain*.2:max(grain*.5,(1.-smoothstep(.25,.55,gn.y))*.85)),face);
   // Round 5: and the steeper the face the plainer: a pattern laid from above
   // stretches into vertical smears on a cliff (Mountain's pale streaks).
  }
