@@ -3,7 +3,7 @@ import {landingZones} from '../src/markings.js';
 import {unbridgedWater, pathShape} from '../src/paths.js';
 import {roadOnPlay} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
-import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
+import {seatGap, FLOAT_TOLERANCE} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
 import {farWoodSites, FAR_SHAPES} from '../src/far-woods.js';
 import {drawnGround} from '../src/landscape-edge.js';
@@ -522,19 +522,14 @@ METRICS.seated = {
   const counts = {plantsChecked: 0}, invariants = {floatingPlant: 0}, series = {seatDepth: [], gap: []};
   for (const t of w.trees || []) {
    counts.plantsChecked++;
-   const pose = plantPose(t, w.height), base = t.y - pose.depth, R = footprintRadius(t);
-   series.seatDepth.push(pose.depth);
    // The foot is a plane through the seated base with the pose's slope; the
    // lean can lift an edge by r x SEAT_LEAN. Checked on its own points, not
    // the seat's: rings at 85% and 50% of the footprint, twelve each, turned
-   // off the seat's sixteen.
-   let worst = -Infinity;
-   for (const r of [R * .85, R * .5]) for (let k = 0; k < 12; k++) {
-    const a = (k + .37) * Math.PI / 6, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
-    worst = Math.max(worst, base + pose.gx * dx + pose.gz * dz + r * SEAT_LEAN - w.height(t.x + dx, t.z + dz));
-   }
+   // off the seat's sixteen (tree-seat.js `seatGap`, which course.js asks too).
+   const {worst, depth} = seatGap(t, w.height);
+   series.seatDepth.push(depth);
    series.gap.push(worst);
-   if (worst > .03) invariants.floatingPlant++;
+   if (worst > FLOAT_TOLERANCE) invariants.floatingPlant++;
   }
   return {series, counts, invariants};
  },

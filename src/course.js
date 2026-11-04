@@ -1,6 +1,6 @@
 import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
-import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
+import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP,cutFor} from './streams.js';
 import {planCourse,holeLine,enabledTees,greenContour,greenPedestal,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
 import {makeGroundGrid,makeGroundGridSteps,makeGroundGridPooled,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
@@ -16,6 +16,7 @@ import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {placeRoads,onRoad,streetFurniture,placeCartBarn} from './roads.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
+import {seatGap,FLOAT_TOLERANCE} from './tree-seat.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
 // conditionals in other files. Re-exported because everything imports it from
@@ -1507,7 +1508,10 @@ export function* generateWorldSteps(settings={},options={}){
  // the Mississippi's alluvial plain has about 5 m at the most (USDA MLRA
  // 131A). A landscape may scale it down; 1 everywhere else. PLACED.
  const baseRoll=bio.baseRoll??1;
- const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:12)+severity*baseRoll*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
+ // `baseHeight`: where the ground sits above the sea before it rolls, for a
+ // landscape whose sea comes in among the holes (the Lowcountry's creeks,
+ // generator 80). 12 m everywhere else. PLACED.
+ const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:bio.baseHeight??12)+severity*baseRoll*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
  // Hazards follow their local ground elevation instead of draining every lake
  // down to a single sea level. Depth is the selected maximum basin depth.
  for(const h of holes){h.ponds=h.ponds.filter(p=>{const q=h.toWorld(p);return nearby(q.x,q.z)===h&&Array.from({length:24},(_,i)=>{const edge=ovalRadius(p,i*Math.PI/12,1);const v=h.toWorld({x:p.x+edge.x,z:p.z+edge.z});return nearby(v.x,v.z)===h;}).every(Boolean)&&!holes.some(other=>other!==h&&['tee','green','fringe','fairway'].includes(localSurface(other,other.toLocal(q).x,other.toLocal(q).z)));});for(const p of h.ponds){const q=h.toWorld(p);p.level=base(q.x,q.z)-.45;}}
@@ -1580,8 +1584,13 @@ export function* generateWorldSteps(settings={},options={}){
   // it a quarter of every crest and hummock came back round the tees and stood
   // in the tee shot -- blind shots blocked inside 80 m went from none to six
   // across the full bench.
-  const lift=liftScale*landform.lift(x,z)*smooth(n.d/(landform.reach??bio.hills.reach));
+  const fade=smooth(n.d/(landform.reach??bio.hills.reach));
+  const lift=liftScale*landform.lift(x,z)*fade;
   let y=base(x,z)+hills+lift;
+  // A recipe that sets ground to a height, not by a height (the Lowcountry's
+  // marsh at the tide line and its creeks below it), does so last, faded in
+  // from play as the lift is.
+  if(landform.level)y=landform.level(x,z,y,fade);
   // A coast that seeks play never ramps down within 5 m of a corridor's
   // envelope, and is sea from 25 m
   // (`nearest().d`, the real corridor, doglegs and all): the sea comes in
@@ -2519,7 +2528,13 @@ export function* generateWorldSteps(settings={},options={}){
  // At two spans -- the cover's tilt span, and half of it -- the steeper of the
  // two: a shrub at 39 degrees over its span stood on a 45-degree step.
  const slopeOver=(x,z,d)=>Math.hypot(height(x+d,z)-height(x-d,z),height(x,z+d)-height(x,z-d))/(2*d);
- const coverTooSteep=(x,z,r)=>{const d=Math.max(.5,r*.6);return Math.max(slopeOver(x,z,d),slopeOver(x,z,Math.max(.3,d/2)))>COVER_STEEPEST;};
+ // And on a creek's cut bank, none that would float: a shrub 0.4 m from a
+ // Wine Country creek's water stood on the cut's drop, which the centred
+ // slopes above average away, and its capped seat left it 6 cm proud
+ // (generator 81). Asked only on a cut bank -- refusing every cover there
+ // moved every landscape's planting for one shrub.
+ const floatsOnCut=(x,z,r,kind,h)=>{const st=streams.at(x,z);return !!st&&st.edge<cutFor(st.width).lip+r&&seatGap({x,z,y:height(x,z),h,r,kind},height).worst>FLOAT_TOLERANCE;};
+ const coverTooSteep=(x,z,r,kind,h)=>{const d=Math.max(.5,r*.6);return Math.max(slopeOver(x,z,d),slopeOver(x,z,Math.max(.3,d/2)))>COVER_STEEPEST||(kind!==undefined&&floatsOnCut(x,z,r,kind,h));};
  // A drop under the foot of more than 15% of the tree's height, or 2 m at
  // most (generator 76: a magnolia stood over a 2.5 m creek bank).
  const onLip=t=>{if(GROUND_PLANTS.has(t.kind))return false;const R=Math.min(2.5,Math.max(1,t.h*.1));let low=Infinity;for(let k=0;k<8;k++){const a=k*Math.PI/4;low=Math.min(low,height(t.x+Math.cos(a)*R,t.z+Math.sin(a)*R));}return t.y-low>Math.min(t.h*.15,2);};
@@ -2642,7 +2657,7 @@ export function* generateWorldSteps(settings={},options={}){
   // was exempt from both tests above, and 232 of them stood in a tee's view on
   // 12 planted courses (12 October 2026). Low cover still grows in front of a
   // tee; only cover whose top rises above the sightline is refused.
-  if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r)))continue;
+  if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r,kind,h)))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
   if(onLip(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
@@ -2676,7 +2691,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(greenKeepOut(guards,x,z,closeness)>0&&Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)))<greenKeepOut(guards,x,z,closeness)+GREEN.ramp)continue;
    const tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true};
    if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z,trunkGirth(tree))))continue;
-   if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r)))continue;
+   if(small&&(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r,kind,h)))continue;
    if(!small&&(onLip(tree)||!roomFor(tree,stands.share)))continue;
    if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
    trees.push(tree);
@@ -2696,7 +2711,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(stands.at(x,z,n.d)<.5||height(x,z)<.8||!allows(surface(x,z),'shrubs'))continue;
    if(builtOn(x,z))continue;
    const kind=choose(stands.under.plants,p.pick),{h,r}=treeSize(kind,p.a,p.b),tree={x,z,y:height(x,z),h,r,shade:p.shade,kind,hole:n.h.hole,stand:true,under:true};
-   if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r))continue;
+   if(blocksView(launch,x,z,tree.y+h,r)||coverTooSteep(x,z,r,kind,h))continue;
    trees.push(tree);
   }
  }

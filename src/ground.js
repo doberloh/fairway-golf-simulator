@@ -331,7 +331,7 @@ export function groundMaterial(view,palette){
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
-   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0},
+   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
    ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
@@ -357,7 +357,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
 // texture is linear for the curves and banks, and a filtered read of every
 // table texel cost Classic 5-10% of its ground on Low (tools/frame-ab.mjs,
 // 31 October 2026). The row passed is the hole's texel centre, hole + .5.
-vec4 holeTexel(float col,float row){return texelFetch(tables,ivec2(int(col),int(rows)+int(row)),0);}uniform vec2 extent;uniform float streamCount;uniform float curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn;
+vec4 holeTexel(float col,float row){return texelFetch(tables,ivec2(int(col),int(rows)+int(row)),0);}uniform vec2 extent;uniform float streamCount;uniform float curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn,beachOwn;uniform vec3 beachTint;
 vec4 curveAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+.5)/1024.,row/tableRows));}
 vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+512.5)/1024.,row/tableRows)).xy;}
  uniform vec3 bankTint;
@@ -646,8 +646,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The kind flips at BEACH_RISE while the colour keeps fading for BEACH_FADE
  // above it. Flipping on the colour's midpoint instead would put the lie and
  // the paint half a fade apart, which is the split this file keeps falling into.
+ // Its colour is the bunkers' sand unless the landscape names its own
+ // (biomes.js beachTint: the Lowcountry's creek banks are pluff mud).
  if(seaBeach>.5&&kind<.5){
-  turf=mix(turf,tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y));
+  turf=mix(turf,beachOwn>.5?beachTint:tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y));
   if(groundPoint.y<${BEACH_RISE.toFixed(2)})kind=5.;
  }
  // How near water this fragment is, for the blowouts below: the hole's ponds

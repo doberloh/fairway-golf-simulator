@@ -173,10 +173,16 @@ from what lies between the holes on real courses of its kind
   Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
   (granite knobs and washes in the Mojave and Desert Palms, the High
   Sierra's domes), **channels** (Sagebrush coulees, Ozark hollows, Piedmont
-  gullies, SoCal barrancas), **volcanic** (Ponderosa's and Hawaii's cinder
+  gullies, SoCal barrancas), **playas** (the High Plains' round dry pans
+  with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder
   cones and lava flows), **sandridges** (Longleaf) and **lowland** (the
   Bayou's, Flatwoods' and Gulf Coast's levees and backswamps, on a corridor
-  roll scaled down by `baseRoll`).
+  roll scaled down by `baseRoll`; the Lowcountry's with `tide`: its marsh
+  laid at the tide line by the recipe's `level`, last of all, and tidal
+  creeks cut through it below the sea, which `sea` fills, the marsh's core
+  bare of trees -- generator 80).
+  A recipe's `level` SETS the ground to a height (faded in from play as the
+  lift is), where `lift` adds to it.
 - **dunes** (Links, Lakeshore Dunes): rumpled ground and dune crests carrying
   marram (native grass), heather on the settled ground behind (Links).
 - **prairie** (Midwest), **coral** (the Island's ironshore just above the

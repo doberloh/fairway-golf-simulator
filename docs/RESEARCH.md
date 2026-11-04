@@ -13141,6 +13141,103 @@ pictures unless a figure is quoted.
   on the river itself, smaller along smaller streams. Before, the Bayou's
   ground spread 14 m from low to high like the Heartland's, almost all of it
   the corridors' roll that every landscape shared; now 4-6 m.
+- **Lowcountry -- salt marsh and tidal creeks** (generator 80; `lowland`
+  with `tide`, course.js `level` and `baseHeight`). The marsh drifts beyond
+  play are laid flat at 1.9 m above the sea, meandering creeks cut through
+  their core to 2 m below it (two scales: creeks about every 260 m and
+  narrower branches about every 110 m), and the sea plane (`sea: true`)
+  fills them; the ground sits 4 m above the sea before it rolls (12 m on
+  every other landscape), so the holes stand a step above the marsh, not
+  on a bluff. Sources: the Southeast Coastal Geomorphology SET network
+  ([Madsen, GSA Southeastern 2014](https://gsa.confex.com/gsa/2014SE/webprogram/Handout/Paper237152/Madsen_SEGSA2014.pdf)):
+  semidiurnal, mesotidal, average tidal range 1.5 m at Little River Inlet,
+  SC, to 2.0 m at the Savannah River -- the creek bed's 2 m below the water
+  is about that range. In the first pictures the creeks read as sand, at
+  1.4 m and again at 3.5 m. It was the BED: the water is clear enough to
+  show it, and ground below the beach line (course.js BEACH_RISE) is painted
+  the bunkers' sand. Turning the sea shader's pale shelf dark (`seaShelf`,
+  colour and strength; the beach's [.55, .72, .6, .4] by default, the
+  Lowcountry's [.2, .26, .2, .55]) changed nothing visible on its own, and
+  deepening the bed was rejected for the same reason. What worked: a
+  landscape may name its beach band's colour (`beachTint`, ground.js; the
+  bunkers' sand by default), the Lowcountry's pluff mud #4f4838 (PLACED).
+  It still plays as sand, as every beach does. Its creeks take a lake's
+  swash (`lakeWaves`) rather than surf. Then the creeks stood in woods: the
+  marsh's core is now bare of trees (the recipe's `treeKeep`), cordgrass to
+  the creek banks, the live oaks on the hammocks above. A North Inlet, SC study (seen only as a
+  search summary; [NSF PAR](https://par.nsf.gov/biblio/10450202-evaluating-indicators-marsh-vulnerability-sea-level-rise-along-historical-marsh-loss-gradient)
+  and [USC theses](https://scholarcommons.sc.edu/etd/402) were the hits):
+  smooth cordgrass grows best at about 0.35 m NAVD88, and one study there
+  gives mean higher high water as 0.66 m NAVD88 (its site label ambiguous)
+  -- the real marsh platform sits just below high tide and floods at most
+  high tides. Not read in full: worth a second look for creek widths. **Departure, PLACED:** the game's marsh stands
+  1.9 m above its water, because the sea plane is one level (no tide) and
+  the beach band (course.js BEACH_RISE 0.9 m, its colour fading for 0.8 m
+  more) would turn a marsh lower than 1.7 m into sand. Creek depth scaling
+  with tidal range (the Cape Romain comparison in the same search) and creek
+  widths are not taken from a source: widths of roughly 6-14 m are PLACED.
+  Measured on three eighteens: nothing in play wet, creeks 1.8-3.8% of the
+  map, marsh at the tide line 18-24%, 1-3 holes with a creek within 40 m.
+  The clubhouse drive of one bench course clipped a creek's tip (thinner
+  than the 6 m routing cell): roads.js now checks a routed drive as the
+  invariant does and routes again round anything it clipped.
+
+**The second look (generator 81, 3 November 2026).** The landscapes left
+on their region's ground were each checked against a source; three moved,
+four were judged to fit.
+- **High Plains -- playas** (new recipe `playas`: a table with 2 m of roll,
+  round pans 60-140 m across and 1-1.8 m deep with flat floors of bare clay,
+  hardpan #bcae8e; the corridors' roll at 0.3). [Llano Estacado](https://en.wikipedia.org/wiki/Llano_Estacado):
+  a plateau bounded by the caprock's cliffs, among the flattest large
+  areas in North America. The playas: about 20,000 on the Llano (the same
+  article) or 50,000 on the High Plains with 85% on the Llano (another
+  source in the search; they disagree); "about 17 acres" on average
+  ([Marfa Public Radio, Nature Notes](https://marfapublicradio.org/blog/nature-notes/gems-on-the-prairie-the-playa-lakes-of-the-llano-estacado/));
+  mostly 3.2-28.3 ha in a Castro County, Texas study (search summary only);
+  depth: a Texas water study assumed 3 ft for storage
+  ([TWDB LP-114](https://www.twdb.texas.gov/publications/reports/limited_printing/doc/LP114.pdf),
+  an assumption, not a measurement). The game's pans are scaled down to
+  fit a course (PLACED); measured on two eighteens: 6.5 m between the low
+  and high ground (5th to 95th percentile), bare playa floor 4-8% of it.
+- **Sand Hills -- taller dunes** (`dunes` at 14 m, scale 230, the corridors'
+  roll lifted to base 24, severity 18). [Sandhills (Nebraska)](https://en.wikipedia.org/wiki/Sandhills_(Nebraska))
+  and the University of Nebraska's overview (via the search): barchanoid
+  ridges and megabarchans typically 120-300 ft, simple linear dunes much
+  lower; a Brown County field's linear dunes 6-10 m of relief; blowouts up
+  to several hundred feet across; wet interdunal valleys. Before, its dunes
+  were 6 m, a links' size. Crests of about 13 m are PLACED: big enough to
+  read, small enough to route holes between.
+- **Wine Country -- a valley floor under ranges** (hills base 14, severity
+  22, roll .6, the far ring lifted to 520). The [Napa Valley Vintners'
+  staff guide](https://www.napavintners.com/trade/docs/Napa_Valley_Staff_Training_Guide.pdf)
+  and others in the search: the valley about 30 mi long and up to 5 mi
+  wide, the Mayacamas to the west and the Vaca Mountains to the east
+  (Atlas Peak 2,663 ft), an alluvial floor from the Napa River. Before, it
+  rolled everywhere (base 30, severity 50). PLACED.
+- **Judged to fit, unchanged:** Bluebonnet (the Blackland Prairie,
+  "gently rolling to nearly level with most slopes less than 12%",
+  [USDA FEIS BpS 3714280](https://research.fs.usda.gov/sites/default/files/feis/bps/3714280.pdf)
+  -- the prairie roll); Cross Timbers (rolling plains to hills, ridges and
+  cuestas over sandstone, local relief low but above its neighbours --
+  [Cross Timbers](https://en.wikipedia.org/wiki/Cross_Timbers) and USDA ESD
+  [084A](https://edit.sc.egov.usda.gov/catalogs/esd/084A/R084AY075OK); the
+  prairie roll with its drifts; the cuestas were considered as the `steps`
+  recipe and left, since it would take the prairie drifts the woods
+  stand between); Pine Barrens (flat to gently rolling, rarely above about
+  200 ft, sandy -- the [NJ Pinelands Commission's](https://www.nj.gov/pinelands/infor/educational/curriculum/pinecur/psg.htm)
+  pages; low sand dunes as now, Pine Valley's own rolling sand being the
+  model course); Chihuahuan (basins and playas, low mountains and bajadas
+  in the EPA's level IV list -- the mesas recipe stands; no source named
+  mesas, so that choice is PLACED).
+
+The bench found one shrub floating 6 cm on a Wine Country creek's cut bank
+after the change: the cover-slope check (course.js `coverTooSteep`) takes
+centred differences, which average away a one-sided drop, and a cover's seat
+is capped at 75% of its height. Refusing every cover within a creek's lip
+moved all forty landscapes' planting, so only a cover there that would
+actually float is refused, by the bench's own check (tree-seat.js
+`seatGap`, now shared by tools/metrics.mjs and course.js). No fingerprint
+moved.
 
 **Tall trees on lips** (found by the bench on the new Piedmont): course.js
 onLip let a tree stand over a drop of 15% of its height under its foot --

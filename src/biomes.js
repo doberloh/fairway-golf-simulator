@@ -889,9 +889,10 @@ const LAND = {
   plants: [['coastliveoak', .15], ['sycamore', .1], ['eucalyptus', .12], ['chaparral', .18], ['coastalsage', .15], ['torreypine', .05], ['jacaranda', .06], ['peppertree', .06], ['olivetree', .05], ['iceplant', .08]],
   ui: {panel: 'rgba(40,24,30,.88)', a1: '#e9d5ff', a2: '#7e22ce', hot: '#fef3c7', soft: '#dccce4', onHot: '#200a28'},
   world: {clubhouse: 'pavilion'}},
- // Wine Country: rolling vineyards between valley oaks and blue oaks,
+ // Wine Country: vineyards on a valley floor between valley oaks and blue oaks
+ // (its ground and ranges are TERRAIN's, generator 81),
  // poppies, olives, a stone winery clubhouse.
- winecountry: {hills: {base: 30, severity: 50, reach: 80}, rough: '#b4a464',
+ winecountry: {rough: '#b4a464',
   stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .5], ['shrub', .5]]},
    plants: [['valleyoak', .4], ['blueoak', .3], ['coastliveoak', .2], ['buckeye', .1]]},
   // The vines stand in rows now (course.js, `vineyard`); a few strays.
@@ -1085,6 +1086,41 @@ const TERRAIN = {
  flatwoods: {landform: {type: 'lowland', scale: 340, levee: 1, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
   hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
  gulfcoast: {landform: {type: 'lowland', scale: 320, levee: 1.5, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}}, baseRoll: .3},
+ // The Llano Estacado: a tableland nearly flat, round dry playas with bare
+ // clay floors (generator 81). Playas scaled down from the real 3-28 ha
+ // (radius 100-300 m) to 60-140 m, 1-1.8 m deep (a Texas water study
+ // assumed 3 ft). PLACED.
+ highplains: {landform: {type: 'playas', roll: 2, cover: .56, cell: 500, chance: .55, radius: [60, 140], size: [1, 1.8], reach: 70,
+  kinds: {a: 'native', b: 'hardpan'}, gates: {a: gate(24, 22), b: gate(14, 14)}}, groundTints: {hardpan: '#bcae8e'},
+  hills: {base: 5, severity: 5, reach: 70}, baseRoll: .3},
+ // The Sand Hills: grassed dunes far taller than a links' -- linear dunes of
+ // 6-10 m relief, barchanoid ridges 37-90 m (UNL; a Brown County study) --
+ // so the crests here reach about 13 m, the corridors' roll lifted with them
+ // (generator 81). PLACED.
+ sandhills: {landform: {type: 'dunes', scale: 230, hummock: 55, height: 14, marram: .5, heather: 0,
+  kinds: {a: 'native'}, gates: {a: {near: 9, ramp: 14}}}, hills: {base: 24, severity: 18, reach: 70}},
+ // Napa's valley floor between the Mayacamas and the Vaca ranges: alluvial
+ // and gentle, the ranges standing 600-800 m over it at the horizon (the
+ // Napa Valley Vintners' guide: 30 mi by up to 5 mi, Atlas Peak 2,663 ft).
+ // In place of rolling hills everywhere (generator 81). PLACED.
+ winecountry: {hills: {base: 14, severity: 22, reach: 80}, ringLift: 520, baseRoll: .6},
+ // Salt marsh at the tide line, tidal creeks winding through it to the sea,
+ // hammocks of live oak standing a few metres above (generator 80). The sea
+ // is the creeks' water: `sea` draws it, and the ground sits 4 m above it
+ // (`baseHeight`) rather than 12, so the marsh lies a step below the holes,
+ // not a bluff. The marsh platform stands 1.9 m up -- above the beach band
+ // (course.js BEACH_RISE and its fade), or every marsh would read as sand --
+ // where the real one floods at every high tide. PLACED.
+ lowcountry: {landform: {type: 'lowland', scale: 300, levee: 1, hollow: 1, swamp: .46, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)},
+  tide: {marsh: 1.9, bed: -2, scale: 260, width: .028}},
+  // The bed 2 m down, about the coast's tidal range. The sea shader paints
+  // shallow sea as a pale sandy shelf (renderer.js WATER_EDGES), and in the
+  // first pictures the creeks read as sand: `seaShelf` turns it toward dark
+  // marsh water instead (its colour and how far). A lake's swash, not surf.
+  // PLACED.
+  // Its banks and creek beds are pluff mud, not beach sand (`beachTint`, the
+  // ground shader's beach band). PLACED.
+  hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2, baseHeight: 4, sea: true, lakeWaves: true, seaShelf: [.2, .26, .2, .55], beachTint: '#4f4838'},
 };
 export const BIOMES = Object.fromEntries(Object.entries(LAND).map(([key, own]) => {
  const place = LANDSCAPES[key], region = place.region;

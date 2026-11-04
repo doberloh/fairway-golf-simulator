@@ -74,6 +74,10 @@ const VIEWS = [
  // The streets kit (3 November 2026): above the parking lot, looking along
  // the drive to the clubhouse -- the road surfaces, the lot and the barn.
  {name: 'lot', hole: 0, when: 'afternoon', cam: `w => { const L = w.lot || {x: 0, z: 0}; return {x: L.x - 55, z: L.z - 55, yaw: 45, height: 40, pitch: -30}; }`},
+ // The sea where it comes in among the holes (generator 80, the
+ // Lowcountry's tidal creeks; Monterey's shore): the 10 m cell with the most
+ // open sea round it inside the map, seen from 70 m off and 40 m up.
+ {name: 'sea-in', hole: 0, when: 'afternoon', cam: `w => { const wet = (x, z) => w.surface(x, z) === 'water' && w.height(x, z) < -.3 && !(w.lakeOwner && w.lakeOwner(x, z)); let best = {n: -1, x: 0, z: 0}; for (let x = -w.halfX * .9; x < w.halfX * .9; x += 30) for (let z = -w.halfZ * .9; z < w.halfZ * .9; z += 30) { if (!wet(x, z)) continue; let n = 0; for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) if (wet(x + i * 10, z + j * 10)) n++; if (n > best.n) best = {n, x, z}; } return {x: best.x - 50, z: best.z - 50, yaw: 45, height: 40, pitch: -24}; }`},
 ];
 
 // THE PICKS: the views each landscape's cards show, in order (at least four).

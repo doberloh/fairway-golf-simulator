@@ -421,7 +421,20 @@ export const SCHEMA_VERSION=26;
 //     `coastSeek`): the shore follows the eastern holes, never within 5 m of
 //     a corridor; 3-6 holes of 18 with open sea within 50 m of a fairway or
 //     green, nothing in play wet. Moved Monterey.
-export const GENERATOR_VERSION=79;
+// 80: the Lowcountry's tidal creeks (biomes.js TERRAIN, landforms.js
+//     `lowland` with `tide`, course.js `level` and `baseHeight`): a salt
+//     marsh laid at the tide line beyond play, meandering creeks cut through
+//     it below the sea, the ground 4 m above the sea instead of 12 and the
+//     prairie roll replaced by the lowland's; no trees on the marsh's core.
+//     Moved the Lowcountry.
+// 81: the second look at landscapes on their region's ground: the High
+//     Plains a flat table with dry playas (landforms.js `playas`), the Sand
+//     Hills' dunes about twice as tall, Wine Country a gentler valley floor
+//     under higher ranges. Moved the High Plains, the Sand Hills and Wine
+//     Country. And a ground cover on a creek's cut bank that would float
+//     is refused (course.js `floatsOnCut`, tree-seat.js `seatGap`): one
+//     bench course, no fingerprint.
+export const GENERATOR_VERSION=81;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

@@ -148,8 +148,21 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
    .sort((a, b) => toward(a) - toward(b))[0];
   const onRoad = side.axis === 'x' ? {x: laid.at, z: Math.max(laid.lo, Math.min(laid.hi, from.z))} : {x: Math.max(laid.lo, Math.min(laid.hi, from.x)), z: laid.at};
   const grid = costGrid({holes, s, surface, streams, height, block: NO_DRIVE, dear: {}, pad: ROAD_MARGIN + 240, berth: true});
-  const cells = grid.route(from, onRoad);
-  let points = null;
+  let cells = grid.route(from, onRoad), points = null;
+  // A FEATURE THINNER THAN A CELL (generator 80: a Lowcountry tidal creek's
+  // tip, its sandy bank between two cells' centres): the routed drive is
+  // checked as the invariant checks it, and the cells round anything it
+  // clipped are closed and the drive routed again. Only a drive that would
+  // have broken the rule changes.
+  for (let tries = 0; tries < 4 && cells?.length; tries++) {
+   const hits = roadOnPlay({roads: [{kind: 'drive', width: ROAD_WIDTH.drive, points: [from, ...lineOf(grid, cells).slice(1, -1), onRoad]}]}, surface);
+   if (!hits.length) break;
+   for (const h of hits) {
+    const [ci, cj] = grid.cellOf(h);
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const i = ci + di, j = cj + dj; if (i >= 0 && j >= 0 && i < grid.nx && j < grid.nz) grid.cost[j * grid.nx + i] = Infinity; }
+   }
+   cells = grid.route(from, onRoad);
+  }
   if (cells?.length) points = [from, ...lineOf(grid, cells).slice(1, -1), onRoad];
   else {
    const len = Math.hypot(onRoad.x - from.x, onRoad.z - from.z), n = Math.ceil(len / 3);

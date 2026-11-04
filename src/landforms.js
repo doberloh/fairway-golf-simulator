@@ -528,7 +528,7 @@ const RECIPES = {
    return Math.abs(n - .5);
   };
   const swamp = (x, z) => smooth(o.swamp, o.swamp + .1, fbm(x / 180, z / 180, s2, 3));
-  return {
+  const out = {
    lift: (x, z) => {
     const b = bayou(x, z);
     const levee = o.levee * smooth(.03, .012, b) * smooth(0, .006, b);
@@ -536,6 +536,56 @@ const RECIPES = {
    },
    raw: (x, z) => [swamp(x, z), 0],
    treeKeep: () => 1,
+  };
+  if (!o.tide) return out;
+  // TIDAL CREEKS (the Lowcountry, generator 80): the salt marsh is a flat
+  // platform at about mean high water, cut by meandering creeks that hold
+  // water at every tide and join one another (USDA MLRA 153B, the Atlantic
+  // coast flatwoods' tidal marshes; SC DNR's ACE Basin). The marsh drifts are
+  // laid down to `tide.marsh` metres above the sea (course.js `level`, after
+  // every other relief), and the creeks cut through them to `tide.bed`, below
+  // the sea, so the sea plane fills them. Only in the marsh's core, so no
+  // creek reaches upland or play. Heights, widths and spacing PLACED.
+  const t = o.tide, s3 = saltOf(seed, 'tidecreek'), s4 = saltOf(seed, 'tidebranch');
+  const core = (x, z) => smooth(o.swamp + .04, o.swamp + .16, fbm(x / 180, z / 180, s2, 3));
+  const channel = (x, z, scale, half, salt) => {
+   const wx = fbm(x / (scale * 2.2), z / (scale * 2.2), salt + 2, 2) - .5;
+   const d = Math.abs(fbm(x / scale + wx * 2, z / scale, salt, 2) - .5);
+   const w = half * (.7 + .6 * fbm(x / 500, z / 500, salt + 5, 2));
+   return 1 - smooth(w * .45, w, d);
+  };
+  const creek = (x, z) => Math.max(channel(x, z, t.scale, t.width, s3), .85 * channel(x, z, t.scale * .42, t.width * .6, s4));
+  out.level = (x, z, y, fade) => {
+   const m = swamp(x, z) * fade;
+   if (m <= 0) return y;
+   const flat = y + (t.marsh + .3 * (fbm(x / 60, z / 60, s3 + 7, 2) - .5) - y) * m;
+   const c = creek(x, z) * core(x, z) * fade;
+   return c > 0 ? flat + (t.bed - flat) * c : flat;
+  };
+  // No trees on the marsh: cordgrass to the creeks, the live oaks on the
+  // hammocks above it (the first pictures stood the creeks in woods).
+  out.treeKeep = (x, z) => 1 - Math.max(creek(x, z), .9) * core(x, z);
+  return out;
+ },
+ // PLAYAS: the Llano Estacado -- a tableland so flat the roll is a few
+ // metres over a course, pocked by round shallow playa lakes, dry most of
+ // the year, their floors bare clay (generator 81; Llano Estacado,
+ // Wikipedia; Marfa Public Radio: about 17 acres on average; a Castro
+ // County study: mostly 3.2-28.3 ha). The native drifts as the prairie's.
+ playas(o, seed) {
+  const sp = saltOf(seed, 'playa-grass'), sr = saltOf(seed, 'playa-roll'), near = scatter(o, seed, 'playa');
+  // A flat floor and a short rim: a playa is a pan, not a bowl.
+  const pan = (x, z) => { const {d, m} = near(x, z); return m ? {f: 1 - smooth(.62, 1, d), m} : {f: 0, m: null}; };
+  return {
+   lift: (x, z) => {
+    const {f, m} = pan(x, z);
+    return o.roll * (fbm(x / 300, z / 300, sr, 2) - .5) * 2 - (m ? m.size * f : 0);
+   },
+   raw: (x, z) => {
+    const {f} = pan(x, z);
+    return [smooth(o.cover, o.cover + .2, fbm(x / 110, z / 110, sp, 3)) * (1 - f), smooth(.55, .8, f)];
+   },
+   treeKeep: (x, z) => 1 - pan(x, z).f,
   };
  },
  // A MOOR: heather in great dark drifts (Haunted Hollow's until it was removed,

@@ -97,3 +97,18 @@ export function plantPose(t, height) {
  return {depth, gx: tilt.gx, gz: tilt.gz};
 }
 export const seatDepth = (t, height) => plantPose(t, height).depth;
+// HOW FAR THE SEATED FOOT STANDS ABOVE THE GROUND at its worst, on points of
+// its own (rings at 85% and 50% of the footprint, twelve each, turned off the
+// seat's): the bench's `seated` metric (tools/metrics.mjs), which counts
+// anything over 3 cm as a floating plant, and course.js, which refuses a
+// cover that would be one (generator 81).
+export function seatGap(t, height) {
+ const pose = plantPose(t, height), base = t.y - pose.depth, R = footprintRadius(t);
+ let worst = -Infinity;
+ for (const r of [R * .85, R * .5]) for (let k = 0; k < 12; k++) {
+  const a = (k + .37) * Math.PI / 6, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
+  worst = Math.max(worst, base + pose.gx * dx + pose.gz * dz + r * SEAT_LEAN - height(t.x + dx, t.z + dz));
+ }
+ return {worst, depth: pose.depth};
+}
+export const FLOAT_TOLERANCE = .03;

@@ -131,12 +131,19 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   TERRAIN, landforms.js; RESEARCH *Terrain true to place*;
   tests/terrain-true.test.mjs); the bench, the tests and the fingerprints
   green; captures of fourteen sent to the owner. The Blue Ridge's coves
-  and ridges followed (generator 78). Still to do: the
-  Lowcountry's tidal creeks, Monterey's
-  bluffs to the sea, SoCal's barrancas from a geology source, and a second
-  look at the landscapes judged to fit their region's recipe (Bluebonnet,
-  Cross Timbers, Wine Country, Chihuahuan, Pine Barrens, High Plains, Sand
-  Hills); more rounds where the pictures say so; a frame-rate A/B on Low.
+  and ridges followed (generator 78), Monterey's holes along the sea (79;
+  its terraces step down to the shore) and the Lowcountry's salt marsh
+  and tidal creeks (80); SoCal's barrancas have their geology source (the
+  Santa Monica Mountains through SCEC). The second look (generator 81):
+  the High Plains a flat table with dry playas, the Sand Hills' dunes
+  about twice as tall, Wine Country a valley floor under higher ranges;
+  Bluebonnet, Cross Timbers, Pine Barrens and the Chihuahuan judged to fit,
+  each with its source (RESEARCH *The second look*). The Lowcountry's A/B
+  on Low: no cost (-0.6%). Captures of the three sent to the owner. Still
+  to do: the High Plains' planting -- its pictures stand the table in thick
+  woods where the Llano is nearly treeless but for shelterbelts (biomes.js
+  highplains stands and treeDensity, not its terrain); an A/B on Low for
+  the rest of the new recipes (the performance pass).
 - [ ] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example
@@ -270,7 +277,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   November 2026), against 4784efd:** the prairie grasses in the Heartland
   -5.3% (noise: no cost), Hill Country's stepped terrain -1.4%, the Bayou's
   flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
-  Ponderosa's cones and flows -6.8%; the Badlands alone 0.5-0.8 ms a frame
+  Ponderosa's cones and flows -6.8%, the Lowcountry's tidal creeks and
+  sea plane -0.6% (generator 80; that run's wait from start to the main
+  menu was 18.8 s for the base build and 21.9 s for this one, with the
+  whole afternoon's work between them -- worth a look in the pass); the Badlands alone 0.5-0.8 ms a frame
   at its tees (the Heartland about 1.0). Earlier: Pacific pack +2.3% (before
   every variant shipped; with them and the silhouette rework Puget Sound
   measured 10% faster), Rockies +1.8%, Lake Dunes not
@@ -408,11 +418,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [x] **The Piedmont's red clay** (generator 73): its prairie drifts beyond
   play are bare red clay banks (hardpan painted #9c6048) at a quarter of the
   ground. Seen in a capture.
-- [ ] **The Lowcountry's salt marsh, partly** (generator 74): open now (trees
+- [x] **The Lowcountry's salt marsh** (generator 74): open now (trees
   halved, 1.5), its drifts beyond play cordgrass flats (native grass painted
   #c4b468) at two-thirds of the ground, its water brackish -- it reads as
-  open grass flats round live-oak woods; still no tidal creeks or marsh
-  water, which want a water rule of their own.
+  open grass flats round live-oak woods. **Its tidal creeks followed**
+  (generator 80): the marsh laid at the tide line, creeks cut through it
+  that the sea fills (RESEARCH *Terrain true to place*, Lowcountry).
 - [x] **Bluebonnet Prairie reads as bluebonnet fields** (3 November 2026,
   drawing only): its native-grass drifts beyond play are painted bluebonnet
   blue (groundTints native #6276c4), with the blue-headed long grass and the

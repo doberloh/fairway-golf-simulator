@@ -21,7 +21,7 @@ const relief = ys => Math.max(...ys) - Math.min(...ys);
 test('each landscape named for its own terrain gets the recipe its research says', () => {
  const want = {hillcountry: 'steps', monterey: 'steps', bluegrass: 'karst', ozarks: 'channels', northwoods: 'glacial',
   oldnortheast: 'glacial', mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels', piedmont: 'channels',
-  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', longleaf: 'sandridges', bayou: 'lowland',
+  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', longleaf: 'sandridges', bayou: 'lowland', lowcountry: 'lowland', highplains: 'playas', sandhills: 'dunes',
   flatwoods: 'lowland', gulfcoast: 'lowland', badlands: 'badlands'};
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
@@ -72,6 +72,23 @@ test('a lowland course is flat where a parkland one rolls', () => {
  assert.ok(bayou < heartland / 2, `the Bayou (${bayou.toFixed(1)} m) is far flatter than the Heartland (${heartland.toFixed(1)} m)`);
 });
 
+test('the Lowcountry\'s tidal creeks hold the sea in its marsh, and nothing in play is wet', () => {
+ // Generator 80: the marsh laid at the tide line beyond play, creeks cut
+ // through it below the sea (landforms.js `lowland` with `tide`).
+ const w = world({holes: 9, biome: 'lowcountry', seed: 'LC-a'});
+ let wet = 0, creek = 0, marsh = 0, cells = 0;
+ for (let x = -w.halfX; x < w.halfX; x += 5) for (let z = -w.halfZ; z < w.halfZ; z += 5) {
+  const s = w.surface(x, z), y = w.height(x, z);
+  cells++;
+  if (['fairway', 'green', 'tee', 'fringe', 'semi'].includes(s) && y < .3) wet++;
+  if (s === 'water' && y < -.3 && !w.lakeOwner?.(x, z)) creek++;
+  if (y > 1.5 && y < 2.3) marsh++;
+ }
+ assert.equal(wet, 0, 'tee, fairway, green or semi under the sea');
+ assert.ok(creek / cells > .005, `the creeks hold water (${(creek / cells * 100).toFixed(1)}% of the ground)`);
+ assert.ok(marsh / cells > .08, `a marsh lies at the tide line (${(marsh / cells * 100).toFixed(1)}%)`);
+});
+
 test('Monterey\'s holes play along the sea, and nothing in play is wet', () => {
  // The owner, 3 November 2026: "Make sure the holes can genuinely play along
  // the coast." course.js `coastAt` (generator 79): the shore follows the
@@ -87,4 +104,15 @@ test('Monterey\'s holes play along the sea, and nothing in play is wet', () => {
  }
  assert.equal(wet, 0, 'tee, fairway, green or semi under the sea');
  assert.ok(along.size >= 3, `only ${along.size} holes of 18 have the sea within 50 m of their fairway or green`);
+});
+
+test('the High Plains are a flat table with dry playas; the Sand Hills stand taller than a links', () => {
+ // Generator 81: landforms.js `playas` (the Llano Estacado's round pans,
+ // bare clay floors) and the Sand Hills' dunes at about 13 m.
+ const playas = landformOf(BIOMES.highplains, 'SHAPE');
+ const lifts = sample(playas.lift), pans = sample((x, z) => playas.raw(x, z)[1]).filter(b => b > .5).length;
+ assert.ok(relief(lifts) < 6, `the table and its pans stay within a few metres (${relief(lifts).toFixed(1)})`);
+ assert.ok(pans > 100, `playas with bare floors (${pans} samples)`);
+ const dunes = k => relief(sample(landformOf(BIOMES[k], 'SHAPE').lift));
+ assert.ok(dunes('sandhills') > 2 * dunes('links'), `the Sand Hills (${dunes('sandhills').toFixed(1)} m) over the Links (${dunes('links').toFixed(1)} m)`);
 });

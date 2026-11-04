@@ -254,7 +254,10 @@ const WATER_EDGES={
   {
    ${FOAM_LIGHT}
    float deepSea=smoothstep(.4,8.,depth);
-   vec3 shelf=mix(diffuseColor.rgb,vec3(.55,.72,.6),.4)*.7,open=diffuseColor.rgb*vec3(.22,.34,.46);
+   // The shelf's colour and how far toward it (biomes.js seaShelf): a
+   // beach's pale sand by default, the Lowcountry's creeks their own dark
+   // marsh water (generator 80).
+   vec3 shelf=mix(diffuseColor.rgb,seaShelf.rgb,seaShelf.a)*.7,open=diffuseColor.rgb*vec3(.22,.34,.46);
    float lookIn=abs(dot(normalize(vViewPosition),normal)),mirror=.02+.98*pow(1.-lookIn,5.);
    outgoingLight=mix(outgoingLight,mix(shelf,open,deepSea)*foamLight,.7*(1.-clamp(mirror*1.4,0.,.85))*smoothstep(.05,.35,depth));
   }
@@ -1697,7 +1700,7 @@ export class GolfView{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
-   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};}
+   if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};const lake=!!biomeOf(this.world.settings.biome).lakeWaves;shader.uniforms.seaSwash={value:new T.Vector2(lake?5:9,lake?.6:1)};const shelf=biomeOf(this.world.settings.biome).seaShelf||[.55,.72,.6,.4];shader.uniforms.seaShelf={value:new T.Vector4(...shelf)};}
    if(kind==='still'&&this.mirrorUniforms)Object.assign(shader.uniforms,this.mirrorUniforms);
    if(kind==='still'){shader.uniforms.waterWind=this.windVec;shader.uniforms.pawK={value:.35+.65*Math.min(1,(this.world.settings.wind||0)/12)};
     // The paws travel at the wind's own speed, as gusts do: metres per
@@ -1710,7 +1713,7 @@ export class GolfView{
     .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;vChanEnd=chanEnd;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
-    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK,pawDrift;':''))
+    .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;uniform vec2 seaSwash;uniform vec4 seaShelf;':'')+(kind==='still'?'uniform sampler2D mirrorMap;uniform vec2 mirrorScreen;uniform float mirrorOn,mirrorWind;uniform vec2 waterWind;uniform float pawK,pawDrift;':''))
     .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
      // CAT'S PAWS (the far-landscape goal's waves, round 18): gusts ruffle
      // patches of a pond that drift downwind; in them the ripples bite and the
