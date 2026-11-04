@@ -273,8 +273,15 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   Measured so far, Low, by mean frame against the build before (frame-ab,
-  RTX 4090, so headroom, not a weak machine). **The owner's additions (3
-  November 2026), against 4784efd:** the prairie grasses in the Heartland
+  RTX 4090, so headroom, not a weak machine). **The seasons' twigs (3
+  November 2026), one round of each build only, the run failed, agents on the
+  processor, so an indication and not a figure:** New England in winter,
+  against bare trees without twigs, processor 1.6 to 4.5 ms and graphics card
+  .93 to 1.32 ms at tee 1, .9 to 2.9 and .61 to .93 at tee 5. Check the
+  processor's rise first: the cull now keeps a far mesh for every bare model
+  (RESEARCH). The spring bloom is not measured at all: new flower meshes in
+  every landscape that had none, and a ground-shader branch on Low. **The
+  owner's additions (3 November 2026), against 4784efd:** the prairie grasses in the Heartland
   -5.3% (noise: no cost), Hill Country's stepped terrain -1.4%, the Bayou's
   flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
   Ponderosa's cones and flows -6.8%, the Lowcountry's tidal creeks and
@@ -529,15 +536,26 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 - [x] **The twig layer, the spring bloom, snow on the walls** (3 November
   2026, drawing only, no generator step, no new models): a bare tree's
   branches are grown from its own model's crown (src/twigs.js, mesh-assets.js
-  `bareParts`) and merged into its bark, so winter adds no draw call and each
-  species keeps its outline; each landscape has its spring bloom
+  `bareParts`) and merged into its bark, so a bare tree has no draw call a tree
+  in leaf lacks, and each species keeps its outline; each landscape has its spring bloom
   (seasons.js `BLOOM`: months and colours, most of them PLACED) in the rough's
   flowers, the long grass's heads and drifts painted in the rough; no
   wildflowers in winter; New England's spring is green; walls, fences and yard
   pieces whiten on top as the roofs do. RESEARCH *The twig layer, the spring
-  bloom and snow on the walls*. Seen in captures (below in that section); not
-  seen by a person. The tropics' "only the flowering changes" (PLAN 3) is not
-  built, and a bloom's window is not read against the date.
+  bloom and snow on the walls*. Seen in captures: New England and the Heartland
+  in winter at Ultra, New England at Low in the game's own view, the Hill
+  Country, Blue Ridge and New England in spring. Not seen by a person. The
+  tropics' "only the flowering changes" (PLAN 3) is not built, and a bloom's
+  window is not read against the date.
+- [ ] **Seasons, to check** (3 November 2026; the graphics card stopped with a
+  hung frame run before these were done). **Snow on the walls is not seen in
+  any picture**: `biome-shots take newengland highplains rockies --views wall
+  --season winter` (the `wall` view is new and has never run either). **The
+  final bloom flecks (0.27 m) are not seen**: the last spring picture had the
+  0.42 m dots; `--views h2-side,h1-low --season spring` on hillcountry and
+  blueridge, and look for polka dots from a tee. **Low's frame is not properly
+  measured** (RESEARCH, same section; TODO *Performance pass*): rerun frame-ab
+  on New England in winter and on the Hill Country and New England in spring.
 - [x] **Chambers Bay** built in the builder on its new landscape and played
   through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
   OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --

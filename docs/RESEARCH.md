@@ -13366,8 +13366,10 @@ Cost, in the model: 500-2,700 triangles of wood a tree (mean 1.1 ms to
 grow one model and make both meshes, Node, this machine; about 40 models in a
 round, in winter only) against 2,000-4,560 of leaf part it replaces. A bare
 tree is under 85% of the tree in leaf on every species tested, most much
-under. The wood is merged INTO the bark, so a bare tree adds no draw call and
-drops the leaf part's. Its twin, far off and on Low, is the shipped `_Far`
+under. The wood is merged INTO the bark, so a bare tree has no draw call a tree
+in leaf lacks: its leaf meshes go. Against the old bare winter it is dearer,
+near and far both, since every bare model now keeps a far mesh it often did
+not have (its bark alone was too near its twin to be thinned). Its twin, far off and on Low, is the shipped `_Far`
 trunk plus the branches that carry two or more ends, 1.6 times as stout,
 with a point in place of the spray: 30-800 triangles.
 
@@ -13422,3 +13424,30 @@ spring green, the litter .75 toward #8a7452 and the far woods .85 toward #7c9c52
 (renderer.js `addStory`) takes the same fade as the roofs and trees
 (vegetation.js snowTopped), where the region's winter is snow. A Bluegrass board
 fence never shows it: Appalachia's winter is frost.
+
+**Low's frame: not properly measured.** tools/frame-ab.mjs (New England,
+winter, Low, tees 1 and 5) against the build before gave one round of each
+before the second B page failed to come up in 60 s, so there is no median, no
+draw or triangle count and no A-B-B-A: processor 1.6 to 4.5 ms and graphics card
+.93 to 1.32 ms at tee 1, .9 to 2.9 and .61 to .93 at tee 5, against the OLD bare
+winter, with other agents' jobs on the processor. An indication that the twigs
+cost something on Low against the bare posts, and that the processor's share
+wants looking at first; not a figure. No driver reset in the Windows log and no
+WebGL error; the failure is not explained, and graphics work stopped there as
+the job's rules say. The bloom's cost on Low was never measured.
+
+**The frame tool's own gate.** Run through tools/gpu-run.mjs, frame-ab still
+applies its own: under 10% busy, under 60 °C, five minutes' rest. The desktop
+idles above 10% here, so it sat holding the shared lock (tools/gpu-lock.mjs) for
+half an hour, with every other job queued behind it. Pass it the same limits:
+`--util 45 --temp 75 --rest 3`.
+
+**Seen and not seen.** Seen at Ultra: New England and the Heartland in winter
+(a bare hardwood wood, each species' outline: the elms' vases, the bur oaks wide
+and flat), the Hill Country in spring (blue and red drifts), the Blue Ridge
+(0.42 m flecks), New England's green spring. Seen at Low in the game's own view:
+New England in winter, the far twins standing as branches where the build before
+had posts, though thin ones break into dashes at the far end of the hole. Not
+seen: snow on any wall or fence; the final 0.27 m flecks (their shader compiled,
+in the failed run's winter pages, but bloomOn was 0); the new `wall` capture
+view. Not seen by a person.
