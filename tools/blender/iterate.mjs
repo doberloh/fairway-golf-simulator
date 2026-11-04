@@ -83,7 +83,7 @@ const sheet = path.join(ROOT, 'bench', 'shots', 'blender', `${pack}.png`);
 // the card (gpu-lock.mjs) until it is done and is logged in
 // bench/ab/gpu-runs.jsonl. The goal is FAIRWAY_GPU_GOAL (us-landscapes).
 const goal = process.env.FAIRWAY_GPU_GOAL || 'us-landscapes';
-const before = gpuGate({goal, cap: Infinity, restMin: +(process.env.FAIRWAY_GPU_REST || 2), utilMax: 30, tempMax: 75});
+const before = gpuGate({goal, cap: Infinity, restMin: +(process.env.FAIRWAY_GPU_REST || 2), utilMax: +(process.env.FAIRWAY_GPU_UTIL || 30), tempMax: 75});
 const startedAt = new Date().toISOString();
 const run = spawnSync(findBlender(), ['-b', '--factory-startup', '--python', script, '--', path.join(ROOT, 'vendor', `blender-${pack}`), '--render', sheet],
  {encoding: 'utf8', maxBuffer: 64 << 20, env: {...process.env, FAIRWAY_TILES: tiles, FAIRWAY_SEASON: season}});

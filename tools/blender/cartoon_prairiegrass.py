@@ -51,7 +51,12 @@ def paint_blades(mesh, height, low=.62, high=1.12, flex=1.0):
 def blades(mesh, rng, n, H, lean, width, droop, spread, tip_from, stiff=False, mound=True):
     # Round 2: r01's clumps were see-through (cartoon_grass learned the same:
     # blades too thin and too few); half as wide again and a third more.
-    n, width = int(n * 1.35), width * 1.5
+    # Round 3: that barely changed the read; twice the blades at the old
+    # width -- a fountain of fine blades, as every reference is.
+    n, width = int(n * 2), width * 1.0
+    # Round 4: every clump was pinched at the root where the references fan
+    # out wide: a broader root and more outward lean.
+    spread, lean = spread * 1.7, lean * 1.25
     if mound:
         mesh.add_lump(Vector((0, 0, H * .05)), (spread * 1.1 + H * .04, spread * 1.1 + H * .04, H * .12), 'leaf', rng,
                       subdiv=1, jitter=.06, flex=.2, squash_bottom=.8)
@@ -75,7 +80,7 @@ def tallfescue(height, n, heads):
     panicles nodding on stems above them."""
     def build(mesh, rng):
         H = height
-        blades(mesh, rng, n, H, .85, .045, .6, .14, .9)
+        blades(mesh, rng, n, H, .95, .03, .75, .14, .9)
         for k in range(heads):
             a = rng.uniform(0, math.tau)
             top = stalk(mesh, rng, Vector((math.cos(a) * .06, math.sin(a) * .06, 0)), a, H * rng.uniform(1.5, 1.9), .12, .008)
@@ -113,10 +118,12 @@ def switchgrass(height, n, panicles):
             a = rng.uniform(0, math.tau)
             root = Vector((math.cos(a) * .08, math.sin(a) * .08, 0))
             top = stalk(mesh, rng, root, a, H * rng.uniform(.9, 1.1), .16, .01)
-            for j in range(5):
+            # Round 6: an airy cloud along the stem's top third, not a star.
+            for j in range(14):
                 b = rng.uniform(0, math.tau)
-                tip = top + Vector((math.cos(b) * H * .06, math.sin(b) * H * .06, rng.uniform(-.04, .08) * H))
-                mesh.add_tube([top - Vector((0, 0, H * .12)), tip], [.006, .002], 3, 'accent', rng=rng, cap_end=False)
+                at = top - Vector((0, 0, H * .3 * rng.random()))
+                tip = at + Vector((math.cos(b) * H * .07, math.sin(b) * H * .07, H * rng.uniform(.02, .08)))
+                mesh.add_tube([at, tip], [.005, .0015], 3, 'accent', rng=rng, cap_end=False)
         paint_blades(mesh, H * 1.1)
     return build
 
@@ -163,7 +170,7 @@ def wheatgrass(height, n, spikes):
     patch (a sod, not a tuft), narrow wheat-like spikes on stems."""
     def build(mesh, rng):
         H = height
-        blades(mesh, rng, n, H * .85, .25, .011, .12, .2, .7, stiff=True, mound=False)
+        blades(mesh, rng, n, H * .85, .4, .011, .3, .18, .7, mound=False)
         for k in range(spikes):
             a = rng.uniform(0, math.tau)
             root = Vector((math.cos(a) * .15 * rng.random(), math.sin(a) * .15 * rng.random(), 0))
@@ -183,10 +190,10 @@ MODELS = [
     ('Blender_Switchgrass_2', switchgrass(1.2, 24, 11)),
     ('Blender_Indiangrass_1', indiangrass(1.7, 28, 9)),
     ('Blender_Indiangrass_2', indiangrass(1.4, 22, 6)),
-    ('Blender_BlueGrama_1', bluegrama(.35, 34, 16)),
-    ('Blender_BlueGrama_2', bluegrama(.3, 28, 10)),
-    ('Blender_Wheatgrass_1', wheatgrass(.75, 36, 6)),
-    ('Blender_Wheatgrass_2', wheatgrass(.6, 28, 3)),
+    ('Blender_BlueGrama_1', bluegrama(.35, 64, 16)),
+    ('Blender_BlueGrama_2', bluegrama(.3, 52, 10)),
+    ('Blender_Wheatgrass_1', wheatgrass(.75, 72, 8)),
+    ('Blender_Wheatgrass_2', wheatgrass(.6, 56, 5)),
 ]
 
 SEASON = os.environ.get('FAIRWAY_SEASON', 'summer')
