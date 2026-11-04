@@ -164,6 +164,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   (catalogue entry, ecoregions or an overlay, model specs and searches,
   photo sheets, picks, Blender pack plan) and write the plan to build it.
   After everything else on this list.
+  **Drafted** (3 November 2026): .claude/skills/course-match/SKILL.md --
+  locate, the partition, research, a scoring table against every
+  landscape, the recommendation with how to build it (door 2, Skin from
+  the land, tools/build-courses.mjs), and the Badlands' research path for
+  a new landscape. Not yet tried on a real course.
 
 - [ ] **Not yet played by a person: the world round the holes on every
   generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
