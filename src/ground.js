@@ -739,13 +739,19 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // green and its fringe, a tee, a cart path, fairway, semi-rough, a ground
  // type, rough. It replaces whatever the hole table painted above, which for
  // a built hole is only its skeleton (no shapes are stored in its row). The
- // ground type is a code read texel by texel and painted by groundPaint, as
+ // ground type is a code, never blended, and painted by groundPaint, as
  // the generator's ground types are; a cart path is code 10.
  if(builtOn>.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   vec2 bu=(wp/extent+1.)*.5;vec4 ba=texture2D(field,bu),bb=texture2D(builtB,bu);
   float bR=${(2*BUILT_FIELD.range).toFixed(1)};
   float dSand=(.5-ba.r)*bR,dGreen=(.5-ba.g)*bR,dFair=(.5-ba.b)*bR,dTee=(.5-ba.a)*bR,dWater=(.5-bb.r)*bR,dSemi=(.5-bb.g)*bR,dGround=(.5-bb.a)*bR;
-  ivec2 bsz=textureSize(builtB,0);float gcode=floor(texelFetch(builtB,clamp(ivec2(bu*vec2(bsz)),ivec2(0),bsz-ivec2(1)),0).b*255.+.5);
+  // The type with the most weight among the four texels round the point
+  // (built-world.js builtGroundAt, in the same order: paint and lie agree).
+  ivec2 bsz=textureSize(builtB,0),b0=ivec2(floor(bu*vec2(bsz)-.5));vec2 bf=fract(bu*vec2(bsz)-.5);
+  float bc[4],bw[4]=float[4]((1.-bf.x)*(1.-bf.y),bf.x*(1.-bf.y),(1.-bf.x)*bf.y,bf.x*bf.y);
+  for(int q=0;q<4;q++)bc[q]=floor(texelFetch(builtB,clamp(b0+ivec2(q&1,q>>1),ivec2(0),bsz-ivec2(1)),0).b*255.+.5);
+  float gcode=0.,gbest=0.;
+  for(int q=0;q<4;q++){if(bc[q]<.5)continue;float gs=0.;for(int r=0;r<4;r++)if(abs(bc[r]-bc[q])<.5)gs+=bw[r];if(gs>gbest){gbest=gs;gcode=bc[q];}}
   turf=roughTint;kind=0.;teeGround=0.;teePadD=1e3;
   if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
   if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}

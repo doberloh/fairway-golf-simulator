@@ -46,7 +46,8 @@ export const BUILT_FIELD = {range: 6, maxSide: 2048, minCell: .5};
 // THE TWO TEXTURES. The first holds four turf channels (R sand, G green, B
 // fairway, A tee); the second water (R), semi-rough (G), and the ground types
 // as ONE layer: B the type's code (BUILT_GROUND_CODE: ground.js's own
-// GROUND_CODE, and 10 for a cart path; read texel by texel, never blended) and A the signed distance to the edge of whichever
+// GROUND_CODE, and 10 for a cart path; never blended: the point takes the type
+// with the most weight among the four texels round it, builtGroundAt) and A the signed distance to the edge of whichever
 // type that is. One layer rather than a channel each because a landscape
 // lays several types side by side across most of its ground (Desert's hardpan
 // floor round its rock) and there are not channels or samplers for ten.
@@ -212,12 +213,23 @@ export function builtFieldAt(field, x, z, channel) {
  const top = at(i, j) + (at(i + 1, j) - at(i, j)) * fu, bottom = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * fu;
  return (.5 - (top + (bottom - top) * fv) / 255) * 2 * BUILT_FIELD.range;
 }
-// The ground type a point is in, by the texel it falls in (the shader's
-// texelFetch), or null.
+// The ground type a point is in, or null: of the four texels round it, the
+// type with the most weight as a linear filter would weigh them (ground.js does
+// the same, in the same order, so paint and lie agree). The texel it fell in
+// made a metre-wide staircase wherever two types met, which Skin from the land
+// makes everywhere (seen on Chambers Bay, 3 November 2026).
 export function builtGroundAt(field, x, z) {
- const i = Math.min(field.Sx - 1, Math.max(0, Math.floor((x / field.ex + 1) * .5 * field.Sx)));
- const j = Math.min(field.Sz - 1, Math.max(0, Math.floor((z / field.ez + 1) * .5 * field.Sz)));
- const code = field.b[(j * field.Sx + i) * 4 + 2];
+ const {Sx, Sz, ex, ez, b} = field, u = (x / ex + 1) * .5 * Sx - .5, v = (z / ez + 1) * .5 * Sz - .5;
+ const i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j;
+ const at = (p, q) => b[(Math.min(Sz - 1, Math.max(0, q)) * Sx + Math.min(Sx - 1, Math.max(0, p))) * 4 + 2];
+ const codes = [at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1)], weigh = [(1 - fu) * (1 - fv), fu * (1 - fv), (1 - fu) * fv, fu * fv];
+ let code = 0, best = 0;
+ for (let k = 0; k < 4; k++) {
+  if (!codes[k]) continue;
+  let s = 0;
+  for (let n = 0; n < 4; n++) if (codes[n] === codes[k]) s += weigh[n];
+  if (s > best) { best = s; code = codes[k]; }
+ }
  return GROUND_OF_CODE[code] ?? null;
 }
 const CH = Object.fromEntries(BUILT_CHANNELS.map((k, i) => [k, i]));

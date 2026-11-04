@@ -561,7 +561,11 @@ export const GENERATOR_VERSION=84;
 //  2: each green on its own (built-world.js greenParts, 1 November 2026): a
 //     hole's green was every green the file stored in one set, so its size
 //     and cups moved; now the one under its mark.
-export const BUILT_VERSION=2;
+//  3: where two ground types meet, a point is the type with the most weight
+//     among the four texels round it, not the texel it falls in
+//     (built-world.js builtGroundAt, ground.js, 3 November 2026): the edge
+//     was a metre-wide staircase, and a lie there can change by half a metre.
+export const BUILT_VERSION=3;
 // A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
 // it, so neither generator number may flag it, and only BUILT_VERSION can.
 export const BUILT_STAMP=1000000;

@@ -22,12 +22,17 @@
 import {layerRings} from './real-course.js';
 
 // What a landscape's faces and aprons are made of, from its landform's own
-// ground kinds: the first rock-like kind is the face, the next the apron.
+// ground kinds: the first rock-like kind is the face, the next the apron. A
+// landscape with nothing rock-like (dunes, prairie, lowland) dresses its steep
+// ground in its own first kind: native grass on a dune's face, waste on a sand
+// ridge. Seen on Chambers Bay, 3 November 2026: the old fallback, rock, put
+// grey stone on dunes, in a landscape whose Paint list has no rock. Only the
+// landscape's own (layers.js layersFor).
 const FACE_KINDS = new Set(['rock', 'hardpan', 'scree', 'coral']);
 const APRON_KINDS = new Set(['scree', 'hardpan', 'waste', 'native', 'heather']);
 export function skinKinds(bio) {
  const k = bio?.landform?.kinds || {};
- const face = [k.a, k.b, k.floor].find(x => FACE_KINDS.has(x)) || 'rock';
+ const face = [k.a, k.b, k.floor].find(x => FACE_KINDS.has(x)) || k.a || 'rock';
  const apron = [k.b, k.floor, k.a].find(x => x && x !== face && APRON_KINDS.has(x)) || null;
  return {face, apron};
 }

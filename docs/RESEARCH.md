@@ -11182,11 +11182,13 @@ corridor does not carry (0.04-0.06%), and sand at a beach's foot.
 for a single field channel: 47% of PNW, 76% of Desert, 44% of Autumn changed
 lie (pine straw, hardpan, leaves -- and hardpan plays like fairway). Rejected
 on that measurement. The field's second texture now holds the ground type as a
-code read texel by texel (ground.js's own GROUND_CODE, so groundPaint draws
-it) and the distance to its edge; a texel where two types meet takes the one
-it is deeper inside. Where two types meet the boundary is a texel step (half
-a metre to 1 m), which the generator's own baked ground types also have at
-1.75 m.
+code (ground.js's own GROUND_CODE, so groundPaint draws it) and the distance
+to its edge; a texel where two types meet takes the one it is deeper inside.
+Where two types met the boundary was a texel step (half a metre to 1 m),
+which the generator's own baked ground types also have at 1.75 m. Since
+BUILT_VERSION 3 (3 November 2026, seen on Chambers Bay skinned from the land)
+a point takes the type with the most weight among the four texels round it,
+in the shader and the lie alike, and the step is gone.
 
 **The ground, every 5 m:** median 0.1-0.4 cm, 95th percentile 0.4 cm on every
 landscape after the land grid was aligned to the ground mesh on both axes
@@ -13140,6 +13142,35 @@ preferred there). Who grows what, and each family's share and height, are
 PLACED from these ranges. The grass pack's models have their fifteen rounds
 (tools/blender/logs).
 
+**Seen in the game (3 November 2026, all seventeen landscapes,
+biome-shots `rough-low`).** The pack's colours had never reached the game:
+every long grass took the landscape's one `leaf` and `accent`, so tall
+fescue in the Bluegrass, the Ozarks and the Blue Ridge was New England's
+autumn orange in summer, and no prairie turned in autumn. Each of the six
+families now wears its own colours by the season (season-tints.js,
+vegetation.js `grassLook`), drawn 55% of the way from the landscape's to
+its own: straight, they read as teal clumps under candy-pink heads on the
+warm rough (PLACED by eye). The bluebonnets keep their blue heads
+(`bloomHeads`), and the older families beside them in those three
+landscapes take the Old Northeast's tan (`GRASS_TINT`, PLACED).
+`Blender_TallFescue_2` lay six metres across at 0.9 m tall, its radius 3.3
+times its height: squeezed to 1.6 times (`GRASS_WIDEST`, PLACED, just past
+the widest clump that read right). Triangles a clump, averaged over a
+landscape's families: about 200 for the old ones, 600-840 for the prairie
+landscapes (High Plains 837, Crosstimbers 691, Heartland 603).
+
+**The A/B on Low (tools/frame-ab.mjs, two rounds, RTX 4090, the Heartland,
+seed PROFILE; 3 November 2026).** Both builds from the same source, A with
+`GRASSES` empty (bench/ab/base.html has no grasses either, but it is
+generator 75, so it would have measured the whole day's work). Graphics
+card, A to B, tees 1, 5 and 9: 0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms,
+no cost. Processor: 1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00 ms, 0.6-0.7 ms
+more, steady in both rounds. Triangles 9.7 to 9.8 M, 7.0 to 7.1 M, 9.3 to
+9.5 M; draws +9. By mean frame +40.9%, by p95 +4.4%. Start to main menu 41.8
+to 47.0 s. The earlier -5.3% against 4784efd was noise. The processor's
+figure is not explained: nine more draws should not cost it. The High Plains
+was not measured (TODO).
+
 ## Terrain true to place (the owner's amendment, 3 November 2026; generator 76)
 
 "Do all of these new landscapes have different terrain generation based on
@@ -13371,7 +13402,12 @@ so a built course reads like a generated one), an apron from 0.22 within
 12 m below a face, and 6 m kept clear of the holes' turf, sand, paths and
 water. Which kinds: the first rock-like kind (rock, hardpan, scree, coral)
 the landscape's landform names is its face, the next (scree, hardpan, waste,
-native, heather) its apron; a landscape naming none gets rock and no apron.
+native, heather) its apron; a landscape naming nothing rock-like takes its
+own first kind for the face (rock was the fallback until it was seen on
+Chambers Bay's dunes, 3 November 2026). On real surveys: Bully Pulpit
+(0.55 m) 31.0 ha of face and 55.6 ha of apron, 9.7 s; Chambers Bay (0.5 m)
+6.3 and 19.6 ha, 5-7 s; 0.6 reads the Badlands' breaks well and was left
+alone.
 
 ## Cart-path corners on steep ground (generator 77, 3 November 2026)
 

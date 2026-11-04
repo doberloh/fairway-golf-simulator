@@ -719,16 +719,35 @@ function addFarWoods(view){
  // where the ground under it is broken (far-woods.js).
  for(const kind of kinds)build(sites.filter(s=>s.shape===kind),farWoodGeometry(kind),s=>pose(s.seat,s.r,s.x,s.z,s.pick),kind==='dome'||kind==='cone'?'Far groves':'Far woods');
 }
+// A LONG GRASS'S OWN COLOURS (seen 3 November 2026): a family with a season
+// table (season-tints.js, the prairie pack's LOOK) wears its own -- tall
+// fescue light green the year round, little bluestem blue-green and copper in
+// autumn -- which never reached the game: every family took the landscape's
+// one leaf and accent, so the transition zone's fescue was autumn orange in
+// July and no prairie turned. The older families have no table and keep the
+// landscape's. `bloomHeads`: a field in flower, the landscape's accent stays.
+// The table's colours straight read as teal clumps under candy-pink heads on
+// the game's warm rough (the first picture), so each is drawn part of the way
+// to the landscape's. PLACED by eye: GRASS_OWN of the family's own.
+const GRASS_OWN=.55;
+export const grassLook=(rec,family,season)=>{const own=SEASON_TINTS[family]?.[season],mix=(a,b)=>new T.Color(b).lerp(new T.Color(a),GRASS_OWN);
+ return {leaf:own?.leaf?mix(own.leaf,rec.leaf):new T.Color(rec.leaf),accent:own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent)};};
+// NO CLUMP A FAN (seen 3 November 2026): a model is scaled by its height, and
+// Blender_TallFescue_2's arching blades barely rise (radius 3.3 times its
+// height): at 0.9 m tall it lay six metres across. Squeezed in to this many
+// times its height. PLACED: just past Bunch_1, the widest that read right.
+const GRASS_WIDEST=1.6;
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
  if(!rec)return;
  const byTee=teeFade(world),carry=carryFade(world);
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
- const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height})).filter(k=>k.models.length);
+ const season=seasonOfView(view);
+ const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height,look:grassLook(rec,family,season)})).filter(k=>k.models.length);
  if(!kinds.length)return;
  const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
- const leaf=new T.Color(rec.leaf),accent=new T.Color(rec.accent),entries=[];
+ const entries=[];
  // The landscape's bloom in the heads, colony by colony, so it lies in drifts
  // and reads from far off (no new mesh: the same tufts, painted).
  const bloom=bloomIn(biomeOf(world.settings.biome).key,seasonOfView(view));
@@ -741,7 +760,7 @@ function addLongGrass(view){
   if(rng()>drift*drift)continue;
   if(world.nearest(cx,cz).d<rec.near)continue;
   const kind=pickKind(),n=8+Math.floor(rng()*7);
-  const head=bloom&&spotHash(cx,cz)<bloom.amount*BLOOM_HEADS?new T.Color(bloom.colours[Math.floor(spotHash(cz,cx)*bloom.colours.length)]):accent;
+  const head=bloom&&spotHash(cx,cz)<bloom.amount*BLOOM_HEADS?new T.Color(bloom.colours[Math.floor(spotHash(cz,cx)*bloom.colours.length)]):kind.look.accent;
   for(let k=0;k<n;k++){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
    if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
@@ -751,9 +770,10 @@ function addLongGrass(view){
    const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5)*(.35+.65*fade);
    dummy.position.set(x,world.height(x,z),z);
    dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
-   dummy.scale.set(h*(.9+rng()*.3),h,h*(.9+rng()*.3));
+   const squeeze=Math.min(1,GRASS_WIDEST/modelRadius(model));
+   dummy.scale.set(h*(.9+rng()*.3)*squeeze,h,h*(.9+rng()*.3)*squeeze);
    dummy.updateMatrix();
-   const tint=leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
+   const tint=kind.look.leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
    entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:head.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
   }
   made++;
@@ -1082,7 +1102,8 @@ function addNearbyGrass(view){
  // since a clump is many blades. PLACED: the share and the sizes.
  const lg=biomeOf(w.settings.biome).longGrass,clumpModel=lg?familyModels(lg.families[0][0])[0]:null;
  const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
- const clumpLeaf=new T.Color(lg?.leaf??'#8a9150'),clumpAccent=new T.Color(lg?.accent??'#d8c27a');
+ const clumpLook=lg?grassLook(lg,lg.families[0][0],seasonOfView(view)):null;
+ const clumpLeaf=clumpLook?.leaf??new T.Color('#8a9150'),clumpAccent=clumpLook?.accent??new T.Color('#d8c27a');
  let clumpMat=null;
  const nearTee=teeFade(w),inCarry=carryFade(w);
  if(clumpParts){

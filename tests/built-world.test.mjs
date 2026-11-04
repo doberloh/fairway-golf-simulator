@@ -3,7 +3,7 @@
 // generated course is tests/freeze.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {worldFromDoc, builtSurface, builtFieldAt, landSampler, polygonDistance, speciesFor, BUILT_FIELD} from '../src/built-world.js';
+import {worldFromDoc, builtSurface, builtFieldAt, builtGroundAt, landSampler, polygonDistance, speciesFor, BUILT_FIELD} from '../src/built-world.js';
 import {biomeOf} from '../src/biomes.js';
 import {greenDistance} from '../src/course.js';
 import {GROUND_CODE} from '../src/ground.js';
@@ -111,4 +111,14 @@ test('stored houses stand where the file puts them, the same street every time, 
  const h = a.homes[0];
  assert.equal(h.x, 60); assert.equal(h.rotation, 1.2); assert.equal(h.width, 20);
  assert.ok(Number.isFinite(h.y) && h.footing >= .45 && ['gable', 'hip', 'saltbox', 'lshape'].includes(h.form) && h.height >= 7 && h.height <= 11);
+});
+
+test('where two ground types meet, a point is the one with the most weight round it', () => {
+ // Four texels, a field 4 m square: heather (8) on three, hardpan (4) on one.
+ const b = new Uint8Array(16); b[2] = 8; b[6] = 8; b[10] = 8; b[14] = 4;
+ const f = {Sx: 2, Sz: 2, ex: 2, ez: 2, b};
+ assert.equal(builtGroundAt(f, 0, 0), 'heather', 'the middle is the heather\'s');
+ assert.equal(builtGroundAt(f, .9, .9), 'hardpan', 'near the hardpan\'s own texel, the hardpan\'s');
+ assert.equal(builtGroundAt(f, .2, .2), 'heather', 'inside the hardpan\'s texel but nearer the heather: the edge no longer steps at the texel');
+ assert.equal(builtGroundAt({...f, b: new Uint8Array(16)}, 0, 0), null, 'no type round it: none');
 });

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as T from 'three';
 import {SEASONS, DRAWN, seasonOf, roundSeason, validSeasonChoice, seasonLook, seasonPalette, UNDER_SNOW, dullInWinter} from '../src/seasons.js';
+import {BIOMES} from '../src/biomes.js';
+import {grassLook} from '../src/vegetation.js';
 
 test('a date falls in its meteorological season, flipped south of the equator', () => {
  const on = (m, d = 15) => new Date(2026, m, d);
@@ -116,4 +119,18 @@ test('a snowy winter leaves no bracken or flowers on the snow, and a leaf-fall r
  const bio = {rough: '#b08a3a', semi: '#8a7a3a', bank: '#8a7a3a', fairway: '#4a7a3a'};
  const plain = seasonPalette(bio, 'winter', 'northeast'), fall = seasonPalette({...bio, leafFall: true}, 'winter', 'northeast');
  assert.ok(chroma(fall.rough) < chroma(plain.rough) / 2, fall.rough);
+});
+
+test('a prairie grass wears its own colours through the year, and a field in bloom keeps its own', () => {
+ // Seen 3 November 2026: every long grass took the landscape's one colour, so
+ // tall fescue was New England's autumn orange in a Kentucky July and no
+ // prairie turned.
+ const rec = BIOMES.heartland.longGrass, hue = c => c.getHSL({}).h * 360;
+ assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'summer').leaf) > 120, 'little bluestem is blue-green in summer');
+ assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'autumn').leaf) < 40, 'and copper in autumn');
+ assert.ok(hue(grassLook(BIOMES.bluegrass.longGrass, 'grasstallfescue', 'summer').leaf) > 70, 'tall fescue is green in summer');
+ const hex = c => `#${c.getHexString(T.SRGBColorSpace)}`;
+ assert.equal(hex(grassLook(rec, 'grassbluestem', 'autumn').leaf), rec.leaf, 'an older family keeps the landscape\'s');
+ assert.equal(hex(grassLook(BIOMES.bluebonnet.longGrass, 'grassindian', 'summer').accent), BIOMES.bluebonnet.longGrass.accent, 'the bluebonnets stay blue');
+ for (const k of ['bluegrass', 'ozarks', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
 });

@@ -121,9 +121,21 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   GRASSES says who grows what -- seventeen landscapes). **Built**: fifteen
   rounds each (tools/blender/logs; rounds 13-15 were checks with no
   change), the four seasons, in the game's model data, seen in the
-  Heartland's rough (a capture sent to the owner). Still to do: a
-  frame-rate A/B on Low (long grass is drawn in colonies, so a cost is
-  possible), and the other sixteen landscapes seen in captures.
+  Heartland's rough (a capture sent to the owner). **All seventeen seen in
+  captures** (3 November 2026, biome-shots `rough-low`): wrong colours in
+  every one, the pack's own never having reached the game -- orange tall
+  fescue in a Kentucky summer, no autumn -- and one tall fescue six metres
+  wide; fixed (RESEARCH, *Tall fescue and the prairie grasses*; no ground
+  moved, the fingerprints silent). The Heartland, Sand Hills and Cross
+  Timbers seen again in the final colours, the Sand Hills' autumn copper
+  too; the other fourteen were seen before the colour fix and not since.
+  **The A/B on Low, the Heartland** (each build only this change apart):
+  no graphics-card cost (0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms at
+  three tees), triangles +1.2-2.5%, draws +9, but 0.6-0.7 ms more on the
+  processor a frame (1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00), steady in
+  both rounds and not explained: TODO *Performance pass*. Still to do: the
+  High Plains, the worst case (837 triangles a clump): its B round failed
+  on a page that did not start, so no figure.
 - [ ] **Every landscape's terrain true to its place** (the owner, 3 November
   2026: "Do all of these new landscapes have different terrain generation
   based on their location and research? Similar to the badlands? If not.
@@ -165,7 +177,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Llano is, brush and yucca round the holes, the shelterbelts kept. Still
   to do: an A/B on Low for the rest of the new recipes (the performance
   pass).
-- [ ] **The builder skins the land from its heights** (the owner, 3 November
+- [x] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example
   if the LIDAR shows something that looks like a mountain or a butte. We
@@ -180,9 +192,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   src/builder/skin.js and the editor's Skin from the land button (under
   Paint), tested in Node; painting by hand was already there (Paint,
   Outline). No BUILT_VERSION step: a file changes only when the button is
-  pressed. Still to do: see it in the builder (the builder's smoke
-  journey and a capture), and try it on a real survey (Chambers Bay's
-  dunes, Bully Pulpit's buttes).
+  pressed. **Seen in the real builder** (tools/capture/builder-skin.mjs,
+  3 November 2026, a script's clicks; no person yet): the button under
+  Paint, Undo and Redo back cell for cell, the Layers list, Erase by the
+  mouse, the saved file, on Bully Pulpit's buttes (31 ha of rock, 56 of
+  bare clay, reading as buttes) and Chambers Bay's dunes, Chambers Bay in
+  the game too. It found three bugs, fixed: rock on dunes in a landscape
+  with no rock (now only the landscape's own ground, native grass there),
+  the page frozen 5-10 s with no word, and a metre-wide staircase in the
+  game where two ground types met (BUILT_VERSION 3). Not done: a builder
+  smoke journey for it (the capture does its work); a person pressing it.
 - [ ] **A skill that matches a real course to a landscape, the last step**
   (the owner, 3 November 2026: "turn the US landscapes docs into a skill
   that I can send in a course, you would evaluate the course. Do research,
@@ -291,6 +310,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     goal*); conifers, palms, cacti and shrubs judged and left. Seen in
     captures (the Keys, Lake Dunes, the Sonoran). A lineup of every tree as
     black outlines side by side was not made.
+- [ ] **A page that does not start in the capture harness** (4 November
+  2026, two in about 40 minutes under the goal's shared queue, on the same
+  build as dozens that started): frame-ab's High Plains B round waited 60 s
+  for `window.lab`, us-showcase's next page 120 s for the main menu. No
+  driver reset in the Windows log, no WebGL error seen, the card idle.
+  Start to main menu read 42-47 s that night against 19-22 s the day
+  before, which puts a 60 s wait close. Not found: whether it is a slow
+  start or a hang. GPU work stopped there, as a hung run asks.
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   Measured so far, Low, by mean frame against the build before (frame-ab,
@@ -304,7 +331,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   every landscape that had none, and a ground-shader branch on Low. **The homes' streets (generator
   84, homes on at 45%, the Heartland, RD-1):** no cost seen: draws +2 at tees 1 and 9 and -11 at tee 5, triangles level at tees 1 and 9 and +8.5% at tee 5 (where the trees moved); the mean frame read -33% (2.25 to 1.52 ms, A B B A), which nothing here explains, since no work was removed, so count it as level, not a saving. **The owner's additions (3
   November 2026), against 4784efd:** the prairie grasses in the Heartland
-  -5.3% (noise: no cost), Hill Country's stepped terrain -1.4%, the Bayou's
+  -5.3% (noise; measured again 3 November with only the grasses apart: no
+  graphics-card cost, but 0.6-0.7 ms more on the processor a frame, +41% by
+  mean on a frame of 1.3 ms, +4.4% by p95, steady over both rounds and not
+  explained -- the cull rebuilds only when the camera moves, so look there
+  second; High Plains, the worst clumps, not measured), Hill Country's stepped terrain -1.4%, the Bayou's
   flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
   Ponderosa's cones and flows -6.8%, the Lowcountry's tidal creeks and
   sea plane -0.6% (generator 80; that run's wait from start to the main
@@ -599,6 +630,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   nine in summer from three views and in spring, autumn and winter from one
   (the tropics summer only: 234 pictures, 3 November 2026) and writes
   docs/reports/us-landscapes-showcase.html (local). No page error on any.
+  **Stale since the day's terrain** (4 November 2026): retaken with `take
+  --again`, the Lowcountry, High Plains and Sand Hills, and Wine Country
+  but for winter; the page timing out at start stopped the run. Still to
+  take: Wine Country's winter, Monterey, the Blue Ridge, Hill Country,
+  Bluegrass, Ozarks, North Woods, Old Northeast, Mojave, Desert Palms, High
+  Sierra, Sagebrush, Piedmont, SoCal, Ponderosa, Hawaii, Longleaf, Bayou,
+  Flatwoods, Gulf Coast, and the Badlands, never in it.
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 

@@ -723,8 +723,9 @@ Roughen and Restore (the brush's size and strength above them); **Paint** any
 surface or ground type -- **Road** among them in every landscape, and
 **Outline** with Road draws a parking lot by its edge; **Skin from the land** (under Paint) paints, in one
 go, the landscape's own rock on the land's steep ground -- a butte's or a
-mountain's sides, a badland face -- and its apron (scree, bare clay, sand)
-on the gentler ground just below, leaving flat tops, the holes' turf, sand,
+mountain's sides, a badland face; native grass where the landscape has no
+rock, as on dunes -- and its apron (scree, bare clay, sand, heather) on the
+gentler ground just below, leaving flat tops, the holes' turf, sand,
 paths and water alone; it is a best effort from the heights, so paint over
 it or Undo it in one step, or paint the ground by hand instead; **Outline** draws one by its edge; dig a bunker,
 draw a pond or a creek (it runs downhill), plant or clear trees, stand a

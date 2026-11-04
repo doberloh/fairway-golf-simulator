@@ -10,6 +10,7 @@
 //       every candidate view of each landscape, at Ultra, 3840 x 2160 (a 1920 x
 //       1080 page at density 2, HUD hidden), as PNG masters in
 //       bench/shots/biome-shots/<label>/<biome>/<view>.png, and a contact sheet
+//       (`--size 1280x720`: that page at density 1, to look a set over)
 //   node tools/capture/biome-shots.mjs encode [--from <label>] [--only biome,...]
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
@@ -32,6 +33,9 @@ const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from 
 // another course than the card's (the `street` views need houses; they are a
 // course setting, off by default).
 const homes = opt('--homes'), seedOverride = opt('--seed');
+// `--size 1280x720`: a page of that size at density 1, for looking a set over
+// (not masters for the cards).
+const size = opt('--size')?.split('x').map(Number);
 // `encode --only a,b`: re-encode those landscapes' pictures alone, leaving the
 // others' files as they are (the US landscapes goal: new landscapes added
 // one phase at a time, from their own set of masters).
@@ -95,6 +99,11 @@ const VIEWS = [
  // Lowcountry's tidal creeks; Monterey's shore): the 10 m cell with the most
  // open sea round it inside the map, seen from 70 m off and 40 m up.
  {name: 'sea-in', hole: 0, when: 'afternoon', cam: `w => { const wet = (x, z) => w.surface(x, z) === 'water' && w.height(x, z) < -.3 && !(w.lakeOwner && w.lakeOwner(x, z)); let best = {n: -1, x: 0, z: 0}; for (let x = -w.halfX * .9; x < w.halfX * .9; x += 30) for (let z = -w.halfZ * .9; z < w.halfZ * .9; z += 30) { if (!wet(x, z)) continue; let n = 0; for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) if (wet(x + i * 10, z + j * 10)) n++; if (n > best.n) best = {n, x, z}; } return {x: best.x - 50, z: best.z - 50, yaw: 45, height: 40, pitch: -24}; }`},
+ // The long grass close to (3 November 2026, the prairie grasses seen): the
+ // spot near hole 1 where the rough's drifts are thickest (vegetation.js
+ // addLongGrass's own wave, far enough off the mown ground), from 2 m up
+ // looking toward the green.
+ {name: 'rough-low', hole: 0, when: 'afternoon', cam: `w => { const h = w.holes[0], g = h.worldGreen, t = h.worldTee, drift = (x, z) => .5 + .5 * Math.sin(x / 53 + Math.sin(z / 71) * 1.7) * Math.cos(z / 47 - Math.sin(x / 89)); let best = {n: -1, x: t.x, z: t.z}; for (let x = -w.halfX; x < w.halfX; x += 6) for (let z = -w.halfZ; z < w.halfZ; z += 6) { const d = Math.hypot(x - g.x, z - g.z), n = w.nearest(x, z).d; if (d > 220 || n < 26 || n > 60 || w.surface(x, z) !== 'rough') continue; const v = drift(x, z) - d / 2000; if (v > best.n) best = {n: v, x, z}; } return {x: best.x, z: best.z, yaw: Math.atan2(g.x - best.x, g.z - best.z) * 180 / Math.PI, height: 2, pitch: -4}; }`},
 ];
 
 // THE PICKS: the views each landscape's cards show, in order (at least four).
@@ -157,7 +166,7 @@ async function take(biomes) {
   for (const biome of biomes) {
    const dir = path.join(ROOT, label, biome);
    fs.mkdirSync(dir, {recursive: true});
-   const p = await openGame(b, {width: 1920, height: 1080, density: 2, quality: 'ultra'});
+   const p = await openGame(b, size ? {width: size[0], height: size[1], density: 1, quality: 'ultra'} : {width: 1920, height: 1080, density: 2, quality: 'ultra'});
    await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
