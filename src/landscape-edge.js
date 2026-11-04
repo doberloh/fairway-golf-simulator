@@ -21,7 +21,9 @@ import {fbm,saltOf} from './landforms.js';
 // (far-woods.js), so the two cannot drift apart.
 export function ringRelief(w){
  const bio=biomeOf(w.settings.biome),lift=bio.ringLift;
- const shore=bio.edgeCoast?(x=>1-T.MathUtils.smoothstep(x,w.halfX-260,w.halfX+40)):(()=>1);
+ // The coast's own line (course.js `coastAt`; halfX - 90 unless it seeks play).
+ const cx=z=>(w.coastAt?w.coastAt(z):w.halfX-90)+90;
+ const shore=bio.edgeCoast?((x,z)=>1-T.MathUtils.smoothstep(x,cx(z)-260,cx(z)+40)):(()=>1);
  const peaks=bio.ringPeaks?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
   return (x,z)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);return Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a);};})():null;
  // MESAS AND BUTTES (the far-landscape goal; the owner: "I think we need more
@@ -50,7 +52,7 @@ export function ringRelief(w){
  const isles=bio.ringIslands?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
   const list=Array.from({length:bio.ringIslands},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
   return (x,z)=>{let h=0;for(const q of list){const dd=Math.hypot(x-q.x,z-q.z)/q.R*(1+.25*(fbm(x/260,z/260,s+11,2)-.5));if(dd<1.3)h=Math.max(h,(1-ss(dd,.85,1.25))*3.5+(1-ss(dd,.2,.95))*q.H);}return h;};})():null;
- return {peaks,mesas,isles,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)};
+ return {peaks,mesas,isles,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)};
 }
 // THE RING AS PLAIN ARRAYS (the far-landscape goal, 26 October 2026). The
 // drawn landscape is these triangles, not `ringRelief` sampled finely: out

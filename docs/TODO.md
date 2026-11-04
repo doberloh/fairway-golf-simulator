@@ -130,8 +130,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Ponderosa, Hawaii, Longleaf, Bayou, Flatwoods, Gulf Coast (biomes.js
   TERRAIN, landforms.js; RESEARCH *Terrain true to place*;
   tests/terrain-true.test.mjs); the bench, the tests and the fingerprints
-  green; captures of fourteen sent to the owner. Still to do: the
-  Lowcountry's tidal creeks, the Blue Ridge's coves and ridges, Monterey's
+  green; captures of fourteen sent to the owner. The Blue Ridge's coves
+  and ridges followed (generator 78). Still to do: the
+  Lowcountry's tidal creeks, Monterey's
   bluffs to the sea, SoCal's barrancas from a geology source, and a second
   look at the landscapes judged to fit their region's recipe (Bluebonnet,
   Cross Timbers, Wine Country, Chihuahuan, Pine Barrens, High Plains, Sand
@@ -422,11 +423,18 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   and the Cascades' snow volcano on the horizon (renderer.js
   `addSeaStacks`, `addBackdrop`); basalt and granite are boulder families.
   Seen in captures; not seen by a person in play.
-- [ ] **Monterey's holes stay inland**: the coast runs along one edge, past
-  the woods, and on most seeds no hole plays along it -- so the sea stacks
-  (within 450 m of play) seldom appear. Pebble Beach's holes are on the
-  cliffs: the routing wants to seek the coast for an `edgeCoast` landscape
-  (a generator step).
+- [x] **Monterey's holes play along the sea** (generator 79; the owner, 3
+  November 2026: "Make sure the holes can genuinely play along the coast.
+  Close that item out"): the shore follows the holes instead of running
+  straight down the course's edge -- at each point along the course it is
+  set from the easternmost hole's corridor there (course.js `coastAt`,
+  biomes.js `coastSeek`), and the land never drops toward the sea within
+  5 m of any corridor, so the holes' edge is a cliff over the water. On
+  five 18-hole seeds, 3-6 holes have open sea within 50 m of their
+  fairway or green, and no tee, fairway, green or semi is wet (tests/
+  terrain-true.test.mjs holds both). Was: none on most seeds. The routing
+  itself does not yet send more holes to the coast (Pebble Beach has about
+  eight); that would be a change to how holes are laid out.
 - [x] **Wine Country's vines in rows** (generator 75): two blocks of 60 by
   36 m off play, a vine every 2 m along rows 3 m apart (806 vines on three
   seeds each), a few strays left in the open planting. Built and measured;

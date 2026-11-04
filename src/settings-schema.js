@@ -414,7 +414,14 @@ export const SCHEMA_VERSION=26;
 //     steeper than SHAPE_GRADE a rounded corner may be as steep as the one
 //     it replaces, never past 29%. Sharp corners across the bench's 195
 //     courses 205 -> 186. Moved thirty-three landscapes' paths.
-export const GENERATOR_VERSION=77;
+// 78: the Blue Ridge's coves and ridges (biomes.js TERRAIN, the channels
+//     recipe with V walls): branching hollows between rounded forested
+//     ridges in place of the Rockies' crags. Moved the Blue Ridge.
+// 79: Monterey's holes play along the sea (course.js `coastAt`, biomes.js
+//     `coastSeek`): the shore follows the eastern holes, never within 5 m of
+//     a corridor; 3-6 holes of 18 with open sea within 50 m of a fairway or
+//     green, nothing in play wet. Moved Monterey.
+export const GENERATOR_VERSION=79;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

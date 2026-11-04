@@ -13099,8 +13099,15 @@ pictures unless a figure is quoted.
   1700 on average and cut gullies with headcuts. The bench found a far grove
   floating over a 3-4 m gully its slope test stepped across: the gullies are
   broader now (scale 180, width .04).
-- **SoCal Canyons -- barrancas** (`channels` with V walls, 20 m) -- from
-  the landscape's own page (its "barrancas"); no geology source fetched yet.
+- **SoCal Canyons -- barrancas** (`channels` with V walls, 20 m). The
+  Santa Monica Mountains' drainage spacing, geometry and relief are set by
+  bedrock strength (Meigs and others, Basin Research 11(1), 59-73, through
+  [SCEC](https://central.scec.org/node/3240)); the City of Malibu's code
+  describes "numerous incised canyons and drainages" and over 80% of the
+  range's soils of high or very high erosion potential
+  ([ecode360](https://ecode360.com/44603712)). No source found for
+  Rancho Santa Fe's barrancas by name. The V walls and their depth are
+  PLACED.
 - **Ponderosa and Hawaii -- volcanic** (`volcanic`: truncated cinder cones
   with a crater, red-brown cinder on their flanks, bare of trees; black
   basalt flow lobes 2-2.5 m proud). [USGS, San Francisco volcanic field](https://www.usgs.gov/volcanoes/san-francisco-volcanic-field/geology-and-history):
@@ -13116,6 +13123,15 @@ pictures unless a figure is quoted.
   shorelines, islands of bare sand; longleaf, turkey oak and wiregrass on
   the dry ridge tops. A first try had a third of the course bare sand: the
   bare threshold is 0.84 now (about 4%).
+- **Blue Ridge -- coves and ridges** (generator 78; `channels` with V
+  walls: hollows 28 m deep branching between rounded ridges, rock only
+  where steepest, the woods kept). [Blue Ridge Mountains](https://en.wikipedia.org/wiki/Blue_Ridge_Mountains):
+  a long chain of ridges on granite, gneiss and limestone, Mount Mitchell
+  2,037 m, about 125 peaks over 1,500 m; cliffs not described. [Cove
+  (Appalachian Mountains)](https://en.wikipedia.org/wiki/Cove_(Appalachian_Mountains)):
+  a small valley between two ridges closed at one or both ends (Cades
+  Cove). Measured on one nine: 110 m of relief, 5% rock, 10% steeper than
+  35 degrees.
 - **Bayou, Flatwoods and Gulf Coast -- lowland** (`lowland`: levees 1-2.5 m
   along sinuous bayous, backswamp hollows of marsh grass, and the corridors'
   broad roll scaled to a fifth or less, course.js `baseRoll`). [USDA MLRA
@@ -13191,3 +13207,20 @@ not found; graphics.js still starts a software renderer on Low. The frames
 are the real finding: the September baseline drew Medium at 3.8 s a frame,
 so the landscapes' geometry roughly doubled the software cost, and neither
 tier is playable without a graphics card.
+
+## Monterey's holes along the sea (generator 79, 3 November 2026)
+
+The owner: "Make sure the holes can genuinely play along the coast." An
+`edgeCoast` landscape's shore ran straight down the course's edge, 90 m in
+-- past the woods, with no hole near it. For `coastSeek` (Monterey) the
+shore's line now follows the holes (course.js `coastAt`): every 10 m along
+z, the easternmost corridor within 40 m (its tees-to-green line plus 30 m)
+less 130 m -- the shore ramp needs about 80 m to take 20-30 m of ground
+under the sea -- dilated over 60 m and averaged, so it never comes nearer
+a hole than its own band allows and its coves are round. And the land
+ramps toward the sea only from 5 m outside any corridor's envelope (full
+from 25 m), so play stays dry and stands on a cliff. Measured on five
+18-hole seeds: 3, 6, 3, 6 and 3 holes with open water within 50 m of a
+fairway or green; no play wet. First tries: 45 m beyond the easternmost
+point left every green 115-250 m from the sea; a line 60 m in without the
+corridor guard wet 40-181 cells of play. All numbers PLACED.

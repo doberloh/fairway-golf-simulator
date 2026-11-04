@@ -21,7 +21,7 @@ const relief = ys => Math.max(...ys) - Math.min(...ys);
 test('each landscape named for its own terrain gets the recipe its research says', () => {
  const want = {hillcountry: 'steps', monterey: 'steps', bluegrass: 'karst', ozarks: 'channels', northwoods: 'glacial',
   oldnortheast: 'glacial', mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels', piedmont: 'channels',
-  socal: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', longleaf: 'sandridges', bayou: 'lowland',
+  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', longleaf: 'sandridges', bayou: 'lowland',
   flatwoods: 'lowland', gulfcoast: 'lowland', badlands: 'badlands'};
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
@@ -70,4 +70,21 @@ test('a lowland course is flat where a parkland one rolls', () => {
  const bayou = spread('bayou'), heartland = spread('heartland');
  assert.ok(bayou < 6, `the Bayou spreads ${bayou.toFixed(1)} m between its low and high ground`);
  assert.ok(bayou < heartland / 2, `the Bayou (${bayou.toFixed(1)} m) is far flatter than the Heartland (${heartland.toFixed(1)} m)`);
+});
+
+test('Monterey\'s holes play along the sea, and nothing in play is wet', () => {
+ // The owner, 3 November 2026: "Make sure the holes can genuinely play along
+ // the coast." course.js `coastAt` (generator 79): the shore follows the
+ // eastern holes and never comes within 5 m of a corridor.
+ const w = world({holes: 18, biome: 'monterey', seed: 'MT-b'}), wl = w.waterLevel ?? 0, along = new Set();
+ let wet = 0;
+ for (let x = -w.halfX; x < w.halfX; x += 5) for (let z = -w.halfZ; z < w.halfZ; z += 5) {
+  const s = w.surface(x, z);
+  if (['fairway', 'green', 'tee', 'fringe', 'semi'].includes(s) && w.height(x, z) < wl + .3) wet++;
+  if (s !== 'fairway' && s !== 'green') continue;
+  for (const [dx, dz] of [[50, 0], [35, 35], [35, -35], [0, 50], [0, -50], [25, 0]])
+   if (w.height(x + dx, z + dz) < wl - .5 && w.surface(x + dx, z + dz) === 'water') { along.add(w.nearest(x, z).h.hole); break; }
+ }
+ assert.equal(wet, 0, 'tee, fairway, green or semi under the sea');
+ assert.ok(along.size >= 3, `only ${along.size} holes of 18 have the sea within 50 m of their fairway or green`);
 });

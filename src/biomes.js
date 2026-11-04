@@ -873,7 +873,7 @@ const LAND = {
  // Monterey: the Pebble Beach shore -- Monterey cypress and pine on the
  // headlands, ice plant, coastal sage, the sea along one side with stacks
  // standing in it (renderer.js addSeaStacks), cool fog.
- monterey: {sea: true, edgeCoast: true, shoreSand: false, hills: {base: 16, severity: 45, reach: 50}, treeDensity: 1.6,
+ monterey: {sea: true, edgeCoast: true, coastSeek: true, shoreSand: false, hills: {base: 16, severity: 45, reach: 50}, treeDensity: 1.6,
   rough: '#7a8a4e', sky: '#c8d6de', temperature: 18, rockStyle: 'angular', seaStacks: 6,
   longGrass: {...TRAITS.california.longGrass, leaf: '#8a9056', accent: '#b8a870'},
   stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['coastalsage', .5], ['shrub', .5]]},
@@ -1067,6 +1067,13 @@ const TERRAIN = {
  // Cinder cones of red-brown cinder and black basalt flows.
  ponderosa: {landform: {type: 'volcanic', cell: 300, chance: .45, radius: [50, 110], size: [25, 60], flows: .62, flowHeight: 2.5, roll: 5, reach: 90,
   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#8a4a36', rock: '#3a3632'}},
+ // The Blue Ridge: forested ridges and coves -- small valleys between
+ // ridges, closed at one or both ends -- on gneiss and granite, cliffs rare
+ // (Blue Ridge Mountains; Cove (Appalachian Mountains)): V hollows
+ // branching between rounded ridges, rock only on the steepest, the woods
+ // kept on their sides.
+ blueridge: {landform: {type: 'channels', scale: 320, width: .07, wall: .9, depth: 28, table: 12, branches: .9, rim: .65, bare: .05, reach: 85,
+  kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}},
  // Black lava flows down to the sea, a few cinder cones.
  hawaii: {landform: {type: 'volcanic', cell: 320, chance: .25, radius: [40, 80], size: [15, 35], flows: .56, flowHeight: 2, roll: 6, reach: 80,
   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#6a3a2a', rock: '#2e2a28'}},

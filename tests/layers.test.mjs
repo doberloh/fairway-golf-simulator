@@ -43,5 +43,7 @@ test('a landscape offers every turf layer, its own ground types, and rough last'
  assert.ok(mountain.includes('rock') && mountain.includes('scree') && !mountain.includes('heather'), mountain.join());
  assert.ok(links.includes('native') && links.includes('heather') && !links.includes('rock'), links.join());
  assert.ok(layersFor(BIOMES.puget).includes('pinestraw'), 'what falls under its trees');
- assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 7), 'rough']);
+ // Road in every landscape (the US landscapes goal, PLAN 4: roads anywhere).
+ assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 7), 'road', 'rough']);
+ assert.ok(mountain.includes('road') && links.includes('road'));
 });

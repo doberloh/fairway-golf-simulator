@@ -836,7 +836,9 @@ function addDriftwood(view){
  // (course.js `land`), the tries stay within reach of it rather than spending
  // most of themselves inland. (A count of the drawn logs reads low: the
  // instance cull keeps only those in view.)
- const x0=world.bio.edgeCoast?world.halfX-320:-world.halfX,x1=world.halfX+(world.bio.edgeCoast?120:0);
+ // The coast's line (course.js coastAt): the window spans its nearest and farthest.
+ const lo=(world.coastMin??world.halfX-90)+90,hi=(world.coastMax??world.halfX-90)+90;
+ const x0=world.bio.edgeCoast?lo-320:-world.halfX,x1=world.bio.edgeCoast?hi+120:world.halfX;
  for(let i=0;i<count*400&&entries.length<count;i++){
   const x=x0+rng()*(x1-x0),z=(rng()-.5)*world.halfZ*2,y=world.height(x,z);
   if(y<.08||y>BEACH_RISE||world.surface(x,z)!=='sand')continue;

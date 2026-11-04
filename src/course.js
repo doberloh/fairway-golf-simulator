@@ -1338,6 +1338,33 @@ export function* generateWorldSteps(settings={},options={}){
  // textures, vegetation -- treats it exactly like any other and needs no branch.
  const bio=BIOMES[s.biome],holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
  yield phaseAt(1);
+ // WHERE AN EDGE COAST RUNS (`coastAt(z)`: the middle of the shore's ramp at
+ // each z; the water itself starts about 40 m further out). 90 m in from the
+ // course's edge -- except a landscape that `coastSeek`s (Monterey: the
+ // owner, 3 November 2026, "Make sure the holes can genuinely play along the
+ // coast"), where the shore follows the holes: at each z its line runs 130 m
+ // inside the eastern edge of the nearest hole's corridor (its tees-to-green
+ // line plus 30 m) -- the ramp needs some 80 m to take high ground under the
+ // sea -- and the land never ramps down within 25 m of any corridor (land,
+ // below), so the eastern holes play along the sea, a cliff at their edge. The profile is a running maximum over 60 m and then an
+ // average, so the shore never comes in nearer a hole than its own band says
+ // and its coves are rounded. Generator 79; every number PLACED.
+ // landscape-edge.js and vegetation.js read it from the world.
+ const coastFar=halfX-90;let coastAt=()=>coastFar,coastMin=coastFar,coastMax=coastFar;
+ if(bio.edgeCoast&&bio.coastSeek){
+  const step=10,z0=-halfZ-200,n=Math.ceil((2*halfZ+400)/step)+1,east=new Float32Array(n).fill(-Infinity);
+  for(const h of holes){
+   const line=[...Object.values(h.tees||{}).slice(0,1),...(h.aims||[]),h.green].filter(Boolean).map(p=>h.toWorld(p));
+   for(let q=1;q<line.length;q++){const a=line[q-1],b=line[q],k=Math.max(2,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/8));
+    for(let i=0;i<=k;i++){const x=a.x+(b.x-a.x)*i/k,z=a.z+(b.z-a.z)*i/k,j0=Math.max(0,Math.floor((z-40-z0)/step)),j1=Math.min(n-1,Math.ceil((z+40-z0)/step));for(let j=j0;j<=j1;j++)east[j]=Math.max(east[j],x+30);}}
+  }
+  const raw=Array.from(east,e=>Number.isFinite(e)?Math.min(coastFar,e-130):coastFar),W=6;
+  const at=(arr,j)=>arr[Math.min(n-1,Math.max(0,j))];
+  const dil=raw.map((_,j)=>{let m=-Infinity;for(let d=-W;d<=W;d++)m=Math.max(m,at(raw,j+d));return m;});
+  const sm=dil.map((_,j)=>{let t=0;for(let d=-W;d<=W;d++)t+=at(dil,j+d);return t/(2*W+1);});
+  coastAt=z=>{const f=(z-z0)/step,j=Math.max(0,Math.min(n-2,Math.floor(f))),t=Math.min(1,Math.max(0,f-j));return sm[j]*(1-t)+sm[j+1]*t;};
+  coastMin=Math.min(...sm);coastMax=Math.max(...sm);
+ }
  const phase=random(s.seed+':land')()*100,coastal=bio.coastal;
  // THE COUNTRY BETWEEN THE HOLES (the cartoon overhaul; landforms.js): the
  // biome's recipe of crags, mesas, dunes or washes. Its relief rides on the
@@ -1555,7 +1582,11 @@ export function* generateWorldSteps(settings={},options={}){
   // across the full bench.
   const lift=liftScale*landform.lift(x,z)*smooth(n.d/(landform.reach??bio.hills.reach));
   let y=base(x,z)+hills+lift;
-  if(bio.edgeCoast){const coast=smooth((x-(halfX-90+Math.sin(z/150)*30))/90);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
+  // A coast that seeks play never ramps down within 5 m of a corridor's
+  // envelope, and is sea from 25 m
+  // (`nearest().d`, the real corridor, doglegs and all): the sea comes in
+  // close and the holes' own ground stays a cliff above it.
+  if(bio.edgeCoast){const coast=smooth((x-(coastAt(z)+Math.sin(z/150)*30*(bio.coastSeek?.3:1)))/90)*(bio.coastSeek?smooth((n.d-5)/20):1);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
   return y;
  }
  // OPEN WATER, AS OPPOSED TO GROUND THAT MERELY SITS LOW.
@@ -2880,7 +2911,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=!s.range?placeWaterworks({holes,s,surface}):[];
- const world={teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,streetProps:streetFurniture({lot:roadLot,roads,club:buildings.find(b=>b.kind==='clubhouse')}),waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={coastAt,coastMin,coastMax,teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,streetProps:streetFurniture({lot:roadLot,roads,club:buildings.find(b=>b.kind==='clubhouse')}),waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }
