@@ -323,14 +323,18 @@ export function groundMaterial(view,palette){
  const sandField=w.surfaceField&&w.surfaceField.Sx===Sx&&w.surfaceField.Sz===Sz?w.surfaceField:null;
  // A BUILT course (built-world.js) binds its own two field textures in the
  // field's place and one more (builtB), at its own finer grid; every other
- // course binds one empty texel there, which builtOn keeps the shader from
- // reading. (The ground had two samplers free for exactly this:
+ // course binds one empty texel there, which BUILT_COURSE keeps the shader
+ // from reading. (The ground had two samplers free for exactly this:
  // PROJECT_HANDOFF *ONE TEXTURE FOR EVERY TABLE*.)
  const built=w.builtField||null;
  const fieldTex=new T.DataTexture(built?built.a:sandField?sandField.data:new Uint8Array(4),built?built.Sx:sandField?Sx:1,built?built.Sz:sandField?Sz:1,T.RGBAFormat,T.UnsignedByteType);
  fieldTex.minFilter=fieldTex.magFilter=T.LinearFilter;fieldTex.needsUpdate=true;view.resources.push(fieldTex);
  const builtBTex=new T.DataTexture(built?built.b:new Uint8Array(4),built?built.Sx:1,built?built.Sz:1,T.RGBAFormat,T.UnsignedByteType);
  builtBTex.minFilter=builtBTex.magFilter=T.LinearFilter;builtBTex.needsUpdate=true;view.resources.push(builtBTex);
+ // A built course's branch is in a built course's program only: the one more
+ // call of groundPaint it holds (see groundPaint IS CALLED TWICE) cost every
+ // generated course a second on every program.
+ if(built)m.defines={...m.defines,BUILT_COURSE:1};
  m.onBeforeCompile=shader=>{
  // The record with the round's season laid over it (renderer.js build).
  const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
@@ -340,7 +344,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -349,7 +353,7 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtOn,builtFringe;uniform vec3 gt_path,gt_road;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtFringe;uniform vec3 gt_path,gt_road;
 // THE ROUTE CURVES AND THE SEMI-ROUGH EDGES SHARE ONE TEXTURE (the cartoon
 // overhaul): curves in texels 0-511 of a hole's row, the semi-rough's two
 // widths in 512-1023. They were two textures of the same grid, and the
@@ -377,6 +381,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
  // The bed a height lies in (strataUniforms): level, a little warped so a
  // bed is not ruled, its colour by a hash of its number.
+ // How many beds a pixel crosses, set before groundPaint is called.
+ float bedFine=0.;
  vec3 strataColour(float y,vec2 q,vec3 base){
   float ys=y/strataSpacing+.18*patchNoise(q/41.),k=floor(ys),h=hashGround(vec2(k,17.3));
   vec4 e=vec4(strataShares.x,strataShares.x+strataShares.y,strataShares.x+strataShares.y+strataShares.z,strataShares.x+strataShares.y+strataShares.z+strataShares.w);
@@ -385,7 +391,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float fy=fract(ys);
   c*=1.+.07*smoothstep(.9,.98,fy)-.09*smoothstep(0.,.05,fy)*(1.-smoothstep(.05,.12,fy));
   // Beds under a pixel settle to their average, so a far face does not shimmer.
-  return mix(c,st_a*strataShares.x+st_b*strataShares.y+st_c*strataShares.z+st_d*strataShares.w+base*(1.-e.w),smoothstep(.3,.8,fwidth(ys)));
+  return mix(c,st_a*strataShares.x+st_b*strataShares.y+st_c*strataShares.z+st_d*strataShares.w+base*(1.-e.w),smoothstep(.3,.8,bedFine));
  }
  // THE OVERHAUL'S GROUND TYPES, PAINTED (GROUND_CODE in this file): a colour
  // and a flat cartoon pattern in world metres for each. q is the world
@@ -488,6 +494,25 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // designer was removed, 2 November 2026; every ground type keeps the soft
  // edge above.)
  float wildEdge(float code,float f){return wildSoft(f);}
+ // One layer of painted ground over c: layer i of the wild ground's four, or
+ // the far ring's floor (0) and face (1), which also settle to a flat colour
+ // where their pattern is under a pixel (ringGrain, -1 off the ring).
+ vec3 paintLayer(vec3 c,vec3 turf,int i,float code,float share,float ringGrain,float beds,vec2 wp,vec3 gn){
+  bool ring=ringGrain>=0.,faceLayer=ring&&i==1;
+  // Banded clay keeps its beds on a far face, four times as thick, as a far
+  // wall's show in the photographs; it is its faces' whole look.
+  float bedScale=faceLayer&&strataOn>.5?.25:1.;bedFine=beds*bedScale;
+  vec3 under=ring?c:turf,paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
+  if(ring){
+   // A ground type's average colour, for where its pattern is under a pixel.
+   // Round 5: the steeper the face the plainer: a pattern laid from above
+   // stretches into vertical smears on a cliff (Mountain's pale streaks).
+   vec3 tint=code<1.5?gt_rock*.78:code<4.5&&code>3.5?gt_hardpan*.97:under;
+   if(faceLayer&&code>3.5)tint*=mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9;
+   paint=mix(paint,tint,faceLayer?(strataOn>.5?ringGrain*.2:max(ringGrain*.5,(1.-smoothstep(.25,.55,gn.y))*.85)):ringGrain*.7);
+  }
+  return mix(c,paint,share);
+ }
  // Distance to one channel station, with its width, channel index and valley
  // shoulder. Returned as xyzw so the shore bands can size themselves from the
  // same numbers the CPU carve and contact queries use.
@@ -741,7 +766,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // a built hole is only its skeleton (no shapes are stored in its row). The
  // ground type is a code, never blended, and painted by groundPaint, as
  // the generator's ground types are; a cart path is code 10.
- if(builtOn>.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
+ #ifdef BUILT_COURSE
+ if(abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   vec2 bu=(wp/extent+1.)*.5;vec4 ba=texture2D(field,bu),bb=texture2D(builtB,bu);
   float bR=${(2*BUILT_FIELD.range).toFixed(1)};
   float dSand=(.5-ba.r)*bR,dGreen=(.5-ba.g)*bR,dFair=(.5-ba.b)*bR,dTee=(.5-ba.a)*bR,dWater=(.5-bb.r)*bR,dSemi=(.5-bb.g)*bR,dGround=(.5-bb.a)*bR;
@@ -753,6 +779,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float gcode=0.,gbest=0.;
   for(int q=0;q<4;q++){if(bc[q]<.5)continue;float gs=0.;for(int r=0;r<4;r++)if(abs(bc[r]-bc[q])<.5)gs+=bw[r];if(gs>gbest){gbest=gs;gcode=bc[q];}}
   turf=roughTint;kind=0.;teeGround=0.;teePadD=1e3;
+  bedFine=fwidth(groundPoint.y)/max(strataSpacing,.001);
   if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
   if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
   if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
@@ -768,6 +795,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   vec3 bpb=shoreBands(6.,dFair<=0.?-10.:30.,16.);
   if(dWater<bpb.z){turf=shoreTint(turf,dWater,6.,bpb);if(dWater<bpb.y){kind=6.;wildTop=0.;}}
  }
+ #endif
  if(owner.b>.5){
   float sid=owner.b-1.;vec4 ch=channelInfo(wp,sid);
   // One segment is stored per owner texel, so a fragment beside a station join
@@ -837,19 +865,26 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // 0.5 of its gated field -- so they are painted bottom-up here, the highest
  // priority last. The colour fades across 0.42-0.58; the lie switches at 0.5.
  // kind stays the rough's for everything after this.
+ // groundPaint IS CALLED TWICE AND NO MORE (the performance pass, 4 November
+ // 2026). It was called from six places here and a seventh on a built course,
+ // and the compiler a browser uses on Windows copies the whole painter in at
+ // every call: 6.9 s of a ground program's 7.8 s, three programs, most of the
+ // wait before the menu. A loop round one call did not help (5.5 s, the same
+ // whether its count was a constant or not), so a fragment's layers (the wild
+ // ground's four, or the far ring's floor and face, never both) are listed
+ // first and only the top two are painted. Three layers meeting is the edge of
+ // an edge of a patch; the lowest shows the rough there, on a few pixels. A new
+ // call here costs a second on every first start.
+ vec4 paintCode=vec4(0.),paintShare=vec4(0.);float ringGrain=-1.;
  if((wildOn>.5||fallenOn>.5)&&kind<.5&&waterNear>=${WILD_WATER.toFixed(1)}&&streamNear>=${WILD_WATER.toFixed(1)}&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   vec4 cv=texture2D(cover,(wp/extent+1.)*.5);
   float hd=holeDistance(owner.r,wp);
-  vec3 gn=normalize(groundNormal),c=turf;
   float ff=fallenOn>.5&&wildKinds.w>.5?cv.g:0.;
   float fz=wildOn>.5&&wildKinds.z>.5?smoothstep(wildGateF.x,wildGateF.x+wildGateF.y,hd):0.;
   float fy=wildOn>.5&&wildKinds.y>.5?cv.b*smoothstep(wildGateB.x,wildGateB.x+wildGateB.y,hd):0.;
   float fx=wildOn>.5&&wildKinds.x>.5?cv.a*smoothstep(wildGateA.x,wildGateA.x+wildGateA.y,hd):0.;
-  if(ff>0.)c=mix(c,groundPaint(wildKinds.w,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.w,ff));
-  if(fz>0.)c=mix(c,groundPaint(wildKinds.z,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.z,fz));
-  if(fy>0.)c=mix(c,groundPaint(wildKinds.y,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.y,fy));
-  if(fx>0.)c=mix(c,groundPaint(wildKinds.x,wp,groundPoint.y,gn,turf),wildEdge(wildKinds.x,fx));
-  turf=c;
+  paintCode=vec4(wildKinds.w,wildKinds.z,wildKinds.y,wildKinds.x);
+  paintShare=vec4(ff>0.?wildEdge(wildKinds.w,ff):0.,fz>0.?wildEdge(wildKinds.z,fz):0.,fy>0.?wildEdge(wildKinds.y,fy):0.,fx>0.?wildEdge(wildKinds.x,fx):0.);
   // Which ground the lie says this is, for the detail atlas below.
   wildTop=fx>=.5?wildKinds.x:fy>=.5?wildKinds.y:fz>=.5?wildKinds.z:ff>=.5?wildKinds.w:0.;
  }
@@ -862,19 +897,19 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // takes the steep faces. Patterns smaller than a pixel settle to their
  // average colour, as the far forest's crowns do, so nothing shimmers.
  if(kind<.5&&(abs(wp.x)>=extent.x||abs(wp.y)>=extent.y)){
-  vec3 gn=normalize(groundNormal);
-  float grain=smoothstep(.3,2.5,length(fwidth(wp)));
-  // A ground type's average colour, for where its pattern is under a pixel.
-  #define RING_TINT(c) ((c)<1.5?gt_rock*.78:(c)<4.5&&(c)>3.5?gt_hardpan*.97:turf)
-  if(ringFloor>.5)turf=mix(groundPaint(ringFloor,wp,groundPoint.y,gn,turf),RING_TINT(ringFloor),grain*.7);
+  ringGrain=smoothstep(.3,2.5,length(fwidth(wp)));
   // Round 5: from a gentler steepness (the ring's facets are coarse, so a
   // mesa's cliff lies at 40-50 degrees on them; at .62-.8 its sides stayed sand).
-  float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+(strataOn>.5?.07:.16),gn.y):0.;
-  // Banded clay keeps its beds out here, four times as thick, as a far wall's
-  // show in the photographs; it is its faces' whole look.
-  if(face>0.)turf=mix(turf,mix(groundPaint(ringFace,wp,strataOn>.5?groundPoint.y*.25:groundPoint.y,gn,turf),RING_TINT(ringFace)*(ringFace>3.5?mix(vec3(1.),gt_rock/max(gt_hardpan,vec3(.01)),.55)*.9:vec3(1.)),strataOn>.5?grain*.2:max(grain*.5,(1.-smoothstep(.25,.55,gn.y))*.85)),face);
-  // Round 5: and the steeper the face the plainer: a pattern laid from above
-  // stretches into vertical smears on a cliff (Mountain's pale streaks).
+  float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+(strataOn>.5?.07:.16),normalize(groundNormal).y):0.;
+  paintCode=vec4(ringFloor,ringFace,0.,0.);paintShare=vec4(ringFloor>.5?1.:0.,face,0.,0.);
+ }
+ if(dot(paintShare,vec4(1.))>0.){
+  vec3 gn=normalize(groundNormal);float beds=fwidth(groundPoint.y)/max(strataSpacing,.001);
+  int top=paintShare.w>0.?3:paintShare.z>0.?2:paintShare.y>0.?1:0;
+  int low=top>2&&paintShare.z>0.?2:top>1&&paintShare.y>0.?1:top>0&&paintShare.x>0.?0:-1;
+  vec3 c=turf;
+  if(low>=0&&paintShare[top]<1.)c=paintLayer(c,turf,low,paintCode[low],paintShare[low],ringGrain,beds,wp,gn);
+  turf=paintLayer(c,turf,top,paintCode[top],paintShare[top],ringGrain,beds,wp,gn);
  }
  // LOCAL RELIEF, BAKED. Crowns lift and hollows darken at a fifteen metre radius
  // -- the size of the thing a golfer is trying to read. It replaces a
@@ -1423,5 +1458,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v72';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v73';return m;
 }

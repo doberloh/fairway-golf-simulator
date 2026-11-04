@@ -13706,3 +13706,44 @@ Every number below is PLACED from the sources and the pictures; none of the sour
 **Seen**: all eight from above and low, in pictures sent to the owner. **Rounds**: one for most; the Sonoran's first knobs read as dunes (as the Mojave's had), so its rock went browner and barer, and Red Rock's first benches lay too gentle, so its risers went from .14 to .09 and the benches closer in.
 
 **Played**: fairway slope at the median 3-8%, the steepest 20 m of a median hole 6-12%; the rise beside a corridor within about 3 m on all eight; the full bench clear. **Rejected**: moving the Chihuahuan off the mesas too (Sonoran and Red Rock moving already gave it its own ground).
+
+## The performance pass at the end of the US landscapes goal (4 November 2026)
+
+Everything here is the RTX 4090 unless it says software, so it is headroom and not a weak machine.
+
+**The profile against bench/profile-baseline.json** (generator 87, 72 cases, 38 minutes; the baseline is 28 September 2026). Every shared case on the real card is faster except two, and those two only on the processor:
+
+| Case | Baseline, processor / card ms | Now | Triangles a frame |
+|---|---|---|---|
+| Low, Redwood, player's view | 4.8 / 5.6 | 1.4 / 0.8 | 79.4 M to 7.0 M |
+| Medium | 5.4 / 8.8 | 1.5 / 1.4 | 79.3 M to 7.7 M |
+| High | 12.4 / 14.1 | 2.3 / 2.3 | 158 M to 10.0 M |
+| Ultra | 14.1 / 15.4 | 2.6 / 2.6 | 158 M to 10.1 M |
+| Links overview | 2.2 / 6.8 | 3.1 / 3.2 | 8.5 M to 11.7 M |
+| Water course, all on | 4.1 / 7.2 | 5.0 / 5.2 | 11.5 M to 37.1 M |
+| Software, Low (seconds a frame) | 3.31 | 8.06 | 3.2 M to 13.2 M |
+| Software, Medium (seconds a frame) | 3.81 | 8.57 | 3.2 M to 15.5 M |
+
+**One line is worse and stays worse: a machine with no graphics card.** Its frame is 2.4 times the baseline's. That machine could not play at 3.3 s a frame and cannot at 8 s; the cost is the trees' triangles on Puget Sound, each a real model, and the owner closed drawing fewer of them (*graphics.js*, won't do, 30 September, and "every model made is used"). So the goal's "no worse than the baseline" holds for every case with a graphics card and fails for this one, reported and not fixed.
+
+**Frame tests on Low**, against the build of 3 November (generator 75), by mean frame: New England in winter +14.3% (0.85 to 0.98 ms; triangles +26%, the twigs), New England in spring +16.0% (1.00 to 1.16 ms, the bloom), Hill Country in spring +5.4%, High Plains in summer -1.9%, the Keys in summer +13.1% (one of its rounds read 1.2 ms against 0.9 on the processor), the Mojave in summer -1.0%. The largest is 0.16 ms, about a hundredth of a 60 fps frame on this card. The twigs' first figure (processor 1.6 to 4.5 ms) came from a run with agents on the processor and does not stand: at the same tees the processor reads 0.6 to 0.7 and 0.9 to 1.0 ms. **The Heartland grasses' 0.6 ms on the processor** did not come back in the High Plains, the worst clumps (0.8 ms level); not measured again on the Heartland.
+
+**The first start's wait.** Start to the main menu was 19-20 s at generator 75 and 26.7 s at generator 87, and it was not the generator (a course builds in the same time as before generator 85: 4.9 s for 18 holes on Puget Sound against 4.8) nor the 38 MB page (loaded in 0.8 s). The page sat idle for 16 of 19 s waiting for the browser to compile shaders. Pulled out and timed alone, the 142 programs of a start take under a second each, except the ground's three (daylight, the water's probes, floodlit): 7.5, 7.7 and 8.5 s, against 4.7-5.3 s at generator 75, run one after another (`ready`).
+
+The ground's cost was one function. `groundPaint` was called from seven places (four wild layers, the far ring's floor and face, a built course's ground), and the compiler a browser uses on Windows copies a function in at every call:
+
+| Ground program, as changed | Compile s |
+|---|---|
+| As it stood | 7.8 |
+| No built branch (one call fewer) | 5.7 |
+| ... and no far ring (two fewer) | 3.6 |
+| ... or no wild layers (four fewer) | 2.1 |
+| No groundPaint at all | 0.9 |
+
+**Tried and rejected, each timed:** moving the derivatives out of the branches (no gain: my first guess); writing the built course's four-texel vote without its nested loops (no gain, and the `for` it replaced went back); a loop round one call, whose count a constant (5.6 s) or a run-time value (5.5 s): the compiler unrolled or otherwise paid for it anyway. Compiling the three ground programs at once does help (14 s against 23 s when each took 7.8) but means reordering `ready`, whose order the probes depend on, and two seconds a program left too little to win.
+
+**Built:** the top two layers of a fragment are painted and no more (`paintLayer`, two calls), which also covers the ring's floor and face; a built course's branch is in a built course's program only (`BUILT_COURSE`). Three layers meeting is the edge of an edge of a patch, and there the lowest shows the rough: PLACED as invisible, and checked: twelve pictures of six landscapes before and after, under 1% of pixels moved by more than a tenth, and the links pair, the most moved, reads the same by eye (the difference is the grass in the wind). A pixel with its top layer fully on no longer paints the one under it, a small saving on the frame.
+
+**Result:** 2.0-2.3 s a ground program; start to the main menu **12.1 s, against 26.7 s before and 20.2 s at generator 75** (Mojave, A B B A, two rounds each), the frame level (-1.0%). Every first course of a session takes the same saving. A second start in the same browser is no quicker in the harness (28.2 s against 29.2 s cold, before the fix): no disk cache of shaders was seen helping there, so the first start's figure is every start's, at least in the harness. **Not measured** on a slower processor, where a compile takes longer in proportion; on Mac and Linux a different compiler does this work and the old cost was probably smaller.
+
+**The page that did not start in the capture harness** (two in 40 minutes, 4 November) is probably this: three programs at 8 s each, on a machine full of agents, against a 60 s wait. Probably, not proven; none since, and no run has had agents beside it since.

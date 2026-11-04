@@ -2563,6 +2563,8 @@ const JOURNEYS = [
    });
    await t.step('the Armed switch in the window brings back the shot controls', async () => {
     await t.page.click('#monArm');
+    // A ball in the water waits for its relief before anything else comes back.
+    await reliefFirst(t);
     await t.until(() => shown('#swingMeter'), 'the Swing Meter to come back', 5 * SLOW);
     if (!await shown('#swingMeter')) throw new Error('the Swing Meter did not come back');
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');

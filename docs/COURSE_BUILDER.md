@@ -897,7 +897,7 @@ the builder has been played by a person (TODO lists what to check).
   kept in IndexedDB by its hash, listed in the library with the hash as
   `settings.built`, played through the same path as any saved course, and
   saved back out as its own file; a built course has no code (it refuses one
-  in plain words). The game's ground shader paints it (the `builtOn` branch),
+  in plain words). The game's ground shader paints it (the `BUILT_COURSE` branch, in a built course's program only),
   the renderer draws its ponds and lakes from their outlines, the maps draw
   its outlines. A saved round on a built course carries the hash and resumes
   by loading the file first. `BUILT_STAMP + BUILT_VERSION` is its stamp.

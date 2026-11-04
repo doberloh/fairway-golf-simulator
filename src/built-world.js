@@ -23,7 +23,7 @@
 // everything that reads a hole's skeleton -- cameras, aiming, the caddie,
 // plays like, the maps' framing, scoring -- works unchanged. Their parametric
 // shapes are empty (no bunkers, no ponds in the hazard slots) and the ground
-// shader paints them from the field instead (`builtOn`).
+// shader paints them from the field instead (the BUILT_COURSE branch).
 //
 // Pure: no DOM, no three; tested in Node (tests/built-world.test.mjs).
 import {makeGroundGrid, groundHeight} from './terrain-grid.js';

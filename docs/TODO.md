@@ -322,16 +322,26 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     goal*); conifers, palms, cacti and shrubs judged and left. Seen in
     captures (the Keys, Lake Dunes, the Sonoran). A lineup of every tree as
     black outlines side by side was not made.
-- [ ] **A page that does not start in the capture harness** (4 November
-  2026, two in about 40 minutes under the goal's shared queue, on the same
-  build as dozens that started): frame-ab's High Plains B round waited 60 s
-  for `window.lab`, us-showcase's next page 120 s for the main menu. No
-  driver reset in the Windows log, no WebGL error seen, the card idle.
-  Start to main menu read 42-47 s that night against 19-22 s the day
-  before, which puts a 60 s wait close. Not found: whether it is a slow
-  start or a hang. GPU work stopped there, as a hung run asks.
+- [x] **A page that does not start in the capture harness** (4 November
+  2026, two in about 40 minutes under the goal's shared queue): frame-ab's
+  High Plains B round waited 60 s for `window.lab`, us-showcase's next page
+  120 s for the main menu. Probably the ground's three shader compiles at
+  8 s each under load (start to main menu read 42-47 s that night); not
+  proven, none since, and that wait is 12 s now (RESEARCH *The performance
+  pass at the end of the US landscapes goal*).
 - [ ] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
+  **Done 4 November 2026** but for what is listed here: RESEARCH *The
+  performance pass at the end of the US landscapes goal*. The profile against
+  bench/profile-baseline.json is better on every case with a graphics card
+  bar the processor's share on Links (2.2 to 3.1 ms) and the water course (4.1
+  to 5.0 ms), whose card share fell further. **Worse and not fixed: a machine
+  with no graphics card**, 3.3 to 8.1 s a frame, unplayable before and after.
+  Start to main menu 12.1 s against 26.7 s (the ground's shader). Low's frame
+  within 0.16 ms of generator 75 everywhere measured. **Still open:** the
+  Heartland's grasses on the processor (the 0.6 ms below, not measured again
+  there; not seen on the High Plains), and the wait on a slower processor, which
+  nothing here measured. Candidates below stand if a weak machine shows trouble.
   Measured so far, Low, by mean frame against the build before (frame-ab,
   RTX 4090, so headroom, not a weak machine). **The seasons' twigs (3
   November 2026), one round of each build only, the run failed, agents on the

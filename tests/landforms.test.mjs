@@ -125,7 +125,7 @@ test('the ground shader asks the lie\'s questions in the lie\'s order', () => {
  assert.match(block, /cv\.b\*smoothstep\(wildGateB\.x,wildGateB\.x\+wildGateB\.y,hd\)/);
  assert.match(block, /float ff=fallenOn>\.5&&wildKinds\.w>\.5\?cv\.g:0\.;/);
  // Each channel through wildEdge with its own code, in the same order.
- assert.match(block, /wildEdge\(wildKinds\.w,ff\)\);[\s\S]*wildEdge\(wildKinds\.z,fz\)\);[\s\S]*wildEdge\(wildKinds\.y,fy\)\);[\s\S]*wildEdge\(wildKinds\.x,fx\)\);/);
+ assert.match(block, /paintShare=vec4\(ff>0\.\?wildEdge\(wildKinds\.w,ff\):0\.,fz>0\.\?wildEdge\(wildKinds\.z,fz\):0\.,fy>0\.\?wildEdge\(wildKinds\.y,fy\):0\.,fx>0\.\?wildEdge\(wildKinds\.x,fx\):0\.\);/);
  // And the colour's soft edge straddles the 0.5 the lie switches at.
  assert.match(src, /float wildSoft\(float f\)\{return smoothstep\(\.34,\.66,f\);\}/);
  // Every ground type takes the soft edge (an Architect course's native grass
