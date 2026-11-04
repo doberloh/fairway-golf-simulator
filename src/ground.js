@@ -337,7 +337,7 @@ export function groundMaterial(view,palette){
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
-   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
+   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
    ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtOn:{value:built?1:0},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
@@ -370,7 +370,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
  uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
- uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
+ uniform float litterVary;uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  uniform float bloomOn;uniform vec3 bloomA,bloomB;
  uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
@@ -455,7 +455,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(code<7.5){
    // Leaves: copper, red and gold, in drifts.
    float h=hashGround(floor(q/.38));
-   vec3 c=h<.33?gt_litter:h<.66?gt_litter*vec3(1.12,.78,.62):gt_litter*vec3(1.18,1.08,.6);
+   vec3 c=gt_litter*mix(vec3(1.),h<.33?vec3(1.):h<.66?vec3(1.12,.78,.62):vec3(1.18,1.08,.6),litterVary);
    return c*(.84+.2*patchNoise(q/3.1));
   }
   if(code<8.5){

@@ -102,8 +102,12 @@ export function seasonPalette(bio, season, region) {
    // .85 and .75 its snow was cream with orange showing through (4 November
    // 2026, the picture of a New England wall; PLACED).
    const autumnal = !!bio.leafFall;
-   // No leaf litter through it either (ground.js litterAmount).
-   out.litter = null;
+   // No leaf litter through it either (ground.js litterAmount), and the
+   // fallen leaves' patches one colour under it (ground.js litterVary): their
+   // pink and yellow tiles showed on snow.
+   out.litter = null; out.litterVary = 0;
+   // New England's low orange sun is its autumn: a winter's is whiter (PLACED).
+   if (autumnal) out.sunColor = '#fff0dc';
    put('rough', SNOW, autumnal ? .96 : .85); put('semi', SNOW, autumnal ? .6 : .45); put('bank', SNOW, .6); put('fairway', FROST, .15);
    // The natural grounds under the snow too (grounds.js GROUND_TINT and the
    // record's groundTints): a winter with orange leaf litter under bare
@@ -164,7 +168,8 @@ export function farWoodsInSeason(bio, season, region) {
  // Winter at .85: New England's summer record is already its autumn, and
  // .55 of the way from orange still read orange (3 November 2026). Its spring
  // woods are green for the same reason (PLACED).
- const to = springGreen ? '#7c9c52' : season === 'autumn' ? '#b0703a' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
+ // Under snow they are paler than bare wood alone (PLACED).
+ const to = springGreen ? '#7c9c52' : season === 'autumn' ? '#b0703a' : WINTER[region] === 'snow' ? '#a9a6a0' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
  return {...f, colors: f.colors.map(c => (/^#[0-9a-f]{6}$/i.test(c) ? mix(c.toLowerCase(), to, t) : c))};
 }
 // Bare in winter: a broadleaf tree that drops its leaves -- not an evergreen,

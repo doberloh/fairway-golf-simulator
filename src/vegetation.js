@@ -1028,7 +1028,8 @@ function addNearbyGrass(view){
  // through it never looks wrong. Denser where the canopy is (the occlusion
  // bake, occlusion.js), so it gathers under the trees and thins to nothing on
  // open rough.
- const floorOn=(view.quality?.forestFloor??0)>0;
+ // Not in a snowy winter: fronds lie under it (seasons.js UNDER_SNOW).
+ const floorOn=(view.quality?.forestFloor??0)>0&&!view.snowTops;
  const canopy=(x,z)=>{const o=view.groundOcclusion;if(!o)return 0;const i=Math.floor((x/o.ex+1)*.5*o.Sx),j=Math.floor((z/o.ez+1)*.5*o.Sz);return i<0||j<0||i>=o.Sx||j>=o.Sz?0:o.occ[j*o.Sx+i];};
  let frondGeo=null,stickGeo=null,frondMat=null,stickMat=null;
  if(floorOn){
