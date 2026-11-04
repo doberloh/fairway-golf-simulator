@@ -836,7 +836,7 @@ const LAND = {
   // The field in bloom from a distance: the long grass's heads bluebonnet
   // blue, half as many tufts again (rendering only; PLACED -- the pack's
   // clumps are under half a metre and read only close to).
-  longGrass: {...TRAITS.texas.longGrass, count: 6000, accent: '#4a62c8'},
+  longGrass: {...TRAITS.texas.longGrass, count: 6000, accent: '#4a62c8', bloomHeads: true},
   scatter: {...TRAITS.texas.scatter, rocks: 60}, rockStyle: 'round',
   stands: {...TRAITS.texas.stands, under: {spacing: 9, plants: [['shrub', 1]]},
    plants: [['pecan', .3], ['cedarelm', .3], ['osageorange', .2], ['postoak', .2]]},
@@ -1000,7 +1000,12 @@ export const worldOf = key => {
 // fescue the transition zone's rough, little bluestem, Indiangrass and
 // switchgrass the tall- and mixed-grass prairie, blue grama the shortgrass
 // and the south-west's uplands. Shares and heights PLACED within the specs.
-// Drawing only (vegetation.js addLongGrass): no ground moves.
+// Drawing only (vegetation.js addLongGrass): no ground moves. A family of the
+// prairie pack wears its own colours (season-tints.js); `GRASS_TINT` is for
+// the older families beside it where the region's are New England's autumn:
+// orange long grass in a Kentucky July (seen 3 November 2026). PLACED, the
+// Old Northeast's.
+const GRASS_TINT = Object.fromEntries(['bluegrass', 'ozarks', 'blueridge'].map(k => [k, {leaf: '#7a8a46', accent: '#a07a3e'}]));
 const GRASSES = {
  heartland: [['grassbluestem', 3, 1.5], ['grassindian', 2, 1.7], ['grassswitch', 2, 1.5], ['grasslittlebluestem', 2, 1.1], ['grasstallfescue', 2, .9]],
  bluegrass: [['grasstallfescue', 3, .9], ['grassbluestem', 1, 1.2]],
@@ -1132,7 +1137,7 @@ export const BIOMES = Object.fromEntries(Object.entries(LAND).map(([key, own]) =
  const place = LANDSCAPES[key], region = place.region;
  const {ui, world, ...rest} = own;
  const merged = {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest};
- if (GRASSES[key]) rest.longGrass = {...merged.longGrass, families: GRASSES[key]};
+ if (GRASSES[key]) rest.longGrass = {...merged.longGrass, families: GRASSES[key], ...GRASS_TINT[key]};
  if (TERRAIN[key]) {
   const {groundTints, ...t} = TERRAIN[key];
   Object.assign(rest, t);

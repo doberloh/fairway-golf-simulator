@@ -1261,15 +1261,34 @@ paint it. for all landscapes." The editor's **Skin from the land** (under
 Paint; src/builder/skin.js, editing.js `skinFromLand`) reads the land as
 shaped now: ground steeper than 0.6 (31 degrees) is the landscape's face
 -- the first rock-like kind its landform names (rock for the Badlands, the
-crags, the mesas, the lava; hardpan for the Piedmont's and SoCal's clay) --
-and gentler ground (from 0.22) within 12 m below a face is its apron (the
-landform's second kind: scree, hardpan, waste). Never within 6 m of the
-holes' turf, sand, paths or water. Added to the layers beside what was
-painted, one undo step; painting by hand needs nothing new -- the Paint
-brushes and Outline were always there. All four thresholds PLACED. A file
-only changes when the button is pressed, so no BUILT_VERSION step. Tested
-in Node (tests/builder-skin.test.mjs, tests/builder-editing.test.mjs); not
-seen in the builder by a person.
+crags, the mesas, the lava; hardpan for the Piedmont's and SoCal's clay),
+or where it names none its own first kind (native grass on a dune or a
+prairie, waste on a sand ridge) -- and gentler ground (from 0.22) within
+12 m below a face is its apron (the landform's next kind: scree, hardpan,
+waste, heather). Never within 6 m of the holes' turf, sand, paths or water.
+Added to the layers beside what was painted, one undo step; painting by
+hand needs nothing new -- the Paint brushes and Outline were always there.
+All four thresholds PLACED. A file only changes when the button is
+pressed, so the button owes no BUILT_VERSION step.
+
+**Seen in the real builder (3 November 2026, tools/capture/builder-skin.mjs,
+no person yet).** The button, Undo and Redo pressed on two real surveys;
+each undo put every layer back cell for cell, the Layers list showed the
+new layers, Erase took a dragged stroke off one, and the saved course held
+them. Bully Pulpit, its painted ground taken off first: 31 ha of rock on
+the survey's steep breaks and 56 ha of bare clay below, the buttes east of
+the holes reading as buttes and the flats left grass, in 9.7 seconds at
+0.55 m. Chambers Bay: 6.3 ha of face and 19.6 ha of apron along the bluff
+and the dunes' sides, in 5-7 seconds at 0.5 m; opened in the game too.
+Three things it found: the fallback was rock, so Chambers Bay's dunes went
+grey stone in a landscape whose Paint list has no rock (now only the
+landscape's own kinds, native grass there; the test holds every landscape
+to `layersFor`); the page froze with no word for those seconds (it now says
+"Reading the land..." first); and where two ground types met the game's
+edge was a staircase a metre wide, because a point took the texel it fell
+in, which the skin makes common: a point now takes the type with the most
+weight among the four texels round it, in ground.js and `builtGroundAt`
+alike (BUILT_VERSION 3).
 
 ## PLACED, and rules the build decided
 
@@ -1280,8 +1299,8 @@ owner can overrule them:
 - Land 1 m, greens and tees 0.25 m; the 3 x 3 km cap.
 - A fixed ZIP entry date (1 January 2026), so a file's hash is its identity.
 - The built field: half a metre (coarser past 2048 texels), 6 m either side of
-  an edge; a patch fades into the land over 1.5 m; a ground type's texel step
-  where two types meet.
+  an edge; a patch fades into the land over 1.5 m; where two ground types
+  meet, the type with the most weight among the four texels round a point.
 - Freezing: the ground types from a 1 m raster, simplified to 0.35 m.
 - A built course's file is kept by a 96-bit prefix of its SHA-256.
 - The editor: the land drawn at every stored sample to about 1 km a side,

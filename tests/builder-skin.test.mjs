@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {skinFromHeights, skinKinds, applySkin} from '../src/builder/skin.js';
+import {layersFor} from '../src/builder/layers.js';
 import {BIOMES} from '../src/biomes.js';
 
 // A flat plain with one butte: a 40 m flat top 25 m high, steep sides, on a
@@ -28,9 +29,13 @@ const inside = (rings, x, z) => rings.filter(r => {
 
 test('every landscape names what its faces and aprons are', () => {
  for (const [k, b] of Object.entries(BIOMES)) {
-  const {face} = skinKinds(b);
-  assert.ok(['rock', 'hardpan', 'scree', 'coral'].includes(face), `${k}: ${face}`);
+  const {face, apron} = skinKinds(b), own = layersFor(b);
+  assert.ok(own.includes(face), `${k}: ${face} is not the landscape's own`);
+  assert.ok(!apron || own.includes(apron), `${k}: ${apron} is not the landscape's own`);
  }
+ // Chambers Bay's dunes, seen in the builder: no grey rock on a dune.
+ assert.deepEqual(skinKinds(BIOMES.oregondunes), {face: 'native', apron: 'heather'});
+ assert.equal(skinKinds(BIOMES.heartland).face, 'native');
  assert.deepEqual(skinKinds(BIOMES.badlands), {face: 'rock', apron: 'hardpan'});
  assert.equal(skinKinds(BIOMES.rockies).apron, 'scree');
 });

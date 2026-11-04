@@ -125,12 +125,17 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // from the land as shaped now; painting by hand still works over it, and
  // Undo takes it back in one step.
  function skinLand() {
-  const got = editor.skinFromLand({bio: BIOMES[s.landscape]});
-  view.refreshAll(); refreshLayers(); refreshSave();
-  const name = k => GROUNDS[k]?.label?.toLowerCase?.() || k;
-  status.textContent = got.cells.face || got.cells.apron
-   ? `Skinned from the land: ${name(got.kinds.face)} on the steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} below it` : ''}. Paint over it or Undo.`
-   : 'Nothing here is steep enough to skin; paint the ground by hand instead.';
+  // A real survey takes 5 to 10 seconds here (seen on Chambers Bay and Bully
+  // Pulpit): say so first, or the page just stops.
+  status.textContent = 'Reading the land…';
+  setTimeout(() => {
+   const got = editor.skinFromLand({bio: BIOMES[s.landscape]});
+   view.refreshAll(); refreshLayers(); refreshSave();
+   const name = k => GROUNDS[k]?.label?.toLowerCase?.() || k;
+   status.textContent = got.cells.face || got.cells.apron
+    ? `Skinned from the land: ${name(got.kinds.face)} on the steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} below it` : ''}. Paint over it or Undo.`
+    : 'Nothing here is steep enough to skin; paint the ground by hand instead.';
+  }, 40);
  }
  function clearTurfTrees() {
   unpick(); showPicked();

@@ -2,7 +2,7 @@
 // section 6: "tools/capture makes several generated pictures of every
 // landscape (seasons included) into a showcase document under docs/reports/").
 //
-//   node tools/capture/us-showcase.mjs take [key ...]   pictures (the graphics card)
+//   node tools/capture/us-showcase.mjs take [--again] [key ...]   pictures (the graphics card)
 //   node tools/capture/us-showcase.mjs doc              the document
 //
 // `take` builds each landscape's generated nine-hole course (seed SHOW-<key>)
@@ -12,7 +12,8 @@
 // green (a tropical landscape has summer only: seasons.js). JPEGs at
 // 1600 by 900 under bench/shots/showcase-us/<key>/ (git-ignored). A
 // landscape whose pictures are all there is skipped, so a batch can be
-// stopped and taken up again. Run it through tools/gpu-run.mjs, a few
+// stopped and taken up again; --again takes the named landscapes afresh, for
+// when their ground has moved. Run it through tools/gpu-run.mjs, a few
 // landscapes a batch (AGENTS.md: minutes, not hours).
 //
 // `doc` writes docs/reports/us-landscapes-showcase.html (local, never
@@ -41,7 +42,7 @@ async function take(keys) {
  const b = await launch();
  try {
   for (const key of keys) {
-   const want = shotsFor(key).filter(s => !fs.existsSync(s.file));
+   const want = shotsFor(key).filter(s => again || !fs.existsSync(s.file));
    if (!want.length) { console.log(`${key}: done already`); continue; }
    fs.mkdirSync(path.join(OUT, key), {recursive: true});
    // A fresh page a season: a second round in the same page waits on the
@@ -102,7 +103,7 @@ addEventListener('keydown',e=>{if(at<0)return;if(e.key==='Escape')shut();else if
  console.log(`${DOC}: ${BIOME_KEYS.length} landscapes${missing ? `, ${missing} pictures not taken yet` : ''}`);
 }
 
-const [cmd, ...rest] = process.argv.slice(2);
+const [cmd, ...others] = process.argv.slice(2), again = others.includes('--again'), rest = others.filter(a => a !== '--again');
 if (cmd === 'take') await take(rest.length ? rest : BIOME_KEYS);
 else if (cmd === 'doc') doc();
 else { console.log('usage: us-showcase.mjs take [key ...] | doc'); process.exitCode = 1; }

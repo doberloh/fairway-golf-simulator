@@ -100,9 +100,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   GRASSES says who grows what -- seventeen landscapes). **Built**: fifteen
   rounds each (tools/blender/logs; rounds 13-15 were checks with no
   change), the four seasons, in the game's model data, seen in the
-  Heartland's rough (a capture sent to the owner). Still to do: a
-  frame-rate A/B on Low (long grass is drawn in colonies, so a cost is
-  possible), and the other sixteen landscapes seen in captures.
+  Heartland's rough (a capture sent to the owner). **All seventeen seen in
+  captures** (3 November 2026, biome-shots `rough-low`): wrong colours in
+  every one, the pack's own never having reached the game -- orange tall
+  fescue in a Kentucky summer, no autumn -- and one tall fescue six metres
+  wide; fixed (RESEARCH, *Tall fescue and the prairie grasses*; no ground
+  moved, the fingerprints silent). The Heartland, Sand Hills and Cross
+  Timbers seen again after; autumn's copper not yet seen in a picture.
+  Still to do: a frame-rate A/B on Low.
 - [ ] **Every landscape's terrain true to its place** (the owner, 3 November
   2026: "Do all of these new landscapes have different terrain generation
   based on their location and research? Similar to the badlands? If not.
@@ -144,7 +149,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Llano is, brush and yucca round the holes, the shelterbelts kept. Still
   to do: an A/B on Low for the rest of the new recipes (the performance
   pass).
-- [ ] **The builder skins the land from its heights** (the owner, 3 November
+- [x] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example
   if the LIDAR shows something that looks like a mountain or a butte. We
@@ -159,9 +164,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   src/builder/skin.js and the editor's Skin from the land button (under
   Paint), tested in Node; painting by hand was already there (Paint,
   Outline). No BUILT_VERSION step: a file changes only when the button is
-  pressed. Still to do: see it in the builder (the builder's smoke
-  journey and a capture), and try it on a real survey (Chambers Bay's
-  dunes, Bully Pulpit's buttes).
+  pressed. **Seen in the real builder** (tools/capture/builder-skin.mjs,
+  3 November 2026, a script's clicks; no person yet): the button under
+  Paint, Undo and Redo back cell for cell, the Layers list, Erase by the
+  mouse, the saved file, on Bully Pulpit's buttes (31 ha of rock, 56 of
+  bare clay, reading as buttes) and Chambers Bay's dunes, Chambers Bay in
+  the game too. It found three bugs, fixed: rock on dunes in a landscape
+  with no rock (now only the landscape's own ground, native grass there),
+  the page frozen 5-10 s with no word, and a metre-wide staircase in the
+  game where two ground types met (BUILT_VERSION 3). Not done: a builder
+  smoke journey for it (the capture does its work); a person pressing it.
 - [ ] **A skill that matches a real course to a landscape, the last step**
   (the owner, 3 November 2026: "turn the US landscapes docs into a skill
   that I can send in a course, you would evaluate the course. Do research,

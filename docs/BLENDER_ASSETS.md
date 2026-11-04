@@ -743,4 +743,10 @@ western wheatgrass as long-grass families (`grasstallfescue`,
 seasons. Lessons: a clump reads only when dense (twice the blades of the
 old families) and wide at the root -- every reference is a fountain; a
 panicle is a cloud of short branches along the stem's top third, not a
-star at its tip.
+star at its tip. Two things only the game showed (3 November 2026): a pack's
+LOOK table reaches the game through src/season-tints.js alone, so run
+tools/blender/dump-tints.mjs when a pack lands, or its colours live only in
+the contact sheets (every long grass was the landscape's one colour until
+then); and a model is scaled by its height, so a tuft of arching blades that
+barely rises (`Blender_TallFescue_2`, radius 3.3 heights) lies six metres
+across at 0.9 m tall -- vegetation.js `GRASS_WIDEST` squeezes it in.
