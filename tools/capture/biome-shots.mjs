@@ -71,6 +71,9 @@ const VIEWS = [
  {name: 'h2-low', hole: 1, when: 'afternoon', cam: {hole: 1, fromPin: 90, around: 150, height: 3, pitch: -1}},
  {name: 'h3-low', hole: 2, when: 'morning', cam: {hole: 2, fromPin: 110, around: 10, height: 2.5, pitch: -1}},
  {name: 'far-high', hole: 0, when: 'afternoon', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
+ // The streets kit (3 November 2026): above the parking lot, looking along
+ // the drive to the clubhouse -- the road surfaces, the lot and the barn.
+ {name: 'lot', hole: 0, when: 'afternoon', cam: `w => { const L = w.lot || {x: 0, z: 0}; return {x: L.x - 55, z: L.z - 55, yaw: 45, height: 40, pitch: -30}; }`},
 ];
 
 // THE PICKS: the views each landscape's cards show, in order (at least four).

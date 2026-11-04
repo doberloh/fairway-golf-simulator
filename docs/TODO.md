@@ -362,8 +362,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   (gravel, dirt, Longleaf's red clay, the Lowcountry's and Pine Barrens'
   shell, the Old Northeast's brick, Desert Palms' cobble, concrete;
   renderer.js addPaths), and a mailbox at the street end of every
-  garaged house's drive. Smoke every-landscape passes; **not seen in a
-  picture yet** (the captured views missed the drive and the houses).
+  garaged house's drive. Smoke every-landscape passes; the drives seen in
+  captures (biome-shots view : Longleaf's red clay, the Lowcountry's
+  shell); the mailboxes not yet seen in a picture.
   Still open: streets joining the fairway homes to the road (a
   generation change).
 - [x] **Roads in the builder** (3 November 2026): Road is in every
