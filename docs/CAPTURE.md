@@ -46,6 +46,8 @@ drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
 | `frame-grab.mjs <video> <seconds>` | One frame of a recording as a JPEG, to check a clip without a player | the video's own size |
 | `motion.mjs <video.webm> [band] [--frames]` | **How smoothly the camera moves**, from the frames themselves: the jitter in each frame's shift against its neighbours, in pixels at 480 wide. CPU only. A band on the distant horizon (`74-130` on most clips) sees only the camera turning | a number per direction; a smooth flyover measures under about 0.012 |
 
+**Through the gate, frame-ab needs the limits too.** `tools/frame-ab.mjs` runs its own gate inside `gpu-run.mjs`, with its own defaults (under 10% busy, under 60 °C, 5 minutes' rest): pass it `--util 45 --temp 75 --rest 3 --cap 1000` as well, or it can sit holding the shared lock for half an hour (seen 3 November 2026). Each is also a run in the worktree's own log, not the main checkout's.
+
 `capture.mjs` is what they share (the browser, the game on Ultra with automatic
 resolution off, the capture golfers, `saveStill`, `hourFor`, `gpuGate`);
 `record.mjs` is the frame-by-frame recorder; `mux.mjs` writes the MP4 and WebM

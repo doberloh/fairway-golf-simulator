@@ -13045,6 +13045,18 @@ the widest clump that read right). Triangles a clump, averaged over a
 landscape's families: about 200 for the old ones, 600-840 for the prairie
 landscapes (High Plains 837, Crosstimbers 691, Heartland 603).
 
+**The A/B on Low (tools/frame-ab.mjs, two rounds, RTX 4090, the Heartland,
+seed PROFILE; 3 November 2026).** Both builds from the same source, A with
+`GRASSES` empty (bench/ab/base.html has no grasses either, but it is
+generator 75, so it would have measured the whole day's work). Graphics
+card, A to B, tees 1, 5 and 9: 0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms,
+no cost. Processor: 1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00 ms, 0.6-0.7 ms
+more, steady in both rounds. Triangles 9.7 to 9.8 M, 7.0 to 7.1 M, 9.3 to
+9.5 M; draws +9. By mean frame +40.9%, by p95 +4.4%. Start to main menu 41.8
+to 47.0 s. The earlier -5.3% against 4784efd was noise. The processor's
+figure is not explained: nine more draws should not cost it. The High Plains
+was not measured (TODO).
+
 ## Terrain true to place (the owner's amendment, 3 November 2026; generator 76)
 
 "Do all of these new landscapes have different terrain generation based on
