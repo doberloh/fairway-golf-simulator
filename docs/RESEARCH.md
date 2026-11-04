@@ -13196,7 +13196,10 @@ four were judged to fit.
   mostly 3.2-28.3 ha in a Castro County, Texas study (search summary only);
   depth: a Texas water study assumed 3 ft for storage
   ([TWDB LP-114](https://www.twdb.texas.gov/publications/reports/limited_printing/doc/LP114.pdf),
-  an assumption, not a measurement). The game's pans are scaled down to
+  an assumption, not a measurement). Its first pictures stood the table
+  in the plains' woods; the Llano has almost no trees but shelterbelts, so
+  trees are .15 of the plains' density and brush takes the stands (generator
+  82, PLACED). The game's pans are scaled down to
   fit a course (PLACED); measured on two eighteens: 6.5 m between the low
   and high ground (5th to 95th percentile), bare playa floor 4-8% of it.
 - **Sand Hills -- taller dunes** (`dunes` at 14 m, scale 230, the corridors'

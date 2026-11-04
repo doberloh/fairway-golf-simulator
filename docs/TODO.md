@@ -139,11 +139,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   about twice as tall, Wine Country a valley floor under higher ranges;
   Bluebonnet, Cross Timbers, Pine Barrens and the Chihuahuan judged to fit,
   each with its source (RESEARCH *The second look*). The Lowcountry's A/B
-  on Low: no cost (-0.6%). Captures of the three sent to the owner. Still
-  to do: the High Plains' planting -- its pictures stand the table in thick
-  woods where the Llano is nearly treeless but for shelterbelts (biomes.js
-  highplains stands and treeDensity, not its terrain); an A/B on Low for
-  the rest of the new recipes (the performance pass).
+  on Low: no cost (-0.6%). Captures of the three sent to the owner. The
+  High Plains' planting followed (generator 82): nearly treeless, as the
+  Llano is, brush and yucca round the holes, the shelterbelts kept. Still
+  to do: an A/B on Low for the rest of the new recipes (the performance
+  pass).
 - [ ] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example

@@ -702,7 +702,13 @@ const LAND = {
  newengland: {}, lakedunes: {},
  // Phase 3, on existing models (see above).
  // High Plains: wheat country -- a grain elevator for the landmark (phase 8).
- highplains: {world: {story: {walls: 'wire', farm: true, shelterbelt: true, landmark: 'grainelevator'}}},
+ // The High Plains: the Llano Estacado is nearly treeless -- shortgrass to
+ // the horizon, trees only in the farms' shelterbelts and along the draws
+ // (generator 82: its first pictures stood the table in the plains' woods).
+ // Brush, not trees, round the holes, as the Sand Hills. PLACED.
+ highplains: {treeDensity: .15, farForest: {cover: .03, size: 8, scrub: true, paint: .3, colors: ['#6a7040', '#7a7e46', '#8a8a4c']},
+  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .5], ['soapweedyucca', .3], ['easternredcedar', .2]]},
+  world: {story: {walls: 'wire', farm: true, shelterbelt: true, landmark: 'grainelevator'}}},
  // The Sand Hills: the plains grassed over dunes, sand blowing out of them,
  // almost no trees.
  // (Round 2 of its pictures: at half density with the plains' stands it

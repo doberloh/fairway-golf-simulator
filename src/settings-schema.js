@@ -434,7 +434,10 @@ export const SCHEMA_VERSION=26;
 //     Country. And a ground cover on a creek's cut bank that would float
 //     is refused (course.js `floatsOnCut`, tree-seat.js `seatGap`): one
 //     bench course, no fingerprint.
-export const GENERATOR_VERSION=81;
+// 82: the High Plains nearly treeless, as the Llano is: trees a fraction
+//     of the plains' (.15), brush and yucca round the holes, the far woods
+//     a thin scrub; the shelterbelts stay. Moved the High Plains.
+export const GENERATOR_VERSION=82;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
