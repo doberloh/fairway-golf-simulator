@@ -465,7 +465,14 @@ export const SCHEMA_VERSION=26;
 //     most with a gap of 3-15 m where a short piece had been taken out as a
 //     jog. A piece that is the only link stays, and a part left over is joined
 //     straight or by the router. Moved the courses that were in parts.
-export const GENERATOR_VERSION=86;
+// 87: the last landscapes on another's ground, each researched: the Sonoran
+//     on the Basin and Range's granite ranges and bajadas, Red Rock on three
+//     great sandstone benches, Alaska a glaciated valley floor, the Oregon
+//     Dunes twice a links' sand, Puget Sound's drumlins and kettles, the
+//     Redwood Coast's steep gorges, the Cross Timbers' low cuestas, the
+//     Cascades sharper than the Rockies. The Chihuahuan keeps the mesas.
+//     Moved those eight.
+export const GENERATOR_VERSION=87;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

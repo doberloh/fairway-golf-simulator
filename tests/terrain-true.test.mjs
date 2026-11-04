@@ -27,6 +27,12 @@ test('each landscape named for its own terrain gets the recipe its research says
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
 
+test('no two landscapes have the same ground', () => {
+ const land = b => JSON.stringify([{...b.landform, kinds: 0, gates: 0}, b.hills, b.baseRoll, b.baseHeight]);
+ const seen = new Map();
+ for (const [k, b] of Object.entries(BIOMES)) { assert.ok(!seen.has(land(b)), `${k} has ${seen.get(land(b))}'s ground`); seen.set(land(b), k); }
+});
+
 test('every recipe is finite, seeded and repeatable', () => {
  for (const k of ['hillcountry', 'bluegrass', 'ozarks', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'longleaf', 'bayou', 'badlands']) {
   const a = landformOf(BIOMES[k], 'T1'), b = landformOf(BIOMES[k], 'T1');

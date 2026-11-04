@@ -1041,6 +1041,35 @@ const GRASSES = {
 // study's pictures. A change here moves generated ground: GENERATOR_VERSION.
 const gate = (near, ramp) => ({near, ramp});
 const TERRAIN = {
+ // THE LAST ON ANOTHER'S GROUND (generator 87, 4 November 2026; RESEARCH
+ // *The last landscapes on another's ground*). The Sonoran: Basin and Range,
+ // broad basins and bajadas round granite ranges, not the mesas it shared
+ // with Red Rock.
+ sonoran: {landform: {type: 'knobs', cell: 280, chance: .36, radius: [40, 95], size: [16, 44], profile: 1.1, round: .45, floor: 4,
+  wash: 260, washWidth: .022, washDepth: 1.4, bare: .1, reach: 90,
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#8e7d6a'}},
+ // Red Rock: benches and tall Navajo sandstone cliffs, three great steps.
+ redrock: {landform: {type: 'steps', scale: 380, height: 50, steps: 3, riser: .09, from: .3, to: .74, ledge: .22, reach: 70,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, hills: {base: 14, severity: 40, reach: 90}},
+ // Alaska: a glaciated valley floor under the ranges, moraines, kettles and
+ // the odd esker, where the Rockies have crags.
+ alaska: {landform: {type: 'glacial', hummock: 9, cell: 170, chance: .45, radius: [30, 70], size: [4, 10], esker: 240, eskerHeight: 5, reach: 80,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 12), b: gate(8, 10)}}, hills: {base: 30, severity: 60, reach: 80}},
+ // The Cascades: sharper and closer-set than the Rockies, deep valleys under
+ // jagged volcanic ridges (PLACED; the volcanoes themselves stand far behind).
+ cascades: {landform: {...TRAITS.mountain.landform, scale: 230, height: 62, steps: 3, jag: .7}},
+ // The Oregon coast: sand standing well above a links', on a higher shore.
+ oregondunes: {landform: {...TRAITS.links.landform, scale: 250, hummock: 48, height: 12}, hills: {base: 20, severity: 40, reach: 50}},
+ // Puget Sound: drumlins, the ice's long north-south hills, and kettles.
+ puget: {landform: {type: 'glacial', hummock: 13, hummockX: 170, hummockZ: 800, cell: 260, chance: .3, radius: [30, 70], size: [4, 9], esker: 300, eskerHeight: 0, reach: 70,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(8, 10)}}, hills: {base: 26, severity: 40, reach: 70}},
+ // The Redwood Coast: young, steep, sliding ridges cut by narrow gorges.
+ redwood: {landform: {type: 'channels', scale: 280, width: .05, wall: .85, depth: 30, table: 10, branches: .85, rim: .6, bare: .07, reach: 85,
+  kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}, hills: {base: 50, severity: 110, reach: 80}},
+ // The Cross Timbers: low sandstone cuestas, one side steep, on rolling
+ // ground, the prairie's grass between them.
+ crosstimbers: {landform: {type: 'steps', scale: 460, height: 8, steps: 2, riser: .16, from: .34, to: .8, ledge: .24, drift: .56, reach: 70,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(24, 22)}}, hills: {base: 14, severity: 20, reach: 70}},
  // Stair-stepped limestone hills, pale ledges on the risers (Glen Rose).
  hillcountry: {landform: {type: 'steps', scale: 260, height: 26, steps: 6, riser: .35, from: .3, to: .78, ledge: .25, reach: 80,
   kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, groundTints: {rock: '#d8d0b8'}},

@@ -84,6 +84,17 @@ docs/studies/us-landscapes/trials/, local) showed:
 - Famous courses carry repeated numbers nobody sourced (bunker counts,
   animals on the course): mark them unconfirmed rather than repeat them.
 
+What the second trial (Cape Kidnappers, 4 November 2026, nothing matching)
+showed:
+
+- **Name the course's defining feature first** and ask whether any landscape
+  has it. A total can look near while the thing that makes the course is
+  missing (finger ridges ending in a 150 m cliff: 49% at best).
+- **The generator cannot route by the land**: holes are laid first and the land
+  follows, so a course whose holes were chosen by its ridges has no generated
+  version. Say so and offer the builder, on its survey, on the nearest
+  landscape.
+
 ## 5. Recommend
 
 - **A good match** (the best scores at least 70% of the maximum and nothing
@@ -136,6 +147,10 @@ docs/studies/us-landscapes/tools/add-badlands.mjs is the model script):
    owes (SCHEMA for the new key, GENERATOR if shared code moves), its tests
    (tests/landscapes-complete.test.mjs and the rest), the frame-rate A/B on
    Low, and an estimate of the work.
+   **Outside the USA the study's tools stop**: the partition, the EPA
+   ecoregions and locate-courses.mjs know no other country, so step 2 needs an
+   `overlays` polygon or a world region as Scottish Links has, and steps 3-4
+   run by hand. Say so before promising a map.
 6. **Stop and show the owner** the plan and the pictures. Building it is
    the owner's call (an idea is not permission: AGENTS.md *Ideas live in
    IDEAS.md* -- add it there if the owner does not pick it now).

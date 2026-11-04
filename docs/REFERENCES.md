@@ -841,3 +841,5 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - National Park Service, Great Smoky Mountains, *Wildflowers*: https://www.nps.gov/grsm/learn/nature/wildflowers.htm -- peak mid to late April at low elevation, later on the peaks; rhododendrons June and July.
 - Lonely Planet, *Best national parks for wildflowers*: https://www.lonelyplanet.com/articles/best-national-parks-for-wildflowers-usa -- Rocky Mountain National Park, June at 8,000-9,000 ft, July-August above. A travel source, taken for lack of a better one.
 - Peninsula Clarion (Kenai, Alaska): https://www.peninsulaclarion.com/?p=31979 -- peak wildflowers near the summer solstice. A local report.
+
+- **The last landscapes on another's ground** (RESEARCH, 4 November 2026): the geology sources for the Sonoran, Red Rock, the Chihuahuan, Alaska, the Oregon Dunes, Puget Sound, the Redwood Coast and the Cross Timbers are linked in that section's table, each with what was taken from it.

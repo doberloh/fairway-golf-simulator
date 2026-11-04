@@ -41,8 +41,10 @@ truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
 landscapes are off, performance and testing are not. In order (PLAN.md
 section 6); nothing ships early -- the branch merges when all of it is done.
 
-- [ ] **The machine went down at 12:14 on 3 November 2026, during Blender
-  work** -- graphics-card work stopped until the owner says otherwise.
+- [x] **The machine went down at 12:14 on 3 November 2026, during Blender
+  work** -- graphics-card work stopped until the owner said otherwise, which
+  the owner did the same day ("you can use the computer fully as im not on it.
+  but make sure not to over load the desktop"), and the throttled gate came of it.
   Windows logged an unclean shutdown (Kernel-Power 41, event 6008 at
   12:14:12) and no blue screen or display-driver error, so the cause is not
   proven. It came as the prairie grass pack's round 2 started rendering --
@@ -177,9 +179,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   each with its source (RESEARCH *The second look*). The Lowcountry's A/B
   on Low: no cost (-0.6%). Captures of the three sent to the owner. The
   High Plains' planting followed (generator 82): nearly treeless, as the
-  Llano is, brush and yucca round the holes, the shelterbelts kept. Still
-  to do: an A/B on Low for the rest of the new recipes (the performance
-  pass).
+  Llano is, brush and yucca round the holes, the shelterbelts kept. Generator
+  87: the last eight on another's ground each on their own (Sonoran, Red Rock,
+  Alaska, Cascades, Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers;
+  RESEARCH *The last landscapes on another's ground*), and a test that no two
+  share theirs. Still to do: an A/B on Low for the rest of the new recipes
+  (the performance pass). Weakest still: the Cascades, and no deflation plains
+  or headlands on the Oregon Dunes.
 - [x] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example
@@ -205,7 +211,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   the page frozen 5-10 s with no word, and a metre-wide staircase in the
   game where two ground types met (BUILT_VERSION 3). Not done: a builder
   smoke journey for it (the capture does its work); a person pressing it.
-- [ ] **A skill that matches a real course to a landscape, the last step**
+- [x] **A skill that matches a real course to a landscape, the last step**
   (the owner, 3 November 2026: "turn the US landscapes docs into a skill
   that I can send in a course, you would evaluate the course. Do research,
   and recommend the best biome to match. If there is no matches, and we
@@ -231,8 +237,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   course (the survey's own trees) Lake Dunes. The skill gained what the
   trial taught (place and look can split; a builder course brings its own
   trees; unsourced famous numbers stay unconfirmed); the record is local
-  (docs/studies/us-landscapes/trials/). Still to do: a trial where nothing
-  matches, so the new-landscape path runs end to end on paper.
+  (docs/studies/us-landscapes/trials/). **Second trial** (4 November 2026)
+  on Cape Kidnappers, where nothing matches: 49% at best, the new-landscape
+  path run to a plan on paper; the skill gained the course's defining feature
+  first, that the generator cannot route by the land, and that the study's
+  tools stop at the US border. Not used by the owner yet.
 
 - [ ] **Not yet played by a person: the world round the holes on every
   generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
@@ -400,7 +409,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   (SCHEMA 18), with names, crests and pictures; no generator step (every
   existing landscape unchanged). Each gets its own models in its region's
   phase. Seen in captures; not seen by a person in play.
-- [ ] **The new landscapes' debut weeks** in the course of the week: phase
+- [x] **The new landscapes' debut weeks** in the course of the week: phase
   3's five are placed at weeks 160-164 (25 January to 22 February 2027),
   the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
   170-175 (5 April to 10 May 2027), California and the mountains' at
@@ -408,8 +417,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   12 July 2027), phase 8b's at 185-187 (19 July to 2 August 2027), phase
   8c's at 188-190 (9 to 23 August 2027), the Badlands at 191 (30 August
   2027;
-  weekly.js `eras`); move them on if the goal's release lands later, and
-  give every later landscape its own week the same way.
+  weekly.js `eras`). All are still ahead (checked 4 November 2026); if a
+  release lands past 25 January 2027 they move on, which is a job for that
+  release, and a later landscape takes its own week the same way.
 - [x] **Every landscape's card pictures retaken** once its models are in:
   the nine originals retaken on 3 November 2026 (biome-shots, label rt9),
   every other landscape when its phase went in.

@@ -464,7 +464,7 @@ const RECIPES = {
    // A ledge of bare limestone along each riser where it stands steep.
    raw: (x, z, y, slope = 0) => {
     const {f} = at(x, z);
-    return [smooth(.6, .85, f) * smooth(o.ledge ?? .3, (o.ledge ?? .3) + .2, slope) * smooth(.02, .1, hill(x, z)), 0];
+    return [smooth(.6, .85, f) * smooth(o.ledge ?? .3, (o.ledge ?? .3) + .2, slope) * smooth(.02, .1, hill(x, z)), o.drift ? smooth(o.drift, o.drift + .2, fbm(x / 110, z / 110, s2 + 3, 2)) : 0];
    },
    treeKeep: () => 1,
   };
@@ -501,7 +501,7 @@ const RECIPES = {
   return {
    needsSlope: true,
    lift: (x, z) => {
-    const hum = o.hummock * (fbm(x / 70, z / 70, s1, 3) - .5) * 2;
+    const hum = o.hummock * (fbm(x / (o.hummockX ?? 70), z / (o.hummockZ ?? 70), s1, 3) - .5) * 2;
     const {d, m} = near(x, z);
     const kettle = m ? -m.size * Math.pow(Math.max(0, 1 - d * d), 1.5) : 0;
     return hum + kettle + o.eskerHeight * esker(x, z);

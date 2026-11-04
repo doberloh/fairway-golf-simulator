@@ -157,6 +157,10 @@ than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
 
+## No two landscapes share their ground (generator 87)
+
+Every landscape's land is its own: the last eight on another's took recipes of their own, researched from the place (RESEARCH *The last landscapes on another's ground*), and tests/terrain-true.test.mjs holds it.
+
 ## One cart path network (generator 86)
 
 Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
