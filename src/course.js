@@ -2501,6 +2501,8 @@ export function* generateWorldSteps(settings={},options={}){
  // `clump`): the stems a redwood sprouts from its roots, a few metres out and a
  // little shorter, their crowns sharing the air but never their trunks. Hashed
  // from where the tree stands, so no stream moves and no other landscape does.
+ // A ring's stems are not the open scatter's, which counts to its own target.
+ let ringStems=0;
  const clumpRound=(t,n)=>{
   const c=bio.clump;if(!c||!c.kinds.includes(t.kind))return;
   const u=k=>{const v=Math.sin(t.x*12.9898+t.z*78.233+k*37.719)*43758.5453;return v-Math.floor(v);};
@@ -2509,12 +2511,15 @@ export function* generateWorldSteps(settings={},options={}){
   for(let k=0;k<stems;k++){
    const a=a0+k/stems*Math.PI*2+(u(3+k)-.5)*.7,d=c.ring[0]+u(10+k)*(c.ring[1]-c.ring[0]),x=t.x+Math.cos(a)*d,z=t.z+Math.sin(a)*d;
    if(Math.abs(x)>halfX||Math.abs(z)>halfZ||height(x,z)<.8||!allows(surface(x,z),'trees')||builtOn(x,z))continue;
+   // A green's approach stays open, whatever stands beside it.
+   const keep=greenKeepOut(guards,x,z,closeness);
+   if(keep>0&&Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)))<keep+GREEN.ramp)continue;
    const h=t.h*(.72+.26*u(17+k)),stem={x,z,y:height(x,z),h,r:t.r*.8,shade:u(24+k),kind:t.kind,hole:t.hole??n?.h?.hole,stand:true};
    if(blocksLaunch(launch,x,z,stem.y,stem.y+h,trunkGirth(stem)+1.2)||inTeeFan(fans,x,z,trunkGirth(stem))||onLip(stem))continue;
    // The crowns close over a ring; only the trunks keep apart.
    if(!roomFor(stem,0))continue;
    const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(stem);
-   trees.push(stem);
+   trees.push(stem);ringStems++;
   }
  };
  // The drawn trunk radius, which physics also uses. Kept local rather than
@@ -2588,7 +2593,7 @@ export function* generateWorldSteps(settings={},options={}){
  // a pond's or lake's water -- never the sea -- within 8 m of its shore
  // (PLACED). Only a landscape that names one tests it, so no other moves.
  const inShallows=(kind,x,z)=>!!bio.inWater?.includes(kind)&&surface(x,z)==='water'&&!isSea(x,z)&&[[8,0],[-8,0],[0,8],[0,-8]].some(([dx,dz])=>surface(x+dx,z+dz)!=='water');
- for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!(allows(surface(x,z),'trees')||inShallows(kind,x,z))||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
+ for(let i=0;i<count*6&&trees.length-ringStems<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(builtOn(x,z)||!(allows(surface(x,z),'trees')||inShallows(kind,x,z))||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;if(bio.landform&&rng()>landform.treeKeep(x,z))continue;
   // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
   // mostly turned away, so the ground beside play stays open dune and the
   // trees mass up farther back. Ground plants are exempt. The draw is taken

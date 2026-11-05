@@ -800,7 +800,12 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   back on Back to 2D in the wrong place: its unit was not stored and it is read
   as metres (draft-from-doc.js). None of the test courses is one; settle it by
   telling feet from the EPSG code if a player's file turns up.
-- [ ] **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; tests/tee-corridor.test.mjs *the corridor rejects candidates without thinning the forest* fails (redwood placed 1158 of 2223), and the full suite was last run before the last changes; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
+- [ ] **Trees placed for you: play it by hand.** The LIDAR sizes toggle and the species
+  ticks driven in the built builder on Northwood's file: live in the 3D view, in Game
+  view, saved, reopened, Back to 2D, no errors. Not seen: a change made in the 2D
+  panel carried to the game, and a round played. COURSE_BUILDER, *The trees placed
+  for you*.
+- [ ] **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
 - [ ] **The Redwood Coast's trees, the owner's verdict.** Rebuilt as they grow
   (BLENDER_ASSETS, *Built as it grows*), 17 rounds or more each. Bay laurel, bigleaf
   maple and madrone were rebuilt with the same builders in far fewer rounds and owe

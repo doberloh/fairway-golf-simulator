@@ -32,7 +32,7 @@ import {placeHole} from './routing.js';
 import {DEFAULT_COURSE} from './settings-schema.js';
 import {TREE_STRIDE, TREE_ROLES, CREEK_FIELDS} from './course-doc.js';
 import {streamIndex} from './streams.js';
-import {GROUND_PLANTS, tallHeight} from './species.js';
+import {GROUND_PLANTS, TREE_SIZE, tallHeight, crownRadius} from './species.js';
 import {GROUND_KINDS} from './grounds.js';
 import {TEE_COLORS, rng} from './course-plan.js';
 import {choosePin} from './course.js';
@@ -345,8 +345,12 @@ function fitsHeight(bio, list, h) {
  const fit = roomy.filter(p => h >= low(p) * SHORTER_THAN_LOW);
  return fit.length ? fit : roomy;
 }
-export function speciesFor(bio, role, h, x, z) {
- const tall = bio.plants.filter(p => !GROUND_PLANTS.has(p[0]));
+// `allow`: the species a course's `treePlan` asks for, or null for all of them; a
+// stand's own species counts, at an even share. `h` null: no height to fit.
+export function speciesFor(bio, role, h, x, z, allow = null) {
+ const plain = bio.plants.filter(p => !GROUND_PLANTS.has(p[0]));
+ const asked = allow?.map(k => bio.plants.find(p => p[0] === k) ?? bio.stands?.plants?.find(p => p[0] === k)).filter(p => p && !GROUND_PLANTS.has(p[0]));
+ const tall = asked?.length ? asked : plain;
  const small = bio.plants.filter(p => GROUND_PLANTS.has(p[0]) && !FLOWERS.has(p[0]));
  const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
  const pick = list => {
@@ -357,7 +361,7 @@ export function speciesFor(bio, role, h, x, z) {
  if (role === 'shrub') return small.length ? pick(small) : 'shrub';
  const want = role === 'conifer' ? tall.filter(p => CONIFERS.has(p[0]) || PALMS.has(p[0])) : role === 'palm' ? tall.filter(p => PALMS.has(p[0])) : tall;
  const list = want.length ? want : tall.length ? tall : [['oak', 1]];
- return pick(fitsHeight(bio, list, h));
+ return pick(h == null ? list : fitsHeight(bio, list, h));
 }
 // The species a stored tree draws as, the game's and the 3D editor's one
 // answer: the stored species while the course wears the landscape it was grown
@@ -366,8 +370,26 @@ export function speciesFor(bio, role, h, x, z) {
 // list or its stands (a tree picked by name, builder/cover.js); else by role,
 // where a tree with no species of its own stored as a conifer is a survey's
 // narrow reading, which says nothing (above), so it is any tall tree.
-export const drawnSpecies = (bio, stored, sameLandscape, role, h, x, z) =>
- stored && (sameLandscape || bio.plants.some(p => p[0] === stored) || bio.stands?.plants?.some(p => p[0] === stored)) ? stored : speciesFor(bio, role === 'conifer' && !stored ? 'tree' : role, h, x, z);
+const ownSpecies = (bio, stored, sameLandscape) => !!stored && (sameLandscape || bio.plants.some(p => p[0] === stored) || bio.stands?.plants?.some(p => p[0] === stored));
+export const drawnSpecies = (bio, stored, sameLandscape, role, h, x, z, allow = null) =>
+ ownSpecies(bio, stored, sameLandscape) ? stored : speciesFor(bio, role === 'conifer' && !stored ? 'tree' : role, h, x, z, allow);
+export const TREE_HAND = 32;
+// WHAT A STORED TREE IS IN THE WORLD, the game's and the 3D editor's one answer,
+// under the course's `treePlan` (the owner, 5 November 2026; builder/tree-plan.js).
+// A tree with a species of its own, one placed or sized by hand, and a bush stay
+// as stored. Any other takes its species from those the plan asks for, and with
+// `sizes` 'landscape' its place and nothing else from the survey: the height for
+// its species, hashed from where it stands so it is the same every time, and the
+// crown and trunk that go with that. Nothing stored changes, so it can go back.
+export function treeAt(bio, plan, sameLandscape, stored, role, h, crown, trunk, x, z) {
+ const r = TREE_ROLES[role & 7] || 'tree', allow = plan?.species ?? null;
+ const kept = ownSpecies(bio, stored, sameLandscape) || role & TREE_HAND || r === 'shrub' || plan?.sizes !== 'landscape';
+ if (kept) return {kind: drawnSpecies(bio, stored, sameLandscape, r, h, x, z, allow), h, crown, trunk};
+ const kind = speciesFor(bio, r === 'palm' ? r : 'tree', null, x, z, allow), plant = bio.plants.find(p => p[0] === kind) ?? bio.stands?.plants?.find(p => p[0] === kind);
+ const u = k => { const v = Math.sin(x * 7.13 + z * 3.71 + k * 11.3) * 24634.6345; return v - Math.floor(v); }, size = TREE_SIZE[kind];
+ const th = tallHeight(bio, kind, u(1), plant?.[2] ?? 1);
+ return {kind, h: th, crown: crownRadius({kind, h: th, r: size ? size[2] + u(2) * (size[3] - size[2]) : th * .2}), trunk: Math.max(.14, Math.min(3.6, th * .027))};
+}
 
 // ---------------------------------------------------------------- the holes
 const lerpLine = (pts, z) => {
@@ -526,9 +548,8 @@ export function worldFromDoc(doc, settings = {}) {
  const trees = [], sameLandscape = doc.from?.settings?.biome === doc.landscape;
  for (let k = 0; k < doc.trees.length; k += TREE_STRIDE) {
   const [x, z, th, crown, trunk, role, ki] = doc.trees.subarray(k, k + TREE_STRIDE);
-  const stored = doc.treeKinds?.[ki], r = TREE_ROLES[role & 7] || 'tree';
-  const kind = drawnSpecies(bio, stored, sameLandscape, r, th, x, z);
-  trees.push({x, z, y: height(x, z), h: th, r: crown, radius: trunk, shade: (Math.sin(x * 3.1 + z * 7.7) * .5 + .5), kind, hole: nearest(x, z).h.hole, built: true,
+  const shown = treeAt(bio, doc.treePlan, sameLandscape, doc.treeKinds?.[ki], role, th, crown, trunk, x, z), {kind} = shown;
+  trees.push({x, z, y: height(x, z), h: shown.h, r: shown.crown, radius: shown.trunk, shade: (Math.sin(x * 3.1 + z * 7.7) * .5 + .5), kind, hole: nearest(x, z).h.hole, built: true,
    ...(role & 8 ? {stand: true} : {}), ...(role & 16 ? {under: true} : {})});
  }
  const homes = builtHomes(doc, height, nearest);

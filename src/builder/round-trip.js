@@ -37,7 +37,7 @@ export function withEditorWork(d, {base, now, changed, hidden}) {
  for (const [kind, m] of got.masks) masks.set(kind, m);
  holes.splice(0, got.holes.length, ...got.holes);
  const landEdits = got.landEdits && d.landEdits ? got.landEdits.map((v, k) => v + d.landEdits[k]) : got.landEdits ?? d.landEdits;
- return {...d, step: 5, holes, holesN: got.holes.length, name: got.name, landscape: got.landscape, creeks: got.creeks, rocks: got.rocks, landEdits, view: {...d.view, treeScale: 1},
+ return {...d, step: 5, holes, holesN: got.holes.length, name: got.name, landscape: got.landscape, creeks: got.creeks, rocks: got.rocks, landEdits, treePlan: now.treePlan ?? null, view: {...d.view, treeScale: 1},
   trace: {...d.trace, masks, hidden: [...hidden], trees: got.trees, homes: got.homes}};
 }
 
@@ -95,7 +95,9 @@ export function fromEditor({base, now, grid, changed = new Map(), holesBefore = 
  const trees = [];
  for (let k = 0; k + 6 < now.trees.length; k += 7) {
   const [x, z, h, crown, trunk, role, ki] = now.trees.subarray(k, k + 7), kind = now.treeKinds?.[ki];
-  trees.push(had.has(treeKey(x, z, h, crown)) ? {x, z, h, crown} : {x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
+  // One left alone is judged by door 2's rules again, unless it was placed by hand
+  // or named, which it must stay (tree-plan.js).
+  trees.push(had.has(treeKey(x, z, h, crown)) && !(role & 32) && !kind ? {x, z, h, crown} : {x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
  }
  return {masks, landEdits, holes, trees, homes: structuredClone(now.homes ?? []), creeks: structuredClone((now.creeks ?? []).filter(c => !(base.creeks ?? []).slice(ownCreeks).some(d => d.points[0][0] === c.points[0][0] && d.points[0][1] === c.points[0][1]))), rocks: structuredClone(now.rocks ?? []), name: now.name, landscape: now.landscape};
 }

@@ -33,6 +33,9 @@
 //    credits: [string], source: {} (door 2's: {kind: 'lidar', files, epsg, origin:
 //      {x, y} -- the land's middle in the survey's map units -- trace}),
 //    from: {seed, settings, generator} | null,
+//    treePlan: {sizes: 'landscape', species: [kind]} | absent   the trees placed
+//      for the player (builder/tree-plan.js): the landscape's sizes rather than
+//      the survey's, and which species; a course without one plays as it did,
 //    picture: data URL | null}
 //
 // THE FILE: a ZIP (zip.js) of course.json (everything but the big arrays),
@@ -74,7 +77,8 @@ export const TREE_STRIDE = TREE_FIELDS.length;
 export const CREEK_FIELDS = ['x', 'z', 'width', 'level', 'depth', 'nx', 'nz', 'miter', 'bank'];
 // What a stored tree is, for the landscape to pick a species to draw (the
 // role's low three bits); +8 marks a tree of an uncleared stand and +16 the
-// stand's understory, which the lower graphics tiers thin. Never changes how
+// stand's understory, which the lower graphics tiers thin; +32 one the player
+// placed or sized by hand, which the course's `treePlan` leaves alone. Never changes how
 // it plays: its trunk and crown are stored.
 export const TREE_ROLES = ['tree', 'conifer', 'broadleaf', 'shrub', 'palm'];
 // Heights are stored in steps of this many metres unless the land's relief
@@ -192,7 +196,8 @@ export function validateDoc(doc) {
   homes: (Array.isArray(doc.homes) ? doc.homes : []).filter(h => [h?.x, h?.z, h?.rotation, h?.width, h?.depth].every(Number.isFinite)).slice(0, LIMITS.homes)
    .map(h => ({x: Math.round(h.x * 10) / 10, z: Math.round(h.z * 10) / 10, rotation: Math.round(h.rotation * 1000) / 1000, width: Math.max(6, Math.min(40, Math.round(h.width * 10) / 10)), depth: Math.max(6, Math.min(40, Math.round(h.depth * 10) / 10))})),
   credits: (doc.credits || []).map(String).slice(0, 20), source: doc.source && typeof doc.source === 'object' ? doc.source : {},
-  from: doc.from ?? null, picture: typeof doc.picture === 'string' ? doc.picture : null, builtVersion: doc.builtVersion ?? null};
+  from: doc.from ?? null, picture: typeof doc.picture === 'string' ? doc.picture : null, builtVersion: doc.builtVersion ?? null,
+  ...(doc.treePlan ? {treePlan: {...(doc.treePlan.sizes === 'landscape' ? {sizes: 'landscape'} : {}), ...(Array.isArray(doc.treePlan.species) ? {species: doc.treePlan.species.map(String).slice(0, 64)} : {})}} : {})};
 }
 
 // The file's bytes for a document. `builtVersion` is the game's, stamped on.
@@ -208,7 +213,7 @@ export async function writeBuiltFile(doc, builtVersion, {builder = null} = {}) {
  const json = {kind: FILE_KIND, version: BUILT_FILE_VERSION, type: 'built', builtVersion, name: d.name, landscape: d.landscape, designer: d.designer,
   halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, landEdits: d.landEdits, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
   patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds, rocks: d.rocks, homes: d.homes,
-  credits: d.credits, source: d.source, from: d.from, picture: d.picture};
+  credits: d.credits, source: d.source, from: d.from, picture: d.picture, ...(d.treePlan ? {treePlan: d.treePlan} : {})};
  return writeZip([
   {name: 'course.json', data: JSON.stringify(json)},
   {name: 'land.bin', data: land.bytes},

@@ -20,6 +20,7 @@ import {testRound} from './test-round.js';
 import {layersFor} from './layers.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {preview} from './preview.js';
+import {treePlanControls} from './tree-plan.js';
 import {changeMark, sameMark, poseFrom} from './game-look.js';
 
 const {el} = ui;
@@ -246,7 +247,9 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    el('label', {'data-for': 'treeZone'}, 'Trees a hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
    el('label', {title: 'Every tree on the course together'}, 'Every tree\'s size ', scaleText, treeScale),
-   el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree)),
+   el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree),
+   // Live: the trees redraw as it is ticked, and Game view shows them next.
+   treePlanControls(el, BIOMES[s.landscape], s.treePlan, plan => { editor.setTreePlan(plan); view.refreshTrees(); refreshSave(); })),
   el('div', {class: 'cb-group'}, el('b', {}, 'Houses'), el('div', {class: 'cb-btns'}, button('House', {kind: 'house'}), button('House zone', {kind: 'homeZone'}), button('Clear houses', {kind: 'clearHomes'}))),
  ); };
  buildTools();

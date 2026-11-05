@@ -39,7 +39,7 @@ export async function writeDraft(d) {
  const parts = [], land = d.land;
  const json = {kind: DRAFT_KIND, version: DRAFT_VERSION, step: d.step, name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN, hole: d.hole ?? 0,
   boundary: d.boundary ?? null, traceMode: d.traceMode ?? null, box: d.box ?? null, sources: (d.sources ?? []).map(s => ({name: s.name, crs: s.crs ?? null})), view: d.view ?? {}, picOffsets: d.picOffsets ?? {}, osm: d.osm ? {said: d.osm.said ?? '', trees: d.osm.trees ?? [], homes: d.osm.homes ?? [], osmTrees: d.osm.osmTrees ?? null, course: d.osm.course ?? null, shift: d.osm.shift ?? null, laid: d.osm.laid ?? null} : null,
-  geo: d.geo ?? null, picShow: d.picShow ?? null, pics: (d.pics ?? []).map(({group, label, provider, file, width, height, credit, place, pack}) => ({group, label, provider: provider ?? null, file: file ?? null, width, height, credit: credit ?? null, place, type: pack.type, nir: !!pack.nir})),
+  geo: d.geo ?? null, picShow: d.picShow ?? null, treePlan: d.treePlan ?? null, pics: (d.pics ?? []).map(({group, label, provider, file, width, height, credit, place, pack}) => ({group, label, provider: provider ?? null, file: file ?? null, width, height, credit: credit ?? null, place, type: pack.type, nir: !!pack.nir})),
   trees: d.trees ?? [], land: null, trace: null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], landEdits: !!(land && d.landEdits)};
  if (land && d.landEdits) parts.push({name: 'edits/land.bin', data: bytesOf(d.landEdits)});
  if (land) {

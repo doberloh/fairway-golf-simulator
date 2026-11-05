@@ -712,6 +712,13 @@ none of it: it reads and keeps only the course. A file saved before 5 November
 2026 has none of this; Back to 2D on one knows where the course is, so you can
 fetch the pictures and OpenStreetMap again.
 
+**Trees placed for you** (in the 3D editor's Trees group, and with the tree tools in
+step 3 of a real course): **Use the LIDAR's tree sizes** off keeps every surveyed tree
+where it stands but gives it the normal size for its species. The ticks below it choose
+which of the landscape's trees grow in those places. Both change the trees as you click,
+and Game view shows them next time you open it. Trees you placed or sized yourself, and
+bushes, stay as they are.
+
 **Save a copy to share** (the editor's top bar) makes the file to give to someone:
 the course as the game plays it, without your pictures, the map data or the
 rest of your builder work. Use it for a course that went through door 2, above

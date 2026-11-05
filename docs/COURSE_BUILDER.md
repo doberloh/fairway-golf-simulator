@@ -113,6 +113,22 @@ Nothing the ball touches is in it, so no version number moved.
   choice had nothing behind it, and "OpenStreetMap's only" emptied the course of
   trees. A version 2 draft now hides the choice.
 
+**The trees placed for you** (`treePlan`, the owner, 5 November 2026: turn "LIDAR
+height and width mapping" off, and "select what trees are automatically placed").
+An optional field of the course, set live in both editors (builder/tree-plan.js):
+`sizes: 'landscape'` keeps each tree's place and gives it the size of its species
+(built-world.js `treeAt`, hashed from where it stands; PLACED: the species' range
+in the generator, the crown from its table, the trunk at 0.027 of the height), and
+`species` is the list of the landscape's trees to use, in their shares. What the
+survey stored is not touched, so both can be undone at any time. It changes what is
+drawn and what a ball hits, from the file's own field, so no `BUILT_VERSION`; a
+course with no plan has no field and keeps its bytes. **Left alone:** a tree with a
+species of its own, one placed or sized by hand (role +32), and bushes. A course
+grown by the generator stores every tree's species, so the plan does nothing to its
+trees until they lose it. The whole-course size slider does not reach trees sized
+by the landscape. With sizes off the height rule (`speciesFor`) has no height to
+fit, so the shares alone decide.
+
 **Limits a file is checked against** (PLACED; `LIMITS` in course-doc.js): 16
 million land samples (a 3 x 3 km property at 1 m is 9 million), 4 million in
 patches, 200 thousand trees, 2 million outline points, 9 or 18 holes. A file

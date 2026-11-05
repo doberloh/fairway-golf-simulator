@@ -9,7 +9,7 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {biomeOf} from '../biomes.js';
-import {drawnSpecies} from '../built-world.js';
+import {treeAt} from '../built-world.js';
 import {TREE_ROLES} from '../course-doc.js';
 import {standIn} from './tree-shape.js';
 import {GROUNDS} from '../grounds.js';
@@ -279,10 +279,14 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  let treeMeshes = null;
  const low = t => (t[5] & 7) === 3;
  const bushGreen = new T.Color('#7a9a52');
+ const shownTree = t => treeAt(biomeOf(s.landscape), s.treePlan, s.doc?.from?.settings?.biome === s.landscape, s.treeKinds?.[t[6]], t[5], t[2], t[3], t[4], t[0], t[1]);
  function placeTree(i) {
   const at = treeSlot[i]; if (at == null || !treeMeshes) return;
   const {stands, bushes} = treeMeshes, f = s.treeScale ?? 1, m = new T.Matrix4(), q = new T.Quaternion();
-  const [x, z, h0, cr0, trunk] = s.trees[i], y = editor.height(x, z);
+  // As the game will have it (built-world.js treeAt), the slider's scale on top; a
+  // tree sized by the landscape keeps the landscape's size, as the game does.
+  const here = shownTree(s.trees[i]), scaled = here.h === s.trees[i][2], g = scaled ? f : 1;
+  const [x, z] = s.trees[i], h0 = here.h * g / f, cr0 = here.crown * g / f, trunk = here.trunk * g / f, y = editor.height(x, z);
   if (!at.shape) {
    m.compose(new T.Vector3(x, y, z), q, new T.Vector3(Math.max(.25, cr0 * f), Math.max(.2, h0 * f), Math.max(.25, cr0 * f))); bushes.setMatrixAt(at.n, m); bushes.instanceMatrix.needsUpdate = true; return;
   }
@@ -299,12 +303,12 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   clear(layers.trees); treeSlot.length = 0; treeMeshes = null;
   if (!s.trees.length) return;
   // Each tree its shape, the same species the game will draw there.
-  const bio = biomeOf(s.landscape), same = s.doc?.from?.settings?.biome === s.landscape, counts = {};
+  const bio = biomeOf(s.landscape), counts = {};
   const total = Math.min(s.trees.length, 120000); let nLow = 0;
   for (let i = 0; i < total; i++) {
    const t = s.trees[i];
    if (low(t)) { treeSlot[i] = {n: nLow++}; continue; }
-   const shape = standIn(bio, drawnSpecies(bio, s.treeKinds?.[t[6]], same, TREE_ROLES[t[5] & 7] || 'tree', t[2], t[0], t[1]));
+   const shape = standIn(bio, shownTree(t).kind);
    counts[shape] = (counts[shape] ?? 0) + 1;
    treeSlot[i] = {shape, n: counts[shape] - 1};
   }

@@ -134,6 +134,11 @@ select option{background:#03100e;color:var(--ink)}
 .cb-door2 .cb-resultgo{flex:none;font:800 12px/1 var(--head);text-transform:uppercase;color:var(--hot)}
 .cb-door2 .cb-btn.cb-result:hover .cb-resultgo{color:inherit}
 .cb-door2 .cb-foldername{color:var(--hot)}
+.cb-treeplan{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.cb-treeplan b{font:800 12px/1.2 var(--head);text-transform:uppercase}
+.cb-treepicks{max-height:150px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.cb-treepick{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}
+.cb-treepick input{flex:none}
 .cb-door2 .cb-folderfiles{font-size:12px;max-height:180px;overflow:auto}
 /* A long file name cannot wrap, and the door's inputs may shrink to nothing
    (min-width:0 below): the owner saw one tick box in a list of USGS tiles. */

@@ -477,7 +477,9 @@ export const SCHEMA_VERSION=27;
 //     first in the mix with Douglas fir beside it and hardwoods under, woods
 //     in walls and rings of stems, and river terraces in place of its gorges.
 //     Moved the Redwood Coast.
-export const GENERATOR_VERSION=88;
+// 89: a ring of stems no longer counts against the open scatter's target, which
+//     left the Redwood Coast with half its open trees. Moved the Redwood Coast.
+export const GENERATOR_VERSION=89;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

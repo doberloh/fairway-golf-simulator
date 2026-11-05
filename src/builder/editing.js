@@ -28,6 +28,7 @@ import {clearTrees} from './tree-clear.js';
 import {skinFromHeights, SKIN} from './skin.js';
 import {digBed, levelFrom, shoreOf, BED, digBowl, creekStations, creekBox, carveCreek} from './water-bed.js';
 import {scatterCover, coverAt, refusedBy, treeSized, TREE_REFUSED} from './cover.js';
+import {TREE_HAND} from '../built-world.js';
 import {smoothCells, extrapolateCells, zoneTrees, zoneHomes} from './layer-ops.js';
 
 // The codes a surface cell can hold, in the order the field paints them
@@ -105,6 +106,8 @@ export function createEditor(doc) {
   // the trees keep their own sizes, so it can go back to 1. A course saved
   // at 1.2 opens at 1 with its trees 1.2 times bigger.
   treeScale: 1,
+  // The trees placed for the player (tree-plan.js): no undo step, as treeScale.
+  treePlan: doc.treePlan ?? null,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
   // mesh to the land there (built-world.js), so a hill plays as drawn.
@@ -367,10 +370,10 @@ export function createEditor(doc) {
   // ONE TREE PICKED BY NAME (the owner, 5 November 2026): its size from its height
   // and role, its species kept. Null `species`: the landscape chooses, as before.
   placeTree({x, z, h, species = null}) {
-   if (!species) return api.addTree([x, z, h, h * .28, Math.min(.8, h * .027), 2, -1]);
+   if (!species) return api.addTree([x, z, h, h * .28, Math.min(.8, h * .027), 2 | TREE_HAND, -1]);
    remember('records', 0, 0, 0, 0);
    let kind = state.treeKinds.indexOf(species); if (kind < 0) kind = state.treeKinds.push(species) - 1;
-   const t = treeSized(species, h); state.trees.push([x, z, t.h, t.crown, t.trunk, t.role, kind]);
+   const t = treeSized(species, h); state.trees.push([x, z, t.h, t.crown, t.trunk, t.role | TREE_HAND, kind]);
   },
   // May a tree stand here? Not on mown turf, sand, water, a path or a road.
   treeFits: (x, z) => !TREE_REFUSED.has(api.surfaceAt(x, z)),
@@ -389,6 +392,7 @@ export function createEditor(doc) {
    return n;
   },
   setTreeScale(f) { state.treeScale = Math.max(.25, Math.min(3, f)); state.changed = true; },
+  setTreePlan(plan) { state.treePlan = plan ?? null; state.changed = true; },
   // The tree whose crown holds a point (at least 1.5 m round its trunk), the
   // nearest of several; -1 for none.
   treeAt({x, z}) {
@@ -408,6 +412,7 @@ export function createEditor(doc) {
    state.touched = (state.touched ?? 0) + 1;
    const k = Math.max(.25, Math.min(3, f));
    state.trees[index] = [base[0], base[1], base[2] * k, base[3] * k, base[4] * k, ...base.slice(5)];
+   state.trees[index][5] |= TREE_HAND;
   },
   // Crowns drawn in off the greens and tees, a tree with no room taken out
   // (tree-clear.js); one undo step. Returns {shrunk, removed}. Measured at
@@ -680,7 +685,8 @@ export function createEditor(doc) {
    for (const w of water) digInto(grids, w.rings, w.level);
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
-   return {...doc, name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
+   const {treePlan: _old, ...rest} = doc;
+   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },
  };

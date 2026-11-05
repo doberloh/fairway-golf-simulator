@@ -120,7 +120,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // TREES: one, or a zone scattered at a density (trees a hectare), each a
   // height and crown from the given ranges, never on mown ground or water.
   // `species`: one tree picked by name, kept with its size wherever it stands.
-  addTree(t) { step(() => { keepTrees(); s.trees.push(t.species ? {x: t.x, z: t.z, ...treeSized(t.species, t.h ?? 14), kept: true, kind: t.species} : {x: t.x, z: t.z, h: t.h ?? 14, crown: t.crown ?? 4}); }); },
+  addTree(t) { step(() => { keepTrees(); s.trees.push(t.species ? {x: t.x, z: t.z, ...treeSized(t.species, t.h ?? 14), kept: true, placed: true, kind: t.species} : {x: t.x, z: t.z, h: t.h ?? 14, crown: t.crown ?? 4, placed: true}); }); },
   removeTrees({x, z, radius}) { step(() => { keepTrees(); s.trees = s.trees.filter(t => Math.hypot(t.x - x, t.z - z) > radius); }); },
   // Every tree replaced at once (door 2's choice of whose trees: osm.js
   // mergeTrees), one step to undo.
@@ -148,7 +148,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // when picked. `first` starts one undo step, so a slider's drag is one Undo.
   sizeTree(index, base, f, first = false) {
    if (!s.trees[index]) return;
-   const k = Math.max(.25, Math.min(3, f)), sized = {...base, h: base.h * k, crown: base.crown * k, ...(base.trunk ? {trunk: base.trunk * k} : {}), kept: true};
+   const k = Math.max(.25, Math.min(3, f)), sized = {...base, h: base.h * k, crown: base.crown * k, ...(base.trunk ? {trunk: base.trunk * k} : {}), kept: true, placed: true};
    if (first) step(() => { keepTrees(); s.trees[index] = sized; }); else s.trees[index] = sized;
   },
   // A BUNKER DUG at a click: sand painted, and the bowl recorded for the course

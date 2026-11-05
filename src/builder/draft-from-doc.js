@@ -46,6 +46,6 @@ export function draftFromDoc(doc) {
   trees.push({x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
  }
  const holes = doc.holes.map(h => ({tees: h.tees.map(t => ({...t})), aims: h.line.slice(1, -1).map(([x, z]) => ({x, z})), green: {...h.green}, par: h.par, index: h.index}));
- return {step: 5, name: doc.name, landscape: doc.landscape, credits: doc.credits ?? [], holes, holesN: holes.length, hole: 0, boundary: null, traceMode: 'manual', box: null, sources: placed ? (src.files?.length ? src.files : ['the course file']).map(name => ({name, crs})) : [], geo: src.geo ?? null, view: {}, picOffsets: {}, trees: trees.map(t => ({...t})),
+ return {step: 5, name: doc.name, landscape: doc.landscape, credits: doc.credits ?? [], holes, holesN: holes.length, hole: 0, boundary: null, traceMode: 'manual', box: null, sources: placed ? (src.files?.length ? src.files : ['the course file']).map(name => ({name, crs})) : [], geo: src.geo ?? null, treePlan: doc.treePlan ?? null, view: {}, picOffsets: {}, trees: trees.map(t => ({...t})),
   land, trace: {masks, hidden: [], trees, homes: structuredClone(doc.homes ?? [])}, landEdits: null, creeks: structuredClone(doc.creeks ?? []), rocks: structuredClone(doc.rocks ?? [])};
 }

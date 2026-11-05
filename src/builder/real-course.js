@@ -11,6 +11,7 @@
 // Local metres throughout: x east of the property's middle, z south of it.
 import {createGridder, findTrees} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
+import {TREE_HAND} from '../built-world.js';
 import {maskRings, simplify, smoothRing, relaxRing} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
@@ -180,7 +181,7 @@ export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -ha
   .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = []}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -300,11 +301,11 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   if (!t.kept && ['green', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
   // A plant the editor painted keeps its species (cover.js).
   let ki = -1; if (t.kind) { ki = treeKinds.indexOf(t.kind); if (ki < 0) ki = treeKinds.push(t.kind) - 1; }
-  treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), t.role ?? (t.crown / t.h < .2 ? 1 : 2), ki);
+  treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), (t.role ?? (t.crown / t.h < .2 ? 1 : 2)) | (t.placed ? TREE_HAND : 0), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
-  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
+  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {})};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };
