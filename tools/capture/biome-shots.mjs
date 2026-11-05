@@ -10,7 +10,9 @@
 //       every candidate view of each landscape, at Ultra, 3840 x 2160 (a 1920 x
 //       1080 page at density 2, HUD hidden), as PNG masters in
 //       bench/shots/biome-shots/<label>/<biome>/<view>.png, and a contact sheet
-//       (`--size 1280x720`: that page at density 1, to look a set over)
+//       (`--size 1280x720`: that page at density 1, to look a set over;
+//       `--picks` in place of `--views`: only the views each landscape's cards
+//       use, when the land has moved and the cards want retaking)
 //   node tools/capture/biome-shots.mjs encode [--from <label>] [--only biome,...]
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
@@ -29,6 +31,9 @@ const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; c
 const mode = argv.shift();
 // `--season s`: the course in that season (seasons.js; summer, the cards', by default).
 const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
+// `--picks`: only the views each landscape's cards use (PICKS), when the land
+// has moved and the cards want retaking.
+const picks = argv.includes('--picks') && argv.splice(argv.indexOf('--picks'), 1).length > 0;
 // `--homes 60`: the course with fairway homes at that density, and `--seed s`
 // another course than the card's (the `street` views need houses; they are a
 // course setting, off by default).
@@ -170,7 +175,7 @@ async function take(biomes) {
    await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
-   for (const v of VIEWS.filter(v => !only || only.includes(v.name))) {
+   for (const v of VIEWS.filter(v => (picks ? PICKS[biome] : only ?? [v.name]).includes(v.name))) {
     if (v.hole !== hole) { await p.evaluate(h => window.lab.hole(h), v.hole); hole = v.hole; await p.waitForTimeout(4000); await p.addStyleTag({content: HIDE_HUD}); }
     await p.evaluate(([cam, at]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
      window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when)]);

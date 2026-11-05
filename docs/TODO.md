@@ -85,10 +85,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   **Your calls, not bugs:** 9 dead-end paths and 86 sharp corners across the
   bench's 195 courses (*Cart paths* below); a machine with no graphics card, 8
   s a frame against 3.3 in September (*Performance pass*).
-- [ ] **The landscape cards' pictures show the land before generator 85**
-  (src/shots/; retaken 3 November). The pictures in Play and the course
-  selectors still show the older ground, bowls and all, and generator 87's
-  eight new grounds. To do: biome-shots `take` on the picked views, `encode`.
+- [x] **The landscape cards' pictures show the land of generator 87** (retaken
+  4 November 2026: biome-shots `take --picks --label final87`, then `encode`;
+  169 pictures, 41 landscapes). They showed the ground before generator 85,
+  bowls and all. The set is 6,259 KB against 6,268 before, so the page did not
+  grow; that is 8.15 MB of the page against `BUDGET`'s 3 MB, written for ten
+  landscapes, so `encode` exits 1 and says over budget. **Your call:** raise
+  the number, or fewer or smaller pictures.
 
 - [ ] **Left when the owner cleared the goal, 4 November 2026** (an audit of the
   goal's list against the study's catalogue, after the owner ended the goal):
@@ -101,9 +104,11 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     tanoak. The other 205 logged models have fifteen or more, each with its
     last side-by-side.
   - **Medium on the software renderer crashes its page again**
-    (tools/software-crash.mjs, this build; Low runs). It passed in the full
-    profile at 4ee6906, so one of the two commits since, or chance, as it came
-    and went on 3 November. A no-card machine starts on Low. A lower resolution
+    (tools/software-crash.mjs, this build; Low runs). It is not from the last
+    commits: a build with 4ee6906's ground.js, vegetation.js and renderer.js
+    crashed the same way twice, though the full profile had passed Medium at
+    4ee6906. So it comes and goes, as on 3 November, and the cause is not
+    found. A no-card machine starts on Low. A lower resolution
     for such a machine (`pixelRatio` .4) was tried and backed out unmeasured, as
     the crash stopped the profile.
   - **Sidewalks are out** (the owner, 4 November 2026: "Don't worry about
