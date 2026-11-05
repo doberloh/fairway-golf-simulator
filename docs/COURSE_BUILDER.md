@@ -1389,8 +1389,11 @@ beds), skin.js. tests/builder-parity.test.mjs tries each in both.
 - **Not done:** a pit left by erasing water is not filled: use Fill to surrounding.
   Skin in 2D reads the land as it stands, without bunkers or creeks not yet made.
 
-Tested in Node; **neither screen has been opened**, and the builder journeys,
-changed for Select shape and Place tree, have not been run.
+Every box and drop-down is dark by one rule at the top of builder.css (the owner
+found white boxes with white text): each had been styled place by place.
+
+Tested in Node; **neither screen has been opened by the build**, and the builder
+journeys, changed for Select shape and Place tree, have not been run.
 
 ### Built courses at their real height (4 November 2026)
 

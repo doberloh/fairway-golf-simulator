@@ -6,7 +6,16 @@
  --head:"Saira Condensed",system-ui,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#061513;color:var(--ink);font:14px/1.45 var(--body);overflow:hidden}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+/* EVERY BOX AND DROP-DOWN DARK (the owner, 4 November 2026: light text on the
+   browser's white). They inherit the page's light text, so each one has to be
+   given a dark ground; until now that was done place by place, and the 3D
+   editor's tools and the newer ones had none. One rule, here, for all of them,
+   and color-scheme so the browser's own lists and scroll bars are dark too. */
+:root{color-scheme:dark}
+input:not([type=range]):not([type=checkbox]):not([type=file]),select,textarea{background:#03100e;color:var(--ink);border:1px solid var(--line);padding:4px 6px}
+select option{background:#03100e;color:var(--ink)}
+::placeholder{color:var(--soft);opacity:.7}
 .cb{position:fixed;inset:0;display:flex;flex-direction:column}
 .cb-top{display:flex;align-items:center;gap:16px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);z-index:5}
 .cb-brand{font:800 22px/1 var(--head);letter-spacing:.02em;text-transform:uppercase}
