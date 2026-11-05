@@ -800,8 +800,18 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   back on Back to 2D in the wrong place: its unit was not stored and it is read
   as metres (draft-from-doc.js). None of the test courses is one; settle it by
   telling feet from the EPSG code if a player's file turns up.
-- [ ] **Northwood's redwoods** on the Redwood landscape: with surveyed trees
-  picked by height they fall to 17% from a 38% share, as its second growth is
+- [ ] **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; tests/tee-corridor.test.mjs *the corridor rejects candidates without thinning the forest* fails (redwood placed 1158 of 2223), and the full suite was last run before the last changes; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
+- [ ] **The Redwood Coast's trees, the owner's verdict.** Rebuilt as they grow
+  (BLENDER_ASSETS, *Built as it grows*), 17 rounds or more each. Bay laurel, bigleaf
+  maple and madrone were rebuilt with the same builders in far fewer rounds and owe
+  the fifteen. Not played; not seen in autumn or winter colours. Their figures are
+  under *Performance pass*. The owner means this approach for many other models
+  later.
+- [ ] **Read redwood heights by age** from Bulletin 796 (scanned, CAL FIRE) and
+  check the 30-75 m and 12-35 m ranges against it.
+- [x] **Northwood's redwoods** on the Redwood landscape, closed by *The Redwood
+  Coast, grounded* (RESEARCH): with surveyed trees
+  picked by height they fall to 17% from a 38% share, as most of its surveyed trees are
   mostly under 21 m and the landscape's redwood runs 42-116 m. The numbers are
   right; whether a redwood course should look like that is the owner's call
   (RESEARCH, *A survey sees a shape, not a species*). Summerlin in the editor and

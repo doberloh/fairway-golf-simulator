@@ -440,7 +440,7 @@ and Python's zipfile reading what it writes) and `tests/course-doc.test.mjs`
 (heights to the centimetre, relief over 655 m, a built course round-tripped,
 the same course making the same file, broken files refused in plain words).
 
-A world from a built file: `tests/built-world.test.mjs` (a surveyed tree draws in the landscape's shares among the species of its height, palms and conifers included, its narrow reading ignored, and the 3D editor's shape follows the same species; a hand-made document's lie
+A world from a built file: `tests/built-world.test.mjs` ((tests/stands.test.mjs: every landscape has stands now, and the Redwood Coast alone grows no long grass, on purpose) a surveyed tree draws in the landscape's shares among the species of its height, palms and conifers included, its narrow reading ignored, and the 3D editor's shape follows the same species; a hand-made document's lie
 in the generator's order, field edges to a few centimetres, a patch fading
 into the land, holes from records, trees keeping their sizes in any
 landscape, the field's ground codes equal to ground.js's, and since the US

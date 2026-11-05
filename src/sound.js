@@ -623,7 +623,7 @@ export const SCENES={
  mountain:{label:'Mountain: Alpine Reserve',tempC:11,wind:12,trees:'conifer',birds:{songbird:2,whistler:2,raven:1,woodpecker:.5},water:{stream:1},planes:{jet:.5,prop:.6},insects:{},howl:1.3,verb:.15},
  pnw:{label:'Pacific Northwest: Sitka Bluff',tempC:16,wind:7,trees:'conifer',birds:{whistler:2,songbird:3,raven:1,woodpecker:1},water:{stream:.7},planes:{jet:.7,prop:.4},insects:{},howl:1,verb:.2},
  florida:{label:'Island: Leeward Cay',tempC:28,wind:11,trees:'palm',birds:{songbird:3,dove:3,gull:1},water:{surf:.8,lake:.4},planes:{jet:.4,prop:.8},insects:{cicada:.3},howl:1,verb:.06},
- redwood:{label:'Giant Redwood: Cathedral Grove',tempC:13,wind:4,trees:'conifer',birds:{songbird:2,whistler:1,raven:1,woodpecker:1},water:{stream:.5},planes:{jet:.3},insects:{},howl:.6,verb:.35},
+ redwood:{label:'Redwood Coast: Russian River',tempC:13,wind:4,trees:'conifer',birds:{songbird:2,whistler:1,raven:1,woodpecker:1},water:{stream:.5},planes:{jet:.3},insects:{},howl:.6,verb:.35},
  northeast:{label:'Autumn: Copper Hollow',tempC:17,wind:10,trees:'dry',birds:{crow:2,songbird:1,geese:.7,woodpecker:.5},water:{lake:.5},planes:{jet:.8},insects:{},howl:1,verb:.12},
  lakeshore:{label:'Lakeshore Dunes: Beacon Dunes',tempC:23,wind:10,trees:'broad',birds:{gull:2,songbird:3,whistler:1,dove:1},water:{lake:1,surf:.3},planes:{jet:.8,prop:.5},insects:{cicada:.4},howl:1.1,verb:.08},
 };

@@ -12157,7 +12157,7 @@ hundred. **Planting** (PLACED, biomes.js): Puget Sound bigleaf maple .08,
 madrone .06 (0.7 of the region's 12-27 m), Garry oak .05 (0.75), dogwood
 .03 (0.5), vine maple .03, Oregon grape .02, Scotch broom .02, and vine
 maple and Oregon grape in the stands' understorey; Redwood Coast bay laurel
-.04 (0.2 of the grove's 42-116 m), rhododendron .03, iris .02. Shrub
+.04 (0.2 of the grove's 42-116 m, as it then was; *The Redwood Coast, grounded*), rhododendron .03, iris .02. Shrub
 heights within the specs (course.js `BRUSH_SIZE`). Until the seasons are
 drawn the game paints them in summer, with the broom and rhododendron in
 their June flower and Oregon grape's berries (PLACED).
@@ -13923,8 +13923,8 @@ landscape share, in percentage points:
 
 What is left on Puget Sound is real: its firs pass 34 m and its tallest listed
 tree tops at 27, so they draw as the tallest it has. Northwood's redwoods fall to
-17% from a 38% share, because its second growth is mostly under 21 m and the
-landscape's redwood runs 42-116 m: the numbers are right, but a redwood course
+17% from a 38% share, because most of its surveyed trees are under 21 m (whether they are second growth is not established) and the
+landscape's redwood then ran 42-116 m (*The Redwood Coast, grounded* since): the numbers were right, but a redwood course
 with few redwoods is worth the owner's eye. Summerlin now draws 6,510 fan palms,
 4,956 date palms, 2,514 desert willows, 2,197 tamarisks, 1,548 smoke trees and
 1,291 Aleppo pines among 19,016 trees.
@@ -13945,6 +13945,43 @@ what its draft does (Summerlin 12.7 MB, Bully Pulpit 13.8 MB, before pictures).
 A Google or Bing mosaic can reach 400 tiles, 26 million pixels; its JPEG size is
 not measured (estimated 5-15 MB, PLACED). Quality .9 is PLACED: tracing needs
 edges rather than exact colours.
+
+## The Redwood Coast, grounded (5 November 2026)
+
+The owner, with four photographs of Northwood: "what i think is kind of a fantasy
+biome". This landscape planted every redwood 42-116 m, the top end being Hyperion,
+the tallest tree known, and gave firs and hemlocks the same range by way of the
+landscape's far canopy.
+
+**Sources.** Wikipedia, *Sequoia sempervirens*: normally 60-100 m, sometimes over
+110; Hyperion 116.22 m; conical crown, horizontal to slightly drooping branches;
+tallest in deep valleys and gullies with year-round streams and fog drip; sprouts
+from root crown and stumps, fairy rings; neighbours Douglas fir, madrone, tanoak,
+western hemlock. NPS, *About the trees*: up to 112 m. Sempervirens Fund: a 276 ft
+(84 m) second-growth tree barely 100 years old, exceptional. Golf.com and Marin
+Magazine on Northwood: MacKenzie and Hunter, 1928, on the Russian River, fairways
+among stands of redwood. **Not found:** heights by age. The Lindquist and Palley
+yield tables (Bulletin 796, 1963) hold them but are scanned, and were not read. How
+old Northwood's trees are is not established.
+
+**Northwood's survey**, 4,536 trees: quartiles 10.9, 17.3 and 34.8 m, tallest 74.1;
+22% over 40 m; two humps, 10-20 m and 40-60 m. Northwood's photographs (the study's
+redwood.coast 01-04): bare trunks to a third or a half of the height, open crowns,
+mown grass to the trunks, no rock.
+
+**What changed (all PLACED but where sourced):** canopy 30-75 m; `youngredwood`
+12-35 m; Douglas fir 0.8 and hemlock 0.6 of the canopy; tanoak, bay, madrone 8-23 m,
+bigleaf maple 11-27; redwood first in the mix, red cedar out (its southern limit
+not checked, and its model stays in the Cascades); river terraces for gorges, with
+the Coast Ranges as the ring; stands in place of none; rings of 2-5 stems round
+55% of redwoods, 3-6.5 m out, 72-98% of the tree's height; mown rough with no long
+grass, tufts or open floor plants.
+
+Trial on Northwood's survey before the trees were built: redwoods 17% of all trees
+to about 60%, and 50% to 79% of those over 25 m. It was run with the proposed
+numbers, and the final mix differs a little.
+
+**Models:** BLENDER_ASSETS, *Built as it grows*.
 
 ## Desert Resort, as built (5 November 2026)
 

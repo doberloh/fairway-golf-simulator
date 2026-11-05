@@ -472,7 +472,12 @@ export const SCHEMA_VERSION=27;
 //     Redwood Coast's steep gorges, the Cross Timbers' low cuestas, the
 //     Cascades sharper than the Rockies. The Chihuahuan keeps the mesas.
 //     Moved those eight.
-export const GENERATOR_VERSION=87;
+// 88: the Redwood Coast grounded (the owner, with photographs of Northwood):
+//     a canopy of 30-75 m, not 42-116, young redwoods their own kind, redwood
+//     first in the mix with Douglas fir beside it and hardwoods under, woods
+//     in walls and rings of stems, and river terraces in place of its gorges.
+//     Moved the Redwood Coast.
+export const GENERATOR_VERSION=88;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

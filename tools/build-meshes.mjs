@@ -62,7 +62,7 @@ const PICK = {
  fartwin: ['Spruce_1', 'Spruce_2', 'Spruce_3', 'Pine_1', 'Pine_2', 'Pine_3', 'Cedar_1', 'Cedar_2', 'Cedar_3',
   'Oak_1', 'Oak_2', 'Oak_3', 'Maple_1', 'Maple_2', 'Maple_3', 'Aspen_1', 'Aspen_2', 'Aspen_3', 'Alder_1', 'Alder_2',
   'Palo_1', 'Palo_2', 'Palo_3', 'Mesquite_1', 'Mesquite_2', 'Mesquite_3',
-  'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
+  'Redwood_1', 'Redwood_2', 'Redwood_3', 'YoungRedwood_1', 'YoungRedwood_2', 'YoungRedwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
   'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'BigleafMaple_1', 'BigleafMaple_2', 'BayLaurel_1', 'BayLaurel_2',
@@ -135,6 +135,7 @@ const PICK = {
  // hand with every other landscape, and 1,000-1,900 faces a tree where the
  // grown ones were 13,000-53,000.
  redwood: ['blender:Blender_Redwood_1', 'blender:Blender_Redwood_2', 'blender:Blender_Redwood_3'],
+ youngredwood: ['blender:Blender_YoungRedwood_1', 'blender:Blender_YoungRedwood_2', 'blender:Blender_YoungRedwood_3'],
  dougfir: ['blender:Blender_Fir_1', 'blender:Blender_Fir_2'],
  hemlock: ['blender:Blender_Hemlock_1', 'blender:Blender_Hemlock_2'],
  redcedar: ['blender:Blender_RedCedar_1', 'blender:Blender_RedCedar_2'],

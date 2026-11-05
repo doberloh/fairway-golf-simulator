@@ -39,7 +39,7 @@ export function hourFor(biome, when) {
 // (tools/gpu-lock.mjs; the US landscapes goal: agents' renders and the main
 // thread's captures queue one at a time). A tool that already gated itself
 // holds it already, and a gpu-run child inherits it.
-export const launch = () => { holdCard(`capture ${path.basename(process.argv[1] || '')}`); return chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required']}); };
+export const launch = () => { holdCard(`capture ${path.basename(process.argv[1] || '')}`); return chromium.launch({args: [...(process.env.FAIRWAY_CAPTURE_SOFTWARE ? ['--disable-gpu', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist']), '--autoplay-policy=no-user-gesture-required']}); };
 
 // The game, opened to its main menu on Ultra with automatic resolution off, so
 // it can never quietly draw fewer pixels to keep the frame rate up. `quality`

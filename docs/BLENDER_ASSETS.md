@@ -93,6 +93,40 @@ Rules the game imposes, learnt the hard way:
   spread-sized family comes out huge, which is why the common juniper's vase
   is its own family (`juniperbush`).
 
+## Built as it grows
+
+The owner, 5 November 2026, on the Redwood Coast's trees, three corrections in a
+row, and the approach is meant for many other models later:
+
+- "using a solid shape in the middle does not look good. trees arent solid like
+  this in the middle."
+- "the tree trunk is the same width almost the whole height of the tree. Thats
+  also not how real trees work."
+- "the leafage on these trees looks too blocky and the tan oak is literally
+  squares for leaves. I do like the skeletons (trunks/branches)."
+
+`tools/blender/grown.py` holds the builders; a pack imports them rather than
+growing its own. **Order:** study the photographs and say what the structure is,
+then trunk, limbs, foliage.
+
+- **Wood tapers all the way** (`girth`): 0.57 of the foot at mid-height, nothing
+  at the tip, a small root flare. A limb thins too, and thinner higher up.
+- **No filler.** There is no core, lump or cloud in a crown. Foliage is only on
+  limbs, with air between, sky through the crown and the trunk seen inside it.
+  Too thin means more or better placed foliage, never a mass.
+- **Foliage is thin points.** `needle_spray`: a stem of paired pointed leaflets,
+  swept forward, sagging, dark at the root and light at the tip. `leaf_cluster`:
+  a twig's end of long pointed leaves. Rejected on the way, each by the owner or
+  beside the photographs: stacked skirts (plates on a pole), tube boughs (a
+  fishbone), a solid core (the first complaint), flat lumps and shelves
+  (hexagon plates), toothed fronds (big flat leaves from the tee).
+- **Seen from both sides**: such a family goes in vegetation.js `THIN_LEAVES`,
+  which is why a spray need not be a closed shape.
+- **Judge it in the game, close, from where a golfer stands.** A contact sheet
+  flatters blocks: round 14 looked right on the sheet.
+
+**Still owed the pass:** the other tree packs, when the owner asks.
+
 ## Blender and the graphics card
 
 Blender may use the graphics card without asking (AGENTS.md, the Blender
@@ -332,10 +366,11 @@ any more, are no longer taken.
 (Its broadleaf trees were reworked silhouette first on 2 November 2026:
 *The silhouette pass on the packs before the goal*, below.)
 
-`tools/blender/cartoon_redwood.py`, the Giant Redwood's forest in the
-overhaul's hand: `Blender_Redwood_*` (a fluted, flared red column bare for
-two-thirds of its height, a ragged crown of drooping tiers and clumps),
-`Blender_Fir_*`, `Blender_Hemlock_*` (feathery, a drooping leader),
+`tools/blender/cartoon_redwood.py`, the Redwood Coast's forest, rebuilt on 5
+November 2026 (*Built as it grows*; logs in tools/blender/logs): `Blender_Redwood_*`
+(a tapering fluted trunk bare for a third of its height or more, the third an old
+tree barer still), `Blender_YoungRedwood_*` (foliage from low on the trunk),
+`Blender_Fir_*`, `Blender_Hemlock_*` (limbs sweeping up; hanging, a nodding leader),
 `Blender_RedCedar_*` (a buttressed fluted foot, long drooping sprays),
 `Blender_Tanoak_*`, `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
 `Blender_Salal_*` and `Blender_Sorrel_1`. `fluted_trunk` pleats a trunk into

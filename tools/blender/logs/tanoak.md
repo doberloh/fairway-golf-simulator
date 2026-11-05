@@ -11,3 +11,9 @@ One line a round: what was wrong beside the reference pictures, and what changed
 - r7: silhouette 6, final summer: the taller cap narrows the top a little; holds -- a tall, narrow, ragged column of olive leaf shelves on a straight leader with upswept limbs, trunk bare below a quarter of the height. Tanoak_1 and _2 1,896 tris each (were 1,991). Next: far round.
 - r8: far round 1: twins 330 tris (old 543) keep the outline, but their 20-face lobes sit inside the full lobes' outline, so the column looks thinner and gappier at a distance. Next: the twin's lobes 1.15x bigger.
 - r9: far round 2: twin lobes 1.15x fill the column out to the full model's outline at 330 tris (old twins 543). Final.
+- r13: r20: the owner on trees as balls: rebuilt as it grows, a tapered stem, limbs forking into branches, small separate clusters of leaves with trunk and sky between; the clumps on limbs are gone.
+- r14: r21: r20's clusters sat in a few big plates at the branch ends: many small clusters strung along forking branches (grown.py broadleaf).
+- r15: r22: fuller: more limbs and clusters, closer to the photographs' dense irregular crown.
+- r16: r23: the owner: literally squares for leaves. Clusters of long pointed leaves on the twigs.
+- r17: r24: leaves right; crown thin beside the photographs: more clusters.
+- r18: r25: far twin cut.

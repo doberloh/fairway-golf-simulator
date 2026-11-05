@@ -315,14 +315,22 @@ const TRAITS = {
  // The landform is PNW's, deliberately: the owner asked for the same country,
  // and the difference should be what grows on it.
  redwood: {light: {shade: '#6f8f98'},
-  longGrass: {families: [['grasssedge', 1, .5]], count: 2000, near: 25, leaf: '#3e5a32', accent: '#6c7d45'},
+  // No long grass: the courses here are mown clean to the trunks (Northwood).
+  longGrass: null,
   farForest: {cover: .95, size: 12, colors: ['#26432a', '#2f4f2e', '#3a5a33']},
   bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
-  // Forty-six metres to 380 FEET. A coast redwood is the tallest living thing
-  // there is, and at the usual 13-to-29 it is just a pine with a dark tint --
-  // the height is most of what makes the grove. The floor stays low so a grove
-  // is a spread of ages rather than a field of identical giants.
-  canopy: {min: 46, range: 69.8}, farCanopy: {min: 42, range: 73.8},
+  // THE REDWOOD COAST AS IT IS (the owner, 5 November 2026, with photographs of
+  // Northwood: "kind of a fantasy biome"). This was 42-116 m, every tree the
+  // height of the tallest one alive. A mature redwood is normally 60-100 m and
+  // Northwood's survey tops out at 74 (RESEARCH, *The Redwood Coast, grounded*),
+  // so the canopy is 30-75 m (PLACED), with the young trees under it their own
+  // kind, and a heavy old tree the rare top of it rather than the rule.
+  canopy: {min: 32, range: 43}, farCanopy: {min: 30, range: 45},
+  // Thousands of tall crowns: every tier swaps these to their far twins by the time
+  // a crown fills a third of the screen height, about 270 m for a 75 m tree (the
+  // renderer takes the larger of this and the tier's own line). High and Ultra's
+  // own lines would keep 8,000-triangle trees to the far side of the property.
+  farPaintedFrom: .34,
   crownShare: .55,
   // 3.8, down from the 5.5 this started at. Measured at 5.5: 12.3 tall
   // conifers per hectare, and the median tree's crown overlapped its
@@ -331,29 +339,45 @@ const TRAITS = {
   treeDensity: 3.8,
   waterTint: '#2c5450', waterMurk: .3,
   // Fewer blades, more of everything low and wet.
-  scatter: {rocks: 300, grass: 90000, tufts: 2000, tallGrass: false,
+  // `noFloor`: no eye-level ferns and sticks out in the open: a course here is mown
+  // clean to the trunks (the understory stands in the woods, `stands.under`).
+  scatter: {rocks: 40, grass: 90000, tufts: 0, tallGrass: false, noFloor: true,
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
-  deadfall: 520,
+  deadfall: 90,
   rockStyle: 'angular', rockMoss: '#4c6a3a',
   // Mossy outcrops in the grove; duff under the giants plays as pine straw.
   landform: {type: 'crags', scale: 180, height: 16, steps: 2, from: .6, to: .95, cluster: .62, reach: 80,
    kinds: {a: 'rock'}, gates: {a: {near: 14, ramp: 16}}},
-  fallen: {from: ['redwood', 'fir', 'hemlock', 'redcedar'], kind: 'pinestraw'},
+  fallen: {from: ['redwood', 'youngredwood', 'fir', 'hemlock'], kind: 'pinestraw'},
+  // The woods the owner's photographs are made of: redwood in dark green walls
+  // down each fairway, in the rings of stems a redwood sprouts from its roots
+  // (`clump`: stems round a redwood, metres out, PLACED). Spacing and shares
+  // PLACED, measured on Low (TODO *Performance pass*).
+  stands: {edge: 44, wobble: 18, ramp: 16, patch: .3, scale: 220, near: 30, spacing: 10, share: .72, grow: 1,
+   under: {spacing: 7, plants: [['swordfern', .6], ['salal', .25], ['pacificrhododendron', .15]]},
+   plants: [['redwood', .5], ['youngredwood', .3], ['fir', .1], ['tanoak', .05], ['baylaurel', .05]]},
+  clump: {kinds: ['redwood', 'youngredwood'], chance: .55, stems: [2, 5], ring: [3, 6.5]},
   // EVERY PLANT HERE IS GROWN, not imported -- see tools/grow.mjs. That let
   // the mix become a real forest rather than three species: giants, the firs
   // and hemlocks between them, a cedar and tanoak mid-storey, seedlings, and
   // a floor of sword fern, salal and sorrel. The third number is a height
   // scale, which is how the understorey stays under the canopy.
-  plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
-   ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
-   ['swordfern', .15], ['salal', .08], ['sorrel', .06],
+  // Redwood first, Douglas fir its usual neighbour, and the hardwoods under
+  // and beside them (RESEARCH). Tanoak, bay and madrone stand 8-23 m, big-leaf
+  // maple 11-27, as the third numbers make them on this canopy.
+  // The floor plants are the woods' (`stands.under`): out on a course the mown
+  // grass runs clean to the trunks (Northwood's photographs), so they are a
+  // trace here.
+  plants: [['redwood', .39], ['youngredwood', .24], ['fir', .11, .8], ['hemlock', .02, .6],
+   ['tanoak', .06, .28], ['madrone', .02, .26], ['bigleafmaple', .02, .36], ['seedling', .01, .067],
+   ['swordfern', .01], ['salal', .01], ['sorrel', .01],
    // Redwood Coast's own (the US landscapes goal's Pacific pack): bay
    // laurel in the mid-storey (8-25 m of the grove's 42-116), Pacific
    // rhododendron and Douglas iris on the floor. Weights PLACED, taken from
    // the floor's fern, salal and sorrel (generator 61: the list summed to
    // 1.04 and the open pick, cumulative, never reached the iris).
-   ['baylaurel', .04, .2], ['pacificrhododendron', .03], ['douglasiris', .02]]},
+   ['baylaurel', .08, .3], ['pacificrhododendron', .01], ['douglasiris', .01]]},
  northeast: {light: {shade: '#9a7fa6'},
   longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.2]], count: 3500, near: 22, leaf: '#a38a4c', accent: '#c96d36'},
   // Round 3 of the far landscape: a few of the far woods evergreen (6%; pine and
@@ -429,7 +453,7 @@ const PALETTES = {
  links:{name:'Links',title:'North Sea Links',tag:'Golden fescue, dunes, and Atlantic light.',rough:'#a89d65',semi:'#7e9050',fairway:'#6d9149',fringe:'#91a75b',green:'#acbd73',tree:'#89945e',sky:'#c8d7df',sand:'#e9dcb7',water:'#436e80',rock:'#8b8977',altitude:15,temperature:14,treeKind:'shrub',sun:23},
  midwest:{name:'Midwest',title:'Prairie Run',tag:'Parkland oaks beneath an endless sky.',rough:'#69783b',semi:'#50803d',fairway:'#599743',fringe:'#83a451',green:'#a0be6a',tree:'#46732f',sky:'#b8d7e9',sand:'#e8ddc3',water:'#41766a',rock:'#83846c',altitude:230,temperature:22,treeKind:'oak',sun:39},
  florida:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
- redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
+ redwood:{name:'Redwood Coast',title:'Russian River',tag:'Tall dark walls of redwood. Green valley floors and wet air.',rough:'#5a7f40',semi:'#537f3c',fairway:'#5a8c46',fringe:'#62964a',green:'#7ba452',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
  northeast:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
  // Altitude is Lake Michigan's surface, about 177 m; 23 C a July evening on
  // its south-east shore. `sun` 20 is a long warm evening rather than the true
@@ -1080,9 +1104,12 @@ const TERRAIN = {
  // Puget Sound: drumlins, the ice's long north-south hills, and kettles.
  puget: {landform: {type: 'glacial', hummock: 13, hummockX: 170, hummockZ: 800, cell: 260, chance: .3, radius: [30, 70], size: [4, 9], esker: 300, eskerHeight: 0, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(8, 10)}}, hills: {base: 26, severity: 40, reach: 70}},
- // The Redwood Coast: young, steep, sliding ridges cut by narrow gorges.
- redwood: {landform: {type: 'channels', scale: 280, width: .05, wall: .85, depth: 30, table: 10, branches: .85, rim: .6, bare: .07, reach: 85,
-  kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}, hills: {base: 50, severity: 110, reach: 80}},
+ // The Redwood Coast: a river's terraces, low and soft, where the courses lie
+ // and the redwoods grow tallest. The young, steep ridges of the Coast Ranges
+ // stand behind them as the ring; the gorges and rock this had before put a
+ // canyon under every hole.
+ redwood: {landform: {type: 'steps', scale: 420, height: 7, steps: 2, riser: .16, from: .3, to: .85, ledge: 0, reach: 70,
+  kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}, hills: {base: 22, severity: 26, reach: 75}},
  // The Cross Timbers: low sandstone cuestas, one side steep, on rolling
  // ground, the prairie's grass between them.
  crosstimbers: {landform: {type: 'steps', scale: 460, height: 8, steps: 2, riser: .16, from: .34, to: .8, ledge: .24, drift: .56, reach: 70,

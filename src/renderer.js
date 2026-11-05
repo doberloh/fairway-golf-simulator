@@ -1176,7 +1176,7 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
-  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:this.quality.farPainted??0});
+  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0)});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);

@@ -70,7 +70,7 @@ export const GROUND_PLANTS = new Set([
 // out 19% as wide as it is tall, a douglas fir 34%, a cedar 37%. Halve for a
 // half-width. Broadleaves are absent on purpose -- they carry their spread in
 // `t.r` like every other pack model.
-const CROWN_FRACTION = {redwood: .095, fir: .17, hemlock: .17, redcedar: .19};
+const CROWN_FRACTION = {redwood: .13, youngredwood: .165, fir: .17, hemlock: .17, redcedar: .19};
 export const crownFraction = kind => CROWN_FRACTION[kind] || 0;
 export const crownRadius = tree => CROWN_FRACTION[tree.kind] ? CROWN_FRACTION[tree.kind] * tree.h : tree.r;
 
@@ -95,6 +95,9 @@ export const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mang
  // Texas's and the deserts' (PLACED within their specs).
  afghanpine:[10,18,3.5,5],africansumac:[6,10,4,6],ashejuniper:[5,8,3,4.5],postoak:[9,14,4,6],pecan:[22,32,8,12],cedarelm:[11,16,4,6],osageorange:[9,13,4.5,6],redbud:[5,8,3.5,5],joshuatree:[5,9,2,3.5],fanpalm:[14,20,2,3],datepalm:[10,17,3,4.5],aleppopine:[10,15,4.5,6],tamarisk:[4.5,7,2.5,3.5],smoketree:[4,6,2.5,3.5],soaptreeyucca:[3.5,6,1,1.5],desertwillow:[5,8,2.5,4],emoryoak:[7,11,4,5.5],alligatorjuniper:[8,12,4,6],
  // The South's (PLACED within their specs).
+ // The Redwood Coast's young redwoods (the owner's Northwood; PLACED, the survey's
+ // lower canopy under the 30-75 m of grown trees).
+ youngredwood:[12,35,2,6],
  longleafpine:[22,32,4,6],loblollypine:[20,30,5,7],slashpine:[18,26,5,7],cabbagepalm:[9,15,2.5,3.5],liveoak:[12,17,12,16],liveoakmoss:[13,17,12,16],baldcypress:[20,32,4,6],blackjackoak:[6,10,3,4],turkeyoak:[6,10,3,4],watertupelo:[18,26,4,6],magnolia:[14,20,5,7],tulippoplar:[28,40,5,8],sweetgum:[18,28,5,7],floweringdogwood:[5,8,4,5],crapemyrtle:[4,7,2,3],citrustree:[4.5,6.5,2,2.5],kudzu:[9,13,6,8]};
 // The tall kinds the table above does not list: [lowest, span] in metres, before
 // the landscape's own scale. Anything else stands as the landscape's far canopy.

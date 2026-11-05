@@ -35,7 +35,6 @@ test('a stand is planted thick, back from play, on ground that holds a tree', ()
 });
 
 test('a landscape without a stand plants none, nor does the range', () => {
- assert.equal(build('redwood').trees.filter(t => t.stand).length, 0);
  assert.equal(standsOf({}, 'x'), null);
  const range = generateWorld({seed: 'stand', biome: 'puget', holes: 1, range: true, trees: 60});
  assert.equal(range.trees.filter(t => t.stand).length, 0);
@@ -80,6 +79,7 @@ test('every landscape grows long grass from families that exist', async () => {
  const {familyModels} = await import('../src/mesh-assets.js');
  for (const [key, bio] of Object.entries(BIOMES)) {
   const g = bio.longGrass;
+  if (key === 'redwood') { assert.equal(g, null, 'mown clean to the trunks, as Northwood is'); continue; }
   assert.ok(g, `${key} grows no long grass`);
   assert.ok(g.count > 0 && g.near >= 10, `${key}: count ${g.count}, near ${g.near}`);
   for (const [family, weight, height] of g.families) {

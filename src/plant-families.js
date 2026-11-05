@@ -16,7 +16,7 @@ export const FAMILY_OF = {
  // foliage in one model -- so nothing is borrowed and nothing is drawn.
  // `redcedar` rather than `cedar` because Pacific Northwest plants `cedar` and
  // must keep its Kenney conifer.
- redwood: 'redwood', fir: 'dougfir', hemlock: 'hemlock',
+ redwood: 'redwood', youngredwood: 'youngredwood', fir: 'dougfir', hemlock: 'hemlock',
  redcedar: 'redcedar', tanoak: 'tanoak', seedling: 'seedling',
  swordfern: 'swordfern', salal: 'salal', sorrel: 'sorrel',
  // The cartoon overhaul's broadleaves (tools/blender/cartoon_broadleaf.py), one

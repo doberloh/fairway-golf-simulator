@@ -23,6 +23,7 @@ import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
 import cartoon as ct
+from grown import broadleaf
 
 
 def drift(rng, amount):
@@ -385,16 +386,36 @@ def douglasiris(height, spread):
     return build
 
 
+# Built as they grow (grown.py); these were balls on a trunk. The bigleaf maple
+# broad and open from a short stem, the madrone leaning, smooth-limbed and airy.
+BIGLEAF = dict(stem=.72, foot=.034, first=.22, limbs=13, sweep=.8, branches=4, clusters=4, size=.15, leaves=6)
+MADRONE = dict(stem=.8, foot=.03, first=.2, limbs=11, sweep=.85, branches=4, clusters=4, size=.14, leaves=6)
+
+
+def grown_broadleaf(height, width, c):
+    def build(mesh, rng):
+        broadleaf(mesh, rng, height, width * .5, c)
+    return build
+
+
+def grown_bay(height, width):
+    """A bay laurel built as it grows (grown.py): a dome from low on the stem,
+    limbs climbing steeply, many small clusters. It was balls on a trunk."""
+    def build(mesh, rng):
+        broadleaf(mesh, rng, height, width * .5, dict(stem=.82, foot=.03, first=.14, limbs=13, sweep=.95, branches=4, clusters=4, size=.13, leaves=6))
+    return build
+
+
 MODELS = [
-    ('Blender_Madrone_1', madrone(14, 13.5, 3)),
-    ('Blender_Madrone_2', madrone(11, 11, 2)),
+    ('Blender_Madrone_1', grown_broadleaf(16, 12, MADRONE)),
+    ('Blender_Madrone_2', grown_broadleaf(13, 10, MADRONE)),
     ('Blender_GarryOak_1', garryoak(15, 18.5, 5)),
     ('Blender_GarryOak_2', garryoak(12, 15, 6)),
-    ('Blender_BigleafMaple_1', bigleafmaple(22, 19.5)),
-    ('Blender_BigleafMaple_2', bigleafmaple(18, 15)),
+    ('Blender_BigleafMaple_1', grown_broadleaf(24, 19, BIGLEAF)),
+    ('Blender_BigleafMaple_2', grown_broadleaf(20, 16, BIGLEAF)),
     ('Blender_PacificDogwood_1', dogwood(9, 7)),
-    ('Blender_BayLaurel_1', baylaurel(15, 13, 3)),
-    ('Blender_BayLaurel_2', baylaurel(11, 10, 2)),
+    ('Blender_BayLaurel_1', grown_bay(15, 11)),
+    ('Blender_BayLaurel_2', grown_bay(12, 9.5)),
     ('Blender_VineMaple_1', vinemaple(4, 5)),
     ('Blender_OregonGrape_1', oregongrape(1.2, 1.0)),
     ('Blender_ScotchBroom_1', scotchbroom(2.0, 2.6)),

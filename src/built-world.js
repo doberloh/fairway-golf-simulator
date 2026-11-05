@@ -322,7 +322,7 @@ export function rockFrom([x, z, size, shape, turn], y) {
 // WHAT A SURVEY DOES MEASURE IS HEIGHT, and a model is scaled to a tree's height
 // with its own proportions kept, so a smoke tree standing 15 m is a bush the size
 // of a house (`fitsHeight`; RESEARCH, *A survey sees a shape, not a species*).
-export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'rmjuniper', 'aleppopine', 'afghanpine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
+export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'youngredwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'rmjuniper', 'aleppopine', 'afghanpine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);

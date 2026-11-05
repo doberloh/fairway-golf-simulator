@@ -26,7 +26,7 @@
 
 export const REGIONS = {
  pnw: 'Pacific Northwest',
- redwood: 'Giant Redwood',
+ redwood: 'Redwood Coast',
  mountain: 'Mountain West',
  highdesert: 'High Desert',
  desert: 'Desert Southwest',

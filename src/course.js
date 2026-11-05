@@ -2497,6 +2497,26 @@ export function* generateWorldSteps(settings={},options={}){
   }
   return true;
  };
+ // A REDWOOD'S RING OF STEMS (the owner's photographs of Northwood; biomes.js
+ // `clump`): the stems a redwood sprouts from its roots, a few metres out and a
+ // little shorter, their crowns sharing the air but never their trunks. Hashed
+ // from where the tree stands, so no stream moves and no other landscape does.
+ const clumpRound=(t,n)=>{
+  const c=bio.clump;if(!c||!c.kinds.includes(t.kind))return;
+  const u=k=>{const v=Math.sin(t.x*12.9898+t.z*78.233+k*37.719)*43758.5453;return v-Math.floor(v);};
+  if(u(0)>c.chance)return;
+  const stems=c.stems[0]+Math.floor(u(1)*(c.stems[1]-c.stems[0]+1)),a0=u(2)*Math.PI*2;
+  for(let k=0;k<stems;k++){
+   const a=a0+k/stems*Math.PI*2+(u(3+k)-.5)*.7,d=c.ring[0]+u(10+k)*(c.ring[1]-c.ring[0]),x=t.x+Math.cos(a)*d,z=t.z+Math.sin(a)*d;
+   if(Math.abs(x)>halfX||Math.abs(z)>halfZ||height(x,z)<.8||!allows(surface(x,z),'trees')||builtOn(x,z))continue;
+   const h=t.h*(.72+.26*u(17+k)),stem={x,z,y:height(x,z),h,r:t.r*.8,shade:u(24+k),kind:t.kind,hole:t.hole??n?.h?.hole,stand:true};
+   if(blocksLaunch(launch,x,z,stem.y,stem.y+h,trunkGirth(stem)+1.2)||inTeeFan(fans,x,z,trunkGirth(stem))||onLip(stem))continue;
+   // The crowns close over a ring; only the trunks keep apart.
+   if(!roomFor(stem,0))continue;
+   const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(stem);
+   trees.push(stem);
+  }
+ };
  // The drawn trunk radius, which physics also uses. Kept local rather than
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
@@ -2630,6 +2650,7 @@ export function* generateWorldSteps(settings={},options={}){
   if(onLip(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
+  clumpRound(tree,n);
  }
  // UNCLEARED STANDS (stands.js; the cartoon overhaul): the woods round the
  // property and between the holes that were never cut, planted densely from
@@ -2663,6 +2684,7 @@ export function* generateWorldSteps(settings={},options={}){
    if(!small&&(onLip(tree)||!roomFor(tree,stands.share)))continue;
    if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
    trees.push(tree);
+   clumpRound(tree,n);
   }
   // THE UNDERSTORY (the owner: THICK brush): shrubs and ferns under a stand,
   // from a grid of their own (`under.spacing`, its own salt), about one in

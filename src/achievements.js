@@ -30,7 +30,7 @@ export const ACHIEVEMENTS = [
  {id: 'par3-sweep', name: 'Par-3 Sweep', how: 'Birdie every par 3 in a round.', xp: 200},
  {id: 'beat-the-index', name: 'Beat the Index', how: 'Finish a round under your sim handicap.', xp: 150},
  {id: 'night-owl', name: 'Night Owl', how: 'Finish a round under the floodlights.', xp: 100, title: 'Night Owl'},
- {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round in Giant Redwood.', xp: 75, title: 'Fog Walker'},
+ {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round on the Redwood Coast.', xp: 75, title: 'Fog Walker'},
  {id: 'globetrotter', name: 'Globetrotter', how: 'Finish a round in nine different landscapes.', xp: 250, title: 'Globetrotter', progress: 'biomes', goal: 9},
  {id: 'centurion', name: 'Centurion', how: 'Finish 100 rounds.', xp: 300, title: 'Centurion', progress: 'rounds', goal: 100},
  {id: 'streak', name: 'Streak', how: 'Finish the course of the week four weeks running.', xp: 150, progress: 'streak', goal: 4},
