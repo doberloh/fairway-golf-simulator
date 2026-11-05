@@ -3488,7 +3488,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // Anchored to the water level, which is where fog actually pools: terrain is
    // generated around this height whatever the biome's nominal altitude says,
    // so a hollow fills and a ridge stands clear of it.
-   u.mistBase.value=this.world.waterLevel;
+   // A built course on high ground with no sea has none of that near its
+   // ground: its haze and hollows start from the land (built-world.js skyBaseOf).
+   u.mistBase.value=this.world.bio.sea?this.world.waterLevel:this.world.skyBase??this.world.waterLevel;
    u.mistTime.value=this.elapsed;
    // The air (U4): the horizon's colour, the sun's colour toward the sun, and
    // how strongly, from the Graphics panel's "Distance haze". Weather off

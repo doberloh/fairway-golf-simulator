@@ -1357,6 +1357,19 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### Built courses at their real height (4 November 2026)
+
+The owner saw Bully Pulpit's clouds inside the ground. A generated course sits
+round height 0, and clouds (640 m), the haze's floor (the water level) and a
+mountain landscape's rock line, snow line and far treeline were fixed heights. A
+survey keeps its real one: Bully Pulpit's ground is 690-784 m, Breckenridge's
+2,809-2,896 m, Scottsdale's 455-479 m, against clouds at about 575-705 m and
+below. On Breckenridge the snow line (550-750 m) should have turned its ground
+white too: worked out from the shader, not seen. `world.skyBase` (built-world.js `skyBaseOf`) is
+now what those measure from; a generated course has none and is unchanged.
+Drawing only, so no `BUILT_VERSION`. Not seen in the game. Left alone: the
+beach and wet-sand lines, which belong to a real sea at height 0.
+
 ### Game view (4 November 2026)
 
 The owner: "go from the 3d preview to actual in game graphics and back again in

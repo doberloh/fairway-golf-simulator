@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import {changeMark, sameMark, poseFrom, samePose, clearOfGround, flyAxes, EYE_OVER_GROUND} from '../src/builder/game-look.js';
 import {createEditor} from '../src/builder/editing.js';
 import {validateDoc} from '../src/course-doc.js';
-import {worldFromDoc} from '../src/built-world.js';
+import {worldFromDoc, skyBaseOf} from '../src/built-world.js';
+import {cloudAltitude} from '../src/clouds.js';
 
 const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
@@ -64,6 +65,21 @@ test('the course it draws is the editor\'s, at the chosen season', () => {
  assert.equal(w.settings.season, 'winter');
  assert.equal(w.surface(30, 0), 'sand');
  w.settings.season = 'spring'; assert.equal(w.settings.season, 'spring', 'a season changes on the same world');
+});
+
+test('a built course\'s sky stands over its own ground, however high', () => {
+ const land = (fill, top = fill) => { const h = new Float32Array(10000).fill(fill); h[5000] = top; return h; };
+ assert.equal(skyBaseOf(land(699, 784)), 699, 'Bully Pulpit: the land\'s middle');
+ assert.equal(cloudAltitude({skyBase: skyBaseOf(land(699, 784))}), 1339, 'clouds 640 m over it');
+ assert.ok(cloudAltitude({skyBase: skyBaseOf(land(2833, 2896))}) > 2896 + 300, 'Breckenridge');
+ assert.equal(skyBaseOf(land(100, 900)), 450, 'a peak far over the middle lifts them clear of it');
+ assert.ok(cloudAltitude({skyBase: 450}) - 120 > 900);
+ assert.equal(cloudAltitude({}), 640, 'a generated course is as it was');
+ assert.ok(worldFromDoc(doc()).skyBase === 100);
+ const shader = fs.readFileSync('src/ground.js', 'utf8');
+ assert.match(shader, /smoothstep\(550\.,750\.,groundPoint\.y-heightBase\)/, 'the snow line');
+ assert.match(shader, /farLine\+40\.,groundPoint\.y-heightBase/, 'the treeline');
+ assert.match(shader, /heightBase: \{value: w\.skyBase \?\? 0\}/, 'nothing moves on a generated course');
 });
 
 test('Game view holds no editing: it never touches the editor or saves a setting', () => {

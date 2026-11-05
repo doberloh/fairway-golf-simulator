@@ -274,6 +274,22 @@ export function builtHomes(doc, height, nearest) {
 }
 
 // --------------------------------------------------------------- the trees
+// WHERE A BUILT COURSE'S GROUND IS (the owner, 4 November 2026: "the clouds are
+// INSIDE the ground on the bully pulpit course ... Maybe has something to do
+// with course elevation?"). A generated course is built round height 0, and the
+// game's clouds, haze, snow line and treeline were written for that. A survey
+// stands at its real height: Bully Pulpit about 700 m, Breckenridge 2,830 m,
+// where the 640 m clouds lay 2 km underground and a mountain landscape's ground
+// was all snow. This is the height those measure from: the land's middle, or
+// higher where the land rises so far above its middle that clouds would touch
+// it (PLACED: 450 m under the top, as clouds' undersides start about 120 m below
+// their level). Drawing only: no ball meets it, so no `BUILT_VERSION`.
+export function skyBaseOf(heights) {
+ const every = Math.max(1, Math.floor(heights.length / 40000)), list = [];
+ for (let k = 0; k < heights.length; k += every) list.push(heights[k]);
+ list.sort((a, b) => a - b);
+ return Math.max(list[list.length >> 1], list.at(-1) - 450);
+}
 // A STONE PAINTED IN THE EDITOR (builder/cover.js; course-doc.js `rocks`) as
 // the generator records one (course.js), so it draws and stops a ball the same
 // way: `size` across, a shade less deep than wide and two-thirds as tall as
@@ -472,7 +488,7 @@ export function worldFromDoc(doc, settings = {}) {
  const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], walls: [], wallBoxes: [],
   storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: (doc.rocks || []).map(q => rockFrom(q, height(q[0], q[1]))), props: [], paths: [], bridges: [], markers: [], wear: [], streams,
   footprint: null, groundGrid, groundCover: (x, z) => { const g = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null; return g === 'pinestraw' || g === 'litter' ? 'straw' : bio.cover; }, straw: [], blowouts: null, wild: null, fallenField: null, surfaceField: null, landform: null,
-  settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,
+  settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, skyBase: skyBaseOf(doc.land.heights), height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,
   land: height, seed: s.seed, ecology: bio.plants.map(([kind]) => kind),
   builtWater: (doc.water || []).map(w => ({rings: w.rings, level: w.level, kind: w.kind})),
   builtOutlines: doc.surfaces};

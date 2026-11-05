@@ -78,6 +78,9 @@ function wildUniforms(w, hasWild, hasFallen) {
   // the record): 0 out of bloom, and the drift below costs one comparison.
   bloomOn: {value: w.bio?.bloom?.amount ?? 0}, bloomA: {value: c3(w.bio?.bloom?.colours[0])}, bloomB: {value: c3(w.bio?.bloom?.colours[1])},
   ...strataUniforms(biomeOf(w.settings.biome).strata),
+  // Where this course's ground is, for what is painted by height: a built
+  // course stands at its real height (built-world.js skyBaseOf).
+  heightBase: {value: w.skyBase ?? 0},
  };
 }
 // BANDED STRATA (the Badlands, 3 November 2026; biomes.js `strata`): a
@@ -374,7 +377,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
  uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
- uniform float litterVary;uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
+ uniform float heightBase;uniform float litterVary;uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  uniform float bloomOn;uniform vec3 bloomA,bloomB;
  uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
@@ -622,7 +625,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mowStart=holeTexel(2.,row).x;float start=mowStart-margin,end=info.x+8.+margin;
  vec2 outerCurve=outerAt(p.y,row);float outerWidth=p.x<curve.x?outerCurve.x:outerCurve.y;
  float kind=0.;vec3 turf=tint_rough;float stripeFade=1.;float wildTop=0.;
- if(altitudeRock>.5){turf=mix(turf,rock,smoothstep(50.,160.,groundPoint.y)*.65);turf=mix(turf,vec3(.84,.9,.94),smoothstep(550.,750.,groundPoint.y));}
+ if(altitudeRock>.5){turf=mix(turf,rock,smoothstep(50.,160.,groundPoint.y-heightBase)*.65);turf=mix(turf,vec3(.84,.9,.94),smoothstep(550.,750.,groundPoint.y-heightBase));}
  if(speckleRock>.5)turf=mix(turf,rock,.18+.1*sin(wp.x*.015)*sin(wp.y*.02));
  // Pine straw used to be painted here, over the rough, as a look only. Since
  // the cartoon overhaul it is a played ground (pinestraw or leaves), painted
@@ -1407,7 +1410,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    float n00=patchN,n10=fract(sin(dot(floor(wp/380.)+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
    float n01=fract(sin(dot(floor(wp/380.)+vec2(0.,1.),vec2(12.9898,78.233)))*43758.5453),n11=fract(sin(dot(floor(wp/380.)+vec2(1.,1.),vec2(12.9898,78.233)))*43758.5453);
    float broad=mix(mix(n00,n10,pf.x),mix(n01,n11,pf.x),pf.y);
-   float mask=smoothstep(0.,40.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y));
+   float mask=smoothstep(0.,40.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
    // No forest on a cliff: the pattern is laid from above and stretches into
    // scales on steep ground, and real woods stop at the rock anyway.
    // Round 6 of the far landscape: on the far ring the facets are hundreds of
@@ -1458,5 +1461,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v73';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v74';return m;
 }

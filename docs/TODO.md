@@ -125,6 +125,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     tools/capture's `autumn-*` shots (gallery, clips) need the same.
   - **Ground cover in the 2D editor** and **Fill to surrounding** in the 3D one:
     built the same way, not seen.
+  - **Built courses at their real height**: Bully Pulpit's clouds over the land,
+    its haze, and Breckenridge's turf no longer snow; the ground shader changed,
+    so a frame check on a generated course (nothing should move) is owed.
   - **Game view**: never run. Press it on a small course and a big 18: does the
     picture come up, does it open at the editor's spot, is flipping instant, how
     long is the first look and a look after an edit, does the bar work, does the
