@@ -60,6 +60,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   tool = t; draft = []; rampA = null; view.draft([]); view.setToolActive(t.kind !== 'navigate');
   if (t.kind !== 'sizeTree') { unpick(); view.cursor(null); }
   if (t.kind !== 'select') choose(null);
+  // Only what the tool in hand uses (`data-for`; the owner, 4 November 2026).
+  for (const n of tools.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(t.kind);
   for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t));
   status.textContent = HINT[t.kind]?.(t) ?? '';
   canvas.style.cursor = '';
@@ -186,12 +188,12 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  }
  const buildTools = () => tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
-   button('Move', {kind: 'navigate'}),
+   button('Move', {kind: 'navigate'}), button('Select shape', {kind: 'select'}),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'From above'),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'This hole'),
    el('button', {class: 'cb-btn', type: 'button', onclick: undo}, 'Undo'),
    el('button', {class: 'cb-btn', type: 'button', onclick: redo}, 'Redo'))),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Brush'),
+  el('div', {class: 'cb-group', 'data-for': 'shape paint erase plant clear clearHomes bunker creek cover clearCover'}, el('b', {}, 'Brush'),
    range('Size', 1, 60, 1, radius, v => { radius = v; }), range('Strength', .05, 1, .05, strength, v => { strength = v; })),
   el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
   el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint'),
@@ -199,15 +201,16 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons(),
-   el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax)),
+   el('label', {'data-for': 'cover'}, 'Smallest ', coverMinText, coverMin), el('label', {'data-for': 'cover'}, 'Largest ', coverMaxText, coverMax)),
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
-   button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Select shape', {kind: 'select'})),
-   el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
-   el('label', {}, 'Tree height ', scaleText, treeScale),
-   el('div', {class: 'cb-btns', style: 'margin-top:4px'}, button('Size a tree', {kind: 'sizeTree'})),
-   el('label', {}, 'This tree ', oneText, oneTree)),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Water and sand'), el('div', {class: 'cb-btns'},
+   button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}))),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Trees'), el('div', {class: 'cb-btns'},
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('Size a tree', {kind: 'sizeTree'})),
+   el('button', {class: 'cb-btn', type: 'button', style: 'width:100%', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
+   el('label', {title: 'Every tree on the course together'}, 'Every tree\'s size ', scaleText, treeScale),
+   el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree)),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Houses'), el('div', {class: 'cb-btns'}, button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}))),
  );
  buildTools();
 

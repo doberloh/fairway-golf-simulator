@@ -618,9 +618,7 @@ the file to anyone else who has Fairway. It opens on three doors.
      an outline at the density set below (never on fairway, greens, tees,
      sand, water or path), **Clear trees** takes them away under the brush,
      **Ground cover** paints the landscape's rocks, mixed bushes or flowers on
-     open ground, with what it lays, its smallest and largest sizes and how
-     thick it lies set in the panel, and **Clear cover** takes them off, as in
-     the 3D editor,
+     open ground, and **Clear cover** takes them off, as in the 3D editor,
      **House** stands a house where clicked facing the nearest fairway, green
      or tee, **House zone** lines an outline with houses 42 m apart (each on
      open ground), **Clear houses** takes them away under the brush,
@@ -701,19 +699,22 @@ the file you chose; other browsers download a new copy each time.)
 **The editor** looks like the course's landscape -- its sky, its ground
 colours, its trees drawn as the landscape grows them (cones for the
 Puget Sound's pines, the Rockies' spruces and the redwoods; round
-crowns for the oak landscapes, copper and gold in New England; palms on the
+crowns for the oak landscapes; palms on the
 Keys; low spreading trees in the Sonoran; squat shrubs on a links) -- and
 offers only that landscape's own ground types to paint (another landscape
-picked, the tools change with it). **Tree height** scales every tree
+picked, the tools change with it). **Every tree's size** scales every tree
 whole -- taller, wider crowns, thicker trunks -- at once, as you drag, and
 the course is saved at that scale; **Clear trees from tees and greens**
 does what it does in door 2, at the scale set (raise the scale after
 clearing and crowns can reach over a green again; clear once more).
 **Size a tree** picks one tree with a click (it is ringed) and **This
 tree** makes it a quarter to three times the size it was -- taller, wider
-and thicker together; Tree height still applies on top, and Undo puts it
+and thicker together; Every tree's size still applies on top, and Undo puts it
 back. It is the
-same for all three doors, and has the same **Layers**: every
+same for all three doors. Tools are in sections, and an option shows only
+while the tool that uses it is held: the Brush sizes, a tree's size, ground
+cover's sizes, and on door 2's trace step the brush size, tree height and trees
+a hectare, each named. It has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
 with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
 surface on its own layer and covers nothing beneath it. Left-drag moves round the course,

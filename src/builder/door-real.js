@@ -438,6 +438,11 @@ export function open(draft = null) {
   plan.draw();
  }
  st.go = go;
+ const toolSet = (title, keys) => el('div', {class: 'cb-toolset'}, title ? el('b', {}, title) : null, el('div', {class: 'cb-btns'}, ...toolButtons.filter(b => keys.includes(b.dataset.tool))));
+ const toolOption = (keys, ...nodes) => el('div', {class: 'cb-toolopt', 'data-for': keys.join(' ')}, ...nodes);
+ function showToolOptions() { for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); }
+ // GROUND COVER (cover.js): what to lay, its two sizes and how thick. The
+ // sliders push each other along and follow the cover chosen.
  function coverControls() {
   const minText = el('span'), maxText = el('span'), bounds = () => COVER_RANGE[coverNow().key];
   const put = () => { const c = st.coverSizes[coverNow().key], r = bounds(); for (const [input, text, v] of [[minIn, minText, c.min], [maxIn, maxText, c.max]]) { input.min = r.low; input.max = r.high; input.value = v; text.textContent = ` ${v.toFixed(1)} m`; } };
@@ -460,7 +465,7 @@ export function open(draft = null) {
   if (t !== 'align') st.picLocked = true;
   st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); st.outline = [];
   toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t));
-  showModel();
+  showModel(); showToolOptions();
   const lockBtn = toolButtons.find(b => b.dataset.tool === 'align'); if (lockBtn) lockBtn.textContent = st.picLocked ? 'Unlock the picture' : 'Lock the picture';
  }
 
@@ -892,20 +897,25 @@ export function open(draft = null) {
     suggestionLine() ? el('small', {class: 'cb-suggest'}, suggestionLine()) : null,
     landscapeMap(document, {built: BIOME_KEYS, chosen: st.landscape, mark: (c => c && [c.lat, c.lon])(surveyPlace()), onPick: k => { st.landscape = k; st.landscapePicked = true; go(2); }}).el,
     el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))) : null,
-   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'), el('div', {class: 'cb-btns'}, ...toolButtons.slice(0, -1)),
+   // THE TOOLS IN SECTIONS, AND ONLY THE TOOL IN HAND'S OPTIONS (the owner, 4
+   // November 2026: "This is confusing and is always showing"). A tree's height
+   // and a zone's density sat as two unlabelled numbers whatever the tool. Now
+   // each option has its name and shows while its tool is held (`data-for`,
+   // showToolOptions); the banner over the plan says how to use the tool, so
+   // the note on clicking corners went.
+   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'),
+    toolSet(null, ['move']), toolSet('Surfaces', ['brush', 'erase', 'eraseAll', 'outline', 'smooth']), toolSet('Trees', ['tree', 'treeZone', 'treeErase']),
+    toolSet('Ground cover', ['cover', 'coverErase']), toolSet('Houses', ['home', 'homeZone', 'homeErase']), toolSet('Shapes', ['shape', 'turnShape']),
+    toolOption(BRUSHES, el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
+    toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); }}))),
+    toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
+    toolOption(['cover'], ...coverControls()),
     el('small', {}, 'The layer you paint, outline, erase and smooth (Rough takes every layer off)'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); showHint(); showModel(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
     el('small', {}, 'Layers, top first: one higher in the list shows over one lower (sand painted on rough or fairway is sand). The eye hides one from view; the course keeps it.'), layerBox,
     el('small', {}, 'Extrapolate: lay a layer round the one picked above, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),
     el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k)))),
      el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'metres', oninput: e => { st.exWidth = +e.target.value || 4; }})),
     el('button', {class: 'cb-btn', type: 'button', onclick: extrapolateNow}, 'Extrapolate'),
-    el('small', {}, 'Brush size (metres round)'), el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}),
-    // GROUND COVER (cover.js): what to lay, its two sizes and how thick. The
-    // sliders push each other along and follow the cover chosen.
-    ...coverControls(),
-    el('small', {}, 'A tree\'s height, and a zone\'s trees a hectare'),
-    el('div', {class: 'cb-btns'}, el('input', {type: 'number', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; }}), el('input', {type: 'number', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; }})),
-    el('small', {}, 'Outline and Tree zone: click the corners; double-click or Enter closes, Esc drops.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Tidy specks'),
      el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'),

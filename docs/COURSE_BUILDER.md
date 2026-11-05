@@ -1347,6 +1347,15 @@ working**; the model is tested in Node, the page has not been opened.
   **Auto trace and Manual trace still start a new trace** on such a course and
   would replace its layers; not guarded, and not tried.
 - **Rough in the editors** is the landscape's summer rough (seasons.js `GREEN`).
+- **The tools in sections** (the owner, of two bare numbers always on show:
+  "This is confusing and is always showing. Do we need to have a separate Trees
+  section?"). Yes: the 2D tools are grouped Surfaces, Trees, Ground cover,
+  Houses, Shapes, and the 3D editor's Water and trees is split. Each option has
+  its name and shows only while its tool is held (`data-for`): brush size, tree
+  height, trees a hectare, the cover's sizes; in 3D the whole Brush group too.
+  Left always on show in 2D: the layer picker, because a stroke's layer can be
+  changed with any tool in hand and the journeys do, and Extrapolate. The 3D
+  **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
 ## PLACED, and rules the build decided
 
