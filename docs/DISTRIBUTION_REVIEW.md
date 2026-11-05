@@ -1626,6 +1626,12 @@ beyond the owner's rounds on the branches.
 
 ## Addendum, 31 October 2026: Fairway Course Builder (branch, not released)
 
+**4 November 2026: the builder's page carries the game's models** (the
+preview, src/builder/preview.js), so `Fairway Builder.html` grows by about 25
+MB and every zip with it (the same data twice, compressed twice). PLACED: the
+owner asked to see the model; fetching it from the game's page is not possible
+by file://.
+
 The `course-builder` branch adds a **second page to every download**,
 `Fairway Builder.html` (docs/COURSE_BUILDER.md): built single-file by
 `vite.builder.config.js` after the game in `npm run build`, into

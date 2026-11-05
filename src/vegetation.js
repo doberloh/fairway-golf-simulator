@@ -14,7 +14,7 @@ import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
 import {regionOf} from './regions.js';
 import {SEASON_TINTS} from './season-tints.js';
-import {bareInWinter,bloomIn,UNDER_SNOW,dullInWinter,curedInWinter,SNOW_GRASS_HEIGHT} from './seasons.js';
+import {bareInWinter,bloomIn,UNDER_SNOW,dullInWinter,curedInWinter,SNOW_GRASS_HEIGHT,RICH,roughGreen} from './seasons.js';
 import {PALMS} from './built-world.js';
 // The regions with wildflowers in the rough. By region: the list was of
 // landscape keys until 2 November 2026, and the keys' rename (Midwest to
@@ -733,8 +733,12 @@ function addFarWoods(view){
 // the game's warm rough (the first picture), so each is drawn part of the way
 // to the landscape's. PLACED by eye: GRASS_OWN of the family's own.
 const GRASS_OWN=.55;
-export const grassLook=(rec,family,season)=>{const own=SEASON_TINTS[family]?.[season],mix=(a,b)=>new T.Color(b).lerp(new T.Color(a),GRASS_OWN);
- return {leaf:own?.leaf?mix(own.leaf,rec.leaf):new T.Color(rec.leaf),accent:own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent)};};
+// `green`: how far this landscape's rough is green in this season (seasons.js
+// GREEN): the long grass goes with it, at half that, or a green rough stood
+// full of straw tussocks.
+export const grassLook=(rec,family,season,green=0)=>{const own=SEASON_TINTS[family]?.[season],mix=(a,b)=>new T.Color(b).lerp(new T.Color(a),GRASS_OWN),rich=new T.Color(RICH);
+ const leaf=own?.leaf?mix(own.leaf,rec.leaf):new T.Color(rec.leaf);
+ return {leaf:leaf.lerp(rich,green*.5),accent:own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent)};};
 // NO CLUMP A FAN (seen 3 November 2026): a model is scaled by its height, and
 // Blender_TallFescue_2's arching blades barely rise (radius 3.3 times its
 // height): at 0.9 m tall it lay six metres across. Squeezed in to this many
@@ -747,7 +751,7 @@ function addLongGrass(view){
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const season=seasonOfView(view);
- const kinds=rec.families.map(([family,weight,height])=>{const cured=view.snowTops&&!SEASON_TINTS[family]?.winter,look=grassLook(rec,family,season);if(cured){look.leaf=new T.Color(curedInWinter(`#${look.leaf.getHexString(T.SRGBColorSpace)}`));look.accent=new T.Color(curedInWinter(`#${look.accent.getHexString(T.SRGBColorSpace)}`));}return {models:familyModels(family),weight,height:height*(view.snowTops?SNOW_GRASS_HEIGHT:1),look};}).filter(k=>k.models.length);
+ const kinds=rec.families.map(([family,weight,height])=>{const cured=view.snowTops&&!SEASON_TINTS[family]?.winter,look=grassLook(rec,family,season,roughGreen(world.settings.biome,season));if(cured){look.leaf=new T.Color(curedInWinter(`#${look.leaf.getHexString(T.SRGBColorSpace)}`));look.accent=new T.Color(curedInWinter(`#${look.accent.getHexString(T.SRGBColorSpace)}`));}return {models:familyModels(family),weight,height:height*(view.snowTops?SNOW_GRASS_HEIGHT:1),look};}).filter(k=>k.models.length);
  if(!kinds.length)return;
  const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
  const entries=[];
@@ -1106,7 +1110,7 @@ function addNearbyGrass(view){
  // since a clump is many blades. PLACED: the share and the sizes.
  const lg=biomeOf(w.settings.biome).longGrass,clumpModel=lg?familyModels(lg.families[0][0])[0]:null;
  const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
- const clumpLook=lg?grassLook(lg,lg.families[0][0],seasonOfView(view)):null;
+ const clumpLook=lg?grassLook(lg,lg.families[0][0],seasonOfView(view),roughGreen(w.settings.biome,seasonOfView(view))):null;
  const clumpLeaf=clumpLook?.leaf??new T.Color('#8a9150'),clumpAccent=clumpLook?.accent??new T.Color('#d8c27a');
  let clumpMat=null;
  const nearTee=teeFade(w),inCarry=carryFade(w);

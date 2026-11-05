@@ -23,9 +23,11 @@ import {createLayers, LAYER_ORDER} from './layers.js';
 import {facingFrom, turnedCells} from './trace-edit.js';
 import {layerRings} from './real-course.js';
 import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
-import {TREE_STRIDE, CREEK_FIELDS} from '../course-doc.js';
+import {TREE_STRIDE, TREE_ROLES, CREEK_FIELDS} from '../course-doc.js';
 import {clearTrees} from './tree-clear.js';
 import {skinFromHeights, SKIN} from './skin.js';
+import {digBed, levelFrom, shoreOf, BED} from './water-bed.js';
+import {scatterCover, coverAt} from './cover.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
@@ -34,6 +36,9 @@ export const CODE = Object.fromEntries(PAINT.map((k, i) => [k, i]));
 export const RASTER = {cell: .5, maxSide: 4096};
 // A brush's weight at a share `t` of its radius: 1 at the centre, 0 at the edge.
 export const falloff = t => t >= 1 ? 0 : 1 - t * t * (3 - 2 * t);
+// Ground cover stands on open ground only, as a tree does (door 2's rule).
+const COVER_REFUSED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'road', 'semi']);
+const TREE_ROLE_SHRUB = TREE_ROLES.indexOf('shrub');
 
 function rasterSize(ex, ez) {
  const cell = Math.max(RASTER.cell, 2 * Math.max(ex, ez) / RASTER.maxSide);
@@ -86,6 +91,9 @@ export function createEditor(doc) {
   doc, raster: r, land, patches, ex, ez,
   holes: structuredClone(doc.holes), water: structuredClone(doc.water || []), creeks: structuredClone(doc.creeks || []),
   trees: Array.from({length: doc.trees.length / TREE_STRIDE}, (_, i) => Array.from(doc.trees.subarray(i * TREE_STRIDE, (i + 1) * TREE_STRIDE))),
+  // Each tree's `kind` is an index here; a bush painted as ground cover adds
+  // its species (cover.js). Rocks are [x, z, size, shape, turn] (course-doc.js).
+  treeKinds: [...(doc.treeKinds || [])], rocks: structuredClone(doc.rocks || []),
   homes: structuredClone(doc.homes || []),
   landscape: doc.landscape, name: doc.name,
   // THE TREES' HEIGHT SCALE (the owner, 1 November 2026: "allow the user to
@@ -127,7 +135,7 @@ export function createEditor(doc) {
   state.changed = true;
   return step;
  };
- const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, homes: state.homes, landscape: state.landscape});
+ const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, treeKinds: state.treeKinds, rocks: state.rocks, homes: state.homes, landscape: state.landscape});
  const cellBox = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)),
   Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
  // Swaps a step's stored state with the present (undo and redo are the same act).
@@ -310,6 +318,29 @@ export function createEditor(doc) {
    if ([[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].some(([a, b]) => { const lx = a * (width / 2 + 2), lz = b * (depth / 2 + 2); return MOWN.has(api.surfaceAt(x + lx * c + lz * sn, z - lx * sn + lz * c)); })) return false;
    remember('records', 0, 0, 0, 0); state.homes.push({x, z, rotation: rot, width, depth}); return true;
   },
+  // GROUND COVER (cover.js; the owner, 4 November 2026: "a paint brush for
+  // ground cover, so things like rocks, mixed bushes, etc."): one dab of the
+  // brush scattered on open ground, each piece its own size between `min` and
+  // `max` metres. `group` makes a drag one undo. Returns how many were added.
+  paintCover({cover, x, z, radius, min, max, density, group = null, rng = Math.random}) {
+   if (!group?.step) { const st = remember('records', 0, 0, 0, 0); if (group) group.step = st; }
+   const got = scatterCover({cover, x, z, radius, min, max, density, rng, open: (px, pz) => !COVER_REFUSED.has(api.surfaceAt(px, pz)), taken: (px, pz, reach) => coverAt(state, px, pz, reach)});
+   for (const p of got) {
+    if (p.rock) { state.rocks.push(p.rock); continue; }
+    let kind = state.treeKinds.indexOf(p.species); if (kind < 0) kind = state.treeKinds.push(p.species) - 1;
+    state.trees.push([p.x, p.z, p.size, p.size * .6, .05, TREE_ROLE_SHRUB, kind]);
+   }
+   return got.length;
+  },
+  // Rocks, and plants sized as ground cover, off under the brush; not trees.
+  clearCover({x, z, radius, group = null}) {
+   const near = (px, pz) => Math.hypot(px - x, pz - z) <= radius, low = t => (t[5] & 7) === TREE_ROLE_SHRUB;
+   const rocks = state.rocks.filter(q => !near(q[0], q[1])), trees = state.trees.filter(t => !(low(t) && near(t[0], t[1])));
+   const n = state.rocks.length - rocks.length + state.trees.length - trees.length; if (!n) return 0;
+   if (!group?.step) { const st = remember('records', 0, 0, 0, 0); if (group) group.step = st; }
+   state.rocks = rocks; state.trees = trees;
+   return n;
+  },
   removeHomes({x, z, radius}) { const keep = state.homes.filter(h => Math.hypot(h.x - x, h.z - z) > radius); if (keep.length === state.homes.length) return 0; remember('records', 0, 0, 0, 0); const n = state.homes.length - keep.length; state.homes = keep; return n; },
   // MOVING ONE SHAPE (amendment 12, in the editor as in door 2's trace step):
   // what is under a point -- a house whose footprint holds it, a tree whose
@@ -320,6 +351,8 @@ export function createEditor(doc) {
   pickAt({x, z, kind = null}) {
    const hi = state.homes.findIndex(h => { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation), lx = (x - h.x) * c - (z - h.z) * sn, lz = (x - h.x) * sn + (z - h.z) * c; return Math.abs(lx) <= h.width / 2 && Math.abs(lz) <= h.depth / 2; });
    if (hi >= 0) return {type: 'home', index: hi};
+   const ri = state.rocks.findIndex(q => Math.hypot(q[0] - x, q[1] - z) <= Math.max(1, q[2] / 2));
+   if (ri >= 0) return {type: 'rock', index: ri};
    const ti = api.treeAt({x, z});
    if (ti >= 0) return {type: 'tree', index: ti};
    const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); if (i < 0 || j < 0 || i >= r.nx || j >= r.nz) return null;
@@ -331,6 +364,7 @@ export function createEditor(doc) {
   },
   moveShape(pick, dx, dz) {
    if (!pick) return null;
+   if (pick.type === 'rock') { remember('records', 0, 0, 0, 0); const q = state.rocks[pick.index]; state.rocks[pick.index] = [q[0] + dx, q[1] + dz, ...q.slice(2)]; return null; }
    if (pick.type === 'tree') { remember('records', 0, 0, 0, 0); const t = state.trees[pick.index]; state.trees[pick.index] = [t[0] + dx, t[1] + dz, ...t.slice(2)]; return null; }
    if (pick.type === 'home') { remember('records', 0, 0, 0, 0); const h = state.homes[pick.index]; state.homes[pick.index] = {...h, x: h.x + dx, z: h.z + dz}; return null; }
    const di = Math.round(dx / r.cell), dj = Math.round(dz / r.cell); if (!di && !dj) return null;
@@ -360,15 +394,106 @@ export function createEditor(doc) {
    recomposeBox(box);
    return box;
   },
+  // A POND: its water on the grid and its bed dug into the land there and
+  // then (water-bed.js), so it shows at once and in the game. One undo.
   addPond({ring, level = null}) {
-   remember('records', 0, 0, 0, 0);
-   const lv = level ?? Math.min(...ring.map(([x, z]) => sample(x, z))) - .3;
-   state.water.push({rings: [ring], level: lv, kind: 'pond'});
-   const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]);
+   const lv = level ?? levelFrom(shoreOf([ring], sample));
+   const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]), m = BED.reach + 2;
+   const box = [Math.min(...xs) - m, Math.max(...xs) + m, Math.min(...zs) - m, Math.max(...zs) + m];
    r.layers.mask('water', true);
-   const st = remember('paint', Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)); state.undo.pop(); state.undo.at(-1).cells = st.cells; state.undo.at(-1).surfacesEdited = state.surfacesEdited; state.undo.at(-1).box = st.box;
-   state.surfacesEdited = true; fill(r, [ring], r.layers.mask('water', true)); recomposeBox(st.box);
+   const step = remember('land', ...box); step.snapshot = records();
+   const pt = remember('paint', ...box); state.undo.pop(); step.cells = pt.cells; step.surfacesEdited = state.surfacesEdited;
+   state.water.push({rings: [ring], level: lv, kind: 'pond'});
+   state.surfacesEdited = true; fill(r, [ring], r.layers.mask('water', true)); recomposeBox(box);
+   digInto([land, ...patches], [ring], lv); noteEdit(box); resample();
    return lv;
+  },
+  // HOLDING ONE THING (the owner, 4 November 2026: "click to select first,
+  // then outline that shape. We also need to make the moves for that shape
+  // real time"). A press-and-drag on what is selected: the thing comes off the
+  // course at once, so what lies under it shows, the view carries it as a
+  // picture of itself under the pointer, and `drop` puts it down `dx`, `dz`
+  // metres off, turned `angle`. The whole hold is one undo; let go where it
+  // began and there is none. Returns {rings, mid, box, set, drop}: `set` moves
+  // a record (a tree, a rock, a house) as it is carried, `drop` ends it and
+  // returns {box, pick}, the box changed (metres) and the pick where it lies.
+  holdShape(pick) {
+   if (pick.type !== 'shape') {
+    const list = pick.type === 'home' ? state.homes : pick.type === 'rock' ? state.rocks : state.trees, was = list[pick.index];
+    const rings = api.ringsOf(pick), mid = api.middleOf(pick), step = remember('records', 0, 0, 0, 0), plain = pick.type === 'home';
+    const set = (dx, dz, angle = 0) => {
+     if (plain) state.homes[pick.index] = {...was, x: was.x + dx, z: was.z + dz, rotation: was.rotation - angle};
+     else list[pick.index] = [was[0] + dx, was[1] + dz, ...was.slice(2)];
+    };
+    return {pick, rings, mid, box: null, set,
+     drop(dx, dz, angle = 0) { set(dx, dz, angle); if (!dx && !dz && !angle) state.undo.splice(state.undo.indexOf(step), 1); return {box: null, pick}; }};
+   }
+   const mid = api.middleOf(pick), rings = api.ringsOf(pick), box = api.boxOf(pick.cells), m = r.layers.mask(pick.kind, true), hadEdited = state.surfacesEdited;
+   const step = remember('paint', ...box); state.surfacesEdited = true;
+   // A pond carries its water body: its outline moves with it and its level
+   // and bed are found again where it lands.
+   const body = pick.kind === 'water' ? state.water.findIndex(w => polygonDistance(w.rings, mid.x, mid.z) < 0) : -1;
+   if (body >= 0) step.snapshot = records();
+   for (const k of pick.cells) m[k] = 0;
+   recomposeBox(box);
+   return {pick, rings, mid, box, set() {},
+    drop(dx, dz, angle = 0) {
+     const di = Math.round(dx / r.cell), dj = Math.round(dz / r.cell);
+     if (!di && !dj && !angle) {
+      for (const k of pick.cells) m[k] = 1;
+      recomposeBox(box);
+      state.undo.splice(state.undo.indexOf(step), 1); state.surfacesEdited = hadEdited;
+      return {box, pick};
+     }
+     const turned = angle ? turnedCells(pick.cells, angle, r.nx, r.nz) : pick.cells, cells = [];
+     for (const k of turned) { const i = k % r.nx + di, j = Math.floor(k / r.nx) + dj; if (i >= 0 && j >= 0 && i < r.nx && j < r.nz) cells.push(j * r.nx + i); }
+     const landed = cells.length ? api.boxOf(cells) : box, all = [Math.min(box[0], landed[0]), Math.max(box[1], landed[1]), Math.min(box[2], landed[2]), Math.max(box[3], landed[3])];
+     extendPaint(step, all);
+     for (const k of cells) m[k] = 1;
+     recomposeBox(all);
+     if (body >= 0) {
+      const c = Math.cos(angle), sn = Math.sin(angle), w = state.water[body];
+      const moved = w.rings.map(ring => ring.map(([x, z]) => { const u = x - mid.x, v = z - mid.z; return [mid.x + u * c - v * sn + di * r.cell, mid.z + u * sn + v * c + dj * r.cell]; }));
+      const level = levelFrom(shoreOf(moved, sample)), reach = BED.reach + 2, wide = [landed[0] - reach, landed[1] + reach, landed[2] - reach, landed[3] + reach];
+      const was = remember('land', ...wide); state.undo.pop(); step.parts = was.parts;
+      step.box = [Math.min(all[0], wide[0]), Math.max(all[1], wide[1]), Math.min(all[2], wide[2]), Math.max(all[3], wide[3])];
+      state.water[body] = {...w, rings: moved, level};
+      digInto([land, ...patches], moved, level); noteEdit(wide); resample();
+      return {box: step.box, pick: {...pick, cells}, water: true};
+     }
+     return {box: all, pick: {...pick, cells}};
+    }};
+  },
+  // A shape's middle, the box of its cells (metres), and its outline: the
+  // rings the view draws round what is selected.
+  middleOf(pick) {
+   if (pick.type === 'home') { const h = state.homes[pick.index]; return {x: h.x, z: h.z}; }
+   if (pick.type !== 'shape') { const q = (pick.type === 'rock' ? state.rocks : state.trees)[pick.index]; return {x: q[0], z: q[1]}; }
+   let sx = 0, sz = 0; for (const k of pick.cells) { sx += r.x0 + (k % r.nx + .5) * r.cell; sz += r.z0 + (Math.floor(k / r.nx) + .5) * r.cell; }
+   return {x: sx / pick.cells.length, z: sz / pick.cells.length};
+  },
+  boxOf(cells) {
+   let i0 = r.nx, i1 = 0, j0 = r.nz, j1 = 0; for (const k of cells) { const i = k % r.nx, j = (k - i) / r.nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+   return [r.x0 + i0 * r.cell, r.x0 + (i1 + 1) * r.cell, r.z0 + j0 * r.cell, r.z0 + (j1 + 1) * r.cell];
+  },
+  ringsOf(pick) {
+   const round = (x, z, q) => [Array.from({length: 24}, (_, k) => [x + Math.cos(k / 24 * Math.PI * 2) * q, z + Math.sin(k / 24 * Math.PI * 2) * q])];
+   if (pick.type === 'tree') { const t = state.trees[pick.index]; return round(t[0], t[1], Math.max(1.5, t[3] * state.treeScale)); }
+   if (pick.type === 'rock') { const q = state.rocks[pick.index]; return round(q[0], q[1], Math.max(1, q[2] / 2)); }
+   if (pick.type === 'home') {
+    const h = state.homes[pick.index], c = Math.cos(h.rotation), sn = Math.sin(h.rotation), a = h.width / 2, b = h.depth / 2;
+    return [[[-a, -b], [a, -b], [a, b], [-a, b]].map(([u, v]) => [h.x + u * c + v * sn, h.z - u * sn + v * c])];
+   }
+   let i0 = r.nx, i1 = 0, j0 = r.nz, j1 = 0; for (const k of pick.cells) { const i = k % r.nx, j = (k - i) / r.nx; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; }
+   const w = i1 - i0 + 3, h = j1 - j0 + 3, sub = new Uint8Array(w * h);
+   for (const k of pick.cells) { const i = k % r.nx, j = (k - i) / r.nx; sub[(j - j0 + 1) * w + i - i0 + 1] = 1; }
+   return layerRings(sub, {nx: w, nz: h, cell: r.cell, x0: r.x0 + (i0 - .5) * r.cell, z0: r.z0 + (j0 - .5) * r.cell}).sort((p, q) => q.length - p.length);
+  },
+  // Is a point on the shape picked: where a press starts a move, not a new pick.
+  onPick(pick, x, z) {
+   if (pick.type !== 'shape') { const g = api.pickAt({x, z}); return g?.type === pick.type && g.index === pick.index; }
+   const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell);
+   return i >= 0 && j >= 0 && i < r.nx && j < r.nz && pick.cells.includes(j * r.nx + i);
   },
   setLandscape(key) { remember('records', 0, 0, 0, 0); state.landscape = key; },
 
@@ -440,7 +565,9 @@ export function createEditor(doc) {
   redo() { const s = state.redo.pop(); if (!s) return null; state.undo.push(swap(s)); return s; },
 
   // ---- back to a document: the outlines traced from the grid (only when a
-  // surface was painted), the water bodies matched to their levels.
+  // surface was painted), the water bodies matched to their levels, and every
+  // body's bed dug (water-bed.js): a course saved before ponds were dug comes
+  // right by opening it here and saving it again.
   toDoc({onStep = () => {}} = {}) {
    let surfaces = doc.surfaces, water = state.water;
    if (state.surfacesEdited) {
@@ -466,14 +593,18 @@ export function createEditor(doc) {
      // traced edge, half a cell either side of it).
      const mid = ring => [ring.reduce((a, p) => a + p[0], 0) / ring.length, ring.reduce((a, p) => a + p[1], 0) / ring.length];
      const was = state.water.find(w => polygonDistance([o], ...mid(w.rings[0])) < 0 || polygonDistance(w.rings, ...mid(o)) < 0);
-     const shore = o.map(([x, z]) => sample(x, z)).sort((p, q) => p - q);
-     return {rings: [o, ...islands], level: was?.level ?? shore[Math.floor(shore.length * .1)] - .3, kind: was?.kind ?? 'pond'};
+     // A stored level stays unless the ground here is far from it (PLACED: 2
+     // m from the shore's middle): the water was moved somewhere else.
+     const shore = shoreOf([o], sample), middle = [...shore].sort((p, q) => p - q)[shore.length >> 1];
+     return {rings: [o, ...islands], level: was && Math.abs(middle - was.level) <= 2 ? was.level : levelFrom(shore), kind: was?.kind ?? 'pond'};
     });
    }
+   const grids = [{...land, heights: Float32Array.from(land.heights)}, ...patches.map(p => ({...p, heights: Float32Array.from(p.heights)}))];
+   for (const w of water) digInto(grids, w.rings, w.level);
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
-   return {...doc, name: state.name, landscape: state.landscape, land: {...land, heights: Float32Array.from(land.heights)}, patches: patches.map(p => ({...p, heights: Float32Array.from(p.heights)})),
-    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
+   return {...doc, name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
+    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },
  };
  // A brush onto one layer (or every layer, `kind` null) -- covering (v 1) or
@@ -490,6 +621,11 @@ export function createEditor(doc) {
   }
   r.layers.recompose(i0, i1, j0, j1);
   return box;
+ }
+ // A body's bed dug into each grid; a green or tee beside it keeps its ground.
+ function digInto(grids, rings, level) {
+  const keep = (x, z) => { const k = api.surfaceAt(x, z); return k === 'green' || k === 'tee'; };
+  for (const g of grids) digBed(g, rings, level, {keep});
  }
  function recomposeBox(box) { const [i0, i1, j0, j1] = cellBox(...box); r.layers.recompose(i0, i1, j0, j1); }
  // A shaped box joins the one it overlaps, else is added; past 400 boxes the

@@ -7,6 +7,7 @@ import projectLicense from '../LICENSE?raw';
 import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {roundSeason} from './seasons.js';
+import {quietRightClick} from './quiet-right-click.js';
 import {LANDSCAPES,currentKey} from './regions.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLED_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';

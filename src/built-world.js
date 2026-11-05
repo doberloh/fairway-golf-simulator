@@ -274,6 +274,14 @@ export function builtHomes(doc, height, nearest) {
 }
 
 // --------------------------------------------------------------- the trees
+// A STONE PAINTED IN THE EDITOR (builder/cover.js; course-doc.js `rocks`) as
+// the generator records one (course.js), so it draws and stops a ball the same
+// way: `size` across, a shade less deep than wide and two-thirds as tall as
+// that (PLACED, the middle of the generator's own proportions).
+export function rockFrom([x, z, size, shape, turn], y) {
+ const scale = size * .32, sx = size / 2, sy = size * .3, sz = size * .4, top = y + scale * .25 + sy;
+ return {x, z, y, scale, shape, rot: [.5, turn, .5], sx, sy, sz, top, reach: Math.max(sx, sz)};
+}
 // Which of the landscape's species draws a stored tree: by its role, and by
 // its height among the kinds that fit, hashed from where it stands so the
 // same file always draws the same wood. Drawing only: a tree's trunk and
@@ -462,7 +470,7 @@ export function worldFromDoc(doc, settings = {}) {
  }
  const homes = builtHomes(doc, height, nearest);
  const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], walls: [], wallBoxes: [],
-  storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: [], props: [], paths: [], bridges: [], markers: [], wear: [], streams,
+  storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: (doc.rocks || []).map(q => rockFrom(q, height(q[0], q[1]))), props: [], paths: [], bridges: [], markers: [], wear: [], streams,
   footprint: null, groundGrid, groundCover: (x, z) => { const g = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null; return g === 'pinestraw' || g === 'litter' ? 'straw' : bio.cover; }, straw: [], blowouts: null, wild: null, fallenField: null, surfaceField: null, landform: null,
   settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,
   land: height, seed: s.seed, ecology: bio.plants.map(([kind]) => kind),

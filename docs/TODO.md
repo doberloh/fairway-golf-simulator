@@ -93,6 +93,35 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   landscapes, so `encode` exits 1 and says over budget. **Your call:** raise
   the number, or fewer or smaller pictures.
 
+- [ ] **The owner's feedback of 4 November 2026: built, none of it seen.** The
+  owner was gaming, so nothing ran on the graphics card and neither page was
+  opened: the rules are tested in Node, the screens not at all. To check, once
+  the owner has looked (smoke, then builder-smoke, then by eye):
+  - **Right click in the game**: no menu, no free camera drag, no map grab; a
+    text box still has its menu.
+  - **Select shape** in the 3D editor: click outlines, four anchors show, a
+    drag moves it live, an anchor turns it, Undo, Escape. The turn's direction
+    and the anchors' feel are unseen. The builder-tools journey was changed to
+    this and has not been run.
+  - **Back to 2D** on a course opened from a file and on one taken over from
+    door 1: never run. Door 2's review on a course with no survey may meet a
+    step that wants one.
+  - **Water**: draw a pond on a hillside, play it. Does it show, do its banks
+    look right, does a green beside it stay as it was? Open a saved course whose
+    water was missing and save it again.
+  - **Ground cover**: paint rocks and bushes, play the course (is a rock hit?
+    do the models sit on the ground? is a size right against the slider?).
+  - **The preview**, in both editors: the first pick is slow (the models load);
+    colours; framing. **`Fairway Builder.html` grows by about 25 MB.**
+  - **Season greens**: wine country and a few others in each season. Spring and
+    its far woods, the rough in `GREEN`, the long grass with it. The card
+    pictures and the showcase still show the old rough (retake them after).
+    Frame rate: colours only, no new geometry; the A/B on Low is owed anyway
+    (vegetation.js and seasons.js moved).
+  - **Not done:** a cover brush in door 2's 2D trace; `npm test` whole, smoke,
+    the round matrix and the fingerprint were not run (no file the generator
+    reads changed).
+
 - [ ] **Left when the owner cleared the goal, 4 November 2026** (an audit of the
   goal's list against the study's catalogue, after the owner ended the goal):
   - **Two catalogue models never built:** cenizo (Hill Country, Chihuahuan) and

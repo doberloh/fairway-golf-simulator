@@ -24,12 +24,12 @@ const bytesOf = a => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 // `d`: {step, name, landscape, credits, holes, holesN, hole, boundary,
 // traceMode, box, sources: [{name, crs}], view, picOffsets, osm, land|null,
 // trees, trace: {masks: Map kind -> Uint8Array, hidden: [kind], trees, homes}|null,
-// landEdits: Float32Array|null, creeks}.
+// landEdits: Float32Array|null, creeks, rocks}.
 export async function writeDraft(d) {
  const parts = [], land = d.land;
  const json = {kind: DRAFT_KIND, version: DRAFT_VERSION, step: d.step, name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN, hole: d.hole ?? 0,
   boundary: d.boundary ?? null, traceMode: d.traceMode ?? null, box: d.box ?? null, sources: (d.sources ?? []).map(s => ({name: s.name, crs: s.crs ?? null})), view: d.view ?? {}, picOffsets: d.picOffsets ?? {}, osm: d.osm ? {said: d.osm.said ?? '', trees: d.osm.trees ?? [], homes: d.osm.homes ?? []} : null,
-  trees: d.trees ?? [], land: null, trace: null, creeks: d.creeks ?? [], landEdits: !!(land && d.landEdits)};
+  trees: d.trees ?? [], land: null, trace: null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], landEdits: !!(land && d.landEdits)};
  if (land && d.landEdits) parts.push({name: 'edits/land.bin', data: bytesOf(d.landEdits)});
  if (land) {
   json.land = {nx: land.nx, nz: land.nz, cell: land.cell, halfX: land.halfX, halfZ: land.halfZ, center: land.center, unit: land.unit, method: land.method, points: land.points ?? 0, rgb: !!land.rgb, grids: [...F32, ...U8].filter(k => land[k])};
@@ -70,5 +70,5 @@ export async function readDraft(bytes) {
  }
  const osm = j.osm && land && parts.has('osm/codes.bin') ? {...j.osm, codes: part('osm/codes.bin', land.nx * land.nz).slice()} : null;
  const landEdits = j.landEdits && land ? new Float32Array(part('edits/land.bin', land.nx * land.nz * 4).slice().buffer) : null;
- return {...j, land, trace, osm, landEdits, creeks: j.creeks ?? []};
+ return {...j, land, trace, osm, landEdits, creeks: j.creeks ?? [], rocks: j.rocks ?? []};
 }

@@ -22,8 +22,8 @@
 //   editor planted, moved or sized is marked `kept`, so the course keeps it
 //   wherever it stands; one it left alone is judged by door 2's rules again
 //   (none on turf, sand or water).
-// - Houses, creeks (door 2 cannot draw one; carried through to the course),
-//   the name and the landscape.
+// - Houses, creeks and rocks (door 2 draws none of them; carried through to
+//   the course), the name and the landscape.
 // Pure: no DOM, no three.js (tests/round-trip.test.mjs).
 
 // Every grid point inside `rings` (even-odd) set to 1 on `mask`. The grid's
@@ -54,7 +54,7 @@ const treeKey = (x, z, h, crown) => [x, z, h, crown].map(v => Math.round(v * 100
 // cell, halfX, halfZ} (its points at -halfX + i * cell). `changed`: Map kind
 // -> rings for each layer the editor changed. `holesBefore`: door 2's holes
 // ({tees, aims, green, par?, index?}). Returns {masks, landEdits, holes,
-// trees, homes, creeks, name, landscape}; `landEdits` null when the ground
+// trees, homes, creeks, rocks, name, landscape}; `landEdits` null when the ground
 // was not shaped (under a millimetre everywhere).
 export function fromEditor({base, now, grid, changed = new Map(), holesBefore = []}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
@@ -77,8 +77,8 @@ export function fromEditor({base, now, grid, changed = new Map(), holesBefore = 
  for (let k = 0; k + 6 < base.trees.length; k += 7) had.add(treeKey(base.trees[k], base.trees[k + 1], base.trees[k + 2], base.trees[k + 3]));
  const trees = [];
  for (let k = 0; k + 6 < now.trees.length; k += 7) {
-  const [x, z, h, crown, trunk, role] = now.trees.subarray(k, k + 6);
-  trees.push(had.has(treeKey(x, z, h, crown)) ? {x, z, h, crown} : {x, z, h, crown, trunk, role, kept: true});
+  const [x, z, h, crown, trunk, role, ki] = now.trees.subarray(k, k + 7), kind = now.treeKinds?.[ki];
+  trees.push(had.has(treeKey(x, z, h, crown)) ? {x, z, h, crown} : {x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
  }
- return {masks, landEdits, holes, trees, homes: structuredClone(now.homes ?? []), creeks: structuredClone(now.creeks ?? []), name: now.name, landscape: now.landscape};
+ return {masks, landEdits, holes, trees, homes: structuredClone(now.homes ?? []), creeks: structuredClone(now.creeks ?? []), rocks: structuredClone(now.rocks ?? []), name: now.name, landscape: now.landscape};
 }

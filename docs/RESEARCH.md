@@ -13749,3 +13749,52 @@ The ground's cost was one function. `groundPaint` was called from seven places (
 **Result:** 2.0-2.3 s a ground program; start to the main menu **12.1 s, against 26.7 s before and 20.2 s at generator 75** (Mojave, A B B A, two rounds each), the frame level (-1.0%). Every first course of a session takes the same saving. A second start in the same browser is no quicker in the harness (28.2 s against 29.2 s cold, before the fix): no disk cache of shaders was seen helping there, so the first start's figure is every start's, at least in the harness. **Not measured** on a slower processor, where a compile takes longer in proportion; on Mac and Linux a different compiler does this work and the old cost was probably smaller.
 
 **The page that did not start in the capture harness** (two in 40 minutes, 4 November) is probably this: three programs at 8 s each, on a machine full of agents, against a 60 s wait. Probably, not proven; none since, and no run has had agents beside it since.
+
+## A pond's bed (4 November 2026)
+
+The owner: water painted into a course did not draw in the game, and should the
+ground be dug out? It should. Built water is one flat sheet at a level
+(renderer.js `addWaterBody`) over land that is whatever it was. The 3D editor's
+pond set its level 0.3 m under its lowest bank and left the ground alone, so
+everything but that bank stood over the sheet and hid it. Door 2 dug a flat
+metre inside the outline, which showed, but with a wall all round and the sheet
+hanging over any shore lower than the level.
+
+src/builder/water-bed.js, for both, all PLACED from the section of a golf pond
+(no source read): the level 0.15 m under the lowest tenth of the shore (door 2's
+figure; one low notch does not sink the pond); a shelf 0.35 m under the water at
+the edge, falling to 1.3 m over 5 m; a bank no steeper than 1 in 2 on both sides,
+measured from 0.1 m over the water, up to 30 m back on the high side and 8 m on
+the low. The first try graded 8 m on both: a pond on a 1 in 5 hillside was left
+with a 6 m cliff behind it (tests/water-bed.test.mjs holds the slope to 60 m).
+The first bank was an easing rather than a limit, which moved the ground again
+at every Save; the limits come out the same however often they run, which the
+same file tests. A green or a tee beside the water keeps its ground. Not seen
+in the game.
+
+## How green the rough is, season by season (4 November 2026)
+
+The owner: "Spring doesnt look too much different across the landscapes", and
+grasses "would be much greener", California wine country the example; a pass
+over every landscape for spring, summer and autumn. A record's rough was one
+colour, and straw where the wild hills go straw (wine country `#b4a464`), but a
+golf course's rough is watered. seasons.js `GREEN`: for each landscape and each
+of the three seasons, the share of the way from the record's rough to a rich
+green `#4f8a34`, the semi-rough at half that, the ground's pale overlay and the
+long grass with it. **Every number is PLACED, read from when the place's rain
+falls, with no source taken**: California greenest in spring and watered through
+summer; the wet East and South rich till autumn; the Plains and Texas a spring
+flush, cured by July; the mountains and Alaska green late; the North-west's
+coasts and the links holding, a links' fescue left tawny; the deserts a touch,
+as their rough is the desert floor. New England's record is its autumn
+(`leafFall`), so its summer and autumn stay as they were, and its summer
+is not a green one: a decision for the owner.
+
+Spring was also too near summer: .18 of the way to fresh green moved a rough by
+less than the eye reads. Now .32 (.12 where the rough is not grass), the fairway
+.16, the fringe .14; a bloom half way to its colour on the wild ground (was a
+third) and 1.4 times as strong in the ground's drifts, capped at 1; and a
+broadleaf forest's far woods .4 toward new leaf in every region (before, New
+England's alone). The test holds spring's rough at least 14 of 441 colour steps
+from summer's on every landscape with a spring. Wine country: spring `#679b40`,
+summer `#779447`, autumn `#9f9b50`. Seen in numbers only, no picture yet.

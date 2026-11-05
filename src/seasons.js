@@ -68,29 +68,77 @@ export const WINTER = {
 };
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
+// HOW GREEN EACH LANDSCAPE'S ROUGH IS, SPRING, SUMMER AND AUTUMN (the owner, 4
+// November 2026: "Grasses in certain regions would be much greener. For example
+// california wine country. Pass over all landscapes and determine if the rough
+// needs to be a more rich green in spring. do the same for summer and fall as
+// well"). A record's rough was one colour, picked as the land's summer look,
+// and straw where the wild hills go straw: but a golf course's rough is watered
+// and mown. The share of the way to RICH green, by season, one landscape at a
+// time, from when its rain falls and whether its rough is really wild ground
+// (all PLACED; RESEARCH.md *How green the rough is*):
+//   California   greenest of all in spring, its winter rain just over, and held
+//                by water through the summer
+//   the wet East and South   rain all year: richest in spring, rich in summer,
+//                turning in autumn. Bluegrass the greenest of them
+//   the Plains and Texas     a real spring flush, cured by July
+//   the mountains and the far north   green late, right through summer
+//   the coasts of the North-west and the links   hold their green, but a
+//                links' fescue is meant to be tawny
+//   the deserts  the rough IS the desert floor: a touch of spring and no more;
+//                their spring is the bloom
+// New England's record is its autumn (`leafFall`), so its summer and autumn
+// stay; the tropics have only their summer.
+export const RICH = '#4f8a34';
+export const GREEN = {
+ winecountry: [.85, .6, .35], monterey: [.7, .35, .25], socal: [.6, .3, .2],
+ bluegrass: [.65, .5, .3], piedmont: [.55, .4, .15], lowcountry: [.55, .4, .2], bayou: [.55, .45, .25], gulfcoast: [.55, .35, .2], longleaf: [.45, .3, .1], flatwoods: [.45, .35, .2],
+ blueridge: [.55, .4, .15], ozarks: [.55, .4, .15], oldnortheast: [.5, .35, .1], pinebarrens: [.35, .2, .05], newengland: [.3, 0, 0], heartland: [.5, .35, .1], lakedunes: [.45, .3, .1], northwoods: [.5, .4, .1],
+ hillcountry: [.6, .15, .05], bluebonnet: [.6, .15, .05], crosstimbers: [.55, .2, .05], highplains: [.55, .12, 0], sandhills: [.55, .15, 0], badlands: [.45, .08, 0],
+ rockies: [.45, .35, .05], sierra: [.5, .3, .05], cascades: [.45, .35, .1], ponderosa: [.45, .2, .05], alaska: [.4, .35, .05],
+ puget: [.45, .2, .15], redwood: [.4, .2, .15], oregondunes: [.35, .1, .05], links: [.3, .1, 0],
+ sagebrush: [.25, .02, 0], redrock: [.15, 0, 0], sonoran: [.12, 0, 0], mojave: [.1, 0, 0], palms: [.15, 0, 0], chihuahuan: [.15, .05, .05],
+ keys: [0, .25, 0], hawaii: [0, .2, 0],
+};
+export const roughGreen = (key, season) => GREEN[key]?.[['spring', 'summer', 'autumn'].indexOf(season)] ?? 0;
 // THE GROUND IN A SEASON: the record's turf and tree colours moved toward the
 // season's (fractions PLACED from the pictures): spring a fresher green,
 // autumn the rough gone gold, winter by the region's WINTER -- snow whitens
 // the rough (fairways and greens are kept clear, so only a touch reaches
-// them), frost greys it, dormant turns it straw. Summer is the record.
+// them), frost greys it, dormant turns it straw. Summer is the record, with its
+// rough as green as GREEN says. Spring went further on 4 November 2026 (the
+// owner: "Spring doesnt look too much different across the landscapes"): at
+// .18 of the way to fresh green its rough could not be told from summer's.
 const SPRING = '#7ab84a', AUTUMN = '#c09a4a', SNOW = '#eef2f4', FROST = '#b8c0b4', STRAW = '#c8b47a';
 export function seasonPalette(bio, season, region) {
- if (!bio || season === 'summer') return {};
- const out = {}, put = (k, to, t) => { if (/^#[0-9a-f]{6}$/i.test(bio[k] || '')) out[k] = mix(bio[k].toLowerCase(), to, t); };
+ if (!bio) return {};
+ const green = season === 'winter' ? 0 : roughGreen(bio.key, season);
+ // The rough and the pale tint the ground lays over it (renderer.js) as green
+ // as the season has them; the season's own colour goes on top of that.
+ const base = k => mix(bio[k].toLowerCase(), RICH, k === 'semi' ? green * .5 : green);
+ if (season === 'summer') {
+  if (!green) return {};
+  return {rough: base('rough'), semi: base('semi'), roughTint: mix((bio.roughTint ?? '#b6bc65').toLowerCase(), '#8fb855', green)};
+ }
+ const out = {}, put = (k, to, t) => { if (/^#[0-9a-f]{6}$/i.test(bio[k] || '')) out[k] = mix(green && (k === 'rough' || k === 'semi') ? base(k) : bio[k].toLowerCase(), to, t); };
+ if (green) out.roughTint = mix((bio.roughTint ?? '#b6bc65').toLowerCase(), '#8fb855', green);
  if (season === 'spring') {
   // A landscape whose record IS its autumn (`leafFall`, New England) goes much
   // further: at .18 its spring had a gold rough, orange litter and orange
   // hills (PLACED, from the first spring picture).
   const autumnal = !!bio.leafFall;
-  put('rough', SPRING, autumnal ? .6 : .18); put('semi', SPRING, autumnal ? .4 : .12); put('fairway', SPRING, .08);
+  // Fresher in a dry landscape too (PLACED: a share of the way, less where the
+  // rough is a desert's or a links' own colour and not grass).
+  const fresh = autumnal ? .6 : green < .2 ? .12 : .32;
+  put('rough', SPRING, fresh); put('semi', SPRING, autumnal ? .4 : fresh * .7); put('fairway', SPRING, .16); put('fringe', SPRING, .14);
   // The wild ground in flower from far off, as Bluebonnet Prairie's drifts
-  // are all summer: a third of the way to the bloom's colour at most (PLACED).
+  // are all summer: half of the way to the bloom's colour at most (PLACED).
   // `bloom` itself goes to the ground shader, which paints drifts of it in
   // the rough (ground.js): the flowers proper are too small and stop too near
   // to show a landscape in flower.
   const bloom = bloomIn(bio.key, season), native = bio.groundTints?.native ?? GROUND_TINT.native;
   const tints = {...bio.groundTints};
-  if (bloom) { tints.native = mix(native.toLowerCase(), bloom.colours[0], .34 * bloom.amount); out.bloom = bloom; }
+  if (bloom) { tints.native = mix(native.toLowerCase(), bloom.colours[0], .5 * bloom.amount); out.bloom = {...bloom, amount: Math.min(1, bloom.amount * 1.4)}; }
   if (autumnal) tints.litter = mix((tints.litter ?? GROUND_TINT.litter).toLowerCase(), '#8a7452', .75);
   if (Object.keys(tints).length) out.groundTints = tints;
  }
@@ -163,13 +211,15 @@ export function bloomIn(key, season) {
 const BROADLEAF_WOODS = new Set(['northeast', 'midwest', 'appalachia', 'south', 'texas', 'plains', 'lakeshore']);
 export function farWoodsInSeason(bio, season, region) {
  const f = bio?.farForest;
- const springGreen = season === 'spring' && bio.leafFall;
+ // Every broadleaf forest's far woods in new leaf in spring, paler and fresher
+ // than summer's (4 November 2026; before, only New England's changed).
+ const springGreen = season === 'spring';
  if (!f?.colors || !BROADLEAF_WOODS.has(region) || (season !== 'autumn' && season !== 'winter' && !springGreen)) return null;
  // Winter at .85: New England's summer record is already its autumn, and
  // .55 of the way from orange still read orange (3 November 2026). Its spring
  // woods are green for the same reason (PLACED).
  // Under snow they are paler than bare wood alone (PLACED).
- const to = springGreen ? '#7c9c52' : season === 'autumn' ? '#b0703a' : WINTER[region] === 'snow' ? '#a9a6a0' : '#7a6e62', t = season === 'autumn' ? .45 : .85;
+ const to = springGreen ? (bio.leafFall ? '#7c9c52' : '#8fb05a') : season === 'autumn' ? '#b0703a' : WINTER[region] === 'snow' ? '#a9a6a0' : '#7a6e62', t = season === 'autumn' ? .45 : springGreen && !bio.leafFall ? .4 : .85;
  return {...f, colors: f.colors.map(c => (/^#[0-9a-f]{6}$/i.test(c) ? mix(c.toLowerCase(), to, t) : c))};
 }
 // Bare in winter: a broadleaf tree that drops its leaves -- not an evergreen,

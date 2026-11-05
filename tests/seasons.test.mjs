@@ -77,6 +77,32 @@ test('snow covers the natural grounds and greys the far broadleaf woods', async 
  assert.equal(seasonPalette(bio, 'winter', 'south').groundTints, undefined, 'a dormant winter keeps its grounds');
 });
 
+test('every landscape\'s rough has its green for three seasons, and spring is its own', async () => {
+ const {GREEN, roughGreen, RICH} = await import('../src/seasons.js');
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const {BIOME_KEYS} = await import('../src/settings-schema.js');
+ const {regionOf} = await import('../src/regions.js');
+ const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+ const far = (a, b) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
+ const greenness = h => { const [r, g, b] = rgb(h); return g - (r + b) / 2; };
+ for (const key of BIOME_KEYS) {
+  assert.ok(GREEN[key], `${key} has no green`);
+  const bio = biomeOf(key), region = regionOf(key), [sp, su, au] = GREEN[key];
+  assert.ok(sp >= au && su >= au, `${key}: autumn is never the greenest`);
+  assert.equal(roughGreen(key, 'winter'), 0);
+  if (bio.tropical) continue;
+  const spring = seasonPalette(bio, 'spring', region), summer = {...bio, ...seasonPalette(bio, 'summer', region)};
+  assert.ok(far(spring.rough, summer.rough) >= 14, `${key}: spring's rough ${spring.rough} too near summer's ${summer.rough}`);
+  assert.ok(greenness(spring.rough) > greenness(bio.rough), `${key}: spring is greener than the record`);
+ }
+ const wine = biomeOf('winecountry');
+ for (const season of ['spring', 'summer']) assert.ok(greenness(seasonPalette(wine, season, 'california').rough) > 15, `wine country's rough is green in ${season}`);
+ assert.ok(greenness(seasonPalette(biomeOf('mojave'), 'spring', 'desert').rough) < 30, 'a desert stays a desert');
+ assert.deepEqual(seasonPalette(biomeOf('mojave'), 'summer', 'desert'), {}, 'its summer is its record');
+ assert.ok(far(seasonPalette(biomeOf('hawaii'), 'summer', 'hawaii').rough, RICH) < far(biomeOf('hawaii').rough, RICH));
+});
+
 test('every landscape with a spring has a bloom, its months real and its colours hex', async () => {
  const {BLOOM} = await import('../src/seasons.js');
  const {LANDSCAPES} = await import('../src/regions.js');
@@ -108,7 +134,8 @@ test('the wild ground takes the bloom in spring, and no other season, and not th
  assert.ok(!('green' in spring));
  assert.equal(seasonPalette(biomeOf('rockies'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
  assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
- assert.deepEqual(seasonPalette(bio, 'summer', 'texas'), {});
+ const summer = seasonPalette(bio, 'summer', 'texas');
+ assert.equal(summer.bloom, undefined); assert.equal(summer.groundTints, undefined);
 });
 
 test('a snowy winter leaves no bracken or flowers on the snow, and a leaf-fall record no cream', () => {

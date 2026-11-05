@@ -16,6 +16,7 @@ import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features, distanceFrom} from '../lidar/trace.js';
 import {GRID_MARGIN, builtLine} from '../built-world.js';
+import {digBed, levelFrom, shoreOf} from './water-bed.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
 // a metre to 2.25 km², else a metre -- memory for a 3 x 3 km course).
@@ -178,7 +179,7 @@ export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -ha
   .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = []}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = []}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -237,18 +238,17 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
    if (!rings.length) continue;
    if (kind !== 'water') { surfaces[kind] = [rings]; continue; }
    // Water: a body a ring not inside another, its islands with it; its level
-   // just under its lowest tenth of shore; the ground under it carved a metre
-   // down so the water shows (the LIDAR's ground there was filled in from the
-   // shore, so it stood at the water's own level).
+   // just under its lowest tenth of shore; its bed dug and its banks graded
+   // (water-bed.js; the LIDAR's ground there was filled in from the shore, so
+   // it stood at the water's own level). A green or a tee beside it keeps its
+   // ground.
    const outer = rings.filter(r => !rings.some(o => o !== r && inside(o, r[0])));
+   const grid = {heights: ground, nx, nz, cell, x0: -halfX, z0: -halfZ}, keep = (x, z) => ['green', 'tee'].includes(codeAt(x, z));
    for (const o of outer) {
     const isl = rings.filter(r => r !== o && inside(o, r[0]));
-    const shore = o.map(([x, z]) => sampleGrid(ground, land, x, z)).sort((a, b) => a - b), level = shore[Math.floor(shore.length * .1)] - .15;
-    water.push({rings: [o, ...isl], level: r2(level), kind: 'pond'});
-    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) if (m[j * nx + i]) {
-     const x = -halfX + i * cell, z = -halfZ + j * cell;
-     if (inside(o, [x, z]) && !isl.some(s => inside(s, [x, z]))) ground[j * nx + i] = Math.min(ground[j * nx + i], level - 1);
-    }
+    const level = r2(levelFrom(shoreOf([o], (x, z) => sampleGrid(ground, land, x, z))));
+    water.push({rings: [o, ...isl], level, kind: 'pond'});
+    digBed(grid, [o, ...isl], level, {keep});
    }
   }
  }
@@ -274,17 +274,19 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // green or in water is a flag, a lamp or a mistake), their trunk from their
  // height as physics.js sizes one, conifer when narrow for their height
  // (PLACED: a crown under a fifth of the height).
- const treeData = [];
+ const treeData = [], treeKinds = [];
  // A tree the 3D editor planted, moved or sized (round-trip.js, `kept`) stays
  // wherever it stands, with its own trunk and role.
  for (const t of trees) {
   const lie = codeAt(t.x, t.z);
   if (!t.kept && ['green', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
-  treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), t.role ?? (t.crown / t.h < .2 ? 1 : 2), -1);
+  // A plant the editor painted keeps its species (cover.js).
+  let ki = -1; if (t.kind) { ki = treeKinds.indexOf(t.kind); if (ki < 0) ki = treeKinds.push(t.kind) - 1; }
+  treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), t.role ?? (t.crown / t.h < .2 ? 1 : 2), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: structuredClone(creeks), holes: recs,
-  trees: new Float32Array(treeData), treeKinds: [], homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
+  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };

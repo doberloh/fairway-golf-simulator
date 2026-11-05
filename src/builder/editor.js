@@ -15,6 +15,8 @@ import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
 import {layersFor} from './layers.js';
+import {coverOptions, COVER_RANGE} from './cover.js';
+import {preview} from './preview.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
@@ -33,20 +35,37 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  setTitle(s.name);
  const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools'}), side = el('div', {class: 'cb-side'});
- show(el('div', {style: 'position:absolute;inset:0'}, wrap, tools, side, status));
+ const page = el('div', {style: 'position:absolute;inset:0'}, wrap, tools, side, status);
+ show(page);
+ preview().mount(page);
  const view = createView(wrap, editor, {onWindowChange: ui.onWindowChange});
  current = {editor, view};
+ const canvas = view.canvas;
+ // What is selected: its outline and anchors (view.js), a pick (editing.js).
+ let chosen = null;
+ const nameOf = c => c.type === 'shape' ? label(c.kind) : c.type === 'home' ? 'House' : c.type === 'rock' ? 'Rock' : 'Tree';
+ const choose = c => { chosen = c; view.select(c ? {rings: editor.ringsOf(c), mid: editor.middleOf(c), anchors: c.type === 'shape' || c.type === 'home'} : null); };
  // The smoke journeys look (never drive) through this, as the game's do through lab.
  window.fairwayBuilder.editor = current;
 
  let tool = {kind: 'navigate'}, radius = 8, strength = .5, selected = 0, draft = [], down = null, rampA = null;
+ // Ground cover's two sizes, one pair for each kind of cover (PLACED: where
+ // cover.js starts them), kept as the brush changes hands.
+ const coverSizes = Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}]));
+ // The model of what the tool paints or places (preview.js).
+ const ITEM = {paint: t => ({kind: 'surface', surface: t.surface}), outline: t => ({kind: 'surface', surface: t.surface}), pond: () => ({kind: 'pond'}), creek: () => ({kind: 'creek'}), bunker: () => ({kind: 'bunker'}), plant: () => ({kind: 'tree'}), house: () => ({kind: 'house'}),
+  cover: t => ({kind: 'cover', cover: t.cover, ...coverSizes[t.cover]})};
+ const showModel = () => preview().show(ITEM[tool.kind]?.(tool) ?? null, s.landscape);
  const setTool = t => {
   tool = t; draft = []; rampA = null; view.draft([]); view.setToolActive(t.kind !== 'navigate');
   if (t.kind !== 'sizeTree') { unpick(); view.cursor(null); }
+  if (t.kind !== 'select') choose(null);
   for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t));
   status.textContent = HINT[t.kind]?.(t) ?? '';
+  canvas.style.cursor = '';
+  refreshCoverSizes(); showModel();
  };
- const toolKey = t => [t.kind, t.op || t.surface || t.set || ''].join(':');
+ const toolKey = t => [t.kind, t.op || t.surface || t.set || t.cover || ''].join(':');
  const HINT = {
   navigate: () => 'Left-drag moves, right-drag turns, the wheel zooms.',
   shape: t => t.op === 'ramp' ? 'Click the low end, then the high end: the ground between is graded.' : `${t.op[0].toUpperCase() + t.op.slice(1)}: drag over the ground. Size and strength on the left.`,
@@ -63,11 +82,13 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   clear: () => 'Drag to take trees out.',
   house: () => 'Click to stand a house: it faces the nearest fairway, green or tee.',
   clearHomes: () => 'Drag to take houses out.',
-  moveShape: () => 'Drag a green, bunker, fairway, pond, tree or house to move it whole; Undo puts it back.',
-  turnShape: () => 'Press on a green, bunker, pond or house and drag round its middle to turn it; Undo puts it back.',
+  select: () => 'Click a green, bunker, fairway, pond, rock, tree or house to select it. Drag inside its outline to move it, or an anchor at a corner to turn it. Undo puts it back.',
+  cover: t => `Paint ${coverLabel(t.cover).toLowerCase()}: drag over open ground. Their sizes on the left, and Strength for how thick they lie.`,
+  clearCover: () => 'Drag to take rocks and low plants off. Trees stay.',
   sizeTree: () => 'Click a tree, then size it with This tree: its height, crown and trunk together. Undo puts it back.',
  };
  // Each tool's tooltip is its hint (HINT), as the status line gives it.
+ const coverLabel = key => coverOptions(BIOMES[s.landscape]).find(c => c.key === key)?.label ?? key;
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), title: HINT[t.kind]?.(t) ?? text, onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
  // ONLY THE LANDSCAPE'S OWN (the owner, 1 November 2026: "Only allow the
@@ -137,6 +158,27 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
     : 'Nothing here is steep enough to skin; paint the ground by hand instead.';
   }, 40);
  }
+ // GROUND COVER (cover.js; the owner, 4 November 2026): the landscape's own
+ // rocks and low plants, with the smallest and largest each brush lays. The
+ // two sliders push each other along, so the smallest is never past the
+ // largest. They and the preview follow the cover in hand.
+ const coverMinText = el('span', {}), coverMaxText = el('span', {});
+ const coverSize = which => el('input', {type: 'range', min: .1, max: 6, step: .1, class: `cb-cover${which}`, disabled: true, oninput: e => {
+  if (tool.kind !== 'cover') return;
+  const c = coverSizes[tool.cover], v = +e.target.value;
+  c[which] = v; if (c.min > c.max) c[which === 'min' ? 'max' : 'min'] = v;
+  refreshCoverSizes(); showModel();
+ }});
+ const coverMin = coverSize('min'), coverMax = coverSize('max');
+ function refreshCoverSizes() {
+  const on = tool.kind === 'cover', c = on ? coverSizes[tool.cover] : null, r = on ? COVER_RANGE[tool.cover] : null;
+  for (const [input, text, v] of [[coverMin, coverMinText, c?.min], [coverMax, coverMaxText, c?.max]]) {
+   input.disabled = !on;
+   if (on) { input.min = r.low; input.max = r.high; input.value = v; }
+   text.textContent = on ? `${v.toFixed(1)} m` : '';
+  }
+ }
+ const coverButtons = () => el('div', {class: 'cb-btns'}, coverOptions(BIOMES[s.landscape]).map(c => button(c.label, {kind: 'cover', cover: c.key})), button('Clear cover', {kind: 'clearCover'}));
  function clearTurfTrees() {
   unpick(); showPicked();
   const got = editor.clearTreesFromTurf(); view.refreshTrees();
@@ -156,10 +198,12 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons(),
+   el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax)),
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and trees'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}),
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Move shape', {kind: 'moveShape'}), button('Turn shape', {kind: 'turnShape'})),
+   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}), button('Select shape', {kind: 'select'})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
    el('label', {}, 'Tree height ', scaleText, treeScale),
    el('div', {class: 'cb-btns', style: 'margin-top:4px'}, button('Size a tree', {kind: 'sizeTree'})),
@@ -213,10 +257,19 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  const leave = () => { current?.view.dispose(); current = null; document.removeEventListener('keydown', onKey); };
  topTools(
   // Back to 2D takes what was done here with it (door-real.js remount,
-  // round-trip.js), so it asks nothing.
-  back ? el('button', {class: 'cb-btn', type: 'button', title: 'Back to door 2\'s steps, taking what you changed here with you: painted layers, shaping, holes, trees and houses', onclick: () => {
-   leave(); back(editor);
-  }}, 'Back to 2D') : null,
+  // round-trip.js), so it asks nothing. On every course since 4 November 2026:
+  // one that did not come from door 2's steps goes there as a draft made from
+  // the course itself (draft-from-doc.js).
+  el('button', {class: 'cb-btn', type: 'button', title: back ? 'Back to door 2\'s steps, taking what you changed here with you: painted layers, shaping, holes, trees and houses' : 'To the 2D plan of this course: its layers, holes, trees and houses, as they stand here', onclick: async () => {
+   if (back) { leave(); back(editor); return; }
+   setBusy('Laying the course out in 2D…');
+   await new Promise(r => setTimeout(r, 30));
+   try {
+    const [{open}, {draftFromDoc}] = await Promise.all([import('./door-real.js'), import('./draft-from-doc.js')]);
+    const made = draftFromDoc(editor.toDoc());
+    leave(); open(made);
+   } catch (e) { status.textContent = 'Could not lay it out in 2D: ' + e.message; } finally { setBusy(''); }
+  }}, 'Back to 2D'),
   el('button', {class: 'cb-btn', type: 'button', onclick: () => {
    if (!confirm('Close this course and go back to the builder\'s start?')) return;
    if (!confirm(s.changed ? 'Are you sure? It has changes that are not saved, and they will be lost.' : 'Are you sure? The course closes (anything saved stays in its file).')) return;
@@ -224,7 +277,6 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   }}, 'Close'));
 
  // ---- the mouse on the ground.
- const canvas = view.canvas;
  const apply = (p, first) => {
   if (tool.kind === 'shape' && tool.op !== 'ramp') {
    if (first) down.level = editor.height(p.x, p.z);
@@ -237,7 +289,13 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    editor.addTree([p.x, p.z, h, h * .3, Math.min(.8, h * .027), 2, -1]); down.last = p; view.refreshTrees();
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
   else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }
-  else if (tool.kind === 'moveShape' || tool.kind === 'turnShape') down.last = p;
+  else if (tool.kind === 'select') carryTo(p);
+  else if (tool.kind === 'cover') {
+   if (!first && Math.hypot(p.x - down.last.x, p.z - down.last.z) < Math.max(1.5, radius * .5)) return;
+   const c = coverOptions(BIOMES[s.landscape]).find(o => o.key === tool.cover), {min, max} = coverSizes[tool.cover];
+   if (editor.paintCover({cover: c, x: p.x, z: p.z, radius, min, max, density: strength, group: down.group})) { view.refreshTrees(); view.refreshRocks(); }
+   down.last = p;
+  } else if (tool.kind === 'clearCover') { if (editor.clearCover({x: p.x, z: p.z, radius, group: down.group})) { view.refreshTrees(); view.refreshRocks(); } }
   else if (tool.kind === 'clearHomes') { if (editor.removeHomes({x: p.x, z: p.z, radius})) view.refreshHomes(); }
  };
  canvas.addEventListener('pointerdown', e => {
@@ -254,14 +312,16 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    if (!rampA) { rampA = p; status.textContent = 'Now click the high end.'; return; }
    view.refreshLand(editor.shape({op: 'ramp', a: rampA, b: p, radius, strength})); rampA = null; status.textContent = HINT.shape(tool); return;
   }
-  if (tool.kind === 'turnShape') {
-   const pick = editor.pickAt({x: p.x, z: p.z}); if (!pick || pick.type === 'tree') { status.textContent = pick ? 'A tree is round: nothing to turn.' : 'Nothing to turn there: only rough.'; return; }
-   const r = editor.state.raster; let mid = pick.type === 'home' ? editor.state.homes[pick.index] : null;
-   if (!mid) { let sx = 0, sz = 0; for (const k of pick.cells) { sx += r.x0 + (k % r.nx + .5) * r.cell; sz += r.z0 + (Math.floor(k / r.nx) + .5) * r.cell; } mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; }
-   down = {pick, turn: true, mid: {x: mid.x, z: mid.z}, start: p, last: p}; return;
+  if (tool.kind === 'select') {
+   // On an anchor it turns, inside the outline it moves; anywhere else is a
+   // new choice. The first click only ever selects.
+   const anchor = chosen ? view.anchorAt(e) : -1;
+   if (chosen && (anchor >= 0 || editor.onPick(chosen, p.x, p.z))) { down = {carry: true, turn: anchor >= 0, pick: chosen, mid: editor.middleOf(chosen), start: p, hold: null, dx: 0, dz: 0, angle: 0}; return; }
+   choose(editor.pickAt({x: p.x, z: p.z}));
+   status.textContent = chosen ? `${nameOf(chosen)} selected. Drag inside the outline to move it${chosen.type === 'shape' || chosen.type === 'home' ? ', or an anchor to turn it' : ''}.` : 'Nothing there to select: only rough.';
+   return;
   }
   if (tool.kind === 'sizeTree') { pickTree(p); return; }
-  if (tool.kind === 'moveShape') { const pick = editor.pickAt({x: p.x, z: p.z}); if (!pick) { status.textContent = 'Nothing to move there: only rough.'; return; } down = {pick, start: p, last: p}; status.textContent = `Moving the ${pick.type === 'shape' ? pick.kind : pick.type === 'home' ? 'house' : 'tree'}: let go where it belongs.`; return; }
   down = {group: {}, last: p}; apply(p, true);
  });
  let pending = null;
@@ -269,16 +329,45 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   const p = view.pick(e);
   if (p) {
    if (tool.kind === 'sizeTree') showPicked();
-   else view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes'].includes(tool.kind) ? p.x : null, p.z, radius);
+   else view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes', 'cover', 'clearCover'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
+  if (tool.kind === 'select' && !down) canvas.style.cursor = !chosen ? '' : view.anchorAt(e) >= 0 ? 'grab' : p && editor.onPick(chosen, p.x, p.z) ? 'move' : '';
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
  });
- canvas.addEventListener('pointerup', () => { if (down?.pick) { const {pick, start, last, turn, mid} = down; down = null; const box = turn ? editor.turnShape(pick, Math.atan2(start.x - mid.x, start.z - mid.z) - Math.atan2(last.x - mid.x, last.z - mid.z)) : editor.moveShape(pick, last.x - start.x, last.z - start.z); if (box) { view.refreshSurface(box); refreshLayers(); } else if (pick.type === 'tree') view.refreshTrees(); else if (pick.type === 'home') view.refreshHomes(); status.textContent = turn ? HINT.turnShape() : HINT.moveShape(); return; } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
+ // CARRYING WHAT IS SELECTED. The first real move picks it up (what lay under
+ // it shows, and its filled picture takes its place); each move after only
+ // lays that picture and outline on the land, so even a whole fairway follows
+ // the pointer frame by frame. A press with no move is not a pick-up at all.
+ function carryTo(p) {
+  const d = down;
+  if (!d.hold) {
+   if (Math.hypot(p.x - d.start.x, p.z - d.start.z) < .3) return;
+   d.hold = editor.holdShape(d.pick);
+   if (d.hold.box) { view.refreshSurface(d.hold.box); view.ghost(d.pick.kind); }
+  }
+  if (d.turn) { d.angle = Math.atan2(d.start.x - d.mid.x, d.start.z - d.mid.z) - Math.atan2(p.x - d.mid.x, p.z - d.mid.z); }
+  else { d.dx = p.x - d.start.x; d.dz = p.z - d.start.z; }
+  view.carry(d.dx, d.dz, d.angle);
+  d.hold.set(d.dx, d.dz, d.angle);
+  if (d.pick.type === 'tree') view.placeTree(d.pick.index);
+  else if (d.pick.type === 'rock') view.placeRock(d.pick.index);
+  else if (d.pick.type === 'home') view.refreshHomes();
+ }
+ canvas.addEventListener('pointerup', () => { if (down?.carry) {
+   const {hold, dx, dz, angle, pick} = down; down = null;
+   if (!hold) return;
+   const got = hold.drop(dx, dz, angle);
+   view.ghost(null); view.carry(0, 0, 0);
+   if (got.water) { view.refreshLand(got.box); view.refreshWater(); }
+   if (got.box) { view.refreshSurface(got.box); refreshLayers(); }
+   else if (pick.type === 'tree') view.refreshTrees(); else if (pick.type === 'rock') view.refreshRocks(); else if (pick.type === 'home') view.refreshHomes();
+   choose(got.pick); refreshSave(); return;
+  } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
  const finishOutline = () => {
   if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
   if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
-  if (tool.kind === 'pond') { editor.addPond({ring: draft}); view.refreshWater(); }
+  if (tool.kind === 'pond') { editor.addPond({ring: draft}); view.refreshLand(s.undo.at(-1).box); view.refreshWater(); }
   else editor.fillOutline({kind: tool.surface, ring: draft});
   const xs = draft.map(q => q[0]), zs = draft.map(q => q[1]);
   view.refreshSurface([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]);
@@ -288,7 +377,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  const onKey = e => {
   if (!current || current.editor !== editor || e.target.tagName === 'INPUT') return;
   if (e.key === 'Enter') finishOutline();
-  else if (e.key === 'Escape') { draft = []; view.draft([]); setTool({kind: 'navigate'}); }
+  else if (e.key === 'Escape') { if (chosen) { choose(null); return; } draft = []; view.draft([]); setTool({kind: 'navigate'}); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
  };
@@ -301,8 +390,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   else if (step.parts && step.cells) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }
  }
- function undo() { unpick(); showPicked(); after(editor.undo()); }
- function redo() { unpick(); showPicked(); after(editor.redo()); }
+ function undo() { unpick(); showPicked(); choose(null); after(editor.undo()); }
+ function redo() { unpick(); showPicked(); choose(null); after(editor.redo()); }
 
  // Save (the top bar's, and Ctrl+S): the course as a .fairway file; once
  // saved, again to the same file until it is renamed (saving.js).

@@ -1290,6 +1290,51 @@ in, which the skin makes common: a point now takes the type with the most
 weight among the four texels round it, in ground.js and `builtGroundAt`
 alike (BUILT_VERSION 3).
 
+### The owner's first feedback (4 November 2026)
+
+The owner's list after first looking at the goal's work, built with nothing
+run on the graphics card (the owner was playing): **none of this has been seen
+working**; the model is tested in Node, the page has not been opened.
+
+- **Select shape** replaces Move shape and Turn shape in the 3D editor (door
+  2's plan keeps its two). Click selects and outlines; drag inside moves; drag
+  an anchor turns. editing.js `holdShape`, `ringsOf`, `onPick`; view.js
+  `select`, `carry`, `ghost`, `anchorAt`.
+- **Live, and how:** a surface comes off the grid when it is picked up, and
+  from then on only its outline and a filled picture of it are moved, a few
+  hundred points laid on the land each move; the surface texture is redrawn
+  when it is picked up and put down. Rejected: rewriting the cells every frame
+  (a fairway is about 160,000 cells and `drawCells` a rectangle each, a
+  million on the box of a big one). So the picture is flat across a bump, drawn
+  over the ground without depth, and the real edge arrives on letting go. A
+  tree and a rock move their one instance, a house its small list.
+- **A pond carried** moves its water body and digs itself in where it lands;
+  the pit it left stays, for the player to fill with Raise (not worth undoing
+  a survey's ground by guess).
+- **Water** (water-bed.js, used by the editor and door 2): see RESEARCH *A
+  pond's bed*. Every Save digs every body, so a saved course comes right when
+  opened and saved again. **`BUILT_VERSION` stays 3**: it is the file's land
+  that changes, on saving, so an unchanged file plays as it did.
+- **Ground cover** (cover.js): rocks are a new optional `rocks` list in the
+  file; an older game drops them and an older file has none, so neither needs
+  a version. Bushes and flowers are stored trees of the shrub role with their
+  species in `treeKinds`: nothing new for the game. Both go through Back to
+  2D and drafts. Only in the 3D editor for now; door 2's trace has no cover
+  brush. The editor draws rocks as grey stones and low plants as mounds;
+  the game draws the models.
+- **The preview** (preview.js, preview-items.js): the game's models in a small
+  panel, one still picture, drawn when it changes or is dragged. **This puts
+  the game's 25 MB of models in the builder's page** (DISTRIBUTION_REVIEW).
+  PLACED, for the owner to overrule: a stand-in would not be "the 3d model".
+  Colours are the species' summer tint or the landscape's tree colour, not
+  vegetation.js's per-species tables, so a few differ from the game. A painted
+  surface shows a plain disc of its colour with what the game grows on it.
+- **Back to 2D** was there only for a course fresh from door 2. draft-from-doc.js
+  makes a door 2 draft from any course, on door 2's grid; patches go onto that
+  one grid, and door 2's smoothing runs on the ground again when the course is
+  made, so a built course gets a little softer at each trip this way.
+- **Rough in the editors** is the landscape's summer rough (seasons.js `GREEN`).
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the

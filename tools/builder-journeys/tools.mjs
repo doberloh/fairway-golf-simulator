@@ -53,9 +53,9 @@ export default function ({journey, SHOTS}) {
   // Undo the green, then the checks and a test round.
   await page.getByRole('button', {name: 'Undo'}).click();
   if ((await state()).green.x !== s0.green.x) throw Error('Undo did not put the green back');
-  // Move shape: a bunker dug in the open (no tree over it) dragged aside,
-  // whole; Undo puts it back. (One under a tree's crown moves the tree: the
-  // tool takes what is on top.)
+  // Select shape: a bunker dug in the open (no tree over it) clicked to select
+  // it, then dragged aside, whole; Undo puts it back. (One under a tree's crown
+  // selects the tree: the tool takes what is on top.)
   // The spot: the first on screen with no tree or house over it, not water.
   const look = (fx, fy) => page.evaluate(([cx, cy]) => { const c = window.fairwayBuilder.editor; const p = c.view.pick({clientX: cx, clientY: cy}); return p ? {kind: c.editor.surfaceAt(p.x, p.z), top: c.editor.pickAt({x: p.x, z: p.z})?.type ?? null} : null; }, at(fx, fy));
   let spot = null;
@@ -65,11 +65,12 @@ export default function ({journey, SHOTS}) {
   await click(...spot);
   const kindUnder = (fx, fy) => look(fx, fy).then(l => l?.kind);
   if (await kindUnder(...spot) !== 'sand') throw Error(`the dug bunker should be sand: ${await kindUnder(...spot)}`);
-  await page.getByRole('button', {name: 'Move shape'}).click();
+  await page.getByRole('button', {name: 'Select shape'}).click();
+  await click(...spot);
   const u0 = (await state()).undo;
   await page.mouse.move(...at(...spot)); await page.mouse.down(); await page.mouse.move(...at(spot[0] + .08, spot[1]), {steps: 6}); await page.mouse.up();
   const moved = {undo: (await state()).undo - u0, under: await kindUnder(...spot), last: await page.evaluate(() => window.fairwayBuilder.editor.editor.state.undo.at(-1)?.kind)};
-  if (moved.undo !== 1 || moved.under === 'sand' || moved.last !== 'paint') throw Error(`Move shape should carry the bunker off its spot in one step: ${JSON.stringify(moved)}`);
+  if (moved.undo !== 1 || moved.under === 'sand' || moved.last !== 'paint') throw Error(`Select shape should carry the bunker off its spot in one step: ${JSON.stringify(moved)}`);
   await page.getByRole('button', {name: 'Undo'}).click();
   if (await kindUnder(...spot) !== 'sand') throw Error('Undo should put the bunker back');
   await page.getByRole('button', {name: 'Check the course'}).click();

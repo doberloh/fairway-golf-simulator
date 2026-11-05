@@ -731,10 +731,25 @@ it or Undo it in one step, or paint the ground by hand instead; **Outline** draw
 draw a pond or a creek (it runs downhill), plant or clear trees, stand a
 **House** where you click (on open ground, facing the nearest fairway, green
 or tee; refused on turf, sand, water or a path) or **Clear houses** under
-the brush -- the game builds each one from where it stands; **Move shape**
-picks up a house, a tree, or one surface's patch under the pointer and puts
-it down where you let go, and **Turn shape** turns one as you drag round
-its middle (Undo puts either back). The holes
+the brush -- the game builds each one from where it stands. **Select shape**
+works in two steps: click a house, a rock, a tree or one surface's patch and
+it takes a yellow outline, with four anchors at the corners of a shape or a
+house; then drag inside the outline to move it, or drag an anchor to turn it.
+It follows the pointer as you drag, with what lay under it showing; Undo puts
+it back, and Escape lets go of the selection. A pond takes its water with it
+and digs itself in where it lands. **Ground cover** paints the landscape's own
+**Rocks**, **Mixed bushes** and, where it has them, **Flowers** on open ground
+(never on turf, sand, water, paths or roads): **Smallest** and **Largest** set
+the sizes it lays, Brush Size how wide, and Strength how thick; a rock stops a
+ball, as any rock does. **Clear cover** takes rocks and low plants away under
+the brush and leaves trees. While a paint, outline or placing tool is in hand,
+here and on door 2's trace step, a panel shows the game's own model of what it
+lays, at its real size beside a golfer: drag it to turn it. A pond is dug when
+it is drawn, with its banks graded, so its water shows; a course saved before
+this comes right when it is opened here and saved again. **Back to 2D** in the
+top bar goes to the 2D plan from any course: one that came from door 2's steps
+goes back to them with what you changed, and any other is laid out as layers,
+holes, trees and houses, with no survey behind it. The holes
 list moves tees and greens, adds a bend to a hole's line, and sets the
 picked hole's par.
 **Check the course** lists what breaks a rule (a tee off its pad or in

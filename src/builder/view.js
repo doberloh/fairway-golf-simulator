@@ -14,6 +14,7 @@ import {PAINT} from './editing.js';
 import {TEE_COLORS} from '../course-plan.js';
 import {LAYER_ORDER} from './layers.js';
 import {regionOf} from '../regions.js';
+import {seasonPalette} from '../seasons.js';
 
 // The land's mesh: chunks of CHUNK samples a side, every `stride`-th sample of
 // the stored grid (1 m stored; a course past about 1 km a side drawn at 2 or
@@ -25,7 +26,7 @@ const CHUNK = 128, MAX_VERTS = 2.2e6;
 const SMOOTH_TEXELS = 12e6;
 
 export function surfaceColours(key) {
- const bio = biomeOf(key), c = v => new T.Color(v);
+ const own = biomeOf(key), bio = {...own, ...seasonPalette(own, 'summer', regionOf(key))}, c = v => new T.Color(v);
  return PAINT.map(kind => {
   const col = kind === 'rough' ? bio.rough : kind === 'semi' ? bio.semi : kind === 'fairway' ? bio.fairway : kind === 'green' ? bio.green
    : kind === 'tee' ? bio.fairway : kind === 'sand' ? bio.sand : kind === 'water' ? (bio.water || '#4a8fb0') : GROUNDS[kind]?.map ?? bio.rough;
@@ -227,7 +228,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  for (const m of chunks) heightChunk(m);
 
  // ---- water, trees, holes: rebuilt whole when they change (they are small).
- const layers = {water: new T.Group(), trees: new T.Group(), homes: new T.Group(), holes: new T.Group(), marks: new T.Group()};
+ const layers = {water: new T.Group(), trees: new T.Group(), rocks: new T.Group(), homes: new T.Group(), holes: new T.Group(), marks: new T.Group()};
  for (const g of Object.values(layers)) scene.add(g);
  const clear = g => { for (const c of [...g.children]) { g.remove(c); c.geometry?.dispose(); } };
  function refreshWater() {
@@ -265,28 +266,67 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // width; 0: none)].
  const SHAPE = {pine: [cone, .2, 1, 0], spruce: [cone, .12, .75, 0], oak: [ball, .32, 1, 0], palm: [ball, .86, 1, .45], cactus: [ball, .3, 1.1, .9], shrub: [ball, 0, 1, 1.1]};
  const AUTUMN = ['#b76427', '#c9852f', '#a8452a', '#d4a23c', '#8a6a2a', '#6f7d34'].map(c => new T.Color(c));
+ // Bushes (a stored tree of the shrub role, painted as ground cover or a
+ // stand's understory) are a low green mound, not a small tree. `treeSlot`
+ // finds a stored tree's instance, so one carried is moved on its own and not
+ // by rebuilding a whole wood every frame.
+ const treeSlot = [];
+ let treeMeshes = null;
+ const low = t => (t[5] & 7) === 3;
+ const bushGreen = new T.Color('#7a9a52');
+ function placeTree(i) {
+  const at = treeSlot[i]; if (at == null || !treeMeshes) return;
+  const {mesh, trunks, bushes, base, wide, cap} = treeMeshes, f = s.treeScale ?? 1, m = new T.Matrix4(), q = new T.Quaternion();
+  const [x, z, h0, cr0, trunk] = s.trees[i], y = editor.height(x, z);
+  if (at < 0) {
+   m.compose(new T.Vector3(x, y, z), q, new T.Vector3(Math.max(.25, cr0 * f), Math.max(.2, h0 * f), Math.max(.25, cr0 * f))); bushes.setMatrixAt(~at, m); bushes.instanceMatrix.needsUpdate = true; return;
+  }
+  // The whole tree at the scale -- height, crown and trunk -- as toDoc saves it.
+  const h = Math.max(.8, h0 * f), cr = Math.max(.6, cr0 * f) * wide;
+  const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)), y0 = y + h * base;
+  m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(at, m);
+  const tr = Math.max(.12, (trunk ? trunk * f : h * .02) * (s.landscape === 'redwood' ? 1.6 : 1));
+  m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(at, m);
+  mesh.instanceMatrix.needsUpdate = true; trunks.instanceMatrix.needsUpdate = true;
+ }
  function refreshTrees() {
-  clear(layers.trees);
+  clear(layers.trees); treeSlot.length = 0; treeMeshes = null;
   if (!s.trees.length) return;
-  const bio = biomeOf(s.landscape), kind = SHAPE[bio.treeKind] ? bio.treeKind : 'oak', [geo, base, wide, cap] = SHAPE[kind], f = s.treeScale ?? 1;
-  const n = Math.min(s.trees.length, 120000), mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : '#5b4634'}), n);
-  const m = new T.Matrix4(), q = new T.Quaternion(), own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
-  for (let i = 0; i < n; i++) {
-   // The whole tree at the scale -- height, crown and trunk -- as toDoc saves it.
-   const [x, z, h0, cr0, trunk] = s.trees[i], h = Math.max(.8, h0 * f), cr = Math.max(.6, cr0 * f) * wide, y = editor.height(x, z);
-   const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)), y0 = y + h * base;
-   m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(i, m);
-   const tr = Math.max(.12, (trunk ? trunk * f : h * .02) * (s.landscape === 'redwood' ? 1.6 : 1));
-   m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(i, m);
-   // Each tree its own shade: a hash of where it stands.
-   const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const bio = biomeOf(s.landscape), kind = SHAPE[bio.treeKind] ? bio.treeKind : 'oak', [geo, base, wide, cap] = SHAPE[kind];
+  const total = Math.min(s.trees.length, 120000); let n = 0, nLow = 0;
+  for (let i = 0; i < total; i++) treeSlot[i] = low(s.trees[i]) ? ~nLow++ : n++;
+  const mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : '#5b4634'}), n), bushes = new T.InstancedMesh(ball, new T.MeshLambertMaterial({color: '#ffffff'}), nLow);
+  treeMeshes = {mesh, trunks, bushes, base, wide, cap};
+  const own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
+  for (let i = 0; i < total; i++) {
+   placeTree(i);
+   // Each its own shade: a hash of where it stands.
+   const [x, z] = s.trees[i], u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+   if (treeSlot[i] < 0) { col.copy(bushGreen).multiplyScalar(.8 + u * .4); bushes.setColorAt(~treeSlot[i], col); continue; }
    if (regionOf(s.landscape) === 'northeast') col.copy(AUTUMN[Math.floor(u * AUTUMN.length)]);
    else { own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3)))); }
-   mesh.setColorAt(i, col);
+   mesh.setColorAt(treeSlot[i], col);
   }
-  for (const g of [mesh, trunks]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
-  mesh.instanceColor.needsUpdate = true;
-  layers.trees.add(trunks, mesh);
+  for (const g of [mesh, trunks, bushes]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
+  if (n) mesh.instanceColor.needsUpdate = true;
+  if (nLow) bushes.instanceColor.needsUpdate = true;
+  layers.trees.add(trunks, mesh, bushes);
+ }
+ // Rocks painted as ground cover: a grey stone in the landscape's own rock
+ // colour; the game draws its model (vegetation.js).
+ const stone = new T.IcosahedronGeometry(1, 1); stone.scale(1, .6, .8);
+ let rockMesh = null;
+ function placeRock(i) {
+  if (!rockMesh || !s.rocks[i]) return;
+  const [x, z, size, , turn] = s.rocks[i], m = new T.Matrix4(), q = new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), turn), k = size / 2;
+  m.compose(new T.Vector3(x, editor.height(x, z) + k * .3, z), q, new T.Vector3(k, k, k)); rockMesh.setMatrixAt(i, m); rockMesh.instanceMatrix.needsUpdate = true;
+ }
+ function refreshRocks() {
+  clear(layers.rocks); rockMesh = null;
+  if (!s.rocks.length) return;
+  rockMesh = new T.InstancedMesh(stone, new T.MeshLambertMaterial({color: biomeOf(s.landscape).rock || '#8a8478'}), s.rocks.length);
+  for (let i = 0; i < s.rocks.length; i++) placeRock(i);
+  rockMesh.computeBoundingSphere(); layers.rocks.add(rockMesh);
  }
  // Houses: a block on each footprint, 6 m to the eaves (PLACED), its front
  // marked pale -- the game builds the house itself from the same record
@@ -318,7 +358,41 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    g.position.set(h.green.x, editor.height(h.green.x, h.green.z), h.green.z); g.userData.hole = i; layers.holes.add(g);
   });
  }
- refreshWater(); refreshTrees(); refreshHomes(); refreshHoles();
+ refreshWater(); refreshTrees(); refreshRocks(); refreshHomes(); refreshHoles();
+
+ // ---- WHAT IS SELECTED (the owner, 4 November 2026: "click to select first,
+ // then outline that shape ... Click and drag on anchors on the shape to rotate
+ // or click and drag inside the shape to move it"). Its outline lying on the
+ // ground, four anchors at the corners of its box, and while it is carried a
+ // filled picture of it in its own colour under the pointer. All of it is a
+ // few hundred points laid on the land each move: the course's texture is
+ // redrawn only when the shape is picked up and when it is put down, as a big
+ // fairway is a million cells.
+ const sel = {rings: null, mid: null, dx: 0, dz: 0, angle: 0, lines: [], fill: null, base: null, anchors: null, corners: []};
+ const selGroup = new T.Group(); scene.add(selGroup);
+ const lineMat = new T.LineBasicMaterial({color: '#fde68a', depthTest: false, transparent: true});
+ const anchorMat = new T.PointsMaterial({color: '#ffffff', size: 13, sizeAttenuation: false, depthTest: false, transparent: true});
+ const RAISE = .35;
+ const carried = (x, z) => { const u = x - sel.mid.x, v = z - sel.mid.z, c = Math.cos(sel.angle), sn = Math.sin(sel.angle); return [sel.mid.x + u * c - v * sn + sel.dx, sel.mid.z + u * sn + v * c + sel.dz]; };
+ function layOut() {
+  sel.lines.forEach((line, q) => {
+   const ring = sel.rings[q], p = line.geometry.attributes.position;
+   ring.forEach(([x, z], k) => { const [px, pz] = carried(x, z); p.setXYZ(k, px, editor.height(px, pz) + RAISE, pz); });
+   p.needsUpdate = true; line.geometry.computeBoundingSphere();
+  });
+  if (sel.fill) {
+   const p = sel.fill.geometry.attributes.position;
+   for (let k = 0; k < sel.base.length; k += 2) { const [px, pz] = carried(sel.base[k], sel.base[k + 1]); p.setXYZ(k / 2, px, editor.height(px, pz) + RAISE, pz); }
+   p.needsUpdate = true; sel.fill.geometry.computeBoundingSphere();
+  }
+  if (sel.anchors) {
+   const p = sel.anchors.geometry.attributes.position;
+   sel.corners.forEach(([x, z], k) => { const [px, pz] = carried(x, z); p.setXYZ(k, px, editor.height(px, pz) + RAISE, pz); });
+   p.needsUpdate = true; sel.anchors.geometry.computeBoundingSphere();
+  }
+ }
+ function clearSelection() { for (const c of [...selGroup.children]) { selGroup.remove(c); c.geometry?.dispose(); if (c.material !== lineMat && c.material !== anchorMat) c.material?.dispose(); } Object.assign(sel, {rings: null, mid: null, dx: 0, dz: 0, angle: 0, lines: [], fill: null, base: null, anchors: null, corners: []}); layers.water.visible = true; }
+ const project = new T.Vector3();
 
  // ---- the cursor: a ring lying on the ground.
  const ringGeo = new T.BufferGeometry(), RING = 64;
@@ -390,6 +464,53 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    const hit = raycaster.intersectObjects(chunks, false)[0];
    return hit ? {x: hit.point.x, y: hit.point.y, z: hit.point.z} : null;
   },
+  // Selection: {rings, mid, anchors}, or null. Anchors a little outside the
+  // corners of its box (PLACED: 2.5 m, or a tenth of its size).
+  select(it) {
+   clearSelection();
+   if (!it) return;
+   sel.rings = it.rings; sel.mid = it.mid;
+   for (const ring of it.rings) {
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(ring.length * 3), 3));
+    const line = new T.LineLoop(g, lineMat); line.renderOrder = 12; line.frustumCulled = false; selGroup.add(line); sel.lines.push(line);
+   }
+   if (it.anchors) {
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const [x, z] of it.rings[0]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+    const pad = Math.max(2.5, Math.max(x1 - x0, z1 - z0) * .1); x0 -= pad; x1 += pad; z0 -= pad; z1 += pad;
+    sel.corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(12), 3));
+    sel.anchors = new T.Points(g, anchorMat); sel.anchors.renderOrder = 13; sel.anchors.frustumCulled = false; selGroup.add(sel.anchors);
+   }
+   layOut();
+  },
+  // Carried this far: the outline, the anchors and the picture follow.
+  carry(dx, dz, angle = 0) { if (!sel.rings) return; sel.dx = dx; sel.dz = dz; sel.angle = angle; layOut(); },
+  // The filled picture of a surface being carried, in its own colour (null:
+  // gone). A pond's own sheet hides while the picture of it is carried.
+  ghost(kind) {
+   if (sel.fill) { selGroup.remove(sel.fill); sel.fill.geometry.dispose(); sel.fill.material.dispose(); sel.fill = null; sel.base = null; }
+   layers.water.visible = kind !== 'water';
+   if (!kind || !sel.rings) return;
+   const [outer, ...holes] = sel.rings, shape = new T.Shape(outer.map(([x, z]) => new T.Vector2(x, z)));
+   for (const ring of holes) shape.holes.push(new T.Path(ring.map(([x, z]) => new T.Vector2(x, z))));
+   const g = new T.ShapeGeometry(shape), p = g.attributes.position; sel.base = new Float32Array(p.count * 2);
+   for (let k = 0; k < p.count; k++) { sel.base[k * 2] = p.getX(k); sel.base[k * 2 + 1] = p.getY(k); }
+   sel.fill = new T.Mesh(g, new T.MeshBasicMaterial({color: rgb(colours[PAINT.indexOf(kind)] ?? colours[0]), depthTest: false, transparent: true, opacity: .85, side: T.DoubleSide}));
+   sel.fill.renderOrder = 11; sel.fill.frustumCulled = false; selGroup.add(sel.fill); layOut();
+  },
+  // The anchor under a mouse event (within 11 pixels, PLACED), or -1.
+  anchorAt(e) {
+   if (!sel.anchors) return -1;
+   const b = renderer.domElement.getBoundingClientRect(), p = sel.anchors.geometry.attributes.position;
+   for (let k = 0; k < 4; k++) {
+    project.fromBufferAttribute(p, k).project(camera);
+    if (Math.hypot(b.left + (project.x + 1) / 2 * b.width - e.clientX, b.top + (1 - project.y) / 2 * b.height - e.clientY) <= 11) return k;
+   }
+   return -1;
+  },
+  // One stored tree, one rock: moved without rebuilding them all.
+  placeTree, placeRock,
   // A tool takes the left button; navigating gives it back to panning.
   setToolActive(on) { controls.mouseButtons.LEFT = on ? null : T.MOUSE.PAN; },
   cursor(x, z, radius) {
@@ -411,10 +532,10 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   },
   // Every surface redrawn smooth (a layer hidden or shown, the landscape changed).
   refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); },
-  refreshAll() { setSky(); colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshHomes(); refreshHoles(); },
+  refreshAll() { setSky(); colours = surfaceColours(s.landscape); drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); for (const m of chunks) heightChunk(m); refreshWater(); refreshTrees(); refreshRocks(); refreshHomes(); refreshHoles(); },
   texels: () => ({width: W, height: H, perCell: F, close: closeUp.box.w ? {side: closeUp.box.z, cm: closeUp.box.z / CLOSE * 100, ms: closeUp.ms()} : null}),
-  refreshWater, refreshTrees, refreshHomes, refreshHoles, frameHole, planView,
+  refreshWater, refreshTrees, refreshRocks, refreshHomes, refreshHoles, frameHole, planView,
   held, fly,
-  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); closeUp.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); for (const m of chunks) m.geometry.dispose(); },
+  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); closeUp.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); clearSelection(); lineMat.dispose(); anchorMat.dispose(); for (const m of chunks) m.geometry.dispose(); },
  };
 }

@@ -22,6 +22,9 @@
 //      along them (streams.js: the generator's own stations, carried whole),
 //    holes: [{number, par, index, tees: [{x, z, set}], green: {x, z}, line: [[x, z], ...]}],
 //    trees: Float32Array, TREE_STRIDE numbers a tree (TREE_FIELDS), treeKinds: [name],
+//    rocks: [[x, z, size, shape, turn]]   stones painted as ground cover (the
+//      editor; size across in metres, shape 0-3); optional, so an older file
+//      has none and plays as it did
 //    homes: [{x, z, rotation, width, depth}]   houses (door 2's house tools; the
 //      game builds each from where it stands; built-world.js `builtHomes`),
 //    fringe, semiRough: metres (null: the defaults), sea: {level} | null (a coast),
@@ -70,7 +73,7 @@ export const TREE_ROLES = ['tree', 'conifer', 'broadleaf', 'shrub', 'palm'];
 export const HEIGHT_STEP = .01;
 // Limits a document is checked against, so a damaged or hostile file cannot
 // ask for a gigabyte. PLACED: a 3 x 3 km property at 1 m is 9 million samples.
-export const LIMITS = {samples: 16e6, patchSamples: 4e6, trees: 200000, points: 2e6, holes: 18, homes: 600};
+export const LIMITS = {samples: 16e6, patchSamples: 4e6, trees: 200000, points: 2e6, holes: 18, homes: 600, rocks: 20000};
 
 const utf8 = new TextEncoder(), text = new TextDecoder();
 const plainError = m => { throw Error(m); };
@@ -171,6 +174,8 @@ export function validateDoc(doc) {
   sea: Number.isFinite(doc.sea?.level) ? {level: doc.sea.level} : null,
   landEdits: (Array.isArray(doc.landEdits) ? doc.landEdits : []).filter(b => Array.isArray(b) && b.length === 4 && b.every(Number.isFinite)).slice(0, 2000).map(b => b.map(v => Math.round(v * 10) / 10)),
   treeKinds: (doc.treeKinds || []).map(String).slice(0, 200),
+  rocks: (Array.isArray(doc.rocks) ? doc.rocks : []).filter(q => Array.isArray(q) && q.length === 5 && q.every(Number.isFinite)).slice(0, LIMITS.rocks)
+   .map(([x, z, size, shape, turn]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100, Math.max(.05, Math.min(12, Math.round(size * 100) / 100)), Math.abs(Math.floor(shape)) % 4, Math.round(turn * 100) / 100]),
   homes: (Array.isArray(doc.homes) ? doc.homes : []).filter(h => [h?.x, h?.z, h?.rotation, h?.width, h?.depth].every(Number.isFinite)).slice(0, LIMITS.homes)
    .map(h => ({x: Math.round(h.x * 10) / 10, z: Math.round(h.z * 10) / 10, rotation: Math.round(h.rotation * 1000) / 1000, width: Math.max(6, Math.min(40, Math.round(h.width * 10) / 10)), depth: Math.max(6, Math.min(40, Math.round(h.depth * 10) / 10))})),
   credits: (doc.credits || []).map(String).slice(0, 20), source: doc.source && typeof doc.source === 'object' ? doc.source : {},
@@ -187,7 +192,7 @@ export async function writeBuiltFile(doc, builtVersion) {
  const patches = patchParts.map(({p, g}) => { patchBytes.set(g.bytes, at); const r = {x0: p.x0, z0: p.z0, cell: p.cell, nx: p.nx, nz: p.nz, base: g.base, step: g.step, offset: at}; at += g.bytes.length; return r; });
  const json = {kind: FILE_KIND, version: BUILT_FILE_VERSION, type: 'built', builtVersion, name: d.name, landscape: d.landscape, designer: d.designer,
   halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, landEdits: d.landEdits, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
-  patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds, homes: d.homes,
+  patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds, rocks: d.rocks, homes: d.homes,
   credits: d.credits, source: d.source, from: d.from, picture: d.picture};
  return writeZip([
   {name: 'course.json', data: JSON.stringify(json)},
