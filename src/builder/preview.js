@@ -3,6 +3,14 @@
 // preview-items.js says what is in it). The game's own models, in the game's
 // colours and at their real sizes, with a golfer to measure them by.
 //
+// They are the full models the game draws close up (`modelParts`; the far
+// twins are a family of their own, `fartwin`, and never come here). What made
+// the first panel look coarse was the picture round them (the owner, 4 November
+// 2026: "can we use the high rez models"): 248 pixels wide, one drawn pixel to
+// a screen pixel or fewer, and plain shading. So it is drawn at twice the
+// screen's density (at most three times, PLACED) and scaled down, lit with the
+// game's own toon ramp, and throws a shadow to sit on its ground.
+//
 // It draws only when what it shows changes, or while it is dragged round: a
 // single still picture, so it costs a graphics card nothing while the editor
 // is in use. One panel for the whole page, moved between the two editors.
@@ -12,11 +20,12 @@
 // the model itself, and a stand-in would not show what the game grows.
 import * as T from 'three';
 import {previewOf} from './preview-items.js';
+import {toonRamp} from '../textures.js';
 import {biomeOf} from '../biomes.js';
 import {regionOf} from '../regions.js';
 import {seasonPalette} from '../seasons.js';
 
-const W = 248, H = 168;
+const W = 340, H = 230;
 let panel = null;
 let meshes = null;
 const models = () => meshes ??= import('../mesh-assets.js');
@@ -26,17 +35,19 @@ function create() {
  box.className = 'cb-preview'; box.hidden = true; canvas.width = W; canvas.height = H;
  box.append(title, canvas, note);
  const renderer = new T.WebGLRenderer({canvas, antialias: true, alpha: false, powerPreference: 'low-power'});
- renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+ renderer.setPixelRatio(Math.min(3, (devicePixelRatio || 1) * 2)); renderer.setSize(W, H, false);
+ renderer.shadowMap.enabled = true;
+ const ramp = toonRamp(null);
  const scene = new T.Scene(), camera = new T.PerspectiveCamera(32, W / H, .1, 800), holder = new T.Group();
  scene.background = new T.Color('#0e2c28');
  scene.add(holder, new T.HemisphereLight('#ffffff', '#6e7a5c', 2.2));
- const sun = new T.DirectionalLight('#fff4e0', 1.6); sun.position.set(-.5, 1, .6); scene.add(sun);
+ const sun = new T.DirectionalLight('#fff4e0', 1.6); sun.position.set(-.5, 1, .6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); scene.add(sun, sun.target);
  let turn = -.5, token = 0, wanted = null, frame = 0;
  const draw = () => { frame = 0; holder.rotation.y = turn; renderer.render(scene, camera); };
  const later = () => { if (!frame) frame = requestAnimationFrame(draw); };
  const empty = () => { holder.traverse(o => { if (o.isMesh) { o.material.dispose(); if (o.userData.own) o.geometry.dispose(); } }); holder.clear(); };
- const flat = (geo, colour, y = 0, extra = {}) => { const m = new T.Mesh(geo, new T.MeshLambertMaterial({color: colour, ...extra})); m.rotation.x = -Math.PI / 2; m.position.y = y; m.userData.own = true; holder.add(m); return m; };
- const part = (geo, colour, x, y, z) => { const m = new T.Mesh(geo, new T.MeshLambertMaterial({color: colour})); m.position.set(x, y, z); m.userData.own = true; holder.add(m); return m; };
+ const flat = (geo, colour, y = 0, extra = {}) => { const m = new T.Mesh(geo, new T.MeshToonMaterial({color: colour, gradientMap: ramp, ...extra})); m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; m.userData.own = true; holder.add(m); return m; };
+ const part = (geo, colour, x, y, z) => { const m = new T.Mesh(geo, new T.MeshToonMaterial({color: colour, gradientMap: ramp})); m.position.set(x, y, z); m.castShadow = true; m.userData.own = true; holder.add(m); return m; };
  // A piece: every part of the model, painted by its role as the game paints it.
  function place(p, a) {
   const names = a.familyModels(p.family); if (!names.length) return 0;
@@ -45,8 +56,8 @@ function create() {
   const paint = {bark: p.bark, leaf: p.leaf, stone: p.leaf, dirt: p.bark, accent: p.accent};
   for (const q of parts) {
    const textured = a.modelTextured(name) && q.geometry.attributes.uv, map = textured ? a.meshAtlas(0) : null;
-   const m = new T.Mesh(q.geometry, new T.MeshLambertMaterial({color: map ? '#ffffff' : paint[q.role] ?? p.leaf, vertexColors: !!q.painted, map}));
-   m.position.set(p.x, 0, p.z); m.scale.setScalar(k); m.rotation.y = p.turn ?? 0; holder.add(m);
+   const m = new T.Mesh(q.geometry, new T.MeshToonMaterial({color: map ? '#ffffff' : paint[q.role] ?? p.leaf, vertexColors: !!q.painted, map, gradientMap: ramp}));
+   m.castShadow = true; m.position.set(p.x, 0, p.z); m.scale.setScalar(k); m.rotation.y = p.turn ?? 0; holder.add(m);
   }
   return k;
  }
@@ -76,6 +87,9 @@ function create() {
    part(new T.CylinderGeometry(.16, .13, 1.45, 8), '#e8e4d8', gx, .72, gz); part(new T.SphereGeometry(.14, 10, 8), '#d8a884', gx, 1.6, gz);
   }
   camera.position.set(0, tallest * .55 + R * .62, R * 1.75); camera.lookAt(0, tallest * .3, 0);
+  // The shadow's box round this scene, from the sun's side.
+  sun.position.set(-R * .6, R * 1.6, R * .8); sun.target.position.set(0, 0, 0);
+  const c = sun.shadow.camera; c.left = c.bottom = -R * 1.2; c.right = c.top = R * 1.2; c.near = .1; c.far = R * 4 + tallest; c.updateProjectionMatrix(); sun.shadow.bias = -.0005; sun.shadow.normalBias = R * .002;
   draw();
  }
  // Dragged round, to see it from another side.

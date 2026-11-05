@@ -1329,6 +1329,10 @@ working**; the model is tested in Node, the page has not been opened.
   Colours are the species' summer tint or the landscape's tree colour, not
   vegetation.js's per-species tables, so a few differ from the game. A painted
   surface shows a plain disc of its colour with what the game grows on it.
+  The models are the full ones the game draws close up. The owner asked for
+  high resolution on first seeing it: what was coarse was the picture, so it
+  went from 248 to 340 pixels wide, drawn at twice the screen's density, in the
+  game's toon shading, with a shadow. Not seen.
 - **Back to 2D** was there only for a course fresh from door 2. draft-from-doc.js
   makes a door 2 draft from any course, on door 2's grid; patches go onto that
   one grid, and door 2's smoothing runs on the ground again when the course is
