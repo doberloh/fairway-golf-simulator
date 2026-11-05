@@ -506,6 +506,11 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    }
    return -1;
   },
+  // A place on the ground as a point on the screen, in the mouse's own numbers.
+  screenOf(x, z) {
+   const b = renderer.domElement.getBoundingClientRect(); project.set(x, editor.height(x, z) + .8, z).project(camera);
+   return project.z > 1 ? null : {x: b.left + (project.x + 1) / 2 * b.width, y: b.top + (1 - project.y) / 2 * b.height};
+  },
   // One stored tree, one rock: moved without rebuilding them all.
   placeTree, placeRock,
   // Game view is showing: draw nothing until it goes. Keys held when it opened

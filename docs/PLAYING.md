@@ -662,7 +662,8 @@ the file to anyone else who has Fairway. It opens on three doors.
      traced green or tee, to stop a metre and a half short of it, and takes
      out a tree with no room left (or one standing on it); Undo puts them
      back.
-  4. **Holes**: for each hole, left-click its **Back tee** (the middle and
+  4. **Holes**: drag any tee, aim point or green to move it, on any hole, and
+     the line follows as it goes. For each hole, left-click its **Back tee** (the middle and
      front if you like), any **Aim points** where it bends, in order from the
      tee, and its **Green**; then **Next hole**. 9 or 18. The game draws
      each hole's line through its aim points in turn -- two make a double
@@ -780,7 +781,8 @@ when it builds the course again. **Back to 2D** in the
 top bar goes to the 2D plan from any course: one that came from door 2's steps
 goes back to them with what you changed, and any other is laid out as layers,
 holes, trees and houses, with no survey behind it. The holes
-list moves tees and greens, adds a bend to a hole's line, and sets the
+list moves tees and greens, adds a bend to a hole's line, **Drag markers**
+lets you drag any tee, bend or green, and it sets the
 picked hole's par.
 **Check the course** lists what breaks a rule (a tee off its pad or in
 water, a green too small or too steep, a tree on a green) and clicking one

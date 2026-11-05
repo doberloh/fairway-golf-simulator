@@ -29,6 +29,7 @@ import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
 import {coverOptions, coverByKey, COVER_RANGE} from './cover.js';
 import {cornersOf} from './layer-ops.js';
+import {markNear, moveMark} from './hole-marks.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -204,7 +205,7 @@ export function open(draft = null) {
   const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} corner${n === 1 ? '' : 's'} so far: click more; double-click or Enter closes it, Esc drops it.`;
   let t = '';
   if (st.step === 0) t = st.preview ? `Drag a box round the property on the relief. ${view}` : '';
-  else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}. ${view}`;
+  else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}, or drag any mark to move it. ${view}`;
   else if (st.step === 2 && !st.model && st.tool !== 'align') t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
   else if (st.step === 2) {
    const all = st.kind === 'rough';
@@ -395,7 +396,16 @@ export function open(draft = null) {
     plan.draw(); return;
    }
   }
-  if (st.step === 3 && st.land && type === 'down') { markAt(p); return; }
+  // THE MARKS DRAG (the owner, 5 November 2026): a press on any tee, aim point or
+  // green picks it up, on any hole; a press on open ground places the mark in
+  // hand, as before. The hole's line follows as it moves; the yards when it lands.
+  if (st.step === 3 && st.land) {
+   const reach = 12 * plan.px / plan.view.scale, holes = st.holes.slice(0, st.holesN), under = () => markNear(holes, st.hole, p, reach);
+   if (type === 'down') { const g = under(); if (g) { st.dragMark = g; st.hole = g.hole; canvas.style.cursor = 'grabbing'; plan.draw(); return; } markAt(p); return; }
+   if (type === 'drag' && st.dragMark) { moveMark(st.holes[st.dragMark.hole], st.dragMark, p); st.dragMark.moved = true; plan.draw(); return; }
+   if (type === 'up' && st.dragMark) { st.dragMark = null; canvas.style.cursor = ''; go(3); return; }
+   if (type === 'hover') canvas.style.cursor = under() ? 'grab' : '';
+  }
   plan.draw();
  }
  st.treeH = 15; st.density = 120;
@@ -1252,7 +1262,7 @@ export function open(draft = null) {
   const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
   const marks = [['back', 'Back tee'], ['middle', 'Middle tee'], ['front', 'Front tee'], ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, onclick: () => { st.mark = m; go(3); }}, t));
   return [el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
-   el('small', {}, 'Click the plan: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
+   el('small', {}, 'Drag any tee, aim point or green to move it, on any hole. Click the plan to place: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
    el('select', {class: 'cb-holes', onchange: e => { st.holesN = +e.target.value; go(3); }}, [18, 9].map(n => el('option', {value: n, selected: n === st.holesN}, `${n} holes`))),
    el('div', {class: 'cb-btns'}, ...marks),
    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.hole = Math.max(0, st.hole - 1); st.mark = 'back'; go(3); }}, 'Previous hole'),
@@ -1272,7 +1282,7 @@ export function open(draft = null) {
   const want = st.holes.slice(0, st.holesN), fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.state.codes, st.land);
   let greens = 0, tees = 0;
   fit.forEach((h, n) => { if (!h) return; if (h.fit.green === 'moved') greens++; tees += h.fit.tees; st.holes[n] = {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null, index: want[n].index ?? null}; });
-  go(3); say(`Fitted: ${greens} green mark${greens === 1 ? '' : 's'} moved onto a green; ${tees} tee boxes given to holes. Move any mark by clicking again.`);
+  go(3); say(`Fitted: ${greens} green mark${greens === 1 ? '' : 's'} moved onto a green; ${tees} tee boxes given to holes. Drag any mark to move it.`);
  }
  function markAt(p) {
   const h = st.holes[st.hole] ??= {tees: [], aims: [], green: null};

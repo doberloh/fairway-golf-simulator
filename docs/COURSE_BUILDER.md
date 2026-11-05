@@ -1357,6 +1357,16 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### Marks that drag (5 November 2026)
+
+The owner: "make it so i can drag pieces around when placing the holes and
+markers." On door 2's holes step a press on any tee, aim point or green picks it
+up, on any hole, within 12 screen pixels (PLACED), the hole in hand first; a press
+on open ground places the mark in hand, as before. The hole's line follows live;
+the yards and the scorecard when it lands. In the 3D editor, **Drag markers** does
+the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
+step has no undo, and never had. Not seen on screen.
+
 ### The wait shows itself (5 November 2026)
 
 The owner: "when getting data from open street map, we need to indicate processing

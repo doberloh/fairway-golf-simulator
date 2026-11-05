@@ -87,6 +87,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   tee: t => `Click where hole ${selected + 1}'s ${t.set} tee goes.`,
   green: () => `Click where hole ${selected + 1}'s green goes.`,
   bend: () => `Click to add a bend to hole ${selected + 1}'s line.`,
+  marks: () => 'Drag markers: press on any tee, bend or green and drag it. The hole\'s line follows; Undo puts it back.',
   placeTree: () => `Place tree: click to stand one ${treeH} m tree, not on turf, sand, water, a path or a road.`,
   treeZone: () => `Tree zone: click round it, then double-click or press Enter. It fills with ${zoneDensity} trees a hectare.`,
   homeZone: () => 'House zone: click round it, then double-click or press Enter. Houses line it 42 m apart, each facing the course.',
@@ -256,7 +257,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  const parSelect = el('select', {class: 'cb-epar', title: 'The picked hole\'s par', onchange: e => { editor.setPar(selected, +e.target.value); refreshHoles(); }}, [3, 4, 5, 6].map(v => el('option', {value: v}, `Par ${v}`)));
  const holeTools = el('div', {class: 'cb-btns'},
   button('Back tee', {kind: 'tee', set: 'back'}), button('Middle tee', {kind: 'tee', set: 'middle'}), button('Front tee', {kind: 'tee', set: 'front'}),
-  button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}),
+  button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}), button('Drag markers', {kind: 'marks'}),
   // Par set by hand, hole by hole (the owner, 1 November 2026: "let the user
   // set the par. per hole"); the yards are the line's, not typed.
   parSelect);
@@ -345,6 +346,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
   else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }
   else if (tool.kind === 'select') carryTo(p);
+  else if (tool.kind === 'marks') { down.hold.set(p.x, p.z); view.refreshHoles(selected); }
   else if (tool.kind === 'cover') {
    if (!first && Math.hypot(p.x - down.last.x, p.z - down.last.z) < Math.max(1.5, radius * .5)) return;
    const c = coverByKey(BIOMES[s.landscape], tool.cover), {min, max} = coverSizes[tool.cover];
@@ -377,6 +379,11 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    return;
   }
   if (tool.kind === 'sizeTree') { pickTree(p); return; }
+  if (tool.kind === 'marks') {
+   const g = markUnder(e); if (!g) { status.textContent = 'No marker there: press on a tee, bend or green.'; return; }
+   if (g.hole !== selected) { selected = g.hole; refreshHoles(); }
+   down = {hold: editor.holdMark(g.hole, g)}; canvas.style.cursor = 'grabbing'; return;
+  }
   down = {group: {}, last: p}; apply(p, true);
  });
  let pending = null;
@@ -387,9 +394,18 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    else view.cursor(['shape', 'paint', 'erase', 'eraseAll', 'smoothEdges', 'clear', 'clearHomes', 'cover', 'clearCover'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
+  if (tool.kind === 'marks' && !down) canvas.style.cursor = markUnder(e) ? 'grab' : '';
   if (tool.kind === 'select' && !down) canvas.style.cursor = !chosen ? '' : view.anchorAt(e) >= 0 ? 'grab' : p && editor.onPick(chosen, p.x, p.z) ? 'move' : '';
   if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
  });
+ // The tee, bend or green under the mouse (within 14 pixels, PLACED), the hole in
+ // hand first, then any other. {hole, kind, index}, or null.
+ function markUnder(e) {
+  const near = i => { let got = null, d0 = 14; for (const m of editor.marksOf(i)) { const q = view.screenOf(m.x, m.z); if (!q) continue; const d = Math.hypot(q.x - e.clientX, q.y - e.clientY); if (d <= d0) { d0 = d; got = {...m, hole: i}; } } return got; };
+  const here = near(selected); if (here) return here;
+  for (let i = 0; i < s.holes.length; i++) { if (i === selected) continue; const m = near(i); if (m) return m; }
+  return null;
+ }
  // CARRYING WHAT IS SELECTED. The first real move picks it up (what lay under
  // it shows, and its filled picture takes its place); each move after only
  // lays that picture and outline on the land, so even a whole fairway follows
@@ -409,7 +425,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   else if (d.pick.type === 'rock') view.placeRock(d.pick.index);
   else if (d.pick.type === 'home') view.refreshHomes();
  }
- canvas.addEventListener('pointerup', () => { if (down?.carry) {
+ canvas.addEventListener('pointerup', () => { if (down?.hold && tool.kind === 'marks') { down.hold.done(); down = null; canvas.style.cursor = ''; refreshHoles(); refreshSave(); return; } if (down?.carry) {
    const {hold, dx, dz, angle, pick} = down; down = null;
    if (!hold) return;
    const got = hold.drop(dx, dz, angle);

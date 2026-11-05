@@ -343,6 +343,25 @@ export function createEditor(doc) {
   setTee(hole, set, x, z) { api.editHoles(hs => { const h = hs[hole], t = h.tees.find(q => q.set === set); if (t) Object.assign(t, {x, z}); else h.tees.push({x, z, set}); h.line[0] = [h.tees[0].x, h.tees[0].z]; }); },
   setGreen(hole, x, z) { api.editHoles(hs => { const h = hs[hole]; h.green = {x, z}; h.line[h.line.length - 1] = [x, z]; }); },
   addBend(hole, x, z) { api.editHoles(hs => { const h = hs[hole]; h.line.splice(h.line.length - 1, 0, [x, z]); }); },
+  // A HOLE'S MARKS, TO DRAG (the owner, 5 November 2026): its tees, the bends in
+  // its line and its green, and one carried: the line follows, as setTee and
+  // setGreen keep it, and the whole drag is one undo, or none if it did not move.
+  marksOf(i) {
+   const h = state.holes[i];
+   return [...h.tees.map((t, n) => ({kind: 'tee', index: n, x: t.x, z: t.z})), ...h.line.slice(1, -1).map(([x, z], n) => ({kind: 'bend', index: n + 1, x, z})), {kind: 'green', x: h.green.x, z: h.green.z}];
+  },
+  holdMark(i, m) {
+   const step = remember('records', 0, 0, 0, 0), h = () => state.holes[i]; let moved = false;
+   return {
+    set(x, z) {
+     moved = true;
+     if (m.kind === 'green') { h().green = {x, z}; h().line[h().line.length - 1] = [x, z]; }
+     else if (m.kind === 'bend') h().line[m.index] = [x, z];
+     else { Object.assign(h().tees[m.index], {x, z}); if (m.index === 0) h().line[0] = [x, z]; }
+    },
+    done() { if (!moved) state.undo.splice(state.undo.indexOf(step), 1); },
+   };
+  },
   setPar(hole, par) { api.editHoles(hs => { hs[hole].par = par; }); },
   addTree(tree) { remember('records', 0, 0, 0, 0); state.trees.push(tree); },
   // May a tree stand here? Not on mown turf, sand, water, a path or a road.
