@@ -1357,6 +1357,16 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### The wait shows itself (5 November 2026)
+
+The owner: "when getting data from open street map, we need to indicate processing
+or progress of some sort." The busy screen (builder.js `setBusy`) now has a spinner
+for everything, turned by the browser so it moves while the page works, and takes
+a `share` for a bar and a `cancel` for a button. OpenStreetMap uses both: the seconds
+counted while the server thinks (its query allows 90 s, and it says nothing until
+it answers), the megabytes as they arrive (no total is sent, so the bar does not
+creep), then each stage of laying it out. Cancel stops the wait and changes nothing.
+
 ### How much the LIDAR covers, and only what is missing (5 November 2026)
 
 The owner: "before downloading we need to signify how much of the course is going

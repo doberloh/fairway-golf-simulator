@@ -40,11 +40,22 @@ export const ui = {el, root, onWindowChange};
 
 const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {class: 'cb-savenote', id: 'cbSaveNote'}), el('button', {class: 'cb-btn cb-hot', type: 'button', id: 'cbSave', hidden: true, title: 'Ctrl+S', onclick: () => saveNow()}, 'Save'), el('span', {id: 'cbTopTools'}));
 const main = el('main', {class: 'cb-main', id: 'cbMain'});
-const busy = el('div', {class: 'cb-busy', hidden: true, role: 'status'});
+// THE WAIT, for everything that takes a moment (the owner, 5 November 2026: "we
+// need to indicate processing or progress of some sort"). A spinner the browser
+// turns by itself, so it keeps moving while the page is working; the words; and,
+// when the job can say how far along it is or be stopped, a bar and a Cancel.
+const busyWords = el('span', {class: 'cb-busywords'}), busyFill = el('i', {}), busyBar = el('div', {class: 'cb-busybar', hidden: true}, busyFill);
+const busyStop = el('button', {class: 'cb-btn', type: 'button', hidden: true}, 'Cancel');
+const busy = el('div', {class: 'cb-busy', hidden: true, role: 'status'}, el('span', {class: 'cb-spinner', 'aria-hidden': 'true'}), busyWords, busyBar, busyStop);
 root.append(top, main, busy);
 
 export function setTitle(t) { document.getElementById('cbTitle').textContent = t || ''; }
-export function setBusy(text) { busy.textContent = text || ''; busy.hidden = !text; }
+// `share`: 0 to 1, how far along. `cancel`: what the Cancel button does.
+export function setBusy(text, {share = null, cancel = null} = {}) {
+ busyWords.textContent = text || ''; busy.hidden = !text;
+ busyBar.hidden = share == null; if (share != null) busyFill.style.width = `${Math.round(share * 100)}%`;
+ busyStop.hidden = !cancel; busyStop.onclick = cancel;
+}
 export function topTools(...nodes) { const t = document.getElementById('cbTopTools'); t.replaceChildren(...nodes.filter(n => n != null)); }   // a tool left out (null) is no tool, not the word
 export function show(node) { main.replaceChildren(node); }
 

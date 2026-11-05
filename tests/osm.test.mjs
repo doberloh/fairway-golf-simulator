@@ -46,6 +46,12 @@ test('an Overpass answer becomes layers, trees and a numbered hole', () => {
 test('the query asks for the golf features in the box; a busy server is said so', async () => {
  assert.match(overpassQuery([-95.63, 43.62, -95.61, 43.63]), /way\["golf"\]\(43\.62,-95\.63,43\.63,-95\.61\)/);
  await assert.rejects(fetchOsm([0, 0, 1, 1], async () => ({ok: false, status: 504})), /busy/);
+ // The bytes as they arrive, and the wait can be stopped.
+ const text = new TextEncoder().encode('{"elements":[1,2]}'), seen = []; let asked = null, sent = 0;
+ const body = {getReader: () => ({read: async () => sent < 2 ? {done: false, value: text.subarray(sent++ * 9, sent * 9)} : {done: true}})};
+ const stop = new AbortController();
+ const streamed = await fetchOsm([0, 0, 1, 1], async (url, o) => { asked = o; return {ok: true, body}; }, {onBytes: n => seen.push(n), signal: stop.signal});
+ assert.deepEqual(streamed, {elements: [1, 2]}); assert.deepEqual(seen, [9, 18]); assert.equal(asked.signal, stop.signal);
  const got = await fetchOsm([0, 0, 1, 1], async (url, o) => ({ok: true, json: async () => ({url, body: o.body})}));
  assert.match(got.url, /overpass-api\.de/);
 });

@@ -57,6 +57,13 @@ select option{background:#03100e;color:var(--ink)}
 .cb-table td,.cb-table th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
 .cb-busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(3,12,10,.72);z-index:20;font:800 22px/1.2 var(--head);text-transform:uppercase;text-align:center;padding:20px}
 .cb-busy[hidden]{display:none}
+.cb-busy{flex-direction:column;gap:12px;text-align:center}
+.cb-spinner{width:34px;height:34px;border-radius:50%;border:4px solid rgba(94,234,212,.25);border-top-color:var(--a1);animation:cb-spin .9s linear infinite}
+@keyframes cb-spin{to{transform:rotate(360deg)}}
+.cb-busybar{width:min(320px,70vw);height:6px;background:rgba(94,234,212,.15);overflow:hidden}
+.cb-busybar[hidden]{display:none}
+.cb-busybar i{display:block;height:100%;width:0;background:var(--a1);transition:width .2s}
+.cb-busy .cb-btn[hidden]{display:none}
 /* The editor: the 3D view, the tool column, the side panel. */
 .cb-view{position:absolute;inset:0}
 .cb-view canvas{display:block;width:100%;height:100%;outline:none}

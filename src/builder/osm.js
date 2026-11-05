@@ -44,10 +44,17 @@ export function overpassQuery([lon0, lat0, lon1, lat1]) {
  const b = `${lat0},${lon0},${lat1},${lon1}`;
  return `[out:json][timeout:90];(way["golf"](${b});relation["golf"](${b});way["natural"="water"](${b});way["natural"="wood"](${b});way["landuse"="forest"](${b});node["natural"="tree"](${b});way["leisure"="golf_course"](${b});way["building"](${b});way["highway"](${b});way["amenity"="parking"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
 }
-export async function fetchOsm(box, get = fetch) {
- const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(overpassQuery(box))});
+// `onBytes(n)`: the bytes received so far, as they arrive; the server sends no
+// total. `signal`: an AbortSignal, so the wait can be cancelled.
+export async function fetchOsm(box, get = fetch, {onBytes = null, signal = null} = {}) {
+ const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(overpassQuery(box)), signal});
  if (!r.ok) throw Error(`OpenStreetMap's server said ${r.status}${r.status === 429 || r.status >= 500 ? ' (it is busy: try again in a minute)' : ''}.`);
- return r.json();
+ if (!onBytes || !r.body?.getReader) return r.json();
+ const reader = r.body.getReader(), parts = []; let n = 0;
+ for (;;) { const {done, value} = await reader.read(); if (done) break; parts.push(value); n += value.length; onBytes(n); }
+ const all = new Uint8Array(n); let at = 0;
+ for (const p of parts) { all.set(p, at); at += p.length; }
+ return JSON.parse(new TextDecoder().decode(all));
 }
 
 // The features of an Overpass answer (JSON) in local metres: `toLocal(lat,

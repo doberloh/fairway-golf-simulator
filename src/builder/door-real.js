@@ -1117,12 +1117,23 @@ export function open(draft = null) {
   if (!st.land) return;
   const toLocal = localOfLonLat(), ll = lonLatOfLocal();
   if (!toLocal || !ll) return say('The survey does not say where it is: find the place first.', true);
-  setBusy(fromFile ? 'Reading the OpenStreetMap file…' : 'Asking OpenStreetMap…');
+  // THE WAIT, stage by stage (the owner, 5 November 2026). The server can take
+  // a minute and a half and says nothing until it answers, so the seconds count
+  // up and it can be cancelled; then the bytes, then each step of laying it out,
+  // with a breath between so the words are seen.
+  const stop = new AbortController(), t0 = Date.now(), cancel = () => stop.abort();
+  const stage = async (words, share) => { setBusy(words, {share}); await new Promise(r => setTimeout(r, 30)); };
+  const waiting = () => setBusy(`Asking OpenStreetMap… ${Math.round((Date.now() - t0) / 1000)} s (a busy server can take over a minute)`, {share: .05, cancel});
+  let ticking = fromFile ? 0 : setInterval(waiting, 1000);
+  if (fromFile) setBusy('Reading the OpenStreetMap file…'); else waiting();
   try {
    let json;
    if (fromFile) { const [file] = await pickFile('.json,application/json'); if (!file) return; json = JSON.parse(await file.text()); }
-   else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))]); }
+   else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))], fetch, {signal: stop.signal, onBytes: n => { clearInterval(ticking); ticking = 0; setBusy(`Receiving the map… ${(n / 1e6).toFixed(1)} MB`, {share: .3, cancel}); }}); }
+   clearInterval(ticking); ticking = 0;
+   await stage('Reading what the map holds…', .5);
    const feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats), edge = osmBoundary(json, toLocal);
+   await stage('Laying the greens, fairways and water…', .65);
    st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], trees: []}); st.traceMode = 'openstreetmap';
    const laid = layOsm(st.model, feats), osmTrees = st.model.state.trees;
    // Whose trees (osm.js mergeTrees): the LIDAR's and the map's, by the choice.
@@ -1131,12 +1142,14 @@ export function open(draft = null) {
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
    st.osm = {codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
     courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
+   await stage('Finding the holes…', .85);
    const n = osmCourseHoles();
+   await stage('Drawing the trace…', .95);
    st.osm.said = `Laid: ${Object.entries(laid).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${n} holes numbered${courses.length > 1 ? ` on ${courses[0].name} (${courses.length} courses here: pick below)` : ''}${st.boundary ? '; the course boundary' : ''}.`;
    paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
    say(st.osm.said);
-  } catch (e) { say('OpenStreetMap: ' + e.message, true); }
-  finally { setBusy(''); }
+  } catch (e) { if (e.name === 'AbortError') say('Stopped: nothing was changed.'); else say('OpenStreetMap: ' + e.message, true); }
+  finally { clearInterval(ticking); setBusy(''); }
  }
  function treesFrom(how) {
   st.treesFrom = how; if (!st.osm) return;
@@ -1172,7 +1185,7 @@ export function open(draft = null) {
  async function refineOsm(mode) {
   if (!st.osm) return;
   if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
-  setBusy('Refining…'); await frame();
+  setBusy(`Lining the map up with the ${mode === 'picture' ? 'picture' : 'LIDAR'}…`); await frame();
   try {
    const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
    st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
