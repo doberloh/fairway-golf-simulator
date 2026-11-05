@@ -6,7 +6,11 @@ import {createEditor} from '../src/builder/editing.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 import {docFromLand} from '../src/builder/real-course.js';
 import {validateDoc, TREE_STRIDE} from '../src/course-doc.js';
-import {treeCover, coverByKey, COVER_RANGE, TREE_REFUSED} from '../src/builder/cover.js';
+import {treeCover, coverByKey, COVER_RANGE, TREE_REFUSED, treeChoices} from '../src/builder/cover.js';
+import {TREE_NAMES} from '../src/builder/tree-names.js';
+import {FAMILY_OF} from '../src/plant-families.js';
+import {GROUND_PLANTS} from '../src/species.js';
+import {worldFromDoc} from '../src/built-world.js';
 import {cornersOf, zoneTrees} from '../src/builder/layer-ops.js';
 import {previewOf} from '../src/builder/preview-items.js';
 import {familyModels} from '../src/mesh-assets.js';
@@ -60,6 +64,29 @@ test('a tree painted in 2D keeps its species and size in the course', () => {
  assert.equal(d.trees.length / TREE_STRIDE, n);
  assert.ok(d.treeKinds.every(k => trees.plants.some(p => p[0] === k)));
  m.undo(); assert.equal(m.state.trees.length, 0);
+});
+
+test('Place tree: every landscape\'s trees by name, and the one picked is the one that grows', async () => {
+ for (const k of BIOME_KEYS) {
+  const choices = treeChoices(BIOMES[k]);
+  if (!choices.length) { assert.equal(k, 'links', 'only a treeless links has none to pick'); continue; }
+  for (const [species, name] of choices) { assert.ok(TREE_NAMES[species], `${k}: ${species} has no name`); assert.equal(name, TREE_NAMES[species]); assert.ok(familyModels(FAMILY_OF[species] ?? species).length, `${k}: ${species} has no model`); }
+  assert.equal(new Set(choices.map(c => c[1])).size, choices.length, `${k}: a name twice`);
+  const [species] = choices[0], s = previewOf({kind: 'tree', species, height: 20}, BIOMES[k]);
+  assert.equal(s.pieces.length, 1); assert.equal(s.pieces[0].size, 20); assert.equal(s.title, TREE_NAMES[species]);
+ }
+ const e = createEditor(doc());
+ e.placeTree({x: 50, z: 50, h: 18, species: 'blueoak'}); e.placeTree({x: 60, z: 60, h: 18}); e.placeTree({x: 70, z: 70, h: 12, species: 'blueoak'});
+ assert.equal(e.state.treeKinds.length, 1); assert.equal(e.state.trees[1][6], -1, 'unpicked, the landscape chooses');
+ const w = worldFromDoc(e.toDoc());
+ assert.equal(w.trees[0].kind, 'blueoak'); assert.equal(w.trees[2].kind, 'blueoak'); assert.equal(w.trees[0].h, 18);
+ e.undo(); assert.equal(e.state.trees.length, 2);
+ const land = land2d(), m = trace(land);
+ m.addTree({x: 50, z: 50, h: 18, species: 'valleyoak'}); m.addTree({x: 60, z: 60, h: 14, crown: 4});
+ assert.deepEqual(make(land, m).treeKinds, ['valleyoak']);
+ // A tree only a landscape's stands grow still draws as itself.
+ const standOnly = BIOME_KEYS.flatMap(k => (BIOMES[k].stands?.plants ?? []).filter(p => !BIOMES[k].plants.some(q => q[0] === p[0]) && !GROUND_PLANTS.has(p[0])).map(p => [k, p[0]]))[0];
+ if (standOnly) { const d = doc(); d.landscape = standOnly[0]; d.trees = new Float32Array([50, 50, 18, 5, .4, 2, 0]); d.treeKinds = [standOnly[1]]; assert.equal(worldFromDoc(d).trees[0].kind, standOnly[1]); }
 });
 
 test('the preview shows the tree brush\'s smallest and largest on every landscape', () => {

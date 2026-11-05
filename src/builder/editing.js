@@ -364,6 +364,14 @@ export function createEditor(doc) {
   },
   setPar(hole, par) { api.editHoles(hs => { hs[hole].par = par; }); },
   addTree(tree) { remember('records', 0, 0, 0, 0); state.trees.push(tree); },
+  // ONE TREE PICKED BY NAME (the owner, 5 November 2026): its size from its height
+  // and role, its species kept. Null `species`: the landscape chooses, as before.
+  placeTree({x, z, h, species = null}) {
+   if (!species) return api.addTree([x, z, h, h * .28, Math.min(.8, h * .027), 2, -1]);
+   remember('records', 0, 0, 0, 0);
+   let kind = state.treeKinds.indexOf(species); if (kind < 0) kind = state.treeKinds.push(species) - 1;
+   const t = treeSized(species, h); state.trees.push([x, z, t.h, t.crown, t.trunk, t.role, kind]);
+  },
   // May a tree stand here? Not on mown turf, sand, water, a path or a road.
   treeFits: (x, z) => !TREE_REFUSED.has(api.surfaceAt(x, z)),
   // A TREE ZONE, as door 2's (layer-ops.js zoneTrees). Returns how many.

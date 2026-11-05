@@ -1357,6 +1357,17 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### Place tree picks the tree (5 November 2026)
+
+The owner: "when i select 'place tree' i can select what tree to place." Both
+editors offer the landscape's own trees by name (tree-names.js, cover.js
+`treeChoices`: its plant list and its stands'), with "Any of the landscape's"
+first, as it was. The preview shows the one picked at the height set. The tree
+is stored with its species; the game draws it while the landscape grows it, which
+now counts its stands as well as its plant list (built-world.js: drawing only, no
+`BUILT_VERSION`). Names PLACED by the common name of each model's species, and two
+older keys share a name, so a landscape shows one of them. Not seen on screen.
+
 ### Marks that drag (5 November 2026)
 
 The owner: "make it so i can drag pieces around when placing the holes and

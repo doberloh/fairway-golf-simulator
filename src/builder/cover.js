@@ -12,6 +12,7 @@
 import {GROUND_PLANTS} from '../species.js';
 import {CONIFERS, PALMS} from '../built-world.js';
 import {TREE_ROLES} from '../course-doc.js';
+import {TREE_NAMES} from './tree-names.js';
 
 // PLACED: what counts as a flower rather than a bush on the two buttons.
 export const FLOWER_PLANTS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris', 'californiapoppy', 'bluebonnet', 'wildsunflower', 'fireweed', 'balsamroot', 'mulesear', 'globemallow', 'sorrel', 'cottongrass']);
@@ -37,6 +38,14 @@ function lowPlants(bio) {
 export function treeCover(bio) {
  const tall = (bio?.plants ?? []).filter(([k]) => !GROUND_PLANTS.has(k));
  return {key: 'trees', label: 'Trees', plants: tall.length ? tall : [['oak', 1]]};
+}
+// The landscape's trees to pick from, one at a time, by name: its plant list and
+// its stands', [[species, name]]. Two keys can share a name (a landscape's own
+// shore pine and the older `pine`): one line each way, the first kept.
+export function treeChoices(bio) {
+ const seen = new Map();
+ for (const [k] of [...(bio?.plants ?? []), ...(bio?.stands?.plants ?? [])]) { if (GROUND_PLANTS.has(k)) continue; const name = TREE_NAMES[k] ?? k; if (!seen.has(name)) seen.set(name, k); }
+ return [...seen].map(([name, k]) => [k, name]).sort((a, b) => a[1].localeCompare(b[1]));
 }
 export const coverByKey = (bio, key) => key === 'trees' ? treeCover(bio) : coverOptions(bio).find(c => c.key === key) ?? null;
 // A stored tree from a painted one: a crown and trunk from its height, as door 2

@@ -479,8 +479,9 @@ export function worldFromDoc(doc, settings = {}) {
   const stored = doc.treeKinds?.[ki], r = TREE_ROLES[role & 7] || 'tree';
   // The stored species while the course wears the landscape it was grown in
   // (a stand's understory, bracken, is not in the landscape's plant list but
-  // is its own), or wherever this landscape grows that species too.
-  const kind = stored && (sameLandscape || bio.plants.some(p => p[0] === stored)) ? stored : speciesFor(bio, r, th, x, z);
+  // is its own), or wherever this landscape grows that species too, in its
+  // plant list or its stands (a tree picked by name, builder/cover.js).
+  const kind = stored && (sameLandscape || bio.plants.some(p => p[0] === stored) || bio.stands?.plants?.some(p => p[0] === stored)) ? stored : speciesFor(bio, r, th, x, z);
   trees.push({x, z, y: height(x, z), h: th, r: crown, radius: trunk, shade: (Math.sin(x * 3.1 + z * 7.7) * .5 + .5), kind, hole: nearest(x, z).h.hole, built: true,
    ...(role & 8 ? {stand: true} : {}), ...(role & 16 ? {under: true} : {})});
  }

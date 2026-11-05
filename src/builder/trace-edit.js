@@ -119,7 +119,8 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   },
   // TREES: one, or a zone scattered at a density (trees a hectare), each a
   // height and crown from the given ranges, never on mown ground or water.
-  addTree(t) { step(() => { keepTrees(); s.trees.push({x: t.x, z: t.z, h: t.h ?? 14, crown: t.crown ?? 4}); }); },
+  // `species`: one tree picked by name, kept with its size wherever it stands.
+  addTree(t) { step(() => { keepTrees(); s.trees.push(t.species ? {x: t.x, z: t.z, ...treeSized(t.species, t.h ?? 14), kept: true, kind: t.species} : {x: t.x, z: t.z, h: t.h ?? 14, crown: t.crown ?? 4}); }); },
   removeTrees({x, z, radius}) { step(() => { keepTrees(); s.trees = s.trees.filter(t => Math.hypot(t.x - x, t.z - z) > radius); }); },
   // Every tree replaced at once (door 2's choice of whose trees: osm.js
   // mergeTrees), one step to undo.

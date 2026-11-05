@@ -15,7 +15,7 @@ import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
 import {layersFor} from './layers.js';
-import {coverOptions, coverByKey, COVER_RANGE} from './cover.js';
+import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {preview} from './preview.js';
 import {changeMark, sameMark, poseFrom} from './game-look.js';
 
@@ -52,13 +52,13 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  let tool = {kind: 'navigate'}, radius = 8, strength = .5, selected = 0, draft = [], down = null, rampA = null;
  // The layer the clean-up tools work on, the tree tools' numbers, how thick
  // ground cover lies, and Extrapolate's. As door 2's (PLACED there).
- let layer = 'fairway', treeH = 15, zoneDensity = 120, coverThick = .5, exTo = 'semi', exWidth = 4;
+ let treeKind = '', layer = 'fairway', treeH = 15, zoneDensity = 120, coverThick = .5, exTo = 'semi', exWidth = 4;
  const OUTLINES = new Set(['outline', 'pond', 'treeZone', 'homeZone']);
  // Ground cover's two sizes, one pair for each kind of cover (PLACED: where
  // cover.js starts them), kept as the brush changes hands.
  const coverSizes = Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}]));
  // The model of what the tool paints or places (preview.js).
- const ITEM = {paint: t => ({kind: 'surface', surface: t.surface}), outline: t => ({kind: 'surface', surface: t.surface}), pond: () => ({kind: 'pond'}), creek: () => ({kind: 'creek'}), bunker: () => ({kind: 'bunker'}), placeTree: () => ({kind: 'tree'}), treeZone: () => ({kind: 'tree'}), house: () => ({kind: 'house'}), homeZone: () => ({kind: 'house'}),
+ const ITEM = {paint: t => ({kind: 'surface', surface: t.surface}), outline: t => ({kind: 'surface', surface: t.surface}), pond: () => ({kind: 'pond'}), creek: () => ({kind: 'creek'}), bunker: () => ({kind: 'bunker'}), placeTree: () => ({kind: 'tree', species: treeKind || null, height: treeH}), treeZone: () => ({kind: 'tree'}), house: () => ({kind: 'house'}), homeZone: () => ({kind: 'house'}),
   cover: t => ({kind: 'cover', cover: t.cover, ...coverSizes[t.cover]})};
  const showModel = () => preview().show(ITEM[tool.kind]?.(tool) ?? null, s.landscape);
  const setTool = t => {
@@ -88,7 +88,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   green: () => `Click where hole ${selected + 1}'s green goes.`,
   bend: () => `Click to add a bend to hole ${selected + 1}'s line.`,
   marks: () => 'Drag markers: press on any tee, bend or green and drag it. The hole\'s line follows; Undo puts it back.',
-  placeTree: () => `Place tree: click to stand one ${treeH} m tree, not on turf, sand, water, a path or a road.`,
+  placeTree: () => `Place tree: pick the tree, then click to stand one ${treeH} m tall, not on turf, sand, water, a path or a road.`,
   treeZone: () => `Tree zone: click round it, then double-click or press Enter. It fills with ${zoneDensity} trees a hectare.`,
   homeZone: () => 'House zone: click round it, then double-click or press Enter. Houses line it 42 m apart, each facing the course.',
   clear: () => 'Drag to take trees out.',
@@ -232,7 +232,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}))),
   el('div', {class: 'cb-group'}, el('b', {}, 'Trees'), el('div', {class: 'cb-btns'},
    button('Place tree', {kind: 'placeTree'}), button('Tree brush', {kind: 'cover', cover: 'trees'}), button('Tree zone', {kind: 'treeZone'}), button('Clear trees', {kind: 'clear'}), button('Size a tree', {kind: 'sizeTree'})),
-   el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; }})),
+   el('label', {'data-for': 'placeTree'}, 'Which tree ', el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[s.landscape]).map(([k, name]) => el('option', {value: k, selected: k === treeKind}, name)))),
+   el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; showModel(); }})),
    el('label', {'data-for': 'treeZone'}, 'Trees a hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
    el('label', {title: 'Every tree on the course together'}, 'Every tree\'s size ', scaleText, treeScale),
@@ -243,7 +244,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
 
  // ---- the right: the course, its holes, the checks, Save.
  const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); refreshSave(); }});
- const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); view.refreshAll(); buildTools(); setTool({kind: 'navigate'}); refreshLayers(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
+ const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); if (!treeChoices(BIOMES[s.landscape]).some(([k]) => k === treeKind)) treeKind = ''; view.refreshAll(); buildTools(); setTool({kind: 'navigate'}); refreshLayers(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
  const holeList = el('ul');
  const checkList = el('ul'), roundList = el('ul');
  async function runTest() {
@@ -341,7 +342,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   else if (tool.kind === 'eraseAll') view.refreshSurface(editor.erase({x: p.x, z: p.z, radius, group: down.group}));
   else if (tool.kind === 'smoothEdges') view.refreshSurface(editor.smoothEdges({x: p.x, z: p.z, radius: Math.max(1, radius / 3), area: radius, kind: layerNow(), group: down.group}));
   else if (tool.kind === 'placeTree' && first) {
-   if (editor.treeFits(p.x, p.z)) { editor.addTree([p.x, p.z, treeH, treeH * .28, Math.min(.8, treeH * .027), 2, -1]); view.refreshTrees(); }
+   if (editor.treeFits(p.x, p.z)) { editor.placeTree({x: p.x, z: p.z, h: treeH, species: treeKind || null}); view.refreshTrees(); }
    else status.textContent = `A tree cannot stand on ${editor.surfaceAt(p.x, p.z)}.`;
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
   else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }

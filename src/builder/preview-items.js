@@ -17,6 +17,7 @@ import {GROUNDS, GROUND_TINT, allows} from '../grounds.js';
 import {GROUND_PLANTS, SPREAD_SIZED} from '../species.js';
 import {SEASON_TINTS} from '../season-tints.js';
 import {coverByKey} from './cover.js';
+import {TREE_NAMES} from './tree-names.js';
 
 const look = (species, bio) => {
  const family = FAMILY_OF[species] ?? species, t = SEASON_TINTS[family]?.summer ?? {};
@@ -56,6 +57,8 @@ export function previewOf(item, bio) {
  if (!item || !bio) return null;
  if (item.kind === 'surface') return surface(item.surface, bio);
  if (item.kind === 'tree') {
+  // One tree picked, at the height set; else a few of the landscape's own.
+  if (item.species) return {title: TREE_NAMES[item.species] ?? item.species, ground: bio.rough, golfer: true, pieces: [plant(item.species, bio, item.height ?? 15, 0, 0)], caption: `${item.height ?? 15} m tall.`};
   const list = tall(bio).slice(0, 3);
   return {title: 'Trees', ground: bio.rough, golfer: true, pieces: list.map((k, i) => plant(k, bio, [12, 9, 7][i], ...ROW[i])), caption: 'The landscape\'s own, in the game\'s models.'};
  }

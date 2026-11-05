@@ -624,7 +624,7 @@ the file to anyone else who has Fairway. It opens on three doors.
      it, Esc drops it), **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
-     when the course is built; **Place tree** stands one tree at the height set,
+     when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
      **Tree brush** scatters the landscape's trees across the brush between a
      Smallest and a Largest size, as thick as you set, **Tree zone** scatters
      trees through an outline at the density set (none of them on fairway,
@@ -747,7 +747,8 @@ paths and water alone; it is a best effort from the heights, so paint over
 it or Undo it in one step, or paint the ground by hand instead; **Outline** draws one by its edge; dig a bunker,
 draw a pond or a creek (it runs downhill), paint or outline **Water** (it gets a
 level and a bed when the stroke ends, and erased water goes), **Place tree**
-(one, at a height you set, never on turf, sand, water, paths or roads), **Tree
+(one, the kind you pick by name or any of the landscape's, at a height you set,
+never on turf, sand, water, paths or roads), **Tree
 brush** (scattered across the brush between a Smallest and a Largest size),
 **Tree zone** (through an outline, at trees a hectare) or **Clear trees**, stand a
 **House** where you click (on open ground, facing the nearest fairway, green

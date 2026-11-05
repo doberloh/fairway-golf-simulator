@@ -27,7 +27,7 @@ import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refresh
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
-import {coverOptions, coverByKey, COVER_RANGE} from './cover.js';
+import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {cornersOf} from './layer-ops.js';
 import {markNear, moveMark} from './hole-marks.js';
 import {fileName} from '../course-file.js';
@@ -91,7 +91,7 @@ export function open(draft = null) {
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
   name: 'My real course', landscape: 'heartland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
-  chosen: null, carry: null, sizing: null, treeScale: 1, cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
+  chosen: null, carry: null, sizing: null, treeScale: 1, treeKind: '', cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
@@ -114,7 +114,7 @@ export function open(draft = null) {
  // The cover in hand, or the landscape's first if it does not offer that one.
  const coverNow = () => { const o = coverOptions(BIOMES[st.landscape]); return o.find(c => c.key === st.cover) ?? o[0]; };
  const showModel = () => {
-  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree'}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, creek: {kind: 'creek'}, bunker: {kind: 'bunker'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}, treeBrush: {kind: 'cover', cover: 'trees', ...st.coverSizes.trees}})[st.tool] ?? null : null;
+  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree', species: st.treeKind || null, height: st.treeH}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, creek: {kind: 'creek'}, bunker: {kind: 'bunker'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}, treeBrush: {kind: 'cover', cover: 'trees', ...st.coverSizes.trees}})[st.tool] ?? null : null;
   preview().show(item, st.landscape);
  };
  // Back to the builder's start ends this course, so with work in it, it asks
@@ -392,7 +392,7 @@ export function open(draft = null) {
    if (t === 'tree' && type === 'down') {
     const here = m.kindAt(p.x, p.z);
     if (['fairway', 'green', 'tee', 'water', 'sand', 'path'].includes(here)) say(`A tree cannot stand on ${LABEL(here).toLowerCase()}.`, true);
-    else { m.addTree({x: p.x, z: p.z, h: st.treeH, crown: st.treeH * .28}); refreshCount(); }
+    else { m.addTree({x: p.x, z: p.z, h: st.treeH, crown: st.treeH * .28, species: st.treeKind || null}); refreshCount(); }
     plan.draw(); return;
    }
   }
@@ -985,7 +985,8 @@ export function open(draft = null) {
     toolSet('Water and sand', ['creek', 'bunker']), toolSet('Trees', ['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree']),
     toolSet('Ground cover', ['cover', 'coverErase']), toolSet('Houses', ['home', 'homeZone', 'homeErase']),
     toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
-    toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); }}))),
+    toolOption(['tree'], el('small', {}, 'Which tree'), el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { st.treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[st.landscape]).map(([k, name]) => el('option', {value: k, selected: k === st.treeKind}, name)))),
+    toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); showModel(); }}))),
     toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
     ...coverControls(),
     toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], el('label', {class: 'cb-opt'}, 'Every tree\'s size', el('input', {type: 'range', class: 'cb-treescale', min: .5, max: 2, step: .05, value: st.treeScale, title: 'Every tree on the course together', oninput: e => { st.treeScale = +e.target.value; plan.draw(); refreshSave(); }}))),
