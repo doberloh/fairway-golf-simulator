@@ -13,7 +13,9 @@ import {TRACE, boxMean, distanceFrom} from '../lidar/trace.js';
 import {GROUND_KINDS} from '../grounds.js';
 import {TREE_ROLES} from '../course-doc.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
-import {scatterCover, coverAt, COVER_REFUSED} from './cover.js';
+import {scatterCover, coverAt, refusedBy, treeSized} from './cover.js';
+import {smoothCells, extrapolateCells, zoneTrees, zoneHomes} from './layer-ops.js';
+import {skinFromHeights, SKIN} from './skin.js';
 
 export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k))];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
@@ -31,11 +33,11 @@ export const POCK = 30;
 // tidying work on one layer (`kind`), or -- Erase, Smooth all, Tidy with no
 // kind -- on every layer. `state.codes` is what the course will be made of,
 // `state.layers.view` what is shown (hidden layers left out).
-export function createTrace(grid, {codes = null, trees = [], homes = [], rocks = []} = {}) {
+export function createTrace(grid, {codes = null, trees = [], homes = [], rocks = [], bunkers = [], creekLines = []} = {}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
  const layers = createLayers(nx, nz, PALETTE);
  if (codes) layers.fromCodes(codes);
- const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), homes: homes.map(h => ({...h})), rocks: rocks.map(q => [...q]), undo: [], redo: [], stroke: null};
+ const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), homes: homes.map(h => ({...h})), rocks: rocks.map(q => [...q]), bunkers: bunkers.map(b => ({...b})), creekLines: creekLines.map(c => ({...c})), undo: [], redo: [], stroke: null};
  const idx = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i < 0 || j < 0 || i >= nx || j >= nz ? -1 : j * nx + i; };
  // Every change goes through `put`, which remembers each layer cell's first
  // value in the current step (so a whole drag undoes at once) and the box the
@@ -51,8 +53,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
  const keepTrees = () => { if (!s.stroke.trees) s.stroke.trees = s.trees.map(t => ({...t})); };
  const keepHomes = () => { if (!s.stroke.homes) s.stroke.homes = s.homes.map(h => ({...h})); };
  const keepRocks = () => { if (!s.stroke.rocks) s.stroke.rocks = s.rocks.map(q => [...q]); };
+ const keepList = key => { if (!s.stroke[key]) s.stroke[key] = s[key].map(v => ({...v})); };
  const settle = () => { const bx = s.stroke?.box; if (bx && bx[1] >= 0) layers.recompose(bx[0], bx[1], bx[2], bx[3]); };
- const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees || s.stroke.homes || s.stroke.rocks)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
+ const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees || s.stroke.homes || s.stroke.rocks || s.stroke.bunkers || s.stroke.creekLines)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
  const box = (x, z, r) => ({i0: Math.max(0, Math.floor((x - r + halfX) / cell)), i1: Math.min(nx - 1, Math.ceil((x + r + halfX) / cell)), j0: Math.max(0, Math.floor((z - r + halfZ) / cell)), j1: Math.min(nz - 1, Math.ceil((z + r + halfZ) / cell))});
  const layerOf = k => { if (k == null || k === 'rough') return null; if (CODE[k] == null || !LAYER_ORDER.includes(k)) throw Error(`No such surface: ${k}`); return k; };
  const facing = (x, z) => facingFrom(api.kindAt)(x, z);
@@ -95,11 +98,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
    const kinds = kind ? [layerOf(kind)] : every();
    step(() => { for (const L of kinds) {
     const m = layers.mask(L); if (!m) continue;
-    const share = boxMean(Float32Array.from(m), nx, nz, r);
-    for (let j = b.j0; j <= b.j1; j++) for (let i = b.i0; i <= b.i1; i++) {
-     if (x != null && Math.hypot(-halfX + i * cell - x, -halfZ + j * cell - z) > reach) continue;
-     const k = j * nx + i, v = share[k] > .5 ? 1 : share[k] < .5 ? 0 : m[k]; if (v !== m[k]) put(L, k, v);
-    }
+    smoothCells(m, grid, r, b, (i, j) => x == null || Math.hypot(-halfX + i * cell - x, -halfZ + j * cell - z) <= reach, (k, v) => put(L, k, v));
    } });
   },
   // EXTRAPOLATE (the owner, 1 November 2026: "semi rough to fairways ...
@@ -110,8 +109,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // mows a collar round every green, the course's fringe width.)
   extrapolate({from, to, width}) {
    const F = layers.mask(layerOf(from)), T = layerOf(to); if (!F || !T || T === from || !(width > 0)) return;
-   const d = distanceFrom(F, nx, nz, cell), under = LI[T] > LI[from];
-   step(() => { for (let k = 0; k < N; k++) if (d[k] <= width && (under || !F[k])) put(T, k, 1); });
+   step(() => extrapolateCells(F, grid, width, LI[T] > LI[from], (k, v) => put(T, k, v)));
   },
   // TIDY: on each layer (or `kind`'s), patches under `minArea` m² go and
   // holes under POCK m² fill -- no specks, no pocks.
@@ -127,27 +125,66 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // mergeTrees), one step to undo.
   setTrees(list) { step(() => { keepTrees(); s.trees = list.map(t => ({...t})); }); },
   treeZone(ring, {density = 120, height = [10, 22], crown = [2.5, 5], seed = 1} = {}) {
-   let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
-   const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]), spacing = Math.sqrt(1e4 / density);
-   step(() => { keepTrees();
-    for (let z = Math.min(...zs); z <= Math.max(...zs); z += spacing) for (let x = Math.min(...xs); x <= Math.max(...xs); x += spacing) {
-     const px = x + (rnd() - .5) * spacing * .9, pz = z + (rnd() - .5) * spacing * .9;
-     if (!inside(ring, px, pz)) continue;
-     const here = api.kindAt(px, pz); if (!here || !OPEN.has(here)) continue;
-     s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])});
-    } });
+   step(() => { keepTrees(); s.trees.push(...zoneTrees(ring, {density, height, crown, seed, open: (x, z) => { const here = api.kindAt(x, z); return !!here && OPEN.has(here); }})); });
   },
   // GROUND COVER, as in the 3D editor (cover.js, editing.js paintCover; the
   // owner, 4 November 2026: "Add the ground cover brush to the 2d editor"): one
   // dab scattered on open ground. A plant is a tree kept where it stands, of
   // the shrub role with its species; a rock is a rock. Returns how many.
   paintCover({cover, x, z, radius, min, max, density, rng = Math.random}) {
-   const got = scatterCover({cover, x, z, radius, min, max, density, rng, open: (px, pz) => { const k = api.kindAt(px, pz); return !!k && !COVER_REFUSED.has(k); }, taken: (px, pz, reach) => coverAt(s, px, pz, reach)});
+   const refused = refusedBy(cover.key), got = scatterCover({cover, x, z, radius, min, max, density, rng, open: (px, pz) => { const k = api.kindAt(px, pz); return !!k && !refused.has(k); }, taken: (px, pz, reach) => coverAt(s, px, pz, reach)});
    if (got.length) step(() => {
     keepTrees(); keepRocks();
-    for (const p of got) { if (p.rock) s.rocks.push(p.rock); else s.trees.push({x: p.x, z: p.z, h: p.size, crown: p.size * .6, trunk: .05, role: SHRUB, kept: true, kind: p.species}); }
+    for (const p of got) {
+     if (p.rock) s.rocks.push(p.rock);
+     else if (cover.key === 'trees') s.trees.push({x: p.x, z: p.z, ...treeSized(p.species, p.size), kept: true, kind: p.species});
+     else s.trees.push({x: p.x, z: p.z, h: p.size, crown: p.size * .6, trunk: .05, role: SHRUB, kept: true, kind: p.species});
+    }
    });
    return got.length;
+  },
+  // ONE TREE'S SIZE, as the 3D editor's: `f` times the `base` record it had
+  // when picked. `first` starts one undo step, so a slider's drag is one Undo.
+  sizeTree(index, base, f, first = false) {
+   if (!s.trees[index]) return;
+   const k = Math.max(.25, Math.min(3, f)), sized = {...base, h: base.h * k, crown: base.crown * k, ...(base.trunk ? {trunk: base.trunk * k} : {}), kept: true};
+   if (first) step(() => { keepTrees(); s.trees[index] = sized; }); else s.trees[index] = sized;
+  },
+  // A BUNKER DUG at a click: sand painted, and the bowl recorded for the course
+  // to dig into the land when it is made (real-course.js). A CREEK a line kept
+  // the same way. Both undo here; the ground is only changed in the course.
+  digBunker({x, z, radius = 5}) { step(() => { keepList('bunkers'); s.bunkers.push({x, z, radius}); api.paint({x, z, radius, kind: 'sand'}); }); },
+  addCreekLine({points, width = 3}) { step(() => { keepList('creekLines'); s.creekLines.push({points: points.map(p => [...p]), width}); }); },
+  // SKIN FROM THE LAND, as the 3D editor's (skin.js): `ground` the heights as
+  // they stand. One undo. Returns {kinds, cells}.
+  skin({bio, ground}) {
+   const c = SKIN.clear, PLAYED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']);
+   const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.kindAt(x + dx, z + dz)));
+   const skin = skinFromHeights({nx, nz, cell, halfX: halfX + cell / 2, halfZ: halfZ + cell / 2, ground}, bio, keepOut);
+   step(() => { for (const [kind, m] of Object.entries(skin.masks)) for (let k = 0; k < N; k++) if (m[k]) put(kind, k, 1); });
+   return {kinds: skin.kinds, cells: skin.cells};
+  },
+  // HOLDING ONE THING, as the 3D editor's (editing.js holdShape): it comes off
+  // the plan at once and `drop` puts it down; one undo, none if it went nowhere.
+  hold(pick) {
+   if (pick.type !== 'shape') {
+    const list = pick.type === 'home' ? 'homes' : 'trees', was = s[list][pick.index], base = list === 'homes' ? keepHomes : keepTrees;
+    begin(); base();
+    const set = (dx, dz, angle = 0) => { s[list][pick.index] = list === 'homes' ? {...was, x: was.x + dx, z: was.z + dz, rotation: was.rotation - angle} : {...was, x: was.x + dx, z: was.z + dz, kept: true}; };
+    return {set, drop(dx, dz, angle = 0) { set(dx, dz, angle); if (!dx && !dz && !angle) { s[list][pick.index] = was; s.stroke = null; } else end(); return pick; }};
+   }
+   begin();
+   for (const k of pick.cells) put(pick.kind, k, 0);
+   settle();
+   return {set() {}, drop(dx, dz, angle = 0) {
+    const di = Math.round(dx / cell), dj = Math.round(dz / cell);
+    if (!di && !dj && !angle) { for (const k of pick.cells) put(pick.kind, k, 1); settle(); s.stroke = null; return pick; }
+    const turned = angle ? turnedCells(pick.cells, angle, nx, nz) : pick.cells, cells = [];
+    for (const k of turned) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i >= 0 && j >= 0 && i < nx && j < nz) cells.push(j * nx + i); }
+    for (const k of cells) put(pick.kind, k, 1);
+    end();
+    return {...pick, cells};
+   }};
   },
   // Rocks, and plants sized as ground cover, off under the brush; not trees.
   clearCover({x, z, radius}) {
@@ -214,13 +251,8 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   homeAt({x, z, rotation = null, width = 20, depth = 15}) { return {x, z, rotation: rotation ?? facing(x, z), width, depth}; },
   homeFits(h) { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation); return [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].every(([a, b]) => { const lx = a * (h.width / 2 + 2), lz = b * (h.depth / 2 + 2), here = api.kindAt(h.x + lx * c + lz * sn, h.z - lx * sn + lz * c); return here && OPEN.has(here); }) && !s.homes.some(o => Math.hypot(o.x - h.x, o.z - h.z) < (Math.max(o.width, o.depth) + Math.max(h.width, h.depth)) / 2 + 4); },
   homeZone(ring, {spacing = 42, seed = 1} = {}) {
-   let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
-   const xs = ring.map(p => p[0]), zs = ring.map(p => p[1]); let n = 0;
-   step(() => { keepHomes();
-    for (let z = Math.min(...zs) + spacing / 2; z <= Math.max(...zs); z += spacing) for (let x = Math.min(...xs) + spacing / 2; x <= Math.max(...xs); x += spacing) {
-     const h = api.homeAt({x: x + (rnd() - .5) * spacing * .3, z: z + (rnd() - .5) * spacing * .3, width: 16 + rnd() * 9, depth: 13 + rnd() * 6});
-     if (inside(ring, h.x, h.z) && api.homeFits(h)) { s.homes.push(h); n++; }
-    } });
+   let n = 0;
+   step(() => { keepHomes(); n = zoneHomes(ring, {spacing, seed, place: h0 => { const h = api.homeAt(h0); if (!api.homeFits(h)) return false; s.homes.push(h); return true; }}); });
    return n;
   },
   // MOVING ONE SHAPE (the owner, 1 November 2026: "the ability to move
@@ -271,11 +303,13 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
  // Undo and redo are one act: a step's remembered values swapped with the present.
  function swapStep(from, to) {
   const st = from.pop(); if (!st) return false;
-  const back = {cells: new Map(), trees: st.trees ? s.trees : null, homes: st.homes ? s.homes : null, rocks: st.rocks ? s.rocks : null, box: st.box};
+  const back = {cells: new Map(), trees: st.trees ? s.trees : null, homes: st.homes ? s.homes : null, rocks: st.rocks ? s.rocks : null, bunkers: st.bunkers ? s.bunkers : null, creekLines: st.creekLines ? s.creekLines : null, box: st.box};
   for (const [key, v] of st.cells) { const L = LAYER_ORDER[key % 32], k = Math.floor(key / 32), m = layers.mask(L, true); back.cells.set(key, m[k]); m[k] = v; }
   if (st.trees) s.trees = st.trees;
   if (st.homes) s.homes = st.homes;
   if (st.rocks) s.rocks = st.rocks;
+  if (st.bunkers) s.bunkers = st.bunkers;
+  if (st.creekLines) s.creekLines = st.creekLines;
   if (st.box[1] >= 0) layers.recompose(st.box[0], st.box[1], st.box[2], st.box[3]);
   to.push(back); return true;
  }

@@ -38,7 +38,7 @@ export async function writeDraft(d) {
  }
  if (d.osm?.codes) parts.push({name: 'osm/codes.bin', data: d.osm.codes});
  if (d.trace) {
-  json.trace = {layers: [...d.trace.masks.keys()], hidden: d.trace.hidden ?? [], trees: d.trace.trees ?? [], homes: d.trace.homes ?? []};
+  json.trace = {layers: [...d.trace.masks.keys()], hidden: d.trace.hidden ?? [], trees: d.trace.trees ?? [], homes: d.trace.homes ?? [], bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? []};
   for (const [k, m] of d.trace.masks) parts.push({name: `trace/${k}.bin`, data: m});
  }
  return writeZip([{name: 'draft.json', data: JSON.stringify(json)}, ...parts]);
@@ -66,7 +66,7 @@ export async function readDraft(bytes) {
  if (j.trace && land) {
   const N = land.nx * land.nz, masks = new Map();
   for (const k of j.trace.layers) masks.set(k, part(`trace/${k}.bin`, N).slice());
-  trace = {masks, hidden: j.trace.hidden, trees: j.trace.trees, homes: j.trace.homes};
+  trace = {masks, hidden: j.trace.hidden, trees: j.trace.trees, homes: j.trace.homes, bunkers: j.trace.bunkers ?? [], creekLines: j.trace.creekLines ?? []};
  }
  const osm = j.osm && land && parts.has('osm/codes.bin') ? {...j.osm, codes: part('osm/codes.bin', land.nx * land.nz).slice()} : null;
  const landEdits = j.landEdits && land ? new Float32Array(part('edits/land.bin', land.nx * land.nz * 4).slice().buffer) : null;

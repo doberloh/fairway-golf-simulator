@@ -165,11 +165,12 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
-  // Move shape: the bunker picked up and put down 12 m south, then back by Undo.
+  // Select shape: the bunker clicked, then dragged 12 m south, then back by Undo.
   const sandCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('sand').reduce((t, v) => t + v, 0));
   const sand0 = await sandCells();
-  await page.locator('[data-tool="shape"]').click();
+  await page.locator('[data-tool="select"]').click();
   [x0, y0] = await at(-55, 40); [x1, y1] = await at(-55, 52);
+  await page.mouse.click(x0, y0);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5});
   if (!/Moving the sand/.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the sand is being moved');
   await page.mouse.up();
@@ -177,12 +178,16 @@ export default function ({journey, SHOTS}) {
   await t.shot('shape-moved');
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   if (await kindAt(-55, 40) !== 'sand') throw Error('Undo should put the bunker back');
-  // Turn shape: the same east-west bunker (-64 to -46 m) turned a quarter by
-  // a drag round its middle, so it runs north-south; Undo puts it back.
-  await page.locator('[data-tool="turnShape"]').click();
-  [x0, y0] = await at(-49, 40); [x1, y1] = await at(-55, 46);
+  // Select shape again: the same east-west bunker (-64 to -46 m) turned a quarter
+  // by a drag on an anchor, so it runs north-south; Undo puts it back.
+  // Selected again after the Undo, then an anchor dragged round its middle.
+  [x0, y0] = await at(-55, 40);
+  await page.mouse.click(x0, y0);
+  const [ax, az] = await page.evaluate(() => window.fairwayBuilder.door2.chosen.corners[1]), centre = await page.evaluate(() => window.fairwayBuilder.door2.chosen.mid);
+  [x0, y0] = await at(ax, az);
+  const swept = Math.atan2(az - centre.z, ax - centre.x), reach = Math.hypot(ax - centre.x, az - centre.z);
   await page.mouse.move(x0, y0); await page.mouse.down();
-  for (const a of [.3, .6, .9, 1.2, Math.PI / 2]) { const [px, py] = await at(-55 + 6 * Math.cos(a), 40 + 6 * Math.sin(a)); await page.mouse.move(px, py); }
+  for (const a of [.3, .6, .9, 1.2, Math.PI / 2]) { const [px, py] = await at(centre.x + reach * Math.cos(swept + a), centre.z + reach * Math.sin(swept + a)); await page.mouse.move(px, py); }
   if (!/Turning the sand/.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the sand is being turned');
   await page.mouse.up();
   if (await kindAt(-62, 40) === 'sand' || await kindAt(-55, 47) !== 'sand' || await sandCells() < sand0 * .9) throw Error(`the bunker should have turned to run north-south, its area kept (${sand0} -> ${await sandCells()} cells)`);

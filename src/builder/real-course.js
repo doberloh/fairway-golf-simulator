@@ -16,7 +16,8 @@ import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features, distanceFrom} from '../lidar/trace.js';
 import {GRID_MARGIN, builtLine} from '../built-world.js';
-import {digBed, levelFrom, shoreOf} from './water-bed.js';
+import {digBed, levelFrom, shoreOf, digBowl, creekStations, carveCreek} from './water-bed.js';
+import {CREEK_FIELDS} from '../course-doc.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
 // a metre to 2.25 km², else a metre -- memory for a 3 x 3 km course).
@@ -179,7 +180,7 @@ export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -ha
   .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = []}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = []}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -233,6 +234,16 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // to the ground as the survey and the smoothing leave it -- before the ponds
  // are carved, which take the lower of the two.
  if (landEdits?.length === ground.length) for (let k = 0; k < ground.length; k++) ground[k] += landEdits[k];
+ // Bunkers dug and creeks drawn on the 2D plan: into the ground here, as the 3D
+ // editor digs them at once (water-bed.js), so each is made from the ground as
+ // it stands. Before the ponds, which take the lower of the two.
+ const onGrid = {heights: ground, nx, nz, cell, x0: -halfX, z0: -halfZ}, drawnCreeks = [];
+ for (const b of bunkers) digBowl(onGrid, b);
+ for (const c of creekLines) {
+  const stations = creekStations(c.points, {width: c.width, height: (x, z) => sampleGrid(ground, land, x, z)});
+  carveCreek(onGrid, stations);
+  drawnCreeks.push({kind: 'creek', points: stations.map(p => CREEK_FIELDS.map(f => p[f]))});
+ }
  const r2 = v => Math.round(v * 100) / 100;
  const surfaces = {green: [], fairway: [], tee: [], sand: [], semi: [], path: []};
  const water = [];
@@ -292,7 +303,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), t.role ?? (t.crown / t.h < .2 ? 1 : 2), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
-  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: structuredClone(creeks), holes: recs,
+  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
   trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: []};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };

@@ -1296,8 +1296,8 @@ The owner's list after first looking at the goal's work, built with nothing
 run on the graphics card (the owner was playing): **none of this has been seen
 working**; the model is tested in Node, the page has not been opened.
 
-- **Select shape** replaces Move shape and Turn shape in the 3D editor (door
-  2's plan keeps its two). Click selects and outlines; drag inside moves; drag
+- **Select shape** replaces Move shape and Turn shape in the 3D editor (and in
+  2D, the same day: *The two editors at parity*). Click selects and outlines; drag inside moves; drag
   an anchor turns. editing.js `holdShape`, `ringsOf`, `onPick`; view.js
   `select`, `carry`, `ghost`, `anchorAt`.
 - **Live, and how:** a surface comes off the grid when it is picked up, and
@@ -1356,6 +1356,41 @@ working**; the model is tested in Node, the page has not been opened.
   Left always on show in 2D: the layer picker, because a stroke's layer can be
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
+
+### The two editors at parity (4 November 2026)
+
+The owner: "we need to bring parity between the 2d and 3d editor", then to go
+ahead with all of it, trees to scatter rather than lie in a line, and a Place tree
+for single ones. Rules that exist twice drift, so what both do now lives once:
+layer-ops.js (edge smoothing, Extrapolate, tree and house zones, anchors),
+cover.js (what may stand where, the tree brush), water-bed.js (bowls, creeks,
+beds), skin.js. tests/builder-parity.test.mjs tries each in both.
+
+- **3D gained:** Water in Paint and Outline, which reads its bodies from the layer
+  when a stroke ends (editing.js `settleWater`: levels kept where a body overlaps
+  one, beds dug, one undo with the stroke), and fixes erased water leaving its
+  sheet; Erase brush, Erase all layers, Smooth edges, Smooth all edges, Tidy
+  specks, Extrapolate, on a picked layer; Place tree, Tree brush, Tree zone, House
+  zone; a tree refused on turf, sand, water, paths and roads, which it never was.
+  Plant trees is gone: it laid a row of one size along the pointer. Strength now
+  shows for ground shaping only; cover and trees have How thick.
+- **2D gained:** Select shape in place of Move shape and Turn shape (trace-edit.js
+  `hold`, as editing.js `holdShape`), Tree brush, Size a tree, Every tree's size,
+  Skin from the land, Dig a bunker, Draw a creek, a 60 m brush.
+- **A bunker dug and a creek drawn in 2D change no ground on the plan.** They are
+  records kept with the trace (undoable, in drafts), and docFromLand digs them
+  from the ground as it stands, so a green moved later is not fighting a dug
+  height. Back from 3D, the creeks the plan drew stay its own lines
+  (round-trip.js `ownCreeks`), or they would be cut twice.
+- **Every tree's size in 2D** is applied when the course is made, as the 3D
+  slider is at Save, and back from 3D it is 1, the trees carrying it.
+- **Left alone on purpose:** ground shaping stays 3D (heights cannot be judged
+  from above); the survey's steps stay 2D; Check and Test round stay 3D.
+- **Not done:** a pit left by erasing water is not filled: use Fill to surrounding.
+  Skin in 2D reads the land as it stands, without bunkers or creeks not yet made.
+
+Tested in Node; **neither screen has been opened**, and the builder journeys,
+changed for Select shape and Place tree, have not been run.
 
 ### Built courses at their real height (4 November 2026)
 

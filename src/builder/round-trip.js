@@ -56,7 +56,9 @@ const treeKey = (x, z, h, crown) => [x, z, h, crown].map(v => Math.round(v * 100
 // ({tees, aims, green, par?, index?}). Returns {masks, landEdits, holes,
 // trees, homes, creeks, rocks, name, landscape}; `landEdits` null when the ground
 // was not shaped (under a millimetre everywhere).
-export function fromEditor({base, now, grid, changed = new Map(), holesBefore = []}) {
+// `ownCreeks`: how many of `base`'s creeks came through door 2 from before; those
+// after them it drew itself (real-course.js creekLines), and keeps as its lines.
+export function fromEditor({base, now, grid, changed = new Map(), holesBefore = [], ownCreeks = Infinity}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
  const at = {nx, nz, cell, x0: -halfX - cell / 2, z0: -halfZ - cell / 2};
  const masks = new Map();
@@ -80,5 +82,5 @@ export function fromEditor({base, now, grid, changed = new Map(), holesBefore = 
   const [x, z, h, crown, trunk, role, ki] = now.trees.subarray(k, k + 7), kind = now.treeKinds?.[ki];
   trees.push(had.has(treeKey(x, z, h, crown)) ? {x, z, h, crown} : {x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
  }
- return {masks, landEdits, holes, trees, homes: structuredClone(now.homes ?? []), creeks: structuredClone(now.creeks ?? []), rocks: structuredClone(now.rocks ?? []), name: now.name, landscape: now.landscape};
+ return {masks, landEdits, holes, trees, homes: structuredClone(now.homes ?? []), creeks: structuredClone((now.creeks ?? []).filter(c => !(base.creeks ?? []).slice(ownCreeks).some(d => d.points[0][0] === c.points[0][0] && d.points[0][1] === c.points[0][1]))), rocks: structuredClone(now.rocks ?? []), name: now.name, landscape: now.landscape};
 }

@@ -613,22 +613,23 @@ the file to anyone else who has Fairway. It opens on three doors.
      the chosen layer, **Erase brush** takes the chosen layer off (what lies
      under it shows), **Erase all layers** takes every layer off, **Outline
      fill** fills a shape (click its corners; double-click or Enter closes
-     it, Esc drops it), **Smooth brush** rounds edges under it, **Tree**
-     places one (its height set below), **Tree zone** scatters trees through
-     an outline at the density set below (never on fairway, greens, tees,
-     sand, water or path), **Clear trees** takes them away under the brush,
+     it, Esc drops it), **Smooth edges** rounds edges under it, **Skin from the
+     land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
+     channel along a line and **Dig a bunker** lays sand in a hollow, both made
+     when the course is built; **Place tree** stands one tree at the height set,
+     **Tree brush** scatters the landscape's trees across the brush between a
+     Smallest and a Largest size, as thick as you set, **Tree zone** scatters
+     trees through an outline at the density set (none of them on fairway,
+     greens, tees, sand, water or path), **Clear trees** takes them away under the
+     brush, **Size a tree** resizes one and **Every tree's size** all of them,
      **Ground cover** paints the landscape's rocks, mixed bushes or flowers on
      open ground, and **Clear cover** takes them off, as in the 3D editor,
      **House** stands a house where clicked facing the nearest fairway, green
      or tee, **House zone** lines an outline with houses 42 m apart (each on
-     open ground), **Clear houses** takes them away under the brush,
-     **Move shape** picks up one thing and puts it down where you let go --
-     a house or tree under the pointer, else one shape: the chosen layer's
-     where it lies under the pointer, else the topmost there (a green off
-     its fairway, a bunker, a pond), all of that layer that touches moving
-     together, what lies under it showing where it stood -- **Turn shape**
-     turns one about its middle as you drag round it (a house turns its
-     front; a tree is round) -- and
+     open ground), **Clear houses** takes them away under the brush, and
+     **Select shape** works as in the 3D editor: click one thing to outline it,
+     drag inside to move it and drag an anchor to turn it. Each tool's own
+     options show while you hold it.
      **Smooth all edges** and **Tidy specks** clean the whole trace.
      **Extrapolate** lays a second layer round the chosen one, a width out --
      semi-rough round the fairways; under the chosen layer it runs on
@@ -714,7 +715,9 @@ back. It is the
 same for all three doors. Tools are in sections, and an option shows only
 while the tool that uses it is held: the Brush sizes, a tree's size, ground
 cover's sizes, and on door 2's trace step the brush size, tree height and trees
-a hectare, each named. It has the same **Layers**: every
+a hectare, each named. **Clean up** works on the layer picked there: **Erase brush**, **Erase all
+layers**, **Smooth edges**, **Smooth all edges**, **Tidy specks** and
+**Extrapolate**, as in door 2's trace. It has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
 with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
 surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
@@ -733,10 +736,14 @@ rock, as on dunes -- and its apron (scree, bare clay, sand, heather) on the
 gentler ground just below, leaving flat tops, the holes' turf, sand,
 paths and water alone; it is a best effort from the heights, so paint over
 it or Undo it in one step, or paint the ground by hand instead; **Outline** draws one by its edge; dig a bunker,
-draw a pond or a creek (it runs downhill), plant or clear trees, stand a
+draw a pond or a creek (it runs downhill), paint or outline **Water** (it gets a
+level and a bed when the stroke ends, and erased water goes), **Place tree**
+(one, at a height you set, never on turf, sand, water, paths or roads), **Tree
+brush** (scattered across the brush between a Smallest and a Largest size),
+**Tree zone** (through an outline, at trees a hectare) or **Clear trees**, stand a
 **House** where you click (on open ground, facing the nearest fairway, green
-or tee; refused on turf, sand, water or a path) or **Clear houses** under
-the brush -- the game builds each one from where it stands. **Select shape**
+or tee; refused on turf, sand, water or a path), line a **House zone**, or
+**Clear houses** under the brush -- the game builds each one from where it stands. **Select shape**
 works in two steps: click a house, a rock, a tree or one surface's patch and
 it takes a yellow outline, with four anchors at the corners of a shape or a
 house; then drag inside the outline to move it, or drag an anchor to turn it.

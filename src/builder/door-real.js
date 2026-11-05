@@ -27,7 +27,8 @@ import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refresh
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
-import {coverOptions, COVER_RANGE} from './cover.js';
+import {coverOptions, coverByKey, COVER_RANGE} from './cover.js';
+import {cornersOf} from './layer-ops.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -81,14 +82,14 @@ const KEYS = 'fairway-builder-imagery-keys';
 // Imagery fetched this session, by provider and place (fetchImagery): kept
 // across door 2's steps, the land rebuilt and door 2 opened again.
 const IMAGERY = new Map();
-const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase', 'homeErase', 'cover', 'coverErase'];
+const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase', 'homeErase', 'cover', 'coverErase', 'treeBrush'];
 
 export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
   model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
   name: 'My real course', landscape: 'heartland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
-  cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
+  chosen: null, carry: null, sizing: null, treeScale: 1, cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
  const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
@@ -111,7 +112,7 @@ export function open(draft = null) {
  // The cover in hand, or the landscape's first if it does not offer that one.
  const coverNow = () => { const o = coverOptions(BIOMES[st.landscape]); return o.find(c => c.key === st.cover) ?? o[0]; };
  const showModel = () => {
-  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree'}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}})[st.tool] ?? null : null;
+  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree'}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, creek: {kind: 'creek'}, bunker: {kind: 'bunker'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}, treeBrush: {kind: 'cover', cover: 'trees', ...st.coverSizes.trees}})[st.tool] ?? null : null;
   preview().show(item, st.landscape);
  };
  // Back to the builder's start ends this course, so with work in it, it asks
@@ -213,7 +214,12 @@ export function open(draft = null) {
     eraseAll: `Erase all layers (${r} m round): drag to take every layer off, down to rough.`,
     outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, corner by corner.`,
     smooth: `Smooth brush (${r} m round): drag along a ragged edge to round it.`,
-    tree: `Tree: click to stand a ${st.treeH} m tree (not on mown ground, sand, water or a path).`,
+    tree: `Place tree: click to stand a ${st.treeH} m tree (not on mown ground, sand, water or a path).`,
+    treeBrush: `Tree brush: drag to scatter the landscape's trees (${r} m round), from ${st.coverSizes.trees.min.toFixed(1)} to ${st.coverSizes.trees.max.toFixed(1)} m tall.`,
+    sizeTree: st.sizing ? 'Size it with This tree; click another to pick it.' : 'Size a tree: click a tree, then size it with This tree.',
+    creek: st.outline.length ? `Draw a creek: ${st.outline.length} point${st.outline.length === 1 ? '' : 's'}; double-click or Enter ends it. Its channel is cut when the course is made.` : 'Draw a creek: click along it from its head to its foot.',
+    bunker: `Dig a bunker: click to dig one ${r} m round; sand, and a hollow when the course is made.`,
+    select: st.carry?.hold ? (st.carry.turn ? `Turning the ${st.chosen.what}: ${Math.round(st.carry.angle * 180 / Math.PI)} degrees; let go to set it.` : `Moving the ${st.chosen.what}: let go where it belongs. Undo puts it back.`) : st.chosen ? `${st.chosen.what[0].toUpperCase() + st.chosen.what.slice(1)} selected: drag inside the outline to move it${st.chosen.corners.length ? ', or an anchor to turn it' : ''}.` : `Select shape: click a green, bunker, fairway, pond, tree or house -- the ${k} layer where it lies.`,
     treeZone: st.outline.length ? `Tree zone: ${corners(st.outline.length)}` : `Tree zone: click round the zone, corner by corner; it fills with ${st.density} trees a hectare.`,
     boundary: st.outline.length ? `Course boundary: ${corners(st.outline.length)}` : 'Course boundary: click round the course, corner by corner; outside it becomes the landscape\'s wood.',
     home: 'House: click to stand a house; it faces the nearest fairway, green or tee.',
@@ -222,8 +228,6 @@ export function open(draft = null) {
     cover: `Ground cover, ${coverNow().label.toLowerCase()}: drag over open ground (${r} m round), from ${st.coverSizes[coverNow().key].min.toFixed(1)} to ${st.coverSizes[coverNow().key].max.toFixed(1)} m. Not on turf, sand, water, paths or roads.`,
     coverErase: `Clear cover: drag to take rocks and low plants off (${r} m round). Trees stay.`,
     treeErase: `Clear trees: drag to take trees off (${r} m round).`,
-    turnShape: st.turning ? `Turning the ${st.turning.what}: ${Math.round(st.turning.angle * 180 / Math.PI)} degrees; let go to set it.` : `Turn shape: press on a green, bunker, pond or house and drag round its middle to turn it -- the ${k} layer where it lies under the pointer, else the topmost shown.`,
-    shape: st.moving ? `Moving the ${st.moving.what}: let go where it belongs. Undo puts it back.` : `Move shape: drag a green, bunker, fairway, pond, tree or house to move it whole -- the ${k} layer where it lies under the pointer, else the topmost shown.`,
     align: `Picture unlocked: drag it into line with the LIDAR, or nudge it with the arrow keys (a quarter metre; Shift, a metre). It is ${st.offset.x.toFixed(2)} m east, ${(-st.offset.z).toFixed(2)} m north of where its position put it. Lock it when it is right.`,
    })[st.tool] ?? '';
    if (t && st.tool !== 'move') t += ' ' + view;
@@ -249,7 +253,7 @@ export function open(draft = null) {
   const trees = st.model?.state.trees ?? st.trees;
   if (st.land && trees.length) {
    ctx.strokeStyle = 'rgba(20,70,30,.9)'; ctx.fillStyle = 'rgba(40,110,50,.45)'; ctx.lineWidth = px;
-   for (const t of trees) { const [x, y] = p.toScreen(t.x, t.z), r = Math.max(1.5 * px, t.crown * p.view.scale); if (x < -r || y < -r || x > ctx.canvas.width + r || y > ctx.canvas.height + r) continue; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); if (r > 3 * px) ctx.stroke(); }
+   for (const t of trees) { const [x, y] = p.toScreen(t.x, t.z), r = Math.max(1.5 * px, t.crown * st.treeScale * p.view.scale); if (x < -r || y < -r || x > ctx.canvas.width + r || y > ctx.canvas.height + r) continue; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); if (r > 3 * px) ctx.stroke(); }
   }
   // Rocks painted as ground cover: grey, at their size.
   const rocks = st.model?.state.rocks;
@@ -274,22 +278,20 @@ export function open(draft = null) {
   });
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
   if (st.outline.length) { ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; ctx.beginPath(); st.outline.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); if (st.hover) ctx.lineTo(...p.toScreen(st.hover.x, st.hover.z)); ctx.stroke(); }
-  // The shape being moved, drawn where it would go.
-  if (st.moving && (st.moving.dx || st.moving.dz)) {
-   const {pick, dx, dz} = st.moving, m = st.model.state; ctx.strokeStyle = '#ff6bd6'; ctx.fillStyle = 'rgba(255,107,214,.25)'; ctx.lineWidth = 2 * px; ctx.beginPath();
-   if (pick.type === 'tree') { const t = m.trees[pick.index], [x, y] = p.toScreen(t.x + dx, t.z + dz); ctx.arc(x, y, Math.max(3 * px, t.crown * p.view.scale), 0, 7); }
-   else if (pick.type === 'home') { const h = m.homes[pick.index], [x, y] = p.toScreen(h.x + dx, h.z + dz), r = Math.max(h.width, h.depth) / 2 * p.view.scale; ctx.rect(x - r, y - r, 2 * r, 2 * r); }
-   else for (const r of st.moving.rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x + dx, z + dz); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
-   ctx.fill('evenodd'); ctx.stroke();
-  }
-  // The shape being turned, drawn as it would lie.
-  if (st.turning && st.turning.angle) {
-   const {pick, angle, mid, rings} = st.turning, c = Math.cos(angle), sn = Math.sin(angle), m = st.model.state;
-   const rot = ([x, z]) => p.toScreen(mid.x + (x - mid.x) * c - (z - mid.z) * sn, mid.z + (x - mid.x) * sn + (z - mid.z) * c);
-   ctx.strokeStyle = '#ff6bd6'; ctx.fillStyle = 'rgba(255,107,214,.25)'; ctx.lineWidth = 2 * px; ctx.beginPath();
-   if (pick.type === 'home') { const h = m.homes[pick.index], r = h.rotation - angle, hc = Math.cos(r), hs = Math.sin(r), w = h.width / 2, d = h.depth / 2; [[-w, -d], [w, -d], [w, d], [-w, d]].forEach(([a, b], q) => { const [sx, sy] = p.toScreen(h.x + a * hc + b * hs, h.z - a * hs + b * hc); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
-   else for (const r of rings) { r.forEach((pt, q) => { const [sx, sy] = rot(pt); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
-   ctx.fill('evenodd'); ctx.stroke();
+  // Creeks drawn here, as lines (the course cuts them when it is made), and
+  // bunkers dug.
+  for (const c of st.model?.state.creekLines ?? []) { ctx.strokeStyle = 'rgba(60,120,220,.95)'; ctx.lineWidth = Math.max(2 * px, c.width * p.view.scale); ctx.beginPath(); c.points.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); ctx.stroke(); }
+  // WHAT IS SELECTED, as in the 3D editor: its outline and anchors, and while it
+  // is carried a filled picture of it, turned and moved.
+  if (st.chosen) {
+   const {rings, mid, corners} = st.chosen, c = st.carry, dx = c?.dx ?? 0, dz = c?.dz ?? 0, a = c?.angle ?? 0, co = Math.cos(a), sn = Math.sin(a);
+   const at = ([x, z]) => { const u = x - mid.x, v = z - mid.z; return p.toScreen(mid.x + u * co - v * sn + dx, mid.z + u * sn + v * co + dz); };
+   ctx.strokeStyle = '#fde68a'; ctx.fillStyle = 'rgba(253,230,138,.3)'; ctx.lineWidth = 2 * px; ctx.beginPath();
+   for (const r of rings) { r.forEach((q, n) => { const [sx, sy] = at(q); if (n) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
+   if (c?.hold) ctx.fill('evenodd');
+   ctx.stroke();
+   ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b2f10'; ctx.lineWidth = px;
+   for (const q of corners) { const [sx, sy] = at(q), h = 6 * px; ctx.beginPath(); ctx.rect(sx - h, sy - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
   }
   if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) { const [x, y] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke(); }
   if (st.align?.pairs) for (const q of st.align.pairs) { const [x, y] = p.toScreen(q.local.x, q.local.z); ctx.strokeStyle = '#ff6bd6'; ctx.strokeRect(x - 5 * px, y - 5 * px, 10 * px, 10 * px); }
@@ -325,9 +327,9 @@ export function open(draft = null) {
    if (BRUSHES.includes(t)) {
     if (type === 'down') { m.beginStroke(); st.coverAt = null; }
     if (type === 'down' || type === 'drag') {
-     if (t === 'cover') {
+     if (t === 'cover' || t === 'treeBrush') {
       // A dab each half a brush along, as in the 3D editor.
-      if (!st.coverAt || Math.hypot(p.x - st.coverAt.x, p.z - st.coverAt.z) >= Math.max(1.5, st.size * .5)) { const c = coverNow(); m.paintCover({cover: c, x: p.x, z: p.z, radius: st.size, density: st.coverThick, ...st.coverSizes[c.key]}); st.coverAt = p; }
+      if (!st.coverAt || Math.hypot(p.x - st.coverAt.x, p.z - st.coverAt.z) >= Math.max(1.5, st.size * .5)) { const c = t === 'cover' ? coverNow() : coverByKey(BIOMES[st.landscape], 'trees'); m.paintCover({cover: c, x: p.x, z: p.z, radius: st.size, density: st.coverThick, ...st.coverSizes[c.key]}); st.coverAt = p; }
      }
      else if (t === 'coverErase') m.clearCover({x: p.x, z: p.z, radius: st.size});
      else if (t === 'brush') m.paint({x: p.x, z: p.z, radius: st.size, kind: st.kind});
@@ -336,50 +338,49 @@ export function open(draft = null) {
      else if (t === 'smooth') m.smooth({x: p.x, z: p.z, radius: Math.max(1, st.size / 3), area: st.size});
      else if (t === 'homeErase') m.removeHomes({x: p.x, z: p.z, radius: st.size});
      else m.removeTrees({x: p.x, z: p.z, radius: st.size});
-     if (t !== 'treeErase' && t !== 'homeErase' && t !== 'cover' && t !== 'coverErase') patchCodes(p.x, p.z, st.size + 2);
+     if (t !== 'treeErase' && t !== 'homeErase' && t !== 'cover' && t !== 'coverErase' && t !== 'treeBrush') patchCodes(p.x, p.z, st.size + 2);
     }
     if (type === 'up') { m.endStroke(); refreshCount(); }
     plan.draw(); return;
    }
-   if (t === 'outline' || t === 'treeZone' || t === 'boundary' || t === 'homeZone') {
+   if (t === 'outline' || t === 'treeZone' || t === 'boundary' || t === 'homeZone' || t === 'creek') {
     if (type === 'down') st.outline.push([p.x, p.z]);
-    if (type === 'double' && st.outline.length >= 3) closeOutline();
+    if (type === 'double' && st.outline.length >= (t === 'creek' ? 2 : 3)) closeOutline();
     plan.draw(); return;
    }
-   // MOVE SHAPE (the owner, 1 November 2026): one shape, tree or house
-   // picked up and put down whole (trace-edit.js pickAt and move).
-   if (t === 'shape') {
+   // SELECT SHAPE, as in the 3D editor (the owner, 4 November 2026): the first
+   // click selects and outlines; a drag inside moves, a drag on an anchor turns,
+   // following the pointer; what lay under it shows while it is carried.
+   if (t === 'select') {
     if (type === 'down') {
-     const pick = m.pickAt({x: p.x, z: p.z, kind: st.kind});
-     if (!pick) { say('Nothing to move there: only rough under the pointer.', true); return; }
-     let rings = [];
-     if (pick.type === 'shape') { const mask = new Uint8Array(st.land.nx * st.land.nz); for (const k of pick.cells) mask[k] = 1; rings = layerRings(mask, st.land); }
-     st.moving = {pick, from: p, dx: 0, dz: 0, rings, what: pick.type === 'shape' ? LABEL(pick.kind).toLowerCase() : pick.type === 'tree' ? 'tree' : 'house'};
+     const c = st.chosen, near = c ? c.corners.findIndex(([x, z]) => { const [ax, ay] = plan.toScreen(x, z), [bx, by] = plan.toScreen(p.x, p.z); return Math.hypot(ax - bx, ay - by) <= 11 * plan.px; }) : -1;
+     if (c && (near >= 0 || onChosen(p))) st.carry = {turn: near >= 0, from: p, a0: Math.atan2(p.x - c.mid.x, p.z - c.mid.z), dx: 0, dz: 0, angle: 0, hold: null};
+     else { chooseShape(m.pickAt({x: p.x, z: p.z, kind: st.kind})); if (!st.chosen) say('Nothing to select there: only rough under the pointer.'); }
     }
-    if (type === 'drag' && st.moving) { st.moving.dx = p.x - st.moving.from.x; st.moving.dz = p.z - st.moving.from.z; }
-    if (type === 'up' && st.moving) {
-     const {pick, dx, dz, what} = st.moving; st.moving = null;
-     if (Math.hypot(dx, dz) >= st.land.cell / 2) { m.move(pick, dx, dz); if (pick.type === 'shape') paintCodes(); refreshCount(); say(`The ${what} moved ${Math.hypot(dx, dz).toFixed(1)} m. Undo puts it back.`); }
+    if (type === 'drag' && st.carry) {
+     const c = st.carry;
+     if (!c.hold && Math.hypot(p.x - c.from.x, p.z - c.from.z) >= .3) { c.hold = m.hold(st.chosen.pick); if (st.chosen.pick.type === 'shape') paintCodes(); }
+     if (c.hold) {
+      if (c.turn) c.angle = c.a0 - Math.atan2(p.x - st.chosen.mid.x, p.z - st.chosen.mid.z);
+      else { c.dx = p.x - c.from.x; c.dz = p.z - c.from.z; }
+      c.hold.set(c.dx, c.dz, c.angle); showHint();
+     }
     }
-    plan.draw(); return;
-   }
-   // TURN SHAPE: the same pick, turned about its middle by the angle the
-   // pointer sweeps round it (trace-edit.js turn).
-   if (t === 'turnShape') {
-    if (type === 'down') {
-     const pick = m.pickAt({x: p.x, z: p.z, kind: st.kind});
-     if (!pick || pick.type === 'tree') { say(pick ? 'A tree is round: nothing to turn.' : 'Nothing to turn there: only rough under the pointer.', true); return; }
-     let mid = pick.type === 'home' ? {x: m.state.homes[pick.index].x, z: m.state.homes[pick.index].z} : null, rings = [];
-     if (!mid) { const {nx, cell, halfX, halfZ} = st.land; let sx = 0, sz = 0; for (const k of pick.cells) { sx += -halfX + (k % nx) * cell; sz += -halfZ + Math.floor(k / nx) * cell; } mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; const mask = new Uint8Array(st.land.nx * st.land.nz); for (const k of pick.cells) mask[k] = 1; rings = layerRings(mask, st.land); }
-     st.turning = {pick, mid, a0: Math.atan2(p.x - mid.x, p.z - mid.z), angle: 0, rings, what: pick.type === 'home' ? 'house' : LABEL(pick.kind).toLowerCase()};
-    }
-    if (type === 'drag' && st.turning) st.turning.angle = st.turning.a0 - Math.atan2(p.x - st.turning.mid.x, p.z - st.turning.mid.z);
-    if (type === 'up' && st.turning) {
-     const {pick, angle, what} = st.turning; st.turning = null;
-     if (Math.abs(angle) > .01) { m.turn(pick, angle); if (pick.type === 'shape') paintCodes(); refreshCount(); say(`The ${what} turned ${Math.round(angle * 180 / Math.PI)} degrees. Undo puts it back.`); }
+    if (type === 'up' && st.carry) {
+     const {hold, dx, dz, angle} = st.carry, what = st.chosen.what; st.carry = null;
+     if (hold) { const got = hold.drop(dx, dz, angle); if (st.chosen.pick.type === 'shape') paintCodes(); refreshCount(); chooseShape(got); if (dx || dz || angle) say(`The ${what} ${angle ? `turned ${Math.round(angle * 180 / Math.PI)} degrees` : `moved ${Math.hypot(dx, dz).toFixed(1)} m`}. Undo puts it back.`); }
+     showHint();
     }
     plan.draw(); return;
    }
+   if (t === 'sizeTree' && type === 'down') {
+    const pick = m.pickAt({x: p.x, z: p.z});
+    if (pick?.type !== 'tree') { st.sizing = null; say('No tree there: click on a tree\'s crown.'); }
+    else { st.sizing = {index: pick.index, base: {...m.state.trees[pick.index]}, started: false}; say('Size it with This tree; Undo puts it back.'); }
+    const slider = panel.querySelector('.cb-onetree'); if (slider) { slider.value = 1; slider.disabled = !st.sizing; }
+    plan.draw(); return;
+   }
+   if (t === 'bunker' && type === 'down') { m.digBunker({x: p.x, z: p.z, radius: Math.max(2, st.size)}); patchCodes(p.x, p.z, st.size + 2); refreshCount(); plan.draw(); return; }
    if (t === 'home' && type === 'down') {
     const h = m.homeAt({x: p.x, z: p.z});
     if (!m.homeFits(h)) say('A house needs open ground all round it -- not turf, sand, water, a path or another house.', true);
@@ -400,6 +401,7 @@ export function open(draft = null) {
  function closeOutline() {
   // A double-click adds its own two clicks as corners; they are one point.
   const ring = st.outline.filter((q, i, a) => !i || Math.hypot(q[0] - a[i - 1][0], q[1] - a[i - 1][1]) > .05); st.outline = [];
+  if (st.tool === 'creek') { if (ring.length >= 2) { st.model.addCreekLine({points: ring, width: Math.max(1.5, Math.min(12, st.size / 2))}); refreshCount(); plan.draw(); } return; }
   if (ring.length < 3) return;
   if (st.tool === 'boundary') { st.boundary = ring; say(`The course boundary: ${(ringArea(ring) / 1e4).toFixed(1)} ha. Fill outside it when it is right.`); setTool('move'); go(2); return; }
   if (st.tool === 'homeZone') { const n = st.model.homeZone(ring, {seed: st.model.state.undo.length + 1}); say(n ? `${n} house${n === 1 ? '' : 's'} in the zone, each facing the nearest fairway, green or tee.` : 'No house fits there: each needs open ground all round it.', !n); refreshCount(); plan.draw(); return; }
@@ -410,13 +412,13 @@ export function open(draft = null) {
  const onKey = e => {
   if (!document.body.contains(canvas)) return;   // door 2 not shown (the editor over it, or another door): kept, as it may come back
   if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
-  if (e.key === 'Enter' && st.outline.length >= 3) closeOutline();
-  if (e.key === 'Escape') { st.outline = []; plan.draw(); }
+  if (e.key === 'Enter' && st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline();
+  if (e.key === 'Escape') { st.outline = []; chooseShape(null); plan.draw(); }
   // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
   const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
   if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { e.preventDefault(); if (e.shiftKey) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { e.preventDefault(); st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { e.preventDefault(); st.chosen = st.sizing = null; if (e.shiftKey) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { e.preventDefault(); st.chosen = st.sizing = null; st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }
  };
  window.addEventListener('keydown', onKey);
 
@@ -440,22 +442,57 @@ export function open(draft = null) {
  st.go = go;
  const toolSet = (title, keys) => el('div', {class: 'cb-toolset'}, title ? el('b', {}, title) : null, el('div', {class: 'cb-btns'}, ...toolButtons.filter(b => keys.includes(b.dataset.tool))));
  const toolOption = (keys, ...nodes) => el('div', {class: 'cb-toolopt', 'data-for': keys.join(' ')}, ...nodes);
- function showToolOptions() { for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); }
+ function showToolOptions() { for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); st.coverPut?.(); }
+ // What is selected, with its outline and anchors. A tree is round: no anchors.
+ function chooseShape(pick) {
+  if (!pick) { st.chosen = null; return; }
+  const {nx, nz, cell, halfX, halfZ} = st.land, m = st.model.state;
+  let rings, mid, what;
+  if (pick.type === 'shape') {
+   const mask = new Uint8Array(nx * nz); let sx = 0, sz = 0;
+   for (const k of pick.cells) { mask[k] = 1; sx += -halfX + (k % nx) * cell; sz += -halfZ + Math.floor(k / nx) * cell; }
+   rings = layerRings(mask, st.land).sort((a, b) => b.length - a.length); mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; what = LABEL(pick.kind).toLowerCase();
+  } else if (pick.type === 'home') {
+   const h = m.homes[pick.index], c = Math.cos(h.rotation), sn = Math.sin(h.rotation), a = h.width / 2, b = h.depth / 2;
+   rings = [[[-a, -b], [a, -b], [a, b], [-a, b]].map(([u, v]) => [h.x + u * c + v * sn, h.z - u * sn + v * c])]; mid = {x: h.x, z: h.z}; what = 'house';
+  } else {
+   const t = m.trees[pick.index], r = Math.max(1.5, t.crown * st.treeScale);
+   rings = [Array.from({length: 24}, (_, k) => [t.x + Math.cos(k / 24 * Math.PI * 2) * r, t.z + Math.sin(k / 24 * Math.PI * 2) * r])]; mid = {x: t.x, z: t.z}; what = 'tree';
+  }
+  if (!rings.length) { st.chosen = null; return; }
+  st.chosen = {pick, rings, mid, what, corners: pick.type === 'tree' ? [] : cornersOf(rings[0]), cells: pick.type === 'shape' ? new Set(pick.cells) : null};
+ }
+ function onChosen(p) {
+  const c = st.chosen, {nx, nz, cell, halfX, halfZ} = st.land;
+  if (c.cells) { const i = Math.round((p.x + halfX) / cell), j = Math.round((p.z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && c.cells.has(j * nx + i); }
+  const g = st.model.pickAt({x: p.x, z: p.z}); return g?.type === c.pick.type && g.index === c.pick.index;
+ }
+ // SKIN FROM THE LAND, as the 3D editor's (trace-edit.js skin): the ground as it
+ // stands, what the 3D editor shaped included.
+ function skinLand() {
+  say('Reading the land…');
+  setTimeout(() => {
+   const g = st.landEdits ? Float32Array.from(st.land.ground, (v, k) => v + st.landEdits[k]) : st.land.ground, got = st.model.skin({bio: BIOMES[st.landscape], ground: g}), name = k => LABEL(k).toLowerCase();
+   paintCodes(); refreshCount(); plan.draw();
+   say(got.cells.face || got.cells.apron ? `Skinned from the land: ${name(got.kinds.face)} on the steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} below it` : ''}. Paint over it or Undo.` : 'Nothing here is steep enough to skin; paint the ground by hand instead.');
+  }, 40);
+ }
  // GROUND COVER (cover.js): what to lay, its two sizes and how thick. The
  // sliders push each other along and follow the cover chosen.
  function coverControls() {
-  const minText = el('span'), maxText = el('span'), bounds = () => COVER_RANGE[coverNow().key];
-  const put = () => { const c = st.coverSizes[coverNow().key], r = bounds(); for (const [input, text, v] of [[minIn, minText, c.min], [maxIn, maxText, c.max]]) { input.min = r.low; input.max = r.high; input.value = v; text.textContent = ` ${v.toFixed(1)} m`; } };
+  const minText = el('span'), maxText = el('span'), keyNow = () => st.tool === 'treeBrush' ? 'trees' : coverNow().key;
+  const put = () => { const c = st.coverSizes[keyNow()], r = COVER_RANGE[keyNow()]; for (const [input, text, v] of [[minIn, minText, c.min], [maxIn, maxText, c.max]]) { input.min = r.low; input.max = r.high; input.step = r.high > 10 ? .5 : .1; input.value = v; text.textContent = ` ${v.toFixed(1)} m`; } };
+  st.coverPut = () => put();
   const size = which => el('input', {type: 'range', step: .1, class: `cb-cover${which}`, oninput: e => {
-   const c = st.coverSizes[coverNow().key], v = +e.target.value; c[which] = v; if (c.min > c.max) c[which === 'min' ? 'max' : 'min'] = v;
+   const c = st.coverSizes[keyNow()], v = +e.target.value; c[which] = v; if (c.min > c.max) c[which === 'min' ? 'max' : 'min'] = v;
    put(); showHint(); showModel();
   }});
   const minIn = size('min'), maxIn = size('max');
   put();
-  return [el('small', {}, 'Ground cover: what the brush lays'),
-   el('select', {class: 'cb-coverkind', style: 'width:100%', onchange: e => { st.cover = e.target.value; put(); showHint(); setTool('cover'); }}, coverOptions(BIOMES[st.landscape]).map(c => el('option', {value: c.key, selected: c.key === coverNow().key}, c.label))),
-   el('small', {}, 'Smallest', minText), minIn, el('small', {}, 'Largest', maxText), maxIn,
-   el('small', {}, 'How thick it lies'), el('input', {type: 'range', min: .05, max: 1, step: .05, value: st.coverThick, oninput: e => { st.coverThick = +e.target.value; }})];
+  return [toolOption(['cover'], el('small', {}, 'Ground cover: what the brush lays'),
+   el('select', {class: 'cb-coverkind', style: 'width:100%', onchange: e => { st.cover = e.target.value; put(); showHint(); setTool('cover'); }}, coverOptions(BIOMES[st.landscape]).map(c => el('option', {value: c.key, selected: c.key === coverNow().key}, c.label)))),
+   toolOption(['cover', 'treeBrush'], el('small', {}, 'Smallest', minText), minIn, el('small', {}, 'Largest', maxText), maxIn,
+    el('small', {}, 'How thick it lies'), el('input', {type: 'range', min: .05, max: 1, step: .05, value: st.coverThick, oninput: e => { st.coverThick = +e.target.value; }}))];
  }
  const next = (n, text) => el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { if (can(n)) go(n); else say(n === 4 ? 'Every hole needs a tee and a green.' : 'Finish this step first.', true); }}, text);
  let toolButtons = [];
@@ -463,6 +500,8 @@ export function open(draft = null) {
  // locks it again, so a brush stroke never drags it.
  function setTool(t) {
   if (t !== 'align') st.picLocked = true;
+  if (t !== 'select') { st.chosen = null; st.carry = null; }
+  if (t !== 'sizeTree') st.sizing = null;
   st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); st.outline = [];
   toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t));
   showModel(); showToolOptions();
@@ -835,7 +874,7 @@ export function open(draft = null) {
   const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; howTo.hidden = !p.howTo; howTo.replaceChildren(el('summary', {}, `How to get a ${p.name} key`), el('ol', {}, (p.howTo ?? []).map(t => el('li', {}, t)))); };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move the view'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth brush'], ['tree', 'Tree'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['cover', 'Ground cover'], ['coverErase', 'Clear cover'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses'], ['shape', 'Move shape'], ['turnShape', 'Turn shape']];
+  const tools = [['move', 'Move the view'], ['select', 'Select shape'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth edges'], ['creek', 'Draw a creek'], ['bunker', 'Dig a bunker'], ['tree', 'Place tree'], ['treeBrush', 'Tree brush'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['sizeTree', 'Size a tree'], ['cover', 'Ground cover'], ['coverErase', 'Clear cover'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses']];
   toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
   // LOCK AND UNLOCK (the owner, 1 November 2026: "drag the satellite picture
   // to align and lock/unlock it"): unlocked, a left drag or the arrow keys
@@ -904,12 +943,16 @@ export function open(draft = null) {
    // showToolOptions); the banner over the plan says how to use the tool, so
    // the note on clicking corners went.
    st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'),
-    toolSet(null, ['move']), toolSet('Surfaces', ['brush', 'erase', 'eraseAll', 'outline', 'smooth']), toolSet('Trees', ['tree', 'treeZone', 'treeErase']),
-    toolSet('Ground cover', ['cover', 'coverErase']), toolSet('Houses', ['home', 'homeZone', 'homeErase']), toolSet('Shapes', ['shape', 'turnShape']),
-    toolOption(BRUSHES, el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', min: 1, max: 40, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
+    toolSet(null, ['move', 'select']), toolSet('Surfaces', ['brush', 'erase', 'eraseAll', 'outline', 'smooth']),
+    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand, title: 'Paint the steep ground the landscape\'s rock and the ground below it its apron, read from the land\'s heights -- a best effort; paint over it, or Undo'}, 'Skin from the land'),
+    toolSet('Water and sand', ['creek', 'bunker']), toolSet('Trees', ['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree']),
+    toolSet('Ground cover', ['cover', 'coverErase']), toolSet('Houses', ['home', 'homeZone', 'homeErase']),
+    toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
     toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); }}))),
     toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
-    toolOption(['cover'], ...coverControls()),
+    ...coverControls(),
+    toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], el('label', {class: 'cb-opt'}, 'Every tree\'s size', el('input', {type: 'range', class: 'cb-treescale', min: .5, max: 2, step: .05, value: st.treeScale, title: 'Every tree on the course together', oninput: e => { st.treeScale = +e.target.value; plan.draw(); refreshSave(); }}))),
+    toolOption(['sizeTree'], el('label', {class: 'cb-opt'}, 'This tree', el('input', {type: 'range', class: 'cb-onetree', min: .25, max: 3, step: .05, value: 1, disabled: !st.sizing, oninput: e => { const z = st.sizing; if (!z) return; st.model.sizeTree(z.index, z.base, +e.target.value, !z.started); z.started = true; plan.draw(); refreshSave(); }}))),
     el('small', {}, 'The layer you paint, outline, erase and smooth (Rough takes every layer off)'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); showHint(); showModel(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
     el('small', {}, 'Layers, top first: one higher in the list shows over one lower (sand painted on rough or fairway is sand). The eye hides one from view; the course keeps it.'), layerBox,
     el('small', {}, 'Extrapolate: lay a layer round the one picked above, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),
@@ -919,7 +962,7 @@ export function open(draft = null) {
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Tidy specks'),
      el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Undo'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Redo'),
+     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.chosen = st.sizing = null; st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Undo'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.chosen = st.sizing = null; st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Redo'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }}, 'Picture on/off'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.traceOn = !st.traceOn; showCodes(); }}, 'Trace on/off'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } say(st.smoothView ? 'Smooth view: the trace drawn as the course will have it.' : 'Cell view: the trace\'s cells as painted.'); }}, 'Smooth / cell view')),
     countText) : null,
@@ -1053,7 +1096,7 @@ export function open(draft = null) {
    if (fromFile) { const [file] = await pickFile('.json,application/json'); if (!file) return; json = JSON.parse(await file.text()); }
    else { const {halfX, halfZ} = st.land, c = [[-halfX, -halfZ], [halfX, -halfZ], [halfX, halfZ], [-halfX, halfZ]].map(([x, z]) => ll(x, z)); json = await fetchOsm([Math.min(...c.map(p => p.lon)), Math.min(...c.map(p => p.lat)), Math.max(...c.map(p => p.lon)), Math.max(...c.map(p => p.lat))]); }
    const feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats), edge = osmBoundary(json, toLocal);
-   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, trees: []}); st.traceMode = 'openstreetmap';
+   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], trees: []}); st.traceMode = 'openstreetmap';
    const laid = layOsm(st.model, feats), osmTrees = st.model.state.trees;
    // Whose trees (osm.js mergeTrees): the LIDAR's and the map's, by the choice.
    st.model.state.trees = mergeTrees(st.trees, osmTrees, st.treesFrom ?? 'merge');
@@ -1098,14 +1141,14 @@ export function open(draft = null) {
   st.osm.course = id; const n = osmCourseHoles(), c = st.osm.courses.find(q => q.id === id);
   go(2); say(`${c?.name ?? 'The course'}: ${n} holes numbered, and its boundary.`);
  }
- function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; st.osm.shift = {x: 0, z: 0}; osmCourseHoles(); paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
+ function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; st.osm.shift = {x: 0, z: 0}; osmCourseHoles(); paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
  async function refineOsm(mode) {
   if (!st.osm) return;
   if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
   setBusy('Refining…'); await frame();
   try {
    const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
-   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
+   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
    // The holes and the boundary were drawn on the same map: they move with it
    // (until 1 November 2026 they stayed where the map lay).
    const sh = refineTrace.lastShift;
@@ -1120,7 +1163,7 @@ export function open(draft = null) {
   try {
    const picture = st.picture && (!st.picture.fromLidar || st.picture.colour) ? st.picture : null;
    const r = trace(st.land, {picture, holes: [], mode: picture ? 'both' : 'lidar'});
-   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, codes: r.codes, trees: st.trees}); st.traceMode = 'auto';
+   st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes: r.codes, trees: st.trees}); st.traceMode = 'auto';
    paintCodes(); go(2); refreshCount();
    say(`Traced ${picture ? 'from the LIDAR first, the picture where it cannot tell' : 'from the LIDAR alone (no picture)'}. Correct it with the tools; the holes come next.`);
   } finally { setBusy(''); }
@@ -1128,7 +1171,7 @@ export function open(draft = null) {
  function manualTrace() {
   if (!st.land) return;
   if (st.model && !confirm('Start a blank trace? What is traced now is dropped.')) return;
-  st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, trees: st.trees}); st.traceMode = 'manual';
+  st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], trees: st.trees}); st.traceMode = 'manual';
   paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
   say('A blank trace (the LIDAR\'s trees kept; Clear trees takes them off). Paint or outline each surface.');
  }
@@ -1221,7 +1264,7 @@ export function open(draft = null) {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees, homes: st.model.state.homes, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
+   const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
@@ -1246,9 +1289,9 @@ export function open(draft = null) {
  // saved from the editor. Pictures are not in it, but each one's lining up is.
  const snapshot = () => ({step: st.step, name: st.name, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box,
   sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
-  view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView},
+  view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale},
   picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
-  trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes} : null});
+  trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
  const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
   said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
  setSaver(saver);
@@ -1263,7 +1306,8 @@ export function open(draft = null) {
   show(section); preview().mount(section.querySelector('.cb-planbox')); setTitle('Real life course'); topTools(backButton()); setSaver(saver);
   let told = 'the trace as you left it';
   if (editor && st.doc && st.model) {
-   const got = fromEditor({base: st.doc, now: editor.toDoc(), grid: st.land, changed: editor.changedLayers(), holesBefore: st.holes}), L = st.model.state.layers;
+   const got = fromEditor({base: st.doc, now: editor.toDoc(), grid: st.land, changed: editor.changedLayers(), holesBefore: st.holes, ownCreeks: st.creeks.length}), L = st.model.state.layers;
+   st.treeScale = 1;
    for (const [kind, m] of got.masks) L.masks.set(kind, m);
    L.hidden = new Set(editor.hiddenLayers()); L.recompose(); st.model.state.codes = L.codes;
    if (got.landEdits) { if (st.landEdits) for (let k = 0; k < got.landEdits.length; k++) st.landEdits[k] += got.landEdits[k]; else st.landEdits = got.landEdits; }
@@ -1293,7 +1337,7 @@ export function open(draft = null) {
    st.gridder = createGridder({box: {x0: L.center.x - L.halfX / u.h, x1: L.center.x + L.halfX / u.h, y0: L.center.y - L.halfZ / u.h, y1: L.center.y + L.halfZ / u.h}, cell: L.cell, unit: u});
    if (d.osm?.codes) st.osm = d.osm;
    if (d.trace) {
-    st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, trees: d.trace.trees, homes: d.trace.homes});
+    st.model = createTrace(st.land, {rocks: st.rocks, bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? [], trees: d.trace.trees, homes: d.trace.homes});
     const Ls = st.model.state.layers;
     for (const [k, m] of d.trace.masks) Ls.mask(k, true).set(m);
     for (const k of d.trace.hidden ?? []) Ls.hidden.add(k);

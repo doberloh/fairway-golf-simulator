@@ -34,7 +34,7 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Dig a bunker'}).click();
   await click(.55, .45);
   // Trees: plant two, then clear around one.
-  await page.getByRole('button', {name: 'Plant trees'}).click();
+  await page.getByRole('button', {name: 'Place tree'}).click();
   await click(.25, .70); await click(.27, .74);
   await page.getByRole('button', {name: 'Clear trees', exact: true}).click();
   await click(.25, .70);

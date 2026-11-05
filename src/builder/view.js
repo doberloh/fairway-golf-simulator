@@ -15,6 +15,7 @@ import {TEE_COLORS} from '../course-plan.js';
 import {LAYER_ORDER} from './layers.js';
 import {regionOf} from '../regions.js';
 import {seasonPalette} from '../seasons.js';
+import {cornersOf} from './layer-ops.js';
 
 // The land's mesh: chunks of CHUNK samples a side, every `stride`-th sample of
 // the stored grid (1 m stored; a course past about 1 km a side drawn at 2 or
@@ -474,10 +475,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
     const line = new T.LineLoop(g, lineMat); line.renderOrder = 12; line.frustumCulled = false; selGroup.add(line); sel.lines.push(line);
    }
    if (it.anchors) {
-    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-    for (const [x, z] of it.rings[0]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
-    const pad = Math.max(2.5, Math.max(x1 - x0, z1 - z0) * .1); x0 -= pad; x1 += pad; z0 -= pad; z1 += pad;
-    sel.corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+    sel.corners = cornersOf(it.rings[0]);
     const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(12), 3));
     sel.anchors = new T.Points(g, anchorMat); sel.anchors.renderOrder = 13; sel.anchors.frustumCulled = false; selGroup.add(sel.anchors);
    }

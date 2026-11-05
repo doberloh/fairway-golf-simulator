@@ -15,7 +15,7 @@ import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
 import {layersFor} from './layers.js';
-import {coverOptions, COVER_RANGE} from './cover.js';
+import {coverOptions, coverByKey, COVER_RANGE} from './cover.js';
 import {preview} from './preview.js';
 import {changeMark, sameMark, poseFrom} from './game-look.js';
 
@@ -50,11 +50,15 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  window.fairwayBuilder.editor = current;
 
  let tool = {kind: 'navigate'}, radius = 8, strength = .5, selected = 0, draft = [], down = null, rampA = null;
+ // The layer the clean-up tools work on, the tree tools' numbers, how thick
+ // ground cover lies, and Extrapolate's. As door 2's (PLACED there).
+ let layer = 'fairway', treeH = 15, zoneDensity = 120, coverThick = .5, exTo = 'semi', exWidth = 4;
+ const OUTLINES = new Set(['outline', 'pond', 'treeZone', 'homeZone']);
  // Ground cover's two sizes, one pair for each kind of cover (PLACED: where
  // cover.js starts them), kept as the brush changes hands.
  const coverSizes = Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}]));
  // The model of what the tool paints or places (preview.js).
- const ITEM = {paint: t => ({kind: 'surface', surface: t.surface}), outline: t => ({kind: 'surface', surface: t.surface}), pond: () => ({kind: 'pond'}), creek: () => ({kind: 'creek'}), bunker: () => ({kind: 'bunker'}), plant: () => ({kind: 'tree'}), house: () => ({kind: 'house'}),
+ const ITEM = {paint: t => ({kind: 'surface', surface: t.surface}), outline: t => ({kind: 'surface', surface: t.surface}), pond: () => ({kind: 'pond'}), creek: () => ({kind: 'creek'}), bunker: () => ({kind: 'bunker'}), placeTree: () => ({kind: 'tree'}), treeZone: () => ({kind: 'tree'}), house: () => ({kind: 'house'}), homeZone: () => ({kind: 'house'}),
   cover: t => ({kind: 'cover', cover: t.cover, ...coverSizes[t.cover]})};
  const showModel = () => preview().show(ITEM[tool.kind]?.(tool) ?? null, s.landscape);
  const setTool = t => {
@@ -73,7 +77,9 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   navigate: () => 'Left-drag moves, right-drag turns, the wheel zooms.',
   shape: t => t.op === 'ramp' ? 'Click the low end, then the high end: the ground between is graded.' : t.op === 'fill' ? 'Fill to surrounding: brush over a hole, wider than it, and it rises smoothly to the ground round it. It never lowers anything.' : `${t.op[0].toUpperCase() + t.op.slice(1)}: drag over the ground. Size and strength on the left.`,
   paint: t => `Paint ${label(t.surface)}: drag over the ground. It goes on the ${label(t.surface).toLowerCase()} layer and covers nothing beneath it.`,
-  erase: t => `Erase the ${label(t.surface).toLowerCase()} layer: drag over the ground; what lies under it shows.`,
+  erase: () => layer === 'rough' ? 'Erase brush: drag to take every layer off.' : `Erase the ${label(layer).toLowerCase()} layer: drag over the ground; what lies under it shows.`,
+  eraseAll: () => 'Erase all layers: drag to take every layer off, down to rough.',
+  smoothEdges: () => `Smooth edges: drag along a ragged edge of the ${layer === 'rough' ? 'layers' : label(layer).toLowerCase()} to round it.`,
   outline: t => `Outline ${label(t.surface)}: click its corners, double-click or press Enter to fill it.`,
   pond: () => 'Draw a pond: click its edge, double-click or press Enter. Its level is set just under its lowest bank.',
   creek: () => 'Draw a creek from its head to its foot: click along it, double-click or press Enter. Its channel is cut and its water falls downstream.',
@@ -81,17 +87,19 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   tee: t => `Click where hole ${selected + 1}'s ${t.set} tee goes.`,
   green: () => `Click where hole ${selected + 1}'s green goes.`,
   bend: () => `Click to add a bend to hole ${selected + 1}'s line.`,
-  plant: () => 'Click to plant a tree. Drag to plant a wood.',
+  placeTree: () => `Place tree: click to stand one ${treeH} m tree, not on turf, sand, water, a path or a road.`,
+  treeZone: () => `Tree zone: click round it, then double-click or press Enter. It fills with ${zoneDensity} trees a hectare.`,
+  homeZone: () => 'House zone: click round it, then double-click or press Enter. Houses line it 42 m apart, each facing the course.',
   clear: () => 'Drag to take trees out.',
   house: () => 'Click to stand a house: it faces the nearest fairway, green or tee.',
   clearHomes: () => 'Drag to take houses out.',
   select: () => 'Click a green, bunker, fairway, pond, rock, tree or house to select it. Drag inside its outline to move it, or an anchor at a corner to turn it. Undo puts it back.',
-  cover: t => `Paint ${coverLabel(t.cover).toLowerCase()}: drag over open ground. Their sizes on the left, and Strength for how thick they lie.`,
+  cover: t => t.cover === 'trees' ? 'Tree brush: drag to scatter the landscape\'s trees across the brush, not on turf, sand, water, a path or a road.' : `Paint ${coverLabel(t.cover).toLowerCase()}: drag over open ground.`,
   clearCover: () => 'Drag to take rocks and low plants off. Trees stay.',
   sizeTree: () => 'Click a tree, then size it with This tree: its height, crown and trunk together. Undo puts it back.',
  };
  // Each tool's tooltip is its hint (HINT), as the status line gives it.
- const coverLabel = key => coverOptions(BIOMES[s.landscape]).find(c => c.key === key)?.label ?? key;
+ const coverLabel = key => coverByKey(BIOMES[s.landscape], key)?.label ?? key;
  const button = (text, t, extra = {}) => el('button', {class: 'cb-btn', type: 'button', 'data-tool': toolKey(t), title: HINT[t.kind]?.(t) ?? text, onclick: () => setTool(t), ...extra}, text);
  const range = (labelText, min, max, step, value, onInput) => el('label', {}, labelText, el('input', {type: 'range', min, max, step, value, oninput: e => onInput(+e.target.value)}));
  // ONLY THE LANDSCAPE'S OWN (the owner, 1 November 2026: "Only allow the
@@ -101,7 +109,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // trees planted are the landscape's own (a tree record's kind -1: the game
  // grows the landscape's species). Another landscape picked, the tools change
  // with it; a layer already painted from another stays in the Layers list.
- const landscapeKinds = () => { const own = layersFor(BIOMES[s.landscape]); return PAINT.filter(k => k !== 'water' && own.includes(k)); };
+ const landscapeKinds = () => { const own = layersFor(BIOMES[s.landscape]); return PAINT.filter(k => own.includes(k)); };
  // THE LAYERS (the owner, 1 November 2026: "exposed in the editor as well in
  // real time"): every surface the course holds, top first, its area kept up
  // to date as it is painted; the eye hides one from the view (the course
@@ -113,7 +121,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    return el('li', {'data-layer': k, style: 'display:flex;gap:4px;align-items:center;margin:2px 0'},
     el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
     el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
-    button('Erase', {kind: 'erase', surface: k}, {style: 'padding:2px 5px;font-size:11px'})); }));
+    el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
  }
  const paintButtons = (kind) => el('div', {class: 'cb-btns'}, landscapeKinds().map(k => button(label(k), {kind, surface: k})));
  // The tree height scale, as the slider is dragged (editing.js treeScale).
@@ -166,7 +174,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // two sliders push each other along, so the smallest is never past the
  // largest. They and the preview follow the cover in hand.
  const coverMinText = el('span', {}), coverMaxText = el('span', {});
- const coverSize = which => el('input', {type: 'range', min: .1, max: 6, step: .1, class: `cb-cover${which}`, disabled: true, oninput: e => {
+ const coverSize = which => el('input', {type: 'range', min: .1, max: 6, step: .1, class: `cb-cover${which}`, oninput: e => {
   if (tool.kind !== 'cover') return;
   const c = coverSizes[tool.cover], v = +e.target.value;
   c[which] = v; if (c.min > c.max) c[which === 'min' ? 'max' : 'min'] = v;
@@ -176,43 +184,60 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  function refreshCoverSizes() {
   const on = tool.kind === 'cover', c = on ? coverSizes[tool.cover] : null, r = on ? COVER_RANGE[tool.cover] : null;
   for (const [input, text, v] of [[coverMin, coverMinText, c?.min], [coverMax, coverMaxText, c?.max]]) {
-   input.disabled = !on;
-   if (on) { input.min = r.low; input.max = r.high; input.value = v; }
+   if (on) { input.min = r.low; input.max = r.high; input.step = r.high > 10 ? .5 : .1; input.value = v; }
    text.textContent = on ? `${v.toFixed(1)} m` : '';
   }
  }
  const coverButtons = () => el('div', {class: 'cb-btns'}, coverOptions(BIOMES[s.landscape]).map(c => button(c.label, {kind: 'cover', cover: c.key})), button('Clear cover', {kind: 'clearCover'}));
+ // THE CLEAN-UP, as door 2's. Whole-course ones redraw the whole sheet.
+ const layerNow = () => layer === 'rough' ? null : layer;
+ const layerPick = el('select', {class: 'cb-layerpick', style: 'width:100%', title: 'The layer Erase, Smooth edges, Tidy and Extrapolate work on (Rough: every layer)', onchange: e => { layer = e.target.value; status.textContent = HINT[tool.kind]?.(tool) ?? ''; }});
+ const fillLayerPick = () => { layerPick.replaceChildren(...[...new Set([...landscapeKinds(), ...editor.layersPresent()])].map(k => el('option', {value: k, selected: k === layer}, label(k)))); };
+ function cleaned() { const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); view.refreshLayers(); refreshLayers(); refreshSave(); }
  function clearTurfTrees() {
   unpick(); showPicked();
   const got = editor.clearTreesFromTurf(); view.refreshTrees();
   status.textContent = got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.';
  }
- const buildTools = () => tools.replaceChildren(
+ const buildTools = () => { fillLayerPick(); tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
    button('Move', {kind: 'navigate'}), button('Select shape', {kind: 'select'}),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'From above'),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'This hole'),
    el('button', {class: 'cb-btn', type: 'button', onclick: undo}, 'Undo'),
    el('button', {class: 'cb-btn', type: 'button', onclick: redo}, 'Redo'))),
-  el('div', {class: 'cb-group', 'data-for': 'shape paint erase plant clear clearHomes bunker creek cover clearCover'}, el('b', {}, 'Brush'),
-   range('Size', 1, 60, 1, radius, v => { radius = v; }), range('Strength', .05, 1, .05, strength, v => { strength = v; })),
+  el('div', {class: 'cb-group', 'data-for': 'shape paint erase eraseAll smoothEdges clear clearHomes bunker creek cover clearCover'}, el('b', {}, 'Brush'),
+   range('Size', 1, 60, 1, radius, v => { radius = v; }), el('div', {'data-for': 'shape'}, range('Strength', .05, 1, .05, strength, v => { strength = v; }))),
+  // The sizes the brush in hand lays, for ground cover and trees alike.
+  el('div', {class: 'cb-group', 'data-for': 'cover'}, el('b', {}, 'What it lays'),
+   el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax),
+   range('How thick', .05, 1, .05, coverThick, v => { coverThick = v; })),
   el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
   el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint'),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons(),
-   el('label', {'data-for': 'cover'}, 'Smallest ', coverMinText, coverMin), el('label', {'data-for': 'cover'}, 'Largest ', coverMaxText, coverMax)),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Clean up'), layerPick, el('div', {class: 'cb-btns'},
+    button('Erase brush', {kind: 'erase'}), button('Erase all layers', {kind: 'eraseAll'}), button('Smooth edges', {kind: 'smoothEdges'}),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.smoothEdges({radius: 1.5, kind: layerNow()}); cleaned(); }}, 'Smooth all edges'),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.tidy({kind: layerNow()}); cleaned(); }}, 'Tidy specks')),
+   el('small', {}, 'Extrapolate the layer above: lay another round it, a width out.'),
+   el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { exTo = e.target.value; }}, landscapeKinds().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === exTo}, label(k)))),
+    el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: exWidth, title: 'metres', oninput: e => { exWidth = +e.target.value || 4; }})),
+   el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (editor.extrapolate({from: layer, to: exTo, width: exWidth})) cleaned(); else status.textContent = 'Pick a layer that holds something, and another to lay round it.'; }}, 'Extrapolate')),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons()),
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Water and sand'), el('div', {class: 'cb-btns'},
    button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}))),
   el('div', {class: 'cb-group'}, el('b', {}, 'Trees'), el('div', {class: 'cb-btns'},
-   button('Plant trees', {kind: 'plant'}), button('Clear trees', {kind: 'clear'}), button('Size a tree', {kind: 'sizeTree'})),
+   button('Place tree', {kind: 'placeTree'}), button('Tree brush', {kind: 'cover', cover: 'trees'}), button('Tree zone', {kind: 'treeZone'}), button('Clear trees', {kind: 'clear'}), button('Size a tree', {kind: 'sizeTree'})),
+   el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; }})),
+   el('label', {'data-for': 'treeZone'}, 'Trees a hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
    el('label', {title: 'Every tree on the course together'}, 'Every tree\'s size ', scaleText, treeScale),
    el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree)),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Houses'), el('div', {class: 'cb-btns'}, button('House', {kind: 'house'}), button('Clear houses', {kind: 'clearHomes'}))),
- );
+  el('div', {class: 'cb-group'}, el('b', {}, 'Houses'), el('div', {class: 'cb-btns'}, button('House', {kind: 'house'}), button('House zone', {kind: 'homeZone'}), button('Clear houses', {kind: 'clearHomes'}))),
+ ); };
  buildTools();
 
  // ---- the right: the course, its holes, the checks, Save.
@@ -311,18 +336,19 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    if (first) down.level = editor.height(p.x, p.z);
    view.refreshLand(editor.shape({op: tool.op, x: p.x, z: p.z, radius, strength, level: down.level, group: down.group}));
   } else if (tool.kind === 'paint') view.refreshSurface(editor.paint({kind: tool.surface, x: p.x, z: p.z, radius, group: down.group}));
-  else if (tool.kind === 'erase') view.refreshSurface(editor.erase({kind: tool.surface, x: p.x, z: p.z, radius, group: down.group}));
-  else if (tool.kind === 'plant') {
-   if (!first && Math.hypot(p.x - down.last.x, p.z - down.last.z) < Math.max(4, radius * .6)) return;
-   const h = 10 + strength * 20;
-   editor.addTree([p.x, p.z, h, h * .3, Math.min(.8, h * .027), 2, -1]); down.last = p; view.refreshTrees();
+  else if (tool.kind === 'erase') view.refreshSurface(editor.erase({kind: layerNow(), x: p.x, z: p.z, radius, group: down.group}));
+  else if (tool.kind === 'eraseAll') view.refreshSurface(editor.erase({x: p.x, z: p.z, radius, group: down.group}));
+  else if (tool.kind === 'smoothEdges') view.refreshSurface(editor.smoothEdges({x: p.x, z: p.z, radius: Math.max(1, radius / 3), area: radius, kind: layerNow(), group: down.group}));
+  else if (tool.kind === 'placeTree' && first) {
+   if (editor.treeFits(p.x, p.z)) { editor.addTree([p.x, p.z, treeH, treeH * .28, Math.min(.8, treeH * .027), 2, -1]); view.refreshTrees(); }
+   else status.textContent = `A tree cannot stand on ${editor.surfaceAt(p.x, p.z)}.`;
   } else if (tool.kind === 'clear') { editor.removeTrees({x: p.x, z: p.z, radius}); view.refreshTrees(); }
   else if (tool.kind === 'house' && first) { if (editor.addHome({x: p.x, z: p.z})) view.refreshHomes(); else status.textContent = 'A house needs open ground all round it -- not turf, sand, water or a path.'; }
   else if (tool.kind === 'select') carryTo(p);
   else if (tool.kind === 'cover') {
    if (!first && Math.hypot(p.x - down.last.x, p.z - down.last.z) < Math.max(1.5, radius * .5)) return;
-   const c = coverOptions(BIOMES[s.landscape]).find(o => o.key === tool.cover), {min, max} = coverSizes[tool.cover];
-   if (editor.paintCover({cover: c, x: p.x, z: p.z, radius, min, max, density: strength, group: down.group})) { view.refreshTrees(); view.refreshRocks(); }
+   const c = coverByKey(BIOMES[s.landscape], tool.cover), {min, max} = coverSizes[tool.cover];
+   if (editor.paintCover({cover: c, x: p.x, z: p.z, radius, min, max, density: coverThick, group: down.group})) { view.refreshTrees(); view.refreshRocks(); }
    down.last = p;
   } else if (tool.kind === 'clearCover') { if (editor.clearCover({x: p.x, z: p.z, radius, group: down.group})) { view.refreshTrees(); view.refreshRocks(); } }
   else if (tool.kind === 'clearHomes') { if (editor.removeHomes({x: p.x, z: p.z, radius})) view.refreshHomes(); }
@@ -331,7 +357,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   if (e.button !== 0 || tool.kind === 'navigate') return;
   const p = view.pick(e); if (!p) return;
   canvas.setPointerCapture(e.pointerId);
-  if (tool.kind === 'outline' || tool.kind === 'pond') { draft.push([p.x, p.z]); view.draft([...draft, draft[0]]); return; }
+  if (OUTLINES.has(tool.kind)) { draft.push([p.x, p.z]); view.draft([...draft, draft[0]]); return; }
   if (tool.kind === 'creek') { draft.push([p.x, p.z]); view.draft(draft); return; }
   if (tool.kind === 'bunker') { const b = editor.digBunker({x: p.x, z: p.z, radius: Math.max(2, radius)}); view.refreshLand(b); view.refreshSurface(b); return; }
   if (tool.kind === 'tee') { editor.setTee(selected, tool.set, p.x, p.z); refreshHoles(); return; }
@@ -358,7 +384,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   const p = view.pick(e);
   if (p) {
    if (tool.kind === 'sizeTree') showPicked();
-   else view.cursor(['shape', 'paint', 'erase', 'clear', 'plant', 'clearHomes', 'cover', 'clearCover'].includes(tool.kind) ? p.x : null, p.z, radius);
+   else view.cursor(['shape', 'paint', 'erase', 'eraseAll', 'smoothEdges', 'clear', 'clearHomes', 'cover', 'clearCover'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
   }
   if (tool.kind === 'select' && !down) canvas.style.cursor = !chosen ? '' : view.anchorAt(e) >= 0 ? 'grab' : p && editor.onPick(chosen, p.x, p.z) ? 'move' : '';
@@ -392,17 +418,23 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    if (got.box) { view.refreshSurface(got.box); refreshLayers(); }
    else if (pick.type === 'tree') view.refreshTrees(); else if (pick.type === 'rock') view.refreshRocks(); else if (pick.type === 'home') view.refreshHomes();
    choose(got.pick); refreshSave(); return;
-  } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (tool.kind === 'paint' || tool.kind === 'erase') refreshLayers(); } });
+  } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (['paint', 'erase', 'eraseAll', 'smoothEdges'].includes(tool.kind)) { const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); refreshLayers(); } } });
  const finishOutline = () => {
   if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
   if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
+  if (tool.kind === 'treeZone' || tool.kind === 'homeZone') {
+   const seed = s.undo.length + 1, n = tool.kind === 'treeZone' ? editor.treeZone(draft, {density: zoneDensity, seed}) : editor.homeZone(draft, {seed});
+   status.textContent = n ? `${n} ${tool.kind === 'treeZone' ? 'tree' : 'house'}${n === 1 ? '' : tool.kind === 'treeZone' ? 's' : 's'} in the zone. Undo takes them out.` : 'Nothing fits there: it needs open ground.';
+   if (tool.kind === 'treeZone') view.refreshTrees(); else view.refreshHomes();
+   draft = []; view.draft([]); return;
+  }
   if (tool.kind === 'pond') { editor.addPond({ring: draft}); view.refreshLand(s.undo.at(-1).box); view.refreshWater(); }
-  else editor.fillOutline({kind: tool.surface, ring: draft});
+  else { editor.fillOutline({kind: tool.surface, ring: draft}); const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); }
   const xs = draft.map(q => q[0]), zs = draft.map(q => q[1]);
   view.refreshSurface([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]);
   draft = []; view.draft([]); refreshLayers();
  };
- canvas.addEventListener('dblclick', () => { if (tool.kind === 'outline' || tool.kind === 'pond' || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
+ canvas.addEventListener('dblclick', () => { if (OUTLINES.has(tool.kind) || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
  const onKey = e => {
   if (!current || current.editor !== editor || e.target.tagName === 'INPUT') return;
   if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleGame(); return; }

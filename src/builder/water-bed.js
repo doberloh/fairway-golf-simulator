@@ -77,3 +77,55 @@ export function digBed(grid, rings, level, {reach: far = BED.reach, keep = null}
  }
  return [x0 + i0 * cell, x0 + i1 * cell, z0 + j0 * cz, z0 + j1 * cz];
 }
+
+// A BUNKER'S BOWL dug into a grid: deepest at the middle with a lip at the edge.
+export function digBowl(g, {x, z, radius, depth = .6}) {
+ const cz = g.cellZ ?? g.cell, i0 = Math.max(0, Math.floor((x - radius - g.x0) / g.cell)), i1 = Math.min(g.nx - 1, Math.ceil((x + radius - g.x0) / g.cell));
+ const j0 = Math.max(0, Math.floor((z - radius - g.z0) / cz)), j1 = Math.min(g.nz - 1, Math.ceil((z + radius - g.z0) / cz));
+ for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+  const d = Math.hypot(g.x0 + i * g.cell - x, g.z0 + j * cz - z) / radius;
+  if (d < 1) g.heights[j * g.nx + i] -= depth * (1 - d * d * d * d);
+ }
+}
+// A CREEK from a line of points: stations every 2 m, the water's level never
+// rising downstream and kept under the ground, as a generated creek's are.
+// Water runs downhill: a line drawn from its foot is turned round, or its level,
+// kept from the top, would cut an ever deeper trench up the slope.
+export function creekStations(points, {width = 3, depth = .7, height}) {
+ if (points.length < 2) throw Error('A creek needs two points.');
+ if (height(...points.at(-1)) > height(...points[0])) points = [...points].reverse();
+ const st = [];
+ for (let k = 1; k < points.length; k++) {
+  const [ax, az] = points[k - 1], [bx, bz] = points[k], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2));
+  for (let t = k === 1 ? 0 : 1; t <= n; t++) st.push([ax + (bx - ax) * t / n, az + (bz - az) * t / n]);
+ }
+ let level = Infinity;
+ return st.map(([x, z], i) => {
+  level = Math.min(level, height(x, z) - .4);
+  const [px, pz] = st[Math.max(0, i - 1)], [qx, qz] = st[Math.min(st.length - 1, i + 1)], len = Math.hypot(qx - px, qz - pz) || 1;
+  return {x, z, width, level, depth, nx: -(qz - pz) / len, nz: (qx - px) / len, miter: 1, bank: 14 + width * .6};
+ });
+}
+// The box a creek's channel reaches, in metres.
+export function creekBox(stations) {
+ const reach = stations[0].width / 2 + 4, xs = stations.map(p => p.x), zs = stations.map(p => p.z);
+ return [Math.min(...xs) - reach, Math.max(...xs) + reach, Math.min(...zs) - reach, Math.max(...zs) + reach];
+}
+// Its channel cut into a grid: a parabola across, the bank graded out over 3 m.
+export function carveCreek(g, stations) {
+ const {width, depth} = stations[0], half = width / 2, reach = half + 4, [bx0, bx1, bz0, bz1] = creekBox(stations), cz = g.cellZ ?? g.cell;
+ const i0 = Math.max(0, Math.floor((bx0 - g.x0) / g.cell)), i1 = Math.min(g.nx - 1, Math.ceil((bx1 - g.x0) / g.cell));
+ const j0 = Math.max(0, Math.floor((bz0 - g.z0) / cz)), j1 = Math.min(g.nz - 1, Math.ceil((bz1 - g.z0) / cz));
+ for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+  const px = g.x0 + i * g.cell, pz = g.z0 + j * cz;
+  let best = null;
+  for (let k = 1; k < stations.length; k++) {
+   const a = stations[k - 1], b = stations[k], dx = b.x - a.x, dz = b.z - a.z, u = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / (dx * dx + dz * dz || 1)));
+   const d = Math.hypot(px - a.x - dx * u, pz - a.z - dz * u);
+   if (!best || d < best.d) best = {d, level: a.level + (b.level - a.level) * u};
+  }
+  if (best.d > reach) continue;
+  const bed = best.d < half ? best.level - depth * (1 - (best.d / half) ** 2) : best.level + (best.d - half) * .5, k = j * g.nx + i;
+  if (bed < g.heights[k]) g.heights[k] = bed;
+ }
+}

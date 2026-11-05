@@ -16,7 +16,7 @@ import {FAMILY_OF} from '../plant-families.js';
 import {GROUNDS, GROUND_TINT, allows} from '../grounds.js';
 import {GROUND_PLANTS, SPREAD_SIZED} from '../species.js';
 import {SEASON_TINTS} from '../season-tints.js';
-import {coverOptions} from './cover.js';
+import {coverByKey} from './cover.js';
 
 const look = (species, bio) => {
  const family = FAMILY_OF[species] ?? species, t = SEASON_TINTS[family]?.summer ?? {};
@@ -64,7 +64,7 @@ export function previewOf(item, bio) {
  if (item.kind === 'creek') return {...surface('water', bio), title: 'Creek', creek: true, water: null, strip: bio.water || '#4a8fb0', caption: 'Its channel is cut as it is drawn.'};
  if (item.kind === 'bunker') return surface('sand', bio);
  if (item.kind === 'cover') {
-  const c = coverOptions(bio).find(o => o.key === item.cover); if (!c) return null;
+  const c = coverByKey(bio, item.cover); if (!c) return null;
   const {min, max} = item, mid = (min + max) / 2, sizes = [min, mid, max], xs = [-.8, 0, .8];
   // Mixed: a different plant at each size.
   const names = byWeight(c.plants), reach = Math.max(2, max);
