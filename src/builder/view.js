@@ -448,8 +448,9 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   if (camera.position.y + move.y < floor) move.y = floor - camera.position.y;
   camera.position.add(move); controls.target.add(move);
  }
- let running = true, last = performance.now();
- (function frame(now = performance.now()) { if (!running) return; fly(Math.min(.1, (now - last) / 1000)); last = now; controls.update(); closeUp.check(); renderer.render(scene, camera); requestAnimationFrame(frame); })();
+ let running = true, paused = false, last = performance.now();
+ const frame = (now = performance.now()) => { if (!running || paused) return; fly(Math.min(.1, (now - last) / 1000)); last = now; controls.update(); closeUp.check(); renderer.render(scene, camera); requestAnimationFrame(frame); };
+ frame();
  onReady();
 
  return {
@@ -509,6 +510,11 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   },
   // One stored tree, one rock: moved without rebuilding them all.
   placeTree, placeRock,
+  // Game view is showing: draw nothing until it goes. Keys held when it opened
+  // are let go, or the camera would set off on its own when it closes.
+  pause(on) { if (on === paused) return; paused = on; held.clear(); if (!on) { last = performance.now(); frame(); } },
+  // Where the camera is and what it looks at.
+  eye: () => ({eye: {x: camera.position.x, y: camera.position.y, z: camera.position.z}, look: {x: controls.target.x, y: controls.target.y, z: controls.target.z}}),
   // A tool takes the left button; navigating gives it back to panning.
   setToolActive(on) { controls.mouseButtons.LEFT = on ? null : T.MOUSE.PAN; },
   cursor(x, z, radius) {

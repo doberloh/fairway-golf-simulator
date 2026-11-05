@@ -307,6 +307,8 @@ export function createEditor(doc) {
   sizeTree(index, base, f, first = false) {
    if (!state.trees[index]) return;
    if (first) remember('records', 0, 0, 0, 0);
+   // Later moves of the slider make no step, and Game view has to know.
+   state.touched = (state.touched ?? 0) + 1;
    const k = Math.max(.25, Math.min(3, f));
    state.trees[index] = [base[0], base[1], base[2] * k, base[3] * k, base[4] * k, ...base.slice(5)];
   },

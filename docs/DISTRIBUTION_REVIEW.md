@@ -1630,7 +1630,8 @@ beyond the owner's rounds on the branches.
 preview, src/builder/preview.js), so `Fairway Builder.html` grows by about 25
 MB and every zip with it (the same data twice, compressed twice). PLACED: the
 owner asked to see the model; fetching it from the game's page is not possible
-by file://.
+by file://. Game view (the same day) adds the game's drawing code: the page goes
+from 26.6 to 28.2 MB as vite counts it, 14.1 MB gzipped.
 
 The `course-builder` branch adds a **second page to every download**,
 `Fairway Builder.html` (docs/COURSE_BUILDER.md): built single-file by

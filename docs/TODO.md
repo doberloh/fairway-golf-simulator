@@ -125,6 +125,12 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     tools/capture's `autumn-*` shots (gallery, clips) need the same.
   - **Ground cover in the 2D editor** and **Fill to surrounding** in the 3D one:
     built the same way, not seen.
+  - **Game view**: never run. Press it on a small course and a big 18: does the
+    picture come up, does it open at the editor's spot, is flipping instant, how
+    long is the first look and a look after an edit, does the bar work, does the
+    game's page keep its saved time and graphics? Measure memory on a weak machine;
+    a builder journey for it is owed. Risk: the game's drawing code may lean on
+    something only the game's page sets up.
   - **Not done:** `npm test` whole, smoke,
     the round matrix and the fingerprint were not run (no file the generator
     reads changed).

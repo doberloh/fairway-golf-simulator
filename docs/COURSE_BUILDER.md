@@ -1357,6 +1357,33 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### Game view (4 November 2026)
+
+The owner: "go from the 3d preview to actual in game graphics and back again in
+a quick way ... NOT have any editing tools in the Real game preview." A button
+in the 3D editor (src/builder/game-view.js, its rules in game-look.js): the
+game's own GolfView, lazily imported, drawing `worldFromDoc(editor.toDoc())` on
+a canvas over the editor. **Not seen working**: it was built without running the
+graphics card, so neither the picture nor the times below have been checked.
+
+- **The view stays**, hidden by `visibility` (its size comes from its box), and
+  each side stops drawing while the other shows (view.js `pause`). So no edit
+  means no rebuild (`changeMark`), and only one picture is ever being drawn; two
+  WebGL contexts are alive, which is the memory cost, unmeasured.
+- **Timed without the card, on three LIDAR 18s**: gathering a painted course
+  0.65-0.86 s, `worldFromDoc` 3.7-4.7 s (Node; `view.build` is unmeasured).
+  The first look also pays for the shaders; the ground program alone was 2.0-2.3
+  s three times over on the RTX 4090.
+- **Season and graphics rebuild the drawing, not the world**: the same world
+  through `view.build`, as the game's own settings do. Time of day is only the
+  clock. None of them saved: `borrowedClock`, rate 0, nothing written.
+- **Size**: the game's drawing code joins the builder's page: 26.6 to 28.2 MB
+  (1.1 MB more gzipped).
+- **Rejected**: opening the game's page beside the builder (file:// pages cannot
+  hand each other a course reliably, and it is 36 MB and a full start every time);
+  dressing the editor's own view as the game (it answers a brush in a frame because
+  it is not the game); throwing the view away on return (the long wait every time).
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the

@@ -753,7 +753,15 @@ the brush and leaves trees. While a paint, outline or placing tool is in hand,
 here and on door 2's trace step, a panel shows the game's own model of what it
 lays, at its real size beside a golfer: drag it to turn it. A pond is dug when
 it is drawn, with its banks graded, so its water shows; a course saved before
-this comes right when it is opened here and saved again. **Back to 2D** in the
+this comes right when it is opened here and saved again. **Game view**
+in the top bar (or **G**) shows the course in the game's own picture, to fly
+round and look at, with nothing to edit: W A S D fly, Q and E go down and up,
+Shift goes faster, a drag looks and the wheel moves ahead, and a bar picks the
+hole, season, time of day and graphics setting, none of them saved. It opens
+where the editor's camera is, and **Back to editor**, G or Escape returns you
+exactly as you left it. The first look takes a while, as the game does starting
+up; after that going back and forth is immediate until something is changed,
+when it builds the course again. **Back to 2D** in the
 top bar goes to the 2D plan from any course: one that came from door 2's steps
 goes back to them with what you changed, and any other is laid out as layers,
 holes, trees and houses, with no survey behind it. The holes

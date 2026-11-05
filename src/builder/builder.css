@@ -75,6 +75,14 @@ button,input,select{font:inherit;color:inherit}
 .cb-opt input[type=number]{width:72px}
 .cb-opt input[type=range]{flex:1;min-width:0}
 .cb-door2 .cb-preview{left:auto;right:12px;bottom:56px}
+.cb-game{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#061513}
+.cb-gamestage{position:relative;flex:1;min-height:0;overflow:hidden}
+.cb-gamecanvas{display:block;width:100%;height:100%;outline:none;cursor:grab;touch-action:none}
+.cb-gamebar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);font-size:12px;color:var(--soft)}
+.cb-gamebar label{display:flex;align-items:center;gap:6px}
+.cb-gamebar select{background:#03100e;border:1px solid var(--line);padding:4px 6px}
+.cb-gamebar input[type=range]{width:130px}
+.cb-gamehint{margin-left:auto}
 .cb-status{position:absolute;left:244px;right:304px;bottom:12px;background:var(--panel);border:1px solid var(--line);padding:6px 12px;font-size:12px;color:var(--soft);z-index:4;pointer-events:none}
 /* Door 2: the steps down the left, the plan filling the rest. */
 .cb-door2{position:absolute;inset:0;display:grid;grid-template-columns:400px 1fr;background:#061513}

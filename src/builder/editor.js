@@ -17,6 +17,7 @@ import {testRound} from './test-round.js';
 import {layersFor} from './layers.js';
 import {coverOptions, COVER_RANGE} from './cover.js';
 import {preview} from './preview.js';
+import {changeMark, sameMark, poseFrom} from './game-look.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
@@ -257,7 +258,31 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  // confirm if its going to fully close the project in the builder"): Close
  // ends the course and goes back to the builder's start, so it asks, and
  // then asks again -- the second time saying what is not saved.
- const leave = () => { current?.view.dispose(); current = null; document.removeEventListener('keydown', onKey); };
+ const leave = () => { game?.dispose(); game = null; current?.view.dispose(); current = null; document.removeEventListener('keydown', onKey); };
+ // GAME VIEW (game-view.js; the owner, 4 November 2026): the course in the
+ // game's own picture, with no tools, and back. The game's drawing code loads
+ // at the first press. The editor keeps everything while it shows, and draws
+ // nothing. Built again only when something changed since the last look.
+ let game = null, gameMark = null, opening = false;
+ const gameButton = el('button', {class: 'cb-btn', type: 'button', 'data-gameview': '', title: 'See this course in the game\'s own picture, to fly round and look at. Nothing can be edited there. G goes there and back.', onclick: () => toggleGame()}, 'Game view');
+ async function toggleGame() {
+  if (opening) return;
+  if (game?.showing) { game.hide(); view.pause(false); gameButton.textContent = 'Game view'; gameButton.classList.remove('cb-on'); return; }
+  opening = true;
+  try {
+   setBusy('Opening the game\'s picture…');
+   await new Promise(r => setTimeout(r, 30));
+   const mine = current?.editor === editor; if (!mine) return;
+   if (!game) { const {createGameView} = await import('./game-view.js'); game = createGameView(page, {onBack: toggleGame, busy: setBusy}); }
+   const mark = changeMark(s), doc = sameMark(mark, gameMark) ? null : (setBusy('Gathering your changes…'), await new Promise(r => setTimeout(r, 30)), editor.toDoc());
+   const {eye, look} = view.eye();
+   view.pause(true);
+   await game.show({doc, pose: poseFrom(eye, look)});
+   gameMark = mark; gameButton.textContent = 'Back to editor'; gameButton.classList.add('cb-on');
+  } catch (e) {
+   view.pause(false); setBusy(''); status.textContent = 'Could not open Game view: ' + e.message;
+  } finally { opening = false; }
+ }
  topTools(
   // Back to 2D takes what was done here with it (door-real.js remount,
   // round-trip.js), so it asks nothing. On every course since 4 November 2026:
@@ -273,6 +298,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
     leave(); open(made);
    } catch (e) { status.textContent = 'Could not lay it out in 2D: ' + e.message; } finally { setBusy(''); }
   }}, 'Back to 2D'),
+  gameButton,
   el('button', {class: 'cb-btn', type: 'button', onclick: () => {
    if (!confirm('Close this course and go back to the builder\'s start?')) return;
    if (!confirm(s.changed ? 'Are you sure? It has changes that are not saved, and they will be lost.' : 'Are you sure? The course closes (anything saved stays in its file).')) return;
@@ -379,6 +405,8 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  canvas.addEventListener('dblclick', () => { if (tool.kind === 'outline' || tool.kind === 'pond' || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
  const onKey = e => {
   if (!current || current.editor !== editor || e.target.tagName === 'INPUT') return;
+  if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleGame(); return; }
+  if (game?.showing) { if (e.key === 'Escape') toggleGame(); return; }
   if (e.key === 'Enter') finishOutline();
   else if (e.key === 'Escape') { if (chosen) { choose(null); return; } draft = []; view.draft([]); setTool({kind: 'navigate'}); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
