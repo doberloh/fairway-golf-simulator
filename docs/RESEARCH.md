@@ -13803,3 +13803,50 @@ broadleaf forest's far woods .4 toward new leaf in every region (before, New
 England's alone). The test holds spring's rough at least 14 of 441 colour steps
 from summer's on every landscape with a spring. Wine country: spring `#679b40`,
 summer `#779447`, autumn `#9f9b50`. Seen in numbers only, no picture yet.
+
+## Desert resort courses (5 November 2026)
+
+The owner sent pictures of TPC Summerlin and Shadow Creek: the Mojave landscape's
+planting does not match them. Research for a possible new landscape; the plan is
+local (docs/studies/desertresort/PLAN.md). Nothing built from it yet.
+
+- **TPC Summerlin:** Bobby Weed with Fuzzy Zoeller, 1991; about 2,700 ft (820 m);
+  crosses and follows barrancas; "creosote and cacti" with "grand pine trees";
+  homes round it; gentle elevation change.
+  [Wikipedia](https://en.wikipedia.org/wiki/TPC_at_Summerlin),
+  [Bobby Weed](https://bobbyweed.com/course/tpc-summerlin/),
+  [Golf365](https://www.golf365.com/courses/tpc-summerlin).
+- **Shadow Creek:** Tom Fazio for Steve Wynn on flat desert, 1989 or 1990 (sources
+  differ). An entire environment made from nothing, trees imported and waterfalls
+  built: [Golf Course News, 1989](https://archive.lib.msu.edu/tic/gcnew/article/1989aug14a.pdf).
+  Over 20,000 trees and 3 million cubic yards of earth are repeated figures with no
+  primary source found: unconfirmed.
+  [Planet Golf](https://www.planetgolf.com/courses/usa/shadow-creek-golf-course),
+  [CLUI](https://clui.org/ludb/site/shadow-creek-golf-club).
+- **Trees in the valley:** Aleppo pine and Mexican fan palm on
+  [SNWA's plant list](https://webarchive.library.unt.edu/web/20161225092602/http://www.snwa.com/assets/pdf/wsl_plantlist.pdf);
+  Afghan pine "found throughout" the valley, expected to struggle by about 2055
+  ([Las Vegas Sun](https://lasvegassun.com/news/2019/nov/25/climate-change-will-likely-stress-out-your-trees/));
+  Desert Pines lines its fairways with 4,000 pines
+  ([its page](https://arcisgolf.com/clubs/desert-pines-golf-club/home)). No document
+  lists either course's species: those in the plan are read from the pictures, PLACED.
+- **Afghan pine** (*Pinus eldarica*): 30-60 ft ([SNWA](https://snwa.com/landscapes/plants/?id=15022));
+  about 50 ft tall, 30 ft wide, irregular when mature ([AMWUA](https://www.amwua.org/plant/afghan-pine));
+  pyramidal young. SNWA's figures followed.
+- **African sumac** (*Searsia lancea*): 20-30 ft to 30-40 ft, as wide; sources split on
+  how weeping it is ([Wikipedia](https://en.wikipedia.org/wiki/Searsia_lancea),
+  [Oregon State](https://landscapeplants.oregonstate.edu/node/795)). No Nevada source.
+- **Pampas grass** (*Cortaderia selloana*): 2.5-4 m, spread 1.5-2.5 m, plumes 45-90 cm
+  ([RHS](https://www.rhs.org.uk/plants/4431/wd/details)); nurseries give less
+  ([Star Nursery](https://www.starnursery.com/product/pampas-grass)). RHS followed.
+- **Italian cypress:** two searches found nothing usable. Rejected until a source and
+  a picture of it on a course exist.
+- **Turf and water:** SNWA cut golf from 6.3 to 4.0 acre-feet an acre from 2024, about
+  1.5 under bermuda's use, making full overseeding "virtually impossible"
+  ([USGA](https://www.usga.org/content/usga/home-page/course-care/green-section-record/61/issue-02/get-out-in-front-of-water-regulations.html));
+  overseeded acres down 60% nationally, 2005-2021 ([Golf.com](https://golf.com/lifestyle/overseeding-golf-courses-fading-popularity/)).
+  Neither course's turf was found stated.
+- **Rock:** the Spring Mountains are mostly grey limestone, over 2,400 m above the
+  valley's west edge, thrust over red Aztec sandstone at Red Rock, with alluvial fans
+  below ([Earth Magazine](https://www.earthmagazine.org/article/travels-geology-las-vegas-scenery-beyond-slots/)).
+  Climate figures and the valley floor's caliche not found: PLACED.
