@@ -12,6 +12,7 @@ import {worldFromDoc, rockFrom} from '../src/built-world.js';
 import {BIOMES} from '../src/biomes.js';
 import {BIOME_KEYS, BUILT_VERSION} from '../src/settings-schema.js';
 import {GROUND_PLANTS} from '../src/species.js';
+import {createTrace} from '../src/builder/trace-edit.js';
 
 const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
@@ -76,6 +77,56 @@ test('clearing cover takes rocks and low plants, never a tree', () => {
  const n = e.clearCover({x: 30, z: 40, radius: 40});
  assert.ok(n > 3);
  assert.equal(e.state.rocks.length, 0); assert.equal(e.state.trees.length, 2);
+});
+
+test('the 2D editor paints the same cover, undoes a drag at once, and the course keeps it', () => {
+ const land = {nx: 201, nz: 201, cell: 1, halfX: 100, halfZ: 100, ground: new Float32Array(201 * 201).fill(100)};
+ const m = createTrace(land, {rocks: [[0, 0, 1, 0, 0]]}), [rocks, bushes] = coverOptions(BIOMES.winecountry), rng = seeded(11);
+ m.fill([[[-30, -30], [30, -30], [30, 30], [-30, 30]]], 'fairway');
+ m.beginStroke();
+ m.paintCover({cover: rocks, x: 60, z: 60, radius: 12, min: .5, max: 2, density: 1, rng});
+ m.paintCover({cover: bushes, x: -60, z: 60, radius: 12, min: .5, max: 1.5, density: 1, rng});
+ m.endStroke();
+ const nRocks = m.state.rocks.length, plants = m.state.trees.filter(t => t.kept);
+ assert.ok(nRocks > 4 && plants.length > 3);
+ assert.ok(plants.every(t => t.role === 3 && bushes.plants.some(p => p[0] === t.kind)));
+ // Nothing on the fairway.
+ assert.equal(m.paintCover({cover: rocks, x: 0, z: 0, radius: 20, min: .5, max: 2, density: 1, rng}), 0);
+ const doc = validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: Array.from({length: 9}, (_, i) => ({number: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}})), trees: m.state.trees, homes: [], rocks: m.state.rocks, name: 'Two', landscape: 'winecountry'}));
+ assert.equal(doc.rocks.length, nRocks); assert.equal(doc.trees.length / 7, plants.length);
+ assert.ok(doc.treeKinds.length >= 1);
+ m.undo();
+ assert.equal(m.state.rocks.length, 1); assert.equal(m.state.trees.length, 0);
+ m.redo();
+ assert.equal(m.state.rocks.length, nRocks);
+ m.state.trees.push({x: 62, z: 62, h: 15, crown: 4});
+ m.clearCover({x: 60, z: 60, radius: 30});
+ assert.ok(m.state.rocks.length <= 1); assert.equal(m.state.trees.filter(t => t.h === 15).length, 1, 'a tree stays');
+});
+
+test('Fill to surrounding raises a hole to the ground round it, and nothing else', () => {
+ const nx = 201, heights = new Float32Array(nx * nx).fill(100);
+ const at = (x, z) => (z + 100) * nx + x + 100;
+ for (let z = -6; z <= 6; z++) for (let x = -6; x <= 6; x++) if (Math.hypot(x, z) <= 6) heights[at(x, z)] = 97;
+ for (let z = -3; z <= 3; z++) for (let x = 40; x <= 46; x++) heights[at(x, z)] = 104;
+ const made = {...doc(), land: {x0: -100, z0: -100, cell: 1, cellZ: 1, nx, nz: nx, heights}}, e = createEditor(made), u = e.state.undo.length, group = {};
+ for (let n = 0; n < 6; n++) e.shape({op: 'fill', x: 0, z: 0, radius: 12, strength: 1, group});
+ assert.ok(Math.abs(e.height(0, 0) - 100) < .02, `the middle: ${e.height(0, 0)}`);
+ assert.ok(Math.abs(e.height(5, 0) - 100) < .02, `the side: ${e.height(5, 0)}`);
+ assert.equal(e.state.undo.length, u + 1, 'one undo for the drag');
+ // A brush over a mound lowers nothing.
+ e.shape({op: 'fill', x: 43, z: 0, radius: 12, strength: 1});
+ assert.equal(e.height(43, 0), 104);
+ e.undo(); e.undo();
+ assert.equal(e.height(0, 0), 97);
+});
+
+test('Fill to surrounding follows a hillside rather than lying flat', () => {
+ const nx = 201, heights = new Float32Array(nx * nx);
+ for (let z = -100; z <= 100; z++) for (let x = -100; x <= 100; x++) heights[(z + 100) * nx + x + 100] = 100 + x * .2 - (Math.hypot(x, z) < 6 ? 3 : 0);
+ const e = createEditor({...doc(), land: {x0: -100, z0: -100, cell: 1, cellZ: 1, nx, nz: nx, heights}});
+ for (let n = 0; n < 6; n++) e.shape({op: 'fill', x: 0, z: 0, radius: 12, strength: 1});
+ for (const x of [-4, 0, 4]) assert.ok(Math.abs(e.height(x, 0) - (100 + x * .2)) < .05, `at x ${x}: ${e.height(x, 0)}`);
 });
 
 test('an older file has no rocks and plays as it did', () => {

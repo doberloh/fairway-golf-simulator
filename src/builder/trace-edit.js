@@ -11,7 +11,9 @@
 // of the land's middle, z south of it; the grid is the land's.
 import {TRACE, boxMean, distanceFrom} from '../lidar/trace.js';
 import {GROUND_KINDS} from '../grounds.js';
+import {TREE_ROLES} from '../course-doc.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
+import {scatterCover, coverAt, COVER_REFUSED} from './cover.js';
 
 export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k))];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
@@ -29,11 +31,11 @@ export const POCK = 30;
 // tidying work on one layer (`kind`), or -- Erase, Smooth all, Tidy with no
 // kind -- on every layer. `state.codes` is what the course will be made of,
 // `state.layers.view` what is shown (hidden layers left out).
-export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
+export function createTrace(grid, {codes = null, trees = [], homes = [], rocks = []} = {}) {
  const {nx, nz, cell, halfX, halfZ} = grid, N = nx * nz;
  const layers = createLayers(nx, nz, PALETTE);
  if (codes) layers.fromCodes(codes);
- const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), homes: homes.map(h => ({...h})), undo: [], redo: [], stroke: null};
+ const s = {layers, codes: layers.codes, trees: trees.map(t => ({...t})), homes: homes.map(h => ({...h})), rocks: rocks.map(q => [...q]), undo: [], redo: [], stroke: null};
  const idx = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i < 0 || j < 0 || i >= nx || j >= nz ? -1 : j * nx + i; };
  // Every change goes through `put`, which remembers each layer cell's first
  // value in the current step (so a whole drag undoes at once) and the box the
@@ -48,8 +50,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
  };
  const keepTrees = () => { if (!s.stroke.trees) s.stroke.trees = s.trees.map(t => ({...t})); };
  const keepHomes = () => { if (!s.stroke.homes) s.stroke.homes = s.homes.map(h => ({...h})); };
+ const keepRocks = () => { if (!s.stroke.rocks) s.stroke.rocks = s.rocks.map(q => [...q]); };
  const settle = () => { const bx = s.stroke?.box; if (bx && bx[1] >= 0) layers.recompose(bx[0], bx[1], bx[2], bx[3]); };
- const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees || s.stroke.homes)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
+ const end = () => { settle(); if (s.stroke && (s.stroke.cells.size || s.stroke.trees || s.stroke.homes || s.stroke.rocks)) { s.undo.push(s.stroke); s.redo.length = 0; } s.stroke = null; };
  const box = (x, z, r) => ({i0: Math.max(0, Math.floor((x - r + halfX) / cell)), i1: Math.min(nx - 1, Math.ceil((x + r + halfX) / cell)), j0: Math.max(0, Math.floor((z - r + halfZ) / cell)), j1: Math.min(nz - 1, Math.ceil((z + r + halfZ) / cell))});
  const layerOf = k => { if (k == null || k === 'rough') return null; if (CODE[k] == null || !LAYER_ORDER.includes(k)) throw Error(`No such surface: ${k}`); return k; };
  const facing = (x, z) => facingFrom(api.kindAt)(x, z);
@@ -133,6 +136,23 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
      const here = api.kindAt(px, pz); if (!here || !OPEN.has(here)) continue;
      s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])});
     } });
+  },
+  // GROUND COVER, as in the 3D editor (cover.js, editing.js paintCover; the
+  // owner, 4 November 2026: "Add the ground cover brush to the 2d editor"): one
+  // dab scattered on open ground. A plant is a tree kept where it stands, of
+  // the shrub role with its species; a rock is a rock. Returns how many.
+  paintCover({cover, x, z, radius, min, max, density, rng = Math.random}) {
+   const got = scatterCover({cover, x, z, radius, min, max, density, rng, open: (px, pz) => { const k = api.kindAt(px, pz); return !!k && !COVER_REFUSED.has(k); }, taken: (px, pz, reach) => coverAt(s, px, pz, reach)});
+   if (got.length) step(() => {
+    keepTrees(); keepRocks();
+    for (const p of got) { if (p.rock) s.rocks.push(p.rock); else s.trees.push({x: p.x, z: p.z, h: p.size, crown: p.size * .6, trunk: .05, role: SHRUB, kept: true, kind: p.species}); }
+   });
+   return got.length;
+  },
+  // Rocks, and plants sized as ground cover, off under the brush; not trees.
+  clearCover({x, z, radius}) {
+   const near = q => Math.hypot(q.x - x, q.z - z) <= radius;
+   step(() => { keepTrees(); keepRocks(); s.rocks = s.rocks.filter(q => Math.hypot(q[0] - x, q[1] - z) > radius); s.trees = s.trees.filter(t => !((t.role & 7) === SHRUB && near(t))); });
   },
   // OUTSIDE THE COURSE (the owner, 1 November 2026: "course boundary.
   // Outside of this we will fill with forest/etc, then fade into the
@@ -251,10 +271,11 @@ export function createTrace(grid, {codes = null, trees = [], homes = []} = {}) {
  // Undo and redo are one act: a step's remembered values swapped with the present.
  function swapStep(from, to) {
   const st = from.pop(); if (!st) return false;
-  const back = {cells: new Map(), trees: st.trees ? s.trees : null, homes: st.homes ? s.homes : null, box: st.box};
+  const back = {cells: new Map(), trees: st.trees ? s.trees : null, homes: st.homes ? s.homes : null, rocks: st.rocks ? s.rocks : null, box: st.box};
   for (const [key, v] of st.cells) { const L = LAYER_ORDER[key % 32], k = Math.floor(key / 32), m = layers.mask(L, true); back.cells.set(key, m[k]); m[k] = v; }
   if (st.trees) s.trees = st.trees;
   if (st.homes) s.homes = st.homes;
+  if (st.rocks) s.rocks = st.rocks;
   if (st.box[1] >= 0) layers.recompose(st.box[0], st.box[1], st.box[2], st.box[3]);
   to.push(back); return true;
  }
@@ -292,6 +313,7 @@ export function facingFrom(kindAt) {
 }
 // Where a tree may stand: rough and the wild ground types, not mown turf,
 // sand, water or path.
+const SHRUB = TREE_ROLES.indexOf('shrub');
 const OPEN = new Set(PALETTE.filter(k => !['fairway', 'tee', 'green', 'sand', 'water', 'path'].includes(k)));
 const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 

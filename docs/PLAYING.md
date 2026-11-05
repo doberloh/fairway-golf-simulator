@@ -617,6 +617,10 @@ the file to anyone else who has Fairway. It opens on three doors.
      places one (its height set below), **Tree zone** scatters trees through
      an outline at the density set below (never on fairway, greens, tees,
      sand, water or path), **Clear trees** takes them away under the brush,
+     **Ground cover** paints the landscape's rocks, mixed bushes or flowers on
+     open ground, with what it lays, its smallest and largest sizes and how
+     thick it lies set in the panel, and **Clear cover** takes them off, as in
+     the 3D editor,
      **House** stands a house where clicked facing the nearest fairway, green
      or tee, **House zone** lines an outline with houses 42 m apart (each on
      open ground), **Clear houses** takes them away under the brush,
@@ -737,7 +741,9 @@ it takes a yellow outline, with four anchors at the corners of a shape or a
 house; then drag inside the outline to move it, or drag an anchor to turn it.
 It follows the pointer as you drag, with what lay under it showing; Undo puts
 it back, and Escape lets go of the selection. A pond takes its water with it
-and digs itself in where it lands. **Ground cover** paints the landscape's own
+and digs itself in where it lands. **Fill to surrounding**, under Shape the ground, brushes a hole back up to the
+ground round it, following a slope and never lowering anything: use a brush
+wider than the hole. **Ground cover** paints the landscape's own
 **Rocks**, **Mixed bushes** and, where it has them, **Flowers** on open ground
 (never on turf, sand, water, paths or roads): **Smallest** and **Largest** set
 the sizes it lays, Brush Size how wide, and Strength how thick; a rock stops a

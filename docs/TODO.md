@@ -122,7 +122,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     and in autumn. Its cards were autumn because the default was: the retake
     wants `--season autumn` for New England or they turn green, and
     tools/capture's `autumn-*` shots (gallery, clips) need the same.
-  - **Not done:** a cover brush in door 2's 2D trace; `npm test` whole, smoke,
+  - **Ground cover in the 2D editor** and **Fill to surrounding** in the 3D one:
+    built the same way, not seen.
+  - **Not done:** `npm test` whole, smoke,
     the round matrix and the fingerprint were not run (no file the generator
     reads changed).
 

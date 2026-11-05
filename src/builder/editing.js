@@ -27,7 +27,7 @@ import {TREE_STRIDE, TREE_ROLES, CREEK_FIELDS} from '../course-doc.js';
 import {clearTrees} from './tree-clear.js';
 import {skinFromHeights, SKIN} from './skin.js';
 import {digBed, levelFrom, shoreOf, BED} from './water-bed.js';
-import {scatterCover, coverAt} from './cover.js';
+import {scatterCover, coverAt, COVER_REFUSED} from './cover.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
@@ -36,8 +36,8 @@ export const CODE = Object.fromEntries(PAINT.map((k, i) => [k, i]));
 export const RASTER = {cell: .5, maxSide: 4096};
 // A brush's weight at a share `t` of its radius: 1 at the centre, 0 at the edge.
 export const falloff = t => t >= 1 ? 0 : 1 - t * t * (3 - 2 * t);
-// Ground cover stands on open ground only, as a tree does (door 2's rule).
-const COVER_REFUSED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'road', 'semi']);
+// How many points round a Fill to surrounding brush's edge it reads (PLACED).
+const FILL_RIM = 48;
 const TREE_ROLE_SHRUB = TREE_ROLES.indexOf('shrub');
 
 function rasterSize(ex, ez) {
@@ -183,7 +183,8 @@ export function createEditor(doc) {
 
   // ---- the ground. `op`: raise, lower, smooth, flatten (to `level`),
   // roughen, restore (to the land it started as), ramp (from `a` to `b`, a
-  // straight grade between their heights, `radius` either side). `strength`
+  // straight grade between their heights, `radius` either side), fill (a hole
+  // raised to the ground round it: below). `strength`
   // 0-1: metres a stroke for raise and lower at the centre (times 0.5),
   // the share moved toward the target for the rest. Returns the box changed.
   // `group` lets a drag be one undo: pass the same object for every dab.
@@ -194,6 +195,21 @@ export function createEditor(doc) {
    else extendLand(group.step, box);
    noteEdit(box);
    const target = op === 'flatten' ? (level ?? sample(x, z)) : null;
+   // FILL TO SURROUNDING (the owner, 4 November 2026: "this brush will raise
+   // ground to the surrounding level smoothly"). The ground the brush's edge
+   // stands on, all the way round, is the level wanted: across the disc the
+   // target runs from each point of the rim in to the rim's average, so on a
+   // hillside the fill follows the hill rather than lying flat. It only ever
+   // raises, so a brush bigger than the hole fills the hole and leaves what
+   // stands above it. It meets the edge exactly, so nothing shows where it
+   // stopped. Holds no shape of its own: drag it and each dab reads the ground
+   // the last one left. Weighted full over the inner three quarters (PLACED):
+   // the plain brush's falloff filled a pit's middle and left its sides.
+   let rim = null, rimMean = 0;
+   if (op === 'fill') {
+    rim = Array.from({length: FILL_RIM}, (_, k) => sample(x + Math.cos(k / FILL_RIM * Math.PI * 2) * radius, z + Math.sin(k / FILL_RIM * Math.PI * 2) * radius));
+    rimMean = rim.reduce((a, v) => a + v, 0) / FILL_RIM;
+   }
    for (const [g, i0, i1, j0, j1] of gridsIn(...box)) {
     const cz = g.cellZ ?? g.cell, h = g.heights, orig = g === land ? original.land : original.patches[patches.indexOf(g)];
     const old = op === 'smooth' ? Float32Array.from(h) : null;
@@ -204,12 +220,18 @@ export function createEditor(doc) {
       const dx = b.x - a.x, dz = b.z - a.z, len2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / len2));
       w = falloff(Math.hypot(px - a.x - dx * u, pz - a.z - dz * u) / radius) * strength;
       t = a.y + (b.y - a.y) * u;
+     } else if (op === 'fill') {
+      const d = Math.hypot(px - x, pz - z) / radius; if (d >= 1) continue;
+      const u = ((Math.atan2(pz - z, px - x) / (Math.PI * 2) + 1) % 1) * FILL_RIM, n = Math.floor(u) % FILL_RIM, f = u - Math.floor(u);
+      t = rimMean + (rim[n] + (rim[(n + 1) % FILL_RIM] - rim[n]) * f - rimMean) * d;
+      if (t <= h[k]) continue;
+      const e = Math.min(1, (1 - d) / .25); w = e * e * (3 - 2 * e) * strength;
      } else w = falloff(Math.hypot(px - x, pz - z) / radius) * strength;
      if (w <= 0) continue;
      if (op === 'raise') h[k] += w * .5;
      else if (op === 'lower') h[k] -= w * .5;
      else if (op === 'flatten') h[k] += (target - h[k]) * w;
-     else if (op === 'ramp') h[k] += (t - h[k]) * w;
+     else if (op === 'ramp' || op === 'fill') h[k] += (t - h[k]) * w;
      else if (op === 'restore') h[k] += (orig[k] - h[k]) * w;
      else if (op === 'roughen') h[k] += Math.sin(px * 1.7 + pz * .3) * Math.cos(pz * 1.3 - px * .5) * .25 * w;
      else if (op === 'smooth' && i > 0 && j > 0 && i < g.nx - 1 && j < g.nz - 1) h[k] += ((old[k - 1] + old[k + 1] + old[k - g.nx] + old[k + g.nx]) / 4 - old[k]) * w;

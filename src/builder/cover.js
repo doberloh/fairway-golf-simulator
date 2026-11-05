@@ -17,6 +17,8 @@ export const FLOWER_PLANTS = new Set(['columbine', 'lupine', 'prairieforbs', 'do
 // sized (species.js SPREAD_SIZED). `from` is where the sliders start. PLACED.
 export const COVER_RANGE = {rocks: {low: .2, high: 6, from: [.4, 1.6]}, bushes: {low: .2, high: 5, from: [.6, 1.6]}, flowers: {low: .1, high: 2, from: [.3, .8]}};
 export const ROCK_SHAPES = 4;
+// Cover stands on open ground only, in both editors, as a tree does.
+export const COVER_REFUSED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'road', 'semi']);
 
 function lowPlants(bio) {
  const weights = new Map();
@@ -52,6 +54,7 @@ export function scatterCover({cover, x, z, radius, min, max, density = .5, rng =
 // Does a rock, or a plant's stem, stand within `reach` of a point?
 export function coverAt({rocks, trees}, x, z, reach) {
  for (const q of rocks) { const d = reach + q[2] / 2, dx = q[0] - x; if (dx > d || dx < -d) continue; if (Math.hypot(dx, q[1] - z) < d) return true; }
- for (const t of trees) { const d = reach + .5, dx = t[0] - x; if (dx > d || dx < -d) continue; if (Math.hypot(dx, t[1] - z) < d) return true; }
+ // The 3D editor's trees are arrays and door 2's are records.
+ for (const t of trees) { const d = reach + .5, dx = (t.x ?? t[0]) - x; if (dx > d || dx < -d) continue; if (Math.hypot(dx, (t.z ?? t[1]) - z) < d) return true; }
  return false;
 }

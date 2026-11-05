@@ -23,7 +23,7 @@ export let current = null;   // {editor, view} while the editor is open (tests a
 let opened = 0;               // each course opened is its own piece of work for Save
 
 // The tools: what a click or a drag on the ground does.
-const SHAPES = [['raise', 'Raise'], ['lower', 'Lower'], ['smooth', 'Smooth'], ['flatten', 'Flatten'], ['ramp', 'Ramp'], ['roughen', 'Roughen'], ['restore', 'Restore']];
+const SHAPES = [['raise', 'Raise'], ['lower', 'Lower'], ['smooth', 'Smooth'], ['flatten', 'Flatten'], ['ramp', 'Ramp'], ['roughen', 'Roughen'], ['restore', 'Restore'], ['fill', 'Fill to surrounding']];
 const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 
 // `back`: door 2's way back to its own steps (the owner, 1 November 2026:
@@ -68,7 +68,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  const toolKey = t => [t.kind, t.op || t.surface || t.set || t.cover || ''].join(':');
  const HINT = {
   navigate: () => 'Left-drag moves, right-drag turns, the wheel zooms.',
-  shape: t => t.op === 'ramp' ? 'Click the low end, then the high end: the ground between is graded.' : `${t.op[0].toUpperCase() + t.op.slice(1)}: drag over the ground. Size and strength on the left.`,
+  shape: t => t.op === 'ramp' ? 'Click the low end, then the high end: the ground between is graded.' : t.op === 'fill' ? 'Fill to surrounding: brush over a hole, wider than it, and it rises smoothly to the ground round it. It never lowers anything.' : `${t.op[0].toUpperCase() + t.op.slice(1)}: drag over the ground. Size and strength on the left.`,
   paint: t => `Paint ${label(t.surface)}: drag over the ground. It goes on the ${label(t.surface).toLowerCase()} layer and covers nothing beneath it.`,
   erase: t => `Erase the ${label(t.surface).toLowerCase()} layer: drag over the ground; what lies under it shows.`,
   outline: t => `Outline ${label(t.surface)}: click its corners, double-click or press Enter to fill it.`,

@@ -1309,8 +1309,12 @@ working**; the model is tested in Node, the page has not been opened.
   over the ground without depth, and the real edge arrives on letting go. A
   tree and a rock move their one instance, a house its small list.
 - **A pond carried** moves its water body and digs itself in where it lands;
-  the pit it left stays, for the player to fill with Raise (not worth undoing
-  a survey's ground by guess).
+  the pit it left stays, for the player to fill with **Fill to surrounding**.
+- **Fill to surrounding** (editing.js `shape`, op `fill`): reads 48 points round
+  the brush's edge; the target runs from each in to their average, so it follows
+  a slope, and it only raises. 3D editor only: the 2D plan has no ground tools.
+  Rejected: a plane through the rim (a bowl on a saddle does not fit one), and
+  the plain brush falloff (filled the middle, left the sides).
 - **Water** (water-bed.js, used by the editor and door 2): see RESEARCH *A
   pond's bed*. Every Save digs every body, so a saved course comes right when
   opened and saved again. **`BUILT_VERSION` stays 3**: it is the file's land
@@ -1319,8 +1323,9 @@ working**; the model is tested in Node, the page has not been opened.
   file; an older game drops them and an older file has none, so neither needs
   a version. Bushes and flowers are stored trees of the shrub role with their
   species in `treeKinds`: nothing new for the game. Both go through Back to
-  2D and drafts. Only in the 3D editor for now; door 2's trace has no cover
-  brush. The editor draws rocks as grey stones and low plants as mounds;
+  2D and drafts. In both editors since the same day (trace-edit.js `paintCover`,
+  the rules shared in cover.js); 2D draws rocks as grey discs and plants as the
+  small crowns trees have. The editor draws rocks as grey stones and low plants as mounds;
   the game draws the models.
 - **The preview** (preview.js, preview-items.js): the game's models in a small
   panel, one still picture, drawn when it changes or is dragged. **This puts
