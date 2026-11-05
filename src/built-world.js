@@ -32,7 +32,7 @@ import {placeHole} from './routing.js';
 import {DEFAULT_COURSE} from './settings-schema.js';
 import {TREE_STRIDE, TREE_ROLES, CREEK_FIELDS} from './course-doc.js';
 import {streamIndex} from './streams.js';
-import {GROUND_PLANTS} from './species.js';
+import {GROUND_PLANTS, tallHeight} from './species.js';
 import {GROUND_KINDS} from './grounds.js';
 import {TEE_COLORS, rng} from './course-plan.js';
 import {choosePin} from './course.js';
@@ -298,26 +298,76 @@ export function rockFrom([x, z, size, shape, turn], y) {
  const scale = size * .32, sx = size / 2, sy = size * .3, sz = size * .4, top = y + scale * .25 + sy;
  return {x, z, y, scale, shape, rot: [.5, turn, .5], sx, sy, sz, top, reach: Math.max(sx, sz)};
 }
-// Which of the landscape's species draws a stored tree: by its role, and by
-// its height among the kinds that fit, hashed from where it stands so the
-// same file always draws the same wood. Drawing only: a tree's trunk and
-// crown are stored and play the same in every landscape.
+// Which of the landscape's species draws a stored tree: by its role, in the
+// shares the landscape plants them, hashed from where it stands so the same
+// file always draws the same wood. Drawing only: a tree's trunk and crown are
+// stored and play the same in every landscape.
+//
+// A SURVEY SEES A SHAPE, NOT A SPECIES (the owner, 5 November 2026, of TPC
+// Summerlin on Desert Palms: "There isn't a single palm tree in here"). A
+// LIDAR tree's role is only conifer when narrow for its height and broadleaf
+// otherwise (real-course.js `docFromLand`), and those two lists used to leave
+// palms out, so no surveyed tree could ever draw as one: its 19,016 trees came
+// out a third each smoke tree, desert willow and tamarisk, and 228 Aleppo
+// pines. Nor does a wide reading mean a broadleaf: Sahalee, a fir forest, reads
+// 25% narrow and Bully Pulpit 1.6% on a landscape 75% conifer. So only a narrow
+// reading tells a pine from an oak at all, and a survey tree stored as narrow is
+// not treated as one (`drawnSpecies`). 'broadleaf' takes anything tall the
+// landscape grows, 'conifer' a conifer or a palm and 'palm' a palm: those two
+// are for a tree picked by name and moved to a landscape that lacks its species,
+// where the role is true. And the pick follows the landscape's shares rather
+// than giving each species an even turn, so a wood is planted in the mix the
+// landscape's generated courses have.
+//
+// WHAT A SURVEY DOES MEASURE IS HEIGHT, and a model is scaled to a tree's height
+// with its own proportions kept, so a smoke tree standing 15 m is a bush the size
+// of a house (`fitsHeight`; RESEARCH, *A survey sees a shape, not a species*).
 export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'rmjuniper', 'aleppopine', 'afghanpine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);
 export const PALMS = new Set(['palm', 'hala', 'royalpalm', 'travelerspalm', 'cabbagepalm', 'fanpalm', 'datepalm']);
-export function speciesFor(bio, role, h, x, z) {
- const kinds = bio.plants.map(p => p[0]);
- const tall = kinds.filter(k => !GROUND_PLANTS.has(k));
- const small = kinds.filter(k => GROUND_PLANTS.has(k) && !FLOWERS.has(k));
- const pick = list => list[Math.abs(Math.floor(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453)) % list.length];
- if (role === 'shrub') return small.length ? pick(small) : 'shrub';
- const want = role === 'conifer' ? tall.filter(k => CONIFERS.has(k)) : role === 'palm' ? tall.filter(k => PALMS.has(k))
-  : role === 'broadleaf' ? tall.filter(k => !CONIFERS.has(k) && !PALMS.has(k)) : tall;
- const list = want.length ? want : tall.length ? tall : ['oak'];
- return pick(list);
+// The species in `list` a tree of height `h` can be: none it would tower over by
+// more than a quarter of the species' tallest, and none under half its shortest
+// (PLACED, both). The two ends differ on purpose. A tree too tall for its model
+// is the wrong that shows (the generator's own stands reach a fifth over the
+// listed top), and a young tree of any species is a real thing, as the
+// generator's own 5.5 m saplings are:
+// holding the low end to a quarter too let whichever species had the lowest
+// floor take the wood, blue spruce going from 6% to 48% of Breckenridge. A tree
+// short for all of them is any of them, in their shares; one too tall for all of
+// them is the tallest.
+const TALLER_THAN_TOP = 1.25, SHORTER_THAN_LOW = .5;
+function fitsHeight(bio, list, h) {
+ const low = p => tallHeight(bio, p[0], 0, p[2] ?? 1), top = p => tallHeight(bio, p[0], 1, p[2] ?? 1);
+ const roomy = list.filter(p => h <= top(p) * TALLER_THAN_TOP);
+ if (!roomy.length) { const tallest = Math.max(...list.map(top)); return list.filter(p => top(p) === tallest); }
+ const fit = roomy.filter(p => h >= low(p) * SHORTER_THAN_LOW);
+ return fit.length ? fit : roomy;
 }
+export function speciesFor(bio, role, h, x, z) {
+ const tall = bio.plants.filter(p => !GROUND_PLANTS.has(p[0]));
+ const small = bio.plants.filter(p => GROUND_PLANTS.has(p[0]) && !FLOWERS.has(p[0]));
+ const u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+ const pick = list => {
+  let at = u * list.reduce((sum, p) => sum + p[1], 0);
+  for (const p of list) if ((at -= p[1]) < 0) return p[0];
+  return list[list.length - 1][0];
+ };
+ if (role === 'shrub') return small.length ? pick(small) : 'shrub';
+ const want = role === 'conifer' ? tall.filter(p => CONIFERS.has(p[0]) || PALMS.has(p[0])) : role === 'palm' ? tall.filter(p => PALMS.has(p[0])) : tall;
+ const list = want.length ? want : tall.length ? tall : [['oak', 1]];
+ return pick(fitsHeight(bio, list, h));
+}
+// The species a stored tree draws as, the game's and the 3D editor's one
+// answer: the stored species while the course wears the landscape it was grown
+// in (a stand's understory, bracken, is not in the landscape's plant list but
+// is its own), or wherever this landscape grows that species too, in its plant
+// list or its stands (a tree picked by name, builder/cover.js); else by role,
+// where a tree with no species of its own stored as a conifer is a survey's
+// narrow reading, which says nothing (above), so it is any tall tree.
+export const drawnSpecies = (bio, stored, sameLandscape, role, h, x, z) =>
+ stored && (sameLandscape || bio.plants.some(p => p[0] === stored) || bio.stands?.plants?.some(p => p[0] === stored)) ? stored : speciesFor(bio, role === 'conifer' && !stored ? 'tree' : role, h, x, z);
 
 // ---------------------------------------------------------------- the holes
 const lerpLine = (pts, z) => {
@@ -477,11 +527,7 @@ export function worldFromDoc(doc, settings = {}) {
  for (let k = 0; k < doc.trees.length; k += TREE_STRIDE) {
   const [x, z, th, crown, trunk, role, ki] = doc.trees.subarray(k, k + TREE_STRIDE);
   const stored = doc.treeKinds?.[ki], r = TREE_ROLES[role & 7] || 'tree';
-  // The stored species while the course wears the landscape it was grown in
-  // (a stand's understory, bracken, is not in the landscape's plant list but
-  // is its own), or wherever this landscape grows that species too, in its
-  // plant list or its stands (a tree picked by name, builder/cover.js).
-  const kind = stored && (sameLandscape || bio.plants.some(p => p[0] === stored) || bio.stands?.plants?.some(p => p[0] === stored)) ? stored : speciesFor(bio, r, th, x, z);
+  const kind = drawnSpecies(bio, stored, sameLandscape, r, th, x, z);
   trees.push({x, z, y: height(x, z), h: th, r: crown, radius: trunk, shade: (Math.sin(x * 3.1 + z * 7.7) * .5 + .5), kind, hole: nearest(x, z).h.hole, built: true,
    ...(role & 8 ? {stand: true} : {}), ...(role & 16 ? {under: true} : {})});
  }

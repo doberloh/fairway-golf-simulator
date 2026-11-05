@@ -58,7 +58,7 @@ Everything that turns a seed into ground. `course.js` is the centre of it; the r
 | src/routing.js | Candidate hole placement, corridor collision checks and world/local transforms |
 | src/footprints.js | Fourteen footprint names, curves and SVG preview icons |
 | src/biomes.js | EVERY BIOME IS ONE RECORD -- palette, light, landform, plant mix, rock and grass density. It was seven tables and forty-eight conditionals across eight files; adding a landscape now means adding a record |
-| src/species.js | What a plant species IS, independently of which biome grows it. Two named sets rather than two similar array literals in two files: tall enough to size like a tree, and solid enough to stop a ball, are different questions |
+| src/species.js | What a plant species IS, independently of which biome grows it, its height included (`TREE_SIZE`, `tallHeight`: the generator's and a surveyed tree's one answer). Two named sets rather than two similar array literals in two files: tall enough to size like a tree, and solid enough to stop a ball, are different questions |
 | src/course-names.js | Seeded course names, so the box is already filled when somebody wants to play. NO WORD HERE MAY NAME A REAL GOLF DESTINATION -- see the denylist test |
 | src/terrain-grid.js | Adaptive connected terrain mesh and matching contact interpolation |
 | src/landscape-edge.js | Distant terrain joined to the detailed ground perimeter. On a biome with a sea along one edge the rings' hills fade out toward the coast, so the sea has no far shore |

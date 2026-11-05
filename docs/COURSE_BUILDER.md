@@ -69,7 +69,7 @@ seed.** One reader returns a *course document* for either:
 | `course.json` | name, landscape, the designer it came from, extent, every surface as outlines (green, fairway, tee, sand, semi, path, native, waste; a polygon is rings, the first outer), water (outline, level, kind), holes (number, par, stroke index, tee sets, green, the line with its bends), credits, source notes, where it came from (seed and settings, or null), picture, `builtVersion` | Coordinates in world metres, rounded to the centimetre |
 | `land.bin` | the land's height grid | Heights to the centimetre (PLACED) as 16-bit steps above the lowest point, each row differenced so the deflate finds the runs; a relief over 655 m takes a coarser step |
 | `patches.bin` | finer grids on greens and tees | Same encoding |
-| `trees.bin` | every tree a ball can hit: x, z, height, crown, trunk, role | 24 bytes a tree. The landscape picks the species drawn; the sizes are stored, so a tree plays the same in every landscape |
+| `trees.bin` | every tree a ball can hit: x, z, height, crown, trunk, role | 24 bytes a tree. The landscape picks the species drawn, in its planting shares among those of the tree's height; the sizes are stored, so a tree plays the same in every landscape |
 
 **Limits a file is checked against** (PLACED; `LIMITS` in course-doc.js): 16
 million land samples (a 3 x 3 km property at 1 m is 9 million), 4 million in
@@ -554,9 +554,11 @@ After trying the builder, the owner amended the goal:
       landscape picked, the tools change.
     - "the 3d editor needs to look like the biome you are editing as well.
       Everything looks like just pine trees right now" -- the editor's sky
-      and its trees are the landscape's: a shape for its tree kind
-      (`treeKind`) in its tree colour, each tree its own shade, on a trunk
-      (view.js). Stand-ins still: the game draws the real models.
+      and its trees are the landscape's: a shape for the species the game
+      draws at that tree (`drawnSpecies`, tree-shape.js; until 5 November
+      2026 one shape for the whole landscape, its `treeKind`, so Desert
+      Palms showed no palm) in its tree colour, each tree its own shade, on a
+      trunk (view.js). Stand-ins still: the game draws the real models.
     - "add a button to go back to the 2d editor from the 3d editor" --
       **Back to 2D**, when the course came from door 2: door 2 shown again
       as it was left, at the review. First decided that what was changed in
@@ -881,8 +883,10 @@ the builder has been played by a person (TODO lists what to check).
   its centre line the stored line, widths measured off the fairway field,
   greens answered exactly from their outline (`greenDistance` asks a built
   hole). Trees with stored trunks and crowns, drawn as their stored species
-  while the course wears the landscape it came from, else by role
-  (`speciesFor`). Creeks and rivers as the generator's own stations through
+  while the course wears the landscape it came from, else by role, in the
+  landscape's planting shares among the species of the tree's height
+  (`speciesFor`; a survey's narrow or wide reading says nothing of the species,
+  and is ignored: RESEARCH, *A survey sees a shape, not a species*). Creeks and rivers as the generator's own stations through
   the same channel lookup (`streamIndex`, extracted from `generateStreams`
   unchanged -- both fingerprints silent).
 - **`src/freeze.js`** -- `freezeWorld`: door 1's *Take it over*. Shapes traced

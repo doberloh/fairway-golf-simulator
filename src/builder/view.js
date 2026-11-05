@@ -9,6 +9,9 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {biomeOf} from '../biomes.js';
+import {drawnSpecies} from '../built-world.js';
+import {TREE_ROLES} from '../course-doc.js';
+import {standIn} from './tree-shape.js';
 import {GROUNDS} from '../grounds.js';
 import {PAINT} from './editing.js';
 import {TEE_COLORS} from '../course-plan.js';
@@ -252,20 +255,22 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // THE TREES AS THE LANDSCAPE GROWS THEM (the owner, 1 November 2026: "the
  // 3d editor needs to look like the biome you are editing as well.
  // Everything looks like just pine trees right now"): a stand-in shape for
- // the landscape's tree (biomes.js `treeKind`) in its own colour, varied
- // tree by tree, on a trunk -- conifers as cones (the Pacific Northwest's
- // pines, the mountains' narrower spruces, the redwoods' on red trunks), a
- // round crown on the oak landscapes,
- // a palm's flat head on a tall trunk, the desert's
- // low spreading mesquite, a links' squat shrub. The game draws the real
- // models; these say what grows where. Heights times the editor's tree scale.
+ // the species the game draws at that tree (built-world.js `drawnSpecies`,
+ // tree-shape.js) in the landscape's colour, varied tree by tree, on a trunk
+ // -- conifers as cones (the Pacific Northwest's pines, the mountains'
+ // narrower spruces, the redwoods' on red trunks), a round crown on the oak
+ // landscapes, a palm's flat head on a tall trunk, the desert's low spreading
+ // mesquite, a links' squat shrub. The game draws the real models; these say
+ // what grows where. Heights times the editor's tree scale.
  const cone = new T.ConeGeometry(1, 1, 8); cone.translate(0, .5, 0);
  const ball = new T.IcosahedronGeometry(1, 1); ball.translate(0, 1, 0); ball.scale(1, .5, 1);
  const stem = new T.CylinderGeometry(.7, 1, 1, 6); stem.translate(0, .5, 0);
  // [crown geometry, where the crown starts (a share of the height), its
  // width (a share of the crown), its height cap (a share of the crown's
- // width; 0: none)].
- const SHAPE = {pine: [cone, .2, 1, 0], spruce: [cone, .12, .75, 0], oak: [ball, .32, 1, 0], palm: [ball, .86, 1, .45], cactus: [ball, .3, 1.1, .9], shrub: [ball, 0, 1, 1.1]};
+ // width; 0: none), the widest its crown may be (a share of the height; 0:
+ // none: the game sizes a palm or a conifer by its height, so a survey's wide
+ // crown would stand a parasol here that the game never draws)].
+ const SHAPE = {pine: [cone, .2, 1, 0, .25], spruce: [cone, .12, .75, 0, .2], oak: [ball, .32, 1, 0, 0], palm: [ball, .86, 1, .45, .25], cactus: [ball, .3, 1.1, .9, 0], shrub: [ball, 0, 1, 1.1, 0]};
  // Bushes (a stored tree of the shrub role, painted as ground cover or a
  // stand's understory) are a low green mound, not a small tree. `treeSlot`
  // finds a stored tree's instance, so one carried is moved on its own and not
@@ -276,40 +281,54 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  const bushGreen = new T.Color('#7a9a52');
  function placeTree(i) {
   const at = treeSlot[i]; if (at == null || !treeMeshes) return;
-  const {mesh, trunks, bushes, base, wide, cap} = treeMeshes, f = s.treeScale ?? 1, m = new T.Matrix4(), q = new T.Quaternion();
+  const {stands, bushes} = treeMeshes, f = s.treeScale ?? 1, m = new T.Matrix4(), q = new T.Quaternion();
   const [x, z, h0, cr0, trunk] = s.trees[i], y = editor.height(x, z);
-  if (at < 0) {
-   m.compose(new T.Vector3(x, y, z), q, new T.Vector3(Math.max(.25, cr0 * f), Math.max(.2, h0 * f), Math.max(.25, cr0 * f))); bushes.setMatrixAt(~at, m); bushes.instanceMatrix.needsUpdate = true; return;
+  if (!at.shape) {
+   m.compose(new T.Vector3(x, y, z), q, new T.Vector3(Math.max(.25, cr0 * f), Math.max(.2, h0 * f), Math.max(.25, cr0 * f))); bushes.setMatrixAt(at.n, m); bushes.instanceMatrix.needsUpdate = true; return;
   }
+  const {mesh, trunks, base, wide, cap, most} = stands[at.shape];
   // The whole tree at the scale -- height, crown and trunk -- as toDoc saves it.
-  const h = Math.max(.8, h0 * f), cr = Math.max(.6, cr0 * f) * wide;
+  const h = Math.max(.8, h0 * f), cr = Math.min(Math.max(.6, cr0 * f) * wide, most ? h * most : Infinity);
   const crownH = Math.max(.6, cap ? Math.min(h * (1 - base), cr * 2 * cap) : h * (1 - base)), y0 = y + h * base;
-  m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(at, m);
+  m.compose(new T.Vector3(x, y0, z), q, new T.Vector3(cr, crownH, cr)); mesh.setMatrixAt(at.n, m);
   const tr = Math.max(.12, (trunk ? trunk * f : h * .02) * (s.landscape === 'redwood' ? 1.6 : 1));
-  m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(at, m);
+  m.compose(new T.Vector3(x, y, z), q, new T.Vector3(tr, Math.max(.3, y0 - y + crownH * .3), tr)); trunks.setMatrixAt(at.n, m);
   mesh.instanceMatrix.needsUpdate = true; trunks.instanceMatrix.needsUpdate = true;
  }
  function refreshTrees() {
   clear(layers.trees); treeSlot.length = 0; treeMeshes = null;
   if (!s.trees.length) return;
-  const bio = biomeOf(s.landscape), kind = SHAPE[bio.treeKind] ? bio.treeKind : 'oak', [geo, base, wide, cap] = SHAPE[kind];
-  const total = Math.min(s.trees.length, 120000); let n = 0, nLow = 0;
-  for (let i = 0; i < total; i++) treeSlot[i] = low(s.trees[i]) ? ~nLow++ : n++;
-  const mesh = new T.InstancedMesh(geo, new T.MeshLambertMaterial({color: '#ffffff'}), n), trunks = new T.InstancedMesh(stem, new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : '#5b4634'}), n), bushes = new T.InstancedMesh(ball, new T.MeshLambertMaterial({color: '#ffffff'}), nLow);
-  treeMeshes = {mesh, trunks, bushes, base, wide, cap};
+  // Each tree its shape, the same species the game will draw there.
+  const bio = biomeOf(s.landscape), same = s.doc?.from?.settings?.biome === s.landscape, counts = {};
+  const total = Math.min(s.trees.length, 120000); let nLow = 0;
+  for (let i = 0; i < total; i++) {
+   const t = s.trees[i];
+   if (low(t)) { treeSlot[i] = {n: nLow++}; continue; }
+   const shape = standIn(bio, drawnSpecies(bio, s.treeKinds?.[t[6]], same, TREE_ROLES[t[5] & 7] || 'tree', t[2], t[0], t[1]));
+   counts[shape] = (counts[shape] ?? 0) + 1;
+   treeSlot[i] = {shape, n: counts[shape] - 1};
+  }
+  const stands = {}, leaf = new T.MeshLambertMaterial({color: '#ffffff'}), bark = new T.MeshLambertMaterial({color: s.landscape === 'redwood' ? '#7a3b26' : '#5b4634'});
+  for (const [name, n] of Object.entries(counts)) { const [geo, base, wide, cap, most] = SHAPE[name]; stands[name] = {mesh: new T.InstancedMesh(geo, leaf, n), trunks: new T.InstancedMesh(stem, bark, n), base, wide, cap, most}; }
+  const bushes = new T.InstancedMesh(ball, new T.MeshLambertMaterial({color: '#ffffff'}), nLow);
+  treeMeshes = {stands, bushes};
   const own = new T.Color(bio.tree || '#3f7d36'), col = new T.Color(), hsl = {};
   for (let i = 0; i < total; i++) {
    placeTree(i);
    // Each its own shade: a hash of where it stands.
-   const [x, z] = s.trees[i], u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
-   if (treeSlot[i] < 0) { col.copy(bushGreen).multiplyScalar(.8 + u * .4); bushes.setColorAt(~treeSlot[i], col); continue; }
+   const [x, z] = s.trees[i], u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1, at = treeSlot[i];
+   if (!at.shape) { col.copy(bushGreen).multiplyScalar(.8 + u * .4); bushes.setColorAt(at.n, col); continue; }
    own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3))));
-   mesh.setColorAt(treeSlot[i], col);
+   stands[at.shape].mesh.setColorAt(at.n, col);
   }
-  for (const g of [mesh, trunks, bushes]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
-  if (n) mesh.instanceColor.needsUpdate = true;
+  for (const {mesh, trunks} of Object.values(stands)) {
+   for (const g of [mesh, trunks]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
+   mesh.instanceColor.needsUpdate = true;
+   layers.trees.add(trunks, mesh);
+  }
+  bushes.instanceMatrix.needsUpdate = true; bushes.computeBoundingSphere();
   if (nLow) bushes.instanceColor.needsUpdate = true;
-  layers.trees.add(trunks, mesh, bushes);
+  layers.trees.add(bushes);
  }
  // Rocks painted as ground cover: a grey stone in the landscape's own rock
  // colour; the game draws its model (vegetation.js).

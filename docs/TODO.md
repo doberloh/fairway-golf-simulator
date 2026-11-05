@@ -790,6 +790,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
+- [ ] **Northwood's redwoods** on the Redwood landscape: with surveyed trees
+  picked by height they fall to 17% from a 38% share, as its second growth is
+  mostly under 21 m and the landscape's redwood runs 42-116 m. The numbers are
+  right; whether a redwood course should look like that is the owner's call
+  (RESEARCH, *A survey sees a shape, not a species*). Summerlin in the editor and
+  Game view seen with no errors; no round played on it and the builder's smoke
+  journeys not run.
 - [ ] **A real course's holes run straight from back tee to green** until the
   player adds bends: door 2 does not yet draw a dogleg's bend from the traced
   fairway. Worthington's test round, 96 against par 71 (a generated Midwest
@@ -2419,6 +2426,13 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
+- [x] **Surveyed trees pick their species by height** (the owner, 5 November
+  2026). A survey's narrow or wide reading no longer steers the species, palms
+  can be picked, and the landscape's shares stand among the species of the tree's
+  height: too tall by a quarter is out, under half the shortest is out, and a
+  tree short for all of them stays in the shares. `TREE_SIZE` moved to species.js
+  with `tallHeight`, ground unchanged. Summerlin's trees too tall for their species
+  14.3% to none. RESEARCH, *A survey sees a shape, not a species*.
 - [x] **Stages 0-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
   page and file format, the game playing a built file, pins per round, door
   1, real-time shaping, the editor's tools, checks and a test round, the

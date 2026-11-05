@@ -16,7 +16,7 @@ import {markOverflow,surfaceField,isFieldSand} from './surface-field.js';
 import {siteClubhouse,inBuilding,inForecourt} from './clubhouse.js';
 import {softField,fieldMean} from './country.js';
 import {placeRoads,placeStreets,onRoad,streetFurniture,placeCartBarn,holesBox,ROAD_MARGIN} from './roads.js';
-import {GROUND_PLANTS,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
+import {GROUND_PLANTS,TREE_SIZE,tallHeight,crownFraction,crownRadius,COVER_STEEPEST} from './species.js';
 import {gapAt,coverRadius,FLOAT_TOLERANCE} from './seat-core.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
@@ -2555,24 +2555,6 @@ export function* generateWorldSteps(settings={},options={}){
   pampasgrass:[2.2,3.4],mountainlaurel:[3,5],bluebonnet:[0.3,0.45],mojaveyucca:[1.8,3.5],oleander:[2.5,4],sotol:[1,1.6],lechuguilla:[0.3,0.5],beavertail:[0.4,1],
   // The South's (the packs' reports, within their specs).
   sawpalmetto:[1,1.8],longleafgrass:[0.5,0.9],wiregrass:[0.3,0.6],cypressknees:[0.5,1],azalea:[1,1.6],yaupon:[3.5,5.5],spartina:[1.2,1.7],sawgrass:[1.6,2.6],muhlygrass:[0.75,1],waxmyrtle:[3,5]};
- // THE KEYS' TREES (the study's specs, PLACED within them): heights h0-h1 m
- // and crown radius r0-r1 m.
- const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mangrove:[4,7,3,4],gumbolimbo:[8,13,4,6],banyan:[14,20,10,15],
-  // The north's and Hawaii's (PLACED within their specs).
-  redpine:[20,28,4,6],jackpine:[10,16,3.5,5],tamarack:[12,18,3,4],blackspruce:[6,12,1,1.6],sitkaspruce:[30,45,6,8],shorepine:[8,12,3.5,5],monkeypod:[13,20,12,17],casuarina:[16,26,5,7],cookpine:[28,42,3,4.5],ohia:[7,12,3.5,5],plumeria:[4.5,7,2.5,3.5],
-  // Appalachia's and the Northeast parkland's (PLACED within their specs).
-  chestnutoak:[18,26,7,10],shortleafpine:[20,28,4,6],sassafras:[8,13,3,4.5],copperbeech:[18,26,9,12],pitchpine:[9,16,4,6],
-  // The high desert's and the plains' (PLACED within their specs).
-  // The Badlands' (Rocky Mountain juniper 4.6-6.1 m in open woodland; green ash
-  // 12-25 m, in a draw 8-15, crowns PLACED).
-  rmjuniper:[4.5,7,1.2,2.2],greenash:[8,15,4,6],
-  westernjuniper:[6,10,4,5.5],utahjuniper:[3.5,6,2.5,3.5],pinyonpine:[4,8,3,4.5],russianolive:[6,9,3.5,5],easternredcedar:[5,9,2,3],
-  // California's and the western mountains' (PLACED within their specs).
-  montereycypress:[10,20,5,9],montereypine:[18,30,5,8],coastliveoak:[10,16,6,9],eucalyptus:[25,40,5,8],sycamore:[15,25,6,9],torreypine:[10,16,5,8],valleyoak:[18,28,9,13],blueoak:[8,14,4,6],buckeye:[5,9,4,6],olivetree:[6,10,3.5,5],jacaranda:[8,14,5,7],peppertree:[8,13,5,7],ponderosa:[25,40,5,8],sugarpine:[35,55,6,9],incensecedar:[25,40,4,6],redfir:[30,45,4,6],noblefir:[30,50,4,6],westernlarch:[25,40,4,6],gambeloak:[5,10,3,5],mountainmahogany:[3,6,2,3.5],
-  // Texas's and the deserts' (PLACED within their specs).
-  afghanpine:[10,18,3.5,5],africansumac:[6,10,4,6],ashejuniper:[5,8,3,4.5],postoak:[9,14,4,6],pecan:[22,32,8,12],cedarelm:[11,16,4,6],osageorange:[9,13,4.5,6],redbud:[5,8,3.5,5],joshuatree:[5,9,2,3.5],fanpalm:[14,20,2,3],datepalm:[10,17,3,4.5],aleppopine:[10,15,4.5,6],tamarisk:[4.5,7,2.5,3.5],smoketree:[4,6,2.5,3.5],soaptreeyucca:[3.5,6,1,1.5],desertwillow:[5,8,2.5,4],emoryoak:[7,11,4,5.5],alligatorjuniper:[8,12,4,6],
-  // The South's (PLACED within their specs).
-  longleafpine:[22,32,4,6],loblollypine:[20,30,5,7],slashpine:[18,26,5,7],cabbagepalm:[9,15,2.5,3.5],liveoak:[12,17,12,16],liveoakmoss:[13,17,12,16],baldcypress:[20,32,4,6],blackjackoak:[6,10,3,4],turkeyoak:[6,10,3,4],watertupelo:[18,26,4,6],magnolia:[14,20,5,7],tulippoplar:[28,40,5,8],sweetgum:[18,28,5,7],floweringdogwood:[5,8,4,5],crapemyrtle:[4,7,2,3],citrustree:[4.5,6.5,2,2.5],kudzu:[9,13,6,8]};
  // A plant's height and spread from two uniform numbers -- drawn from the
  // ecology stream for the open scatter, hashed for a stand (stands.js). The
  // low cacti (`cholla`: teddy-bear cholla, prickly pear, barrel) stand
@@ -2580,7 +2562,7 @@ export function* generateWorldSteps(settings={},options={}){
  // (An Architect course's trees grew with its age dial until the designer was
  // removed, 2 November 2026.)
  const treeSize=(kind,a,b)=>baseTreeSize(kind,a,b);
- const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(TREE_SIZE[kind]){const [h0,h1,r0,r1]=TREE_SIZE[kind];return {h:h0+a*(h1-h0),r:r0+b*(r1-r0)};}if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:(small?.8+a*2.1:kind==='cactus'?4+a*5:kind==='ocotillo'?2+a*3:kind==='hala'?5+a*5:kind==='palo'||kind==='mesquite'||kind==='ironwood'?5+a*6:bio.farCanopy.min+a*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
+ const baseTreeSize=(kind,a,b)=>{const small=GROUND_PLANTS.has(kind);if(kind==='cholla')return {h:.7+a*.9,r:.5+b*.6};if(TREE_SIZE[kind]){const [h0,h1,r0,r1]=TREE_SIZE[kind];return {h:h0+a*(h1-h0),r:r0+b*(r1-r0)};}if(BRUSH_SIZE[kind]){const [h0,h1]=BRUSH_SIZE[kind],h=h0+a*(h1-h0);return {h,r:h*(.5+b*.3)};}return {h:small?.8+a*2.1:tallHeight(bio,kind,a,heightScale[kind]??1),r:small?1+b*1.3:kind==='aspen'?2+b*2:kind==='palo'||kind==='mesquite'||kind==='ironwood'?4+b*3:3+b*4};};
  // TREES IN THE SHALLOWS (biomes.js `inWater`; the Bayou's bald cypress and
  // its knees, the US landscapes goal): a kind the landscape names may stand in
  // a pond's or lake's water -- never the sea -- within 8 m of its shore

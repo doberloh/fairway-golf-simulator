@@ -12338,7 +12338,7 @@ limbo in leaf in spring (its brief bare spell is not modelled).
 **Planting** (PLACED, biomes.js): stands palm .24, royal palm .18, gumbo
 limbo .14, sea grape .12, hala .13, mangrove .08, traveler's palm .06,
 banyan .05, under them naupaka .4, sea grape .3, hibiscus and bougainvillea
-.15 each; the open ground likewise, mangrove and banyan .02. Sizes (course.js
+.15 each; the open ground likewise, mangrove and banyan .02. Sizes (species.js
 `TREE_SIZE`, PLACED within the specs): royal palm 15-21 m, traveler's palm
 6-9, mangrove 4-7, gumbo limbo 8-13, banyan 14-20 m with a 10-15 m crown.
 Mangroves are not yet placed at the water's edge, where they belong.
@@ -13851,6 +13851,83 @@ built*, below.
   valley's west edge, thrust over red Aztec sandstone at Red Rock, with alluvial fans
   below ([Earth Magazine](https://www.earthmagazine.org/article/travels-geology-las-vegas-scenery-beyond-slots/)).
   Climate figures and the valley floor's caliche not found: PLACED.
+
+## A survey sees a shape, not a species (5 November 2026)
+
+The owner built TPC Summerlin on Desert Palms and found "not a single palm tree".
+Its 19,016 surveyed trees drew as 6,314 smoke trees, 6,261 desert willows, 6,213
+tamarisks and 228 Aleppo pines. A LIDAR tree's role is only narrow (crown under a
+fifth of its height, PLACED, real-course.js) or wide, and the species picker took
+those to mean conifer and broadleaf, with palms in neither.
+
+The reading does not tell a species. Measured on the built test courses, share
+read as narrow against the landscape's conifer share of its tall trees:
+
+| Course | Landscape | Read narrow | Conifer share |
+| --- | --- | --- | --- |
+| Sahalee (a fir forest) | puget | 24.7% | 62% |
+| Battle Creek | puget | 25.5% | 62% |
+| Breckenridge | rockies | 66.6% | 78% |
+| Bully Pulpit | badlands | 1.6% | 75% |
+| Ekwanok | newengland | 76.1% | 27% |
+| TPC Scottsdale | sonoran | 18.0% | 0% |
+| Worthington | heartland | 11.9% | 0% |
+
+So a surveyed tree's narrow reading no longer steers its species at all
+(`drawnSpecies`: no stored species and a conifer role is any tall tree), and
+`speciesFor` picks by the landscape's own planting shares rather than an even
+turn for each species. A conifer or palm role still counts when it is true: a
+tree picked by name, moved to a landscape that lacks its species. Rejected: wide
+as "anything but a conifer" (palms back, but a conifer landscape's woods stay
+wrong, and Desert Resort's pines would all but vanish on the course it is for).
+Drawing only: a built tree's collider is its stored trunk (physics.js `radius`),
+so no `BUILT_VERSION`.
+
+**Height is what a survey does measure** (the owner: "does height make more
+sense"), and a model is scaled to a tree's height with its own proportions kept,
+so by shares alone a smoke tree stood 15 m. `fitsHeight` takes out any species
+the tree would top by more than a quarter of the species' tallest, or fall under
+half its shortest; both PLACED. Too short for every species, it keeps the shares;
+too tall for every species, the tallest.
+
+The first version held the low end to a quarter too and gave a tree that fitted
+nothing the nearest species, and it was wrong. Over a third of the trees fitted
+nothing on four courses, and they all went to whichever species had the lowest
+floor by a metre: blue spruce 6% to 48% of Breckenridge, bur oak 23% to 55% of
+Worthington. The low end is the weak one on the evidence: a young tree of any species is real (the
+generator plants 5.5 m saplings of its own), and a tall model scaled down still
+looks like itself, where a shrubby model scaled up does not. The top end's quarter
+agrees with the generator, whose stands grow their trees a fifth over the listed
+top (`stands.grow`), so a generated 20.4 m date palm on a 10-17 m listing is
+within it. Heights are the game's own, `TREE_SIZE` and `tallHeight` in species.js.
+
+Share of each course's trees drawn more than a quarter over their species' top,
+by shares alone and by height, and the largest move of one species against its
+landscape share, in percentage points:
+
+| Course | Landscape | By shares | By height | Largest move |
+| --- | --- | --- | --- | --- |
+| TPC Summerlin | palms | 14.3% | 0% | fan palm -4 |
+| Bully Pulpit | badlands | 30.7% | 0% | juniper -24 |
+| Chambers Bay | oregondunes | 30.9% | 0% | shore pine -18 |
+| Northwood | redwood | 11.1% | 0% | redwood -21 |
+| TPC Scottsdale | sonoran | 17.6% | 5.5% | ocotillo -10 |
+| Key West | keys | 9.9% | 5.0% | royal palm -8 |
+| Ekwanok | newengland | 4.9% | 0% | under 1 |
+| Sahalee | puget | 20.5% | 17.6% | dogwood +2 |
+| Snohomish | puget | 22.5% | 18.4% | dogwood +3 |
+| Battle Creek | puget | 21.3% | 15.9% | madrone -2 |
+| Nile Shrine | puget | 13.0% | 10.8% | dogwood +11 |
+| Breckenridge | rockies | 0% | 0% | blue spruce +4 |
+| Worthington | heartland | 0% | 0% | bur oak +3 |
+
+What is left on Puget Sound is real: its firs pass 34 m and its tallest listed
+tree tops at 27, so they draw as the tallest it has. Northwood's redwoods fall to
+17% from a 38% share, because its second growth is mostly under 21 m and the
+landscape's redwood runs 42-116 m: the numbers are right, but a redwood course
+with few redwoods is worth the owner's eye. Summerlin now draws 6,510 fan palms,
+4,956 date palms, 2,514 desert willows, 2,197 tamarisks, 1,548 smoke trees and
+1,291 Aleppo pines among 19,016 trees.
 
 ## Desert Resort, as built (5 November 2026)
 
