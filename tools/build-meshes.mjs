@@ -71,7 +71,7 @@ const PICK = {
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
-  'Pecan_1', 'Pecan_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
+  'Pecan_1', 'Pecan_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
   'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
   'PinyonPine_1', 'PinyonPine_2', 'WesternJuniper_1', 'WesternJuniper_2', 'GrainElevator_1', 'Shelterbelt_1',
   'ChestnutOak_1', 'ChestnutOak_2', 'ShortleafPine_1', 'ShortleafPine_2', 'CopperBeech_1', 'CopperBeech_2', 'PitchPine_1',
@@ -359,6 +359,11 @@ const PICK = {
  tiplant: ['blender:Blender_TiPlant_1'],
  heliconia: ['blender:Blender_Heliconia_1'],
  boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
+ // THE DESERT RESORT PACK (tools/blender/cartoon_resort.py; the owner, 5 November
+ // 2026): the Las Vegas valley's pine, sumac and lake-edge pampas grass.
+ afghanpine: ['blender:Blender_AfghanPine_1', 'blender:Blender_AfghanPine_2'],
+ africansumac: ['blender:Blender_AfricanSumac_1', 'blender:Blender_AfricanSumac_2'],
+ pampasgrass: ['blender:Blender_PampasGrass_1', 'blender:Blender_PampasGrass_2'],
  // THE BADLANDS PACK (tools/blender/cartoon_badlands.py; the owner, 3
  // November 2026): its plants; the Yellow Mounds as its boulder family; the
  // bison in lifeforms. Its spires, walls and buttes are the ground's

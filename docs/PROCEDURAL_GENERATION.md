@@ -211,7 +211,8 @@ from what lies between the holes on real courses of its kind
   (the Hill Country's limestone staircases, Monterey's marine terraces),
   **karst** (the Bluegrass's shallow sinkholes), **glacial** (the North
   Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
-  (granite knobs and washes in the Mojave and Desert Palms, the High
+  (granite knobs and washes in the Mojave and Desert Palms, a rare low knob
+  and no washes on the built floor of Desert Resort, the High
   Sierra's domes), **channels** (Sagebrush coulees, Ozark hollows, Piedmont
   gullies, SoCal barrancas), **playas** (the High Plains' round dry pans
   with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder

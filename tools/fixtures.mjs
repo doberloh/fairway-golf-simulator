@@ -14,7 +14,7 @@
 export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes',
  'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska',
  'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
- 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
+ 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan', 'desertresort',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
  'sagebrush', 'redrock', 'crosstimbers',
  'blueridge', 'ozarks', 'bluegrass',

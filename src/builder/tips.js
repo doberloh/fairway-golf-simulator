@@ -9,12 +9,19 @@
 // Door 2's trace tools and the editor's, by `data-tool`.
 export const TOOL_TIPS = {
  move: 'Drag the view; the wheel zooms',
+ select: 'Click a shape to choose it: drag inside to move it, drag its anchors to turn it',
  brush: 'Paint the chosen layer by dragging (Brush size sets how wide)',
  erase: 'Take the chosen layer off by dragging; what lies under it shows',
  eraseAll: 'Take every layer off by dragging, down to rough',
  outline: 'Click round a shape corner by corner and fill it with the chosen layer (double-click or Enter closes)',
  smooth: 'Drag along a ragged edge to round it',
+ creek: 'Click along a line to lay a creek; double-click or Enter ends it',
+ bunker: 'Click to dig a bunker, as wide as the brush',
  tree: 'Click to stand one tree (not on mown ground, sand, water or a path)',
+ treeBrush: 'Drag to scatter trees at random inside the brush, not in a line',
+ sizeTree: 'Click a tree, then set its size under This tree',
+ cover: 'Paint ground cover by dragging: rocks, bushes and the like, between the sizes set below',
+ coverErase: 'Drag to take ground cover off',
  treeZone: 'Click round an area and fill it with trees at the density set below',
  treeErase: 'Drag to take trees off',
  home: 'Click to stand a house; it faces the nearest fairway, green or tee',
@@ -29,6 +36,7 @@ export const TOOL_TIPS = {
 export const TIPS = {
  // The home screen and the top bar.
  'Back': 'Back to the builder\'s start (anything not saved is lost)',
+ 'Cancel': 'Stop this and keep what was there',
  'Take it over': 'Open this generated course in the editor to change anything',
  'Grow this course': 'Make a course from these settings and seed',
  // Door 2's plan.

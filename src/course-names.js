@@ -133,6 +133,13 @@ export const NAME_WORDS = {
    'Sands', 'Woods', 'Narrows', 'Cove'],
  ],
  // The owner's addition (3 November 2026): the Dakota Badlands.
+ desertresort: [
+  ['Summerlin', 'Spring Mountain', 'Oasis Valley', 'Silver State', 'Red Rock', 'Calico Basin', 'Charleston', 'Sunset', 'Pine Shadow',
+   'Lone Mountain', 'Silverado', 'Sahara', 'Desert Inn', 'Tropicana', 'Rainbow', 'Blue Diamond', 'Sundial', 'Paradise', 'Serenade',
+   'Olive Grove', 'Whitney', 'Frenchman Flat', 'McCullough', 'Arroyo', 'Azure', 'Sierra Vista', 'Palomino', 'Cielo', 'Vista',
+   'Mondell', 'Tule', 'Bonanza', 'Kyle', 'Durango', 'Fort Apache', 'Peccole', 'Stardust', 'Flamingo', 'Eldorado'],
+  ['Pines', 'Oasis', 'Springs', 'Highlands', 'Lakes', 'Falls', 'Ranch', 'Reserve', 'Canyon', 'Hills', 'Club', 'Estates', 'Greens', 'Vistas', 'Fountains', 'Terrace', 'Crossing', 'Grove'],
+ ],
  badlands: [
   ['Sawtooth', 'Pinnacles', 'Yellowmound', 'Sodtable', 'Clinker', 'Scoria',
    'Bison', 'Notch', 'Juniper', 'Chokecherry', 'Leadplant', 'Cannonball',

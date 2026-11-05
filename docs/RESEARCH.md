@@ -13808,7 +13808,8 @@ summer `#779447`, autumn `#9f9b50`. Seen in numbers only, no picture yet.
 
 The owner sent pictures of TPC Summerlin and Shadow Creek: the Mojave landscape's
 planting does not match them. Research for a possible new landscape; the plan is
-local (docs/studies/desertresort/PLAN.md). Nothing built from it yet.
+local (docs/studies/desertresort/PLAN.md). Built the same day: *Desert Resort, as
+built*, below.
 
 - **TPC Summerlin:** Bobby Weed with Fuzzy Zoeller, 1991; about 2,700 ft (820 m);
   crosses and follows barrancas; "creosote and cacti" with "grand pine trees";
@@ -13850,3 +13851,50 @@ local (docs/studies/desertresort/PLAN.md). Nothing built from it yet.
   valley's west edge, thrust over red Aztec sandstone at Red Rock, with alluvial fans
   below ([Earth Magazine](https://www.earthmagazine.org/article/travels-geology-las-vegas-scenery-beyond-slots/)).
   Climate figures and the valley floor's caliche not found: PLACED.
+
+## Desert Resort, as built (5 November 2026)
+
+Landscape `desertresort`, region desert, at 36.15, -115.2 (the Las Vegas valley),
+from *Desert resort courses*, above. The owner: "Winter should stay green. dont
+include italian cypress. And lets keep it in the las vegas valley for now."
+No number below is published; **all are PLACED**, read from the owner's pictures
+of TPC Summerlin and Shadow Creek against the game's captures, except where a
+source above is named.
+
+- **Turf:** rough #6a9448, semi #659546, fairway #629b50; the first colours
+  (#5f9140, #5a9a3e, #4fa03f) drew near pure green under the cartoon light.
+  `GREEN` .2, .25, .1 (the test wants spring 14 colour steps from summer).
+- **Winter stays green** (`WINTER_OF`, seasons.js; overseeded rye, the owner's
+  ruling). Pampas grass's winter leaf was olive-brown at round 15 and was set
+  to its autumn green for the same reason.
+- **Ground:** the desert's cobble starts 14-18 m out; hardpan #c6b69a, waste
+  #b5a68c, rock #a09a8e. Knobs chance .1 and no washes: built, nearly flat
+  (TPC Summerlin's "gentle elevation change", above).
+- **Ring:** peaks at 620 m, not the Mojave's 1,100, which stood as a wall over
+  the holes in the first pictures; the Spring Mountains are a distant range.
+- **Past the planted belts, scrub and not a wood:** the first pictures carried
+  the desert's stands of pines to the property edge. The stands are now
+  creosote, brittlebush and mesquite with a few pines and sumacs, every 13 m,
+  from 60 m outside the corridors, over 22% of the country between the holes.
+  The pine belts are the open scatter's (`treeDensity` 2).
+- **Trees:** Afghan pine .25, Aleppo .2, olive .12, mesquite .08, African sumac
+  .08, fan palm .07, date palm .05, and oleander, bougainvillea and pampas by
+  the water. Sizes: Afghan pine 10-18 m, within SNWA's 30-60 ft (above), the
+  lower half: golf-course plantings are young; African sumac 6-10 m; pampas
+  grass 2.2-3.4 m. Italian cypress left out by the owner.
+- **Frame rate on Low** (real graphics card, a nine, seed PROFILE, 5 November
+  2026, tools/profile.mjs `--only built`), generated courses:
+
+| Landscape | CPU ms | GPU ms | Draws | Triangles |
+| --- | --- | --- | --- | --- |
+| Desert Resort | 1.00 | 1.33 | 297 | 13.8 million |
+| Desert Palms | 1.00 | 1.65 | 247 | 16.1 million |
+| Mojave | 1.40 | 1.70 | 229 | 20.5 million |
+
+  Cheaper than either neighbour on the graphics card and in triangles; 50 more
+  draws than Desert Palms, from the new models' families.
+- **The world moved nowhere else:** the fingerprints of the forty existing
+  landscapes are unchanged, so no `GENERATOR_VERSION`; `SCHEMA_VERSION` 27 for
+  the new key.
+- **Not modelled:** the rock-built waterfalls and rock-lined ponds at Wynn,
+  Southern Highlands and Canyon Gate (edge riprap is in; a waterfall is not).

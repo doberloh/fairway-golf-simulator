@@ -4,6 +4,8 @@
 // season with them. A species not listed has no seasons of its own and
 // follows the general rules (seasons.js).
 export const SEASON_TINTS = {
+ afghanpine: {"spring":{"leaf":"#47703f","bark":"#6a5c50"},"summer":{"leaf":"#3f6438","bark":"#6a5c50"},"autumn":{"leaf":"#3f6438","bark":"#6a5c50"},"winter":{"leaf":"#3c5e38","bark":"#6a5c50"}},
+ africansumac: {"spring":{"leaf":"#6a8a4a","bark":"#4a3c34"},"summer":{"leaf":"#5c7c44","bark":"#4a3c34"},"autumn":{"leaf":"#5c7c44","bark":"#4a3c34"},"winter":{"leaf":"#587640","bark":"#4a3c34"}},
  aldertree: {"spring":{"leaf":"#8ab456","bark":"#8c8a82"},"summer":{"leaf":"#4e7a38","bark":"#8c8a82"},"autumn":{"leaf":"#7a7a3a","bark":"#8c8a82"},"winter":{"leaf":"#4e7a38","bark":"#8c8a82"}},
  aleppopine: {"spring":{"leaf":"#7a9a52","bark":"#7a7068"},"summer":{"leaf":"#6f8f4c","bark":"#7a7068"},"autumn":{"leaf":"#6f8f4c","bark":"#7a7068"},"winter":{"leaf":"#6c8a4a","bark":"#7a7068"}},
  alligatorjuniper: {"spring":{"leaf":"#6d8a78","bark":"#8a8580"},"summer":{"leaf":"#678572","bark":"#8a8580"},"autumn":{"leaf":"#678572","bark":"#8a8580"},"winter":{"leaf":"#647f6e","bark":"#8a8580"}},
@@ -126,6 +128,7 @@ export const SEASON_TINTS = {
  oregongrape: {"spring":{"leaf":"#3f6234","accent":"#e0c03a"},"summer":{"leaf":"#3f6234","accent":"#4a5a8a"},"autumn":{"leaf":"#6a4a3a","accent":"#4a5a8a"},"winter":{"leaf":"#6a3e3a","accent":"#6a3e3a"}},
  osageorange: {"spring":{"leaf":"#9ab55a","bark":"#7a5a3a","accent":"#9ab55a"},"summer":{"leaf":"#4f7a36","bark":"#7a5a3a","accent":"#a8b84a"},"autumn":{"leaf":"#c8b03a","bark":"#7a5a3a","accent":"#9aae3e"},"winter":{"leaf":"#4f7a36","bark":"#7a5a3a","accent":"#4f7a36"}},
  pacificdogwood: {"spring":{"leaf":"#557e3a","accent":"#f1ede0","bark":"#8a8478"},"summer":{"leaf":"#557e3a","accent":"#557e3a","bark":"#8a8478"},"autumn":{"leaf":"#b2443a","accent":"#b2443a","bark":"#8a8478"},"winter":{"leaf":"#557e3a","accent":"#557e3a","bark":"#8a8478"}},
+ pampasgrass: {"spring":{"leaf":"#6a8a50","bark":"#8a8a60","accent":"#b8b088"},"summer":{"leaf":"#6a8a50","bark":"#8a8a60","accent":"#e8dcc0"},"autumn":{"leaf":"#7a8a58","bark":"#8a8a60","accent":"#e8dcc0"},"winter":{"leaf":"#7a8a58","bark":"#8a8a60","accent":"#dccfae"}},
  paperbirch: {"spring":{"leaf":"#a6c46a","accent":"#2a2a2a","bark":"#ece8e0"},"summer":{"leaf":"#5f8a3e","accent":"#2a2a2a","bark":"#ece8e0"},"autumn":{"leaf":"#e0c03a","accent":"#2a2a2a","bark":"#ece8e0"},"winter":{"leaf":"#5f8a3e","accent":"#2a2a2a","bark":"#ece8e0"}},
  pecan: {"spring":{"leaf":"#a9c06a","bark":"#6e665c"},"summer":{"leaf":"#4f7a36","bark":"#6e665c"},"autumn":{"leaf":"#bfa23e","bark":"#6e665c"},"winter":{"leaf":"#4f7a36","bark":"#6e665c"}},
  peppertree: {"spring":{"leaf":"#7a9a4a","bark":"#8a7058","accent":"#7a9a4a"},"summer":{"leaf":"#749448","bark":"#8a7058","accent":"#d06a7a"},"autumn":{"leaf":"#749448","bark":"#8a7058","accent":"#d0607a"},"winter":{"leaf":"#729246","bark":"#8a7058","accent":"#d0607a"}},

@@ -754,3 +754,16 @@ the contact sheets (every long grass was the landscape's one colour until
 then); and a model is scaled by its height, so a tuft of arching blades that
 barely rises (`Blender_TallFescue_2`, radius 3.3 heights) lies six metres
 across at 0.9 m tall -- vegetation.js `GRASS_WIDEST` squeezes it in.
+
+**Desert Resort (5 November 2026).** `cartoon_resort`: Afghan pine
+(`afghanpine`, a full layered egg to the ground with the trunk seen only near
+it), African sumac (`africansumac`, a broad crown on a fork, its tufts round
+the lobes) and pampas grass (`pampasgrass`, a mound of arching leaves and a
+fan of cream plumes), sixteen rounds each, two variants, far twins for the two
+trees (about 5,000, 5,300 and 3,800 triangles at their largest). Lessons: a
+pine's egg is many small masses, not a few big ones (54 for the 16 m variant;
+rounds 1-5 read as balls on a post); a crown's underside needs tufts too, or it
+ends in a hard flat line; a plume fan has to spread as wide as the mound, or it
+reads as a bouquet stuck in the top. Run build-meshes BEFORE dump-tints: tints
+join through the model module, so a new pack's species are missing from
+src/season-tints.js until build-meshes has written them.

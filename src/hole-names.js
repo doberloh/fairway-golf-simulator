@@ -40,6 +40,7 @@ const LAND = {
  bluebonnet: ['Bluebonnet', 'Paintbrush', 'Pecan Bottom', 'Hedge Row', 'Cedar Elm', 'Black Dirt', 'Meadowlark', 'Stock Tank', 'Big Sky'],
  gulfcoast: ['Live Oak', 'Bayou Bend', 'Cordgrass', 'Heron', 'Loblolly', 'Wax Myrtle', 'Shell Road', 'Gulf Breeze', 'Spoonbill'],
  mojave: ['Joshua Tree', 'Creosote', 'Dry Lake', 'Granite', 'Yucca', 'Smoke Tree', 'Tortoise', 'Beavertail', 'Long Shadow'],
+ desertresort: ['Long Shadow', 'Oasis', 'Afghan Pine', 'The Falls', 'Cobble', 'Spring Mountain', 'Olive Row', 'White Sand', 'Silver Lake'],
  palms: ['Fan Palm', 'Date Grove', 'Oleander', 'Oasis', 'Windbreak', 'Bougainvillea', 'Mountain View', 'Desert Willow', 'Palm Row'],
  chihuahuan: ['Lechuguilla', 'Sotol', 'Soaptree', 'Ocotillo', 'Alligator Juniper', 'Caliche', 'Javelina', 'Emory Oak', 'Big Sky'],
  monterey: ['Lone Cypress', 'Sea Stack', 'Ice Plant', 'Headland', 'Fog Bank', 'Kelp Bed', 'Sea Otter', 'Monterey Pine', 'Breakers'],

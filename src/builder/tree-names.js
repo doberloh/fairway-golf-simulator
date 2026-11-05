@@ -3,7 +3,7 @@
 // knows a species by its key and never needed to say it; a new species needs its
 // line here, and tests/builder-parity.test.mjs says so.
 export const TREE_NAMES = {
- alder: 'Red alder', aleppopine: 'Aleppo pine', alligatorjuniper: 'Alligator juniper', americanbeech: 'American beech', americanelm: 'American elm', ashejuniper: 'Ashe juniper', aspen: 'Quaking aspen',
+ afghanpine: 'Afghan pine', africansumac: 'African sumac', alder: 'Red alder', aleppopine: 'Aleppo pine', alligatorjuniper: 'Alligator juniper', americanbeech: 'American beech', americanelm: 'American elm', ashejuniper: 'Ashe juniper', aspen: 'Quaking aspen',
  baldcypress: 'Bald cypress', balsamfir: 'Balsam fir', banyan: 'Banyan', baylaurel: 'California bay laurel', bigleafmaple: 'Bigleaf maple', blackjackoak: 'Blackjack oak', blackoak: 'Black oak', blackspruce: 'Black spruce', blueoak: 'Blue oak', bluespruce: 'Blue spruce', buckeye: 'California buckeye', buroak: 'Bur oak',
  cabbagepalm: 'Cabbage palm', cactus: 'Saguaro', casuarina: 'Casuarina', cedar: 'Western red cedar', cedarelm: 'Cedar elm', chestnutoak: 'Chestnut oak', citrustree: 'Citrus tree', coastliveoak: 'Coast live oak', cookpine: 'Cook pine', copperbeech: 'Copper beech', cottonwood: 'Cottonwood', crapemyrtle: 'Crape myrtle',
  datepalm: 'Date palm', desertwillow: 'Desert willow', easternredcedar: 'Eastern red cedar', emoryoak: 'Emory oak', eucalyptus: 'Eucalyptus', fanpalm: 'Fan palm', fir: 'Douglas fir', floweringdogwood: 'Flowering dogwood',

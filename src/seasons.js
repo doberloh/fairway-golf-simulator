@@ -66,6 +66,10 @@ export const WINTER = {
  south: 'dormant', texas: 'dormant', desert: 'dormant', california: 'dormant',
  florida: 'green', hawaii: 'green',
 };
+// A landscape that winters unlike its region: a Las Vegas resort is overseeded and
+// stays green (the owner, 5 November 2026: "Winter should stay green"; the USGA
+// says water limits are ending full overseeding there: RESEARCH).
+export const WINTER_OF = {desertresort: 'green'};
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
 // HOW GREEN EACH LANDSCAPE'S ROUGH IS, SPRING, SUMMER AND AUTUMN (the owner, 4
@@ -98,7 +102,7 @@ export const GREEN = {
  hillcountry: [.6, .15, .05], bluebonnet: [.6, .15, .05], crosstimbers: [.55, .2, .05], highplains: [.55, .12, 0], sandhills: [.55, .15, 0], badlands: [.45, .08, 0],
  rockies: [.45, .35, .05], sierra: [.5, .3, .05], cascades: [.45, .35, .1], ponderosa: [.45, .2, .05], alaska: [.4, .35, .05],
  puget: [.45, .2, .15], redwood: [.4, .2, .15], oregondunes: [.35, .1, .05], links: [.3, .1, 0],
- sagebrush: [.25, .02, 0], redrock: [.15, 0, 0], sonoran: [.12, 0, 0], mojave: [.1, 0, 0], palms: [.15, 0, 0], chihuahuan: [.15, .05, .05],
+ sagebrush: [.25, .02, 0], redrock: [.15, 0, 0], sonoran: [.12, 0, 0], mojave: [.1, 0, 0], palms: [.15, 0, 0], desertresort: [.2, .25, .1], chihuahuan: [.15, .05, .05],
  keys: [0, .25, 0], hawaii: [0, .2, 0],
 };
 export const roughGreen = (key, season) => GREEN[key]?.[['spring', 'summer', 'autumn'].indexOf(season)] ?? 0;
@@ -163,7 +167,7 @@ export function seasonPalette(bio, season, region) {
  }
  else if (season === 'autumn') { put('rough', AUTUMN, .3); put('semi', AUTUMN, .12); }
  else if (season === 'winter') {
-  const w = WINTER[region] || 'frost';
+  const w = WINTER_OF[bio.key] ?? WINTER[region] ?? 'frost';
   if (w === 'snow') {
    // A landscape whose record IS its autumn goes further, as in spring: at
    // .85 and .75 its snow was cream with orange showing through (4 November
@@ -203,7 +207,7 @@ export const BLOOM = {
  puget: [4, 5, '#6a6ad0', '#f2efe0'], redwood: [3, 5, '#f2efe0', '#e0a0b8', '#8a6ac8'],
  cascades: [7, 8, '#f2efe0', '#6a5ac8'], sierra: [6, 8, '#e8c030', '#6a5ac8'], rockies: [6, 8, '#6a5ac8', '#e8c030'], ponderosa: [5, 7, '#d8402e', '#e8c030'],
  sagebrush: [4, 5, '#e8c030', '#6a5ac8'], redrock: [4, 5, '#e0782e', '#d8402e'],
- sonoran: [3, 4, '#f0a020', '#6a5ac8', '#c85aa0'], mojave: [3, 5, '#f0d040', '#b85ab0'], palms: [2, 4, '#b85ab0', '#f2efe0'], chihuahuan: [3, 5, '#3a5ac8', '#f0c020'],
+ sonoran: [3, 4, '#f0a020', '#6a5ac8', '#c85aa0'], mojave: [3, 5, '#f0d040', '#b85ab0'], desertresort: [3, 5, '#f0d040', '#b85ab0'], palms: [2, 4, '#b85ab0', '#f2efe0'], chihuahuan: [3, 5, '#3a5ac8', '#f0c020'],
  monterey: [3, 5, '#f08a20', '#6a5ac8'], socal: [3, 4, '#f08a20', '#6a7ad0'], winecountry: [3, 4, '#e8d030', '#f08a20'],
  heartland: [4, 5, '#f2efe0', '#e8c850', '#a080d0'], sandhills: [5, 7, '#8a7ad0', '#f0d040'], highplains: [5, 6, '#e8b040', '#b05aa8'], crosstimbers: [4, 5, '#d8502e', '#f0c020'], badlands: [5, 6, '#b090d0', '#f0e040'],
  hillcountry: [3, 4, '#3a5ac8', '#d8502e'], bluebonnet: [3, 4, '#3a5ac8', '#d8502e'], gulfcoast: [3, 4, '#e8a0c0', '#3a5ac8'],

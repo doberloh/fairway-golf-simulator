@@ -253,6 +253,13 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   both rounds and not explained: TODO *Performance pass*. The High Plains,
   the worst case (837 triangles a clump), read level (-1.9% by mean,
   4 November 2026).
+- [x] **Desert Resort** (the owner, 5 November 2026: "Many courses in vegas and
+  surrounding area look like this"): a forty-second landscape in the Las Vegas
+  valley, `cartoon_resort` (Afghan pine, African sumac, pampas grass, sixteen
+  rounds each), winter green, no Italian cypress. RESEARCH, *Desert Resort, as
+  built*. Frame rate on Low: cheaper than Desert Palms and Mojave (table there).
+  **Seen in captures only, not played**; `npm run smoke` not run (the owner
+  looks first). No Desert Resort map or card seen in the running game.
 - [x] **Every landscape's terrain true to its place** (the owner, 3 November
   2026: "Do all of these new landscapes have different terrain generation
   based on their location and research? Similar to the badlands? If not.

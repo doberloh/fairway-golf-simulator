@@ -57,6 +57,7 @@ export const LANDSCAPES = {
  sonoran: {name: 'Sonoran', region: 'desert', where: [33.6, -111.7]},
  mojave: {name: 'Mojave', region: 'desert', where: [36.4, -114.9]},
  palms: {name: 'Desert Palms', region: 'desert', where: [33.7, -116.3]},
+ desertresort: {name: 'Desert Resort', region: 'desert', where: [36.15, -115.2]},
  chihuahuan: {name: 'Chihuahuan', region: 'desert', where: [31.8, -106.3]},
  monterey: {name: 'Monterey', region: 'california', where: [37.0, -122.0]},
  socal: {name: 'SoCal Canyons', region: 'california', where: [34.0, -117.8]},

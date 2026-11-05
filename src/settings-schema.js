@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=26;
+export const SCHEMA_VERSION=27;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -615,7 +615,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys',
  // Phase 8c (SCHEMA 24): the North Woods, the Oregon Dunes and Hawaii.
  'northwoods','oregondunes','hawaii',
  // The owner's addition, 3 November 2026 (SCHEMA 26): the Dakota Badlands.
- 'badlands'];
+ 'badlands',
+ // The owner, 5 November 2026 (SCHEMA 27): the Las Vegas valley's watered courses.
+ 'desertresort'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -830,6 +832,8 @@ const MIGRATIONS={
  24:s=>s,
  // 25 -> 26: one more landscape (the Badlands); no save changes shape.
  25:s=>s,
+ // 26 -> 27: one more landscape (Desert Resort); no save changes shape.
+ 26:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

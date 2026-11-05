@@ -875,6 +875,23 @@ const LAND = {
   plants: [['fanpalm', .2], ['datepalm', .12], ['oleander', .12], ['bougainvillea', .06], ['creosote', .2], ['brittlebush', .08], ['desertwillow', .06], ['tamarisk', .06], ['smoketree', .05], ['aleppopine', .03], ['agave', .02]],
   ui: {panel: 'rgba(36,18,28,.88)', a1: '#fbcfe8', a2: '#be185d', hot: '#fef9c3', soft: '#e4c8d4', onHot: '#2a0a18'},
   world: {clubhouse: 'pavilion'}},
+ // Desert Resort (the owner, 5 November 2026, of TPC Summerlin and Shadow Creek:
+ // "the Mojave foliage just doesnt match"): a planted, watered parkland set down
+ // on bare desert, with a hard edge between them. Afghan and Aleppo pines in lines,
+ // olive and mesquite by the tees, palms as accents, white sand, blue lakes in
+ // rock-lined edges; past the edge, pale cobble and creosote. Colours PLACED from
+ // the pictures; RESEARCH.md *Desert resort courses*.
+ desertresort: {rough: '#6a9448', semi: '#659546', fairway: '#629b50', sand: '#efe6d6', rock: '#a9a59c', sky: '#bcd4ea', water: '#3e7fa0',
+  altitude: 700, temperature: 33, rockStyle: 'angular', treeDensity: 2, tree: '#3f6438', treeKind: 'pine', arid: false, sandLand: false, dust: false, speckleRock: false, title: 'Oasis Valley', tag: 'Green fairways and tall pines on the desert floor.',
+  longGrass: {...TRAITS.desert.longGrass, count: 300},
+  // Past the planted belts the valley's own open scrub, not a wood: the pines
+  // are the open scatter's, along the holes (first pictures, 5 November 2026).
+  stands: {...TRAITS.desert.stands, edge: 60, patch: .22, near: 40, spacing: 13, under: {spacing: 9, plants: [['creosote', .7], ['brittlebush', .3]]},
+   plants: [['creosote', .55], ['brittlebush', .15], ['mesquite', .15], ['afghanpine', .08], ['africansumac', .07]]},
+  plants: [['afghanpine', .25], ['aleppopine', .2], ['olivetree', .12], ['mesquite', .08], ['africansumac', .08], ['fanpalm', .07], ['datepalm', .05], ['oleander', .05], ['pampasgrass', .03], ['creosote', .03], ['bougainvillea', .02], ['brittlebush', .02]],
+  ui: {panel: 'rgba(14,32,28,.88)', a1: '#bbf7d0', a2: '#15803d', hot: '#fde68a', soft: '#c0dccc', onHot: '#06201a'},
+  world: {clubhouse: 'pavilion', path: 'asphalt', bridge: 'stone', fountain: true, life: {geese: 4},
+   colours: {clubhouse: {stone: '#ece0cc', bark: '#7d5a3c', accent: '#b4553a', dirt: '#3a2c26'}, riprap: '#a89c88', wall: '#d8ccb8', ruin: '#cfc2ac', bridgeStone: '#c8bca8'}}},
  // Chihuahuan: lechuguilla, sotol and soaptree yucca on limestone, ocotillo,
  // mesquite, Emory oak and alligator juniper up the slopes (Big Bend).
  chihuahuan: {rough: '#b0a07a', sky: '#d8dade', altitude: 1200, temperature: 30, rock: '#c0aa8a', rockStyle: 'angular',
@@ -1095,6 +1112,12 @@ const TERRAIN = {
  mojave: {landform: {type: 'knobs', cell: 200, chance: .5, radius: [25, 60], size: [10, 28], profile: 1.3, round: .6, floor: 3,
   wash: 240, washWidth: .02, washDepth: 1.2, bare: .1, reach: 80,
   kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#a8a294'}},
+ // Nearly flat, built ground: a rare low knob, no washes, and the desert's pale
+ // cobble starting short and hard where the watering stops. Grey limestone
+ // ranges behind (Earth Magazine; RESEARCH). Gates PLACED from the pictures.
+ desertresort: {landform: {type: 'knobs', cell: 260, chance: .1, radius: [20, 40], size: [4, 10], profile: 1.3, round: .6, floor: 1, wash: 0, bare: .2, reach: 80,
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(16, 8), b: gate(18, 6), floor: gate(14, 3)}}, groundTints: {hardpan: '#c6b69a', waste: '#b5a68c', rock: '#a09a8e'},
+  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false},
  // A flat valley floor, the odd knob, steep bare ranges behind.
  palms: {landform: {type: 'knobs', cell: 260, chance: .22, radius: [20, 45], size: [6, 16], profile: 1.3, round: .6, floor: 1.5,
   wash: 300, washWidth: .015, washDepth: .8, bare: .2, reach: 80,

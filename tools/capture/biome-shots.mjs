@@ -64,7 +64,7 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
  blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
  northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
- badlands: 'SAWTOOTH'};
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -162,6 +162,7 @@ export const PICKS = {
  oregondunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
  hawaii: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  badlands: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ desertresort: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 
 
