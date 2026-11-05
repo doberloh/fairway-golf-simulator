@@ -103,6 +103,21 @@ test('every landscape\'s rough has its green for three seasons, and spring is it
  assert.ok(far(seasonPalette(biomeOf('hawaii'), 'summer', 'hawaii').rough, RICH) < far(biomeOf('hawaii').rough, RICH));
 });
 
+test('New England has a real summer, and its autumn is the landscape it was built as', async () => {
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const {regionOf} = await import('../src/regions.js');
+ const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), greenness = h => { const [r, g, b] = rgb(h); return g - (r + b) / 2; };
+ const bio = biomeOf('newengland'), region = regionOf('newengland'), summer = seasonPalette(bio, 'summer', region);
+ assert.ok(greenness(summer.rough) > greenness(bio.rough) + 15, `a green rough: ${summer.rough} from ${bio.rough}`);
+ for (const c of summer.farForest.colors) assert.ok(greenness(c) > 10, `green hills: ${c}`);
+ assert.equal(summer.litter, null, 'no fallen leaves in the rough');
+ assert.notEqual(summer.sunColor, bio.sunColor, 'not the low autumn sun');
+ assert.deepEqual(seasonPalette(bio, 'autumn', region), {}, 'autumn is the record');
+ // No other landscape is touched.
+ assert.equal(seasonPalette(biomeOf('oldnortheast'), 'summer', 'northeast').farForest, undefined);
+});
+
 test('every landscape with a spring has a bloom, its months real and its colours hex', async () => {
  const {BLOOM} = await import('../src/seasons.js');
  const {LANDSCAPES} = await import('../src/regions.js');

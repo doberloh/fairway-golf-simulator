@@ -163,8 +163,8 @@ const EVERGREEN=new Set(['spruce','pine','fir','hemlock','redcedar','redwood','w
 const FALL_HUE={maple:0,aspen:.11,paperbirch:.12,americanbeech:.09};
 // THE SEASONS (the US landscapes goal, step 9; seasons.js). The round's
 // season is the view's (renderer.js sets it). Leaves turn in autumn
-// everywhere; a landscape with `leafFall` (New England, the autumn showcase)
-// wears its autumn as its summer too (PLACED). Kept in leaf through winter
+// everywhere and only then: New England wore its autumn as its summer too,
+// until the owner asked for a real one (4 November 2026). Kept in leaf through winter
 // beside the evergreens: the cacti and the desert's green-barked trees, and
 // the Pacific's evergreen broadleaves.
 const WINTER_LEAFY=new Set([...EVERGREEN,...STILL,'madrone','tanoak','baylaurel','ocotillo','ironwood','palo']);
@@ -172,7 +172,7 @@ const WINTER_LEAFY=new Set([...EVERGREEN,...STILL,'madrone','tanoak','baylaurel'
 // so they stay on a bare tree (a flower or a berry does not).
 const TRUNK_ACCENT=new Set(['aspen','paperbirch']);
 const seasonOfView=view=>view.season||'summer';
-const autumnLeaves=view=>{const s=seasonOfView(view);return s==='autumn'||(s==='summer'&&!!biomeOf(view.world.settings.biome).leafFall);};
+const autumnLeaves=view=>seasonOfView(view)==='autumn';
 const bare=(view,kind)=>seasonOfView(view)==='winter'&&bareInWinter(kind,{evergreen:WINTER_LEAFY,palms:PALMS,ground:GROUND_PLANTS});
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
@@ -738,7 +738,8 @@ const GRASS_OWN=.55;
 // full of straw tussocks.
 export const grassLook=(rec,family,season,green=0)=>{const own=SEASON_TINTS[family]?.[season],mix=(a,b)=>new T.Color(b).lerp(new T.Color(a),GRASS_OWN),rich=new T.Color(RICH);
  const leaf=own?.leaf?mix(own.leaf,rec.leaf):new T.Color(rec.leaf);
- return {leaf:leaf.lerp(rich,green*.5),accent:own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent)};};
+ const accent=own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent);
+ return {leaf:leaf.lerp(rich,green*.5),accent:rec.bloomHeads?accent:accent.lerp(rich,green*.5)};};
 // NO CLUMP A FAN (seen 3 November 2026): a model is scaled by its height, and
 // Blender_TallFescue_2's arching blades barely rise (radius 3.3 times its
 // height): at 0.9 m tall it lay six metres across. Squeezed in to this many

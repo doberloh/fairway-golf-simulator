@@ -12821,10 +12821,10 @@ tables, via tools/blender/dump-tints.mjs: 172 species).
   model cost and no download, at the price of no twig layer on the bare
   crowns (TODO). The cartoon models' limbs carry the silhouette (the first
   winter Heartland: bur oaks wide and flat, elms a vase, shagbarks tall).
-- **New England keeps its autumn as its summer** (`leafFall`): PLAN 3 makes
-  autumn a season everywhere and New England its showcase; read as New
-  England's summer look staying the autumn the landscape was built as, with
-  spring green and winter bare like the rest.
+- **New England's record is its autumn** (`leafFall`), the landscape it was
+  built as. Until 4 November 2026 its summer looked the same; the owner then
+  asked for a real summer, and seasons.js `realSummer` draws one (*How green
+  the rough is*). Spring green and winter bare like the rest.
 
 SCHEMA 25 adds the Season setting (default today's); no generator step --
 the fingerprint is unchanged.
@@ -13787,8 +13787,13 @@ summer; the wet East and South rich till autumn; the Plains and Texas a spring
 flush, cured by July; the mountains and Alaska green late; the North-west's
 coasts and the links holding, a links' fescue left tawny; the deserts a touch,
 as their rough is the desert floor. New England's record is its autumn
-(`leafFall`), so its summer and autumn stay as they were, and its summer
-is not a green one: a decision for the owner.
+(`leafFall`), so its autumn is the record as it stands. Its summer was the same
+until the owner read this ("make it real summer. Autumn can just be real
+autumn"): now a green rough (.55), summer woods on the hills, a white sun in
+place of the low orange one, Appalachia's shade, grass banks, no leaf drifts,
+and the trees in their own summer colours (`autumnLeaves` is autumn only). All
+colours PLACED from Old Northeast's summer record. Drawing only: the land, and
+the leaf-litter ground type under the woods, stay; only its colour changes.
 
 Spring was also too near summer: .18 of the way to fresh green moved a rough by
 less than the eye reads. Now .32 (.12 where the rough is not grass), the fairway

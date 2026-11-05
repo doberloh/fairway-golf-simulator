@@ -118,6 +118,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     pictures and the showcase still show the old rough (retake them after).
     Frame rate: colours only, no new geometry; the A/B on Low is owed anyway
     (vegetation.js and seasons.js moved).
+  - **New England's real summer** (seasons.js `realSummer`): play it in summer
+    and in autumn. Its cards were autumn because the default was: the retake
+    wants `--season autumn` for New England or they turn green, and
+    tools/capture's `autumn-*` shots (gallery, clips) need the same.
   - **Not done:** a cover brush in door 2's 2D trace; `npm test` whole, smoke,
     the round matrix and the fingerprint were not run (no file the generator
     reads changed).

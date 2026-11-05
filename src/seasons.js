@@ -87,13 +87,14 @@ const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - 
 //                links' fescue is meant to be tawny
 //   the deserts  the rough IS the desert floor: a touch of spring and no more;
 //                their spring is the bloom
-// New England's record is its autumn (`leafFall`), so its summer and autumn
-// stay; the tropics have only their summer.
+// New England's record is its autumn (`leafFall`), so its autumn is the record
+// and its summer is drawn green here (`realSummer`); the tropics have only
+// their summer.
 export const RICH = '#4f8a34';
 export const GREEN = {
  winecountry: [.85, .6, .35], monterey: [.7, .35, .25], socal: [.6, .3, .2],
  bluegrass: [.65, .5, .3], piedmont: [.55, .4, .15], lowcountry: [.55, .4, .2], bayou: [.55, .45, .25], gulfcoast: [.55, .35, .2], longleaf: [.45, .3, .1], flatwoods: [.45, .35, .2],
- blueridge: [.55, .4, .15], ozarks: [.55, .4, .15], oldnortheast: [.5, .35, .1], pinebarrens: [.35, .2, .05], newengland: [.3, 0, 0], heartland: [.5, .35, .1], lakedunes: [.45, .3, .1], northwoods: [.5, .4, .1],
+ blueridge: [.55, .4, .15], ozarks: [.55, .4, .15], oldnortheast: [.5, .35, .1], pinebarrens: [.35, .2, .05], newengland: [.3, .55, 0], heartland: [.5, .35, .1], lakedunes: [.45, .3, .1], northwoods: [.5, .4, .1],
  hillcountry: [.6, .15, .05], bluebonnet: [.6, .15, .05], crosstimbers: [.55, .2, .05], highplains: [.55, .12, 0], sandhills: [.55, .15, 0], badlands: [.45, .08, 0],
  rockies: [.45, .35, .05], sierra: [.5, .3, .05], cascades: [.45, .35, .1], ponderosa: [.45, .2, .05], alaska: [.4, .35, .05],
  puget: [.45, .2, .15], redwood: [.4, .2, .15], oregondunes: [.35, .1, .05], links: [.3, .1, 0],
@@ -110,15 +111,33 @@ export const roughGreen = (key, season) => GREEN[key]?.[['spring', 'summer', 'au
 // owner: "Spring doesnt look too much different across the landscapes"): at
 // .18 of the way to fresh green its rough could not be told from summer's.
 const SPRING = '#7ab84a', AUTUMN = '#c09a4a', SNOW = '#eef2f4', FROST = '#b8c0b4', STRAW = '#c8b47a';
+// A REAL SUMMER FOR A LANDSCAPE BUILT AS ITS AUTUMN (the owner, 4 November 2026:
+// "For new england summer make it not autumn. make it real summer. Autumn can
+// just be real autumn"): everything in the record that is October. The hills
+// the woods' summer green, the low orange sun a day's white, the purple autumn
+// shade Appalachia's, the banks grass, no drifts of fallen leaves in the rough
+// and a brown forest floor under the trees. The trees take their own summer
+// colours (vegetation.js). Colours PLACED, from Old Northeast's summer record
+// beside it.
+function realSummer(bio) {
+ const tints = {...bio.groundTints, litter: mix((bio.groundTints?.litter ?? GROUND_TINT.litter).toLowerCase(), '#8a7452', .75)};
+ const out = {sunColor: '#fff0dc', litter: null, litterVary: 0, groundTints: tints, light: {...bio.light, shade: '#8a96bc'}};
+ if (bio.bank) out.bank = mix(bio.bank.toLowerCase(), '#6a7a48', .75);
+ if (bio.farForest?.colors) out.farForest = {...bio.farForest, colors: ['#3f6a30', '#4a7436', '#56803a', '#3f5a34']};
+ return out;
+}
 export function seasonPalette(bio, season, region) {
  if (!bio) return {};
  const green = season === 'winter' ? 0 : roughGreen(bio.key, season);
  // The rough and the pale tint the ground lays over it (renderer.js) as green
  // as the season has them; the season's own colour goes on top of that.
  const base = k => mix(bio[k].toLowerCase(), RICH, k === 'semi' ? green * .5 : green);
+ // A landscape built as its autumn is simply that in autumn.
+ if (season === 'autumn' && bio.leafFall) return {};
  if (season === 'summer') {
   if (!green) return {};
-  return {rough: base('rough'), semi: base('semi'), roughTint: mix((bio.roughTint ?? '#b6bc65').toLowerCase(), '#8fb855', green)};
+  const summer = {rough: base('rough'), semi: base('semi'), roughTint: mix((bio.roughTint ?? '#b6bc65').toLowerCase(), '#8fb855', green)};
+  return bio.leafFall ? {...summer, ...realSummer(bio)} : summer;
  }
  const out = {}, put = (k, to, t) => { if (/^#[0-9a-f]{6}$/i.test(bio[k] || '')) out[k] = mix(green && (k === 'rough' || k === 'semi') ? base(k) : bio[k].toLowerCase(), to, t); };
  if (green) out.roughTint = mix((bio.roughTint ?? '#b6bc65').toLowerCase(), '#8fb855', green);

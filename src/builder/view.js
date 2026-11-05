@@ -254,7 +254,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // the landscape's tree (biomes.js `treeKind`) in its own colour, varied
  // tree by tree, on a trunk -- conifers as cones (the Pacific Northwest's
  // pines, the mountains' narrower spruces, the redwoods' on red trunks), a
- // round crown on the oak landscapes (autumn's in copper, orange and gold),
+ // round crown on the oak landscapes,
  // a palm's flat head on a tall trunk, the desert's
  // low spreading mesquite, a links' squat shrub. The game draws the real
  // models; these say what grows where. Heights times the editor's tree scale.
@@ -265,7 +265,6 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  // width (a share of the crown), its height cap (a share of the crown's
  // width; 0: none)].
  const SHAPE = {pine: [cone, .2, 1, 0], spruce: [cone, .12, .75, 0], oak: [ball, .32, 1, 0], palm: [ball, .86, 1, .45], cactus: [ball, .3, 1.1, .9], shrub: [ball, 0, 1, 1.1]};
- const AUTUMN = ['#b76427', '#c9852f', '#a8452a', '#d4a23c', '#8a6a2a', '#6f7d34'].map(c => new T.Color(c));
  // Bushes (a stored tree of the shrub role, painted as ground cover or a
  // stand's understory) are a low green mound, not a small tree. `treeSlot`
  // finds a stored tree's instance, so one carried is moved on its own and not
@@ -303,8 +302,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    // Each its own shade: a hash of where it stands.
    const [x, z] = s.trees[i], u = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
    if (treeSlot[i] < 0) { col.copy(bushGreen).multiplyScalar(.8 + u * .4); bushes.setColorAt(~treeSlot[i], col); continue; }
-   if (regionOf(s.landscape) === 'northeast') col.copy(AUTUMN[Math.floor(u * AUTUMN.length)]);
-   else { own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3)))); }
+   own.getHSL(hsl); col.setHSL(hsl.h + (u - .5) * .04, hsl.s, Math.max(.05, Math.min(.9, hsl.l * (.85 + u * .3))));
    mesh.setColorAt(treeSlot[i], col);
   }
   for (const g of [mesh, trunks, bushes]) { g.instanceMatrix.needsUpdate = true; g.computeBoundingSphere(); }
