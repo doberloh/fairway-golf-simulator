@@ -13929,6 +13929,23 @@ with few redwoods is worth the owner's eye. Summerlin now draws 6,510 fan palms,
 4,956 date palms, 2,514 desert willows, 2,197 tamarisks, 1,548 smoke trees and
 1,291 Aleppo pines among 19,016 trees.
 
+## What reopening a course lost, and what keeping it costs (5 November 2026)
+
+Three test courses run through a reopen and Back to 2D before the change
+(tpc-scottsdale, worthington, bully-pulpit) came back with no sources, no map
+position although the file held it, no OpenStreetMap, no boundary or box, none of
+the survey's grids and every tree locked. The owner's own Summerlin draft had
+been through that road: `method` 'course', middle (0, 0), no sources.
+
+TPC Scottsdale, driven in the built builder with its USGS picture (1,280 x 768)
+and OpenStreetMap's data: the saved file 11.5 MB, the copy to share 2.4 MB. Save
+took 1.2 s; reopening 3.8 s; Back to 2D 10.7 s. That is from a stand-in land with
+few of the survey's grids; a door 2 session straight from the LIDAR weighs about
+what its draft does (Summerlin 12.7 MB, Bully Pulpit 13.8 MB, before pictures).
+A Google or Bing mosaic can reach 400 tiles, 26 million pixels; its JPEG size is
+not measured (estimated 5-15 MB, PLACED). Quality .9 is PLACED: tracing needs
+edges rather than exact colours.
+
 ## Desert Resort, as built (5 November 2026)
 
 Landscape `desertresort`, region desert, at 36.15, -115.2 (the Las Vegas valley),

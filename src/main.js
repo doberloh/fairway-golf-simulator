@@ -5771,7 +5771,7 @@ function renderPanel(name,content){
     // The same file opened again is the course already here (by its hash),
     // not a second copy of it (until 1 November 2026 each open added one).
     if(f){const head=new Uint8Array(await f.slice(0,4).arrayBuffer());if(isBuiltFile(head)){
-     if(f.size>64000000)throw Error(`That built course is ${(f.size/1e6).toFixed(0)} MB; Fairway opens built courses up to 64 MB.`);
+     if(f.size>1e9)throw Error(`That file is ${(f.size/1e6).toFixed(0)} MB, too large to open.`);
      const {hash,doc,kept}=await builtStore.put(new Uint8Array(await f.arrayBuffer()));
      const had=listCourses().find(c=>c.built===hash);
      if(had){openPanel('library');toast(`“${had.name}” is already in Saved courses.`);return;}

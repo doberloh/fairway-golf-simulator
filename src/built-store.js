@@ -13,7 +13,7 @@
 // With no IndexedDB (some browsers on a file opened from disk) a built course
 // lives for the session only, and the import says so.
 // `createBuiltStore` takes its back end so tests/built-store.test.mjs runs in Node.
-import {readBuiltFile} from './course-doc.js';
+import {readBuiltFile, playableFile, MAX_PLAYABLE} from './course-doc.js';
 
 const DB = 'fairway-built-courses', STORE = 'files';
 
@@ -45,7 +45,12 @@ export function createBuiltStore({idb = globalThis.indexedDB, backend = null} = 
  return {
   // Keeps a file; returns {hash, doc, kept}: `kept` false when it could only
   // be held for this session.
-  async put(bytes) {
+  async put(whole) {
+   // What the game keeps is the course: a file saved from the builder also
+   // carries the builder's own section, pictures and all, which plays no part
+   // here, so the same course has the same hash with it or without.
+   const bytes = playableFile(whole);
+   if (bytes.length > MAX_PLAYABLE) throw Error(`That built course is ${(bytes.length / 1e6).toFixed(0)} MB; Fairway opens built courses up to ${MAX_PLAYABLE / 1e6} MB.`);
    const doc = await readBuiltFile(bytes), hash = await hashOf(bytes);
    docs.set(hash, doc);
    let kept = true;

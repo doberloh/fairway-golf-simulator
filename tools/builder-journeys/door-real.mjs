@@ -328,7 +328,7 @@ export default function ({journey, SHOTS}) {
   const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') shape = 'round'; else if (o.isInstancedMesh && o.geometry.type === 'ConeGeometry' && !shape) shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
   if (look.sky !== '#c8d7df' || look.shape !== 'round') throw Error(`the editor should look like a links: ${JSON.stringify(look)}`);
   // The tree height scale, at once in the view.
-  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0, wide = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; wide = m.elements[0]; } }); return [top, wide]; });
+  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0, wide = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.count && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; wide = m.elements[0]; } }); return [top, wide]; });
   const [top0, wide0] = await crownTop();
   await page.locator('.cb-treescale').fill('1.5'); await page.waitForTimeout(200);
   const [top1, wide1] = await crownTop();

@@ -35,7 +35,12 @@ export default function ({journey, SHOTS}) {
   await click(.55, .45);
   // Trees: plant two, then clear around one.
   await page.getByRole('button', {name: 'Place tree'}).click();
-  await click(.25, .70); await click(.27, .74);
+  // Place tree refuses turf, sand, water, a path or a road (editing.js treeFits,
+  // since 4 November 2026), and this course's ground under a fixed spot changes
+  // with it: click round the plan until two have stood.
+  const trees0 = (await state()).trees; let planted = 0;
+  for (const [fx, fy] of [[.25, .70], [.27, .74], [.18, .82], [.82, .18], [.12, .12], [.88, .88], [.75, .35], [.40, .85], [.60, .12], [.10, .50], [.90, .50], [.50, .92]]) { if (planted === 2) break; await click(fx, fy); planted = (await state()).trees - trees0; }
+  if (planted !== 2) throw Error(`Place tree stood ${planted} of 2 anywhere on the plan`);
   await page.getByRole('button', {name: 'Clear trees', exact: true}).click();
   await click(.25, .70);
   // Hole 1's green, moved.

@@ -26,6 +26,21 @@
 //   the course), the name and the landscape.
 // Pure: no DOM, no three.js (tests/round-trip.test.mjs).
 
+// The same, without leaving the editor: a door 2 draft `d` (draft.js) with the
+// editor's work in it, as if Back to 2D had just been pressed. What a course
+// file carries as its builder's section, so that it reopens with what the
+// course has become, and what Back to 2D opens on a course from a file. `d`
+// comes back unchanged; `base` is the course as the editor opened it.
+export function withEditorWork(d, {base, now, changed, hidden}) {
+ const got = fromEditor({base, now, grid: d.land, changed, holesBefore: d.holes, ownCreeks: d.creeks.length});
+ const masks = new Map(d.trace.masks), holes = [...d.holes];
+ for (const [kind, m] of got.masks) masks.set(kind, m);
+ holes.splice(0, got.holes.length, ...got.holes);
+ const landEdits = got.landEdits && d.landEdits ? got.landEdits.map((v, k) => v + d.landEdits[k]) : got.landEdits ?? d.landEdits;
+ return {...d, step: 5, holes, holesN: got.holes.length, name: got.name, landscape: got.landscape, creeks: got.creeks, rocks: got.rocks, landEdits, view: {...d.view, treeScale: 1},
+  trace: {...d.trace, masks, hidden: [...hidden], trees: got.trees, homes: got.homes}};
+}
+
 // Every grid point inside `rings` (even-odd) set to 1 on `mask`. The grid's
 // points are its cells' middles at x0 + (i + 0.5) * cell.
 export function fillRings(rings, {nx, nz, cell, x0, z0}, mask) {

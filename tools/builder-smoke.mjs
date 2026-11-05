@@ -54,7 +54,7 @@ async function run() {
  fs.mkdirSync(SHOTS, {recursive: true});
  const only = option('only')?.split(',');
  const names = Object.keys(JOURNEYS).filter(n => !only || only.includes(n));
- const browser = await chromium.launch({headless: !flag('headed'), args: ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist']});
+ const browser = await chromium.launch({headless: !flag('headed'), args: flag('software') ? ['--disable-gpu', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist']});
  let failed = 0;
  try {
   for (const name of names) {

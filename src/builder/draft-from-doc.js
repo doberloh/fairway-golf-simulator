@@ -6,9 +6,15 @@
 // its land on one grid, each surface a layer of the trace, its holes, trees
 // and houses -- so the plan view opens at the review as if it had been built
 // there. There is no survey behind it, so the steps that read one (the LIDAR
-// views, the auto trace, the pictures' lining up by map position) have nothing
-// to read; the land stays the course's own, and `method` 'course' tells door 2
-// not to smooth it as it does a survey (real-course.js). A generated course's
+// views, the auto trace) have nothing to read; the land stays the course's own,
+// and `method` 'course' tells door 2 not to smooth it as it does a survey
+// (real-course.js). Where the course lies does come back, from what the file
+// keeps of its survey (`source`: its map grid and middle, or the place searched
+// for), so OpenStreetMap and pictures can be fetched for it again. A course
+// saved from the editor since 5 November 2026 carries its whole builder's section
+// and never comes here. Its survey's unit came with the file only since then:
+// an older one is read as metres, which every UTM survey is and a State Plane
+// survey in feet is not. A generated course's
 // finer green grids go onto this one grid, so a first trip can lose detail
 // finer than it; after that its heights do not move. Pure;
 // tests/builder-cover.test.mjs.
@@ -16,6 +22,7 @@ import {GRID_MARGIN, landSampler} from '../built-world.js';
 import {SURFACE_KINDS, TREE_STRIDE} from '../course-doc.js';
 import {fillRings} from './round-trip.js';
 import {cellFor} from './real-course.js';
+import {toMetres} from '../lidar/las.js';
 
 // `at` metres on a side, whole cells, centred: door 2's grids have their
 // points at -half + i * cell.
@@ -26,7 +33,8 @@ export function draftFromDoc(doc) {
  const nx = fit(ex, cell), nz = fit(ez, cell), N = nx * nz, halfX = (nx - 1) * cell / 2, halfZ = (nz - 1) * cell / 2;
  const ground = new Float32Array(N);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = sample(-halfX + i * cell, -halfZ + j * cell);
- const land = {nx, nz, cell, halfX, halfZ, center: {x: 0, y: 0}, unit: {h: 1, v: 1}, method: 'course', points: 0, rgb: null, ground, surface: ground,
+ const src = doc.source ?? {}, crs = src.crs ?? (src.epsg ? {epsg: src.epsg, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false} : null), placed = crs && src.origin;
+ const land = {nx, nz, cell, halfX, halfZ, center: placed ? {...src.origin} : {x: 0, y: 0}, unit: placed ? toMetres(crs) : {h: 1, v: 1}, method: 'course', points: 0, rgb: null, ground, surface: ground,
   canopy: new Float32Array(N), intensity: new Float32Array(N).fill(NaN), water: new Uint8Array(N), building: new Uint8Array(N), multi: new Uint8Array(N), noReturns: new Uint8Array(N), filled: new Uint8Array(N)};
  const at = {nx, nz, cell, x0: -halfX - cell / 2, z0: -halfZ - cell / 2}, masks = new Map();
  const add = (kind, rings) => { if (!masks.has(kind)) masks.set(kind, new Uint8Array(N)); fillRings(rings, at, masks.get(kind)); };
@@ -38,6 +46,6 @@ export function draftFromDoc(doc) {
   trees.push({x, z, h, crown, trunk, role, kept: true, ...(kind ? {kind} : {})});
  }
  const holes = doc.holes.map(h => ({tees: h.tees.map(t => ({...t})), aims: h.line.slice(1, -1).map(([x, z]) => ({x, z})), green: {...h.green}, par: h.par, index: h.index}));
- return {step: 5, name: doc.name, landscape: doc.landscape, credits: doc.credits ?? [], holes, holesN: holes.length, hole: 0, boundary: null, traceMode: 'manual', box: null, sources: [], view: {}, picOffsets: {},
+ return {step: 5, name: doc.name, landscape: doc.landscape, credits: doc.credits ?? [], holes, holesN: holes.length, hole: 0, boundary: null, traceMode: 'manual', box: null, sources: placed ? (src.files?.length ? src.files : ['the course file']).map(name => ({name, crs})) : [], geo: src.geo ?? null, view: {}, picOffsets: {}, trees: trees.map(t => ({...t})),
   land, trace: {masks, hidden: [], trees, homes: structuredClone(doc.homes ?? [])}, landEdits: null, creeks: structuredClone(doc.creeks ?? []), rocks: structuredClone(doc.rocks ?? [])};
 }

@@ -71,6 +71,48 @@ seed.** One reader returns a *course document* for either:
 | `patches.bin` | finer grids on greens and tees | Same encoding |
 | `trees.bin` | every tree a ball can hit: x, z, height, crown, trunk, role | 24 bytes a tree. The landscape picks the species drawn, in its planting shares among those of the tree's height; the sizes are stored, so a tree plays the same in every landscape |
 
+**The builder's section** (the owner, 5 November 2026: "The game doesn't need to
+load all of that, but when reopening a builder file, we need to have
+everything"). A course saved from the editor after door 2 ends with one more
+part, `builder.zip`: a whole door 2 draft (draft.js, version 3), stored, as if
+Back to 2D had just been pressed (round-trip.js `withEditorWork`). It holds
+everything a course alone loses: the survey's grids (canopy, brightness, water,
+buildings, returns), every surveyed tree, the trace's exact layers and hidden
+ones, the boundary and the property box, the survey's names and map grid, the
+place searched for, the choices made, OpenStreetMap's download as it came with
+its trees and the course picked (the features, the Course picker, the boundary
+and the holes are made again from it), and the pictures. **Back to 2D on a file
+that has one opens that session**, not the stand-in `draft-from-doc.js` makes.
+Nothing the ball touches is in it, so no version number moved.
+
+- **The game never unpacks it** (`readBuiltFile` turns the part down by name;
+  a broken section does not stop a course loading) **and does not keep it**
+  (built-store.js `playableFile`). Written last, so the file without it is byte
+  for byte the file that never had one: same hash, same course, same challenge.
+  The 64 MB limit is on what is kept; the file itself may run to a gigabyte.
+- **Pictures** go as JPEG at quality .9 (PLACED), the plain pixels if too big
+  for a canvas, with `place` for how each sits on the land: tiles, a map
+  position, or the hand-matched pairs (picture-file.js). Encoded once.
+- **Save a copy to share** writes the course alone.
+- **Decided, with what was turned down.** A second file kind for the builder's
+  work: the owner asked for it in the `.fairway`, and one file cannot be lost
+  from its pair. Google's and Bing's pictures left out of saved files: the
+  owner's call was to keep them, with the sharing copy leaving them out; the
+  provider's terms are said where the key is asked for. The LIDAR files
+  themselves: gigabytes, and the land built from them is kept; door 2 keeps
+  their names. Undo history: not kept. OpenStreetMap's parsed features rather
+  than its download: the download can be read again when the parser learns
+  something. Image-service keys never go in any file.
+- **A file from before this** has no section. `draft-from-doc.js` gives it back
+  what it does hold: its map grid and middle (`source`), so fetching pictures
+  and OpenStreetMap work, and its trees, which fetching the map used to replace.
+  Its survey's unit was not stored, so it is read as metres: right for UTM,
+  wrong for a State Plane survey in feet (TODO). New files store the whole
+  `crs` and the place searched for in `source`.
+- **Bug this closed:** on a draft reopened with OpenStreetMap's data, the Trees
+  choice had nothing behind it, and "OpenStreetMap's only" emptied the course of
+  trees. A version 2 draft now hides the choice.
+
 **Limits a file is checked against** (PLACED; `LIMITS` in course-doc.js): 16
 million land samples (a 3 x 3 km property at 1 m is 9 million), 4 million in
 patches, 200 thousand trees, 2 million outline points, 9 or 18 holes. A file
@@ -419,7 +461,8 @@ After trying the builder, the owner amended the goal:
       editor**: a draft opens back where it was; a course file opens in the
       editor. Saving a course at the review step was turned down -- reopening
       it would lose the trace step's layers' history and the pictures' lining
-      up.
+      up. (Since 5 November 2026 a course saved from the editor carries the
+      whole draft: *Course files*, *The builder's section*.)
     - **The rockyweb downloads are spaced 4 s apart** and read from a folder
       the player picks (the LIDAR folder, amendment 15), because the
       browser, not the page, saves them; a
@@ -1500,6 +1543,16 @@ graphics card, so neither the picture nor the times below have been checked.
   dressing the editor's own view as the game (it answers a brush in a frame because
   it is not the game); throwing the view away on return (the long wait every time).
 
+## The LIDAR folder's tick boxes (5 November 2026)
+
+The owner: "The builder only gives you one tick mark to select files." Every
+file had its box, but a long name such as USGS_LPC_MN_MissouriRiverBigSioux_2021_B21_287_4833.laz
+cannot wrap, and door 2's inputs are allowed to shrink (`min-width:0`), so the
+box took all the squeeze: measured 0 px on those rows, 4 and 10 on others, 13 on
+a short name. The rows could still be ticked by their names, unseen. The box no
+longer shrinks and a long name now wraps anywhere. **Tick all** and **Untick all**
+came with it, for a folder of many tiles.
+
 ## PLACED, and rules the build decided
 
 Numbers placed rather than measured, and rules the study left open, so the
@@ -1508,6 +1561,9 @@ owner can overrule them:
 - Heights stored to the centimetre; the file's limits (above).
 - Land 1 m, greens and tees 0.25 m; the 3 x 3 km cap.
 - A fixed ZIP entry date (1 January 2026), so a file's hash is its identity.
+- The builder's section: a saved picture's JPEG quality .9; a picture is kept as
+  plain pixels past 16,000 a side or 120 million in all; a file the game will
+  open runs to 1 GB, of which 64 MB may be the course.
 - The built field: half a metre (coarser past 2048 texels), 6 m either side of
   an edge; a patch fades into the land over 1.5 m; where two ground types
   meet, the type with the most weight among the four texels round a point.

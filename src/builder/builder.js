@@ -7,7 +7,7 @@
 import './builder.css';
 import {BIOMES} from '../biomes.js';
 import {BIOME_KEYS} from '../settings-schema.js';
-import {readBuiltFile, isBuiltFile, textOf} from '../course-doc.js';
+import {readBuiltFile, isBuiltFile, builderPart, textOf} from '../course-doc.js';
 import {readCourseFile} from '../course-file.js';
 import {saveBytes, saveHow, lastSave} from './saving.js';
 import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
@@ -96,7 +96,7 @@ export function pickFile(accept, multiple = false) {
 }
 export async function readCourseAny(file) {
  const bytes = new Uint8Array(await file.arrayBuffer());
- if (isBuiltFile(bytes)) return {kind: 'built', doc: await readBuiltFile(bytes)};
+ if (isBuiltFile(bytes)) return {kind: 'built', doc: await readBuiltFile(bytes), builder: await builderPart(bytes)};
  return {kind: 'seeded', course: readCourseFile(textOf(bytes))};
 }
 
@@ -124,9 +124,12 @@ async function openFile() {
  setBusy('Opening ' + file.name);
  try {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (await isDraft(bytes)) { (await import('./door-real.js')).open(await readDraft(bytes)); return; }
+  if (await isDraft(bytes)) { await (await import('./door-real.js')).openSaved(await readDraft(bytes)); return; }
   const got = await readCourseAny(file);
-  if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc);
+  // A course saved from the editor brings its builder's section (course-doc.js),
+  // unpacked only when Back to 2D or Save wants it.
+  let draft = null;
+  if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc, {work: got.builder ? {draft: () => draft ??= readDraft(got.builder)} : null});
   else (await import('./door-generate.js')).open(got.course);
  } finally { setBusy(''); }
 }

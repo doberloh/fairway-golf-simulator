@@ -6,10 +6,12 @@
 // THE ONE PLACE THE BUILDER GOES ONLINE, and only when the player asks: the
 // builder otherwise makes no request at all. The player brings their own key
 // (Google Maps Platform with the Map Tiles API, or Bing Maps), kept in this
-// browser only; nothing is sent anywhere but to the provider, and nothing of
-// the picture is saved in a course. The providers' terms limit tracing their
-// pictures into other products: the builder says so where the key is asked
-// for, and the choice is the player's.
+// browser only, never in a file; nothing is sent anywhere but to the provider.
+// A fetched picture is kept in the player's own saved files, so a course
+// reopens with it (the owner, 5 November 2026), and left out of the copy made
+// to share and of what the game keeps. The providers' terms limit tracing their
+// pictures into other products and keeping them: the builder says so where the
+// key is asked for, and the choice is the player's.
 //
 // AUTO SIZING: both serve the world as Web Mercator tiles, so every pixel
 // has a known latitude and longitude, and a survey with a known map grid
@@ -68,7 +70,7 @@ export const PROVIDERS = {
    'APIs and services, Credentials: Create credentials, API key. Copy it into the box above; it stays in this browser only.',
    'Restrict the key to those two APIs (Edit key, API restrictions). A website restriction will not work when the game is opened as a file, which sends no website address.',
    'Optional: set a daily quota on the Map Tiles API so a mistake cannot cost much. One fetch for a course is a few hundred tiles.'],
-  terms: 'Google\'s terms (Maps Platform, section 3.2.3) forbid creating content from its imagery outside Google\'s own products. Using it to trace a course is your decision and your account\'s.',
+  terms: 'Google\'s terms (Maps Platform, section 3.2.3) forbid creating content from its imagery outside Google\'s own products, and limit keeping it. Using it to trace a course, and keeping it in your saved file, is your decision and your account\'s; Save a copy to share leaves it out.',
   async start(key, get = fetch) {
    const r = await get(`https://tile.googleapis.com/v1/createSession?key=${encodeURIComponent(key)}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mapType: 'satellite', language: 'en-US', region: 'US'})});
    if (!r.ok) throw Error(`Google refused the key (${r.status}). Is the Map Tiles API on for it?`);
@@ -85,7 +87,7 @@ export const PROVIDERS = {
   howTo: ['Microsoft no longer gives out Bing Maps keys to new users: free and Basic accounts ended on 30 June 2025, and Enterprise accounts run to 30 June 2028 (Microsoft\'s notice, REFERENCES).',
    'If you already have a Bing Maps key (from bingmapsportal.com), paste it above and it works as before.',
    'Otherwise use Google, or the free national imagery where it covers the course.'],
-  terms: 'Microsoft\'s Bing Maps terms limit what may be made from its imagery; Microsoft has let OpenStreetMap trace it, but a course you share is your decision and your account\'s.',
+  terms: 'Microsoft\'s Bing Maps terms limit what may be made from its imagery; Microsoft has let OpenStreetMap trace it, but a course you share is your decision and your account\'s. It is kept in your saved file; Save a copy to share leaves it out.',
   async start(key, get = fetch) {
    const r = await get(`https://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial?key=${encodeURIComponent(key)}&uriScheme=https&output=json`);
    if (!r.ok) throw Error(`Bing refused the key (${r.status}).`);
@@ -146,6 +148,8 @@ export async function mosaic(session, box, {want = .3, maxTiles = 400, onProgres
  if (missing === t.tiles.length) throw Error('No imagery came back for this place.');
  const d = cx.getImageData(0, 0, canvas.width, canvas.height).data, N = canvas.width * canvas.height, rgb = new Uint8Array(N * 3);
  for (let k = 0; k < N; k++) { rgb[k * 3] = d[k * 4]; rgb[k * 3 + 1] = d[k * 4 + 1]; rgb[k * 3 + 2] = d[k * 4 + 2]; }
- return {width: canvas.width, height: canvas.height, rgb, nir: null, z, missing, credit: session.credit,
-  toPixel: (lon, lat) => { const p = tileOf(lon, lat, z); return [(p.x - t.x0) * 256 - .5, (p.y - t.y0) * 256 - .5]; }};
+ const tile = {z, x0: t.x0, y0: t.y0};
+ return {width: canvas.width, height: canvas.height, rgb, nir: null, z, missing, credit: session.credit, tile, toPixel: tilePixel(tile)};
 }
+// A mosaic's pixel for a longitude and latitude, from its zoom and its first tile.
+export const tilePixel = ({z, x0, y0}) => (lon, lat) => { const p = tileOf(lon, lat, z); return [(p.x - x0) * 256 - .5, (p.y - y0) * 256 - .5]; };

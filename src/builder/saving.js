@@ -31,8 +31,9 @@ const TYPES = {
 
 // Saves `bytes` as `file` (a file name with its extension) for the work
 // `key` named `name`. Returns {how, file}: 'overwrite', 'pick', 'download',
-// or 'cancelled' when the player closed the dialog.
-export async function saveBytes(bytes, {key, name, file}) {
+// or 'cancelled' when the player closed the dialog. `remember` false: a copy on
+// the side (Save a copy to share), which the next Save does not go to.
+export async function saveBytes(bytes, {key, name, file, remember = true}) {
  const canPick = typeof window !== 'undefined' && typeof window.showSaveFilePicker === 'function';
  let how = saveHow(last, {key, name}, {canPick});
  if (how === 'overwrite') {
@@ -44,11 +45,11 @@ export async function saveBytes(bytes, {key, name, file}) {
   let handle;
   try { handle = await window.showSaveFilePicker({suggestedName: file, types: type ? [type] : undefined}); }
   catch (e) { if (e?.name === 'AbortError') return {how: 'cancelled', file}; how = 'download'; }
-  if (handle) { await write(handle, bytes); last = {key, name, file: handle.name ?? file, handle}; return {how, file: last.file}; }
+  if (handle) { await write(handle, bytes); if (remember) last = {key, name, file: handle.name ?? file, handle}; return {how, file: handle.name ?? file}; }
  }
  const url = URL.createObjectURL(new Blob([bytes], {type: 'application/zip'})), a = document.createElement('a');
  a.href = url; a.download = file; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
- last = {key, name, file, handle: null};
+ if (remember) last = {key, name, file, handle: null};
  return {how: 'download', file};
 }
 async function write(handle, bytes) { const w = await handle.createWritable(); await w.write(bytes); await w.close(); }

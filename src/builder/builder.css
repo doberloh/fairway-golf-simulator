@@ -135,6 +135,10 @@ select option{background:#03100e;color:var(--ink)}
 .cb-door2 .cb-btn.cb-result:hover .cb-resultgo{color:inherit}
 .cb-door2 .cb-foldername{color:var(--hot)}
 .cb-door2 .cb-folderfiles{font-size:12px;max-height:180px;overflow:auto}
+/* A long file name cannot wrap, and the door's inputs may shrink to nothing
+   (min-width:0 below): the owner saw one tick box in a list of USGS tiles. */
+.cb-door2 .cb-folderfiles input{flex:none}
+.cb-door2 .cb-folderfiles span{min-width:0;overflow-wrap:anywhere}
 /* Selects and fields never wider than the steps' column (the trees choice ran off it). */
 .cb-door2 .cb-steps select,.cb-door2 .cb-steps input{max-width:100%;min-width:0;box-sizing:border-box}
 .cb-door2 .cb-btns>*{min-width:0}

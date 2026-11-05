@@ -8,6 +8,9 @@ import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave} from
 import {createEditor, PAINT} from './editing.js';
 import {createView} from './view.js';
 import {writeBuiltFile, validateDoc} from '../course-doc.js';
+import {writeDraft} from './draft.js';
+import {withEditorWork} from './round-trip.js';
+import {saveBytes} from './saving.js';
 import {BUILT_VERSION, BIOME_KEYS} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {fileName} from '../course-file.js';
@@ -30,7 +33,13 @@ const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 // `back`: door 2's way back to its own steps (the owner, 1 November 2026:
 // "add a button to go back to the 2d editor from the 3d editor"), when the
 // course came from there.
-export function openEditor(doc, {from = 'file', back = null} = {}) {
+// `work`: the door 2 session behind this course, {draft()} giving it as a draft
+// (draft.js) -- door 2's own when the course came from there, or the one in the
+// file it was opened from. Save puts it in the course file with this editor's
+// work added (round-trip.js `withEditorWork`), and Back to 2D opens it, so a
+// course reopened from a file has everything it had. None on a generated course
+// or a file from before 5 November 2026.
+export function openEditor(doc, {from = 'file', back = null, work = null} = {}) {
  current?.view.dispose();
  const editor = createEditor(doc), s = editor.state;
  setTitle(s.name);
@@ -320,11 +329,13 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
    setBusy('Laying the course out in 2D…');
    await new Promise(r => setTimeout(r, 30));
    try {
-    const [{open}, {draftFromDoc}] = await Promise.all([import('./door-real.js'), import('./draft-from-doc.js')]);
+    const [{open, openSaved}, {draftFromDoc}] = await Promise.all([import('./door-real.js'), import('./draft-from-doc.js')]);
+    if (work) { const made = withEditorWork(await work.draft(), editorWork(editor.toDoc())); leave(); await openSaved(made); return; }
     const made = draftFromDoc(editor.toDoc());
     leave(); open(made);
    } catch (e) { status.textContent = 'Could not lay it out in 2D: ' + e.message; } finally { setBusy(''); }
   }}, 'Back to 2D'),
+  work ? el('button', {class: 'cb-btn', type: 'button', title: 'A copy of this course to give to someone: what the game plays, without the pictures, the map data and the rest of your builder work', onclick: shareCopy}, 'Save a copy to share') : null,
   gameButton,
   el('button', {class: 'cb-btn', type: 'button', onclick: () => {
    if (!confirm('Close this course and go back to the builder\'s start?')) return;
@@ -397,7 +408,11 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   }
   if (tool.kind === 'marks' && !down) canvas.style.cursor = markUnder(e) ? 'grab' : '';
   if (tool.kind === 'select' && !down) canvas.style.cursor = !chosen ? '' : view.anchorAt(e) >= 0 ? 'grab' : p && editor.onPick(chosen, p.x, p.z) ? 'move' : '';
-  if (down && p && !pending) { pending = p; requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); }
+  // A frame's worth of moves is one: the latest, and what is still waiting when
+  // the button comes up is applied first, or a quick drag lands short of where
+  // it was let go (the smoke's builder-tools, 5 November 2026, on a busy card:
+  // a bunker carried a few metres of a hundred).
+  if (down && p) { if (!pending) requestAnimationFrame(() => { if (down && pending) apply(pending, false); pending = null; }); pending = p; }
  });
  // The tee, bend or green under the mouse (within 14 pixels, PLACED), the hole in
  // hand first, then any other. {hole, kind, index}, or null.
@@ -426,7 +441,7 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
   else if (d.pick.type === 'rock') view.placeRock(d.pick.index);
   else if (d.pick.type === 'home') view.refreshHomes();
  }
- canvas.addEventListener('pointerup', () => { if (down?.hold && tool.kind === 'marks') { down.hold.done(); down = null; canvas.style.cursor = ''; refreshHoles(); refreshSave(); return; } if (down?.carry) {
+ canvas.addEventListener('pointerup', () => { if (down && pending) { apply(pending, false); pending = null; } if (down?.hold && tool.kind === 'marks') { down.hold.done(); down = null; canvas.style.cursor = ''; refreshHoles(); refreshSave(); return; } if (down?.carry) {
    const {hold, dx, dz, angle, pick} = down; down = null;
    if (!hold) return;
    const got = hold.drop(dx, dz, angle);
@@ -473,18 +488,33 @@ export function openEditor(doc, {from = 'file', back = null} = {}) {
  function undo() { unpick(); showPicked(); choose(null); after(editor.undo()); }
  function redo() { unpick(); showPicked(); choose(null); after(editor.redo()); }
 
- // Save (the top bar's, and Ctrl+S): the course as a .fairway file; once
- // saved, again to the same file until it is renamed (saving.js).
+ // What the editor hands the door 2 session behind this course.
+ function editorWork(now) { return {base: doc, now, changed: editor.changedLayers(), hidden: editor.hiddenLayers()}; }
+ async function shareCopy() {
+  setBusy('Saving a copy to share…');
+  try {
+   await new Promise(r => setTimeout(r, 30));
+   const bytes = await writeBuiltFile(validateDoc(editor.toDoc()), BUILT_VERSION);
+   const r = await saveBytes(bytes, {key: `share-${opened}`, name: s.name, file: fileName(s.name).replace(/\.fairway$/, '-share.fairway'), remember: false});
+   if (r.how !== 'cancelled') status.textContent = `A copy to share: ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB), the course without your pictures and builder work.`;
+  } catch (e) { status.textContent = 'Could not save the copy: ' + e.message; } finally { setBusy(''); }
+ }
+ // Save (the top bar's, and Ctrl+S): the course as a .fairway file, with the
+ // door 2 session behind it; once saved, again to the same file until it is
+ // renamed (saving.js).
  setSaver({
   key: `editor-${++opened}`, name: () => s.name, file: () => fileName(s.name),
   async bytes() {
    await new Promise(r => setTimeout(r, 30));
-   return writeBuiltFile(validateDoc(editor.toDoc({onStep: what => setBusy(`Saving the course… ${what}`)})), BUILT_VERSION);
+   const now = editor.toDoc({onStep: what => setBusy(`Saving the course… ${what}`)}), course = validateDoc(now);
+   if (!work) return writeBuiltFile(course, BUILT_VERSION);
+   setBusy('Saving the land, the map data and the pictures…');
+   return writeBuiltFile(course, BUILT_VERSION, {builder: await writeDraft(withEditorWork(await work.draft(), editorWork(now)))});
   },
   said(r, bytes) {
    if (r.how === 'failed') { status.textContent = 'Could not save: ' + r.error.message; return; }
    s.changed = false;
-   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.`;
+   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.${work ? ' It keeps everything the builder needs, your pictures too: to give the course to someone, use Save a copy to share.' : ''}`;
   },
  });
  setTool({kind: 'navigate'});

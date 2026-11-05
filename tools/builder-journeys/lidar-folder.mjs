@@ -103,6 +103,10 @@ export default function ({journey}) {
   await page.getByRole('button', {name: 'Load from the folder'}).click(); await idle();
   const listed = await page.evaluate(() => [...document.querySelectorAll('.cb-folderfiles li')].map(li => ({text: li.textContent, on: li.querySelector('input').checked})));
   if (listed.length !== 1 || !listed[0].on || !/over this place/.test(listed[0].text)) throw Error(`Load from the folder should list the kept square, ticked: ${JSON.stringify(listed)}`);
+  // A long file name must not squeeze a row's tick box away (the owner, 5
+  // November 2026: one box showing in a list of USGS tiles).
+  const box = await page.evaluate(() => { const b = document.querySelector('.cb-folderfiles input'); return {shrink: getComputedStyle(b).flexShrink, width: b.getBoundingClientRect().width}; });
+  if (box.shrink !== '0' || box.width < 12) throw Error(`a tick box must keep its size: ${JSON.stringify(box)}`);
   await t.shot('folder');
  });
 }

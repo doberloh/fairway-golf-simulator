@@ -11,7 +11,7 @@ import {TREE_NAMES} from '../src/builder/tree-names.js';
 import {FAMILY_OF} from '../src/plant-families.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {worldFromDoc} from '../src/built-world.js';
-import {cornersOf, zoneTrees} from '../src/builder/layer-ops.js';
+import {cornersOf, zoneTrees, anchorHit} from '../src/builder/layer-ops.js';
 import {previewOf} from '../src/builder/preview-items.js';
 import {familyModels} from '../src/mesh-assets.js';
 import {BIOMES} from '../src/biomes.js';
@@ -201,4 +201,15 @@ test('skin from the land works in 2D as in 3D', () => {
  assert.equal(m.kindAt(80, 0), got.kinds.face);
  assert.equal(m.kindAt(0, 0), 'fairway', 'the turf is left alone');
  m.undo(); assert.equal(m.kindAt(80, 0), 'rough');
+});
+
+test('a press takes an anchor only when it is nearer that than the shape\'s middle', () => {
+ const small = [[100, 100], [110, 100], [110, 110], [100, 110]];
+ assert.equal(anchorHit(small, 105, 105, 11), -1, 'the middle of a small shape moves it, though every anchor is in reach');
+ assert.equal(anchorHit(small, 99, 99, 11), 0, 'its corner still turns it');
+ assert.equal(anchorHit(small, 112, 112, 11), 2, 'the nearest corner');
+ const big = [[0, 0], [200, 0], [200, 200], [0, 200]];
+ assert.equal(anchorHit(big, 5, 5, 11), 0);
+ assert.equal(anchorHit(big, 100, 100, 11), -1);
+ assert.equal(anchorHit(big, 30, 30, 11), -1, 'out of reach');
 });

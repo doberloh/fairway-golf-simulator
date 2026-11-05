@@ -40,7 +40,16 @@
 // (PLACED: finer than any LIDAR's error, coarser than nothing a ball feels),
 // as whole steps above the lowest point, each row differenced so the deflate
 // finds the runs. Pure: tested in Node (tests/course-doc.test.mjs).
-import {writeZip, readZip, isZip} from './zip.js';
+//
+// THE BUILDER'S SECTION (the owner, 5 November 2026: "The game doesn't need to
+// load all of that, but when reopening a builder file, we need to have
+// everything"): a file saved from the builder's editor can end with one more
+// part, builder.zip -- a whole door 2 draft (builder/draft.js): the land's survey
+// grids, the trace, the map data, the pictures. Nothing the ball touches is in
+// it. The game never unpacks it and keeps a course without it
+// (built-store.js `playableFile`), so the course is the same course, with the
+// same hash, with it or without.
+import {writeZip, readZip, zipWithout, isZip} from './zip.js';
 import {BIOME_KEYS} from './settings-schema.js';
 import {currentKey} from './regions.js';
 import {GROUND_KINDS} from './grounds.js';
@@ -74,6 +83,10 @@ export const HEIGHT_STEP = .01;
 // Limits a document is checked against, so a damaged or hostile file cannot
 // ask for a gigabyte. PLACED: a 3 x 3 km property at 1 m is 9 million samples.
 export const LIMITS = {samples: 16e6, patchSamples: 4e6, trees: 200000, points: 2e6, holes: 18, homes: 600, rocks: 20000};
+
+// The builder's section of a course file (the note at the top), and how much of
+// a file the game will keep once that is left out (PLACED, 1 November 2026).
+export const BUILDER_PART = 'builder.zip', MAX_PLAYABLE = 64e6;
 
 const utf8 = new TextEncoder(), text = new TextDecoder();
 const plainError = m => { throw Error(m); };
@@ -183,7 +196,9 @@ export function validateDoc(doc) {
 }
 
 // The file's bytes for a document. `builtVersion` is the game's, stamped on.
-export async function writeBuiltFile(doc, builtVersion) {
+// `builder`: the builder's section (bytes), written last, so that leaving it out
+// gives exactly the file a course without one is.
+export async function writeBuiltFile(doc, builtVersion, {builder = null} = {}) {
  const d = validateDoc(doc);
  const land = encodeGrid(d.land.heights, d.land.nx, d.land.nz);
  const patchParts = d.patches.map(p => ({p, g: encodeGrid(p.heights, p.nx, p.nz)}));
@@ -199,6 +214,7 @@ export async function writeBuiltFile(doc, builtVersion) {
   {name: 'land.bin', data: land.bytes},
   {name: 'patches.bin', data: patchBytes},
   {name: 'trees.bin', data: new Uint8Array(d.trees.buffer, d.trees.byteOffset, d.trees.byteLength)},
+  ...(builder ? [{name: BUILDER_PART, data: builder, store: true}] : []),
  ]);
 }
 
@@ -206,7 +222,7 @@ export async function writeBuiltFile(doc, builtVersion) {
 // one, or comes from a newer Fairway.
 export async function readBuiltFile(bytes) {
  if (!isZip(bytes)) plainError('This is not a Fairway course file.');
- const parts = await readZip(bytes);
+ const parts = await readZip(bytes, {only: name => name !== BUILDER_PART});
  const raw = parts.get('course.json');
  if (!raw) plainError('This is not a Fairway course file.');
  let j;
@@ -227,6 +243,12 @@ export async function readBuiltFile(bytes) {
  const trees = new Float32Array(tb.buffer.slice(tb.byteOffset, tb.byteOffset + tb.length));
  return validateDoc({...j, type: 'built', land: {...j.land, heights}, patches, trees});
 }
+
+// The file the game keeps: the course, the builder's section left out. The same
+// bytes when there is none, so a file from before it keeps its hash.
+export const playableFile = bytes => zipWithout(bytes, BUILDER_PART);
+// The builder's section of a file (bytes), or null.
+export const builderPart = async bytes => (await readZip(bytes, {only: name => name === BUILDER_PART})).get(BUILDER_PART) ?? null;
 
 // Any course file's bytes: a built course's ZIP, or a seeded course's JSON
 // text (course-file.js, version 1), told apart by their first bytes.

@@ -1699,7 +1699,8 @@ folder dialog (Firefox, Safari), each download is an ordinary browser
 download. A ZIP brought in (a portal's download) is unpacked in memory. 3DEP is public domain and LiDAR HD Licence Ouverte; a course built
 from a survey carries the land, not the survey. Only when the player
 presses them; a key is kept in that browser's storage and sent only to its
-own provider; the picture is never saved in a course, and its credit is added
+own provider, never in a file; the picture is kept in the player's own saved
+files since 5 November 2026 (*Addendum, 5 November 2026*) and its credit is added
 to the course's credits. Everything else in both pages stays offline, and the
 smoke journeys still fail on any request but the stand-ins a journey names.
 **Owed before a
@@ -1713,6 +1714,28 @@ A built course file (`.fairway` version 2) is a ZIP written by hand
 code, and every part is checked against limits before use
 (`src/course-doc.js` `LIMITS`), so a file handed between players cannot ask
 the game for more memory than a 3 x 3 km course needs.
+
+## Addendum, 5 November 2026: pictures and map data in a saved course (branch, not released)
+
+The owner's decision, against the earlier line that no picture is ever saved: a
+course saved from the builder's editor keeps its pictures and OpenStreetMap's
+download in a builder's section (COURSE_BUILDER, *Course files*), so it reopens
+whole. What that changes here:
+
+- **Google and Bing pictures now sit on the player's disk.** The builder only
+  ever held them in memory; their terms limit keeping them as well as tracing
+  them (Google's section 3.2.3 is the one the builder quotes; the wording on
+  keeping should be read before a release). The player brings their own key and
+  is told at the key box; the owner accepted this as the player's decision and
+  account. Fairway ships no imagery and fetches none unasked.
+- **A saved .fairway can carry those pictures to someone else** if a player sends
+  it instead of **Save a copy to share**. The copy leaves them out, the game
+  keeps and exports only the course, and the builder's words say so on every
+  Save; nothing can stop a player sending the wrong file.
+- **OpenStreetMap's download in a file** stays under ODbL with the credit the
+  course already carries.
+- **The offline claim stands:** fetching remains only on the player's press, and
+  reopening a file makes no request. The file's API keys: none, by design.
 
 ## Addendum, 2 November 2026: Architect, Haunted Hollow, tournament week and the people removed (branch, not released)
 

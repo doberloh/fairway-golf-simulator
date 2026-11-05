@@ -790,6 +790,16 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
+- [ ] **Reopening a course with everything: play it by hand.** Driven in the
+  built builder on TPC Scottsdale with real data (the USGS picture, OpenStreetMap,
+  a par changed in 3D, saved, reopened, Back to 2D: all back, no errors), and the
+  file's game side by tests. Not seen: a Google or Bing picture, a picture file,
+  a hand-matched picture, a reopened file imported by hand in the game on a
+  phone. COURSE_BUILDER, *The builder's section*.
+- [ ] **A course file saved before 5 November 2026 from a survey in feet** comes
+  back on Back to 2D in the wrong place: its unit was not stored and it is read
+  as metres (draft-from-doc.js). None of the test courses is one; settle it by
+  telling feet from the EPSG code if a player's file turns up.
 - [ ] **Northwood's redwoods** on the Redwood landscape: with surveyed trees
   picked by height they fall to 17% from a 38% share, as its second growth is
   mostly under 21 m and the landscape's redwood runs 42-116 m. The numbers are
@@ -2426,6 +2436,20 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
+- [x] **A small shape can be moved when seen from afar** (5 November 2026, found
+  by the smoke's builder-tools). A bunker ten pixels across has all four anchors
+  within reach of its middle, so pressing it only ever turned it, in both
+  editors. A press now takes an anchor only when it is nearer that than the
+  middle (layer-ops.js `anchorHit`). While looking, a second fix: a quick drag
+  kept the first pointer position of each frame and dropped the last one waiting
+  at release, so it could land short of where it was let go.
+- [x] **A course reopens with everything** (the owner, 5 November 2026): a course
+  saved from the editor carries the door 2 session behind it (the survey's grids,
+  every surveyed tree, the trace, boundary and box, pictures, OpenStreetMap's
+  download, where it is), the game skips and drops that section, and Back to 2D
+  opens it. Save a copy to share leaves it out. Older files get their location
+  and trees back. The Trees choice emptying a reopened draft is fixed.
+  COURSE_BUILDER, *The builder's section*.
 - [x] **Surveyed trees pick their species by height** (the owner, 5 November
   2026). A survey's narrow or wide reading no longer steers the species, palms
   can be picked, and the landscape's shares stand among the species of the tree's

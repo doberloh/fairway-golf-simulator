@@ -18,7 +18,7 @@ import {TEE_COLORS} from '../course-plan.js';
 import {LAYER_ORDER} from './layers.js';
 import {regionOf} from '../regions.js';
 import {seasonPalette} from '../seasons.js';
-import {cornersOf} from './layer-ops.js';
+import {cornersOf, anchorHit} from './layer-ops.js';
 
 // The land's mesh: chunks of CHUNK samples a side, every `stride`-th sample of
 // the stored grid (1 m stored; a course past about 1 km a side drawn at 2 or
@@ -518,12 +518,12 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   // The anchor under a mouse event (within 11 pixels, PLACED), or -1.
   anchorAt(e) {
    if (!sel.anchors) return -1;
-   const b = renderer.domElement.getBoundingClientRect(), p = sel.anchors.geometry.attributes.position;
+   const b = renderer.domElement.getBoundingClientRect(), p = sel.anchors.geometry.attributes.position, corners = [];
    for (let k = 0; k < 4; k++) {
     project.fromBufferAttribute(p, k).project(camera);
-    if (Math.hypot(b.left + (project.x + 1) / 2 * b.width - e.clientX, b.top + (1 - project.y) / 2 * b.height - e.clientY) <= 11) return k;
+    corners.push([b.left + (project.x + 1) / 2 * b.width, b.top + (1 - project.y) / 2 * b.height]);
    }
-   return -1;
+   return anchorHit(corners, e.clientX, e.clientY, 11);
   },
   // A place on the ground as a point on the screen, in the mouse's own numbers.
   screenOf(x, z) {

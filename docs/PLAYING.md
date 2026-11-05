@@ -495,7 +495,7 @@ the file to anyone else who has Fairway. It opens on three doors.
      the easy choice: the portals' and USGS's tile downloads land there by
      themselves) or the builder asks the first time it downloads; the
      browser remembers it and may ask leave to use it again on a later
-     visit. **Load from the folder** lists the LIDAR files in it (and the
+     visit. **Load from the folder** lists the LIDAR files in it, each with its tick box and **Tick all** and **Untick all** above **Load the ticked** (and the
      folders one down), ticking those over the place you searched for;
      **Load the ticked** reads them. In other browsers each download is
      saved to the browser's download folder instead; bring them back with
@@ -528,8 +528,8 @@ the file to anyone else who has Fairway. It opens on three doors.
   2. **Land**: **Build the land**. It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it
      found.
-  3. **Trace**: first a picture to trace over (it is never saved in the
-     course):
+  3. **Trace**: first a picture to trace over (kept in your saved file, never
+     drawn in the game):
      - **Fetch imagery for this land**: free national aerial photographs
        where they cover the place -- USGS in the United States (coarse,
        about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
@@ -697,11 +697,26 @@ the file to anyone else who has Fairway. It opens on three doors.
 
 **Save, anywhere** (top right, or Ctrl+S): the editor saves the course as a
 .fairway file; door 1 saves the course as its settings; door 2 saves a
-**draft** (.fairway-draft) at any step -- the land, the trace's layers,
-trees and houses, the holes so far, the boundary, the name, and how each
-picture was lined up -- which **Open a course file** opens back at that step.
-A draft keeps the land, not the LIDAR files (bring them again only to build
-the land anew), and not the pictures (fetch or bring them again). Once
+**draft** (.fairway-draft) at any step -- the land and everything the survey
+read from it, the trace's layers, trees and houses, the holes so far, the
+boundary, the name, the pictures with their lining up, OpenStreetMap's data
+and where the course is -- which **Open a course file** opens back at that
+step. Neither keeps the LIDAR files themselves (bring them again only to build
+the land anew).
+
+**A real course saved from the editor keeps all of that too.** Reopen the
+.fairway and **Back to 2D** brings back your session as you left it, pictures,
+map data, Trees and Course choices and all, with what you changed in 3D. It
+makes the file bigger (TPC Scottsdale: 11.5 MB against 2.4). The game takes
+none of it: it reads and keeps only the course. A file saved before 5 November
+2026 has none of this; Back to 2D on one knows where the course is, so you can
+fetch the pictures and OpenStreetMap again.
+
+**Save a copy to share** (the editor's top bar) makes the file to give to someone:
+the course as the game plays it, without your pictures, the map data or the
+rest of your builder work. Use it for a course that went through door 2, above
+all when it holds Google or Bing pictures, which are yours to use on your own
+account and not to pass on. Once
 saved, the button says **Save again** and one click writes the same file;
 rename the course and Save asks for a new file. (Chrome and Edge write to
 the file you chose; other browsers download a new copy each time.)

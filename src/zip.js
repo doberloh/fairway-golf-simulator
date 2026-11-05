@@ -88,7 +88,9 @@ export const isZip = bytes => bytes?.length >= 4 && bytes[0] === 0x50 && bytes[1
 
 // A ZIP's parts: Map of name -> Uint8Array. Refused in plain words when it is
 // damaged, uses a method other than stored or deflated, or fails its CRC.
-export async function readZip(bytes) {
+// `only`: a test of a part's name; a part it turns down is not unpacked, so a
+// course file's builder section costs the game nothing but the file's length.
+export async function readZip(bytes, {only = null} = {}) {
  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
  let e = -1;
  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
@@ -102,6 +104,7 @@ export async function readZip(bytes) {
   const nameLen = v.getUint16(p + 28, true), extraLen = v.getUint16(p + 30, true), commentLen = v.getUint16(p + 32, true), local = v.getUint32(p + 42, true);
   const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
   p += 46 + nameLen + extraLen + commentLen;
+  if (only && !only(name)) continue;
   if (v.getUint32(local, true) !== 0x04034b50) throw Error(`This file is damaged: ${name} cannot be found.`);
   const start = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true);
   const body = bytes.subarray(start, start + size);
@@ -115,5 +118,38 @@ export async function readZip(bytes) {
   if (raw.length !== rawSize || crc32(raw) !== crc) throw Error(`This file is damaged: ${name} does not check out.`);
   out.set(name, raw);
  }
+ return out;
+}
+
+// The same ZIP without the part `name`, its other parts copied as they are.
+// The bytes themselves when it has no such part. A part written last leaves
+// exactly the bytes a ZIP without it would have been, so a built course's hash
+// does not depend on it (a course's identity is its file's hash).
+export function zipWithout(bytes, name) {
+ const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), dec = new TextDecoder();
+ let e = -1;
+ for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+ if (e < 0) throw Error('This file is damaged: it has no ZIP directory.');
+ const count = v.getUint16(e + 10, true), kept = [];
+ let p = v.getUint32(e + 16, true), dropped = false;
+ for (let k = 0; k < count; k++) {
+  if (p + 46 > bytes.length || v.getUint32(p, true) !== 0x02014b50) throw Error('This file is damaged: its ZIP directory is broken.');
+  const nameLen = v.getUint16(p + 28, true), extraLen = v.getUint16(p + 30, true), commentLen = v.getUint16(p + 32, true), size = 46 + nameLen + extraLen + commentLen;
+  const own = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen)), local = v.getUint32(p + 42, true);
+  if (own === name) dropped = true;
+  else kept.push({central: bytes.subarray(p, p + size), local, length: 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true) + v.getUint32(p + 20, true)});
+  p += size;
+ }
+ if (!dropped) return bytes;
+ const bodies = kept.reduce((s, q) => s + q.length, 0), cenSize = kept.reduce((s, q) => s + q.central.length, 0);
+ const out = new Uint8Array(bodies + cenSize + 22), w = new DataView(out.buffer);
+ let at = 0, cen = bodies;
+ for (const q of kept) {
+  out.set(bytes.subarray(q.local, q.local + q.length), at);
+  out.set(q.central, cen); w.setUint32(cen + 42, at, true);
+  at += q.length; cen += q.central.length;
+ }
+ w.setUint32(cen, 0x06054b50, true); w.setUint16(cen + 8, kept.length, true); w.setUint16(cen + 10, kept.length, true);
+ w.setUint32(cen + 12, cenSize, true); w.setUint32(cen + 16, bodies, true);
  return out;
 }

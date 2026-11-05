@@ -30,6 +30,18 @@ export function extrapolateCells(from, {nx, nz, cell}, width, under, put) {
 
 // Where a selected shape's anchors stand: the corners of its box, a little
 // outside it (PLACED: 2.5 m, or a tenth of its size), in either editor.
+// WHICH ANCHOR A PRESS TAKES, in both editors: `corners` on the screen, the
+// press at (x, y), `reach` in the same units. The nearest within reach, but never
+// one the press is farther from than from the shape's middle: seen from afar a
+// bunker is ten pixels across, all four anchors lie within reach of its centre,
+// and a press there only ever turned it (the smoke's builder-tools, 5 November
+// 2026). -1: not an anchor, so a press inside the outline moves it.
+export function anchorHit(corners, x, y, reach) {
+ const mx = corners.reduce((s, c) => s + c[0], 0) / corners.length, my = corners.reduce((s, c) => s + c[1], 0) / corners.length, toMiddle = Math.hypot(x - mx, y - my);
+ let best = -1, near = reach;
+ corners.forEach(([cx, cy], k) => { const d = Math.hypot(x - cx, y - cy); if (d <= near && d < toMiddle) { near = d; best = k; } });
+ return best;
+}
 export function cornersOf(ring) {
  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
  for (const [x, z] of ring) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }

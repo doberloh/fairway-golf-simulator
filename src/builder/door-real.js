@@ -28,7 +28,7 @@ import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
-import {cornersOf} from './layer-ops.js';
+import {cornersOf, anchorHit} from './layer-ops.js';
 import {markNear, moveMark} from './hole-marks.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
@@ -42,7 +42,8 @@ import {osmCourses, osmHoles, shiftHoles, fitHoles} from './osm-course.js';
 import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
-import {PROVIDERS, providersAt, mosaic} from './imagery.js';
+import {PROVIDERS, providersAt, mosaic, tilePixel} from './imagery.js';
+import {packPictures, unpackPictures} from './picture-file.js';
 import {sourcesAt, squareAround, searchLidar, downloadLidar, isEptZip, eptZipSource, gridByName, coverFor, coverTogether, tilesOf} from './lidar-search.js';
 import {coverageWords, percent} from './lidar-coverage.js';
 import {canPick, recallFolder, pickFolder, allowed, fileIn, bytesIn, saveIn, saveAsDownload, listIn, overPlace, removeIn} from './lidar-folder.js';
@@ -85,6 +86,12 @@ const KEYS = 'fairway-builder-imagery-keys';
 // across door 2's steps, the land rebuilt and door 2 opened again.
 const IMAGERY = new Map();
 const BRUSHES = ['brush', 'erase', 'eraseAll', 'smooth', 'treeErase', 'homeErase', 'cover', 'coverErase', 'treeBrush'];
+
+// A saved draft, its pictures unpacked first (picture-file.js).
+export async function openSaved(draft) {
+ const pics = await unpackPictures(draft.pics ?? [], {onStep: label => setBusy(`Opening the pictures… ${label}`)});
+ return open({...draft, pics});
+}
 
 export function open(draft = null) {
  setTitle('Real life course');
@@ -355,7 +362,7 @@ export function open(draft = null) {
    // following the pointer; what lay under it shows while it is carried.
    if (t === 'select') {
     if (type === 'down') {
-     const c = st.chosen, near = c ? c.corners.findIndex(([x, z]) => { const [ax, ay] = plan.toScreen(x, z), [bx, by] = plan.toScreen(p.x, p.z); return Math.hypot(ax - bx, ay - by) <= 11 * plan.px; }) : -1;
+     const c = st.chosen, near = c ? anchorHit(c.corners.map(([x, z]) => plan.toScreen(x, z)), ...plan.toScreen(p.x, p.z), 11 * plan.px) : -1;
      if (c && (near >= 0 || onChosen(p))) st.carry = {turn: near >= 0, from: p, a0: Math.atan2(p.x - c.mid.x, p.z - c.mid.z), dx: 0, dz: 0, angle: 0, hold: null};
      else { chooseShape(m.pickAt({x: p.x, z: p.z, kind: st.kind})); if (!st.chosen) say('Nothing to select there: only rough under the pointer.'); }
     }
@@ -630,6 +637,9 @@ export function open(draft = null) {
    folderList.replaceChildren(el('small', {}, st.findBox ? 'Ticked: those over the place searched for.' : 'Tick the files to load.'),
     el('ul', {class: 'cb-folderfiles', style: 'list-style:none;padding:0;margin:4px 0'}, rows.map((r, q) => el('li', {}, el('label', {style: 'display:flex;gap:6px;align-items:center;cursor:pointer'}, ticks[q],
      el('span', {}, `${r.e.path} (${(r.e.file.size / 1e6).toFixed(0)} MB)${r.over === true ? ' -- over this place' : r.over === false ? ' -- elsewhere' : ''}`))))),
+    rows.length > 1 ? el('div', {class: 'cb-btns'},
+     el('button', {class: 'cb-btn', type: 'button', 'data-folder': 'all', title: 'Tick every file in the list', onclick: () => ticks.forEach(t => { t.checked = true; })}, 'Tick all'),
+     el('button', {class: 'cb-btn', type: 'button', 'data-folder': 'none', title: 'Untick every file in the list', onclick: () => ticks.forEach(t => { t.checked = false; })}, 'Untick all')) : null,
     el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-folder': 'read', title: 'Read the ticked files (and any .prj or .hdr beside them)', onclick: async () => {
      const pick = rows.filter((r, q) => ticks[q].checked).map(r => r.e);
      if (!pick.length) return say('Tick a file first.', true);
@@ -926,7 +936,7 @@ export function open(draft = null) {
   const pct = (key, after) => el('input', {type: 'range', min: 0, max: 100, value: Math.round(st[key] * 100), 'data-alpha': key, oninput: e => { st[key] = +e.target.value / 100; viewLayers(); after?.(); }});
   return [
    el('div', {class: 'cb-field'}, el('label', {}, 'A picture to trace over'),
-    el('small', {}, 'Fetched for this land and placed by itself, or a file. If it sits off, unlock it and drag it into line with the LIDAR, then lock it. It is never saved in the course.'),
+    el('small', {}, 'Fetched for this land and placed by itself, or a file. If it sits off, unlock it and drag it into line with the LIDAR, then lock it. It is kept in your saved file, never drawn in the game, and left out of a copy made to share.'),
     prov, keyIn, howTo, terms,
     el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
@@ -954,8 +964,10 @@ export function open(draft = null) {
     st.osm?.courses?.length > 1 ? el('select', {class: 'cb-osmcourse', style: 'width:100%', title: 'Which of the club\'s courses to build: its holes and its boundary', onchange: e => pickCourse(e.target.value)},
      st.osm.courses.map(c => el('option', {value: c.id, selected: c.id === st.osm.course}, `${c.name} (${c.holes} hole${c.holes === 1 ? '' : 's'} numbered)`))) : null,
     // WHOSE TREES (osm.js mergeTrees; the owner, 1 November 2026).
-    st.osm ? el('small', {}, 'Trees') : null,
-    st.osm ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
+    // Not on a draft from before version 3, which has no map trees to choose:
+    // the choice would have dropped them.
+    st.osm?.osmTrees ? el('small', {}, 'Trees') : null,
+    st.osm?.osmTrees ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
      [['merge', 'Both: the LIDAR\'s, and OpenStreetMap\'s where it has none'], ['lidar', 'The LIDAR\'s only'], ['osm', 'OpenStreetMap\'s only']].map(([v, t]) => el('option', {value: v, selected: v === (st.treesFrom ?? 'merge')}, t))) : null,
     st.osm ? el('div', {class: 'cb-btns'},
      el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('picture')}, 'Refine with the picture'),
@@ -1028,7 +1040,7 @@ export function open(draft = null) {
    const cacheKey = `${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`, kept = IMAGERY.get(cacheKey);
    const pic = kept ?? await mosaic(await p.start(apiKey), box, {onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
    IMAGERY.set(cacheKey, pic);
-   st.pics = st.pics.filter(q => q.group !== key).concat([{group: key, label: p.name, pic, provider: key, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}]);
+   st.pics = st.pics.filter(q => q.group !== key).concat([{group: key, label: p.name, pic, provider: key, place: {kind: 'tiles', ...pic.tile}, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}]);
    if (!st.credits.includes(pic.credit)) st.credits.push(pic.credit);
    showPic(key, {offset: {x: 0, z: 0}});
    say(`${p.name}: ${pic.width} x ${pic.height} pixels at zoom ${pic.z}${pic.missing ? `, ${pic.missing} tiles missing` : ''}, ${kept ? 'kept from earlier -- nothing downloaded' : 'sized and placed by position'}. If it sits off, unlock it and drag it into line with the LIDAR.`);
@@ -1092,7 +1104,7 @@ export function open(draft = null) {
    }
    const conv = pic.x0 != null && landCrs ? converter(landCrs, pic.crs ?? landCrs) : null;
    if (conv) {
-    st.pics.push({group: 'files', label: 'Picture files', file: main.name, pic, toPixel: (x, z) => { const m = st.gridder.map(x, z), q = conv(m.x, m.y); return [(q.x - pic.x0) / pic.dx, (q.y - pic.y0) / pic.dy]; }});
+    st.pics.push({group: 'files', label: 'Picture files', file: main.name, pic, place: {kind: 'map', x0: pic.x0, y0: pic.y0, dx: pic.dx, dy: pic.dy, crs: pic.crs ?? null}, toPixel: (x, z) => { const m = st.gridder.map(x, z), q = conv(m.x, m.y); return [(q.x - pic.x0) / pic.dx, (q.y - pic.y0) / pic.dy]; }});
     showPic('files');
     say(`Placed by its own position: the pictures cover ${(100 * st.picture.has.reduce((s, v) => s + v, 0) / st.picture.has.length).toFixed(0)}% of the land. Add another tile to fill the rest.`);
    } else {
@@ -1111,7 +1123,7 @@ export function open(draft = null) {
    if (st.align?.waiting !== 'picture') return;
    const b = pc.getBoundingClientRect();
    st.align.pairs.push({local: st.align.local, pixel: {col: (e.clientX - b.left) / b.width * pic.width, row: (e.clientY - b.top) / b.height * pic.height}}); st.align.waiting = 'land';
-   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = st.pics.filter(q => q.group !== 'matched').concat([{group: 'matched', label: 'Matched by points', pic, toPixel: fit.map}]); showPic('matched', {offset: {x: 0, z: 0}, render: false}); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or unlock it and drag it.`); } catch (er) { say(er.message, true); } }
+   if (st.align.pairs.length >= 3) { try { const fit = affineFromPairs(st.align.pairs); st.pics = st.pics.filter(q => q.group !== 'matched').concat([{group: 'matched', label: 'Matched by points', pic, place: {kind: 'pairs', pairs: st.align.pairs.map(q => ({...q}))}, toPixel: fit.map}]); showPic('matched', {offset: {x: 0, z: 0}, render: false}); say(`Lined up from ${st.align.pairs.length} points: the worst ${fit.worst.toFixed(1)} m off. Add points, or unlock it and drag it.`); } catch (er) { say(er.message, true); } }
    else say(`${st.align.pairs.length} of 3: click the next point on the land.`);
    plan.draw();
   });
@@ -1151,7 +1163,7 @@ export function open(draft = null) {
    st.model.state.trees = mergeTrees(st.trees, osmTrees, st.treesFrom ?? 'merge');
    st.model.state.undo.length = 0;
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
-   st.osm = {codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
+   st.osm = {raw: json, codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
     courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
    await stage('Finding the holes…', .85);
    const n = osmCourseHoles();
@@ -1163,7 +1175,7 @@ export function open(draft = null) {
   finally { clearInterval(ticking); setBusy(''); }
  }
  function treesFrom(how) {
-  st.treesFrom = how; if (!st.osm) return;
+  st.treesFrom = how; if (!st.osm?.osmTrees) return;
   const list = mergeTrees(st.trees, st.osm.osmTrees ?? [], how), was = st.model?.state.trees.length ?? 0;
   st.osm.trees = list;
   if (st.model) { st.model.setTrees(list); plan.draw(); refreshCount(); }
@@ -1174,8 +1186,8 @@ export function open(draft = null) {
  // map's shift when it was refined, then put on the trace's greens and tees.
  // Returns how many holes. Replaces the marks only when the map numbers some.
  function osmCourseHoles() {
-  // A draft keeps the map's trace, not its features (draft.js): its holes
-  // stay as marked.
+  // A draft from before version 3 kept the map's trace, not its features
+  // (draft.js): its holes stay as marked.
   const o = st.osm; if (!o?.feats) return 0;
   const c = o.courses.find(q => q.id === o.course), sh = o.shift ?? {x: 0, z: 0};
   const ring = c?.rings[0] ?? o.edge;
@@ -1307,7 +1319,7 @@ export function open(draft = null) {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course, painted'),
    el('small', {}, 'Every surface as the course will have it -- the outlines smoothed, the specks gone -- in the landscape\'s colours, with the trees and the holes. Go back to any step to change it.'),
    card, el('small', {}, 'Checks'), found,
-   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real', back: remount})}, 'Open in the editor'))];
+   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real', back: remount, work: {draft: whole}})}, 'Open in the editor'))];
  }
  // The course made (docFromLand) and drawn from the world the game will
  // build from it, so what is shown is what will be played.
@@ -1316,7 +1328,7 @@ export function open(draft = null) {
   setBusy('Painting the course…'); await frame();
   try {
    const doc = st.doc = validateDoc(docFromLand({land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
-    source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
+    source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
    const {nx, nz, cell, halfX, halfZ, ground: g} = st.land, N = nx * nz;
@@ -1340,10 +1352,13 @@ export function open(draft = null) {
  // saved from the editor. Pictures are not in it, but each one's lining up is.
  const snapshot = () => ({step: st.step, name: st.name, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box,
   sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
-  view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale},
+  view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale, treesFrom: st.treesFrom},
+  geo: st.geo, picShow: st.picShow,
   picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
   trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
- const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: () => writeDraft(snapshot()),
+ // Everything, the pictures packed as a file holds them (picture-file.js).
+ const whole = async () => ({...snapshot(), pics: await packPictures(st.pics, {onStep: label => setBusy(`Saving the pictures… ${label}`)})});
+ const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: async () => writeDraft(await whole()),
   said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
  setSaver(saver);
  // BACK FROM THE 3D EDITOR (the owner, 1 November 2026: "add a button to go
@@ -1379,14 +1394,16 @@ export function open(draft = null) {
  function restore(d) {
   // The LIDAR files are not in a draft: stand-ins carry their names and map
   // grid, so the place is known (imagery, OpenStreetMap); building the land
-  // anew needs the files again.
+  // anew needs the files again. Everything else comes back as it was left.
   Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box,
-   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], ...(d.view ?? {})});
+   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], geo: d.geo ?? null, ...(d.view ?? {})});
+  let lostPics = 0;
   if (d.land) {
    const L = d.land, u = L.unit ?? {h: 1, v: 1};
    st.land = L;
    st.gridder = createGridder({box: {x0: L.center.x - L.halfX / u.h, x1: L.center.x + L.halfX / u.h, y0: L.center.y - L.halfZ / u.h, y1: L.center.y + L.halfZ / u.h}, cell: L.cell, unit: u});
-   if (d.osm?.codes) st.osm = d.osm;
+   if (d.osm?.codes) { st.osm = d.osm; backOsm(); }
+   for (const p of d.pics ?? []) { const live = !p.failed && livePicture(p); if (live) st.pics.push(live); else lostPics++; }
    if (d.trace) {
     st.model = createTrace(st.land, {rocks: st.rocks, bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? [], trees: d.trace.trees, homes: d.trace.homes});
     const Ls = st.model.state.layers;
@@ -1395,11 +1412,35 @@ export function open(draft = null) {
     Ls.recompose();
    }
    paintRelief();
+   if (d.picShow === 'lidar' || st.pics.some(p => p.group === d.picShow)) { st.picShow = d.picShow; st.offset = st.picOffsets[d.picShow] ?? {x: 0, z: 0}; relay(); }
   }
   setTitle('Real life course');
   go(Math.min(d.step ?? 0, st.land ? (st.model ? 5 : 2) : 0));
   if (st.step === 5 && !can(5)) go(st.model ? 3 : 2);
-  say(`Opened the draft "${d.name}" at step ${st.step + 1}. ${st.land ? 'The land and the trace are as saved; pictures are fetched or brought again (each keeps its lining up).' : 'Bring the LIDAR files again to build the land.'}`);
+  say(`Opened "${d.name}" at step ${st.step + 1}. ${!st.land ? 'Bring the LIDAR files again to build the land.' : st.pics.length || st.osm ? 'The land, the trace, the map data and the pictures are as saved.' : 'The land and the trace are as saved.'}${lostPics ? ` ${lostPics} picture${lostPics === 1 ? '' : 's'} could not be read: fetch or bring ${lostPics === 1 ? 'it' : 'them'} again.` : ''}`);
+ }
+ // The map's features again from its download as it came (draft.js): what the
+ // course picker, the boundary and the holes are made from.
+ function backOsm() {
+  const o = st.osm, toLocal = o.raw && localOfLonLat();
+  if (!toLocal) return;
+  const json = JSON.parse(o.raw), feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats);
+  Object.assign(o, {feats, edge: osmBoundary(json, toLocal), courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), shift: o.shift ?? {x: 0, z: 0}});
+ }
+ // A saved picture placed on this land again (picture-file.js `place`); null
+ // when it cannot be, as a tile mosaic on land that no longer says where it is.
+ function livePicture(p) {
+  const {pic, place} = p, crs = crsOfSources(st.sources);
+  if (place?.kind === 'tiles') {
+   const ll = lonLatOfLocal(), at = tilePixel(place);
+   return ll && {...p, pic: {...pic, toPixel: at}, toPixel: (x, z) => { const g = ll(x, z); return at(g.lon, g.lat); }};
+  }
+  if (place?.kind === 'map' && crs) {
+   const conv = converter(crs, place.crs ?? crs);
+   return {...p, pic: {...pic, x0: place.x0, y0: place.y0, dx: place.dx, dy: place.dy, crs: place.crs}, toPixel: (x, z) => { const m = st.gridder.map(x, z), q = conv(m.x, m.y); return [(q.x - place.x0) / place.dx, (q.y - place.y0) / place.dy]; }};
+  }
+  if (place?.kind === 'pairs') return {...p, toPixel: affineFromPairs(place.pairs).map};
+  return null;
  }
 }
 let opened = 0;   // each door 2 opened is its own piece of work for Save
