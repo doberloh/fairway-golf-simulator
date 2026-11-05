@@ -90,6 +90,26 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   selectors still show the older ground, bowls and all, and generator 87's
   eight new grounds. To do: biome-shots `take` on the picked views, `encode`.
 
+- [ ] **Left when the owner cleared the goal, 4 November 2026** (an audit of the
+  goal's list against the study's catalogue, after the owner ended the goal):
+  - **Two catalogue models never built:** cenizo (Hill Country, Chihuahuan) and
+    Chinese tallow (Gulf Coast). Adding them moves planting: a
+    `GENERATOR_VERSION` step.
+  - **Eleven older trees have fewer than fifteen logged rounds** (reworked for
+    the silhouette rule, not new models; 7-10 rounds each): alder, aspen, black
+    oak, cottonwood, hala, maple, mesquite, oak, palo verde, sugar maple,
+    tanoak. The other 205 logged models have fifteen or more, each with its
+    last side-by-side.
+  - **Medium on the software renderer crashes its page again**
+    (tools/software-crash.mjs, this build; Low runs). It passed in the full
+    profile at 4ee6906, so one of the two commits since, or chance, as it came
+    and went on 3 November. A no-card machine starts on Low. A lower resolution
+    for such a machine (`pixelRatio` .4) was tried and backed out unmeasured, as
+    the crash stopped the profile.
+  - **Sidewalks are out** (the owner, 4 November 2026: "Don't worry about
+    sidewalks. Remove that from the goal and spec"): removed from PLAN.md,
+    GOAL.md, the catalogue and the study's pages. Never built.
+
 **The owner's additions of 3 November 2026** (each part of the goal now):
 
 - [x] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
