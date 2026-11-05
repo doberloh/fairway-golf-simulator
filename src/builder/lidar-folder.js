@@ -57,6 +57,9 @@ export async function saveIn(dir, name, bytes) {
  const w = await (await dir.getFileHandle(name, {create: true})).createWritable();
  try { await w.write(bytes); await w.close(); } catch (e) { await w.abort?.(); throw e; }
 }
+// A file taken out of the folder: only ever one the builder made, whose every
+// piece is in the file that replaced it (door-real.js keepAll checks that first).
+export async function removeIn(dir, name) { try { await dir.removeEntry(name); return true; } catch { return false; } }
 // Where no folder can be picked: the browser saves it, into its downloads.
 export function saveAsDownload(name, bytes) {
  const url = URL.createObjectURL(new Blob([bytes])), a = document.createElement('a');

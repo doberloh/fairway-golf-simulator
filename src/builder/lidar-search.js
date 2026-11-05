@@ -21,6 +21,7 @@
 import {nodesFor, nodeBox, lonLatToMerc, mercToLonLat} from '../lidar/ept.js';
 import {toUtm, zoneOf} from '../lidar/geo.js';
 import {parseHeader, readPoints} from '../lidar/las.js';
+import {boxFrom, boxOfGeometry, coverageOf, overlaps, polygonsOf, squareOfName, unionBox} from './lidar-coverage.js';
 
 const EPT = 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public';
 // EVERY STATE'S OWN SURVEY (the owner, 1 November 2026: "add sources for each
@@ -108,15 +109,16 @@ export async function searchLidar(key, box, {get = fetch} = {}) {
 async function searchUsgs(box, get) {
  const url = `https://tnmaccess.nationalmap.gov/api/v1/products?datasets=${encodeURIComponent('Lidar Point Cloud (LPC)')}&bbox=${[box.lon0, box.lat0, box.lon1, box.lat1].map(v => v.toFixed(5)).join(',')}&prodFormats=LAZ&max=200&outputFormat=JSON`;
  const r = await get(url); if (!r.ok) throw Error(`The National Map did not answer (${r.status}).`);
- const items = (await r.json()).items || [];
+ const answer = await r.json(), items = answer.items || [], cut = (answer.total ?? 0) > items.length;
  // A survey is a work unit: the folder after the project in each tile's address,
  // which is the name of its Entwine copy.
  const units = new Map();
  for (const it of items) {
   const u = it.downloadLazURL || it.downloadURL || '', m = u.match(/\/Projects\/([^/]+)\/([^/]+)\/LAZ\//), unit = m?.[2] ?? m?.[1];
   if (!unit) continue;
-  const g = units.get(unit) ?? {source: 'usgs', id: unit, project: m[1], title: unit.replace(/_/g, ' '), date: it.publicationDate ?? '', tiles: 0, bytes: 0, ept: null, tileUrls: []};
-  g.tiles++; g.bytes += it.sizeInBytes || 0; g.tileUrls.push({url: u, name: u.split('/').pop(), bytes: it.sizeInBytes || 0}); if ((it.publicationDate ?? '') > g.date) g.date = it.publicationDate; units.set(unit, g);
+  const g = units.get(unit) ?? {source: 'usgs', id: unit, project: m[1], title: unit.replace(/_/g, ' '), date: it.publicationDate ?? '', tiles: 0, bytes: 0, ept: null, tileUrls: [], cut};
+  const b = it.boundingBox;
+  g.tiles++; g.bytes += it.sizeInBytes || 0; g.tileUrls.push({url: u, name: u.split('/').pop(), bytes: it.sizeInBytes || 0, box: b ? {lon0: b.minX, lat0: b.minY, lon1: b.maxX, lat1: b.maxY} : null}); if ((it.publicationDate ?? '') > g.date) g.date = it.publicationDate; units.set(unit, g);
  }
  // Which have an Entwine copy, and which copies the National Map did not
  // list: by the copies' own boundaries. The copy is often named for the work
@@ -126,9 +128,9 @@ async function searchUsgs(box, get) {
  const copies = await entwineAt(box, get).catch(() => []), used = new Set();
  for (const g of units.values()) {
   const c = copies.find(x => x.name === g.id) ?? copies.find(x => x.name.includes(g.id.replace(/_[A-Z]?\d+$/, '')) && !used.has(x.name));
-  if (c) { g.ept = c.url; g.points = c.count; used.add(c.name); }
+  if (c) { g.ept = c.url; g.points = c.count; g.polys = c.polys; used.add(c.name); }
  }
- const extra = copies.filter(c => !used.has(c.name)).map(c => ({source: 'usgs', id: c.name, title: c.name.replace(/_/g, ' '), date: (c.name.match(/(19|20)\d\d/g) ?? []).at(-1) ?? '', tiles: 0, points: c.count, ept: c.url, tileUrls: []}));
+ const extra = copies.filter(c => !used.has(c.name)).map(c => ({source: 'usgs', id: c.name, title: c.name.replace(/_/g, ' '), date: (c.name.match(/(19|20)\d\d/g) ?? []).at(-1) ?? '', tiles: 0, points: c.count, ept: c.url, polys: c.polys, tileUrls: []}));
  return [...units.values(), ...extra].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 // USGS's Entwine copies over a box, from their published boundaries (Hobu's
@@ -139,29 +141,49 @@ export async function entwineAt(box, get = fetch) {
  entwineIndex ??= (async () => { const r = await get(ENTWINE_INDEX); if (!r.ok) throw Error(`The Entwine index did not answer (${r.status}).`); return (await r.json()).features; })().catch(e => { entwineIndex = null; throw e; });
  const feats = await entwineIndex, lon = (box.lon0 + box.lon1) / 2, lat = (box.lat0 + box.lat1) / 2;
  const inRing = r => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) c = !c; } return c; };
- return feats.filter(f => { const g = f.geometry; if (!g) return false; const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []; return polys.some(p => inRing(p[0])); }).map(f => f.properties);
+ return feats.filter(f => { const g = f.geometry; if (!g) return false; const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []; return polys.some(p => inRing(p[0])); }).map(f => ({...f.properties, polys: polygonsOf(f.geometry)}));
 }
 export const forgetEntwineIndex = () => { entwineIndex = null; };
 async function searchIgn(box, get) {
  const url = `https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=IGNF_LIDAR-HD_METADONNEE:metadata&OUTPUTFORMAT=application/json&COUNT=200&BBOX=${[box.lat0, box.lon0, box.lat1, box.lon1].map(v => v.toFixed(5)).join(',')},urn:ogc:def:crs:EPSG::4326`;
  const r = await get(url); if (!r.ok) throw Error(`IGN did not answer (${r.status}).`);
- const tiles = ((await r.json()).features || []).map(f => f.properties).filter(p => p?.url_npl);
+ const tiles = ((await r.json()).features || []).filter(f => f.properties?.url_npl);
  if (!tiles.length) return [];
  const byMission = new Map();
- for (const p of tiles) { const g = byMission.get(p.code_mission) ?? {source: 'ign', id: p.code_mission, title: `LiDAR HD ${p.code_mission}`, date: String(p.date_fin_acquisition ?? '').slice(0, 10), tiles: 0, points: 0, urls: []}; g.tiles++; g.points += +p.nombre_points || 0; g.urls.push(p.url_npl.replace(/^http:/, 'https:')); byMission.set(p.code_mission, g); }
+ for (const f of tiles) { const p = f.properties, g = byMission.get(p.code_mission) ?? {source: 'ign', id: p.code_mission, title: `LiDAR HD ${p.code_mission}`, date: String(p.date_fin_acquisition ?? '').slice(0, 10), tiles: 0, points: 0, urls: [], boxes: []}; g.tiles++; g.points += +p.nombre_points || 0; g.urls.push(p.url_npl.replace(/^http:/, 'https:')); g.boxes.push(boxOfGeometry(f.geometry)); byMission.set(p.code_mission, g); }
  return [...byMission.values()];
 }
+
+// ---- what is there: a survey's tiles, however its source lists them, and how
+// much of the square it and the folder cover.
+export function tilesOf(found) {
+ if (found.tileUrls?.length) return found.tileUrls;
+ return (found.urls ?? []).map((url, n) => ({url, name: url.split('/').pop(), bytes: 0, box: found.boxes?.[n] ?? null}));
+}
+// `saved`: Map file name -> its size, from the LIDAR folder (empty when none is
+// open yet). A tile counts as saved whole, or not at all; a kept square of this
+// survey counts over its own box.
+export function coverFor(found, box, saved = new Map()) {
+ const tiles = tilesOf(found), isSaved = t => saved.has(t.name) && (!t.bytes || saved.get(t.name) === t.bytes), have = tiles.filter(isSaved);
+ const squares = [...saved.keys()].map(squareOfName).filter(q => q?.id === found.id).map(q => q.box);
+ const cover = coverageOf(box, {boxes: tiles.map(t => t.box).filter(Boolean), polys: found.polys ?? [], held: [...have.map(t => t.box).filter(Boolean), ...squares]});
+ return {...cover, tiles: tiles.length, tilesSaved: have.length, known: tiles.some(t => t.box) || !!found.polys?.length, cut: !!found.cut};
+}
+// Every survey found, together: can the square be covered at all?
+export const coverTogether = (founds, box) => coverageOf(box, {boxes: founds.flatMap(f => tilesOf(f).map(t => t.box).filter(Boolean)), polys: founds.flatMap(f => f.polys ?? [])});
 
 // ---- downloading: a LIDAR source as door 2 reads one (formats.js openSource
 // shape: {kind: 'points', form, name, crs, bounds, count, each}).
 // `kept(name)`: the bytes of a file already in the player's LIDAR folder, or
-// null -- what is there is read, not downloaded again. A source read from
-// there says `kept: true`; one downloaded carries `keep` (below).
-export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}, kept = async () => null} = {}) {
+// null -- what is there is read, not downloaded again. `list()`: the names in
+// that folder, so a square can find the pieces its neighbours already hold. A
+// source read from there says `kept: true`; one downloaded carries `keep`.
+export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}, kept = async () => null, list = async () => []} = {}) {
  if (found.source === 'usgs') {
-  const name = squareName(found, box), have = await kept(name);
-  if (have) { const {readZip} = await import('../zip.js'); return [{...eptZipSource(await readZip(have), lazModule), kept: true, keptAs: name}]; }
-  return downloadEpt(found, box, {get, lazModule, onProgress});
+  const held = await heldPieces(found, box, {kept, list}), name = squareName(found, box);
+  const exact = held.squares.find(s => squareName(found, s.box) === name);
+  if (exact && exact.keys.every(k => held.pieces.has(k))) return [{...eptSource({...held.head, box, count: exact.count}, exact.keys.map(k => held.pieces.get(k)), lazModule), kept: true, keptAs: held.from[0]}];
+  return downloadEpt(found, box, {get, lazModule, onProgress, held});
  }
  if (found.source === 'ign' || found.source === 'swisstopo') {
   const [{openSource}, {readZip}] = await Promise.all([import('../lidar/formats.js'), import('../zip.js')]), out = [], who = found.source === 'ign' ? 'IGN' : 'swisstopo';
@@ -189,16 +211,38 @@ async function searchSwisstopo(box, get) {
  for (const f of (await r.json()).features || []) {
   const year = (f.id.match(/_([0-9]{4})_/) || [])[1] ?? String(f.properties?.datetime ?? '').slice(0, 4), a = Object.values(f.assets || {}).find(x => /[.]las[.]zip$|[.]laz$/i.test(x.href));
   if (!a) continue;
-  const g = byYear.get(year) ?? {source: 'swisstopo', id: `swisssurface3d-${year}`, title: `swissSURFACE3D ${year}`, date: year, tiles: 0, urls: []};
-  g.tiles++; g.urls.push(a.href); byYear.set(year, g);
+  const g = byYear.get(year) ?? {source: 'swisstopo', id: `swisssurface3d-${year}`, title: `swissSURFACE3D ${year}`, date: year, tiles: 0, urls: [], boxes: []};
+  g.tiles++; g.urls.push(a.href); g.boxes.push(f.bbox?.length === 4 ? boxFrom(f.bbox) : null); byYear.set(year, g);
  }
  return [...byYear.values()].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
+// EVERYTHING ALREADY SAVED OF THIS SURVEY OVER THIS SQUARE (the owner, 5 November
+// 2026: "the builder should notice your previously downloaded tiles and only
+// download whats needed, then combine them"): the pieces of every kept square of
+// the survey that touches it, whatever its middle or size. A file from before
+// this holds one square, with no list of them.
+async function heldPieces(found, box, {kept, list}) {
+ const self = squareName(found, box), names = (await list()).filter(n => { const q = squareOfName(n); return q?.id === found.id && overlaps(q.box, box); });
+ if (!names.includes(self)) names.push(self);
+ const out = {pieces: new Map(), squares: [], from: [], head: null, counted: 0};
+ for (const n of names) {
+  const bytes = await kept(n); if (!bytes) continue;
+  const {readZip} = await import('../zip.js'), parts = await readZip(bytes); if (!parts.has(EPT_META)) continue;
+  const meta = JSON.parse(new TextDecoder().decode(parts.get(EPT_META))), keys = [];
+  for (const [p, b] of parts) if (p.endsWith('.laz')) { const k = p.replace(/^ept-data\//, '').replace(/\.laz$/, ''); keys.push(k); out.pieces.set(k, b); }
+  out.squares.push(...(meta.squares ?? [{box: meta.box, keys, count: meta.count}]));
+  out.head ??= meta; out.from.push(n); out.counted += meta.count;
+ }
+ return out;
+}
 // The Entwine pieces over the square, their points carried from Web Mercator
 // to UTM (the square's middle's zone, NAD83(2011): what 3DEP's own tiles use)
-// as they are read.
-async function downloadEpt(found, box, {get, lazModule, onProgress}) {
+// as they are read. Only those not already held are fetched; what is new is
+// combined with what was held into one file, so a survey over one course is one
+// ZIP however many searches built it. Its name is its whole extent, and the
+// files it replaces are named for door 2 to remove once it is safely written.
+async function downloadEpt(found, box, {get, lazModule, onProgress, held = {pieces: new Map(), squares: [], from: [], head: null, counted: 0}}) {
  if (!found.ept) throw Error('This survey has no copy that downloads by the square: download all its tiles.');
  const er = await get(found.ept); if (!er.ok) throw Error(`This survey's square copy did not answer (${er.status}): download all its tiles.`);
  const ept = await er.json(), root =found.ept.replace(/ept\.json$/, '');
@@ -206,15 +250,19 @@ async function downloadEpt(found, box, {get, lazModule, onProgress}) {
  const a = lonLatToMerc(box.lon0, box.lat0), b = lonLatToMerc(box.lon1, box.lat1);
  const {nodes} = await nodesFor(ept.bounds, [a.x, a.y, b.x, b.y], async key => { const r = await get(`${root}ept-hierarchy/${key}.json`); if (!r.ok) throw Error(`The survey's index would not load (${r.status}).`); return r.json(); });
  if (!nodes.length) throw Error('This survey has no points over the square.');
- const parts = [];
- for (const [n, node] of nodes.entries()) {
-  onProgress(n / nodes.length, `piece ${n + 1} of ${nodes.length}`);
+ const missing = nodes.filter(n => !held.pieces.has(n.key)), fresh = new Map();
+ for (const [n, node] of missing.entries()) {
+  onProgress(n / missing.length, `piece ${n + 1} of ${missing.length}${held.pieces.size ? `, the rest already saved` : ''}`);
   const r = await get(`${root}ept-data/${node.key}.laz`); if (!r.ok) throw Error(`A piece of the survey would not load (${r.status}).`);
-  parts.push({key: node.key, bytes: new Uint8Array(await r.arrayBuffer())});
+  fresh.set(node.key, new Uint8Array(await r.arrayBuffer()));
  }
  onProgress(1, 'done');
- const meta = {title: found.title, box, minZ: ept.bounds[2], maxZ: ept.bounds[5], count: nodes.reduce((s, x) => s + x.points, 0)};
- return [{...eptSource(meta, parts.map(p => p.bytes), lazModule), keep: {name: squareName(found, box), bytes: await eptZip(meta, parts)}}];
+ const count = nodes.reduce((s, x) => s + x.points, 0), meta = {title: found.title, box, minZ: ept.bounds[2], maxZ: ept.bounds[5], count}, bytesOf = k => fresh.get(k) ?? held.pieces.get(k);
+ const source = {...eptSource(meta, nodes.map(n => bytesOf(n.key)), lazModule), reused: nodes.length - missing.length, fetched: missing.length};
+ if (!missing.length) return [{...source, kept: true, keptAs: held.from[0]}];
+ const square = {box, keys: nodes.map(n => n.key), count}, squares = [...held.squares, square], whole = unionBox(squares.map(s => s.box)), all = new Map([...held.pieces, ...fresh]);
+ const file = {...meta, box: whole, count: held.counted + missing.reduce((s, x) => s + x.points, 0), squares}, name = squareName(found, whole);
+ return [{...source, keep: {name, bytes: await eptZip(file, [...all].map(([key, bytes]) => ({key, bytes}))), replaces: held.from.filter(n => n !== name)}}];
 }
 // The square's pieces as door 2 reads a source.
 function eptSource(meta, parts, lazModule) {

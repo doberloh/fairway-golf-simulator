@@ -42,8 +42,9 @@ import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, aff
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
 import {PROVIDERS, providersAt, mosaic} from './imagery.js';
-import {sourcesAt, squareAround, searchLidar, downloadLidar, isEptZip, eptZipSource, gridByName} from './lidar-search.js';
-import {canPick, recallFolder, pickFolder, allowed, fileIn, bytesIn, saveIn, saveAsDownload, listIn, overPlace} from './lidar-folder.js';
+import {sourcesAt, squareAround, searchLidar, downloadLidar, isEptZip, eptZipSource, gridByName, coverFor, coverTogether, tilesOf} from './lidar-search.js';
+import {coverageWords, percent} from './lidar-coverage.js';
+import {canPick, recallFolder, pickFolder, allowed, fileIn, bytesIn, saveIn, saveAsDownload, listIn, overPlace, removeIn} from './lidar-folder.js';
 import {readZip} from '../zip.js';
 import {createPlanView} from './plan-view.js';
 import {validateDoc} from '../course-doc.js';
@@ -531,20 +532,44 @@ export function open(draft = null) {
    if (!r.length) say('Nothing found by that name.', true);
   } catch (e) { say('The search failed: ' + e.message, true); }
  }
+ // What is in the LIDAR folder, without asking for leave: a search must not
+ // open a prompt. Name -> size; empty until the folder is open this visit.
+ async function savedInFolder() {
+  if (!lidarFolder) return new Map();
+  try { if (!await allowed(lidarFolder)) return new Map(); return new Map((await listIn(lidarFolder, 0)).map(e => [e.name, e.file.size])); } catch { return new Map(); }
+ }
+ // The square as a small map, north up: green saved, gold to download, dark
+ // nothing there.
+ function coverMap({n, grid}) {
+  const c = el('canvas', {class: 'cb-covermap', width: n, height: n, title: 'The square, north up: green is saved, gold would download, dark has no data'}), g = c.getContext('2d');
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { g.fillStyle = ['#3a1c1c', '#c9a227', '#3fae6a'][grid[j * n + i]]; g.fillRect(i, n - 1 - j, 1, 1); }
+  return c;
+ }
  async function searchAll() {
   if (!st.find) return;
   const box = squareAround(st.find.lon, st.find.lat, st.findSize ?? 1500), here = sourcesAt(st.find.lon, st.find.lat);
   st.findBox = box; findOut.replaceChildren(el('small', {}, 'Searching…'));
-  const rows = [];
+  const rows = [], everything = [], km = (st.findSize ?? 1500) / 1000, saved = await savedInFolder();
   for (const s of here.filter(s => s.online)) {
    try {
     const found = await searchLidar(s.key, box);
+    everything.push(...found);
     rows.push(el('div', {class: 'cb-field', style: 'padding:6px'}, el('label', {}, s.name), el('small', {}, s.licence),
-     found.length ? el('ul', {}, found.map(f => el('li', {}, `${f.title}${f.date ? ', ' + String(f.date).slice(0, 10) : ''}: ${f.tiles ? `${f.tiles} tile${f.tiles === 1 ? '' : 's'}` : 'its square copy only'}${f.bytes ? `, ${(f.bytes / 1e6).toFixed(0)} MB as tiles` : f.points ? `, ${(f.points / 1e6).toFixed(1)} M points` : ''} `,
-      el('div', {class: 'cb-btns'}, f.ept || s.key !== 'usgs' ? el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-download': f.id, title: s.key === 'usgs' ? 'Only the survey\'s points over the square, from USGS\'s open copy -- saved to your LIDAR folder' : 'Every tile over the square -- saved to your LIDAR folder', onclick: () => fetchLidar(f)}, s.key === 'usgs' ? 'Download the square here' : 'Download here') : el('small', {}, 'No copy that downloads by the square yet.'),
-       f.tileUrls?.length ? el('button', {class: 'cb-btn', type: 'button', 'data-rocky': f.id, title: `USGS's own LAZ tiles, whole (${(f.bytes / 1e6).toFixed(0)} MB): your browser downloads them, and the builder reads them from your LIDAR folder`, onclick: () => viaDownloads(f)}, 'Download all tiles') : null)))) : el('small', {}, 'Nothing over this square.')));
+     found.length ? el('ul', {}, found.map(f => {
+      // HOW MUCH THIS SURVEY COVERS, AND WHAT IS ALREADY SAVED, before anything
+      // is downloaded (the owner, 5 November 2026; lidar-coverage.js).
+      const c = coverFor(f, box, saved), left = c.tiles - c.tilesSaved, whole = c.known && c.share >= .995;
+      const squareWord = !s.key.startsWith('usgs') ? (c.tilesSaved ? (left ? `Download ${left} missing tile${left === 1 ? '' : 's'}` : 'Load the saved tiles') : 'Download here') : c.heldShare ? (c.heldShare >= c.share ? 'Load the saved square' : 'Download what is missing') : 'Download the square here';
+      const tileWord = c.tilesSaved ? (left ? `Download ${left} missing tile${left === 1 ? '' : 's'}` : 'Load the saved tiles') : 'Download all tiles';
+      return el('li', {}, `${f.title}${f.date ? ', ' + String(f.date).slice(0, 10) : ''}: ${f.tiles ? `${f.tiles} tile${f.tiles === 1 ? '' : 's'}` : 'its square copy only'}${f.bytes ? `, ${(f.bytes / 1e6).toFixed(0)} MB as tiles` : f.points ? `, ${(f.points / 1e6).toFixed(1)} M points` : ''} `,
+       c.known ? el('div', {class: 'cb-cover'}, coverMap(c), el('small', {class: whole ? '' : 'cb-coverwarn'}, coverageWords(c, km), c.tiles ? ` ${c.tilesSaved} of ${c.tiles} tile${c.tiles === 1 ? '' : 's'} saved.` : '', c.cut ? ' The search stopped at 200 tiles, so there may be more.' : '')) : el('small', {}, 'How much of the square it covers is not known: its source does not say.'),
+       el('div', {class: 'cb-btns'}, f.ept || s.key !== 'usgs' ? el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-download': f.id, title: s.key === 'usgs' ? 'Only the survey\'s points over the square that are not already saved -- combined with them in your LIDAR folder' : 'Every tile over the square that is not already saved -- to your LIDAR folder', onclick: () => fetchLidar(f)}, squareWord) : el('small', {}, 'No copy that downloads by the square yet.'),
+        f.tileUrls?.length ? el('button', {class: 'cb-btn', type: 'button', 'data-rocky': f.id, title: `USGS's own LAZ tiles, whole (${(f.bytes / 1e6).toFixed(0)} MB): your browser downloads those not already saved, and the builder reads them from your LIDAR folder`, onclick: () => viaDownloads(f)}, tileWord) : null));
+     })) : el('small', {}, 'Nothing over this square.')));
    } catch (e) { rows.push(el('small', {class: 'cb-err'}, `${s.name}: ${e.message}`)); }
   }
+  // Can the square be covered at all, by every survey together?
+  if (everything.some(f => tilesOf(f).some(t => t.box) || f.polys?.length)) { const all = percent(coverTogether(everything, box).share); rows.unshift(el('small', {class: all < 100 ? 'cb-coverwarn' : ''}, all === 100 ? `These surveys cover all of the ${km} km square.` : `Together these surveys cover ${all}% of the ${km} km square. If the course runs past that, it has no LIDAR here, or another source below holds it.`)); }
   const links = here.filter(s => s.link);
   // A portal opened: what to do with what it gives (the owner, 1 November
   // 2026: "builder needs to tell the user to put the files in the folder
@@ -612,6 +637,8 @@ export function open(draft = null) {
    if (!s.keep || done.has(s.keep.name)) { delete s.keep; continue; }
    setBusy(`Saving ${s.keep.name} to your ${dir ? 'LIDAR' : 'download'} folder…`);
    if (dir) await saveIn(dir, s.keep.name, s.keep.bytes); else saveAsDownload(s.keep.name, s.keep.bytes);
+   // The squares combined into it go, once it is there whole.
+   if (dir && s.keep.replaces?.length && await fileIn(dir, s.keep.name, s.keep.bytes.length)) for (const n of s.keep.replaces) await removeIn(dir, n);
    done.add(s.keep.name); delete s.keep;
   }
   return [...done];
@@ -624,9 +651,9 @@ export function open(draft = null) {
    const lazModule = await (await import('../lidar/laz.js')).lazModule();
    // The square and the land built past it (GRID_MARGIN each side).
    const wide = squareAround(st.find.lon, st.find.lat, (st.findSize ?? 1500) + 2 * GRID_MARGIN);
-   const got = await downloadLidar(found, wide, {lazModule, kept: name => bytesIn(dir, name), onProgress: (f, what) => setBusy(`Downloading the LIDAR… ${what} (${Math.round(f * 100)}%)`)});
+   const got = await downloadLidar(found, wide, {lazModule, kept: name => bytesIn(dir, name), list: async () => dir ? (await listIn(dir, 0)).map(e => e.name) : [], onProgress: (f, what) => setBusy(`Downloading the LIDAR… ${what} (${Math.round(f * 100)}%)`)});
    const names = await keepAll(got, dir);
-   for (const src of got) { st.sources.push(src); fileList.append(el('li', {}, `${src.name}: ${src.kept ? `read from your LIDAR folder (${src.keptAs}), nothing downloaded` : 'downloaded'}, ${src.count.toLocaleString()} points${src.bytes ? `, ${(src.bytes / 1e6).toFixed(0)} MB` : ''}`)); }
+   for (const src of got) { st.sources.push(src); fileList.append(el('li', {}, `${src.name}: ${src.kept ? `read from your LIDAR folder (${src.keptAs}), nothing downloaded` : src.reused ? `${src.fetched} piece${src.fetched === 1 ? '' : 's'} downloaded, ${src.reused} already saved, combined` : 'downloaded'}, ${src.count.toLocaleString()} points${src.bytes ? `, ${(src.bytes / 1e6).toFixed(0)} MB` : ''}`)); }
    await previewLand(st.findBox);
    say(`${keptSaid(names, dir)}${got.every(s => s.kept) ? 'Read from your LIDAR folder: nothing downloaded. ' : ''}Drag a box on the relief round the course, then build the land.`);
   } catch (e) { say('Could not download it: ' + e.message, true); }

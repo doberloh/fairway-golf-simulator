@@ -469,7 +469,13 @@ the file to anyone else who has Fairway. It opens on three doors.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
      place, **Find** (or Enter), click the place you mean in the list (each
      is a button marked **Use ›**), choose the square round it (1 to 3 km), and
-     **Search for LIDAR**. Every source over that place is listed. **USGS
+     **Search for LIDAR**. Every source over that place is listed, each survey
+     with a small map of the square, north up: green is already saved, gold
+     would download, dark has no data. Beside it, how much of the square it
+     covers and how much you hold, and the buttons say what they will do:
+     **Download 2 missing tiles**, **Download what is missing**, **Load the
+     saved tiles**. It measures the square you searched, so pick a square that
+     takes in the course. **USGS
      3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
      there: **Download the square here** takes just the survey over the
      square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
@@ -482,7 +488,9 @@ the file to anyone else who has Fairway. It opens on three doors.
      **Your LIDAR folder** (Chrome and Edge): every download is saved there
      as it arrives -- a USGS square as one ZIP named for the survey, the
      place and the size, other tiles under their own names -- and the same
-     download asked for again is read from there instead, so nothing is
+     download asked for again is read from there instead. A bigger or shifted
+     USGS square of the same survey fetches only what is missing and combines
+     it into one ZIP, which replaces the ones it took in, so nothing is
      downloaded twice. Pick it once with **Choose the folder** (Downloads is
      the easy choice: the portals' and USGS's tile downloads land there by
      themselves) or the builder asks the first time it downloads; the

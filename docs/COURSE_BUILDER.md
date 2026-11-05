@@ -1357,6 +1357,36 @@ working**; the model is tested in Node, the page has not been opened.
   changed with any tool in hand and the journeys do, and Extrapolate. The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
+### How much the LIDAR covers, and only what is missing (5 November 2026)
+
+The owner: "before downloading we need to signify how much of the course is going
+to be covered by the tiles", and "the builder should notice your previously
+downloaded tiles and only download whats needed, then combine them to same folder
+or zip."
+
+- **Coverage** (lidar-coverage.js): each survey found shows a small map of the
+  square, north up, green saved, gold to download, dark no data, and its share in
+  words; the first line says what every survey covers together. Read from the
+  USGS tiles' `boundingBox`, the Entwine copies' published outlines, IGN's tile
+  geometry and swisstopo's `bbox`, all in degrees (checked 4 November 2026). **It
+  measures the square searched for, not the course**, whose edge is not known
+  until it is traced. A tile's box is its full square, so a survey's tile can
+  promise ground it has no points on; an Entwine outline is the truer of the two.
+- **Whole tiles** were already fetched only when missing, by name and size; the
+  button now says how many before it is pressed. A search reads the folder only
+  if it is already open this visit: it must not raise a prompt.
+- **USGS squares** were the gap: a square was kept by its middle and size, so a
+  different size or a nudge downloaded all of it again, into a second ZIP. The
+  Entwine pieces are the same whichever square asks, so door 2 gathers the pieces
+  of every kept square of the survey that touches the new one, fetches only the
+  rest, and writes one combined ZIP named for the whole extent, with a list of
+  the squares in it (`squares`), so asking again needs no network. **The ZIPs it
+  replaces are removed**, once the new one is in the folder at its full size;
+  only ever the builder's own. Squares of a survey that do not touch stay apart,
+  so one survey over two courses is not read whole for each. A ZIP rather than a
+  folder of pieces: Load from the folder and the files a player moves stay one
+  file each.
+
 ### The two editors at parity (4 November 2026)
 
 The owner: "we need to bring parity between the 2d and 3d editor", then to go

@@ -128,6 +128,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   - **Built courses at their real height**: Bully Pulpit's clouds over the land,
     its haze, and Breckenridge's turf no longer snow; the ground shader changed,
     so a frame check on a generated course (nothing should move) is owed.
+  - **LIDAR coverage and combining** (COURSE_BUILDER *How much the LIDAR
+    covers*): search a course at the edge of a survey; download a 1.5 km square,
+    then 3 km, and see it fetch only the rest and end as one ZIP. Not run online.
   - **The two editors at parity** (COURSE_BUILDER): every new tool in both, by
     eye. The tree brush's look and density; Select shape in 2D (anchors, the
     turn's direction); painted water in 3D on a slope; a 2D creek and bunker in
