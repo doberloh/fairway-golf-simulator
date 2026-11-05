@@ -128,11 +128,14 @@ function groundShaded(geometry,shade){
 // SNOW ON THE TOPS (the seasons, winter where the region's winter is snow:
 // view.snowTops, renderer.js): every face turned up -- a crown's top, a
 // limb's upper side -- fades toward snow white, by how far it faces the sky
-// (world normal y from .45 to .8, 85% at most; PLACED). Looks only.
-export function snowTopped(material){
- const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
- material.customProgramCacheKey=()=>key.call(material)+'-snowtop';
- material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_toon_fragment>','{vec3 snowN=normalize((vec4(normal,0.)*viewMatrix).xyz);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.97),smoothstep(.45,.8,snowN.y)*.85);}\n#include <lights_toon_fragment>');};
+// (world normal y from .45 to .8, 85% at most; PLACED). Looks only. `flat`
+// is where a wall's rounded stones and thin rails take it: from .15 to .5
+// (PLACED; seen 4 November 2026: at the trees' numbers a fieldstone wall in
+// the snow stayed bare, its stones too round to hold any).
+export function snowTopped(material,flat=false){
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey,range=flat?'.15,.5':'.45,.8';
+ material.customProgramCacheKey=()=>key.call(material)+(flat?'-snowtop-flat':'-snowtop');
+ material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_toon_fragment>','{vec3 snowN=normalize((vec4(normal,0.)*viewMatrix).xyz);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.97),smoothstep('+range+',snowN.y)*.85);}\n#include <lights_toon_fragment>');};
  return material;
 }
 function groundLit(material){

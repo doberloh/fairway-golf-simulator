@@ -13656,6 +13656,8 @@ seen: snow on any wall or fence; the final 0.27 m flecks (their shader compiled,
 in the failed run's winter pages, but bloomOn was 0); the new `wall` capture
 view. Not seen by a person.
 
+**Seen on 4 November 2026.** The `wall` view showed New England's fieldstone bare in the snow: the snow fade starts at a world normal y of .45 and is full at .8, and a rounded stone has almost nothing that flat. Walls, fences and yard pieces now fade from .15 to .5 (`snowTopped(material, true)`, PLACED by eye), and the wall carries snow on its tops, in the same shaded blue as the snow beside it. The flecks read as flowers on the Blue Ridge and Bluebonnet, no polka dots. **The long grass's bloom heads were looked at and kept**: from a metre away a clump's blade tips are plainly blue (the Hill Country, `h1-low`), but from a tee or above they are what reads as the drifts of bluebonnets and paintbrush, and without them the Hill Country's spring has little else at range. Listed for the owner's eye.
+
 ## The country is one surface: no hole in a bowl (generator 85, 4 November 2026)
 
 **The owner**: "When you look at many of our GENERATED courses, you will see that each hole exists in sort of a bowl with a creased rise of land between them ... I believe this may have been linked to prior issues we have had with tee boxes and greens." The land, courses, tees and greens were free to move.

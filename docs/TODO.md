@@ -57,9 +57,42 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Nothing was lost: the Badlands models are done and exported; the grass
   pack's round 1 is logged and its round 2 change saved, not rendered.
 
+- [ ] **The owner's play-through, the end of the goal** (4 November 2026).
+  Everything on this list is built and checked by machine; none of it has been
+  played by a person. In the order worth doing:
+  1. **The land** (generator 85-87): any eighteen on the Rockies, the Blue
+     Ridge and the Heartland, from the tee and from the overview. Is any hole
+     still in a bowl, any crease between holes? Do tees and greens sit better?
+     Fairway slopes went up on the mountains (median 7% on the Rockies).
+  2. **The landscapes' own ground**: the Badlands, Sonoran, Red Rock, Alaska,
+     Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers, the Cascades.
+  3. **The seasons**: Round start's season on New England (winter, autumn),
+     the Hill Country in spring, the Rockies in winter. Snow on walls and
+     bloom flecks are seen in pictures only; the long grass's bloom heads read
+     as flowers from a tee and as blue blade tips from a metre away (kept;
+     say if not).
+  4. **The world round the holes**: *Not yet played by a person* below, the
+     clubhouse, paths and bridges, streets, houses. A house shows the fairway
+     its back wall since generator 84 (RESEARCH *The fairway homes' streets*).
+  5. **The map and globes**: *Not yet played by a person: the map* below.
+  6. **The builder**: Chambers Bay and Bully Pulpit from Saved courses; a
+     course of your own through door 2; Skin from the land and paint by hand
+     (*Fairway Course Builder* below, *The owner plays the builder*).
+  7. **A weak machine**: the wait to the menu and the frame on Low, which
+     nothing here measured (RTX 4090 only); the Heartland's grasses on the
+     processor (0.6 ms in one measure, not seen since).
+  8. **course-match**: send it a course.
+  **Your calls, not bugs:** 9 dead-end paths and 86 sharp corners across the
+  bench's 195 courses (*Cart paths* below); a machine with no graphics card, 8
+  s a frame against 3.3 in September (*Performance pass*).
+- [ ] **The landscape cards' pictures show the land before generator 85**
+  (src/shots/; retaken 3 November). The pictures in Play and the course
+  selectors still show the older ground, bowls and all, and generator 87's
+  eight new grounds. To do: biome-shots `take` on the picked views, `encode`.
+
 **The owner's additions of 3 November 2026** (each part of the goal now):
 
-- [ ] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
+- [x] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
   exists in sort of a bowl with a creased rise of land between them. This
   makes things look extremely unnatural, and also I believe this may have
   been linked to prior issues we have had with tee boxes and greens ... we
@@ -71,8 +104,9 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   and green complaints it may have caused looked at again. Built, generator
   85 (RESEARCH *The country is one surface*): the bowl is gone by measure on
   every landscape, tees need less earthwork, "Landscape character" stayed.
-  **Not seen by a person; to look at from the ground.**
-- [ ] **The Dakota Badlands, a forty-first landscape** ("can we add a new
+  Seen from above on all 41 in the showcase of 4 November 2026. **Not seen by a
+  person**: the play-through, item 1.
+- [x] **The Dakota Badlands, a forty-first landscape** ("can we add a new
   biome, The north and south dakota Badlands? Do all of the research, data
   gathering, model planning, pictures, and add to the us_landscapes report.
   Then build out that biome as well"; "add bully pulpit to the course
@@ -107,7 +141,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   grama) stays green in winter snow, a question for the grass pack's
   seasons; two or three small sunk cones near a green or tee read a little
   like hats from low down. No code left open here but the owner's eye on it.
-- [ ] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
+- [x] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
   the Badlands, the way Chambers Bay was. **Built** (tools/build-courses.mjs
   `bully-pulpit`): OpenStreetMap way/245874307 at Medora traced, the land
   from 3DEP's survey (14.8 million points, 1 m, 100% surveyed) refined,
@@ -118,7 +152,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   shot played (tools/play-built.mjs), the banded clay seen on the survey's
   real breaks; the picture and the file sent to the owner. Not played by a
   person. The file is local (bench/courses/bully-pulpit), never committed.
-- [ ] **Tall fescue and the prairie grasses for every landscape that needs
+- [x] **Tall fescue and the prairie grasses for every landscape that needs
   them** ("do we have tall fescue and prairie grasses? if not, we should
   retroactively build them"): tall fescue, little bluestem, switchgrass,
   Indiangrass and blue grama (and the Badlands' western wheatgrass) as
@@ -138,10 +172,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   no graphics-card cost (0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms at
   three tees), triangles +1.2-2.5%, draws +9, but 0.6-0.7 ms more on the
   processor a frame (1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00), steady in
-  both rounds and not explained: TODO *Performance pass*. Still to do: the
-  High Plains, the worst case (837 triangles a clump): its B round failed
-  on a page that did not start, so no figure.
-- [ ] **Every landscape's terrain true to its place** (the owner, 3 November
+  both rounds and not explained: TODO *Performance pass*. The High Plains,
+  the worst case (837 triangles a clump), read level (-1.9% by mean,
+  4 November 2026).
+- [x] **Every landscape's terrain true to its place** (the owner, 3 November
   2026: "Do all of these new landscapes have different terrain generation
   based on their location and research? Similar to the badlands? If not.
   Please amend the goal to account for that. We want to make sure that the
@@ -183,9 +217,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   87: the last eight on another's ground each on their own (Sonoran, Red Rock,
   Alaska, Cascades, Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers;
   RESEARCH *The last landscapes on another's ground*), and a test that no two
-  share theirs. Still to do: an A/B on Low for the rest of the new recipes
-  (the performance pass). Weakest still: the Cascades, and no deflation plains
-  or headlands on the Oregon Dunes.
+  share theirs. Low's frame measured on the Hill Country, High Plains, Keys and Mojave
+  (the performance pass). Weakest still, each its own job if wanted: the
+  Cascades (volcanic in name more than shape), no deflation plains or headlands
+  on the Oregon Dunes, no playa floor in the Chihuahuan.
 - [x] **The builder skins the land from its heights** (the owner, 3 November
   2026: "In the builder, we should add an option that the user can click to
   do a best effort at skinning the landscape based on height. For example
@@ -329,7 +364,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   8 s each under load (start to main menu read 42-47 s that night); not
   proven, none since, and that wait is 12 s now (RESEARCH *The performance
   pass at the end of the US landscapes goal*).
-- [ ] **Performance pass, at the end of the goal** (the owner, 2 November
+- [x] **Performance pass, at the end of the goal** (the owner, 2 November
   2026: accept the costs while building, record them, fix them in one pass).
   **Done 4 November 2026** but for what is listed here: RESEARCH *The
   performance pass at the end of the US landscapes goal*. The profile against
@@ -341,7 +376,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   within 0.16 ms of generator 75 everywhere measured. **Still open:** the
   Heartland's grasses on the processor (the 0.6 ms below, not measured again
   there; not seen on the High Plains), and the wait on a slower processor, which
-  nothing here measured. Candidates below stand if a weak machine shows trouble.
+  nothing here measured: both in the play-through, item 7. Candidates below stand
+  if a weak machine shows trouble.
   Measured so far, Low, by mean frame against the build before (frame-ab,
   RTX 4090, so headroom, not a weak machine). **The seasons' twigs (3
   November 2026), one round of each build only, the run failed, agents on the
@@ -455,7 +491,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   -> 186, the six steepest landscapes 58 -> 45. What is left stands on
   ground too steep for a walkable rounded turn (a 120-degree switchback on
   a 50% hillside): rounding it would break the walkable-grade rule, and
-  that trade is the owner's call. Dead ends: 26-27 across the bench.
+  that trade is the owner's call. **After generators 85-86** (4 November 2026,
+  the land calmer and one network): 9 dead ends and 86 sharp corners across
+  the bench's 195 courses, no course in two parts. **Left open as the owner's
+  call**: the amendment says none; a walkable grade says these stay.
 - [x] **The streets kit placed** (generator 65; roads.js `streetFurniture`):
   light poles down the lot's aisles, a planted island at each row end, a
   wheel stop a stall, the bag drop by the clubhouse, lamps along the drive.
@@ -467,7 +506,7 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   the tee views; the cart barn (40 by 15.2 m) beside a long side or an end
   of the lot where it fits (on 9 of 17 courses tried), a building. Seen in a
   capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
-- [ ] **The rest of the streets kit**: mailboxes and streets for the fairway
+- [x] **The rest of the streets kit**: mailboxes and streets for the fairway
   homes, each landscape's road surface (catalogue `streets`). **Done
   (3 November 2026, drawing only):** each landscape's road surface -- the
   public road asphalt (concrete in Bluebonnet, the Gulf Coast and the
@@ -632,8 +671,14 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   Country, Blue Ridge and New England in spring. Not seen by a person. The
   tropics' "only the flowering changes" (PLAN 3) is not built, and a bloom's
   window is not read against the date.
-- [ ] **Seasons, to check** (3 November 2026; the graphics card stopped with a
-  hung frame run before these were done). **Snow on the walls is not seen in
+- [x] **Seasons, to check** (3 November 2026; the graphics card stopped with a
+  hung frame run before these were done). **Seen 4 November 2026:** the first
+  pictures showed New England's fieldstone bare, its stones too round to hold
+  the trees' snow; walls and fences now take it on gentler slopes
+  (`snowTopped(mat, true)`), seen on New England and the Rockies. The bloom's
+  flecks and drifts seen on the Hill Country, Blue Ridge and Bluebonnet: no
+  polka dots from a tee. Low's frame measured: *Performance pass*. What it asked
+  for: **Snow on the walls is not seen in
   any picture**: `biome-shots take newengland highplains rockies --views wall
   --season winter` (the `wall` view is new and has never run either). **The
   final bloom flecks (0.27 m) are not seen**: the last spring picture had the
@@ -653,13 +698,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   nine in summer from three views and in spring, autumn and winter from one
   (the tropics summer only: 234 pictures, 3 November 2026) and writes
   docs/reports/us-landscapes-showcase.html (local). No page error on any.
-  **Stale since the day's terrain** (4 November 2026): retaken with `take
-  --again`, the Lowcountry, High Plains and Sand Hills, and Wine Country
-  but for winter; the page timing out at start stopped the run. Still to
-  take: Wine Country's winter, Monterey, the Blue Ridge, Hill Country,
-  Bluegrass, Ozarks, North Woods, Old Northeast, Mojave, Desert Palms, High
-  Sierra, Sagebrush, Piedmont, SoCal, Ponderosa, Hawaii, Longleaf, Bayou,
-  Flatwoods, Gulf Coast, and the Badlands, never in it.
+  **Retaken whole on the final land** (4 November 2026, generator 87): all 41
+  landscapes, the Badlands for the first time, 240 pictures, no failed batch.
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 

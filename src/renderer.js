@@ -2407,7 +2407,7 @@ export class GolfView{
    for(const p of parts){
     // Snow along the walls' tops and on everything else out here, in a snowy
     // winter, as on the roofs and the trees (vegetation.js snowTopped).
-    const lit=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mat=this.snowTops?snowTopped(lit):lit,mesh=new T.InstancedMesh(p.geometry,mat,list.length);
+    const lit=this.surfaceMaterial(colours[p.role]??'#ffffff',{vertexColors:p.painted}),mat=this.snowTops?snowTopped(lit,true):lit,mesh=new T.InstancedMesh(p.geometry,mat,list.length);
     list.forEach((it,i)=>{place(it,info);mesh.setMatrixAt(i,m4.compose(pos,q,sc));});
     mesh.castShadow=mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();this.group.add(mesh);this.resources.push(mat);
     if(inked){const ink=new T.InstancedMesh(p.geometry,this.inkMaterial(1.2),list.length);ink.instanceMatrix.copy(mesh.instanceMatrix);ink.castShadow=ink.receiveShadow=false;ink.computeBoundingSphere();this.group.add(ink);}
