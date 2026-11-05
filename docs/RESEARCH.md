@@ -13896,5 +13896,6 @@ source above is named.
 - **The world moved nowhere else:** the fingerprints of the forty existing
   landscapes are unchanged, so no `GENERATOR_VERSION`; `SCHEMA_VERSION` 27 for
   the new key.
-- **Not modelled:** the rock-built waterfalls and rock-lined ponds at Wynn,
-  Southern Highlands and Canyon Gate (edge riprap is in; a waterfall is not).
+- **Not modelled, and turned down by the owner (5 November 2026):** the
+  rock-built waterfalls and rock-lined ponds at Wynn, Southern Highlands and
+  Canyon Gate (edge riprap is in; a waterfall is not). IDEAS.md *Turned down*.
