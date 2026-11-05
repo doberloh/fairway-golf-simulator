@@ -200,13 +200,20 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // green's or tee's real shape is metres across, so their ground is averaged
  // over a 2.5 m square (PLACED), the fairway's over 1.5 m; sand and rough keep
  // what was measured. With no trace, the discs round the green marks.
+ //
+ // ONLY A SURVEY'S GROUND. Land that came from a finished course (Back to 2D,
+ // draft-from-doc.js, `method` 'course') has had this, or was never a survey:
+ // smoothing it again took a little more off a green's contours at every trip
+ // between 2D and 3D (the owner, 4 November 2026). A survey's course starts
+ // from the raw ground each time, so it never built up there.
+ const surveyed = land.method !== 'course';
  const greenAt = (x, z) => holes.some(h => Math.hypot(x - h.green.x, z - h.green.z) < 14);
  const smoothR = new Uint8Array(nx * nz);
- for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+ if (surveyed) for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
   const k = j * nx + i, t = codes ? PALETTE[codes[k]] : greenAt(-halfX + i * cell, -halfZ + j * cell) ? 'green' : 'rough';
   smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' ? 1 : 0;
  }
- for (const r of [1, 2]) {
+ if (surveyed) for (const r of [1, 2]) {
   const m = boxMean(land.ground, nx, nz, Math.max(1, Math.round(r * 1.25 / cell / 2)));
   for (let k = 0; k < m.length; k++) if (smoothR[k] === r) ground[k] = m[k];
  }
@@ -217,7 +224,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // ground is averaged over 5 m (PLACED: its tilt and tiers stay, a bump under
  // a stride goes), eased into the ground round it over 3 m outside, so its
  // collar keeps no lip. RESEARCH, *Greens a putt can hold*.
- {
+ if (surveyed) {
   const isGreen = Uint8Array.from({length: nx * nz}, (_, k) => codes ? (PALETTE[codes[k]] === 'green' ? 1 : 0) : (greenAt(-halfX + (k % nx) * cell, -halfZ + Math.floor(k / nx) * cell) ? 1 : 0));
   const out = distanceFrom(isGreen, nx, nz, cell), m = boxMean(ground, nx, nz, Math.max(1, Math.round(2.5 / cell))), EASE = 3;
   for (let k = 0; k < m.length; k++) { const w = isGreen[k] ? 1 : out[k] < EASE ? 1 - out[k] / EASE : 0; if (w > 0) ground[k] = ground[k] * (1 - w) + m[k] * w; }

@@ -1340,8 +1340,12 @@ working**; the model is tested in Node, the page has not been opened.
   game's toon shading, with a shadow. Not seen.
 - **Back to 2D** was there only for a course fresh from door 2. draft-from-doc.js
   makes a door 2 draft from any course, on door 2's grid; patches go onto that
-  one grid, and door 2's smoothing runs on the ground again when the course is
-  made, so a built course gets a little softer at each trip this way.
+  one grid, so detail finer than it goes on a first trip. Its land is marked
+  `method` 'course', and docFromLand does not smooth it as it smooths a survey:
+  it did at first, which took a little off a green's contours at every trip
+  (the owner had it fixed the same day). Heights hold still from then on.
+  **Auto trace and Manual trace still start a new trace** on such a course and
+  would replace its layers; not guarded, and not tried.
 - **Rough in the editors** is the landscape's summer rough (seasons.js `GREEN`).
 
 ## PLACED, and rules the build decided

@@ -7,7 +7,11 @@
 // and houses -- so the plan view opens at the review as if it had been built
 // there. There is no survey behind it, so the steps that read one (the LIDAR
 // views, the auto trace, the pictures' lining up by map position) have nothing
-// to read; the land stays the course's own. Pure; tests/builder-draft.test.mjs.
+// to read; the land stays the course's own, and `method` 'course' tells door 2
+// not to smooth it as it does a survey (real-course.js). A generated course's
+// finer green grids go onto this one grid, so a first trip can lose detail
+// finer than it; after that its heights do not move. Pure;
+// tests/builder-cover.test.mjs.
 import {GRID_MARGIN, landSampler} from '../built-world.js';
 import {SURFACE_KINDS, TREE_STRIDE} from '../course-doc.js';
 import {fillRings} from './round-trip.js';

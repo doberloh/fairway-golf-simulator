@@ -129,6 +129,25 @@ test('Fill to surrounding follows a hillside rather than lying flat', () => {
  for (const x of [-4, 0, 4]) assert.ok(Math.abs(e.height(x, 0) - (100 + x * .2)) < .05, `at x ${x}: ${e.height(x, 0)}`);
 });
 
+test('a course\'s ground does not soften going to 2D and back, however often', () => {
+ const nx = 201, heights = new Float32Array(nx * nx).fill(100);
+ // A small ridge across the green and a bump on the fairway, which a survey's
+ // smoothing would take off.
+ for (let z = 70; z <= 90; z++) for (let x = -10; x <= 10; x++) heights[(z + 100) * nx + x + 100] = 100 + Math.sin(x * 1.2) * .25;
+ heights[100 * nx + 100] = 100.6;
+ const start = {...doc(), water: [], land: {x0: -100, z0: -100, cell: 1, cellZ: 1, nx, nz: nx, heights}};
+ const trip = d => { const t = draftFromDoc(d), L = {masks: t.trace.masks}; return validateDoc(docFromLand({land: t.land, traced: {layers: L}, holes: t.holes, trees: t.trace.trees, homes: t.trace.homes, name: t.name, landscape: t.landscape, rocks: t.rocks, creeks: t.creeks})); };
+ const first = trip(start), second = trip(first), third = trip(second);
+ const at = (d, x, z) => d.land.heights[Math.round((z - d.land.z0) / d.land.cell) * d.land.nx + Math.round((x - d.land.x0) / d.land.cell)];
+ for (const [x, z] of [[1, 80], [4, 80], [-3, 75], [0, 0]]) {
+  assert.ok(Math.abs(at(first, x, z) - (heights[(z + 100) * nx + x + 100])) < .06, `the first trip keeps the ground at ${x}, ${z}: ${at(first, x, z)}`);
+  assert.equal(at(second, x, z), at(first, x, z)); assert.equal(at(third, x, z), at(first, x, z));
+ }
+ // A survey's land still gets its smoothing.
+ const t = draftFromDoc(start), surveyed = validateDoc(docFromLand({land: {...t.land, method: 'classified'}, traced: {layers: {masks: t.trace.masks}}, holes: t.holes, trees: [], homes: [], name: 'S', landscape: 'puget'}));
+ assert.ok(Math.abs(at(surveyed, 1, 80) - 100) < Math.abs(at(first, 1, 80) - 100), 'a survey is smoothed');
+});
+
 test('an older file has no rocks and plays as it did', () => {
  assert.deepEqual(worldFromDoc(doc()).rocks, []);
  const r = rockFrom([1, 2, 2, 3, .5], 100);

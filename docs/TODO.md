@@ -105,7 +105,8 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     this and has not been run.
   - **Back to 2D** on a course opened from a file and on one taken over from
     door 1: never run. Door 2's review on a course with no survey may meet a
-    step that wants one.
+    step that wants one. Its ground no longer softens on each trip. Auto trace
+    and Manual trace would replace such a course's layers: unguarded.
   - **Water**: draw a pond on a hillside, play it. Does it show, do its banks
     look right, does a green beside it stay as it was? Open a saved course whose
     water was missing and save it again.
