@@ -50,110 +50,6 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
-## On the course-builder branch, the graphics card and processor are free
-
-The course-builder goal (31 October 2026; the record is
-docs/COURSE_BUILDER.md once stage 0 writes it, the local study
-docs/studies/CUSTOM_COURSE_BUILDER_SPEC.md) runs without stopping for the
-owner, who plays the result at the end. The owner: "GPU and CPU are free for
-this goal until merged." So **on this branch, for that goal and every
-single-turn request on it, nothing below needs asking**: `npm run smoke`,
-captures (`tools/capture/`), the game and the builder in the browser pane,
-`npm run profile` (full sweeps too), Blender, long bench and test runs. This
-replaces *A `/goal` that says "GPU allowed"*'s limits here; the precautions
-from the crashes stay:
-
-- **Through the gate**: graphics-card jobs run through `node tools/gpu-run.mjs
-  --goal course-builder --util 30 --temp 80 --rest 1 -- <command>` (the
-  capture tools gate themselves), which reads `nvidia-smi` first and logs
-  every run (`bench/ab/gpu-runs.jsonl`). Above 30% busy, or a game, browser or
-  Blender we did not start on the card: the owner is using the machine --
-  wait, and say so.
-- **One graphics job at a time** (`tools/gpu-lock.mjs` holds it across
-  processes, so agents working packs queue their renders), minutes rather
-  than hours, at least a minute apart; above 80 °C, stop and cool down 10 minutes.
-- **After every job, leave nothing running**: browsers, built-in browser tabs,
-  Blender and servers closed, the card checked (*Leave no processes running*
-  still holds).
-- **A hung run, driver reset or lost WebGL context**: write it down, wait 10
-  minutes, retry once; a second failure ends graphics-card use until the
-  owner is back.
-- **Software rendering is free too** (`smoke --software`, the profiler's
-  `weak` group) -- "CPU free", as the 1.0 polish goal had it -- though one took
-  the machine down on 13 October 2026: run it alone, nothing else heavy
-  beside it.
-- **This section is for this branch only. Delete it in the merge** (and the
-  pointers to it under *Nothing runs on the graphics card* and *A `/goal`
-  that says "GPU allowed"*, and TESTING.md's sentence), so main's rules are
-  as before. RULES_HISTORY.md keeps the story.
-
-## The US landscapes goal (on this branch, from 2 November 2026)
-
-Every region of the USA as a landscape (TODO.md *US landscapes*; the plan
-and the owner's answers are local, docs/studies/us-landscapes/PLAN.md).
-The owner: "All agents restrictions are off for these (except for
-performance targeting and testing where we need to stay the same for FPS
-and quality)." So, for this goal:
-
-- **Landscapes may move.** Today's ten may be renamed, rebuilt and
-  reorganised, and given new models; a seed need not keep its course. What
-  stays is the record: every change to generated output is still a
-  `GENERATOR_VERSION` step with its line, the fingerprint run and the moved
-  landscapes named in it (*Three version numbers*).
-- **Held as they are:** quality, and testing -- `npm test`, the round
-  matrix, smoke, the bench invariants, all green.
-- **Frame-rate costs are accepted and recorded, then fixed at the end** (the
-  owner amended the goal, 2 November 2026: "Lets ignore performance issues
-  but document them so we can do a pass on that at the end"). Every pack
-  still gets its A/B on Low, and its figure goes into TODO *Performance
-  pass*; nothing is cut to meet a frame. **Every model made is used**: all
-  variants and far twins ship, and no species is held back for cost ("I
-  dont want to end up not using the models we create").
-- **Cart paths on generated courses: no right angles, no dead ends** (the
-  owner amended the goal, 2 November 2026): every corner rounded, and
-  where a path would end it loops smoothly back on itself.
-- **Architect, Haunted Hollow, tournament week and the people are removed**
-  (the owner, 2 November 2026); Architect's other world pieces (paths and
-  bridges, markings, walls, landmarks, wildlife) are the generator's (PLAN.md
-  1b), and every path over water is a bridge (the bench's `pathOverWater`).
-- **The graphics card and processor need no asking** for this goal ("computer
-  is open to you fully"), as on the rest of this branch; the precautions
-  of the section above stay.
-- **Every new model: at least 15 iterations** against its reference
-  pictures, each logged (PLAN.md section 5). **And silhouette first** (the owner:
-  the trees read as "big green fluffy balls on the trunks"): every species
-  recognisable by its outline, the rule back-ported to every tree already
-  built (BLENDER_ASSETS *Silhouette first*). Pack contact sheets are made;
-  the owner does not need to see them before the work goes on.
-- **Nothing ships early**: no landscape goes out on stand-in models.
-- **Amended 3 November 2026** (the owner): the Dakota Badlands as a
-  forty-first landscape, Bully Pulpit built on it in the builder, tall
-  fescue and the prairie grasses for every landscape that needs them, and,
-  last, a skill that takes a real course, researches it and recommends the
-  landscape to match -- or plans a new one by the study's research path.
-  And every landscape's terrain true to its place, researched from its
-  geology (the Badlands' formations are the ground's, not models); and in
-  the builder, a button that skins the land from its heights (a mountain,
-  a butte, a badland face painted as the landscape's own) or a tool to paint
-  it by hand, for every landscape. All are TODO *US landscapes*, *The
-  owner's additions*.
-- **Graphics work is throttled** (the owner, 3 November 2026, after the PC
-  went down during a long run of Blender renders: "GPU work needs to be
-  throttled properly ... make sure not to over load the desktop"): every
-  render and capture waits at the gate (tools/gpu-gate.mjs: two minutes'
-  rest, under 30% busy and 75 °C), one at a time, logged.
-- **Send pictures as work lands** (the owner: "keep sending pictures to
-  the output so i can review in real time").
-- **No hole sits in a bowl** (the owner, 4 November 2026): generated holes
-  had a forced corridor, each in a bowl with a creased rise of land between
-  it and the next. That goes, on every landscape: the land and the courses
-  may move, tees and greens may move or change, and "Landscape character"
-  may be folded into "elevation severity" if that is the root. Iterate over
-  all landscapes. TODO *The owner's additions*; PLAN.md section 0 item 30.
-- **One main agent from here** (the owner, 4 November 2026): when the agents
-  running that day are done, no more fanning out for this goal.
-- **Delete this section in the merge** with the course-builder section.
-
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -383,9 +279,7 @@ The owner plays games on this machine, and test runs on its GPU have crashed it
 twice while they did. **Nothing that draws on the graphics card runs unless the
 owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
 browser pane, `npm run profile`. Earlier permission does not carry over -- the
-exceptions are Blender (below), a `/goal` that says so (next section), and
-the course-builder branch until it merges (*On the course-builder branch, the
-graphics card and processor are free*).
+exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*).
 
@@ -430,9 +324,6 @@ ask as above.
   goal text.
 - The cartoon-overhaul goals (25-27 October 2026) had their own GPU limits,
   which ended with the branch's merge (*The cartoon look is main's*).
-- The course-builder goal (31 October 2026) has no limits but the crash
-  precautions, until its branch merges (*On the course-builder branch, the
-  graphics card and processor are free*).
 
 ## Ask before a graphics profile; never just run one
 

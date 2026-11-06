@@ -31,6 +31,13 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Release 0.9.7 (5 November 2026)
+
+- [ ] **Play 0.9.7 by hand.** Released at the owner's word, the website left alone: its
+  Download buttons follow the release, its demo stays on 0.9.6 until the owner asks for a
+  redeploy. The full smoke set did not run on this build (DISTRIBUTION_REVIEW, the
+  addendum for v0.9.7).
+
 ## Meshy trial (5 November 2026)
 
 - [ ] **The Meshy trees are in; not played.** The redwood pack's 14 trees ship from

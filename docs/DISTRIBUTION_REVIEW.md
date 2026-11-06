@@ -1833,3 +1833,33 @@ shader rule), so they add no model weight. Still one file, no network
 request.
 
 **4 November 2026, the page doubled its models and was put back.** From generator 81 to 85 the built page was 62.8 MB (33.2 MB gzipped): the generator's worker, inlined into the page, had come to import the models. Fixed: 38,130,402 bytes (20.87 MB gzipped), and tests/worker-imports.test.mjs now fails if the worker reaches them again. No release carried it.
+
+## Addendum, 5 November 2026: v0.9.7
+
+**v0.9.7** is published at the owner's request ("Lets merge back to main with this
+version of the game, build a new patch version and push to git hub but not the
+website"), as "Fairway 0.9.7 (beta)", tag `v0.9.7`, not a pre-release, the same six
+files as 0.9.6, from the merge of `course-builder` into `main`, with its notes in
+`docs/releases/v0.9.7.md`. It carries the addenda above marked as not released: Fairway
+Course Builder, the US landscapes, and the removal of Architect, Haunted Hollow,
+tournament week and the people. It also carries the Redwood Coast's Meshy trees.
+**`GENERATOR_VERSION` is 89** (53 in 0.9.6), so a saved 0.9.6 round is told its course
+changed; **`SCHEMA_VERSION` 27** (14, migrated: settings carry over); **`BUILT_VERSION`
+3**, new since 0.9.6; **`PROFILE_VERSION` 3** unchanged. **The package version is 0.9.7**,
+so 0.9.6's friend-challenge codes do not play on it (said in the notes). **The website
+is not redeployed**, by the owner's word: its Download buttons follow the new release
+by themselves, and its demo stays on 0.9.6.
+
+The built game is **41,158,636 bytes (22.5 MB gzipped)**, 26.3 MB over 0.9.6, and
+`Fairway Builder.html` 31,080,038 bytes. This is well past where the page stood, and
+was accepted as the landscapes' cost and not reviewed further here. The zips: Windows
+79.2 MB, macOS Apple silicon 65.0 MB, macOS Intel 67.4 MB, Linux 75.8 MB, each 9 verified
+files; the source zip 19.3 MB, 630 files. The 28 Meshy models are the paid plan's
+output (ATTRIBUTION.md, *Generated with Meshy*).
+
+**Checked:** `npm test` (1,483) on the branch, whose tree the merge keeps; the
+fingerprint before the last trees; the packager's verification of every zip; the
+`boot` journey on the trees' final build. **Not run:** the full smoke set on this build
+or a profile, waived by the owner on 5 November; 36 of 41 journeys passed on a build
+just before the last wood change, and the other five on the next. **Not played by a
+person** in this form, including the Meshy trees and far-version swaps in motion.
