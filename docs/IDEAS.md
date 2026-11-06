@@ -204,3 +204,12 @@ One line each: the idea, when, and the owner's reason.
 - **Leaderboards for the course of the week** (20 October 2026). Scrapped by the owner after seeing the three ways to do it: friends' scores swapped as codes, a public board on the website (a service to run and moderate), or the game posting scores itself (breaks "nothing ever sent anywhere").
 - **Networked multiplayer** (20 October 2026). The owner wanted it with no servers of their own; across the internet that still needs an address-check service, or a relay for about one connection in ten, and Netlify cannot be the relay (no lasting connections; a free site over its limit is suspended for the month). The owner picked *Challenge a friend by code* instead (now built, TODO *Challenge a friend*) and does not expect to ask again. The study is `docs/reports/MULTIPLAYER_FEASIBILITY.md` (local); RESEARCH *Challenge a friend* has the Netlify sources.
 - **A rock-built waterfall for Desert Resort** (5 November 2026). Offered after the landscape was built, for the waterfalls at Wynn, Southern Highlands and Canyon Gate. The owner declined: "No rock waterfalls please." No reason given.
+
+- **Join and reorder every shipped model's vertices.** What: in build-meshes, join
+  vertices that match and put each part's triangles in vertex-cache order, as
+  tools/blender/meshy_parts.py does for Meshy trees. Why: the shipped trees shade 2.5
+  vertices a triangle where about 0.6 can be had; the same change took the Redwood
+  Coast's Low frame from 2.75 to 1.72 ms for Meshy trees. Rough cost: a few hours,
+  then every landscape's A/B and a look, because joining shared paint or normals can
+  soften facets. Where: tools/build-meshes.mjs, tools/mesh-read.mjs. The owner's
+  session, 5 November 2026.

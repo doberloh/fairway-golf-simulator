@@ -843,3 +843,5 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - Peninsula Clarion (Kenai, Alaska): https://www.peninsulaclarion.com/?p=31979 -- peak wildflowers near the summer solstice. A local report.
 
 - **The last landscapes on another's ground** (RESEARCH, 4 November 2026): the geology sources for the Sonoran, Red Rock, the Chihuahuan, Alaska, the Oregon Dunes, Puget Sound, the Redwood Coast and the Cross Timbers are linked in that section's table, each with what was taken from it.
+
+- **AI model generators** (RESEARCH, 5 November 2026): the sources for Meshy, Rodin, Tripo, Hunyuan3D and TRELLIS.2 are listed under that section, each with what was taken from it.

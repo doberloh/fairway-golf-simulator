@@ -29,6 +29,7 @@ bench/lidar/
 # Real courses built from that LIDAR and OpenStreetMap by tools/build-courses.mjs:
 # other people's data, for testing only.
 bench/courses/
+bench/meshy/
 
 # Reports, studies and saved sources are made for the owner and stay on this
 # machine (AGENTS.md, *What stays local*). They were

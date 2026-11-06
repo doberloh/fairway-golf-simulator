@@ -135,6 +135,63 @@ Read `nvidia-smi` first and do not start while a game is running, run one
 Blender at a time, and make sure it has exited afterwards (`run.mjs` waits for
 it).
 
+## Trying models from Meshy (from 5 November 2026)
+
+The owner is trying an online AI generator for foliage (RESEARCH.md, *AI model
+generators*). `tools/meshy-run.mjs` drives Meshy's API from a pack file,
+`tools/meshy/<pack>.json`: each model's shape prompt, colours, picture shape,
+triangle target and far target, and one style and one view sentence shared by
+the pack. **Pictures first, and the owner picks** (the owner, 5 November 2026:
+text to model was dropped before it ever ran):
+
+1. `--pictures` makes a picture of each model into `bench/meshy/<pack>/pictures/`
+   (gpt-image-2 by default, the owner's pick; 9 credits).
+2. `--approve Redwood_1=<file>` copies the chosen one to `approved/`.
+3. `--models` builds only from approved pictures (30 credits, textured) into
+   `bench/meshy/<pack>/r<round>-<model>/`, with four side views of each. `meshy-6`
+   is the default because only it strips baked light.
+4. `--far` builds each tree's far version from its full model, in Blender on the
+   processor (`tools/blender/meshy_far.py`, no credits), with an outline score and
+   a side-by-side picture. Meshy's own Remesh is not used: it loses a thin crown.
+5. `--convert` turns each model into the game's form in
+   `bench/meshy/<pack>/game-r<round>/` (`tools/blender/meshy_game.py`, no credits):
+   wood split from leaf as `bark` and `leaves`, the texture's light and dark baked to
+   a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
+   model's `paintLevel`), triangles put in the order the card's vertex cache likes. Far versions are
+   written in that form already, closed all round because the game draws one side.
+   `tools/blender/meshy_parts.py` holds what the two share.
+
+To try new ones in the game: `FAIRWAY_MESHY=<game folder> node tools/build-meshes.mjs`,
+build, then `node tools/build-meshes.mjs` to put `src/asset-meshes.js` back. The
+folder's models replace those of the same name, in every landscape that plants them.
+
+`--dry-run` prints what would be sent and the cost, `--max-credits` (100 by
+default) refuses a dearer run before anything is sent, and each paid step is
+saved the moment it is accepted, so a stopped run is picked up without paying
+twice. No texture prompt goes with a picture, and Meshy's image enhancement is
+off, so the model keeps the look that was approved (PLACED until models are seen).
+
+**The picture prompt is the style.** It names the game's own colours (`shades`
+and `barks` in vegetation.js) and asks for flat painted colour with no
+photographic detail. The game drops textures and reads role from the material
+name (*What the game keeps from a model*), so nothing reaches it without `--convert`.
+
+**The redwood pack's 14 trees ship from here** (the owner, 5 November 2026):
+`vendor/blender-meshy_redwood` is `game-r2` copied in by hand, models and far versions.
+`cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
+builders as the record. To change a tree, run `--convert` and copy it over.
+
+**The first model** (Redwood_1, 5 November 2026): the owner likes its full model's
+foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
+far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
+into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
+and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak).  RESEARCH.md, *AI model generators*.
+
+The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
+**No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just
+generate normal trees"); `tests/meshy-run.test.mjs` holds the pack to that.
+
 ## The packs
 
 ### lakeshore (23 October 2026; removed 27 October 2026)
@@ -372,7 +429,8 @@ November 2026 (*Built as it grows*; logs in tools/blender/logs): `Blender_Redwoo
 tree barer still), `Blender_YoungRedwood_*` (foliage from low on the trunk),
 `Blender_Fir_*`, `Blender_Hemlock_*` (limbs sweeping up; hanging, a nodding leader),
 `Blender_RedCedar_*` (a buttressed fluted foot, long drooping sprays),
-`Blender_Tanoak_*`, `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
+`Blender_Tanoak_*` (those 14 since replaced by Meshy models, *Trying models from
+Meshy*), `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
 `Blender_Salal_*` and `Blender_Sorrel_1`. `fluted_trunk` pleats a trunk into
 flutes, deepest at the foot. Crown widths are the generator's (species.js
 `CROWN_FRACTION`: half-width over height 0.095 redwood, 0.17 fir and hemlock,

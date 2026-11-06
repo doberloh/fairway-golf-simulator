@@ -458,7 +458,16 @@ const push = typed => {
 // matches file names case-insensitively and Linux does not, so `grass` would
 // find Quaternius's `Grass.obj` on one machine and not the other -- a build
 // that differs by operating system, which is the worst kind.
-const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
+const PACKS = readdirSync(VENDOR).map(pack => ({pack, dir: join(VENDOR, pack), files: new Set(readdirSync(join(VENDOR, pack)))}));
+// A TRIAL OF MODELS FROM ELSEWHERE: FAIRWAY_MESHY names a folder (tools/meshy-run.mjs
+// --convert), and what it holds replaces the shipped model of the same name. Without
+// it nothing changes. It is for looking; src/asset-meshes.js is rebuilt without it.
+const TRIAL = process.env.FAIRWAY_MESHY;
+if (TRIAL) {
+ const files = new Set(readdirSync(TRIAL).filter(f => f.endsWith('.glb')));
+ for (const p of PACKS) for (const f of files) p.files.delete(f);
+ PACKS.push({pack: 'blender-meshy-trial', dir: TRIAL, files});
+}
 
 // Every pack holding this model, so an ambiguous name can say so rather than
 // quietly taking whichever the filesystem listed first.
@@ -466,10 +475,10 @@ function locate(entry) {
  const colon = entry.indexOf(':');
  const hint = colon < 0 ? null : entry.slice(0, colon), name = colon < 0 ? entry : entry.slice(colon + 1);
  const found = [];
- for (const {pack, files} of PACKS) {
+ for (const {pack, dir, files} of PACKS) {
   if (hint && !pack.includes(hint)) continue;
   for (const ext of ['.glb', '.obj'])
-   if (files.has(name + ext)) { found.push({pack, file: join(VENDOR, pack, name + ext), glb: ext === '.glb'}); break; }
+   if (files.has(name + ext)) { found.push({pack, file: join(dir, name + ext), glb: ext === '.glb'}); break; }
  }
  if (found.length > 1)
   throw Error(`"${entry}" matches ${found.length} packs (${found.map(f => f.pack).join(', ')}). `

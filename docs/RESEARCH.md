@@ -14030,3 +14030,383 @@ source above is named.
 - **Not modelled, and turned down by the owner (5 November 2026):** the
   rock-built waterfalls and rock-lined ponds at Wynn, Southern Highlands and
   Canyon Gate (edge riprap is in; a waterfall is not). IDEAS.md *Turned down*.
+
+## AI model generators, for the Desert Resort's foliage (5 November 2026)
+
+The owner asked which online AI generator to try for replacing the Desert
+Resort's foliage. Nothing was generated or tested; this is a desk comparison,
+and the prices and allowances below were read on one day and move often.
+
+**What the game needs** (BLENDER_ASSETS *What the game keeps from a model*): a
+model keeps only its triangles, normals, material names and vertex paint. A
+generator's texture is thrown away, and a one-material model falls to the
+accent role (`ROLE_OF`, tools/mesh-read.mjs). So an AI model needs its bark and
+leaves split into two materials and its texture baked to vertex paint before
+the game can use it. Budgets: a tree about 4,500-5,500 triangles, a shrub
+2,000-3,500, with a far twin for a tree.
+
+| Service | Low triangle control | Licence as read | Taken |
+| --- | --- | --- | --- |
+| Meshy | Custom target 100-300,000; triangle output; Remesh costs no credits | Free: CC BY 4.0 (credit Meshy), 100 credits a month, image-to-3D 20 credits. Paid: private. Pro about $20 a month (third-party figure) | First to try |
+| Rodin (Hyper3D) | Fast tiers capped at 20,000 faces, in three levels | Unclear: the commercial licence is stated for Business, sources differ on Creator | Second test, for thin parts |
+| Tripo | Not established | Free: CC BY 4.0 and no commercial rights, per third parties; paid has them. Paid prices conflict ($11.94-$20) | Not first |
+| Hunyuan3D | Not established | 2.0 and 2.1 licences exclude the EU, UK and South Korea; 3.0 only by a third-party summary. 20 free a day | Rejected: this game is public worldwide |
+| TRELLIS.2 | Not established | MIT by several reports; check the model card. Free Hugging Face demo | Free side test only |
+
+**Where sources disagree.** One third-party post says Meshy's free models are
+personal and academic use only; Meshy's own docs and help centre say CC BY 4.0
+with commercial use, and those were followed. Rodin's credit charging and
+licence differ between sources; hyper3d.ai/pricing should settle them.
+
+**The risk.** No source tests palm fronds, pine needles or thin foliage side by
+side. Tripo's own blog calls thin parts such as leaves one of the hardest cases
+and warns that dense AI foliage flickers in real-time shadows; a review citing
+SimInsights reports about 1 in 10 outputs usable without rework across Rodin,
+Meshy and Tripo (about 40 trials, read second-hand). The expectation that these
+tools will close a crown into a solid shell, against the owner's rule of no
+solid cores (5 November 2026, of the Redwood Coast), is a judgement, PLACED until a test is
+run. Whether Meshy keeps vertex colours in a GLB was not found.
+
+Sources:
+- Meshy, pricing and credits: https://docs.meshy.ai/en/webapp/pricing -- licences, 100 free credits, credit cost per model.
+- Meshy, free plan: https://intercom.help/meshy/en/articles/15696428-what-is-included-on-the-free-plan -- CC BY 4.0, credit Meshy.
+- Meshy, low poly tutorial: https://www.meshy.ai/tutorials/make-low-poly-3d-models -- target polycount, triangle output, free Remesh, export formats.
+- Sorceress Games: https://sorceress.games/blog/best-free-ai-3d-model-generator-honest-2026-picks -- the claim against Meshy's free licence; rejected for Meshy's own docs.
+- Costbench, Tripo free plan: https://www.costbench.com/software/ai-3d-generation/tripo-ai/free-plan/ -- free allowance and licence, third-party.
+- Costbench, Rodin: https://www.costbench.com/software/ai-3d-generation/rodin-hyper3d/ -- plans, third-party.
+- Hyper3D pricing: https://hyper3d.ai/pricing -- commercial licence named for Business.
+- Scenario, Rodin essentials: https://help.scenario.com/articles/6155258011-rodin-hyper3d-models-the-essentials -- Fast tiers, 20,000-face cap.
+- Hunyuan 3D 2 licence: https://huggingface.co/tencent/Hunyuan3D-2/blob/main/LICENSE -- the territory exclusion.
+- TRELLIS.2: https://comfyui-wiki.com/en/models/trellis/trellis-2 -- MIT by report, demo.
+- Tripo, thin structures: https://www.tripo3d.ai/blog/explore/ai-3d-model-generator-and-thin-structures-survival-strategies -- the hard case (a vendor's blog).
+- Tripo, plants and foliage: https://www.tripo3d.ai/blog/explore/how-to-generate-plants-and-foliage-with-ai -- flickering shadows (a vendor's blog).
+- Dupple, Rodin review: https://dupple.com/tools/rodin-ai -- the SimInsights figure, second-hand.
+- Krea comparison: https://www.krea.ai/blog/best-ai-3d-model-generators-2026 -- general ranking only.
+- Meshy, Text to 3D API: https://docs.meshy.ai/en/api/text-to-3d -- prompts up to 800 characters, no negative prompt field, Smart Topology target 100-15,000 faces (meshy-t2) in triangles only.
+
+**The API.** tools/meshy-run.mjs was first written for Text to 3D, a preview
+(shape, 20 credits on meshy-6 or meshy-7.1) then a refine (texture, 10 at 2K or
+4K). The owner turned that down before it ran (5 November 2026), so a person can
+look before a model is paid for: Text to Image (nano-banana-2-1 4 credits,
+nano-banana-pro and gpt-image-2 9), then Image to 3D (30, textured), which takes
+the approved picture as a data URI. Remesh
+is 5 credits by API, against no credits on the website by Meshy's tutorial.
+`target_polycount` applies at the preview only, with `should_remesh`. `art_style`
+is deprecated and ignored, so the style has to be said in `texture_prompt`, up to
+800 characters; `texture_image_url` is the alternative, and when both are sent the
+prompt wins. `remove_lighting` takes effect only with meshy-6. The API docs list
+meshy-7.1 for Text to 3D; the website's pricing page says it is not offered there.
+Pro allows 10 tasks at once. Whether Pro includes the API is not stated in the
+docs read; error 402 is "insufficient credits, or a free plan". A sentence of hex
+colours in a texture prompt is PLACED: nothing says Meshy honours them.
+
+- Meshy, API pricing: https://docs.meshy.ai/en/api/pricing -- credits per step.
+- Meshy, Remesh: https://docs.meshy.ai/en/api/remesh -- far versions from a finished task.
+- Meshy, rate limits: https://docs.meshy.ai/en/api/rate-limits -- 10 tasks at once on Pro, the 429 messages.
+- Meshy, balance: https://docs.meshy.ai/en/api/balance -- free to read.
+- Meshy, authentication: https://docs.meshy.ai/en/api/authentication -- API keys, with a monthly credit limit per key.
+- Meshy, Text to Image: https://docs.meshy.ai/en/api/text-to-image -- picture models, aspect ratios, results.
+- Meshy, Image to 3D: https://docs.meshy.ai/en/api/image-to-3d -- image_url as a data URI, target_polycount with should_remesh, image_enhancement, four side thumbnails.
+
+**First pictures (5 November 2026; 36 credits, seen by eye, no model made).** Same
+prompt, one take each. nano-banana-pro: big soft rendered shapes, boughs heavy and
+wide, a redwood too broad and Christmas-tree shaped, with two stray limb stubs and
+a good tapering trunk; its fern a flat star with a dark lump at the foot.
+gpt-image-2: finer and closer to the real outline, slim as a redwood is, but the
+trunk nearly even in width, which the owner has turned down before; its fern
+natural and full. Fine sprays are the likelier to close up in a 3D model (a
+judgement, untested).
+
+The owner chose gpt-image-2 (5 November 2026). A second take of Redwood_1 (9
+credits) added to every tree with a real trunk: half as wide at mid-height as at
+the foot, thin as a twig at the top, sides never parallel. The taper came through
+and the trunk now narrows visibly; the foot flares more than the "barely flared"
+asked for, and the limbs still read finely. Seen by eye, one take only.
+
+**The first model (5 November 2026).** Redwood_1 from the approved gpt-image-2
+picture, Image to 3D on meshy-6 with the triangle cut, plus Remesh for the far
+version: 35 credits, about 2 minutes, one mesh, 9,317 triangles (target 9,300) and
+a far version of 487 (target 530), so the targets hold. Judged in Blender on a
+plain background, with the lens close and from the whole-tree view, not in the
+game.
+
+- Held: the outline, the trunk's taper and flutes, a whole pointed top, gaps
+  between the boughs. Sky shows through the crown.
+- Foliage: the picture's fine sprays became broad chunky boughs with a torn edge.
+  I first recorded this as a failure of the rule against plates. **The owner
+  overruled that**: "I actually really like the way the foliage looks on the higher
+  quality model. Blocky is not the problem. But flat literal squares are, which is
+  what i saw." Broad faceted boughs are wanted; a literal square is not.
+- Failed: the far version is a bare, kinked pole with scraps of leaf. Remesh at
+  this count cannot serve as a far twin; a far twin would have to be made another
+  way.
+- Colour: the trunk came out a pale salmon, lighter than the picture, and green
+  from the foliage bled onto it in streaks at the foot. The game ignores this
+  until a converter exists, and would paint by role instead.
+- One take of one tree, so a judgement on the model and not yet on the service.
+
+**A far version rebuilt from the full model (5 November 2026).** Meshy's Remesh
+treats the tree as one shape, so a thin crown goes first. tools/blender/meshy_far.py
+instead samples the texture to tell wood from leaf, measures the trunk's axis and
+radius by height, joins the mesh by position (glTF splits vertices at texture
+seams: 4,611 false pieces before, 65 after), cuts the crown into 97 boughs and
+rebuilds each as a five-triangle ribbon, with a five-sided tube for the trunk. Bough
+direction is taken from the trunk outward; taken from each bough's own longest
+axis, stacked boughs came out as tall vertical plates.
+
+| Version | Triangles | Outline match with the full model, 8 views (mean / worst) |
+| --- | --- | --- |
+| Meshy Remesh | 487 | 0.518 / 0.511 |
+| Trial | 530 | 0.687 / 0.674 |
+
+The score is shared area over combined area of the two outlines, seen side-on
+(1.0 is identical), measured for this trial and not a bench figure. Its limit is
+that fine jagged edges cannot survive at this count. Seen in Blender only: a few
+stray slivers near the top, and thin boughs near the crown's edge. PLACED: the
+budget of 530 is today's Redwood_1 far twin.
+
+The owner took this for every model with a far version, redwood pack first (5
+November 2026). Meshy's Remesh is out, so a tree costs 30 credits, not 35. The
+tool rerun on Redwood_1 scored 0.688 (worst 0.675) at 530 triangles: dropping
+scraps by the trunk did not clear the slivers near the top.
+
+**Trunks too thick (5 November 2026).** The owner, on the redwood pictures: the base
+is too big and the taper should be gentler. Measured off the pictures, trunk width
+as a share of the tree's height:
+
+| Picture | 3% up | 10% | 25% | 50% |
+| --- | --- | --- | --- | --- |
+| Redwood_1, first take, before the taper wording | 0.047 | 0.037 | 0.031 | 0.017 |
+| Redwood_1, take 2, with it | 0.092 | 0.067 | 0.049 | 0.039 |
+| Redwood_2 | 0.063 | 0.052 | 0.039 | 0.025 |
+| Redwood_3 | 0.099 | 0.077 | 0.056 | 0.030 |
+| YoungRedwood_1 | 0.088 | 0.069 | 0.027 | 0.017 |
+
+The wording "half as wide at mid-height as at the foot" about doubled the width low
+down. Breast height on a 60 m tree is about 2% of the way up, so 0.092 is about 5.5
+m across: Lost Monarch's proportions (about 12:1 height to diameter) on a tree of
+ordinary size. Sources describe the trunk as buttressed at the base and only
+slightly tapering. No measured taper or second-growth height-to-diameter figure was
+found. The first take's slimmer proportions, or a little stouter, fit the owner's
+second-growth Northwood better; that is a judgement. girth() in grown.py, 0.57 at
+mid-height, was also placed by eye.
+
+- Wikipedia, *Sequoia sempervirens*: https://en.wikipedia.org/wiki/Sequoia_sempervirens -- 60-100 m; Lost Monarch 320 ft, 26 ft at breast height.
+- Trees and Shrubs Online: https://www.treesandshrubsonline.org/articles/sequoia/sequoia-sempervirens -- a 93.57 m tree, 7.22 m at breast height.
+- Earle, Gymnosperm Database mirror: https://www1.biologie.uni-hamburg.de/b-online/earle/cu/se/index.htm -- trunk slightly tapering, enlarged at the base.
+- Coonen et al. 2019, read as a search summary and not used for figures: https://katalog.lib.cas.cz/KNAV/EdsRecord/edsair,edsair.doi...........e6308153a38c18ad7629c3245e707bc6
+
+The six redwoods redone (54 credits), with width given as a share of the tree's
+height: one twenty-fifth near the ground (one twentieth for Redwood_3), two-thirds of
+that at mid-height, a small flare only.
+
+| Picture | 3% up | 10% | 25% | 50% |
+| --- | --- | --- | --- | --- |
+| Redwood_1, take 3 | 0.056 | 0.047 | 0.039 | 0.007 (hidden by boughs) |
+| Redwood_2, take 2 | 0.056 | 0.045 | 0.038 | 0.029 |
+| Redwood_3, take 2 | 0.065 | 0.058 | 0.045 | 0.037 |
+| YoungRedwood_1, take 2 | 0.044 | 0.035 | 0.029 | 0.014 |
+| YoungRedwood_2, take 2 | 0.041 | 0.036 | 0.031 | hidden |
+| YoungRedwood_3, take 2 | 0.061 | 0.047 | 0.038 | 0.024 |
+
+The generator ran wider than asked in four of the six (Redwood_3 against its 0.05) and at
+about 0.04 in the two young trees that held, and most feet are down by a third or more from the thick
+pictures. The crowns also came lower and fuller than in the earlier takes.
+
+**Six redwoods through the pipeline (5 November 2026).** Models 180 credits, far
+versions local. Six trees showed what one had hidden: a slim fluted trunk leaked past
+the radius test, and parts of it were rebuilt as boughs, as slabs on the bark. Fixes
+in tools/blender/meshy_far.py: everything below the crown is trunk, its width is
+measured there, one thin reading cannot narrow the trunk above it, and a mostly
+wood-coloured piece is not a bough.
+
+| Tree | Full | Far (budget) | Outline, mean / worst |
+| --- | --- | --- | --- |
+| Redwood_1 | 9,273 | 530 | 0.668 / 0.636 |
+| Redwood_2 | 10,097 | 530 | 0.591 / 0.573 |
+| Redwood_3 | 5,185 | 440 | 0.638 / 0.623 |
+| YoungRedwood_1 | 12,308 | 540 | 0.636 / 0.622 |
+| YoungRedwood_2 | 12,387 | 650 | 0.743 / 0.738 |
+| YoungRedwood_3 | 12,676 | 710 | 0.674 / 0.667 |
+
+Scores run lower on fuller crowns, and the first scores of the trunk leak were higher
+on one tree (Redwood_1 0.635 with slabs, 0.604 clean, 0.668 fixed): the outline score
+alone would have passed a broken trunk, so a person looks too. Still rough at this
+budget: scattered flat pieces at the top of the crown and ribbon ends that read as
+flat bars. Models came in within 2.3% of their triangle targets.
+
+The other eight trees redone the same way (72 credits): width asked for, one
+twenty-fifth for the fir, one thirtieth for the hemlock, one twentieth for the red
+cedar and tanoak.
+
+| Picture, take 2 | Asked | 3% up | 10% | 25% |
+| --- | --- | --- | --- | --- |
+| Fir_1 | 0.04 | 0.047 | 0.036 | 0.027 |
+| Fir_2 | 0.04 | 0.050 | 0.039 | 0.036 |
+| Hemlock_1 | 0.033 | 0.038 | 0.030 | 0.028 |
+| Hemlock_2 | 0.033 | 0.029 | 0.024 | 0.020 |
+| RedCedar_1 | 0.05 | 0.170 | 0.110 | 0.051 |
+| RedCedar_2 | 0.05 | 0.092 | 0.061 | 0.053 |
+| Tanoak_1 | 0.05 | 0.024 | 0.020 | 0.016 |
+| Tanoak_2 | 0.05 | 0.027 | 0.022 | hidden |
+
+The fir and hemlock trunks landed close. The red cedars ignored the width: the word
+buttressed wins over the number, and RedCedar_1's foot is 8.5 m on a 50 m tree. The
+tanoaks came in at half the width asked for, and thin under their fuller crowns.
+Asking for a gentle droop calmed the hemlock tops without straightening them.
+
+**All 14 trees (5 November 2026).** The other eight models 240 credits. The first far
+versions of the eight failed in two ways: a level ribbon vanishes from the side, so
+the tanoaks came out as flat slices (outline 0.32-0.36), and boughs at a crowded tip
+came out as flat squares, which the owner has ruled out. Three changes: each bough
+is a ridged ribbon of six triangles, with the ridge as tall as the bough is deep; the
+top 8% is a five-sided cone; and a broadleaf crown is cut into clumps of 8-triangle
+faceted lumps, with grey bark counted as wood, which is what had thinned the tanoak's
+trunk reading.
+
+| Tree | Far triangles (budget) | Outline, mean / worst |
+| --- | --- | --- |
+| Redwood_1 | 524 (530) | 0.707 / 0.688 |
+| Redwood_2 | 530 (530) | 0.619 / 0.603 |
+| Redwood_3 | 440 (440) | 0.704 / 0.681 |
+| YoungRedwood_1 | 536 (540) | 0.685 / 0.667 |
+| YoungRedwood_2 | 650 (650) | 0.715 / 0.709 |
+| YoungRedwood_3 | 710 (710) | 0.701 / 0.691 |
+| Fir_1 | 494 (500) | 0.615 / 0.586 |
+| Fir_2 | 410 (410) | 0.608 / 0.596 |
+| Hemlock_1 | 506 (510) | 0.605 / 0.590 |
+| Hemlock_2 | 536 (540) | 0.615 / 0.597 |
+| RedCedar_1 | 1,232 (1,270) | 0.788 / 0.779 |
+| RedCedar_2 | 1,088 (1,220) | 0.717 / 0.697 |
+| Tanoak_1 | 413 (420) | 0.669 / 0.648 |
+| Tanoak_2 | 413 (420) | 0.631 / 0.620 |
+
+Seen in Blender on a plain background only. The tip cone reads plain and bright, and
+the tanoak's lumps leave gaps. RedCedar_1's foot, the widest picture at 0.170, built
+narrower than feared. Budgets are the shipped far twins', so the cedars' are high
+for no reason but the older build.
+
+**The converter (5 November 2026).** tools/blender/meshy_game.py. Paint is a grey
+multiplier, not the texture's colour, so the game's species colours, tints and
+seasons still decide the hue and green smeared on a trunk disappears; the range 0.35-1.7 is PLACED. (A 50% bend of leaf normals was the first try; see *Dark crowns*, below.) Closing
+the far boughs for the game's one-sided faces took each from 6 triangles to 9, so
+the far versions dropped from 79 to 52 boughs on Redwood_1 and its outline from
+0.707 to 0.675. Joining seam vertices halves the count: Redwood_1 has 4,398 vertices
+for 9,273 triangles, and all 14 trees are read back correctly by tools/mesh-read.mjs.
+
+The trial build's model module is 26.9 MB against 30.8 MB shipped: about 4 MB
+smaller, because the shipped trees carry more vertices for their triangles.
+
+**First seen in the game (5 November 2026).** A trial build, FAIRWAY_MESHY, four
+captures of the Redwood Coast (bench/shots/biome-shots/meshy1, local), then
+src/asset-meshes.js rebuilt and unchanged. The trees load, stand at their sizes and
+take the game's light, shadows and species colours. Up close the broad boughs hold.
+Faults seen: brown wedges at the root of some boughs, where wood-coloured faces meet
+leaf; some crowns very dark in shade, near black in the overview; dark trunks on
+the shaded side. No frame rate measured, no smoke run, not played by hand.
+
+**Dark crowns (5 November 2026).** The owner asked for these first. The paint was not
+the cause, being brighter than the shipped trees'. The normals were, as read by
+tools/mesh-read.mjs:
+
+| Redwood_1 leaves | Paint mean | Normals facing down | Normal height mean |
+| --- | --- | --- | --- |
+| Shipped | 0.76 | 0% | 0.69 |
+| Meshy, first conversion | 1.00 | 49% | -0.06 |
+| Meshy, now | 0.97 | 0% | 0.82 |
+
+A generated bough is a closed shell, so half its faces look at the ground, and the
+game's light turns those nearly black; a crown does not take the shadow map, so
+nothing else was darkening it. Now each normal is mirrored upward and bent 60% out
+and up, and how far it had faced the ground goes into the paint, up to 35% darker.
+The paint level is the pack's paintLevel: 1.15 for redwoods and firs (the darkest
+game colours), 0.95 for hemlocks and cedars, 0.82 otherwise, all PLACED by eye. Far
+versions were 10% darker than full models and are lifted to match.
+
+Captures meshy1 to meshy4 show the woods much lighter and greener. A few lone trees stayed near black through all four, with their paint changed by 40%: the next entry. A tree seen against the sun also stays dark.
+
+**Frame rate on Low (5 November 2026).** tools/frame-ab.mjs, Redwood Coast, seed
+PROFILE, shipped trees (A) against the 14 Meshy trees (B), alternating, two rounds
+each, RTX 4090, so headroom and not a weak machine.
+
+| Spot | CPU A / B ms | GPU A / B ms | Triangles A / B | Draws A / B |
+| --- | --- | --- | --- | --- |
+| tee 1 | 2.20 / 2.20 | 2.63 / 2.98 | 22.8 M / 21.4 M | 382 / 378 |
+| tee 5 | 1.50 / 2.10 | 2.44 / 3.08 | 22.3 M / 20.3 M | 274 / 270 |
+| tee 9 | 2.60 / 3.40 | 3.03 / 3.78 | 26.1 M / 24.8 M | 367 / 363 |
+
+Mean frame 2.77 to 3.34 ms (+20.5%), 95th percentile 3.67 to 4.53 ms (+23.5%),
+start to menu 14.40 to 14.14 s. **Slower with 5-9% fewer triangles and the same draws;** the cause is in the next entry. The two first guesses, more pixels drawn over each other and far versions upsetting the cull, were both wrong. Only the redwood pack's trees differ. The fit of frame-ab's run cap: --cap names a total for the goal,
+and this branch is past 137, with no cap in its rules.
+
+**Why the Meshy trees were slow (5 November 2026).** Their triangles were in the wrong
+order for the card. Found by splitting the change:
+
+| Test, on Low | Frame, A to B | Change |
+| --- | --- | --- |
+| Meshy far versions only | 2.74 to 2.53 ms | -7.9% |
+| Meshy full models only | 2.75 to 3.46 ms | +25.5% |
+
+The first split test was void: farParts (mesh-assets.js) takes a shipped far version
+only if its parts match the model's in order, so mixing leaf-then-bark with
+bark-then-leaf silently fell back to the full model's foliage (triangles 44-52 M).
+The tools now write bark first, as the shipped models do. A second job on the card
+also spoiled a round of it.
+
+The weak-laptop run ruled out pixels: at about a third of the pixels, 1920 x 1080
+against 3200 x 1800, the card took the same time (2.69 ms against 2.63), so this
+frame is bound by vertices. Leaf surface had looked the likely cause, at 3.26 against
+0.39 of height squared on Redwood_1, about 8 times the shipped tree's, and its far
+version 1.80 against 0.34; it is real but is not what costs here.
+
+Vertices shaded per triangle on a 32-entry cache: shipped 2.51, Meshy 2.61, with the
+ideal about 0.5-0.7. A shipped tree earns its figure honestly, each triangle
+with nearly its own vertices (280,180 vertices for 111,949 triangles over the 14
+models). A Meshy tree has shared vertices (56,848) wasted by a random order.
+`cache_order` in meshy_parts.py, Tom Forsyth's linear-speed method
+(https://tomforsyth1000.github.io/papers/fast_vert_cache_opt.html, from memory and not
+fetched), takes it to 0.57, so 63,220 vertices shaded against 280,853.
+
+| Run | Frame mean | 95th percentile | GPU, three tees |
+| --- | --- | --- | --- |
+| Low, A shipped | 2.75 ms | 3.53 ms | 2.62, 2.43, 3.03 |
+| Low, B Meshy, reordered | 1.72 ms (-37%) | 2.13 ms (-40%) | 1.36, 1.14, 1.46 |
+| Weak laptop, A | 6.50 ms | 8.70 ms | 2.86, 2.50, 3.09 |
+| Weak laptop, B | 6.19 ms (-5%) | 7.97 ms (-8%) | 2.77, 1.71, 3.24 |
+
+RTX 4090; the laptop is the frame tool's estimate, throttled processor and scaled
+card, and its B rounds spread widely (tee 9: 2.23 and 3.24), so read it only as no
+worse. The estimate has the same laptop at about 190-250 ms of graphics work a frame
+on either build, which is not a playable Low on that machine at all and is older than
+this work. This is for the Redwood Coast, whose planting is nearly all these trees.
+
+**The black trees (5 November 2026).** Not the Meshy trees: a bug in the game, older
+than them. A probe of the instance colours at the black spots (redwoods, far and full)
+read leaf colours like 0.004, 0.010, 0.005 beside neighbours of 0.065, 0.165, 0.071.
+vegetation.js varied each tree with offsetHSL, and three.js works HSL in linear colour,
+where the redwood's #2f4f32 has a lightness of about 0.05. A random -0.05 took it to
+nearly nothing. A light species hardly shows it, which is why this stayed hidden, and
+the shipped redwoods were dark too (rw9). varyColour now holds a darkening to 40% of
+the colour's own lightness (species.js darkenBy, PLACED), for leaf and bark. Its
+draws are unchanged and the fingerprint reads every landscape unchanged, so no version
+bump. It reaches every landscape's darkest trees, shipped or not: seen only on the
+Redwood Coast.
+
+**Final checks.** Low, A/B, RTX 4090, both builds with this fix: 3.30 to 1.91 ms
+(-42%), 95th percentile 5.60 to 2.80 ms (-50%). A's figure ran higher than the 2.75 of
+the run before, so take the two as about 40%. Smoke: 36 of 41 on the build before the
+last wood change; the other five failed only because --file ran from bench/ab, without
+the files beside dist/index.html, and all five passed from dist on the final build.
+So no one build ran all 41. Far-version outlines were not read again after the last
+changes. Brown wedges: taking wood by the trunk's measured width and not 1.3 times it
+made them smaller; the rest are generator-painted faces hard against the trunk.
+
+**The wedges, and shipping (5 November 2026).** The owner: fix them entirely, and put
+the trees on the branch, full smoke and profile waived. The wedges were on the lowest
+boughs, under the crown's measured base where everything counted as trunk, and they
+faced up. In the crown a face is now wood only if it stands upright on the trunk, is
+tall (a long face beside the axis is trunk whatever was smeared on it), or belongs to
+a thin limb; leaf faces that were wood-coloured take the leaves' mean shade. The first
+tries turned long fluted trunk faces green, on the young redwoods most; the last
+shape of the test, on captures meshy13, shows neither fault in the views taken. Later
+the long-face reach was widened for cedars and not re-captured.

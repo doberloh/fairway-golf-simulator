@@ -31,6 +31,14 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Meshy trial (5 November 2026)
+
+- [ ] **The Meshy trees are in; not played.** The redwood pack's 14 trees ship from
+  vendor/blender-meshy_redwood (the owner, 5 November). Owed: a hand play, watching
+  trees swap to their far versions in motion, and a look at the Cascades and Oregon
+  Dunes, which share them. The full smoke run was waived by the owner; no one build
+  ran all 41 journeys. The far versions' plain tip cones and the tanoak's gaps stand.
+
 ## US landscapes (branch `course-builder`, from 2 November 2026)
 
 Every region of the USA as a landscape, picked by the owner on 2 November

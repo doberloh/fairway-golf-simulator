@@ -128,3 +128,8 @@ export const EVERGREEN = new Set(['afghanpine','africansumac','spruce','pine','f
  // Added 5 November 2026: the cedar and the palms that had no tints of their own,
  // the evergreen broadleaves and shrubs that have none, and young conifers.
  'cedar', 'palm', 'hala', 'seedling', 'tanoak', 'swordfern', 'salal', 'naupaka', 'gorse', 'heather', 'sagebrush', 'creosote', 'cactus', 'cholla', 'agave']);
+
+// How much a tree's random lightness may take away: never more than this share
+// of the colour's own lightness, so the darkest species cannot reach black.
+export const DARKEN_LIMIT = .4;
+export const darkenBy = (lightness, offset) => Math.max(offset, -lightness * DARKEN_LIMIT);

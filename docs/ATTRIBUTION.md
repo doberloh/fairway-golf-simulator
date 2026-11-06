@@ -14,6 +14,15 @@ The overhaul remade every one of those models, and the packs and the tools
 that read them were removed from the repository on 27 October 2026. Releases
 up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 
+## Generated with Meshy
+
+`vendor/blender-meshy_redwood/` holds 28 tree models, the Redwood Coast's redwoods,
+firs, hemlocks, red cedars and tanoaks. The full models were generated on Meshy's paid
+Pro plan (https://www.meshy.ai), under which the output is private with full
+commercial use, then converted, and the far versions rebuilt from them, by this
+project's own tools (`tools/meshy-run.mjs`, `tools/blender/meshy_*.py`). The pictures they
+were made from came through Meshy from gpt-image-2. No credit is required on that plan.
+
 ## Built in Blender, which is this project's own work
 
 Every `vendor/blender-cartoon_*/` folder (the painted broadleaves, conifers,

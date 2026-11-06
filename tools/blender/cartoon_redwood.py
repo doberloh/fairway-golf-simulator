@@ -1,5 +1,11 @@
 # THE CARTOON REDWOOD GROVE (the cartoon overhaul; docs/CARTOON_OVERHAUL.md).
 #
+# SINCE 5 NOVEMBER 2026 THE 14 TREES HERE ARE NOT BUILT: the game's redwoods, firs,
+# hemlocks, red cedars and tanoaks come from Meshy, in vendor/blender-meshy_redwood
+# (tools/meshy-run.mjs; docs/BLENDER_ASSETS.md, *Trying models from Meshy*). This
+# script makes the seedling and the floor plants. The tree builders stay as the
+# record, and to bring a tree back: add it to MODELS and remove its Meshy files.
+#
 #   node tools/blender/run.mjs cartoon_redwood --render
 #
 # The Giant Redwood's forest, which was grown (tools/grow.mjs) in a realistic
@@ -8,7 +14,7 @@
 #   redwood    (remade 5 November 2026, the owner's photographs of Northwood) a
 #              straight, dark, fluted trunk, barely flared; a long narrow cone
 #              of fine drooping boughs from a quarter of the way up. The third
-#              is an old tree: higher crown, broken top
+#              is an old tree: higher crown
 #   youngredwood the same tree young: boughs nearly to the ground, the full
 #              cone the owner's photographs are full of
 #   fir        Douglas fir: heavier boughs, sweeping up at the top of the crown
@@ -67,7 +73,7 @@ def redwood(height, flutes, old=False):
         half = H * c['reach']
         fluted_trunk(mesh, rng, H, H * .985, H * .031, 1.3, flutes)
         limbs(mesh, rng, H, c)
-        # An old tree's limbs are few and heavy, and its top broken.
+        # An old tree's limbs are few and heavy.
         if old:
             for k in range(rng.randint(4, 6)):
                 z = H * rng.uniform(.48, .86)
@@ -200,20 +206,6 @@ def sorrel(width):
 
 
 MODELS = [
-    ('Blender_Redwood_1', redwood(60, 9)),
-    ('Blender_Redwood_2', redwood(52, 8)),
-    ('Blender_Redwood_3', redwood(70, 10, old=True)),
-    ('Blender_YoungRedwood_1', youngredwood(28, 7)),
-    ('Blender_YoungRedwood_2', youngredwood(22, 7)),
-    ('Blender_YoungRedwood_3', youngredwood(34, 8)),
-    ('Blender_Fir_1', fir(60)),
-    ('Blender_Fir_2', fir(55)),
-    ('Blender_Hemlock_1', hemlock(45)),
-    ('Blender_Hemlock_2', hemlock(40)),
-    ('Blender_RedCedar_1', redcedar(50)),
-    ('Blender_RedCedar_2', redcedar(45)),
-    ('Blender_Tanoak_1', tanoak(20, 11)),
-    ('Blender_Tanoak_2', tanoak(17, 9.5)),
     ('Blender_Seedling_1', seedling(3)),
     ('Blender_Seedling_2', seedling(2.4)),
     ('Blender_SwordFern_1', swordfern(18)),
@@ -228,10 +220,4 @@ ONLY = [w for w in os.environ.get('FAIRWAY_ONLY', '').split(',') if w]
 if ONLY:
     MODELS = [m for m in MODELS if any(w in m[0] for w in ONLY)]
 
-ct.export(MODELS, colours={'leaf': (0.13, 0.25, 0.16), 'bark': (0.27, 0.17, 0.13)},
-          # The tanoak's sheet colours (the game paints roles itself): olive
-          # leaf against the conifers' blue-green, grey-brown bark.
-          tints={n: {'leaf': (0.3, 0.42, 0.2), 'bark': (0.42, 0.36, 0.3)} for n in ('Blender_Tanoak_1', 'Blender_Tanoak_2')},
-          far={'Blender_Redwood_1', 'Blender_Redwood_2', 'Blender_Redwood_3', 'Blender_YoungRedwood_1', 'Blender_YoungRedwood_2', 'Blender_YoungRedwood_3', 'Blender_Fir_1', 'Blender_Fir_2',
-               'Blender_Hemlock_1', 'Blender_Hemlock_2', 'Blender_RedCedar_1', 'Blender_RedCedar_2', 'Blender_Tanoak_1',
-               'Blender_Tanoak_2'})
+ct.export(MODELS, colours={'leaf': (0.13, 0.25, 0.16), 'bark': (0.27, 0.17, 0.13)})

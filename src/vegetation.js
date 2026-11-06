@@ -1,3 +1,4 @@
+import {darkenBy} from './species.js';
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -36,6 +37,12 @@ import {onDrive} from './homes.js';
 // `viewBlocker` reads it -- the same object for every part of one house, so
 // a house goes whole. clearCameraTrees tests each object once. Exported for
 // homes.js.
+// A tree's own tint. HSL here is in linear colour, where the dark greens sit at a
+// lightness of about 0.05, so a flat -0.05 took them to black (the Redwood Coast's
+// lone black trees, 5 November 2026): how far down one goes is held to a share of
+// its own lightness. The draws from rng are the same, in the same order.
+const varyColour=(c,h,s,l)=>c.offsetHSL(h,s,darkenBy(c.getHSL({}).l,l));
+
 export function addViewBlockers(view,mesh,matrices,owners){
  if(!mesh||!owners?.length)return;
  const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
@@ -247,9 +254,9 @@ function addModelSpecies(view,kind,trees){
   // its white pines and firs came out orange when only `spruce` was spared),
   // each in its own hue: maple red, birch and aspen yellow, beech bronze.
   if(turns)leaf.setHSL((FALL_HUE[kind]??.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
-  else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
+  else varyColour(leaf,(rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
   entries.push({model,owner:t,matrix:dummy.matrix.clone(),parts:twig?bareParts(model,twig):null,
-   color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
+   color:{leaf,bark:varyColour(barkBase.clone(),0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
  }
  // White materials: the instance colour carries the whole tint, so one material
  // per role serves every biome.

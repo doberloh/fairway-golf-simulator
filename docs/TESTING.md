@@ -366,6 +366,13 @@ the courses several suites share, and builds many at once on worker threads
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 
+`tests/meshy-run.test.mjs` runs tools/meshy-run.mjs against a small stand-in for
+Meshy, so it spends no credits: pictures, approving one, a model built only from
+it, a stopped run not paying twice, a swapped picture refused, the key never
+reaching a download or a file, and converting only what has its model and far version. The Blender steps
+are not run by any test. It also holds the redwood pack to every shipped model, no broken tops and a cartoon picture prompt in the game's colours. No test
+touches the real API.
+
 ## The smoke journeys
 
 `tools/smoke.mjs` plays the built file in Chromium and fails on any uncaught
