@@ -21,6 +21,7 @@
 // fires its change, so every rule behind it still applies.
 
 import {stepSheet} from './ui-steps.js';
+import {landscapeMap, addGlobe} from './ui-map.js';
 
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -160,9 +161,12 @@ export function landscapePage(doc, e, q) {
   b.type = 'button'; b.dataset.land = l.key;
   const pic = make(doc, 'span', 'sx-pic');
   b.append(pic, make(doc, 'span', 'sx-land-name', esc(l.name.toUpperCase())));
-  b.onclick = () => { e.onLandscape?.(l.key); paint(l.key); };
+  b.onclick = () => { e.onLandscape?.(l.key); paint(l.key); map?.choose(l.key); };
   grid.append(b); cards.push(b); queue.push({el: pic, settings: l.settings});
+  addGlobe(doc, pic, l.key, 30);
  }
+ // The map over the cards (the US landscapes goal): a region pressed picks it.
+ const map = e.landscapes?.length ? landscapeMap(doc, {built: e.landscapes.map(l => l.key), chosen: e.landscape, onPick: key => { e.onLandscape?.(key); paint(key); }}) : null;
  const any = make(doc, 'button', 'sx-land sx-any', '<span class="sx-land-name">ANY · A NEW ONE EACH HOLE</span>');
  any.type = 'button'; any.dataset.land = 'any';
  any.onclick = () => { e.onLandscape?.('any'); paint('any'); };
@@ -175,7 +179,7 @@ export function landscapePage(doc, e, q) {
  side.append(make(doc, 'ul', 'sx-run-how', ['ONE HOLE AFTER ANOTHER, GROWN AS YOU GO', 'NO LAST HOLE: STOP WHEN YOU LIKE, PICK IT UP LATER', 'SUDDEN DEATH ENDS AT YOUR FIRST BOGEY'].map(t => `<li>${esc(t)}</li>`).join('')));
  if (e.best) side.append(make(doc, 'div', 'sx-best', `<span class="sx-help-k">YOUR BEST RUN</span><strong>${esc(e.best.line)}</strong><small>${esc(e.best.sub || '')}</small>`));
  const lands = make(doc, 'div', 'sx-lands-col');
- lands.append(make(doc, 'h3', 'sx-head', 'LANDSCAPE'), grid);
+ lands.append(make(doc, 'h3', 'sx-head', 'LANDSCAPE'), ...(map ? [map.el] : []), grid);
  p.append(lands, side);
  paint(e.landscape || 'any');
  e.pictures?.(queue, 200, 90);

@@ -105,7 +105,7 @@ const clickSel = (p, sel) => p.evaluate(s => { const e = [...document.querySelec
 // A ROUND, from the main menu, through the lab (one golfer, or the four the
 // round-matrix plays). Waits for the opening flyover to finish.
 const GOLFERS = n => ({players: ['Alex', 'Sam', 'Jordan', 'Riley'].slice(0, n).map((name, i) => ({name, team: i % 2 ? 'B' : 'A', hand: i === 2 ? 'LH' : 'RH'})), mode: 'stroke', tee: 'white'});
-async function round(p, n = 1, biome = 'autumn') {
+async function round(p, n = 1, biome = 'newengland') {
  await p.evaluate(([g, b]) => window.lab.course({biome: b, holes: 9, seed: 'AUDIT'}, g), [GOLFERS(n), biome]);
  // The opening flyover ends on its own; wait until a swing can start.
  await p.waitForFunction(() => window.lab.state().canSwing, null, {timeout: 60000}).catch(() => {});

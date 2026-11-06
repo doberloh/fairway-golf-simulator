@@ -93,7 +93,8 @@ DOCS = [path for path, _ in PORTABLE] + [
     'docs/LANDSCAPE_RESEARCH.md', 'docs/BALL_BEHAVIOUR_KNOBS.md',
     'docs/REFERENCES.md',
 ]
-ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html']
+ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html',
+               'vite.builder.config.js', 'builder.html']
 # `tools` used to ship its Python packager alone, which left the source
 # archive carrying a package.json whose scripts -- bench, profile, gpu,
 # assets, grove -- all pointed at files that were not in it. The .mjs tools
@@ -134,6 +135,12 @@ def tracked_files():
 def main():
     html_path = ROOT / 'dist/index.html'
     html = html_path.read_text(encoding='utf-8')
+    # FAIRWAY COURSE BUILDER, the second page in every download (the
+    # course-builder branch, 31 October 2026; docs/COURSE_BUILDER.md), built by
+    # vite.builder.config.js in the same `npm run build`.
+    builder_path = ROOT / 'dist/builder.html'
+    if not builder_path.is_file():
+        raise SystemExit('No dist/builder.html. Run npm run build first.')
     files = [ROOT / name for name in DOCS + ROOT_SOURCE]
     tracked = tracked_files()
     for directory, suffixes in DIRECTORIES.items():
@@ -157,6 +164,8 @@ def main():
     inputs.extend(p for p in files if p.is_relative_to(ROOT / 'src'))
     if any(p.stat().st_mtime_ns > html_path.stat().st_mtime_ns for p in inputs):
         raise SystemExit('Source or licenses changed since build. Run npm run build first.')
+    if any(p.stat().st_mtime_ns > builder_path.stat().st_mtime_ns for p in inputs):
+        raise SystemExit('Source changed since the builder was built. Run npm run build first.')
     for marker in ['Dustin Oberloh', 'Copyright (c) 2024 bryc',
                    'Copyright (c) 2024, Mapbox', 'Lucide Icons and Contributors',
                    'Missing Deadlines (Benjamin Wrensch)', 'Apache License',
@@ -179,7 +188,7 @@ def main():
         if path.stat().st_mtime_ns < bundle_path.stat().st_mtime_ns:
             raise SystemExit(f'{path.relative_to(ROOT).as_posix()} is older than the bridge bundle. Run npm run server.')
         servers[platform] = path
-    common = [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE] + [(bundle_path, SERVER_SOURCE)]
+    common = [(html_path, 'Fairway.html'), (builder_path, 'Fairway Builder.html')] + [(ROOT / p, n) for p, n in PORTABLE] + [(bundle_path, SERVER_SOURCE)]
     packages = {name: [(servers[platform], program)] + common for name, platform, program in PLATFORMS}
     packages['Fairway-source.zip'] = [(p, p.relative_to(ROOT).as_posix()) for p in files]
     OUT.mkdir(exist_ok=True)
@@ -201,7 +210,7 @@ def main():
                 if archive.read(destination) != path.read_bytes():
                     raise SystemExit(f'Archive contents differ: {destination}')
         print(f'{name}: {len(entries)} verified files, {target.stat().st_size:,} bytes')
-    artifacts = [OUT / n for n in packages] + [html_path]
+    artifacts = [OUT / n for n in packages] + [html_path, builder_path]
     (OUT / 'RELEASE_SHA256.txt').write_text(''.join(
         f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(ROOT).as_posix()}\n'
         for p in artifacts), encoding='utf-8', newline='\n')

@@ -2,14 +2,12 @@
 
 Fully procedural generation is a good fit for this simulator. It needs constraints to create playable golf, but it does not need a catalogue of prebuilt holes. The same seed and settings reproduce the same course within this generator version. Changing the generator can change what an older seed produces.
 
-**Two designers (since 30 October 2026).** Everything below describes
-**Classic**, the generator Fairway has always had, which stays the default.
-**Architect (beta)** shares this pipeline and replaces its decisions at named
-seams -- its own plan per hole, hazards placed against shots, routing from a
-clubhouse, and the rest of docs/ARCHITECT_COURSES.md. *Architect, as built*
-at the end of this file says what it does differently so far; until a seam is
-built, an Architect course is generated exactly as Classic generates its
-defaults.
+**One generator (since 2 November 2026).** From 30 October to 2 November
+2026 a second designer, **Architect (beta)**, replaced some of these steps
+with its own plan per hole; the owner removed it (real people build courses
+in Fairway Course Builder instead), and docs/ARCHITECT_COURSES.md, in git
+history, is its record. What it built round the holes stayed and is part of
+every generated course: *The world round the holes*, at the end of this file.
 
 ## What is generated
 
@@ -56,11 +54,29 @@ Ponds are generated against the fairway edge with a gap that may be negative, so
 
 River and creek controls request a bounded number of course-wide meandering corridors. Tees, greens and fitted ponds have protected clearance areas; accepted paths are rounded, given variable widths and terrain-fitted levels, and indexed spatially. That same path drives bed carving, water surfaces, water lies and map lines. Par threes are not given a fairway at all: the ball is played through the air to the green, so a full corridor down the hole is turf nobody uses and it swallows the tee complex. They get an approach instead, beginning at `mowStart` rather than `fairwayStart` — never wider than the green it fronts and never covering more than the last 45% of the hole — and every bunker on a par three is greenside, because there is no fairway to bunker. `fairwayStart` still anchors bunker and pond placement on every hole, so par threes keep their hazards. Rivers and creeks do not cross fairways, greens or other bodies of water. Corridors and greens are raised in the drainage model so routes go between the holes -- and the corridor ridge keeps rising inward rather than levelling off at the corridor edge, because a constant offset preserves the gradient underneath it and simply becomes a plateau that water runs through, and the finished curve is then pushed clear of anything it must not touch and re-smoothed, because meander and corner cutting are applied after the route is chosen and would otherwise undo it. Measured over 24 courses: no channel station inside a fairway, a minimum of 11 m past any green edge, and a minimum of 26 m from the edge of any pond or lake. Creek depths are 60% of river depth, and no bridges are generated yet. A channel runs only as far as it can stay within its cut budget, and fades out where it is trimmed.
 
-Optional homes are sampled along both sides of the fairways with occurrence and setback controls. Sites must be dry rough, gently sloping, spaced from other homes, clear of tee/green complexes, and out of what a tee sees: a house whose roof would rise above the line from a golfer's eye to the landing area, inside a tee's forward view, is not built (`blocksView`). Houses face their corridor and trees are excluded from their footprints. They are solid: a ball rebounds off them.
+Optional homes are sampled along both sides of the fairways with occurrence and setback controls. Sites must be dry rough, gently sloping, spaced from other homes, clear of tee/green complexes, and out of what a tee sees: a house whose roof would rise above the line from a golfer's eye to the landing area, inside a tee's forward view, is not built (`blocksView`). Houses have their backs to their corridor (their streets are below) and trees are excluded from their footprints. They are solid: a ball rebounds off them.
 
 For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO.md covers hydrology, routing quality, building collisions, performance and other future improvements.
 
+**The homes' streets (generator 84; roads.js `placeStreets`).** With fairway
+homes on, a house has its back to the fairway and its front, drive and mailbox
+to a street behind it. The garaged houses on one side of one hole make a row;
+rows are joined nearest first, each from its nearer end, from the public road,
+the club's drive, a street already laid, or the lot where there is no road. A
+street is routed on the cart paths' 6 m grid with water, everything played and
+everything built closed; the rough beside play is dear, so it goes round the
+end of a hole rather than across a carry. It is rounded, meets what it joins at
+a slant, and its far end runs on to the next street within 130 m or turns in a
+cul-de-sac. A lane runs from each drive's end along the drive's line to the
+street; a drive no street reaches is not built, so no drive ends in the rough.
+Nothing here draws on the seed: the same houses give the same streets.
+
 ## What a biome decides
+
+(Since 2 November 2026 a biome is a landscape: its region's record with its
+own differences over it -- biomes.js, regions.js; PROJECT_HANDOFF *Adding a
+biome*. The landscape's key is part of the seed of the world pieces and the
+course name.)
 
 Since the cartoon overhaul the redwood grove's plants are built in Blender (tools/blender/cartoon_redwood.py), like every other landscape's. Before it they were GROWN rather than imported: `tools/grow.mjs` (removed 27 October 2026) composed every one of them -- redwood, douglas fir, hemlock, red cedar, tanoak, seedlings, sword fern, salal, sorrel, plus nurse logs, stumps and boulders -- from a small geometry library, with shapes and colours measured from 315 photographs of real redwood forest. Each was a whole tree carrying its own fluted, buttressed trunk, so nothing is borrowed and nothing is drawn underneath. This replaced an earlier approach that drew a tapered cylinder and balanced a borrowed conifer crown on top, which existed only because no imported conifer is anything but conical to the ground and reads as a Christmas tree at redwood scale.
 
@@ -86,7 +102,7 @@ A hole may also be given a **specimen**: a feature tree or a cluster of stones s
 
 **Boulders are generation output, not decoration.** They used to be placed by the renderer from a stream the generator never saw, so the world did not know where they were and nothing could collide with one. They carry their reach and crown height now, and the renderer reads them.
 
-**Haunted Hollow's giant pumpkins and toadstools are generation output for the same reason.** They are solid, so the world has to know where they are. A biome asks for them per hole (`props`: 26 pumpkins and 18 toadstool clumps a hole for Haunted Hollow), drawn from a stream of their own so no other biome moves. Pumpkins grow in patches of three to seven round a centre; three quarters of the toadstools come up a few metres from a trunk. Each is three to five times life size -- 0.9 to 3.5 m for a pumpkin, 0.75 to 2.75 m for a clump, most near the small end -- and as wide as the model it will be drawn with. Siting follows the boulder rules (rough only, out of every tee shot and tee fan) plus room from the corridor, trunks, boulders, houses and each other. A share of pumpkins (60%) is marked to be carved as lanterns, and each is turned to face the nearest fairway.
+**Haunted Hollow's giant pumpkins and toadstools** were generation output too, solid and placed per hole from their own stream; they went with the landscape on 2 November 2026 (generator 54).
 
 Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
 
@@ -141,6 +157,25 @@ than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
 landing area rather than the tee: measured, every one of them is caused by
 ground 96 to 190 m out.
 
+## No two landscapes share their ground (generator 87)
+
+Every landscape's land is its own: the last eight on another's took recipes of their own, researched from the place (RESEARCH *The last landscapes on another's ground*), and tests/terrain-true.test.mjs holds it.
+
+## One cart path network (generator 86)
+
+Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
+
+## The country is one surface (generator 85)
+
+The hills and each landscape's landform stand everywhere. A hole lies on the
+long shape of that country (softened over a few hundred metres, and eased
+toward the course's mean by elevation severity), so the ground beside it rises
+on one side and falls on the other, with no bowl round the hole and no crease
+between two holes. Near a corridor the country eases into that long shape over
+the recipe's reach. Elevation severity 0 is a level hole. The Badlands stand
+their formations on a prairie floor instead; the driving range and the islands
+keep their own flat base.
+
 ## The country between the holes (generator 37)
 
 Until generator 37 every landscape was the same rolling hills under three
@@ -156,10 +191,43 @@ from what lies between the holes on real courses of its kind
 - **mesas** (Desert): flat-topped sandstone buttes on a seeded grid of cells,
   cliffs on their sides and a talus apron, and dry washes winding between them.
   Every remaining rough more than a few metres past the corridor is hardpan.
+- **badlands** (the Badlands, 3 November 2026; carved since generator 83):
+  a table of clay eaten back from the prairie by its own drainage
+  (landforms.js `carve`, baked once per seed: a branching gully network
+  grown in from the prairie, heights built up it, steep on the divides and
+  almost flat along the big channels), so what stands between the gullies
+  is ridges, pyramids and spires, the summits drawn up above 44 m and the
+  land stopped at a 50 m caprock in places, a flat-topped butte. Near a hole
+  it is SUNK into the prairie, not squashed (`sinks`): the peaks keep their
+  faces and only the tallest reach the grass. The four lines the public road
+  can take are kept clear as a valley (course.js `roadValley`). Bare rock on
+  the steep faces, a narrow hardpan wash at their feet, every rock face
+  painted in level beds of the landscape's colours (ground.js strata,
+  biomes.js `strata`). The far land is the same carving at a tenth the
+  resolution (`ringCarve`, landscape-edge.js): tables with fluted scarps.
+- **Terrain true to place** (generator 76, the owner's amendment of 3
+  November 2026): eighteen landscapes have their own recipe from their
+  geology (biomes.js `TERRAIN`; RESEARCH *Terrain true to place*): **steps**
+  (the Hill Country's limestone staircases, Monterey's marine terraces),
+  **karst** (the Bluegrass's shallow sinkholes), **glacial** (the North
+  Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
+  (granite knobs and washes in the Mojave and Desert Palms, a rare low knob
+  and no washes on the built floor of Desert Resort, the High
+  Sierra's domes), **channels** (Sagebrush coulees, Ozark hollows, Piedmont
+  gullies, SoCal barrancas), **playas** (the High Plains' round dry pans
+  with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder
+  cones and lava flows), **sandridges** (Longleaf) and **lowland** (the
+  Bayou's, Flatwoods' and Gulf Coast's levees and backswamps, on a corridor
+  roll scaled down by `baseRoll`; the Lowcountry's with `tide`: its marsh
+  laid at the tide line by the recipe's `level`, last of all, and tidal
+  creeks cut through it below the sea, which `sea` fills, the marsh's core
+  bare of trees -- generator 80).
+  A recipe's `level` SETS the ground to a height (faded in from play as the
+  lift is), where `lift` adds to it.
 - **dunes** (Links, Lakeshore Dunes): rumpled ground and dune crests carrying
   marram (native grass), heather on the settled ground behind (Links).
 - **prairie** (Midwest), **coral** (the Island's ironshore just above the
-  beach), **moor** (Haunted Hollow's dead heather).
+  beach), **moor** (heather in drifts; Haunted Hollow's until it was removed, and any heath's).
 
 The relief is added to the raw landform and fades to nothing toward the
 corridors over the recipe's `reach` -- not with the tee area's returned relief,
@@ -194,8 +262,7 @@ the last green's level, so its fairway lies beside the other's rather than
 beside its teeing ground. After routing and before anything measures a
 corridor (`shareFairways`), wherever two fairways run nearly parallel with
 under 85 m of rough between them, each widens to the middle, so the strip
-between becomes one fairway (on an Architect course each fairway joins one
-neighbour at most, the longest joins first: `pairs`). Never across a pond; never at a tee end or
+between becomes one fairway. Never across a pond; never at a tee end or
 green complex. A join is decided for the PAIR (generator 47): taken only
 where the two fairways run alongside for at least 100 m and, on average, two
 thirds of their shareable stretch -- a double fairway, never a crossbar --
@@ -219,105 +286,58 @@ jittered grid every 8-11 m, by the rules every tree obeys, with crowns
 allowed to close and trees 1.2 times the open scatter's size (generator 40). Hashed, not drawn: nothing else on the course is decided
 differently. Under each stand an understory of shrubs and ferns is planted from a grid of its own (generator 42). The Giant Redwood (already a grove) and the range have none.
 
-## Architect, as built
+## The world round the holes (generator 55)
 
-What an Architect course does differently from the Classic pipeline above,
-seam by seam (docs/ARCHITECT_COURSES.md has the reasons and the record).
+Architect's pieces, on every generated course but the driving range since 2
+November 2026. Each draws from its own named stream (world-stream.js), so
+none moves a hole or another piece; each landscape's kit is its `WORLD` block
+in biomes.js.
 
-- **Its settings** (designer.js `designSettings`, architect-styles.js
-  `architectChoices`): everything but the designer, holes, seed, landscape, the
-  four dials, wind and pin day is the architect's. The **style** (chosen, or By
-  landscape from the seed) sets fairway width, bunker count and raggedness,
-  green size, shape and slope, raised and punchbowl greens, water, trees and
-  doglegs; the **club** sets the length (6,250-7,250 yd for eighteen) and
-  scales width, bunkers and water; the **age** scales the trees; the **story**
-  adds a creek.
-- **The plan per hole** (architect.js `designHole`, after the shared skeleton,
-  so the card holds): a concept -- strategic, heroic carry, penal, risk and
-  reward, short, three-shot par five -- and sometimes a named template
-  (Redan, Eden, Biarritz, Punchbowl, Double plateau, Road, Cape, Principal's
-  Nose, Leven, Long), and a preferred side (a dogleg's inside, else the
-  seed's).
-- **Where the hazards go**: a drive bunker where a good player's drive lands
-  (277 yd from the back tee, the golfer table), on the preferred side; one on
-  the other side at the average golfer's distance (224 yd from the middle tee);
-  sometimes a centreline bunker; cross bunkers at a par five's lay-up; the
-  green's front corner on the wrong side always guarded, then the style's
-  count round the green; water placed for a carry, a cape, a go-for-it second
-  or a short side. Every hazard records why; the architect places at most
-  twelve a hole, and with the signatures a hole holds up
-  to 24 -- the bunkers past the shader's twelve slots baked into the surface
-  field (surface-field.js) at the end, after the ground grid, and painted
-  and played from it.
-- **The fairway** swells at the landing zones, necks before the green and
-  tucks round a bunker on its edge; on Links, Sandhills and Minimalist it runs
-  into the green on a collar under a metre wide.
-- **Collection areas**: on the ground-game styles, an oval of fairway-height
-  grass off the front corner the green drains toward.
-- **Bunker complexes**: on the big-bunker styles, about half the bunkers
-  over 7 m grow a lobe over their rim (outward, on a fairway bunker).
-- **Wear**: divots on the tees (most on par 3s) and in the landing zones,
-  by club and age; decoration.
-- **The green** is turned to its approach -- its depth along the line the
-  second shot comes from, opened to the preferred side on a strategic or
-  heroic hole -- and drains off a front corner, higher at the back; a
-  template asks for its own (the Redan's fall away, the Biarritz swale, a
-  punchbowl). The fall, ridge, tier and false front turn with the green.
-- **The ground's paint** (not generation, but Architect's only): a step of
-  shade where a shorter cut meets a taller one, and a mower's line where
-  rough meets native grass.
-- **Routing from the clubhouse** (routing.js): the first tee at home, each
-  nine pulled home toward its turn, every hole kept within walking reach of
-  home, the green before the last about a last hole's length out, the 10th tee
-  at home, the walk to each next tee priced high; twelve routings tried.
-- **Cart paths** (paths.js): routed across a cost grid (A*) when planting begins, off greens, tees, sand and water, round the fairways, on walkable grades, joined into one network; down each hole on
-  its bail-out side 14 m beyond the rough and round its hazards, past the
-  green to a pull-off and on to the next tee, smoothed; pushed sideways off any
-  green, tee, sand or water; a bridge wherever one crosses a creek. The lie on
-  one is `path`, and houses and trees keep off it.
+- **Cart paths** (paths.js): routed across a cost grid (A*) when planting
+  begins, off greens, tees, sand and water, round the fairways, on walkable
+  grades, joined into one network; down each hole on its bail-out side 14 m
+  beyond the rough and round its hazards, past the green to a pull-off and on
+  to the next tee, smoothed; pushed sideways off any green, tee, sand or
+  water. The lie on one is `path`, and houses and trees keep off it.
+- **Bridges** (paths.js `findBridges`): every run of a path over a stream, a
+  pond, a lake or a ravine is a bridge, timber or stone by the landscape --
+  straight decks, as many as the run's bends need --
+  found once for the network and again after the clubhouse's link is laid.
+  Each deck's height is fixed then, so the drawn deck and the solid one agree.
+  The bench's `pathOverWater` holds it at zero.
 - **The clubhouse** (clubhouse.js), sited when planting begins, after the
   tee shots are known: on rings 40-150 m (on steep land up to 270 m) round the
   first tee and the last green, on ground clear of every corridor by 14 m,
   of every tee shot and its view, falling no more than 4.5 m across its
   footprint (a terrace; on steep land a municipal footprint on up to 6.5 m),
-  nearest the two; facing the first tee; sized by club. Houses and trees keep
-  off it and its 40 m lawn; the path is linked to its door.
+  nearest the two; facing the first tee; a members' club's size. Houses and
+  trees keep off it and its 40 m lawn; the path is linked to its door (cut at
+  its first junction, with no stub past it).
+- **The land's story** (story.js), after the clubhouse and before the houses
+  and trees, a middling amount (Architect's *A little*): field walls (stone,
+  fieldstone, split-rail, barbed wire or four-board), a farmstead (with a shelterbelt
+  behind it on the plains), ruins, a landmark on a hole's line (a lighthouse,
+  church, windmill, grain elevator, pump jack...), a stone circle and
+  lanterns, a dock on a lake's shore (the North Woods), as the landscape has
+  them.
 - **Markings** (markings.js), placed on the finished ground: red stakes
   every 11 m round each pond and along creeks within 60 m of play, white
   stakes every 13 m where the boundary comes within 120 m of a corridor,
   yardage posts both sides at 100, 150 and 200 yd from the green, a rake on
   the far side of each bunker laid along its edge. Decoration, never solid.
-- **Mounds** (architect.js `designMounds`), by style, in the ground itself
-  before the creeks are cut: framing mounds beyond the rough (Modern,
-  Parkland, Tropical), spectator banks behind greens (Stadium), chocolate
-  drops near greens (Golden Age, Raynor); clear of every hole's play, the sea
-  and the creeks.
-- **The land's templates** (architect.js), in the ground with the mounds:
-  the Dell's dune (18 m to a side, 4 m high, its back foot 5 m short of
-  the green) before a sunken green, the Alps' ridge across the fairway,
-  the Barranca's ravine (its fairway gap and its bridge), the Pit's wall.
-- **Tournament week** (occasion.js), on a Championship venue, with the
-  story's buildings: stands round the last green and a par three, a
-  scoreboard, towers, marquees, gallery ropes and the crowd by the pin day.
-- **History by age** (architect.js): grassed-over bunkers as hollows on
-  municipal, old and restored courses; a restored course's felled trees
-  left as stumps scattered in the rough (3-7 a hole). Trees sized by age:
-  New 0.68, Mature 1, Old 1.18, Restored 1.08 of full height.
-- **Hand-made shapes** (hand-tools.js), on each Architect hole before its
-  pin is chosen: the architect's own signature on about a third of holes,
-  by style (the studio's own Hand tools were withdrawn on 31 October
-  2026); their mounds and hollows join the earth field after routing.
-- **Life** (life.js), after the planting: animals and distant people, out
-  of play and clear of the trees, drawn only -- a fourball on the longest
-  path piece, a mower only on a run of mown rough (none where the rough
-  grows tall).
-- **Heritage** (story.js; the setting was The land's story), after the
-  clubhouse and before the houses and trees: field walls, a farmstead,
-  ruins, a landmark on a hole's line, a stone circle and lanterns.
+- **Wear** (markings.js `placeWear`): divots on the tees (most on par 3s)
+  and in the good and average drives' landing zones, each pointing at the
+  green; decoration.
+- **Life** (life.js), after the planting: animals, out of play and clear of
+  the trees, drawn only.
 - **Built water** (waterworks.js), on the finished ground: rip-rap or a tie
-  wall along the side of each pond that faces play, by style, and a fountain
-  in a big pond on a dressed club (its water drawn moving by the renderer). A bridge's deck height is fixed where the
-  paths are routed, so the drawn deck and the solid one agree.
-- **The trees** are cleared to a scalloped line, not faded by chance; avenues
-  line some holes on Parkland, Golden Age and Raynor courses, and a dogleg's
-  inside corner gets a cluster.
+  wall along the side of each pond that faces play, or a soft bank, by the
+  landscape's `edge`, and a fountain in a big open pond where its
+  `fountain` allows (its water drawn moving by the renderer).
+
+Gone with Architect: the dials, the plan per hole and its templates, hazards
+placed against shots, collection areas, bunker complexes, the swelling and
+tucking fairway, turned greens, mounds, the land's templates (Dell, Alps,
+Barranca, Pit), history by age, hand-made shapes, routing home to the
+clubhouse, designed tree lines and avenues; and tournament week and the
+people with it.

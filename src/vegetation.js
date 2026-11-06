@@ -1,17 +1,34 @@
+import {darkenBy} from './species.js';
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 import {farWoodSites,FAR_SHAPES} from './far-woods.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts,bareParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
-import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
+import {EVERGREEN,GROUND_PLANTS,SPREAD_SIZED} from './species.js';
 import {plantPose} from './tree-seat.js';
 import {allows} from './grounds.js';
 import {wildAt} from './landforms.js';
 import {launchCorridors,blocksLaunch,BEACH_RISE,teePad,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND} from './course.js';
 import {windMaterial,toonRamp,rimLit} from './textures.js';
 import {biomeOf} from './biomes.js';
+import {regionOf} from './regions.js';
+import {SEASON_TINTS} from './season-tints.js';
+import {bareInWinter,bloomIn,UNDER_SNOW,dullInWinter,curedInWinter,SNOW_GRASS_HEIGHT,RICH,roughGreen} from './seasons.js';
+import {PALMS} from './built-world.js';
+// The regions with wildflowers in the rough. By region: the list was of
+// landscape keys until 2 November 2026, and the keys' rename (Midwest to
+// Heartland, Mountain to Rockies, Desert to Sonoran) left only the Links with
+// any (found 3 November, phase 6). Texas joins with its bluebonnets.
+const FLOWER_REGIONS=new Set(['midwest','mountain','links','desert','texas']);
+// A number from a place, the same every time and with no draw from a stream,
+// so a season's flowers never move the grass round them.
+const spotHash=(x,z)=>Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1;
+// Of the rough's blades, the share with a flower at a full spring bloom
+// (seasons.js bloomIn), against .16 the year round in FLOWER_REGIONS; and of
+// the long grass's colonies, the share whose heads are the bloom's. PLACED.
+const BLOOM_FLOWERS=.24,BLOOM_HEADS=.7;
 // A house drive keeps the rough's grass off it (homes.js; the cartoon overhaul's paths, round 5).
 import {onDrive} from './homes.js';
 
@@ -19,7 +36,13 @@ import {onDrive} from './homes.js';
 // instanced mesh with, for each instance, the object it belongs to as
 // `viewBlocker` reads it -- the same object for every part of one house, so
 // a house goes whole. clearCameraTrees tests each object once. Exported for
-// homes.js and haunts.js.
+// homes.js.
+// A tree's own tint. HSL here is in linear colour, where the dark greens sit at a
+// lightness of about 0.05, so a flat -0.05 took them to black (the Redwood Coast's
+// lone black trees, 5 November 2026): how far down one goes is held to a share of
+// its own lightness. The draws from rng are the same, in the same order.
+const varyColour=(c,h,s,l)=>c.offsetHSL(h,s,darkenBy(c.getHSL({}).l,l));
+
 export function addViewBlockers(view,mesh,matrices,owners){
  if(!mesh||!owners?.length)return;
  const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
@@ -109,6 +132,19 @@ function groundShaded(geometry,shade){
 }
 // DoubleSide flips the normal of a back face, which would turn half of every
 // clump's blades to face the ground. These keep the normal they were given.
+// SNOW ON THE TOPS (the seasons, winter where the region's winter is snow:
+// view.snowTops, renderer.js): every face turned up -- a crown's top, a
+// limb's upper side -- fades toward snow white, by how far it faces the sky
+// (world normal y from .45 to .8, 85% at most; PLACED). Looks only. `flat`
+// is where a wall's rounded stones and thin rails take it: from .15 to .5
+// (PLACED; seen 4 November 2026: at the trees' numbers a fieldstone wall in
+// the snow stayed bare, its stones too round to hold any).
+export function snowTopped(material,flat=false){
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey,range=flat?'.15,.5':'.45,.8';
+ material.customProgramCacheKey=()=>key.call(material)+(flat?'-snowtop-flat':'-snowtop');
+ material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_toon_fragment>','{vec3 snowN=normalize((vec4(normal,0.)*viewMatrix).xyz);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.97),smoothstep('+range+',snowN.y)*.85);}\n#include <lights_toon_fragment>');};
+ return material;
+}
 function groundLit(material){
  const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
  material.customProgramCacheKey=()=>key.call(material)+'-groundlit';
@@ -116,27 +152,66 @@ function groundLit(material){
  return material;
 }
 // Stiffer in a wind than a broadleaf: needled boughs on a heavy leader.
-const CONIFERS=new Set(['redwood','dougfir','hemlock','redcedar','pine','spruce','cedar']);
+const CONIFERS=new Set(['redwood','youngredwood','dougfir','hemlock','redcedar','pine','spruce','cedar']);
 // Rigid: a cactus is a column of water in a skin, and an agave's leaves are
 // stiff blades. Neither moves in any wind a round of golf is played in.
 const STILL=new Set(['cactus','agave','cholla']);
-const THIN_LEAVES=new Set(['palm','halatree','brackenfern','ocotillo']);
+// The trees built as they grow (tools/blender/grown.py): their foliage is thin too.
+const THIN_LEAVES=new Set(['palm','halatree','brackenfern','ocotillo','redwood','youngredwood','dougfir','hemlock','tanoak','baylaurel','madrone','bigleafmaple']);
+// Kept green through leaf fall; and the hue a broadleaf turns (HSL hue; the
+// rest turn orange, .055).
+const FALL_HUE={maple:0,aspen:.11,paperbirch:.12,americanbeech:.09};
+// THE SEASONS (the US landscapes goal, step 9; seasons.js). The round's
+// season is the view's (renderer.js sets it). Leaves turn in autumn
+// everywhere and only then: New England wore its autumn as its summer too,
+// until the owner asked for a real one (4 November 2026). Kept in leaf through winter
+// beside the evergreens: the cacti and the desert's green-barked trees, and
+// the Pacific's evergreen broadleaves.
+const WINTER_LEAFY=new Set([...EVERGREEN,...STILL,'madrone','tanoak','baylaurel','ocotillo','ironwood','palo']);
+// An aspen's "eyes" and a birch's bands are the accent role but on the trunk,
+// so they stay on a bare tree (a flower or a berry does not).
+const TRUNK_ACCENT=new Set(['aspen','paperbirch']);
+const seasonOfView=view=>view.season||'summer';
+const autumnLeaves=view=>seasonOfView(view)==='autumn';
+const bare=(view,kind)=>seasonOfView(view)==='winter'&&bareInWinter(kind,{evergreen:WINTER_LEAFY,palms:PALMS,ground:GROUND_PLANTS});
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
- const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55',palo:'#9aa64e',mesquite:'#6c804b',cholla:'#6f8f5e',ocotillo:'#6f7a45',agave:'#7caa9b',creosote:'#5d6b39',brittlebush:'#a9b39b',sagebrush:'#9aa58c',bracken:'#5d8a3a',huckleberry:'#3f5f34',hala:'#678f3d',redwood:'#3d5a35',fir:'#355a3a',hemlock:'#4a6b3e',redcedar:'#3f6a40',tanoak:'#4f6b38',seedling:'#4a7041',swordfern:'#3f6e33',salal:'#3e5f30',sorrel:'#5f8a3e'};
- // Bark is one brown unless a species says otherwise. The dead trees do: a
- // haunted wood is told apart by its bark, since it has no leaves to do it.
- const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b',palo:'#8fa553',mesquite:'#4d3d31',cholla:'#5a5040',ocotillo:'#7a6e5c',creosote:'#5a4a3a',bracken:'#6b5a3a',sagebrush:'#6a5d4e',huckleberry:'#5a4636',palm:'#93876a',hala:'#8a7b66',redwood:'#7a5242',fir:'#5d4636',hemlock:'#5a4a3e',redcedar:'#735040',tanoak:'#6e6256',sorrel:'#6f8a4e'};
+ // Under the snow in a snowy winter (seasons.js UNDER_SNOW).
+ if(view.snowTops&&UNDER_SNOW.has(kind))return true;
+ const shades={afghanpine:'#3f6438',africansumac:'#465f38',pampasgrass:'#6a8a50',rmjuniper:'#56706a',greenash:'#4f7a3a',chokecherry:'#4a7038',leadplant:'#8f9c80',redpine:'#557a3a',jackpine:'#647a3e',tamarack:'#6e9a4a',blackspruce:'#3c583a',sitkaspruce:'#587656',shorepine:'#4a6a36',fireweed:'#557a3c',devilsclub:'#4f7e36',cottongrass:'#6e8a4a',monkeypod:'#5a843c',casuarina:'#5a7650',cookpine:'#3d663e',ohia:'#56764a',plumeria:'#5a853a',tiplant:'#8a2e4a',heliconia:'#4f8a3e',rosebay:'#3e6234',mountainlaurelshrub:'#3e6234',flameazalea:'#557e38',chestnutoak:'#4f7436',shortleafpine:'#5c7638',sassafras:'#5a8a3c',copperbeech:'#5a3036',pitchpine:'#647e40',scruboak:'#4f7036',bayberry:'#5a7a3e',beachrose:'#4e7a36',hydrangea:'#4a7a3a',westernjuniper:'#64805a',utahjuniper:'#6c8256',pinyonpine:'#58763f',rabbitbrush:'#8a9a6a',blackbrush:'#6a6e62',cliffrose:'#7a8a5a',russianolive:'#9fb09a',balsamroot:'#a8b498',globemallow:'#9aa88a',cheatgrass:'#c8b07a',soapweedyucca:'#7a8a5a',easternredcedar:'#436a36',buffalograss:'#8a9a6a',wildsunflower:'#5a7a3a',montereycypress:'#3a5a32',montereypine:'#3a5e34',coastliveoak:'#40613a',eucalyptus:'#7a9480',sycamore:'#5f8a3e',torreypine:'#66864f',iceplant:'#6a9a4a',coastalsage:'#a09a80',chaparral:'#5a6e4a',valleyoak:'#5c7e3c',blueoak:'#8a9e86',buckeye:'#a8925a',grapevine:'#5a7e34',californiapoppy:'#8a9a7a',olivetree:'#84967a',jacaranda:'#8a7ac8',peppertree:'#749448',ponderosa:'#5b7e38',sugarpine:'#4f744d',incensecedar:'#4d7a3a',redfir:'#557564',noblefir:'#4d7a72',westernlarch:'#6a9a48',manzanita:'#6f826a',gambeloak:'#4f7a34',mountainmahogany:'#4a5e3e',bitterbrush:'#7a8a5a',mulesear:'#8a9662',beargrass:'#6a8a4e',ashejuniper:'#4b6a40',postoak:'#4c6e34',pecan:'#4f7a36',cedarelm:'#4f7436',osageorange:'#4f7a36',mountainlaurel:'#3f6a34',redbud:'#557e38',bluebonnet:'#5a7a40',joshuatree:'#77884a',mojaveyucca:'#6a8040',fanpalm:'#5a843a',datepalm:'#738f62',aleppopine:'#6f8f4c',oleander:'#4f7436',tamarisk:'#8fa070',smoketree:'#a8acaa',soaptreeyucca:'#8a9a5a',sotol:'#8a9a7a',lechuguilla:'#8a9a5a',desertwillow:'#7a9a52',emoryoak:'#4f6a38',alligatorjuniper:'#678572',beavertail:'#8a8aa0',longleafpine:'#6a8a42',loblollypine:'#5a7e38',slashpine:'#5f823a',cabbagepalm:'#527a3a',sawpalmetto:'#66864a',longleafgrass:'#647e40',wiregrass:'#7a8a52',liveoak:'#3e6034',liveoakmoss:'#3e6034',turkeyoak:'#5c7e3a',blackjackoak:'#466a32',baldcypress:'#5e8a42',cypressknees:'#5e8a42',watertupelo:'#4f7a36',floweringdogwood:'#557e3a',azalea:'#4f7436',magnolia:'#355a30',tulippoplar:'#4f7e36',crapemyrtle:'#4f7a38',kudzu:'#4f8a36',sweetgum:'#4f7e36',yaupon:'#4c7036',spartina:'#5a8a3e',sawgrass:'#6e7e4c',muhlygrass:'#6a8a4a',waxmyrtle:'#56763c',citrustree:'#3a6430',royalpalm:'#5a873c',travelerspalm:'#58873c',seagrape:'#58873c',mangrove:'#3d6632',gumbolimbo:'#4f7a36',banyan:'#47763a',bougainvillea:'#4f7a36',hibiscus:'#3f6a34',ironwood:'#7d9070',americanelm:'#4f7a36',shagbark:'#4f7a36',buroak:'#4f7436',prairieforbs:'#6a8a42',paperbirch:'#5f8a3e',whitepine:'#58825a',balsamfir:'#3e6438',americanbeech:'#557e38',jojoba:'#768668',sandcherry:'#5a7a3e',lodgepole:'#4e7234',bluespruce:'#6f8f96',willowthicket:'#6a8a52',columbine:'#7a9a5a',lupine:'#7a9a5a',madrone:'#3a6a36',garryoak:'#4f7436',bigleafmaple:'#4f7e36',pacificdogwood:'#557e3a',baylaurel:'#4f7036',vinemaple:'#5a8a3c',oregongrape:'#3f6234',scotchbroom:'#4f7436',pacificrhododendron:'#3f6234',douglasiris:'#5a7a42',cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55',palo:'#9aa64e',mesquite:'#6c804b',cholla:'#6f8f5e',ocotillo:'#6f7a45',agave:'#7caa9b',creosote:'#5d6b39',brittlebush:'#a9b39b',sagebrush:'#9aa58c',bracken:'#5d8a3a',huckleberry:'#3f5f34',hala:'#678f3d',redwood:'#2f4f32',youngredwood:'#35583a',fir:'#355a3a',hemlock:'#4a6b3e',redcedar:'#3f6a40',tanoak:'#4f6b38',seedling:'#4a7041',swordfern:'#3f6e33',salal:'#3e5f30',sorrel:'#5f8a3e'};
+ // Bark is one brown unless a species says otherwise.
+ const barks={afghanpine:'#6a5c50',africansumac:'#4a3c34',pampasgrass:'#8a8a60',rmjuniper:'#7a5040',greenash:'#8a8478',chokecherry:'#6a5650',leadplant:'#7a7a62',redpine:'#b0603a',jackpine:'#4e4640',tamarack:'#7a5a4e',blackspruce:'#5a5248',sitkaspruce:'#7a7468',shorepine:'#3e3a34',fireweed:'#557a3c',devilsclub:'#8a7a4a',cottongrass:'#6e8a4a',monkeypod:'#4a4038',casuarina:'#6a5a4e',cookpine:'#7a6e66',ohia:'#7a7670',plumeria:'#8a8680',tiplant:'#6e6050',heliconia:'#e8c440',rosebay:'#5a4a3e',mountainlaurelshrub:'#5e5048',flameazalea:'#6a5a4c',chestnutoak:'#4a423a',shortleafpine:'#7a4e36',sassafras:'#7a5a44',copperbeech:'#8a8a86',pitchpine:'#3e3530',scruboak:'#5a4e44',bayberry:'#6a5e52',beachrose:'#6a4a3a',hydrangea:'#6a5a48',westernjuniper:'#7a4e3a',utahjuniper:'#8a8378',pinyonpine:'#6a5e52',rabbitbrush:'#8a8a6a',blackbrush:'#6a6660',cliffrose:'#8a8072',russianolive:'#4e3e32',balsamroot:'#a07830',globemallow:'#8a8a70',cheatgrass:'#a09070',soapweedyucca:'#9a8a62',easternredcedar:'#7a4a34',wildsunflower:'#5a3a1e',montereycypress:'#8a7e70',montereypine:'#4e443c',coastliveoak:'#6a6660',eucalyptus:'#d8d2c2',sycamore:'#e2dccc',torreypine:'#7a5040',iceplant:'#b04a3a',coastalsage:'#9a8a6a',chaparral:'#7a3a2a',valleyoak:'#6e6a62',blueoak:'#a09a8e',buckeye:'#aaa69c',grapevine:'#6a5a4a',californiapoppy:'#7a9a8a',olivetree:'#7a766c',jacaranda:'#6a645c',peppertree:'#8a7058',ponderosa:'#b8683a',sugarpine:'#6e4c44',incensecedar:'#9a5636',redfir:'#6e3a2c',noblefir:'#6e6a66',westernlarch:'#8e5234',manzanita:'#8e2e22',gambeloak:'#6a6660',mountainmahogany:'#6e6862',bitterbrush:'#6a5e50',mulesear:'#9a6a1e',beargrass:'#6a8a4e',ashejuniper:'#7a5e4a',postoak:'#5e564c',pecan:'#6e665c',cedarelm:'#6a6460',osageorange:'#7a5a3a',mountainlaurel:'#5a5650',redbud:'#3e3a36',bluebonnet:'#f2f0ea',joshuatree:'#8a7a62',mojaveyucca:'#8a7a60',fanpalm:'#8a8478',datepalm:'#7a6450',aleppopine:'#7a7068',oleander:'#6a5a48',tamarisk:'#7a4a38',smoketree:'#9a9c98',soaptreeyucca:'#8a7c62',sotol:'#a89a70',lechuguilla:'#8a7a50',desertwillow:'#6a5644',emoryoak:'#2e2a28',alligatorjuniper:'#8a8580',beavertail:'#8a8aa0',longleafpine:'#8a5a3c',loblollypine:'#6e5a4a',slashpine:'#7e5038',cabbagepalm:'#8e8a80',sawpalmetto:'#7a6248',liveoak:'#4a4038',liveoakmoss:'#4a4038',turkeyoak:'#4e463e',blackjackoak:'#2e2a26',baldcypress:'#8a6248',cypressknees:'#8a6a52',watertupelo:'#7a746a',floweringdogwood:'#5a524c',azalea:'#5a4a3a',magnolia:'#7a756c',tulippoplar:'#6e6a62',crapemyrtle:'#b39a7e',kudzu:'#5a4a36',sweetgum:'#5a5048',yaupon:'#8a8780',waxmyrtle:'#8a8a80',citrustree:'#6a6a5a',royalpalm:'#b8b4aa',travelerspalm:'#8a8478',seagrape:'#7a6a58',mangrove:'#7a5a48',gumbolimbo:'#b0644a',banyan:'#8a847a',bougainvillea:'#6a5a40',hibiscus:'#6a5a40',ironwood:'#7a746a',americanelm:'#6a665e',shagbark:'#7a746a',buroak:'#5e5850',prairieforbs:'#3a2a20',paperbirch:'#ece8e0',whitepine:'#4a4440',balsamfir:'#6a6660',americanbeech:'#a8a8a0',sandcherry:'#5a4038',lodgepole:'#8a6a4a',bluespruce:'#6a625a',willowthicket:'#8a5a3a',columbine:'#f4f2ea',madrone:'#a8452a',garryoak:'#6f6a60',bigleafmaple:'#6a6656',pacificdogwood:'#8a8478',baylaurel:'#6c6a58',vinemaple:'#7a7448',scotchbroom:'#4f7436',pacificrhododendron:'#6a5040',aspen:'#d5d2b5',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b',palo:'#8fa553',mesquite:'#4d3d31',cholla:'#5a5040',ocotillo:'#7a6e5c',creosote:'#5a4a3a',bracken:'#6b5a3a',sagebrush:'#6a5d4e',huckleberry:'#5a4636',palm:'#93876a',hala:'#8a7b66',redwood:'#6d4e42',youngredwood:'#6a4b3f',fir:'#5d4636',hemlock:'#5a4a3e',redcedar:'#735040',tanoak:'#6e6256',sorrel:'#6f8a4e'};
  // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
  // does: its blade tips are a second part, straw over green, which is what
  // American beachgrass looks like by midsummer.
  // The cartoon aspen's accent is the dark "eyes" on its pale trunk.
  // The cartoon shrubs' flowers and berries (tools/blender/cartoon_shrubs.py).
- const accents={dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',bramble:'#2c1f2e',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
- const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
- const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
+ // The Pacific pack (the US landscapes goal) in summer, until the seasons
+ // are drawn: the broom and rhododendron still in their June flower, Oregon
+ // grape's blue berries; the madrone's berries and the dogwood's and iris's
+ // spring flowers in leaf colour (PLACED: the seasons step paints them by date).
+ const accents={pampasgrass:'#e8dcc0',chokecherry:'#5a1a2a',leadplant:'#6a3a8a',jackpine:'#8a806a',fireweed:'#c8288a',devilsclub:'#c8281e',cottongrass:'#f2f0ea',monkeypod:'#d88aa8',ohia:'#d8302a',plumeria:'#f6f0dc',heliconia:'#d8302e',rosebay:'#c88ab8',mountainlaurelshrub:'#3e6234',flameazalea:'#e0782e',bayberry:'#a4a8a4',beachrose:'#d2508a',hydrangea:'#6a8ad0',rabbitbrush:'#9aa66a',blackbrush:'#6a6e62',cliffrose:'#d8d0c4',russianolive:'#b8bca8',balsamroot:'#e8c030',globemallow:'#e0782e',cheatgrass:'#d0b880',soapweedyucca:'#efe8c8',buffalograss:'#7a5a6a',wildsunflower:'#f0c020',eucalyptus:'#b8a07a',sycamore:'#b8a888',iceplant:'#c82a8a',chaparral:'#5a6e4a',buckeye:'#c8b88a',grapevine:'#4a3456',californiapoppy:'#f08a1e',jacaranda:'#9a8ad8',peppertree:'#d06a7a',sugarpine:'#a07e50',noblefir:'#7e7650',manzanita:'#6f826a',mountainmahogany:'#dcdad0',bitterbrush:'#7a8a5a',mulesear:'#e0b830',beargrass:'#f2efe4',osageorange:'#a8b84a',mountainlaurel:'#3f6a34',redbud:'#557e38',bluebonnet:'#3a5ac8',joshuatree:'#8a9a52',mojaveyucca:'#a89a6a',fanpalm:'#a8885a',datepalm:'#d8862e',oleander:'#e080a8',tamarisk:'#d890b0',smoketree:'#7a6aa8',soaptreeyucca:'#f2eedc',sotol:'#e8dcaa',lechuguilla:'#d89a3a',desertwillow:'#d890c8',beavertail:'#c82a7a',longleafpine:'#7a5a3a',loblollypine:'#7a5a3a',slashpine:'#7a5a3a',cabbagepalm:'#e6dcb4',sawpalmetto:'#4a5a3a',longleafgrass:'#c8c8b0',wiregrass:'#a8a070',liveoakmoss:'#78826e',floweringdogwood:'#6a8a42',azalea:'#5a8040',magnolia:'#f4f0e2',crapemyrtle:'#d0508a',kudzu:'#7a4a8a',yaupon:'#6e8a3e',spartina:'#a89a5a',sawgrass:'#8a4a2a',muhlygrass:'#a4ad74',waxmyrtle:'#56763c',citrustree:'#e8962a',royalpalm:'#7cae4c',seagrape:'#b0738a',bougainvillea:'#c8288a',hibiscus:'#d03a3a',ironwood:'#7d9070',prairieforbs:'#b05aa8',paperbirch:'#2a2a2a',sandcherry:'#3a1a2a',columbine:'#8aa8e0',lupine:'#6a5ac8',scotchbroom:'#e8c830',pacificrhododendron:'#d27aa8',oregongrape:'#4a5a8a',madrone:'#3a6a36',pacificdogwood:'#557e3a',douglasiris:'#5a7a42',dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',palo:'#ead35a',cactus:'#efe6c4',cholla:'#e3cf86',ocotillo:'#d8452c',agave:'#3a2e2a',creosote:'#e8c840',brittlebush:'#f0d040',palm:'#7a5a32',hala:'#d68a3a',snag:'#cbc2b2'};
+ // Its own colours in the round's season (season-tints.js, the pack's specs);
+ // summer is the tables above, exactly as before.
+ const season=seasonOfView(view),own=season!=='summer'?SEASON_TINTS[kind]?.[season]:null;
+ if(own?.accent)accents[kind]=own.accent;
+ // A ground plant with no winter of its own in a snowy one (seasons.js).
+ const dull=view.snowTops&&!own&&GROUND_PLANTS.has(kind)&&!EVERGREEN.has(kind);
+ if(dull)delete accents[kind];
+ const leafBase=new T.Color(dull?dullInWinter(shades[kind]||'#5b7f44'):own?.leaf||shades[kind]||'#5b7f44'),barkBase=new T.Color(own?.bark||barks[kind]||'#6b5942');
+ // THE BRANCHES OF A BARE TREE (twigs.js; mesh-assets.js bareParts), one set a
+ // model. A shrub's twig is thicker for its height than a tree's (PLACED: as
+ // thick as an 18 m tree's up to four times). Fine wood is darker than a trunk
+ // and no paler than a dark grey-brown, whatever the bark: a white birch's
+ // twigs are nearly black against the sky.
+ const leafless=bare(view,kind),meanHeight=trees.reduce((s,t)=>s+t.h,0)/Math.max(1,trees.length),barkLight=barkBase.getHSL({}).l;
+ const twig=leafless?{width:Math.round(Math.min(4,Math.max(1,18/meanHeight))*2)/2,shade:Math.round(Math.min(.85,.3/barkLight)*20)/20,tip:Math.round(Math.min(.65,.2/barkLight)*20)/20,keep:TRUNK_ACCENT.has(kind)?['accent']:[]}:null;
+ const turns=autumnLeaves(view)&&!EVERGREEN.has(kind)&&!own;
+ // A species whose stone role is a flower (the prairie forbs' gold), not rock.
+ const stones={prairieforbs:'#e0b030',grapevine:'#9a9a96',beachrose:'#c8402a'};
+ const stone=new T.Color(stones[kind]||world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const UP_AXIS=new T.Vector3(0,1,0),coverNormal=new T.Vector3(),coverTilt=new T.Quaternion();
  const coverFade=teeFade(world);
@@ -175,10 +250,13 @@ function addModelSpecies(view,kind,trees){
   dummy.scale.set(sxz,sy,sxz);
   dummy.updateMatrix();
   const leaf=leafBase.clone();
-  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
-  else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
-  entries.push({model,owner:t,matrix:dummy.matrix.clone(),
-   color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
+  // Leaf fall turns the broadleaves, never an evergreen (the New England pack:
+  // its white pines and firs came out orange when only `spruce` was spared),
+  // each in its own hue: maple red, birch and aspen yellow, beech bronze.
+  if(turns)leaf.setHSL((FALL_HUE[kind]??.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  else varyColour(leaf,(rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
+  entries.push({model,owner:t,matrix:dummy.matrix.clone(),parts:twig?bareParts(model,twig):null,
+   color:{leaf,bark:varyColour(barkBase.clone(),0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
  }
  // White materials: the instance colour carries the whole tint, so one material
  // per role serves every biome.
@@ -210,7 +288,8 @@ function addModelSpecies(view,kind,trees){
    const base=painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view),side:thin&&role==='leaf'?T.DoubleSide:T.FrontSide}):new T.MeshToonMaterial({color:'#ffffff'});
    const swayed=sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base;
    // A painted crown catches a rim of sky at its edges (textures.js rimLit).
-   materials.set(key,painted&&role==='leaf'?rimLit(swayed):swayed);
+   const lit=painted&&role==='leaf'?rimLit(swayed):swayed;
+   materials.set(key,view.snowTops?snowTopped(lit):lit);
   }
   return materials.get(key);
  };
@@ -257,7 +336,7 @@ function addSpecies(view,kind,trees){
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
  for(const t of trees){currentTree=t;
   const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palo:'#8d9a47',mesquite:'#6c804b',ocotillo:'#7c8050',agave:'#7caa9b',naupaka:'#428546',hala:'#678f3d',gorse:'#718347',heather:'#79627c'};const tint=new T.Color(blue?'#a3d6cf':shades[kind]||world.bio.tree).multiplyScalar(.8+t.shade*.4);
-  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(autumnLeaves(view)&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   // Every tree used to stand perfectly upright on a trunk of identical
   // proportion, which is half of why a stand reads as one asset repeated.
   const leanX=(rng()-.5)*.085,leanZ=(rng()-.5)*.085,girth=.021+rng()*.013;
@@ -406,9 +485,7 @@ export function addVegetation(view){
 // fallen log. Worth knowing before anyone makes them bigger.
 //
 // What it is made of is the biome's `floor`: the grove's logs, stumps and mossy
-// boulders, Haunted Hollow's logs and stumps. Haunted Hollow's pumpkins and
-// toadstools were here once; they are solid now, so generation places them and
-// haunts.js draws them.
+// boulders.
 function addDeadfall(view) {
  const {world} = view, {deadfall: count, floor: mix} = biomeOf(world.settings.biome);
  if (!count) return;
@@ -592,7 +669,8 @@ export function farWoodGeometry(kind){
  else if(kind==='cluster'||kind==='scrub'){const parts=[lump(0,0,0,1),lump(.55,-.12,.2,.7),lump(-.45,-.1,-.35,.65)];geo=mergeGeometries(parts);parts.forEach(p=>p.dispose());
   const p=geo.attributes.position;for(let i=0;i<p.count;i++)if(p.getY(i)<-.295)p.setY(i,-.295);}
  else if(kind==='cone')geo=new T.ConeGeometry(1,1,6,1);
- // Haunted Hollow's dead trunks (round 3 of the far landscape): three bare
+ // A `dead` far forest's trunks (round 3 of the far landscape, for Haunted
+ // Hollow, since removed; kept for bare winter woods): three bare
  // spikes leaning a little apart, each with two broken limbs, on one floor.
  else if(kind==='snags'){const parts=[];for(const [x,z,h,lean] of [[0,0,1,.04],[.42,.2,.78,-.08],[-.3,-.36,.66,.07]]){
    const t=new T.ConeGeometry(.07,h,5,1).translate(0,h/2,0).rotateZ(lean).translate(x,0,z);parts.push(t);
@@ -612,7 +690,8 @@ function addFarWoods(view){
  // and cones to its clusters and domes).
  const kinds=[...new Set(sites.map(s=>s.shape))];
  const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
- const colors=f.colors.map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
+ // In the round's season (seasons.js seasonPalette, via world.bio).
+ const colors=(world.bio?.farForest?.colors??f.colors).map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
 
  // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
  // mesh with its own bounds, so the card skips every sector out of view --
@@ -643,16 +722,43 @@ function addFarWoods(view){
  // where the ground under it is broken (far-woods.js).
  for(const kind of kinds)build(sites.filter(s=>s.shape===kind),farWoodGeometry(kind),s=>pose(s.seat,s.r,s.x,s.z,s.pick),kind==='dome'||kind==='cone'?'Far groves':'Far woods');
 }
+// A LONG GRASS'S OWN COLOURS (seen 3 November 2026): a family with a season
+// table (season-tints.js, the prairie pack's LOOK) wears its own -- tall
+// fescue light green the year round, little bluestem blue-green and copper in
+// autumn -- which never reached the game: every family took the landscape's
+// one leaf and accent, so the transition zone's fescue was autumn orange in
+// July and no prairie turned. The older families have no table and keep the
+// landscape's. `bloomHeads`: a field in flower, the landscape's accent stays.
+// The table's colours straight read as teal clumps under candy-pink heads on
+// the game's warm rough (the first picture), so each is drawn part of the way
+// to the landscape's. PLACED by eye: GRASS_OWN of the family's own.
+const GRASS_OWN=.55;
+// `green`: how far this landscape's rough is green in this season (seasons.js
+// GREEN): the long grass goes with it, at half that, or a green rough stood
+// full of straw tussocks.
+export const grassLook=(rec,family,season,green=0)=>{const own=SEASON_TINTS[family]?.[season],mix=(a,b)=>new T.Color(b).lerp(new T.Color(a),GRASS_OWN),rich=new T.Color(RICH);
+ const leaf=own?.leaf?mix(own.leaf,rec.leaf):new T.Color(rec.leaf);
+ const accent=own?.accent&&!rec.bloomHeads?mix(own.accent,rec.accent):new T.Color(rec.accent);
+ return {leaf:leaf.lerp(rich,green*.5),accent:rec.bloomHeads?accent:accent.lerp(rich,green*.5)};};
+// NO CLUMP A FAN (seen 3 November 2026): a model is scaled by its height, and
+// Blender_TallFescue_2's arching blades barely rise (radius 3.3 times its
+// height): at 0.9 m tall it lay six metres across. Squeezed in to this many
+// times its height. PLACED: just past Bunch_1, the widest that read right.
+const GRASS_WIDEST=1.6;
 function addLongGrass(view){
  const {world}=view,rec=biomeOf(world.settings.biome).longGrass,offDrive=onDrive(world.homes);
  if(!rec)return;
  const byTee=teeFade(world),carry=carryFade(world);
  const group=new T.Group();group.name='Long grass';view.group.add(group);
  const rng=random(world.seed+':longgrass'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
- const kinds=rec.families.map(([family,weight,height])=>({models:familyModels(family),weight,height})).filter(k=>k.models.length);
+ const season=seasonOfView(view);
+ const kinds=rec.families.map(([family,weight,height])=>{const cured=view.snowTops&&!SEASON_TINTS[family]?.winter,look=grassLook(rec,family,season,roughGreen(world.settings.biome,season));if(cured){look.leaf=new T.Color(curedInWinter(`#${look.leaf.getHexString(T.SRGBColorSpace)}`));look.accent=new T.Color(curedInWinter(`#${look.accent.getHexString(T.SRGBColorSpace)}`));}return {models:familyModels(family),weight,height:height*(view.snowTops?SNOW_GRASS_HEIGHT:1),look};}).filter(k=>k.models.length);
  if(!kinds.length)return;
  const total=kinds.reduce((n,k)=>n+k.weight,0),pickKind=()=>{let r=rng()*total;for(const k of kinds){r-=k.weight;if(r<=0)return k;}return kinds[kinds.length-1];};
- const leaf=new T.Color(rec.leaf),accent=new T.Color(rec.accent),entries=[];
+ const entries=[];
+ // The landscape's bloom in the heads, colony by colony, so it lies in drifts
+ // and reads from far off (no new mesh: the same tufts, painted).
+ const bloom=bloomIn(biomeOf(world.settings.biome).key,seasonOfView(view));
  const colonies=Math.round(rec.count*(view.quality?.grass??1));
  for(let tries=0,made=0;made<colonies&&tries<colonies*6;tries++){
   const cx=(rng()-.5)*world.halfX*2,cz=(rng()-.5)*world.halfZ*2;
@@ -662,6 +768,7 @@ function addLongGrass(view){
   if(rng()>drift*drift)continue;
   if(world.nearest(cx,cz).d<rec.near)continue;
   const kind=pickKind(),n=8+Math.floor(rng()*7);
+  const head=bloom&&spotHash(cx,cz)<bloom.amount*BLOOM_HEADS?new T.Color(bloom.colours[Math.floor(spotHash(cz,cx)*bloom.colours.length)]):kind.look.accent;
   for(let k=0;k<n;k++){
    const a=rng()*6.28,r=Math.sqrt(rng())*4,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,at=world.surface(x,z);
    if(!allows(at,'grass')||offDrive(x,z)||onShoreBank(world,x,z,false))continue;
@@ -671,10 +778,11 @@ function addLongGrass(view){
    const model=kind.models[Math.floor(rng()*kind.models.length)],h=kind.height*(.75+rng()*.5)*(.35+.65*fade);
    dummy.position.set(x,world.height(x,z),z);
    dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
-   dummy.scale.set(h*(.9+rng()*.3),h,h*(.9+rng()*.3));
+   const squeeze=Math.min(1,GRASS_WIDEST/modelRadius(model));
+   dummy.scale.set(h*(.9+rng()*.3)*squeeze,h,h*(.9+rng()*.3)*squeeze);
    dummy.updateMatrix();
-   const tint=leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
-   entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:accent.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
+   const tint=kind.look.leaf.clone().offsetHSL((rng()-.5)*.03,(rng()-.5)*.1,(rng()-.5)*.08);
+   entries.push({model,owner:null,matrix:dummy.matrix.clone(),color:{leaf:tint,accent:head.clone().offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08)}});
   }
   made++;
  }
@@ -697,8 +805,10 @@ function addLongGrass(view){
 // landscape's heather blooms, grey-brown on a dead moor. The near cushions
 // (addNearbyGrass) and the far heath (addFarHeath) both paint with them, so
 // one turns into the other without a change of colour.
-const heathColours=biome=>biome==='haunted'?{leaf:'#4a403c',accent:'#6c5862'}:{leaf:'#5a5a3c',accent:'#a86aa8'};
-const hasHeath=w=>!!(w.holes.length&&Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather'));
+const heathColours=()=>({leaf:'#5a5a3c',accent:'#a86aa8'});
+// A BUILT course (built-world.js) has no landform: its heather is its own
+// outlines, whatever the landscape (and so the lie the cushions stand on).
+const hasHeath=w=>!!(w.holes.length&&(w.built?w.builtOutlines?.heather?.length:Object.values(biomeOf(w.settings.biome).landform?.kinds||{}).includes('heather')));
 // THE HEATH PAST THE NEAR TILES (the owner, 31 October 2026, Links: "the
 // purple bushes fade out completely leaving just weird looking purple
 // ground"). The heather's cushions are near-field decoration, shrinking away
@@ -723,8 +833,8 @@ export function addFarHeath(view){
  // Heather is only ever where its channel of the baked field reads half or
  // more (landforms.js wildGround), and that read is a few array lookups; the
  // whole surface question, about 3 microseconds, is asked only there.
- const channel=Object.keys(world.landform.kinds).find(k=>world.landform.kinds[k]==='heather');
- const field=(x,z)=>Math.abs(x)<world.wild.ex&&Math.abs(z)<world.wild.ez&&wildAt(world.wild,channel,x,z)>=.5;
+ const channel=world.built?null:Object.keys(world.landform.kinds).find(k=>world.landform.kinds[k]==='heather');
+ const field=world.built?()=>true:(x,z)=>Math.abs(x)<world.wild.ex&&Math.abs(z)<world.wild.ez&&wildAt(world.wild,channel,x,z)>=.5;
  // Thinner on a tier with less grass, as the long grass is; and on a course
  // with more heath than `most` domes would cover at `spacing` (Haunted
  // Hollow's moor, a fifth of the property: 67,000 domes added a third of a
@@ -779,7 +889,9 @@ function addDriftwood(view){
  // (course.js `land`), the tries stay within reach of it rather than spending
  // most of themselves inland. (A count of the drawn logs reads low: the
  // instance cull keeps only those in view.)
- const x0=world.bio.edgeCoast?world.halfX-320:-world.halfX,x1=world.halfX+(world.bio.edgeCoast?120:0);
+ // The coast's line (course.js coastAt): the window spans its nearest and farthest.
+ const lo=(world.coastMin??world.halfX-90)+90,hi=(world.coastMax??world.halfX-90)+90;
+ const x0=world.bio.edgeCoast?lo-320:-world.halfX,x1=world.bio.edgeCoast?hi+120:world.halfX;
  for(let i=0;i<count*400&&entries.length<count;i++){
   const x=x0+rng()*(x1-x0),z=(rng()-.5)*world.halfZ*2,y=world.height(x,z);
   if(y<.08||y>BEACH_RISE||world.surface(x,z)!=='sand')continue;
@@ -820,6 +932,18 @@ function addGroundCover(view){
  // grows and its colour, so the grass after it is where it was; which of the
  // three, and its size, come from where it stands. The gem is the fallback.
  const flowerModels=familyModels('wildflower'),flowerEntries=[],stemTint=new T.Color('#5f8a45'),flowerEye=new T.Color('#f2c84b');
+ // WHICH FLOWERS (the seasons): none in winter, none in a spring before the
+ // landscape's bloom; in its bloom its own colours, at its own strength, in
+ // every landscape. The year's flowers keep their draws in every season, so
+ // the grass after them stands where it did.
+ const season=seasonOfView(view),bloom=bloomIn(biomeOf(world.settings.biome).key,season),yearRound=FLOWER_REGIONS.has(regionOf(world.settings.biome));
+ const bloomSize=bloom?1.7:1;// Bigger in bloom: PLACED, they were specks from a tee.
+ const wildflower=(x,z)=>{
+  let fc=null;
+  if(yearRound&&rng()<.16){const c=biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1];if(season!=='winter'&&season!=='spring')fc=new T.Color(blue?'#93d4de':c);}
+  if(bloom&&spotHash(z,x)<BLOOM_FLOWERS*bloom.amount)fc=new T.Color(bloom.colours[Math.floor(spotHash(x+z,z)*bloom.colours.length)]);
+  return fc;
+ };
  // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
  // world, because a rock the generator does not know about is a rock physics
  // cannot collide with -- which is what they were until they moved. Placing
@@ -880,7 +1004,7 @@ function addGroundCover(view){
  const bladeFade=teeFade(world);
  // And short in a tee's carry where blades grow long (Links; carryFade).
  const tallBlades=!!biomeOf(world.settings.biome).scatter.tallGrass,bladeCarry=tallBlades?carryFade(world):null;
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){const fc=new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]);if(flowerModels.length){const u=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,fh=.2+u*.14;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||offDrive(x,z)||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const bf=Math.min(bladeFade(x,z),tallBlades?bladeCarry(x,z):1),h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1+.9*bf:1)*(.3+.7*bf);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());const fc=wildflower(x,z);if(fc){if(flowerModels.length){const u=spotHash(x,z),fh=(.2+u*.14)*bloomSize;dummy.scale.set(fh,fh,fh);dummy.updateMatrix();flowerEntries.push({model:flowerModels[Math.floor(u*7)%flowerModels.length],owner:null,matrix:dummy.matrix.clone(),color:{leaf:stemTint,accent:fc,bark:flowerEye}});}else{dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(fc);}}}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
  // Drawn only to two-fifths of the long grass's reach, sinking before it
  // stops (sinkBeyond): flowers by the thousand to the horizon were 8 M
@@ -912,7 +1036,8 @@ function addNearbyGrass(view){
  // through it never looks wrong. Denser where the canopy is (the occlusion
  // bake, occlusion.js), so it gathers under the trees and thins to nothing on
  // open rough.
- const floorOn=(view.quality?.forestFloor??0)>0;
+ // Not in a snowy winter: fronds lie under it (seasons.js UNDER_SNOW).
+ const floorOn=(view.quality?.forestFloor??0)>0&&!view.snowTops&&!biomeOf(view.world.settings.biome).scatter.noFloor;
  const canopy=(x,z)=>{const o=view.groundOcclusion;if(!o)return 0;const i=Math.floor((x/o.ex+1)*.5*o.Sx),j=Math.floor((z/o.ez+1)*.5*o.Sz);return i<0||j<0||i>=o.Sx||j>=o.Sz?0:o.occ[j*o.Sx+i];};
  let frondGeo=null,stickGeo=null,frondMat=null,stickMat=null;
  if(floorOn){
@@ -986,7 +1111,8 @@ function addNearbyGrass(view){
  // since a clump is many blades. PLACED: the share and the sizes.
  const lg=biomeOf(w.settings.biome).longGrass,clumpModel=lg?familyModels(lg.families[0][0])[0]:null;
  const clumpParts=clumpModel?modelParts(clumpModel):null,clumpHeight=lg?.families[0][2]??.8;
- const clumpLeaf=new T.Color(lg?.leaf??'#8a9150'),clumpAccent=new T.Color(lg?.accent??'#d8c27a');
+ const clumpLook=lg?grassLook(lg,lg.families[0][0],seasonOfView(view),roughGreen(w.settings.biome,seasonOfView(view))):null;
+ const clumpLeaf=clumpLook?.leaf??new T.Color('#8a9150'),clumpAccent=clumpLook?.accent??new T.Color('#d8c27a');
  let clumpMat=null;
  const nearTee=teeFade(w),inCarry=carryFade(w);
  if(clumpParts){

@@ -1,6 +1,8 @@
 // WATER MADE BY PEOPLE (architect-courses, phase 5; the study, workstream E;
 // docs/ARCHITECT_COURSES.md, *Phase 5*): what a builder does to a pond on an
-// Architect course, by the architect's style.
+// course, by its landscape (biomes.js WORLD `edge` and `fountain`, PLACED from
+// each landscape's leading Architect style when the designer was removed, 2
+// November 2026).
 //
 //   rip-rap     a band of rough stones along the waterline on the side of a
 //               pond that faces play: Modern (the study), Parkland, Tropical,
@@ -20,20 +22,18 @@
 // bank's top, and nothing here is solid or changes a lie (a ball reaching
 // them is in the water either way). Placed in world coordinates as
 // `{kind, x, z, y, rot, size}`; renderer.js `addWaterworks` draws them
-// instanced. Architect only. Pure: tests/waterworks.test.mjs.
+// instanced. Every generated course. Pure: tests/waterworks.test.mjs.
 import {ovalRadius} from './course.js';
-import {styleOf, archStream} from './architect-styles.js';
+import {worldStream} from './world-stream.js';
+import {worldOf} from './biomes.js';
 
-export const EDGE_STYLE = {modern: 'riprap', parkland: 'riprap', tropical: 'riprap', desert: 'riprap', mountain: 'riprap', stadium: 'bulkhead'};
-const FOUNTAIN_STYLES = new Set(['parkland', 'tropical', 'stadium', 'modern']);
-const FOUNTAIN_CLUBS = new Set(['resort', 'members']);
 const FACING = Math.cos(75 * Math.PI / 180);
 // A section of ties is 2.4 m long; a stone about 0.8 m across.
 // Sections laid 2.2 m apart overlap a little, so a curve shows no gaps.
 const TIE_RUN = 2.2, STONE_GAP = .6;
 
 export function placeWaterworks({holes, s, surface}) {
- const style = styleOf(s), edge = EDGE_STYLE[style], out = [];
+ const look = worldOf(s.biome), edge = look.edge, out = [];
  const seen = new Set();
  let fountains = 0;
  for (const h of holes) for (const p of h.ponds) {
@@ -41,7 +41,7 @@ export function placeWaterworks({holes, s, surface}) {
   const c = h.toWorld(p), key = Math.round(c.x) + ',' + Math.round(c.z);
   if (seen.has(key)) continue;
   seen.add(key);
-  const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'waterworks', s.biome || '', key);
+  const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'waterworks', s.biome || '', key);
   // Where play comes from, in the hole's frame.
   const zc = Math.max(0, Math.min(h.length, p.z)), nearGreen = Math.hypot(p.x - h.green.x, p.z - h.green.z) < Math.max(p.rx, p.rz) + 45;
   const target = nearGreen ? h.green : {x: h.center(zc), z: zc};
@@ -76,7 +76,7 @@ export function placeWaterworks({holes, s, surface}) {
    }
   }
   // A fountain in a big open pond, at its middle if that is water.
-  if (FOUNTAIN_STYLES.has(style) && FOUNTAIN_CLUBS.has(s.archClub) && fountains < 2 && Math.PI * p.rx * p.rz > 700 && surface(c.x, c.z) === 'water') {
+  if (look.fountain && fountains < 2 && Math.PI * p.rx * p.rz > 700 && surface(c.x, c.z) === 'water') {
    out.push({kind: 'fountain', x: c.x, z: c.z, y: p.level, rot: rnd() * Math.PI * 2, size: 1});
    fountains++;
   }

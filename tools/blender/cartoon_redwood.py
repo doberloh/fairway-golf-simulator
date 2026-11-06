@@ -1,16 +1,24 @@
 # THE CARTOON REDWOOD GROVE (the cartoon overhaul; docs/CARTOON_OVERHAUL.md).
 #
+# SINCE 5 NOVEMBER 2026 THE 14 TREES HERE ARE NOT BUILT: the game's redwoods, firs,
+# hemlocks, red cedars and tanoaks come from Meshy, in vendor/blender-meshy_redwood
+# (tools/meshy-run.mjs; docs/BLENDER_ASSETS.md, *Trying models from Meshy*). This
+# script makes the seedling and the floor plants. The tree builders stay as the
+# record, and to bring a tree back: add it to MODELS and remove its Meshy files.
+#
 #   node tools/blender/run.mjs cartoon_redwood --render
 #
 # The Giant Redwood's forest, which was grown (tools/grow.mjs) in a realistic
 # hand at 13,000-53,000 triangles a tree. Remade in the overhaul's hand:
 #
-#   redwood    a vast, slightly tapering, fluted red-brown column, bare for
-#              most of its height, flared at the foot; a narrow crown of
-#              drooping sprays in the top third or less
-#   fir        Douglas fir: a long clear bole, a conical crown of drooping
-#              tiers from about a third of the way up
-#   hemlock    western hemlock: soft feathery tiers and a drooping leader
+#   redwood    (remade 5 November 2026, the owner's photographs of Northwood) a
+#              straight, dark, fluted trunk, barely flared; a long narrow cone
+#              of fine drooping boughs from a quarter of the way up. The third
+#              is an old tree: higher crown
+#   youngredwood the same tree young: boughs nearly to the ground, the full
+#              cone the owner's photographs are full of
+#   fir        Douglas fir: heavier boughs, sweeping up at the top of the crown
+#   hemlock    western hemlock: finer, drooping, a nodding leader
 #   redcedar   western red cedar: a buttressed, fluted foot, J-shaped drooping
 #              sprays, a narrow pyramid
 #   tanoak     an evergreen broadleaf, a rounded crown under the giants
@@ -22,10 +30,16 @@
 # CROWN WIDTHS ARE THE GENERATOR'S. course.js plants these at spacings from
 # species.js CROWN_FRACTION (half-width over height: redwood 0.095, fir and
 # hemlock 0.17, red cedar 0.19), so each crown is built that wide.
+# REFS tanoak=Blender_Tanoak_1,Blender_Tanoak_2
+# REFS redwood=Blender_Redwood_1,Blender_Redwood_2,Blender_Redwood_3
+# REFS youngredwood=Blender_YoungRedwood_1,Blender_YoungRedwood_2,Blender_YoungRedwood_3
+# REFS dougfir=Blender_Fir_1,Blender_Fir_2
+# REFS hemlock=Blender_Hemlock_1,Blender_Hemlock_2
 import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
 import cartoon as ct
+from grown import girth, fluted_trunk, limbs, broadleaf
 fb = ct.fb
 
 
@@ -44,61 +58,47 @@ def tiers(mesh, rng, H, half, n, base, top, points, droop, ragged, depth, thick,
                  shade=shade, twist=rng.uniform(0, 1), ragged=ragged, flex=.3 + .6 * t, thick=thick)
 
 
-def fluted_trunk(mesh, rng, H, top_z, radius, flare, flutes, shade_low=.7, shade_high=1.0):
-    """A trunk pleated into flutes: rings whose radius rises and falls round
-    the circumference, deepest at the foot, painted darker in the grooves."""
-    rings, n, steps = [], flutes * 2, 10
-    for k in range(steps + 1):
-        t = k / steps
-        z = top_z * t
-        r = radius * (1 - .35 * t) * (1 + (flare - 1) * math.exp(-t * 10))
-        depth = .16 * (1 - t) + .04
-        ring = []
-        for j in range(n):
-            a = j / n * math.tau
-            rr = r * (1 - depth * (j % 2))
-            ring.append(Vector((math.cos(a) * rr, math.sin(a) * rr, z)))
-        rings.append(ring)
-    made = mesh.ring_strip(rings, 'bark', smooth=True, cap_end=True)
-    for k, ring in enumerate(made):
-        t = k / steps
-        for j, v in enumerate(ring):
-            m = (shade_low + (shade_high - shade_low) * min(1, t * 1.5)) * (.8 if j % 2 else 1.0)
-            mesh.paint[v] = (m, m, m, .1 * t * t)
-    return made
+TANOAK = dict(stem=.92, foot=.026, first=.18, limbs=15, sweep=.75, branches=5, clusters=5, size=.13, leaves=6)
+REDWOOD = dict(base=.36, top=.985, step=.0078, reach=.118, widest=.16, power=.8, down=.34, up=.5, tip=.22, limb=.0024, sprays=7, slen=.6, hang=.34, bare=.12, fan=.26, least=.04, pairs=6, wide=.62)
+REDWOOD_OLD = dict(REDWOOD, base=.55, step=.0105, reach=.112, bare=.3, limb=.003)
+YOUNG = dict(base=.09, top=.985, step=.0088, reach=.15, widest=.1, power=1.0, down=.46, up=.55, tip=.14, limb=.0034, sprays=7, slen=.54, hang=.42, bare=.1, fan=.26, least=.036, pairs=6, wide=.64)
+FIR = dict(base=.26, top=.985, step=.0102, reach=.16, widest=.12, power=.95, down=.2, up=.95, tip=.32, limb=.0034, sprays=6, slen=.64, hang=.2, bare=.14, fan=.22, least=.04, pairs=6, wide=.66)
+HEMLOCK = dict(base=.15, top=.9, step=.0094, reach=.15, widest=.08, power=.85, down=.62, up=.1, tip=.04, limb=.0028, sprays=7, slen=.58, hang=.6, bare=.1, fan=.2, least=.036, pairs=6, wide=.58)
 
 
-def redwood(height, flutes):
+def redwood(height, flutes, old=False):
     def build(mesh, rng):
         H = height
-        half = H * .095
-        fluted_trunk(mesh, rng, H, H * .96, H * .03, 1.9, flutes)
-        # A few dead limb stubs on the long bare bole.
-        for k in range(rng.randint(3, 6)):
-            z = H * rng.uniform(.3, .62)
-            a = rng.uniform(0, math.tau)
-            p = Vector((0, 0, z))
-            ct.limb(mesh, rng, p, p + Vector((math.cos(a), math.sin(a), -.2)) * H * .04, H * .006, H * .003, sides=4, shade=.6)
-        # The crown: narrow, ragged, drooping sprays high up, a few clumps
-        # breaking the outline.
-        # Round 3: fuller and deeper -- rounds 1 and 2 were skimpy for a giant.
-        tiers(mesh, rng, H, half * 1.1, 11, .58, .98, 8, .6, .3, .05, .62, power=.5)
-        shade = ct.crown_shade(Vector((0, 0, H * .82)), (half, half, H * .16))
-        for k in range(rng.randint(8, 12)):
-            z = H * rng.uniform(.6, .94)
-            a = rng.uniform(0, math.tau)
-            p = Vector((math.cos(a) * half * .8, math.sin(a) * half * .8, z))
-            s = half * rng.uniform(.4, .6)
-            mesh.add_lump(p, (s, s, s * .55), 'leaf', rng, subdiv=2, jitter=.18, crown=Vector((0, 0, z)), blend=.7,
-                          shade=shade, flex=.7, squash_bottom=.5)
+        c = REDWOOD_OLD if old else REDWOOD
+        half = H * c['reach']
+        fluted_trunk(mesh, rng, H, H * .985, H * .031, 1.3, flutes)
+        limbs(mesh, rng, H, c)
+        # An old tree's limbs are few and heavy.
+        if old:
+            for k in range(rng.randint(4, 6)):
+                z = H * rng.uniform(.48, .86)
+                a = rng.uniform(0, math.tau)
+                p = Vector((0, 0, z))
+                ct.limb(mesh, rng, p, p + Vector((math.cos(a), math.sin(a), .12)) * half * rng.uniform(.8, 1.2), H * .006, H * .002, sides=4, shade=.6)
+    return build
+
+
+def youngredwood(height, flutes):
+    """A redwood of sixty or a hundred years, as the owner's photographs of
+    Northwood show them: the same straight trunk, seen only at the foot, inside
+    a full cone of drooping boughs."""
+    def build(mesh, rng):
+        H = height
+        fluted_trunk(mesh, rng, H, H * .985, H * .03, 1.22, flutes, power=.9)
+        limbs(mesh, rng, H, YOUNG)
     return build
 
 
 def fir(height):
     def build(mesh, rng):
         H = height
-        ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .95, H * .022, flare=1.6, sides=8, shade_low=.7)
-        tiers(mesh, rng, H, H * .17, 12, .3, .96, 8, .5, .18, .06, .66, power=.9)
+        fluted_trunk(mesh, rng, H, H * .985, H * .024, 1.25, 5, power=.9, deep=.05)
+        limbs(mesh, rng, H, FIR)
     return build
 
 
@@ -106,14 +106,12 @@ def hemlock(height):
     def build(mesh, rng):
         H = height
         lean = drift(rng, H * .02)
-        ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .88, H * .02, flare=1.5, sides=8, lean=lean, shade_low=.7)
-        # Round 2: feathery -- more, thinner sprays than the fir's.
-        tiers(mesh, rng, H, H * .17, 13, .2, .9, 11, .7, .3, .055, .42, power=.85, lean=lean)
-        # The drooping leader: the top bends over like a whip.
-        top = Vector((0, 0, H * .88)) + lean
-        d = Vector((1, 0, 0)) if lean.length < 1e-6 else lean.normalized()
-        tip = top + d * H * .05 + Vector((0, 0, H * .05))
-        ct.limb(mesh, rng, top, tip, H * .008, H * .002, bow=.4, sides=4, shade=.85)
+        fluted_trunk(mesh, rng, H, H * .9, H * .021, 1.22, 5, power=.85, deep=.05)
+        limbs(mesh, rng, H, HEMLOCK)
+        # The nodding leader.
+        top = Vector((0, 0, H * .9)) + lean
+        mesh.add_tube([top, top + Vector((.01 * H, 0, .055 * H)), top + Vector((.045 * H, 0, .08 * H)), top + Vector((.075 * H, 0, .068 * H))],
+                      [H * .006, H * .004, H * .0025, H * .0008], 4, 'leaf', rng=rng, shade=lambda co, f: .85, flex=lambda co, f: .9)
     return build
 
 
@@ -127,14 +125,10 @@ def redcedar(height):
 
 
 def tanoak(height, width):
+    """Tall and narrow: a stem nearly to the top, limbs sweeping up off it (the
+    shared builder, grown.py). The old tree was balls on a trunk."""
     def build(mesh, rng):
-        H, W = height, width
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .5, H * .035, flare=1.5, sides=9, lean=drift(rng, H * .05),
-                              bend=H * .03)
-        c = Vector((pts[-1].x, pts[-1].y, H * .66))
-        # Round 2: lobes of 320 triangles, not 1,280 (round 1 was 7,000 faces).
-        ct.cloud_crown(mesh, rng, c, (W * .5, W * .46, H * .32), lobes=22, lobe_size=(.26, .36), flat_bottom=.4, shell=.82,
-                       low=.45, high=1.1, subdiv=2)
+        broadleaf(mesh, rng, height, width * .5, TANOAK)
     return build
 
 
@@ -212,17 +206,6 @@ def sorrel(width):
 
 
 MODELS = [
-    ('Blender_Redwood_1', redwood(100, 9)),
-    ('Blender_Redwood_2', redwood(90, 8)),
-    ('Blender_Redwood_3', redwood(110, 10)),
-    ('Blender_Fir_1', fir(60)),
-    ('Blender_Fir_2', fir(55)),
-    ('Blender_Hemlock_1', hemlock(45)),
-    ('Blender_Hemlock_2', hemlock(40)),
-    ('Blender_RedCedar_1', redcedar(50)),
-    ('Blender_RedCedar_2', redcedar(45)),
-    ('Blender_Tanoak_1', tanoak(20, 14)),
-    ('Blender_Tanoak_2', tanoak(17, 12)),
     ('Blender_Seedling_1', seedling(3)),
     ('Blender_Seedling_2', seedling(2.4)),
     ('Blender_SwordFern_1', swordfern(18)),
@@ -232,7 +215,9 @@ MODELS = [
     ('Blender_Sorrel_1', sorrel(1.2)),
 ]
 
-ct.export(MODELS, colours={'leaf': (0.22, 0.38, 0.22), 'bark': (0.5, 0.28, 0.2)},
-          far={'Blender_Redwood_1', 'Blender_Redwood_2', 'Blender_Redwood_3', 'Blender_Fir_1', 'Blender_Fir_2',
-               'Blender_Hemlock_1', 'Blender_Hemlock_2', 'Blender_RedCedar_1', 'Blender_RedCedar_2', 'Blender_Tanoak_1',
-               'Blender_Tanoak_2'})
+# While a tree is worked on: only these, by a word in the name (FAIRWAY_ONLY=Young,Fir).
+ONLY = [w for w in os.environ.get('FAIRWAY_ONLY', '').split(',') if w]
+if ONLY:
+    MODELS = [m for m in MODELS if any(w in m[0] for w in ONLY)]
+
+ct.export(MODELS, colours={'leaf': (0.13, 0.25, 0.16), 'bark': (0.27, 0.17, 0.13)})

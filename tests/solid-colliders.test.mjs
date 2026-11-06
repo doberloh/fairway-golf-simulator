@@ -7,7 +7,7 @@ import {simulateShot,R} from '../src/physics.js';
 // Every shot here is fired through simulateShot, the same call the game makes,
 // at points defined in the HOUSE'S OWN frame as homes.js draws it -- so a
 // collider turned or raised differently from the drawing fails here.
-const world=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:0,water:0});
+const world=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:0,water:0});
 const holeOf=home=>world.holes.find(h=>h.hole===home.hole);
 // House frame -> world, as three.js turns a group by rotation.y.
 const frame=home=>{const c=Math.cos(home.rotation),s=Math.sin(home.rotation);return (x,z)=>({x:home.x+x*c+z*s,z:home.z-x*s+z*c});};

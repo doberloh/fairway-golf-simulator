@@ -42,7 +42,7 @@ const GOLFERS = {
 const KINDS = ['driver', 'wood', 'iron5', 'iron7', 'iron9', 'wedge'];
 
 // A flat, straight fairway long enough for any drive.
-const w = generateWorld({seed: 'GOLFER-TABLE', biome: 'midwest', holes: 1, courseYards: 600, elevation: 0, landform: 0,
+const w = generateWorld({seed: 'GOLFER-TABLE', biome: 'heartland', holes: 1, courseYards: 600, elevation: 0, landform: 0,
  doglegs: 0, water: 0, lakes: 0, rivers: 0, creeks: 0, bunkerCount: 0, trees: 0, width: 92, homes: false, fairwayFeature: 0});
 const hole = w.holes[0], turf = turfConfig();
 const tee = {x: hole.center(30), z: 30};

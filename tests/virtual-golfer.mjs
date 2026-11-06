@@ -46,8 +46,8 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
   // The club: the putter on the green; the challenge's; else for the distance (setUpTurn, challengeClub).
   let id = lie === 'green' ? 'putter' : nearest(aimAt ? Math.hypot(aimAt.x - from.x, aimAt.z - from.z) : toPin);
   if (wantKind && lie !== 'green') id = list.find(([, c]) => c.kind === wantKind)?.[0] || id;
-  // The putter from off the green, when asked (tools/architect-difficulty.mjs
-  // putts from the fringe and close in on the semi-rough): `list` leaves it out.
+  // The putter from off the green, when asked (a golfer putting from the
+  // fringe and close in on the semi-rough): `list` leaves it out.
   if (wantKind === 'putter' && clubs.putter) id = 'putter';
   const c = clubs[id], putt = c.code === 'PT';
   // The aim (defaultAim): the challenge's target, the pin with the putter, the

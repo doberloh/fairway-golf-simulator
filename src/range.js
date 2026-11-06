@@ -24,6 +24,7 @@
 import {localSurface, greenDistance, greenRadius, TEE_PAD, BIOMES} from './course.js';
 import {greenContour, rng} from './course-plan.js';
 import {DEFAULT_COURSE} from './settings-schema.js';
+import {currentKey} from './regions.js';
 
 const YARD = 0.9144;
 
@@ -52,7 +53,7 @@ const MOW_START = -20;
 const matSpacing = () => TEE_PAD.x * 2.5;
 // Same rule, same reason: BIOMES is a const in the other half of the cycle, so
 // it is read inside the builder and never at this module's top level.
-const biomeOf = key => BIOMES[key] || BIOMES.pnw;
+const biomeOf = key => BIOMES[currentKey(key)] || BIOMES.puget;
 
 // Where the real green sits, in yards from the mats, and how far the tools
 // slider may move it. The near end is a pitch and the far end is a long iron;

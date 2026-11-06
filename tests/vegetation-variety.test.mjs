@@ -6,7 +6,7 @@ import {addVegetation,carryFade,CARRY_EDGE} from '../src/vegetation.js';
 import {addHomes} from '../src/homes.js';
 
 const build=(settings={})=>{
- const world=generateWorld({seed:'VARIETY',biome:'pnw',holes:9,trees:70,water:20,...settings});
+ const world=generateWorld({seed:'VARIETY',biome:'puget',holes:9,trees:70,water:20,...settings});
  const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
  addVegetation(view);
  const meshes=[];view.group.traverse(o=>{if(o.isInstancedMesh)meshes.push(o);});
@@ -67,7 +67,7 @@ test('a stand of conifers draws on several models and varies each one',()=>{
 test('every biome builds its vegetation, models and procedural alike',()=>{
  // The desert is the case that matters here: its species split across imported
  // cacti, imported arid trees, and ocotillo and agave that stay procedural.
- for(const biome of ['pnw','mountain','desert','links','midwest','island','autumn','haunted']){
+ for(const biome of ['puget','rockies','sonoran','links','heartland','keys','newengland']){
   const world=generateWorld({seed:'BIOMES',biome,holes:9,trees:55,water:20});
   const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
   assert.doesNotThrow(()=>addVegetation(view),`${biome} failed to build`);
@@ -84,7 +84,7 @@ test('every biome builds its vegetation, models and procedural alike',()=>{
 });
 
 test('houses are drawn from imported models fitted to the box physics collides with',()=>{
- const world=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:0,water:0});
+ const world=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:0,water:0});
  assert(world.homes.length>0,'this fixture needs houses');
  const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
  addHomes(view);

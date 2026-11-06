@@ -200,7 +200,7 @@ def limb(mesh, rng, start, end, r0, r1, sides=6, bow=0.2, shade=0.85):
 
 
 def cloud_crown(mesh, rng, center, radii, lobes=14, lobe_size=(0.34, 0.52), role='leaf', subdiv=3,
-                blend=0.8, low=0.45, high=1.2, flat_bottom=0.35, jitter=0.08, shell=0.78):
+                blend=0.8, low=0.45, high=1.2, flat_bottom=0.35, jitter=0.08, shell=0.78, core=True):
     """A crown as a cloud of soft lobes on and inside an ellipsoid.
 
     Lobes sit on a shell at `shell` of the radii (golden-angle spread, jittered),
@@ -223,7 +223,11 @@ def cloud_crown(mesh, rng, center, radii, lobes=14, lobe_size=(0.34, 0.52), role
         mesh.add_lump(c, size, role, rng, subdiv=subdiv, jitter=jitter, crown=center, blend=blend, shade=shade,
                       flex=lambda w: min(1.0, 0.45 + 0.55 * max(0.0, (w - center).length / max(rx, rz))),
                       squash_bottom=flat_bottom if d.z < -0.2 else 0.0)
-    # A filled core so no sky shows through the middle.
+    # A filled core so no sky shows through the middle. A small clump of a
+    # few big lobes has none to show, and its core (a 320-face sphere) would
+    # be most of its cost: `core=False` (the US landscapes packs).
+    if not core:
+        return
     mesh.add_lump(center, (rx * 0.62, ry * 0.62, rz * 0.6), role, rng, subdiv=2, jitter=0.05,
                   crown=center, blend=blend, shade=shade, flex=0.35)
 
@@ -471,6 +475,8 @@ def use_toon_sheet(colours=None):
     the way the game will draw the pack."""
     colours = {**SHEET_COLOURS, **(colours or {})}
     original = fb.role_material
+    global SHEET_BASE
+    SHEET_BASE = colours
 
     def role_material(role, preview=None):
         if preview is not None:
@@ -481,8 +487,24 @@ def use_toon_sheet(colours=None):
             m.use_nodes = True
             m.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (*preview, 1)
             return m
-        return toon_material(fb.ROLE_MATERIAL[role], colours[role])
+        return toon_material(fb.ROLE_MATERIAL[role], {**colours, **SHEET_TINT}[role])
     fb.role_material = role_material
+
+
+# A model's own sheet colours (`export(..., tints=)`): set while that model is
+# built and finished, so a pack's yellow broom and pink rhododendron are not
+# both drawn in the pack's one accent. The sheet only; the game paints roles
+# from the species tables.
+SHEET_TINT = {}
+SHEET_BASE = {}
+
+
+def tinted(build, tint):
+    def b(mesh, rng):
+        global SHEET_TINT
+        SHEET_TINT = tint or {}
+        build(mesh, rng)
+    return b
 
 
 def far_twin(name, build):
@@ -498,17 +520,33 @@ def far_twin(name, build):
     return b
 
 
-def export(models, render=None, colours=None, far=False, figure=1.8):
+def export(models, render=None, colours=None, far=False, figure=1.8, tints=None):
     """fb.export_pack with PaintMesh and the paint exported as COLOR_0; with
     `far`, every model's far twin too (`<name>_Far`) -- or, given a set of
     names, those models' only (a small plant's twin saves next to nothing).
     `figure`: the contact sheet's height reference in metres (a person by
     default; a small pack passes something its own size)."""
+    # SEASONS FOR THE GAME (the US landscapes goal, step 9; tools/blender/
+    # dump-tints.mjs): with FAIRWAY_DUMP_TINTS set, write the pack's role
+    # colours in all four seasons (its `tints(season)`, as hex) to that file
+    # and stop -- the models are built lazily below, so nothing is built.
+    dump = os.environ.get('FAIRWAY_DUMP_TINTS')
+    if dump:
+        import json
+        tint = sys._getframe(1).f_globals.get('tints')
+        hexed = lambda c: '#' + ''.join('%02x' % round(max(0, min(1, v)) ** (1 / 2.2) * 255) for v in c[:3])
+        seasons = {s: {n: {r: hexed(c) for r, c in roles.items()} for n, roles in tint(s).items()} for s in ('spring', 'summer', 'autumn', 'winter')} if tint else {}
+        with open(dump, 'w') as f:
+            json.dump(seasons, f)
+        return
     out, render_path = fb.args()
     use_toon_sheet(colours)
     fb.Mesh = PaintMesh
     if far:
         models = list(models) + [(name + '_Far', far_twin(name, build)) for name, build in models
                                  if far is True or name in far]
+    # Every model sets its sheet tint (empty for most), so one model's never
+    # carries into the next.
+    models = [(name, tinted(build, (tints or {}).get(name.replace('_Far', '')))) for name, build in models]
     fb.export_pack(models, out, render_path or render, figure=figure,
                    gltf_options={'export_vertex_color': 'ACTIVE', 'export_all_vertex_colors': False})

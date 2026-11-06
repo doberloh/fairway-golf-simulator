@@ -29,8 +29,9 @@ test('every ground type has a row in every table', () => {
   assert.ok(IMPACTS[g.sound] || ['rock', 'tee', 'rough', 'sand'].includes(g.sound), `${k}: a sound that exists`);
   assert.ok(/^#[0-9a-f]{6}$/.test(g.map), `${k}: a map colour`);
   assert.ok(g.label && surfaceLabel(k) === g.label, `${k}: a HUD label`);
-  // The cart path (architect-courses) is a ground a ball lies on, but man-made.
-  assert.ok(isGround(k) && isNatural(k) === (k !== 'path'), k);
+  // The cart path (architect-courses) and the road (roads.js) are grounds a
+  // ball lies on, but man-made.
+  assert.ok(isGround(k) && isNatural(k) === (k !== 'path' && k !== 'road'), k);
  }
  assert.ok(!isGround('rough') && isNatural('rough') && !isNatural('fairway'));
  assert.equal(surfaceLabel('semi'), 'Semi-rough');

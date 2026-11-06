@@ -437,6 +437,9 @@ were added and two kept, the giant trunks being what that landscape is.
 1,709 KB -- about 2.2 MB of the page (budget 3 MB); the page is 13.8 MB
 (11.4 on main). Every card that stands for all landscapes now starts on a
 different one (its own key).
+**Since then:** 169 pictures for 41 landscapes, retaken on generator 87's land
+(4 November 2026, `biome-shots take --picks`): 6,259 KB, about 8.15 MB of the
+page, past the 3 MB written for ten, so `encode` reports over budget (TODO).
 
 ## Phones, round 1 (27 October 2026)
 

@@ -3,6 +3,7 @@ import {bounceScale,tiltScale,gripScale,firmnessApplies,firmnessValue,NORMAL_FIR
 import {CUP_RADIUS as CUP_R,CUP_DEPTH} from './cup.js';
 import {bounce as compliantBounce,dampingFor} from './contact.js';
 import {NO_TRUNK} from './species.js';
+import {pastBoundary} from './roads.js';
 import {GROUNDS} from './grounds.js';
 // Restitution -> damping, remembered. The solve is sixty runs of a full contact,
 // and the same handful of (restitution, friction) pairs recur all shot long.
@@ -570,7 +571,8 @@ export function rollPreview(course,origin,aimDegrees,speed,options={}){
 // the flight and a relief drop (relief.js) cannot disagree about where it is.
 export function outOfBounds(course,x,z){
  const wp=course.world?course.toWorld({x,z}):null;
- return wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ):(Math.abs(x)>course.bounds.x||z<course.bounds.minZ||z>course.bounds.maxZ);
+ // Past the public road (roads.js; the US landscapes goal, phase 4) is out too.
+ return wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ||pastBoundary(course.world.boundary,wp.x,wp.z)>0):(Math.abs(x)>course.bounds.x||z<course.bounds.minZ||z>course.bounds.maxZ);
 }
 export function simulateShot(shot,course,options={}){
  // LEFT AND RIGHT ARE THE GOLFER'S, AS A LAUNCH MONITOR REPORTS THEM: positive
@@ -633,10 +635,6 @@ export function simulateShot(shot,course,options={}){
  const solids=[...(course.world?.trees||course.trees||[])];
  for(const r of course.world?.rocks||[])
   solids.push({x:r.x,z:r.z,y:r.y,h:Math.max(.2,r.top-r.y),radius:r.reach,solid:'rock'});
- // Haunted Hollow's giant pumpkins and toadstools: the same cylinder, as wide
- // as the model and as tall as it is drawn.
- for(const p of course.world?.props||[])
-  solids.push({x:p.x,z:p.z,y:p.y,h:p.h,radius:p.reach,solid:'prop'});
  for(const q of options.poles||[])
   solids.push({x:q.x,z:q.z,y:q.y,h:q.height,radius:POLE_RADIUS,solid:'pole'});
  // THE FLAGSTICK IS SOLID WHILE IT STANDS IN THE HOLE (the owner, 13 October

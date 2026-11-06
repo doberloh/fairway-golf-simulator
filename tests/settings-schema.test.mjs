@@ -77,7 +77,7 @@ test('every schema version between 1 and the current one has a migration',()=>{
  // setting means bumping SCHEMA_VERSION and writing the step that supplies it --
  // this is the assertion that notices when only the first half was done.
  for(let v=1;v<SCHEMA_VERSION;v++){
-  const migrated=migrateSettings({seed:'STEP',biome:'pnw'},v);
+  const migrated=migrateSettings({seed:'STEP',biome:v<17?'pnw':'puget'},v); // the keys were renamed going into 17
   assert.doesNotThrow(()=>validateSettings(migrated),`a version ${v} save does not survive migration`);
   for(const f of SETTINGS)
    assert.notEqual(migrated[f.key],undefined,`a version ${v} save comes through without ${f.key}`);
@@ -133,6 +133,37 @@ test('migrating an already current save is a no-op, and gaps fall back to defaul
  assert.equal(sparse.seed,'SPARSE');
  assert.equal(sparse.trees,DEFAULT_COURSE.trees);
  assert.doesNotThrow(()=>validateSettings(sparse));
+});
+
+// HAUNTED HOLLOW WAS REMOVED (the owner, 2 November 2026): a save on it opens
+// on Autumn, the landscape that stood in for it out of season -- New England
+// since the landscapes' new keys (schema 17).
+test('a save on Haunted Hollow opens on Autumn, now New England',()=>{
+ const s=migrateSettings({...DEFAULT_COURSE,seed:'GLOAM',biome:'haunted'},14);
+ assert.equal(s.biome,'newengland');
+ assert.equal(validateSettings(s).biome,'newengland');
+ assert.ok(!BIOME_KEYS.includes('haunted'));
+});
+
+// THE LANDSCAPES' NEW KEYS (schema 17, 2 November 2026): a save on every old
+// key opens on the landscape it became, and keeps everything else.
+test('a save on an old landscape key opens on its new one',()=>{
+ const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes',redwood:'redwood',links:'links'};
+ for(const [old,now] of Object.entries(to)){
+  const s=migrateSettings({...DEFAULT_COURSE,seed:'RENAMED',biome:old,trees:37},16);
+  assert.equal(validateSettings(s).biome,now,old);
+  assert.equal(s.trees,37);
+  assert.ok(!BIOME_KEYS.includes(old)||old===now);
+ }
+});
+
+// ARCHITECT WAS REMOVED (the owner, 2 November 2026): a save that carried the
+// designer and its four dials opens as the generator's course of its seed.
+test('a save from an Architect course opens as a generated one',()=>{
+ const s=migrateSettings({...DEFAULT_COURSE,seed:'ARCH',biome:'links',designer:'architect',archStyle:'links',archClub:'championship',archAge:'old',archStory:'lots'},15);
+ for(const k of ['designer','archStyle','archClub','archAge','archStory'])assert.ok(!(k in s),`${k} kept`);
+ assert.equal(s.seed,'ARCH');assert.equal(s.biome,'links');
+ assert.doesNotThrow(()=>validateSettings(s));
 });
 
 test('a surprise course is always valid, always a nine, and never the same twice',()=>{

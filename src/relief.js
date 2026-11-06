@@ -180,13 +180,16 @@ export function reliefOptions(ground, trouble, pin, {outRule = 'stroke', back = 
 // (PLACED: playing it off the path, which the Rules also allow, is not
 // offered); the stance is half a metre either side of the ball.
 export const STANCE = .5;
+// What the relief is from: a cart path, and a road or the parking lot
+// (roads.js), both immovable obstructions.
+export const OBSTRUCTIONS = new Set(['path', 'road']);
 export function pathRelief(surface, ball, pin, {step = .1, reach = 15} = {}) {
- const toPin = dist(ball, pin), playable = s => s !== 'path' && s !== 'water' && s !== 'green' && s !== 'sand';
+ const toPin = dist(ball, pin), playable = s => !OBSTRUCTIONS.has(s) && s !== 'water' && s !== 'green' && s !== 'sand';
  const clearAt = (x, z) => {
   if (!playable(surface(x, z))) return false;
   // The stance, across the line to the hole.
   const dx = pin.x - x, dz = pin.z - z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
-  return surface(x + nx * STANCE, z + nz * STANCE) !== 'path' && surface(x - nx * STANCE, z - nz * STANCE) !== 'path';
+  return !OBSTRUCTIONS.has(surface(x + nx * STANCE, z + nz * STANCE)) && !OBSTRUCTIONS.has(surface(x - nx * STANCE, z - nz * STANCE));
  };
  for (let r = step; r <= reach; r += step) {
   let best = null;

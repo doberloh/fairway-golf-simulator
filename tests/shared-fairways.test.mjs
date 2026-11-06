@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld, shareFairways} from '../src/course.js';
 import {BIOMES} from '../src/biomes.js';
+import {regionOf} from '../src/regions.js';
 import {world} from './worlds.mjs';
 
 // Cached (worlds.mjs): five tests read the same eighteen-hole links, and each
@@ -58,10 +59,12 @@ test('a shared fairway always has a partner, and near fairways leave a strip or 
 });
 
 test('only a biome that asks for it shares fairways or routes side by side', () => {
- for (const [key, bio] of Object.entries(BIOMES)) if (key !== 'links') {
+ // The Links' region shares: the Scottish Links and, since phase 8c of the US
+ // landscapes goal, the Oregon Dunes (Bandon's links).
+ for (const [key, bio] of Object.entries(BIOMES)) if (regionOf(key) !== 'links') {
   assert.ok(!bio.sharedFairways && !bio.routeParallel && !bio.fairwayScale, `${key} shares`);
  }
- const w = generateWorld({seed: 'overhaul', biome: 'pnw', holes: 18, trees: 60, homes: true});
+ const w = generateWorld({seed: 'overhaul', biome: 'puget', holes: 18, trees: 60, homes: true});
  assert.equal(w.holes.filter(h => h.sharedFairway).length, 0);
 });
 
@@ -115,34 +118,4 @@ test('a shared fairway carries pot bunkers on its seam, wholly in the fairway', 
   }
  }
  assert.ok(seen >= 3, `only ${seen} seam bunkers on two courses`);
-});
-
-// PAIRS ONLY ON AN ARCHITECT COURSE (the owner's review, 30 October 2026:
-// Links style, Members' club, Old, A lot, 9 holes, seed ST-1 -- holes 2, 3, 7
-// and 8 ran together into one field of fairway). An Architect course joins
-// each fairway to one neighbour at most; Classic joins every pair it can.
-test('an Architect links joins fairways in pairs, never a field of three or more', async () => {
- const {world} = await import('./worlds.mjs');
- const w = world({seed: 'ST-1', holes: 9, biome: 'links', designer: 'architect', archStyle: 'links', archClub: 'members', archAge: 'old', archStory: 'lots'});
- // Flood the fairway on a 4 m grid, then see which holes' centre lines each piece holds.
- const C = 4, xs = [], zs = [];
- for (const h of w.holes) for (let z = 0; z <= h.length; z += 10) { const p = h.toWorld({x: h.center(z), z}); xs.push(p.x); zs.push(p.z); }
- const x0 = Math.min(...xs) - 60, z0 = Math.min(...zs) - 60, nx = Math.ceil((Math.max(...xs) + 60 - x0) / C), nz = Math.ceil((Math.max(...zs) + 60 - z0) / C);
- const lab = new Int32Array(nx * nz).fill(-1), fw = new Uint8Array(nx * nz);
- for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) fw[j * nx + i] = w.surface(x0 + i * C, z0 + j * C) === 'fairway' ? 1 : 0;
- let n = 0;
- for (let k = 0; k < fw.length; k++) {
-  if (!fw[k] || lab[k] >= 0) continue;
-  const st = [k]; lab[k] = n;
-  while (st.length) { const c = st.pop(), i = c % nx, j = (c / nx) | 0; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + a, jj = j + b, q = jj * nx + ii; if (ii >= 0 && jj >= 0 && ii < nx && jj < nz && fw[q] && lab[q] < 0) { lab[q] = n; st.push(q); } } }
-  n++;
- }
- const holesIn = new Map();
- for (const h of w.holes) for (let z = 60; z <= h.length - 60; z += 10) {
-  const p = h.toWorld({x: h.center(z), z}), l = lab[Math.round((p.z - z0) / C) * nx + Math.round((p.x - x0) / C)];
-  if (l >= 0) { if (!holesIn.has(l)) holesIn.set(l, new Set()); holesIn.get(l).add(h.hole + 1); }
- }
- const groups = [...holesIn.values()].filter(s => s.size > 1);
- assert.ok(groups.length >= 1, 'no fairways shared at all');
- for (const g of groups) assert.ok(g.size <= 2, `holes ${[...g].join(', ')} share one fairway`);
 });

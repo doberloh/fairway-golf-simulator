@@ -4,12 +4,13 @@ import {ACHIEVEMENTS, achievement, sandSave, longestStreak, holeAchievements, ro
 import {ACHIEVEMENT_TITLES, isUnlocked, wornItem, reward} from '../src/rewards.js';
 
 // THE SPEC'S TABLE (8.3): thirteen, each with XP, the titles where named.
-// Thirteen from the spec, and five for the challenges (16 October 2026).
-test('eighteen achievements, each paying XP, eleven with a title', () => {
- assert.equal(ACHIEVEMENTS.length, 18);
- assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 18);
+// Thirteen from the spec, and five for the challenges (16 October 2026); Ghost
+// Hunter went with Haunted Hollow (2 November 2026).
+test('seventeen achievements, each paying XP, ten with a title', () => {
+ assert.equal(ACHIEVEMENTS.length, 17);
+ assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 17);
  for (const a of ACHIEVEMENTS) assert.ok(a.xp > 0 && a.name && a.how, a.id);
- assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 11);
+ assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 10);
  assert.equal(achievement('ace').xp, 200);
 });
 
@@ -32,7 +33,6 @@ test('a hole earns First birdie and Ace; a round its own', () => {
  assert.ok(got.includes('par3-sweep'), 'every par 3 a birdie');
  assert.ok(got.includes('beat-the-index'), 'three under against an index of 2');
  assert.ok(got.includes('night-owl') && got.includes('fog-walker'));
- assert.ok(!got.includes('ghost-hunter'));
  // A nine is held to half the index: one over against an index of 4 beats it.
  const nine = Array.from({length: 9}, (_, i) => ({par: 4, score: i ? 4 : 5}));
  assert.ok(roundAchievements({holes: nine, index: 4}).includes('beat-the-index'));
@@ -55,14 +55,14 @@ test('counted achievements, streaks, and each earned only once', () => {
 });
 
 test('stored progress is cleaned on the way in', () => {
- assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['pnw', 'pnw', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['pnw'], weeks: [2, 3], chalWeeks: [], once: ['a']});
+ assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['puget', 'puget', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['puget'], weeks: [2, 3], chalWeeks: [], once: ['a']});
  assert.deepEqual(normaliseProgress({chalWeeks: [9, 8, 8, 'x']}).chalWeeks, [8, 9]);
  assert.deepEqual(normaliseEarned({ace: 5, bogus: 1, sandy: 'x'}), {ace: 5});
 });
 
 // TITLES FROM ACHIEVEMENTS (spec 7.5): worn only once earned, whatever the level.
 test('an achievement title is earned with its achievement, not by level', () => {
- assert.equal(ACHIEVEMENT_TITLES.length, 11);
+ assert.equal(ACHIEVEMENT_TITLES.length, 10);
  assert.equal(reward('title', 'ach-ace').name, 'Ace');
  assert.equal(isUnlocked('title', 'ach-ace', 50, {}), false);
  assert.equal(isUnlocked('title', 'ach-ace', 1, {ace: 1}), true);

@@ -80,6 +80,9 @@ export function applyCloudFade(material) {
  material.needsUpdate = true;
 }
 
+// Over the course's ground, wherever that is (built-world.js skyBaseOf); a
+// generated course has no `skyBase`, its ground being round height 0.
+export const cloudAltitude = world => (world.skyBase ?? 0) + 640;
 export function makeClouds(view, seed) {
  const {world} = view;
  const rng = random(seed + ':clouds');
@@ -93,7 +96,7 @@ export function makeClouds(view, seed) {
  // simply no shadow to see. This box is 14.7 km2 against 8.9 km2 of cloud, so
  // 60% of disc area; overlapping, that lands near 45% of sky actually covered.
  const spanX = world.halfX + 1200, spanZ = world.halfZ + 1200;
- const altitude = 640;
+ const altitude = cloudAltitude(world);
 
  const material = new T.MeshToonMaterial({color: '#ffffff'});
  // One blob geometry, instanced per puff. Round 6 of the overhaul's light:

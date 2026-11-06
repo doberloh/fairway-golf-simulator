@@ -1,6 +1,6 @@
 // THE YARDAGE BOOK (architect-courses, phase 7; the study, workstream P: "a
 // printable page per hole -- the map with carries, the notes, the green's
-// slopes"). One page a hole of an Architect course, drawn from the built
+// slopes"). One page a hole of a generated course, drawn from the built
 // course in the hole's own frame (tee at the foot of the page, green at the
 // head, the player's left on the left):
 //
@@ -9,14 +9,17 @@
 //               average drive
 //   carries     to each hazard's near and far edge from the back tee, and
 //               what is left to the green's centre from each landing zone
-//   notes       the architect's note for the hole and each hazard's reason
+//   notes       where drives come down and what is left (an Architect
+//               course's note and each hazard's reason went with the
+//               designer, 2 November 2026)
 //
 // Written with pdf.js (no library, offline). No DOM and no three.js: Node
-// builds it in tests/yardage-book.test.mjs. Architect only (the goal: Classic
-// gets its free extras and no more).
+// builds it in tests/yardage-book.test.mjs. Every generated course (Architect's
+// only until the designer was removed, 2 November 2026).
 import {PdfDocument, PAGE, textWidth} from './pdf.js';
 import {fairwayWidth, ovalRadius} from './course.js';
 import {holeNames} from './hole-names.js';
+import {landingZones} from './markings.js';
 
 const YARD = .9144;
 const INK = '#1d2a22', SOFT = '#5b6b60', RULE = '#c9d2c4', FAIRWAY = '#7fae5c', SEMI = '#b9cf8f', GREEN = '#3f8f4f', SAND = '#e9d8a6', WATER = '#7fb3d5';
@@ -98,7 +101,7 @@ export function yardageBook(world) {
   const blue = (h.tees?.blue ?? tees[tees.length - 1]?.[1]) || {z: 0};
   const toGreen = z => Math.round(Math.hypot(h.green.x - h.center(z), h.green.z - z) / YARD);
   const notes = [];
-  if (h.par > 3) for (const [label, z, color] of [['good drive', d.zones?.good, '#3a6fb8'], ['average drive', d.zones?.average, '#8a6d1f']]) {
+  if (h.par > 3) for (const [label, z, color] of (zones => [['good drive', zones.good, '#3a6fb8'], ['average drive', zones.average, '#8a6d1f']])(d.zones ?? landingZones(h))) {
    if (!z) continue;
    const [x0, y] = P(h.center(z) + 18, z), [x1] = P(h.center(z) - 18, z);
    page.line(x0, y, x1, y, {color, width: .8, dash: [3, 2]});

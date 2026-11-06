@@ -13,14 +13,14 @@ const hour = (p, h, flood) => p.evaluate(([h, flood]) => { const v = window.__vi
 const SCENES = {
  // A tilted green read with the grid and its flow, from the putting camera.
  'putting-grid': async p => {
-  await course(p, {biome: 'pnw', holes: 9, seed: 'REPORT1', greenDifficulty: 70}, 1);
+  await course(p, {biome: 'puget', holes: 9, seed: 'REPORT1', greenDifficulty: 70}, 1);
   await hour(p, 14);
   await p.evaluate(() => { const v = window.__view, pin = v.course.pin; v.config.greenGrid = true; v.config.greenFlow = true; v.config.greenHeat = false; v.setGreenReading(); window.__play({x: pin.x + 7, z: pin.z - 5}); });
   await p.waitForTimeout(2500);
  },
  // Dartboard putting: the rings around the cup, with the putting options open.
  'putting-modes': async p => {
-  await course(p, {biome: 'autumn', holes: 9, seed: 'MAPLE'}, 0);
+  await course(p, {biome: 'newengland', holes: 9, seed: 'MAPLE'}, 0);
   await hour(p, 15);
   await p.evaluate(() => { const v = window.__view, pin = v.course.pin, tee = v.course.tee || v.course.worldTee; const dx = (tee?.x ?? pin.x) - pin.x, dz = (tee?.z ?? pin.z - 40) - pin.z, d = Math.hypot(dx, dz) || 1; window.__play({x: pin.x + dx / d * 38, z: pin.z + dz / d * 38}); });
   await p.waitForTimeout(1500);
@@ -30,7 +30,7 @@ const SCENES = {
  },
  // A launch-monitor shot landed, its numbers on the shot card.
  'shot-data': async p => {
-  await course(p, {biome: 'mountain', holes: 9, seed: 'SUMMIT'}, 0);
+  await course(p, {biome: 'rockies', holes: 9, seed: 'SUMMIT'}, 0);
   await hour(p, 10.5);
   await p.evaluate(() => window.__takeShot({speed: 52, vla: 16, hla: -.8, spin: 5200, spinAxis: 3}));
   await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 60000});

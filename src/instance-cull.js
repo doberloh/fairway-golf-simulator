@@ -127,9 +127,11 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // It is never drawn into the picture: only into shadow maps.
   // A PAINTED TREE SHIPS ITS TWIN (mesh-assets.js `hasShippedTwin`): every
   // part of it, trunk too, swaps -- by its own line, `farPainted`.
-  const painted = !!mesh.userData.model && hasShippedTwin(mesh.userData.model);
+  // A BARE TREE BRINGS ITS OWN (mesh-assets.js `bareParts`): its bark and
+  // twigs are one part, so its twin is too, and every bare species has one.
+  const own = mesh.userData.farGeometry, painted = !!own || !!mesh.userData.model && hasShippedTwin(mesh.userData.model);
   const far = (painted || mesh.userData.role === 'leaf') && (thinShadowsFrom !== Infinity || farTrees > 0 || farPainted > 0)
-   ? farParts(mesh.userData.model)?.[mesh.userData.part]?.geometry : null;
+   ? own ?? farParts(mesh.userData.model)?.[mesh.userData.part]?.geometry : null;
   record.painted = painted;
   // ONLY A CROWN OF MANY SPRAYS HAS A TWIN. Thinning keeps a third of the
   // pieces and grows each, which a grown redwood's thousands of sprays survive

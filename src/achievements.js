@@ -20,6 +20,7 @@
 //                       profile's own (challenges.js).
 
 import {CHALLENGES} from './challenges.js';
+import {currentKey} from './regions.js';
 
 export const ACHIEVEMENTS = [
  {id: 'first-birdie', name: 'First birdie', how: 'Make a birdie.', xp: 50},
@@ -29,8 +30,7 @@ export const ACHIEVEMENTS = [
  {id: 'par3-sweep', name: 'Par-3 Sweep', how: 'Birdie every par 3 in a round.', xp: 200},
  {id: 'beat-the-index', name: 'Beat the Index', how: 'Finish a round under your sim handicap.', xp: 150},
  {id: 'night-owl', name: 'Night Owl', how: 'Finish a round under the floodlights.', xp: 100, title: 'Night Owl'},
- {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round in Giant Redwood.', xp: 75, title: 'Fog Walker'},
- {id: 'ghost-hunter', name: 'Ghost Hunter', how: 'Finish a round in Haunted Hollow.', xp: 75, title: 'Ghost Hunter'},
+ {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round on the Redwood Coast.', xp: 75, title: 'Fog Walker'},
  {id: 'globetrotter', name: 'Globetrotter', how: 'Finish a round in nine different landscapes.', xp: 250, title: 'Globetrotter', progress: 'biomes', goal: 9},
  {id: 'centurion', name: 'Centurion', how: 'Finish 100 rounds.', xp: 300, title: 'Centurion', progress: 'rounds', goal: 100},
  {id: 'streak', name: 'Streak', how: 'Finish the course of the week four weeks running.', xp: 150, progress: 'streak', goal: 4},
@@ -54,7 +54,9 @@ export function normaliseProgress(d) {
  const p = blankProgress();
  if (!d || typeof d !== 'object') return p;
  if (Number.isInteger(d.rounds) && d.rounds >= 0) p.rounds = d.rounds;
- if (Array.isArray(d.biomes)) p.biomes = [...new Set(d.biomes.filter(b => typeof b === 'string' && b.length <= 20))].slice(0, 30);
+ // The landscapes finished in, an old key read as its new one (2 November
+ // 2026); room for every landscape the goal adds.
+ if (Array.isArray(d.biomes)) p.biomes = [...new Set(d.biomes.filter(b => typeof b === 'string' && b.length <= 20).map(currentKey))].slice(0, 64);
  if (Array.isArray(d.weeks)) p.weeks = [...new Set(d.weeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
  if (Array.isArray(d.chalWeeks)) p.chalWeeks = [...new Set(d.chalWeeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
  if (Array.isArray(d.once)) p.once = d.once.filter(k => typeof k === 'string' && k.length <= 120).slice(-ONCE_KEEP);
@@ -122,7 +124,6 @@ export function roundAchievements({holes = [], index = null, floodlit = false, b
  if (Number.isFinite(index) && over < index * played.length / 18) out.push('beat-the-index');
  if (floodlit) out.push('night-owl');
  if (biome === 'redwood') out.push('fog-walker');
- if (biome === 'haunted') out.push('ghost-hunter');
  return out;
 }
 // What the counters and the progress have reached.

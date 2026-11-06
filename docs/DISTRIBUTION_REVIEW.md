@@ -1623,3 +1623,243 @@ asked for; `architect-studio` and `architect-round` last passed on the
 branch on 31 October, before the far heath and the eleven models, and the
 whole set has not run since the overhaul branch. **Not played by a person**
 beyond the owner's rounds on the branches.
+
+## Addendum, 31 October 2026: Fairway Course Builder (branch, not released)
+
+**4 November 2026: the builder's page carries the game's models** (the
+preview, src/builder/preview.js), so `Fairway Builder.html` grows by about 25
+MB and every zip with it (the same data twice, compressed twice). PLACED: the
+owner asked to see the model; fetching it from the game's page is not possible
+by file://. Game view (the same day) adds the game's drawing code: the page goes
+from 26.6 to 28.2 MB as vite counts it, 14.1 MB gzipped.
+
+The `course-builder` branch adds a **second page to every download**,
+`Fairway Builder.html` (docs/COURSE_BUILDER.md): built single-file by
+`vite.builder.config.js` after the game in `npm run build`, into
+`dist/builder.html`; the packager puts it in all four zips beside
+`Fairway.html` and adds its line to `RELEASE_SHA256.txt`. The zip names do not
+change, so the website's Download buttons are unaffected. **Owed before a
+release**: the website's demo checks `Fairway.html` against
+`RELEASE_SHA256.txt`, and must be confirmed to read it by name.
+
+The builder is offline on the same terms as the game: it opens by file://,
+reads only the files a player gives it, writes `.fairway` files (and door 2 drafts) as downloads -- or, since 1
+November 2026, to the one file the player chose in the browser's save dialog,
+written again by Save (saving.js) --
+and makes no request -- checked by its own smoke harness
+(`tools/builder-smoke.mjs`, which fails on any request). At stage 0 it was
+107,941 bytes; at stage 3 906,624 (three.js and the course generator now
+ride in it, for door 1 and the editor), still no dependency of its own. **Stage 6 adds laz-perf 0.0.7** (Apache-2.0; npm, `laz-perf`), the LASzip decoder compiled to WebAssembly, to the builder's page only, its 214 KB of WebAssembly inlined (laz.js hands it in, so the loader never fetches its .wasm). In DEPENDENCY_INVENTORY.json (runtime), THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md. The game's page does not import it. The game's page is unchanged by stage 0.
+The study named geotiff.js and proj4js too; **neither was added** (stage 6):
+GeoTIFF is read by Fairway's own reader, and UTM, degrees and (since 1
+November 2026) Lambert conformal conic and transverse Mercator grids from a
+file's WKT by its own conversions, any other map grid lined up by matching
+points.
+
+**Stages 7-9 (31 October 2026).** Door 2 and the auto trace add no
+dependency. The builder's page is **1,374,433 bytes** (gzip about 461 KB):
+laz-perf's WebAssembly and the LIDAR readers since stage 3's 906,624. The
+game's page is 14,846,858 bytes against main's 14,820,197 built the same day
+(+26,661, 0.18%: the code that plays a built file -- built-world, the ZIP and
+document readers, the built store and the built-field shader branch); still
+one file. Door 2 reads only the files a player chooses (LIDAR, its .prj/.hdr,
+a picture and its world file), holds them in the page's memory, and keeps
+none of them in the course: a built file carries the land, outlines, holes and
+trees, never the survey or the picture (an aerial picture's licence may
+forbid passing it on). All five builder journeys pass with no network request,
+`builder-door-2` among them, which brings a LIDAR file in through the file
+picker, makes a course and plays it in the game by file://. **The one network use (the owner's amended goal, 31 October 2026)**:
+door 2's *Fetch imagery for this land* and *Find* ask an imagery provider --
+USGS, IGN France, PDOK, PNOA, swisstopo with no key, Google or Bing with the
+player's own -- for map tiles over the land, and OpenStreetMap's Nominatim
+(the free providers' place search) for a place by name; and *Fetch
+OpenStreetMap* asks the Overpass API (overpass-api.de) for the golf features, the course boundary and the buildings
+over the land. **OpenStreetMap's licence travels with a course built from
+it**: the ODbL asks for the credit, which the builder adds to the course's
+credits, and a database made from it and shared stays ODbL -- a shared
+`.fairway` built from it carries that licence (the owner's call to allow,
+named here so a release can say so). **Since 1 November 2026, LIDAR too**
+(amendments 13-14): *Search for LIDAR* asks the National Map's product API
+(tnmaccess.nationalmap.gov), IGN's WFS (data.geopf.fr) and swisstopo's STAC catalogue (data.geo.admin.ch); *Download the
+square here* reads USGS's Entwine copy on Amazon's open data
+(s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles or swisstopo's zipped LAS;
+*Download all tiles* asks Fairway's bridge on 127.0.0.1:1922 (its
+`/lidar` route, which fetches rockyweb.usgs.gov and prd-tnm only, for local
+pages only) or makes ordinary browser downloads from rockyweb and reads them
+from the player's LIDAR folder; state and national portals are plain
+links (Washington's opens on the place, by its own `#lat:lon:zoom`).
+**The LIDAR folder** (amendment 15): every download is written to a folder
+the player picks with the browser's own folder dialog (File System Access,
+`showDirectoryPicker`; Chrome and Edge, which treat a `file://` page as a
+secure context), and read back from there instead of downloaded again; the
+browser keeps the folder's handle in IndexedDB and asks the player's leave
+again on a later visit. The page writes only there, only files it
+downloaded, and reads only LIDAR files from it. Where the browser has no
+folder dialog (Firefox, Safari), each download is an ordinary browser
+download. A ZIP brought in (a portal's download) is unpacked in memory. 3DEP is public domain and LiDAR HD Licence Ouverte; a course built
+from a survey carries the land, not the survey. Only when the player
+presses them; a key is kept in that browser's storage and sent only to its
+own provider, never in a file; the picture is kept in the player's own saved
+files since 5 November 2026 (*Addendum, 5 November 2026*) and its credit is added
+to the course's credits. Everything else in both pages stays offline, and the
+smoke journeys still fail on any request but the stand-ins a journey names.
+**Owed before a
+release carrying the builder** (TODO): the website's `RELEASE_SHA256.txt`
+check confirmed to read `Fairway.html`'s line by name, now that the builder's
+line sits beside it; laz-perf's copyright line confirmed against its
+LICENSE; the owner's play of both programs.
+
+A built course file (`.fairway` version 2) is a ZIP written by hand
+(`src/zip.js`) and read only by Fairway's own code; it holds data, never
+code, and every part is checked against limits before use
+(`src/course-doc.js` `LIMITS`), so a file handed between players cannot ask
+the game for more memory than a 3 x 3 km course needs.
+
+## Addendum, 5 November 2026: pictures and map data in a saved course (branch, not released)
+
+The owner's decision, against the earlier line that no picture is ever saved: a
+course saved from the builder's editor keeps its pictures and OpenStreetMap's
+download in a builder's section (COURSE_BUILDER, *Course files*), so it reopens
+whole. What that changes here:
+
+- **Google and Bing pictures now sit on the player's disk.** The builder only
+  ever held them in memory; their terms limit keeping them as well as tracing
+  them (Google's section 3.2.3 is the one the builder quotes; the wording on
+  keeping should be read before a release). The player brings their own key and
+  is told at the key box; the owner accepted this as the player's decision and
+  account. Fairway ships no imagery and fetches none unasked.
+- **A saved .fairway can carry those pictures to someone else** if a player sends
+  it instead of **Save a copy to share**. The copy leaves them out, the game
+  keeps and exports only the course, and the builder's words say so on every
+  Save; nothing can stop a player sending the wrong file.
+- **OpenStreetMap's download in a file** stays under ODbL with the credit the
+  course already carries.
+- **The offline claim stands:** fetching remains only on the player's press, and
+  reopening a file makes no request. The file's API keys: none, by design.
+
+## Addendum, 2 November 2026: Architect, Haunted Hollow, tournament week and the people removed (branch, not released)
+
+On `course-builder`, the first step of the US landscapes goal. **The game's
+page is 13,562,273 bytes (7.01 MB gzipped)**, 1.28 MB under the 14,846,858
+of the builder's stages 7-9: Haunted Hollow's models, the people and
+tournament week's pack (`architect_occasion`, `figures.py`), and the
+Architect code (designer, styles, the architect, hand tools) left the
+bundle. Architect's world pieces stayed and are now on every generated
+course; the yardage book is offered for every generated course, the same
+local PDF download as before. No dependency added or removed; still one
+file, still no network request in the game. Not yet released, so no player
+sees it; the US landscapes goal grows the page again (the owner: game size
+may grow).
+
+**Step 2, the same day**: the page is **13,797,198 bytes (7.11 MB
+gzipped)**, +235 KB: the map of the landscapes and the globe's land
+(src/us-map-data.js, 215 KB; EPA ecoregions and Natural Earth, both public
+domain -- ATTRIBUTION), the region table and the map's code. Still one file,
+no network request.
+
+**Step 3, the Pacific pack**: the page is **14,496,972 bytes (7.47 MB
+gzipped)**, +700 KB: ten Blender models for Puget Sound and Redwood Coast
+and four far twins (the model module 7.05 to 7.75 MB). Still one file.
+
+**Step 3, the mountain pack**: the page is **14,746,002 bytes (7.59 MB
+gzipped)**, +249 KB: six Blender models for the Rockies (two lodgepoles,
+a blue spruce, willow thicket, columbine, lupine, the split-rail fence)
+and three far twins (the model module 7.75 to 7.99 MB). Still one file.
+
+**Step 3, the dry-and-lake pack**: the page is **14,883,461 bytes (7.66
+MB gzipped)**, +137 KB: jojoba, sand cherry and the pier light (the
+ironwood held back). Still one file.
+
+**Step 3, Heartland and New England**: the page is **15,914,333 bytes
+(8.18 MB gzipped)**, +1.03 MB: twelve models and their far twins, the
+ironwood, and the Pacific trees reworked silhouette first. Still one file.
+
+**Step 3, the Keys and every variant**: the page is **17,308,566 bytes
+(8.90 MB gzipped)**, +1.39 MB: the Keys pack, every held-back variant and
+far twin, and the older trees reworked silhouette first. Still one file.
+
+**Step 3 done, and phase 3**: the page is **18,317,461 bytes (9.65 MB
+gzipped)**, +1.01 MB: five landscapes' card pictures (0.95 MB) and their
+records. Still one file, no network request.
+
+**Phase 4, the roads**: the page is **18,327,986 bytes (9.65 MB gzipped)**,
++10 KB of code (roads.js, the lot and road drawing). Still one file.
+
+**Phase 5, the South** (with phase 4b's streets kit): the page is
+**23,295,540 bytes (12.32 MB gzipped)**, +5.0 MB: the streets kit's eight
+models, then the South's 26 species in every variant with 21 far twins,
+the plantation clubhouse and the alligator (the model module 14.35 MB),
+and the five landscapes' card pictures (836 KB of WebP). Still one file,
+no network request.
+
+**Phase 6, Texas and the deserts**: the page is **26,562,670 bytes (14.22
+MB gzipped)**, +3.3 MB: the two packs' 24 species in every variant with
+six far twins and the limestone boulders (the model module 16.19 MB, +2.2
+MB), and six landscapes' card pictures (750 KB). Still one file, no
+network request.
+
+**Phase 7, California and the western mountains**: the page is
+**30,705,270 bytes (16.68 MB gzipped)**, +4.1 MB: the three packs' 29
+species in every variant with 16 far twins, basalt and granite boulders,
+two sea stacks and the volcano (the model module 19.0 MB, +2.8 MB), and six
+landscapes' card pictures (913 KB). Still one file, no network request.
+
+**Phase 8a, the high desert and the plains**: the page is **32,757,120
+bytes (17.80 MB gzipped)**, +2.1 MB: the two packs' 14 species, stone and
+ranch pieces (the model module 20.5 MB, +1.5 MB), and five landscapes'
+card pictures (611 KB, two of them retaken). Still one file, no network
+request.
+
+**Phase 8b, Appalachia and the Northeast's own**: the page is
+**34,788,010 bytes (18.96 MB gzipped)**, +2.0 MB: the two packs' 12 species
+and five buildings and fences (the model module 21.95 MB, +1.5 MB), and five
+landscapes' card pictures (661 KB, two retaken). Still one file, no network
+request.
+
+**Phase 8c, the north, the Pacific links and Hawaii** -- every landscape
+in: the page is **37,025,760 bytes (20.31 MB gzipped)**, +2.2 MB: the two
+packs' 16 species, the lava, cabin and dock (the model module 23.4 MB, +1.5
+MB), and four landscapes' card pictures (758 KB, Alaska's retaken). Since
+the goal's first step (13.8 MB) the page has grown 23.2 MB, of which the
+models are about 16 MB and the forty landscapes' pictures about 4 MB.
+Still one file, no network request.
+
+**The Badlands and the prairie grasses (3 November 2026)** -- the page is
+**37,891,844 bytes (19.82 MB gzipped as measured by gzip -c)**, +0.87 MB
+on phase 8c: the Badlands pack's six species and the grass pack's twelve
+clumps (the model module 24.1 MB once the grasses had their rounds; the page then 38,071,286 bytes), the Badlands' four card pictures
+(89 KB). The Badlands' formations are the ground's (a landform and a
+shader rule), so they add no model weight. Still one file, no network
+request.
+
+**4 November 2026, the page doubled its models and was put back.** From generator 81 to 85 the built page was 62.8 MB (33.2 MB gzipped): the generator's worker, inlined into the page, had come to import the models. Fixed: 38,130,402 bytes (20.87 MB gzipped), and tests/worker-imports.test.mjs now fails if the worker reaches them again. No release carried it.
+
+## Addendum, 5 November 2026: v0.9.7
+
+**v0.9.7** is published at the owner's request ("Lets merge back to main with this
+version of the game, build a new patch version and push to git hub but not the
+website"), as "Fairway 0.9.7 (beta)", tag `v0.9.7`, not a pre-release, the same six
+files as 0.9.6, from the merge of `course-builder` into `main`, with its notes in
+`docs/releases/v0.9.7.md`. It carries the addenda above marked as not released: Fairway
+Course Builder, the US landscapes, and the removal of Architect, Haunted Hollow,
+tournament week and the people. It also carries the Redwood Coast's Meshy trees.
+**`GENERATOR_VERSION` is 89** (53 in 0.9.6), so a saved 0.9.6 round is told its course
+changed; **`SCHEMA_VERSION` 27** (14, migrated: settings carry over); **`BUILT_VERSION`
+3**, new since 0.9.6; **`PROFILE_VERSION` 3** unchanged. **The package version is 0.9.7**,
+so 0.9.6's friend-challenge codes do not play on it (said in the notes). **The website
+is not redeployed**, by the owner's word: its Download buttons follow the new release
+by themselves, and its demo stays on 0.9.6.
+
+The built game is **41,158,636 bytes (22.5 MB gzipped)**, 26.3 MB over 0.9.6, and
+`Fairway Builder.html` 31,080,038 bytes. This is well past where the page stood, and
+was accepted as the landscapes' cost and not reviewed further here. The zips: Windows
+79.2 MB, macOS Apple silicon 65.0 MB, macOS Intel 67.4 MB, Linux 75.8 MB, each 9 verified
+files; the source zip 19.3 MB, 630 files. The 28 Meshy models are the paid plan's
+output (ATTRIBUTION.md, *Generated with Meshy*).
+
+**Checked:** `npm test` (1,483) on the branch, whose tree the merge keeps; the
+fingerprint before the last trees; the packager's verification of every zip; the
+`boot` journey on the trees' final build. **Not run:** the full smoke set on this build
+or a profile, waived by the owner on 5 November; 36 of 41 journeys passed on a build
+just before the last wood change, and the other five on the next. **Not played by a
+person** in this form, including the Meshy trees and far-version swaps in motion.

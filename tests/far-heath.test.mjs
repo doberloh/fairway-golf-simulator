@@ -51,21 +51,11 @@ test('every patch of heath grows domes, one a 2.6 m square', () => {
  assert.ok(heath.count > found * .9 && heath.count < found * 1.1, `${heath.count} domes for ${found} squares of heath`);
 });
 
-test('a moor of heather is spaced out to a cap rather than drawn by the hundred thousand', () => {
- // Haunted Hollow's moor is a fifth of its property: 67,000 domes at the
- // links' spacing, a third of a second more to wait on Medium.
- const {heath} = build({seed: 'HAU-9', holes: 18, biome: 'haunted'}, {foliage: 1, grass: 1, longGrassReach: 130});
- assert.ok(heath.count > 20000 && heath.count < 36000, `${heath.count} domes on the moor`);
- const c = new T.Color();
- heath.getColorAt(0, c);
- assert.ok(c.r < .5 && c.g < .4, 'the moor\'s heath is not its dead brown');
-});
-
 test('a tier with less grass draws a thinner heath, and nowhere without heather grows one', () => {
  const full = build(LINKS).heath.count;
  const low = build(LINKS, {foliage: 1, grass: .35, longGrassReach: 90}).heath;
  assert.ok(low.count < full * .5, `Low drew ${low.count} of ${full}`);
  assert.equal(low.userData.cullReach, 90);
- assert.equal(build({seed: 'DUNE-7', holes: 9, biome: 'pnw'}).heath, null, 'PNW has no heather');
+ assert.equal(build({seed: 'DUNE-7', holes: 9, biome: 'puget'}).heath, null, 'PNW has no heather');
  assert.equal(build({...LINKS, holes: 9}, {foliage: 1, grass: 1, longGrassReach: 0}).heath, null, 'drawn with no reach to sink it by');
 });

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {BIOMES} from '../src/biomes.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
-import {weeklyBiome} from '../src/weekly.js';
+import {weeklyBiome, WEEKLY_ROTATION} from '../src/weekly.js';
 import {PALETTE_KEYS, UNDER_PAR, screenBiome, screenPalette, paletteVars, parseColour, contrast, contrastProblems, TEXT_END_MIN} from '../src/ui-palette.js';
 
 test('every biome carries a complete interface palette of real colours', () => {
@@ -61,7 +61,10 @@ test('a round wears its course, the lobby and studio the course being chosen, th
 
 test('the menus change colour with the week, through every biome', () => {
  const seen = new Set();
- for (let w = 0; w < BIOME_KEYS.length; w++) {
+ // From 19 October 2026 to past every landscape's debut (weekly.js `eras`,
+ // the last debut's week less week 146) and a whole rotation after it.
+ const weeks = Math.max(...WEEKLY_ROTATION.eras.map(e => e.debut)) - 146 + 10 + WEEKLY_ROTATION.eras.length;
+ for (let w = 0; w < weeks; w++) {
   const date = new Date(2026, 9, 19 + 7 * w); // Mondays from 19 October 2026
   const p = screenPalette({screen: 'menu', date});
   assert.equal(p.biome, weeklyBiome(date));
@@ -69,9 +72,9 @@ test('the menus change colour with the week, through every biome', () => {
   assert.equal(screenPalette({screen: 'menu', date: new Date(2026, 9, 25 + 7 * w)}).biome, p.biome);
   seen.add(p.biome);
  }
- // Every landscape but Haunted Hollow, whose turn in these weeks falls out of
- // its season and wears Autumn's colours (seasons.js, weekly.js).
- for (const k of BIOME_KEYS.filter(k => k !== 'haunted')) assert.ok(seen.has(k), k);
+ // Every landscape (Haunted Hollow's turn, removed 2 November 2026, wears
+ // Autumn's colours: weekly.js `retired`).
+ for (const k of BIOME_KEYS) assert.ok(seen.has(k), k);
 });
 
 test('a palette becomes the kit\'s custom properties, with the one shared under-par red', () => {

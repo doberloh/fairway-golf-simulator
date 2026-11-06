@@ -1,33 +1,35 @@
 // LIFE ON THE COURSE (architect-courses, phase 6; the study, workstream M;
-// docs/ARCHITECT_COURSES.md, *Phase 6*): animals, cartoon and calm, and
-// people far off.
+// docs/ARCHITECT_COURSES.md, *Phase 6*): animals, cartoon and calm.
 //
 //   grazers     sheep on Links; deer at the wood's edge (Midwest, Autumn, PNW,
 //               Mountain); elk (Redwood, Mountain); a roadrunner (Desert)
 //   water birds geese on the far bank of a pond; a heron by a pond or creek
-//   fliers      gulls circling over Links, Lakeshore and Island; ravens over
-//               Haunted Hollow (which has its own bats)
-//   people      a group of three walking a stretch of the cart path; a
-//               greenkeeper on a ride-on mower in the rough between holes
+//   fliers      gulls circling over Links, Lakeshore and Island
+//
+// The people -- a fourball on the path, a greenkeeper on a mower -- were
+// removed on 2 November 2026 (the owner; the US landscapes goal).
 //
 // Everything stands or moves out of play: grazers 30 m outside every
-// corridor, people on the path or in the rough well away from it, birds 25 m
-// up. Decoration: nothing here is solid or changes a lie, and the study's
+// corridor, birds 25 m up. Decoration: nothing here is solid or changes a lie, and the study's
 // rule -- never in the line of a shot -- holds by placement. Drawn and moved
-// by renderer.js `addLife`, never on Low. All counts PLACED. Architect only;
+// by renderer.js `addLife`, never on Low. All counts PLACED. Every generated
+// course (Architect's until it was removed, 2 November 2026);
 // rendering only, so no version moves for it (the fingerprint reads ground).
 // Pure: tests/life.test.mjs.
-import {archStream} from './architect-styles.js';
-import {ARCHITECT, biomeOf} from './biomes.js';
+import {worldStream} from './world-stream.js';
+import {worldOf} from './biomes.js';
 import {ovalRadius} from './course.js';
 
-// Each landscape's animals are its architect block's (biomes.js).
-export const LIFE_SET = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.life]));
+// Each landscape's animals are its world block's (biomes.js).
+export const lifeSet = key => worldOf(key).life || {};
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
 const PLAYED = new Set(['fairway', 'semi', 'green', 'fringe', 'tee', 'sand', 'water', 'path']);
 
 export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [], trees = []}) {
- const out = [], set = LIFE_SET[s.biome] || {};
- const rnd = archStream(s.seed || 'EVERGREEN', 'arch', 'life', s.biome || '');
+ const out = [], set = lifeSet(s.biome);
+ const rnd = worldStream(s.seed || 'EVERGREEN', 'world', 'life', s.biome || '');
  // Clear of trunks too (iteration 7: the mower was put in a wood). The trees
  // are planted by now; a coarse grid of them, built once.
  const cell = 8, grid = new Map();
@@ -69,26 +71,6 @@ export function placeLife({holes, s, surface, nearest, halfX, halfZ, paths = [],
  if (set.fliers) {
   const [kind, n] = set.fliers;
   for (let k = 0; k < n; k++) out.push({kind, x: (rnd() * 2 - 1) * halfX * .6, z: (rnd() * 2 - 1) * halfZ * .6, r: 30 + rnd() * 40, up: 25 + rnd() * 15, speed: (.12 + rnd() * .08) * (rnd() < .5 ? -1 : 1), phase: rnd() * Math.PI * 2});
- }
- // People: three walking one way along the longest piece of the path, from
- // its start to its end and round again (the owner: "no reason they would be
- // walking reverse"; out and back, they turned and walked home).
- const piece = paths.slice().sort((p, q) => q.points.length - p.points.length)[0];
- if (piece?.points.length > 6) {
-  const line = piece.points.map(p => ({x: p.x, z: p.z})), w = piece.width ?? 2.5;
-  // A fourball (the owner's review: four bodies to show, was three).
-  for (let k = 0; k < 4; k++) out.push({kind: 'walker', line, loop: true, side: (k - 1.5) * Math.min(.8, w * .22), lag: k * .9, speed: 1.2, phase: rnd() * 30});
- }
- // A greenkeeper mowing the rough between holes, back and forth.
- // Iteration 7: tried at up to forty spots, each run clear of trees and of
- // play all along (one try left most wooded courses without one). The
- // owner's review, iteration 10: its whole run on mown rough -- it waded
- // through native prairie on Midwest and marram on Links -- and none on a
- // landscape whose rough all grows tall (`scatter.tallGrass`).
- const mown = (x, z) => surface(x, z) === 'rough';
- for (let k = 0; k < (biomeOf(s.biome).scatter?.tallGrass ? 0 : 80); k++) {
-  const m = spot(28, 60), a = rnd() * Math.PI;
-  if (m && Array.from({length: 11}, (_, i) => i / 10).every(u => { const x = m.x + Math.sin(a) * 30 * u, z = m.z + Math.cos(a) * 30 * u; return open(x, z, 24, 4) && mown(x, z); })) { out.push({kind: 'mower', ax: m.x, az: m.z, bx: m.x + Math.sin(a) * 30, bz: m.z + Math.cos(a) * 30, side: 0, lag: 0, speed: 1.8, phase: rnd() * 30}); break; }
  }
  return out;
 }

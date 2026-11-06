@@ -16,6 +16,7 @@
 import {execSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import {holdCard} from './gpu-lock.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'), '..');
 // Git-ignored: a record for the owner, not source.
@@ -68,6 +69,9 @@ export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60,
   const wait = restMin * 60000 - (Date.now() - Date.parse(last));
   if (wait > 0) { console.log(`gate: resting ${Math.ceil(wait / 1000)} s since the last run`); sleep(wait); }
  }
+ // One graphics job at a time across processes (gpu-lock.mjs), held until
+ // this process exits; taken before the look, so the look sees no job of ours.
+ holdCard(`${goal} ${path.basename(process.argv[1] || 'job')}`);
  const started = Date.now();
  for (;;) {
   const r = look(lookSeconds), others = foreignJobs();

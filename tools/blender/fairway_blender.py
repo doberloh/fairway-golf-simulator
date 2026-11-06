@@ -243,8 +243,16 @@ def contact_sheet(models, path, figure):
     the small things invisible. Tiles in pack order, names written in."""
     import numpy as np
     tiles = []
+    # FAIRWAY_TILES (tools/blender/iterate.mjs): also keep each model's tile
+    # as <dir>/<name>.png, to be laid beside its reference pictures.
+    keep = os.environ.get('FAIRWAY_TILES')
+    if keep:
+        os.makedirs(keep, exist_ok=True)
     for name, builder in models:
         tiles.append(render_tile(name, builder, figure, path + '.tile.png'))
+        if keep:
+            import shutil
+            shutil.copyfile(path + '.tile.png', os.path.join(keep, name + '.png'))
     rows = math.ceil(len(tiles) / COLUMNS)
     sheet = np.ones((rows * TILE, COLUMNS * TILE, 4), dtype=np.float32)
     for n, px in enumerate(tiles):
@@ -271,6 +279,10 @@ def render_tile(name, builder, figure, scratch):
     x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
     y0, y1 = min(v.y for v in vs), max(v.y for v in vs)
     top = max(v.z for v in vs)
+    # A plant under half the post's height is lost beside it (the US
+    # landscapes goal's iris, 0.35 m, and lupine, 0.7 m): its post is 30 cm.
+    if top < figure / 2:
+        figure = 0.3
     size = max(x1 - x0, y1 - y0, top, figure) * 1.3
     # The figure: a post as tall as a person, for scale.
     bpy.ops.mesh.primitive_cylinder_add(radius=figure * 0.12, depth=figure,

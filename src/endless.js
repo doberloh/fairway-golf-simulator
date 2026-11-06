@@ -14,7 +14,7 @@
 import {randomSettings, DEFAULT_COURSE} from './settings-schema.js';
 import {turfConfig} from './turf.js';
 import {BIOMES} from './biomes.js';
-import {HAUNTED, markedOffSeason, standIn} from './seasons.js';
+import {currentKey} from './regions.js';
 
 function rng(seed) {
  let a = 2166136261;
@@ -58,7 +58,9 @@ export function pickShape(r) {
 export const LANDSCAPE_MARK = '~';
 export function runLandscape(runSeed) {
  const m = String(runSeed || '').match(/~([a-z]+)$/);
- return m && BIOMES[m[1]] ? m[1] : null;
+ // A run from before the landscapes' new keys names an old one.
+ const k = m && currentKey(m[1]);
+ return k && BIOMES[k] ? k : null;
 }
 export const landscapeSeed = (seed, biome) => (BIOMES[biome] ? `${seed}${LANDSCAPE_MARK}${biome}` : seed);
 
@@ -67,10 +69,6 @@ export function endlessHole(runSeed, index) {
  const shape = pickShape(r);
  const pinned = runLandscape(runSeed);
  const rolled = randomSettings(r);
- // A run started out of season (seasons.js) carries the mark in its seed, and
- // its holes never roll Haunted Hollow: a stand-in drawn from the seed instead,
- // so the same code grows the same holes whatever the date.
- if (!pinned && rolled.biome === HAUNTED && markedOffSeason(runSeed)) rolled.biome = standIn(Object.keys(BIOMES), runSeed, index);
  return {
   ...rolled,
   ...(pinned ? {biome: pinned} : {}),

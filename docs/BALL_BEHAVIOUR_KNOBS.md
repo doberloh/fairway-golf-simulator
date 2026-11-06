@@ -31,7 +31,7 @@ on the hops and roll that follow. Enforced in `physics.js`; see the
 One row per surface: green, fringe, fairway, tee, semi, rough, sand -- and,
 since the cartoon overhaul, one per ground type (rock, coral, scree,
 hardpan, waste sand, pine straw, leaves, heather, native grass), and the
-cart path on an Architect course (architect-courses: the hardest surface in
+cart path (on every generated course since 2 November 2026: the hardest surface in
 play, cor 0.235, a long run, roll 0.85). **Those rows
 are not edited here**: physics writes them from `src/grounds.js`, which holds
 every number for each type in one place -- `contact` (this table's knobs,

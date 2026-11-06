@@ -11162,3 +11162,3257 @@ All PLACED, judged by eye in the game, none from a source:
 - A links joins each fairway to one neighbour at most on an Architect
   course: a rule the owner's report asked for in spirit ("is there a way to
   fix it? I do really like it"), not a number.
+
+## Course builder: a world from a file (31 October 2026)
+
+The course builder's stage 1 (docs/COURSE_BUILDER.md): a generated course
+frozen into a built `.fairway` file (freeze.js) and played from it with no
+generator (built-world.js), measured against the course it came from with
+tools/freeze-compare.mjs. One 9-hole seed per landscape unless said.
+
+**Surfaces, every 2 m over the property, the share that is the same:**
+Midwest 99.72%, Desert 99.51%, Links 99.41%, Lakeshore 99.21%, Island 97.98%,
+PNW 97.69%, Mountain 97.11% (after the ground types got their own layer --
+below). What differs is edges: ground-type boundaries traced from a 1 m
+raster (pine straw under trees is most of PNW's and Mountain's 2-3%), the
+fairway beside water where the generator mows a semi-rough band the frozen
+corridor does not carry (0.04-0.06%), and sand at a beach's foot.
+
+**The first version collapsed every ground type into native grass**, PLACED
+for a single field channel: 47% of PNW, 76% of Desert, 44% of Autumn changed
+lie (pine straw, hardpan, leaves -- and hardpan plays like fairway). Rejected
+on that measurement. The field's second texture now holds the ground type as a
+code (ground.js's own GROUND_CODE, so groundPaint draws it) and the distance
+to its edge; a texel where two types meet takes the one it is deeper inside.
+Where two types met the boundary was a texel step (half a metre to 1 m),
+which the generator's own baked ground types also have at 1.75 m. Since
+BUILT_VERSION 3 (3 November 2026, seen on Chambers Bay skinned from the land)
+a point takes the type with the most weight among the four texels round it,
+in the shader and the lie alike, and the step is gone.
+
+**The ground, every 5 m:** median 0.1-0.4 cm, 95th percentile 0.4 cm on every
+landscape after the land grid was aligned to the ground mesh on both axes
+(the first version used one spacing for both and Mountain's 95th percentile
+was 24 cm, worst 2.27 m on a crag), 99th percentile 0.9-1.8 cm, worst 16-42 cm
+on the steepest rough. **Greens, every 0.5 m:** median 0.08-0.12 cm, worst
+0.7-1.3 cm. The land is stored at a third of the ground mesh's spacing (about
+1 m), greens, tees and bunkers again at 0.25 m (PLACED: finer than the
+generator's own 0.5 m refinement, coarser than anything a ball feels).
+
+**Bunkers get a patch too.** Without one the virtual golfer took extra
+strokes in bunkers on a frozen Midwest (hole 7: four shots in sand against
+two); a bunker's lip is sharper than 1 m holds. Every bunker now gets a 0.25 m
+patch and the rebuilt mesh refines inside sand as well as near it.
+
+**Strokes, eight virtual golfers, eighteen holes, the same pins on both:**
+Mountain 0 ± 1.0, Desert +1.4 ± 0.8, Midwest +3.1 ± 3.8 (mean of built minus
+generated, ± its standard error). No landscape differs by more than its
+error allows at two standard errors. One round is not a measurement: the
+club flights are memoised by a rounded key (swing-meter.js `fullCarry`,
+physics.js's damping table), so what was played before a round nudges a
+flight by a hair, and a round turns a hair into strokes -- the same golfer on
+the same generated course scored 85 and 74 in two runs that differed only in
+what was played first. Boulders and haunted props are not carried, and they
+were solid, so a frozen course is if anything slightly easier there.
+
+**Size and time, a 9:** files 0.7-2.7 MB (an 18: 1.6-3.4 MB); freezing 4-6 s
+(an 18: 6-9 s), most of it the 1 m raster of `surface` for the ground types
+(1.8 µs a call, measured on an 18); building the world from a file 0.6-4.7 s,
+most of it the field bake and the ground mesh.
+
+**In the game** (tools/freeze-capture.mjs, the built dist/index.html, High):
+the frozen Midwest from above differs from the generated one in 1.43% of
+pixels; at ground level from the same world poses, 13-17%, almost all of it
+the grass tufts (placed differently) and the edges of the semi-rough bands,
+and one house the frozen copy does not carry. No page error, no request.
+
+**Low, the ground shader's new branch on a Classic course** (main's build
+against the branch's, `profile.mjs --only tiers`, real GPU, redwood): Low GPU
+-0.04 ms, Medium +0.02, High -0.02, Ultra -0.74 -- all within the run-to-run
+spread. The branch costs Classic nothing measurable.
+
+**Low, a built course against its generated original** (`profile.mjs --only
+built`, real GPU, nine holes, seed PROFILE): Midwest 0.83 against 0.99 ms of
+graphics time, PNW 1.07 against 1.20, Links 0.93 against 0.96 -- no dearer,
+and a little cheaper for carrying no houses or props. The first PNW reading
+was 1.50 against 1.20: the frozen trees had lost the generated forest's
+`stand` and `under` marks, which the lower tiers thin by (vegetation.js
+`understory`); with the marks carried in the stored role, the gap went.
+
+**Shaping in real time** (the builder's editor, a frozen nine, RTX 4090): a
+brush dab -- the model's change plus the view's redraw of the ground it
+reached, a 12 m brush on 1 m land -- 3.8-4.0 ms at the median, 7.8-8.9 ms at
+worst; the frames around it stay at the display's 16.4 ms. **A shaped hill in
+the game**: 9 m over 12 m, it played 0.41 m low on its top (the game's mesh is
+3 m apart off the greens, tees and sand) until a built world refined cells
+whose middle misses the land by more than 6 cm (PLACED); then 28.06 m in both.
+Refining every cell by that rule made a frozen Mountain worse (99th
+percentile 1.1 -> 14.5 cm, worst 1.35 m), so on a taken-over course it
+applies only where the land was shaped.
+
+## Course builder: LIDAR read, on a real course (31 October 2026)
+
+The owner's test course, GreatLIFE Golf & Fitness (Worthington Country Club),
+Worthington, Minnesota: four USGS 3DEP tiles as delivered (project
+MN_MissouriRiverBigSioux_2021_B21; QL1, flown 27 April - 23 May 2022; LAS 1.4
+point format 6, LAZ; EPSG 6344, metres both ways), 45,411,335 points. Read
+with Fairway's own readers (las.js, laz-perf in Node) in 23 s; gridded at
+0.5 m over the course's own box (819 x 734 m, from its longitude-latitude
+box converted by geo.js -- the conversion reproduced the other pipeline's grid
+origin, 287860.000 E, 4833411.500 N, to the millimetre).
+
+| Against | Where the survey saw ground | Where it was filled |
+| --- | --- | --- |
+| USGS's 1 m bare-earth DEM | median 0.7 cm, 95th 2.8 cm, 99th 5.3 cm | median 2.6 cm, 95th 24 cm |
+| Another pipeline's 0.5 m DTM | median 0.4 cm, 95th 1.5 cm, 99th 2.7 cm | median 2.2 cm, 95th 24 cm |
+
+Filled cells (6.3%: under dense evergreens, roofs and the ponds) differ
+because every pipeline fills them its own way; Fairway fills from the edges
+inward. **Canopy** against the other pipeline's canopy model where either is
+over 2 m: median 28 cm at 0.5 m cells (97 cm at 1 m -- crown edges), 95th
+percentile 8.9 m (an edge one calls tree and the other ground). **Trees**: of
+its 1,984 on the property, 1,405 within 3 m of one of Fairway's 1,839 (71%;
+76% of Fairway's), height median error 0.34-0.66 m, crown 0.9 m. Two changes
+moved them: tops from every return rather than first returns only (a
+leaf-out survey's top of a crown is often a second return), and peaks sought
+on the canopy smoothed once, the height then read off the raw canopy (61% and
+71% before, at 1 m). The study's PLACED expectation from a forum -- "a 2 m grid
+captures green contours" -- is not tested here: the greens' fine break at 12.6
+points per m² is the other pipeline's README's own caveat.
+
+## Course builder: the auto trace on a real course (31 October 2026)
+
+What each surface looks like to each witness at Worthington, inside
+OpenStreetMap's outlines (medians, from `tools/real-course.mjs --diagnose`):
+the laser's brightness (0-1, the survey's own scale) greens 0.87, fairways
+0.79, tees 0.77, sand 0.69, other ground 0.70, water 0.17; roughness at a
+metre's scale greens 0.7 cm, fairways 0.7, sand 2.5, other 0.9; NAIP 2021
+(0.6 m, flown 15 and 21 August) brightness fairway 130, sand 189, water 88,
+other 139; greenness (2G-R-B over the sum) fairway 0.16, sand 0.02, water
+-0.01; NDVI fairway 0.20, sand -0.23, water -0.41. **Sand is darker to a
+1,064 nm laser than turf** -- grass reflects near-infrared strongly -- the
+opposite of the design's guess, which found no sand at all. The rules are set
+from these and stated against the course's own fairway, not as absolute
+values (docs/COURSE_BUILDER.md, stage 8, with the scores three ways on
+generated courses and on Worthington). The relaxed fill (stage 7) brought
+filled cells to a median 1.3 cm and a 95th percentile of 8 cm against USGS's
+DEM, from 2.6 and 24 cm. **Sources**: NAIP 2021 quarter-quads m_4309527_ne,
+m_4309519_se, m_4309528_nw and m_4309520_sw, from Microsoft's Planetary
+Computer (https://planetarycomputer.microsoft.com/api/stac/v1, collection
+naip; public domain; local only); OpenStreetMap's golf features through the
+Overpass API (https://overpass-api.de; ODbL; local only, as a reference); the
+club's scorecard as GolfPass lists it (par 71, blue 6,282 yards).
+
+## The auto trace from the LIDAR alone (1 November 2026)
+
+Door 2's *Auto trace* runs before any hole is marked (the owner's order), and
+with no picture it traced nothing but water: every LIDAR rule measured from
+the hole lines, and the no-hole path (`mownTurf`) read only the picture.
+tools/lidar-bench.mjs now scores the LIDAR-only trace, no hole, on the nine
+landscape courses (surveys in bench/lidar, land at 1 m, OpenStreetMap lined
+up with the laser first), and `--study` prints what each mapped surface is
+like to the laser -- the 10th/50th/90th percentiles:
+
+| Surface | Ground roughness (cm) | Slope (%) | Laser brightness / fairway's |
+| --- | --- | --- | --- |
+| Fairway | 0.2-1.1 median, to 2.1 at the 90th | 1.2-8 | 1 |
+| Green | 0.2-0.9 | 2.5-4.6 | 0.9-1.3 (no one way) |
+| Tee | 0.1-1.0 | **1.2-2.3** (the flattest ground on every course) | 0.94-1.31 |
+| Sand | **2.8-5.8** on seven courses; 0.2-0.3 at Chambers Bay and TPC Scottsdale | **9-15** | 0.5-0.98 |
+| Water | 0-1.2 | 0.3-2.5 | 0.13-0.75 |
+| Mapped rough/semi | 0.2-1.6 | 4-8 | 0.64-1.03 |
+
+So **to the laser a fairway, a green and the rough beside them differ by
+millimetres**; sand, water, tees and trees are what it can tell apart.
+Grass is BRIGHT to the laser (its leaves reflect the 1064 nm near infrared):
+on TPC Scottsdale the open ground is mostly desert floor at half the
+fairway's brightness, on Breckenridge the fairway lies at twice the open
+ground's median.
+
+| Iteration | Change | Mean overlap (green, tee, fairway, semi, sand, water) |
+| --- | --- | --- |
+| 0 | none: no yardstick without holes or a picture | 0, 0, 0, 0, 0, 13 |
+| 1 | `lidarTurf` (trace.js): open (canopy under 0.3 m, single returns, not water or roofs), under 1.6 cm rough, within 20% of the open smooth ground's median brightness, 400 m² patches -- stands in for the hole lines; tees its flattest squared pads (40-900 m², under 1.5% over 3 m); the rest fairway | 0, 1, 10, 1, 3, 13 |
+| 1b | TPC Scottsdale's and Chambers Bay's rockyweb tiles did not cover their courses (a third and all of their mapped fairway had no returns): the Entwine square fetched for both, and a course's Entwine survey now read before loose tiles | -- |
+| 2 | brightness: the open smooth ground split in two, the BRIGHTER half kept (the median band threw out 71% of TPC Scottsdale's fairway and all of Breckenridge's) | 0, 3, 17, 2, 4, 17 |
+| 3 | several returns a pulse only count where something stands above the ground (Chambers Bay's fescue sent several on 44% of its fairway); the turf split in two by smoothness over 2 m, the smoother fairway, the other semi | 0, 3, 19, 5, 5, 17 |
+| 4 | sand with no hole: over 2 cm rough and 6% slope, no brighter than the turf, within 30 m of it (the old rule's absolute darkness, iF - 0.05, meant nothing on Breckenridge's 0-0.1 brightness scale) | 0, 3, 19, 5, 9, 17 |
+| 5 | water: a dark patch whose surface is level within 15 cm (10th to 90th percentile) over 200 m² is a pond, silent or not (Key West's ponds returned points of no class); and a topobathymetric survey's water classes (41, 42, 45) counted as water (land.js) | 0, 3, 19, 5, 9, **21** |
+| 6 | GREENS ARE BUILT UP: mapped greens stand 13-55 cm over the mean ground 25 m round (median) on seven of eight courses, fairways 1-19 cm under it (Chambers Bay's greens are laid into the dunes); turf over 15 cm above the ground 15 m round, compact 150-1,500 m² patches | 4, 3, 19, 5, 9, 21 |
+| 7 | a green's top is gentle (under 6% over 3 m) and round (over 55% of its box), to 2,500 m² -- hillsides had joined the greens' patches past 1,500 m² | 7, 3, 19, 5, 9, 21 |
+| 8 | the patches greens fall in are 75-100% green but irregular (40-55% of their box, 100-600 m²): over 35%, from 80 m², then grown 3 m over the turf (a green's edge stands lower than its middle) | **13**, 3, 19, 5, 9, 21 |
+| 9 | TEES stand higher still (20-61 cm, median) and flatter: a raised pad over 20 cm and under 3% is a tee as well as the flattest | 12, **5**, 19, 5, 9, 21 |
+| 10 (study, not built) | why fairway stays at 19: the LIDAR's fairway finds 41-95% of the mapped fairway (recall) but only 7-59% of what it calls fairway is mapped fairway -- the rest is mown rough, mapped as semi or not mapped at all, 3-10 times the fairway's area on open courses. Tried as a separator: distance from the turf's edge (a fairway runs down the corridor's middle) -- mapped fairway lies a median 8-21 m in, the overcalled 6-15 m, the spreads overlapping; a cut there loses more fairway than it saves. Not built | -- |
+
+By course at iteration 9: Sahalee green 17, fairway 46, sand 31, water 69;
+TPC Scottsdale green 9, tee 18, semi 22, water 56; Breckenridge fairway 31;
+Worthington green 28, tee 11, fairway 19, water 18; Key West green 16,
+fairway 18, sand 16, water 25; Ekwanok green 13, fairway 26, sand 13;
+Arcadia Bluffs fairway 17, semi 17; Chambers Bay green 7, fairway 7 (its
+fescue is as rough as its rough); Northwood maps no fairway. **To the
+laser a green is its fairway in every measure but one -- it is built up**
+(iteration 6), which is how the LIDAR alone finds greens at all; the
+picture finds them at 30-66%. Checked not to
+move the trace with holes: tools/trace-bench.mjs's nine synthetic
+courses scored the same before and after (lidar green 56, tee 75, fairway
+19, sand 33, water 79), and Worthington's scripted build's traces matched.
+**Where the LIDAR alone stops** (iteration 10): a mowing line is a few
+centimetres of grass, under the survey's noise, and the course's shape does
+not stand in for it; the fairway's edge needs a picture, the map or the
+player. Far from 90%: the LIDAR alone is a start the player corrects, and
+OpenStreetMap lined up by the LIDAR (*OpenStreetMap is itself off the
+place*) stays the recommended path. All numbers set here are PLACED.
+
+**Found on the way: a built course's cups on the wrong green** (BUILT_VERSION
+2). Door 2 and the editor store all of a course's greens as one set of
+outlines; the game took that set as each hole's green -- its size the area
+of all eighteen, its cup cut wherever the search reached. Worthington's
+scripted build cut hole 3's cup on the practice putting green 50 m off,
+in a survey pit, and the test golfers putted at it forty times: 168 strokes
+against par 71. With each outer ring a green of its own (built-world.js
+`greenParts`): 88.5 strokes, nothing stuck.
+
+## The editor's close-up sheet (1 November 2026)
+
+The owner found the 3D editor's edges "extremely blurry" against door 2's
+plan. Measured with `tools/builder-look.mjs` on the owner's Worthington file
+(1114 x 1154 m, the editing grid 0.5 m, 2228 x 2308 cells): the editor's one
+picture of the whole course held 3403 x 3527 texels -- 1.53 texels a cell,
+**0.33 m a texel** -- capped by the 12-million-texel budget (view.js
+`SMOOTH_TEXELS`, PLACED, unchanged since it was set on 31 October). Photographed from 12 m
+and 40 m above hole 1's green, the green's and bunker's edges were soft
+staircases a third of a metre a step. Door 2's plan draws the same outlines
+as vectors at the screen's pixels, hence the difference.
+
+The fix draws the outlines a second time into a 2048-texel square round
+where the camera looks (view.js `closeUp`; every number PLACED): the side
+twice the camera's distance from what it looks at, within 30 to 300 m, so
+**1.5 to 14.6 cm a texel**; faded into the whole picture over the square's
+last twentieth; redrawn 150 ms after the camera stops, once it has moved a
+quarter of the square or zoomed by half. Redraw times on that file, with the
+card idle: 0.9 ms (30 m square, from 8 m up), 5 ms (93 m, from 40 m), 35 ms
+(300 m, from 150 m and 400 m). With an 800 m cap it took **270 ms** at 800 m,
+for 39 cm texels -- coarser than the whole picture's 33 cm -- so the cap is
+300 m. The time is the outlines traced over the square (editing.js
+`outlines`), which grows with its area. Cost on the card: 2048 x 2048 x 4
+bytes = 16.8 MB, about 22 MB with mipmaps, and one more texture read per
+ground pixel; nothing was measured on Low or a weak machine, since the
+editor is not the game.
+
+Rejected: the whole picture at four texels a cell (9112 x 9232, 84 million
+texels, about 336 MB) and the outlines as meshes laid on the ground (every
+edge would have to follow the land, and be rebuilt under every brush).
+
+The same day the owner sent a low view of a green with its edge doubled.
+Measured first: the land has no step there (across hole 1's green on the
+owner's file, never more than 1 cm a quarter metre). The cause was the whole
+picture's mapping: the ground's texture coordinate was a share of 2 x the
+editor's half-width, while the grid is a whole number of 0.5 m cells
+(2228 for 1114.3 m) and the picture a whole number of texels (3403 for 2228
+x 1.53) -- so the picture's edges sat up to half a metre off the close-up's,
+which is exact. Mapped texel for texel now. The square was also moved: it is
+centred halfway between the ground below the camera and what the camera
+looks at, its side 2.2 times the camera's distance, because centred on the
+target the near ground sat in the fade.
+
+## Outlines without notches (1 November 2026)
+
+Every surface's outline in a door 2 course, in door 2's smooth view and in
+the 3D editor is `layerRings` (real-course.js): the cells traced (contour.js
+`maskRings`, a staircase at 45 degrees through edge midpoints), the staircase
+removed, the corners rounded. Until this day it simplified the staircase
+(Douglas-Peucker at 0.6 of a cell) then cut corners twice; the owner found
+notches "all over" in the editor -- a stair corner the simplifying kept,
+rounded into a small dent. Now the traced ring is relaxed first (each point
+to 1/4, 1/2, 1/4 of itself and its neighbours, eight passes), simplified at
+a tenth of a cell and cut once. All PLACED.
+
+Measured with shapes rasterised at 0.5 m and traced (a local script, the
+worst distance from the true edge, the worst notch -- a turn one way then
+straight back -- and the points kept):
+
+| Shape | Before: off, notch, points | After (8 passes) |
+| --- | --- | --- |
+| circle, 12 m radius | 0.288 m, 18.4 deg, 116 | 0.158 m, 0.0 deg, 86 |
+| ellipse, 30 x 9 m | 0.251 m, 31.0 deg, 148 | 0.147 m, 4.5 deg, 122 |
+| band 6 m wide at 17 deg | 0.117 m, 10.6 deg, 344 | 0.067 m, 2.0 deg, 196 |
+
+Four and six passes were tried: four left the ellipse a 6.6-degree notch,
+six 5.4; eight was the smallest notch on every shape without moving the
+edge more. Relaxing pulls a curve inward by about passes/2 x spacing squared
+over its radius -- under a centimetre on a 12 m circle at half a metre.
+Nothing the game reads changed: a saved file keeps its outlines, so
+`BUILT_VERSION` stays; a course made or saved again from now has the smoother
+ones. Both landscape fingerprints were unchanged.
+
+## OpenStreetMap's holes on the ground (1 November 2026)
+
+Building every course in bench/lidar (tools/build-courses.mjs; COURSE_BUILDER
+amendment 17) showed door 2's holes from OpenStreetMap could sit off the
+course. The causes and the fixes (src/builder/osm-course.js):
+
+- **Refining moved the map, not its holes.** `refineTrace` lines the map up
+  with the LIDAR by a whole shift (lineUp, to 6 m); measured shifts: Chambers
+  Bay 1.0, 0.5 m; Breckenridge 2.0, 1.0; Worthington 3.0, -1.5; Northwood
+  -4.5, -6.5; the rest none (the gain under 10%). The holes and boundary now
+  move by the same shift.
+- **Two courses at one club** each number holes 1-18 (TPC Scottsdale's
+  Stadium and Champions, Sahalee's three nines, Breckenridge's Bear, Beaver
+  and Elk, Ekwanok beside the Equinox's course). Read together, the later
+  line overwrote the earlier. A hole now belongs to the leisure=golf_course
+  holding most of its line's points; the course with most holes is offered
+  first.
+- **One tee a hole**: a hole line starts at one tee. Tee boxes whose middle
+  lies within 25 m of the line, no farther along it than 60%, and no more
+  than 40 m behind its start (150 m for a guessed tee; 15 m off the line
+  there) are the hole's, farthest first; and none that makes a hole longer
+  than its par allows (par 3 250 yd, 4 500, 5 640). PLACED, all. Sahalee's
+  2nd took a box 150 m back (665 yards) until the 40 m limit for drawn
+  lines.
+- **The par was thrown away** (door 2 kept tees, aims, green): kept now.
+
+**Numbered greens, no hole lines** (Worthington: 18 numbered greens, one hole
+line, 25 tee boxes for 18 holes). Each green needs a tee; scored against the
+card (golfpass, as read 31 October 2026), holes within 10% of the card's back
+yards:
+
+| Choosing the tee | Within 10% |
+| --- | --- |
+| first come, nearest the green before | not scored; by eye 7 holes clearly wrong (hole 2 227 yd for 173, 18 581 for 390) |
+| best pairing over all holes, walk + mown share past 230 m | 6 |
+| + the share under trees (LIDAR canopy over 4 m), mown share for all | 6 |
+| + back tees found 150 m behind | 7 |
+| + the hole's fairway: a tee near its far end (25 m past) | 8 |
+| the same, 70 m past the fairway's end | 9 |
+| + the scorecard's yards | 11 |
+
+The first-come rule was dropped for the holes it got badly wrong. The pairing is the Hungarian method over (holes x tee boxes plus one
+made tee per hole at its fairway's end). The 70 m is placed from Worthington
+alone: its fairway ends lay 55 to 110 m short of the card's tees. What it
+cannot find is a tee the map never drew -- Worthington's 2, 3, 6, 8, 9, 10,
+14 -- and a dogleg measured straight. A map with hole lines needs none of
+it.
+
+**Lining up, checked against a card**: TPC Scottsdale's Stadium Course, from
+its hole lines: 15th 551 yd (the card 553), 16th 161 (163), 17th 329 (332),
+18th 443 (442); 7,251 yd par 71 against 7,261 par 71. **The card's numbers
+are from memory, not fetched** (the Stadium Course's widely published back
+tees); to be checked against tpc.com's scorecard.
+
+## Greens a putt can hold (1 November 2026)
+
+Measured on the built files (a local script: the slope over half a metre at
+every point 3 m or more inside a green, within 15 m of the hole's green
+mark): Arcadia Bluffs' 2nd green up to 17% and 56% of it over 4%, TPC
+Scottsdale's 3rd 10% at the mark itself, Chambers Bay's greens 19-46% over
+4%. A green on a real course is rarely over 3-4% where a cup can be cut; the
+survey's ground, averaged over 2.5 m, kept ridges a stride long. Arcadia's
+test round: 167 strokes against par 72, the golfers stuck on the 2nd green
+(40 and 45 strokes on the 2nd and 3rd). Greens are now averaged over 5 m,
+eased into the ground round them over 3 m outside (docFromLand, PLACED):
+Arcadia 87 strokes, no hole over 7. The tilt stays -- the 2nd still reads
+5% at the mark and 15% at its steepest inside, 60% over 4% -- so these are
+still steep greens, as Arcadia's are; what went is the bump. Tees and
+fairways are as before (2.5 m and 1.5 m).
+
+## Every course in bench/lidar, built (1 November 2026)
+
+Built by tools/build-courses.mjs from each folder's survey (Druids Glen's fetched from 3DEP's Entwine copy; its property is over 2.25 km², so its land is at 1 m) and OpenStreetMap refined with the LIDAR; test rounds replayed with the test round as it is now (two virtual golfers, white tees). "Map shift" is how far refining moved the map; "greens on" counts green marks on a traced green after fitting; "tee boxes" all tees given to holes. Par is the map's where it tags it, else worked out (Battle Creek's map tags none: 70 here, 73 on its card -- from memory). Breckenridge is its Bear nine (the Beaver and Elk nines are not fully numbered in the map), Northwood its nine. The courses are not committed (bench/courses/, other people's data).
+
+| Course | Landscape | Holes, par, yards (back) | Map shift | Greens on / tee boxes | Test round | Stuck |
+| --- | --- | --- | --- | --- | --- | --- |
+| Arcadia Bluffs | lakeshore | 18, par 72, 7,237 yd | 0.0, 0.0 m | 18 of 18 / 49 | 87.0 / 72 | none |
+| Battle Creek Golf Course | pnw | 18, par 70, 6,313 yd | 0.0, 0.0 m | 18 of 18 / 48 | 94.5 / 70 | none |
+| Breckenridge Golf Club | mountain | 9, par 36, 3,668 yd | 2.0, 1.0 m | 9 of 9 / 32 | 46.5 / 36 | none |
+| Chambers Bay | links | 18, par 72, 7,455 yd | 1.0, 0.5 m | 18 of 18 / 48 | 88.5 / 72 | none |
+| Druids Glen Golf Course | pnw | 18, par 72, 6,947 yd | 0.0, 0.0 m | 18 of 18 / 64 | 86.5 / 72 | none |
+| Ekwanok Country Club | autumn | 18, par 70, 6,553 yd | 0.0, 0.0 m | 18 of 18 / 71 | 101.0 / 70 | none |
+| Key West Golf Club | island | 18, par 70, 6,242 yd | 0.0, 0.0 m | 18 of 18 / 49 | 97.5 / 70 | none (the 5th, a pond short-left of the green, 21.5 strokes) |
+| Nile Shrine Golf Course | pnw | 18, par 67, 4,769 yd | 0.0, 0.0 m | 18 of 18 / 19 | 77.0 / 67 | none |
+| Northwood Golf Club | redwood | 9, par 35, 2,802 yd | -4.5, -6.5 m | 9 of 9 / 12 | 52.5 / 35 | none |
+| Sahalee Country Club | pnw | 18, par 72, 6,877 yd | 0.0, 0.0 m | 18 of 18 / 60 | 87.0 / 72 | none |
+| Salish Cliffs Golf Club | pnw | 18, par 72, 6,998 yd | 0.0, 0.0 m | 18 of 18 / 67 | 89.0 / 72 | none |
+| Snohomish Golf Course | pnw | 18, par 72, 6,276 yd | 0.0, 0.0 m | 18 of 18 / 36 | 76.5 / 72 | none |
+| TPC Scottsdale (Stadium) | desert | 18, par 71, 7,251 yd | 0.0, 0.0 m | 18 of 18 / 62 | 79.0 / 71 | none |
+| Worthington Country Club | midwest | 18, par 72, 6,318 yd | 3.0, -1.5 m | 18 of 18 / 25 | 91.5 / 72 | none |
+
+## A built course's yards, and the builder's card (1 November 2026)
+
+The owner found an imported course's yards "off". Measured on the
+Worthington file door 2 made (tools: a script reading the file, the game's
+world from it, and the builder's line): the game's blue yards equal the
+length of the builder's line, tee through bends to green, to within 1 yard
+on all 18 holes (5,899 against 5,889 in all; the game steps the line a metre
+at a time). Nothing is lost in the import. Three things make it look off:
+**the white tees** -- every player starts on white (main.js), and white is
+the builder's middle tee where a hole has two (the tees by distance:
+farthest blue, the next white and red; with three, one each), so hole 1
+reads 287 yards to a player and 337 from the back; **holes marked straight**
+measure straight, where the club's card measures round its doglegs (22 yards
+short at the median, 84 at worst, on Worthington's clicked holes); and
+**par was worked from the straight line** from the back tee to the green
+(real-course.js) -- now from the yards along the line, as the game measures
+them. The game's measure is one routine now, built-world.js `builtLine`,
+which the builder's scorecard and its par read too; the refactor left every
+yard on five built courses exactly as it was (compared before and after).
+An aim point no farther down the hole than the one before, or within a
+metre of the green, is skipped by the game (the line must keep running
+forward); the builder names the holes where that happens.
+
+**Clearing trees from tees and greens** (tree-clear.js): a crown is drawn in
+to stop 1.5 m short of the nearest green or tee cell's edge (PLACED: the
+collar and a little air) and a tree with under 1.2 m of crown left (PLACED:
+less reads as a pole), or standing on the turf, is taken out; the height is
+kept. Not measured on a real course yet.
+
+## Whose trees, when OpenStreetMap is laid on the LIDAR (1 November 2026)
+
+The owner built Nile Shrine (Mountlake Terrace, WA) in the builder and lost
+the survey's trees when OpenStreetMap was fetched. The cause: door 2 kept the
+LIDAR's trees only where the map had no tree or wood of its own, so one
+mapped tree dropped every surveyed one. Measured on the owner's own four
+rockyweb tiles (USGS WA_KingCounty_2021_B21, EPSG 6597, 78.5 million
+points), a 1.7 km land at 0.5 m: **10,846 trees from the LIDAR**; the map
+has 86 single trees and 19 woods, which door 2 scatters into **5,114**.
+Before the fix the course kept the map's 5,114 and none of the survey's.
+Now the default (osm.js `mergeTrees`, 'merge') keeps all 10,846 and adds the
+map's where no LIDAR tree stands within 6 m -- **13,208** (2,362 of the
+map's, mostly the woods' scatter in gaps of the canopy); 'lidar' keeps the
+10,846, 'osm' the 5,114. **6 m is PLACED**: about one crown across, so a
+mapped tree beside a surveyed one is taken as the same tree. Not measured: how
+many of the 2,362 stand where trees really are (the map's woods are drawn
+loosely, and a wood felled since the map was drawn would be planted again --
+the choice of 'lidar' is there for that).
+
+Outside OpenStreetMap's course boundary at Nile Shrine, the map puts 967 of
+its 978 houses and some roads and ponds: Fill outside with **Remove what is
+there** took 34,101 surfaced cells (0.85 ha) and the 967 houses off;
+**Keep what is there** left all of them and floored only the bare ground.
+
+## Finding LIDAR from the builder (1 November 2026)
+
+The owner asked for LIDAR searched for and downloaded inside the builder
+(docs/COURSE_BUILDER.md, amendments 13-14), from "all known sources", rockyweb
+included, and every state's own survey. A page opened from a file can read
+another site only if that site answers with `Access-Control-Allow-Origin`;
+each source was asked from `Origin: null` on 1 November 2026:
+
+| Source | Search | The points | Readable by the page |
+| --- | --- | --- | --- |
+| USGS 3DEP: the National Map's product API (https://tnmaccess.nationalmap.gov/api/v1/products) | yes, `*` | its LAZ tiles are on rockyweb.usgs.gov | search yes; **tiles no** |
+| rockyweb.usgs.gov | -- | 3DEP's LAZ tiles | **no**: no allow-origin on GET; OPTIONS answered 405; 429 to a rush |
+| prd-tnm.s3.amazonaws.com | -- | the projects' metadata and a `.vpc` (STAC virtual point cloud, September 2026) whose tiles are `./LAZ/...` -- not in the bucket (404) | `*`, but no tiles |
+| USGS 3DEP Entwine copy, Amazon open data (https://s3-us-west-2.amazonaws.com/usgs-lidar-public/<work unit>/ept.json) | by work unit, the folder after the project in a rockyweb address | every 3DEP survey, Web Mercator (EPSG 3857), an octree of small LAZ files | **yes**, `*` |
+| Hobu's Entwine index (https://raw.githubusercontent.com/hobuinc/usgs-lidar/master/boundaries/resources.geojson, 8.8 MB, 2,283 copies) | by place | which Entwine copies cover a point: their names are not always the work unit's (Breckenridge's 2016 survey is `USGS_LPC_CO_Central_Western_2016_LAS_2018`), and some newest surveys have none yet (Vermont's third statewide block) | yes, `*` |
+| Planetary Computer `3dep-lidar-copc` (STAC) | yes, `*` | COPC copies; at Worthington only the 2010 survey came back | yes (not used: Entwine has the newest) |
+| IGN LiDAR HD: WFS `IGNF_LIDAR-HD_METADONNEE:metadata` on data.geopf.fr | yes, `*` | `url_npl`: one COPC tile a km, Lambert-93 | **yes**, `*` |
+| swisstopo swissSURFACE3D STAC (data.geo.admin.ch) | yes, `*` | zipped LAS (about 125 MB a km), LV95 -- the LAS states NO grid in its header; the catalogue and the name say EPSG 2056 | **yes**, `*` (downloaded since later that night: a square in Bern, 11.5 million points, placed and built) |
+| AHN, PDOK atom feed | `*` | tiles of gigabytes | linked |
+
+The test courses' surveys came the Entwine way too (tools/lidar-fetch.mjs, each course's box and 150 m, cached under bench/lidar/<course>/ept/): Key West, Northwood, Breckenridge, Ekwanok and Arcadia Bluffs in minutes, 72-309 MB each, where rockyweb's three Sahalee tiles had taken four hours.
+
+**So rockyweb is reached two ways that need no reading by the page.** The
+browser DOWNLOADS from it like any site (a download is not a cross-origin
+read), and the builder reads the files from the player's LIDAR folder
+(`showDirectoryPicker`, Chrome and Edge; below); and **Fairway's bridge**, a
+program rather than a page, fetches it and hands the bytes on (`/lidar`,
+bridge/server.mjs, USGS's two hosts only, local pages only): a range request
+through a test bridge returned rockyweb's `LASF` header with the page's
+allow-origin. The downloads are spaced 4 s apart (PLACED: rockyweb answered
+429 to a burst) and the builder waits up to an hour for them (PLACED).
+
+**The Entwine path was measured on Worthington** (tools/lidar-search.mjs): a
+400 m square searched, its 91 octree pieces downloaded (3.29 million points,
+16.6 MB, 12 s), carried from Web Mercator to UTM 15N point by point, and the
+land built at 1 m against the owner's own four tiles of the same survey
+(MN_MORiverBigSioux_2021_B21): ground differing by 0.0 cm at the median, 0.1
+cm at the 95th percentile and 20 cm at the worst, over 220,873 cells -- the
+same survey, read correctly. Web Mercator's metres are 1/cos(latitude)
+ground metres (1.38 at Worthington), which is why the points are carried to
+UTM before the land is built and never gridded in 3857.
+
+**Every state's own portal** (the owner: "Washington has one, i bet other
+states do too"). Wikipedia's *National Lidar Dataset (United States)* table
+of state programmes was the starting list, many of its links dead; each
+state's current address was found by search and checked to answer on 1
+November 2026: 36 states (lidar-search.js `STATE_PORTALS`). Moved since the
+table: Illinois (the ISGS Clearinghouse root), Minnesota (mn.gov/mngeo),
+Vermont (the VCGI lidar program page), Montana (State Library elevation;
+point clouds by request), Tennessee (TNMap), Texas (TxGIO DataHub). Dropped:
+Mississippi's MARIS did not answer. Massachusetts' page refuses scripts (403)
+but is the state's own; MassGIS sends point clouds through NOAA's Digital
+Coast Data Access Viewer, added as a US coastal source. None of the state
+portals answers a page, so each is a link; most deliver State Plane in US
+feet, which the builder now places itself (below). Each state's box is loose
+(its extent rounded out), so a place near a border may list a neighbour.
+
+**Washington's portal, looked into for a direct download** (1 November 2026;
+the owner: "can we link directly to the downloads or does the user really
+need to do manual work?"). lidarportal.dnr.wa.gov's own script (js/lidar.js)
+shows its whole flow: `POST /query` with the box as GeoJSON answers the
+datasets over it (project, dataset name, files, bytes -- at Nile Shrine 34,
+among them North Puget 2017's Point Cloud, 2 files, 283 MB), and the
+download is one address, `download?geojson=<box>&ids=<dataset ids>`, a ZIP
+made to order (`custom_download.zip`). Neither can be used by the builder's
+page: `/query` sends no Access-Control-Allow-Origin, and the download
+answers 403 from the portal's load balancer unless the request carries the
+`dlgate` cookie the portal's page sets (HttpOnly, two hours). Checked in a
+browser that had opened the portal: the download link gave the ZIP's first
+bytes (`PK`) at once; the same request with cookies left out: 403. A
+script's request (curl) was refused 403 even with the cookie, and was not
+pushed further. What the builder does: the portal's address takes a place
+(`#lat:lon:zoom`), so its link opens on the course, and the ZIP it gives is
+read from the LIDAR folder (door 2 unpacks ZIPs). A possible next step, not
+built: the bridge asking `/query` for the page (a program needs no
+allow-origin), so door 2 could list Washington's datasets and give the
+download link itself, the browser fetching it with the portal's pass. The
+other 35 portals were not checked for an address that takes a place.
+
+**The LIDAR folder** (the owner, the same day: downloads must "go somewhere
+local always"). Until then a square downloaded in the page lived only in the
+page; a draft keeps the land built, not the LIDAR. Now every download is
+written to one folder the player picks once (lidar-folder.js; the browser
+keeps its handle in IndexedDB and asks leave again on a later visit), and a
+download already there by the same name is read instead: a USGS square as a
+ZIP of its Entwine pieces, stored as they came (LAZ) with the square in
+`fairway-ept.json`, named for the survey, its middle and its size; IGN's and
+swisstopo's tiles under their own names. A ZIP rather than one LAS of the
+points carried to UTM: the pieces are LAZ already, and the same points as
+plain LAS (point format 0, 20 bytes a point) are four times the size --
+the Worthington square's 3.29 million points are 16.6 MB as pieces, 66 MB as
+LAS. Tested against a fake folder (tests/lidar-folder.test.mjs: downloaded
+once, read back with no request) and in the page with a stand-in folder (the
+builder-lidar-folder journey). Where the browser has no folder picker
+(Firefox, Safari), each download is saved as a browser download instead.
+
+Overpass, asked from a Node script for Nile Shrine, answered 406 to Node's
+own User-Agent, and answered (after one busy 502) a request whose User-Agent names the script; a browser
+(the builder) is not affected. The script names itself.
+
+**State Plane, worked from the file.** The owner's Washington surveys are
+NAD83(HARN) / Washington South in US survey feet (EPSG 2927), and the builder
+worked only UTM and degrees, so they could not be placed. geo.js
+`projectionOf` now works Lambert conformal conic (one or two parallels) and
+transverse Mercator from a file's WKT -- parameters, ellipsoid and linear
+unit -- after Snyder (USGS Professional Paper 1395, pp. 61-64, 104-110).
+Checked against IOGP Guidance Note 7-2's worked examples: NAD27 / Texas South
+Central (28.5 N, 96 W -> 2963503.91, 254759.80 US ft) and the British National
+Grid (50.5 N, 0.5 E -> 577274.99, 69740.50 m), both within 2 cm. The owner's
+three Washington surveys came out at Battle Creek (Tulalip), Salish Cliffs
+(Kamilche) and Snohomish golf courses. Datums are taken as one (NAD83 against
+WGS84 is about a metre). The Swiss grid (LV95 and LV03) by swisstopo's own
+*Approximate formulas for the transformation between Swiss projection
+coordinates and WGS84* -- to about a metre, checked against their worked
+example (46 2 38.87 N, 8 43 49.79 E = E 2,700,000, N 1,100,000) within 2 m;
+enough for lining up, which is all placing is for. Not worked: polar
+stereographic, Albers -- a file in one lines up by matched points.
+
+Sources: [National Map product API](https://tnmaccess.nationalmap.gov/api/v1/docs);
+[USGS 3DEP on AWS (Entwine)](https://registry.opendata.aws/usgs-lidar/);
+[Entwine Point Tile format](https://entwine.io/en/latest/entwine-point-tile.html);
+[Planetary Computer 3DEP COPC](https://planetarycomputer.microsoft.com/dataset/3dep-lidar-copc);
+[IGN LiDAR HD](https://geoservices.ign.fr/lidarhd);
+[swisstopo swissSURFACE3D](https://www.swisstopo.admin.ch/en/height-model-swisssurface3d);
+[National Lidar Dataset (United States), Wikipedia](https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States));
+[IOGP Guidance Note 7-2](https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/);
+Snyder, *Map Projections -- A Working Manual*, USGS PP 1395 (1987).
+
+## Free aerial imagery for the builder (31 October 2026)
+
+The owner asked for free imagery beside Google's. What a golf course needs:
+about 0.5 m a pixel or finer (a green is 25-40 m across, a bunker 5-15 m), so
+the free satellite sets -- Sentinel-2 at 10 m, Landsat at 30 m -- are far too
+coarse. The free sources fine enough are national aerial photography, served
+as Web Mercator tiles. Each was tried with one tile (31 October 2026, no key):
+
+| Source | Covers | Finest | Licence | Credit asked | Tried |
+| --- | --- | --- | --- | --- | --- |
+| USGS The National Map, USGSImageryOnly (NAIP underneath) | the United States | zoom 16 cached (about 1.7 m a pixel at 44° N; the service stops at 1:9,028) | US government work; the service asks for attribution | "USDA, USGS The National Map: Orthoimagery" | 200 at zoom 16, 404 at 17 |
+| IGN France, Géoplateforme WMTS, ORTHOIMAGERY.ORTHOPHOTOS | France | about 0.2 m | Licence Ouverte (Etalab) 2.0 since 1 January 2021 -- CC-BY-like | IGN | 200 at zoom 17 |
+| PDOK, Beeldmateriaal Nederland, Actueel_orthoHR | the Netherlands | 7.5-8 cm | CC BY 4.0 | Beeldmateriaal.nl / PDOK | 200 at zoom 17 |
+| IGN España, PNOA máxima actualidad WMTS | Spain | 0.25-0.5 m | CC BY 4.0 | "PNOA cedido por © Instituto Geográfico Nacional" | 200 at zoom 17 |
+| swisstopo, SWISSIMAGE WMTS | Switzerland | 10 cm (25 cm in the Alps) | free for every use, commercial too, since 1 March 2021; the source named | swisstopo | 200 at zoom 17 |
+
+**Read and not used**: Esri World Imagery -- free to trace only for editing
+OpenStreetMap, other uses under Esri's terms (OSM wiki's summary of Esri's
+grant). USGS's NAIP image service (imagery.nationalmap.gov,
+USGSNAIPImagery/ImageServer, 0.6 m, `exportImage`) answers its description but
+timed out on an export twice -- the full-resolution US source if it holds up;
+not built yet. Microsoft's Planetary Computer serves NAIP as whole 400 MB
+tiles (what the trace was tuned on), too big for a page to fetch. Google
+(Maps Platform terms 3.2.3) and Bing need a key and limit tracing; the owner
+asked for them, and they are offered with that said.
+
+**Sources**: https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer
+(its JSON: 24 levels listed, maxScale 9,027.98, the credit above);
+https://www.usgs.gov/faqs/what-are-base-map-services-or-urls-used-national-map;
+https://ignf.github.io/geopf-extensions-openlayers/jsdoc/ol.source.GeoportalWMTS.html
+(layer and endpoint); https://next.ink/brief-article/les-donnees-publiques-de-lign-libres-et-gratuites-des-le-1er-janvier-2021/
+and https://wiki.openstreetmap.org/wiki/FR:Sources_de_donn%C3%A9es_potentielles/France
+(BD ORTHO under Licence Ouverte 2.0 from 1 January 2021);
+https://data.overheid.nl/dataset/77581-luchtfoto-beeldmateriaal-2026-5cm---8cm-rgb-open-data
+(the PDOK WMTS, CC BY 4.0); https://www.idee.es/csw-codsi-idee/srv/api/records/spaignwmts_pnoa-ma
+(PNOA WMTS, CC BY 4.0) and https://wiki.openstreetmap.org/wiki/PNOA (the
+credit wording); https://shop.swisstopo.admin.ch/en/free-geodata and
+https://www.swisstopo.admin.ch/en/terms-and-conditions (free since 1 March
+2021, the source the one condition); https://wiki.openstreetmap.org/wiki/Esri
+(Esri's tracing grant). The licences were read in summaries and OSM's wiki
+pages, not each provider's full legal text: worth the owner's own read
+before a release names them.
+
+**Getting a Google or Bing key (1 November 2026).** The owner asked for
+clearer steps. Google's Map Tiles API setup page: enable the API in a Cloud
+project (service `tile.googleapis.com`), create an API key under
+Credentials, restrict it; a session (`createSession`, mapType satellite)
+then a tile address with the key and the session. Maps Platform needs a
+billing account on the project. The builder's steps add two of its own: the
+Geocoding API for the place search, and **an API restriction rather than a
+website one** -- a page opened from a file sends no website address, so a
+key restricted by website would refuse it (reasoned from how browsers treat
+file pages, not tested with a key). Bing: Microsoft's notice and its Learn
+coverage page -- free and Basic Bing Maps for Enterprise accounts ended 30
+June 2025, Enterprise accounts run to 30 June 2028, and new users are sent
+to Azure Maps; a community thread had a reseller still issuing Enterprise
+keys (not Microsoft). So the builder tells a player that Bing gives no new
+keys and an existing one still works. Azure Maps' imagery is not offered
+(not built). **Sources**:
+https://developers.google.com/maps/documentation/tile/get-api-key?setupProd=enable,
+https://developers.google.com/maps/documentation/tile/overview,
+https://blogs.bing.com/maps/?p=25433, https://learn.microsoft.com/en-us/bingmaps/coverage,
+https://community.blackbaud.com/discussion/comment/291318 (the reseller).
+
+**Outside the course boundary (1 November 2026), all PLACED.** A wood of 150
+trees a hectare where the landscape drops needles or leaves (its `fallen`:
+Pacific Northwest, Mountain, Midwest, Giant Redwood, Autumn, Lakeshore),
+15 on a links, a desert or an island, 80 elsewhere -- by eye against the
+generated courses' edges, not measured; thinning linearly from none at the
+line to full 15 m out, so the course is not walled in. The ground laid
+outside: what falls under its trees, else its desert floor (hardpan), else
+its native grass or heather, else rough. **Houses**: a house zone spaces them
+42 m apart, the generator's own spacing (homes.js); sizes 16-25 x 13-19 m as
+the generator draws; OpenStreetMap buildings taken as houses only between 40
+and 1,500 m² (a shed and a warehouse are not houses); a footprint clamped to
+6-40 m a side in the file; each faces the nearest fairway, green or tee found
+along 32 bearings every 3 m out to 150 m. All PLACED.
+
+## The auto trace from the picture, iteration by iteration (31 October - 1 November 2026)
+
+The owner's amended goal (docs/COURSE_BUILDER.md, *The amended goal*): door 2
+traces before any hole is marked, so the auto trace must find the course's
+surfaces in the picture alone; iterate on it (up to fifty times, then up to
+fifty on the LIDAR), on real courses matching Fairway's landscapes, with no
+jagged or pock-marked edges. Measured by `tools/imagery-bench.mjs` on the
+courses `tools/imagery-fetch.mjs` fetched -- NAIP 2023 (0.3-0.6 m, red,
+green, blue, near-infrared), OpenStreetMap's golf features as the reference,
+the land flat with no LIDAR: Sahalee (Pacific Northwest, an October picture
+with long tree shadows), TPC Scottsdale Stadium (Desert), Breckenridge's Bear
+nine (Mountain); the rest join as their downloads finish. Overlap is
+intersection over union with OpenStreetMap's outlines, per cent; specks and
+pocks are patches and holes under 10 m² in what the course is made of;
+ragged is a surface's edge length against the same surface smoothed over
+1.5 m (1.00 smooth). Means over the courses:
+
+| # | What changed | Green | Tee | Fairway | Semi | Sand | Water | Specks/pocks | Ragged (fairway, sand) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | the trace as it stood, no holes marked | 0 | 0 | 0 | -- | 0 | 15 | 0/3 | -- |
+| 1 | mown turf found in the picture: green, bright, smooth at a metre, in patches; it stands in for the hole lines | 0 | 0 | 10 | -- | 18 | 10 | 0/230 | 1.16, 1.26 |
+| 2 | turf at the middle texture, enclosed gaps filled; rough pocks under 30 m² filled; dark still water; rectangles refused as sand (roofs); first greens | 0 | 0 | 11 | -- | 22 | 8 | 0/0 | 1.07, 1.19 |
+| 3 | texture as spread over brightness (shadows); near-infrared must agree on dark water; turf split in two (fairway, semi) | 8 | 0 | 10 | -- | 24 | 9 | 4/8 | 1.08, 1.21 |
+| 4 | plant ground by an absolute bar (NDVI 0.15) -- Sahalee's greens were not "plant" against its trees; water with algae (darker and less green than the fairway); semi scored against OSM's rough | 11 | 0 | 16 | 20 | 32 | 24 | 61/42 | 1.10, 1.18 |
+| 5 | greens by contrast with their surroundings over 21 m (failed: a green is that wide); sand must be warm (failed, dropped); specks raised to 10 m² | 0 | 0 | 16 | 20 | 29 | 24 | 0/0 | 1.08, 1.19 |
+| 5b-c | surroundings over 41 m; either cue | 12 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.10, 1.18 |
+| 6 | greens LIGHTER, LESS GREEN and SMOOTHER than the turf within 20 m, each in its own spread; the top 7% | 15 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.09, 1.18 |
+| 7 | candidates opened 2.5 m apart; tees as small squared pads (more real greens kept, more false ones: fell) | 7 | 1 | 16 | 20 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 8 | only as many greens as the turf has room for (1 per 2 ha), the strongest (fell: the strongest were bare ground and paths) | 4 | 0 | 16 | 20 | 32 | 24 | 0/0 | 1.10, 1.18 |
+| 9 | a green must be a plant (NDVI over 0.15) | 10 | 1 | 16 | 20 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 10 | the REFERENCE fixed: OSM's rough was painted last and hid nearly every green TPC maps; larger surfaces now go down first | 20 | 1 | 18 | 17 | 32 | 24 | 0/0 | 1.11, 1.18 |
+| 11 | layers in (the trace and the editor); Northwood (Giant Redwood) joins: four courses | 15 | 1 | 14 | 13 | 26 | 18 | 0/0 | 1.10, 1.20 |
+| 12 | a green's surroundings are the TURF within 20 m (trees left out: every redwood-lined edge was "lighter"); water from the picture wider than a shadow (3.5 m) | 18 | 0 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 13 | shaded sand with near-infrared only 10 brighter than the fairway (fell, 26 to 24: not kept); cart paths refused by their length (neutral, kept) | 18 | 0 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 14 | green patches ranked by how round as well as how strong; candidates the top 10% | 22 | 1 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 15 | a green per 1.5 ha of turf (was 2) | 23 | 1 | 14 | 13 | 26 | 28 | 0/0 | 1.09, 1.20 |
+| 16 | the fairway split by texture alone: shaded fairway no longer semi (Sahalee 21 to 30); TPC's green rough now fairway (semi 52 to 13) | 23 | 1 | 17 | 3 | 26 | 28 | 0/0 | 1.06, 1.20 |
+| 17-18 | brightness at half weight; shade judged by texture alone -- each kept 16's cost and lost its gain; Chambers Bay (Links) joins: five courses | 20 | 1 | 11-14 | 3-11 | 20 | 22 | 0/0 | 1.07-1.11, 1.20 |
+| 19 | back to 16's split, kept | 20 | 1 | 16 | 3 | 20 | 22 | 0/0 | 1.07, 1.20 |
+| 20 | sand's NDVI bar a share of the fairway's (Chambers Bay's fescue fairways read 0.20, so "0.25 below" asked for less than nothing); patches to 6,000 m² for waste areas (fell elsewhere: not kept) | 20 | 1 | 16 | 3 | 24 | 22 | 0/0 | 1.07, 1.21 |
+
+| 21 | tees as small squared mown islands (no change: measured, most tees lie INSIDE the found turf, joined to the grass round them -- 42-94% kept as turf, 0-3% islands; left to the player's tee markers and the pads made under them) | 20 | 1 | 16 | 3 | 24 | 22 | 0/0 | 1.07, 1.21 |
+| 22 | Arcadia Bluffs (Lakeshore Dunes) joins untuned: green 40, tee 14, sand 27, water 77 there | 23 | 3 | 18 | 6 | 24 | 32 | 0/0 | 1.08, 1.21 |
+| 23 | a green's smoothness counted twice (Chambers Bay's greens differ from its fairways in texture alone) | 25 | 3 | 17 | 6 | 24 | 32 | 0/0 | 1.09, 1.21 |
+| 24 | a green's smoothness over 1.5 m (neutral, kept) | 25 | 4 | 17 | 6 | 24 | 32 | 0/0 | 1.09, 1.21 |
+| 25 | turf split in THREE by texture: fairway, semi, the coarsest left rough | 25 | 4 | 21 | 11 | 24 | 32 | 0/0 | 1.06, 1.21 |
+| 26 | the REFERENCE: OSM's lateral water hazards counted as water | 25 | 4 | 21 | 11 | 24 | 42 | 0/0 | 1.06, 1.21 |
+| 27 | sand 30 brighter than the turf within 20 m, for bunkers in shade (fell 24 to 23: not kept) | 25 | 4 | 21 | 11 | 23 | 42 | 0/0 | 1.06, 1.23 |
+| 28 | FAIRWAYS AS SIMPLE SHAPES (the owner: "real fairways are one continuous shape"): pieces joined over 8 m, holes to 2,000 m² filled, spurs cut over 4 m, the outline rounded over 5 m, whole fairways only (2,000 m²); Ekwanok (Autumn) joins: seven courses | 22 | 3 | 28 | 8 | 27 | 44 | 0/0 | 1.04, 1.19 |
+
+**The target since 1 November** (the owner): no limit on iterations, until
+the trace matches OpenStreetMap at 90% across the landscapes. From here the
+bench reports, beside the overlap, how much of what OSM maps is found and how
+much of what is drawn is mapped (eight courses; Worthington, on 2023's 0.3 m
+NAIP, joins).
+
+| # | What changed | Green | Fairway | Sand | Water | Found (green, fairway, sand, water) | Right (same) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 28 | (as above, eight courses) | 23 | 31 | 28 | 42 | 25, 64, 45, 70 | 70, 44, 41, 74 |
+| 29 | a green per hectare of turf | 26 | 31 | 28 | 42 | 28, 63, 45, 70 | 70, 44, 41, 74 |
+| 30 | each green found GROWN to its edge while colour and smoothness hold (22 m at most) | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 62, 44, 41, 74 |
+| 31 | grown greens rounded (closed 2 m, majority 2.5 m: the growing frayed them, 1.31 ragged to 1.01) | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
+| 32-34 | for Ekwanok's pale greens (NDVI 0.07 against its fairways' 0.16, June 2023): the plant bar from the fairway's own greenness, greens to 40 m from turf, a green with no turf near measured against everything near -- fell to 24, Ekwanok 3: not kept | 24-26 | 31 | 28 | 42 | | |
+| 35 | back to 31 | 29 | 30 | 28 | 42 | 34, 63, 45, 70 | 61, 44, 41, 74 |
+| 36 | THE COURSE TEACHES ITSELF: the rules' surest cells (each surface shrunk from its edges) are examples; a naive-Bayes classifier on twelve measures a cell (brightness, greenness, colour balance, texture at two scales, standing out from the turf round it, distance from turf) labels every cell near the course; shape rules clean it; it may only add. Greens and water gained; its fairways and sand were drawn too wide (30% and 25% right) | 30 | 24 | 19 | 42 | 41, 75, 48, 71 | 50, 30, 25, 72 |
+| 37 | the learnt greens and water kept, its fairways and sand dropped | 30 | 30 | 28 | 42 | 41, 62, 45, 71 | 50, 44, 41, 72 |
+| 38 | fairway spurs cut over 6 m (was 4): no gain, not kept | 30 | 29 | 28 | 42 | 41, 59, 45, 71 | 49, 44, 41, 72 |
+
+| 39 | where too few greens are found (under 6, or 40% of the room for them), a second, looser look on that course alone -- the loosening 32-34 tried everywhere | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
+| 40 | the learnt sand where a looser rule agrees (found 45 to 49, right 41 to 26): not kept | 32 | 30 | 20 | 42 | | |
+| 41 | the learnt water dropped (no gain on the real courses; over a picture of plain dark and light squares it called every dark square a pond) | 32 | 30 | 28 | 42 | 47, 62, 45, 71 | 50, 44, 41, 72 |
+| 52 | the YARDSTICK lined up with the picture first (OpenStreetMap lay 1-2.5 m off on seven of nine; *OpenStreetMap is itself off the place*, below) -- the auto trace unchanged | 31 | 31 | 35 | 38 | 48, 65, 52, 60 | 48, 44, 47, 64 |
+
+**OpenStreetMap first** (the owner, 1 November 2026): the builder can start
+from OpenStreetMap's own outlines and refine them (`refineTrace`). Measured
+by `imagery-bench.mjs --refine` on three courses with the map damaged (every
+outline 4 m east, every other green and bunker left out), the refinement
+lining the map up first (the shift that puts fairways, greens and tees on the
+smoothest ground and the 2-6 m round them on coarser) and then moving only
+fairway, semi, sand and water edges within 3 m. Start -> refined:
+Breckenridge tee 31 -> 60, fairway 79 -> 80, water 90 -> 93 (lined up by -4,
+-2 m; the truth -4, 0); Ekwanok green 37 -> 61, sand 19 -> 45, fairway 82 ->
+85 (by -6, +2); Worthington worse, tee 53 -> 37, sand 19 -> 2 (by +0.5, -3.5:
+the line-up misjudged). The first version, with no lining up and 8 m of edge
+relabelled, lost tees and greens everywhere (green 37 -> 22, tee 45 -> 9).
+Then, iterations on the refinement itself (each on the damaged maps):
+lined up by SMOOTH-AND-GREEN inside against coarse outside (45: wrong on two
+of four), then by EDGES -- the shift that puts the map's outlines on the
+strongest change in brightness and greenness (46) -- searched to 6 m, not 10
+(47: at 10, Breckenridge's mapped outlines jumped 9.5 m onto its two
+unmapped nines), moved only when clearly better (a tenth); only fairway,
+semi and rough edges move, greens, tees, paths, sand and water keeping their
+lined-up shapes (48); only fairway and semi rounded (49), the fairway's shape
+covering no bunker; and neither sand (50) nor ponds (51) added where the map
+has none -- each added more false than real. On all nine courses, damaged
+start -> refined: greens up everywhere (Key West 25 -> 65, Ekwanok 37 -> 69,
+Chambers Bay 32 -> 43); tees up 19-50 points where the map was moved (Key
+West 57 -> 94); sand up 10-22 points where moved (Arcadia 27 -> 48); water
+to 89-97 where moved; fairway up on six, down on TPC (85 -> 79) and
+Worthington (77 -> 75); semi down on three. The line-up found 8 of 9 shifts
+within 1.5 m of the truth (-4, 0) and left Worthington's unmoved.
+
+**OpenStreetMap is itself off the place, and Worthington showed it (1
+November 2026).** Asked to shore up "OpenStreetMap then fit to LIDAR", the
+refinement was run on Worthington's own survey (`real-course.mjs --refine`):
+the line-up found no shift there from the LIDAR either. A study of which
+edges find a 4 m shift showed why: the map MOVED 4 m east lay on the
+ground's edges better than the map as drawn. OpenStreetMap's own Worthington
+lies about 3 m west and 1.5 m north of where the LIDAR's ground (3.0, -1.5 m)
+and the aerial picture (3.0, -1.0 m) both put its bunkers and ponds -- two
+independent sources agreeing within half a metre. So the yardstick charged
+every trace with the map's own error. Of the nine picture courses, seven
+lie 1-2.5 m off their pictures (Worthington 2.5 east, Northwood 2.0,
+Breckenridge, TPC and Chambers Bay 1.5, Sahalee and Arcadia 1.0; Key West and Ekwanok none found).
+
+What changed (iteration 52): **the line-up uses the FIRM outlines** --
+bunkers, water, greens, tees -- when the map has 200 sampled cells of them:
+on Worthington the fairways' best shift wandered to 8 m in any direction
+while the bunkers' and ponds' agreed in the LIDAR and in the picture.
+**From the LIDAR it reads slope and the laser's brightness** (a bunker's lip
+and a green's fall are breaks of slope): with the bunker-and-pond outlines,
+slope with brightness gained 47% over where the map lay, roughness with
+brightness (the first choice) 28%, the picture's brightness and greenness
+51%. One routine, `lineUp` (trace.js), serves the refinement and the
+benches. **The yardstick is lined up first** (osm-holes.mjs `lineUpTruth`;
+imagery-bench's `--raw` keeps the old scoring): the trace is scored
+against OpenStreetMap moved onto the picture (or the LIDAR) by that same
+routine. Iterations 0-51 were scored against the map as it lay.
+
+Then (iteration 53) **the map's fairway and semi-rough are kept as drawn**
+(`refineTrace`'s `mown`, now false by default): moving their edges by the
+learnt classifier took Worthington's fairway from 89 to 78 and the semi of
+Sahalee 53 -> 12, Chambers Bay 78 -> 45 and Northwood 84 -> 63; a mowing line
+is what a mapper draws best and the picture and the laser show least.
+
+**Damaged map -> refined, with both**, nine courses from the picture
+(imagery-bench --refine; the map moved 4 m east, half its greens and
+bunkers left out; against the map lined up): the line-up found every shift
+within half a metre (-3.5 to -4.5 m); fairway 96-100, semi 94-100, tee
+85-100, water 94-100, greens 48-74 (from 25-54), sand 35-62 (from 12-29) --
+greens and sand short because half were removed and only greens are added
+back. **Worthington from its LIDAR** (real-course.mjs --refine), moved 4 m
+east (which happened to land it near the truth, OpenStreetMap being 3 m
+west) and moved 4 m west and 3 m north (8 m off): both come back to the same
+place -- fairway, tee and water 100, greens 62 (40 or 21 at the start),
+sand 59 (34 or 5); from the picture the same but greens 58. With the
+fairway edges still moved, fairway 78.
+
+**The same edges shown to the player (1 November 2026).** Door 2's
+*Viewing* can draw the LIDAR as its slope, so a player dragging the picture
+into line sees the edges `lineUp` reads. The slope is the one
+`features(land)` computes (the ground averaged over a metre, its fall over
+two cells), drawn dark at flat and white at **25%**, PLACED: a bunker's lip
+and a tee's bank run 30-100% and saturate, a green's fall (2-4%) stays near
+the floor, so the lines are the firm edges and not the greens' tilt. Not
+measured against a player's eye; the owner's play is the check.
+
+At 37, by course: Worthington green 66, fairway 51; Arcadia Bluffs green 49;
+Breckenridge water 71, sand 41, fairway 42; Ekwanok fairway 67 (greens
+still 0); Sahalee green 30; Chambers Bay green 25. **Where the 90% stands**:
+greens 30, fairways 30, sand 28, water 42 -- far short. What limits it, as
+measured: greens are now found at 41% and right at 50%; fairways are found at
+62% but right at 44%, much of the shortfall being OpenStreetMap's own (TPC
+Scottsdale's mapped fairways are a sliver of its mown grass: 12% of a
+fairway drawn there is mapped; Ekwanok's, mapped with care, 90%).
+
+By course at 35: Worthington green 50, fairway 51; Arcadia Bluffs green
+42, fairway 38, water 77; Breckenridge green 43, fairway 42, sand 41, water
+65; Ekwanok fairway 71, sand 45 (greens 0: pale and not found); TPC
+Scottsdale sand 45, water 59; Sahalee water 53; Chambers Bay everything
+under 10 (one pale sweep of fescue and sand).
+
+**Found and right** (iteration 27, before the shaping): sand found 8-72% of
+the mapped, 4-80% of what it drew mapped; greens found 0-57%, but 59-98% of
+what was drawn a mapped green (the greens drawn are right, too few are
+drawn); fairways found 40-89% at most courses, 5-47% of what was drawn
+mapped -- the drawn fairway ran over into rough, which the shaping of
+iteration 28 trims.
+
+By course at iteration 20: Breckenridge green 48, fairway 27, sand 41;
+TPC Scottsdale green 16, sand 45, water 59; Sahalee green 19, fairway 30,
+sand 22, water 54; Chambers Bay green 7, fairway 12, sand 8 (its dunes and
+waste areas are one pale sweep the rules cannot yet cut into bunkers);
+Northwood green 8 (OSM maps no fairway there to score).
+
+By course at iteration 10: Breckenridge green 30, fairway 24, sand 40; TPC
+Scottsdale green 15, semi 52, sand 36, water 59; Sahalee green 15, fairway
+22, sand 22, water 14. **What each surface looks like** (medians inside
+OSM's outlines; brightness 0-255, NDVI, texture as spread over brightness):
+Sahalee greens 152 / 0.28 / 0.026, fairways 68 / 0.41 / 0.029 (shadowed),
+water 43 / -0.21; TPC greens 110 / 0.31 / 0.025, fairways 103 / 0.33 /
+0.029, its rough 102 / 0.32 / 0.034 (fairway and rough alike to the camera),
+water 73 / 0.05 (algae); Breckenridge greens 133 / 0.24 / 0.028, fairways
+113 / 0.33 / 0.039. **The reference's limits**: OSM maps what a mapper drew --
+TPC's 9 fairways inside 60 ha of "rough", Breckenridge's picture holding two
+more nines OSM does not map at all -- so overlap understates a trace that
+draws those right; the pictures in bench/shots/imagery/<course>/trace.png
+(local) are looked at with each iteration. Every number in the rules is
+PLACED (trace.js, *mownTurf* and the markless greens).
+
+## Architect removed; its world on every course (2 November 2026)
+
+The owner's decision, the US landscapes goal (PLAN.md 1b, local): "Architect
+mode needs to be removed. We are going to use the new builder and have real
+humans do the work here instead"; tournament week and the people go; cart
+paths and bridges, markings, walls, landmarks and wildlife stay, and "ensure
+paths going over water turn into bridges". No outside source was read for
+this step; the numbers below are the build's.
+
+**What moved.** The clubhouse, paths and bridges, markings and divots, the
+land's story, built water and the animals now run on every generated course
+but the driving range (GENERATOR_VERSION 55: every landscape's fingerprint
+moved, because houses and trees keep off the new pieces). The bench (full
+tier, every landscape, 9 and 18 holes) found 26 bridges and no path point
+over water off a bridge (`paths.pathOverWater`, a new invariant, zero).
+The game's page shrank 1.28 MB to 13,562,273 bytes (DISTRIBUTION_REVIEW).
+
+**Rejected:** keeping Architect's per-course amounts as settings. The
+story's amount, the clubhouse's size and the wear's density each had a
+dial (Heritage, Club, Age); with the dials gone each takes one value rather
+than becoming three new studio sliders, which the owner did not ask for.
+
+**PLACED, each a judgement to revisit with the landscapes' rebuild:**
+
+- **The story's amount** is Architect's *A little* (story.js `AMOUNT.some`)
+  on every course: walls, a farm, ruins and a landmark where the landscape
+  has them, without *A lot*'s second landmark.
+- **The clubhouse is a members' club's size** (clubhouse.js `CLUBHOUSE_SIZE.members`), falling back to a municipal
+  footprint on steep land as before.
+- **Wear at the Mature density** (`placeWear` k = 1): 3-5 divots a tee, 14
+  on a par 3's, 9 in each landing zone.
+- **Edge and fountain per landscape** (biomes.js `WORLD`, which had them by
+  style): rip-rap on Desert, Mountain, Island, Redwood and the generic kit;
+  a natural bank on PNW, Links, Midwest, Autumn and Lakeshore Dunes;
+  fountains allowed on Island, Redwood and the generic kit.
+- **A path end may climb 28% to join** (paths.js `JOIN_GRADE`, against the
+  route's 22% `MAX_GRADE`): Classic's rougher ground left ends a metre or two
+  short of a join over a steeper lip. The steeper grade applies to the join's few metres only.
+- **The clubhouse keeps 10 m off the paths** (course.js, was 3 m): at 3 m the
+  network ran across its lawn on Classic's tighter land.
+- **The clubhouse's link** stops at the first path it crosses, drops a stub
+  under 12 m past that junction, extends a loose end within 8 m only over
+  walkable ground, and falls back to a straight line only when it is 40 m or
+  less and walkable (Mountain W-3 drew a 150 m straight line down a slope).
+
+**What a subtle bug looked like.** On Mountain W-3 the clubhouse's link
+crossed a creek on foot: bridges were found when the network was routed, and
+the link is laid later. `findBridges` now runs again after it; the bridges
+it finds late had no deck height (the deck box sat at zero and a ball fell
+through it) until `setDecks` gave them one.
+
+## The landscapes' keys, the map and the globe (2 November 2026)
+
+The US landscapes goal's foundations (PLAN.md section 1-3, local; sources in
+REFERENCES). What was decided and measured:
+
+**The keys.** Seven landscapes took the keys the owner approved
+(data/names.json in the study): pnw puget, desert sonoran, mountain rockies,
+midwest heartland, island keys, autumn newengland, lakeshore lakedunes.
+Ground moved for those seven (generator 56: the key seeds the world pieces'
+streams and the course name); Links and Redwood Coast kept their keys and
+their fingerprints. The old keys are read everywhere one is stored
+(PROJECT_HANDOFF *A LANDSCAPE'S KEY IS FOREVER*).
+
+**Rejected:** keeping the old keys and changing only the names players see.
+It would have kept every save without a migration, but left keys that no
+longer say where a landscape is (`island` for the Keys, `autumn` for New
+England once autumn is a season everywhere), forever, and the owner asked
+for the heavy-handed version while there are no players.
+
+**Regions, then landscapes.** The nine landscapes' records became their
+regions' records unchanged (rendering and ground identical but for the key),
+so a new landscape in a region starts from its region's look and states
+only what differs.
+
+**The map.** The study's partition (EPA level III ecoregions grouped into
+39 landscapes, 1.09 MB) is shipped simplified: Douglas-Peucker at 0.45
+pixels of a 960 x 500 picture, pieces under 0.15 square pixels dropped
+(PLACED: invisible at the size the map is drawn), 21,421 points, 215 KB of
+module with the globe. Alaska and Hawaii were boxes in the partition and are
+Natural Earth's outlines. A place outside every shape takes the nearest
+within 6 pixels, about 50 km (PLACED: the Keys' islands are thinner than the
+simplified outline keeps; Key West lies 4-6 px from the nearest shape). The
+check: 15 reference courses find their own landscape; 37 of the 39
+landscapes' own places fall in their own shape -- Heartland's (the median of
+its courses, east to Michigan and west to Iowa, lands on Lake Michigan's
+shore: Lake Dunes) and North Woods' (on the Twin Cities' edge: Heartland)
+do not; a median is not a centre, and only the globe's dot uses it.
+
+**Each landscape's place** (`where`, the globe's dot) is the median of the
+study's reference courses for it that the map agrees with (PLACED: a
+polygon's centre put Puget Sound on the Oregon coast and the Lowcountry in
+Florida); Alaska is Anchorage, Hawaii Maui, Scottish Links St Andrews.
+
+**The globe** is orthographic, turned to 0.8 of the place's latitude
+(PLACED: keeps the polar cap out of view and the continent whole), Natural
+Earth's land at 0.9 degrees, cut at the horizon. Pressing hidden land to the
+rim was tried first and rejected: Hawaii's globe came out all land.
+
+**Seasons** are meteorological -- spring March-May, summer June-August,
+autumn September-November, winter December-February (PLACED: what weather
+services report, and simpler than the equinoxes) -- flipped south of the
+equator; the Keys and Hawaii have one look the year round. Until the
+seasons are drawn (the goal's step 9) every season resolves to summer.
+
+**Door 2's suggestion** is the map's landscape at the land's centre, taken
+unasked when the land is built unless the player has chosen one; the real
+Worthington survey (Minnesota) suggested Heartland.
+## The Pacific pack: fifteen rounds against the pictures (2 November 2026)
+
+The first pack of the US landscapes goal (BLENDER_ASSETS *The US landscapes
+packs*): Puget Sound's and Redwood Coast's ten missing models. Every round
+put the models beside three of the study's reference pictures for each
+(local photos, picked by eye on 2 November); each model's log is
+tools/blender/logs/<id>.md. What the rounds taught, beyond each model:
+
+- **A crown is clumps, not a cloud, for the open trees.** Madrone and Garry
+  oak both started as one cloud crown and read as lollipops; clumps on
+  the limb ends read as the real trees once the clumps were big enough to
+  join (madrone round 5) and a raised centre domed the top (round 10). A
+  broad flattened layer "joining" the clumps made a table top for six
+  rounds before it was found and removed.
+- **Look in every season.** Spring (rounds 7, 11, 15), autumn (8, 13) and
+  winter (14) sheets caught what summer hides: the madrone's berries were
+  missing, and the season colours from the study's specs (bigleaf maple's
+  yellow, vine maple's and dogwood's reds, Oregon grape's red-purple
+  winter) all read true without change.
+- **Count the triangles, then measure in the game.** By round 11 four
+  models were two to six times their budget (the dogwood 18,665 faces).
+  The causes were library defaults -- `subdiv=2` is the costly sphere,
+  every clump carries a 320-face core -- and the cost pass (round 12) cut
+  them 2-6 times, after which two shapes needed restoring (rounds 13-14).
+  But Blender counts faces, mostly quads: in triangles the pack was still
+  double (the madrone 9,800 beside the region's 3,400-triangle pine).
+
+**The A/B in the game** (tools/frame-ab.mjs, Puget Sound, the step 2 build
+against this one, alternating, two rounds of 150 frames at three tees; the
+card an RTX 4090, so the numbers are headroom, not a weak machine's):
+
+| | Low frame | Medium frame | Draws (Low) | Triangles (Low) |
+| --- | --- | --- | --- | --- |
+| First cut (two variants, shrubs in the understorey) | +24% (0.81 to 1.00 ms) | +11.5% | 163-185 to 229-253 | +24-28% |
+| One variant of the four less common trees | +16% | -- | +44 | +28% |
+| Vine maple and Oregon grape out of the stands' understorey | +12% | -- | +44 | +18% |
+| Second cost pass (round 18: trees 4,100-4,700 triangles, shrubs 1,000-2,800; the two-stem madrone) | +2.3% (0.87 to 0.89 ms) | +0.3% | +18-28% | +10% |
+
+**Accepted** at the last row: the frame is within the runs' noise on Low and
+Medium. **Rejected:** keeping the understorey shrubs (they replace sub-1,000
+triangle ferns by the thousand) and shipping two variants of every tree (each
+variant is a draw a part, full and far, in the frame and the shadow pass).
+**Still open:** the draws, about 45 more on a Puget Sound tee, cost little on
+this card and more on a weak processor; the landscapes to come carry about as
+many species each, so the next packs ship one variant of their less common
+trees from the start. (Reversed the same day: the owner amended the goal to
+ship every variant and pay the frame cost in one pass at the end.)
+
+**Budgets** (PLACED, measured off the overhaul's packs with inspect.mjs):
+a tree about 4,500-5,500 triangles, a shrub 2,000-3,500, a flower a few
+hundred. **Planting** (PLACED, biomes.js): Puget Sound bigleaf maple .08,
+madrone .06 (0.7 of the region's 12-27 m), Garry oak .05 (0.75), dogwood
+.03 (0.5), vine maple .03, Oregon grape .02, Scotch broom .02, and vine
+maple and Oregon grape in the stands' understorey; Redwood Coast bay laurel
+.04 (0.2 of the grove's 42-116 m, as it then was; *The Redwood Coast, grounded*), rhododendron .03, iris .02. Shrub
+heights within the specs (course.js `BRUSH_SIZE`). Until the seasons are
+drawn the game paints them in summer, with the broom and rhododendron in
+their June flower and Oregon grape's berries (PLACED).
+
+**Size:** as first cut the model module grew 1.55 MB (22 models with the
+far twins); as shipped, after the cost passes and one variant of the less
+common trees, 0.70 MB (7.05 to 7.75 MB; 10 models, 4 far twins), the page
+13.80 to 14.50 MB (7.11 to 7.47 MB gzipped). At that rate the 40 models of
+step 3 add about 3 MB and all 210 about 15 MB, inside the plan's 15-25 MB
+estimate.
+
+## The mountain pack, and the world pieces found again (2 November 2026)
+
+The second pack of the US landscapes goal: the Rockies' six missing models
+(BLENDER_ASSETS *cartoon_mountain*), fifteen rounds each against the
+study's local pictures, logged in tools/blender/logs/<id>.md. Budgets were
+counted in triangles from round 1, after the Pacific pack's lesson, so no
+cost pass was needed: lodgepole 970-1,100, blue spruce 2,050, willow
+thicket 3,390, columbine 1,130, lupine 1,075, the fence panel 108. What
+the rounds taught:
+
+- **A lodgepole is its pole.** A narrow crown on the top third read as a
+  toy tree on a stick (round 2); the crown down the upper 40-50%, and dead
+  stubs up the bare lower pole, read as the pictures' dense stands.
+- **A flower model is the flower held above the leaves.** Columbine and
+  lupine both began as a solid mound under flat discs; broken leaf clumps,
+  short stems and florets standing proud of the spike read at a few
+  hundred triangles a part. A cost pass that smoothed lupine's florets into
+  cones lost it, and was undone.
+- **The split-rail fence is one straight panel, laid turned.** Every other
+  2 m section turns 30 degrees (0.52 rad) each way about the wall's line;
+  centred panels so turned meet at their ends, which is the zig-zag
+  (renderer.js addStory). A zig-zag built into the model could not follow
+  a wall's run. Its solid box is 1.3 m wide (story.js `WALL_WIDTH`, PLACED:
+  the zig-zag's reach), 1.1 m high.
+
+**Planting** (PLACED, biomes.js TRAITS.mountain): the stands spruce .4,
+lodgepole .3, pine .15, aspen .15; the open spruce .3, lodgepole .18 (1.1
+of the region's 12-27 m: the specs' 15-30), blue spruce .05 (0.9), pine
+.12, aspen .18, sagebrush .07, willow thicket .04, lupine .03, columbine
+.03. Two lodgepole variants ship (the common tree), one of the rest.
+
+**The A/B** (tools/frame-ab.mjs, the Rockies, step 3a's build against
+this one, two rounds of 150 frames at three tees, RTX 4090 headroom): Low
+frame by mean 0.86 to 0.88 ms (+1.8%; mean of spots +5.5%, p95 -3.9%),
+Medium 1.59 to 1.51 ms (-5.0%); draws +17-25%, triangles -3%. Accepted:
+within the runs' noise. The B build also has generator 59's world pieces
+(below), so the Rockies' fences, ruins and animals are in that figure.
+
+**The world pieces found again (generator 59).** Since generator 56 the
+story, the animals, the clubhouse's build and the path surface were looked
+up in tables made from biomes.js `WORLD`, which is keyed by region, by the
+landscape's key: only Links and Redwood Coast, whose keys are their
+regions', matched. The other seven drew no walls, ruins, farmstead or
+animals, the generic clubhouse and gravel paths -- found when a capture
+aimed at the Rockies' longest wall found none. The tests had passed
+because they made the same lookup (`STORY_SET[biome] || {}` expects
+nothing). Now through `worldOf(key)`. **Walls keep off bare rock and
+ground steeper than 30%** (story.js `WALL_GRADE`, PLACED: a 2 m section
+sits at the lower of its ends, so its high end is 0.6 m into such a
+slope): the first fence seen ran up a Rockies cliff with half its panels
+sunk. On seed `overhaul` the Rockies keep one 11 m fence; Links' walls
+moved too.
+
+**Size:** the model module 7.75 to 7.99 MB, the page 14.50 to 14.75 MB
+(7.47 to 7.59 MB gzipped) for six models, three far twins.
+
+## The dry-and-lake pack, and the landmarks back (2 November 2026)
+
+Jojoba (the Sonoran) and sand cherry (Lake Dunes), seventeen rounds each,
+and a Great Lakes pier light for Lake Dunes' landmark (BLENDER_ASSETS
+*cartoon_drylake*). The first pack worked by an agent, two at a time with
+the main thread wiring and testing (tools/gpu-lock.mjs queues their
+renders). What the rounds taught: a shrub's shape is where its leaf
+flakes sit (on an ellipsoid the jojoba stood on a narrow foot, a ball on
+legs; on a mound profile widest a third of the way up it was the
+pictures' mound); accent blossoms placed at a leaf's centre vanish inside
+it, 7 cm aside they read; eight-triangle blossoms let the sand cherry
+carry twice as many for less. **The ironwood was held out of the game** until
+its silhouette pass (generator 61): it read as tidy bonsai clumps on trunks, the owner's "big green fluffy balls"
+(BLENDER_ASSETS *Silhouette first*), and goes to the silhouette pass. Its
+spec's spring colour (#8a96a8) drew a blue-grey conifer, not a tree in
+lavender bloom; the pack uses #a49aa6 leaf and #c8a8d8 bloom, judged on
+the pictures (a departure from the spec, PLACED).
+
+**Planting** (PLACED, biomes.js): the Sonoran's open ground jojoba .05,
+taken from creosote (.14 to .11) and brittlebush (.08 to .06); Lake Dunes
+sand cherry .05. Heights within the specs (course.js `BRUSH_SIZE`): jojoba
+1.2-1.8 m, sand cherry 0.4-0.9.
+
+**The landmarks were lost for a day.** A landmark (story.js) was placed only
+when the story was "lots"; since Architect went (generator 55) it is fixed
+at "some", so from then no course had its lighthouse or church spire --
+which PLAYING.md still promised and the owner had asked to keep. Generator
+60 places one wherever the landscape names one, and tests/story.test.mjs
+now fails a landscape without its landmark. **The pier light is drawn 24 m**
+(PLACED within the spec's 15-30; the model is 17 m): at 17 it stood among
+Lake Dunes' 20 m trees and, seen from 120 m short of the green, showed as a
+red sliver. **A lane is kept clear of trees** from 30 m past the green to
+the landmark (circles of 12 m radius every 15 m, PLACED) and a clearing of
+the landmark's width plus 10 m round it: the placement already checked the
+land for a sight line, not the woods.
+
+**The A/B** (Lake Dunes, Low, step 3b's build against this one): graphics
+time unchanged (0.97/0.60/0.88 ms to 0.97/0.59/0.87 at the three tees),
+draws unchanged, triangles 1-2% fewer. The processor's time rose on two
+tees (1.1 to 1.6 ms, 0.8 to 1.1) while two agents' sheet layouts ran on
+the processor beside it, so the frame by mean (+29%) is not this change's;
+not measured again on a quiet machine. **Size:** the page 14.75 to 14.88 MB
+(7.59 to 7.66 MB gzipped).
+
+## The Heartland and New England packs, and planting past one (2 November 2026)
+
+Twelve models (BLENDER_ASSETS *cartoon_heartland and cartoon_newengland*),
+modelled by two agents beside each other; the owner's "big green fluffy
+balls" note reached the Heartland's at round 15 and its three trees were
+rebuilt in rounds 16-23. What the rounds taught: **the silhouette is where
+the parts sit** -- the elm became a vase only once its limbs bent steeply
+from the fork and then flared, the bur oak only with small clumps on level
+limbs and gaps between; **flat ragged stars, not lumps, make shelves** (the
+white pine's tiers read as bonsai pads until each shelf was a flat star);
+**a broad crown stops being separate balls** when its lobes overlap closer
+than their size and their normals bend to the crown's centre (the beech);
+**a birch's stems start apart at the root**, or they fuse into one fat
+trunk.
+
+**Planting** (PLACED, biomes.js): the Heartland's stands bur oak .26 (0.9 of
+the region's 12-27 m), oak .26, maple .18, elm .12, shagbark .1, aspen .08;
+its open ground adds prairie flowers .06. New England's stands maple .3,
+white pine .17 (1.2), oak .15, beech .12 (0.9), birch .1 (0.7), balsam fir
+.08 (0.7), aspen and spruce .04. The red barn's corn: up to twelve 5 by
+6.4 m patches in four columns and three rows behind it, each only on open,
+out-of-play ground within 1.2 m of level (PLACED).
+
+**Planting past one.** The open scatter picks a species by walking the
+weights cumulatively, so a list summing past 1 never plants what lies past
+it: Redwood Coast's Douglas iris (since 57), Lake Dunes' sand cherry (60)
+and the Sonoran's ironwood were never planted, and jojoba only 52 times in
+about 10,000 plants. Every list sums to 1 now and tests/landscapes-complete
+fails one that does not; the Sonoran's jojoba is in its stands' understorey
+(791 on seed ST-1) and ironwood among its stands (351).
+
+**Leaf fall spared only spruce**, so New England's white pines and firs came
+out orange; vegetation.js `EVERGREEN` now names every conifer, and
+`FALL_HUE` gives birch and aspen yellow, beech bronze, maple red.
+
+**The A/B** (step 3c's build against this one, Low, RTX 4090): New England
++1.3% by mean frame; the Heartland +22% (0.86 to 1.04 ms; graphics +3-5%,
+draws 229 to 255 at its first tee, triangles +8-13%). Cut to four tree
+species the Heartland measured 30% faster than before, but the owner
+amended the goal the same evening -- costs are accepted and recorded, every
+model is used, and a performance pass comes at the end (TODO, *Performance
+pass*) -- so the six species stand. **Size:** the page 14.88 to 15.91 MB
+(7.66 to 8.18 MB gzipped), with the Pacific trees' silhouette rework and
+the ironwood.
+
+**Built courses** (Fairway Course Builder) draw a stored tree from its
+landscape's species by role: the new conifers join the conifer role, and
+flowers (columbine, lupine, prairie forbs, iris) are never a stored shrub
+(built-world.js; the Heartland's shrubs drew as prairie flowers). Drawing
+only, so no `BUILT_VERSION` step.
+
+## The Keys pack, every variant shipped, and the silhouette pass (2 November 2026)
+
+**The Keys** (BLENDER_ASSETS *cartoon_keys*): eight species, fifteen
+rounds each, silhouette first. What the rounds taught: large single lobes
+read as pads or balls however they are placed, and an open fine-leaved
+crown (gumbo limbo) reads right as flat ragged rosettes at uneven heights
+on visible limbs; a royal palm's crownshaft shows only when the low fronds
+leave nearly level and fall at their outer half; a spilling shrub
+(bougainvillea) cannot be separate canes at this size -- their tips land as
+magenta feet -- but a mound to the ground with short tongues and many small
+ragged sprays reads. Three season colours depart from the specs, judged on
+the pictures (PLACED, in the script): sea grape's autumn #74703a (the spec's
+rust turned the whole shrub rust; it means some red leaves), bougainvillea's
+winter bracts duller rather than fewer (a mesh cannot lose them), gumbo
+limbo in leaf in spring (its brief bare spell is not modelled).
+**Planting** (PLACED, biomes.js): stands palm .24, royal palm .18, gumbo
+limbo .14, sea grape .12, hala .13, mangrove .08, traveler's palm .06,
+banyan .05, under them naupaka .4, sea grape .3, hibiscus and bougainvillea
+.15 each; the open ground likewise, mangrove and banyan .02. Sizes (species.js
+`TREE_SIZE`, PLACED within the specs): royal palm 15-21 m, traveler's palm
+6-9, mangrove 4-7, gumbo limbo 8-13, banyan 14-20 m with a 10-15 m crown.
+Mangroves are not yet placed at the water's edge, where they belong.
+
+**Every variant ships** (the owner's amendment): the second variants held
+back for cost, and their far twins, are in the game -- madrone, Garry oak,
+bigleaf maple, bay laurel, blue spruce, ironwood, elm, shagbark, bur oak,
+paper birch, balsam fir, beech, royal palm.
+
+**The silhouette pass** on the trees made before the goal (BLENDER_ASSETS
+*The silhouette pass on the packs before the goal*), three agents, every
+model at or below its old count. Lessons beyond the packs': one flat-
+bottomed lobe per limb end reads as bonsai pads or an acacia umbrella --
+masses with lobes riding up their tops and limb ends at stepped heights
+fixed it; clumps set alternately up a stem make a column (small ones peas
+on a stick, big ones a spire) -- an oval came only when the crown was widest
+at 0.4 of its height with one blunt top; a far twin's cost is mostly its
+thin limbs (a tube never drops below four sides), so twins drop twigs and
+limbs, drawing what they skip from their own random streams so the rest of
+the tree stays put.
+
+**The A/B** (step 3d's build against this one, Low, RTX 4090): the Keys
++47% by mean frame (1.28 to 1.88 ms; draws 173 to 243 at the first tee,
+eight new species); Puget Sound -10% (1.72 to 1.54 ms: its reworked trees
+are cheaper even with both variants). Accepted until the performance pass
+(TODO). **Size:** the page 15.91 to 17.31 MB (8.18 to 8.90 MB gzipped);
+the model module 10.3 MB.
+
+## Five landscapes on existing models (phase 3, 2 November 2026)
+
+PLAN.md's phase 3: landscapes built from models already in the game, to
+prove the pipeline end to end before each region gets its own models
+(their own come in their region's phase). Every value below is PLACED from
+the study's page for the landscape (docs/studies/us-landscapes/subs/,
+local) and the nearest region's record; none is measured.
+
+- **High Plains** (a new region, `plains`, from the Midwest's record):
+  shortgrass and bluestem (long grass bluestem 2 : fescue 3, 5,200 tufts,
+  straw-coloured), few trees (density 1.1 against the Midwest's default
+  2.8), stands of cottonwood .5, cedar (`juniper`) .25 and elm .25 at a
+  twentieth of the ground, the open cottonwood .2, cedar .2, elm .1, shrub
+  .2, prairie flowers .3. A farmstead and a windmill (`windpump`) as the
+  landmark. Sun 41 degrees, 700 m, 21 C.
+- **Sand Hills** (plains): the Links' dunes landform (scale 170, hummock 42,
+  height 6, no heather) with blowouts .25 (Lake Dunes' .29), trees at half
+  density, mostly grass, prairie flowers, cedar and a few cottonwoods; the
+  windmill landmark, no farm.
+- **Old Northeast** (New England's region): no leaf fall, summer greens,
+  oak .3, maple .25, elm .15, beech .15, white pine .1, a stone clubhouse,
+  fieldstone walls, a church landmark.
+- **Pine Barrens** (New England's region): pine .35, scrub oak (the dune
+  woods' black oak) .2, heather .2, shrub .1, common juniper .1, dune grass
+  .05 on a low dunes landform with heath; a shingled clubhouse and a
+  lighthouse.
+- **Alaska** (a new region, `alaska`, from the Rockies' record): spruce .35,
+  paper birch .2 (0.6 of the region's height), aspen .15, willow thicket
+  .15, lupine .1 (fireweed's stand-in until its model), columbine .05; sun 16
+  degrees (the long low light), 100 m, 13 C; a log lodge, a mine head ruin,
+  elk.
+
+No generator step: the fingerprint showed every existing landscape
+unchanged and five new. SCHEMA 18 adds the keys (no save changes shape).
+The settings test that walks every old version now gives a version-17 save
+a version-17 key (`pnw` was renamed going into 17).
+
+
+## The roads (phase 4, 2 November 2026)
+
+PLAN.md section 4: on a generated course, the clubhouse and its lot near an
+edge of the property, a public road along that edge, the drive from it, no
+road across a fairway ever (the owner's answer 8). Every figure PLACED:
+
+- **Widths**: the public road 7.3 m (a two-lane 24 ft road), the drive
+  6.1 m (20 ft). **A stall** 2.7 by 5.5 m (9 by 18 ft) on a 7.3 m (24 ft)
+  aisle -- common US dimensions, not a measured course's.
+- **The lot**: 60 stalls for nine holes, 120 for eighteen (PLAN's figures),
+  in two double rows: 40.5 by 36.6 m and 81 by 36.6 m; half that where the
+  full lot fits nowhere. Sought on rings 10 m apart, 16 directions, squared
+  to the clubhouse or turned a quarter, off its 30 m lawn, the cart paths
+  (2 m) and play (12 m from any corridor), the ground under it within 5 m;
+  scored by its distance from the clubhouse, a third of its distance from
+  the road and 8 a metre of fall.
+- **The public road**: straight, on the side of the holes' box (their tees
+  and greens) nearest the clubhouse, 70 m out to begin with and moved out
+  10 m at a time (to 270 m) until nothing played lies under it, from 120 m
+  before the box to 120 m past it, inside the world's edge. Out of bounds
+  past its outer edge. The Keys (islands) find no straight dry edge on any
+  side and have no public road.
+- **The clubhouse** leans toward the box's edge: 0.3 on its score for every
+  metre inside it (beside its distances to the first tee and last green).
+- **A ball on a road** plays as hardpan (PLAN: "a ball on a road plays as
+  hardpan") and takes a cart path's free relief.
+
+Measured on seed RD-1, nine holes: drives of 3 m (the lot against the road)
+to 251 m (the Sonoran); the lot 40-50 m from the clubhouse. Generator 63
+moved every landscape. A boulder test's roll on the Rockies started 13 m
+above the stone and flew over its crown by 10 cm; the test now rolls only
+from run-ups within 3 m of the stone's foot.
+
+
+## Cart paths: no right angles, no dead ends (2 November 2026)
+
+The owner amended the goal: "No right angles or dead ends. make sure all
+corners are rounded and where a dead end would sit, make the path smoothly
+loop back on itself." paths.js `shape`, run on the whole network after the
+clubhouse's link (course.js), before its bridges are found. All PLACED:
+a join meeting its path steeper than 50 degrees slides 8 m along it; every
+piece resampled every 2 m and smoothed (a 1-2-2-2-1 kernel, ends fixed, up
+to 30 passes) until no 4 m of it turns more than 45 degrees, each point
+kept only where it and its neighbours are on open ground, within 28% grade
+and 10 m clear of every green; a dead end or a hairpin runs on into a
+teardrop loop (u = L(1 - cos t)/2, v = W sin t (1 - cos t)/2, L = 2.6 R,
+W = R/0.65, R from 7 m down to 3.5 m, either side, from the end or up to
+60 m back), kept 2.5 m off every other path; an end that cannot loop is
+cut back to its junction within 80 m; then ends settled (cut at a crossing
+in their last 8 m, snapped onto a path within 2.5 m, run on to one within
+8 m where open) and short jogs dropped. Measured on sixteen nine-hole
+courses (seeds PA-1 to PA-4 on four landscapes): ten fully meet the rule;
+the other six keep 5 dead ends and 19 sharp corners, worst on the Rockies
+(corners to 167 degrees where steep ground refuses rounding). A first cut
+let a hairpin's loop start another forever (Puget Sound FINGER-1 never
+finished); loops are capped at eight a piece.
+
+
+## The South (phase 5, 2 November 2026)
+
+PLAN.md's phase 5: five landscapes on the South's own packs
+(tools/blender/cartoon_southpines.py, cartoon_southoaks.py,
+cartoon_piedmont.py, cartoon_southcoast.py; 26 species, every variant and a
+far twin for each tree). Every share, size and colour below is PLACED from
+the study's pages (docs/studies/us-landscapes/subs/, local) and the packs'
+reports; none is measured on a course.
+
+- **A new region, `south`** (from the Midwest's record): loblolly pine,
+  tulip poplar, sweetgum, magnolia, oak and dogwood in the stands under
+  azalea and yaupon; in the open the same with crape myrtle, azalea, kudzu
+  at a twentieth. A plantation clubhouse (17.1 m to its cupola on 39.2 m of
+  front: height .436 of width), asphalt paths, wooden bridges, a farm, a
+  chapel ruin, deer and herons. Fog: haze .8, ground sheet .45, mist on
+  water .9 (warm humid haze).
+- **Piedmont**: the region as it is (red clay hills, the Midwest's ground).
+- **Longleaf Pines** (Pinehurst's country): longleaf .3 of the open
+  planting, wiregrass .25, longleaf grass stage .15, turkey oak .12,
+  yaupon .08, loblolly and blackjack oak .05; stands half the ground,
+  longleaf .6 under wiregrass. Pine straw's amber interface.
+- **Lowcountry**: live oak in moss .18, cabbage palm .15, slash pine .1,
+  magnolia .04, spartina .21, saw palmetto .12, muhly grass .1, wax myrtle
+  .1; 28 C, a pale coastal sky.
+- **Bayou**: bald cypress .2 with its knees .15, live oak in moss .15,
+  tupelo .1, spartina .15, sweetgum .05; brown slow water (#5a5a3e).
+- **Florida Flatwoods** (the Keys' region, inland): slash pine .25 over saw
+  palmetto .25, cabbage palm .15, sawgrass .15, live oak .08, cypress .03,
+  muhly .04, citrus .05; white sand. Its water, landform and grasses come
+  from the Heartland's record, defaults included -- a first cut copied the
+  Heartland's own fields only and left `coastal`, `sea` and ten more
+  undefined, which crashed the generator.
+- **Tree sizes** (height and crown, m): longleaf 22-32 / 4-6, loblolly
+  20-30, slash 18-26, cabbage palm 9-15, live oak 12-17 high by 12-16
+  wide, bald cypress 20-32, tulip poplar 28-40, magnolia 14-20, sweetgum
+  18-28, dogwood 5-8, crape myrtle 4-7, citrus 4.5-6.5.
+- **Names**: twenty first words and twenty last a landscape, none a real
+  golf destination (Kiawah and Sawgrass were caught by the test and
+  replaced); hole names and crests their own. Debut weeks 165-169 in the
+  course of the week, one a week after Alaska.
+
+No generator step for the five (new keys); SCHEMA 19 adds them (no save
+changes shape).
+
+**Generator 66, the roads' berth** (found by the full bench while checking
+this phase): a drive routed on the 6 m path grid kept its centre on open
+cells but its edges, 3 m out, clipped a Pine Barrens sand waste; and the
+lot, checked on a quarter-width grid (about 9 m), sat a corner in a
+Scottish Links pond. The drive's grid now blocks the cell margin round
+anything it may not cross (paths.js `costGrid` `berth`), and the lot is
+checked every 4 m, as the invariant samples it. Six landscapes' fingerprint
+seeds moved their lot or drive.
+
+**The moss's colour**: drawn at the pack's grey-green (#9aa092) the
+strands lit nearly white and read as bones under the oaks; #78826e
+(PLACED, from the first pictures) reads as moss. **The cost** on Low
+(frame-ab, one build, seed PROFILE, tees 1, 5 and 9, RTX 4090 headroom):
+the Heartland 0.82 ms of graphics card a frame, the Bayou 0.81, the
+Lowcountry 1.10 (+34%; 14.8 million triangles at tee 1 against 9.5).
+
+
+## Texas and the deserts (phase 6, 3 November 2026)
+
+PLAN.md's phase 6: six landscapes on the Texas and deserts packs
+(tools/blender/cartoon_texas.py, cartoon_deserts.py; 24 species, every
+variant, far twins for the pecans and palms). Every share, size and colour
+below is PLACED from the study's pages (subs/texas/, subs/desert/, local)
+and the packs' specs; none is measured on a course.
+
+- **A new region, `texas`** (from the Midwest's record): hills base 30 m,
+  severity 60 (rolling, between the Heartland's flat and the Sonoran's
+  mesas); 320 boulders a course drawn as the pack's pale layered limestone
+  (rockStyle `limestone`, #d8d0b8); stands of Ashe juniper .35, live oak
+  .25, post oak .2, cedar elm and mesquite .1 under mountain laurel; in the
+  open bluebonnets .2, live oak and juniper .15 each, post oak .1, mesquite
+  .08, mountain laurel .07, pecan, cedar elm and redbud .05. A limestone
+  ranch-house clubhouse (`stonehouse`), split-rail fences, a farm, a
+  windmill landmark, deer. 300 m, 30 C, sun 40 degrees; fog haze .55.
+  **Hill Country** is the region as it is.
+- **Bluebonnet Prairie**: hills 14 / 20 (near flat), 60 rounded boulders,
+  trees at 1.4; bluebonnets .3, pecan and cedar elm .12 each, Osage orange
+  .1, prairie flowers .15; a farmhouse and red barn.
+- **Gulf Coast**: hills 6 / 12 (flat), live oak .25, loblolly .15, cordgrass
+  (spartina) .12, wax myrtle .12, yaupon .1, pecan .08; 31 C; a clapboard
+  clubhouse, herons and geese.
+- **Mojave** (the Sonoran's region): Joshua tree .22, creosote .25, Mojave
+  yucca .12, cholla .1, beavertail .08, smoke tree .05; rounded granite
+  (#c8ac88); 900 m, 33 C.
+- **Desert Palms**: fan palm .2, date palm .12, oleander .12, creosote .2,
+  bougainvillea, desert willow and tamarisk .06 each, Aleppo pine .03; mesas
+  at half the Sonoran's chance; a pavilion clubhouse; 100 m, 34 C.
+- **Chihuahuan**: creosote .22, lechuguilla .14, sotol .12, soaptree yucca
+  .1, mesquite .1, ocotillo .08, Emory oak and alligator juniper .05 each;
+  angular stone; 1,200 m, 30 C.
+- **The bluebonnet is drawn in bloom** (its spring colours) until seasons
+  are on: in summer it is a seeded grey-green clump and the landscape is
+  named for it.
+- **Tree sizes** (height, crown radius, m): pecan 22-32 / 8-12, post oak
+  9-14 / 4-6, Ashe juniper 5-8, cedar elm 11-16, Osage orange 9-13, redbud
+  5-8, Joshua tree 5-9, fan palm 14-20, date palm 10-17, Aleppo pine 10-15,
+  alligator juniper 8-12, Emory oak 7-11.
+- **Names**: twenty first and twenty last words each; clashes with earlier
+  landscapes' first words (Meadowlark, Tarpon, Tortoise, Cathedral, Alpine,
+  Javelina, Roadrunner, then Pronghorn) and one real course (Ocotillo) were
+  replaced. Debut weeks 170-175.
+
+No generator step for the six (new keys); SCHEMA 20 adds them.
+
+**Generator 67, bridges that follow a bent crossing** (found by the full
+bench while checking this phase): on Bluebonnet Prairie S1 a cart path ran
+along a winding creek for about 80 m, and its one straight deck, laid from
+the last dry point to the next, left 98 sampled points of path in the
+water beside it (16 on Hill Country S4). `findBridges` now splits a run
+where it strays furthest from its deck until every point is on one; a run
+the one deck already covers is unchanged. The Pine Barrens' fingerprint
+seed moved.
+
+**The wildflowers came back** (vegetation.js `FLOWER_REGIONS`, rendering
+only): the rough's flowers were scattered where the landscape's KEY was
+midwest, mountain, links or desert, and the keys' rename on 2 November left
+only the Scottish Links with any -- the Heartland, the Rockies and the
+Sonoran had lost theirs, unnoticed in five phases of pictures. The test is
+now by region, and Texas joins it in bluebonnet blue (#3a5ac8) and Indian
+paintbrush red (#d8502e), 16% of the grass blades as everywhere (PLACED).
+Seen when Bluebonnet Prairie's first pictures had no bluebonnets in them:
+the pack's clumps are 0.3-0.45 m and read only close to. Its long grass's
+heads are bluebonnet blue too (#4a62c8, 6,000 tufts against Texas's 4,000;
+PLACED); still not a field from the camera -- until its native-grass drifts
+(over half the ground beyond play) were painted bluebonnet blue, #6276c4
+(PLACED; drawing only, the fingerprint unchanged).
+
+
+## California and the western mountains (phase 7, 3 November 2026)
+
+PLAN.md's phase 7: six landscapes on the California coast, California
+inland and western mountains packs (tools/blender/cartoon_calcoast.py,
+cartoon_calinland.py, cartoon_westmtn.py; 29 species, every variant, 16 far
+twins). Every share, size and colour below is PLACED from the study's pages
+(subs/california/, subs/mountain/, local) and the packs' specs; none is
+measured on a course.
+
+- **A new region, `california`** (from the Midwest's record): hills base 35
+  m, severity 70; the rough gold (#b0a060, the dry summer), long grass gold;
+  stands of coast live oak .45, valley oak .2, blue oak .15, sycamore and
+  buckeye .1 under chaparral and coastal sage; in the open coast live oak
+  .18, chaparral .14, coastal sage and poppies .12, valley and blue oak .1,
+  eucalyptus .06. An adobe (mission) clubhouse with a terracotta roof, a
+  chapel ruin, deer. Fog haze .6.
+- **Monterey**: the sea along one side (`sea` and `edgeCoast`, as Lake
+  Dunes' lake: `sea` alone gave ponds in oak woods and no coast at all; hills
+  16 / 45 as the Links'),
+  Monterey cypress .2, Monterey pine .15, ice plant .18, coastal sage .15;
+  18 C; six sea stacks offshore; the thickest fog in the game (haze 1,
+  sheet .95: the sea fog).
+- **SoCal Canyons**: hills 40 / 110 (barrancas); chaparral .18, coast live
+  oak and coastal sage .15, eucalyptus .12, sycamore .1, jacaranda and
+  pepper tree .06, Torrey pine .05; a pavilion clubhouse. **The jacaranda
+  is drawn in bloom** (its spring purple) until seasons are on.
+- **Wine Country**: hills 30 / 50; grape vines .3, valley oak .15,
+  poppies .12, blue oak .1; a stone winery clubhouse. The vines stand singly
+  (TODO: rows).
+- **Cascades** (the Rockies' region): far ring lifted 600 m (the Rockies'
+  950) so the volcano stands over it; Douglas fir .25, hemlock and noble
+  fir .15, beargrass and huckleberry .1, western larch .08, red cedar .07;
+  basalt boulders; a lodge.
+- **High Sierra**: sugar pine and incense cedar .15, red fir .12,
+  ponderosa .1, manzanita .15, mule's ear .08; glaciated granite slabs; no
+  split-rail fences (none stood on the test course's granite, and none
+  belong there).
+- **Ponderosa**: ponderosa .4, Gambel oak .15, bitterbrush .12, sage .1,
+  mountain mahogany .08; trees at 2.4 (the open park); 2,100 m, 24 C;
+  basalt; a log lodge.
+- **The sea stacks**: 6 a course, 12-22 m tall, in water 2 m deep or more,
+  60-450 m from the nearest hole; scenery, never collided with.
+- **The volcano**: 900 m tall at 5.2 km on a bearing from the seed -- about
+  ten degrees of sky, as a Cascades peak stands over a course on a clear
+  day; unfogged and every colour 40% of the way to the sky, because every
+  tier's fog has closed by then (Low's at 3.5 km).
+- **Names**: twenty and twenty a landscape; clashes (Larch, Huckleberry,
+  Basalt, Rainier, Sequoia, Sonora) and real courses (Torrey Pines, Cypress
+  Point, Spanish Bay, Del Monte, Mission Hills, Silverado) replaced. Debut
+  weeks 176-181.
+
+**The lot checks the invariant's own grid too** (roads.js): Monterey's coast
+put a sliver of sea between the lot search's samples (spaced by the lot's
+own width) and the invariant's (every 4 m from a corner). Both grids now
+reject a lot; a lot that passed both is where it was, and no existing
+landscape moved.
+
+No generator step (new keys, existing ground unchanged); SCHEMA 21. The
+weekly and palette tests now work out the last debut and the cycle from the
+rotation, so each phase's debuts need no edit there.
+
+
+## The high desert and the plains (phase 8a, 3 November 2026)
+
+PLAN.md's phase 8, first part: the high desert and plains packs
+(tools/blender/cartoon_highdesert.py, cartoon_plains.py; 14 species and
+eight pieces of stone and ranch, every variant, six far twins). Every value
+PLACED from the study's pages (subs/highdesert/, subs/plains/, local) and
+the packs' specs.
+
+- **A new region, `highdesert`** (from the Sonoran's record): pinyon .15
+  and Utah juniper .18 over blackbrush .15, sage .14, cliffrose .1,
+  rabbitbrush and globemallow .08, cheatgrass .07, Russian olive .05; stands
+  of pinyon and juniper; hoodoos and fins as its stone (#c06a3a, the bands'
+  #e0b080 as the accent); 1,500 m, 26 C; the thinnest fog in the game
+  (haze .35). **Red Rock** is the region as it is.
+- **Sagebrush**: the Midwest's prairie landform (rolling, no mesas inside
+  the course), no sand ground; sage .3, cheatgrass .13, rabbitbrush .12,
+  bitterbrush and balsamroot .1, western juniper .1; basalt rimrock as its
+  stone (#4a4440). Balsamroot and globemallow are drawn in flower (spring)
+  until seasons are on.
+- **The plains on their own pack** (generator 68): eastern red cedar for the
+  stand-in juniper (.08 in the open, .25 of the stands), soapweed yucca .06
+  (.1 on the Sand Hills), buffalo grass .1, wild sunflowers .05; barbed wire
+  for the fences (1.2 m, a ball stops against it as against a rail fence),
+  a shelterbelt 40 m behind the farmstead where all 21 m of it is open and
+  out of play, a ranch windmill for the landmark (10 m) and a concrete grain
+  elevator on High Plains (30 m).
+- **Cross Timbers** (the plains' region): post oak .2, blackjack oak .15,
+  red cedar .1, prairie flowers .2; stands of post oak and blackjack at half
+  the ground; an oil pump jack (4.4 m) for the landmark.
+- **Ranch pieces' sizes**: each as wide and deep as its model is for its
+  height -- windmill 6.5 by 5.9 m, elevator 32.3 by 11, pump jack 7.7 by 2.8.
+- **Names**: clashes (Bunchgrass, Bitterbrush, Cimarron) and one with a
+  hyphen replaced. Debut weeks 182-184.
+
+SCHEMA 22 adds the three keys; generator 68 moved High Plains and the Sand
+Hills. The grain elevator's and shelterbelt's far twins are built into the
+model module but not drawn: a landmark and a story prop draw their full
+model at every distance.
+
+
+## Appalachia and the Northeast's own models (phase 8b, 3 November 2026)
+
+PLAN.md's phase 8, second part: the Appalachia and Northeast parkland packs
+(tools/blender/cartoon_appalachia.py, cartoon_neparkland.py; 12 species and
+five buildings and fences, every variant, seven far twins). Every value
+PLACED from the study's pages (subs/appalachia/, subs/northeast/, local)
+and the packs' specs.
+
+- **A new region, `appalachia`** (from New England's record, but in summer:
+  no leaf fall): hills base 50 m, severity 120; stands of chestnut oak .3,
+  tulip poplar .2, oak and hemlock .15, maple and shortleaf pine .1, under
+  rosebay rhododendron .4, mountain laurel .35 and flame azalea .25; in the
+  open chestnut oak .15, rhododendron .12, mountain laurel .1, flame azalea
+  .08. Flame azalea drawn in its June flower on the ridges (#e0782e). A log
+  lodge, split-rail fences (#7a6a52), a log cabin with its stone chimney
+  for the ruin (8.5 by 7 m, 6.1 m tall). Fog haze 1, sheet .85 -- the blue
+  haze. **Blue Ridge** is the region as it is.
+- **Ozarks**: limestone stone (#c8c0a8), hills 40 / 90; oak .16, shortleaf
+  pine .14, hickory .1, red cedar, sassafras, dogwood, redbud and chestnut
+  oak .08 each.
+- **Bluegrass**: hills 20 / 35, trees at 0.5 (pasture), the rough green
+  (#6e8a44); bur oak .15, oak .12; black four-board fences (1.4 m, a wall
+  kind like the barbed wire, in 9 m sections), a black tobacco barn as the
+  farm's barn (16.5 by 21.7 m, 11.5 m tall), a clapboard clubhouse.
+- **The Old Northeast** (generator 69): copper beech .06 in the open and .08
+  of the stands, hydrangea .05; a Tudor clubhouse (height .361 of width,
+  cream and dark timber).
+- **The Pine Barrens** (generator 69): pitch pine for the stand-in pine
+  (.35), scrub oak .15 (a shrub, 1-2.5 m), bayberry .08, beach rose .06 with
+  its red hips; a shingled Long Island windmill (14 m) for the lighthouse.
+- **Names**: clashes (Grandfather, Sassafras, Sinkhole) and two real
+  courses (Linville, Blowing Rock) replaced. Debut weeks 185-187.
+
+SCHEMA 23 adds the three keys; generator 69 moved the Old Northeast and the
+Pine Barrens. A first wiring named the Appalachian rhododendron's family
+`rhododendron`, already the Puget pack's: one object, so the later key
+silently took Puget Sound's rhododendron. It is `rosebay` now.
+
+**No autumn leaf ground in summer** (the first pictures): New England's
+record lays fallen-leaf ground (`fallen`: maple, oak and aspen, kind
+`litter`) round its trees, orange for its autumn; inherited by Appalachia,
+and carried by the Old Northeast since phase 3, it read as orange paint
+under summer trees. Both have `fallen: null` now. The Bluegrass's first
+pictures were closed forest: it takes the plains' stands whole and their
+tree density (0.5), pasture round the holes. The woods left between holes
+are the generator's between-corridor planting, the same on High Plains.
+
+
+## The north, the Pacific links and Hawaii (phase 8c, 3 November 2026)
+
+PLAN.md's phase 8, last part: the north and Hawaii packs
+(tools/blender/cartoon_north.py, cartoon_hawaii.py; 16 species, the lava, a
+log cabin and a dock, every variant, seven far twins). Every value PLACED
+from the study's pages (subs/northwoods/, subs/links/, subs/hawaii/,
+subs/alaska/, local) and the packs' specs.
+
+- **A new region, `northwoods`** (from New England's record, in summer):
+  red pine .2, birch .15, jack pine, white pine and aspen .1, balsam fir .08,
+  tamarack .07; the pines' needles as pine-straw ground; hills 25 / 45; a log
+  lodge, a log-cabin ruin (8 by 9 m) and a wooden dock (12 m) on a lake's
+  shore: a point out of play with water 8, 12 and 16 m out on one of eight
+  bearings, tried 600 times (three seeds of four found one). Lake mist (fog
+  sheet .8, water 1).
+- **Oregon Dunes** (the Links' region, so it shares fairways as the
+  Scottish Links does -- Bandon's are links): gorse .25, beachgrass .3, shore
+  pine .2, Sitka spruce .08, salal .07; stands of gorse with shore pine and
+  spruce at three-tenths; a shingled lodge and a lighthouse; 15 C.
+- **A new region, `hawaii`** (from the Heartland's record with a sea along
+  one side, `edgeCoast`, and peaks behind, `ringPeaks`, ring 700 m): palm
+  .14, ti .14, monkeypod, ironwood, ohia and heliconia .1, plumeria and
+  hibiscus .08, Cook pine .06, bougainvillea and hala .05; black lava (#3a3230,
+  mossed green) for its stone, 260 a course; a pavilion clubhouse, a sugar
+  mill ruin; 27 C, sun 52 degrees.
+- **Alaska on its own** (generator 70): black spruce .2 beside white spruce
+  .15, fireweed .1 for the stand-in lupine, devil's club and cottongrass .05.
+- **Names**: ten clashes with earlier landscapes' first words replaced
+  (Tamarack, Snowshoe, Sitka, Beachgrass, Driftwood, Salal, Yaquina, Puffin,
+  Plumeria, Lava Flow). Debut weeks 188-190.
+
+SCHEMA 24 adds the three keys -- forty landscapes with Scottish Links, the
+whole map. Generator 70 moved Alaska.
+
+**Chambers Bay on the Oregon Dunes** (step 10, 3 November 2026): rebuilt by
+tools/build-courses.mjs as door 2 builds a course (OpenStreetMap way
+26787026 traced, the LIDAR's land at 0.5 m, the map refined against it, the
+holes fitted), on the Oregon Dunes -- PLACED: the study puts it "in the
+lowland, but built as Links", and of the new landscapes the Pacific links is
+the links. Par 72, 7,455 yd from the back, 4,825 trees, 53 houses, a 6.1 MB
+file. The virtual golfers played it through in 87 against par 72 (the 4th
+the hardest, 8 on a par 5, then the 1st, 6 on a par 4; none stuck), and the game
+opened it and played a 136 m tee shot (tools/play-built.mjs).
+
+
+## The seasons (step 9, 3 November 2026)
+
+PLAN.md section 3, built. Every figure below is PLACED from the pictures,
+not measured; the species' colours are the packs' own (their specs' Seasons
+tables, via tools/blender/dump-tints.mjs: 172 species).
+
+- **Meteorological seasons** by whole months (spring March-May): simpler
+  than the equinoxes, and what weather services report. Tropical
+  landscapes (the Keys, Hawaii) are always summer.
+- **Winter by region** (seasons.js `WINTER`): snow -- Alaska, the
+  mountains, the North Woods, the Northeast, the Midwest, the plains, the
+  lakeshore; frost -- Appalachia, the high desert, the Pacific Northwest, the
+  redwoods, the links; dormant -- the South, Texas, the deserts, California;
+  green -- Florida and Hawaii.
+- **The turf in a season** (`seasonPalette`, the fraction of the way each
+  colour moves): spring toward #7ab84a, rough .18, semi .12, fairway .08;
+  autumn toward #c09a4a, rough .3, semi .12; snow toward #eef2f4, rough .85,
+  semi .45, bank .6, the fairway .15 toward frost; frost toward #b8c0b4,
+  rough .35, semi .2, fairway .1; dormant toward #c8b47a, rough .45, semi .3,
+  fairway .18. Greens never move. The far woods of a broadleaf region
+  (Northeast, Midwest, Appalachia, South, Texas, plains, lakeshore) toward
+  #b0703a by .45 in autumn and #7a6e62 by .55 in winter.
+- **Bare in winter**: a tree that is not evergreen, not a palm, not a ground
+  plant, and not a cactus or one of the desert's green-barked trees (palo
+  verde, desert ironwood, ocotillo) or the Pacific's evergreen broadleaves
+  (madrone, tanoak, bay laurel), drawn without its leaf and accent parts.
+  PLAN 3 asked for about 55 separate bare models; leaving the leaf parts out
+  of the models already built gives every deciduous tree its winter at no
+  model cost and no download, at the price of no twig layer on the bare
+  crowns (TODO). The cartoon models' limbs carry the silhouette (the first
+  winter Heartland: bur oaks wide and flat, elms a vase, shagbarks tall).
+- **New England's record is its autumn** (`leafFall`), the landscape it was
+  built as. Until 4 November 2026 its summer looked the same; the owner then
+  asked for a real summer, and seasons.js `realSummer` draws one (*How green
+  the rough is*). Spring green and winter bare like the rest.
+
+SCHEMA 25 adds the Season setting (default today's); no generator step --
+the fingerprint is unchanged.
+
+**The full profile at the goal's end** (3 November 2026, tools/profile.mjs
+--since, real GPU, an RTX 4090 with headroom): every case on the card is
+well under the stored baseline -- but that baseline was taken on 28
+September, before the cartoon look and the frame-rate goal, so "no worse
+than the baseline" is met by an old yardstick. Graphics-card time, ms a
+frame (now against the baseline): tiers Low 0.83 (5.63), Medium 1.34
+(8.82), High 2.50 (14.12), Ultra 2.89 (15.36); the overview on Ultra 5.21
+(27.23); the landscapes on High 2.52 (Redwood Coast) to 6.07 (Florida
+Flatwoods), the heaviest the Flatwoods, the Lowcountry 5.70 and the Pine
+Barrens 5.48 -- against 5.0-14.4 for the nine in the baseline. **The
+software renderer** (SwiftShader, no graphics card): Low 3.3 ms of work a
+frame; Medium crashed its page ("Target crashed"), twice, the second run
+alone -- in the baseline it drew, slowly (3.8 s a frame). Not diagnosed
+(TODO, *Performance pass*); no smoke --software run (it took the machine
+down on 13 October).
+
+**The lot's island trees and the cart barn** (generator 71, 3 November
+2026; roads.js `placeCartBarn`, course.js): the cart barn 40 by 15.2 m and
+6.85 m to the ridge, its model's own proportions for a 40 m front (PLACED,
+the streets pack's spec), squared to the lot beside a long side or an end,
+4, 12 or 20 m off it, on the first site that is out of play (12 m from a
+corridor), off the paths and the clubhouse, the ground under it within 3 m
+-- 9 of 17 courses tried had one (the first site on RD-1 had the clubhouse
+on one side and the drive on the other). A tree in each lot island, the
+landscape's most-planted tree, at most 5.5 m tall and 2.2 m of crown
+(PLACED), never in a tee shot or a tee's fan of view (the full bench found
+one under a Lake Dunes tee).
+
+**Cypress in the Bayou's water** (generator 72, 3 November 2026): a
+landscape may name kinds that stand in the shallows (biomes.js `inWater`;
+the Bayou names bald cypress and cypress knees): on a pond's or lake's
+water, never the sea, where open ground lies 8 m off in one of the four
+directions (PLACED: about a crown's width from shore). 6, 11 and 14 stood
+in the water on three Bayou seeds. The ball meets them as any tree; they
+stand in a hazard already.
+
+**The Piedmont's red clay** (generator 73, 3 November 2026): its landform
+is the South's prairie with the drifts beyond play as hardpan (bare clay;
+it plays as hardpan) at a quarter of the ground (the Midwest's native
+drifts are .56), painted #9c6048 (PLACED: the first pictures' #a8583a read
+too orange).
+
+**The Lowcountry's salt marsh, partly** (generator 74, 3 November 2026):
+its drifts beyond play are cordgrass flats (native grass at .68 of the
+ground, painted #c4b468; #a4a65a read as the rough), its trees halved (1.5
+from the South's 3, stands at .35 of the ground: the flats lay under the
+woods), its water brackish (#4e6a5e). PLACED. Open grass flats round
+live-oak woods now; tidal creeks are still to do.
+
+**Wine Country's vineyard** (generator 75, 3 November 2026): up to two
+blocks (biomes.js `vineyard`) of 60 by 36 m, each on its own bearing, on
+ground where trees may stand, 30 m off any corridor and 80 m from the other
+block, the ground within 4 m; rows 3 m apart, a vine every 2 m (403 a
+block); the open planting keeps grape vines at .03 (from .3). Its own seeded
+stream, so nothing before it moves. All PLACED, not checked against a
+published spacing.
+
+**Snow on the tops** (3 November 2026, the seasons): in a winter whose
+region has snow (seasons.js WINTER), every tree material fades a face toward
+#eef2f4-ish white (.93, .95, .97) by how far its world normal faces up --
+from y .45 to .8, at most 85% (PLACED, from the first winter pictures of
+Alaska). Drawing only. The same fade is laid on the buildings (the
+clubhouse, the story's pieces, the cart barn, the houses), so their roofs
+whiten and their walls do not. Under the snow, every natural ground's colour
+(leaf litter, pine straw, native grass, heather, hardpan; grounds.js
+GROUND_TINT and the record's groundTints) goes .75 of the way to snow, rock
+and scree .35 (PLACED, from New England's winter picture, where orange leaf
+litter read as autumn through the snow). The far broadleaf woods go .85 of
+the way to #7a6e62 in winter, .45 to #b0703a in autumn (PLACED; .55 left New
+England's orange autumn record still orange).
+
+## The Dakota Badlands (the owner's addition, 3 November 2026)
+
+A forty-first landscape, `badlands` (region plains): South Dakota's White
+River badlands and North Dakota's Little Missouri badlands, drawn on the
+map as two overlays (the study's catalogue.json, local; their outlines
+PLACED by hand from the park maps). Its courses, located in OpenStreetMap:
+Bully Pulpit (Medora, way/245874307, 46.874 N 103.534 W), Watford City Golf
+Course, Wall Golf Course, and Lake Waggoner (Philip; in OpenStreetMap
+without a name, way/177851293, placed by hand). Kadoka Golf Course and
+"Wall Community Golf Course" were listed by directories but not found in
+OpenStreetMap, and dropped.
+
+**Sources.**
+
+- [Badlands National Park](https://en.wikipedia.org/wiki/Badlands_National_Park)
+  (Wikipedia): the White River Group deposited about 37-23 million years
+  ago, the Brule Formation 32-26 Ma, the Sharps capping the highest peaks,
+  the Yellow Mounds a weathered old soil on the Pierre Shale; erosion up to
+  about 2.5 cm a year on bare ground; Red Shirt Table the highest point,
+  1,020 m; the largest undisturbed mixed-grass prairie in the US, western
+  wheatgrass the commonest grass (1-3 ft); bison released 1963 from
+  Theodore Roosevelt NP, the herd over 1,200; at Interior, 498 mm of rain a
+  year, 97 cm of snow, January mean 2.8 / -9.9 °C, July 32.9 / 16.8 °C.
+  No heights for single buttes or spires: the formations' sizes are PLACED.
+- [Theodore Roosevelt National Park](https://en.wikipedia.org/wiki/Theodore_Roosevelt_National_Park)
+  (Wikipedia): the Fort Union Group's Bullion Creek (yellowish-brown
+  siltstone, to 180 m) and Sentinel Butte (grey to brown, with lignite)
+  formations; clinker baked where the HT Butte lignite burned (the Buck
+  Hill burn, 1951-1977); hoodoos and pedestals capped by cannonball
+  concretions; 363-388 mm of rain; visitor centres at 670 and 726 m.
+- [NPS, Theodore Roosevelt's geologic formations](https://www.nps.gov/thro/learn/nature/geologicformations.htm):
+  clinker ("scoria") red from the iron in the burned coal; porcelanite caps
+  many buttes. [NPS, its plants](https://www.nps.gov/thro/learn/nature/plants.htm):
+  north slopes forested and cooler, south faces sunny and dry; cottonwood
+  gold in late September; over 400 species. Bentonite's blue-grey and the
+  sandstones' tan and brown come from the park's Coal Vein trail sheet as
+  the search results quoted it (not fetched); the colours used are PLACED
+  from the study's pictures all the same.
+- NPS Badlands handbooks and vegetation pages (through search; the pages
+  themselves answered 404 or reset): western wheatgrass the most abundant
+  grass, blue grama and buffalograss with it on clay; leadplant, wild rose,
+  sand cherry and small soapweed common; "the few trees include Rocky
+  Mountain juniper and Great Plains cottonwood"; woody draws of cottonwood
+  and green ash on north- and east-facing escarpments; wild cherry thickets
+  in draws. North Dakota Game and Fish's badlands page (gf.nd.gov) agrees:
+  juniper scattered on bare hills, shortgrass on the buttes' tops.
+- USGS vegetation descriptions (through search): Rocky Mountain juniper
+  stands "almost exclusively on steep (30-70%) north-facing slopes" in the
+  northern Great Plains. Buffaloberry, searched for, was not confirmed by
+  any source and is not planted.
+- The models' own figures, from Wikipedia: [Rocky Mountain juniper](https://en.wikipedia.org/wiki/Juniperus_scopulorum)
+  4.6-6.1 m in open woodland (to 20), a narrow pyramid young, irregular
+  old, a blue-grey cast; [green ash](https://en.wikipedia.org/wiki/Fraxinus_pennsylvanica)
+  12-25 m (here 8-15 in a draw, PLACED), golden-yellow from early
+  September; [chokecherry](https://en.wikipedia.org/wiki/Prunus_virginiana)
+  1-6 m, white racemes 4-11 cm in late spring, cherries 6-14 mm red to
+  black; [leadplant](https://en.wikipedia.org/wiki/Amorpha_canescens)
+  0.3-1 m, grey-green, purple spikes late June to September;
+  [American bison](https://en.wikipedia.org/wiki/American_bison) to 1.86 m
+  at the shoulder and 3.5 m long (plains bulls), a dark-brown winter coat;
+  [western wheatgrass](https://en.wikipedia.org/wiki/Pascopyrum_smithii) a
+  sod-forming rhizomatous grass (its height from the NPS figure above).
+- [Bully Pulpit](https://medora.com/bullypulpit): Hurdzan's course of 2004
+  at Medora, its last holes routed through the badlands; par 72 and 7,166
+  yards in most listings, par 71 and 6,873 in one (GolfPass, wander.golf).
+  The builder reads its par from the map when it is built.
+
+**The formations are the ground's** (the owner, 3 November 2026: "I would
+prefer the landscape to generate the mountain, butte, spire like
+formations for badlands rather than building a model"). Models came
+first -- banded spires, a sawtooth wall, a clinker butte, a horizon wall
+and a cannonball concretion, sixteen rounds in Blender -- and were cut: a
+turned spire read as a party hat, and models standing in the rough are not
+the land.
+
+**Carved by a drainage network (generator 83).** The `badlands` landform
+(landforms.js `carve`, `carvedField`) makes the land the way the land was
+made: a table of clay eaten back from its edges by gullies that branch and
+branch. On a grid of 750 by 750 cells, 4 m each, 3 km across (the tile, mirrored
+past its edge), every cell a broad mask calls prairie is an outlet. A
+shortest-path tree grown in from the outlets, over step costs of 1 plus 14 times
+a random number to the fourth, is the drainage: each cell's one parent is where
+its water goes. A cell's area is the count of cells above it; its height is
+its parent's plus a step at slope S = 1.9 x U x area^-0.5, where U wanders
+.55-1.45 on a 260 m field. Steep on the divides, almost flat down the big
+channels, and what stands between the gullies is ridges, pyramids and spires
+with nothing having been told to make them. One pass, baked once a seed: a
+quarter of a second, 248 ms measured, a player's wait for an 18-hole course
+about 7-8 s in Node here. Above 44 m a summit is drawn up by 1.7 (the spires);
+where a 320 m field says so the land stops at a 50 m caprock, a butte with a
+flat grass top; ledges every 2.2 m, weak (22%), where a bed weathers back. Every
+one of those numbers is PLACED from the pictures, and the sizes are, too: no
+source gave heights for single formations.
+
+The law: [Stream power law](https://en.wikipedia.org/wiki/Stream_power_law)
+(Wikipedia): erosion E = K A^m S^n, with A the drainage area and S the slope,
+and m/n "around 0.5" for rivers in erosional steady state. Setting erosion
+equal to uplift U and n = 1 gives S = (U/K) A^-m, the step above; that
+rearrangement is ours, and K is folded into the 1.9. Taken: the form and the
+0.5. Not taken: time. [Braun and Willett 2013](https://doi.org/10.1016/j.geomorph.2012.10.008)
+(Geomorphology 180-181, 170-179; the title and method through its abstract and
+Landlab's FastScape documentation, the paper itself not read) solve the same
+equation in order-n steps along a receiver tree, implicitly, and reach the
+steady state in many; here the tree is drawn at random and the steady state
+written down at once, so there is no erosion run at all. Real badland slopes
+are not only rivers (rain splash, creep, mudflow), so the hillslope end of the
+same curve is a cartoon of them. Departure, recorded.
+
+**The rounds, each against the study's pictures** (05, 08 and 13 most; seed
+SAWTOOTH; local captures, bench/shots/biome-shots/):
+
+1. *What was wrong at the start*: the ridged field cubed made small spiky
+   lumps in islands, 30-40 m tall against photo 5's whole landscape of
+   pyramids; beside the holes the relief was squashed by the corridor fade
+   into gentle banks of rock paint, flat tiles beside the fairways; the far
+   hills were green with stripes on them. First try, not captured, seen in a
+   CPU sketch: separate fluted cones in three layers, the highest winning.
+   Better outlines, but gumdrops and witch's hats: the owner's "party hat"
+   again, from the ground instead of Blender. Turned shapes were the fault,
+   so the cones went. Second try, the drainage above: at once photo 8's
+   ridges, spurs and sharp valleys. **Round 1 (GPU)**: the look was right, the
+   formations 60-100 m. New faults: the public road ran up and over them as a
+   black ribbon, with its poles on the crest; the wash below the faces was
+   wide and bare; no rills; the far hills still plain.
+2. **Round 2**: SUNK, NOT SQUASHED (`sinks`, course.js): near a hole the
+   height is lowered by a share of 80 m, not multiplied down, so what stands
+   near a hole keeps its faces and only the tallest reach the grass. The first
+   big change from the ground: walls rise straight out of the prairie beside
+   the fairway. The road's valley: the road is laid long after the ground,
+   straight, 70 m outside the holes' box on whichever side the clubhouse
+   lands, so the formations leave all four of those lines, 26 m either side
+   and a rise over the recipe's 80 m reach (course.js `roadValley`, PLACED).
+   Measured on seven courses, 9 and 18 holes: the road's steepest stretch 0.19-0.36,
+   cart paths' 0.24-0.34, a lot found on every one. Buttes (the 50 m caprock)
+   and spires (the 1.7 stretch); the far land carved. New faults: the far
+   country still smooth, its slopes under what the ring paints as rock; beige
+   patches on the grass, read as stains; grass blotches on the ledges.
+3. **Round 3**: the far land's slope 0.42 to 1.2 and a 110 m cap: tables with
+   fluted scarps and banded faces on the horizon, the first time the far hills
+   were not plain; the floor patches gone, the wash narrowed; ledges weaker.
+   New faults: formations just past the property line turned to green ghosts
+   (the ring paints rock by a softer rule than the course); a large beige slab
+   on a gentle bank by a hole; a tartan cross-hatch on close faces, regular
+   rills against the bed lines.
+4. **Round 4**: the ring's rock rule narrowed, the wash only from 0.33 to 0.4
+   of slope (rock from about .4), the rills sparser and irregular, thin
+   and in patches. From the ground it reads as the place: the picture at h2-low.
+5. **Round 5**: the ring's threshold at .9 (rock from about 0.48 of slope):
+   the ghosts gone, seen in the winter and autumn overviews and here. The
+   slab was still there, 3,350 m2 of bare hardpan by hole 2.
+6. **Round 6**: what the slab was. A profile across it: not a sunk ramp, as
+   first assumed (a first fix, testing the carved land's own slope, moved it
+   nothing), but the prairie's own roll at 0.41 of slope with the formations
+   sunk out of it. An even bank and a broken face can have the same slope, so
+   the bake now hands the recipe the finished ground, and rock and wash want
+   the ground to bend, at least 1.2-3 m over 12 m, unless it stands steeper
+   than 0.55-0.7. The largest patch on the seed 500 m2. Final picture: h1-behind
+   against photo 8.
+
+Measured on seven courses (four of nine holes, three of eighteen): 89-129 m of
+relief across the course (75-82 m on the first recipe), 7-24% of the ground bare
+rock (14-17%), 0.5-1.5% hardpan (12-13%), 4-14% steeper than 40 degrees. The bench
+on twelve courses of the Badlands alone: every rule clear, no tee shot blocked
+inside 80 m, 9 of 324 shots with ground 1-3 m over the line past 80 m.
+
+**Near a hole, and the ground's rules.** Rock where the finished ground is
+steeper than about 0.40 (rise over run, wandering 0.3-0.5 with noise; rock
+in full 0.14 above that) and broken, hardpan from 0.33 to 0.4 at the foot of a
+face, grass below that and on a plain bank (round 6). All PLACED.
+
+**The far country** (biomes.js `ringCarve`, landscape-edge.js `ringRelief`):
+the course's 4 m carving would only alias into jags on the ring's rows, so over
+140-700 m past the property line the ring trades it for the same carving at a
+tenth the resolution: 350 by 350 cells of 40 m, 14 km across, mirrored past
+that, a mask 1.3 km across, a cap at 110 m, for the tables of photo 5 and photo
+13's Wall. Rows of 70 m out to 3.6 km, where the haze takes them, then 220 m as
+the mesas had: 155,000-180,000 triangles in the ring. PLACED, all of it. The
+mesas (ringMesas) went from this landscape. A built course on the Badlands gets
+the same far country on its own land (scenery, so no BUILT_VERSION); nothing is
+taken off a built course's ground, which never had the carving.
+
+**The frame** (tools/frame-ab.mjs on Low, the card, this machine, seed SAWTOOTH,
+tees 1, 5 and 9, two rounds, before this work against after, 212 s on the card):
+the frame 1.23 ms to 0.70 ms, -43%; p95 1.80 to 1.17 ms; graphics card 0.66 to
+0.57, 0.51 to 0.51, 0.46 to 0.46 ms; draws 158-200 to 131-189; triangles 3.0-3.9 M
+to 2.9-3.0 M. Cheaper, not dearer, and the graphics card's share is flat; why the
+processor's fell by about two-fifths was not chased (the walls hiding what is
+behind them is a guess, and the holes are the same in both builds). Three tees of one course on Low, so no
+promise for Medium or the overview. Measured on the build before round 6, whose
+change is which ground type a bank bakes as, not anything drawn. The carving adds
+about a quarter of a second to the build of a course, in each worker that asks
+(248 ms alone; bench generation time for twelve courses 87.6 to 106.6 s between
+two runs on a busy machine, noise as much as anything); the start-up to the main
+menu was 34.8 s before and 31.6 s after, the same within its noise.
+
+**The strata** (ground.js `strataColour`, biomes.js `strata`): every rock
+face, every steep hardpan bank and the far ring's faces painted in level
+beds 1.8 m thick, warped a little, each bed by a hash of its number -- the
+rock's own tan 38.5%, pink (#d4b0a0) 30%, grey (#a8a49c) 20%, the red fossil
+soils (#b06a50) 8%, the white ash (#ece6dc) 3.5% (5% until round 2) -- with a
+light lip and a shadow at each bed's edge. Past the property line the beds are
+four times as thick, as a far wall's show in photo 13; a bed under a pixel
+settles to the average, so nothing shimmers. Thin rills down the faces in
+patches (the first version, at a regular 1.9 m, made tartan with the beds).
+All PLACED from the study's pictures. The cannonball concretion is cut ("the
+big round ball thing is not needed").
+
+**The planting** (PLACED from the sources above): open mixed-grass
+prairie -- yucca, sage, leadplant and forbs scattered, the odd juniper --
+with small juniper stands (Rocky Mountain juniper 70%, green ash and
+chokecherry 15% each) only past 260 m from the holes or in patches of 3%
+of the country. The first capture walled every hole in green woods (the
+plains' stands at 30%, closing everything 50 m out). Green ash is the
+fairway's specimen tree: a full-size lone juniper stood oversized. The long
+grass is western wheatgrass and blue grama. Five bison graze (life.js).
+
+## Tall fescue and the prairie grasses (the owner, 3 November 2026)
+
+"Do we have tall fescue and prairie grasses? if not, we should
+retroactively build them for all landscapes that need them." The game had
+a fine fescue, big bluestem, buffalo grass, a desert bunchgrass and the
+regional ones; now tall fescue, little bluestem, switchgrass, Indiangrass,
+blue grama and western wheatgrass as long-grass families
+(tools/blender/cartoon_prairiegrass.py), and biomes.js `GRASSES` names who
+grows what -- seventeen landscapes. Sources, Wikipedia: [tall fescue](https://en.wikipedia.org/wiki/Festuca_arundinacea)
+(flowering stems to 165 cm, flat blades to 10 mm, open panicles to 40 cm,
+cool-season, Kentucky 31 light green, the transition zone's grass);
+[little bluestem](https://en.wikipedia.org/wiki/Schizachyrium_scoparium)
+(clumps 0.6-0.9 m, stalks 1.2-1.5 m, blue-green, copper-orange to red in
+autumn, redder on sand); [switchgrass](https://en.wikipedia.org/wiki/Panicum_virgatum)
+(to 2.7 m, panicles to 60 cm, golden-brown in autumn); [Indiangrass](https://en.wikipedia.org/wiki/Sorghastrum_nutans)
+(1-2 m, golden-brown plumes, tallgrass prairie and the longleaf country);
+[blue grama](https://en.wikipedia.org/wiki/Bouteloua_gracilis) (0.15-0.3
+m, stems to 0.46, usually two comb-like spikes, the shortgrass steppe's
+dominant). Tall fescue as golf rough: [USGA Green Section Record](https://www.usga.org/content/usga/home-page/course-care/green-section-record/62/issue-13/got-shade--tall-fescue-to-the-rescue-.html)
+(transition-zone courses converting the rough under trees to it) and
+[Penn State Extension](https://extension.psu.edu/naturalized-grass-stands-for-golf-courses)
+(less favoured for naturalised stands for its coarse texture; fine fescues
+preferred there). Who grows what, and each family's share and height, are
+PLACED from these ranges. The grass pack's models have their fifteen rounds
+(tools/blender/logs).
+
+**Seen in the game (3 November 2026, all seventeen landscapes,
+biome-shots `rough-low`).** The pack's colours had never reached the game:
+every long grass took the landscape's one `leaf` and `accent`, so tall
+fescue in the Bluegrass, the Ozarks and the Blue Ridge was New England's
+autumn orange in summer, and no prairie turned in autumn. Each of the six
+families now wears its own colours by the season (season-tints.js,
+vegetation.js `grassLook`), drawn 55% of the way from the landscape's to
+its own: straight, they read as teal clumps under candy-pink heads on the
+warm rough (PLACED by eye). The bluebonnets keep their blue heads
+(`bloomHeads`), and the older families beside them in those three
+landscapes take the Old Northeast's tan (`GRASS_TINT`, PLACED).
+`Blender_TallFescue_2` lay six metres across at 0.9 m tall, its radius 3.3
+times its height: squeezed to 1.6 times (`GRASS_WIDEST`, PLACED, just past
+the widest clump that read right). Triangles a clump, averaged over a
+landscape's families: about 200 for the old ones, 600-840 for the prairie
+landscapes (High Plains 837, Crosstimbers 691, Heartland 603).
+
+**The A/B on Low (tools/frame-ab.mjs, two rounds, RTX 4090, the Heartland,
+seed PROFILE; 3 November 2026).** Both builds from the same source, A with
+`GRASSES` empty (bench/ab/base.html has no grasses either, but it is
+generator 75, so it would have measured the whole day's work). Graphics
+card, A to B, tees 1, 5 and 9: 0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms,
+no cost. Processor: 1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00 ms, 0.6-0.7 ms
+more, steady in both rounds. Triangles 9.7 to 9.8 M, 7.0 to 7.1 M, 9.3 to
+9.5 M; draws +9. By mean frame +40.9%, by p95 +4.4%. Start to main menu 41.8
+to 47.0 s. The earlier -5.3% against 4784efd was noise. The processor's
+figure is not explained: nine more draws should not cost it. The High Plains
+was not measured (TODO).
+
+## Terrain true to place (the owner's amendment, 3 November 2026; generator 76)
+
+"Do all of these new landscapes have different terrain generation based on
+their location and research? ... We want to make sure that the terrain is
+also lifelike to the regions where the courses are built!" They did not:
+most shared their region's landform recipe -- the South's and Texas's on
+the prairie roll, the western mountains and Appalachia on the Rockies'
+crags, the Mojave and Desert Palms on the Sonoran's mesas. Eighteen now
+have their own (biomes.js `TERRAIN`, landforms.js); the rest are judged to
+fit their region's recipe for now (TODO lists the ones still to look at).
+Every shape and number below is PLACED from these sources and the study's
+pictures unless a figure is quoted.
+
+- **Hill Country -- stepped limestone** (`steps`: six steps, 26 m, pale
+  ledges #d8d0b8 on the risers). [Glen Rose Formation](https://en.wikipedia.org/wiki/Glen_Rose_Formation)
+  and the [UT Austin field guide](https://www.geo.utexas.edu/courses/303/303_Lab/FieldTripLab303.html):
+  harder limestone over soft marl; the marl weathers back, the beds above
+  fall, and the hillsides stand as staircases "for many miles". Wilding and
+  others (Environmental Earth Sciences, 2008; abstract only, not fetched)
+  argue the hard/soft explanation is wrong; the look -- many low ledges --
+  is not in dispute, and that is what is drawn.
+- **Monterey -- marine terraces** (`steps`: three broad steps, 12 m). [USGS
+  OFR 2016-1110](https://pubs.usgs.gov/publication/ofr20161110): the
+  peninsula is "largely low marine terraces" on granitic bedrock, level
+  wave-cut platforms with bluffs between. No bluff height found.
+- **Bluegrass -- karst** (`karst`: a roll of 8 m, sinkholes 12-30 m across
+  and 2-6 m deep in about half of 140 m cells). [KGS RI-07-11](https://kgs.uky.edu/kgsweb/olops/pub/kgs/ri07_11.pdf):
+  local relief generally under 150 ft (50 m), sinkholes seldom over 100 ft
+  (30 m) deep and many too shallow to map; [USGS PP 1151-H](https://pubs.usgs.gov/pp/p1151h/physiography.html):
+  "very low relief, abundant shallow sinkholes ... sparse outcrops". No
+  density per area found (the KGS sinkhole GIS was not read).
+- **Ozarks -- dissected plateau** (`channels`: hollows 22 m deep with
+  branches, limestone on their steep walls). [Ozark Highlands](https://en.wikipedia.org/wiki/Ozark_Highlands_(ecoregion))
+  and the [Ozarks](https://en.wikipedia.org/wiki/Ozarks): erosionally
+  dissected plateaus, steep valley walls, narrow bottoms; the Boston
+  Mountains' valleys 150-470 m deep, the Springfield Plateau nearly level to
+  rolling, sharply incised; bluffs where streams cut the Boone chert.
+- **North Woods and Old Northeast -- glacial** (`glacial`: hummocks of 7 m,
+  kettles 25-55 m across and 4-9 m deep holding bog grass, an esker of 6 m,
+  granite where the moraine breaks steep; the Old Northeast the same at
+  about half). [WGNHS bulletins](https://wgnhs.wisc.edu/pubshare/B099.pdf):
+  northern moraines a broad band of hills and hollows, poorly drained,
+  dotted with lakes, marshes and bogs; kettles from stranded ice; eskers
+  tracing old streams under the ice. USDA ESD 095X: local relief mainly
+  8 m, moraines and drumlins 25-100 m. Moraines from 30 to 250-300 ft.
+- **Mojave and Desert Palms -- knobs** (`knobs`: rounded granite knobs
+  10-28 m on a gentle floor, shallow washes, hardpan beyond; Desert Palms a
+  flatter floor, fewer knobs, and steep bare ranges on the far ring, 1,100 m
+  and peaked). [USGS OF 2004-1007](https://pubs.usgs.gov/of/2004/1007/fans.html)
+  and LibreTexts *Geology of California* 13.06: Mojave pediments mostly on
+  granite, gentle enough not to gully; inselbergs the sparsely jointed
+  residuals; fans coalescing into bajadas. [Coachella Valley](https://en.wikipedia.org/wiki/Coachella_Valley)
+  and [USGS Bulletin 845](https://www.nps.gov/parkhistory/online_books/geology/publications/bul/845/sec27.htm):
+  a wide flat alluvial plain from the foot of the Santa Rosa Mountains; San
+  Jacinto Peak 10,804-10,834 ft above Palm Springs (about 479 ft). The first
+  Mojave capture read its knobs as sand dunes: bare from a gentler slope now
+  (0.1), grey granite (#a8a294).
+- **High Sierra -- granite domes** (`knobs` with a dome profile, 15-40 m,
+  bare slabs, scree below). [NPS Yosemite geology](https://www.nps.gov/yose/learn/nature/geology-exhibits.htm):
+  joints frame the land; exfoliation sheets round ridges into domes (Half
+  Dome, Lembert Dome); glaciers polished what they buried.
+- **Sagebrush -- coulees** (`channels`: box-walled coulees 18 m deep with
+  basalt rimrock). [Channeled Scablands](https://en.wikipedia.org/wiki/Channeled_Scablands):
+  flat-lying basalt cut by dry flood channels, coulees branching round
+  isolated mesas of basalt and loess; loess scarps about 30 degrees.
+- **Piedmont -- gullies** (`channels`: red-clay gullies 4 m deep, branching).
+  [Georgia Encyclopedia](https://www.georgiaencyclopedia.org/articles/geography-environment/piedmont-geographic-region/),
+  the Forest Encyclopedia and Rock Hawk: low rolling hills and narrow
+  valleys, saprolite (the red clay) up to 40 m deep; cotton and tobacco
+  stripped 144 mm (North Carolina) to 244 mm (South Carolina) of soil since
+  1700 on average and cut gullies with headcuts. The bench found a far grove
+  floating over a 3-4 m gully its slope test stepped across: the gullies are
+  broader now (scale 180, width .04).
+- **SoCal Canyons -- barrancas** (`channels` with V walls, 20 m). The
+  Santa Monica Mountains' drainage spacing, geometry and relief are set by
+  bedrock strength (Meigs and others, Basin Research 11(1), 59-73, through
+  [SCEC](https://central.scec.org/node/3240)); the City of Malibu's code
+  describes "numerous incised canyons and drainages" and over 80% of the
+  range's soils of high or very high erosion potential
+  ([ecode360](https://ecode360.com/44603712)). No source found for
+  Rancho Santa Fe's barrancas by name. The V walls and their depth are
+  PLACED.
+- **Ponderosa and Hawaii -- volcanic** (`volcanic`: truncated cinder cones
+  with a crater, red-brown cinder on their flanks, bare of trees; black
+  basalt flow lobes 2-2.5 m proud). [USGS, San Francisco volcanic field](https://www.usgs.gov/volcanoes/san-francisco-volcanic-field/geology-and-history):
+  over 600 volcanoes, most monogenetic basalt cinder cones under 300 m,
+  flows running for kilometres; the in-course cones (25-60 m) are scaled
+  down, PLACED. [GolfPass on "lava golf"](https://www.golfpass.com/travel-advisor/articles/lava-golf-still-flowing-strong-after-50-years-on-the-big-island-of-hawaii):
+  the Kohala coast's courses carved from black lava fields, Mauna Kea the
+  first (1964). The first Ponderosa capture read its cone as a pit: steeper
+  now, a narrower crater, its trees cleared.
+- **Longleaf -- sand ridges** (`sandridges`: broad rounded ridges of 9 m,
+  bare sand on the highest). [Georgia Encyclopedia, sandhills](https://www.georgiaencyclopedia.org/articles/geography-environment/sandhills/):
+  gentle rounded hills of quartz sand along the Fall Line, old dunes and
+  shorelines, islands of bare sand; longleaf, turkey oak and wiregrass on
+  the dry ridge tops. A first try had a third of the course bare sand: the
+  bare threshold is 0.84 now (about 4%).
+- **Blue Ridge -- coves and ridges** (generator 78; `channels` with V
+  walls: hollows 28 m deep branching between rounded ridges, rock only
+  where steepest, the woods kept). [Blue Ridge Mountains](https://en.wikipedia.org/wiki/Blue_Ridge_Mountains):
+  a long chain of ridges on granite, gneiss and limestone, Mount Mitchell
+  2,037 m, about 125 peaks over 1,500 m; cliffs not described. [Cove
+  (Appalachian Mountains)](https://en.wikipedia.org/wiki/Cove_(Appalachian_Mountains)):
+  a small valley between two ridges closed at one or both ends (Cades
+  Cove). Measured on one nine: 110 m of relief, 5% rock, 10% steeper than
+  35 degrees.
+- **Bayou, Flatwoods and Gulf Coast -- lowland** (`lowland`: levees 1-2.5 m
+  along sinuous bayous, backswamp hollows of marsh grass, and the corridors'
+  broad roll scaled to a fifth or less, course.js `baseRoll`). [USDA MLRA
+  131A](https://jornada-edt.nmsu.edu/catalogs/esd/131A): the lower
+  Mississippi's alluvial plain has a maximum local relief of about 5 m,
+  much less over most of it; natural levees about 4.5 m above the floodplain
+  on the river itself, smaller along smaller streams. Before, the Bayou's
+  ground spread 14 m from low to high like the Heartland's, almost all of it
+  the corridors' roll that every landscape shared; now 4-6 m.
+- **Lowcountry -- salt marsh and tidal creeks** (generator 80; `lowland`
+  with `tide`, course.js `level` and `baseHeight`). The marsh drifts beyond
+  play are laid flat at 1.9 m above the sea, meandering creeks cut through
+  their core to 2 m below it (two scales: creeks about every 260 m and
+  narrower branches about every 110 m), and the sea plane (`sea: true`)
+  fills them; the ground sits 4 m above the sea before it rolls (12 m on
+  every other landscape), so the holes stand a step above the marsh, not
+  on a bluff. Sources: the Southeast Coastal Geomorphology SET network
+  ([Madsen, GSA Southeastern 2014](https://gsa.confex.com/gsa/2014SE/webprogram/Handout/Paper237152/Madsen_SEGSA2014.pdf)):
+  semidiurnal, mesotidal, average tidal range 1.5 m at Little River Inlet,
+  SC, to 2.0 m at the Savannah River -- the creek bed's 2 m below the water
+  is about that range. In the first pictures the creeks read as sand, at
+  1.4 m and again at 3.5 m. It was the BED: the water is clear enough to
+  show it, and ground below the beach line (course.js BEACH_RISE) is painted
+  the bunkers' sand. Turning the sea shader's pale shelf dark (`seaShelf`,
+  colour and strength; the beach's [.55, .72, .6, .4] by default, the
+  Lowcountry's [.2, .26, .2, .55]) changed nothing visible on its own, and
+  deepening the bed was rejected for the same reason. What worked: a
+  landscape may name its beach band's colour (`beachTint`, ground.js; the
+  bunkers' sand by default), the Lowcountry's pluff mud #4f4838 (PLACED).
+  It still plays as sand, as every beach does. Its creeks take a lake's
+  swash (`lakeWaves`) rather than surf. Then the creeks stood in woods: the
+  marsh's core is now bare of trees (the recipe's `treeKeep`), cordgrass to
+  the creek banks, the live oaks on the hammocks above. A North Inlet, SC study (seen only as a
+  search summary; [NSF PAR](https://par.nsf.gov/biblio/10450202-evaluating-indicators-marsh-vulnerability-sea-level-rise-along-historical-marsh-loss-gradient)
+  and [USC theses](https://scholarcommons.sc.edu/etd/402) were the hits):
+  smooth cordgrass grows best at about 0.35 m NAVD88, and one study there
+  gives mean higher high water as 0.66 m NAVD88 (its site label ambiguous)
+  -- the real marsh platform sits just below high tide and floods at most
+  high tides. Not read in full: worth a second look for creek widths. **Departure, PLACED:** the game's marsh stands
+  1.9 m above its water, because the sea plane is one level (no tide) and
+  the beach band (course.js BEACH_RISE 0.9 m, its colour fading for 0.8 m
+  more) would turn a marsh lower than 1.7 m into sand. Creek depth scaling
+  with tidal range (the Cape Romain comparison in the same search) and creek
+  widths are not taken from a source: widths of roughly 6-14 m are PLACED.
+  Measured on three eighteens: nothing in play wet, creeks 1.8-3.8% of the
+  map, marsh at the tide line 18-24%, 1-3 holes with a creek within 40 m.
+  The clubhouse drive of one bench course clipped a creek's tip (thinner
+  than the 6 m routing cell): roads.js now checks a routed drive as the
+  invariant does and routes again round anything it clipped.
+
+**The second look (generator 81, 3 November 2026).** The landscapes left
+on their region's ground were each checked against a source; three moved,
+four were judged to fit.
+- **High Plains -- playas** (new recipe `playas`: a table with 2 m of roll,
+  round pans 60-140 m across and 1-1.8 m deep with flat floors of bare clay,
+  hardpan #bcae8e; the corridors' roll at 0.3). [Llano Estacado](https://en.wikipedia.org/wiki/Llano_Estacado):
+  a plateau bounded by the caprock's cliffs, among the flattest large
+  areas in North America. The playas: about 20,000 on the Llano (the same
+  article) or 50,000 on the High Plains with 85% on the Llano (another
+  source in the search; they disagree); "about 17 acres" on average
+  ([Marfa Public Radio, Nature Notes](https://marfapublicradio.org/blog/nature-notes/gems-on-the-prairie-the-playa-lakes-of-the-llano-estacado/));
+  mostly 3.2-28.3 ha in a Castro County, Texas study (search summary only);
+  depth: a Texas water study assumed 3 ft for storage
+  ([TWDB LP-114](https://www.twdb.texas.gov/publications/reports/limited_printing/doc/LP114.pdf),
+  an assumption, not a measurement). Its first pictures stood the table
+  in the plains' woods; the Llano has almost no trees but shelterbelts, so
+  trees are .15 of the plains' density and brush takes the stands (generator
+  82, PLACED). The game's pans are scaled down to
+  fit a course (PLACED); measured on two eighteens: 6.5 m between the low
+  and high ground (5th to 95th percentile), bare playa floor 4-8% of it.
+- **Sand Hills -- taller dunes** (`dunes` at 14 m, scale 230, the corridors'
+  roll lifted to base 24, severity 18). [Sandhills (Nebraska)](https://en.wikipedia.org/wiki/Sandhills_(Nebraska))
+  and the University of Nebraska's overview (via the search): barchanoid
+  ridges and megabarchans typically 120-300 ft, simple linear dunes much
+  lower; a Brown County field's linear dunes 6-10 m of relief; blowouts up
+  to several hundred feet across; wet interdunal valleys. Before, its dunes
+  were 6 m, a links' size. Crests of about 13 m are PLACED: big enough to
+  read, small enough to route holes between.
+- **Wine Country -- a valley floor under ranges** (hills base 14, severity
+  22, roll .6, the far ring lifted to 520). The [Napa Valley Vintners'
+  staff guide](https://www.napavintners.com/trade/docs/Napa_Valley_Staff_Training_Guide.pdf)
+  and others in the search: the valley about 30 mi long and up to 5 mi
+  wide, the Mayacamas to the west and the Vaca Mountains to the east
+  (Atlas Peak 2,663 ft), an alluvial floor from the Napa River. Before, it
+  rolled everywhere (base 30, severity 50). PLACED.
+- **Judged to fit, unchanged:** Bluebonnet (the Blackland Prairie,
+  "gently rolling to nearly level with most slopes less than 12%",
+  [USDA FEIS BpS 3714280](https://research.fs.usda.gov/sites/default/files/feis/bps/3714280.pdf)
+  -- the prairie roll); Cross Timbers (rolling plains to hills, ridges and
+  cuestas over sandstone, local relief low but above its neighbours --
+  [Cross Timbers](https://en.wikipedia.org/wiki/Cross_Timbers) and USDA ESD
+  [084A](https://edit.sc.egov.usda.gov/catalogs/esd/084A/R084AY075OK); the
+  prairie roll with its drifts; the cuestas were considered as the `steps`
+  recipe and left, since it would take the prairie drifts the woods
+  stand between); Pine Barrens (flat to gently rolling, rarely above about
+  200 ft, sandy -- the [NJ Pinelands Commission's](https://www.nj.gov/pinelands/infor/educational/curriculum/pinecur/psg.htm)
+  pages; low sand dunes as now, Pine Valley's own rolling sand being the
+  model course); Chihuahuan (basins and playas, low mountains and bajadas
+  in the EPA's level IV list -- the mesas recipe stands; no source named
+  mesas, so that choice is PLACED).
+
+The bench found one shrub floating 6 cm on a Wine Country creek's cut bank
+after the change: the cover-slope check (course.js `coverTooSteep`) takes
+centred differences, which average away a one-sided drop, and a cover's seat
+is capped at 75% of its height. Refusing every cover within a creek's lip
+moved all forty landscapes' planting, so only a cover there that would
+actually float is refused, by the bench's own check (tree-seat.js
+`seatGap`, now shared by tools/metrics.mjs and course.js). No fingerprint
+moved.
+
+**Tall trees on lips** (found by the bench on the new Piedmont): course.js
+onLip let a tree stand over a drop of 15% of its height under its foot --
+2.7 m for a magnolia, which floated over a creek bank. Now 2 m at most. That
+moved every landscape's planting a little (thirty fingerprints).
+
+## The builder skins the land from its heights (3 November 2026)
+
+The editor's Skin from the land (src/builder/skin.js; docs/COURSE_BUILDER.md)
+paints a landscape's rock on steep built ground and its apron below. Its
+four numbers are PLACED, none from a source: a face from a slope of 0.6
+(31 degrees; the generator's crags turn to rock between about 0.45 and 0.7,
+so a built course reads like a generated one), an apron from 0.22 within
+12 m below a face, and 6 m kept clear of the holes' turf, sand, paths and
+water. Which kinds: the first rock-like kind (rock, hardpan, scree, coral)
+the landscape's landform names is its face, the next (scree, hardpan, waste,
+native, heather) its apron; a landscape naming nothing rock-like takes its
+own first kind for the face (rock was the fallback until it was seen on
+Chambers Bay's dunes, 3 November 2026). On real surveys: Bully Pulpit
+(0.55 m) 31.0 ha of face and 55.6 ha of apron, 9.7 s; Chambers Bay (0.5 m)
+6.3 and 19.6 ha, 5-7 s; 0.6 reads the Badlands' breaks well and was left
+alone.
+
+## Cart-path corners on steep ground (generator 77, 3 November 2026)
+
+The owner's rule (2 November 2026): every corner rounded. What was left
+sat on ground steeper than SHAPE_GRADE (0.28): a rounded corner failed the
+grade test even where the corner it replaced was already steeper. Now a
+rounded point may be as steep as the old one plus 15% (the 2 m samples'
+spread), capped at 0.29 so every step stays under the walkable 30%
+(tests/paths.test.mjs), and a point that does not fit may move halfway. All
+three numbers PLACED. Across the full bench (195 courses) sharp corners
+went from 205 to 186; on the six steepest landscapes (SoCal, Sierra,
+Rockies, Cascades, Alaska, Ozarks) from 58 to 45. Allowing 60 passes
+instead of 30 rounded two more of those and was not kept. The rest are
+switchbacks of about 120 degrees on slopes of 0.4-0.57: no walkable
+rounded turn fits there.
+
+## Roads in the builder (3 November 2026)
+
+OpenStreetMap's roads painted their width (src/builder/osm.js `ROAD_WIDTH`):
+motorway 14 m, trunk 12, primary 9, secondary 8, tertiary 7, unclassified
+and residential 6, living street and service 5, a parking aisle 6. PLACED
+from common US lane widths of about 3-3.7 m a lane (two lanes and a little
+shoulder for the smaller roads); no source fetched for the exact figures.
+
+## Each landscape's road surface (3 November 2026)
+
+From the study's catalogue (`subs[].streets`, local): where a landscape
+lists a country surface beside asphalt, the club's drive takes it (gravel,
+dirt, red clay, shell, brick, cobble or concrete; renderer.js addPaths
+`DRIVE`), and the public road stays asphalt unless the place lists concrete
+and no asphalt (Bluebonnet Prairie, the Gulf Coast, Florida Flatwoods) or
+only gravel and dirt (the Sand Hills). Which of a landscape's listed
+surfaces goes where is PLACED. Colours PLACED: dirt #9c8466, red clay
+#a5583a, brick #9a4e3c, cobble #8a8478.
+
+## The fairway homes' streets (generator 84, 3 November 2026)
+
+PLAN.md section 4: "the housing's streets serve the homes". No outside source;
+every figure PLACED, for the owner to overrule:
+
+- **Which way a house faces.** The houses faced the fairway, so a drive and
+  its mailbox ended on the fairway side, in the rough. Three ways out were
+  weighed. A street between house and fairway would lay asphalt 25-55 m off
+  the semi-rough, in the rough a sliced drive lands in: refused. Fronts kept to
+  the course with the drive moved to the back would give the street nothing but
+  back doors: refused. **Taken: the house turned half round**, as a golf
+  community's houses stand, backs to the course. The footprint is a rectangle
+  about its middle, so the collider, the siting and every seeded draw are as
+  they were; only `rotation`. What a player gives up: from the fairway a house
+  now shows its back wall (windows and shutters, no porch or garden).
+- **Sizes.** A street 6.1 m (20 ft, a common US residential width) with a pale
+  curb; a lane 3.4 m, the drive's width, up to 30 m long; a street's middle 7 m
+  past the drive's end (`STREET` in roads.js).
+- **Shape.** No 4 m stretch turning past 20 degrees where the ground allows (a
+  radius of about 11.5 m); a join squarer than 50 degrees runs 14 m along what
+  it joins; a far end joins another street within 130 m if the way is under 2.2
+  times the distance and does not double back, else a teardrop cul-de-sac of
+  radius 12, 10, 8 or 6.5 m within its last 30 m.
+- **What it costs.** The rough beside play is 8 times as dear to cross. Water is
+  closed to a street altogether: a row a creek cuts off loses its drives rather
+  than gaining a bridge, the simpler rule. Over the full bench with homes on
+  (195 courses, 1,583 houses): 558 streets and 661 lanes, 0 roads on play, 0
+  on water, 0 drives to nowhere, 0 through a building; 78 streets keep a corner
+  sharper than the cart paths' limit, 49 stop short where no cul-de-sac fits and
+  7 still leave a tip heading back (bench counts `streetSharp`, `streetDeadEnd`,
+  `streetFold`). Courses are spread out, so a
+  street can be long for what it serves: 2 to 3 km on a nine with ten garaged
+  houses, and a lone house at the far end of the property keeps its long way
+  to the road (PLACED: no cap, so that a drive still arrives). Laying them
+  adds about 0.5 s to a nine and 1.1 s to an eighteen (about a tenth), with
+  homes on only; measured on a loaded machine.
+- **Found on the way.** The bench's new `roadOverWater` and `roadOnHouse` read
+  non-zero before any street was laid: a public road or a club's drive could
+  cross a creek with no bridge (Sonoran S2), and the drive ran under the
+  clubhouse on about one course in forty (Longleaf S3, the Gulf Coast S2), the
+  public road through it once (Hill Country S4). A road over water now gets a
+  deck as wide as the road (course.js, `findBridges`), and both keep off the
+  clubhouse; a drive tries the lot's next side when the first is walled by it.
+  These are the only changes on a course with homes off.
+- **Seen, and the bugs it showed.** The first pictures showed a lane laid under
+  the street coming through on a crown: a road's strip has two points across,
+  so it cuts straight over a rise that the lane follows. A lane now stops at
+  the street's edge; a road's strip lies 5 cm above the ground, the paths' 3.5.
+  The Sonoran's showed two more no count had seen: a street hanging off another's
+  far end and running back beside it, a blunt point that reads as joined (a street
+  whose way out heads back now joins 40 m along, and the tip gets its cul-de-sac:
+  `streetFold` 54 to 7, dead ends 64 to 49), and a lane in
+  the warm landscapes' sand colour lost against the sand (concrete everywhere).
+
+## The software renderer on Medium, retried (3 November 2026, evening)
+
+The profile of 3 November crashed its page at weak/medium ("Target
+crashed") twice. Retried alone on the current build (16f737e and after),
+the profiler's weak group ran both cases: Low 2.7 ms of processor work, a
+frame presented every 6.2 s, 259 draws, 11.7 million triangles; Medium
+3.0 ms, 6.7 s, 315 draws, 13.5 million (SwiftShader through ANGLE's
+Vulkan, 1600 x 900 at 1x). tools/software-crash.mjs (new) built a Puget
+Sound nine straight at Medium and drew it, 312 draws and 9.0 million
+triangles at its tee, heap 157 MB. The crash is not reproduced and its cause
+not found; graphics.js still starts a software renderer on Low. The frames
+are the real finding: the September baseline drew Medium at 3.8 s a frame,
+so the landscapes' geometry roughly doubled the software cost, and neither
+tier is playable without a graphics card.
+
+## Monterey's holes along the sea (generator 79, 3 November 2026)
+
+The owner: "Make sure the holes can genuinely play along the coast." An
+`edgeCoast` landscape's shore ran straight down the course's edge, 90 m in
+-- past the woods, with no hole near it. For `coastSeek` (Monterey) the
+shore's line now follows the holes (course.js `coastAt`): every 10 m along
+z, the easternmost corridor within 40 m (its tees-to-green line plus 30 m)
+less 130 m -- the shore ramp needs about 80 m to take 20-30 m of ground
+under the sea -- dilated over 60 m and averaged, so it never comes nearer
+a hole than its own band allows and its coves are round. And the land
+ramps toward the sea only from 5 m outside any corridor's envelope (full
+from 25 m), so play stays dry and stands on a cliff. Measured on five
+18-hole seeds: 3, 6, 3, 6 and 3 holes with open water within 50 m of a
+fairway or green; no play wet. First tries: 45 m beyond the easternmost
+point left every green 115-250 m from the sea; a line 60 m in without the
+corridor guard wet 40-181 cells of play. All numbers PLACED.
+
+## The twig layer, the spring bloom and snow on the walls (3 November 2026)
+
+The three seasons items left open by the seasons step. All drawing: the
+fingerprints did not move, no generator step. New models: none.
+
+**The twig layer** (src/twigs.js, mesh-assets.js `bareParts`). A bare tree
+was its bark part alone, and bark parts are small (a maple's 216 triangles:
+trunk and a few limbs) because leaves hid the rest. PLAN section 3 asked for
+some 55 bare variants, each owing fifteen Blender rounds; instead the branches
+are grown at run time from the model's own parts, by space colonisation
+(Runions, Lane and Prusinkiewicz, 2007, read at abstract level only): points
+in the crown pull the nearest branch end, are used up when reached, and a
+branch nothing pulls stops. The points are the leaf part's own vertices (230
+of them, evenly by vertex order), so the twigs fill that species' crown: the
+owner's silhouette rule holds by construction (tests/twigs.test.mjs: width
+within 75-115% of the crown, height 85-110%, on birch, aspen, elm, bur oak,
+maple). Thickness is the pipe model run back from the ends: a parent's width
+to the 2.3 is the sum of its children's, from .0026 of the tree's height (5 cm
+radius at 18 m) to at most .013. All PLACED against the pictures. A shrub's twig
+is thickened up to four times (18 m over its mean height), since its metres
+are few. The fine wood is painted darker than the bark and no paler than a
+dark grey-brown (.3 and .2 over the bark's lightness, at most .85 and .65):
+a birch's white trunk has near-black twigs, as it does in life.
+
+What the pictures taught, in order. **A fixed step grew nothing on a birch**:
+at .055 and a reach of .08 its whole crown lay within one reach of the trunk;
+the step now goes by the crown's width (.13 of it, .025-.055, the reach 1.4
+steps), and the bark no longer uses points up. **Forty-eight starts made a
+tuft on every limb**, nothing branching and no twin left to draw; sixteen
+starts, spread by farthest-point sampling from the highest, also finds every
+limb's end -- a plain sample left limbs stopping in mid-air where the leaves
+had hidden the cut. **Direction from the pull alone zig-zagged**: each step now
+carries .8 of the last step's heading. **Following points on the crown's skin
+ran branches round it in rings** (seen on a Heartland maple): each step leans
+.35 away from the trunk. **Spray ends at 0.05 and wide read as thorns**: now
+0.07 long, .5 spread, thinner at the foot.
+
+Cost, in the model: 500-2,700 triangles of wood a tree (mean 1.1 ms to
+grow one model and make both meshes, Node, this machine; about 40 models in a
+round, in winter only) against 2,000-4,560 of leaf part it replaces. A bare
+tree is under 85% of the tree in leaf on every species tested, most much
+under. The wood is merged INTO the bark, so a bare tree has no draw call a tree
+in leaf lacks: its leaf meshes go. Against the old bare winter it is dearer,
+near and far both, since every bare model now keeps a far mesh it often did
+not have (its bark alone was too near its twin to be thinned). Its twin, far off and on Low, is the shipped `_Far`
+trunk plus the branches that carry two or more ends, 1.6 times as stout,
+with a point in place of the spray: 30-800 triangles.
+
+**The spring bloom** (seasons.js `BLOOM`, `bloomIn`). The packs' spring colours
+flower each species; this is the place's own wildflowers. Each landscape has
+its months and two or three colours, and `amount` is the share of those
+months in March-May, so a window half in June is half a bloom and one wholly
+in summer is none. Anchored on sources (REFERENCES.md): Hill Country and
+Bluebonnet Prairie March-April, the Wildflower Center's early-April peak in
+Central Texas; Monterey and SoCal March to April or May, after the Antelope
+Valley poppy reserve's late-March to mid-April peak (a desert-edge reserve, not
+those coasts; adapted); the Sonoran March-April, the Desert Museum's peak
+mid-March to late April in the Arizona Upland; the Mojave March-May, later than
+the Sonoran by the same source, which gives no months for it, so the last month
+is PLACED; Blue Ridge April-May, the Smokies' mid to late April low down and
+later high up; the Rockies June-August, June at 8,000-9,000 ft and July-August
+above (Lonely Planet, a travel source); Alaska June-July, peak near the
+solstice (a Kenai newspaper). **Every other landscape's months, and every
+colour, are PLACED** from the region's character and nobody has checked them:
+puget, redwood, cascades, sierra, ponderosa, sagebrush, redrock, palms,
+chihuahuan, winecountry, the Midwest, plains, South and Florida landscapes,
+ozarks, bluegrass, the Northeast, northwoods, lakedunes, oregondunes, links. A
+search for Pacific Northwest camas and New England trillium dates found
+nothing. The tropics have no spring (`roundSeason`), so no entry; PLAN's "with
+only the flowering changing" for them is not built. A big desert bloom is not
+annual (NPS, Mojave); the game draws a good year. A window is not read against
+a date: spring is one look, the peak, for a whole season (PLACED, a round is
+played in a season).
+
+The bloom is drawn three ways. Wildflowers in the rough, in every landscape,
+at .24 of the rough's blades times `amount` (the five FLOWER_REGIONS' .16
+year-round flowers are kept in summer and autumn), 1.7 times the size, none in
+winter or in a spring with no bloom: they used to stand in snow. Long grass
+heads, colony by colony, .7 of colonies times `amount`. **Neither shows a
+landscape in flower**: seen from the second tee the first picture was a few red
+specks. So the ground shader paints drifts in the rough (`bloomOn`): flecks in
+a 0.27 m cell, a third of cells empty, 72% the first colour, in drifts of about
+30 m and 9 m, settling to a 20% tint where a cell is under a pixel or so. It
+runs before any surface overwrites the rough, so it cannot reach a fairway,
+green or tee, and the wild `native` ground goes .34 of the way to the first
+colour times `amount`. First tries: half-metre squares over four fifths of the
+rough, a carpet of pixels that turned the Blue Ridge's white bloom to gravel;
+0.42 m round dots, polka dots from a tee. All PLACED.
+
+New England's spring needed its own line: its record is its autumn
+(`leafFall`), so at the general .18 its spring had a gold rough and orange
+hills. For a `leafFall` landscape the rough goes .6 and the semi .4 toward
+spring green, the litter .75 toward #8a7452 and the far woods .85 toward #7c9c52
+(PLACED). Its summer stays as the owner accepted it.
+
+**Snow on the walls.** Every wall, fence and yard piece the story draws
+(renderer.js `addStory`) takes the same fade as the roofs and trees
+(vegetation.js snowTopped), where the region's winter is snow. A Bluegrass board
+fence never shows it: Appalachia's winter is frost.
+
+**Low's frame: not properly measured.** tools/frame-ab.mjs (New England,
+winter, Low, tees 1 and 5) against the build before gave one round of each
+before the second B page failed to come up in 60 s, so there is no median, no
+draw or triangle count and no A-B-B-A: processor 1.6 to 4.5 ms and graphics card
+.93 to 1.32 ms at tee 1, .9 to 2.9 and .61 to .93 at tee 5, against the OLD bare
+winter, with other agents' jobs on the processor. An indication that the twigs
+cost something on Low against the bare posts, and that the processor's share
+wants looking at first; not a figure. No driver reset in the Windows log and no
+WebGL error; the failure is not explained, and graphics work stopped there as
+the job's rules say. The bloom's cost on Low was never measured.
+
+**The frame tool's own gate.** Run through tools/gpu-run.mjs, frame-ab still
+applies its own: under 10% busy, under 60 °C, five minutes' rest. The desktop
+idles above 10% here, so it sat holding the shared lock (tools/gpu-lock.mjs) for
+half an hour, with every other job queued behind it. Pass it the same limits:
+`--util 45 --temp 75 --rest 3`.
+
+**Seen and not seen.** Seen at Ultra: New England and the Heartland in winter
+(a bare hardwood wood, each species' outline: the elms' vases, the bur oaks wide
+and flat), the Hill Country in spring (blue and red drifts), the Blue Ridge
+(0.42 m flecks), New England's green spring. Seen at Low in the game's own view:
+New England in winter, the far twins standing as branches where the build before
+had posts, though thin ones break into dashes at the far end of the hole. Not
+seen: snow on any wall or fence; the final 0.27 m flecks (their shader compiled,
+in the failed run's winter pages, but bloomOn was 0); the new `wall` capture
+view. Not seen by a person.
+
+**Seen on 4 November 2026.** The `wall` view showed New England's fieldstone bare in the snow: the snow fade starts at a world normal y of .45 and is full at .8, and a rounded stone has almost nothing that flat. Walls, fences and yard pieces now fade from .15 to .5 (`snowTopped(material, true)`, PLACED by eye), and the wall carries snow on its tops, in the same shaded blue as the snow beside it. The flecks read as flowers on the Blue Ridge and Bluebonnet, no polka dots. **The long grass's bloom heads were looked at and kept**: from a metre away a clump's blade tips are plainly blue (the Hill Country, `h1-low`), but from a tee or above they are what reads as the drifts of bluebonnets and paintbrush, and without them the Hill Country's spring has little else at range. Listed for the owner's eye.
+
+## The country is one surface: no hole in a bowl (generator 85, 4 November 2026)
+
+**The owner**: "When you look at many of our GENERATED courses, you will see that each hole exists in sort of a bowl with a creased rise of land between them ... I believe this may have been linked to prior issues we have had with tee boxes and greens." The land, courses, tees and greens were free to move.
+
+**The cause.** `land` was `base + hills * fade + lift * fade`, the fade nothing on a corridor and growing with distance from it. Hills and lift are positive, so a multiplier that is zero on the hole is a trough along the hole. And the distance to the nearest of many corridors is the kind of field with a sharp ridge along the line of equal distance, which is the crease. Older entries here (*the base landscape puts a basin in the ground wherever a tee goes*) and generators 53's seam fade were this, seen from the tee. "Landscape character" was the size of that wall, but it was not the root and did not need folding into elevation: the two now mean separate things (the country's relief, and how much of it a hole takes).
+
+**The measure** (a probe, then tests/country.test.mjs; two eighteens a landscape): rise, the mean ground 60-100 m from a corridor less the mean on it, in metres; and crest, of the cells on the line between two corridors, the share with a change of slope of more than .12 across 24 m.
+
+| Landscape | Rise before | after | Crest before | after |
+|---|---|---|---|---|
+| Rockies | 40.7 | -1.1 | 78.9% | 14.5% |
+| High Sierra | 36.9 | -1.6 | 79.8% | 17.2% |
+| Hill Country | 24.4 | -1.0 | 79.1% | 14.4% |
+| Badlands | 22.4 | 6.6 | 63.3% | 7.6% |
+| Ponderosa | 20.6 | -0.1 | 68.5% | 11.6% |
+| SoCal Canyons | 17.1 | -0.3 | 75.6% | 12.9% |
+| Sand Hills | 14.8 | 0.4 | 69.2% | 5.9% |
+| Sonoran | 14.6 | -0.2 | 58.9% | 5.8% |
+| Puget Sound | 12.3 | -0.4 | 64.7% | 7.0% |
+| Heartland | 4.9 | 0.1 | 38.6% | 2.9% |
+
+Forty of the forty-one are within 3 m but for the Badlands (on purpose: it stands on a floor), Monterey (-6.9, the ground falling to the sea) and the Keys (-9.1, unchanged, the islands' own path). The crest's remainder in the mountains is mostly the rock recipes' own cliffs.
+
+**What the holes lost nothing by** (195 courses, full tier, before against after): tees needing real earthwork 106 to 22; tee shots blocked over 1 m 122 to 100, over 3 m 26 to 22; a tee's step down the hole at the 95th percentile 5.33 m to 3.85 m; sharp cart-path corners 190 to 70, dead ends 26 to 13; every bench rule clear. Fairway slope, median, before and after: Rockies 5.2% to 7.0%, High Sierra 5.2% to about 9%, Blue Ridge 5.2% to 7.3%, Puget Sound 5.8% to 4.4%, Sand Hills 5.4% to 3.6%, Heartland 4.7% to 3.1%; the steepest 20 m of a median hole in the Rockies 15.6% to 11.8%. Tee-to-green fall barely moves. The change is side-hill lies in the mountains, gentler holes everywhere else.
+
+**Rounds.** One: `floor + (country - floor) * fade`, the rise gone first time, but a tee at the tip of a corridor lay inside the softened distance and took the country back (a tee collar 1.34 m out of level); hence `CLEAR_EDGE`, 12 m. Two: fairways on the whole long shape were 12% at the median in the Rockies, and the cap as one standard deviation came from that: 18.5 m per unit of elevation severity (6.5 m at the default 35%), PLACED. A first cap of 5 + 18 per unit was not binding, and a share kept at no elevation (.3) broke the rule that elevation 0 is a level hole (tests/play.test.mjs, 0.1 m), so both numbers are now per unit of elevation. Three: six tees of 5,265 still had a tilted collar with no level to them: on rolling ground a pond's shelf ran 60 m, past the tee, and was laid after it; the pad is set back to its level after the basins, and `teeCollarTilted` is a bench rule. Rejected: folding "Landscape character" into "Elevation severity" (the owner's offer; not needed, and it would have cost a settings migration and the country's own size as a setting). PLACED: every constant in course.js *The country*, and the 3 m edge on a tee's level.
+
+**Two landmarks of the change.** A lighthouse could stand on the public road (Oregon Dunes S5): landmarks never asked; they do now. A cart-path network in pieces was not new and got no worse: 31 of 84 sampled courses were in two or more, against 43 before. Generator 86 closed it: most gaps were 3-15 m, where a short piece joined at both ends had been deleted as a jog without asking whether it was the only link. Keeping those took it to 25 of 84; joining what was left, straight or by the router, to 0 of 84, and `pathInParts` is a bench rule. Dead ends 13 to 11, sharp corners 70 to 75, with the links' own corners, and the bench clear.
+
+## The last landscapes on another's ground (generator 87, 4 November 2026)
+
+**The question** (the owner): is any other landscape's terrain still not true to its place? **The check**: every record's land compared (landform, hills, base roll, base height). Four groups were the same ground under other planting: Sonoran, Red Rock and Chihuahuan; Rockies, Alaska and Cascades (the Cascades differing only in the far ring); Links and Oregon Dunes; Heartland and Cross Timbers. Puget Sound and the Redwood Coast had separate numbers but the same recipe and hills. `tests/terrain-true.test.mjs` now fails if two landscapes share their ground.
+
+Every number below is PLACED from the sources and the pictures; none of the sources gives a figure for a game recipe.
+
+| Landscape | Taken from the source | Built |
+|---|---|---|
+| Sonoran | Basin and Range: "broad, minimally dissected basins", ranges "granitic or 'mesa'-type volcanic", skirted by pediments and flanked by bajadas of coalescing fans ([USGS OF 92-23](https://pubs.usgs.gov/of/1992/0023/report.pdf); [AGS Digest 8, Cabeza Prieta](https://arizonageologicalsociety10.wildapricot.org/resources/Documents/Publications/Digests/Digest_08/09_AGS_DIG08_Simmons_Cabeza_Prieta-S.pdf); [AZGS OFR 01-03, Crater Range](https://data.azgs.arizona.edu/api/v1/collections/AOFR-1552428978347-621/OFR01-03CraterRangebw.pdf)) | `knobs` of brown granite, 16-44 m, on a washed floor, in place of mesas |
+| Red Rock | Navajo Sandstone cliffs, cuestas, domes and bluffs ([Utah Geological Survey](https://geology.utah.gov/spot-the-rock-january-23-2014/); [Navajo Sandstone](https://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq.ipfs.4everland.io/wiki/Navajo_Formation.html), a Wikipedia mirror, the weakest here). The search found nothing on the stair-step benches themselves; the three benches follow the study's pictures | `steps`: three benches, 50 m in all, sharp risers |
+| Chihuahuan | Fault-block ranges, sediment-filled bolsons, playas, bajadas ([Bolson](https://en.wikipedia.org/wiki/Bolson); [NPS Chihuahuan network](https://home.nps.gov/subjects/geology/geodiversity-atlas-chihuahuan-desert-network-index.htm); [USGS GF 194](https://pubs.usgs.gov/gf/194/text.pdf)) | Unchanged: it keeps the mesas, now its own. Judged enough; a playa floor would be closer and is not built |
+| Alaska | Moraines and kames commonest, then meltwater plains and channels; end and lateral moraines, eskers and outwash terraces in the Matanuska valley ([USGS OF 87-168](https://pubs.usgs.gov/of/1987/0168/report.pdf); [OF 88-381](https://pubs.usgs.gov/of/1988/0381/report.pdf); [OF 91-143](https://pubs.usgs.gov/of/1991/0143/report.pdf); [WSP 1494](https://pubs.usgs.gov/wsp/1494/report.pdf)) | `glacial`: hummocks 9 m, kettles 4-10 m, eskers 5 m, the ranges behind |
+| Oregon Dunes | Holocene dunes on uplifted terraces, transverse and parabolic forms, deflation plains; the Whisky Run terrace about 125 ft ([Peterson et al. 2007](https://people.wou.edu/~taylors/g407/peterson_et_al_2007_dunes_HINTZ.pdf); [SERC, Oregon terraces](https://serc.carleton.edu/42739); [USGS OF 80-444](https://pubs.usgs.gov/of/1980/0444/plate-1.pdf); [Oregon Geology 34(2)](https://pubs.oregon.gov/dogami/og/OBv34n02.pdf)) | `dunes` at twice a links' height and scale. Deflation plains and headlands not built |
+| Puget Sound | Fluted ridges and drumlins aligned with the ice, kettles, till ([WA DNR](https://dnr.wa.gov/node/416); [UW glacial notes](https://faculty.washington.edu/slb/esc210/glacial.pdf)). No source found for drumlin heights | `glacial` with long north-south hills (`hummockX`, `hummockZ`, 13 m), kettles 4-9 m, no eskers |
+| Redwood Coast | Franciscan rock, uplift against erosion, steep tributaries, gorge walls with debris slides ([NPS Redwood geodiversity](https://www.nps.gov/articles/nps-geodiversity-atlas-redwood-national-park-and-state-parks-california.htm); [CGS Humboldt Redwoods note](https://www.parks.ca.gov/pages/734/files/GeoGem%20Note%205%20Humboldt%20Redwoods%20State%20Park.pdf); [USGS Redwood Creek map](https://www.usgs.gov/publications/geologic-map-redwood-creek-drainage-basin-humboldt-county-california)) | `channels`: narrow V gorges 30 m deep between steep ridges |
+| Cross Timbers | "Rolling plains, to hills, ridges and cuestas"; resistant sandstone on ridgetops ([Cross Timbers](https://Wikipedia.com/wiki/Cross_Timbers); [USFS ecoregions](https://www.fs.usda.gov/land/pubs/ecoregions/ch29.html); [NRCS site description](https://edit.jornada.nmsu.edu/services/descriptions/esd/084B/R084BY174TX.pdf)) | `steps`: two low benches, 8 m, sandstone on the risers, native grass between (`drift`) |
+| Cascades | No new source; the study's page: "dark basalt and pumice", volcanoes behind | `crags` sharper and closer-set than the Rockies'. The weakest of these: volcanic ground in name more than shape |
+
+**Seen**: all eight from above and low, in pictures sent to the owner. **Rounds**: one for most; the Sonoran's first knobs read as dunes (as the Mojave's had), so its rock went browner and barer, and Red Rock's first benches lay too gentle, so its risers went from .14 to .09 and the benches closer in.
+
+**Played**: fairway slope at the median 3-8%, the steepest 20 m of a median hole 6-12%; the rise beside a corridor within about 3 m on all eight; the full bench clear. **Rejected**: moving the Chihuahuan off the mesas too (Sonoran and Red Rock moving already gave it its own ground).
+
+## The performance pass at the end of the US landscapes goal (4 November 2026)
+
+Everything here is the RTX 4090 unless it says software, so it is headroom and not a weak machine.
+
+**The profile against bench/profile-baseline.json** (generator 87, 72 cases, 38 minutes; the baseline is 28 September 2026). Every shared case on the real card is faster except two, and those two only on the processor:
+
+| Case | Baseline, processor / card ms | Now | Triangles a frame |
+|---|---|---|---|
+| Low, Redwood, player's view | 4.8 / 5.6 | 1.4 / 0.8 | 79.4 M to 7.0 M |
+| Medium | 5.4 / 8.8 | 1.5 / 1.4 | 79.3 M to 7.7 M |
+| High | 12.4 / 14.1 | 2.3 / 2.3 | 158 M to 10.0 M |
+| Ultra | 14.1 / 15.4 | 2.6 / 2.6 | 158 M to 10.1 M |
+| Links overview | 2.2 / 6.8 | 3.1 / 3.2 | 8.5 M to 11.7 M |
+| Water course, all on | 4.1 / 7.2 | 5.0 / 5.2 | 11.5 M to 37.1 M |
+| Software, Low (seconds a frame) | 3.31 | 8.06 | 3.2 M to 13.2 M |
+| Software, Medium (seconds a frame) | 3.81 | 8.57 | 3.2 M to 15.5 M |
+
+**One line is worse and stays worse: a machine with no graphics card.** Its frame is 2.4 times the baseline's. That machine could not play at 3.3 s a frame and cannot at 8 s; the cost is the trees' triangles on Puget Sound, each a real model, and the owner closed drawing fewer of them (*graphics.js*, won't do, 30 September, and "every model made is used"). So the goal's "no worse than the baseline" holds for every case with a graphics card and fails for this one, reported and not fixed.
+
+**Frame tests on Low**, against the build of 3 November (generator 75), by mean frame: New England in winter +14.3% (0.85 to 0.98 ms; triangles +26%, the twigs), New England in spring +16.0% (1.00 to 1.16 ms, the bloom), Hill Country in spring +5.4%, High Plains in summer -1.9%, the Keys in summer +13.1% (one of its rounds read 1.2 ms against 0.9 on the processor), the Mojave in summer -1.0%. The largest is 0.16 ms, about a hundredth of a 60 fps frame on this card. The twigs' first figure (processor 1.6 to 4.5 ms) came from a run with agents on the processor and does not stand: at the same tees the processor reads 0.6 to 0.7 and 0.9 to 1.0 ms. **The Heartland grasses' 0.6 ms on the processor** did not come back in the High Plains, the worst clumps (0.8 ms level); not measured again on the Heartland.
+
+**The first start's wait.** Start to the main menu was 19-20 s at generator 75 and 26.7 s at generator 87, and it was not the generator (a course builds in the same time as before generator 85: 4.9 s for 18 holes on Puget Sound against 4.8) nor the 38 MB page (loaded in 0.8 s). The page sat idle for 16 of 19 s waiting for the browser to compile shaders. Pulled out and timed alone, the 142 programs of a start take under a second each, except the ground's three (daylight, the water's probes, floodlit): 7.5, 7.7 and 8.5 s, against 4.7-5.3 s at generator 75, run one after another (`ready`).
+
+The ground's cost was one function. `groundPaint` was called from seven places (four wild layers, the far ring's floor and face, a built course's ground), and the compiler a browser uses on Windows copies a function in at every call:
+
+| Ground program, as changed | Compile s |
+|---|---|
+| As it stood | 7.8 |
+| No built branch (one call fewer) | 5.7 |
+| ... and no far ring (two fewer) | 3.6 |
+| ... or no wild layers (four fewer) | 2.1 |
+| No groundPaint at all | 0.9 |
+
+**Tried and rejected, each timed:** moving the derivatives out of the branches (no gain: my first guess); writing the built course's four-texel vote without its nested loops (no gain, and the `for` it replaced went back); a loop round one call, whose count a constant (5.6 s) or a run-time value (5.5 s): the compiler unrolled or otherwise paid for it anyway. Compiling the three ground programs at once does help (14 s against 23 s when each took 7.8) but means reordering `ready`, whose order the probes depend on, and two seconds a program left too little to win.
+
+**Built:** the top two layers of a fragment are painted and no more (`paintLayer`, two calls), which also covers the ring's floor and face; a built course's branch is in a built course's program only (`BUILT_COURSE`). Three layers meeting is the edge of an edge of a patch, and there the lowest shows the rough: PLACED as invisible, and checked: twelve pictures of six landscapes before and after, under 1% of pixels moved by more than a tenth, and the links pair, the most moved, reads the same by eye (the difference is the grass in the wind). A pixel with its top layer fully on no longer paints the one under it, a small saving on the frame.
+
+**Result:** 2.0-2.3 s a ground program; start to the main menu **12.1 s, against 26.7 s before and 20.2 s at generator 75** (Mojave, A B B A, two rounds each), the frame level (-1.0%). Every first course of a session takes the same saving. A second start in the same browser is no quicker in the harness (28.2 s against 29.2 s cold, before the fix): no disk cache of shaders was seen helping there, so the first start's figure is every start's, at least in the harness. **Not measured** on a slower processor, where a compile takes longer in proportion; on Mac and Linux a different compiler does this work and the old cost was probably smaller.
+
+**The page that did not start in the capture harness** (two in 40 minutes, 4 November) is probably this: three programs at 8 s each, on a machine full of agents, against a 60 s wait. Probably, not proven; none since, and no run has had agents beside it since.
+
+## A pond's bed (4 November 2026)
+
+The owner: water painted into a course did not draw in the game, and should the
+ground be dug out? It should. Built water is one flat sheet at a level
+(renderer.js `addWaterBody`) over land that is whatever it was. The 3D editor's
+pond set its level 0.3 m under its lowest bank and left the ground alone, so
+everything but that bank stood over the sheet and hid it. Door 2 dug a flat
+metre inside the outline, which showed, but with a wall all round and the sheet
+hanging over any shore lower than the level.
+
+src/builder/water-bed.js, for both, all PLACED from the section of a golf pond
+(no source read): the level 0.15 m under the lowest tenth of the shore (door 2's
+figure; one low notch does not sink the pond); a shelf 0.35 m under the water at
+the edge, falling to 1.3 m over 5 m; a bank no steeper than 1 in 2 on both sides,
+measured from 0.1 m over the water, up to 30 m back on the high side and 8 m on
+the low. The first try graded 8 m on both: a pond on a 1 in 5 hillside was left
+with a 6 m cliff behind it (tests/water-bed.test.mjs holds the slope to 60 m).
+The first bank was an easing rather than a limit, which moved the ground again
+at every Save; the limits come out the same however often they run, which the
+same file tests. A green or a tee beside the water keeps its ground. Not seen
+in the game.
+
+## How green the rough is, season by season (4 November 2026)
+
+The owner: "Spring doesnt look too much different across the landscapes", and
+grasses "would be much greener", California wine country the example; a pass
+over every landscape for spring, summer and autumn. A record's rough was one
+colour, and straw where the wild hills go straw (wine country `#b4a464`), but a
+golf course's rough is watered. seasons.js `GREEN`: for each landscape and each
+of the three seasons, the share of the way from the record's rough to a rich
+green `#4f8a34`, the semi-rough at half that, the ground's pale overlay and the
+long grass with it. **Every number is PLACED, read from when the place's rain
+falls, with no source taken**: California greenest in spring and watered through
+summer; the wet East and South rich till autumn; the Plains and Texas a spring
+flush, cured by July; the mountains and Alaska green late; the North-west's
+coasts and the links holding, a links' fescue left tawny; the deserts a touch,
+as their rough is the desert floor. New England's record is its autumn
+(`leafFall`), so its autumn is the record as it stands. Its summer was the same
+until the owner read this ("make it real summer. Autumn can just be real
+autumn"): now a green rough (.55), summer woods on the hills, a white sun in
+place of the low orange one, Appalachia's shade, grass banks, no leaf drifts,
+and the trees in their own summer colours (`autumnLeaves` is autumn only). All
+colours PLACED from Old Northeast's summer record. Drawing only: the land, and
+the leaf-litter ground type under the woods, stay; only its colour changes.
+
+Spring was also too near summer: .18 of the way to fresh green moved a rough by
+less than the eye reads. Now .32 (.12 where the rough is not grass), the fairway
+.16, the fringe .14; a bloom half way to its colour on the wild ground (was a
+third) and 1.4 times as strong in the ground's drifts, capped at 1; and a
+broadleaf forest's far woods .4 toward new leaf in every region (before, New
+England's alone). The test holds spring's rough at least 14 of 441 colour steps
+from summer's on every landscape with a spring. Wine country: spring `#679b40`,
+summer `#779447`, autumn `#9f9b50`. Seen in numbers only, no picture yet.
+
+## Desert resort courses (5 November 2026)
+
+The owner sent pictures of TPC Summerlin and Shadow Creek: the Mojave landscape's
+planting does not match them. Research for a possible new landscape; the plan is
+local (docs/studies/desertresort/PLAN.md). Built the same day: *Desert Resort, as
+built*, below.
+
+- **TPC Summerlin:** Bobby Weed with Fuzzy Zoeller, 1991; about 2,700 ft (820 m);
+  crosses and follows barrancas; "creosote and cacti" with "grand pine trees";
+  homes round it; gentle elevation change.
+  [Wikipedia](https://en.wikipedia.org/wiki/TPC_at_Summerlin),
+  [Bobby Weed](https://bobbyweed.com/course/tpc-summerlin/),
+  [Golf365](https://www.golf365.com/courses/tpc-summerlin).
+- **Shadow Creek:** Tom Fazio for Steve Wynn on flat desert, 1989 or 1990 (sources
+  differ). An entire environment made from nothing, trees imported and waterfalls
+  built: [Golf Course News, 1989](https://archive.lib.msu.edu/tic/gcnew/article/1989aug14a.pdf).
+  Over 20,000 trees and 3 million cubic yards of earth are repeated figures with no
+  primary source found: unconfirmed.
+  [Planet Golf](https://www.planetgolf.com/courses/usa/shadow-creek-golf-course),
+  [CLUI](https://clui.org/ludb/site/shadow-creek-golf-club).
+- **Trees in the valley:** Aleppo pine and Mexican fan palm on
+  [SNWA's plant list](https://webarchive.library.unt.edu/web/20161225092602/http://www.snwa.com/assets/pdf/wsl_plantlist.pdf);
+  Afghan pine "found throughout" the valley, expected to struggle by about 2055
+  ([Las Vegas Sun](https://lasvegassun.com/news/2019/nov/25/climate-change-will-likely-stress-out-your-trees/));
+  Desert Pines lines its fairways with 4,000 pines
+  ([its page](https://arcisgolf.com/clubs/desert-pines-golf-club/home)). No document
+  lists either course's species: those in the plan are read from the pictures, PLACED.
+- **Afghan pine** (*Pinus eldarica*): 30-60 ft ([SNWA](https://snwa.com/landscapes/plants/?id=15022));
+  about 50 ft tall, 30 ft wide, irregular when mature ([AMWUA](https://www.amwua.org/plant/afghan-pine));
+  pyramidal young. SNWA's figures followed.
+- **African sumac** (*Searsia lancea*): 20-30 ft to 30-40 ft, as wide; sources split on
+  how weeping it is ([Wikipedia](https://en.wikipedia.org/wiki/Searsia_lancea),
+  [Oregon State](https://landscapeplants.oregonstate.edu/node/795)). No Nevada source.
+- **Pampas grass** (*Cortaderia selloana*): 2.5-4 m, spread 1.5-2.5 m, plumes 45-90 cm
+  ([RHS](https://www.rhs.org.uk/plants/4431/wd/details)); nurseries give less
+  ([Star Nursery](https://www.starnursery.com/product/pampas-grass)). RHS followed.
+- **Italian cypress:** two searches found nothing usable. Rejected until a source and
+  a picture of it on a course exist.
+- **Turf and water:** SNWA cut golf from 6.3 to 4.0 acre-feet an acre from 2024, about
+  1.5 under bermuda's use, making full overseeding "virtually impossible"
+  ([USGA](https://www.usga.org/content/usga/home-page/course-care/green-section-record/61/issue-02/get-out-in-front-of-water-regulations.html));
+  overseeded acres down 60% nationally, 2005-2021 ([Golf.com](https://golf.com/lifestyle/overseeding-golf-courses-fading-popularity/)).
+  Neither course's turf was found stated.
+- **Rock:** the Spring Mountains are mostly grey limestone, over 2,400 m above the
+  valley's west edge, thrust over red Aztec sandstone at Red Rock, with alluvial fans
+  below ([Earth Magazine](https://www.earthmagazine.org/article/travels-geology-las-vegas-scenery-beyond-slots/)).
+  Climate figures and the valley floor's caliche not found: PLACED.
+
+## A survey sees a shape, not a species (5 November 2026)
+
+The owner built TPC Summerlin on Desert Palms and found "not a single palm tree".
+Its 19,016 surveyed trees drew as 6,314 smoke trees, 6,261 desert willows, 6,213
+tamarisks and 228 Aleppo pines. A LIDAR tree's role is only narrow (crown under a
+fifth of its height, PLACED, real-course.js) or wide, and the species picker took
+those to mean conifer and broadleaf, with palms in neither.
+
+The reading does not tell a species. Measured on the built test courses, share
+read as narrow against the landscape's conifer share of its tall trees:
+
+| Course | Landscape | Read narrow | Conifer share |
+| --- | --- | --- | --- |
+| Sahalee (a fir forest) | puget | 24.7% | 62% |
+| Battle Creek | puget | 25.5% | 62% |
+| Breckenridge | rockies | 66.6% | 78% |
+| Bully Pulpit | badlands | 1.6% | 75% |
+| Ekwanok | newengland | 76.1% | 27% |
+| TPC Scottsdale | sonoran | 18.0% | 0% |
+| Worthington | heartland | 11.9% | 0% |
+
+So a surveyed tree's narrow reading no longer steers its species at all
+(`drawnSpecies`: no stored species and a conifer role is any tall tree), and
+`speciesFor` picks by the landscape's own planting shares rather than an even
+turn for each species. A conifer or palm role still counts when it is true: a
+tree picked by name, moved to a landscape that lacks its species. Rejected: wide
+as "anything but a conifer" (palms back, but a conifer landscape's woods stay
+wrong, and Desert Resort's pines would all but vanish on the course it is for).
+Drawing only: a built tree's collider is its stored trunk (physics.js `radius`),
+so no `BUILT_VERSION`.
+
+**Height is what a survey does measure** (the owner: "does height make more
+sense"), and a model is scaled to a tree's height with its own proportions kept,
+so by shares alone a smoke tree stood 15 m. `fitsHeight` takes out any species
+the tree would top by more than a quarter of the species' tallest, or fall under
+half its shortest; both PLACED. Too short for every species, it keeps the shares;
+too tall for every species, the tallest.
+
+The first version held the low end to a quarter too and gave a tree that fitted
+nothing the nearest species, and it was wrong. Over a third of the trees fitted
+nothing on four courses, and they all went to whichever species had the lowest
+floor by a metre: blue spruce 6% to 48% of Breckenridge, bur oak 23% to 55% of
+Worthington. The low end is the weak one on the evidence: a young tree of any species is real (the
+generator plants 5.5 m saplings of its own), and a tall model scaled down still
+looks like itself, where a shrubby model scaled up does not. The top end's quarter
+agrees with the generator, whose stands grow their trees a fifth over the listed
+top (`stands.grow`), so a generated 20.4 m date palm on a 10-17 m listing is
+within it. Heights are the game's own, `TREE_SIZE` and `tallHeight` in species.js.
+
+Share of each course's trees drawn more than a quarter over their species' top,
+by shares alone and by height, and the largest move of one species against its
+landscape share, in percentage points:
+
+| Course | Landscape | By shares | By height | Largest move |
+| --- | --- | --- | --- | --- |
+| TPC Summerlin | palms | 14.3% | 0% | fan palm -4 |
+| Bully Pulpit | badlands | 30.7% | 0% | juniper -24 |
+| Chambers Bay | oregondunes | 30.9% | 0% | shore pine -18 |
+| Northwood | redwood | 11.1% | 0% | redwood -21 |
+| TPC Scottsdale | sonoran | 17.6% | 5.5% | ocotillo -10 |
+| Key West | keys | 9.9% | 5.0% | royal palm -8 |
+| Ekwanok | newengland | 4.9% | 0% | under 1 |
+| Sahalee | puget | 20.5% | 17.6% | dogwood +2 |
+| Snohomish | puget | 22.5% | 18.4% | dogwood +3 |
+| Battle Creek | puget | 21.3% | 15.9% | madrone -2 |
+| Nile Shrine | puget | 13.0% | 10.8% | dogwood +11 |
+| Breckenridge | rockies | 0% | 0% | blue spruce +4 |
+| Worthington | heartland | 0% | 0% | bur oak +3 |
+
+What is left on Puget Sound is real: its firs pass 34 m and its tallest listed
+tree tops at 27, so they draw as the tallest it has. Northwood's redwoods fall to
+17% from a 38% share, because most of its surveyed trees are under 21 m (whether they are second growth is not established) and the
+landscape's redwood then ran 42-116 m (*The Redwood Coast, grounded* since): the numbers were right, but a redwood course
+with few redwoods is worth the owner's eye. Summerlin now draws 6,510 fan palms,
+4,956 date palms, 2,514 desert willows, 2,197 tamarisks, 1,548 smoke trees and
+1,291 Aleppo pines among 19,016 trees.
+
+## What reopening a course lost, and what keeping it costs (5 November 2026)
+
+Three test courses run through a reopen and Back to 2D before the change
+(tpc-scottsdale, worthington, bully-pulpit) came back with no sources, no map
+position although the file held it, no OpenStreetMap, no boundary or box, none of
+the survey's grids and every tree locked. The owner's own Summerlin draft had
+been through that road: `method` 'course', middle (0, 0), no sources.
+
+TPC Scottsdale, driven in the built builder with its USGS picture (1,280 x 768)
+and OpenStreetMap's data: the saved file 11.5 MB, the copy to share 2.4 MB. Save
+took 1.2 s; reopening 3.8 s; Back to 2D 10.7 s. That is from a stand-in land with
+few of the survey's grids; a door 2 session straight from the LIDAR weighs about
+what its draft does (Summerlin 12.7 MB, Bully Pulpit 13.8 MB, before pictures).
+A Google or Bing mosaic can reach 400 tiles, 26 million pixels; its JPEG size is
+not measured (estimated 5-15 MB, PLACED). Quality .9 is PLACED: tracing needs
+edges rather than exact colours.
+
+## The Redwood Coast, grounded (5 November 2026)
+
+The owner, with four photographs of Northwood: "what i think is kind of a fantasy
+biome". This landscape planted every redwood 42-116 m, the top end being Hyperion,
+the tallest tree known, and gave firs and hemlocks the same range by way of the
+landscape's far canopy.
+
+**Sources.** Wikipedia, *Sequoia sempervirens*: normally 60-100 m, sometimes over
+110; Hyperion 116.22 m; conical crown, horizontal to slightly drooping branches;
+tallest in deep valleys and gullies with year-round streams and fog drip; sprouts
+from root crown and stumps, fairy rings; neighbours Douglas fir, madrone, tanoak,
+western hemlock. NPS, *About the trees*: up to 112 m. Sempervirens Fund: a 276 ft
+(84 m) second-growth tree barely 100 years old, exceptional. Golf.com and Marin
+Magazine on Northwood: MacKenzie and Hunter, 1928, on the Russian River, fairways
+among stands of redwood. **Not found:** heights by age. The Lindquist and Palley
+yield tables (Bulletin 796, 1963) hold them but are scanned, and were not read. How
+old Northwood's trees are is not established.
+
+**Northwood's survey**, 4,536 trees: quartiles 10.9, 17.3 and 34.8 m, tallest 74.1;
+22% over 40 m; two humps, 10-20 m and 40-60 m. Northwood's photographs (the study's
+redwood.coast 01-04): bare trunks to a third or a half of the height, open crowns,
+mown grass to the trunks, no rock.
+
+**What changed (all PLACED but where sourced):** canopy 30-75 m; `youngredwood`
+12-35 m; Douglas fir 0.8 and hemlock 0.6 of the canopy; tanoak, bay, madrone 8-23 m,
+bigleaf maple 11-27; redwood first in the mix, red cedar out (its southern limit
+not checked, and its model stays in the Cascades); river terraces for gorges, with
+the Coast Ranges as the ring; stands in place of none; rings of 2-5 stems round
+55% of redwoods, 3-6.5 m out, 72-98% of the tree's height; mown rough with no long
+grass, tufts or open floor plants.
+
+Trial on Northwood's survey before the trees were built: redwoods 17% of all trees
+to about 60%, and 50% to 79% of those over 25 m. It was run with the proposed
+numbers, and the final mix differs a little.
+
+**Models:** BLENDER_ASSETS, *Built as it grows*.
+
+## Desert Resort, as built (5 November 2026)
+
+Landscape `desertresort`, region desert, at 36.15, -115.2 (the Las Vegas valley),
+from *Desert resort courses*, above. The owner: "Winter should stay green. dont
+include italian cypress. And lets keep it in the las vegas valley for now."
+No number below is published; **all are PLACED**, read from the owner's pictures
+of TPC Summerlin and Shadow Creek against the game's captures, except where a
+source above is named.
+
+- **Turf:** rough #6a9448, semi #659546, fairway #629b50; the first colours
+  (#5f9140, #5a9a3e, #4fa03f) drew near pure green under the cartoon light.
+  `GREEN` .2, .25, .1 (the test wants spring 14 colour steps from summer).
+- **Winter stays green** (`WINTER_OF`, seasons.js; overseeded rye, the owner's
+  ruling). Pampas grass's winter leaf was olive-brown at round 15 and was set
+  to its autumn green for the same reason.
+- **Ground:** the desert's cobble starts 14-18 m out; hardpan #c6b69a, waste
+  #b5a68c, rock #a09a8e. Knobs chance .1 and no washes: built, nearly flat
+  (TPC Summerlin's "gentle elevation change", above).
+- **Ring:** peaks at 620 m, not the Mojave's 1,100, which stood as a wall over
+  the holes in the first pictures; the Spring Mountains are a distant range.
+- **Past the planted belts, scrub and not a wood:** the first pictures carried
+  the desert's stands of pines to the property edge. The stands are now
+  creosote, brittlebush and mesquite with a few pines and sumacs, every 13 m,
+  from 60 m outside the corridors, over 22% of the country between the holes.
+  The pine belts are the open scatter's (`treeDensity` 2).
+- **Trees:** Afghan pine .25, Aleppo .2, olive .12, mesquite .08, African sumac
+  .08, fan palm .07, date palm .05, and oleander, bougainvillea and pampas by
+  the water. Sizes: Afghan pine 10-18 m, within SNWA's 30-60 ft (above), the
+  lower half: golf-course plantings are young; African sumac 6-10 m; pampas
+  grass 2.2-3.4 m. Italian cypress left out by the owner.
+- **Frame rate on Low** (real graphics card, a nine, seed PROFILE, 5 November
+  2026, tools/profile.mjs `--only built`), generated courses:
+
+| Landscape | CPU ms | GPU ms | Draws | Triangles |
+| --- | --- | --- | --- | --- |
+| Desert Resort | 1.00 | 1.33 | 297 | 13.8 million |
+| Desert Palms | 1.00 | 1.65 | 247 | 16.1 million |
+| Mojave | 1.40 | 1.70 | 229 | 20.5 million |
+
+  Cheaper than either neighbour on the graphics card and in triangles; 50 more
+  draws than Desert Palms, from the new models' families.
+- **The world moved nowhere else:** the fingerprints of the forty existing
+  landscapes are unchanged, so no `GENERATOR_VERSION`; `SCHEMA_VERSION` 27 for
+  the new key.
+- **Not modelled, and turned down by the owner (5 November 2026):** the
+  rock-built waterfalls and rock-lined ponds at Wynn, Southern Highlands and
+  Canyon Gate (edge riprap is in; a waterfall is not). IDEAS.md *Turned down*.
+
+## AI model generators, for the Desert Resort's foliage (5 November 2026)
+
+The owner asked which online AI generator to try for replacing the Desert
+Resort's foliage. Nothing was generated or tested; this is a desk comparison,
+and the prices and allowances below were read on one day and move often.
+
+**What the game needs** (BLENDER_ASSETS *What the game keeps from a model*): a
+model keeps only its triangles, normals, material names and vertex paint. A
+generator's texture is thrown away, and a one-material model falls to the
+accent role (`ROLE_OF`, tools/mesh-read.mjs). So an AI model needs its bark and
+leaves split into two materials and its texture baked to vertex paint before
+the game can use it. Budgets: a tree about 4,500-5,500 triangles, a shrub
+2,000-3,500, with a far twin for a tree.
+
+| Service | Low triangle control | Licence as read | Taken |
+| --- | --- | --- | --- |
+| Meshy | Custom target 100-300,000; triangle output; Remesh costs no credits | Free: CC BY 4.0 (credit Meshy), 100 credits a month, image-to-3D 20 credits. Paid: private. Pro about $20 a month (third-party figure) | First to try |
+| Rodin (Hyper3D) | Fast tiers capped at 20,000 faces, in three levels | Unclear: the commercial licence is stated for Business, sources differ on Creator | Second test, for thin parts |
+| Tripo | Not established | Free: CC BY 4.0 and no commercial rights, per third parties; paid has them. Paid prices conflict ($11.94-$20) | Not first |
+| Hunyuan3D | Not established | 2.0 and 2.1 licences exclude the EU, UK and South Korea; 3.0 only by a third-party summary. 20 free a day | Rejected: this game is public worldwide |
+| TRELLIS.2 | Not established | MIT by several reports; check the model card. Free Hugging Face demo | Free side test only |
+
+**Where sources disagree.** One third-party post says Meshy's free models are
+personal and academic use only; Meshy's own docs and help centre say CC BY 4.0
+with commercial use, and those were followed. Rodin's credit charging and
+licence differ between sources; hyper3d.ai/pricing should settle them.
+
+**The risk.** No source tests palm fronds, pine needles or thin foliage side by
+side. Tripo's own blog calls thin parts such as leaves one of the hardest cases
+and warns that dense AI foliage flickers in real-time shadows; a review citing
+SimInsights reports about 1 in 10 outputs usable without rework across Rodin,
+Meshy and Tripo (about 40 trials, read second-hand). The expectation that these
+tools will close a crown into a solid shell, against the owner's rule of no
+solid cores (5 November 2026, of the Redwood Coast), is a judgement, PLACED until a test is
+run. Whether Meshy keeps vertex colours in a GLB was not found.
+
+Sources:
+- Meshy, pricing and credits: https://docs.meshy.ai/en/webapp/pricing -- licences, 100 free credits, credit cost per model.
+- Meshy, free plan: https://intercom.help/meshy/en/articles/15696428-what-is-included-on-the-free-plan -- CC BY 4.0, credit Meshy.
+- Meshy, low poly tutorial: https://www.meshy.ai/tutorials/make-low-poly-3d-models -- target polycount, triangle output, free Remesh, export formats.
+- Sorceress Games: https://sorceress.games/blog/best-free-ai-3d-model-generator-honest-2026-picks -- the claim against Meshy's free licence; rejected for Meshy's own docs.
+- Costbench, Tripo free plan: https://www.costbench.com/software/ai-3d-generation/tripo-ai/free-plan/ -- free allowance and licence, third-party.
+- Costbench, Rodin: https://www.costbench.com/software/ai-3d-generation/rodin-hyper3d/ -- plans, third-party.
+- Hyper3D pricing: https://hyper3d.ai/pricing -- commercial licence named for Business.
+- Scenario, Rodin essentials: https://help.scenario.com/articles/6155258011-rodin-hyper3d-models-the-essentials -- Fast tiers, 20,000-face cap.
+- Hunyuan 3D 2 licence: https://huggingface.co/tencent/Hunyuan3D-2/blob/main/LICENSE -- the territory exclusion.
+- TRELLIS.2: https://comfyui-wiki.com/en/models/trellis/trellis-2 -- MIT by report, demo.
+- Tripo, thin structures: https://www.tripo3d.ai/blog/explore/ai-3d-model-generator-and-thin-structures-survival-strategies -- the hard case (a vendor's blog).
+- Tripo, plants and foliage: https://www.tripo3d.ai/blog/explore/how-to-generate-plants-and-foliage-with-ai -- flickering shadows (a vendor's blog).
+- Dupple, Rodin review: https://dupple.com/tools/rodin-ai -- the SimInsights figure, second-hand.
+- Krea comparison: https://www.krea.ai/blog/best-ai-3d-model-generators-2026 -- general ranking only.
+- Meshy, Text to 3D API: https://docs.meshy.ai/en/api/text-to-3d -- prompts up to 800 characters, no negative prompt field, Smart Topology target 100-15,000 faces (meshy-t2) in triangles only.
+
+**The API.** tools/meshy-run.mjs was first written for Text to 3D, a preview
+(shape, 20 credits on meshy-6 or meshy-7.1) then a refine (texture, 10 at 2K or
+4K). The owner turned that down before it ran (5 November 2026), so a person can
+look before a model is paid for: Text to Image (nano-banana-2-1 4 credits,
+nano-banana-pro and gpt-image-2 9), then Image to 3D (30, textured), which takes
+the approved picture as a data URI. Remesh
+is 5 credits by API, against no credits on the website by Meshy's tutorial.
+`target_polycount` applies at the preview only, with `should_remesh`. `art_style`
+is deprecated and ignored, so the style has to be said in `texture_prompt`, up to
+800 characters; `texture_image_url` is the alternative, and when both are sent the
+prompt wins. `remove_lighting` takes effect only with meshy-6. The API docs list
+meshy-7.1 for Text to 3D; the website's pricing page says it is not offered there.
+Pro allows 10 tasks at once. Whether Pro includes the API is not stated in the
+docs read; error 402 is "insufficient credits, or a free plan". A sentence of hex
+colours in a texture prompt is PLACED: nothing says Meshy honours them.
+
+- Meshy, API pricing: https://docs.meshy.ai/en/api/pricing -- credits per step.
+- Meshy, Remesh: https://docs.meshy.ai/en/api/remesh -- far versions from a finished task.
+- Meshy, rate limits: https://docs.meshy.ai/en/api/rate-limits -- 10 tasks at once on Pro, the 429 messages.
+- Meshy, balance: https://docs.meshy.ai/en/api/balance -- free to read.
+- Meshy, authentication: https://docs.meshy.ai/en/api/authentication -- API keys, with a monthly credit limit per key.
+- Meshy, Text to Image: https://docs.meshy.ai/en/api/text-to-image -- picture models, aspect ratios, results.
+- Meshy, Image to 3D: https://docs.meshy.ai/en/api/image-to-3d -- image_url as a data URI, target_polycount with should_remesh, image_enhancement, four side thumbnails.
+
+**First pictures (5 November 2026; 36 credits, seen by eye, no model made).** Same
+prompt, one take each. nano-banana-pro: big soft rendered shapes, boughs heavy and
+wide, a redwood too broad and Christmas-tree shaped, with two stray limb stubs and
+a good tapering trunk; its fern a flat star with a dark lump at the foot.
+gpt-image-2: finer and closer to the real outline, slim as a redwood is, but the
+trunk nearly even in width, which the owner has turned down before; its fern
+natural and full. Fine sprays are the likelier to close up in a 3D model (a
+judgement, untested).
+
+The owner chose gpt-image-2 (5 November 2026). A second take of Redwood_1 (9
+credits) added to every tree with a real trunk: half as wide at mid-height as at
+the foot, thin as a twig at the top, sides never parallel. The taper came through
+and the trunk now narrows visibly; the foot flares more than the "barely flared"
+asked for, and the limbs still read finely. Seen by eye, one take only.
+
+**The first model (5 November 2026).** Redwood_1 from the approved gpt-image-2
+picture, Image to 3D on meshy-6 with the triangle cut, plus Remesh for the far
+version: 35 credits, about 2 minutes, one mesh, 9,317 triangles (target 9,300) and
+a far version of 487 (target 530), so the targets hold. Judged in Blender on a
+plain background, with the lens close and from the whole-tree view, not in the
+game.
+
+- Held: the outline, the trunk's taper and flutes, a whole pointed top, gaps
+  between the boughs. Sky shows through the crown.
+- Foliage: the picture's fine sprays became broad chunky boughs with a torn edge.
+  I first recorded this as a failure of the rule against plates. **The owner
+  overruled that**: "I actually really like the way the foliage looks on the higher
+  quality model. Blocky is not the problem. But flat literal squares are, which is
+  what i saw." Broad faceted boughs are wanted; a literal square is not.
+- Failed: the far version is a bare, kinked pole with scraps of leaf. Remesh at
+  this count cannot serve as a far twin; a far twin would have to be made another
+  way.
+- Colour: the trunk came out a pale salmon, lighter than the picture, and green
+  from the foliage bled onto it in streaks at the foot. The game ignores this
+  until a converter exists, and would paint by role instead.
+- One take of one tree, so a judgement on the model and not yet on the service.
+
+**A far version rebuilt from the full model (5 November 2026).** Meshy's Remesh
+treats the tree as one shape, so a thin crown goes first. tools/blender/meshy_far.py
+instead samples the texture to tell wood from leaf, measures the trunk's axis and
+radius by height, joins the mesh by position (glTF splits vertices at texture
+seams: 4,611 false pieces before, 65 after), cuts the crown into 97 boughs and
+rebuilds each as a five-triangle ribbon, with a five-sided tube for the trunk. Bough
+direction is taken from the trunk outward; taken from each bough's own longest
+axis, stacked boughs came out as tall vertical plates.
+
+| Version | Triangles | Outline match with the full model, 8 views (mean / worst) |
+| --- | --- | --- |
+| Meshy Remesh | 487 | 0.518 / 0.511 |
+| Trial | 530 | 0.687 / 0.674 |
+
+The score is shared area over combined area of the two outlines, seen side-on
+(1.0 is identical), measured for this trial and not a bench figure. Its limit is
+that fine jagged edges cannot survive at this count. Seen in Blender only: a few
+stray slivers near the top, and thin boughs near the crown's edge. PLACED: the
+budget of 530 is today's Redwood_1 far twin.
+
+The owner took this for every model with a far version, redwood pack first (5
+November 2026). Meshy's Remesh is out, so a tree costs 30 credits, not 35. The
+tool rerun on Redwood_1 scored 0.688 (worst 0.675) at 530 triangles: dropping
+scraps by the trunk did not clear the slivers near the top.
+
+**Trunks too thick (5 November 2026).** The owner, on the redwood pictures: the base
+is too big and the taper should be gentler. Measured off the pictures, trunk width
+as a share of the tree's height:
+
+| Picture | 3% up | 10% | 25% | 50% |
+| --- | --- | --- | --- | --- |
+| Redwood_1, first take, before the taper wording | 0.047 | 0.037 | 0.031 | 0.017 |
+| Redwood_1, take 2, with it | 0.092 | 0.067 | 0.049 | 0.039 |
+| Redwood_2 | 0.063 | 0.052 | 0.039 | 0.025 |
+| Redwood_3 | 0.099 | 0.077 | 0.056 | 0.030 |
+| YoungRedwood_1 | 0.088 | 0.069 | 0.027 | 0.017 |
+
+The wording "half as wide at mid-height as at the foot" about doubled the width low
+down. Breast height on a 60 m tree is about 2% of the way up, so 0.092 is about 5.5
+m across: Lost Monarch's proportions (about 12:1 height to diameter) on a tree of
+ordinary size. Sources describe the trunk as buttressed at the base and only
+slightly tapering. No measured taper or second-growth height-to-diameter figure was
+found. The first take's slimmer proportions, or a little stouter, fit the owner's
+second-growth Northwood better; that is a judgement. girth() in grown.py, 0.57 at
+mid-height, was also placed by eye.
+
+- Wikipedia, *Sequoia sempervirens*: https://en.wikipedia.org/wiki/Sequoia_sempervirens -- 60-100 m; Lost Monarch 320 ft, 26 ft at breast height.
+- Trees and Shrubs Online: https://www.treesandshrubsonline.org/articles/sequoia/sequoia-sempervirens -- a 93.57 m tree, 7.22 m at breast height.
+- Earle, Gymnosperm Database mirror: https://www1.biologie.uni-hamburg.de/b-online/earle/cu/se/index.htm -- trunk slightly tapering, enlarged at the base.
+- Coonen et al. 2019, read as a search summary and not used for figures: https://katalog.lib.cas.cz/KNAV/EdsRecord/edsair,edsair.doi...........e6308153a38c18ad7629c3245e707bc6
+
+The six redwoods redone (54 credits), with width given as a share of the tree's
+height: one twenty-fifth near the ground (one twentieth for Redwood_3), two-thirds of
+that at mid-height, a small flare only.
+
+| Picture | 3% up | 10% | 25% | 50% |
+| --- | --- | --- | --- | --- |
+| Redwood_1, take 3 | 0.056 | 0.047 | 0.039 | 0.007 (hidden by boughs) |
+| Redwood_2, take 2 | 0.056 | 0.045 | 0.038 | 0.029 |
+| Redwood_3, take 2 | 0.065 | 0.058 | 0.045 | 0.037 |
+| YoungRedwood_1, take 2 | 0.044 | 0.035 | 0.029 | 0.014 |
+| YoungRedwood_2, take 2 | 0.041 | 0.036 | 0.031 | hidden |
+| YoungRedwood_3, take 2 | 0.061 | 0.047 | 0.038 | 0.024 |
+
+The generator ran wider than asked in four of the six (Redwood_3 against its 0.05) and at
+about 0.04 in the two young trees that held, and most feet are down by a third or more from the thick
+pictures. The crowns also came lower and fuller than in the earlier takes.
+
+**Six redwoods through the pipeline (5 November 2026).** Models 180 credits, far
+versions local. Six trees showed what one had hidden: a slim fluted trunk leaked past
+the radius test, and parts of it were rebuilt as boughs, as slabs on the bark. Fixes
+in tools/blender/meshy_far.py: everything below the crown is trunk, its width is
+measured there, one thin reading cannot narrow the trunk above it, and a mostly
+wood-coloured piece is not a bough.
+
+| Tree | Full | Far (budget) | Outline, mean / worst |
+| --- | --- | --- | --- |
+| Redwood_1 | 9,273 | 530 | 0.668 / 0.636 |
+| Redwood_2 | 10,097 | 530 | 0.591 / 0.573 |
+| Redwood_3 | 5,185 | 440 | 0.638 / 0.623 |
+| YoungRedwood_1 | 12,308 | 540 | 0.636 / 0.622 |
+| YoungRedwood_2 | 12,387 | 650 | 0.743 / 0.738 |
+| YoungRedwood_3 | 12,676 | 710 | 0.674 / 0.667 |
+
+Scores run lower on fuller crowns, and the first scores of the trunk leak were higher
+on one tree (Redwood_1 0.635 with slabs, 0.604 clean, 0.668 fixed): the outline score
+alone would have passed a broken trunk, so a person looks too. Still rough at this
+budget: scattered flat pieces at the top of the crown and ribbon ends that read as
+flat bars. Models came in within 2.3% of their triangle targets.
+
+The other eight trees redone the same way (72 credits): width asked for, one
+twenty-fifth for the fir, one thirtieth for the hemlock, one twentieth for the red
+cedar and tanoak.
+
+| Picture, take 2 | Asked | 3% up | 10% | 25% |
+| --- | --- | --- | --- | --- |
+| Fir_1 | 0.04 | 0.047 | 0.036 | 0.027 |
+| Fir_2 | 0.04 | 0.050 | 0.039 | 0.036 |
+| Hemlock_1 | 0.033 | 0.038 | 0.030 | 0.028 |
+| Hemlock_2 | 0.033 | 0.029 | 0.024 | 0.020 |
+| RedCedar_1 | 0.05 | 0.170 | 0.110 | 0.051 |
+| RedCedar_2 | 0.05 | 0.092 | 0.061 | 0.053 |
+| Tanoak_1 | 0.05 | 0.024 | 0.020 | 0.016 |
+| Tanoak_2 | 0.05 | 0.027 | 0.022 | hidden |
+
+The fir and hemlock trunks landed close. The red cedars ignored the width: the word
+buttressed wins over the number, and RedCedar_1's foot is 8.5 m on a 50 m tree. The
+tanoaks came in at half the width asked for, and thin under their fuller crowns.
+Asking for a gentle droop calmed the hemlock tops without straightening them.
+
+**All 14 trees (5 November 2026).** The other eight models 240 credits. The first far
+versions of the eight failed in two ways: a level ribbon vanishes from the side, so
+the tanoaks came out as flat slices (outline 0.32-0.36), and boughs at a crowded tip
+came out as flat squares, which the owner has ruled out. Three changes: each bough
+is a ridged ribbon of six triangles, with the ridge as tall as the bough is deep; the
+top 8% is a five-sided cone; and a broadleaf crown is cut into clumps of 8-triangle
+faceted lumps, with grey bark counted as wood, which is what had thinned the tanoak's
+trunk reading.
+
+| Tree | Far triangles (budget) | Outline, mean / worst |
+| --- | --- | --- |
+| Redwood_1 | 524 (530) | 0.707 / 0.688 |
+| Redwood_2 | 530 (530) | 0.619 / 0.603 |
+| Redwood_3 | 440 (440) | 0.704 / 0.681 |
+| YoungRedwood_1 | 536 (540) | 0.685 / 0.667 |
+| YoungRedwood_2 | 650 (650) | 0.715 / 0.709 |
+| YoungRedwood_3 | 710 (710) | 0.701 / 0.691 |
+| Fir_1 | 494 (500) | 0.615 / 0.586 |
+| Fir_2 | 410 (410) | 0.608 / 0.596 |
+| Hemlock_1 | 506 (510) | 0.605 / 0.590 |
+| Hemlock_2 | 536 (540) | 0.615 / 0.597 |
+| RedCedar_1 | 1,232 (1,270) | 0.788 / 0.779 |
+| RedCedar_2 | 1,088 (1,220) | 0.717 / 0.697 |
+| Tanoak_1 | 413 (420) | 0.669 / 0.648 |
+| Tanoak_2 | 413 (420) | 0.631 / 0.620 |
+
+Seen in Blender on a plain background only. The tip cone reads plain and bright, and
+the tanoak's lumps leave gaps. RedCedar_1's foot, the widest picture at 0.170, built
+narrower than feared. Budgets are the shipped far twins', so the cedars' are high
+for no reason but the older build.
+
+**The converter (5 November 2026).** tools/blender/meshy_game.py. Paint is a grey
+multiplier, not the texture's colour, so the game's species colours, tints and
+seasons still decide the hue and green smeared on a trunk disappears; the range 0.35-1.7 is PLACED. (A 50% bend of leaf normals was the first try; see *Dark crowns*, below.) Closing
+the far boughs for the game's one-sided faces took each from 6 triangles to 9, so
+the far versions dropped from 79 to 52 boughs on Redwood_1 and its outline from
+0.707 to 0.675. Joining seam vertices halves the count: Redwood_1 has 4,398 vertices
+for 9,273 triangles, and all 14 trees are read back correctly by tools/mesh-read.mjs.
+
+The trial build's model module is 26.9 MB against 30.8 MB shipped: about 4 MB
+smaller, because the shipped trees carry more vertices for their triangles.
+
+**First seen in the game (5 November 2026).** A trial build, FAIRWAY_MESHY, four
+captures of the Redwood Coast (bench/shots/biome-shots/meshy1, local), then
+src/asset-meshes.js rebuilt and unchanged. The trees load, stand at their sizes and
+take the game's light, shadows and species colours. Up close the broad boughs hold.
+Faults seen: brown wedges at the root of some boughs, where wood-coloured faces meet
+leaf; some crowns very dark in shade, near black in the overview; dark trunks on
+the shaded side. No frame rate measured, no smoke run, not played by hand.
+
+**Dark crowns (5 November 2026).** The owner asked for these first. The paint was not
+the cause, being brighter than the shipped trees'. The normals were, as read by
+tools/mesh-read.mjs:
+
+| Redwood_1 leaves | Paint mean | Normals facing down | Normal height mean |
+| --- | --- | --- | --- |
+| Shipped | 0.76 | 0% | 0.69 |
+| Meshy, first conversion | 1.00 | 49% | -0.06 |
+| Meshy, now | 0.97 | 0% | 0.82 |
+
+A generated bough is a closed shell, so half its faces look at the ground, and the
+game's light turns those nearly black; a crown does not take the shadow map, so
+nothing else was darkening it. Now each normal is mirrored upward and bent 60% out
+and up, and how far it had faced the ground goes into the paint, up to 35% darker.
+The paint level is the pack's paintLevel: 1.15 for redwoods and firs (the darkest
+game colours), 0.95 for hemlocks and cedars, 0.82 otherwise, all PLACED by eye. Far
+versions were 10% darker than full models and are lifted to match.
+
+Captures meshy1 to meshy4 show the woods much lighter and greener. A few lone trees stayed near black through all four, with their paint changed by 40%: the next entry. A tree seen against the sun also stays dark.
+
+**Frame rate on Low (5 November 2026).** tools/frame-ab.mjs, Redwood Coast, seed
+PROFILE, shipped trees (A) against the 14 Meshy trees (B), alternating, two rounds
+each, RTX 4090, so headroom and not a weak machine.
+
+| Spot | CPU A / B ms | GPU A / B ms | Triangles A / B | Draws A / B |
+| --- | --- | --- | --- | --- |
+| tee 1 | 2.20 / 2.20 | 2.63 / 2.98 | 22.8 M / 21.4 M | 382 / 378 |
+| tee 5 | 1.50 / 2.10 | 2.44 / 3.08 | 22.3 M / 20.3 M | 274 / 270 |
+| tee 9 | 2.60 / 3.40 | 3.03 / 3.78 | 26.1 M / 24.8 M | 367 / 363 |
+
+Mean frame 2.77 to 3.34 ms (+20.5%), 95th percentile 3.67 to 4.53 ms (+23.5%),
+start to menu 14.40 to 14.14 s. **Slower with 5-9% fewer triangles and the same draws;** the cause is in the next entry. The two first guesses, more pixels drawn over each other and far versions upsetting the cull, were both wrong. Only the redwood pack's trees differ. The fit of frame-ab's run cap: --cap names a total for the goal,
+and this branch is past 137, with no cap in its rules.
+
+**Why the Meshy trees were slow (5 November 2026).** Their triangles were in the wrong
+order for the card. Found by splitting the change:
+
+| Test, on Low | Frame, A to B | Change |
+| --- | --- | --- |
+| Meshy far versions only | 2.74 to 2.53 ms | -7.9% |
+| Meshy full models only | 2.75 to 3.46 ms | +25.5% |
+
+The first split test was void: farParts (mesh-assets.js) takes a shipped far version
+only if its parts match the model's in order, so mixing leaf-then-bark with
+bark-then-leaf silently fell back to the full model's foliage (triangles 44-52 M).
+The tools now write bark first, as the shipped models do. A second job on the card
+also spoiled a round of it.
+
+The weak-laptop run ruled out pixels: at about a third of the pixels, 1920 x 1080
+against 3200 x 1800, the card took the same time (2.69 ms against 2.63), so this
+frame is bound by vertices. Leaf surface had looked the likely cause, at 3.26 against
+0.39 of height squared on Redwood_1, about 8 times the shipped tree's, and its far
+version 1.80 against 0.34; it is real but is not what costs here.
+
+Vertices shaded per triangle on a 32-entry cache: shipped 2.51, Meshy 2.61, with the
+ideal about 0.5-0.7. A shipped tree earns its figure honestly, each triangle
+with nearly its own vertices (280,180 vertices for 111,949 triangles over the 14
+models). A Meshy tree has shared vertices (56,848) wasted by a random order.
+`cache_order` in meshy_parts.py, Tom Forsyth's linear-speed method
+(https://tomforsyth1000.github.io/papers/fast_vert_cache_opt.html, from memory and not
+fetched), takes it to 0.57, so 63,220 vertices shaded against 280,853.
+
+| Run | Frame mean | 95th percentile | GPU, three tees |
+| --- | --- | --- | --- |
+| Low, A shipped | 2.75 ms | 3.53 ms | 2.62, 2.43, 3.03 |
+| Low, B Meshy, reordered | 1.72 ms (-37%) | 2.13 ms (-40%) | 1.36, 1.14, 1.46 |
+| Weak laptop, A | 6.50 ms | 8.70 ms | 2.86, 2.50, 3.09 |
+| Weak laptop, B | 6.19 ms (-5%) | 7.97 ms (-8%) | 2.77, 1.71, 3.24 |
+
+RTX 4090; the laptop is the frame tool's estimate, throttled processor and scaled
+card, and its B rounds spread widely (tee 9: 2.23 and 3.24), so read it only as no
+worse. The estimate has the same laptop at about 190-250 ms of graphics work a frame
+on either build, which is not a playable Low on that machine at all and is older than
+this work. This is for the Redwood Coast, whose planting is nearly all these trees.
+
+**The black trees (5 November 2026).** Not the Meshy trees: a bug in the game, older
+than them. A probe of the instance colours at the black spots (redwoods, far and full)
+read leaf colours like 0.004, 0.010, 0.005 beside neighbours of 0.065, 0.165, 0.071.
+vegetation.js varied each tree with offsetHSL, and three.js works HSL in linear colour,
+where the redwood's #2f4f32 has a lightness of about 0.05. A random -0.05 took it to
+nearly nothing. A light species hardly shows it, which is why this stayed hidden, and
+the shipped redwoods were dark too (rw9). varyColour now holds a darkening to 40% of
+the colour's own lightness (species.js darkenBy, PLACED), for leaf and bark. Its
+draws are unchanged and the fingerprint reads every landscape unchanged, so no version
+bump. It reaches every landscape's darkest trees, shipped or not: seen only on the
+Redwood Coast.
+
+**Final checks.** Low, A/B, RTX 4090, both builds with this fix: 3.30 to 1.91 ms
+(-42%), 95th percentile 5.60 to 2.80 ms (-50%). A's figure ran higher than the 2.75 of
+the run before, so take the two as about 40%. Smoke: 36 of 41 on the build before the
+last wood change; the other five failed only because --file ran from bench/ab, without
+the files beside dist/index.html, and all five passed from dist on the final build.
+So no one build ran all 41. Far-version outlines were not read again after the last
+changes. Brown wedges: taking wood by the trunk's measured width and not 1.3 times it
+made them smaller; the rest are generator-painted faces hard against the trunk.
+
+**The wedges, and shipping (5 November 2026).** The owner: fix them entirely, and put
+the trees on the branch, full smoke and profile waived. The wedges were on the lowest
+boughs, under the crown's measured base where everything counted as trunk, and they
+faced up. In the crown a face is now wood only if it stands upright on the trunk, is
+tall (a long face beside the axis is trunk whatever was smeared on it), or belongs to
+a thin limb; leaf faces that were wood-coloured take the leaves' mean shade. The first
+tries turned long fluted trunk faces green, on the young redwoods most; the last
+shape of the test, on captures meshy13, shows neither fault in the views taken. Later
+the long-face reach was widened for cedars and not re-captured.
+
+**How far the speed-up reaches (5 November 2026).** tools/vertex-report.mjs across all 47
+folders in vendor: 1,363,623 triangles, 0.74 vertices shaded a triangle, 969,348 vertices,
+901,973 after an exact join. So the redwood pack's 2.51 was the exception, not the rule,
+and the claim that shipped models share it was wrong. The figures and how to apply it are
+in IDEAS.md, *Join and reorder every shipped model's vertices*.

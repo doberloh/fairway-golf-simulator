@@ -5,8 +5,9 @@ import {yardageBook} from '../src/yardage-book.js';
 import {holeNames} from '../src/hole-names.js';
 
 // PHASE 7: THE YARDAGE BOOK (architect-courses; yardage-book.js): a page a
-// hole of an Architect course -- the plan, the carries, the architect's notes
-// -- as a well-formed PDF.
+// hole of a generated course -- the plan, the carries, where drives come down
+// -- as a well-formed PDF. (An Architect course's notes went with the
+// designer, 2 November 2026.)
 
 // The same structural check as tests/range-report.test.mjs: every offset in
 // the cross-reference table lands on its object, every stream is the length
@@ -28,8 +29,8 @@ function checkPdf(bytes) {
  return text;
 }
 
-test('a page a hole, well formed, with each hole\'s name, par, note and carries', () => {
- const w = world({seed: 'BOOK-T', holes: 9, biome: 'midwest', designer: 'architect'});
+test('a page a hole, well formed, with each hole\'s name, par and carries', () => {
+ const w = world({seed: 'BOOK-T', holes: 9, biome: 'heartland'});
  const doc = yardageBook(w);
  assert.equal(doc.pages.length, 9);
  const text = checkPdf(doc.bytes()), names = holeNames(w.holes, w.settings);
@@ -38,7 +39,6 @@ test('a page a hole, well formed, with each hole\'s name, par, note and carries'
   assert.ok(text.includes(`(${names[i]})`), `hole ${i + 1}'s name`);
   assert.ok(text.includes(`(Par ${w.holes[i].par})`));
  }
- assert.ok(text.includes('(The architect)'));
  assert.ok(/to carry\./.test(text), 'carries to the hazards');
  assert.ok(/to go\)/.test(text), 'what is left from the landing zones');
 });

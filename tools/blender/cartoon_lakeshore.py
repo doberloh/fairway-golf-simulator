@@ -1,6 +1,6 @@
 # THE CARTOON LAKESHORE (the cartoon overhaul; docs/CARTOON_OVERHAUL.md).
 #
-#   node tools/blender/run.mjs cartoon_lakeshore --render
+#   node tools/blender/iterate.mjs cartoon_lakeshore <round>
 #
 # Lakeshore Dunes' plants, which were built in Blender before the overhaul
 # (tools/blender/lakeshore.py) in a plainer hand -- no paint, no bent normals.
@@ -15,6 +15,10 @@
 #   juniper      creeping juniper mats, and common juniper's upright vase
 #   dune grass   American beachgrass: a patch of upright tussocks, straw tips
 #   driftwood    bleached logs, smooth and twisted, one with its root wad
+#
+# REFS cottonwood=Blender_LakeCottonwood_1,Blender_LakeCottonwood_2,Blender_LakeCottonwood_3
+# REFS blackoak=Blender_LakeBlackOak_1,Blender_LakeBlackOak_2,Blender_LakeBlackOak_3
+# REFS sugarmaple=Blender_LakeSugarMaple_1,Blender_LakeSugarMaple_2
 import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
@@ -26,51 +30,141 @@ def drift(rng, amount):
     return Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), 0)) * amount
 
 
+def lump(mesh, rng, p, size, shade, crown, subdiv=3, squash=0.0, flex=0.9):
+    """One soft lobe lit with its whole crown (the silhouette pass; a far
+    twin's lobe an eighth bigger so the far crown does not break apart)."""
+    if ct.FAR:
+        size = tuple(v * 1.12 for v in size)
+    mesh.add_lump(p, size, 'leaf', rng, subdiv=subdiv, jitter=.08, crown=crown, blend=.8, shade=shade, flex=flex,
+                  squash_bottom=squash)
+
+
+def twig(mesh, rng, start, end, r0, r1, sides=6, bow=.1, shade=.8):
+    """A limb of two segments (ct.limb has five), so crooked limbs drawn as
+    several of them cost no more than one."""
+    d = end - start
+    pts = fb.sweep_points(start, end, Vector((0, 0, d.length * bow)), 2, rng=rng, kink=d.length * .03)
+    mesh.add_tube(pts, [r0, (r0 + r1) / 2, r1], sides, 'bark', rng=rng, wobble=.06, cap_end=False,
+                  shade=lambda co, t: shade * (.9 + .15 * t), flex=lambda co, t: .2 + .35 * t)
+
+
+def mass(mesh, rng, at, s, shade, crown, n=4, rise=.45, squash=.4, tall=.85):
+    """A heavy leaf mass: one big lobe, n-1 smaller ones round its top."""
+    lump(mesh, rng, at, (s, s, s * tall), shade, crown, squash=squash)
+    for k in range(n - 1):
+        a = k / max(1, n - 1) * math.tau + rng.uniform(-.5, .5)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        p = at + d * s * rng.uniform(.55, .8) + Vector((0, 0, s * rng.uniform(.15, rise)))
+        k2 = s * rng.uniform(.6, .78)
+        lump(mesh, rng, p, (k2, k2, k2 * .9), shade, crown)
+
+
 def cottonwood(height, limbs):
+    """Eastern cottonwood (the silhouette pass): a massive short trunk forking
+    low into great limbs that fan out wide and up, each carrying its own big
+    coarse mass well apart from the next -- a huge, broad, open crown wider
+    than tall, sky and limbs between the masses. (Round 2 of the overhaul:
+    a small crown on a big trunk was broccoli; lineup 2 November 2026: the
+    clouds sat on a tall bare pole, leaning to one side.)"""
     def build(mesh, rng):
         H = height
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .38, H * .055, lean=drift(rng, H * .03), flare=1.7,
+        fork = H * rng.uniform(.2, .24)
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), fork, H * .07, lean=drift(rng, H * .02), flare=1.7,
                               sides=11, wobble=.1, shade_low=.7, shade_high=1.0)
         top = pts[-1]
-        crown_c = Vector((top.x, top.y, H * .7))
-        shade = ct.crown_shade(crown_c, (H * .32, H * .32, H * .26))
+        c = Vector((top.x, top.y, H * .62))
+        shade = ct.crown_shade(c, (H * .45, H * .45, H * .3))
         for i in range(limbs):
-            a = i / limbs * math.tau + rng.uniform(-.4, .4)
-            # Round 2: round 1 was broccoli -- a small crown on a big trunk.
-            end = top + Vector((math.cos(a) * H * .24, math.sin(a) * H * .24, H * rng.uniform(.25, .35)))
-            ct.limb(mesh, rng, top, end, H * .03, H * .015, bow=.12, sides=8, shade=.8)
-            # Each great limb carries its own cloud: the broad, open, lumpy
-            # crown of a cottonwood rather than one dome.
-            ct.cloud_crown(mesh, rng, end, (H * .22, H * .2, H * .15), lobes=14, lobe_size=(.3, .4), subdiv=2,
-                           flat_bottom=.4, shell=.75, low=.5, high=1.15)
-        mesh.add_lump(crown_c + Vector((0, 0, H * .1)), (H * .15, H * .15, H * .1), 'leaf', rng, subdiv=2, jitter=.1,
-                      crown=crown_c, blend=.8, shade=shade, flex=.8)
+            a = i / limbs * math.tau + rng.uniform(-.3, .3)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            reach = H * rng.uniform(.3, .4)
+            z = H * rng.uniform(.54, .7)  # round 7: a taller crown
+            mid = top + out * reach * .45 + Vector((0, 0, (z - top.z) * .55)) + drift(rng, H * .03)
+            end = top + out * reach + Vector((0, 0, z - top.z))
+            twig(mesh, rng, top, mid, H * .04, H * .028, sides=8, shade=.8)
+            twig(mesh, rng, mid, end, H * .028, H * .014, sides=7, shade=.8)
+            # A side branch off the elbow to a second, smaller mass: the
+            # crown's coarse, broken edge.
+            a2 = a + rng.choice((-1, 1)) * rng.uniform(.5, .8)
+            # Round 4: the side branch climbs to a second tier, so the crown
+            # is a tall broad dome of masses, not one layer of pads.
+            side = mid + Vector((math.cos(a2), math.sin(a2), 0)) * reach * .3 + Vector((0, 0, H * .34))
+            twig(mesh, rng, mid, side, H * .016, H * .008, sides=5, shade=.8)
+            # Round 3: masses a third bigger -- round 2's were clouds on sticks.
+            s = H * rng.uniform(.145, .165)
+            mass(mesh, rng, end + Vector((0, 0, s * .45)), s, shade, c, n=4, rise=.65)
+            lump(mesh, rng, side + Vector((0, 0, s * .3)), (s * .78, s * .78, s * .7), shade, c, squash=.3)
+        # The top: one mass over the middle, off-centre.
+        mass(mesh, rng, c + drift(rng, H * .08) + Vector((0, 0, H * .22)), H * .15, shade, c, n=4, rise=.6)  # r6: coarser top
     return build
 
 
 def black_oak(height, width):
+    """Black oak on the dunes (the silhouette pass): a crooked trunk that
+    leans, three crooked limbs elbowing out, an open irregular crown of a few
+    dark masses, lopsided, sky between. (Lineup: a mushroom cap on a straight
+    stick.)"""
     def build(mesh, rng):
         H, W = height, width
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .38, H * .05, flare=1.6, sides=10, bend=H * .02,
-                              shade_low=.65)
+        lean = drift(rng, 1).normalized() * H * rng.uniform(.08, .12)
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .38, H * .05, flare=1.6, sides=10, bend=H * .04,
+                              lean=lean, shade_low=.65)
         top = pts[-1]
-        for i in range(4):
-            a = i / 4 * math.tau + rng.uniform(-.4, .4)
-            ct.limb(mesh, rng, top, top + Vector((math.cos(a) * W * .3, math.sin(a) * W * .3, H * .22)), H * .025, H * .012,
-                    bow=.15, sides=7, shade=.75)
-        c = Vector((top.x, top.y, H * .66))
-        ct.cloud_crown(mesh, rng, c, (W * .5, W * .47, H * .3), lobes=26, lobe_size=(.22, .36), subdiv=2, flat_bottom=.45,
-                       shell=.84, low=.42, high=1.1)
+        lean_dir = Vector((lean.x, lean.y, 0)).normalized()
+        c = Vector((top.x, top.y, H * .68)) + lean_dir * W * .08
+        shade = ct.crown_shade(c, (W * .5, W * .5, H * .3), low=.42, high=1.1)
+        n = 3
+        for i in range(n):
+            a = math.atan2(lean_dir.y, lean_dir.x) + (i - 1) * rng.uniform(1.6, 2.2) + rng.uniform(-.3, .3)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            reach = W * .5 * rng.uniform(.55, .8)
+            z = H * (.52 + .12 * i) + rng.uniform(-.03, .03) * H  # round 4: stepped, not one table
+            elbow = top + out * reach * .35 + Vector((0, 0, (z - top.z) * .7)) + drift(rng, H * .05)
+            end = top + out * reach + Vector((0, 0, z - top.z))
+            twig(mesh, rng, top, elbow, H * .028, H * .018, sides=7, shade=.75)
+            twig(mesh, rng, elbow, end, H * .018, H * .008, sides=5, bow=-.05, shade=.75)
+            # Round 3: bigger, rounder masses -- round 2's flat pads were an
+            # acacia's.
+            s = W * rng.uniform(.19, .23)
+            # Round 5: round, not flat-bottomed (stacked pads read as bonsai).
+            # Round 6: a fourth lobe on two of the three, so the edge is
+            # ragged rather than three balls.
+            mass(mesh, rng, end + Vector((0, 0, s * .45)), s, shade, c, n=4 if i < 2 else 3, rise=.6, squash=.1, tall=1.0)
+        # A smaller crown top over the lean, and one low side tuft.
+        mass(mesh, rng, c + lean_dir * W * .06 + Vector((0, 0, H * .22)), W * .19, shade, c, n=3, rise=.6, squash=.1,
+             tall=1.0)
+        p = top + Vector((-lean_dir.x, -lean_dir.y, 0)) * W * .3 + Vector((0, 0, H * .2))
+        twig(mesh, rng, top - Vector((0, 0, H * .05)), p, H * .012, H * .006, sides=5, shade=.75)
+        s = W * .12
+        lump(mesh, rng, p + Vector((0, 0, s * .4)), (s, s, s * .75), shade, c, squash=.3)
     return build
 
 
 def sugar_maple(height, width):
+    """Sugar maple on the dunes' edge (the silhouette pass): a short clear
+    trunk under a dense broad oval, round-topped, widest at its middle and
+    reaching low -- fuller and rounder than the inland maple's upright egg,
+    dense where the oak and cottonwood beside it are open."""
     def build(mesh, rng):
         H, W = height, width
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .45, H * .035, flare=1.5, sides=9)
-        c = Vector((pts[-1].x, pts[-1].y, H * .62))
-        ct.cloud_crown(mesh, rng, c, (W * .5, W * .5, H * .38), lobes=28, lobe_size=(.24, .32), subdiv=2, flat_bottom=.3,
-                       shell=.8)
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .6, H * .035, flare=1.5, sides=9)
+        base, topz = H * .22, H * .98
+        c = Vector((pts[-1].x, pts[-1].y, (base + topz) / 2))
+        rz = (topz - base) / 2
+        shade = ct.crown_shade(c, (W * .5, W * .5, rz))
+        lump(mesh, rng, c, (W * .36, W * .36, rz * .7), shade, c, subdiv=2, flex=.4)
+        s = W * .17
+        rings = [(-.62, 5), (-.05, 5), (.5, 4)]
+        for y, n in rings:
+            r = math.sqrt(max(0, 1 - y * y))
+            off = rng.uniform(0, math.tau)
+            for j in range(n):
+                a = off + j / n * math.tau + rng.uniform(-.2, .2)
+                p = c + Vector((math.cos(a) * (W * .5 * r - s * .55), math.sin(a) * (W * .5 * r - s * .55),
+                                y * (rz - s * .5)))
+                k2 = s * rng.uniform(.92, 1.08)
+                lump(mesh, rng, p, (k2, k2, k2 * .95), shade, c, squash=.4 if y < -.3 else 0)
+        lump(mesh, rng, c + Vector((0, 0, rz - s * .7)), (s * 1.1, s * 1.1, s), shade, c)
     return build
 
 
@@ -142,14 +236,14 @@ def driftwood(length, radius, root_wad):
 
 
 MODELS = [
-    ('Blender_LakeCottonwood_1', cottonwood(25, 3)),
-    ('Blender_LakeCottonwood_2', cottonwood(23, 4)),
-    ('Blender_LakeCottonwood_3', cottonwood(27, 3)),
+    ('Blender_LakeCottonwood_1', cottonwood(25, 4)),
+    ('Blender_LakeCottonwood_2', cottonwood(23, 5)),
+    ('Blender_LakeCottonwood_3', cottonwood(27, 4)),
     ('Blender_LakeBlackOak_1', black_oak(17, 15)),
     ('Blender_LakeBlackOak_2', black_oak(15, 14)),
     ('Blender_LakeBlackOak_3', black_oak(19, 16)),
-    ('Blender_LakeSugarMaple_1', sugar_maple(22, 14)),
-    ('Blender_LakeSugarMaple_2', sugar_maple(20, 13)),
+    ('Blender_LakeSugarMaple_1', sugar_maple(22, 16)),
+    ('Blender_LakeSugarMaple_2', sugar_maple(20, 15)),
     ('Blender_LakeJuniper_1', juniper(1.6, .45, 22)),
     ('Blender_LakeJuniper_2', juniper(2.0, .5, 28)),
     ('Blender_LakeJuniper_3', juniper(.8, 1.3, 14, vase=True)),
@@ -161,6 +255,35 @@ MODELS = [
     ('Blender_LakeDriftwood_3', driftwood(3.6, .24, True)),
 ]
 
+# THE SHEET'S COLOURS BY SEASON (iterate.mjs --season; the silhouette pass,
+# 2 November 2026), placed from the reference pictures (no study spec for
+# these). Sheet only; juniper, dune grass and driftwood keep the pack colours.
+SEASON = os.environ.get('FAIRWAY_SEASON', 'summer')
+
+
+def hexrgb(h):
+    h = h.lstrip('#')
+    return tuple((int(h[i:i + 2], 16) / 255) ** 2.2 for i in (0, 2, 4))
+
+
+BARK = {'LakeCottonwood': '#77706a', 'LakeBlackOak': '#3f3934', 'LakeSugarMaple': '#6a6052'}
+LOOK = {
+    'LakeCottonwood': {'spring': '#9cbc5a', 'summer': '#5a8a3e', 'autumn': '#d8b43a', 'winter': '#5a8a3e'},
+    'LakeBlackOak': {'spring': '#86a250', 'summer': '#3e6230', 'autumn': '#8a4428', 'winter': '#3e6230'},
+    'LakeSugarMaple': {'spring': '#90b85a', 'summer': '#4c7e34', 'autumn': '#e2742a', 'winter': '#4c7e34'},
+}
+
+
+def tints(season):
+    out = {}
+    for name, _ in MODELS:
+        sp = name.replace('Blender_', '').rsplit('_', 1)[0]
+        if sp in LOOK:
+            out[name] = {'leaf': hexrgb(LOOK[sp][season]), 'bark': hexrgb(BARK[sp])}
+    return out
+
+
 ct.export(MODELS, colours={'leaf': (0.36, 0.55, 0.24), 'bark': (0.5, 0.46, 0.42), 'accent': (0.8, 0.72, 0.5)},
+          tints=tints(SEASON),
           far={'Blender_LakeCottonwood_1', 'Blender_LakeCottonwood_2', 'Blender_LakeCottonwood_3', 'Blender_LakeBlackOak_1',
                'Blender_LakeBlackOak_2', 'Blender_LakeBlackOak_3', 'Blender_LakeSugarMaple_1', 'Blender_LakeSugarMaple_2'})

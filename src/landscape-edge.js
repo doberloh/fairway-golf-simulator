@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {biomeOf} from './biomes.js';
-import {fbm,saltOf} from './landforms.js';
+import {fbm,saltOf,carvedField,landformOf} from './landforms.js';
 // Join the detailed ground's exact perimeter vertices to progressively wider
 // landscape rings. No overlapping rectangular backdrop or exposed tile edge.
 //
@@ -21,7 +21,9 @@ import {fbm,saltOf} from './landforms.js';
 // (far-woods.js), so the two cannot drift apart.
 export function ringRelief(w){
  const bio=biomeOf(w.settings.biome),lift=bio.ringLift;
- const shore=bio.edgeCoast?(x=>1-T.MathUtils.smoothstep(x,w.halfX-260,w.halfX+40)):(()=>1);
+ // The coast's own line (course.js `coastAt`; halfX - 90 unless it seeks play).
+ const cx=z=>(w.coastAt?w.coastAt(z):w.halfX-90)+90;
+ const shore=bio.edgeCoast?((x,z)=>1-T.MathUtils.smoothstep(x,cx(z)-260,cx(z)+40)):(()=>1);
  const peaks=bio.ringPeaks?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
   return (x,z)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);return Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a);};})():null;
  // MESAS AND BUTTES (the far-landscape goal; the owner: "I think we need more
@@ -41,6 +43,12 @@ export function ringRelief(w){
    const tier=(t,w,h)=>ss(n,t-w,t+w)*h,apron=(t,h)=>ss(n,t-.08,t-.02)*h;
    return tier(.55,.018,.62)+apron(.55,.12)+tier(.62,.014,.36)+apron(.62,.06)+fbm(x/900,z/900,s+3,2)*.06;
   };})():null;
+ // THE CARVED FAR COUNTRY (`ringCarve`, the Badlands). The course's own carved
+ // land is 4 m detail, which the ring's rows would only alias into jags, so
+ // over its first few hundred metres the ring trades it for the same carving
+ // at a tenth the resolution. Scenery only. PLACED.
+ const carved=bio.ringCarve?carvedField(bio.ringCarve,w.settings.seed,'far'):null,fine=carved&&!w.settings.range&&!w.built?landformOf(bio,w.settings.seed):null;
+ const carvedAt=(x,z,distance)=>{if(!carved)return 0;const t=T.MathUtils.smoothstep(distance,carved.o.near,carved.o.far);return t?t*(carved.height(x,z)-(fine?fine.lift(x,z,1):0)):0;};
  const ridgeAt=(x,z)=>peaks?peaks(x,z):mesas?mesas(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
  // FAR ISLANDS (the far-landscape goal, round 3): a landscape with
  // `ringIslands` (Island: sea to every horizon) raises a few islets out of its
@@ -50,7 +58,7 @@ export function ringRelief(w){
  const isles=bio.ringIslands?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
   const list=Array.from({length:bio.ringIslands},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
   return (x,z)=>{let h=0;for(const q of list){const dd=Math.hypot(x-q.x,z-q.z)/q.R*(1+.25*(fbm(x/260,z/260,s+11,2)-.5));if(dd<1.3)h=Math.max(h,(1-ss(dd,.85,1.25))*3.5+(1-ss(dd,.2,.95))*q.H);}return h;};})():null;
- return {peaks,mesas,isles,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)};
+ return {peaks,mesas,isles,carved,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance)};
 }
 // THE RING AS PLAIN ARRAYS (the far-landscape goal, 26 October 2026). The
 // drawn landscape is these triangles, not `ringRelief` sampled finely: out
@@ -96,8 +104,10 @@ function buildRing(w){
  // Mesas (and far islands) need their cliffs drawn: rings 16% apart, never more than 220 m (were
  // 28% and unbounded -- 500 m rows smeared a cliff into a ramp), and 2.5 times
  // as many vertices round each ring.
- const mesaRings=!!(relief.mesas||relief.isles),grow=mesaRings?1.16:1.28,most=mesaRings?220:1e9;
- for(let step=8;steps[steps.length-1]<REACH;step=Math.min(most,step*grow))steps.push(Math.min(REACH,steps[steps.length-1]+step));
+ // Carved far country: rows of 70 m out to where its ridges are lost in the
+ // haze, about the size of its own drainage.
+ const mesaRings=!!(relief.mesas||relief.isles||relief.carved),grow=mesaRings?1.16:1.28,most=mesaRings?220:1e9,fineTo=relief.carved?3600:0;
+ for(let step=8;steps[steps.length-1]<REACH;step=Math.min(steps[steps.length-1]<fineTo?70:most,step*grow))steps.push(Math.min(REACH,steps[steps.length-1]+step));
  // How long each ring is, from a coarse walk round it, to size its spacing.
  const around=d=>{let L=0,prev=null;for(let k=0;k<=256;k++){const [x0,z0]=perimeter(k/256*count),r=Math.hypot(x0,z0),p=[x0+x0/r*d,z0+z0/r*d];if(prev)L+=Math.hypot(p[0]-prev[0],p[1]-prev[1]);prev=p;}return L;};
  const positions=[],indices=[],rings=[],along=[],out=[];

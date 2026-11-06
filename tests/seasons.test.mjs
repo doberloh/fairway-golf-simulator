@@ -1,96 +1,191 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hauntedInSeason, offered, offeredBiomes, markOffSeason, markedOffSeason, standIn, HAUNTED} from '../src/seasons.js';
-import {endlessHole, landscapeSeed, runLandscape} from '../src/endless.js';
-import {biomeForWeek, WEEKLY_ROTATION} from '../src/weekly.js';
-import {BIOME_KEYS} from '../src/settings-schema.js';
+import * as T from 'three';
+import {SEASONS, DRAWN, seasonOf, roundSeason, validSeasonChoice, seasonLook, seasonPalette, UNDER_SNOW, dullInWinter} from '../src/seasons.js';
 import {BIOMES} from '../src/biomes.js';
+import {grassLook} from '../src/vegetation.js';
 
-// Haunted Hollow is seasonal (the owner, 26 October 2026): 1 October to
-// 7 November by the player's own clock, or all year with the setting.
-const day = (y, m, d) => new Date(y, m - 1, d, 12);
-
-test('the season runs from 1 October to 7 November, both days included', () => {
- assert.equal(hauntedInSeason(day(2026, 9, 30)), false);
- assert.equal(hauntedInSeason(day(2026, 10, 1)), true);
- assert.equal(hauntedInSeason(day(2026, 10, 31)), true);
- assert.equal(hauntedInSeason(day(2026, 11, 7)), true);
- assert.equal(hauntedInSeason(day(2026, 11, 8)), false);
- assert.equal(hauntedInSeason(day(2027, 3, 15)), false);
- assert.equal(hauntedInSeason(new Date(2026, 10, 7, 23, 59)), true, 'the last minute of 7 November');
- assert.equal(hauntedInSeason(new Date(2026, 9, 1, 0, 0)), true, 'the first minute of 1 October');
+test('a date falls in its meteorological season, flipped south of the equator', () => {
+ const on = (m, d = 15) => new Date(2026, m, d);
+ assert.equal(seasonOf(on(0)), 'winter');
+ assert.equal(seasonOf(on(2, 1)), 'spring');
+ assert.equal(seasonOf(on(5)), 'summer');
+ assert.equal(seasonOf(on(8)), 'autumn');
+ assert.equal(seasonOf(on(10, 30)), 'autumn');
+ assert.equal(seasonOf(on(11, 1)), 'winter');
+ assert.equal(seasonOf(on(5), {south: true}), 'winter');
+ assert.equal(seasonOf(on(0), {south: true}), 'summer');
+ // Every month has a season, and all four occur.
+ assert.deepEqual(new Set(Array.from({length: 12}, (_, m) => seasonOf(on(m)))), new Set(SEASONS));
 });
 
-test('out of season it is not offered, unless the setting asks for it all year; every other landscape always is', () => {
- const march = day(2027, 3, 1), october = day(2026, 10, 15);
- assert.equal(offered(HAUNTED, {date: march}), false);
- assert.equal(offered(HAUNTED, {date: march, allYear: true}), true);
- assert.equal(offered(HAUNTED, {date: october}), true);
- for (const k of BIOME_KEYS.filter(k => k !== HAUNTED)) assert.equal(offered(k, {date: march}), true, k);
- assert.deepEqual(offeredBiomes(BIOME_KEYS, {date: march}), BIOME_KEYS.filter(k => k !== HAUNTED));
- // Never locked out: a picker keeps the landscape already chosen.
- assert.ok(offeredBiomes(BIOME_KEYS, {date: march, keep: HAUNTED}).includes(HAUNTED));
-});
-
-// A run whose holes roll Haunted Hollow, found by trying seeds in order.
-const hauntedRun = () => {
- for (let i = 0; i < 4000; i++) {
-  const seed = `SEASON-${i}`;
-  for (let h = 0; h < 6; h++) if (endlessHole(seed, h).biome === HAUNTED) return {seed, h};
+test('a round\'s season is today\'s or the one picked, never one the game cannot draw', () => {
+ const july = new Date(2026, 6, 4), dec = new Date(2026, 11, 25);
+ assert.equal(roundSeason('today', {date: july}), 'summer');
+ assert.equal(roundSeason('nonsense', {date: july}), 'summer');
+ for (const s of SEASONS) {
+  const got = roundSeason(s, {date: july});
+  assert.ok(DRAWN.includes(got), `${s} -> ${got}`);
+  if (DRAWN.includes(s)) assert.equal(got, s);
  }
- throw new Error('no seed rolled Haunted Hollow');
-};
-
-test('an endless run started out of season never rolls Haunted Hollow, and grows the same holes every time', () => {
- const {seed, h} = hauntedRun();
- const marked = markOffSeason(seed);
- assert.ok(markedOffSeason(marked) && !markedOffSeason(seed));
- assert.equal(markOffSeason(marked), marked, 'marking twice changes nothing');
- // The mark is part of the seed, so a marked run grows its own holes -- and
- // none of them, over thousands, is Haunted Hollow.
- let stoodIn = 0;
- for (let i = 0; i < 600; i++) for (let k = 0; k < 6; k++) {
-  const run = markOffSeason(`SEASON-${i}`), hole = endlessHole(run, k);
-  assert.notEqual(hole.biome, HAUNTED, `${run} hole ${k}`);
-  if (hole.biome === standIn(Object.keys(BIOMES), run, k)) stoodIn++;
- }
- assert.ok(stoodIn > 0);
- assert.deepEqual(endlessHole(marked, h), endlessHole(marked, h), 'deterministic');
- // A seed without the mark -- every run before the rule, and every run started
- // in season -- grows exactly what it always did.
- assert.equal(endlessHole(seed, h).biome, HAUNTED);
- // A run pinned to a landscape keeps its pin, mark or not.
- const pinned = landscapeSeed(marked, 'links');
- assert.equal(runLandscape(pinned), 'links');
- assert.equal(endlessHole(pinned, h).biome, 'links');
+ assert.ok(DRAWN.includes(roundSeason('today', {date: dec})));
+ // A tropical landscape is always its one green look.
+ assert.equal(roundSeason('winter', {date: dec, tropical: true}), 'summer');
 });
 
-test('the course of the week plays Autumn in Haunted Hollow\'s turn out of season, from 9 November 2026 on, and never changes a past week', () => {
- const plain = {...WEEKLY_ROTATION, season: undefined};
- let changed = 0, kept = 0;
- for (let w = 0; w < 400; w++) {
-  const before = biomeForWeek(w, plain), now = biomeForWeek(w, WEEKLY_ROTATION);
-  if (w < WEEKLY_ROTATION.season.from) { assert.equal(now, before, `week ${w} changed`); continue; }
-  if (before !== HAUNTED) { assert.equal(now, before); continue; }
-  const monday = new Date(Date.UTC(2024, 0, 1) + w * 7 * 86400000);
-  const inSeason = monday.getUTCMonth() === 9 || (monday.getUTCMonth() === 10 && monday.getUTCDate() <= 7);
-  if (inSeason) { assert.equal(now, HAUNTED); kept++; } else { assert.equal(now, 'autumn'); changed++; }
- }
- assert.ok(changed > 0, 'some out-of-season weeks were Haunted Hollow\'s');
- // The splash runs this function from its source text: it must not lean on
- // anything outside itself.
- const copy = new Function(`return ${biomeForWeek.toString()}`)();
- for (let w = 140; w < 300; w++) assert.equal(copy(w, WEEKLY_ROTATION), biomeForWeek(w, WEEKLY_ROTATION));
+test('a choice is today or a season; a season\'s look is the record\'s own table', () => {
+ assert.ok(validSeasonChoice('today'));
+ for (const s of SEASONS) assert.ok(validSeasonChoice(s));
+ assert.ok(!validSeasonChoice('fall'));
+ assert.ok(!validSeasonChoice(undefined));
+ const rec = {rough: '#111111', seasons: {autumn: {rough: '#aa6633'}}};
+ assert.deepEqual(seasonLook(rec, 'summer'), {});
+ assert.deepEqual(seasonLook(rec, 'autumn'), {rough: '#aa6633'});
+ assert.deepEqual(seasonLook(rec, 'winter'), {});
+ assert.deepEqual(seasonLook({}, 'autumn'), {});
 });
 
-test('a graphics record saved before the setting existed loads with it off', async () => {
- const store = new Map([['fairway-graphics-v1', JSON.stringify({quality: 'high', distantFlags: true})]]);
- globalThis.localStorage = {getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: k => store.delete(k)};
- const {loadGraphics, saveGraphics} = await import('../src/graphics.js');
- const old = loadGraphics();
- assert.equal(old.hauntedAllYear, false);
- assert.equal(old.distantFlags, true, 'the rest of the old record is kept');
- assert.equal(saveGraphics({...old, hauntedAllYear: true}).hauntedAllYear, true);
- assert.equal(loadGraphics().hauntedAllYear, true);
- delete globalThis.localStorage;
+test('every region has its winter; a season moves the turf, never the greens, and summer nothing', async () => {
+ const {WINTER, seasonPalette, bareInWinter} = await import('../src/seasons.js');
+ const {REGIONS} = await import('../src/regions.js');
+ for (const r of Object.keys(REGIONS)) assert.ok(['snow', 'frost', 'dormant', 'green'].includes(WINTER[r]), `${r} has no winter`);
+ const bio = {rough: '#6e7a3c', semi: '#4f8a3e', fairway: '#549a44', green: '#a0be6a', bank: '#697348'};
+ assert.deepEqual(seasonPalette(bio, 'summer', 'midwest'), {});
+ const snow = seasonPalette(bio, 'winter', 'midwest');
+ assert.ok(!('green' in snow), 'a green is kept clear');
+ const lum = h => [1, 3, 5].reduce((a, i) => a + parseInt(h.slice(i, i + 2), 16), 0);
+ assert.ok(lum(snow.rough) > lum(bio.rough) + 300, 'snow whitens the rough');
+ assert.deepEqual(seasonPalette(bio, 'winter', 'hawaii'), {}, 'a green winter changes nothing');
+ for (const s of ['spring', 'autumn']) assert.ok(seasonPalette(bio, s, 'south').rough !== bio.rough, `${s} moves the rough`);
+ const sets = {evergreen: new Set(['pine']), palms: new Set(['palm']), ground: new Set(['shrub'])};
+ assert.ok(bareInWinter('oak', sets) && !bareInWinter('pine', sets) && !bareInWinter('palm', sets) && !bareInWinter('shrub', sets));
+});
+
+test('snow covers the natural grounds and greys the far broadleaf woods', async () => {
+ // New England's winter showed orange leaf litter and autumn far woods
+ // through the snow (3 November 2026).
+ const {seasonPalette} = await import('../src/seasons.js');
+ const bright = h => [1, 3, 5].reduce((s, i) => s + parseInt(h.slice(i, i + 2), 16), 0) / 3;
+ const bio = {rough: '#4a7a3a', groundTints: {native: '#b3a35a'}, farForest: {colors: ['#b8482c', '#d67c34', '#cfa443']}};
+ const snow = seasonPalette(bio, 'winter', 'northeast');
+ assert.ok(bright(snow.groundTints.litter) > 200, `litter under snow is ${snow.groundTints.litter}`);
+ assert.ok(bright(snow.groundTints.native) > 200, `native grass under snow is ${snow.groundTints.native}`);
+ // New England's own autumn woods: at least four fifths of the orange gone.
+ const warmth = h => parseInt(h.slice(1, 3), 16) - parseInt(h.slice(5, 7), 16);
+ bio.farForest.colors.forEach((c, i) => assert.ok(warmth(snow.farForest.colors[i]) <= warmth(c) * .2 + 24,
+  `the far woods in winter are still orange: ${c} became ${snow.farForest.colors[i]}`));
+ assert.equal(seasonPalette(bio, 'winter', 'south').groundTints, undefined, 'a dormant winter keeps its grounds');
+});
+
+test('every landscape\'s rough has its green for three seasons, and spring is its own', async () => {
+ const {GREEN, roughGreen, RICH} = await import('../src/seasons.js');
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const {BIOME_KEYS} = await import('../src/settings-schema.js');
+ const {regionOf} = await import('../src/regions.js');
+ const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+ const far = (a, b) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
+ const greenness = h => { const [r, g, b] = rgb(h); return g - (r + b) / 2; };
+ for (const key of BIOME_KEYS) {
+  assert.ok(GREEN[key], `${key} has no green`);
+  const bio = biomeOf(key), region = regionOf(key), [sp, su, au] = GREEN[key];
+  assert.ok(sp >= au && su >= au, `${key}: autumn is never the greenest`);
+  assert.equal(roughGreen(key, 'winter'), 0);
+  if (bio.tropical) continue;
+  const spring = seasonPalette(bio, 'spring', region), summer = {...bio, ...seasonPalette(bio, 'summer', region)};
+  assert.ok(far(spring.rough, summer.rough) >= 14, `${key}: spring's rough ${spring.rough} too near summer's ${summer.rough}`);
+  assert.ok(greenness(spring.rough) > greenness(bio.rough), `${key}: spring is greener than the record`);
+ }
+ const wine = biomeOf('winecountry');
+ for (const season of ['spring', 'summer']) assert.ok(greenness(seasonPalette(wine, season, 'california').rough) > 15, `wine country's rough is green in ${season}`);
+ assert.ok(greenness(seasonPalette(biomeOf('mojave'), 'spring', 'desert').rough) < 30, 'a desert stays a desert');
+ assert.deepEqual(seasonPalette(biomeOf('mojave'), 'summer', 'desert'), {}, 'its summer is its record');
+ assert.ok(far(seasonPalette(biomeOf('hawaii'), 'summer', 'hawaii').rough, RICH) < far(biomeOf('hawaii').rough, RICH));
+});
+
+test('New England has a real summer, and its autumn is the landscape it was built as', async () => {
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const {regionOf} = await import('../src/regions.js');
+ const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), greenness = h => { const [r, g, b] = rgb(h); return g - (r + b) / 2; };
+ const bio = biomeOf('newengland'), region = regionOf('newengland'), summer = seasonPalette(bio, 'summer', region);
+ assert.ok(greenness(summer.rough) > greenness(bio.rough) + 15, `a green rough: ${summer.rough} from ${bio.rough}`);
+ for (const c of summer.farForest.colors) assert.ok(greenness(c) > 10, `green hills: ${c}`);
+ assert.equal(summer.litter, null, 'no fallen leaves in the rough');
+ assert.notEqual(summer.sunColor, bio.sunColor, 'not the low autumn sun');
+ assert.deepEqual(seasonPalette(bio, 'autumn', region), {}, 'autumn is the record');
+ // No other landscape is touched.
+ assert.equal(seasonPalette(biomeOf('oldnortheast'), 'summer', 'northeast').farForest, undefined);
+});
+
+test('every landscape with a spring has a bloom, its months real and its colours hex', async () => {
+ const {BLOOM} = await import('../src/seasons.js');
+ const {LANDSCAPES} = await import('../src/regions.js');
+ for (const [key, l] of Object.entries(LANDSCAPES)) {
+  if (l.tropical) { assert.equal(BLOOM[key], undefined, `${key} has no spring`); continue; }
+  const [first, last, ...colours] = BLOOM[key] ?? [];
+  assert.ok(first >= 1 && last <= 12 && first <= last, `${key}: months ${first}-${last}`);
+  assert.ok(colours.length >= 2 && colours.every(c => /^#[0-9a-f]{6}$/.test(c)), `${key}: ${colours}`);
+ }
+});
+
+test('a bloom falls in the spring it falls in, and only there', async () => {
+ const {bloomIn} = await import('../src/seasons.js');
+ assert.equal(bloomIn('sonoran', 'spring').amount, 1);
+ assert.equal(bloomIn('newengland', 'spring').amount, .5, 'half of it is in June');
+ assert.equal(bloomIn('rockies', 'spring'), null, 'the Rockies bloom in summer');
+ assert.equal(bloomIn('alaska', 'spring'), null);
+ assert.equal(bloomIn('keys', 'spring'), null, 'the tropics have no spring');
+ for (const s of ['summer', 'autumn', 'winter']) assert.equal(bloomIn('sonoran', s), null);
+ assert.equal(bloomIn('nowhere', 'spring'), null);
+});
+
+test('the wild ground takes the bloom in spring, and no other season, and not the greens', async () => {
+ const {seasonPalette} = await import('../src/seasons.js');
+ const {biomeOf} = await import('../src/biomes.js');
+ const blue = h => parseInt(h.slice(5, 7), 16) - parseInt(h.slice(1, 3), 16);
+ const bio = biomeOf('hillcountry'), spring = seasonPalette(bio, 'spring', 'texas');
+ assert.ok(blue(spring.groundTints.native) > blue(bio.groundTints?.native ?? '#b3a35a'), 'bluebonnets blue the native ground');
+ assert.ok(!('green' in spring));
+ assert.equal(seasonPalette(biomeOf('rockies'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
+ assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
+ const summer = seasonPalette(bio, 'summer', 'texas');
+ assert.equal(summer.bloom, undefined); assert.equal(summer.groundTints, undefined);
+});
+
+test('a snowy winter leaves no bracken or flowers on the snow, and a leaf-fall record no cream', () => {
+ assert.ok(UNDER_SNOW.has('bracken') && UNDER_SNOW.has('fern'));
+ const orange = '#c8702a', dull = dullInWinter(orange);
+ const chroma = h => { const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); return Math.max(...v) - Math.min(...v); };
+ assert.ok(chroma(dull) < chroma(orange) / 2, dull);
+ const bio = {rough: '#b08a3a', semi: '#8a7a3a', bank: '#8a7a3a', fairway: '#4a7a3a'};
+ const plain = seasonPalette(bio, 'winter', 'northeast'), fall = seasonPalette({...bio, leafFall: true}, 'winter', 'northeast');
+ assert.ok(chroma(fall.rough) < chroma(plain.rough) / 2, fall.rough);
+});
+
+test('a prairie grass wears its own colours through the year, and a field in bloom keeps its own', () => {
+ // Seen 3 November 2026: every long grass took the landscape's one colour, so
+ // tall fescue was New England's autumn orange in a Kentucky July and no
+ // prairie turned.
+ const rec = BIOMES.heartland.longGrass, hue = c => c.getHSL({}).h * 360;
+ assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'summer').leaf) > 120, 'little bluestem is blue-green in summer');
+ assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'autumn').leaf) < 40, 'and copper in autumn');
+ assert.ok(hue(grassLook(BIOMES.bluegrass.longGrass, 'grasstallfescue', 'summer').leaf) > 70, 'tall fescue is green in summer');
+ const hex = c => `#${c.getHexString(T.SRGBColorSpace)}`;
+ assert.equal(hex(grassLook(rec, 'grassbluestem', 'autumn').leaf), rec.leaf, 'an older family keeps the landscape\'s');
+ assert.equal(hex(grassLook(BIOMES.bluebonnet.longGrass, 'grassindian', 'summer').accent), BIOMES.bluebonnet.longGrass.accent, 'the bluebonnets stay blue');
+ for (const k of ['bluegrass', 'ozarks', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
+});
+
+// The owner, 5 November 2026, of Puget Sound in autumn: "The evergreen trees change
+// color". `cedar` was not on the list. The three conifers that do drop their needles
+// have their own tints.
+test('no evergreen turns in autumn: every conifer and palm is on the list or has its own colours', async () => {
+ const [{EVERGREEN}, {CONIFERS, PALMS}, {SEASON_TINTS}] = await Promise.all([import('../src/species.js'), import('../src/built-world.js'), import('../src/season-tints.js')]);
+ const shed = new Set(['baldcypress', 'westernlarch', 'tamarack']);
+ for (const k of [...CONIFERS, ...PALMS]) {
+  if (shed.has(k)) { assert.ok(SEASON_TINTS[k]?.autumn, `${k} turns by its own colours`); continue; }
+  assert.ok(EVERGREEN.has(k) || SEASON_TINTS[k]?.autumn, `${k} would turn orange in autumn`);
+ }
+ for (const k of ['cedar', 'tanoak', 'seedling', 'swordfern']) assert.ok(EVERGREEN.has(k), k);
 });

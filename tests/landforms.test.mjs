@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {landformOf, wildField, wildAt, wildGate, wildGround, fallenAt, WILD_WATER} from '../src/landforms.js';
-import {GROUNDS, allows} from '../src/grounds.js';
+import {GROUNDS, allows, isNatural} from '../src/grounds.js';
 import {BIOMES} from '../src/biomes.js';
 import {generateWorld} from '../src/course.js';
 import {ownerAtlasSize} from '../src/owner-atlas.js';
@@ -29,7 +29,7 @@ test('every recipe names ground types that exist, and a biome with blowouts leav
 });
 
 test('the field is baked on the ground atlas grid and read back as a linear filter reads it', () => {
- const r = landformOf(BIOMES.mountain, 'L1'), f = wildField(r, 900, 700, () => 0);
+ const r = landformOf(BIOMES.rockies, 'L1'), f = wildField(r, 900, 700, () => 0);
  assert.deepEqual({Sx: f.Sx, Sz: f.Sz}, ownerAtlasSize(900, 700));
  for (const [i, j] of [[3, 5], [100, 200], [f.Sx - 1, f.Sz - 1]]) {
   const x = ((i + .5) / f.Sx * 2 - 1) * f.ex, z = ((j + .5) / f.Sz * 2 - 1) * f.ez;
@@ -39,8 +39,8 @@ test('the field is baked on the ground atlas grid and read back as a linear filt
 });
 
 test('a seed bakes its own field, the same every time', () => {
- const flat = () => 0, a = wildField(landformOf(BIOMES.desert, 'L1'), 600, 600, flat), b = wildField(landformOf(BIOMES.desert, 'L1'), 600, 600, flat);
- const c = wildField(landformOf(BIOMES.desert, 'L2'), 600, 600, flat);
+ const flat = () => 0, a = wildField(landformOf(BIOMES.sonoran, 'L1'), 600, 600, flat), b = wildField(landformOf(BIOMES.sonoran, 'L1'), 600, 600, flat);
+ const c = wildField(landformOf(BIOMES.sonoran, 'L2'), 600, 600, flat);
  assert.deepEqual(a.a, b.a); assert.deepEqual(a.b, b.b);
  // Channel b, the washes: on flat test ground the cliffs (a) are steepness
  // and so empty for every seed.
@@ -63,7 +63,7 @@ test('the gates keep every ground type off the playing lines', () => {
 });
 
 test('the driving range stays flat and plain whatever its biome', () => {
- for (const biome of ['mountain', 'desert', 'links']) {
+ for (const biome of ['rockies', 'sonoran', 'links']) {
   const w = generateWorld({seed: 'L1', biome, range: true});
   assert.equal(w.wild, null, `${biome} range has a ground field`);
  }
@@ -72,14 +72,17 @@ test('the driving range stays flat and plain whatever its biome', () => {
 const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 test('each landscape has the ground its recipe asks for, and only where the lie rules allow', () => {
- const want = {mountain: ['rock', 'scree'], desert: ['rock', 'waste', 'hardpan'], links: ['native', 'heather'],
-  midwest: ['native'], haunted: ['heather'], autumn: ['rock', 'litter'], pnw: ['pinestraw'], lakeshore: ['native']};
+ const want = {rockies: ['rock', 'scree'], sonoran: ['rock', 'waste', 'hardpan'], links: ['native', 'heather'],
+  heartland: ['native'], newengland: ['rock', 'litter'], puget: ['pinestraw'], lakedunes: ['native']};
  for (const [biome, kinds] of Object.entries(want)) {
   const w = generateWorld({seed: SEEDS[0], biome, holes: 9, trees: 60, homes: true, ...WATER});
   const seen = new Set();
   for (let x = -w.halfX; x < w.halfX; x += 9) for (let z = -w.halfZ; z < w.halfZ; z += 9) {
    const s = w.surface(x, z);
-   if (!GROUNDS[s]) continue;
+   // The landform's own ground (a cart path is a ground too, but laid by
+   // people and bridged over the creeks it crosses: every generated course
+   // has paths since 2 November 2026).
+   if (!GROUNDS[s] || !isNatural(s)) continue;
    seen.add(s);
    const n = w.nearest(x, z);
    // Clear of the corridor envelope by the gate, and of water.
@@ -95,7 +98,7 @@ test('each landscape has the ground its recipe asks for, and only where the lie 
 });
 
 test('fallen needles are played from the bytes the straw is painted with', () => {
- const w = generateWorld({seed: SEEDS[0], biome: 'pnw', holes: 9, trees: 60, homes: true});
+ const w = generateWorld({seed: SEEDS[0], biome: 'puget', holes: 9, trees: 60, homes: true});
  assert.ok(w.fallenField, 'pine straw is baked');
  let straw = 0;
  for (let x = -w.halfX; x < w.halfX; x += 7) for (let z = -w.halfZ; z < w.halfZ; z += 7) {
@@ -121,12 +124,11 @@ test('the ground shader asks the lie\'s questions in the lie\'s order', () => {
  assert.match(block, /cv\.a\*smoothstep\(wildGateA\.x,wildGateA\.x\+wildGateA\.y,hd\)/);
  assert.match(block, /cv\.b\*smoothstep\(wildGateB\.x,wildGateB\.x\+wildGateB\.y,hd\)/);
  assert.match(block, /float ff=fallenOn>\.5&&wildKinds\.w>\.5\?cv\.g:0\.;/);
- // Each channel through wildEdge with its own code (Architect's native line,
- // below), in the same order.
- assert.match(block, /wildEdge\(wildKinds\.w,ff\)\);[\s\S]*wildEdge\(wildKinds\.z,fz\)\);[\s\S]*wildEdge\(wildKinds\.y,fy\)\);[\s\S]*wildEdge\(wildKinds\.x,fx\)\);/);
+ // Each channel through wildEdge with its own code, in the same order.
+ assert.match(block, /paintShare=vec4\(ff>0\.\?wildEdge\(wildKinds\.w,ff\):0\.,fz>0\.\?wildEdge\(wildKinds\.z,fz\):0\.,fy>0\.\?wildEdge\(wildKinds\.y,fy\):0\.,fx>0\.\?wildEdge\(wildKinds\.x,fx\):0\.\);/);
  // And the colour's soft edge straddles the 0.5 the lie switches at.
  assert.match(src, /float wildSoft\(float f\)\{return smoothstep\(\.34,\.66,f\);\}/);
- // On an Architect course native grass (code 9) takes a mower's edge, still
- // centred on the lie's 0.5; every other type, and all of Classic, the soft one.
- assert.match(src, /float wildEdge\(float code,float f\)\{return archGround>\.5&&code==9\.\?smoothstep\(\.48,\.52,f\):wildSoft\(f\);\}/);
+ // Every ground type takes the soft edge (an Architect course's native grass
+ // took a mower's crisp one until the designer was removed, 2 November 2026).
+ assert.match(src, /float wildEdge\(float code,float f\)\{return wildSoft\(f\);\}/);
 });

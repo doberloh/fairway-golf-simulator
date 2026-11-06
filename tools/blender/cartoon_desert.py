@@ -23,6 +23,8 @@
 #               clusters at the tips (the accent)
 #   agave       a rosette of thick blue-grey leaves, each with a dark spine
 #               at its tip (the accent), under a metre tall
+# REFS paloverde=Blender_Palo_1,Blender_Palo_2,Blender_Palo_3
+# REFS mesquite=Blender_Mesquite_1,Blender_Mesquite_2,Blender_Mesquite_3
 import math, os, random, sys
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(__file__))
@@ -33,81 +35,145 @@ def drift(rng, amount):
     return Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), 0)) * amount
 
 
-def palo(height, width, stems):
+def twig(mesh, a, b, r0, r1, sides=3, shade=1.0, sag=0.0):
+    """A fine stick of two segments: a third of a limb's cost, for the many
+    last twigs an open crown shows against the sky."""
+    mid = (a + b) * .5 + Vector((0, 0, sag))
+    mesh.add_tube([a, mid, b], [r0, (r0 + r1) * .5, r1], sides, 'bark', shade=lambda co, t: shade,
+                  flex=lambda co, t: .3 + .5 * t)
+
+
+def palo(height, width, stems, twigs=3):
     def build(mesh, rng):
+        # SILHOUETTE (the US landscapes back-port, 2 November 2026): a wide,
+        # flat umbrella of green haze held up by a fan of green bones. Several
+        # trunks from the ground, each forking twice into limbs reaching up and
+        # out, every branch ending in fine twigs whose tips sit on one flat
+        # dome; the leaves are small flat specks along that dome, so sky shows
+        # through and between them -- nearly see-through, unlike the ironwood's
+        # ragged grey dome or the mesquite's dark shelves.
         H, W = height, width
-        c = Vector((0, 0, H * .66))
-        tips = []
-        # Several low trunks leaning out, each forking once: the green bones
-        # that show through a palo verde's thin crown.
+        R = W * .5
+
+        def dome(r):
+            return H * (.97 - .34 * (r / R) ** 2)
+        c = Vector((0, 0, H * .68))
+        shade = ct.crown_shade(c, (R, R, H * .32), low=.8, high=1.25, core=.9)
+        per = max(2, math.ceil(8 / stems))
+        ends, mids = [], []
         for i in range(stems):
             a = i / stems * math.tau + rng.uniform(-.4, .4)
-            lean = Vector((math.cos(a), math.sin(a), 0)) * W * rng.uniform(.12, .2)
-            pts, radii = ct.trunk(mesh, rng, drift(rng, H * .03), H * rng.uniform(.38, .5), H * .032, lean=lean,
-                                  flare=1.3, sides=8, bend=H * .02, shade_low=.85, shade_high=1.1)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            th = H * rng.uniform(.18, .26)
+            pts, radii = ct.trunk(mesh, rng, out * H * .025, th, H * .03, lean=out * th * .55, flare=1.25, sides=6,
+                                  steps=5, bend=H * .015, shade_low=.85, shade_high=1.05)
             top = pts[-1]
-            for k in range(2):
-                b = a + (k - .5) * rng.uniform(.6, 1.1)
-                end = top + Vector((math.cos(b) * W * .26, math.sin(b) * W * .26, H * rng.uniform(.18, .3)))
-                ct.limb(mesh, rng, top, end, H * .016, H * .006, bow=.12, sides=6, shade=.95)
-                tips.append(end)
-        # An open, airy crown -- sky shows through, as in the real tree. Round
-        # 2: round 1's few big flat lobes on bare stalks read as lollipops;
-        # now each branch tip splits into twigs, each carrying a cloud of
-        # many small lobes, so the crown is a fine haze. Round 3: those lobes
-        # cost 11,000 faces a tree -- too many for a bosque -- so four to a
-        # twig, of 80 triangles each, not 320.
-        shade = ct.crown_shade(c, (W * .5, W * .5, H * .3), low=.6, high=1.25, core=.8)
-        ends = []
-        for e in tips:
-            for j in range(3):
-                b = rng.uniform(0, math.tau)
-                f = e + Vector((math.cos(b) * W * .1, math.sin(b) * W * .1, H * rng.uniform(.02, .08)))
-                ct.limb(mesh, rng, e, f, H * .006, H * .003, bow=.1, sides=4, shade=.95)
-                ends.append(f)
-        for e in tips + ends:
-            for j in range(4):
-                p = e + Vector((rng.uniform(-1, 1) * W * .06, rng.uniform(-1, 1) * W * .06, rng.uniform(-.01, .04) * H))
-                s = W * rng.uniform(.045, .07)
-                mesh.add_lump(p, (s, s, s * .7), 'leaf', rng, subdiv=1, jitter=.2, crown=c, blend=.75, shade=shade,
-                              flex=.85, squash_bottom=.3)
+            for k in range(per):
+                b = a + (k - (per - 1) / 2) * rng.uniform(.45, .7)
+                rr = R * rng.uniform(.26, .38)
+                le = Vector((math.cos(b) * rr, math.sin(b) * rr, H * rng.uniform(.46, .56)))
+                ct.limb(mesh, rng, top, le, H * .016, H * .009, bow=.08, sides=4, shade=.95)
+                for m in range(2):
+                    c2 = b + (m - .5) * rng.uniform(.35, .7)
+                    r2 = min(R * .95, rr + R * rng.uniform(.38, .6))
+                    be = Vector((math.cos(c2) * r2, math.sin(c2) * r2, dome(r2) - H * rng.uniform(.1, .15)))
+                    twig(mesh, le, be, H * .008, H * .005, sides=4, shade=1.0, sag=H * .03)
+                    mids.append((le + be) * .5 + Vector((0, 0, H * .03)))
+                    for n in range(twigs):
+                        d = c2 + rng.uniform(-.9, .9)
+                        te = be + Vector((math.cos(d) * W * .08, math.sin(d) * W * .08, 0))
+                        te.z = dome(min(R, te.xy.length)) - H * rng.uniform(.0, .1)
+                        if not ct.FAR:   # the far twin: no last twigs, a bigger speck
+                            twig(mesh, be, te, H * .004, H * .002, shade=1.05)
+                        ends.append(te)
+        # The haze: small flat specks on the twig ends and between them.
+        # Each end draws from its own stream, so the far twin (fewer specks)
+        # stays the same tree as the full model.
+        for e in ends + mids:
+            er = random.Random(rng.random())
+            for j in range(2 if e in ends and not ct.FAR else 1):
+                p = e + Vector((er.uniform(-1, 1) * W * .06, er.uniform(-1, 1) * W * .06, er.uniform(-.04, .01) * H))
+                s = W * er.uniform(.035, .055) * (1.3 if ct.FAR else 1)
+                mesh.add_lump(p, (s, s, s * .75), 'leaf', er, subdiv=1, jitter=.42, crown=c, blend=.7, shade=shade,
+                              flex=.85)
         # Spring: yellow flowers dusting the crown.
-        for i in range(40):
-            e = tips[rng.randrange(len(tips))]
-            p = e + Vector((rng.uniform(-1, 1) * W * .12, rng.uniform(-1, 1) * W * .12, rng.uniform(0, .08) * H))
-            s = W * rng.uniform(.018, .03)
+        for i in range(7):
+            e = ends[rng.randrange(len(ends))]
+            p = e + Vector((rng.uniform(-1, 1) * W * .05, rng.uniform(-1, 1) * W * .05, H * .02))
+            s = W * rng.uniform(.02, .03)
             mesh.add_lump(p, (s, s, s), 'accent', rng, subdiv=1, jitter=.1, flex=.9)
     return build
 
 
-def mesquite(height, width):
+def mesquite(height, width, limbs, stems=1):
     def build(mesh, rng):
+        # SILHOUETTE (the back-port): low, wide and dark. A short crooked
+        # trunk forks almost at once into heavy arching limbs that spread
+        # sideways; the crown is a broad, flat-topped, ragged shelf of dark
+        # clumps, wider than tall, with feathery tassels hanging from its
+        # outer edge and dark limbs showing through the gaps beneath --
+        # not a ball, not the palo verde's thin bright umbrella.
         H, W = height, width
-        # A crooked trunk forking low into arching stems.
-        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .3, H * .045, lean=drift(rng, H * .06), flare=1.6,
-                              sides=10, bend=H * .05, shade_low=.7, shade_high=.95, wobble=.1)
+        R = W * .5
+        pts, radii = ct.trunk(mesh, rng, Vector((0, 0, 0)), H * .2, H * .05, lean=drift(rng, H * .05), flare=1.6,
+                              sides=9, steps=6, bend=H * .05, shade_low=.55, shade_high=.75, wobble=.12)
         top = pts[-1]
-        c = Vector((top.x, top.y, H * .62))
-        ends = []
-        for i in range(5):
-            a = i / 5 * math.tau + rng.uniform(-.5, .5)
-            mid = top + Vector((math.cos(a) * W * .2, math.sin(a) * W * .2, H * .22))
-            end = top + Vector((math.cos(a) * W * .38, math.sin(a) * W * .38, H * rng.uniform(.28, .38)))
-            ct.limb(mesh, rng, top, mid, H * .026, H * .016, bow=.25, sides=7, shade=.8)
-            ct.limb(mesh, rng, mid, end, H * .016, H * .006, bow=-.1, sides=6, shade=.85)
-            ends.append(end)
-        # A broad, rounded but open crown: a low dome of many feathery lobes
-        # with gaps, wider than it is tall.
-        # Round 2: round 1's crown was a stack of pancakes (a crown half as
-        # tall as wide, lobes flattened); taller now, rounder lobes, more of
-        # them, so the dome reads as feathery clumps.
-        ct.cloud_crown(mesh, rng, c, (W * .5, W * .47, H * .32), lobes=36, lobe_size=(.16, .24), subdiv=2, jitter=.22,
-                       flat_bottom=.35, shell=.9, low=.5, high=1.15)
-        shade = ct.crown_shade(c, (W * .5, W * .47, H * .32))
-        for e in ends:
-            s = W * .11
-            mesh.add_lump(e, (s, s, s * .75), 'leaf', rng, subdiv=2, jitter=.2, crown=c, blend=.8, shade=shade, flex=.85,
-                          squash_bottom=.3)
+        # A second, thinner stem from the foot, leaning out under the crown:
+        # mesquite is often several-stemmed (round 6).
+        sr_ = random.Random(rng.random())   # its own stream: the far twin skips it
+        for k in range(0 if ct.FAR else stems - 1):
+            a = sr_.uniform(0, math.tau)
+            o = Vector((math.cos(a), math.sin(a), 0))
+            sp, sr = ct.trunk(mesh, sr_, o * H * .04, H * .3, H * .028, lean=o * R * .35, flare=1.3, sides=6, steps=5,
+                              bend=H * .04, shade_low=.55, shade_high=.75, wobble=.12)
+            ct.limb(mesh, sr_, sp[-1], sp[-1] + o * R * .3 + Vector((0, 0, H * .2)), H * .015, H * .007, bow=.15,
+                    sides=4, shade=.65)
+        c = Vector((top.x, top.y, H * .68))
+        shade = ct.crown_shade(c, (R, R, H * .28), low=.5, high=1.12, core=.75)
+        tips = []
+        for i in range(limbs):
+            a = i / limbs * math.tau + rng.uniform(-.45, .45)
+            out = Vector((math.cos(a), math.sin(a), 0))
+            mid = top + out * R * rng.uniform(.25, .35)
+            mid.z = H * rng.uniform(.4, .5)
+            end = Vector((0, 0, 0)) + out * R * rng.uniform(.72, .85)
+            end.z = H * rng.uniform(.62, .68)
+            ct.limb(mesh, rng, top, mid, H * .03, H * .02, bow=.22, sides=7, shade=.6)
+            ct.limb(mesh, rng, mid, end, H * .02, H * .009, bow=-.12, sides=5, shade=.65)
+            tips.append((end, out))
+            # A side branch running out nearly level from the arch.
+            b = a + rng.choice((-1, 1)) * rng.uniform(.5, .8)
+            o2 = Vector((math.cos(b), math.sin(b), 0))
+            side = o2 * R * rng.uniform(.92, 1.02)
+            side.z = H * rng.uniform(.52, .6)
+            ct.limb(mesh, rng, mid, side, H * .014, H * .006, bow=.05, sides=4, shade=.65)
+            tips.append((side, o2))
+        for e, out in tips:
+            # A shelf clump, wide and flat, over the tip ...
+            s = R * rng.uniform(.28, .34)
+            mesh.add_lump(e + Vector((0, 0, H * .05)), (s, s * .9, H * .09), 'leaf', rng, subdiv=3, jitter=.28,
+                          crown=c, blend=.75, shade=shade, flex=.8, squash_bottom=.3)
+            # ... a smaller one inboard and higher, so the top is ragged ...
+            p = e - out * R * .18 + drift(rng, R * .08)
+            p.z += H * rng.uniform(.08, .11)
+            s = R * rng.uniform(.17, .22)
+            mesh.add_lump(p, (s, s, H * .08), 'leaf', rng, subdiv=2, jitter=.2, crown=c, blend=.75, shade=shade,
+                          flex=.75)
+            # ... and feathery tassels hanging past the outer edge.
+            tr = random.Random(rng.random())
+            for k in range(1 if ct.FAR else 3):
+                q = e + out * R * tr.uniform(.16, .28) + drift(tr, R * .12)
+                q.z -= H * tr.uniform(.06, .14)
+                s = R * tr.uniform(.06, .08)
+                mesh.add_lump(q, (s, s, H * tr.uniform(.06, .09)), 'leaf', tr, subdiv=1, jitter=.25, crown=c,
+                              blend=.6, shade=shade, flex=1.0)
+        # The middle of the shelf, so the top reads as one broad flat lid.
+        for k in range(3):
+            p = c + drift(rng, R * .38)
+            p.z = H * rng.uniform(.76, .8)
+            s = R * rng.uniform(.24, .3)
+            mesh.add_lump(p, (s, s, H * .08), 'leaf', rng, subdiv=2, jitter=.2, crown=c, blend=.75, shade=shade,
+                          flex=.7, squash_bottom=.4)
     return build
 
 
@@ -302,10 +368,10 @@ def agave(height, width, leaves):
 MODELS = [
     ('Blender_Palo_1', palo(6.5, 7.5, 3)),
     ('Blender_Palo_2', palo(5.5, 6.5, 4)),
-    ('Blender_Palo_3', palo(7, 8, 2)),
-    ('Blender_Mesquite_1', mesquite(8, 9)),
-    ('Blender_Mesquite_2', mesquite(7, 8.5)),
-    ('Blender_Mesquite_3', mesquite(9, 9.5)),
+    ('Blender_Palo_3', palo(7, 8, 2, 2)),
+    ('Blender_Mesquite_1', mesquite(8, 9, 5, 2)),
+    ('Blender_Mesquite_2', mesquite(7, 8.5, 5)),
+    ('Blender_Mesquite_3', mesquite(9, 9.5, 5, 2)),
     ('Blender_Saguaro_1', saguaro(10, 2)),
     ('Blender_Saguaro_2', saguaro(12, 4)),
     ('Blender_Saguaro_3', saguaro(8, 0)),
@@ -321,4 +387,9 @@ MODELS = [
 ]
 
 ct.export(MODELS, colours={'leaf': (0.45, 0.55, 0.32), 'bark': (0.45, 0.55, 0.3), 'accent': (0.95, 0.8, 0.3)},
-          far={n for n, _ in MODELS if 'Palo' in n or 'Mesquite' in n})
+          far={n for n, _ in MODELS if 'Palo' in n or 'Mesquite' in n},
+          # The sheet's colours for the two trees (the game paints the roles
+          # itself): palo verde's bright yellow-green bones and haze; mesquite's
+          # dark grey-brown bark under a darker, duller green.
+          tints={**{f'Blender_Palo_{i}': {'leaf': (0.5, 0.66, 0.2), 'bark': (0.45, 0.62, 0.24)} for i in (1, 2, 3)},
+                 **{f'Blender_Mesquite_{i}': {'leaf': (0.33, 0.46, 0.24), 'bark': (0.3, 0.26, 0.22)} for i in (1, 2, 3)}})

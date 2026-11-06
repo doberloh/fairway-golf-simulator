@@ -6,6 +6,9 @@ import projectLicense from '../LICENSE?raw';
 // this line does not fail a test, it fails the build.
 import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
+import {roundSeason} from './seasons.js';
+import {quietRightClick} from './quiet-right-click.js';
+import {LANDSCAPES,currentKey} from './regions.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLED_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {planShotCamera,planReview} from './tv-camera.js';
@@ -56,7 +59,7 @@ import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui
 import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
 import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,sheetScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
 import {holeNames} from './hole-names.js';
-import {crestSvg,courseIdentity} from './crest.js';
+import {crestSvg} from './crest.js';
 import {yardageBook} from './yardage-book.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
@@ -73,6 +76,9 @@ import {createPictureLoop} from './picture-loop.js';
 import {LANDSCAPE_SHOTS,EVERY_LANDSCAPE} from './landscape-shots.js';
 import {createPictureStore} from './course-pictures.js';
 import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
+import {createBuiltStore} from './built-store.js';
+import {worldFromDoc} from './built-world.js';
+import {isBuiltFile} from './course-doc.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
 import {makeWindow} from './ui-windows.js';
@@ -82,9 +88,7 @@ import {framedForBall} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
-import {leaderboard} from './leaderboard.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
-import {hauntedInSeason,offered,markOffSeason} from './seasons.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -96,15 +100,26 @@ import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRange
 import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
-import {reliefOptions,crossingPoint,OB_RULES,pathRelief} from './relief.js';
-import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor,shownFor,isArchitect} from './settings-schema.js';
+import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
+import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
+// BUILT COURSES (Fairway Course Builder; docs/COURSE_BUILDER.md): their files
+// kept in IndexedDB by hash, parsed when a round on one is about to start.
+const builtStore=createBuiltStore();
+// A world for these settings: a built course from its file (already loaded by
+// prepareWorld), else grown from its seed.
+function worldNow(s){
+ if(!s.built)return generateWorld(s);
+ const doc=builtStore.now(s.built);
+ if(!doc)throw Error('This built course is not loaded. Open it again from Saved courses.');
+ return worldFromDoc(doc,s);
+}
 let tour=null;
 let lastShot=null,priorShot=null,aimRange=null,aimPoint=null,lastMapFrame=0;
 // Which numbers the card shows, and in how many columns. A display
@@ -1091,14 +1106,12 @@ function applyRoundCamera(saved){
 // never part of what the seed decides. `style` is deliberately NOT carried:
 // endless forces cartoon, which is the mode's own choice and not a loss.
 const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),...playScope(from)});
-// SEASONAL LANDSCAPES (seasons.js). Whether Haunted Hollow is offered now, and
-// a fresh endless run's seed -- marked when it is not, so the run never rolls it.
-const hauntedOffered=()=>offered('haunted',{allYear:!!graphics?.hauntedAllYear});
-const freshRunSeed=()=>{const s=newRunSeed();return hauntedOffered()?s:markOffSeason(s);};
-// A picker's landscapes now: those in season, and the one already chosen.
-const seasonalBiomes=keep=>Object.entries(BIOMES).filter(([k])=>k===keep||offered(k,{allYear:!!graphics?.hauntedAllYear}));
-// Surprise me rolls again rather than land on a landscape out of season.
-const surpriseSettings=()=>{let s=randomSettings(Math.random);for(let i=0;i<20&&!offered(s.biome,{allYear:!!graphics?.hauntedAllYear});i++)s=randomSettings(Math.random);return s;};
+// A fresh endless run's seed, a picker's landscapes and Surprise me. (Haunted
+// Hollow's season -- seasons.js, its date switch -- went with the landscape,
+// 2 November 2026; every landscape is offered all year.)
+const freshRunSeed=()=>newRunSeed();
+const seasonalBiomes=()=>Object.entries(BIOMES);
+const surpriseSettings=()=>randomSettings(Math.random);
 // Carrying the keys is only half of it -- they have to be made live. Boot and
 // import each did this by hand and `resumeRound` did not, so resuming a round
 // saved under a different bag played it with the CURRENT one while the bag panel
@@ -1168,7 +1181,7 @@ function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:round.en
 // still slides without a rebuild. A cup's place is never in it: recutting one
 // changes no ground.
 const rangeKey=s=>{if(!s.range)return '';const c=centreSetup(s),q=shortSetup(s),k=g=>[g.slope,g.tilt,g.contour,g.seed];return JSON.stringify(['range',k(c),k(q),shapes(c)?rangeGreenYards(s):null]);};
-const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),...generationKeys().map(k=>s[k])]);
+const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),s.built??null,s.builtPins??null,...generationKeys().map(k=>s[k])]);
 // Settling `settings` into the exact shape the world is keyed on.
 //
 // Pulled out of loadCourse so `prepareWorld` can key on the same thing without a
@@ -1179,6 +1192,12 @@ const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),...generationKe
 // this and then loadCourse calls it again on the way through.
 function settleSettings(){
  settings.style='cartoon';settings.turf=turfConfig(settings.turf);
+ // A built course is only ever the course a round was started on (buildRoundOn,
+ // a resumed round); the range, an endless run and the studio grow their own.
+ if(settings.built&&(settings.range||round.endless||appMode==='studio'))settings.built=null;
+ // Its cups are the round's (built-world.js placeBuiltPins), so a new round on
+ // it is a new world.
+ if(settings.built)settings.builtPins=round.pinSeed;else delete settings.builtPins;
  if(!settings.range&&!round.endless&&settings.holes&&settings.holes!==round.holes&&settings.courseYards)settings.courseYards*=round.holes/settings.holes;
  // No tee toggles: all three sets are always built and the playing tee is a round
  // setting. Re-adding them here would reinstate the keys migration just removed.
@@ -1210,7 +1229,7 @@ const worldHole=n=>round.endless?0:n;
 function loadCourse(){
  stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced){lastShot=null;priorShot=null;}
  const key=settleSettings();
- if(!world||key!==worldKey){lastShot=null;priorShot=null;world=generateWorld(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));updateBoard();}else view.setHole(worldHole(round.hole));
+ if(!world||key!==worldKey){lastShot=null;priorShot=null;world=worldNow(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));}else view.setHole(worldHole(round.hole));
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
  const holeIndex=worldHole(round.hole);
@@ -2240,31 +2259,25 @@ function freshHole(){
 // scramble, whose balls are chosen between rather than played.
 function takePathRelief(result){
  if(result.hazard||result.holed||round.holeComplete||round.mode==='scramble'||rangeMode)return;
- if(course.surface(result.end.x,result.end.z)!=='path')return;
+ if(!OBSTRUCTIONS.has(course.surface(result.end.x,result.end.z)))return;
  const r=pathRelief((x,z)=>course.surface(x,z),result.end,course.pin);if(!r)return;
  const i=round.positions.findIndex(p=>Math.abs(p.x-result.end.x)<1e-6&&Math.abs(p.z-result.end.z)<1e-6);if(i<0)return;
  round.positions[i]={...round.positions[i],x:r.spot.x,z:r.spot.z};
  toast('On the cart path: free relief, dropped beside it (no penalty).');
 }
 function arriveAtHole(){
- if(freshHole()){view.arriveAtHole(round.position,aim);architectNote();}
+ if(freshHole())view.arriveAtHole(round.position,aim);
  else view.flyCamera(round.position,aim);
 }
-// THE HOLE'S NAMES AND THE ARCHITECT'S NOTE (architect-courses, phase 2;
-// hole-names.js). Names are read from the built holes, once a world, for both
-// designers; an endless run grows one hole at a time and has none. The note
-// is an Architect hole's own (architect.js `designHole`), said once as the
-// hole is arrived at.
+// THE HOLE'S NAMES (architect-courses, phase 2; hole-names.js). Names are read
+// from the built holes, once a world; an endless run grows one hole at a time
+// and has none. (An Architect hole's note, said as the hole was arrived at,
+// went with the designer, 2 November 2026.)
 let namedWorld=null,courseHoleNames=[];
 function holeNameOf(hole){
  if(!world||round?.endless||rangeMode)return '';
  if(namedWorld!==world){courseHoleNames=holeNames(world.holes,settings);namedWorld=world;}
  return courseHoleNames[worldHole(hole)]||'';
-}
-function architectNote(){
- const note=course?.design?.note;
- if(!note||round.endless||rangeMode)return;
- toast(`${holeNameOf(round.hole)||`Hole ${round.hole+1}`}: ${note}`);
 }
 function advanceHole(){
  cancelAdvance();endHoleSummary();
@@ -3421,10 +3434,15 @@ async function buildEndless(group,replaySeed){
 }
 async function buildRoundOn(courseSettings,group,name){
  const next={...settings,...courseSettings};
+ // A built course's file, or none: never one carried over from the last round.
+ next.built=courseSettings.built??null;
  // Not a generation setting: it is filtered out by `courseSettings()` before
  // anything is saved, and it is not in the world key, so naming a course can
  // never move a metre of its ground.
  next.courseName=String(name||'').trim()||suggestCourseName(next);
+ // The round's season, fixed now (seasons.js): 'today' becomes today's, so the
+ // saved round -- resumed next month -- still looks as it did.
+ next.season=roundSeason(next.season??'today',{tropical:!!LANDSCAPES[currentKey(next.biome)]?.tropical});
  // Build the Round first: an invalid group must fail before the overlay appears.
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building the course…',async report=>{
@@ -3562,6 +3580,14 @@ const nextFrame=()=>new Promise(r=>{let settled=false;const go=()=>{if(!settled)
 // the main thread waited on them per round, and the whole generation, for lab.ground.
 let lastGridWorkers=0,lastGridWait=[],lastGenerationMs=0;
 async function generateProgressively(next,onProgress){
+ // A BUILT course: no generator, its world from its file (built-world.js).
+ if(next.built){
+  onProgress?.(.2);
+  const doc=await builtStore.load(next.built);
+  if(!doc)throw Error('This built course is no longer on this device. Open its .fairway file again.');
+  builtStore.forget(next.built);
+  return worldFromDoc(doc,next);
+ }
  // The ground grid's heights on other cores (gen-pool.js). Not for one hole --
  // the range, an endless hole -- where starting the workers costs more than
  // the grid they would share.
@@ -3777,7 +3803,7 @@ function toggleStudioPause(show){
   {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
   {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
   {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
-  ...(world&&isArchitect(world.settings)?[{id:'book',label:'Yardage book',sub:'A PDF, a page a hole',act:()=>{toggleStudioPause(false);downloadYardageBook();}}]:[]),
+  ...(world&&!world.built?[{id:'book',label:'Yardage book',sub:'A PDF, a page a hole',act:()=>{toggleStudioPause(false);downloadYardageBook();}}]:[]),
   {id:'graphics',label:'Graphics & sound',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
   {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
  ]});
@@ -3787,7 +3813,7 @@ function toggleStudioPause(show){
 function updateStudioState(){
  if(appMode!=='studio')return;
  const el=$('studioState');el.classList.toggle('dirty',studioDirty);
- if($('studioBook'))$('studioBook').hidden=!world||!isArchitect(world.settings);
+ if($('studioBook'))$('studioBook').hidden=!world||!!world.built;
  studioHud($('world'));
  paintStudioHud({facts:{biome:BIOMES[settings.biome]?.name||settings.biome,holes:settings.holes},changes:studioDirty?studioChanges():[],regenerate:()=>$('studioRegenerate').click()});
  el.textContent=studioDirty?'Settings changed — regenerate to see them.':panel?'Close the settings panel to fly around with W A S D.':'Fly around with W A S D. Drag to look.';
@@ -4138,12 +4164,6 @@ function openStudioSetup(){
  // throw away the choices just made in the panel.
  rangeMode=false;closeRangeBox();restoreCourse();
  settings=courseOnly(settings);
- // ARCHITECT IS NEVER THE DEFAULT (the owner, 31 October 2026: "only
- // accessible in the course studio, and should not be the default"): a fresh
- // visit starts on Classic, whatever was played or grown last. Choosing
- // Architect lasts while the studio is open. The play modes never grow one
- // (tests/designer.test.mjs, *every play mode grows Classic*).
- if(isArchitect(settings))settings={...settings,designer:'classic'};
  studioSetup=true;
  openPanel('course');
 }
@@ -4453,9 +4473,11 @@ async function startRivalRound(base){
  const pick=listRivals().find(r=>r.id===rivalPick);
  if(!pick)throw Error('Paste the code your friend sent first.');
  const problem=rivalProblem(pick,{version:GAME_VERSION});if(problem)throw Error(problem);
- const group={...base,mode:'stroke',rival:pick.id};new Round({...group,holes:pick.holes});
+ // A challenge on a built course: the same file, and the challenger's cups.
+ if(pick.built&&!await builtStore.load(pick.built))throw Error('This challenge was played on a course built in the course builder, which is not on this device. Ask for its .fairway file and open it in Saved courses.');
+ const group={...base,mode:'stroke',rival:pick.id,...(pick.built&&pick.pinSeed?{pinSeed:pick.pinSeed}:{})};new Round({...group,holes:pick.holes});
  rivalSetup=false;closePanel();
- await startRoundOn(pick.settings,group,pick.course);
+ await startRoundOn(pick.built?{...pick.settings,built:pick.built}:pick.settings,group,pick.course);
  toast(`${pick.name}’s challenge: ${scoreText(sumScores(pick.card))} to beat.`);
 }
 // THE COURSE OF THE WEEK'S PAGE, Play's step after choosing it (UI/UX pass V2,
@@ -4762,19 +4784,7 @@ function flashTurn(tries=0){
  el.hidden=true;void el.offsetWidth;el.hidden=false;
  clearTimeout(flashTurn.timer);flashTurn.timer=setTimeout(()=>{el.hidden=true;},1900);
 }
-// THE SCOREBOARD BY THE LAST GREEN follows the scores (the owner's review;
-// leaderboard.js, Renderer.setLeaderboard): on a Championship venue only,
-// where there is a board; a scramble's teams as one line each.
-function updateBoard(){
- if(!view?.hasBoard?.()||rangeMode)return;
- const pars=roundPars();if(!pars.length)return;
- const entries=round.mode==='scramble'
-  ?[...new Set(round.players.map(p=>p.team))].map(team=>({name:round.players.filter(p=>p.team===team).map(p=>p.name).join(' & '),card:round.teamCards[team]}))
-  :round.players.map((p,i)=>({name:p.name||`Player ${i+1}`,card:round.cards[i]}));
- view.setLeaderboard(leaderboard({players:entries,pars,seed:settings.seed,day:pinDayOf(settings)}));
-}
 function drawScoreChips(){
- updateBoard();
  const host=$('scoreChips');if(!host)return;
  const others=round.players.length-1;
  // In skins each chip also says how many skins its golfer has won.
@@ -5051,8 +5061,8 @@ function roundCompleteHtml(){
  const share=canSendCards();
  // The course's crest beside the title, and an Architect course's founding
  // (crest.js; architect-courses, phase 2).
- const id=round.endless?{}:courseIdentity(settings),crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
- return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes${id.year?` \u00b7 founded ${id.year}, laid out by ${escape(id.architect)}`:''}</small></div>`
+ const crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
+ return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></div>`
   +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
@@ -5070,16 +5080,18 @@ function drawPauseInfo(){
  const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
  setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
   return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
- // THE YARDAGE BOOK (architect-courses, phase 7; yardage-book.js): an
- // Architect course's page a hole, from the menu while a round is paused.
- if($('pauseBook'))$('pauseBook').hidden=rangeMode||!isArchitect(settings);
+ // THE YARDAGE BOOK (architect-courses, phase 7; yardage-book.js): a generated
+ // course's page a hole, from the menu while a round is paused (Architect's
+ // only until the designer was removed, 2 November 2026; not a built course's,
+ // a range's or an endless run's).
+ if($('pauseBook'))$('pauseBook').hidden=rangeMode||!(world&&!world.built&&!round?.endless);
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
-// The yardage book of the course on screen, as a PDF (an Architect course's
-// page a hole: yardage-book.js), from the round's menu or the studio.
+// The yardage book of the course on screen, as a PDF (a page a hole:
+// yardage-book.js), from the round's menu or the studio.
 function downloadYardageBook(){
  // The BUILT course's settings: the studio's may have changed unbuilt.
- if(world&&isArchitect(world.settings))download(`fairway-yardage-book-${String(world.settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');
+ if(world&&!world.built)download(`fairway-yardage-book-${String(world.settings.seed||'course').replace(/[^A-Za-z0-9-]+/g,'-')}.pdf`,yardageBook(world).bytes(),'application/pdf');
 }
 function setPause(on){
  const app=$('app');
@@ -5698,7 +5710,7 @@ function renderPanel(name,content){
   <p class="note">A code is one course as text, short enough to paste into a message. Save as file, on a course, keeps its picture too: send the file, and open it here or drop it on this screen. Export every course makes one file of your whole library, for a backup or another computer.</p>
   <button class="secondary" id="exportCourses"><i data-lucide="download"></i> Export every course to a file</button>
   <button class="secondary" id="importCourses"><i data-lucide="upload"></i> Import courses from a file</button>
-  <input id="courseFile" type="file" accept=".fairway,.json,application/json" hidden>`;
+  <input id="courseFile" type="file" accept=".fairway,.json,application/json,application/zip" hidden>`;
   const fail=e=>{$('libraryError').textContent=e.message;};
   if($('saveCourse'))$('saveCourse').onclick=()=>{try{$('libraryError').textContent='';const rec=saveCourse({name:$('courseName').value,settings});openPanel('library');toast(`Saved “${rec.name}”.`);}catch(e){fail(e);}};
   if($('libraryStudio'))$('libraryStudio').onclick=()=>{closePanel();openStudioSetup();};
@@ -5728,8 +5740,10 @@ function renderPanel(name,content){
   // ONE COURSE AS A FILE, WITH ITS PICTURE (the 1.0 polish, course-file.js):
   // `<name>.fairway`, opened by Import courses from a file or dropped here.
   content.querySelectorAll('[data-file]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.file);if(!c)return;
+   // A built course leaves as the file it came in as (its land, its outlines).
+   if(c.built){const bytes=await builtStore.bytes(c.built);if(!bytes){toast('This built course’s file is no longer on this device.');return;}download(courseFileName(c.name),bytes,'application/zip');toast(`Saved “${c.name}” as a file.`);return;}
    const pic=coursePics.get(c.id)??await pictureStore.get(c.id);download(courseFileName(c.name),courseFile(c,pic),'application/json');toast(`Saved “${c.name}” as a file${pic?', with its picture':''}.`);});
-  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
+  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;let code;try{code=exportCourse(c);}catch(e){toast(e.message);return;}$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
   content.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{
    const c=findCourse(b.dataset.play);if(!c)return;
    if(flight){toast('Finish the current shot first.');return;}
@@ -5752,6 +5766,18 @@ function renderPanel(name,content){
    try{
     $('libraryError').textContent='';
     const f=$('courseFile').files[0];
+    // A BUILT course (Fairway Course Builder): a ZIP of its land, outlines and
+    // trees, kept by its hash (built-store.js), its record in the library.
+    // The same file opened again is the course already here (by its hash),
+    // not a second copy of it (until 1 November 2026 each open added one).
+    if(f){const head=new Uint8Array(await f.slice(0,4).arrayBuffer());if(isBuiltFile(head)){
+     if(f.size>1e9)throw Error(`That file is ${(f.size/1e6).toFixed(0)} MB, too large to open.`);
+     const {hash,doc,kept}=await builtStore.put(new Uint8Array(await f.arrayBuffer()));
+     const had=listCourses().find(c=>c.built===hash);
+     if(had){openPanel('library');toast(`“${had.name}” is already in Saved courses.`);return;}
+     const saved=saveCourse({name:doc.name,settings:{biome:doc.landscape,holes:doc.holes.length},built:hash});
+     if(doc.picture&&pictureOk(doc.picture)){coursePics.set(saved.id,doc.picture);pictureStore.put(saved.id,doc.picture);}
+     openPanel('library');toast(`Opened “${saved.name}”, built in the course builder${kept?'':' (kept for this visit only: this browser will not store it)'}.`);return;}}
     if(!f||f.size>2000000)throw Error('Choose a Fairway course file smaller than 2 MB.');
     const text=await f.text();
     // One course with its picture (course-file.js) rather than a library.
@@ -5828,9 +5854,6 @@ function renderPanel(name,content){
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   // An Architect dial says what its choice does to the course, under the
-   // list (the owner's review: "what's changing?"), and keeps saying it as
-   // the choice changes (`describeChoice`, below).
    if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${escape(String(f.names?.[o]??o))}</option>`).join('')}</select></label>${f.describe?`<p class="choice-note" id="${k}Note" aria-live="polite">${escape(f.describe[settings[k]]||'')}</p>`:''}`;
    // A field with `warn` in the schema turns red past its threshold, and says
    // why in a bubble that pops out over the panel when the slider is let go
@@ -5848,7 +5871,7 @@ function renderPanel(name,content){
    // now, and the card is the whole card rather than a par count.
    courseYards:()=>`<div class="course-plan" id="coursePlan" aria-live="polite">
     <div class="plan-summary" id="planSummary"></div>
-    ${isArchitect(settings)?'<p class="research-label">The architect sets the length from the style and the club.</p>':`<label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
+    ${`<label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>`}
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
@@ -5912,14 +5935,9 @@ function renderPanel(name,content){
    // THE LANDSCAPE FIRST (the 1.0 polish, studio round 1): the studio says
    // "choose the landscape you want, then grow it", so its pictures lead the
    // first menu; the rest keep the schema's order.
-   // The designer before everything (architect-courses): it decides which
-   // controls exist at all.
-   const lead=key==='course'?['designer','biome']:[],rank=k=>{const i=lead.indexOf(k);return i<0?lead.length:i;};
-   // TWO DESIGNERS (architect-courses): an Architect course shows only what it
-   // is chosen by, a Classic one everything but the Architect's dials
-   // (settings-schema.js `shownFor`). A heading with nothing under it is left out.
-   // The card stays for an Architect course, without its length controls.
-   const members=SETTINGS.filter(f=>f.category===key&&(shownFor(f,settings)||isArchitect(settings)&&f.key==='courseYards')).sort((a,b)=>rank(a.key)-rank(b.key));
+   const lead=key==='course'?['biome']:[],rank=k=>{const i=lead.indexOf(k);return i<0?lead.length:i;};
+   // A heading with nothing under it is left out.
+   const members=SETTINGS.filter(f=>f.category===key).sort((a,b)=>rank(a.key)-rank(b.key));
    const main=[],more=[];
    for(const f of members){
     let html;
@@ -5982,9 +6000,6 @@ function renderPanel(name,content){
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').innerHTML='<kbd>?</kbd>'+(tipsOpen?'Hide all descriptions':'Show all descriptions');};
   $('openLibrary').onclick=()=>openPanel('library');
-  // Choosing the designer changes which controls exist, so the panel is drawn
-  // again from what is set so far.
-  if($('designer'))$('designer').onchange=()=>{if(applyStudioSettings()){markStudioDirty();openPanel('course');}};
   // Setup only: apply what was chosen, then build once and enter the studio.
   // In the studio, regrow: regenerateStudio reads the controls before its first
   // await, so the sheet can close straight after.
@@ -5998,17 +6013,14 @@ function renderPanel(name,content){
   // the builder runs, over the same seeded stream, so every yardage here is
   // the yardage that gets built -- checked to within the rounding.
   const previewPlan=(syncNumber=true)=>{
-   // An Architect course has no length controls: the architect's own length
-   // is what was asked for (designer.js resolves it inside planScorecard).
-   const arch=!$('courseYards');
-   if(syncNumber&&!arch)$('courseYardsNumber').value=$('courseYards').value;
+   if(syncNumber)$('courseYardsNumber').value=$('courseYards').value;
    // THE WHOLE SETTINGS OBJECT, not just the three fields on screen. The hole
    // skeleton reads doglegs, dogleg angle and turning point, and a card built
    // with the defaults while the studio is set to something else would be
    // quietly wrong about every yardage on a bending hole.
    const p=planScorecard({...settings,holes:Number($('courseHoles').value),
-    ...(arch?{}:{courseYards:Number($('courseYards').value)}),seed:$('seed').value});
-   const asked=arch?p.yards:Number($('courseYards').value);
+    courseYards:Number($('courseYards').value),seed:$('seed').value});
+   const asked=Number($('courseYards').value);
    const n=p.holes.length,half=Math.min(9,n),yd=v=>v.toLocaleString('en-US');
    // Said out loud when the bands cannot reach what was asked for, rather than
    // stretching holes out of shape to make the number come out.
@@ -6331,8 +6343,6 @@ function renderPanel(name,content){
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
-  <label class="check"><input id="gfxHauntedAllYear" type="checkbox" ${graphics.hauntedAllYear?'checked':''}> Haunted Hollow all year</label>
-  <p class="note">Haunted Hollow is a seasonal landscape: offered from 1 October to 7 November${hauntedInSeason()?' (in season now)':''}. On, it is offered all year. A saved round or course, or a shared code, on Haunted Hollow opens any time either way.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -6377,7 +6387,6 @@ function renderPanel(name,content){
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
-  $('gfxHauntedAllYear').onchange=()=>{graphics=saveGraphics({...graphics,hauntedAllYear:$('gfxHauntedAllYear').checked});};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -6642,7 +6651,7 @@ function renderPanel(name,content){
  // categories, rows, what has changed, the landscapes as pictures, in the
  // colours of the landscape being shaped (ui-studio.js).
  studioSheet=name==='course'&&content.id==='drawerContent'
-  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:$('courseYards')?Number($('courseYards').value):isArchitect(settings)?planScorecard({...settings,holes:Number($('courseHoles')?.value)||settings.holes,seed:$('seed')?.value||settings.seed}).yards:settings.courseYards,seed:$('seed')?.value||settings.seed}),
+  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:$('courseYards')?Number($('courseYards').value):settings.courseYards,seed:$('seed')?.value||settings.seed}),
    setup:()=>studioSetup,landscapes:seasonalBiomes(settings.biome).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
  if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
  // Challenges, the course of the week and saved courses, the same way
@@ -7162,7 +7171,10 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The seed the next fresh Endless run takes (the smoke run's
   // --endless-seed): pin, then press Start an endless run as a player does.
   pinRun:seed=>{pinnedRun=String(seed);},
-  course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
+  // A BUILT course's file handed in as bytes, kept as an import keeps it; the
+  // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
+  built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
+  course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,season:'summer',...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.
    group||{players:[{name:'Bench',team:'A',hand:'RH'}],mode:'stroke',tee:'blue'}),
@@ -8169,6 +8181,8 @@ try{
  applyUiScale();addEventListener('resize',applyUiScale);
  globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
+ // No graphics card, no tier chosen: start on Low (graphics.js isSoftwareRenderer).
+ if(!hasSavedGraphics()&&graphics.quality!=='low'){try{const gl=view.renderer.getContext(),dbg=gl.getExtension('WEBGL_debug_renderer_info'),name=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);if(isSoftwareRenderer(name)){graphics={...graphics,quality:'low'};view.applyQuality('low');}}catch{}}
  globalThis.__splashStep?.('Growing the first hole',.3);
 
  gameAudio=createGameAudio();

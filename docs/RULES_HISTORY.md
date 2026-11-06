@@ -293,6 +293,40 @@ merge, 29 October 2026**: the section and its pointers were deleted in the
 branch's last commit, as the rule asked, and the branch was squashed to five
 commits before it merged.
 
+**The course builder unlocks the computer, 31 October 2026.** The course
+builder goal (a second program in the release, courses as files, LIDAR) was
+first drafted to stop at five points for the owner to play a stage, after the
+overhaul's lesson that a done-when clause should name only what an agent can
+finish alone. The owner chose the other way: "don't stop. Do as much as you
+can to compare with the data. I'll play around with the final result", and
+"GPU and CPU are free for this goal until merged. add to agents.md rule. then
+remove the rule when merging." So each stage is proven by data (tests, smoke
+journeys, captures, real LIDAR and published DEMs, scorecards, OpenStreetMap
+outlines as a local reference) and the AGENTS.md section *On the
+course-builder branch, the graphics card and processor are free* says to
+delete itself in the merge. The precautions kept are the 1.0 polish goal's:
+the gate's busy check (a game running), one graphics job at a time, nothing
+left open, and the overhaul's retry-once on a hung run. Software rendering is
+unlocked as in the 1.0 polish, run alone.
+
+**The US landscapes goal lifts the landscape limits, 2 November 2026.** After
+reviewing the study of every region of the USA, the owner kept it on the
+course-builder branch ("This is all in line with that") and set its terms:
+"All agents restrictions are off for these (except for performance
+targeting and testing where we need to stay the same for FPS and quality)",
+the base landscapes renamed and reorganised "heavy handed" because there are
+no users yet, Architect removed ("We are going to use the new builder and
+have real humans do the work here instead"), Haunted Hollow removed, and
+every model iterated at least fifteen times against real pictures. AGENTS.md
+*The US landscapes goal* reads "restrictions off" as freedom to move ground,
+not to stop recording it: a moved seed still owes its `GENERATOR_VERSION`
+line, because old saves still exist on the owner's own machine and the
+notice is how they learn. It deletes itself in the merge with the
+course-builder section. The same day the owner added that tournament week
+and the people go with Architect, while paths, bridges, markings, walls,
+landmarks and wildlife stay, and that the goal needs no asking for the
+graphics card or processor: "computer is open to you fully".
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

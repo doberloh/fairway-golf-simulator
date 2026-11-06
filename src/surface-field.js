@@ -11,9 +11,10 @@
 // table: twelve slots, each an analytic oval with waves (ground.js
 // HOLE_ATLAS, HAZARD_SLOTS here). A hole asked for more -- a signature waste
 // area with its lobes, or bunkers added by hand in the studio -- had to be cut
-// to twelve (hand-tools.js HAZARD_CAP). Bunkers past the slots now go into the
-// field instead, so the limit is what a hole should hold, not what the table
-// can: HAZARD_CAP in hand-tools.js.
+// to twelve. Bunkers past the slots now go into the field instead, so the
+// limit is what a hole should hold, not what the table can (Architect's
+// HAZARD_CAP, 24, went with hand-tools.js on 2 November 2026; nothing
+// generated fills the twelve slots since).
 //
 // THE CHANNELS. Each holds a signed distance to an edge, in metres, as
 // 0.5 - d / (2 * FIELD_RANGE): 0.5 on the edge, above inside. A distance

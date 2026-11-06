@@ -124,7 +124,7 @@ try {
   });
   await p.goto(pathToFileURL(GAME).href);
   await p.waitForFunction(() => window.lab && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
-  await p.evaluate(() => window.lab.course({biome: 'autumn', holes: 9, seed: 'MOVE'}));
+  await p.evaluate(() => window.lab.course({biome: 'newengland', holes: 9, seed: 'MOVE'}));
   await p.waitForFunction(() => window.lab.state().canSwing && document.getElementById('mainMenu').hidden, null, {timeout: 90000});
   await wait(p, 1500);
   const row = {size: p.sizeName, pieces: []};

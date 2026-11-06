@@ -31,103 +31,960 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
-## Architect courses (branch `architect-courses`, from 30 October 2026)
+## Release 0.9.7 (5 November 2026)
 
-The owner's goal: build the whole local study, phases 0-7; the record is
-[ARCHITECT_COURSES.md](ARCHITECT_COURSES.md). Picked from IDEAS.md, with
-*Cart paths*, *Bridges over creeks*, *Scalloped bunker edges* and *Routing
-quality measures*, which it absorbs.
+- [ ] **Play 0.9.7 by hand.** Released at the owner's word, the website left alone: its
+  Download buttons follow the release, its demo stays on 0.9.6 until the owner asks for a
+  redeploy. The full smoke set did not run on this build (DISTRIBUTION_REVIEW, the
+  addendum for v0.9.7).
 
-**The play checks below block nothing** (the owner, 31 October 2026): the
-owner plays them as and when, and the branch moves on without waiting.
+## Meshy trial (5 November 2026)
 
-- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
-  October 2026, the owner's third word on the branch; rendering only, no
-  version moves). Built and tested in Node only -- no capture, no frame
-  measured. To check on Links (an 18-hole course, Medium and Low): from a
-  tee, looking across heather -- past about 48 m the cushions should give way
-  to low purple-and-olive domes rather than flat purple ground, with no ring
-  where one becomes the other, and the domes sinking away at the tier's
-  long-grass reach (Low 90 m, Medium 130 m); Haunted Hollow's moor the same in
-  dark brown, sparser. And the eleven models whole: tussocks and logs
-  (Haunted, Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
-  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
-  triangles in reach of a Links tee on Medium (32,000 on Haunted), against the
-  long grass's millions -- a `profile --only biomes` would settle it.
-- [ ] **Not yet played by a person: the studio's *How the course is made*.**
-  Choose Architect (beta): the sliders the architect decides should go, the
-  *Architect (beta)* heading with Style, Club, Age and Heritage should
-  appear, each with its sentence under it changing as the choice changes
-  (built in the owner's review; not seen), and the card should stay without its length slider; choose Classic
-  again and everything returns. Save the course and export its code: both
-  should come back as Architect. (Phase 0: Node tests, and the
-  `architect-studio` smoke journey drives all of it but the code export.)
-- [ ] **Not yet played by a person: phase 1, holes designed against the
-  shots.** Seen from above (CPU maps) and from four GPU views of one Midwest
-  course: bunkers where drives land, fairways that tuck round them, avenues.
-  To check: a few Architect rounds in different styles -- do the holes read as
-  designed, and do they play fairly (the virtual golfer, at the end of the
-  goal: 0.82 strokes per 18 harder than Classic, 0.17 after the owner's
-  review; hardest on Haunted Hollow and PNW at the goal's end; ARCHITECT_COURSES.md, *greens that trapped the golfer*)?
-- [ ] **Not yet played by a person: phase 2's first half.** Cart paths and
-  their bridges (seen in GPU captures), free relief when a ball stops on a
-  path (Node only: no ball was played onto one in the game), the hole's name
-  in the hole panel and the architect's note as a hole is arrived at (built,
-  not seen), the crest and founding line on the final scorecard (not seen),
-  flags by pin position (seen: a white middle flag).
-- [ ] **Not yet played by a person: phases 2 (rest) to 5.** Seen in GPU
-  captures only: stakes, posts and rakes; the clubhouse in every landscape;
-  collection areas, lobes and divots; mounds, rip-rap, tie walls, fountains
-  and the bridge kit (timber and stone). Not seen at all: a ball landing on a
-  bridge in a round (Node only: one dropped on a deck stops there and is
-  called in the water) and a round's nines coming home (measured, not seen).
-  To check: play an Architect Parkland or Stadium course with water and
-  creeks (story "A lot"); hit one at a bridge.
-- [ ] **Not yet played by a person: phase 6's first half.** Seen in GPU
-  captures: the farmstead, the walls, the ruins, the lighthouse on its line,
-  the stone circle; the Dell, the Alps, the Barranca and the Pit. Not seen:
-  a ball against a wall or the Pit's wall in a round (Node only), a carry
-  over a barranca. To check: an Architect Links or Golden Age course with a
-  lot of story.
-- [ ] **Not yet played by a person: phase 6's second half.** Seen in GPU
-  captures: sheep, deer, elk, geese, a heron, a roadrunner, a raven, the
-  walkers and the mower; none on Low; hollows and stumps. Not seen: the
-  animals moving in a round (they turn and circle; the captures are stills),
-  gulls (Lakeshore's flew out of frame). To check: a round on an Architect
-  Links course on High, watching the flock and the gulls.
-- [ ] **Not yet played by a person: phase 7.** Seen in GPU captures:
-  tournament week on Midwest, Links and PNW, Thursday to Sunday, none of the
-  crowd on Low. Seen as a PDF: the yardage book. Not seen: the pause menu's
-  *Yardage book* item clicked in the game, a ball hit at a stand in a round.
-  To check: an Architect Championship course on Sunday; pause, Yardage book.
-- [ ] **Not yet played by a person: the owner's review (30 October 2026).**
-  Seen in GPU captures: the cart paths (six iterations), the fountain moving
-  (five; a drop measured rising), the people, crowd and mower (ten each), the
-  Alps as a broad hill, Links ST-1's fairways in two pairs. Seen in Node
-  only: rakes in the sand, divots toward the green, scattered stumps, trees
-  by age, a path bridging a barranca. Driven by the smoke journey: the
-  dials' sentences and the studio's yardage book. Not seen at all: the paths
-  on the map, the walkers' bob in
-  motion. (The scoreboard following a played round is now driven by the
-  smoke journey `architect-tournament`.) To check: the owner's own courses -- Links ST-1 (Links style,
-  Members', Old, A lot, 9 holes), PNW with an Alps, a Championship Sunday.
-- [ ] **Not yet played by a person: the owner's second review** (31 October
-  2026, ARCHITECT_VERSION 20, SCHEMA_VERSION 14; ARCHITECT_COURSES.md, *The
-  owner's second review*). Seen in captures (Midwest and Links ST-1: the
-  clubhouse and its path, a pull-off, the path over the dunes, the shared
-  fairways, the sharpest bend left) and driven by the smoke journeys
-  `architect-studio` and `architect-round`. Not seen: the owner's own
-  Midwest and Links holes (seeds unknown) -- to check, look at them again.
-- [ ] **Not yet played by a person: the surface field and the turned greens**
-  (ARCHITECT_VERSION 18; ARCHITECT_COURSES.md, *Phase 3, finished*). Seen
-  in GPU captures only: a green turned to its approach from above, the
-  mowing-height step at a fairway's edge, the mower's line at native grass
-  on Midwest, a bunker drawn from the field (sixteen hand bunkers on a hole).
-  Tested in Node: field bunkers play as sand. Not seen: a ball played out of
-  a field bunker, a putt on a turned green, the native line on Links and
-  Lakeshore (the capture view landed on a path). To check: put more than
-  twelve bunkers on a hole in the studio, play into the last ones; play a
-  dogleg's approach to its turned green.
+- [ ] **The Meshy trees are in; not played.** The redwood pack's 14 trees ship from
+  vendor/blender-meshy_redwood (the owner, 5 November). Owed: a hand play, watching
+  trees swap to their far versions in motion, and a look at the Cascades and Oregon
+  Dunes, which share them. The full smoke run was waived by the owner; no one build
+  ran all 41 journeys. The far versions' plain tip cones and the tanoak's gaps stand.
+
+## US landscapes (branch `course-builder`, from 2 November 2026)
+
+Every region of the USA as a landscape, picked by the owner on 2 November
+2026 from the study of 1-2 November (local: docs/studies/us-landscapes/,
+PLAN.md the plan with the owner's answers, catalogue.json the source of
+truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
+*The US landscapes goal* holds its rules: the usual limits on moving
+landscapes are off, performance and testing are not. In order (PLAN.md
+section 6); nothing ships early -- the branch merges when all of it is done.
+
+- [x] **The machine went down at 12:14 on 3 November 2026, during Blender
+  work** -- graphics-card work stopped until the owner said otherwise, which
+  the owner did the same day ("you can use the computer fully as im not on it.
+  but make sure not to over load the desktop"), and the throttled gate came of it.
+  Windows logged an unclean shutdown (Kernel-Power 41, event 6008 at
+  12:14:12) and no blue screen or display-driver error, so the cause is not
+  proven. It came as the prairie grass pack's round 2 started rendering --
+  the eighteenth Blender render in about two hours (the Badlands pack's
+  fifteen rounds and three season and far-twin renders, the grass pack's
+  round 1), run back to back with less than the minute's rest the branch's
+  rules ask, several started with the card at 31-39% busy (above the 30%
+  line), after the morning's captures. The iterate renders were not in
+  bench/ab/gpu-runs.jsonl (iterate.mjs takes the lock but does not log).
+  Nothing was lost: the Badlands models are done and exported; the grass
+  pack's round 1 is logged and its round 2 change saved, not rendered.
+
+- [ ] **The owner's play-through, the end of the goal** (4 November 2026).
+  Everything on this list is built and checked by machine; none of it has been
+  played by a person. In the order worth doing:
+  1. **The land** (generator 85-87): any eighteen on the Rockies, the Blue
+     Ridge and the Heartland, from the tee and from the overview. Is any hole
+     still in a bowl, any crease between holes? Do tees and greens sit better?
+     Fairway slopes went up on the mountains (median 7% on the Rockies).
+  2. **The landscapes' own ground**: the Badlands, Sonoran, Red Rock, Alaska,
+     Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers, the Cascades.
+  3. **The seasons**: Round start's season on New England (winter, autumn),
+     the Hill Country in spring, the Rockies in winter. Snow on walls and
+     bloom flecks are seen in pictures only; the long grass's bloom heads read
+     as flowers from a tee and as blue blade tips from a metre away (kept;
+     say if not).
+  4. **The world round the holes**: *Not yet played by a person* below, the
+     clubhouse, paths and bridges, streets, houses. A house shows the fairway
+     its back wall since generator 84 (RESEARCH *The fairway homes' streets*).
+  5. **The map and globes**: *Not yet played by a person: the map* below.
+  6. **The builder**: Chambers Bay and Bully Pulpit from Saved courses; a
+     course of your own through door 2; Skin from the land and paint by hand
+     (*Fairway Course Builder* below, *The owner plays the builder*).
+  7. **A weak machine**: the wait to the menu and the frame on Low, which
+     nothing here measured (RTX 4090 only); the Heartland's grasses on the
+     processor (0.6 ms in one measure, not seen since).
+  8. **course-match**: send it a course.
+  **Your calls, not bugs:** 9 dead-end paths and 86 sharp corners across the
+  bench's 195 courses (*Cart paths* below); a machine with no graphics card, 8
+  s a frame against 3.3 in September (*Performance pass*).
+- [x] **The landscape cards' pictures show the land of generator 87** (retaken
+  4 November 2026: biome-shots `take --picks --label final87`, then `encode`;
+  169 pictures, 41 landscapes). They showed the ground before generator 85,
+  bowls and all. The set is 6,259 KB against 6,268 before, so the page did not
+  grow; that is 8.15 MB of the page against `BUDGET`'s 3 MB, written for ten
+  landscapes, so `encode` exits 1 and says over budget. **Your call:** raise
+  the number, or fewer or smaller pictures.
+
+- [ ] **The owner's feedback of 4 November 2026: built, none of it seen.** The
+  owner was gaming, so nothing ran on the graphics card and neither page was
+  opened: the rules are tested in Node, the screens not at all. To check, once
+  the owner has looked (smoke, then builder-smoke, then by eye):
+  - **Right click in the game**: no menu, no free camera drag, no map grab; a
+    text box still has its menu.
+  - **Select shape** in the 3D editor: click outlines, four anchors show, a
+    drag moves it live, an anchor turns it, Undo, Escape. The turn's direction
+    and the anchors' feel are unseen. The builder-tools journey was changed to
+    this and has not been run.
+  - **Back to 2D** on a course opened from a file and on one taken over from
+    door 1: never run. Door 2's review on a course with no survey may meet a
+    step that wants one. Its ground no longer softens on each trip. Auto trace
+    and Manual trace would replace such a course's layers: unguarded.
+  - **Water**: draw a pond on a hillside, play it. Does it show, do its banks
+    look right, does a green beside it stay as it was? Open a saved course whose
+    water was missing and save it again.
+  - **Ground cover**: paint rocks and bushes, play the course (is a rock hit?
+    do the models sit on the ground? is a size right against the slider?).
+  - **The preview**, in both editors: the first pick is slow (the models load);
+    colours; framing. **`Fairway Builder.html` grows by about 25 MB.**
+  - **Season greens**: wine country and a few others in each season. Spring and
+    its far woods, the rough in `GREEN`, the long grass with it. The card
+    pictures and the showcase still show the old rough (retake them after).
+    Frame rate: colours only, no new geometry; the A/B on Low is owed anyway
+    (vegetation.js and seasons.js moved).
+  - **New England's real summer** (seasons.js `realSummer`): play it in summer
+    and in autumn. Its cards were autumn because the default was: the retake
+    wants `--season autumn` for New England or they turn green, and
+    tools/capture's `autumn-*` shots (gallery, clips) need the same.
+  - **Ground cover in the 2D editor** and **Fill to surrounding** in the 3D one:
+    built the same way, not seen.
+  - **Built courses at their real height**: Bully Pulpit's clouds over the land,
+    its haze, and Breckenridge's turf no longer snow; the ground shader changed,
+    so a frame check on a generated course (nothing should move) is owed.
+  - **LIDAR coverage and combining** (COURSE_BUILDER *How much the LIDAR
+    covers*): search a course at the edge of a survey; download a 1.5 km square,
+    then 3 km, and see it fetch only the rest and end as one ZIP. Not run online.
+  - **The two editors at parity** (COURSE_BUILDER): every new tool in both, by
+    eye. The tree brush's look and density; Select shape in 2D (anchors, the
+    turn's direction); painted water in 3D on a slope; a 2D creek and bunker in
+    the game; a creek through Back to 2D and back. The journeys' changed steps
+    have not been run.
+  - **Game view**: never run. Press it on a small course and a big 18: does the
+    picture come up, does it open at the editor's spot, is flipping instant, how
+    long is the first look and a look after an edit, does the bar work, does the
+    game's page keep its saved time and graphics? Measure memory on a weak machine;
+    a builder journey for it is owed. Risk: the game's drawing code may lean on
+    something only the game's page sets up.
+  - **Not done:** `npm test` whole, smoke,
+    the round matrix and the fingerprint were not run (no file the generator
+    reads changed).
+
+- [ ] **Left when the owner cleared the goal, 4 November 2026** (an audit of the
+  goal's list against the study's catalogue, after the owner ended the goal):
+  - **Two catalogue models never built:** cenizo (Hill Country, Chihuahuan) and
+    Chinese tallow (Gulf Coast). Adding them moves planting: a
+    `GENERATOR_VERSION` step.
+  - **Eleven older trees have fewer than fifteen logged rounds** (reworked for
+    the silhouette rule, not new models; 7-10 rounds each): alder, aspen, black
+    oak, cottonwood, hala, maple, mesquite, oak, palo verde, sugar maple,
+    tanoak. The other 205 logged models have fifteen or more, each with its
+    last side-by-side.
+  - **Medium on the software renderer crashes its page again**
+    (tools/software-crash.mjs, this build; Low runs). It is not from the last
+    commits: a build with 4ee6906's ground.js, vegetation.js and renderer.js
+    crashed the same way twice, though the full profile had passed Medium at
+    4ee6906. So it comes and goes, as on 3 November, and the cause is not
+    found. A no-card machine starts on Low. A lower resolution
+    for such a machine (`pixelRatio` .4) was tried and backed out unmeasured, as
+    the crash stopped the profile.
+  - **Sidewalks are out** (the owner, 4 November 2026: "Don't worry about
+    sidewalks. Remove that from the goal and spec"): removed from PLAN.md,
+    GOAL.md, the catalogue and the study's pages. Never built.
+
+**The owner's additions of 3 November 2026** (each part of the goal now):
+
+- [x] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
+  exists in sort of a bowl with a creased rise of land between them. This
+  makes things look extremely unnatural, and also I believe this may have
+  been linked to prior issues we have had with tee boxes and greens ... we
+  need to remove the forced corridor/bowl effect on each hole." The land and
+  generated courses may move; tees and greens may move or change; iterate
+  over all landscapes. The owner's suspect is "Landscape character", which
+  may be folded into "elevation severity" if needed. Check: seen from low
+  and from above on every landscape, no crease between holes, and the tee
+  and green complaints it may have caused looked at again. Built, generator
+  85 (RESEARCH *The country is one surface*): the bowl is gone by measure on
+  every landscape, tees need less earthwork, "Landscape character" stayed.
+  Seen from above on all 41 in the showcase of 4 November 2026. **Not seen by a
+  person**: the play-through, item 1.
+- [x] **The Dakota Badlands, a forty-first landscape** ("can we add a new
+  biome, The north and south dakota Badlands? Do all of the research, data
+  gathering, model planning, pictures, and add to the us_landscapes report.
+  Then build out that biome as well"; "add bully pulpit to the course
+  research for badlands"). Done so far: the study (catalogue.json
+  `plains.badlands`, two overlays on the map -- the White River and the
+  Little Missouri badlands -- four courses located: Bully Pulpit, Watford
+  City, Wall, Lake Waggoner; nine models specced; 22 landscape pictures and
+  every model's references picked; tools/add-badlands.mjs, local); the
+  Blender pack tools/blender/cartoon_badlands.py -- Yellow Mounds, Rocky
+  Mountain juniper, green ash, chokecherry, leadplant and bison, fifteen
+  rounds each and the four seasons; the game's record (biomes.js
+  `badlands`, key, SCHEMA 26, names, crest, hole names, debut week 191,
+  card pictures, the map's two shapes). **Its formations are the
+  ground's**, not models (the owner: "the rock formations ... dont look
+  great. And the shapes are off still", then "I would prefer the landscape
+  to generate the mountain, butte, spire like formations"): the spire,
+  wall, butte, horizon-wall and concretion models were cut, and the
+  `badlands` landform (landforms.js) with banded strata on every rock face
+  (ground.js) replaces them -- RESEARCH *The Dakota Badlands*, which has
+  every round. **Generator 83** carved it again, by a drainage network
+  (`carve`): ridges, pyramids, spires and flat-topped buttes up to about
+  130 m of relief, sunk into the prairie near a hole, the road on a valley
+  floor, the far hills tables with fluted banded scarps (`ringCarve`). Six
+  rounds of captures against the study's pictures; the Badlands' bench rules
+  clear on twelve courses, the road and cart paths gentle on seven; winter
+  and autumn seen in captures (snow on the tables, the beds bare on the
+  faces; straw grass, gold ash). Bully Pulpit, built, opened in the game on
+  this build: a 143 m tee shot played, the banded clay on the survey's
+  breaks and the carved tables on its horizon. On Low the landscape
+  got cheaper, not dearer: 1.23 ms a frame to 0.70 at three tees (*Performance
+  pass*). Not played by a person. Seen and left alone: the long grass (western wheatgrass, blue
+  grama) stays green in winter snow, a question for the grass pack's
+  seasons; two or three small sunk cones near a green or tee read a little
+  like hats from low down. No code left open here but the owner's eye on it.
+- [x] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
+  the Badlands, the way Chambers Bay was. **Built** (tools/build-courses.mjs
+  `bully-pulpit`): OpenStreetMap way/245874307 at Medora traced, the land
+  from 3DEP's survey (14.8 million points, 1 m, 100% surveyed) refined,
+  skinned from the land by the editor's own Skin from the land (`skin:
+  true`: rock on the survey's steep breaks, bare clay below), par 72,
+  7,113 yd from the back (the course lists 7,166); the virtual golfers
+  played all 18 in 83, none stuck; opened in the game and a 142 m tee
+  shot played (tools/play-built.mjs), the banded clay seen on the survey's
+  real breaks; the picture and the file sent to the owner. Not played by a
+  person. The file is local (bench/courses/bully-pulpit), never committed.
+- [x] **Tall fescue and the prairie grasses for every landscape that needs
+  them** ("do we have tall fescue and prairie grasses? if not, we should
+  retroactively build them"): tall fescue, little bluestem, switchgrass,
+  Indiangrass and blue grama (and the Badlands' western wheatgrass) as
+  long-grass families (tools/blender/cartoon_prairiegrass.py; biomes.js
+  GRASSES says who grows what -- seventeen landscapes). **Built**: fifteen
+  rounds each (tools/blender/logs; rounds 13-15 were checks with no
+  change), the four seasons, in the game's model data, seen in the
+  Heartland's rough (a capture sent to the owner). **All seventeen seen in
+  captures** (3 November 2026, biome-shots `rough-low`): wrong colours in
+  every one, the pack's own never having reached the game -- orange tall
+  fescue in a Kentucky summer, no autumn -- and one tall fescue six metres
+  wide; fixed (RESEARCH, *Tall fescue and the prairie grasses*; no ground
+  moved, the fingerprints silent). The Heartland, Sand Hills and Cross
+  Timbers seen again in the final colours, the Sand Hills' autumn copper
+  too; the other fourteen were seen before the colour fix and not since.
+  **The A/B on Low, the Heartland** (each build only this change apart):
+  no graphics-card cost (0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms at
+  three tees), triangles +1.2-2.5%, draws +9, but 0.6-0.7 ms more on the
+  processor a frame (1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00), steady in
+  both rounds and not explained: TODO *Performance pass*. The High Plains,
+  the worst case (837 triangles a clump), read level (-1.9% by mean,
+  4 November 2026).
+- [x] **Desert Resort** (the owner, 5 November 2026: "Many courses in vegas and
+  surrounding area look like this"): a forty-second landscape in the Las Vegas
+  valley, `cartoon_resort` (Afghan pine, African sumac, pampas grass, sixteen
+  rounds each), winter green, no Italian cypress. RESEARCH, *Desert Resort, as
+  built*. Frame rate on Low: cheaper than Desert Palms and Mojave (table there).
+  **Seen in captures only, not played**; `npm run smoke` not run (the owner
+  looks first). No Desert Resort map or card seen in the running game.
+- [x] **Every landscape's terrain true to its place** (the owner, 3 November
+  2026: "Do all of these new landscapes have different terrain generation
+  based on their location and research? Similar to the badlands? If not.
+  Please amend the goal to account for that. We want to make sure that the
+  terrain is also lifelike to the regions where the courses are built!").
+  Today most share their region's landform recipe (landforms.js): the
+  South's and Texas's on the prairie roll, the western mountains and
+  Appalachia on the Rockies' crags, the Mojave and Desert Palms on the
+  Sonoran's mesas. Each landscape's ground gets researched from its real
+  geology (sources in RESEARCH.md and LANDSCAPE_RESEARCH.md, the study's
+  pages) and its own recipe or tuning where the shared one is wrong -- at
+  least: flat wet ground (Bayou, Flatwoods, Lowcountry with its tidal
+  creeks), sandhill ridges (Longleaf), red-clay hills and gullies
+  (Piedmont), stair-stepped limestone (Hill Country), coastal bluffs and
+  headlands (Monterey, the Oregon Dunes), lava flows and cinder (Hawaii,
+  Ponderosa), basalt coulees and rimrock (Sagebrush), alluvial fans and
+  granite domes (Mojave), a flat valley under steep ranges (Desert Palms),
+  glaciated granite (Sierra), karst with sinkholes (Bluegrass, Ozarks),
+  glacial kettles and moraines (North Woods), ridge and valley (Blue
+  Ridge). Each a GENERATOR_VERSION step naming the landscapes it moves;
+  each seen in captures sent to the owner as it lands.
+  **Done so far (generator 76):** eighteen landscapes on their own recipes
+  -- Hill Country, Monterey, Bluegrass, Ozarks, North Woods, Old Northeast,
+  Mojave, Desert Palms, High Sierra, Sagebrush, Piedmont, SoCal Canyons,
+  Ponderosa, Hawaii, Longleaf, Bayou, Flatwoods, Gulf Coast (biomes.js
+  TERRAIN, landforms.js; RESEARCH *Terrain true to place*;
+  tests/terrain-true.test.mjs); the bench, the tests and the fingerprints
+  green; captures of fourteen sent to the owner. The Blue Ridge's coves
+  and ridges followed (generator 78), Monterey's holes along the sea (79;
+  its terraces step down to the shore) and the Lowcountry's salt marsh
+  and tidal creeks (80); SoCal's barrancas have their geology source (the
+  Santa Monica Mountains through SCEC). The second look (generator 81):
+  the High Plains a flat table with dry playas, the Sand Hills' dunes
+  about twice as tall, Wine Country a valley floor under higher ranges;
+  Bluebonnet, Cross Timbers, Pine Barrens and the Chihuahuan judged to fit,
+  each with its source (RESEARCH *The second look*). The Lowcountry's A/B
+  on Low: no cost (-0.6%). Captures of the three sent to the owner. The
+  High Plains' planting followed (generator 82): nearly treeless, as the
+  Llano is, brush and yucca round the holes, the shelterbelts kept. Generator
+  87: the last eight on another's ground each on their own (Sonoran, Red Rock,
+  Alaska, Cascades, Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers;
+  RESEARCH *The last landscapes on another's ground*), and a test that no two
+  share theirs. Low's frame measured on the Hill Country, High Plains, Keys and Mojave
+  (the performance pass). Weakest still, each its own job if wanted: the
+  Cascades (volcanic in name more than shape), no deflation plains or headlands
+  on the Oregon Dunes, no playa floor in the Chihuahuan.
+- [x] **The builder skins the land from its heights** (the owner, 3 November
+  2026: "In the builder, we should add an option that the user can click to
+  do a best effort at skinning the landscape based on height. For example
+  if the LIDAR shows something that looks like a mountain or a butte. We
+  should skin it that way. Allow the user to paint it or indicate as such
+  if they dont want to auto paint it. for all landscapes"). A button in the
+  editor reads the built land's heights and slopes (the LIDAR's) and paints
+  what the landscape's own landform would there -- steep faces as its rock
+  (with the Badlands' strata, the crags' bands), the gentler ground at their
+  feet as its apron (hardpan, scree, waste), flat tops left grass -- outside
+  the holes' turf; and a paint tool (or a mark-as tool) for those who would
+  rather do it by hand. Every landscape. **Built** (3 November 2026):
+  src/builder/skin.js and the editor's Skin from the land button (under
+  Paint), tested in Node; painting by hand was already there (Paint,
+  Outline). No BUILT_VERSION step: a file changes only when the button is
+  pressed. **Seen in the real builder** (tools/capture/builder-skin.mjs,
+  3 November 2026, a script's clicks; no person yet): the button under
+  Paint, Undo and Redo back cell for cell, the Layers list, Erase by the
+  mouse, the saved file, on Bully Pulpit's buttes (31 ha of rock, 56 of
+  bare clay, reading as buttes) and Chambers Bay's dunes, Chambers Bay in
+  the game too. It found three bugs, fixed: rock on dunes in a landscape
+  with no rock (now only the landscape's own ground, native grass there),
+  the page frozen 5-10 s with no word, and a metre-wide staircase in the
+  game where two ground types met (BUILT_VERSION 3). Not done: a builder
+  smoke journey for it (the capture does its work); a person pressing it.
+- [x] **A skill that matches a real course to a landscape, the last step**
+  (the owner, 3 November 2026: "turn the US landscapes docs into a skill
+  that I can send in a course, you would evaluate the course. Do research,
+  and recommend the best biome to match. If there is no matches, and we
+  need to build a new one, the skill would follow the research paths we
+  have set up to gather data about what would need to be built and put
+  together a plan to build it"). From the study's method: locate the course
+  (locate-courses.mjs, OpenStreetMap), find its landscape on the partition
+  (lookup.mjs `landscapeAt`), research its ground, trees and look (the
+  landscape pages, photos and catalogue), score it against every built
+  landscape, and recommend one -- or, when none fits, run the study's path
+  (catalogue entry, ecoregions or an overlay, model specs and searches,
+  photo sheets, picks, Blender pack plan) and write the plan to build it.
+  After everything else on this list.
+  **Drafted** (3 November 2026): .claude/skills/course-match/SKILL.md --
+  locate, the partition, research, a scoring table against every
+  landscape, the recommendation with how to build it (door 2, Skin from
+  the land, tools/build-courses.mjs), and the Badlands' research path for
+  a new landscape. **Tried** (3 November 2026) on Whistling Straits:
+  found (OpenStreetMap way/205111637), the partition said Lake Dunes, the
+  research (eight holes on Lake Michigan, dunes pushed up on a flat site,
+  fescue, no trees on the Straits) scored Lake Dunes 28 of 39 and Scottish
+  Links 29 -- place against the Irish-links look Dye built; for a builder
+  course (the survey's own trees) Lake Dunes. The skill gained what the
+  trial taught (place and look can split; a builder course brings its own
+  trees; unsourced famous numbers stay unconfirmed); the record is local
+  (docs/studies/us-landscapes/trials/). **Second trial** (4 November 2026)
+  on Cape Kidnappers, where nothing matches: 49% at best, the new-landscape
+  path run to a plan on paper; the skill gained the course's defining feature
+  first, that the generator cannot route by the land, and that the study's
+  tools stop at the US border. Not used by the owner yet.
+
+- [ ] **Not yet played by a person: the world round the holes on every
+  generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
+  clubhouse, cart paths and bridges, markings and divots, the land's story,
+  fountains and rip-rap, and the animals were Architect's and are now on every
+  course but the range. Tested in Node (every landscape: a clubhouse, one path
+  network, every path over water a bridge -- the bench's `pathOverWater` is
+  zero on every course) and driven by the smoke journey `course-pieces-round`
+  (a saved generated course played to the hole-out). Not seen by eye: none
+  of it captured or played on the new ground. To check: a Midwest and a
+  Mountain eighteen -- does each clubhouse sit well, does its path reach the
+  network without a stub, does every creek crossing have a bridge, do the
+  animals move (High), and does the pause menu's *Yardage book* download?
+  A ball hit onto a bridge and against a wall in a round (Node only).
+- [ ] **Not yet played by a person: the map, the globes and the new names**
+  (step 2, 2 November 2026; SCHEMA_VERSION 17, GENERATOR_VERSION 56). Seen
+  in the smoke journey's pictures (Course studio, desktop and phone: the map
+  over the pictures, a region pressed picks it, Scottish Links beside it, a
+  globe in every picture's corner) and driven by `landscape-map`,
+  `every-landscape` and the builder's Worthington journey (door 2 suggested
+  Heartland). Not seen: Endless's landscape step with its map, the builder's
+  door 1 map, the globes at a glance on a real screen, an old save or course
+  file opening on its new landscape in the game. To check: Play, Endless,
+  pick a landscape on the map; open a course saved before today.
+- [x] **Today's ten rebuilt as their new landscapes** (Links stays, as
+  Scottish Links, outside the map), with the models their research says
+  they lack.
+  Progress (the 40 models the nine lack, by pack; each model fifteen
+  rounds or more, logged in tools/blender/logs/):
+  - [x] `cartoon_pacific` -- Puget Sound and Redwood Coast's ten (madrone,
+    Garry oak, bigleaf maple, Pacific dogwood, bay laurel, vine maple,
+    Oregon grape, Scotch broom, Pacific rhododendron, Douglas iris), in the
+    game since generator 57; Puget Sound's Low frame +2% after two cost
+    passes (RESEARCH, *The Pacific pack*). Seen in captures (Puget Sound,
+    Redwood Coast); not seen by a person in play.
+  - [x] `cartoon_mountain` -- the Rockies' six (lodgepole, blue spruce,
+    willow thicket, split-rail fence, columbine, lupine), in the game since
+    generator 58; the fence is the Rockies' story wall, laid in zig-zag
+    sections (RESEARCH, *The mountain pack*). Seen in captures (the Rockies'
+    stands, a fence on a meadow shelf); not seen by a person in play.
+  - [x] Found on the way (generator 59): since the new keys, seven of the
+    nine landscapes had no walls, ruins, farmstead or animals, the generic
+    clubhouse and gravel paths -- the world pieces were looked up in the
+    regions' tables by the landscape's key. Fixed (through `worldOf`), and
+    walls keep off bare rock and steep banks. Seen: the Rockies' fence;
+    not seen: the other six landscapes' restored pieces in the game.
+  - [x] `cartoon_drylake` -- jojoba (Sonoran), sand cherry and a Great Lakes
+    pier light as Lake Dunes' landmark, in the game since generator 60, with
+    the landmarks restored on every landscape that has one (they had been
+    lost since 55) and a lane of no trees to them. Seen in captures (the pier
+    light over the dune woods); not seen by a person in play. The ironwood
+    is held for the silhouette pass.
+  - [x] `cartoon_heartland` and `cartoon_newengland` -- the Heartland's
+    bur oak, elm, shagbark hickory, prairie flowers, red barn with corn;
+    New England's white pine, paper birch, beech, balsam fir, fieldstone
+    walls and covered bridges; the ironwood after its silhouette pass. In
+    the game since generator 61, with every planting list summing to one
+    (Redwood Coast's iris and Lake Dunes' sand cherry had never been
+    planted). Seen in captures (the barn, a covered bridge, New England's
+    shore); not seen by a person in play; the corn not caught in a capture.
+  - [x] `cartoon_keys` -- royal palm, traveler's palm, sea grape, mangrove,
+    gumbo limbo, banyan, bougainvillea, hibiscus, in the game since
+    generator 62 (Low +47% on the Keys, recorded for the performance pass).
+    Seen in a capture (a Keys hole); not seen by a person in play.
+    Mangroves are not yet placed at the water's edge.
+  - [x] **Every variant shipped** (the owner: "I dont want to end up not
+    using the models we create"): Madrone_1, GarryOak_2, BigleafMaple_2,
+    BayLaurel_2, BlueSpruce_2, Ironwood_2, AmericanElm_2, Shagbark_2,
+    BurOak_2, PaperBirch_1, BalsamFir_2, AmericanBeech_2, RoyalPalm_2, with
+    their far twins.
+  - [x] **Silhouette pass** (the owner, 2 November 2026: the trees read as
+    "big green fluffy balls on the trunks"; "back port to all of our other
+    models that are already done"): every pack from New England on modelled
+    silhouette first, and every broadleaf already in the game reworked --
+    the Pacific trees, the ironwood, the overhaul's oak, maple, aspen,
+    alder, cottonwood, black oak, sugar maple, palo verde, mesquite, hala
+    and tanoak (BLENDER_ASSETS, *The silhouette pass on the packs before the
+    goal*); conifers, palms, cacti and shrubs judged and left. Seen in
+    captures (the Keys, Lake Dunes, the Sonoran). A lineup of every tree as
+    black outlines side by side was not made.
+- [x] **A page that does not start in the capture harness** (4 November
+  2026, two in about 40 minutes under the goal's shared queue): frame-ab's
+  High Plains B round waited 60 s for `window.lab`, us-showcase's next page
+  120 s for the main menu. Probably the ground's three shader compiles at
+  8 s each under load (start to main menu read 42-47 s that night); not
+  proven, none since, and that wait is 12 s now (RESEARCH *The performance
+  pass at the end of the US landscapes goal*).
+- [x] **Performance pass, at the end of the goal** (the owner, 2 November
+  2026: accept the costs while building, record them, fix them in one pass).
+  **Done 4 November 2026** but for what is listed here: RESEARCH *The
+  performance pass at the end of the US landscapes goal*. The profile against
+  bench/profile-baseline.json is better on every case with a graphics card
+  bar the processor's share on Links (2.2 to 3.1 ms) and the water course (4.1
+  to 5.0 ms), whose card share fell further. **Worse and not fixed: a machine
+  with no graphics card**, 3.3 to 8.1 s a frame, unplayable before and after.
+  Start to main menu 12.1 s against 26.7 s (the ground's shader). Low's frame
+  within 0.16 ms of generator 75 everywhere measured. **Still open:** the
+  Heartland's grasses on the processor (the 0.6 ms below, not measured again
+  there; not seen on the High Plains), and the wait on a slower processor, which
+  nothing here measured: both in the play-through, item 7. Candidates below stand
+  if a weak machine shows trouble.
+  Measured so far, Low, by mean frame against the build before (frame-ab,
+  RTX 4090, so headroom, not a weak machine). **The seasons' twigs (3
+  November 2026), one round of each build only, the run failed, agents on the
+  processor, so an indication and not a figure:** New England in winter,
+  against bare trees without twigs, processor 1.6 to 4.5 ms and graphics card
+  .93 to 1.32 ms at tee 1, .9 to 2.9 and .61 to .93 at tee 5. Check the
+  processor's rise first: the cull now keeps a far mesh for every bare model
+  (RESEARCH). The spring bloom is not measured at all: new flower meshes in
+  every landscape that had none, and a ground-shader branch on Low. **The homes' streets (generator
+  84, homes on at 45%, the Heartland, RD-1):** no cost seen: draws +2 at tees 1 and 9 and -11 at tee 5, triangles level at tees 1 and 9 and +8.5% at tee 5 (where the trees moved); the mean frame read -33% (2.25 to 1.52 ms, A B B A), which nothing here explains, since no work was removed, so count it as level, not a saving. **The owner's additions (3
+  November 2026), against 4784efd:** the prairie grasses in the Heartland
+  -5.3% (noise; measured again 3 November with only the grasses apart: no
+  graphics-card cost, but 0.6-0.7 ms more on the processor a frame, +41% by
+  mean on a frame of 1.3 ms, +4.4% by p95, steady over both rounds and not
+  explained -- the cull rebuilds only when the camera moves, so look there
+  second; High Plains, the worst clumps, not measured), Hill Country's stepped terrain -1.4%, the Bayou's
+  flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
+  Ponderosa's cones and flows -6.8%, the Lowcountry's tidal creeks and
+  sea plane -0.6% (generator 80; that run's wait from start to the main
+  menu was 18.8 s for the base build and 21.9 s for this one, with the
+  whole afternoon's work between them -- worth a look in the pass); the Badlands alone 0.5-0.8 ms a frame
+  at its tees (the Heartland about 1.0), and carved (generator 83) 0.70 ms against
+  1.23 for the same tees before it, -43%, triangles down too, the far ring's
+  155,000-180,000 triangles included. Earlier: Pacific pack +2.3% (before
+  every variant shipped; with them and the silhouette rework Puget Sound
+  measured 10% faster), Rockies +1.8%, Lake Dunes not
+  measured cleanly (agents on the processor), Heartland +22% (six tree
+  species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). The South (phase 5;
+  one build, against the Heartland on it, three tees): the Bayou level
+  (0.81 against 0.82 ms of graphics card), the Lowcountry +34% (1.10 ms;
+  triangles +40%, the live oaks' moss; draws 12% fewer). Texas and the
+  deserts (phase 6, same way): the Mojave 0.89 and Desert Palms 0.87 ms
+  against the Sonoran's 0.73 (+22%, +19%; triangles +33%, +7%), the Hill
+  Country 0.97 against the Heartland's 0.82 of phase 5 (+18%; the Heartland
+  has its wildflowers back since, so not like for like). California and
+  the mountains (phase 7): the Cascades 0.85 against the Rockies' 0.80 (+6%;
+  triangles +33%, draws 20% fewer), Monterey 0.84 and Wine Country 0.82,
+  level with the Heartland. The high desert and plains (phase 8a): Red
+  Rock 0.80 against the Sonoran's 0.71 (+13%; triangles +19%), High Plains
+  0.71. Appalachia and the Northeast (phase 8b): the Blue Ridge 1.00
+  against the Heartland's 0.81 (+23%; triangles +40%, its closed hardwood
+  woods), the Old Northeast 0.87 (+7%). One frame-ab run (the Heartland,
+  3 November) hung 40 minutes with the card idle and was killed; the retry
+  took its usual 90 s. The north and Hawaii (phase 8c): the North Woods
+  0.92 (+14%), Hawaii about 0.97 (+20%; one of its runs read 1.36 at tee 1
+  against 1.08, so noisy). Candidates:
+  fewer species drawn per landscape at range, far twins for shrubs, merging
+  a landscape's species into fewer draws; **the software renderer on Medium
+  crashes its page** (the full profile of 3 November, retried alone: "Target
+  crashed" at weak/medium on Puget Sound, every time; Low runs, 3.3 ms) --
+  a machine with no graphics card cannot run Medium now, probably the
+  model module's memory (23 MB of models) under SwiftShader, not measured.
+  Since 3 November such a machine STARTS on Low (graphics.js
+  isSoftwareRenderer, by the renderer's name) unless its player has chosen a
+  tier, so a first run no longer lands on the crash. **Retried 3 November
+  2026, evening, on the current build: it no longer crashes** -- the
+  profiler's weak group ran both cases (Low 259 draws, 11.7 M triangles;
+  Medium 315 draws, 13.5 M) and tools/software-crash.mjs built a course at
+  Medium and drew it. What fixed it is not known (the builds between carried
+  the Badlands, the terrain and the grasses; the crash ran with 37.0 MB of
+  page, this with 38.1); the start-on-Low guard stays. But software frames
+  are slow: 6.2 s a frame on Low and 6.7 on Medium by the presentation gap,
+  against 3.8 s in the September baseline -- a machine with no graphics
+  card cannot play either tier;
+  the grain elevator's and
+  shelterbelt's far twins, built but not drawn (a landmark and a story prop
+  draw their full model at every distance). The profile against
+  bench/profile-baseline.json is due here.
+- [x] **Five landscapes on existing models** (PLAN.md 6, phase 3): High
+  Plains and the Sand Hills (a new plains region: prairie or grassed dunes
+  with blowouts, cottonwood, cedar and elm, a windmill for a landmark), the
+  Old Northeast and the Pine Barrens (New England's region in summer green,
+  and pitch pine, scrub oak and heath on sand), Alaska (a new region: the
+  Rockies' crags, spruce, birch and willow, a long low sun). Pickable
+  (SCHEMA 18), with names, crests and pictures; no generator step (every
+  existing landscape unchanged). Each gets its own models in its region's
+  phase. Seen in captures; not seen by a person in play.
+- [x] **The new landscapes' debut weeks** in the course of the week: phase
+  3's five are placed at weeks 160-164 (25 January to 22 February 2027),
+  the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
+  170-175 (5 April to 10 May 2027), California and the mountains' at
+  176-181 (17 May to 21 June 2027), phase 8a's at 182-184 (28 June to
+  12 July 2027), phase 8b's at 185-187 (19 July to 2 August 2027), phase
+  8c's at 188-190 (9 to 23 August 2027), the Badlands at 191 (30 August
+  2027;
+  weekly.js `eras`). All are still ahead (checked 4 November 2026); if a
+  release lands past 25 January 2027 they move on, which is a job for that
+  release, and a later landscape takes its own week the same way.
+- [x] **Every landscape's card pictures retaken** once its models are in:
+  the nine originals retaken on 3 November 2026 (biome-shots, label rt9),
+  every other landscape when its phase went in.
+- [x] **The roads pass** (generator 63; roads.js): a public road along the
+  clubhouse's side of the property, out of bounds beyond it; the parking
+  lot beside the clubhouse; the drive between, never across play (the
+  bench's `roadOnPlay` invariant at zero); the clubhouse leans toward the
+  edge. Seen in captures; not seen by a person in play.
+- [ ] **Cart paths with no right angles and no dead ends** (the owner's
+  amendment, 2 November 2026): every corner rounded; where a path ends, a
+  smooth loop back on itself instead. Built (generator 64; paths.js `shape`):
+  joins merge at a shallow angle, corners rounded, dead ends and hairpins
+  turn in teardrop loops, ends that cannot loop are cut back. **Not yet
+  everywhere**: on sixteen nine-hole courses, ten fully meet it; the rest
+  keep 5 dead ends and 19 sharp corners between them, mostly on the steep
+  Rockies where no loop or rounding fits the ground (tests/paths.test.mjs
+  holds the clean ten and that budget; the bench counts `pathDeadEnd`,
+  `pathSharp`). Not seen in the game yet.
+  **Generator 77** (3 November 2026): a smoothed corner point that does
+  not fit may move halfway, and on ground already steeper than the shaping
+  grade a rounded corner may be as steep as the corner it replaces (never
+  past 29%, so still walkable): across the full bench, 205 sharp corners
+  -> 186, the six steepest landscapes 58 -> 45. What is left stands on
+  ground too steep for a walkable rounded turn (a 120-degree switchback on
+  a 50% hillside): rounding it would break the walkable-grade rule, and
+  that trade is the owner's call. **After generators 85-86** (4 November 2026,
+  the land calmer and one network): 9 dead ends and 86 sharp corners across
+  the bench's 195 courses, no course in two parts. **Left open as the owner's
+  call**: the amendment says none; a walkable grade says these stay.
+- [x] **The streets kit placed** (generator 65; roads.js `streetFurniture`):
+  light poles down the lot's aisles, a planted island at each row end, a
+  wheel stop a stall, the bag drop by the clubhouse, lamps along the drive.
+  Seen in a capture (the Heartland's lot). Not done: a tree in each
+  island, the cart barn and mailboxes placed, streets for the fairway
+  homes, each landscape's own road surface -- open below.
+- [x] **The lot's island trees and the cart barn** (generator 71): the
+  landscape's most-planted tree in each island, 5.5 m at most, kept out of
+  the tee views; the cart barn (40 by 15.2 m) beside a long side or an end
+  of the lot where it fits (on 9 of 17 courses tried), a building. Seen in a
+  capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
+- [x] **The rest of the streets kit**: mailboxes and streets for the fairway
+  homes, each landscape's road surface (catalogue `streets`). **Done
+  (3 November 2026, drawing only):** each landscape's road surface -- the
+  public road asphalt (concrete in Bluebonnet, the Gulf Coast and the
+  Flatwoods, gravel in the Sand Hills), the club's drive the place's own
+  (gravel, dirt, Longleaf's red clay, the Lowcountry's and Pine Barrens'
+  shell, the Old Northeast's brick, Desert Palms' cobble, concrete;
+  renderer.js addPaths), and a mailbox at the street end of every
+  garaged house's drive. Smoke every-landscape passes; the drives seen in
+  captures (biome-shots view `lot`: Longleaf's red clay, the Lowcountry's
+  shell). **Done (3 November 2026, generator 84):** streets joining the
+  fairway homes to the road (roads.js `placeStreets`): houses turned to face
+  them, a lane from every drive, a cul-de-sac or a join at the far end, a
+  drive no street reaches not built. Seen in captures (biome-shots `street`,
+  `street-high`, `mailbox`, `street-back`: the Heartland RD-1), the mailboxes
+  among them. Not played in a round. Open for the owner: a house now shows the
+  fairway its back wall (RESEARCH, *The fairway homes' streets*, has the
+  alternatives); the bench keeps 78 sharp corners, 49 streets that stop short and 7 blunt
+  joins, across 195 courses and 558 streets; and a row a creek cuts off
+  loses its drives rather than gaining a road bridge.
+- [x] **Roads in the builder** (3 November 2026): Road is in every
+  landscape's Paint and Outline lists (layers.js `layersFor`) -- painted
+  anywhere, and Outline Road is the parking-lot tool (draw the lot's edge);
+  door 2 reads OpenStreetMap's roads (`highway=*`, painted their width,
+  osm.js `ROAD_WIDTH`, PLACED from US lane widths) and parking lots
+  (`amenity=parking`) onto the road layer; stored as the course's `road`
+  surface, which the game already draws and plays as road (ground code 11).
+  No BUILT_VERSION step: no existing file plays differently. Tested in Node
+  (tests/osm.test.mjs); not seen in the builder by a person.
+- [x] **The South** (phase 5; SCHEMA 19, no generator step): Piedmont,
+  Longleaf Pines, Lowcountry, Bayou and Florida Flatwoods on the South's own
+  packs (every variant and far twin), a new `south` region with a
+  plantation clubhouse, names, crests, pictures and debut weeks 165-169.
+  Seen in captures; not seen by a person in play. Found on the way: the
+  full bench's `roadOnPlay` on two courses, fixed in generator 66 (the
+  drive's berth, the lot checked every 4 m).
+- [x] **The Bayou's bald cypresses stand in its water** (generator 72):
+  the cypress and their knees may stand in a pond's or lake's shallows,
+  within 8 m of the shore (course.js inShallows, biomes.js `inWater`); 6-14
+  a course. Seen in a capture.
+- [x] **The Piedmont's red clay** (generator 73): its prairie drifts beyond
+  play are bare red clay banks (hardpan painted #9c6048) at a quarter of the
+  ground. Seen in a capture.
+- [x] **The Lowcountry's salt marsh** (generator 74): open now (trees
+  halved, 1.5), its drifts beyond play cordgrass flats (native grass painted
+  #c4b468) at two-thirds of the ground, its water brackish -- it reads as
+  open grass flats round live-oak woods. **Its tidal creeks followed**
+  (generator 80): the marsh laid at the tide line, creeks cut through it
+  that the sea fills (RESEARCH *Terrain true to place*, Lowcountry).
+- [x] **Bluebonnet Prairie reads as bluebonnet fields** (3 November 2026,
+  drawing only): its native-grass drifts beyond play are painted bluebonnet
+  blue (groundTints native #6276c4), with the blue-headed long grass and the
+  rough's flowers. Seen in a capture.
+- [x] **Texas and the deserts** (phase 6; SCHEMA 20, generator 67): Hill
+  Country, Bluebonnet Prairie and Gulf Coast (a new `texas` region,
+  limestone boulders, a stone ranch-house clubhouse) and the Mojave, Desert
+  Palms and Chihuahuan (the Sonoran's region) on the Texas and deserts
+  packs. Seen in captures; not seen by a person in play. Found on the way:
+  a path along a winding creek ran off its one straight bridge (the full
+  bench's `pathOverWater`), fixed in generator 67 (decks split to follow it).
+- [x] **California and the western mountains** (phase 7; SCHEMA 21, no
+  generator step): Monterey, SoCal Canyons and Wine Country (a new
+  `california` region on golden summer hills) and the Cascades, High Sierra
+  and Ponderosa (the Rockies' region) on the California coast, California
+  inland and western mountains packs. Monterey's sea stacks stand offshore
+  and the Cascades' snow volcano on the horizon (renderer.js
+  `addSeaStacks`, `addBackdrop`); basalt and granite are boulder families.
+  Seen in captures; not seen by a person in play.
+- [x] **Monterey's holes play along the sea** (generator 79; the owner, 3
+  November 2026: "Make sure the holes can genuinely play along the coast.
+  Close that item out"): the shore follows the holes instead of running
+  straight down the course's edge -- at each point along the course it is
+  set from the easternmost hole's corridor there (course.js `coastAt`,
+  biomes.js `coastSeek`), and the land never drops toward the sea within
+  5 m of any corridor, so the holes' edge is a cliff over the water. On
+  five 18-hole seeds, 3-6 holes have open sea within 50 m of their
+  fairway or green, and no tee, fairway, green or semi is wet (tests/
+  terrain-true.test.mjs holds both). Was: none on most seeds. The routing
+  itself does not yet send more holes to the coast (Pebble Beach has about
+  eight); that would be a change to how holes are laid out.
+- [x] **Wine Country's vines in rows** (generator 75): two blocks of 60 by
+  36 m off play, a vine every 2 m along rows 3 m apart (806 vines on three
+  seeds each), a few strays left in the open planting. Built and measured;
+  **not seen in a picture** -- the card cameras do not look where the blocks
+  fell. Check in play.
+- [x] **The high desert and the plains** (phase 8a; SCHEMA 22, generator
+  68): Sagebrush and Red Rock (a new `highdesert` region from the Sonoran's
+  record, rimrock and hoodoos as stone) and Cross Timbers on the high desert
+  and plains packs; High Plains and the Sand Hills on their own models now
+  (eastern red cedar, soapweed yucca, buffalo grass, sunflowers, barbed
+  wire, a shelterbelt, a windmill or grain elevator; Cross Timbers' pump
+  jack). Seen in captures; not seen by a person in play.
+- [x] **Appalachia and the Northeast's own** (phase 8b; SCHEMA 23,
+  generator 69): Blue Ridge, Ozarks and Bluegrass (a new `appalachia` region
+  from New England's record in summer; a log-cabin ruin, a four-board horse
+  fence, a tobacco barn) on the Appalachia pack; the Old Northeast (copper
+  beech, hydrangea, a Tudor clubhouse) and the Pine Barrens (pitch pine, scrub
+  oak, bayberry, beach rose, a shingled windmill) on the Northeast parkland
+  pack. Seen in captures; not seen by a person in play.
+- [x] **The north, the Pacific links and Hawaii** (phase 8c; SCHEMA 24,
+  generator 70): the North Woods (a new region: red and jack pine, tamarack
+  round lakes, a log cabin and a dock), the Oregon Dunes (the Links' region:
+  shore pine, Sitka spruce, gorse) and Hawaii (a new region: a sea along one
+  side, lava, monkeypod, ironwood, Cook pine, ohia) on the north and Hawaii
+  packs; Alaska on its own (black spruce, fireweed, devil's club,
+  cottongrass). Seen in captures; not seen by a person in play.
+- [x] **The new landscapes by region** (phases 5-8): every landscape on the
+  map has its key, record, names, crest, pictures and its own models -- forty
+  with Scottish Links. Played in the generator, not in the builder: the
+  builder's side is *Every landscape in the builder* below.
+- [x] **Every landscape in the builder** (PLAN 2's table, "both modes"): a
+  built course takes its look, trees and ground from its landscape's record
+  (built-world.js `speciesFor` reads the landscape's planting by role), so
+  every landscape is in the builder's list and builds; tests/built-world
+  holds it for all forty -- the same file, every lie kept, each stored tree
+  one of that landscape's own. Seen in the game on the Oregon Dunes
+  (Chambers Bay) and the nine; the other new landscapes not seen built. Texas and the deserts;
+  California and the mountains; the rest (PLAN.md 6, phases 5-8).
+- [x] **Every model at least 15 iterations** against its reference pictures
+  (the study's photos/models/), each with its log and side-by-side picture;
+  a contact sheet a pack, not waited on. Counted 3 November 2026: 202 model
+  logs in tools/blender/logs/, 3,213 rounds; every new model has fifteen or
+  more. Eleven older ones (the overhaul's oak, maple, sugar maple, aspen,
+  alder, black oak, cottonwood, tanoak, mesquite, palo verde, hala) have 7-10:
+  they were built before this goal and only took its silhouette pass.
+- [x] **Seasons on** (step 9; SCHEMA 25, no generator step): the Season
+  setting (today's, or spring, summer, autumn, winter) fixed when a round
+  starts and saved with it (main.js); every species in its own season's
+  colours from its pack's specs (src/season-tints.js, 172 species, made by
+  tools/blender/dump-tints.mjs); autumn colour everywhere (New England keeps
+  its as its summer, PLACED); deciduous trees bare in winter -- drawn
+  without their leaf and flower parts rather than as separate bare models
+  (PLACED, a departure from PLAN 3's 55 bare variants); snow on the rough
+  in the north and mountains, frost, dormant straw or green by region;
+  the far woods turn with a broadleaf forest. Looks only. Seen in captures
+  (a winter Heartland, an autumn Blue Ridge); not seen by a person.
+- [x] **Snow on the trees, and the far woods in winter** (3 November 2026,
+  drawing only): in a snow winter every tree face turned up fades to snow
+  white (vegetation.js snowTopped), and the far woods of a broadleaf forest
+  turn grey-brown (seasons.js farWoodsInSeason, read by the ground shader
+  from the season's copy of the record). Seen in captures (Alaska's spruces
+  under snow, the Heartland's horizon).
+- [x] **Snow on the roofs and the ground under the trees** (3 November 2026,
+  drawing only): in a snow winter the clubhouse, the story's buildings, the
+  cart barn and every house whiten on their up-facing faces as the trees do
+  (snowTopped on their materials); leaf litter, pine straw and the other
+  natural grounds go under snow (seasons.js lays snow over grounds.js
+  GROUND_TINT, and ground.js now reads the round's season copy); the far
+  broadleaf woods in winter go .85 of the way to bare grey-brown (New
+  England's autumn record read orange at .55). Seen in captures (Heartland's
+  barn, New England's winter).
+- [x] **The twig layer, the spring bloom, snow on the walls** (3 November
+  2026, drawing only, no generator step, no new models): a bare tree's
+  branches are grown from its own model's crown (src/twigs.js, mesh-assets.js
+  `bareParts`) and merged into its bark, so a bare tree has no draw call a tree
+  in leaf lacks, and each species keeps its outline; each landscape has its spring bloom
+  (seasons.js `BLOOM`: months and colours, most of them PLACED) in the rough's
+  flowers, the long grass's heads and drifts painted in the rough; no
+  wildflowers in winter; New England's spring is green; walls, fences and yard
+  pieces whiten on top as the roofs do. RESEARCH *The twig layer, the spring
+  bloom and snow on the walls*. Seen in captures: New England and the Heartland
+  in winter at Ultra, New England at Low in the game's own view, the Hill
+  Country, Blue Ridge and New England in spring. Not seen by a person. The
+  tropics' "only the flowering changes" (PLAN 3) is not built, and a bloom's
+  window is not read against the date.
+- [x] **Seasons, to check** (3 November 2026; the graphics card stopped with a
+  hung frame run before these were done). **Seen 4 November 2026:** the first
+  pictures showed New England's fieldstone bare, its stones too round to hold
+  the trees' snow; walls and fences now take it on gentler slopes
+  (`snowTopped(mat, true)`), seen on New England and the Rockies. The bloom's
+  flecks and drifts seen on the Hill Country, Blue Ridge and Bluebonnet: no
+  polka dots from a tee. Low's frame measured: *Performance pass*. What it asked
+  for: **Snow on the walls is not seen in
+  any picture**: `biome-shots take newengland highplains rockies --views wall
+  --season winter` (the `wall` view is new and has never run either). **The
+  final bloom flecks (0.27 m) are not seen**: the last spring picture had the
+  0.42 m dots; `--views h2-side,h1-low --season spring` on hillcountry and
+  blueridge, and look for polka dots from a tee. **Low's frame is not properly
+  measured** (RESEARCH, same section; TODO *Performance pass*): rerun frame-ab
+  on New England in winter and on the Hill Country and New England in spring.
+- [x] **Chambers Bay** built in the builder on its new landscape and played
+  through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
+  OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --
+  PLACED, the study's "in the lowland, but built as Links" -- par 72,
+  7,455 yd; the virtual golfers played all 18 in 87, none stuck; opened in
+  the game and a tee shot played (tools/play-built.mjs). Seen in the game's
+  pictures; not played by a person.
+- [x] **The showcase** of every landscape, generated, several pictures each
+  (step 10): tools/capture/us-showcase.mjs takes each landscape's generated
+  nine in summer from three views and in spring, autumn and winter from one
+  (the tropics summer only: 234 pictures, 3 November 2026) and writes
+  docs/reports/us-landscapes-showcase.html (local). No page error on any.
+  **Retaken whole on the final land** (4 November 2026, generator 87): all 41
+  landscapes, the Badlands for the first time, 240 pictures, no failed batch.
+
+## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
+
+- [ ] **Reopening a course with everything: play it by hand.** Driven in the
+  built builder on TPC Scottsdale with real data (the USGS picture, OpenStreetMap,
+  a par changed in 3D, saved, reopened, Back to 2D: all back, no errors), and the
+  file's game side by tests. Not seen: a Google or Bing picture, a picture file,
+  a hand-matched picture, a reopened file imported by hand in the game on a
+  phone. COURSE_BUILDER, *The builder's section*.
+- [ ] **A course file saved before 5 November 2026 from a survey in feet** comes
+  back on Back to 2D in the wrong place: its unit was not stored and it is read
+  as metres (draft-from-doc.js). None of the test courses is one; settle it by
+  telling feet from the EPSG code if a player's file turns up.
+- [ ] **Trees placed for you: play it by hand.** The LIDAR sizes toggle and the species
+  ticks driven in the built builder on Northwood's file: live in the 3D view, in Game
+  view, saved, reopened, Back to 2D, no errors. Not seen: a change made in the 2D
+  panel carried to the game, and a round played. COURSE_BUILDER, *The trees placed
+  for you*.
+- [ ] **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
+- [ ] **The Redwood Coast's trees, the owner's verdict.** Rebuilt as they grow
+  (BLENDER_ASSETS, *Built as it grows*), 17 rounds or more each. Bay laurel, bigleaf
+  maple and madrone were rebuilt with the same builders in far fewer rounds and owe
+  the fifteen. Not played; not seen in autumn or winter colours. Their figures are
+  under *Performance pass*. The owner means this approach for many other models
+  later.
+- [ ] **Read redwood heights by age** from Bulletin 796 (scanned, CAL FIRE) and
+  check the 30-75 m and 12-35 m ranges against it.
+- [x] **Northwood's redwoods** on the Redwood landscape, closed by *The Redwood
+  Coast, grounded* (RESEARCH): with surveyed trees
+  picked by height they fall to 17% from a 38% share, as most of its surveyed trees are
+  mostly under 21 m and the landscape's redwood runs 42-116 m. The numbers are
+  right; whether a redwood course should look like that is the owner's call
+  (RESEARCH, *A survey sees a shape, not a species*). Summerlin in the editor and
+  Game view seen with no errors; no round played on it and the builder's smoke
+  journeys not run.
+- [ ] **A real course's holes run straight from back tee to green** until the
+  player adds bends: door 2 does not yet draw a dogleg's bend from the traced
+  fairway. Worthington's test round, 96 against par 71 (a generated Midwest
+  eighteen plays at par), is partly the golfers aiming through trees on
+  doglegs; its yardages are short of the card by a median 22 yards for the same
+  reason.
+- [ ] **Refining OpenStreetMap's trace: measured, not played by a person**
+  (door 2, *Refine with the picture / the LIDAR*). Since 1 November it lines
+  the map up by its bunkers', ponds' and greens' edges and keeps its shapes:
+  every damaged test map (nine from the picture, Worthington from its LIDAR
+  in two directions) came back within half a metre (RESEARCH, *OpenStreetMap
+  is itself off the place*). Not yet measured from the LIDAR on courses other
+  than Worthington: their 3DEP downloads were rate-limited and are paused
+  (tools/lidar-fetch.mjs resumes them).
+- [ ] **Google and Bing imagery not tried with a real key** (door 2, *Fetch
+  imagery for this land*): their session, metadata and tile addresses follow
+  the providers' documentation and are tested against a fake fetch; the free
+  providers each answered one tile by hand (31 October 2026), and the journey
+  stands in for USGS and Nominatim. The owner's own key is the check.
+- [ ] **Door 2's new steps are not played by a person** (the owner's order of
+  31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
+  review): the builder-door-2 journey drives every control once.
+- [ ] **Not played by a person: the trace step's 1 November list** (the
+  owner's list after testing; docs/COURSE_BUILDER.md, *The amended goal*,
+  item 10): the landscape in the trace step, every layer listed with empty
+  ones marked, Extrapolate, the banner, the renamed brushes, Google's key
+  steps, the course boundary and Fill outside it, houses (tool, zone,
+  OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
+  builder-door-2-osm journeys drive each once and the game plays a tee shot
+  on a course with a house; nobody has looked at a built house in the game
+  or painted with the smooth view by hand. In the editor since 1 November
+  2026 (drawn, the House tool, Clear houses): the builder-door-2-osm journey
+  draws the map's house, has one refused on the fairway, stands one on the
+  rough and undoes it; not played by a person.
+- [ ] **Not played by a person: Viewing, the picture's lock, Move shape**
+  (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
+  step). The builder-door-2 journey sets the opacities, draws the LIDAR's
+  slope over the picture, unlocks, drags, nudges and locks the picture, and
+  moves a bunker and undoes it. To check by hand: whether a half-seen slope
+  over a real picture makes the bunkers easy to line up, and whether picking
+  the chosen layer before the topmost surprises anyone. Move shape is in
+  the editor too (the builder-tools journey drags a bunker and undoes it;
+  under a tree's crown it takes the tree). Turn shape too, in both (the
+  builder-door-2 journey turns a bunker a quarter and undoes it).
+- [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
+  amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
+  square or IGN tiles, rockyweb's tiles through the bridge or the browser's
+  downloads, the 36 state portals), Save on every screen with Save again and
+  door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
+  its smoothed surfaces, State Plane surveys placed. Checked: the
+  builder-door-2 journey (search with the National Map stood in for, Save
+  and Save again with a stand-in dialog, a renamed Save, a draft reopened,
+  the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
+  square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
+  real rockyweb range through a test bridge. **Not checked**: the rockyweb
+  download read from the LIDAR folder (a browser download a script cannot
+  watch), the bridge path from the page (the owner's running bridge needs a
+  restart to have the route), IGN's in-page download end to end, a real
+  save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
+  same night: swissSURFACE3D found and downloaded in the page.)
+- [ ] **Not played by a person: amendment 17** (docs/COURSE_BUILDER.md; every
+  course in bench/lidar built, 1 November 2026): the fourteen courses in
+  bench/courses (built by tools/build-courses.mjs, opened in the game by
+  tools/play-built.mjs -- see RESEARCH *Every course in bench/lidar, built*
+  for which played and what each report says); door 2's Course choice,
+  holes moved with the refined map, Fit holes to the trace, the map's par
+  kept; Saved courses not adding a built file twice. **To check by hand**:
+  play a few holes on each course; Worthington's holes 2, 3, 6, 8, 9, 10,
+  14, whose tees the map never drew; Key West's 2nd (a straight map line
+  across water); the TPC Scottsdale card numbers quoted from memory.
+- [ ] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
+  owner's second list of 1 November 2026): the scorecard (par and index
+  set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
+  Back to 2D carrying the 3D work home (round-trip.js: layers, shaping,
+  holes, trees, houses, creeks), Close and Back asking twice, the editor's landscape-only paint
+  and its landscape look, Tree height (the whole tree since), Size a tree,
+  the editor's close-up sheet (sharp edges near the camera, lined up with
+  the whole picture, outlines without notches; seen only in
+  tools/builder-look.mjs pictures), Clear trees from tees and greens,
+  Fill outside removing the trees too, the views following the window.
+  Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
+  and builder-tools journeys and tests/tree-clear.test.mjs and
+  tests/round-trip.test.mjs. **To check by hand**: several trips between 2D
+  and 3D on a real course (the journey makes one, with sand and a hill); a window dragged to a second screen of another scaling (the
+  journeys only resize); how the editor's stand-in trees read against the
+  game's; clearing trees on a real course (not yet measured how many it
+  draws in at Worthington or Nile Shrine).
+- [ ] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
+  owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
+  folder (every download saved there, read back instead of downloaded
+  again, Load from the folder, ZIPs unpacked), Washington's portal opened on
+  the place, Download all tiles, a tooltip on every button, places found as
+  buttons, the files' coverage in yellow, whose trees beside OpenStreetMap,
+  and Fill outside keeping or removing what is there. Checked: the
+  builder-lidar-folder journey (with a stand-in folder: the square
+  downloaded once and read back with nothing asked of USGS, listed ticked,
+  coverage drawn, every shown button with a tooltip, the result a button),
+  the builder-door-2-osm journey (whose trees three ways, outside kept and
+  removed), tests/lidar-folder, builder-tips, osm and trace-edit, and Nile
+  Shrine's own survey by script (RESEARCH, *Whose trees*). **To check by
+  hand**: Chrome's folder dialog, the leave-to-use prompt and the folder
+  remembered on a later visit (IndexedDB; a stand-in cannot be stored
+  there); Washington's portal from the link and its ZIP loaded; whether
+  2,362 of OpenStreetMap's wood trees added at Nile Shrine stand where trees
+  are; the tooltips' wording.
+- [ ] **The auto trace from the LIDAR alone, before the holes: started, far
+  from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
+  trace from the LIDAR alone*): mean overlap over the nine courses green 12,
+  tee 5, fairway 19, semi 5, sand 9, water 21 (from 0 but water 13). The
+  laser tells fairway, green and rough apart by millimetres; greens and tees
+  are found because they are built up (iterations 6-9). Next: fairway
+  corridors by width and by their tees and greens at either end; a
+  green's bunkers round it. Not seen in the builder's page.
+- [ ] **The editor's saved outlines changed** (1 November 2026): it now saves
+  door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
+  to 0.35 of a cell, so a course saved again from the editor differs slightly
+  at its edges from the same course saved before; and later that day
+  `layerRings` itself relaxes the staircase before simplifying (RESEARCH,
+  *Outlines without notches*), moving every edge again by centimetres. A file already saved plays
+  as before (`BUILT_VERSION` unchanged). Not yet compared on a course by
+  measurement (tools/freeze-compare.mjs round trip).
+- [ ] **The trace has no review layer
+  in the editor** (each cell's source is kept, and door 2 reports the share), no
+  automatic alignment nudge after a picture is lined up, and no classifier
+  learnt from the player's corrections -- all in the study's design
+  (docs/COURSE_BUILDER.md, *LIDAR first, the picture as fallback*).
+- [ ] **Sand is the trace's weakest surface**: 27% overlap with
+  OpenStreetMap's bunkers at Worthington with both witnesses, and on generated
+  courses the LIDAR's sand calls lower the picture's, 54 to 43, on pale
+  native grass (docs/COURSE_BUILDER.md, stage 8). OpenStreetMap maps 20 of
+  the club's bunkers; some of what it scores as wrong may be bunkers it lacks
+  -- one corner checked by eye, not the whole course. The study's 80% target
+  is not met.
+- [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
+- [ ] **The editor cannot move or delete a pond or creek once drawn** (only
+  Undo), add or remove holes, or stamp a green's contours beyond the brush.
+- [ ] **The owner plays the builder and a built course** at the end of the
+  goal: the builder's doors and editor, a Worthington round in the game.
+  Nothing in the builder has been played by a person; the smoke journeys
+  drive every door (builder-door-2 on a made-up survey; the local
+  builder-door-2-worthington on Worthington's own tiles, the holes clicked by
+  the script from OpenStreetMap). `node tools/built-compare.mjs --file <your
+  course.fairway> --dem ... --osm ... --scorecard ...` measures the owner's own
+  door 2 course the same way.
+- [ ] **Before a release carrying the builder**: check the website's demo
+  check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
+  game's does not confuse it (tell the owner).
+
 ## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
 
 - [x] **The drop bar and the Tools window: three lines low on their own
@@ -250,7 +1107,7 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   as tables with red-rock sides, its scrub in clumps with bare sand between,
   and its hardpan runs past the course's edge with no line; Lakeshore's far
   land dune woodland, not a carpet; Island's islets sit on the horizon;
-  Haunted Hollow's far trunks read dead; Autumn's evergreens dark crowns in
+  Autumn's evergreens dark crowns in
   the canopy, no spikes on the horizon. The wait as a course loads is
   0.3-0.5 s longer on the wooded landscapes (measured, not felt).
 - [ ] **Links' double fairways have been judged from above and in captures,
@@ -288,9 +1145,8 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
   the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,
   agave -- generator 41; does a ball still hit a saguaro where it is drawn?),
-  the Island's palms and hala, Haunted Hollow's dead trees, the houses
-  (does a ball off a wall bounce where the wall is drawn?), the pumpkins and
-  toadstools (do lantern faces sit on the skin?), the redwood grove and
+  the Island's palms and hala, the houses
+  (does a ball off a wall bounce where the wall is drawn?), the redwood grove and
   the deadfall,
   built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
   packs*). Check in a round: crowns light as one soft body with no speckle;
@@ -416,13 +1272,6 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   rather than sticking out level; nothing looks sunk (a tree on a steep slope
   is drawn up to 15% of its height lower). The wait as a course loads is
   0.1-0.15 s longer here.
-- [ ] **Haunted Hollow's season has been tested, not played** (seasons.js;
-  CARTOON_OVERHAUL *Haunted Hollow is seasonal*). Check: with the computer's
-  date out of season, Course studio, Surprise me and the Endless picker do not
-  offer it, and the menu's backdrop never grows it; Settings, Graphics,
-  "Haunted Hollow all year" brings it back at once (a picker open at the time
-  redraws when reopened); a saved course on Haunted Hollow still opens and
-  shows it selected; in season (today, until 7 November) everything offers it.
 - [ ] **The gardens have been seen only in captures** (cartoon_garden.py,
   homes.js): fences stand on the ground on a sloping lot (they were never
   fitted to it, before or now); the shrubs do not stand in the driveway or
@@ -459,7 +1308,7 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   landscapes: the rim on the crowns does not shimmer or crawl as the camera
   moves (it is a view-angle term); a ball is easy to find at noon, dusk and
   night; the lavender blue hour after sunset and the afterglow under the set
-  sun look like evening, not a filter; Haunted Hollow still reads spooky; the
+  sun look like evening, not a filter; the
   colour grade does not make the HUD's tiny course models or the menu cards
   garish (they share the renderer). Frame cost of the rim and the eight-step
   ramp is unmeasured (a few instructions on painted crowns) -- the frame-rate
@@ -1053,6 +1902,18 @@ are in the archived section of the same name.
 
 ## Graphics
 
+- [ ] **Not yet seen: the far heath, and the eleven models unwrapped** (31
+  October 2026, the owner's third word on Architect's branch; rendering only, no
+  version moves). Built and tested in Node only -- no capture, no frame
+  measured. To check on Links (an 18-hole course, Medium and Low): from a
+  tee, looking across heather -- past about 48 m the cushions should give way
+  to low purple-and-olive domes rather than flat purple ground, with no ring
+  where one becomes the other, and the domes sinking away at the tier's
+  long-grass reach (Low 90 m, Medium 130 m). And the eleven models whole: tussocks and logs
+  (Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
+  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
+  triangles in reach of a Links tee on Medium, against the
+  long grass's millions -- a `profile --only biomes` would settle it.
 - [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it.**
   Smoke journeys run with the owner's go-ahead (23 October), one at a time,
   the card checked before each: `hud-reachable`, `range`, `endless-round`,
@@ -1356,7 +2217,7 @@ per category.
   ball-light-hole-out, boot, range pass; fingerprint unchanged. **Not run:
   `npm run profile`** -- vegetation.js now tests every boulder, log, house and
   prop when the camera moves (about ten minutes on the graphics card; ask
-  first). Not seen: a house or pumpkin cleared in play, the menu camera
+  first). Not seen: a house cleared in play, the menu camera
   clearing a fir (it needs the right showcase hole).
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
@@ -1429,7 +2290,7 @@ green everywhere, and every mode but the range under one Play.
   owner's three reviews; the smoke journeys `architect-studio` and
   `architect-round` last ran on the branch on 31 October, before the far
   heath and the models. Not seen in the game: the far heath, the eleven
-  unwrapped models (Architect section above). Website redeployed with it.
+  unwrapped models (Graphics, above). Website redeployed with it.
 
 ## Release 0.9.5 (27 October)
 
@@ -1544,7 +2405,97 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   week does not count as the course of the week; and there is no way to delete
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
+
 # Done
+
+## US landscapes (branch `course-builder`, from 2 November 2026)
+
+- [x] **Foundations**: the `REGION` table and inheritance; the new keys and
+  player names (study's data/names.json) with one `MIGRATIONS` entry from
+  today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
+  the partition shipped, door 2's suggestion, **the clickable map** in the
+  course card, studio and builder, and **a small globe in each landscape
+  thumbnail's corner** marking where it is.
+  **Built** (step 2): regions.js (every landscape, its region, place and
+  the old keys), biomes.js keyed by region with each landscape's `LAND` over
+  it, the new keys and names with MIGRATIONS 16 (schema 17) and the old keys
+  read in course files, profiles and endless seeds (generator 56: the seven
+  renamed landscapes' world pieces moved), tests/landscapes-complete.test.mjs,
+  seasons.js (summer only until step 9; the turf palettes come with the
+  seasons), the partition shipped (us-map-data.js, 215 KB, tools/us-map.mjs),
+  the clickable map in Course studio, Endless and the builder's doors 1 and
+  2, a globe on every landscape picture, door 2's suggestion from where the
+  survey lies. Not seen by a person: the open entry *the map, the globes and
+  the new names*.
+- [x] **Remove Architect** (the designer, its styles and hole design, hand
+  tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
+  doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the
+  people** (`life.js`); **move into the generator** the paths and bridges,
+  clubhouse, markings, waterworks, walls, landmarks, wildlife, yardage book
+  and surface field, with **every path over water a bridge** (PLAN.md 1b).
+  Saved Architect courses migrate.
+- [x] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
+  date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
+  meshes, names, tests, captures and fixtures. Saved courses migrate to New
+  England in autumn.
+  **Built** (commits 53c4aa2, ee77600 and step 1c): Haunted Hollow, its date
+  switch and assets gone, saves opening on Autumn (SCHEMA_VERSION 15); the
+  people and tournament week gone; Architect gone -- designer.js,
+  architect.js, architect-styles.js, hand-tools.js, `ARCHITECT_VERSION`, the
+  studio's choice, four suites, two smoke journeys, architect-difficulty.mjs
+  and the Architect fingerprint store; an Architect save loads as an ordinary
+  course (SCHEMA_VERSION 16, the version notice shown). The world pieces run
+  on every generated course from their own streams (world-stream.js), each
+  landscape's kit its `WORLD` block; `findBridges` makes every path over
+  water a bridge, the clubhouse's link included, held by a test on every
+  landscape and the bench's `pathOverWater` invariant. GENERATOR_VERSION 55.
+  Not seen by a person: the open entry *the world round the holes*.
+
+## Architect courses (branch `architect-courses`, from 30 October 2026)
+
+- [x] **Closed unplayed on 2 November 2026: Architect was removed** (the US
+  landscapes goal). The open play checks -- the studio's *How the course is
+  made*, phase 1's designed holes, phases 2-7 (paths, relief, hole names and
+  the architect's note, the crest's founding line, markings, the clubhouse,
+  collection areas, mounds, waterworks, the story and the land's templates,
+  life, tournament week, the yardage book), the owner's two reviews, and the
+  surface field and turned greens -- were never played by a person. What
+  survives the removal is checked under *US landscapes*, *the world round the
+  holes*; the far heath entry moved to *Graphics*. The entries' text is in
+  git history (this file before step 1c).
+
+## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+- [x] **A small shape can be moved when seen from afar** (5 November 2026, found
+  by the smoke's builder-tools). A bunker ten pixels across has all four anchors
+  within reach of its middle, so pressing it only ever turned it, in both
+  editors. A press now takes an anchor only when it is nearer that than the
+  middle (layer-ops.js `anchorHit`). While looking, a second fix: a quick drag
+  kept the first pointer position of each frame and dropped the last one waiting
+  at release, so it could land short of where it was let go.
+- [x] **Evergreens stay green in autumn** (the owner, 5 November 2026, of Puget Sound). `cedar` was not on the keep-green list, so it turned with the maples; nor were palms, tanoak, young conifers and several evergreen shrubs. The list is species.js `EVERGREEN` now, and tests/seasons.test.mjs holds every conifer and palm to it. Seen on Puget Sound at Medium.
+- [x] **A course reopens with everything** (the owner, 5 November 2026): a course
+  saved from the editor carries the door 2 session behind it (the survey's grids,
+  every surveyed tree, the trace, boundary and box, pictures, OpenStreetMap's
+  download, where it is), the game skips and drops that section, and Back to 2D
+  opens it. Save a copy to share leaves it out. Older files get their location
+  and trees back. The Trees choice emptying a reopened draft is fixed.
+  COURSE_BUILDER, *The builder's section*.
+- [x] **Surveyed trees pick their species by height** (the owner, 5 November
+  2026). A survey's narrow or wide reading no longer steers the species, palms
+  can be picked, and the landscape's shares stand among the species of the tree's
+  height: too tall by a quarter is out, under half the shortest is out, and a
+  tree short for all of them stays in the shares. `TREE_SIZE` moved to species.js
+  with `tallHeight`, ground unchanged. Summerlin's trees too tall for their species
+  14.3% to none. RESEARCH, *A survey sees a shape, not a species*.
+- [x] **Stages 0-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
+  page and file format, the game playing a built file, pins per round, door
+  1, real-time shaping, the editor's tools, checks and a test round, the
+  LIDAR readers and Worthington's ground, door 2 end to end, the auto trace
+  LIDAR first, and the release-readiness sweep (the documents, the
+  distribution review's sizes and offline proof, the player's guide in
+  PLAYING.md). Not merged, pushed or released; not played by a person (the
+  open items above).
 
 ## Release 0.9.6 (31 October)
 
@@ -1646,6 +2597,10 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
 
+- [x] **Haunted Hollow's season has been tested, not played** (seasons.js) --
+  CLOSED UNPLAYED, 2 November 2026: Haunted Hollow and its date switch were
+  removed (the owner; the US landscapes goal), so there is no season left to
+  check. Every landscape is offered all year.
 - [x] **`endless-round` failed once on the cartoon-overhaul branch** (26
   October, seed HARROW-4021): **the harness was wrong, not the game.** Replayed
   on the far-landscape goal (27 October) with `--endless-seed HARROW-4021`,

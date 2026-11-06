@@ -5,20 +5,18 @@ import {pathIndex} from '../src/paths.js';
 import {pathRelief, STANCE} from '../src/relief.js';
 import {GROUNDS, allows, isNatural} from '../src/grounds.js';
 
-// CART PATHS (architect-courses, phase 2): an Architect course's paths run
-// beside its holes out of play and on to each next tee; they are a lie of
+// CART PATHS (architect-courses, phase 2): every generated course's paths run
+// beside its holes out of play and on to each next tee (an Architect course's
+// alone until the designer was removed, 2 November 2026); they are a lie of
 // their own, nothing stands on them, a bridge carries them over a creek, and
-// a ball that stops on one gets free relief. Classic has none.
+// a ball that stops on one gets free relief.
 
-const arch = world({seed: 'PATHS-T', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
-const classic = world({seed: 'PATHS-T', holes: 9, biome: 'midwest'});
+const arch = world({seed: 'PATHS-T', holes: 9, biome: 'heartland'});
 
 // The network's points, every piece.
 const allPoints = w => w.paths.flatMap(p => p.points);
 
-test('an Architect course has a network of paths a course long; Classic has none', () => {
- assert.equal(classic.paths.length, 0);
- assert.equal(classic.bridges.length, 0);
+test('a course has a network of paths a course long', () => {
  assert.ok(arch.paths.length >= 9, `${arch.paths.length} pieces`);
  let len = 0;
  for (const path of arch.paths) for (let i = 1; i < path.points.length; i++) len += Math.hypot(path.points[i].x - path.points[i - 1].x, path.points[i].z - path.points[i - 1].z);
@@ -63,7 +61,7 @@ test('the path stays out of play beside the hole it runs down', () => {
 // green's edge, climbs nothing steeper than 25% between points, and turns
 // gently -- at most a few corners of more than 35 degrees a course.
 test('the path keeps off the greens, climbs walkable grades and turns gently', () => {
- for (const w of [arch, world({seed: 'ST-1', holes: 9, biome: 'redwood', designer: 'architect'})]) {
+ for (const w of [arch, world({seed: 'ST-1', holes: 9, biome: 'redwood'})]) {
   let sharp = 0;
   for (const path of w.paths) {
    const p = path.points;
@@ -99,8 +97,8 @@ test('free relief from a path: off it, stance and all, no nearer the hole, no pe
 });
 
 test('a creek the path crosses gets a bridge', () => {
- // PATHS-T crosses no creek; BR-7 on Midwest with a lot of story crosses one.
- const bridged = world({seed: 'BR-7', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
+ // PATHS-T crosses no creek; BR-5 on the Heartland with three creeks crosses two.
+ const bridged = world({seed: 'BR-5', holes: 9, biome: 'heartland', creeks: 3, rivers: 1});
  assert.ok(bridged.bridges.length >= 1, 'no bridge where the path crosses a creek');
  for (const b of [...arch.bridges, ...bridged.bridges]) {
   assert.ok(b.span > 3 && b.span < 60, `bridge span ${b.span}`);
@@ -108,13 +106,13 @@ test('a creek the path crosses gets a bridge', () => {
  }
 });
 
-import {CLUBHOUSE_ASPECT} from '../src/clubhouse.js';
+import {CLUBHOUSE_ASPECT, clubhouseModel} from '../src/clubhouse.js';
 import {MESH_MODELS} from '../src/asset-meshes.js';
 test('every clubhouse keeps its model\'s own proportions (clubhouse.js CLUBHOUSE_ASPECT)', () => {
  // The table is the ingested model's height for its width; a model rebuilt
  // without re-measuring it would be drawn stretched or squashed.
  for (const [k, a] of Object.entries(CLUBHOUSE_ASPECT)) {
-  const m = MESH_MODELS[`Blender_Clubhouse_${k}`];
+  const m = MESH_MODELS[clubhouseModel(k)];
   assert.ok(m, `no model for ${k}`);
   assert.ok(Math.abs(a - 1 / (2 * m.rx)) < .002, `${k}: the table says ${a}, the model ${(1 / (2 * m.rx)).toFixed(3)}`);
  }
@@ -123,10 +121,10 @@ test('every clubhouse keeps its model\'s own proportions (clubhouse.js CLUBHOUSE
 // PHASE 5: A BRIDGE'S DECK IS SOLID (physics.js, the houses' box routine with
 // a floor). A ball dropped onto it stops on the planks, not in the creek bed
 // under them, and is in the penalty area there (Rule 17.1a: a penalty area's
-// edge runs straight up). Classic has no bridges, so nothing changes there.
+// edge runs straight up).
 import {simulateShot} from '../src/physics.js';
 test('a ball dropped on a bridge stops on its deck, in the penalty area', () => {
- const w = world({seed: 'BR-7', holes: 9, biome: 'midwest', designer: 'architect', archStory: 'lots'});
+ const w = world({seed: 'BR-5', holes: 9, biome: 'heartland', creeks: 3, rivers: 1});
  assert.ok(w.bridges.length, 'this course has a bridge');
  const b = w.bridges[0], h = w.nearest(b.x, b.z).h, at = h.toLocal({x: b.x, z: b.z});
  assert.ok(b.deck > w.height(b.x, b.z) + .3, 'the deck stands over the water');
@@ -148,12 +146,13 @@ const toOthers = (w, p, e) => { let d = Infinity; for (const o of w.paths) if (o
 const lengthOf = pts => pts.reduce((a, p, k) => a + (k ? Math.hypot(p.x - pts[k - 1].x, p.z - pts[k - 1].z) : 0), 0);
 test('the paths are one network, joined where they meet', () => {
  // PA-2 Midwest came in two halves: hole 10's pull-off sat in a pocket.
- for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'})]) {
+ // Every course is one network since generator 86 (the bench's `pathInParts`).
+ for (const w of [world({seed: 'PA-3', holes: 18, biome: 'heartland'}), world({seed: 'PA-2', holes: 18, biome: 'heartland'})]) {
   const P = w.paths, par = P.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
   P.forEach((p, i) => {
    const ends = [p.points[0], p.points[p.points.length - 1]], d = ends.map(e => toOthers(w, p, e));
    d.forEach((v, k) => assert.ok(v < .05 || v > 8, `piece ${i}: an end stops ${v.toFixed(1)} m short of another path`));
-   if (!p.door) assert.ok(!(d[0] < .05 && d[1] < .05 && lengthOf(p.points) < SPUR), `piece ${i}: a ${lengthOf(p.points).toFixed(0)} m jog between two paths`);
+   if (!p.door && !p.link) assert.ok(!(d[0] < .05 && d[1] < .05 && lengthOf(p.points) < SPUR), `piece ${i}: a ${lengthOf(p.points).toFixed(0)} m jog between two paths`);
    ends.forEach(e => P.forEach((o, j) => { if (j !== i) for (let k = 1; k < o.points.length; k++) if (seg(e, o.points[k - 1], o.points[k]) < .05) par[f(i)] = f(j); }));
   });
   assert.equal(new Set(P.map((_, i) => f(i))).size, 1, 'the network is in more than one piece');
@@ -163,8 +162,8 @@ test('the paths are one network, joined where they meet', () => {
 // NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under the
 // Midwest farmhouse; 8 clubhouses in 15 courses had one under them).
 test('no building or house stands on a path, and the clubhouse\'s own path goes round it', () => {
- for (const biome of ['midwest', 'mountain', 'desert']) {
-  const w = world({seed: 'PA-3', holes: 18, biome, designer: 'architect', archStory: 'lots', archClub: 'championship'});
+ for (const biome of ['heartland', 'rockies', 'sonoran']) {
+  const w = world({seed: 'PA-3', holes: 18, biome});
   for (const b of w.buildings) {
    // The clubhouse's own path runs up to its front (`door`), and no further.
    assert.ok(!pathTouches(w.paths.filter(p => !(p.door && b.kind === 'clubhouse')), b, 0), `${biome}: a path under the ${b.kind}`);
@@ -184,7 +183,7 @@ test('no building or house stands on a path, and the clubhouse\'s own path goes 
 // runs at least 12 m along its own piece before any other piece joins it.
 test('no end stops just past a junction or a crossing', () => {
  // `overhaul` Midwest is the capture's course, where the wedge was seen.
- for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'}), world({seed: 'overhaul', holes: 18, biome: 'midwest', designer: 'architect'})]) for (const p of w.paths) for (const end of [0, 1]) {
+ for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'heartland'}), world({seed: 'overhaul', holes: 18, biome: 'heartland'})]) for (const p of w.paths) for (const end of [0, 1]) {
   const pts = end ? [...p.points].reverse() : p.points;
   const loose = toOthers(w, p, pts[0]) >= .05;
   let run = 0;
@@ -213,7 +212,7 @@ test('no end stops just past a junction or a crossing', () => {
 // would cross closed ground).
 test('a path end does not fold back on itself', () => {
  let folds = 0, ends = 0;
- for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'midwest', designer: 'architect', archStory: 'lots'})]) for (const p of w.paths) for (const end of [0, 1]) {
+ for (const w of [arch, world({seed: 'PA-2', holes: 18, biome: 'heartland'})]) for (const p of w.paths) for (const end of [0, 1]) {
   const q = end ? [...p.points].reverse() : p.points;
   if (q.length < 3) continue;
   ends++;
@@ -221,4 +220,41 @@ test('a path end does not fold back on itself', () => {
   if ((ux * vx + uz * vz) / ((Math.hypot(ux, uz) * Math.hypot(vx, vz)) || 1) < -.17) folds++;
  }
  assert.ok(folds <= Math.ceil(ends * .02), `${folds} of ${ends} ends fold back`);
+});
+
+// EVERY PATH OVER WATER IS A BRIDGE (the owner, 2 November 2026; paths.js
+// `findBridges`, the bench's `pathOverWater`): no point of a path, every 2 m,
+// stands on water off a bridge -- the clubhouse's link included, which a creek
+// once crossed dry-shod (Mountain W-3).
+import {unbridgedWater} from '../src/paths.js';
+test('every path over water is a bridge', () => {
+ for (const [biome, seed] of [['rockies', 'W-3'], ['heartland', 'W-1'], ['redwood', 'W-2'], ['puget', 'W-4']]) {
+  const w = world({seed, holes: 9, biome, water: 80, lakes: 1, creeks: 2});
+  const bad = unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water');
+  assert.equal(bad.length, 0, `${biome} ${seed}: ${bad.length} path points on water off a bridge`);
+ }
+});
+
+// NO RIGHT ANGLES, NO DEAD ENDS (the owner, 2 November 2026; paths.js
+// `shape`, `pathShape`). Where a path would end it loops back on itself, and
+// its corners are rounded. Not yet perfect everywhere (TODO): held here on
+// the courses that are, and as a budget on the rest.
+test('cart paths loop back instead of ending, and round their corners', async () => {
+ const {pathShape} = await import('../src/paths.js');
+ const {world} = await import('./worlds.mjs');
+ const clean = [['heartland', 'PA-2'], ['heartland', 'PA-4'], ['puget', 'PA-1'], ['puget', 'PA-2'], ['puget', 'PA-5'], ['links', 'PA-5']];
+ for (const [biome, seed] of clean) {
+  const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
+  assert.equal(s.looseEnds.length, 0, `${biome} ${seed}: a dead end`);
+  assert.equal(s.sharp.length, 0, `${biome} ${seed}: a sharp corner (${Math.round(s.worstTurn)} degrees)`);
+ }
+ let ends = 0, sharp = 0, pieces = 0;
+ for (const [biome, seed] of [['heartland', 'PA-1'], ['heartland', 'PA-3'], ['puget', 'PA-4'], ['rockies', 'PA-1'], ['rockies', 'PA-2'], ['rockies', 'PA-3'], ['rockies', 'PA-4'], ['links', 'PA-1'], ['links', 'PA-2'], ['links', 'PA-3']]) {
+  const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
+  ends += s.looseEnds.length; sharp += s.sharp.length; pieces += w.paths.length;
+ }
+ // 2 November 2026: 5 dead ends and 19 sharp corners in 169 pieces on these
+ // ten. The budget only tightens.
+ assert.ok(ends <= 5, `${ends} dead ends on ten courses`);
+ assert.ok(sharp <= 19, `${sharp} sharp corners in ${pieces} pieces`);
 });

@@ -2,7 +2,6 @@
 // another device. A course record is settings and a name — never a round, a lie
 // or a score — so the same course can be played as any format with any group.
 import {SCHEMA_VERSION,DEFAULT_COURSE,generationKeys,validateSettings,migrateSettings,generatorFor} from './settings-schema.js';
-import {designerScope} from './designer.js';
 
 const KEY='fairway-courses-v1';
 const PREFIX='FW1';
@@ -12,12 +11,10 @@ export const MAX_NAME=40;
 // Play-scope settings (turf, club yardages, flight profile) share one object
 // with generation settings at runtime. A shared course must not carry the
 // author's club distances, so records keep generation keys only.
-// An Architect course keeps only what it is chosen by (designer.js
-// `designerScope`): the rest is the architect's, recomputed on every load.
-export function courseSettings(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(s[k]!==undefined)out[k]=s[k];return out;}
+export function courseSettings(settings={}){const out={},s=settings;for(const k of generationKeys())if(s[k]!==undefined)out[k]=s[k];return out;}
 // Codes carry only what differs from the defaults, which keeps a typical course
 // a couple of hundred characters instead of eight hundred.
-export function settingsDiff(settings={}){const out={},s=designerScope(settings);for(const k of generationKeys())if(k in s&&s[k]!==DEFAULT_COURSE[k])out[k]=s[k];return out;}
+export function settingsDiff(settings={}){const out={},s=settings;for(const k of generationKeys())if(k in s&&s[k]!==DEFAULT_COURSE[k])out[k]=s[k];return out;}
 
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function validName(name){const n=String(name??'').trim();if(!n.length||n.length>MAX_NAME)throw Error(`Give the course a name of 1–${MAX_NAME} characters.`);return n;}
@@ -34,15 +31,19 @@ function normalise(raw){
  if(!raw||typeof raw.id!=='string'||typeof raw.name!=='string')throw Error('Invalid course record.');
  const schema=Number.isInteger(raw.schema)?raw.schema:1;
  const settings=validateSettings(migrateSettings(raw.settings||{},schema));
- return {id:raw.id,name:validName(raw.name),created:Number(raw.created)||0,generator:Number.isInteger(raw.generator)?raw.generator:0,schema:SCHEMA_VERSION,settings:courseSettings(settings)};
+ // A BUILT course (the course builder) keeps its file's hash beside its
+ // settings; its land is the file's, kept in IndexedDB (built-store.js), and
+ // the hash rides in its settings so a round started on it asks for that file.
+ const built=typeof raw.built==='string'&&/^[0-9a-f]{24}$/.test(raw.built)?raw.built:null;
+ return {id:raw.id,name:validName(raw.name),created:Number(raw.created)||0,generator:Number.isInteger(raw.generator)?raw.generator:0,schema:SCHEMA_VERSION,settings:built?{...courseSettings(settings),built}:courseSettings(settings),...(built?{built}:{})};
 }
 
 // One unreadable entry must not take the whole library down with it.
 export function listCourses(){const out=[];for(const raw of readStore()){try{out.push(normalise(raw));}catch{}}return out;}
 export function findCourse(id){return listCourses().find(c=>c.id===id)||null;}
 
-export function saveCourse({id,name,settings,generator=generatorFor(settings)}={}){
- const record={id:id||newId(),name:validName(name),created:Date.now(),generator,schema:SCHEMA_VERSION,settings:courseSettings(validateSettings(settings))};
+export function saveCourse({id,name,settings,built=null,generator=generatorFor({...settings,built})}={}){
+ const record={id:id||newId(),name:validName(name),created:Date.now(),generator,schema:SCHEMA_VERSION,settings:courseSettings(validateSettings(settings)),...(built?{built}:{})};
  const courses=readStore().filter(c=>c&&c.id!==record.id);
  if(courses.length>=MAX_COURSES)throw Error(`The library holds at most ${MAX_COURSES} courses. Delete one first.`);
  courses.unshift(record);writeStore(courses);return record;
@@ -62,6 +63,7 @@ const fromB64=c=>{const bin=atob(c.replace(/-/g,'+').replace(/_/g,'/'));return n
 export const checksum=s=>{let a=2166136261;for(let i=0;i<s.length;i++){a^=s.charCodeAt(i);a=Math.imul(a,16777619);}return (a>>>0).toString(36).padStart(7,'0').slice(-6);};
 
 export function exportCourse(record){
+ if(record?.built)throw Error('A built course travels as its .fairway file, not as a code: use Save as a file.');
  const settings=validateSettings(record?.settings||{});
  const body=toB64(JSON.stringify({v:SCHEMA_VERSION,g:record?.generator??generatorFor(settings),n:validName(record?.name),d:settingsDiff(settings)}));
  return `${PREFIX}.${body}.${checksum(body)}`;

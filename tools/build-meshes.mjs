@@ -62,9 +62,20 @@ const PICK = {
  fartwin: ['Spruce_1', 'Spruce_2', 'Spruce_3', 'Pine_1', 'Pine_2', 'Pine_3', 'Cedar_1', 'Cedar_2', 'Cedar_3',
   'Oak_1', 'Oak_2', 'Oak_3', 'Maple_1', 'Maple_2', 'Maple_3', 'Aspen_1', 'Aspen_2', 'Aspen_3', 'Alder_1', 'Alder_2',
   'Palo_1', 'Palo_2', 'Palo_3', 'Mesquite_1', 'Mesquite_2', 'Mesquite_3',
-  'Redwood_1', 'Redwood_2', 'Redwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
+  'Redwood_1', 'Redwood_2', 'Redwood_3', 'YoungRedwood_1', 'YoungRedwood_2', 'YoungRedwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
+  'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'BigleafMaple_1', 'BigleafMaple_2', 'BayLaurel_1', 'BayLaurel_2',
+  'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1', 'BlueSpruce_2', 'AmericanElm_1', 'AmericanElm_2', 'Shagbark_1', 'Shagbark_2',
+  'BurOak_1', 'BurOak_2', 'PaperBirch_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'BalsamFir_2',
+  'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
+  'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
+  'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
+  'Pecan_1', 'Pecan_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
+  'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
+  'PinyonPine_1', 'PinyonPine_2', 'WesternJuniper_1', 'WesternJuniper_2', 'GrainElevator_1', 'Shelterbelt_1',
+  'ChestnutOak_1', 'ChestnutOak_2', 'ShortleafPine_1', 'ShortleafPine_2', 'CopperBeech_1', 'CopperBeech_2', 'PitchPine_1',
+  'RedPine_1', 'RedPine_2', 'SitkaSpruce_1', 'Casuarina_1', 'CookPine_1', 'Monkeypod_1', 'Monkeypod_2',
   'Shrub_1', 'Shrub_2', 'Shrub_3', 'Gorse_1', 'Gorse_2', 'Gorse_3']
   .map(n => `blender:Blender_${n}_Far`),
  // THE CARTOON ISLAND (tools/blender/cartoon_island.py), replacing Kenney's
@@ -91,10 +102,17 @@ const PICK = {
  grassfescue: ['blender:Blender_Fescue_1', 'blender:Blender_Fescue_2', 'blender:Blender_Fescue_3'],
  grassmarram: ['blender:Blender_Marram_1', 'blender:Blender_Marram_2'],
  grassbluestem: ['blender:Blender_Bluestem_1', 'blender:Blender_Bluestem_2'],
+ // Tall fescue and the prairie grasses (tools/blender/cartoon_prairiegrass.py;
+ // the owner, 3 November 2026), long-grass families like these.
+ grasstallfescue: ['blender:Blender_TallFescue_1', 'blender:Blender_TallFescue_2'],
+ grasslittlebluestem: ['blender:Blender_LittleBluestem_1', 'blender:Blender_LittleBluestem_2'],
+ grassswitch: ['blender:Blender_Switchgrass_1', 'blender:Blender_Switchgrass_2'],
+ grassindian: ['blender:Blender_Indiangrass_1', 'blender:Blender_Indiangrass_2'],
+ grassgrama: ['blender:Blender_BlueGrama_1', 'blender:Blender_BlueGrama_2'],
+ grasswheat: ['blender:Blender_Wheatgrass_1', 'blender:Blender_Wheatgrass_2'],
  grassalpine: ['blender:Blender_Alpine_1', 'blender:Blender_Alpine_2'],
  grassbunch: ['blender:Blender_Bunch_1', 'blender:Blender_Bunch_2'],
  grasssedge: ['blender:Blender_Sedge_1', 'blender:Blender_Sedge_2'],
- grasstussock: ['blender:Blender_Tussock_1', 'blender:Blender_Tussock_2'],
  grassplume: ['blender:Blender_Plume_1', 'blender:Blender_Plume_2'],
  // Kenney's `rock`, `grass` and `flower` families and the grown `litter` are
  // no longer taken (the cartoon overhaul): nothing drew them once the
@@ -106,7 +124,6 @@ const PICK = {
  heatherbush: ['blender:Blender_Heather_1', 'blender:Blender_Heather_2', 'blender:Blender_Heather_3'],
  naupakabush: ['blender:Blender_Naupaka_1', 'blender:Blender_Naupaka_2', 'blender:Blender_Naupaka_3'],
  fernbush: ['blender:Blender_Fern_1', 'blender:Blender_Fern_2', 'blender:Blender_Fern_3'],
- bramblebush: ['blender:Blender_Bramble_1', 'blender:Blender_Bramble_2', 'blender:Blender_Bramble_3'],
  // THE FOREST FLOOR (tools/blender/cartoon_deadfall.py): old-growth reads from
  // what has fallen as much as from what is standing -- logs, stumps and mossy
  // stones, in one hand with the rest.
@@ -118,6 +135,7 @@ const PICK = {
  // hand with every other landscape, and 1,000-1,900 faces a tree where the
  // grown ones were 13,000-53,000.
  redwood: ['blender:Blender_Redwood_1', 'blender:Blender_Redwood_2', 'blender:Blender_Redwood_3'],
+ youngredwood: ['blender:Blender_YoungRedwood_1', 'blender:Blender_YoungRedwood_2', 'blender:Blender_YoungRedwood_3'],
  dougfir: ['blender:Blender_Fir_1', 'blender:Blender_Fir_2'],
  hemlock: ['blender:Blender_Hemlock_1', 'blender:Blender_Hemlock_2'],
  redcedar: ['blender:Blender_RedCedar_1', 'blender:Blender_RedCedar_2'],
@@ -126,18 +144,6 @@ const PICK = {
  salal: ['blender:Blender_Salal_1', 'blender:Blender_Salal_2'],
  sorrel: ['blender:Blender_Sorrel_1'],
  seedling: ['blender:Blender_Seedling_1', 'blender:Blender_Seedling_2'],
- // HAUNTED HOLLOW, remade in one hand (tools/blender/cartoon_haunted.py, the
- // cartoon overhaul): until then three packs -- the MegaKit's gnarled dead
- // oaks, the Ultimate Stylized snags, Kenney's dead willows and dead
- // hardwoods (`arid`, which also stood in for palo verde and mesquite).
- gnarled: ['blender:Blender_Gnarled_1', 'blender:Blender_Gnarled_2', 'blender:Blender_Gnarled_3'],
- snag: ['blender:Blender_Snag_1', 'blender:Blender_Snag_2', 'blender:Blender_Snag_3'],
- deadwillow: ['blender:Blender_DeadWillow_1', 'blender:Blender_DeadWillow_2'],
- deadoaktree: ['blender:Blender_DeadOak_1', 'blender:Blender_DeadOak_2'],
- // The forest floor's Halloween: pumpkins and toadstools among the deadfall.
- // THE CARTOON PROPS (tools/blender/cartoon_props.py), replacing Kenney's.
- pumpkin: ['blender:Blender_Pumpkin_1', 'blender:Blender_Pumpkin_2', 'blender:Blender_Pumpkin_3'],
- toadstool: ['blender:Blender_Toadstool_RedGroup', 'blender:Blender_Toadstool_RedTall', 'blender:Blender_Toadstool_TanGroup'],
  // LAKESHORE DUNES (tools/blender/cartoon_lakeshore.py). Every name starting
  // `Blender_` comes out of a script in tools/blender/ and lives in a
  // `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how to remake
@@ -149,6 +155,225 @@ const PICK = {
  juniper: ['blender:Blender_LakeJuniper_1', 'blender:Blender_LakeJuniper_2'],
  juniperbush: ['blender:Blender_LakeJuniper_3'],
  driftwood: ['blender:Blender_LakeDriftwood_1', 'blender:Blender_LakeDriftwood_2', 'blender:Blender_LakeDriftwood_3'],
+ // THE PACIFIC PACK (the US landscapes goal; tools/blender/cartoon_pacific.py,
+ // fifteen rounds a model against the study's pictures: tools/blender/logs/).
+ // One variant each of the less common trees: every variant is a draw per
+ // part, full and far, in the frame and the shadow pass, and the first cut
+ // put Puget Sound's Low frame up 24% (RESEARCH, *The Pacific pack*). The
+ // others stay in the pack, not shipped (the madrone's two-stem `_2` ships:
+ // the three-stem `_1` is 6,700 triangles).
+ madrone: ['blender:Blender_Madrone_1', 'blender:Blender_Madrone_2'],
+ garryoak: ['blender:Blender_GarryOak_1', 'blender:Blender_GarryOak_2'],
+ bigleafmaple: ['blender:Blender_BigleafMaple_1', 'blender:Blender_BigleafMaple_2'],
+ pacificdogwood: ['blender:Blender_PacificDogwood_1'],
+ baylaurel: ['blender:Blender_BayLaurel_1', 'blender:Blender_BayLaurel_2'],
+ vinemaple: ['blender:Blender_VineMaple_1'],
+ oregongrape: ['blender:Blender_OregonGrape_1'],
+ scotchbroom: ['blender:Blender_ScotchBroom_1'],
+ rhododendron: ['blender:Blender_PacificRhododendron_1'],
+ douglasiris: ['blender:Blender_DouglasIris_1'],
+ // THE MOUNTAIN PACK (tools/blender/cartoon_mountain.py): the Rockies' own.
+ // Two lodgepoles (the common tree), one of the rest.
+ lodgepole: ['blender:Blender_Lodgepole_1', 'blender:Blender_Lodgepole_2'],
+ bluespruce: ['blender:Blender_BlueSpruce_1', 'blender:Blender_BlueSpruce_2'],
+ willowthicket: ['blender:Blender_WillowThicket_1'],
+ columbine: ['blender:Blender_Columbine_1'],
+ lupine: ['blender:Blender_Lupine_1'],
+ // A story wall's panel (renderer.js addStory), never planted.
+ storyrail: ['blender:Blender_SplitRailFence_1'],
+ // THE DRY-AND-LAKE PACK (tools/blender/cartoon_drylake.py): the Sonoran's
+ // jojoba, Lake Dunes' sand cherry; the pier light is a story piece (above).
+ // The ironwood after the silhouette pass (one variant: the Sonoran's third tree).
+ ironwood: ['blender:Blender_Ironwood_1', 'blender:Blender_Ironwood_2'],
+ jojoba: ['blender:Blender_Jojoba_1'],
+ sandcherry: ['blender:Blender_SandCherry_1'],
+ // THE HEARTLAND PACK (tools/blender/cartoon_heartland.py): one of each tree.
+ // The red barn and the corn are story pieces (above).
+ americanelm: ['blender:Blender_AmericanElm_1', 'blender:Blender_AmericanElm_2'],
+ shagbark: ['blender:Blender_Shagbark_1', 'blender:Blender_Shagbark_2'],
+ buroak: ['blender:Blender_BurOak_1', 'blender:Blender_BurOak_2'],
+ prairieforbs: ['blender:Blender_PrairieForbs_1'],
+ // THE NEW ENGLAND PACK (tools/blender/cartoon_newengland.py): both white
+ // pines (the region's commonest tree), one of the rest. The field wall and
+ // the covered bridge are story pieces (above).
+ paperbirch: ['blender:Blender_PaperBirch_1', 'blender:Blender_PaperBirch_2'],
+ whitepine: ['blender:Blender_WhitePine_1', 'blender:Blender_WhitePine_2'],
+ balsamfir: ['blender:Blender_BalsamFir_1', 'blender:Blender_BalsamFir_2'],
+ americanbeech: ['blender:Blender_AmericanBeech_1', 'blender:Blender_AmericanBeech_2'],
+ // THE KEYS PACK (tools/blender/cartoon_keys.py), silhouette first.
+ royalpalm: ['blender:Blender_RoyalPalm_1', 'blender:Blender_RoyalPalm_2'],
+ travelerspalm: ['blender:Blender_TravelersPalm_1'],
+ seagrape: ['blender:Blender_SeaGrape_1'],
+ mangrove: ['blender:Blender_Mangrove_1'],
+ gumbolimbo: ['blender:Blender_GumboLimbo_1'],
+ banyan: ['blender:Blender_Banyan_1'],
+ bougainvillea: ['blender:Blender_Bougainvillea_1'],
+ hibiscus: ['blender:Blender_Hibiscus_1'],
+ // THE SOUTH'S PACKS (tools/blender/cartoon_southpines.py, cartoon_southoaks.py,
+ // cartoon_piedmont.py, cartoon_southcoast.py): every variant.
+ longleafpine: ['blender:Blender_LongleafPine_1', 'blender:Blender_LongleafPine_2'],
+ loblollypine: ['blender:Blender_LoblollyPine_1', 'blender:Blender_LoblollyPine_2'],
+ slashpine: ['blender:Blender_SlashPine_1', 'blender:Blender_SlashPine_2'],
+ cabbagepalm: ['blender:Blender_CabbagePalm_1', 'blender:Blender_CabbagePalm_2'],
+ sawpalmetto: ['blender:Blender_SawPalmetto_1'],
+ longleafgrass: ['blender:Blender_LongleafGrass_1'],
+ wiregrass: ['blender:Blender_Wiregrass_1'],
+ liveoak: ['blender:Blender_LiveOak_1', 'blender:Blender_LiveOak_2'],
+ liveoakmoss: ['blender:Blender_LiveOakMoss_1', 'blender:Blender_LiveOakMoss_2'],
+ turkeyoak: ['blender:Blender_TurkeyOak_1'],
+ blackjackoak: ['blender:Blender_BlackjackOak_1'],
+ baldcypress: ['blender:Blender_BaldCypress_1', 'blender:Blender_BaldCypress_2'],
+ cypressknees: ['blender:Blender_CypressKnees_1'],
+ watertupelo: ['blender:Blender_WaterTupelo_1'],
+ floweringdogwood: ['blender:Blender_FloweringDogwood_1'],
+ azalea: ['blender:Blender_Azalea_1'],
+ magnolia: ['blender:Blender_Magnolia_1', 'blender:Blender_Magnolia_2'],
+ tulippoplar: ['blender:Blender_TulipPoplar_1', 'blender:Blender_TulipPoplar_2'],
+ crapemyrtle: ['blender:Blender_CrapeMyrtle_1'],
+ kudzu: ['blender:Blender_Kudzu_1'],
+ sweetgum: ['blender:Blender_Sweetgum_1', 'blender:Blender_Sweetgum_2'],
+ yaupon: ['blender:Blender_Yaupon_1'],
+ spartina: ['blender:Blender_Spartina_1'],
+ sawgrass: ['blender:Blender_Sawgrass_1'],
+ muhlygrass: ['blender:Blender_MuhlyGrass_1'],
+ waxmyrtle: ['blender:Blender_WaxMyrtle_1'],
+ citrustree: ['blender:Blender_CitrusTree_1'],
+ // THE TEXAS AND DESERTS PACKS (tools/blender/cartoon_texas.py,
+ // cartoon_deserts.py): every variant; the Hill Country's limestone as a
+ // boulder family of its own (biomes.js rockStyle 'limestone').
+ ashejuniper: ['blender:Blender_AsheJuniper_1', 'blender:Blender_AsheJuniper_2'],
+ postoak: ['blender:Blender_PostOak_1', 'blender:Blender_PostOak_2'],
+ pecan: ['blender:Blender_Pecan_1', 'blender:Blender_Pecan_2'],
+ cedarelm: ['blender:Blender_CedarElm_1'],
+ osageorange: ['blender:Blender_OsageOrange_1'],
+ mountainlaurel: ['blender:Blender_MountainLaurel_1'],
+ redbud: ['blender:Blender_Redbud_1'],
+ bluebonnet: ['blender:Blender_Bluebonnet_1'],
+ joshuatree: ['blender:Blender_JoshuaTree_1', 'blender:Blender_JoshuaTree_2'],
+ mojaveyucca: ['blender:Blender_MojaveYucca_1'],
+ fanpalm: ['blender:Blender_FanPalm_1', 'blender:Blender_FanPalm_2'],
+ datepalm: ['blender:Blender_DatePalm_1', 'blender:Blender_DatePalm_2'],
+ aleppopine: ['blender:Blender_AleppoPine_1'],
+ oleander: ['blender:Blender_Oleander_1'],
+ tamarisk: ['blender:Blender_Tamarisk_1'],
+ smoketree: ['blender:Blender_SmokeTree_1'],
+ soaptreeyucca: ['blender:Blender_SoaptreeYucca_1'],
+ sotol: ['blender:Blender_Sotol_1'],
+ lechuguilla: ['blender:Blender_Lechuguilla_1'],
+ desertwillow: ['blender:Blender_DesertWillow_1'],
+ emoryoak: ['blender:Blender_EmoryOak_1'],
+ alligatorjuniper: ['blender:Blender_AlligatorJuniper_1', 'blender:Blender_AlligatorJuniper_2'],
+ beavertail: ['blender:Blender_Beavertail_1'],
+ boulderlimestone: ['blender:Blender_LimestoneBoulder_1', 'blender:Blender_LimestoneBoulder_2'],
+ // THE CALIFORNIA AND WESTERN MOUNTAINS PACKS (tools/blender/
+ // cartoon_calcoast.py, cartoon_calinland.py, cartoon_westmtn.py): every
+ // variant; their stones as boulder families (biomes.js rockStyle), the sea
+ // stacks offshore (renderer.js addSeaStacks), the volcano on the horizon
+ // (renderer.js addBackdrop).
+ montereycypress: ['blender:Blender_MontereyCypress_1', 'blender:Blender_MontereyCypress_2'],
+ montereypine: ['blender:Blender_MontereyPine_1'],
+ coastliveoak: ['blender:Blender_CoastLiveOak_1', 'blender:Blender_CoastLiveOak_2'],
+ eucalyptus: ['blender:Blender_Eucalyptus_1', 'blender:Blender_Eucalyptus_2'],
+ sycamore: ['blender:Blender_Sycamore_1'],
+ torreypine: ['blender:Blender_TorreyPine_1'],
+ iceplant: ['blender:Blender_IcePlant_1'],
+ coastalsage: ['blender:Blender_CoastalSage_1'],
+ chaparral: ['blender:Blender_Chaparral_1'],
+ valleyoak: ['blender:Blender_ValleyOak_1', 'blender:Blender_ValleyOak_2'],
+ blueoak: ['blender:Blender_BlueOak_1', 'blender:Blender_BlueOak_2'],
+ buckeye: ['blender:Blender_Buckeye_1'],
+ grapevine: ['blender:Blender_GrapeVine_1'],
+ californiapoppy: ['blender:Blender_CaliforniaPoppy_1'],
+ olivetree: ['blender:Blender_OliveTree_1'],
+ jacaranda: ['blender:Blender_Jacaranda_1'],
+ peppertree: ['blender:Blender_PepperTree_1'],
+ ponderosa: ['blender:Blender_Ponderosa_1', 'blender:Blender_Ponderosa_2'],
+ sugarpine: ['blender:Blender_SugarPine_1'],
+ incensecedar: ['blender:Blender_IncenseCedar_1'],
+ redfir: ['blender:Blender_RedFir_1'],
+ noblefir: ['blender:Blender_NobleFir_1'],
+ westernlarch: ['blender:Blender_WesternLarch_1'],
+ manzanita: ['blender:Blender_Manzanita_1'],
+ gambeloak: ['blender:Blender_GambelOak_1'],
+ mountainmahogany: ['blender:Blender_MountainMahogany_1'],
+ bitterbrush: ['blender:Blender_Bitterbrush_1'],
+ mulesear: ['blender:Blender_MulesEar_1'],
+ beargrass: ['blender:Blender_Beargrass_1'],
+ boulderbasalt: ['blender:Blender_BasaltBoulder_1', 'blender:Blender_BasaltBoulder_2'],
+ bouldergranite: ['blender:Blender_GraniteSlab_1', 'blender:Blender_GraniteSlab_2'],
+ seastack: ['blender:Blender_SeaStack_1', 'blender:Blender_SeaStack_2'],
+ volcano: ['blender:Blender_Volcano_1'],
+ // THE HIGH DESERT AND PLAINS PACKS (tools/blender/cartoon_highdesert.py,
+ // cartoon_plains.py): every variant; the rimrock and hoodoos as boulder
+ // families; the ranch pieces (windmill, grain elevator, pump jack, barbed
+ // wire, shelterbelt) are story pieces (story.js), picked in storypieces.
+ westernjuniper: ['blender:Blender_WesternJuniper_1', 'blender:Blender_WesternJuniper_2'],
+ utahjuniper: ['blender:Blender_UtahJuniper_1'],
+ pinyonpine: ['blender:Blender_PinyonPine_1', 'blender:Blender_PinyonPine_2'],
+ rabbitbrush: ['blender:Blender_Rabbitbrush_1'],
+ blackbrush: ['blender:Blender_Blackbrush_1'],
+ cliffrose: ['blender:Blender_Cliffrose_1'],
+ russianolive: ['blender:Blender_RussianOlive_1'],
+ balsamroot: ['blender:Blender_Balsamroot_1'],
+ globemallow: ['blender:Blender_Globemallow_1'],
+ cheatgrass: ['blender:Blender_Cheatgrass_1'],
+ soapweedyucca: ['blender:Blender_SoapweedYucca_1'],
+ easternredcedar: ['blender:Blender_EasternRedCedar_1', 'blender:Blender_EasternRedCedar_2'],
+ buffalograss: ['blender:Blender_Buffalograss_1'],
+ wildsunflower: ['blender:Blender_WildSunflower_1'],
+ boulderrimrock: ['blender:Blender_BasaltRimrock_1', 'blender:Blender_BasaltRimrock_2'],
+ boulderhoodoo: ['blender:Blender_SandstoneHoodoo_1', 'blender:Blender_SandstoneHoodoo_2'],
+ // THE APPALACHIA AND NORTHEAST PARKLAND PACKS (tools/blender/
+ // cartoon_appalachia.py, cartoon_neparkland.py): every variant; the cabin,
+ // horse fence, tobacco barn, shingled windmill and Tudor clubhouse are
+ // story pieces and a clubhouse, picked in storypieces.
+ rosebay: ['blender:Blender_Rhododendron_1'],
+ mountainlaurelshrub: ['blender:Blender_MountainLaurelShrub_1'],
+ flameazalea: ['blender:Blender_FlameAzalea_1'],
+ chestnutoak: ['blender:Blender_ChestnutOak_1', 'blender:Blender_ChestnutOak_2'],
+ shortleafpine: ['blender:Blender_ShortleafPine_1', 'blender:Blender_ShortleafPine_2'],
+ sassafras: ['blender:Blender_Sassafras_1'],
+ copperbeech: ['blender:Blender_CopperBeech_1', 'blender:Blender_CopperBeech_2'],
+ pitchpine: ['blender:Blender_PitchPine_1', 'blender:Blender_PitchPine_2'],
+ scruboak: ['blender:Blender_ScrubOak_1'],
+ bayberry: ['blender:Blender_Bayberry_1'],
+ beachrose: ['blender:Blender_BeachRose_1'],
+ hydrangea: ['blender:Blender_Hydrangea_1'],
+ // THE NORTH AND HAWAII PACKS (tools/blender/cartoon_north.py,
+ // cartoon_hawaii.py): every variant; Hawaii's ironwood as `casuarina`
+ // (`ironwood` is the desert's); the lava as a boulder family; the log cabin
+ // and the dock are story pieces, picked in storypieces.
+ redpine: ['blender:Blender_RedPine_1', 'blender:Blender_RedPine_2'],
+ jackpine: ['blender:Blender_JackPine_1'],
+ tamarack: ['blender:Blender_Tamarack_1'],
+ blackspruce: ['blender:Blender_BlackSpruce_1', 'blender:Blender_BlackSpruce_2'],
+ sitkaspruce: ['blender:Blender_SitkaSpruce_1'],
+ shorepine: ['blender:Blender_ShorePine_1', 'blender:Blender_ShorePine_2'],
+ fireweed: ['blender:Blender_Fireweed_1'],
+ devilsclub: ['blender:Blender_DevilsClub_1'],
+ cottongrass: ['blender:Blender_Cottongrass_1'],
+ monkeypod: ['blender:Blender_Monkeypod_1', 'blender:Blender_Monkeypod_2'],
+ casuarina: ['blender:Blender_Casuarina_1'],
+ cookpine: ['blender:Blender_CookPine_1'],
+ ohia: ['blender:Blender_Ohia_1'],
+ plumeria: ['blender:Blender_Plumeria_1'],
+ tiplant: ['blender:Blender_TiPlant_1'],
+ heliconia: ['blender:Blender_Heliconia_1'],
+ boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
+ // THE DESERT RESORT PACK (tools/blender/cartoon_resort.py; the owner, 5 November
+ // 2026): the Las Vegas valley's pine, sumac and lake-edge pampas grass.
+ afghanpine: ['blender:Blender_AfghanPine_1', 'blender:Blender_AfghanPine_2'],
+ africansumac: ['blender:Blender_AfricanSumac_1', 'blender:Blender_AfricanSumac_2'],
+ pampasgrass: ['blender:Blender_PampasGrass_1', 'blender:Blender_PampasGrass_2'],
+ // THE BADLANDS PACK (tools/blender/cartoon_badlands.py; the owner, 3
+ // November 2026): its plants; the Yellow Mounds as its boulder family; the
+ // bison in lifeforms. Its spires, walls and buttes are the ground's
+ // (landforms.js `badlands`), not models.
+ rmjuniper: ['blender:Blender_RMJuniper_1', 'blender:Blender_RMJuniper_2'],
+ greenash: ['blender:Blender_GreenAsh_1'],
+ chokecherry: ['blender:Blender_Chokecherry_1'],
+ leadplant: ['blender:Blender_Leadplant_1'],
+ boulderbadlands: ['blender:Blender_BadlandsMound_1', 'blender:Blender_BadlandsMound_2'],
  // THE CARTOON HOUSES (tools/blender/cartoon_houses.py), replacing Kenney's
  // building kit: two of each form homes.js chooses, picked by name.
  house: ['blender:Blender_House_Gable_1', 'blender:Blender_House_Gable_2', 'blender:Blender_House_Hip_1',
@@ -170,40 +395,43 @@ const PICK = {
  coursemarkings: ['blender:Blender_Stake_1', 'blender:Blender_ObStake_1', 'blender:Blender_YardagePost_1', 'blender:Blender_Rake_1'],
  // AN ARCHITECT COURSE'S CLUBHOUSE (tools/blender/architect_clubhouses.py), one
  // per landscape, fitted to its box by renderer.js addBuildings.
- clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'manor', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
+ clubhouse: ['lodge', 'adobe', 'chalet', 'stonehouse', 'farmhouse', 'pavilion', 'loglodge', 'clapboard', 'shingle'].map(k => `blender:Blender_Clubhouse_${k}`),
  // AN ARCHITECT COURSE'S BUILT WATER (tools/blender/architect_water.py;
  // architect-courses, phase 5): bridge bays (renderer.js addPaths), rip-rap,
  // tie walls and fountains (waterworks.js, renderer.js addWaterworks).
  // AN ARCHITECT COURSE'S STORY (tools/blender/architect_story.py; phase 6):
  // walls, the farmstead, ruins and landmarks (story.js, renderer.js
  // addBuildings and addStory).
- storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Lantern_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church'].map(k => `blender:Blender_${k}`),
+ storypieces: ['StoryWall_Stone', 'StoryWall_Hedge', 'StandingStone_1', 'Barn', 'Silo', 'Windpump', 'RuinChapel', 'RuinCottage', 'MineHead', 'SugarMill', 'Lighthouse', 'Church', 'PierLight_1', 'RedBarn_1', 'CornPatch_1', 'FieldWall_1', 'CoveredBridge_1',
+  // The streets kit (tools/blender/cartoon_streets.py; roads.js furniture).
+  'StreetLight_1', 'LightPole_1', 'WheelStop_1', 'BagDrop_1', 'ParkingIsland_1', 'CartBarn_1', 'Mailbox_1',
+  // The South's plantation clubhouse and its alligator (tools/blender/cartoon_southcoast.py).
+  'PlantationClubhouse_1', 'Alligator_1',
+  // The plains pack's ranch pieces (tools/blender/cartoon_plains.py).
+  'Windmill_1', 'GrainElevator_1', 'PumpJack_1', 'BarbedWireFence_1', 'Shelterbelt_1',
+  // Appalachia's and the Northeast parkland's.
+  'StoneCabin_1', 'HorseFence_1', 'TobaccoBarn_1', 'ShingledWindmill_1', 'TudorClubhouse_1',
+  // The north pack's.
+  'LogCabin_1', 'Dock_1'].map(k => `blender:Blender_${k}`),
  // LIFE ON AN ARCHITECT COURSE (tools/blender/architect_life.py; phase 6):
- // animals and distant people, placed by life.js, moved by renderer.js addLife.
- lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1'].map(k => `blender:Blender_${k}`),
- // TOURNAMENT WEEK (tools/blender/architect_occasion.py; phase 7): a
- // Championship venue's stands, scoreboard, towers, marquees, ropes and crowd.
- occasionpieces: ['Grandstand_1', 'Scoreboard_1', 'TVTower_1', 'Marquee_1', 'GalleryRope_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `blender:Blender_${k}`),
+ // animals, placed by life.js, moved by renderer.js addLife. (The walkers and
+ // the mower, and tournament week's stands, board and crowd -- the pack
+ // architect_occasion.py -- were removed on 2 November 2026: the owner.)
+ lifeforms: ['Sheep_1', 'Goose_1', 'Deer_1', 'Elk_1', 'Heron_1', 'Roadrunner_1', 'Bird_1', 'Bison_1'].map(k => `blender:Blender_${k}`),
  waterworks: ['BridgeBay_Wood', 'BridgeBay_Stone', 'RipRap_1', 'RipRap_2', 'RipRap_3', 'Bulkhead_1'].map(k => `blender:Blender_${k}`),
 };
 
-// People, whose real height the game keeps (`tall`, below).
-const PEOPLE = new Set(['Walker_1', 'Walker_2', 'Walker_3', 'Walker_4', 'Mower_1', 'Spectator_1', 'Spectator_2', 'Spectator_3', 'Spectator_4', 'Spectator_5'].map(k => `Blender_${k}`));
 
 // Families that use only part of a model. A crown is foliage only, so the
 // trunk geometry inside those models is dropped here rather than shipped and
 // skipped at draw time.
 const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
 
-// Families whose material names mislead ROLE_OF. Kenney's pumpkin is
-// `leafsFall` (the body) and `grass` (the stem), so by name it is all leaf and
-// paints one colour; the toadstools are `colorRed`/`colorTan` caps on a
-// `_defaultMat` stalk, all accent. Named here per family, so ROLE_OF -- which
-// every shipped model already went through -- is untouched.
-const ROLE_OVERRIDE = {
- pumpkin: {leafsFall: 'accent', grass: 'leaf'},
- toadstool: {colorRed: 'accent', colorTan: 'accent', _defaultMat: 'bark'},
-};
+// Families whose material names mislead ROLE_OF, named here per family so
+// ROLE_OF -- which every shipped model already went through -- is untouched.
+// None now: Kenney's pumpkin and toadstools had them, and went with Haunted
+// Hollow (2 November 2026).
+const ROLE_OVERRIDE = {};
 
 // Families whose texture the game actually ships, and therefore the only ones
 // whose texture coordinates are worth carrying. Houses have their atlas;
@@ -230,7 +458,16 @@ const push = typed => {
 // matches file names case-insensitively and Linux does not, so `grass` would
 // find Quaternius's `Grass.obj` on one machine and not the other -- a build
 // that differs by operating system, which is the worst kind.
-const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
+const PACKS = readdirSync(VENDOR).map(pack => ({pack, dir: join(VENDOR, pack), files: new Set(readdirSync(join(VENDOR, pack)))}));
+// A TRIAL OF MODELS FROM ELSEWHERE: FAIRWAY_MESHY names a folder (tools/meshy-run.mjs
+// --convert), and what it holds replaces the shipped model of the same name. Without
+// it nothing changes. It is for looking; src/asset-meshes.js is rebuilt without it.
+const TRIAL = process.env.FAIRWAY_MESHY;
+if (TRIAL) {
+ const files = new Set(readdirSync(TRIAL).filter(f => f.endsWith('.glb')));
+ for (const p of PACKS) for (const f of files) p.files.delete(f);
+ PACKS.push({pack: 'blender-meshy-trial', dir: TRIAL, files});
+}
 
 // Every pack holding this model, so an ambiguous name can say so rather than
 // quietly taking whichever the filesystem listed first.
@@ -238,10 +475,10 @@ function locate(entry) {
  const colon = entry.indexOf(':');
  const hint = colon < 0 ? null : entry.slice(0, colon), name = colon < 0 ? entry : entry.slice(colon + 1);
  const found = [];
- for (const {pack, files} of PACKS) {
+ for (const {pack, dir, files} of PACKS) {
   if (hint && !pack.includes(hint)) continue;
   for (const ext of ['.glb', '.obj'])
-   if (files.has(name + ext)) { found.push({pack, file: join(VENDOR, pack, name + ext), glb: ext === '.glb'}); break; }
+   if (files.has(name + ext)) { found.push({pack, file: join(dir, name + ext), glb: ext === '.glb'}); break; }
  }
  if (found.length > 1)
   throw Error(`"${entry}" matches ${found.length} packs (${found.map(f => f.pack).join(', ')}). `
@@ -335,12 +572,9 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    parts.push(part);
   }
-  // `tall`: the model's own height in metres, for the people (the owner's
-  // review): a child and someone under an umbrella were both stretched to
-  // the one height the game drew every spectator at. Recorded for the
-  // figure families only, so every other entry is written as before.
-  const tall = PEOPLE.has(name) ? {tall: +height.toFixed(3)} : {};
-  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), ...tall, parts};
+  // (`tall`, a figure's own height in metres, went with the people on 2
+  // November 2026.)
+  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), parts};
   taken++;
  }
 }

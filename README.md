@@ -42,7 +42,7 @@ Node.js 22.12 or newer (developed on Node 26):
 npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the full regression suite, no external framework
-npm run build    # writes the single-file dist/index.html, and dist/fairway-bridge.mjs
+npm run build    # writes the single-file dist/index.html, the course builder's dist/builder.html, and dist/fairway-bridge.mjs
 ```
 
 Cutting the release archives is one more command, and it rebuilds first so
@@ -113,7 +113,7 @@ checked by hand.
 | `tools/` | Measurement, asset ingest, profiling, release packaging, capturing pictures and clips of the game (`tools/capture/`), and the synthesised sounds being designed for it (`tools/sound-lab/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
-| `vendor/` | The models built in Blender by `tools/blender/cartoon_*.py`, one `blender-cartoon_<pack>/` folder per pack, that the tree, plant, rock and house geometry is ingested from; what ships from them is already in `src/asset-meshes.js` |
+| `vendor/` | The models built in Blender by `tools/blender/cartoon_*.py` (and the Redwood Coast's trees from Meshy, `blender-meshy_redwood/`), one `blender-cartoon_<pack>/` folder per pack, that the tree, plant, rock and house geometry is ingested from; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |

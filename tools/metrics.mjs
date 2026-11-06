@@ -1,7 +1,9 @@
 import {greenApproaches, GREEN} from '../src/course.js';
-import {landingZones} from '../src/architect.js';
+import {landingZones} from '../src/markings.js';
+import {unbridgedWater, pathShape, partsOf} from '../src/paths.js';
+import {roadOnPlay, roadOnHouse} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
-import {plantPose, footprintRadius, SEAT_LEAN} from '../src/tree-seat.js';
+import {seatGap, FLOAT_TOLERANCE} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
 import {farWoodSites, FAR_SHAPES} from '../src/far-woods.js';
 import {drawnGround} from '../src/landscape-edge.js';
@@ -163,7 +165,7 @@ export const METRICS = {
     if (t.spread > 1.5) counts.needsWork++;
     if (t.lift > .05) counts.raised++;
    }
-   const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0};
+   const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0, teeCollarTilted: 0};
    // IS A TEE DIRECTLY IN FRONT OF ANOTHER ONE? Measured as the sideways gap
    // between each pair on a hole, against the width of the mown collar: two
    // pads whose collars overlap sideways are in line, and the one behind looks
@@ -219,6 +221,8 @@ export const METRICS = {
      }
      series.padSpread.push(Math.max(...pad) - Math.min(...pad));
      series.collarRelief.push(Math.max(...collar) - Math.min(...collar));
+     // A mown collar stands flat round its pad (the country, generator 85).
+     if (Math.max(...collar) - Math.min(...collar) > .5) invariants.teeCollarTilted++;
      // The crease a square plateau leaves under an oval of paint.
      let jump = 0, slope = 0;
      for (const scale of [1.05, 1.3, 1.8, 2.4]) {
@@ -520,19 +524,14 @@ METRICS.seated = {
   const counts = {plantsChecked: 0}, invariants = {floatingPlant: 0}, series = {seatDepth: [], gap: []};
   for (const t of w.trees || []) {
    counts.plantsChecked++;
-   const pose = plantPose(t, w.height), base = t.y - pose.depth, R = footprintRadius(t);
-   series.seatDepth.push(pose.depth);
    // The foot is a plane through the seated base with the pose's slope; the
    // lean can lift an edge by r x SEAT_LEAN. Checked on its own points, not
    // the seat's: rings at 85% and 50% of the footprint, twelve each, turned
-   // off the seat's sixteen.
-   let worst = -Infinity;
-   for (const r of [R * .85, R * .5]) for (let k = 0; k < 12; k++) {
-    const a = (k + .37) * Math.PI / 6, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
-    worst = Math.max(worst, base + pose.gx * dx + pose.gz * dz + r * SEAT_LEAN - w.height(t.x + dx, t.z + dz));
-   }
+   // off the seat's sixteen (tree-seat.js `seatGap`, which course.js asks too).
+   const {worst, depth} = seatGap(t, w.height);
+   series.seatDepth.push(depth);
    series.gap.push(worst);
-   if (worst > .03) invariants.floatingPlant++;
+   if (worst > FLOAT_TOLERANCE) invariants.floatingPlant++;
   }
   return {series, counts, invariants};
  },
@@ -573,32 +572,26 @@ METRICS.farSeated = {
  },
 };
 
-// THE ARCHITECT'S MEASURES (architect-courses; docs/ARCHITECT_COURSES.md), on
-// either designer, so Classic is the baseline Architect has to beat:
+// THE ARCHITECT'S MEASURES (architect-courses), kept on the generator after the
+// designer was removed (2 November 2026):
 //   - fairway bunkers within 30 m (along the hole) of where a good or an
-//     average drive comes down (architect.js `landingZones`, the same
-//     function the architect places them with);
+//     average drive comes down (markings.js `landingZones`, which Architect
+//     placed them with);
 //   - the walk from each green to the next hole's back tee, in metres;
 //   - nines that return: the 9th green (and the 18th) within 200 m of the 1st
-//     tee, PLACED as "in sight of the clubhouse" until phase 4 builds one;
-//   - variety: how many different concepts and templates a course uses
-//     (Architect only; Classic has none).
-// One invariant: an Architect hazard without a recorded reason.
+//     tee, PLACED as "in sight of the clubhouse".
+// (The variety of concepts and templates, and the invariant that every
+// hazard had a reason, were Architect's and went with it.)
 METRICS.design = {
- describe: 'bunkers where drives land, green-to-tee walks, returning nines, and the variety of an Architect course',
+ describe: 'bunkers where drives land, green-to-tee walks and returning nines',
  run(w) {
-  const counts = {fairwayBunkers: 0, nearLanding: 0, nines: 0, returning: 0}, invariants = {hazardWithoutReason: 0};
-  const series = {walk: [], concepts: [], templates: []};
+  const counts = {fairwayBunkers: 0, nearLanding: 0, nines: 0, returning: 0};
+  const series = {walk: []};
   for (const h of w.holes) {
    const zones = landingZones(h);
    for (const b of h.bunkers) if (!b.greenSide) {
     counts.fairwayBunkers++;
     if (Math.min(Math.abs(b.z - zones.good), Math.abs(b.z - zones.average)) <= 30) counts.nearLanding++;
-   }
-   if (h.design) {
-    const why = h.design.reasons || [];
-    h.bunkers.forEach((_, i) => { if (!why.some(r => r.kind === 'bunker' && r.i === i)) invariants.hazardWithoutReason++; });
-    h.ponds.forEach((_, i) => { if (!why.some(r => r.kind === 'pond' && r.i === i)) invariants.hazardWithoutReason++; });
    }
   }
   for (let i = 0; i + 1 < w.holes.length; i++) {
@@ -611,11 +604,51 @@ METRICS.design = {
    const g = w.holes[last].worldGreen;
    if (Math.hypot(g.x - home.x, g.z - home.z) <= 200) counts.returning++;
   }
-  if (w.holes.some(h => h.design)) {
-   series.concepts.push(new Set(w.holes.map(h => h.design?.concept)).size);
-   series.templates.push(new Set(w.holes.map(h => h.design?.template).filter(Boolean)).size);
+  return {series, counts, invariants: {}};
+ },
+};
+
+// EVERY PATH OVER WATER IS A BRIDGE (the owner, 2 November 2026; paths.js
+// `findBridges`): a cart path's point, every 2 m, on water and on no bridge.
+METRICS.paths = {
+ describe: 'cart paths: their length, their bridges, and no path over water off a bridge',
+ run(w) {
+  // Dead ends and sharp corners (the owner, 2 November 2026: none; paths.js
+  // `pathShape`): counted, not yet held at zero (TODO).
+  const shape = pathShape(w.paths || [], w.buildings || []);
+  const counts = {pieces: (w.paths || []).length, bridges: (w.bridges || []).length, pathDeadEnd: shape.looseEnds.length, pathSharp: shape.sharp.length};
+  const invariants = {pathOverWater: unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water').length, pathInParts: w.paths.length ? partsOf(w.paths).length - 1 : 0};
+  return {series: {}, counts, invariants};
+ },
+};
+
+// NO ROAD CROSSES A FAIRWAY, EVER (the owner's answer 8; roads.js): every
+// point of a road, every 3 m across its width, and of the lot on a 4 m grid,
+// on nothing played. The geometry is roads.js's own `roadOnPlay`.
+METRICS.roads = {
+ describe: 'roads and the parking lot: how many, and none on play',
+ run(w) {
+  const roads = w.roads || [], streets = roads.filter(r => r.kind === 'street'), lanes = roads.filter(r => r.kind === 'lane'), drives = (w.homes || []).filter(h => h.garage);
+  // The ends judged against every road they may join; the corners, the streets' own.
+  const ends = new Set(streets.flatMap(r => [r.points[0], r.points[r.points.length - 1]]));
+  const looseEnds = pathShape(roads.filter(r => r.kind !== 'lane'), w.buildings || []).looseEnds.filter(p => ends.has(p));
+  // A street that leaves another's far end heading back along it: a blunt point
+  // no dead-end test sees, the two being joined.
+  let streetFold = 0;
+  for (const a of streets) for (const b of streets) {
+   if (a === b) continue;
+   const p = a.points, E = p[p.length - 1], D = p[Math.max(0, p.length - 3)], S = b.points[0], N = b.points[Math.min(b.points.length - 1, 2)];
+   if (Math.hypot(E.x - S.x, E.z - S.z) < 3 && (E.x - D.x) * (N.x - S.x) + (E.z - D.z) * (N.z - S.z) < 0) streetFold++;
   }
-  return {series, counts, invariants};
+  const counts = {roads: roads.length, lots: w.lot ? 1 : 0, publicRoads: roads.filter(r => r.kind === 'boundary').length, streets: streets.length, lanes: lanes.length, streetSharp: pathShape(streets, []).sharp.length, streetDeadEnd: looseEnds.length, streetFold};
+  return {series: {}, counts, invariants: {
+   roadOnPlay: roadOnPlay(w, (x, z) => w.surface(x, z)).length,
+   // No road over water but on a bridge (paths.js's own test), no drive that
+   // ends in the rough, no road on a house (the streets, generator 84).
+   roadOverWater: unbridgedWater(roads, w.bridges, (x, z) => w.surface(x, z) === 'water').length,
+   driveToNowhere: drives.filter(h => !h.lane).length,
+   roadOnHouse: roadOnHouse(w).length,
+  }};
  },
 };
 

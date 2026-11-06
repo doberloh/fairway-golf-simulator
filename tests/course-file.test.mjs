@@ -6,7 +6,7 @@ import {DEFAULT_COURSE, SCHEMA_VERSION, GENERATOR_VERSION} from '../src/settings
 import {exportCourse, importCourse} from '../src/course-library.js';
 
 const PIC = 'data:image/webp;base64,' + 'UklGRh'.repeat(200);
-const rec = {name: 'Cliffs at Dawn', settings: {...DEFAULT_COURSE, biome: 'mountain', seed: 'SUMMIT', holes: 18, courseYards: 6400}, generator: GENERATOR_VERSION};
+const rec = {name: 'Cliffs at Dawn', settings: {...DEFAULT_COURSE, biome: 'rockies', seed: 'SUMMIT', holes: 18, courseYards: 6400}, generator: GENERATOR_VERSION};
 
 test('a course and its picture come back from the file as they went in', () => {
  const back = readCourseFile(courseFile(rec, PIC));

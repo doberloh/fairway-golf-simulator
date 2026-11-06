@@ -25,10 +25,13 @@
 // (PLACED).
 //
 // Shared by vegetation.js, which draws by it, and tools/metrics.mjs `seated`,
-// which checks it on a denser, different set of points.
+// which checks it on a denser, different set of points. The arithmetic is in
+// seat-core.js, with no models behind it; this file is where a tree's trunk
+// foot is read off its model.
 
 import {FAMILY_OF, familyModels, modelParts} from './mesh-assets.js';
-import {GROUND_PLANTS, SPREAD_SIZED, COVER_STEEPEST} from './species.js';
+import {isCover, coverRadius, poseAt, gapAt} from './seat-core.js';
+export {SEAT_LEAN, COVER_TILT, isCover, plantTilt, FLOAT_TOLERANCE} from './seat-core.js';
 
 const shares = new Map();
 // The widest trunk foot among a family's models, as a share of the model's
@@ -49,51 +52,13 @@ export function footprintShare(kind) {
  return shares.get(family);
 }
 
-// The lean vegetation.js gives a model, at most, in radians.
-export const SEAT_LEAN = .05;
-// The steepest a ground cover is laid along, as a gradient: 40 degrees
-// (round 2; at round 1's 25, ferns on Mountain's steep stand floors still
-// hung up to 2.4 m over the slope below them). Round 3: past it the
-// generator plants no cover at all (species.js COVER_STEEPEST).
-export const COVER_TILT = COVER_STEEPEST;
-
-export const isCover = t => GROUND_PLANTS.has(t.kind) || SPREAD_SIZED.has(FAMILY_OF[t.kind]);
-
 // How far out under a plant its foot reaches, in metres. A tree is drawn up
 // to 1.14 x its height and 1.14 x as wide (lift and girth), hence 1.3.
 export function footprintRadius(t) {
- if (isCover(t)) return Math.max(.05, (t.r || .5) / 3);
+ if (isCover(t)) return coverRadius(t);
  return Math.min(2.5, Math.max(.06, footprintShare(t.kind) * (t.h || 4) * 1.3));
 }
 
-// The slope a ground cover lies along: the ground's gradient over its spread,
-// held to COVER_TILT. Trees stand upright: {gx: 0, gz: 0}.
-export function plantTilt(t, height) {
- if (!isCover(t)) return {gx: 0, gz: 0};
- const d = Math.max(.5, (t.r || .5) * .6);
- let gx = (height(t.x + d, t.z) - height(t.x - d, t.z)) / (2 * d), gz = (height(t.x, t.z + d) - height(t.x, t.z - d)) / (2 * d);
- const s = Math.hypot(gx, gz);
- if (s > COVER_TILT) { gx *= COVER_TILT / s; gz *= COVER_TILT / s; }
- return {gx, gz};
-}
-
-// How far below the generator's `y` a plant is drawn, and the slope it lies
-// along. The foot is a plane through (x, y, z) with the tilt's gradient; the
-// seat is the most that plane stands above the ground on four rings of
-// twenty-four points under the footprint (sixteen until a dip between them let a pine stand 12 cm proud), plus the lean's lift and 8 cm.
-export function plantPose(t, height) {
- const R = footprintRadius(t), tilt = plantTilt(t, height);
- let rise = 0;
- for (const r of [R, R * .75, R * .5, R * .25]) for (let k = 0; k < 24; k++) {
-  const a = k * Math.PI / 12, dx = Math.cos(a) * r, dz = Math.sin(a) * r;
-  rise = Math.max(rise, t.y + tilt.gx * dx + tilt.gz * dz - height(t.x + dx, t.z + dz));
- }
- // 8 cm under (round 2's 5 cm, after round 1's 2 cm left trunks 4-8 cm
- // proud between the sixteen points; round 3 still found one at 5); a cover
- // never more than 75% of its height (at 60%, one fern on bumpy ground still
- // stood 12 cm proud at an edge; the cap binds only on such rare spots).
- let depth = rise + R * SEAT_LEAN + .08;
- if (isCover(t)) depth = Math.min(depth, (t.h || 1) * .75);
- return {depth, gx: tilt.gx, gz: tilt.gz};
-}
+export const plantPose = (t, height) => poseAt(t, height, footprintRadius(t));
 export const seatDepth = (t, height) => plantPose(t, height).depth;
+export const seatGap = (t, height) => gapAt(t, height, footprintRadius(t));

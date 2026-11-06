@@ -75,13 +75,10 @@ repository and nothing for it belongs here. AGENTS.md has the detail.
 **Three version numbers live in `src/settings-schema.js`.**
 `GENERATOR_VERSION` goes up whenever generated output changes for an unchanged
 seed — otherwise a saved round silently rebuilds different ground underneath a
-ball that has not moved. Courses have two designers, Classic and Architect;
-`ARCHITECT_VERSION` goes up when only Architect courses change, and
-`GENERATOR_VERSION` covers Classic and everything both share.
+ball that has not moved.
 `SCHEMA_VERSION` goes up whenever the shape of a settings object changes, and
 needs a matching migration and a test that an old save still loads. The
-fingerprint tool is the arbiter for the first two (run it with and without
-`--designer architect`): it reports the biome record and the generated ground
+fingerprint tool is the arbiter for the first: it reports the biome record and the generated ground
 separately, and only a ground change owes a bump.
 
 **Documentation ships in the same change.** Not afterwards, and not batched at

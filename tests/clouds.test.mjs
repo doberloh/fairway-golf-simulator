@@ -5,7 +5,7 @@ import {generateWorld} from '../src/course.js';
 import {makeClouds, MAX_CLOUDS} from '../src/clouds.js';
 
 const build = () => {
- const world = generateWorld({seed:'CLOUDS', biome:'midwest', holes:9, trees:0, water:0, wind:8, windDirection:90});
+ const world = generateWorld({seed:'CLOUDS', biome:'heartland', holes:9, trees:0, water:0, wind:8, windDirection:90});
  return {world, clouds: makeClouds({world}, world.seed)};
 };
 

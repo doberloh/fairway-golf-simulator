@@ -230,6 +230,18 @@ export const VIEWS = [
  {name: 'arch-wall', hole: 0, when: 'afternoon', caption: 'A field wall', cam: `w => { const l = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0] || {ax: 0, az: 0, bx: 1, bz: 1};
   const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz) || 1, x = mx + dz / n * 9 - dx / n * 6, z = mz - dx / n * 9 - dz / n * 6;
   return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: 2, pitch: -6}; }`},
+ // The same wall from 22 m up a little (the mountain pack's split-rail
+ // fence, 2 November 2026: at 9 m the camera stood inside a hillside), from
+ // the higher side, looking down at it. Its height is 5 m unless an --eval
+ // sets globalThis.WALLH (60 looks down on a whole run).
+ {name: 'wall-far', hole: 0, when: 'afternoon', caption: 'A field wall from further off', cam: `w => { const l = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0] || {ax: 0, az: 0, bx: 1, bz: 1};
+  const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz) || 1, side = w.height(mx + dz / n * 22, mz - dx / n * 22) > w.height(mx - dz / n * 22, mz + dx / n * 22) ? 1 : -1, x = mx + side * dz / n * 22 - dx / n * 8, z = mz - side * dx / n * 22 - dz / n * 8;
+  return {x, z, yaw: Math.atan2(mx - x, mz - z) * 180 / Math.PI, height: +(globalThis.WALLH ?? 5), pitch: Math.atan2(w.height(mx, mz) + 1 - w.height(x, z) - (globalThis.WALLH ?? 5), Math.hypot(mx - x, mz - z)) * 180 / Math.PI}; }`},
+ // The roads (phase 4): from above the lot's far side, looking over the
+ // lot at the clubhouse, the drive and the road beyond.
+ {name: 'roads-lot', hole: 0, when: 'afternoon', caption: 'The parking lot, the drive and the road', cam: `w => { const L = w.lot || {x: 0, z: 0}, c = (w.buildings || []).find(b => b.kind === 'clubhouse') || {x: L.x + 1, z: L.z};
+  const dx = L.x - c.x, dz = L.z - c.z, n = Math.hypot(dx, dz) || 1, x = L.x + dx / n * 55, z = L.z + dz / n * 55;
+  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 32, pitch: -24}; }`},
  {name: 'arch-template', hole: 0, when: 'afternoon', caption: 'A hole shaped by the land', cam: `w => { const h = w.holes.find(k => k.design && ['dell', 'alps', 'barranca'].includes(k.design.template)) || w.holes[0], e = h.design?.earthworks?.[0] || {z: h.length * .6};
   const z0 = Math.max(0, e.z - 70), a = h.toWorld({x: h.center(z0), z: z0}), b = h.toWorld({x: h.center(Math.min(h.length, e.z + 40)), z: Math.min(h.length, e.z + 40)});
   return {x: a.x, z: a.z, yaw: Math.atan2(b.x - a.x, b.z - a.z) * 180 / Math.PI, height: 2.2, pitch: -2}; }`},
@@ -306,26 +318,10 @@ export const VIEWS = [
  {name: 'arch-life-raven', hole: 0, when: 'afternoon', caption: 'Life: raven', cam: `w => { const a = (w.life || []).find(k => k.kind === 'raven') || {x: 0, z: 0, r: 30, up: 30};
   const x = a.x + a.r + 12, z = a.z;
   return {x, z, yaw: -90, height: a.up - 6, pitch: 12}; }`},
- // PHASE 7: tournament week -- the last green from down its fairway, a piece
- // from in front of it, the crowd at the ropes.
- {name: 'arch-week-green', hole: 0, when: 'afternoon', caption: 'The last green in tournament week', cam: `w => { const h = w.holes[w.holes.length - 1], z0 = Math.max(0, h.length - 60), a = h.toWorld({x: h.center(z0), z: z0}), g = h.toWorld(h.green);
-  return {x: a.x, z: a.z, yaw: Math.atan2(g.x - a.x, g.z - a.z) * 180 / Math.PI, height: 6, pitch: -3}; }`},
- {name: 'arch-week-board', hole: 0, when: 'afternoon', caption: 'The scoreboard and a tower', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'scoreboard') || {x: 0, z: 0, rotation: 0};
-  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 22 + fz * 6, z = b.z + fz * 22 - fx * 6;
-  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 2}; }`},
- {name: 'arch-week-tents', hole: 0, when: 'afternoon', caption: 'Hospitality by the clubhouse', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'marquee') || {x: 0, z: 0, rotation: 0};
-  const fx = -Math.sin(b.rotation), fz = -Math.cos(b.rotation), x = b.x + fx * 24 + fz * 8, z = b.z + fz * 24 - fx * 8;
-  return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 0}; }`},
- {name: 'arch-week-crowd', hole: 0, when: 'afternoon', caption: 'The gallery at the ropes', cam: `w => { const r = (w.occasion?.ropes || [])[Math.floor((w.occasion?.ropes || []).length * .3)] || {x: 0, z: 0, rot: 0};
-  const x = r.x + Math.cos(r.rot) * 14 - Math.sin(r.rot) * 10, z = r.z - Math.sin(r.rot) * 14 - Math.cos(r.rot) * 10;
-  return {x, z, yaw: Math.atan2(r.x - x, r.z - z) * 180 / Math.PI, height: 2, pitch: -2}; }`},
- {name: 'arch-week-crowd-near', hole: 0, when: 'afternoon', caption: 'The gallery close to', cam: `w => { const c = (w.occasion?.crowd || [])[Math.floor((w.occasion?.crowd || []).length * .3)] || {x: 0, z: 0, rot: 0};
-  const x = c.x + Math.sin(c.rot) * 7 + Math.cos(c.rot) * 2, z = c.z + Math.cos(c.rot) * 7 - Math.sin(c.rot) * 2;
-  return {x, z, yaw: Math.atan2(c.x - x, c.z - z) * 180 / Math.PI, height: 1.8, pitch: -3}; }`},
- {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0};
+ {name: 'arch-landmark-near', hole: 0, when: 'afternoon', caption: 'A landmark close to', cam: `w => { const b = (w.buildings || []).find(k => ['lighthouse', 'pierlight', 'church'].includes(k.kind)) || {x: 0, z: 0};
   const x = b.x + 45, z = b.z + 30;
   return {x, z, yaw: Math.atan2(b.x - x, b.z - z) * 180 / Math.PI, height: 3, pitch: 8}; }`},
- {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => k.kind === 'lighthouse' || k.kind === 'church') || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
+ {name: 'arch-landmark', hole: 0, when: 'afternoon', caption: 'A landmark on the line of a hole', cam: `w => { const b = (w.buildings || []).find(k => ['lighthouse', 'pierlight', 'church'].includes(k.kind)) || {x: 0, z: 0, hole: 0}, h = w.holes[b.hole ?? 0] || w.holes[0];
   const g = h.toWorld({x: h.center(h.length - 120), z: Math.max(0, h.length - 120)});
   return {x: g.x, z: g.z, yaw: Math.atan2(b.x - g.x, b.z - g.z) * 180 / Math.PI, height: 2, pitch: 1}; }`},
  // THE POLISH GOAL'S VIEWS (26 October 2026).

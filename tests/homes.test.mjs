@@ -5,7 +5,7 @@ import {simulateShot} from '../src/physics.js';
 import {allows} from '../src/grounds.js';
 
 let estate;
-const built=()=>estate??=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:0,water:0});
+const built=()=>estate??=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:0,water:0});
 const shotInto=(w,home,extra={})=>{
  const h=w.nearest(home.x,home.z).h,local=h.toLocal({x:home.x,z:home.z});
  // Fire flat at the house from 40 m out along the hole's own x axis.
@@ -38,9 +38,13 @@ test('houses are solid: a ball cannot finish inside one',()=>{
 
 test('houses cost nothing by default, and only cost a stroke when the rule is on',()=>{
  const w=built();
- const forgiving=w.homes.slice(0,10).map(home=>shotInto(w,home).hazard);
+ // Houses well inside the boundary: a shot beside one near it starts, or ends,
+ // out of bounds, which says nothing about the house.
+ const inside=w.homes.filter(home=>Math.abs(home.x)<w.halfX-200&&Math.abs(home.z)<w.halfZ-200).slice(0,10);
+ assert(inside.length>=5,'enough houses inside');
+ const forgiving=inside.map(home=>shotInto(w,home).hazard);
  assert(forgiving.every(x=>x===null),'houses must not penalise until the course says so');
- const strict=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:0,water:0,residentialOB:true});
+ const strict=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:0,water:0,residentialOB:true});
  assert.equal(strict.homes.length,w.homes.length,'the rule must not move a single house');
  let penalised=0;
  for(const home of strict.homes.slice(0,10))if(shotInto(strict,home).hazard==='Out of bounds')penalised++;

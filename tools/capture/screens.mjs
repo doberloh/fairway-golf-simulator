@@ -17,7 +17,7 @@ const click = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
 const step = (p, label) => p.evaluate(l => { const b = [...document.querySelectorAll('#drawer .sx-steps .sx-step')].find(x => x.getAttribute('aria-label') === l || x.textContent.trim().toUpperCase().endsWith(l.toUpperCase())); if (!b) throw Error('no step ' + l); b.click(); }, label);
 const pressText = (p, text) => p.getByRole('button', {name: text, exact: true}).filter({visible: true}).first().click({timeout: 15000});
 // A course in play, at a time of day, the opening flyover over.
-async function round(p, {biome = 'desert', seed = 'MESA', hole = 2, when = 'afternoon', hour = null, group = GROUP} = {}) {
+async function round(p, {biome = 'sonoran', seed = 'MESA', hole = 2, when = 'afternoon', hour = null, group = GROUP} = {}) {
  await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome, holes: 9, seed}, group]);
  await p.evaluate(h => window.lab.hole(h), hole);
  await p.evaluate(at => { const v = window.__view; v.daylight.hour = at; v.daylight.rate = 0; }, hour ?? hourFor(biome, when));
@@ -69,7 +69,6 @@ export const SCREENS = [
   await p.evaluate(() => { for (const id of ['readSlope', 'readHeat']) document.getElementById(id).click(); });
   await wait(p, 2500);
  }},
- {name: 'haunted-round', go: async p => { await round(p, {biome: 'haunted', seed: 'GLOAMING', hole: 1, hour: 18.6}); }},
  {name: 'driving-range', go: async p => {
   await click(p, 'menuRange'); await wait(p, 1200);
   await pressText(p, 'Open the driving range').catch(async () => { await step(p, 'The range'); await wait(p, 600); await pressText(p, 'Open the driving range'); });

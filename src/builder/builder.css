@@ -1,0 +1,182 @@
+/* FAIRWAY COURSE BUILDER's look: the game's 1.0 colours and type (ui-kit.css),
+   square boxes, a PC program (docs/COURSE_BUILDER.md, *The program*). */
+@font-face{font-family:"Saira Condensed";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/saira-condensed-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Saira Condensed";font-style:normal;font-weight:800;font-display:swap;src:url("../fonts/saira-condensed-latin-800-normal.woff2") format("woff2")}
+:root{--panel:rgba(9,30,28,.92);--panel-2:rgba(14,44,40,.94);--a1:#5eead4;--a2:#0f766e;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--ink:#eafaf6;--warn:#fca5a5;--line:rgba(94,234,212,.28);
+ --head:"Saira Condensed",system-ui,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#061513;color:var(--ink);font:14px/1.45 var(--body);overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+/* EVERY BOX AND DROP-DOWN DARK (the owner, 4 November 2026: light text on the
+   browser's white). They inherit the page's light text, so each one has to be
+   given a dark ground; until now that was done place by place, and the 3D
+   editor's tools and the newer ones had none. One rule, here, for all of them,
+   and color-scheme so the browser's own lists and scroll bars are dark too. */
+:root{color-scheme:dark}
+input:not([type=range]):not([type=checkbox]):not([type=file]),select,textarea{background:#03100e;color:var(--ink);border:1px solid var(--line);padding:4px 6px}
+select option{background:#03100e;color:var(--ink)}
+::placeholder{color:var(--soft);opacity:.7}
+.cb{position:fixed;inset:0;display:flex;flex-direction:column}
+.cb-top{display:flex;align-items:center;gap:16px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);z-index:5}
+.cb-brand{font:800 22px/1 var(--head);letter-spacing:.02em;text-transform:uppercase}
+.cb-brand b{color:var(--a1)}
+.cb-top .cb-title{font:700 16px/1 var(--head);color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
+.cb-top .cb-spacer{flex:1}
+.cb-btn{background:var(--panel-2);border:1px solid var(--line);padding:7px 14px;cursor:pointer;font:700 15px/1 var(--head);letter-spacing:.03em;text-transform:uppercase}
+.cb-btn:hover,.cb-btn:focus-visible{border-color:var(--a1);outline:none}
+.cb-btn.cb-hot{background:linear-gradient(135deg,var(--a1),var(--a2));color:var(--on-hot);border-color:transparent}
+.cb-btn:disabled{opacity:.45;cursor:default}
+.cb-btn.cb-on{background:var(--a1);color:var(--on-hot)}
+.cb-main{flex:1;position:relative;min-height:0}
+.cb-doors{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;
+ background:radial-gradient(ellipse at 50% 40%,#0f3a33 0,#061513 70%)}
+.cb-doors h1{margin:0;font:800 44px/1 var(--head);text-transform:uppercase;letter-spacing:.02em}
+.cb-doors h1 b{color:var(--a1)}
+.cb-doors>p{margin:0;color:var(--soft);max-width:640px;text-align:center}
+.cb-door-row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.cb-door{width:290px;min-height:190px;padding:20px 22px;background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:10px}
+.cb-door:hover,.cb-door:focus-visible{border-color:var(--hot);outline:none;background:var(--panel-2)}
+.cb-door strong{font:800 24px/1.05 var(--head);text-transform:uppercase}
+.cb-door span{color:var(--soft)}
+.cb-door em{margin-top:auto;font-style:normal;color:var(--a1);font:700 14px/1 var(--head);text-transform:uppercase;letter-spacing:.05em}
+.cb-note{color:var(--soft);font-size:12px;max-width:760px;text-align:center}
+.cb-err{color:var(--warn)}
+.cb-sheet{position:absolute;inset:0;overflow:auto;padding:28px 36px;background:#061513}
+.cb-sheet h2{font:800 30px/1 var(--head);text-transform:uppercase;margin:0 0 14px}
+.cb-sheet h3{font:800 18px/1 var(--head);text-transform:uppercase;margin:20px 0 8px;color:var(--a1)}
+.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.cb-field{display:flex;flex-direction:column;gap:4px;background:var(--panel);padding:10px 12px;border:1px solid var(--line)}
+.cb-field label{font:700 13px/1 var(--head);text-transform:uppercase;color:var(--soft);letter-spacing:.04em}
+.cb-field input,.cb-field select{background:#03100e;border:1px solid var(--line);padding:6px 8px}
+.cb-field small{color:var(--soft);font-size:11px}
+.cb-tile{background:var(--panel);border:1px solid var(--line);padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:6px;text-align:left}
+.cb-tile.cb-on{border-color:var(--hot);box-shadow:inset 0 0 0 1px var(--hot)}
+.cb-tile i{display:block;height:8px;background:linear-gradient(90deg,var(--c0),var(--c1),var(--c2))}
+.cb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.cb-table{border-collapse:collapse;width:100%;max-width:900px}
+.cb-table td,.cb-table th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+.cb-busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(3,12,10,.72);z-index:20;font:800 22px/1.2 var(--head);text-transform:uppercase;text-align:center;padding:20px}
+.cb-busy[hidden]{display:none}
+.cb-busy{flex-direction:column;gap:12px;text-align:center}
+.cb-spinner{width:34px;height:34px;border-radius:50%;border:4px solid rgba(94,234,212,.25);border-top-color:var(--a1);animation:cb-spin .9s linear infinite}
+@keyframes cb-spin{to{transform:rotate(360deg)}}
+.cb-busybar{width:min(320px,70vw);height:6px;background:rgba(94,234,212,.15);overflow:hidden}
+.cb-busybar[hidden]{display:none}
+.cb-busybar i{display:block;height:100%;width:0;background:var(--a1);transition:width .2s}
+.cb-busy .cb-btn[hidden]{display:none}
+/* The editor: the 3D view, the tool column, the side panel. */
+.cb-view{position:absolute;inset:0}
+.cb-view canvas{display:block;width:100%;height:100%;outline:none}
+.cb-tools{position:absolute;left:12px;top:12px;bottom:12px;width:220px;display:flex;flex-direction:column;gap:6px;overflow:auto;z-index:4}
+.cb-tools .cb-group{background:var(--panel);border:1px solid var(--line);padding:8px;display:flex;flex-direction:column;gap:6px}
+.cb-tools [hidden]{display:none}
+.cb-tools .cb-group>b{font:700 13px/1 var(--head);text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+.cb-tools .cb-btns{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.cb-tools .cb-btn{padding:6px 6px;font-size:13px}
+.cb-tools input[type=range]{width:100%}
+.cb-side{position:absolute;right:12px;top:12px;width:280px;max-height:calc(100% - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);padding:10px 12px;z-index:4}
+.cb-side h4{margin:0 0 6px;font:800 16px/1 var(--head);text-transform:uppercase;color:var(--a1)}
+.cb-side ul{margin:0;padding-left:16px}
+.cb-side li{margin:3px 0;cursor:pointer}
+.cb-preview{position:absolute;left:244px;bottom:48px;width:354px;background:var(--panel);border:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;z-index:4}
+.cb-preview[hidden]{display:none}
+.cb-preview b{font:700 13px/1 var(--head);text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+.cb-preview small{color:var(--soft);font-size:11px;line-height:1.25}
+.cb-preview canvas{display:block;width:340px;height:230px;max-width:100%;cursor:grab;touch-action:none}
+.cb-toolset{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.cb-toolset>b{font:700 12px/1 var(--head);text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+.cb-toolopt{display:flex;flex-direction:column;gap:4px;margin-top:6px;padding:6px 8px;border-left:2px solid var(--a1);background:rgba(94,234,212,.06)}
+.cb-toolopt[hidden]{display:none}
+.cb-field label.cb-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 12px/1.2 var(--body);text-transform:none;letter-spacing:0;color:var(--ink)}
+.cb-opt input[type=number]{width:72px}
+.cb-opt input[type=range]{flex:1;min-width:0}
+.cb-door2 .cb-preview{left:auto;right:12px;bottom:56px}
+.cb-game{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#061513}
+.cb-gamestage{position:relative;flex:1;min-height:0;overflow:hidden}
+.cb-gamecanvas{display:block;width:100%;height:100%;outline:none;cursor:grab;touch-action:none}
+.cb-gamebar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);font-size:12px;color:var(--soft)}
+.cb-gamebar label{display:flex;align-items:center;gap:6px}
+.cb-gamebar select{background:#03100e;border:1px solid var(--line);padding:4px 6px}
+.cb-gamebar input[type=range]{width:130px}
+.cb-gamehint{margin-left:auto}
+.cb-cover{display:flex;align-items:center;gap:8px;margin:4px 0}
+.cb-covermap{width:72px;height:72px;flex:none;image-rendering:pixelated;border:1px solid var(--line)}
+.cb-coverwarn{color:var(--hot)}
+.cb-status{position:absolute;left:244px;right:304px;bottom:12px;background:var(--panel);border:1px solid var(--line);padding:6px 12px;font-size:12px;color:var(--soft);z-index:4;pointer-events:none}
+/* Door 2: the steps down the left, the plan filling the rest. */
+.cb-door2{position:absolute;inset:0;display:grid;grid-template-columns:400px 1fr;background:#061513}
+.cb-door2 .cb-steps{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--line)}
+.cb-door2 .cb-stepnav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.cb-door2 .cb-stepnav .cb-btn{padding:6px 4px;font-size:12px}
+.cb-door2 .cb-btns{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.cb-door2 .cb-btns .cb-btn{padding:6px 6px;font-size:13px}
+.cb-door2 .cb-planbox{position:relative;display:flex;flex-direction:column;min-width:0}
+.cb-door2 canvas.cb-plan{flex:1;width:100%;min-height:0;display:block;background:#0b1f1c;touch-action:none}
+.cb-door2 .cb-planbar{display:flex;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--soft)}
+.cb-door2 .cb-planbar .cb-btn{padding:4px 8px;font-size:12px}
+.cb-door2 ul{margin:4px 0;padding-left:18px;font-size:13px}
+.cb-door2 li.cb-cur{color:var(--hot)}
+.cb-door2 li.cb-empty{opacity:.55}
+.cb-door2 .cb-howto{font-size:13px;color:var(--soft)}
+.cb-door2 .cb-howto summary{cursor:pointer;color:var(--hot)}
+.cb-door2 .cb-howto ol{padding-left:18px;margin:4px 0}
+.cb-door2 .cb-toolhint{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;max-width:min(760px,86%);padding:7px 16px;border:1px solid var(--hot);border-radius:8px;background:rgba(3,12,10,.88);color:#fff;font:600 14px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 4px 14px #0008}
+.cb-door2 .cb-toolhint[hidden]{display:none}
+.cb-door2 .cb-swatch{display:inline-block;width:10px;height:10px;margin-right:6px;border:1px solid #0006;vertical-align:-1px}
+/* Links out of the builder (door 2's LIDAR portals), readable on the panels. */
+#builder a{color:var(--a1)}#builder a:visited{color:var(--soft)}
+.cb-savenote{color:var(--soft);font-size:12px;margin-right:10px}
+/* Places found: each a button, so it reads as something to click (the owner, 1 November 2026). */
+.cb-door2 ul:has(> li > .cb-result){list-style:none;padding:0}
+.cb-door2 li.cb-resulthead{font-size:12px;color:var(--soft);margin:2px 0}
+.cb-door2 .cb-btn.cb-result{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;margin:2px 0;text-align:left;text-transform:none;font:600 13px/1.25 var(--body,system-ui);letter-spacing:0}
+.cb-door2 .cb-btn.cb-result:hover{background:var(--a1);color:var(--on-hot)}
+.cb-door2 .cb-resultgo{flex:none;font:800 12px/1 var(--head);text-transform:uppercase;color:var(--hot)}
+.cb-door2 .cb-btn.cb-result:hover .cb-resultgo{color:inherit}
+.cb-door2 .cb-foldername{color:var(--hot)}
+.cb-treeplan{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.cb-treeplan b{font:800 12px/1.2 var(--head);text-transform:uppercase}
+.cb-treepicks{max-height:150px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.cb-treepick{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}
+.cb-treepick input{flex:none}
+.cb-door2 .cb-folderfiles{font-size:12px;max-height:180px;overflow:auto}
+/* A long file name cannot wrap, and the door's inputs may shrink to nothing
+   (min-width:0 below): the owner saw one tick box in a list of USGS tiles. */
+.cb-door2 .cb-folderfiles input{flex:none}
+.cb-door2 .cb-folderfiles span{min-width:0;overflow-wrap:anywhere}
+/* Selects and fields never wider than the steps' column (the trees choice ran off it). */
+.cb-door2 .cb-steps select,.cb-door2 .cb-steps input{max-width:100%;min-width:0;box-sizing:border-box}
+.cb-door2 .cb-btns>*{min-width:0}
+/* The holes step's scorecard. */
+.cb-door2 .cb-card table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0}
+.cb-door2 .cb-card th,.cb-door2 .cb-card td{padding:2px 4px;text-align:right;border-bottom:1px solid var(--line)}
+.cb-door2 .cb-card th:first-child,.cb-door2 .cb-card td:first-child{text-align:left}
+.cb-door2 .cb-card th{color:var(--soft);font-weight:700}
+.cb-door2 .cb-card tr.cb-cur td{color:var(--hot)}
+.cb-door2 .cb-card tr.cb-cardsum td{font-weight:800;border-bottom:2px solid var(--line)}
+.cb-door2 .cb-card select{font-size:12px;padding:0 2px}
+/* Selects outside a field (the editor's par, door 2's rows of choices) styled as the fields' are. */
+.cb-btns select,.cb-side select,.cb-card select{background:#03100e;border:1px solid var(--line);padding:4px 6px;min-width:0}
+.cb-btns select option,.cb-side select option{background:#03100e}
+/* The plan's canvas never sets the layout's height: its pixel size follows the
+   box, not the other way (coming back from the editor it held a stale size
+   and pushed the bar below the window). */
+.cb-door2{grid-template-rows:minmax(0,1fr)}
+.cb-door2 .cb-planbox{min-height:0;overflow:hidden}
+.cb-door2 canvas.cb-plan{height:0;flex:1 1 0}
+/* THE MAP OF THE LANDSCAPES (the US landscapes goal, 2 November 2026;
+   ui-map.js): door 1's landscape, and door 2's with the survey marked. */
+.lmap{display:grid;gap:4px}
+.lmap-svg{display:block;width:100%;height:auto;max-height:240px}
+.lmap-land{stroke:rgba(0,0,0,.45);stroke-width:.6;stroke-linejoin:round}
+.lmap-land.live{fill:var(--a2);cursor:pointer}
+.lmap-land.coming{fill:rgba(255,255,255,.12)}
+.lmap-land.over{stroke:rgba(255,255,255,.55);stroke-dasharray:3 2}
+.lmap-land.live:hover,.lmap-land.live:focus-visible{fill:var(--a1);outline:none}
+.lmap-land.on{fill:var(--hot)}
+.lmap-mark{fill:#ff5a4f;stroke:#fff;stroke-width:2;pointer-events:none}
+.lmap-name{display:flex;gap:8px;align-items:baseline;min-height:16px;font:800 14px/1 var(--head);text-transform:uppercase}
+.lmap-name small{font:600 11px/1 var(--body);color:var(--soft)}
+.lmap-abroad{display:flex;gap:6px;flex-wrap:wrap}
+.lmap-chip{display:inline-flex;gap:6px;align-items:center;padding:3px 8px 3px 3px;border:1px solid var(--line);background:none;font:800 12px/1 var(--head);text-transform:uppercase;cursor:pointer}
+.lmap-chip.on{background:var(--hot);color:var(--on-hot)}

@@ -118,6 +118,7 @@ not run it on a network you do not trust.
 | --- | --- |
 | **run_fairway_server** | The server: serves the game and receives your launch monitor's shots. |
 | **Fairway.html** | The game. Opens on its own for play without a launch monitor. |
+| **Fairway Builder.html** | Fairway Course Builder: double-click it like the game to generate a course and reshape it, or build one from real land (LIDAR of the place -- in the United States free from the USGS National Map, https://apps.nationalmap.gov/downloader/; PLAYING.md, *Fairway Course Builder*). It saves `.fairway` files that Fairway plays and that you can give to anybody with Fairway. |
 | **PLAYING.md** | Every control, mode and setting. |
 | **LICENSE**, **THIRD_PARTY_NOTICES.txt**, **ATTRIBUTION.md** | The licences and credits. |
 | **server-source/fairway-bridge.mjs** | The server program as plain JavaScript: run it with Node.js 20 or newer (`node server-source/fairway-bridge.mjs`) if you prefer, and the source the program was built from. |

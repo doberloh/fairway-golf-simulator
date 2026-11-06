@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {regionOf} from './regions.js';
 
 // Height fog, and the mist that pools in the hollows at dawn.
 //
@@ -50,13 +51,31 @@ const PROFILES = {
  // Sea fret rather than valley fog: thinner, but it comes in off the water.
  links: {haze: .72, sheet: .55, water: .85},
  midwest: {haze: .62, sheet: .62, water: .7},
+ // The plains: dry wind, a little haze over the grass, no ground fog (PLACED).
+ plains: {haze: .5, sheet: .3, water: .5},
+ // Alaska: cold still air over the lakes, cloud on the peaks (PLACED).
+ alaska: {haze: .9, sheet: .85, water: 1},
+ // The South: warm humid haze, mist on the water at dawn (PLACED).
+ south: {haze: .8, sheet: .45, water: .9},
+ // Texas: a dry clear sky inland, a little morning mist on the creeks (PLACED).
+ texas: {haze: .55, sheet: .25, water: .6},
+ // California: dry gold haze inland; Monterey's sea fog its own, the
+ // thickest on the coast (PLACED).
+ california: {haze: .6, sheet: .35, water: .7},
+ monterey: {haze: 1, sheet: .95, water: 1},
+ // The high desert: thin dry air, the clearest sky in the game (PLACED).
+ highdesert: {haze: .35, sheet: .15, water: .4},
+ // Appalachia: the blue haze the Blue Ridge and the Smokies are named for,
+ // mist in the hollows (PLACED).
+ appalachia: {haze: 1, sheet: .85, water: .9},
+ // The North Woods: mist on the lakes at dawn; Hawaii: clear trade-wind air,
+ // a little haze over the sea (PLACED).
+ northwoods: {haze: .7, sheet: .8, water: 1},
+ hawaii: {haze: .5, sheet: .3, water: .6},
  // Still, cold mornings. The best mist on the course.
- autumn: {haze: .75, sheet: .78, water: 1},
+ northeast: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.
- island: {haze: .48, sheet: .22, water: .35},
- // Haunted Hollow: the most of everything. Fog is most of what the biome is,
- // and it pools in the hollows and over the black water.
- haunted: {haze: 1, sheet: 1, water: 1},
+ florida: {haze: .48, sheet: .22, water: .35},
  // A summer evening by a big lake: a soft warm haze over everything and a
  // little lying on the water, never a sheet in the dune hollows. PLACED.
  lakeshore: {haze: .6, sheet: .3, water: .75},
@@ -65,11 +84,11 @@ const PROFILES = {
  desert: {haze: .26, sheet: 0, water: 0},
 };
 
-export const profileFor = biome => PROFILES[biome] || PROFILES.midwest;
+export const profileFor = biome => PROFILES[biome] || PROFILES[regionOf(biome)] || PROFILES.midwest;
 // Whether a biome has fog of its own. profileFor can never say no -- that is the
 // point of a fallback -- so a test asking it whether a profile exists could not
 // fail, and Giant Redwood went its whole life on Midwest's fog unnoticed.
-export const hasOwnProfile = biome => Object.hasOwn(PROFILES, biome);
+export const hasOwnProfile = biome => Object.hasOwn(PROFILES, biome) || Object.hasOwn(PROFILES, regionOf(biome) ?? '');
 
 // Densities, derived from how far you should be able to SEE rather than picked
 // by eye.

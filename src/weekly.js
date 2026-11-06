@@ -54,17 +54,33 @@ export const weekKey = (date = new Date(), generator = GENERATOR_VERSION) => `${
 //
 // Plain data and a function with no imports, so vite.config.js can write both
 // into the start splash, which picks the week's colours before anything loads.
-// HAUNTED HOLLOW IS SEASONAL (seasons.js; the owner, 26 October 2026). The
-// week's course is everyone's, so it does not follow a player's clock or
-// setting: a week whose MONDAY falls outside 1 October - 7 November that the
-// rotation gives to Haunted Hollow is played in `standIn` instead (PLACED:
-// Autumn, the nearest in mood). Only from week `from` on -- Monday 9 November
-// 2026, the first week out of season after the rule -- so no week already
-// played or shown changes.
+// A RETIRED LANDSCAPE'S WEEKS (`retired`): Haunted Hollow was removed on 2
+// November 2026 (the owner), so every week the rotation gives it is played on
+// the landscape named instead -- Autumn, the nearest in mood (PLACED; it had
+// stood in for Haunted Hollow out of season since 26 October). The rotation
+// itself is untouched, so no other week moves.
 export const WEEKLY_ROTATION = {
- nine: ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'],
- eras: [{debut: 149, biome: 'lakeshore'}],
- season: {biome: 'haunted', from: 149, standIn: 'autumn'},
+ nine: ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'haunted'],
+ // The US landscapes goal's phase 3 (2 November 2026): a debut a week from
+ // week 160, 25 January 2027 (PLACED, well after the goal's release is
+ // likely; move them on if it lands later -- TODO).
+ eras: [{debut: 149, biome: 'lakedunes'}, {debut: 160, biome: 'highplains'}, {debut: 161, biome: 'sandhills'},
+  {debut: 162, biome: 'oldnortheast'}, {debut: 163, biome: 'pinebarrens'}, {debut: 164, biome: 'alaska'},
+  // Phase 5, the South (PLACED, one a week on).
+  {debut: 165, biome: 'longleaf'}, {debut: 166, biome: 'piedmont'}, {debut: 167, biome: 'lowcountry'}, {debut: 168, biome: 'bayou'}, {debut: 169, biome: 'flatwoods'},
+  // Phase 6, Texas and the deserts (PLACED, one a week on).
+  {debut: 170, biome: 'hillcountry'}, {debut: 171, biome: 'bluebonnet'}, {debut: 172, biome: 'gulfcoast'}, {debut: 173, biome: 'mojave'}, {debut: 174, biome: 'palms'}, {debut: 175, biome: 'chihuahuan'},
+  // Phase 7, California and the western mountains (PLACED, one a week on).
+  {debut: 176, biome: 'monterey'}, {debut: 177, biome: 'socal'}, {debut: 178, biome: 'winecountry'}, {debut: 179, biome: 'cascades'}, {debut: 180, biome: 'sierra'}, {debut: 181, biome: 'ponderosa'},
+  // Phase 8a (PLACED, one a week on).
+  {debut: 182, biome: 'sagebrush'}, {debut: 183, biome: 'redrock'}, {debut: 184, biome: 'crosstimbers'},
+  // Phase 8b (PLACED, one a week on).
+  {debut: 185, biome: 'blueridge'}, {debut: 186, biome: 'ozarks'}, {debut: 187, biome: 'bluegrass'},
+  // Phase 8c (PLACED, one a week on).
+  {debut: 188, biome: 'northwoods'}, {debut: 189, biome: 'oregondunes'}, {debut: 190, biome: 'hawaii'},
+  // The owner's addition of 3 November 2026 (PLACED, the week after).
+  {debut: 191, biome: 'badlands'}, {debut: 192, biome: 'desertresort'}],
+ retired: {haunted: 'newengland'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;
@@ -77,13 +93,7 @@ export function biomeForWeek(w, rotation) {
   start = era.debut; lead = era.biome;
  }
  const biome = lead === null ? keys[((w % keys.length) + keys.length) % keys.length] : keys[(w - start) % keys.length];
- const s = rotation.season;
- if (s && biome === s.biome && w >= s.from) {
-  // The week's Monday: week 0 began on Monday 1 January 2024.
-  const monday = new Date(Date.UTC(2024, 0, 1) + w * 7 * 86400000), m = monday.getUTCMonth(), d = monday.getUTCDate();
-  if (!(m === 9 || (m === 10 && d <= 7))) return s.standIn;
- }
- return biome;
+ return rotation.retired?.[biome] ?? biome;
 }
 export const weeklyBiome = (date = new Date()) => biomeForWeek(weekIndex(date), WEEKLY_ROTATION);
 // The week's course: the defaults, its seed and landscape, eighteen holes.

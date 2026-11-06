@@ -13,7 +13,7 @@
 // the biome's rough as the ground, `mapTurf` for semi-rough, fairway and green,
 // ponds and bunkers in the map's own blue and sand, the tees as dots.
 
-import {generateCourse, DEFAULT_COURSE, random, BIOMES, fairwayWidth, greenRadius, greenPoint, ovalRadius} from './course.js';
+import {generateCourse, DEFAULT_COURSE, random, BIOMES, biomeOf, fairwayWidth, greenRadius, greenPoint, ovalRadius} from './course.js';
 import {routeHoles} from './routing.js';
 
 const TAU = Math.PI * 2;
@@ -57,7 +57,7 @@ export function fitLayout(bounds, w, h, pad = 0.08) {
 
 // Draws the picture on a 2D context of w x h.
 export function drawCoursePicture(ctx, layout, w, h) {
- const bio = BIOMES[layout.settings.biome] || BIOMES.pnw, turf = bio.mapTurf || {};
+ const bio = biomeOf(layout.settings.biome), turf = bio.mapTurf || {};
  const {scale, at} = fitLayout(layout.bounds, w, h);
  ctx.fillStyle = bio.mapGround ?? bio.rough ?? '#7a9d44';
  ctx.fillRect(0, 0, w, h);

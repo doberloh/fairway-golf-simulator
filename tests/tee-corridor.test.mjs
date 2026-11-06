@@ -31,7 +31,7 @@ function blockers(w, h, tee) {
  return out;
 }
 
-const CASES = ['pnw', 'redwood', 'midwest', 'mountain', 'links', 'autumn', 'desert', 'island', 'haunted'];
+const CASES = ['puget', 'redwood', 'heartland', 'rockies', 'links', 'newengland', 'sonoran', 'keys'];
 
 test('no tee shot has a trunk on the line the hole asks for', () => {
  // Measured at 4.5% of 648 before the launch corridor existed, the close ones
@@ -54,7 +54,7 @@ test('no tee shot has a trunk on the line the hole asks for', () => {
 test('the corridor only looks forward, so trees beside and behind a tee survive', () => {
  // Deliberate: trees around a tee box are wanted. They give it something to sit
  // in and they break up the basin the terracing leaves. A bubble would kill them.
- const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw', fairwayFeature: 0});
+ const w = world({holes: 9, biome: 'puget', seed: 'corridor-pnw', fairwayFeature: 0});
  const corr = launchCorridors(w.holes);
  let beside = 0, behind = 0;
  for (const h of w.holes) for (const tee of Object.values(h.tees)) {
@@ -72,7 +72,7 @@ test('the corridor only looks forward, so trees beside and behind a tee survive'
 });
 
 test('the corridor asks about height, not just distance', () => {
- const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw', fairwayFeature: 0});
+ const w = world({holes: 9, biome: 'puget', seed: 'corridor-pnw', fairwayFeature: 0});
  const h = w.holes[0], tee = h.tees.blue, corr = launchCorridors(w.holes, w.height);
  const from = h.toWorld(tee), aim = h.toWorld(fairwayAim(h, tee, LAUNCH.reach));
  const a = Math.atan2(aim.x - from.x, aim.z - from.z), dx = Math.sin(a), dz = Math.cos(a);
@@ -99,7 +99,7 @@ test('the corridor rejects candidates without thinning the forest', () => {
  // measured at 1233 of 1638 before the launch corridor existed and 1227 after,
  // a cost of six trees. Asserting "equals target" there would be blaming the
  // corridor for the ocean.
- const SEA_LIMITED = {island: 1200};
+ const SEA_LIMITED = {keys: 1200};
  for (const biome of CASES) {
   const w = world({holes: 9, biome, seed: 'corridor-' + biome, fairwayFeature: 0});
   const {trees: perHole, holes} = w.settings;
@@ -107,7 +107,7 @@ test('the corridor rejects candidates without thinning the forest', () => {
   const floor = SEA_LIMITED[biome];
   // The open scatter: the target is its count. A stand (stands.js) is planted
   // on top, from a grid, with no target of its own.
-  const open = w.trees.filter(t => !t.stand);
+  const open = w.trees.filter(t => !t.stand && !t.island && !t.vineyard);
   if (floor === undefined)
    assert.equal(open.length, target, `${biome} placed ${open.length} of ${target}`);
   else
@@ -130,7 +130,7 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
  // ROUGH, not of ground -- mown turf can never hold a tree, so counting it in
  // the denominator would understate the rest.
  const SEEDS = ['a', 'b', 'c', 'd'];
- for (const biome of ['midwest', 'pnw', 'redwood']) {
+ for (const biome of ['heartland', 'puget', 'redwood']) {
   const each = SEEDS.map(seed => {
    const w = world({holes: 9, biome, seed});
    const tees = w.holes.flatMap(h => Object.values(h.tees).map(t => h.toWorld(t)));
@@ -143,7 +143,7 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
    }
    // The open scatter, as tools/metrics.mjs measures it: a stand stands back
    // from every tee by design and would make every surround look clear-cut.
-   const open = w.trees.filter(t => !t.stand);
+   const open = w.trees.filter(t => !t.stand && !t.island && !t.vineyard);
    const overall = open.length / ((w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4);
    let rr = 0, rn = 0;
    for (const t of tees) for (let i = 0; i < 700; i++) {
@@ -184,7 +184,7 @@ test('no bush or house stands in the view from any tee', async () => {
  const {blocksView} = await import('../src/course.js');
  const {GROUND_PLANTS} = await import('../src/species.js');
  const bad = [];
- for (const biome of ['pnw', 'mountain', 'links']) {
+ for (const biome of ['puget', 'rockies', 'links']) {
   const w = world({holes: 9, biome, seed: 'view-' + biome, trees: 65, homes: true, homeDensity: 70});
   const corr = launchCorridors(w.holes, w.height);
   for (const t of w.trees) if (GROUND_PLANTS.has(t.kind) && blocksView(corr, t.x, t.z, t.y + t.h, t.r)) bad.push(`${biome} ${t.kind} ${t.h.toFixed(1)} m`);

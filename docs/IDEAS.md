@@ -119,6 +119,19 @@ often has the how-to already worked out.
 
 ## Under the hood
 
+- **Washington's surveys listed in the builder, through the bridge.** The
+  Washington Lidar Portal answers what covers a box only to its own page,
+  and its download needs the pass its page hands a browser, so door 2 now
+  opens it on the place and the player draws a box there. Fairway's bridge
+  (a program, which needs no allow-origin) could ask the portal's `/query`
+  for door 2, which would list Washington's surveys beside USGS's and give
+  each its download link, the browser fetching the ZIP with the portal's
+  pass (opened once). Why: three clicks on another site fewer, for the
+  owner's own state. Small to medium: bridge/server.mjs `lidarTarget` and a
+  POST route, lidar-search.js a `wa` source, door-real.js `searchAll`; only
+  while the bridge runs. The same may suit other state portals with a query
+  of their own (not checked). Claude, 1 November 2026 (RESEARCH, *Finding
+  LIDAR from the builder*).
 - **Spin at the rim.** A putt reaches the lip carrying only rolling spin; one
   with sidespin should take the lip differently. Medium. (was: *Spin-dependent
   rim behaviour*)
@@ -140,6 +153,88 @@ often has the how-to already worked out.
   for Lakeshore Dunes. A redwood remake would be a new pack script there;
   Blender may use the graphics card without asking (AGENTS.md).
 
+### Join and reorder every shipped model's vertices
+
+**What.** Give every shipped model what the Meshy trees got: vertices joined where they
+can be, triangles in the order the graphics card's vertex cache likes. The card shades
+a vertex once if the next triangle reuses it soon, so the order alone can halve its
+work, with no change to how a model looks.
+
+**Why it is worth writing down.** On the Redwood Coast it took Low from 3.34 ms a frame
+to about 1.9 ms (RESEARCH.md, *Why the Meshy trees were slow*). That frame is bound by
+vertices, not pixels: the card took the same time at a third of the pixels. **But do not
+expect that gain everywhere.** That landscape's trees were the worst in the game and
+fill nearly all of it. Across all 46 folders in vendor the game already shades 0.74
+vertices a triangle, where 0.6 is about as good as it gets (`tools/vertex-report.mjs`,
+5 November 2026). The owner was told at first that every shipped model had the problem;
+that was wrong, and this entry replaces it.
+
+**Where the gain is**, shaded per triangle and triangles in the folder:
+
+| Folder | Shaded/tri | Triangles | Vertices now, exact join, position join |
+| --- | --- | --- | --- |
+| cartoon_pacific | 1.37 | 45,306 | 61,452, 52,270, 48,131 |
+| cartoon_southpines | 1.24 | 49,243 | 61,093, 36,137, 31,941 |
+| cartoon_prairiegrass | 1.62 | 9,631 | 15,583, 13,654, 12,036 |
+| cartoon_island | 1.48 | 10,818 | 15,982, 15,808, 10,744 |
+| cartoon_grass | 1.75 | 3,438 | 6,008, 5,232, 4,596 |
+| cartoon_rocks | 1.69 | 3,840 | 6,082, 6,078, 2,178 |
+| cartoon_houses, cartoon_streets, the architect folders | 1.6-2.0 | under 5,000 each | flat-shaded, little to join |
+
+Run `node tools/vertex-report.mjs` for today's figures; `--models` for each model. Weigh a
+folder by how many instances a course plants, not by its triangles: grass and sprays
+planted by the thousand matter far more than a clubhouse.
+
+**The worst are the trees built by `tools/blender/grown.py`** (*Built as it grows*): bay
+laurel, bigleaf maple and madrone shade 2.15-2.19 a triangle and their far versions 1.5,
+because each thin leaf owns its vertices. The redwood pack's were the same (2.51) until
+Meshy replaced them. Reordering cannot help those: a model cannot shade fewer than its
+vertices divided by its triangles. Their cure is in grown.py, sharing vertices along a
+spray, or fewer vertices through a different leaf shape.
+
+**How to build it.**
+
+1. In `tools/build-meshes.mjs`, after `extract` and before quantising (the loop over
+   `byRole`), join vertices identical in position, normal and paint. That is safe.
+   Joining by position alone smooths facets, so only do that with the owner's eye on it.
+2. Reorder each part's triangles and renumber vertices by first use. `cache_order` and
+   `by_first_use` in `tools/blender/meshy_parts.py` are the method, Tom Forsyth's
+   linear-speed one: port it to JavaScript. It took 12,000 triangles a few
+   seconds a model in Python, which is fine in a build step, and 627 models will add to that.
+3. Rebuild `src/asset-meshes.js`. It should shrink. Every model's bytes will change, where
+   the tool has so far kept them stable, so say so in the commit.
+
+**Traps, each met on the way.**
+
+- **Part order:** `farParts` (mesh-assets.js) uses a far version only if its parts match the
+  model's, role for role and in order, and silently falls back to a thinned full model
+  otherwise. The sign is triangles doubling (44-52 M against 22 M). Keep bark first.
+- **One-sided faces:** the game draws one side, so a join must not merge faces with
+  opposite normals, which the exact join cannot do but a position join could.
+- **Paint and wind:** a vertex carries paint and flex (`COLOR_0`); join on those too.
+- **Nothing moves on the course:** model shape is unchanged, so the fingerprint should stay
+  silent, but run `node tools/biome-fingerprint.mjs --check` to be sure.
+
+**How to measure.** Build both with hooks, from the same source, and alternate them on an
+idle card; another job on the card spoilt one run here.
+
+```bash
+OUT=bench/shots/dist-a node tools/capture/build-hooked.mjs
+```
+
+```bash
+node tools/frame-ab.mjs --goal <name> --cap 200 --util 30 --temp 80 --rest 1 --tier low --biome puget --rounds 2 --a <before.html> --b <after.html>
+```
+
+`--cap` counts every run under that goal name, so a cap below the log's total stops the
+run at once. Start with a landscape that plants the worst folders (cartoon_pacific,
+cartoon_southpines). Check that the trees look the same, then take it landscape by
+landscape: `--device weak-laptop` for a weak machine, whose figures are an estimate.
+
+**Rough cost.** Half a day for the exact join and reorder, and a look at a few landscapes.
+Expect a modest gain outside the folders above. **Who and when:** the owner, 5 November
+2026, to be decided later.
+
 ## New biomes (9 October)
 
 Sixteen landscapes the owner and Claude drew up together, with what each would
@@ -153,10 +248,19 @@ choosing, because picking by file name has been wrong twice. Altitude and
 temperature are biome fields and feed the air the ball flies through, so
 several of these play differently as well as look different.
 
+**Picked: every region of the USA** (the owner, 2 November 2026). The idea of
+1 November -- 39 landscapes under 18 regions, with seasons, roads and a
+clickable map -- is now the goal on the `course-builder` branch: TODO.md
+*US landscapes*, the local study docs/studies/us-landscapes/ (PLAN.md). The
+ideas it covers left this list with it: Heathland / Sandbelt (the Pine
+Barrens), Volcanic Coast (Hawaii), Winter (the winter season, snow for looks
+only), Nordic Birch (the North Woods), Lowcountry Marsh, Spring Blossom (the
+spring season's flowering), Countryside (the Heartland's fields) and Red
+Rock Canyon. Haunted Hollow, built from this list, is being removed (the
+owner, 2 November 2026).
+
 **Settings only, no new assets**
 
-- **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
-- **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
 - **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
 - **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
 
@@ -166,20 +270,14 @@ before then, and the packs are CC0 and still published); an idea below now
 means building its models in Blender (docs/BLENDER_ASSETS.md) or fetching a
 pack again, with its credit put back in ATTRIBUTION.md.
 
-- **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
-- **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
 - **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
 - **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
-- **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
 
 **Some new building**
 
-- **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
 - **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
 - **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be built in Blender, as every model is now (the redwoods were once grown by `tools/grow.mjs`, removed 27 October 2026). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
-- **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
 - **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
-- **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
 
 ## Turned down
 
@@ -187,3 +285,4 @@ One line each: the idea, when, and the owner's reason.
 
 - **Leaderboards for the course of the week** (20 October 2026). Scrapped by the owner after seeing the three ways to do it: friends' scores swapped as codes, a public board on the website (a service to run and moderate), or the game posting scores itself (breaks "nothing ever sent anywhere").
 - **Networked multiplayer** (20 October 2026). The owner wanted it with no servers of their own; across the internet that still needs an address-check service, or a relay for about one connection in ten, and Netlify cannot be the relay (no lasting connections; a free site over its limit is suspended for the month). The owner picked *Challenge a friend by code* instead (now built, TODO *Challenge a friend*) and does not expect to ask again. The study is `docs/reports/MULTIPLAYER_FEASIBILITY.md` (local); RESEARCH *Challenge a friend* has the Netlify sources.
+- **A rock-built waterfall for Desert Resort** (5 November 2026). Offered after the landscape was built, for the waterfalls at Wynn, Southern Highlands and Canyon Gate. The owner declined: "No rock waterfalls please." No reason given.

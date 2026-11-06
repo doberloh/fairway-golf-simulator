@@ -1,0 +1,183 @@
+{
+ "name": "redwood",
+ "note": "The Redwood Coast pack on Meshy. Shape prompts come from tools/blender/cartoon_redwood.py and the owner's rules on built-as-it-grows trees; colours are the game's own (src/vegetation.js shades and barks); targets are today's triangle counts, raised for the seedling, sword fern and salal. No broken tops, and redwood trunks slim with a gentle taper (the owner, 5 November 2026).",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "models": [
+  {
+   "name": "Blender_Redwood_1",
+   "target": 9300,
+   "far": 530,
+   "prompt": "A mature coast redwood tree, 60 m tall, about a quarter as wide as tall. One straight trunk of cinnamon red-brown fibrous bark with 9 deep vertical flutes. Trunk bare for its lowest third. Above that a long narrow cone of thin tapering limbs, level to slightly drooping, carrying flat sprays of fine pointed dark blue-green needles. Open crown with sky showing through and the trunk glimpsed inside. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #2f4f32. Bark muted red-brown #6d4e42.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_Redwood_2",
+   "target": 10000,
+   "far": 530,
+   "prompt": "A mature coast redwood tree, 52 m tall, about a quarter as wide as tall, its crown slightly uneven with one side fuller. One straight trunk of cinnamon red-brown fibrous bark with 8 deep vertical flutes. Trunk bare for its lowest third. Thin tapering limbs, level to slightly drooping, with flat sprays of fine pointed dark blue-green needles forming a long narrow open cone. Sky visible through the crown. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #2f4f32. Bark muted red-brown #6d4e42.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_Redwood_3",
+   "target": 5300,
+   "far": 440,
+   "prompt": "A tall old coast redwood tree, 70 m tall, about a fifth as wide as tall. Straight trunk of cinnamon red-brown fibrous bark with 10 deep vertical flutes. Trunk bare for about half its height. High, narrow cone of thin tapering limbs with gaps between them, level to slightly drooping, carrying flat sprays of fine pointed dark blue-green needles. Sky visible through the crown. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #2f4f32. Bark muted red-brown #6d4e42.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_YoungRedwood_1",
+   "target": 12600,
+   "far": 540,
+   "prompt": "A young coast redwood tree, 28 m tall, about 30 percent as wide as tall, a full cone. Straight tapering trunk of red-brown fibrous bark with 7 shallow flutes, seen only at the foot. Thin drooping boughs start just above the ground and reach the pointed top, each carrying flat hanging sprays of fine pointed dark blue-green needles. Dense but airy, with gaps between boughs and the trunk glimpsed inside. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #35583a. Bark muted red-brown #6a4b3f.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_YoungRedwood_2",
+   "target": 12600,
+   "far": 650,
+   "prompt": "A very young coast redwood tree, 22 m tall, about 30 percent as wide as tall, a full slightly slender cone. Straight tapering trunk of red-brown fibrous bark with shallow flutes, seen only at the foot. Thin drooping boughs from just above the ground to a sharp pointed top, with flat hanging sprays of fine pointed dark blue-green needles. Airy, with gaps between boughs. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #35583a. Bark muted red-brown #6a4b3f.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_YoungRedwood_3",
+   "target": 12400,
+   "far": 710,
+   "prompt": "A coast redwood tree of about a hundred years, 34 m tall, about 30 percent as wide as tall, a full cone a little uneven on one side. Straight tapering trunk of red-brown fibrous bark with 8 shallow flutes, seen only at the foot. Thin drooping boughs from low on the trunk to the pointed top, with flat hanging sprays of fine pointed dark blue-green needles. Gaps between boughs, trunk glimpsed inside. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #35583a. Bark muted red-brown #6a4b3f.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_Fir_1",
+   "target": 7300,
+   "far": 500,
+   "prompt": "A mature coastal Douglas fir tree, 60 m tall, about a third as wide as tall. Straight trunk of thick, deeply furrowed dark grey-brown bark, narrowing continuously to nothing at the tip, bare for its lowest quarter. Heavy tapering boughs, level low down and sweeping upward near the top of the pointed crown, carrying sprays of fine soft dark green needles. Open crown with sky through it and the trunk glimpsed inside. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #355a3a. Bark dark grey-brown #5d4636.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_Fir_2",
+   "target": 7500,
+   "far": 410,
+   "prompt": "A mature coastal Douglas fir tree, 55 m tall, about a third as wide as tall, its crown irregular with a few longer boughs. Straight trunk of thick, deeply furrowed dark grey-brown bark, narrowing to nothing at the tip, bare for its lowest quarter. Heavy tapering boughs sweeping upward toward the pointed top, with sprays of fine soft dark green needles. Sky through the crown. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles deep muted green #355a3a. Bark dark grey-brown #5d4636.",
+   "aspect": "9:16",
+   "paintLevel": 1.15
+  },
+  {
+   "name": "Blender_Hemlock_1",
+   "target": 10000,
+   "far": 510,
+   "prompt": "A western hemlock tree, 45 m tall, about 30 percent as wide as tall. Slim tapering trunk of thin scaly russet-brown bark, bare only near the foot. Fine drooping limbs all the way up, hanging at the tips, with soft feathery sprays of short flat dark green needles. The very top of the tree droops gently to one side in a shallow curve, only the tip, not a hook or a curl. Graceful, airy crown with sky through it. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one thirtieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles soft muted green #4a6b3e. Bark russet brown #5a4a3e.",
+   "aspect": "9:16",
+   "paintLevel": 0.95
+  },
+  {
+   "name": "Blender_Hemlock_2",
+   "target": 9600,
+   "far": 540,
+   "prompt": "A western hemlock tree, 40 m tall, about 30 percent as wide as tall, leaning very slightly. Slim tapering trunk of thin scaly russet-brown bark. Fine limbs drooping from low on the trunk, with hanging feathery sprays of short flat dark green needles. The very top of the tree droops gently to one side in a shallow curve, only the tip, not a hook or a curl. Airy crown with gaps and sky through it. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one thirtieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Needles soft muted green #4a6b3e. Bark russet brown #5a4a3e.",
+   "aspect": "9:16",
+   "paintLevel": 0.95
+  },
+  {
+   "name": "Blender_RedCedar_1",
+   "target": 2200,
+   "far": 1270,
+   "prompt": "A western red cedar tree, 50 m tall, a narrow pyramid about 40 percent as wide as tall. Strongly buttressed, flared foot with 7 deep flutes, trunk of stringy grey-red bark narrowing all the way up. J-shaped limbs dip down then turn up at the tips, with long drooping flat sprays of fine scale-like green foliage, from low on the trunk to the top. Open crown with gaps and sky through it. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. The buttressed foot stays in the bottom tenth of the trunk. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Foliage soft muted green #3f6a40. Bark grey-red #735040.",
+   "aspect": "9:16",
+   "paintLevel": 0.95
+  },
+  {
+   "name": "Blender_RedCedar_2",
+   "target": 2100,
+   "far": 1220,
+   "prompt": "A western red cedar tree, 45 m tall, a narrow pyramid about 40 percent as wide as tall, slightly ragged on one side. Wide buttressed fluted foot, trunk of stringy grey-red bark narrowing all the way up. Limbs curve down then up at the tips in a J shape, with long hanging flat sprays of fine scale-like green foliage. Gaps between limbs, trunk glimpsed inside. No solid core, no lumps, no foliage balls, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. The buttressed foot stays in the bottom tenth of the trunk. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Foliage soft muted green #3f6a40. Bark grey-red #735040.",
+   "aspect": "9:16",
+   "paintLevel": 0.95
+  },
+  {
+   "name": "Blender_Tanoak_1",
+   "target": 5500,
+   "far": 420,
+   "prompt": "A forest tanoak tree, 20 m tall and 11 m wide, an evergreen broadleaf grown under taller trees. Straight grey-brown stem running nearly to the top and narrowing all the way, bare for its lowest fifth. Tapering limbs sweep upward and fork into twigs, holding many broad overlapping masses of long pointed leathery olive-green leaves, forming a full, dense, tall irregular egg shape. Only small glimpses of trunk and sky between them. No solid core, no lumps, no foliage balls, no square leaves, no acorns. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Leaves olive green #4f6b38. Bark grey-brown #6e6256.",
+   "aspect": "9:16",
+   "farStyle": "clumps"
+  },
+  {
+   "name": "Blender_Tanoak_2",
+   "target": 5500,
+   "far": 420,
+   "prompt": "A young forest tanoak tree, 17 m tall and 9.5 m wide, slightly lopsided as if reaching for light. Straight grey-brown stem narrowing nearly to the top, bare low down. Upswept tapering limbs fork into twigs with many broad overlapping masses of long pointed leathery olive-green leaves. Full, dense, tall irregular crown with only small glimpses of trunk and sky. No solid core, no lumps, no foliage balls, no square leaves, no acorns. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "colour": "Leaves olive green #4f6b38. Bark grey-brown #6e6256.",
+   "aspect": "9:16",
+   "farStyle": "clumps"
+  },
+  {
+   "name": "Blender_Seedling_1",
+   "target": 2000,
+   "prompt": "A young forest conifer sapling, 3 m tall, about half as wide as tall. Thin tapering stem with a slightly flared foot. Six loose tiers of slender drooping boughs from near the ground to a pointed tip, with fine pointed dark green needles along them. Stem visible between tiers. No solid core, no discs, no lumps, no cones. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single sapling alone, no ground, no base, no pot, no text.",
+   "colour": "Needles fresh muted green #4a7041. Stem brown #5d4636.",
+   "aspect": "3:4"
+  },
+  {
+   "name": "Blender_Seedling_2",
+   "target": 2000,
+   "prompt": "A small young forest conifer sapling, 2.4 m tall, about half as wide as tall, a little uneven and wispy. Thin tapering stem. Five or six loose tiers of slender drooping boughs with fine pointed dark green needles, stem visible between them, pointed tip. No solid core, no discs, no lumps, no cones. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single sapling alone, no ground, no base, no pot, no text.",
+   "colour": "Needles fresh muted green #4a7041. Stem brown #5d4636.",
+   "aspect": "3:4"
+  },
+  {
+   "name": "Blender_SwordFern_1",
+   "target": 1500,
+   "prompt": "A western sword fern, about 1 m tall, a full shuttlecock of 18 fronds rising from one central crown and arching outward. Each frond is long and narrow on a slender rib, with many paired pointed leaflets getting smaller toward a fine tip, dark glossy green. Gaps between the fronds. No fiddleheads, no flowers, no solid centre. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no pot, no text.",
+   "colour": "Fronds deep fern green #3f6e33, ribs a little darker.",
+   "aspect": "1:1"
+  },
+  {
+   "name": "Blender_SwordFern_2",
+   "target": 1500,
+   "prompt": "A smaller western sword fern, about 0.8 m tall, an open shuttlecock of 14 fronds arching out from one central crown, a few bending lower than the rest. Each frond long and narrow with many paired pointed leaflets on a slender rib, tapering to a fine tip, dark glossy green. No fiddleheads, no flowers, no solid centre. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no pot, no text.",
+   "colour": "Fronds deep fern green #3f6e33, ribs a little darker.",
+   "aspect": "1:1"
+  },
+  {
+   "name": "Blender_Salal_1",
+   "target": 2000,
+   "prompt": "A salal shrub, 1.6 m wide and about 1 m tall, a low rounded thicket. Many wiry arching reddish-brown stems, branching from the base, carry alternate glossy leathery oval leaves with pointed tips, deep green, each leaf a separate shape. Stems glimpsed between the leaves. No solid body, no lumps, no berries, no flowers. Stylised cartoon game asset, matte hand-painted colour. Single shrub alone, no ground, no base, no pot, no text.",
+   "colour": "Leaves deep green #3e5f30. Stems reddish brown #5d4636.",
+   "aspect": "1:1"
+  },
+  {
+   "name": "Blender_Salal_2",
+   "target": 2000,
+   "prompt": "A small salal shrub, 1.2 m wide and about 0.7 m tall, a low uneven mound. Wiry arching reddish-brown stems with alternate glossy leathery oval pointed leaves, deep green, each leaf separate, some stems reaching out past the rest. No solid body, no lumps, no berries, no flowers. Stylised cartoon game asset, matte hand-painted colour. Single shrub alone, no ground, no base, no pot, no text.",
+   "colour": "Leaves deep green #3e5f30. Stems reddish brown #5d4636.",
+   "aspect": "1:1"
+  },
+  {
+   "name": "Blender_Sorrel_1",
+   "target": 1700,
+   "prompt": "A low patch of redwood sorrel, 1.2 m across and about 20 cm tall, a loose carpet of about 26 small plants. Each is a slender reddish-brown stem topped by three heart-shaped leaflets spread flat like clover, soft mid green. Stems and gaps visible between the plants. No flowers, no solid mat, no lumps. Stylised cartoon game asset, matte hand-painted colour. Plants only, no soil, no ground plane, no base, no pot, no text.",
+   "colour": "Leaves soft clover green #5f8a3e. Stems reddish brown #6f5a44.",
+   "aspect": "1:1"
+  }
+ ],
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow."
+}

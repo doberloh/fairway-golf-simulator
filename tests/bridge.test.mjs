@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import {once} from 'node:events';
 import {WebSocket} from 'ws';
-import {JsonFramer,createBridge,isLocalOrigin} from '../bridge/server.mjs';
+import {JsonFramer,createBridge,isLocalOrigin,lidarTarget} from '../bridge/server.mjs';
 import {parseLaunchMessage,readDeviceStatus} from '../src/physics.js';
 test('JSON framing handles split, combined and quoted braces',()=>{const f=new JsonFramer();assert.deepEqual(f.push('{"a":"}'),[]);assert.deepEqual(f.push('{","b":{"c":3}} \n{"d":4}'),[{a:'}{',b:{c:3}},{d:4}]);assert.throws(()=>f.push('oops'));});
 test('bridge validates, relays, acknowledges and reports device state',async()=>{const b=await createBridge({tcpPort:0,httpPort:0,onLog:()=>{}});let ws,tcp;try{
@@ -279,4 +279,16 @@ test('every club in a bag reaches the device, and an unknown one keeps the conne
   assert.ok(received.includes('"Club":"PT"'), 'the last good club is kept');
   assert.equal(closed, false, 'the browser keeps its connection');
  } finally { tcp?.destroy(); ws?.terminate(); await b.close(); }
+});
+test('the builder\'s LIDAR route fetches only USGS tiles, for a local page only', async () => {
+ assert.equal(lidarTarget('/lidar?url=' + encodeURIComponent('https://rockyweb.usgs.gov/vdelivery/a/LAZ/x.laz')), 'https://rockyweb.usgs.gov/vdelivery/a/LAZ/x.laz');
+ for (const u of ['https://example.com/x.laz', 'http://rockyweb.usgs.gov/x.laz', 'https://rockyweb.usgs.gov/x.html', 'https://rockyweb.usgs.gov.evil.example/x.laz', 'not a url']) assert.equal(lidarTarget('/lidar?url=' + encodeURIComponent(u)), null, u);
+ assert.equal(lidarTarget('/other?url=' + encodeURIComponent('https://rockyweb.usgs.gov/x.laz')), null);
+ const b = await createBridge({tcpPort: 0, httpPort: 0, onLog: () => {}});
+ try {
+  const pre = await fetch(`http://127.0.0.1:${b.httpPort}/lidar?url=x`, {method: 'OPTIONS', headers: {origin: 'null'}});
+  assert.equal(pre.status, 204); assert.equal(pre.headers.get('access-control-allow-private-network'), 'true');
+  assert.equal((await fetch(`http://127.0.0.1:${b.httpPort}/lidar?url=x`, {headers: {origin: 'https://untrusted.example'}})).status, 403);
+  assert.equal((await fetch(`http://127.0.0.1:${b.httpPort}/lidar?url=${encodeURIComponent('https://example.com/x.laz')}`, {headers: {origin: 'null'}})).status, 404);
+ } finally { await b.close(); }
 });

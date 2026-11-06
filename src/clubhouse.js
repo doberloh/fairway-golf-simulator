@@ -1,5 +1,6 @@
 // THE CLUBHOUSE (architect-courses, phase 2; the study, workstreams F and G).
-// An Architect course's clubhouse stands where an architect would put it:
+// A course's clubhouse (every generated course since Architect was removed, 2
+// November 2026) stands where an architect would put it:
 // near the first tee, as near the last green as the land allows, on flat
 // ground clear of every corridor and every tee shot, facing the first tee
 // (ASGCA: the clubhouse is sited first and the 1st and 10th tees and the 9th
@@ -14,8 +15,8 @@
 
 // Footprint and height by club, metres (PLACED: a modest municipal clubhouse
 // to a championship venue's).
-import {ARCHITECT, ARCHITECT_GENERIC} from './biomes.js';
-const ARCHITECT_GENERIC_CLUBHOUSE = ARCHITECT_GENERIC.clubhouse;
+import {worldOf, WORLD_GENERIC} from './biomes.js';
+const GENERIC_CLUBHOUSE = WORLD_GENERIC.clubhouse;
 
 export const CLUBHOUSE_SIZE = {
  municipal: {width: 18, depth: 12, height: 7},
@@ -25,12 +26,25 @@ export const CLUBHOUSE_SIZE = {
 };
 // Each model's height for its width, as built (tools/blender/
 // architect_clubhouses.py, measured off the ingested models): the building is
-// as tall as its own model is for the club's width, so a manor keeps its turret
-// and a pavilion stays low (iteration 4: one height for all squashed the manor).
-export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, manor: .731, shingle: .414};
+// as tall as its own model is for the club's width, so a tall house keeps its
+// roof and a pavilion stays low (iteration 4: one height for all squashed
+// Haunted Hollow's manor, since removed).
+export const CLUBHOUSE_ASPECT = {lodge: .394, adobe: .434, chalet: .431, stonehouse: .442, farmhouse: .462, pavilion: .401, loglodge: .397, clapboard: .467, shingle: .414,
+ // The South's plantation house (tools/blender/cartoon_southcoast.py: 17.1 m to
+ // its cupola on 39.2 m of front).
+ plantation: .436,
+ // The Old Northeast's Tudor clubhouse (tools/blender/cartoon_neparkland.py).
+ tudor: .361};
 // The landscape's build (the study's landscape table); the model's name.
-// Each landscape's clubhouse is its architect block's (biomes.js).
-export const CLUBHOUSE_KIND = Object.fromEntries(Object.entries(ARCHITECT).map(([k, a]) => [k, a.clubhouse]));
+// Each landscape's clubhouse is its world block's (biomes.js).
+// Looked up by landscape through worldOf, never by the key in a table: the
+// tables are the regions' (step 2 of the US landscapes goal moved them, and
+// a lookup by landscape key found nothing for seven of the nine).
+export const clubhouseKind = key => worldOf(key).clubhouse || GENERIC_CLUBHOUSE;
+// A kind's model (the South's plantation house came from its own pack, under
+// its own name).
+const OWN_MODEL = {plantation: 'Blender_PlantationClubhouse_1', tudor: 'Blender_TudorClubhouse_1'};
+export const clubhouseModel = kind => OWN_MODEL[kind] ?? `Blender_Clubhouse_${kind}`;
 
 const corners = (c, w, d, rot) => {
  const cs = Math.cos(rot), sn = Math.sin(rot), out = [];
@@ -51,7 +65,7 @@ export function siteClubhouse({holes, s, surface, nearest, height, blocked, clea
  // The club's own size first; a steep landscape that finds nowhere for it
  // falls back to a municipal footprint on ground falling up to 6.5 m
  // (Mountain, iteration 6). Proper levelling is phase 5's earthworks.
- for (const [size, fall] of [[CLUBHOUSE_SIZE[s.archClub] || CLUBHOUSE_SIZE.members, 4.5], [CLUBHOUSE_SIZE.municipal, 6.5]]) {
+ for (const [size, fall] of [[CLUBHOUSE_SIZE.members, 4.5], [CLUBHOUSE_SIZE.municipal, 6.5]]) {
   const found = siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall});
   if (found) return found;
  }
@@ -61,6 +75,9 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
  const first = holes[0], last = holes[holes.length - 1];
  const tee = first.toWorld(first.tees.blue || first.tee), home = last.worldGreen;
  const reach = Math.max(size.width, size.depth) / 2;
+ // The box round every tee and green: the property's edges, near enough.
+ let box = {x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity};
+ for (const h of holes) for (const p of [h.worldGreen ?? h.toWorld(h.green), ...Object.values(h.tees).map(t => h.toWorld(t))]) box = {x0: Math.min(box.x0, p.x), x1: Math.max(box.x1, p.x), z0: Math.min(box.z0, p.z), z1: Math.max(box.z1, p.z)};
  let best = null;
  // Out to 150 m first; a steep landscape that finds nothing there looks to 270.
  for (const far of [150, 270]) { if (best) break;
@@ -79,13 +96,16 @@ function siteOf({holes, s, surface, nearest, height, blocked, clear, size, fall}
   // down to the low side (renderer.js addBuildings). Iteration 5: Mountain
   // found nowhere within 3.5 m and had no clubhouse.
   if (!ok || hi - lo > fall || !clear({x: c.x, z: c.z, rotation: rot, width: size.width, depth: size.depth})) continue;
-  // Near the first tee and the last green, on level ground.
-  const score = Math.hypot(c.x - tee.x, c.z - tee.z) + Math.hypot(c.x - home.x, c.z - home.z) * .8 + (hi - lo) * 12;
+  // Near the first tee and the last green, on level ground -- and toward an
+  // edge of the property, so the drive from the public road is short (the
+  // US landscapes goal, phase 4; roads.js; weight PLACED).
+  const score = Math.hypot(c.x - tee.x, c.z - tee.z) + Math.hypot(c.x - home.x, c.z - home.z) * .8 + (hi - lo) * 12
+   + Math.max(0, Math.min(c.x - box.x0, box.x1 - c.x, c.z - box.z0, box.z1 - c.z)) * .3;
   if (!best || score < best.score) best = {score, c, rot, lo, hi};
  }
  }
  if (!best) return null;
- const model = CLUBHOUSE_KIND[s.biome] || ARCHITECT_GENERIC_CLUBHOUSE;
+ const model = clubhouseKind(s.biome);
  return {kind: 'clubhouse', model, club: true,
   x: best.c.x, z: best.c.z, y: best.hi - .3, base: best.lo, rotation: best.rot, ...size, height: +(size.width * (CLUBHOUSE_ASPECT[model] ?? .42)).toFixed(2)};
 }

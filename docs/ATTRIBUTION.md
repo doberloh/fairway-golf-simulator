@@ -3,7 +3,8 @@
 Every model Fairway draws is this project's own work, made by its own scripts
 in Blender (*Built in Blender*, below). No third-party model pack, texture,
 sprite or sound ships. What does come from elsewhere is code and one
-typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms
+typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms,
+and in the course builder's page laz-perf (the LAZ decoder, Apache-2.0)
 -- and their licences are in `docs/THIRD_PARTY_NOTICES.txt`, which travels
 with every distribution and is shown in the game under Help.
 
@@ -13,11 +14,20 @@ The overhaul remade every one of those models, and the packs and the tools
 that read them were removed from the repository on 27 October 2026. Releases
 up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 
+## Generated with Meshy
+
+`vendor/blender-meshy_redwood/` holds 28 tree models, the Redwood Coast's redwoods,
+firs, hemlocks, red cedars and tanoaks. The full models were generated on Meshy's paid
+Pro plan (https://www.meshy.ai), under which the output is private with full
+commercial use, then converted, and the far versions rebuilt from them, by this
+project's own tools (`tools/meshy-run.mjs`, `tools/blender/meshy_*.py`). The pictures they
+were made from came through Meshy from gpt-image-2. No credit is required on that plan.
+
 ## Built in Blender, which is this project's own work
 
 Every `vendor/blender-cartoon_*/` folder (the painted broadleaves, conifers,
 redwoods, boulders, shrubs, grasses, brush, desert and island plants,
-Haunted Hollow's trees and props, Lakeshore's plants, the deadfall, the
+Lakeshore's plants, the deadfall, the
 houses and their gardens, the wildflowers and the course furniture, and the
 far twins) is written by `tools/blender/cartoon_*.py`, `tools/blender/cartoon.py`
 and `tools/blender/fairway_blender.py`, this project's own scripts, run in
@@ -117,3 +127,21 @@ and the licence is reproduced in THIRD_PARTY_NOTICES.txt.
 "Saira" is a Reserved Font Name: a modified copy would have to be renamed.
 Fairway ships the files unmodified. Distribution review, *Addendum, 17 October
 2026: the 1.0 interface's typeface*, has what was checked.
+
+## The map of the landscapes and the globe: public-domain data
+
+Since 2 November 2026 (the US landscapes goal) the game carries
+`src/us-map-data.js`, written by `tools/us-map.mjs`:
+
+- **The landscapes' shapes** are the U.S. Environmental Protection Agency's
+  *Level III Ecoregions of the Continental United States* (us_eco_l3, 2013
+  edition; a U.S. government work, public domain), grouped into the
+  landscapes by the project's own study, simplified and projected.
+- **Alaska's and Hawaii's outlines and the globe's land** are Natural Earth's
+  1:50m states and provinces and 1:110m land (https://www.naturalearthdata.com,
+  public domain; Natural Earth asks no credit and welcomes one: "Made with
+  Natural Earth").
+- The map's projection uses the parallels and inset placings of d3-geo's
+  `geoAlbersUsa` (Mike Bostock, ISC licence) -- numbers only; the
+  projection is written here from Snyder's Albers equal-area formulas, and no
+  d3 code ships.

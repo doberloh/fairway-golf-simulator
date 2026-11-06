@@ -93,6 +93,40 @@ Rules the game imposes, learnt the hard way:
   spread-sized family comes out huge, which is why the common juniper's vase
   is its own family (`juniperbush`).
 
+## Built as it grows
+
+The owner, 5 November 2026, on the Redwood Coast's trees, three corrections in a
+row, and the approach is meant for many other models later:
+
+- "using a solid shape in the middle does not look good. trees arent solid like
+  this in the middle."
+- "the tree trunk is the same width almost the whole height of the tree. Thats
+  also not how real trees work."
+- "the leafage on these trees looks too blocky and the tan oak is literally
+  squares for leaves. I do like the skeletons (trunks/branches)."
+
+`tools/blender/grown.py` holds the builders; a pack imports them rather than
+growing its own. **Order:** study the photographs and say what the structure is,
+then trunk, limbs, foliage.
+
+- **Wood tapers all the way** (`girth`): 0.57 of the foot at mid-height, nothing
+  at the tip, a small root flare. A limb thins too, and thinner higher up.
+- **No filler.** There is no core, lump or cloud in a crown. Foliage is only on
+  limbs, with air between, sky through the crown and the trunk seen inside it.
+  Too thin means more or better placed foliage, never a mass.
+- **Foliage is thin points.** `needle_spray`: a stem of paired pointed leaflets,
+  swept forward, sagging, dark at the root and light at the tip. `leaf_cluster`:
+  a twig's end of long pointed leaves. Rejected on the way, each by the owner or
+  beside the photographs: stacked skirts (plates on a pole), tube boughs (a
+  fishbone), a solid core (the first complaint), flat lumps and shelves
+  (hexagon plates), toothed fronds (big flat leaves from the tee).
+- **Seen from both sides**: such a family goes in vegetation.js `THIN_LEAVES`,
+  which is why a spray need not be a closed shape.
+- **Judge it in the game, close, from where a golfer stands.** A contact sheet
+  flatters blocks: round 14 looked right on the sheet.
+
+**Still owed the pass:** the other tree packs, when the owner asks.
+
 ## Blender and the graphics card
 
 Blender may use the graphics card without asking (AGENTS.md, the Blender
@@ -100,6 +134,63 @@ exception, 23 October 2026). The contact sheet renders with EEVEE on the GPU.
 Read `nvidia-smi` first and do not start while a game is running, run one
 Blender at a time, and make sure it has exited afterwards (`run.mjs` waits for
 it).
+
+## Trying models from Meshy (from 5 November 2026)
+
+The owner is trying an online AI generator for foliage (RESEARCH.md, *AI model
+generators*). `tools/meshy-run.mjs` drives Meshy's API from a pack file,
+`tools/meshy/<pack>.json`: each model's shape prompt, colours, picture shape,
+triangle target and far target, and one style and one view sentence shared by
+the pack. **Pictures first, and the owner picks** (the owner, 5 November 2026:
+text to model was dropped before it ever ran):
+
+1. `--pictures` makes a picture of each model into `bench/meshy/<pack>/pictures/`
+   (gpt-image-2 by default, the owner's pick; 9 credits).
+2. `--approve Redwood_1=<file>` copies the chosen one to `approved/`.
+3. `--models` builds only from approved pictures (30 credits, textured) into
+   `bench/meshy/<pack>/r<round>-<model>/`, with four side views of each. `meshy-6`
+   is the default because only it strips baked light.
+4. `--far` builds each tree's far version from its full model, in Blender on the
+   processor (`tools/blender/meshy_far.py`, no credits), with an outline score and
+   a side-by-side picture. Meshy's own Remesh is not used: it loses a thin crown.
+5. `--convert` turns each model into the game's form in
+   `bench/meshy/<pack>/game-r<round>/` (`tools/blender/meshy_game.py`, no credits):
+   wood split from leaf as `bark` and `leaves`, the texture's light and dark baked to
+   a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
+   model's `paintLevel`), triangles put in the order the card's vertex cache likes. Far versions are
+   written in that form already, closed all round because the game draws one side.
+   `tools/blender/meshy_parts.py` holds what the two share.
+
+To try new ones in the game: `FAIRWAY_MESHY=<game folder> node tools/build-meshes.mjs`,
+build, then `node tools/build-meshes.mjs` to put `src/asset-meshes.js` back. The
+folder's models replace those of the same name, in every landscape that plants them.
+
+`--dry-run` prints what would be sent and the cost, `--max-credits` (100 by
+default) refuses a dearer run before anything is sent, and each paid step is
+saved the moment it is accepted, so a stopped run is picked up without paying
+twice. No texture prompt goes with a picture, and Meshy's image enhancement is
+off, so the model keeps the look that was approved (PLACED until models are seen).
+
+**The picture prompt is the style.** It names the game's own colours (`shades`
+and `barks` in vegetation.js) and asks for flat painted colour with no
+photographic detail. The game drops textures and reads role from the material
+name (*What the game keeps from a model*), so nothing reaches it without `--convert`.
+
+**The redwood pack's 14 trees ship from here** (the owner, 5 November 2026):
+`vendor/blender-meshy_redwood` is `game-r2` copied in by hand, models and far versions.
+`cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
+builders as the record. To change a tree, run `--convert` and copy it over.
+
+**The first model** (Redwood_1, 5 November 2026): the owner likes its full model's
+foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
+far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
+into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
+and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak).  RESEARCH.md, *AI model generators*.
+
+The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
+**No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just
+generate normal trees"); `tests/meshy-run.test.mjs` holds the pack to that.
 
 ## The packs
 
@@ -199,6 +290,9 @@ Every sheet a round draws is copied to `bench/shots/overhaul/rounds/<pack>-r<n>.
 
 ### cartoon_broadleaf
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_broadleaf.py`, 11 models: `Blender_Oak_1`-`_3`
 (family `oaktree`), `Blender_Maple_1`-`_3` (`mapletree`), `Blender_Aspen_1`-`_3`
 (`aspentree`), `Blender_Alder_1`, `_2` (`aldertree`). 3,500-6,500 vertices
@@ -244,6 +338,9 @@ heather. 33,700 vertices for all eighteen.
 
 ### cartoon_desert
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_desert.py`, 18 models: `Blender_Palo_*` (`palotree`:
 several low green trunks, an airy crown of small lobes on twigs, yellow
 flowers), `Blender_Mesquite_*` (`mesquitetree`: a crooked trunk, arching
@@ -263,7 +360,7 @@ and the procedural ocotillo and agave.
 `tools/blender/cartoon_grass.py`, 17 clumps of long grass, a family each:
 `grassfescue`, `grassmarram`, `grassbluestem` (three-fingered "turkey foot"
 heads), `grassalpine` (with flowers), `grassbunch` (desert), `grasssedge`,
-`grasstussock` (Haunted Hollow) and `grassplume` (Island). Each is 40-200
+`grasstussock` (Haunted Hollow's; built, not shipped since it was removed) and `grassplume` (Island). Each is 40-200
 faces of two-sided blades (`fb.blade`) round a low mound, green at the root
 and the accent toward the tip, painted by height, normals straight up (the
 game lights grass like the ground). Decoration only: vegetation.js
@@ -283,6 +380,9 @@ stands and fill the open Desert and Mountain.
 
 ### cartoon_island
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_island.py`, 7 trees: `Blender_Palm_*` (`palm`: a curved
 ringed column, a crown of 15-20 arching fronds of overlapping leaflets,
 coconuts) and `Blender_Hala_*` (`halatree`: prop roots, a forked trunk, a
@@ -290,18 +390,6 @@ dense crown of strap-leaf rosettes, orange fruit). They replace Kenney's palms
 and the procedural hala. Their leaves are single faces, so vegetation.js draws
 the leaf part two-sided (`THIN_LEAVES`; also bracken and ocotillo). No far
 twins: flat leaves gain nothing from one.
-
-### cartoon_haunted
-
-`tools/blender/cartoon_haunted.py`, 10 dead trees from one crooked branching
-helper (`crooked`, `branch`): `Blender_Gnarled_*` (a short twisted trunk, thick
-limbs hooking up and clawing down), `Blender_Snag_*` (a broken conifer: jagged
-top, stubs, bark peeling to pale wood -- the accent), `Blender_DeadWillow_*`
-(a split trunk, long whips hanging) and `Blender_DeadOak_*` (`deadoaktree`, a
-twisted spreading skeleton). 320-950 faces each. They replace the MegaKit's
-gnarled oaks (about 7,500 vertices each), the Ultimate Stylized snags,
-Kenney's dead willows and the Kenney dead hardwoods (`arid`, now gone); the
-model module is about 650 KB smaller for it.
 
 ### cartoon_houses
 
@@ -318,17 +406,6 @@ the ingest centres a model on its whole box and scales it to unit height,
 chimney included); the eaves and a porch roof overhang it. They replace
 Kenney's building kit, whose texture atlases (about 63 KB) no longer ship.
 
-### cartoon_props
-
-`tools/blender/cartoon_props.py`, Haunted Hollow's props: `Blender_Pumpkin_1..3`
-(a ribbed lathe, 8-12 ribs, a twisted stem) and `Blender_Toadstool_RedGroup`,
-`_RedTall` and `_TanGroup` (domed caps flecked with white warts, stout stalks
-with a ring). Built to the Kenney models' proportions, because two things are
-laid on them: the collision radius (species.js `PROP_MODELS`, re-measured --
-pumpkins 0.71, the groups 0.65 and 0.77, the single 0.35) and the lantern face
-(haunts.js `faceGeometry`, on a body 0.67-0.70 of its height in half-width), so
-every pumpkin is round, not squashed. haunts.js draws them painted.
-
 ### cartoon_deadfall
 
 `tools/blender/cartoon_deadfall.py`, the forest floor (vegetation.js
@@ -343,12 +420,17 @@ any more, are no longer taken.
 
 ### cartoon_redwood
 
-`tools/blender/cartoon_redwood.py`, the Giant Redwood's forest in the
-overhaul's hand: `Blender_Redwood_*` (a fluted, flared red column bare for
-two-thirds of its height, a ragged crown of drooping tiers and clumps),
-`Blender_Fir_*`, `Blender_Hemlock_*` (feathery, a drooping leader),
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
+`tools/blender/cartoon_redwood.py`, the Redwood Coast's forest, rebuilt on 5
+November 2026 (*Built as it grows*; logs in tools/blender/logs): `Blender_Redwood_*`
+(a tapering fluted trunk bare for a third of its height or more, the third an old
+tree barer still), `Blender_YoungRedwood_*` (foliage from low on the trunk),
+`Blender_Fir_*`, `Blender_Hemlock_*` (limbs sweeping up; hanging, a nodding leader),
 `Blender_RedCedar_*` (a buttressed fluted foot, long drooping sprays),
-`Blender_Tanoak_*`, `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
+`Blender_Tanoak_*` (those 14 since replaced by Meshy models, *Trying models from
+Meshy*), `Blender_Seedling_*`, and the floor's `Blender_SwordFern_*`,
 `Blender_Salal_*` and `Blender_Sorrel_1`. `fluted_trunk` pleats a trunk into
 flutes, deepest at the foot. Crown widths are the generator's (species.js
 `CROWN_FRACTION`: half-width over height 0.095 redwood, 0.17 fir and hemlock,
@@ -399,6 +481,9 @@ a ball hits, as the sign never was. The plain shapes stay as the fallback.
 
 ### cartoon_lakeshore
 
+(Its broadleaf trees were reworked silhouette first on 2 November 2026:
+*The silhouette pass on the packs before the goal*, below.)
+
 `tools/blender/cartoon_lakeshore.py` remakes Lakeshore Dunes' set (lakeshore.py,
 built before the overhaul with no paint or bent normals) in the overhaul's
 hand under names of their own, `Blender_Lake*`, so the old pack stays as main
@@ -407,11 +492,15 @@ cloud), black oak, sugar maple (with far twins), creeping and vase junipers,
 dune grass patches of splayed tussocks, and bleached driftwood (now drawn
 painted).
 
-## The Architect packs (architect-courses, from 30 October 2026)
+## The world packs (Architect's, from 30 October 2026)
 
-Models an Architect course places (docs/ARCHITECT_COURSES.md). Each model is
-iterated at least ten times, on the contact sheet and in the game, and every
-iteration is logged in ARCHITECT_COURSES.md, *Blender iteration log*.
+Models every generated course places round its holes -- the clubhouse,
+markings, bridges, the land's story, its animals. Built for Architect
+courses (30 October 2026; docs/ARCHITECT_COURSES.md, in git history, holds
+their iteration log) and kept when Architect was removed on 2 November 2026,
+so the packs keep their `architect_` names. Each model was iterated at least
+ten times; under the US landscapes goal a model gets at least fifteen, each
+logged in tools/blender/logs/<id>.md.
 
 **A model longer than two of its own heights** -- a rake lying on the grass
 -- does not fit the ingest's int16 box (positions are stored at 16384 a
@@ -445,12 +534,12 @@ study's landscape table): a timber lodge (PNW), an adobe with a tower and
 vigas (Desert), a chalet (Mountain), a twin-gabled stone links house (Links),
 a two-storey farmhouse with a porch (Midwest), an open hipped pavilion
 (Island), a log lodge (Giant Redwood), a clapboard house with a cupola
-(Autumn), a crooked manor with a turret (Haunted Hollow) and a shingled house
+(Autumn), a crooked manor with a turret (Haunted Hollow's, built but not shipped since 2 November 2026) and a shingled house
 with dormers (Lakeshore Dunes); each with fascia and ridge trim, a flag by
 the door. Built round a 26 x 16 m footprint, front at -Y; ingested as the
 `clubhouse` family with its own scale (`q`); renderer.js
 `addBuildings` fits each to its building's box and inks it, coloured per
-landscape (walls, roof, trim, glass -- Haunted Hollow's windows lit), and
+landscape (walls, roof, trim, glass), and
 draws a terrace wall under it on a slope. clubhouse.js `CLUBHOUSE_ASPECT`
 is each model's height for its width, measured off the ingested model; a
 test holds it to the models, so **re-measure it whenever a clubhouse changes
@@ -471,49 +560,22 @@ and landscape) and `addStory` instances the walls in 2 m sections, the
 stones and the lanterns. The walls are drawn uninked (inked, their small
 stones went black).
 
-### architect_occasion
-
-`tools/blender/architect_occasion.py`: tournament week, each drawn to
-occasion.js's footprint (front, toward play, at -Y): a grandstand (20 x 9 m,
-six stepped rows, an event-green skirt, a canopy and pennants: 8.6 m), a
-scoreboard on 3 m legs (12 x 2, 7.6 m), a scaffold TV tower with a hooded
-camera (4 x 4, 12 m), a peaked marquee (10 x 10, 5.5 m), 6 m of gallery rope
-and five spectators from the shared body (`figures.py`, below): a cap, a sun
-hat and skirt, a golf umbrella, clapping in a visor, a child cheering.
-Ingested as `occasionpieces` with its own scale; renderer.js fits the
-buildings to their boxes and `addOccasion` instances the ropes and the crowd,
-each spectator dressed from `PEOPLE_PALETTE` and drawn at its own height.
-
-### figures.py: one body for every person
-
-`tools/blender/figures.py` (the owner's review, 30 October 2026) builds a
-cartoon person into a mesh -- poses walk, stand, clap, cheer, push, pull,
-umbrella and seated; hats cap, visor, sun hat and bucket; a skirt and
-ponytail; a carry bag, push and pull trolleys, an umbrella. Each part is one
-role -- skin `stone`, shirt `accent`, trousers `bark`, shoes and hair `dirt`,
-hat with its bag or umbrella `leaf` -- because the game colours each role per
-figure (instance colours), so one model is many people. The ingest records a
-person's true height (`tall`, build-meshes.mjs `PEOPLE`): every model is
-normalised to one unit tall, and a child and someone under an umbrella were
-stretched to the same height until it did.
-
 ### architect_life
 
-`tools/blender/architect_life.py`: life on an Architect course, each
+`tools/blender/architect_life.py`: life on a course, each
 facing -Y at its real size -- a sheep (a fleece of lumps on short legs, a dark
 face), a goose, a doe and a bull elk (inset coat-coloured legs, a full body),
-a heron, a roadrunner, a gliding bird (a gull white, a raven black), four
-walking golfers from `figures.py` (a bag, a push trolley, a pull trolley, a
-bucket hat and bag) and a five-unit fairway reel mower (2.58 x 2.59 m, 2.32 m
-to its sunshade; RESEARCH, *A fairway mower*) with a greenkeeper aboard.
+a heron, a roadrunner and a gliding bird (a gull white, a raven black).
 Ingested as the `lifeforms` family with its own scale; renderer.js `addLife`
-draws them instanced, the animals a quarter to a half larger than life and
-the people a twentieth, and moves them, never on Low.
+draws them instanced, a quarter to a half larger than life, and moves them,
+never on Low. (The four walking golfers, the mower, tournament week's pack
+`architect_occasion.py` and the shared body `figures.py` were removed on 2
+November 2026: the owner.)
 
 ### architect_water
 
-`tools/blender/architect_water.py`: what a builder puts at an Architect
-course's water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
+`tools/blender/architect_water.py`: what a builder puts at a course's
+water. Two 2 m **bridge bays** -- timber (3.0 m wide, 1.25 m tall:
 stringers, nine planks, a post each corner, two rails) and stone (3.1 m, 1.08
 m: a slab, parapets with a coping) -- the deck's top 0.30 m up both; renderer.js
 `addPaths` lays as many as a span needs, fitted to the path's width and to
@@ -527,3 +589,274 @@ renderer.js `addWaterworks` draws them instanced. **The tube helper draws one
 ring a radius** (`add_tube`): give it a radius for every point, or the tube
 stops after the first stretch -- the old fountain's streams were invisible
 for eight iterations.
+
+## The US landscapes packs (from 2 November 2026)
+
+The models the US landscapes goal adds (the owner's plan, docs/studies/
+us-landscapes/PLAN.md section 5, local): one pack a region, built in the
+cartoon hand from `cartoon.py`, each model iterated **at least fifteen times
+against its reference pictures** (the owner: "All Models need to be
+iterated on at minimum 15 times while comparing to real pictures").
+
+**How a round runs.** `node tools/blender/iterate.mjs <pack> <round>`
+first waits at the graphics card's gate (tools/gpu-gate.mjs, since 3
+November 2026, when the PC went down at the eighteenth of a two-hour run
+of renders started back to back, some with the card over 30% busy): two
+minutes' rest since the last graphics job (`FAIRWAY_GPU_REST`), the card
+under 30% busy and 75 °C over 30 seconds, nobody else's job on it; each
+render is logged in bench/ab/gpu-runs.jsonl under `FAIRWAY_GPU_GOAL`
+(us-landscapes). It then builds the pack, keeps each model's sheet tile (`FAIRWAY_TILES` in
+fairway_blender.py) and lays every model beside the first three of the
+study's pictures for it (photos/models/<id>/, local) on one sheet,
+bench/shots/blender/iter/<pack>/r<round>.png, with each model's own row
+saved as <id>-r<round>.png (local). `--season spring|autumn|winter` draws
+the pack in that season's colours (the pack's `LOOK` table, from the
+study's models/<id>.md *Seasons*); `--far` puts each far twin beside its
+model. What was wrong and what changed go into tools/blender/logs/<id>.md,
+one line a round (`--log notes.json`), committed; a model is not done
+below fifteen lines. The pack names its models' study ids in
+`# REFS id=Model,...` comment lines.
+
+**Sheet changes for it.** A plant under a third of the post's height gets a
+30 cm post (the 0.35 m iris was invisible beside 1.8 m); a pack may give
+each model its own sheet colours (`export(..., tints=)`), so a yellow broom
+and a pink rhododendron are not both drawn in the pack's one accent. Both
+are sheet-only: the game paints roles from the species tables.
+
+**Budgets** (PLACED, from the overhaul's packs, `inspect.mjs`): a tree
+about 4,500-5,500 triangles (the cartoon oak 5,100), a shrub 2,000-3,500,
+a flower a few hundred. Two traps found on the way: `cloud_crown`'s lobes
+are cheapest at its default (`subdiv=3` draws a 12 x 7 sphere, 144
+triangles; `subdiv=2` is a 320-face icosphere), and every `cloud_crown`
+adds a 320-face filled core, most of the cost of a small clump -- so
+`cloud_crown(..., core=False)` (added for these packs; the default keeps
+every earlier pack's bytes).
+
+### cartoon_pacific
+
+`tools/blender/cartoon_pacific.py`, 14 models and 8 far twins: what Puget
+Sound and Redwood Coast lacked. Seventeen rounds for the dogwood, fifteen
+for the rest; each log says what each round found.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Madrone_1` (three stems), `_2` | `madrone` | Two leaning red stems, crooked limbs, an open domed evergreen crown of clumps with the limbs showing; white flowers in spring, orange-red berries in autumn (accent) | 4,600 |
+| `Blender_GarryOak_1` | `garryoak` | A short heavy trunk, crooked limbs, a broad lumpy crown wider than tall | 4,700 |
+| `Blender_BigleafMaple_1` | `bigleafmaple` | A heavy trunk under a tall broad oval crown | 4,400 |
+| `Blender_PacificDogwood_1` | `pacificdogwood` | Three tiers of flat sprays, cream four-petal bracts over and round them (accent) | 4,100 |
+| `Blender_BayLaurel_1` | `baylaurel` | Several leaning stems under a dense dome reaching toward the ground | 4,500 |
+| `Blender_VineMaple_1` | `vinemaple` | Eight splayed stems, a full rounded mass of leaves | 1,000 |
+| `Blender_OregonGrape_1` | `oregongrape` | Upright holly-leaved clumps, yellow flowers or blue berries (accent) | 2,600 |
+| `Blender_ScotchBroom_1` | `scotchbroom` | A rounded mound of fine switches, solid yellow in flower (accent) | 2,800 |
+| `Blender_PacificRhododendron_1` | `rhododendron` | Leggy stems with leaf whorls down them, pink trusses (accent) | 1,800 |
+| `Blender_DouglasIris_1` | `douglasiris` | An arching clump of grassy leaves, lavender flowers among the tips | 750 |
+
+**Count triangles, not Blender's faces** (`inspect.mjs`): the lobes are
+mostly quads, so a model's triangles run 1.6-1.8 times its faces. The pack
+met its budgets by faces after round 12 and was still double by triangles;
+round 18 was the second cost pass, after the game's A/B.
+
+The deciduous ones (Garry oak, bigleaf maple, dogwood, vine maple) go bare
+in winter by drawing without their leaf and flower parts, their branches
+grown from the model's own leaf part when a round asks (src/twigs.js,
+mesh-assets.js `bareParts`), not as separate models: a pack makes no bare
+variant, and every deciduous model has its twig layer for nothing. A
+species' crown must still be its leaf part's outline, since that is what
+the twigs fill.
+
+**Every variant ships** (since 2 November 2026, the owner: "I dont want to
+end up not using the models we create"). For a day only one variant of the
+madrone, Garry oak, bigleaf maple and bay laurel shipped: a variant is a
+draw call per part, full and far, in the frame and the shadow pass, and
+with both Puget Sound's Low frame had risen 24% (RESEARCH, *The Pacific
+pack*); that cost waits for the goal's performance pass (TODO).
+
+### cartoon_mountain
+
+`tools/blender/cartoon_mountain.py`, 6 models (two variants of each tree)
+and 4 far twins: what the Rockies lacked. Fifteen rounds each, logged.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Lodgepole_1`, `_2` | `lodgepole` | A tall straight pole with dead stubs up its bare lower half, a narrow uneven crown above | 970-1,100 |
+| `Blender_BlueSpruce_1`, `_2` | `bluespruce` | A broad silver-blue cone to the ground, lighter new growth at the top | 2,050 |
+| `Blender_WillowThicket_1` | `willowthicket` | A rounded grey-green mound on fine red shoots | 3,390 |
+| `Blender_Columbine_1` | `columbine` | A low leafy spread, blue-and-white star flowers held above it (bark is the white cup, accent the blue) | 1,130 |
+| `Blender_Lupine_1` | `lupine` | Purple flower spikes, florets proud of them, over a palmate base (accent) | 1,075 |
+| `Blender_SplitRailFence_1` | `storyrail` (never planted) | One 2 m panel of six heavy split rails; the game lays panels along a wall's run, every other one turned 30 degrees each way, for the zig-zag | 108 |
+
+The fence is the Rockies' story wall (biomes.js WORLD.mountain
+`story.walls: 'rail'`): renderer.js addStory draws it, story.js gives it
+a 1.3 m wide solid box (`WALL_WIDTH`) so a ball meets the zig-zag's
+width. Willow thicket is a ground plant and keeps its colour in winter; bare
+stems for it are still owed (TODO *Seasons, still to do*).
+
+### Silhouette first (the owner, 2 November 2026)
+
+"The trees all look like big green fluffy balls on the trunks... every
+tree is gonna end up looking kind of the same." The style stays (soft
+lobed clumps, flat colour, ink); what changes is that **every species is
+modelled to be recognised by its outline alone**, a black shape at
+thumbnail size, and not confused with another tree in the game: crown
+shape (vase, umbrella, spire, shelves, fan, broad and flat), how much
+trunk and limb shows, lobe scale and edge, and sky through an open crown.
+A tree's crown is never one default ellipsoid `cloud_crown`; it is built
+from parts placed to make its species' outline. The packs from New
+England on were briefed this way from their first round, Heartland from
+round 4; the Pacific, mountain and dry-and-lake packs were made before it
+(TODO, *Silhouette lineup*).
+
+### cartoon_drylake
+
+`tools/blender/cartoon_drylake.py`, 5 models and 2 far twins, seventeen
+rounds each: what the Sonoran and Lake Dunes lacked.
+
+| Model | Species (family) | What it is | Triangles |
+| --- | --- | --- | --- |
+| `Blender_Ironwood_1`, `_2` | `ironwood` | After the silhouette pass: short split trunks and crooked limbs forking into twigs, many small ragged sprays making a broad open grey-green dome with sky through it | 4,510-5,070 |
+| `Blender_Jojoba_1` | `jojoba` | A dense grey-green mound leafy to the ground, leaf flakes on its skin | 3,250 |
+| `Blender_SandCherry_1` | `sandcherry` | A low sprawl of thin dark stems, narrow leaves, small blossoms (accent: white in spring, dark cherries in summer) | 3,100 |
+| `Blender_PierLight_1` | story piece `pierlight` | Grand Haven's red pierhead light on its concrete pier end: red tower (accent), dark railed gallery and iron (bark), pale lantern and deck (stone); front -Y, pier along Y | 800 |
+
+The pier light is Lake Dunes' landmark (story.js `STORY_PIECES.pierlight`,
+drawn 24 m on an 8.4 by 16.8 m footing). Painting its accent #f2efe6
+makes a white light like St. Joseph's.
+
+### cartoon_heartland and cartoon_newengland
+
+Two packs worked by agents on 2 November 2026, silhouette first (the
+Heartland's trees from round 16 of 23, New England's from round 1 of 16).
+
+| Model | Species (family) | Outline | Triangles |
+| --- | --- | --- | --- |
+| `Blender_AmericanElm_1`, `_2` | `americanelm` | A vase: limbs fanning up from a low fork to an umbrella over the top quarter, sky under it | 4,060-4,780 |
+| `Blender_Shagbark_1`, `_2` | `shagbark` | A long straight trunk bare to 40%, a narrow ragged column of clumps on short level branches | 3,340 |
+| `Blender_BurOak_1`, `_2` | `buroak` | A massive short trunk, heavy level limbs crooking up, ragged clumps with gaps, far wider than tall | 4,310-5,060 |
+| `Blender_PrairieForbs_1` | `prairieforbs` | Grass with blazing star, coneflowers and black-eyed Susans (purple accent, gold stone, dark cones bark) | 860 |
+| `Blender_CornPatch_1` | story prop `corn` | Five rows of thirteen corn plants, 5 by 6.4 m, rows along Y | 2,730 |
+| `Blender_RedBarn_1` | story piece `redbarn` | A red gambrel barn, white trim, cupola, lean-to and a banded silo; 24 by 21 m, front -Y | 770 |
+| `Blender_PaperBirch_1`, `_2` | `paperbirch` | White stems with black marks splaying from one root, small clumps up the top half, sky between | 3,070-4,660 |
+| `Blender_WhitePine_1`, `_2` | `whitepine` | Separate level shelves of ragged tufts (flat stars) on a tall dark trunk; `_1` flagged to the lee | 4,390-4,960 |
+| `Blender_BalsamFir_1`, `_2` | `balsamfir` | A narrow regular sharp spire to the ground | 1,440-1,680 |
+| `Blender_AmericanBeech_1`, `_2` | `americanbeech` | A smooth grey trunk under a broad low dome on long level limbs | 4,470 |
+| `Blender_FieldWall_1` | story wall `field` | One 2 m section of tumbled fieldstone, lichen on a third (accent), 1.05 m | 550 |
+| `Blender_CoveredBridge_1` | bridge `covered` | A red board bridge, gabled roof, open portals, stone abutments; spans X, 24 m by 5 m, deck 2.6 m above its base | 330 |
+
+The barn replaces the farmstead's barn and silo in the Heartland (story.js
+`farm: 'redbarn'`), with up to twelve corn patches behind it; New England's
+walls are `field` and its bridges `covered` (renderer.js draws one covered
+bridge a crossing, stretched to the span, at its own width and height).
+Leaf fall turns only broadleaves (vegetation.js `EVERGREEN`, `FALL_HUE`).
+
+### cartoon_keys
+
+`tools/blender/cartoon_keys.py`, 9 models and 5 far twins, fifteen rounds
+each, silhouette first; every one ships (generator 62).
+
+| Model | Species (family) | Outline | Triangles |
+| --- | --- | --- | --- |
+| `Blender_RoyalPalm_1`, `_2` | `royalpalm` | A tall smooth pale-grey column swelling mid-way, a fat bright-green crownshaft (accent), a round head of arching fronds | 1,100-1,200 |
+| `Blender_TravelersPalm_1` | `travelerspalm` | A flat 190-degree fan of ragged paddle leaves in one plane on a ringed post | 1,380 |
+| `Blender_SeaGrape_1` | `seagrape` | A broad dome scalloped by round leaf plates, rose grape strings under its edge (accent) | 2,470 |
+| `Blender_Mangrove_1` | `mangrove` | A dark rounded cap low over a cage of arching prop roots | 3,410 |
+| `Blender_GumboLimbo_1` | `gumbolimbo` | Thick crooked copper limbs carrying loose flat leaf rosettes, sky between | 4,830 |
+| `Blender_Banyan_1` | `banyan` | A fused trunk, level limbs and sixteen root columns under a broad low canopy, about 30 m across | 4,460 |
+| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent) with green showing | 3,340 |
+| `Blender_Hibiscus_1` | `hibiscus` | A vase of glossy leaf masses on splayed stems, big red flowers (accent) | 2,750 |
+
+### The silhouette pass on the packs before the goal (2 November 2026)
+
+The owner's note that the trees read as "big green fluffy balls on the
+trunks" was back-ported to every broadleaf already in the game, by three
+agents (logs in tools/blender/logs/<id>.md; the pictures they worked from
+are the study's photos/models/<id>/, fetched for the pass). Every reworked
+model is at or below its old triangle count; names and variants are
+unchanged. The pack sections above describe the trees before the pass.
+
+| Pack | Trees reworked (rounds) | Outline now |
+| --- | --- | --- |
+| cartoon_pacific | Garry oak, bigleaf maple, dogwood, bay laurel (10 more each) | oak wider than tall on elbowed limbs; maple four big lobed masses on a Y fork; dogwood thin level shelves; bay a haystack with a hanging skirt |
+| cartoon_drylake | ironwood (8 more) | an open, ragged, twiggy dome with sky through it |
+| cartoon_broadleaf | oak, maple, aspen, alder (10) | oak a few heavy masses with notches; maple a dense upright egg, the only gapless crown; aspen a narrow ragged column on a white pole; alder a pointed loose oval |
+| cartoon_lakeshore | cottonwood, black oak, sugar maple (10) | cottonwood a huge two-tier open crown on four great limbs; black oak crooked, leaning, lopsided; sugar maple broad, dense and round-topped |
+| cartoon_desert | palo verde, mesquite (9) | palo verde a see-through umbrella of specks on green limbs; mesquite low, wide, flat-topped and dark with hanging tassels |
+| cartoon_island | hala (7) | a leaning trunk on a cone of prop roots, candelabra arms ending in drooping spiky mops |
+| cartoon_redwood | tanoak (9) | a tall narrow ragged column of olive shelves (narrower: 11 and 9.5 m) |
+
+Left as they were: the madrone (already itself), the shrubs and flowers,
+the cacti, palms, conifers and ground plants. The reworks had fewer rounds
+than a new model's fifteen; they are reworks of models that had their own.
+
+### cartoon_streets
+
+`tools/blender/cartoon_streets.py`, 7 pieces at real size, fifteen rounds
+each, front -Y, origin on the ground at the footprint's centre: street lamp
+(acorn, 5 m), mailbox, lot light pole (9.2 m, two heads), wheel stop (1.83
+m), bag drop (a hipped canopy 10.8 by 6.8 m), planted island (2.5 by 5.5 m,
+its middle clear for a tree) and cart barn (40 by 12 m). The game places
+all of them (roads.js `streetFurniture`, `placeCartBarn` and `mailboxAt`).
+
+### The packs made for the new landscapes (2-3 November 2026)
+
+Modelled by agents, fifteen rounds or more each, silhouette first, and all
+in the game since phase 8c, each with its landscapes (the South's four,
+`cartoon_southpines`, `cartoon_southoaks`, `cartoon_piedmont` and
+`cartoon_southcoast`, went in with phase 5: every variant, a far twin for
+each tree, the plantation clubhouse as `clubhouse.js` `clubhouseModel`;
+`cartoon_texas` and `cartoon_deserts` with phase 6, every variant and
+the pecans' and palms' far twins, the limestone as the boulder family
+`boulderlimestone`; `cartoon_calcoast`, `cartoon_calinland` and
+`cartoon_westmtn` with phase 7, the basalt and granite as boulder
+families, the sea stacks offshore and the volcano as a horizon backdrop
+(renderer.js `addSeaStacks`, `addBackdrop`); `cartoon_highdesert` and
+`cartoon_plains` with phase 8a, the rimrock and hoodoos as boulder
+families and the ranch pieces as story pieces (story.js), the plains' red
+cedar as `easternredcedar`, apart from the redwood pack's western
+`RedCedar`; `cartoon_appalachia` and `cartoon_neparkland` with phase 8b, the
+Appalachian rhododendron as `rosebay` (the Puget pack's Pacific one keeps
+the family `rhododendron`), the cabin, tobacco barn and shingled windmill
+as story pieces, the horse fence a wall kind, the Tudor clubhouse a
+clubhouse kind; `cartoon_north` and `cartoon_hawaii` with phase 8c, Hawaii's
+ironwood as `casuarina` (`ironwood` is the desert's), the lava a boulder
+family, the log cabin a ruin and the dock a story prop). Each script's header and `LOOK`/`BARK` tables hold its
+colours and roles; each model's log holds its rounds.
+
+**The owner's additions of 3 November 2026.** `cartoon_badlands`: the
+Yellow Mounds (the Badlands' boulder family `boulderbadlands`), Rocky
+Mountain juniper (far twins), green ash (far twin), chokecherry,
+leadplant and the bison (lifeforms), fifteen rounds each and the four
+seasons. Its spires, sawtooth wall, clinker butte, horizon wall and
+cannonball concretion were built (sixteen rounds) and **cut**: the owner
+wants the landscape's formations generated from the ground, as the other
+landscapes' are (landforms.js `badlands`, ground.js strata); their logs
+close with the reason. The lesson for the next rock: a turned (lathed)
+shape reads as a cone however it is banded, and stripes coloured face by
+face zigzag on a slope -- slice the faces at each bed's level instead
+(tried in round 17, dropped with the models). `cartoon_prairiegrass`:
+tall fescue, little bluestem, switchgrass, Indiangrass, blue grama and
+western wheatgrass as long-grass families (`grasstallfescue`,
+`grasslittlebluestem`, `grassswitch`, `grassindian`, `grassgrama`,
+`grasswheat`; biomes.js `GRASSES`), fifteen rounds each and the four
+seasons. Lessons: a clump reads only when dense (twice the blades of the
+old families) and wide at the root -- every reference is a fountain; a
+panicle is a cloud of short branches along the stem's top third, not a
+star at its tip. Two things only the game showed (3 November 2026): a pack's
+LOOK table reaches the game through src/season-tints.js alone, so run
+tools/blender/dump-tints.mjs when a pack lands, or its colours live only in
+the contact sheets (every long grass was the landscape's one colour until
+then); and a model is scaled by its height, so a tuft of arching blades that
+barely rises (`Blender_TallFescue_2`, radius 3.3 heights) lies six metres
+across at 0.9 m tall -- vegetation.js `GRASS_WIDEST` squeezes it in.
+
+**Desert Resort (5 November 2026).** `cartoon_resort`: Afghan pine
+(`afghanpine`, a full layered egg to the ground with the trunk seen only near
+it), African sumac (`africansumac`, a broad crown on a fork, its tufts round
+the lobes) and pampas grass (`pampasgrass`, a mound of arching leaves and a
+fan of cream plumes), sixteen rounds each, two variants, far twins for the two
+trees (about 5,000, 5,300 and 3,800 triangles at their largest). Lessons: a
+pine's egg is many small masses, not a few big ones (54 for the 16 m variant;
+rounds 1-5 read as balls on a post); a crown's underside needs tufts too, or it
+ends in a hard flat line; a plume fan has to spread as wide as the mound, or it
+reads as a bouquet stuck in the top. Run build-meshes BEFORE dump-tints: tints
+join through the model module, so a new pack's species are missing from
+src/season-tints.js until build-meshes has written them.

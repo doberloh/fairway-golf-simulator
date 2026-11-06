@@ -36,7 +36,7 @@ import {rng as random} from './course-plan.js';
 // The original lists let both halves overlap, and "Cedar Hollow" was reachable
 // from both the Pacific Northwest and the Midwest.
 export const NAME_WORDS = {
- pnw: [
+ puget: [
   ['Cedar', 'Sitka', 'Harbour', 'Cascade', 'Douglas', 'Salmon', 'Fern', 'Tofino',
    'Quinault', 'Skagit', 'Chinook', 'Hemlock', 'Driftwood', 'Cannon', 'Orca',
    'Madrona', 'Nootka', 'Tillamook', 'Alder', 'Rainier', 'Nehalem', 'Yaquina',
@@ -46,7 +46,7 @@ export const NAME_WORDS = {
    'Landing', 'Cove', 'Inlet', 'Narrows', 'Bend', 'Spit', 'Shore', 'Timber',
    'Crossing', 'Hook', 'Bar', 'Passage', 'Rise'],
  ],
- desert: [
+ sonoran: [
   ['Mesa', 'Coyote', 'Adobe', 'Sonora', 'Agave', 'Rincon', 'Vermilion', 'Cholla',
    'Mesquite', 'Javelina', 'Yucca', 'Caliche', 'Gila', 'Ironwood', 'Tinaja',
    'Roadrunner', 'Sandstone', 'Kiva', 'Estrella', 'Creosote', 'Bajada', 'Mirage',
@@ -56,7 +56,7 @@ export const NAME_WORDS = {
    'Draw', 'Buttes', 'Rim', 'Sands', 'Gulch', 'Playa', 'Bench', 'Crossing',
    'Hollow', 'Ridge', 'Bluffs', 'Pass'],
  ],
- mountain: [
+ rockies: [
   ['Alpine', 'Granite', 'Glacier', 'Summit', 'Larch', 'Aspen', 'Cirque', 'Tarn',
    'Chamonix', 'Moraine', 'Talus', 'Cornice', 'Snowmelt', 'Ptarmigan', 'Marmot',
    'Avalanche', 'Bighorn', 'Icefall', 'Scree', 'Sawback', 'Stonecrop', 'Gentian',
@@ -75,7 +75,7 @@ export const NAME_WORDS = {
    'Braes', 'Point', 'Howe', 'Hillock', 'Bank', 'Head', 'Bay', 'Crossing',
    'Hollow', 'Rise', 'Reach', 'Bend'],
  ],
- midwest: [
+ heartland: [
   ['Prairie', 'Sycamore', 'Elmhurst', 'Wheatfield', 'Tallgrass', 'Walnut',
    'Hawthorn', 'Bluestem', 'Hickory', 'Cottonwood', 'Ironweed', 'Milkweed',
    'Goldenrod', 'Switchgrass', 'Coneflower', 'Osage', 'Shagbark', 'Silo',
@@ -85,7 +85,7 @@ export const NAME_WORDS = {
    'Creek', 'Bottoms', 'Rise', 'Flats', 'Commons', 'Acres', 'Draw', 'Bend',
    'Ridge', 'Lane', 'Prairies', 'Stand'],
  ],
- island: [
+ keys: [
   ['Coral', 'Lagoon', 'Frangipani', 'Barracuda', 'Palm', 'Reef', 'Conch',
    'Windward', 'Leeward', 'Bonefish', 'Tarpon', 'Hibiscus', 'Plumeria',
    'Mangrove', 'Seagrape', 'Pelican', 'Frigate', 'Manta', 'Coconut', 'Banyan',
@@ -105,7 +105,7 @@ export const NAME_WORDS = {
    'Canopy', 'Bottom', 'Ring', 'Bench', 'Rise', 'Crossing', 'Bend', 'Ridge',
    'Cloister', 'Walk', 'Clearing', 'Aisle'],
  ],
- autumn: [
+ newengland: [
   ['Copper', 'Maple', 'Amber', 'Harvest', 'Sumac', 'Russet', 'Chestnut',
    'Bracken', 'Ember', 'Cider', 'Scarlet', 'Crimson', 'Tamarack', 'Sassafras',
    'Persimmon', 'Quince', 'Bittersweet', 'Witchhazel', 'Beechnut', 'Acorn',
@@ -122,7 +122,7 @@ export const NAME_WORDS = {
  // was searched with "golf" (23 October 2026, REFERENCES); Black Oak,
  // Starboard, Lakebreeze, Shoal, Agate and Lakeshore were dropped -- each is
  // a real course or the start of a famous one.
- lakeshore: [
+ lakedunes: [
   ['Beacon', 'Beachgrass', 'Sandreed', 'Sandcherry', 'Foredune', 'Blowout',
    'Lakewind', 'Seiche', 'Breakwater', 'Pierhead', 'Jackpine', 'Plover',
    'Sandbar', 'Freshwater', 'Duneline', 'Wavecrest', 'Bearberry', 'Puccoon',
@@ -132,15 +132,185 @@ export const NAME_WORDS = {
    'Pier', 'Light', 'Hollow', 'Reach', 'Bay', 'Bowl', 'Crest', 'Overlook',
    'Sands', 'Woods', 'Narrows', 'Cove'],
  ],
- haunted: [
-  ['Gloaming', 'Wraith', 'Spectre', 'Banshee', 'Cobweb', 'Bogle', 'Wisp',
-   'Lychgate', 'Crypt', 'Shroud', 'Cauldron', 'Gourd', 'Pumpkin', 'Hobgoblin',
-   'Bonfire', 'Samhain', 'Nightshade', 'Belladonna', 'Mandrake', 'Wolfsbane',
-   'Nightjar', 'Owlet', 'Rook', 'Gibbous', 'Moonrise', 'Hallow', 'Thornapple',
-   'Hexwood', 'Murkwater', 'Candlewick'],
-  ['Hollow', 'Moor', 'Barrow', 'Fen', 'Mire', 'Wood', 'Gate', 'Hill', 'Rise',
-   'Glen', 'Bog', 'Heath', 'Crossing', 'Lane', 'Bend', 'Down', 'Thicket',
-   'Marsh', 'Copse', 'Knoll'],
+ // The owner's addition (3 November 2026): the Dakota Badlands.
+ desertresort: [
+  ['Summerlin', 'Spring Mountain', 'Oasis Valley', 'Silver State', 'Red Rock', 'Calico Basin', 'Charleston', 'Sunset', 'Pine Shadow',
+   'Lone Mountain', 'Silverado', 'Sahara', 'Desert Inn', 'Tropicana', 'Rainbow', 'Blue Diamond', 'Sundial', 'Paradise', 'Serenade',
+   'Olive Grove', 'Whitney', 'Frenchman Flat', 'McCullough', 'Arroyo', 'Azure', 'Sierra Vista', 'Palomino', 'Cielo', 'Vista',
+   'Mondell', 'Tule', 'Bonanza', 'Kyle', 'Durango', 'Fort Apache', 'Peccole', 'Stardust', 'Flamingo', 'Eldorado'],
+  ['Pines', 'Oasis', 'Springs', 'Highlands', 'Lakes', 'Falls', 'Ranch', 'Reserve', 'Canyon', 'Hills', 'Club', 'Estates', 'Greens', 'Vistas', 'Fountains', 'Terrace', 'Crossing', 'Grove'],
+ ],
+ badlands: [
+  ['Sawtooth', 'Pinnacles', 'Yellowmound', 'Sodtable', 'Clinker', 'Scoria',
+   'Bison', 'Notch', 'Juniper', 'Chokecherry', 'Leadplant', 'Cannonball',
+   'Brule', 'Sage Creek', 'Cedar Pass', 'Badger', 'Tatanka', 'Medora',
+   'Little Missouri', 'Painted Canyon', 'Red Shirt', 'Conata', 'Fossil',
+   'Saddle Pass', 'Gumbo', 'Window', 'Buffalo Gap', 'Sheep Mountain',
+   'Cliff Shelf', 'Bully'],
+  ['Wall', 'Table', 'Breaks', 'Butte', 'Draw', 'Pass', 'Basin', 'Spires',
+   'Overlook', 'Gap', 'Coulee', 'Flats', 'Divide', 'Rim', 'Mounds', 'Badlands',
+   'Point', 'Bench', 'Fork', 'Ridge'],
+ ],
+ // Phase 3 of the US landscapes goal (2 November 2026).
+ highplains: [
+  ['Buffalo', 'Grama', 'Shortgrass', 'Elevator', 'Pumpjack', 'Shelterbelt',
+   'Meadowhawk', 'Pronghorn', 'Dryland', 'Wheatland', 'Windbreak', 'Section',
+   'Tumbleweed', 'Sodbuster', 'Haymeadow', 'Prairiehen', 'Longhorn', 'Cimarron',
+   'Thunderhead', 'Stockyard', 'Flatiron', 'Plainsong', 'Railhead', 'Grassland',
+   'Harrier', 'Fencepost', 'Wagonwheel', 'Sunflower', 'Harvestmoon', 'Prairiefire'],
+  ['Flats', 'Draw', 'Table', 'Rise', 'Crossing', 'Section', 'Ridge', 'Creek',
+   'Bend', 'Plains', 'Breaks', 'Run', 'Divide', 'Junction', 'Range', 'Station',
+   'Line', 'Fork', 'Gap', 'Mesa'],
+ ],
+ sandhills: [
+  ['Soapweed', 'Blowsand', 'Sandbur', 'Stocktank', 'Aermotor', 'Ranchhand',
+   'Hackberry', 'Choppy', 'Redcedar', 'Lark', 'Sharptail', 'Lonetree',
+   'Bunchgrass', 'Sandsage', 'Crane', 'Calving', 'Haystack', 'Spurline',
+   'Wildrose', 'Coyotegrass', 'Prickly', 'Needlegrass', 'Branding', 'Saddle',
+   'Lowland', 'Rawhide', 'Openrange', 'Grassdune', 'Stirrup', 'Cattleguard'],
+  ['Hills', 'Valley', 'Lake', 'Blowout', 'Ranch', 'Table', 'Swale', 'Range',
+   'Knob', 'Basin', 'Pasture', 'Meadow', 'Spring', 'Draw', 'Flat', 'Ridge',
+   'Pocket', 'Rise', 'Bottom', 'Sandhill'],
+ ],
+ oldnortheast: [
+  ['Elmcrest', 'Ivywood', 'Brookline', 'Copperbeech', 'Fieldstone', 'Gatehouse',
+   'Linden', 'Chestnuthill', 'Tudor', 'Greystone', 'Hawthorne', 'Millbrook',
+   'Orchardwood', 'Quarry', 'Rectory', 'Steeplechase', 'Thornbury', 'Whitestone',
+   'Carriage', 'Larchmont', 'Oakhurst', 'Mapleridge', 'Ridgewood', 'Saddlebrook',
+   'Stonebridge', 'Wainscot', 'Highgate', 'Ashgrove', 'Kingsbury', 'Boxwood'],
+  ['Hill', 'Park', 'Hall', 'Manor', 'Brook', 'Glen', 'Green', 'Downs', 'Heights',
+   'Commons', 'Chase', 'Wood', 'Lane', 'Meadow', 'Court', 'Vale', 'Hollow',
+   'Grange', 'Farm', 'Close'],
+ ],
+ pinebarrens: [
+  ['Pitchpine', 'Scruboak', 'Bayberry', 'Beachplum', 'Heathland', 'Sandplain',
+   'Saltmeadow', 'Cranberry', 'Bogiron', 'Tidewater', 'Osprey', 'Shakeroof',
+   'Saltbox', 'Sound', 'Ironstone', 'Eelgrass', 'Broomsedge', 'Swamppink',
+   'Inkberry', 'Pinesap', 'Teaberry', 'Sweetfern', 'Shadbush', 'Marshhawk',
+   'Pinesnake', 'Barrens', 'Cedarbog', 'Firebreak', 'Seabreeze', 'Fogline'],
+  ['Hills', 'Neck', 'Plain', 'Heath', 'Barrens', 'Pond', 'Point', 'Harbor',
+   'Hollow', 'Ridge', 'Landing', 'Bog', 'Moor', 'Shore', 'Run', 'Bluff',
+   'Woods', 'Inlet', 'Dunes', 'Meadow'],
+ ],
+ alaska: [
+  ['Fireweed', 'Blackspruce', 'Iceworm', 'Moose', 'Tundra', 'Aurora', 'Musher',
+   'Sourdough', 'Caribou', 'Denali', 'Chugach', 'Talkeetna', 'Matanuska',
+   'Willow', 'Snowshoe', 'Snowgoose', 'Icefield', 'Muskeg', 'Kodiak', 'Raven',
+   'Salmonrun', 'Northstar', 'Midnight', 'Larchbog', 'Trapline', 'Goldpan',
+   'Cottongrass', 'Bushpilot', 'Dogsled', 'Coldfoot'],
+  ['Flats', 'Pass', 'Lake', 'Ridge', 'Creek', 'Valley', 'Bench', 'Point',
+   'Landing', 'Station', 'Bluff', 'Basin', 'Hollow', 'Crossing', 'Run',
+   'Reach', 'Moraine', 'Cirque', 'Sound', 'Fork'],
+ ],
+ // Phase 5 of the US landscapes goal: the South.
+ longleaf: [
+  ['Wiregrass','Longleaf','Pinestraw','Turkeyoak','Sandhill','Candlestick','Bobwhite','Woodpecker','Pinecone','Sand Pine','Gopher','Fox Squirrel','Sandspur','Resin','Turpentine','Naval Stores','Tarheel','Carolina','Pinewood','Sandy Run'],
+  ['Pines','Ridge','Hollow','Run','Branch','Hills','Crossing','Glade','Flats','Station','Bend','Lake','Creek','Field','Woods','Grove','Barrens','Savanna','Pond','Gap'],
+ ],
+ piedmont: [
+  ['Red Clay','Dogwood','Magnolia','Tulip','Sweetgum','Azalea','Mockingbird','Peachtree','Mill Creek','Kudzu','Shoals','Fall Line','Catawba','Chattahoochee','Hickory Nut','Honeysuckle','Muscadine','Cotton Mill','Brick Kiln','Sourwood'],
+  ['Hills','Run','Creek','Ridge','Hollow','Bend','Shoals','Mill','Branch','Crossing','Farms','Grove','Lake','Knob','Fork','Springs','Gap','Woods','Meadow','Station'],
+ ],
+ lowcountry: [
+  ['Spartina','Oyster','Palmetto','Marsh Hen','Egret','Fiddler Crab','Live Oak','Spanish Moss','Sea Island','Rice Field','Indigo','Plough Mud','Pluff','Shrimp Boat','Heron','Sweetgrass','Tabby','Wando','Edisto','Marsh Tacky'],
+  ['Marsh','Creek','Landing','Island','Plantation','Point','Neck','Bluff','Sound','Hammock','Inlet','Cove','Reach','Dock','Banks','Oaks','Ferry','Harbor','Shoals','Woods'],
+ ],
+ bayou: [
+  ['Cypress','Tupelo','Pirogue','Crawfish','Levee','Batture','Cottonmouth','Nutria','Bousillage','Chenier','Acadiana','Boudreaux','Spillway','Teche','Atchafalaya','Cane Brake','Pecan Bottom','Sugar Mill','Mudbug','Zydeco'],
+  ['Bayou','Landing','Levee','Swamp','Bend','Island','Bottoms','Point','Ridge','Crossing','Lake','Pass','Cove','Brake','Chute','Oaks','Ferry','Parish','Mill','Woods'],
+ ],
+ flatwoods: [
+  ['Slash Pine','Spanish Bayonet','Saw Palmetto','Gator','Sandhill Crane','Orange Grove','Cracker','Scrub Jay','Armadillo','Lake Wales','Cypress Dome','Kissimmee','Hammock','Flatwood','Turpentine Camp','Cattle Pen','Sinkhole','Wiregrass Prairie','Cabbage Palm','Sandspur Flats'],
+  ['Flats','Lake','Prairie','Hammock','Pines','Ranch','Grove','Dome','Run','Slough','Crossing','Creek','Island','Pond','Woods','Springs','Ridge','Landing','Bluff','Groves'],
+ ],
+ // Phase 6: Texas and the deserts.
+ hillcountry: [
+  ['Cedar Break','Limestone','Ashe','Live Oak Draw','Pedernales','Guadalupe','Blanco','Llano','Frio','Caprock','Spanish Oak','Mountain Laurel','Armadillo Flats','Bandera','Comal','Dripping Springs','Bee Cave','Wimberley','Painted Bunting','Goldencheek'],
+  ['Hills','Draw','Springs','Bluff','Ranch','Crossing','Bend','Creek','Hollow','Divide','Mesa','Gap','Ridge','Falls','Canyon','Pass','Station','Valley','Knob','Fork'],
+ ],
+ bluebonnet: [
+  ['Bluebonnet','Blackland','Indian Paintbrush','Bois d Arc','Pecan Creek','Cedar Elm','Trinity','Brazos','Waxahachie','Ennis','Scissortail','Dickcissel','Cottonseed','Gin House','Prairie Dog','Horned Lark','Primrose','Sorghum','Hedge Apple','Long Horn'],
+  ['Prairie','Fields','Meadow','Farms','Crossing','Station','Creek','Bottoms','Ranch','Run','Lake','Grove','Bend','Flats','Hill','Pond','Road','Mill','Fork','Downs'],
+ ],
+ gulfcoast: [
+  ['Galveston Bay','Buffalo Bayou','Cypress Creek','Brazoria','Matagorda','San Jacinto','Clear Lake','Kemah','Roseate','Whooping Crane','Shrimp Dock','Sugar Land','Rice Belt','Live Oak Point','Cordgrass','Gulf Breeze','Seabrook','Bolivar','Redfish','Nutria Point'],
+  ['Bayou','Landing','Shores','Point','Harbor','Marsh','Island','Prairie','Oaks','Pines','Inlet','Cove','Reach','Dock','Banks','Bend','Creek','Pass','Bay','Lake'],
+ ],
+ mojave: [
+  ['Joshua','Creosote Flat','Mojave','Amargosa','Calico','Kelso','Cima','Ivanpah','Desert Tortoise','Chuckwalla','Silver Lake','Dry Lake','Bristle','Beavertail','Smoke Tree','Coyote Wash','Burro','Pinto','Lucerne','Old Woman'],
+  ['Wash','Flats','Basin','Mesa','Springs','Valley','Pass','Butte','Dunes','Ridge','Wells','Station','Canyon','Playa','Range','Crossing','Rock','Point','Bajada','Gap'],
+ ],
+ palms: [
+  ['Date Grove','Fan Palm','Oasis','San Jacinto Peak','Coachella','Thousand Palms','Tamarisk Row','Oleander','Bougainvillea','Medjool','Agua Caliente','Chino Canyon','Windmill Pass','Salton','Mecca','Thermal','Cathedral City','Smoke Tree Ranch','Santa Rosa','Sunrise Palm'],
+  ['Palms','Oasis','Springs','Canyon','Grove','Ranch','Mesa','Cove','Wash','Villas','Gardens','Court','Pointe','Vista','Lakes','Hills','Park','Club','Terrace','Row'],
+ ],
+ chihuahuan: [
+  ['Lechuguilla','Sotol','Soaptree','Candlewood','Chisos','Davis','Guadalupe Peak','Franklin','Hueco','Organ','Tularosa','Jornada','Terlingua','Marfa','Fort Davis','Collared Peccary','Scaled Quail','Candelilla','Emory','Alligator Bark'],
+  ['Mesa','Draw','Basin','Tanks','Springs','Canyon','Flats','Peak','Wells','Ridge','Arroyo','Gap','Bajada','Bluff','Butte','Pass','Rim','Crossing','Ranch','Window'],
+ ],
+ // Phase 7: California and the western mountains.
+ monterey: [
+  ['Sand Dollar','Lone Cypress','Carmel','Asilomar','Point Lobos','Otter Cove','Sea Lion','Kelp','Abalone','Fog Bank','Big Sur','Moss Beach','Seal Rock','Bird Rock','Fanshell','Huckleberry Hill','Kelp Forest','Pescadero','Stillwater','Sea Otter'],
+  ['Point','Cove','Links','Headland','Bluffs','Reach','Shore','Rocks','Beach','Landing','Cliffs','Overlook','Bay','Sound','Cypress','Pines','Hill','Dunes','Strand','Harbor'],
+ ],
+ socal: [
+  ['Barranca','Chaparral','Santa Ana','Arroyo Seco','Sycamore Canyon','Topanga','Malibu Creek','Ocean Bluff','Jacaranda','Mission Road','San Gabriel','Laguna','Encinitas','Rancho','Sage Scrub','Coyote Hills','Eucalyptus Row','Pepper Tree','Red Tile','Agoura'],
+  ['Canyon','Ranch','Mesa','Hills','Arroyo','Ridge','Vista','Heights','Springs','Oaks','Grove','Bluff','Point','Trail','Estates','Park','Valley','Crest','Highlands','Gardens'],
+ ],
+ winecountry: [
+  ['Cabernet','Zinfandel','Chardonnay','Vintner','Cooperage','Crush Pad','Valley Oak','Blue Oak','Mayacamas','Carneros','Russian River','Alexander','Rutherford','Oakville','Stags Leap','Napa River','Poppy','Olive Press','Barrel Room','Old Vine'],
+  ['Vineyard','Estate','Ranch','Cellars','Hills','Valley','Bench','Slope','Oaks','Creek','Knoll','Crossing','Terrace','Row','Grange','Meadow','Ridge','Springs','Glen','Mill'],
+ ],
+ cascades: [
+  ['Noble Fir','Subalpine Larch','Beargrass','Thimbleberry','Columnar','Snow Cone','Hood View','Pinnacle','St Helens','Adams','Glacier Creek','Timberline','Cloudcap','Lava Bed','Silver Fir','Paradise Meadow','Sahale','Ohanapecosh','Wy East','Tamanawas'],
+  ['Ridge','Meadow','Falls','Lodge','Pass','Basin','Lake','Creek','Divide','Lookout','Fork','Crossing','Peak','Hollow','Glade','Springs','Trail','Butte','Run','Camp'],
+ ],
+ sierra: [
+  ['Sugar Pine','Incense Cedar','Red Fir','Manzanita','Mule Ear','Granite Dome','Tahoe','Donner','Tuolumne','Mono','Kings Canyon','Mineral King','Lodgepole Flat','Echo Summit','Ebbetts','Sonora Pass','Mariposa','Glacier Point','Half Dome','Desolation'],
+  ['Meadow','Dome','Lake','Summit','Pass','Basin','Falls','Ridge','Creek','Valley','Springs','Lodge','Crest','Peak','Bowl','Fork','Camp','Flat','Spire','Station'],
+ ],
+ ponderosa: [
+  ['Ponderosa','Gambel Oak','Mogollon','Coconino','Kaibab','Humphreys','Cinder','Sunset Crater','Abert','Elk Park','Bitterbrush','Mahogany','Lava Flow','Mormon Lake','Woody Mountain','Fort Valley','Snowbowl','Mount Elden','Walnut Canyon','Oak Creek'],
+  ['Park','Rim','Mesa','Meadow','Ridge','Canyon','Flat','Springs','Draw','Lake','Pines','Crossing','Tank','Peak','Butte','Valley','Lodge','Ranch','Trail','Hollow'],
+ ],
+ // Phase 8a: the high desert and the Cross Timbers.
+ sagebrush: [
+  ['Sagebrush','Wheatgrass','Rimrock','Coulee','Ritzville','Balsamroot','Bitterroot','Scabland','Channeled','Steptoe','Sage Grouse','Rattlesnake Ridge','Juniper Draw','Lava Rim','Columbia','Horse Heaven','Frenchman','Dry Falls','Owyhee','Snake River'],
+  ['Coulee','Rim','Flats','Draw','Bench','Butte','Springs','Ridge','Breaks','Basin','Canyon','Crossing','Hills','Mesa','Station','Ranch','Lake','Point','Gap','Plateau'],
+ ],
+ redrock: [
+  ['Slickrock','Hoodoo','Pinyon','Cliffrose','Blackbrush','Canyonlands','Arches','Fisher Towers','Castle Valley','Navajo','Kayenta','Wingate','Entrada','Cedar Mesa','Comb Ridge','Moab','Bluff','Indian Creek','Valley of Gods','Moki'],
+  ['Mesa','Canyon','Rim','Arch','Fin','Wash','Butte','Tower','Bench','Spire','Reef','Point','Narrows','Alcove','Gulch','Tank','Window','Park','Overlook','Bluffs'],
+ ],
+ crosstimbers: [
+  ['Post Oak','Blackjack','Cross Timbers','Red Dirt','Kiamichi','Canadian','Washita','Osage Hills','Arbuckle','Wichita','Pump Jack','Oil Patch','Section Line','Red Cedar','Mistletoe','Greater Prairie','Chisholm','Boomer','Sooner','Indian Blanket'],
+  ['Timbers','Hills','Creek','Crossing','Ranch','Bend','Ridge','Lake','Bottoms','Station','Prairie','Woods','Trail','Fork','Springs','Hollow','Grove','Knob','Flats','Draw'],
+ ],
+ // Phase 8b: Appalachia.
+ blueridge: [
+  ['Blue Haze','Chestnut Oak','Rosebay','Laurel Hell','Flame Azalea','Hemlock Cove','Beech Mountain','Wiseman','Roan','Craggy','Balsam Gap','Pisgah','Watauga','Doughton','Rough Ridge','Whitetop','Looking Glass','Shining Rock','Graveyard Fields','Tanawha'],
+  ['Gap','Knob','Cove','Hollow','Ridge','Bald','Falls','Creek','Branch','Overlook','Laurel','Run','Notch','Summit','Fork','Meadow','Spring','Mill','Bluff','Lodge'],
+ ],
+ ozarks: [
+  ['Shortleaf','Glade','Buffalo River','White River','Current River','Big Piney','Gasconade','Eleven Point','Hercules','Mark Twain','Bull Shoals','Table Rock','Taneycomo','Boston Mountain','Chinquapin','Persimmon Hollow','Spring Fed','Karst','Losing Stream','Calico Rock'],
+  ['Hollow','Bluff','Spring','Ridge','Knob','Creek','Bottoms','Glade','Ford','Bend','Mill','Cave','Shoals','Mountain','Fork','Branch','Lake','Run','Crossing','Valley'],
+ ],
+ bluegrass: [
+  ['Thoroughbred','Paddock','Four Board','Tobacco Barn','Limestone Spring','Elkhorn','Kentucky River','Versailles','Paris Pike','Iron Works','Stallion','Yearling','Bourbon','Rickhouse','Bur Oak','Hickory Hall','Stone Fence','Clark County','Keeneland','Saddlebred'],
+  ['Farm','Pike','Stables','Downs','Run','Meadow','Hill','Spring','Hall','Station','Pasture','Crossing','Bend','Grove','Barn','Lane','Paddock','Ridge','Creek','Manor'],
+ ],
+ // Phase 8c: the north, the Pacific links and Hawaii.
+ northwoods: [
+  ['Red Pine','Jack Pine','Bemidji','Loon','Walleye','Muskie','Boundary Waters','Northwoods','Ojibwe','Wild Rice','Birch Bark','Portage','Voyageur','Iron Range','Mesabi','Gunflint','Chippewa','Lac du Flambeau','Pine Marten','Wolf Lake'],
+  ['Lake','Pines','Point','Bay','Narrows','Landing','Portage','Island','Shore','Lodge','Woods','Bog','Falls','Rapids','Ridge','Cove','Trail','Camp','Hollow','Flowage'],
+ ],
+ oregondunes: [
+  ['Shore Pine','Seven Devils','Bullards','Coquille','Cape Blanco','Sea Stack','Face Rock','Arago','Tidepool','Umpqua','Siuslaw','Coos','Heceta','Sunset Bay','Sea Lion Rock','Gray Whale','Tufted Puffin','Fog Horn','Myrtlewood','Port Orford'],
+  ['Dunes','Bluff','Head','Point','Strand','Links','Spit','Cove','Reach','Beach','Cape','Rock','Shore','Heath','Hollow','Ridge','Trail','Sound','Landing','Light'],
+ ],
+ hawaii: [
+  ['Monkeypod','Ohia','Lehua','Lei','Heliconia','Ti Leaf','Aa Field','Pahoehoe','Kiawe','Haleakala','Mauna','Kona Coast','Hana','Honokahua','Napili','Makena','Hapuna','Pololu','Nene','Trade Wind'],
+  ['Point','Bay','Ridge','Gulch','Cove','Beach','Bluffs','Valley','Plantation','Ranch','Heights','Coast','Shores','Falls','Crater','Reef','Rise','Gardens','Lookout','Landing'],
  ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately

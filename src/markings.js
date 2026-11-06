@@ -1,4 +1,5 @@
-// AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; the study,
+// A COURSE'S MARKINGS (architect-courses, phase 2; on every generated course
+// since Architect was removed, 2 November 2026; the study,
 // workstream I): what a club puts out on a course it looks after.
 //
 //   stakes      red stakes round every pond and along creeks near play, the
@@ -13,7 +14,7 @@
 // Decoration: nothing here is solid or changes a lie (a real stake is a
 // movable obstruction, and a ball rarely meets one). Placed in world
 // coordinates, as `{kind, x, z, rot}`; renderer.js `addMarkings` draws them
-// instanced. Architect only. Pure: tests/markings.test.mjs.
+// instanced. Every generated course. Pure: tests/markings.test.mjs.
 import {ovalRadius} from './course.js';
 
 const YARD = .9144;
@@ -96,18 +97,32 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
 // WEAR (architect-courses, phase 3; the study, workstream N): divots where
 // golf is played -- thickest on par-3 tees, where irons dig (USGA: a par 3's
 // tee wants twice the area per round for that reason), a few on every back
-// tee, and scattered where drives land (architect.js `landingZones`). A busy
-// municipal course is worn most and a new or restored course least. Each is
-// a small dark patch on the ground; decoration, it changes no lie. PLACED: the
-// counts and sizes.
-import {landingZones} from './architect.js';
-const WEAR = {municipal: 1.5, members: 1, resort: .8, championship: .7};
-const AGE_WEAR = {new: .4, mature: 1, old: 1.1, restored: .7};
+// tee, and scattered where drives land (`landingZones`). Each is a small dark
+// patch on the ground; decoration, it changes no lie. PLACED: the counts and
+// sizes. (Architect wore a municipal course most and a new one least, by its
+// club and age dials; since the designer went, 2 November 2026, every course
+// is worn as its members' club of mature age was.)
+import {GOLFER_TABLE} from './golfer-table.js';
+const YD = .9144;
+// Where drives come down: a good player's from the back tee, an average
+// golfer's from the middle one, along the hole's line (moved here from
+// architect.js with the designer's removal).
+function alongLine(center, from, metres, length) {
+ let d = 0, z = from;
+ while (z < length && d < metres) { const next = Math.min(length, z + 1); d += Math.hypot(center(next) - center(z), next - z); z = next; }
+ return z;
+}
+export function landingZones({center, length, tees}) {
+ const T = GOLFER_TABLE;
+ const good = Math.min(length - 95, alongLine(center, tees.blue?.z ?? 0, T.good.clubs.driver.total * YD, length));
+ const average = Math.min(length - 110, alongLine(center, tees.white?.z ?? 0, T.average.clubs.driver.total * YD, length));
+ return {good, average};
+}
 function stream(seed) { let a = 2166136261; for (const c of String(seed)) { a ^= c.charCodeAt(0); a = Math.imul(a, 16777619); } return () => { a += 0x6D2B79F5; let t = Math.imul(a ^ a >>> 15, a | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 export function placeWear({holes, s, surface}) {
- const out = [], k = (WEAR[s.archClub] ?? 1) * (AGE_WEAR[s.archAge] ?? 1);
+ const out = [], k = 1;
  for (const h of holes) {
-  const r = stream(`${s.seed}|arch|wear|${s.biome}|${h.hole}`);
+  const r = stream(`${s.seed}|world|wear|${s.biome}|${h.hole}`);
   // Each divot points where the shot went -- at the green (the owner's
   // review: they pointed all over the place). A divot is drawn long along its
   // own x, which a turn of `rot` carries to (cos rot, -sin rot); a few

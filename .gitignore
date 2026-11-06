@@ -22,6 +22,14 @@ RELEASE_SHA256.txt
 bench/shots/
 # Builds compared, results and the GPU run log of tools/frame-ab.mjs.
 bench/ab/
+# Real courses' LIDAR surveys, one folder a course (the owner, 1 November
+# 2026: "put the lidar files into the repo (not committed)"). Gigabytes of
+# other people's data: tools/lidar-home.mjs names the folders.
+bench/lidar/
+# Real courses built from that LIDAR and OpenStreetMap by tools/build-courses.mjs:
+# other people's data, for testing only.
+bench/courses/
+bench/meshy/
 
 # Reports, studies and saved sources are made for the owner and stay on this
 # machine (AGENTS.md, *What stays local*). They were

@@ -67,6 +67,17 @@ test('the statement body goes to an anchor that is inside main()', () => {
   'the shader body is not attached to the color_fragment link -- it would land at global scope');
 });
 
+test('the ground painter is copied in twice, and three times on a built course', () => {
+ // The compiler a browser uses on Windows copies a function in at every call,
+ // and groundPaint is most of the ground's compile: seven calls cost 7.8 s a
+ // program and most of the first start's wait, two cost 2 s (4 November 2026).
+ const calls = name => SRC.split(name + '(').length - 2; // Less its definition.
+ assert.equal(calls('groundPaint'), 2, 'one in paintLayer, one in the built branch');
+ assert.equal(calls('paintLayer'), 2);
+ const built = SRC.slice(SRC.indexOf('#ifdef BUILT_COURSE'), SRC.indexOf('#endif', SRC.indexOf('#ifdef BUILT_COURSE')));
+ assert.ok(built.includes('groundPaint('), 'the built call belongs to a built course\'s program');
+});
+
 test('the program cache key changes when the shader does', () => {
  // three caches compiled programs by this key. Leave it alone across a shader
  // edit and a stale program can be handed back.

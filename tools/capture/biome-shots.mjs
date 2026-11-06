@@ -10,7 +10,10 @@
 //       every candidate view of each landscape, at Ultra, 3840 x 2160 (a 1920 x
 //       1080 page at density 2, HUD hidden), as PNG masters in
 //       bench/shots/biome-shots/<label>/<biome>/<view>.png, and a contact sheet
-//   node tools/capture/biome-shots.mjs encode [--from <label>]
+//       (`--size 1280x720`: that page at density 1, to look a set over;
+//       `--picks` in place of `--views`: only the views each landscape's cards
+//       use, when the land has moved and the cards want retaking)
+//   node tools/capture/biome-shots.mjs encode [--from <label>] [--only biome,...]
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
 //
@@ -26,7 +29,22 @@ import {BIOMES} from '../../src/biomes.js';
 const argv = process.argv.slice(2);
 const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const mode = argv.shift();
-const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest');
+// `--season s`: the course in that season (seasons.js; summer, the cards', by default).
+const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
+// `--picks`: only the views each landscape's cards use (PICKS), when the land
+// has moved and the cards want retaking.
+const picks = argv.includes('--picks') && argv.splice(argv.indexOf('--picks'), 1).length > 0;
+// `--homes 60`: the course with fairway homes at that density, and `--seed s`
+// another course than the card's (the `street` views need houses; they are a
+// course setting, off by default).
+const homes = opt('--homes'), seedOverride = opt('--seed');
+// `--size 1280x720`: a page of that size at density 1, for looking a set over
+// (not masters for the cards).
+const size = opt('--size')?.split('x').map(Number);
+// `encode --only a,b`: re-encode those landscapes' pictures alone, leaving the
+// others' files as they are (the US landscapes goal: new landscapes added
+// one phase at a time, from their own set of masters).
+const onlyBiomes = opt('--only')?.split(',');
 const ROOT = path.join('bench', 'shots', 'biome-shots');
 
 // What the cards are drawn at: about 380 px wide at 1280 x 720, so about 1140
@@ -37,7 +55,16 @@ export const WIDTH = 960, QUALITY = .7, BUDGET = 3 * 1024 * 1024;
 
 // The seed each landscape is taken on: one whose holes show it well (chosen
 // in the rounds; a seed's course is the same on every copy of this version).
-const SEEDS = {pnw: 'CASCADE', desert: 'MESA', mountain: 'SUMMIT', links: 'DUNE', midwest: 'PRAIRIE', island: 'LAGOON', redwood: 'GROVE', autumn: 'MAPLE', haunted: 'GLOAMING', lakeshore: 'BEACON'};
+const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUNE', heartland: 'PRAIRIE', keys: 'LAGOON', redwood: 'GROVE', newengland: 'MAPLE', lakedunes: 'BEACON',
+ // Phase 3 of the US landscapes goal (first seeds, not yet chosen in rounds).
+ highplains: 'BIGSKY', sandhills: 'BLOWOUT', oldnortheast: 'ELMWALK', pinebarrens: 'PITCHPINE', alaska: 'FIREWEED',
+ longleaf: 'PINESTRAW', piedmont: 'REDCLAY', lowcountry: 'MARSH', bayou: 'CYPRESS', flatwoods: 'PALMETTO',
+ hillcountry: 'CEDARBREAK', bluebonnet: 'PAINTBRUSH', gulfcoast: 'SHELLROAD', mojave: 'JOSHUA', palms: 'OASIS', chihuahuan: 'SOTOL',
+ monterey: 'SEASTACK', socal: 'BARRANCA', winecountry: 'OLDVINE', cascades: 'SNOWCONE', sierra: 'GRANITE', ponderosa: 'CINDER',
+ sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
+ blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
+ northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -57,6 +84,31 @@ const VIEWS = [
  {name: 'h2-low', hole: 1, when: 'afternoon', cam: {hole: 1, fromPin: 90, around: 150, height: 3, pitch: -1}},
  {name: 'h3-low', hole: 2, when: 'morning', cam: {hole: 2, fromPin: 110, around: 10, height: 2.5, pitch: -1}},
  {name: 'far-high', hole: 0, when: 'afternoon', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
+ // The streets kit (3 November 2026): above the parking lot, looking along
+ // the drive to the clubhouse -- the road surfaces, the lot and the barn.
+ {name: 'lot', hole: 0, when: 'afternoon', cam: `w => { const L = w.lot || {x: 0, z: 0}; return {x: L.x - 55, z: L.z - 55, yaw: 45, height: 40, pitch: -30}; }`},
+ // A landscape's longest wall or fence, from 12 m off and 4 m up (the seasons:
+ // snow along its top). A landscape with none gets the middle of the map.
+ {name: 'wall', hole: 0, when: 'afternoon', cam: `w => { const a = (w.walls || []).slice().sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0]; if (!a) return {x: 0, z: 0, yaw: 0, height: 60, pitch: -30}; const yaw = Math.atan2(a.bx - a.ax, a.bz - a.az) * 180 / Math.PI + 40, r = yaw * Math.PI / 180; return {x: (a.ax + a.bx) / 2 - Math.sin(r) * 12, z: (a.az + a.bz) / 2 - Math.cos(r) * 12, yaw, height: 4, pitch: -14}; }`},
+ // The fairway homes' streets (roads.js placeStreets, generator 84), on the
+ // busiest stretch: the house with the most garaged neighbours within 130 m.
+ // `street` stands on the street and looks along it past the lanes and the
+ // mailboxes; `street-high` from 30 m up; `mailbox` up close at that house's
+ // lane; `street-back` from the hole's side, the houses' backs and the street
+ // beyond them.
+ {name: 'street', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {lane: {x: 0, z: 0}}, B = near(A)[0] || {lane: {x: A.lane.x + 1, z: A.lane.z + 1}}, dx = B.lane.x - A.lane.x, dz = B.lane.z - A.lane.z, l = Math.hypot(dx, dz) || 1; return {x: A.lane.x - dx / l * 24, z: A.lane.z - dz / l * 24, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: 5, pitch: -7}; }`},
+ {name: 'street-high', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {lane: {x: 0, z: 0}}, B = near(A)[0] || {lane: {x: A.lane.x + 1, z: A.lane.z + 1}}, dx = B.lane.x - A.lane.x, dz = B.lane.z - A.lane.z, l = Math.hypot(dx, dz) || 1; return {x: A.lane.x - dx / l * 40, z: A.lane.z - dz / l * 40, yaw: Math.atan2(dx, dz) * 180 / Math.PI, height: 30, pitch: -24}; }`},
+ {name: 'mailbox', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {x: 0, z: 0, rotation: 0, lane: {x: 0, z: 0}}, dx = Math.sin(A.rotation), dz = Math.cos(A.rotation); return {x: A.lane.x + dx * 9 + dz * 7, z: A.lane.z + dz * 9 - dx * 7, yaw: Math.atan2(A.lane.x - dx * 6 - (A.lane.x + dx * 9 + dz * 7), A.lane.z - dz * 6 - (A.lane.z + dz * 9 - dx * 7)) * 180 / Math.PI, height: 2.6, pitch: -9}; }`},
+ {name: 'street-back', hole: 0, when: 'afternoon', cam: `w => { const G = (w.homes || []).filter(h => h.lane), near = h => G.filter(o => o !== h && Math.hypot(o.x - h.x, o.z - h.z) < 130), A = G.slice().sort((a, b) => near(b).length - near(a).length)[0] || {x: 0, z: 0, rotation: 0}, dx = Math.sin(A.rotation), dz = Math.cos(A.rotation); return {x: A.x - dx * 62, z: A.z - dz * 62, yaw: A.rotation * 180 / Math.PI, height: 12, pitch: -8}; }`},
+ // The sea where it comes in among the holes (generator 80, the
+ // Lowcountry's tidal creeks; Monterey's shore): the 10 m cell with the most
+ // open sea round it inside the map, seen from 70 m off and 40 m up.
+ {name: 'sea-in', hole: 0, when: 'afternoon', cam: `w => { const wet = (x, z) => w.surface(x, z) === 'water' && w.height(x, z) < -.3 && !(w.lakeOwner && w.lakeOwner(x, z)); let best = {n: -1, x: 0, z: 0}; for (let x = -w.halfX * .9; x < w.halfX * .9; x += 30) for (let z = -w.halfZ * .9; z < w.halfZ * .9; z += 30) { if (!wet(x, z)) continue; let n = 0; for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) if (wet(x + i * 10, z + j * 10)) n++; if (n > best.n) best = {n, x, z}; } return {x: best.x - 50, z: best.z - 50, yaw: 45, height: 40, pitch: -24}; }`},
+ // The long grass close to (3 November 2026, the prairie grasses seen): the
+ // spot near hole 1 where the rough's drifts are thickest (vegetation.js
+ // addLongGrass's own wave, far enough off the mown ground), from 2 m up
+ // looking toward the green.
+ {name: 'rough-low', hole: 0, when: 'afternoon', cam: `w => { const h = w.holes[0], g = h.worldGreen, t = h.worldTee, drift = (x, z) => .5 + .5 * Math.sin(x / 53 + Math.sin(z / 71) * 1.7) * Math.cos(z / 47 - Math.sin(x / 89)); let best = {n: -1, x: t.x, z: t.z}; for (let x = -w.halfX; x < w.halfX; x += 6) for (let z = -w.halfZ; z < w.halfZ; z += 6) { const d = Math.hypot(x - g.x, z - g.z), n = w.nearest(x, z).d; if (d > 220 || n < 26 || n > 60 || w.surface(x, z) !== 'rough') continue; const v = drift(x, z) - d / 2000; if (v > best.n) best = {n: v, x, z}; } return {x: best.x, z: best.z, yaw: Math.atan2(g.x - best.x, g.z - best.z) * 180 / Math.PI, height: 2, pitch: -4}; }`},
 ];
 
 // THE PICKS: the views each landscape's cards show, in order (at least four).
@@ -68,17 +120,49 @@ export const PICKS = {
  // tree or long grass in front), the green close to (a flat colour on a card),
  // golden hour at a tee (too dark); golden hour from above only where it is
  // clear (Desert, Autumn; elsewhere a brown haze).
- pnw: ['overview', 'h1-behind', 'h5-approach', 'h2-side', 'h3-high'],
- desert: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
- mountain: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ puget: ['overview', 'h1-behind', 'h5-approach', 'h2-side', 'h3-high'],
+ sonoran: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
+ rockies: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  links: ['overview', 'h1-behind', 'h3-high', 'h2-side'],
- midwest: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
- island: ['overview', 'h1-behind', 'h3-high', 'h2-side', 'h5-approach'],
+ heartland: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ keys: ['overview', 'h1-behind', 'h3-high', 'h2-side', 'h5-approach'],
  // Round 2: low views under the giants (the high ones stood in the crowns).
  redwood: ['overview', 'h2-low', 'h5-approach', 'h3-low', 'h1-tee'],
- autumn: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
- haunted: ['h1-behind', 'h2-side', 'overview', 'h5-approach'],
- lakeshore: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ newengland: ['overview', 'h1-behind', 'h2-side', 'overview-golden', 'h3-high'],
+ lakedunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ highplains: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ sandhills: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ longleaf: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ piedmont: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ lowcountry: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ bayou: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ flatwoods: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ hillcountry: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ bluebonnet: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ gulfcoast: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ mojave: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ palms: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ chihuahuan: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ monterey: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ socal: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ winecountry: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ cascades: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ sierra: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ ponderosa: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ sagebrush: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ redrock: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ crosstimbers: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ blueridge: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ ozarks: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ bluegrass: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ northwoods: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ oregondunes: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ hawaii: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ badlands: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
+ desertresort: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
 };
 
 
@@ -88,11 +172,11 @@ async function take(biomes) {
   for (const biome of biomes) {
    const dir = path.join(ROOT, label, biome);
    fs.mkdirSync(dir, {recursive: true});
-   const p = await openGame(b, {width: 1920, height: 1080, density: 2, quality: 'ultra'});
-   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: SEEDS[biome]});
+   const p = await openGame(b, size ? {width: size[0], height: size[1], density: 1, quality: 'ultra'} : {width: 1920, height: 1080, density: 2, quality: 'ultra'});
+   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
-   for (const v of VIEWS.filter(v => !only || only.includes(v.name))) {
+   for (const v of VIEWS.filter(v => (picks ? PICKS[biome] : only ?? [v.name]).includes(v.name))) {
     if (v.hole !== hole) { await p.evaluate(h => window.lab.hole(h), v.hole); hole = v.hole; await p.waitForTimeout(4000); await p.addStyleTag({content: HIDE_HUD}); }
     await p.evaluate(([cam, at]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
      window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when)]);
@@ -114,12 +198,13 @@ async function take(biomes) {
 async function encode() {
  const out = path.join('src', 'shots');
  fs.mkdirSync(out, {recursive: true});
- for (const f of fs.readdirSync(out)) if (f.endsWith('.webp')) fs.rmSync(path.join(out, f));
+ for (const f of fs.readdirSync(out)) if (f.endsWith('.webp') && (!onlyBiomes || onlyBiomes.includes(f.replace(/-[0-9]+[.]webp$/, '')))) fs.rmSync(path.join(out, f));
  const b = await launch();
  let total = 0;
  try {
   const p = await (await b.newContext()).newPage();
   for (const [biome, views] of Object.entries(PICKS)) {
+   if (onlyBiomes && !onlyBiomes.includes(biome)) continue;
    let n = 0;
    for (const v of views) {
     const src = path.join(ROOT, from, biome, `${v}.png`);
@@ -151,4 +236,4 @@ if (mode === 'take') {
  for (const k of biomes) if (!BIOMES[k] || !SEEDS[k]) throw Error(`unknown landscape ${k}`);
  await take(biomes);
 } else if (mode === 'encode') await encode();
-else console.log('usage: biome-shots.mjs take [biome ...] [--views a,b] [--label r1] | encode [--from label]');
+else console.log('usage: biome-shots.mjs take [biome ...] [--views a,b] [--label r1] | encode [--from label] [--only a,b]');

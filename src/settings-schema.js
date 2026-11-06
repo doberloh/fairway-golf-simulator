@@ -10,11 +10,23 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-//   ARCHITECT_VERSION the behaviour of the Architect designer alone (the
-//                     architect-courses branch, 30 October 2026). Classic
-//                     courses never read it. See `generatorFor` below and
-//                     PROJECT_HANDOFF *TWO DESIGNERS, ONE WORLD*.
-export const SCHEMA_VERSION=14;
+//   (ARCHITECT_VERSION, the Architect designer's own number, went with the
+//   designer on 2 November 2026: the owner. Its history is kept below.)
+export const SCHEMA_VERSION=27;
+// 17: the landscapes renamed for the regions of the USA (the owner, 2 November
+//     2026: "Lets change all of the base biomes names to match what they would
+//     be called under this new plan"). `biome`'s options take their new keys
+//     -- pnw puget, desert sonoran, mountain rockies, midwest heartland, island
+//     keys, autumn newengland, lakeshore lakedunes; redwood and links keep
+//     theirs -- and a save on an old key opens on its new one
+//     (regions.js OLD_KEYS; tests/settings-schema.test.mjs).
+// 16: Architect removed (the owner, 2 November 2026: "Architect mode needs to
+//     be removed. We are going to use the new builder and have real humans do
+//     the work"). `designer`, `archStyle`, `archClub`, `archAge` and
+//     `archStory` go; a save that carried them opens as the generator's
+//     course of the same seed (tests/settings-schema.test.mjs).
+// 15: Haunted Hollow removed (the owner, 2 November 2026: the US landscapes
+//     goal). `biome` loses an option; a save on it opens on Autumn.
 // 14: `archHand` removed (the owner, 31 October 2026: "leave those tools for
 //     the architect to use"). The studio's Hand tools are gone; the architect
 //     still lays its own hand-made signatures from the seed. A save that
@@ -278,13 +290,199 @@ export const SCHEMA_VERSION=14;
 //     sited on that ground with it.
 //     Architect's ground unchanged (it had the fade); its stamp moves with
 //     this number.
-export const GENERATOR_VERSION=53;
+// 54: Haunted Hollow removed (the owner, 2 November 2026; the US landscapes
+//     goal). No other landscape's ground moved (the fingerprints), but an
+//     endless run and Surprise me roll their landscape from one fewer, so
+//     the same run seed grows other holes.
+// 55: Architect removed (the owner, 2 November 2026); its world pieces come
+//     to every generated course -- the clubhouse, cart paths and bridges,
+//     markings and divots, dressed water, walls, buildings and landmarks,
+//     animals (tournament week and people gone) -- so every landscape moved
+//     (houses and trees keep off the new pieces). Every path over water is a
+//     bridge, the clubhouse's link to the network included; that link stops
+//     at the first path it meets, and a join may climb 28% (paths.js
+//     JOIN_GRADE). The clubhouse keeps 10 m off the paths (was 3).
+// 56: the landscapes' new keys (the US landscapes goal, 2 November 2026;
+//     SCHEMA_VERSION 17). The key is part of the seed of the world pieces'
+//     streams and of the course name, so the seven renamed landscapes moved
+//     (puget, sonoran, rockies, heartland, keys, newengland, lakedunes);
+//     Links and Redwood Coast kept their keys and their ground.
+// 57: the Pacific pack (the US landscapes goal, step 3): Puget Sound plants
+//     madrone, Garry oak, bigleaf maple, Pacific dogwood, vine maple, Oregon
+//     grape and Scotch broom among its pines and cedars; Redwood Coast bay
+//     laurel, Pacific rhododendron and Douglas iris. Both moved.
+// 58: the mountain pack (step 3): the Rockies plant lodgepole pine (in the
+//     stands and the open), blue spruce, willow thickets, lupine and
+//     columbine, and its field walls are split-rail fences (a wider solid
+//     box). Rockies moved.
+// 59: the world pieces found their landscapes again. Since 56 the story
+//     (walls, farmstead, ruins, landmark), the animals, the clubhouse's
+//     build and the path surface were looked up in the regions' tables by
+//     the landscape's key, which matched only Links and Redwood Coast: the
+//     other seven had no walls, ruins or animals, the generic clubhouse and
+//     gravel paths. Looked up through worldOf now (story.js storySet,
+//     life.js lifeSet, clubhouse.js clubhouseKind, paths.js pathKind). The
+//     seven moved. And walls keep off bare rock and ground steeper than 30%
+//     (story.js WALL_GRADE; a Rockies fence ran up a cliff), which moved
+//     Links' walls too.
+// 60: the dry-and-lake pack (step 3): the Sonoran plants jojoba, Lake Dunes
+//     sand cherry, and Lake Dunes' landmark is a Great Lakes pier light. And
+//     landmarks are back: since Architect went (55) the story was fixed at
+//     "some" and a landmark needed "lots", so no course had its lighthouse
+//     or church spire; every landscape with one has it again. Sonoran, Lake
+//     Dunes, Links and New England moved.
+// 61: the Heartland and New England packs (step 3), and the ironwood after
+//     the silhouette pass. The Heartland plants bur oak, American elm,
+//     shagbark hickory and prairie flowers, and its farmstead is a red
+//     gambrel barn (its silo in the model) with corn behind it; New England
+//     plants white pine, beech, paper birch and balsam fir, its walls are
+//     fieldstone and its bridges covered; the Sonoran plants ironwood, and
+//     jojoba in its stands' understorey. And every planting list sums to 1
+//     (tests/landscapes-complete): the open pick is cumulative, so what lay
+//     past 1 was never planted -- Redwood Coast's Douglas iris (57), Lake
+//     Dunes' sand cherry (60). Heartland, New England, Sonoran, Redwood
+//     Coast and Lake Dunes moved.
+// 62: the Keys pack (step 3): royal palms, traveler's palms, gumbo limbo,
+//     sea grape, mangrove and banyan among the palms and hala, hibiscus and
+//     bougainvillea under them. Keys moved.
+// 63: roads (the US landscapes goal, phase 4; roads.js): a public road along
+//     the clubhouse's side of the property (out of bounds beyond it), a
+//     parking lot beside the clubhouse and the drive between, never across
+//     play; the clubhouse leans toward the property's edge. Trees, houses
+//     and the story keep off them. Every landscape moved.
+// 64: cart paths with no right angles and no dead ends (the owner amended
+//     the goal, 2 November 2026; paths.js `shape`): joins merge at a shallow
+//     angle, corners are rounded, a dead end or a hairpin turns in a teardrop
+//     loop, an end that cannot loop is cut back to its junction. Every
+//     landscape moved.
+// 65: the streets kit placed (roads.js streetFurniture): light poles, islands,
+//     wheel stops, the bag drop and drive lamps; a half lot is whole stalls
+//     (7 a row), which moved Rockies, Keys and Alaska.
+// 66: the drive keeps a cell's berth off everything it may not cross, and the
+//     lot is checked every 4 m (the full bench's roadOnPlay: a drive's edge on
+//     Pine Barrens sand, a lot corner in a Scottish Links pond). The
+//     fingerprint's seed moved its lot or drive in Puget, Sonoran, Heartland,
+//     Redwood, Lake Dunes and High Plains; other seeds elsewhere too.
+// 67: a path's run over water that bends off its one straight deck is split
+//     into decks that follow it (paths.js findBridges; the full bench's
+//     pathOverWater on Bluebonnet Prairie and Hill Country). Moved the Pine
+//     Barrens' fingerprint seed; other bent crossings elsewhere too.
+// 68: the plains on their own pack (phase 8a): eastern red cedar for the
+//     stand-in juniper, soapweed yucca, buffalo grass, wild sunflowers;
+//     barbed-wire fences, a shelterbelt behind the farm; a windmill for the
+//     landmark (a grain elevator on High Plains). Moved High Plains and the
+//     Sand Hills.
+// 69: the Old Northeast and the Pine Barrens on their own pack (phase 8b):
+//     copper beech and hydrangea, a Tudor clubhouse; pitch pine for the
+//     stand-in pine, scrub oak, bayberry and beach rose, a shingled windmill
+//     for the lighthouse; no autumn leaf ground under the Old Northeast's
+//     summer trees. Moved the Old Northeast and the Pine Barrens.
+// 70: Alaska on the north pack (phase 8c): black spruce, fireweed for the
+//     stand-in lupine, devil's club and cottongrass. Moved Alaska.
+// 71: the streets kit's cart barn beside the lot (roads.js placeCartBarn, a
+//     building) and a tree in each lot island (the landscape's most-planted
+//     tree, kept out of the tee views). Moved every landscape -- the
+//     buildings and trees after them shift where a barn stands.
+// 72: the Bayou's bald cypress and their knees stand in the shallows of its
+//     ponds and lakes, within 8 m of the shore (course.js inShallows,
+//     biomes.js `inWater`). Moved the Bayou.
+// 73: the Piedmont's red clay -- its prairie drifts beyond play are bare red
+//     clay (hardpan) at a quarter of the ground. Moved the Piedmont.
+// 74: the Lowcountry's salt marsh -- its drifts beyond play are cordgrass
+//     flats at two-thirds of the ground, its water brackish. Moved the
+//     Lowcountry.
+// 75: Wine Country's vines in rows -- two vineyard blocks of 60 by 36 m off
+//     play, a vine every 2 m along rows 3 m apart, the scattered vines down to
+//     a few strays (course.js, biomes.js `vineyard`). Moved Wine Country.
+// 76: terrain true to place (the owner, 3 November 2026) -- each landscape's
+//     ground from its region's geology (biomes.js TERRAIN, landforms.js):
+//     stepped limestone (Hill Country), marine terraces (Monterey), karst
+//     sinkholes (Bluegrass), dissected hollows (Ozarks), glacial kettles and
+//     eskers (North Woods, Old Northeast), granite knobs and washes (Mojave,
+//     Desert Palms, with a flat floor and ranges behind), granite domes
+//     (High Sierra), coulees (Sagebrush), red-clay gullies (Piedmont),
+//     barrancas (SoCal Canyons), cinder cones and lava flows (Ponderosa,
+//     Hawaii), sand ridges (Longleaf), and the lowlands' levees and
+//     backswamps on a near-flat base roll (Bayou, Flatwoods, Gulf Coast;
+//     course.js `baseRoll`). Moved those eighteen. And a tall tree no longer
+//     stands on a lip with more than 2 m of drop under its foot (course.js
+//     onLip allowed 15% of the tree's height -- 2.7 m for a magnolia, which
+//     the bench found floating over a creek bank on the new Piedmont). That
+//     moved every landscape's planting a little: thirty of them.
+// 77: cart paths round more of their corners (paths.js `round`): a smoothed
+//     point that does not fit may move halfway, and on ground already
+//     steeper than SHAPE_GRADE a rounded corner may be as steep as the one
+//     it replaces, never past 29%. Sharp corners across the bench's 195
+//     courses 205 -> 186. Moved thirty-three landscapes' paths.
+// 78: the Blue Ridge's coves and ridges (biomes.js TERRAIN, the channels
+//     recipe with V walls): branching hollows between rounded forested
+//     ridges in place of the Rockies' crags. Moved the Blue Ridge.
+// 79: Monterey's holes play along the sea (course.js `coastAt`, biomes.js
+//     `coastSeek`): the shore follows the eastern holes, never within 5 m of
+//     a corridor; 3-6 holes of 18 with open sea within 50 m of a fairway or
+//     green, nothing in play wet. Moved Monterey.
+// 80: the Lowcountry's tidal creeks (biomes.js TERRAIN, landforms.js
+//     `lowland` with `tide`, course.js `level` and `baseHeight`): a salt
+//     marsh laid at the tide line beyond play, meandering creeks cut through
+//     it below the sea, the ground 4 m above the sea instead of 12 and the
+//     prairie roll replaced by the lowland's; no trees on the marsh's core.
+//     Moved the Lowcountry.
+// 81: the second look at landscapes on their region's ground: the High
+//     Plains a flat table with dry playas (landforms.js `playas`), the Sand
+//     Hills' dunes about twice as tall, Wine Country a gentler valley floor
+//     under higher ranges. Moved the High Plains, the Sand Hills and Wine
+//     Country. And a ground cover on a creek's cut bank that would float
+//     is refused (course.js `floatsOnCut`, tree-seat.js `seatGap`): one
+//     bench course, no fingerprint.
+// 82: the High Plains nearly treeless, as the Llano is: trees a fraction
+//     of the plains' (.15), brush and yucca round the holes, the far woods
+//     a thin scrub; the shelterbelts stay. Moved the High Plains.
+// 83: the Badlands carved by their own drainage (landforms.js `carve`): the
+//     ridged field and its ledges replaced by a branching gully network, with
+//     spires and flat-topped buttes, up to about 130 m of relief (was 80);
+//     sunk into the prairie near a hole rather than squashed, and clear of the
+//     four lines the public road can take; the far land carved the same way
+//     (`ringCarve`) in place of the mesas. Moved the Badlands.
+// 84: the fairway homes' streets (roads.js placeStreets): a house turned
+//     round, its front, drive and mailbox to a street behind it (its footprint
+//     and collider as before), the streets joined to the public road, the
+//     club's drive or the lot, rounded, ending in a join or a cul-de-sac, with
+//     a lane from every drive; a drive no street reaches is not built. The
+//     trees and scatter keep off them. Moved every landscape's course with
+//     fairway homes on; with homes off, only courses whose public road or club
+//     drive ran through the clubhouse (now kept off it) or over a creek (now a
+//     bridge, as wide as the road).
+// 85: the country is one surface (country.js; the owner: "each hole exists
+//     in sort of a bowl with a creased rise of land between them"). Hills and
+//     landforms stand everywhere and a hole lies on the long shape of them,
+//     capped by elevation severity, rather than the land being pressed flat
+//     along every corridor; the fade is read from a softened distance, so no
+//     crease stands between two holes; a green stands on the same long shape;
+//     a tee keeps its level under a pond's shelf; a landmark keeps off the road.
+//     Moved all 41 landscapes.
+// 86: the cart paths one network (paths.js `stitch`, `isLink`): 31 of 84
+//     sampled courses were in two or more parts no cart could drive between,
+//     most with a gap of 3-15 m where a short piece had been taken out as a
+//     jog. A piece that is the only link stays, and a part left over is joined
+//     straight or by the router. Moved the courses that were in parts.
+// 87: the last landscapes on another's ground, each researched: the Sonoran
+//     on the Basin and Range's granite ranges and bajadas, Red Rock on three
+//     great sandstone benches, Alaska a glaciated valley floor, the Oregon
+//     Dunes twice a links' sand, Puget Sound's drumlins and kettles, the
+//     Redwood Coast's steep gorges, the Cross Timbers' low cuestas, the
+//     Cascades sharper than the Rockies. The Chihuahuan keeps the mesas.
+//     Moved those eight.
+// 88: the Redwood Coast grounded (the owner, with photographs of Northwood):
+//     a canopy of 30-75 m, not 42-116, young redwoods their own kind, redwood
+//     first in the mix with Douglas fir beside it and hardwoods under, woods
+//     in walls and rings of stems, and river terraces in place of its gorges.
+//     Moved the Redwood Coast.
+// 89: a ring of stems no longer counts against the open scatter's target, which
+//     left the Redwood Coast with half its open trees. Moved the Redwood Coast.
+export const GENERATOR_VERSION=89;
 
-// THE ARCHITECT'S OWN VERSION. Bump it whenever an ARCHITECT course changes
-// for an unchanged seed and Classic does not; a change that moves both (shared
-// code: terrain, water, the mesh) bumps GENERATOR_VERSION instead, which moves
-// both. `node tools/biome-fingerprint.mjs --check --designer architect`
-// decides, beside the Classic check, which must stay silent.
+// THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
+// (the owner). Its history, kept for the record of what Architect built:
 // 1: Architect exists (phase 0): a course chosen by style, club, age, story and
 //    seed, built for now exactly as Classic builds its defaults.
 // 2: phase 1, purpose: the dials become settings (twelve styles, four clubs,
@@ -372,34 +570,61 @@ export const GENERATOR_VERSION=53;
 //    "weird hole"); a path's stub past a junction cut back, its ends kept
 //    from folding back on themselves, and the clubhouse's path run up to its
 //    front.
-export const ARCHITECT_VERSION=20;
+// ARCHITECT_VERSION ended at 20 (retired with the designer, 2 November 2026).
 // ONE NUMBER PER COURSE. A saved round, course, file or code keeps one integer,
-// `generator`, and has since long before there were two designers; every
-// reader checks `Number.isInteger`. So an Architect course's stamp folds both
-// versions into that one integer -- GENERATOR_VERSION*1000 + ARCHITECT_VERSION
-// -- rather than adding a second field that every format would have to learn.
-// A Classic course's stamp is GENERATOR_VERSION exactly, as it always was, so
-// nothing a Classic player has saved changes. A shared change moves both
-// stamps; an Architect-only change moves Architect's alone.
-export const isArchitect=s=>s?.designer==='architect';
-export const generatorFor=s=>isArchitect(s)?GENERATOR_VERSION*1000+ARCHITECT_VERSION:GENERATOR_VERSION;
-// How a stamp reads to a person: "52" or "52 · Architect 1".
-export const stampLabel=g=>Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
+// `generator`; every reader checks `Number.isInteger`. A generated course's
+// stamp is GENERATOR_VERSION. (An Architect course's stamp was
+// GENERATOR_VERSION*1000 + ARCHITECT_VERSION; one saved before 2 November 2026
+// never matches a stamp made now, so it is shown the version notice.)
+// BUILT_VERSION: how the game turns a BUILT course -- a file from Fairway
+// Course Builder, its land, outlines and trees all stored (course-doc.js) --
+// into a world. A built course never runs the generator, so neither number
+// above can move it; this can (the field bake, the green patches' blend, how a
+// stored tree is drawn and stands). Bump it whenever a built course's ground,
+// lie or trees would change for an unchanged file, with a line here. Shown to
+// the player like a generator mismatch. (The course-builder branch, 31 October
+// 2026; docs/COURSE_BUILDER.md.)
+//  1: the first reader (stage 1).
+//  2: each green on its own (built-world.js greenParts, 1 November 2026): a
+//     hole's green was every green the file stored in one set, so its size
+//     and cups moved; now the one under its mark.
+//  3: where two ground types meet, a point is the type with the most weight
+//     among the four texels round it, not the texel it falls in
+//     (built-world.js builtGroundAt, ground.js, 3 November 2026): the edge
+//     was a metre-wide staircase, and a lie there can change by half a metre.
+export const BUILT_VERSION=3;
+// A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
+// it, so neither generator number may flag it, and only BUILT_VERSION can.
+export const BUILT_STAMP=1000000;
+export const generatorFor=s=>s?.built?BUILT_STAMP+BUILT_VERSION:GENERATOR_VERSION;
+// How a stamp reads to a person: "52", "Built 1", or an old Architect
+// course's "52 · Architect 1".
+export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_STAMP}`:Number.isInteger(g)&&g>=1000?`${Math.floor(g/1000)} · Architect ${g%1000}`:String(g);
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
-export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn','haunted','lakeshore'];
-// The Architect's dials. Held here for the same reason as the biome keys;
-// tests/architect.test.mjs asserts STYLE_KEYS matches architect-styles.js.
-export const DESIGNER_KEYS=['classic','architect'];
-export const STYLE_KEYS=['auto','golden','raynor','links','heathland','sandhills','parkland','modern','stadium','minimalist','desert','mountain','tropical'];
-export const CLUB_KEYS=['municipal','members','resort','championship'];
-export const AGE_KEYS=['new','mature','old','restored'];
-export const STORY_KEYS=['none','some','lots'];
-// What an Architect course is chosen by. Everything else the architect
-// decides; Classic's other controls are hidden while Architect is chosen, and
-// ignored by its generation (`designSettings` in designer.js).
-export const ARCHITECT_KEEPS=['designer','holes','seed','biome','archStyle','archClub','archAge','archStory','wind','windDirection','pinDay'];
+// The landscapes a player may pick: the built ones (biomes.js LAND), in the
+// order the nine before the US landscapes goal had, so an endless run or
+// Surprise me picking by index lands where it did. regions.js lists them all.
+export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes',
+ // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
+ 'highplains','sandhills','oldnortheast','pinebarrens','alaska',
+ // Phase 5 (SCHEMA 19): the South.
+ 'longleaf','piedmont','lowcountry','bayou','flatwoods',
+ // Phase 6 (SCHEMA 20): Texas and the deserts.
+ 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
+ // Phase 7 (SCHEMA 21): California and the western mountains.
+ 'monterey','socal','winecountry','cascades','sierra','ponderosa',
+ // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
+ 'sagebrush','redrock','crosstimbers',
+ // Phase 8b (SCHEMA 23): Appalachia.
+ 'blueridge','ozarks','bluegrass',
+ // Phase 8c (SCHEMA 24): the North Woods, the Oregon Dunes and Hawaii.
+ 'northwoods','oregondunes','hawaii',
+ // The owner's addition, 3 November 2026 (SCHEMA 26): the Dakota Badlands.
+ 'badlands',
+ // The owner, 5 November 2026 (SCHEMA 27): the Las Vegas valley's watered courses.
+ 'desertresort'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -408,7 +633,6 @@ export const CATEGORIES=[
  // No note (the 1.0 polish, studio round 2): it was about yardage and sat
  // over the landscapes; the length's own help says the same.
  ['course','Course'],
- ['architect','Architect (beta)','The architect designs every hole from these four and the seed: where each hazard goes and why, the greens, the length, the trees and the water.'],
  ['landscape','Land & routing','Left and right turns are balanced across the course, and each turning point varies up to 22 points either side of your setting.'],
  ['turf','Fairways, greens & bunkers'],
  ['water','Water','The depths set each pond and lake at its deepest; every shore still slopes to nothing at the bank. Rivers and creeks are new: they may cross fairways but go round tees, greens, ponds and bunkers, and a course with no room for one gets fewer.'],
@@ -426,16 +650,12 @@ export const SETTINGS=[
  {key:'seed',category:'course',kind:'text',max:50,def:'EVERGREEN',label:'Course seed',tip:'The same seed and settings rebuild the same course, within one generator version.'},
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
- {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
- // THE DESIGNER (architect-courses, 30 October 2026). `names` are what a
- // player reads; the option values are what saves and codes carry.
- {key:'designer',category:'course',kind:'choice',options:DESIGNER_KEYS,def:'classic',names:{classic:'Classic',architect:'Architect (beta)'},label:'How the course is made',tip:'Classic grows every course from the sliders below, as Fairway always has. Architect (beta) designs it: each hole gets a plan, every bunker and pond is placed against the shots golfers play, and the style, club, age and story you choose decide the rest. Classic courses never change when Architect does.'},
- {key:'archStyle',category:'architect',kind:'choice',options:STYLE_KEYS,def:'auto',architect:true,names:{auto:'By landscape',golden:'Golden Age',raynor:'Raynor & Macdonald',links:'Links',heathland:'Heathland & Sandbelt',sandhills:'Sandhills',parkland:'Parkland',modern:'Modern championship',stadium:'Stadium',minimalist:'Minimalist',desert:'Desert target',mountain:'Mountain',tropical:'Tropical resort'},label:'Style',tip:'Whose hand designed it. By landscape picks one that suits the land from the seed. Each style has its own bunkers, greens, fairways and planting.',describe:{"auto":"Picks a style that suits this landscape, from the seed -- the styles it leans toward are listed in the landscape's own notes.","golden":"Golden Age (MacKenzie, Tillinghast): wide fairways, bold contoured greens, big ragged bunkers with flashed sand, chocolate-drop mounds, few trees in play.","raynor":"Raynor & Macdonald: template holes more than any other style (Redan, Eden, Biarritz, Road, Alps), geometric greens on steep straight banks, flat-bottomed bunkers.","links":"Seaside links: firm fairways that run into one another, small pot bunkers, no ponds, little planting, natural pond banks; Dells, Capes and the Pit.","heathland":"Heathland & Sandbelt: large ragged bunker complexes flashed up to the greens, heather and pine framing the holes.","sandhills":"Sandhills: holes laid on dunes inland, huge natural bunkers, wide fairways, hardly a tree, the land as found.","parkland":"Parkland: tree-lined holes and avenues in rolling ground, framing mounds, ponds edged in stone, a fountain on a members' or resort course.","modern":"Modern championship: long holes, framing mounds, big bunker complexes with capes and bays, water in play edged in stone.","stadium":"Stadium (Dye): railway-tie walls on the ponds, grassy spectator banks behind the greens, pot bunkers, heroic carries over water.","minimalist":"Minimalist: little earth moved, holes that follow the land, bunkers where the ground suggested them.","desert":"Desert target: islands of turf in native desert, carries over sand and arroyos, ponds edged in stone, the Barranca.","mountain":"Mountain: holes across steep ground, high tees and shelf greens, the land as found, a mine head in the woods.","tropical":"Tropical resort: palms and sea views, water features edged in stone, fountains, wide paths."}},
- {key:'archClub',category:'architect',kind:'choice',options:CLUB_KEYS,def:'members',architect:true,names:{municipal:'Municipal',members:"Members' club",resort:'Resort',championship:'Championship venue'},label:'Club',tip:'Who runs it, and so how long it plays and how much is spent on it: a municipal course is shorter, plainer and well worn; a championship venue is long, tight and dressed for a tournament on its pin days.',describe:{"municipal":"Public course: about 6,250 yards for eighteen, plainer bunkers, narrow paths, worn tees and more divots, bunkers grassed over to save the raking.","members":"Members' club: about 6,650 yards, well kept -- stakes and yardage posts, a rake in every bunker, a fountain in a big pond on the dressed styles.","resort":"Resort: about 6,850 yards, wide paths, fountains and dressed water, a pavilion of a clubhouse.","championship":"Championship venue: about 7,250 yards, long and tight. Tournament week: stands round the last green, a scoreboard and TV towers, ropes and a crowd that grows from Thursday to Sunday with the pin day."}},
- {key:'archAge',category:'architect',kind:'choice',options:AGE_KEYS,def:'mature',architect:true,names:{new:'New',mature:'Mature',old:'Old',restored:'Restored'},label:'Age',tip:'How long it has been there. New courses have young trees and crisp edges; old ones have grown trees, added back tees and bunkers grassed over; a restored course has its mid-century trees felled and its old bunkers back.',describe:{"new":"Built recently: trees about two thirds grown, crisp edges, few divots, no avenues.","mature":"Twenty or thirty years in: full-grown trees, avenues down some holes on the parkland styles.","old":"Generations old: tall trees and long avenues, well-worn tees, old bunkers grassed over into hollows.","restored":"An old course put back: the mid-century trees felled, their stumps scattered in the rough, the views opened, old bunkers grassed over."}},
- {key:'archStory',category:'architect',kind:'choice',options:STORY_KEYS,def:'some',architect:true,names:{none:'None',some:'A little',lots:'A lot'},label:'Heritage',tip:'What the land held before the course: stone walls, an old farm, a ruin, a landmark to aim at, a creek. (The setting was The land’s story; renamed in the owner’s review.)',describe:{"none":"Nothing before the course: no walls, ruins or farm, and no creek added.","some":"A little: a few field walls and a ruin or a farmstead, out of play.","lots":"A lot: more walls, a farmstead or ruins, a lighthouse or spire lined up behind a green, a creek through the land."}},
- {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
- {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
+ {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'puget',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
+ // Looks only (the owner, 2 November 2026: snow is for looks): never part of
+ // the ground, so no generator step and no world key (seasons.js).
+ {key:'season',category:'course',kind:'choice',options:['today','spring','summer','autumn','winter'],def:'today',label:'Season',tip:'Today\'s season from the date, or one you pick: spring green, summer, autumn colour, or winter with bare trees and snow in the north. Looks only; the ball plays the same.'},
+ {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How much the country around the holes stands out: its mountains, dunes, mesas or island channels. The land rises and falls on both sides of a hole.'},
+ {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors, taken from the land they lie on. At 0 every hole is level; at the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
  {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
 
  {key:'footprint',category:'landscape',kind:'choice',options:FOOTPRINT_KEYS,def:'organic',label:'Course footprint',tip:'A guiding shape for the whole routing. It steers land use; individual holes stay procedural, so the silhouette is an intention rather than a guarantee.'},
@@ -588,11 +808,40 @@ const MIGRATIONS={
  // 13 -> 14: the studio's Hand tools withdrawn; whatever they shaped goes
  // (tests/hand-tools.test.mjs loads a save that carried some).
  13:s=>{const {archHand,...rest}=s;return rest;},
+ // 14 -> 15: Haunted Hollow removed; a course on it opens on Autumn, the
+ // landscape that stood in for it out of season (tests/settings-schema.test.mjs).
+ 14:s=>s.biome==='haunted'?{...s,biome:'autumn'}:s,
+ // 15 -> 16: Architect removed; its designer and four dials go, and the course
+ // is the generator's of the same seed (tests/settings-schema.test.mjs).
+ 15:s=>{const {designer,archStyle,archClub,archAge,archStory,...rest}=s;return rest;},
+ // 16 -> 17: the landscapes' new keys (regions.js OLD_KEYS, held equal to this
+ // by tests/landscapes-complete.test.mjs; written out so this module imports
+ // nothing).
+ 16:s=>{const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes'}[s.biome];return to?{...s,biome:to}:s;},
+ // 17 -> 18: five landscapes added to the choice (High Plains, Sand Hills,
+ // Old Northeast, Pine Barrens, Alaska); no save changes shape.
+ 17:s=>s,
+ // 18 -> 19: five more landscapes (the South); no save changes shape.
+ 18:s=>s,
+ // 19 -> 20: six more landscapes (Texas and the deserts); no save changes shape.
+ 19:s=>s,
+ // 20 -> 21: six more landscapes (California and the western mountains); no save changes shape.
+ 20:s=>s,
+ // 21 -> 22: three more landscapes (the high desert, the Cross Timbers); no save changes shape.
+ 21:s=>s,
+ // 22 -> 23: three more landscapes (Appalachia); no save changes shape.
+ 22:s=>s,
+ // 23 -> 24: three more landscapes (the North Woods, the Oregon Dunes, Hawaii); no save changes shape.
+ 23:s=>s,
+ // 24 -> 25: the round's season (the US landscapes goal, step 9). An old save
+ // has none: today's, the default, which is what it would have been drawn in
+ // had seasons existed; filled in by the defaults.
+ 24:s=>s,
+ // 25 -> 26: one more landscape (the Badlands); no save changes shape.
+ 25:s=>s,
+ // 26 -> 27: one more landscape (Desert Resort); no save changes shape.
+ 26:s=>s,
 };
-// Whether a control belongs on screen for this course: Architect shows only
-// what it is chosen by (ARCHITECT_KEEPS); Classic shows everything but the
-// Architect's own dials.
-export const shownFor=(f,s)=>isArchitect(s)?ARCHITECT_KEEPS.includes(f.key):!f.architect;
 
 // Play-scope keys (turf, club yardages, art style) ride along in
 // the same object and are validated by their own modules, so they are preserved

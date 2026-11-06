@@ -573,8 +573,18 @@ function channels(model, count, used) {
  return out;
 }
 
+// THE CHANNELS' LOOKUP, shared by the generator and a built course
+// (built-world.js, the course builder): segments in a 40 m hash, and `at`,
+// the nearest channel to a point with its edge distance, width, level and
+// depth. Extracted from generateStreams unchanged, so the fingerprints held.
+export function streamIndex(){
+ const segments=[],cells=new Map(),cellSize=40;
+ function add(path,kind,n,width){for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],bank=Math.max(a.bank,b.bank),id=segments.length;segments.push({a,b,bank,id,kind,stream:n});for(let x=Math.floor((Math.min(a.x,b.x)-bank-width)/cellSize);x<=Math.floor((Math.max(a.x,b.x)+bank+width)/cellSize);x++)for(let z=Math.floor((Math.min(a.z,b.z)-bank-width)/cellSize);z<=Math.floor((Math.max(a.z,b.z)+bank+width)/cellSize);z++){const key=x+','+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}}}
+ function at(x,z){let best=null;for(const id of cells.get(Math.floor(x/cellSize)+','+Math.floor(z/cellSize))||[]){const seg=segments[id],{a,b}=seg,dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz))),distance=Math.hypot(x-a.x-dx*t,z-a.z-dz*t),width=a.width+(b.width-a.width)*t,edge=distance-width*.5;if(edge>seg.bank)continue;if(!best||edge<best.edge)best={...seg,edge,distance,width,level:a.level+(b.level-a.level)*t,depth:a.depth+(b.depth-a.depth)*t};}return best;}
+ return {segments,add,at};
+}
 export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>false,corridor=()=>({d:Infinity,ux:0,uz:0}),onSink=null){
- const rng=random(s.seed+':streams'),specs=[...Array(s.rivers||0).fill('river'),...Array(s.creeks||0).fill('creek')],streams=[],segments=[],cells=new Map(),cellSize=40,reach=Math.hypot(halfX,halfZ)+210;
+ const rng=random(s.seed+':streams'),specs=[...Array(s.rivers||0).fill('river'),...Array(s.creeks||0).fill('creek')],streams=[],index=streamIndex(),segments=index.segments,reach=Math.hypot(halfX,halfZ)+210;
  const protect=holes.flatMap(h=>[{...(h.worldGreen??h.worldPin),r:h.greenSize*h.greenAspect+s.fringe+30,keep:h.greenSize*h.greenAspect+s.fringe+8},...Object.values(h.tees).map(t=>({...h.toWorld(t),r:18,flat:14,keep:16})),...h.ponds.map(p=>({...h.toWorld(p),pond:true,r:Math.max(p.reachX||p.rx,p.rz)+(p.shoreWidth||14)+12,keep:Math.max(p.reachX||p.rx,p.rz)+(p.shoreWidth||14)+12}))]);
  // Bunkers are excavated dry hazards: a channel crossing one would leave water
  // standing in sand. They are avoided too, and are dropped only when a course is
@@ -685,9 +695,9 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
   // the drop to the water and the ramp is what sets that near a mouth.
   for(const p of path)p.bank=(14+width*.6+Math.min(26,Math.max(0,height(p.x,p.z)-p.level)*2.4))*Math.max(.25,p.taper??1);
   n++;
-  streams.push({kind,points:path,end,sink});for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],bank=Math.max(a.bank,b.bank),id=segments.length;segments.push({a,b,bank,id,kind,stream:n});for(let x=Math.floor((Math.min(a.x,b.x)-bank-width)/cellSize);x<=Math.floor((Math.max(a.x,b.x)+bank+width)/cellSize);x++)for(let z=Math.floor((Math.min(a.z,b.z)-bank-width)/cellSize);z<=Math.floor((Math.max(a.z,b.z)+bank+width)/cellSize);z++){const key=x+','+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}}
+  streams.push({kind,points:path,end,sink});index.add(path,kind,n,width);
  }
- function at(x,z){let best=null;for(const id of cells.get(Math.floor(x/cellSize)+','+Math.floor(z/cellSize))||[]){const seg=segments[id],{a,b}=seg,dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz))),distance=Math.hypot(x-a.x-dx*t,z-a.z-dz*t),width=a.width+(b.width-a.width)*t,edge=distance-width*.5;if(edge>seg.bank)continue;if(!best||edge<best.edge)best={...seg,edge,distance,width,level:a.level+(b.level-a.level)*t,depth:a.depth+(b.depth-a.depth)*t};}return best;}
+ const at=index.at;
  function carve(x,z,y){const q=at(x,z);if(!q)return y;if(q.edge<=0)return q.level-q.depth*(1-smooth(q.distance/(q.width*.5)));// Two stages, as for a pond: the valley is graded to a rim one freeboard above
  // the water across the bank, and only the last WATER_LIP metres are the cut.
  // The bank is still what the owner atlas is sized from.

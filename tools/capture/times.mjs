@@ -26,18 +26,17 @@ const tee = h => ({hole: h, along: 0, height: 9, look: 'pin', pitch: -6});
 // Island one, and the Giant Redwood tee looked at a hillside. Their views were
 // picked from angles.mjs's test sheets.
 export const LANDSCAPES = [
- {name: 'pacific-northwest', biome: 'pnw', seed: 'CEDAR', hole: 1, cam: behind},
- {name: 'desert', biome: 'desert', seed: 'MESA', hole: 1, cam: behind},
- {name: 'mountain', biome: 'mountain', seed: 'SUMMIT', hole: 1, cam: tee(1)},
+ {name: 'pacific-northwest', biome: 'puget', seed: 'CEDAR', hole: 1, cam: behind},
+ {name: 'sonoran', biome: 'sonoran', seed: 'MESA', hole: 1, cam: behind},
+ {name: 'rockies', biome: 'rockies', seed: 'SUMMIT', hole: 1, cam: tee(1)},
  {name: 'links', biome: 'links', seed: 'DUNE', hole: 1, cam: behind},
- {name: 'midwest', biome: 'midwest', seed: 'MEADOW', hole: 3, cam: behind},
- {name: 'island', biome: 'island', seed: 'LAGOON', hole: 1, cam: {...behind, around: 130}},
+ {name: 'heartland', biome: 'heartland', seed: 'MEADOW', hole: 3, cam: behind},
+ {name: 'keys', biome: 'keys', seed: 'LAGOON', hole: 1, cam: {...behind, around: 130}},
  {name: 'giant-redwood', biome: 'redwood', seed: 'GIANT', hole: 1, cam: {...behind, around: 210}},
- {name: 'autumn', biome: 'autumn', seed: 'MAPLE', hole: 1, cam: behind},
- {name: 'haunted-hollow', biome: 'haunted', seed: 'GLOAMING', hole: 1, cam: behind},
+ {name: 'newengland', biome: 'newengland', seed: 'MAPLE', hole: 1, cam: behind},
  // Picked from angles.mjs's sheet (23 October 2026): a fairway ribbon between
  // grassed dunes with sand torn into their faces, woods behind.
- {name: 'lakeshore-dunes', biome: 'lakeshore', seed: 'BEACON', hole: 2, cam: {...behind, height: 34, pitch: -18}},
+ {name: 'lakeshore-dunes', biome: 'lakedunes', seed: 'BEACON', hole: 2, cam: {...behind, height: 34, pitch: -18}},
 ];
 // Night: 10 PM, the floodlights on (they light the fairway and green; the
 // glow ball is hidden with the rest).

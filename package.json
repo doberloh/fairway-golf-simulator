@@ -1,11 +1,11 @@
 {
   "name": "fairway-browser-golf",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && node tools/build-bridge.mjs",
+    "build": "vite build && vite build --config vite.builder.config.js && node tools/build-bridge.mjs",
     "release": "npm run build && node tools/build-server.mjs && node tools/release.mjs",
     "server": "node tools/build-server.mjs",
     "preview": "vite preview --host 127.0.0.1",
@@ -24,6 +24,7 @@
     "blender": "node tools/blender/run.mjs"
   },
   "dependencies": {
+    "laz-perf": "^0.0.7",
     "lucide": "1.44.0",
     "three": "0.186.0",
     "ws": "8.21.3"

@@ -13,9 +13,9 @@ const [seed = 'overhaul', n = '18', out = 'map.png', biome = 'links'] = process.
 // map only, to judge a rule before writing it (the far-landscape goal).
 const shareAt = process.argv.indexOf('--share');
 if (shareAt > 0) Object.assign(BIOMES[biome].sharedFairways, JSON.parse(process.argv[shareAt + 1]));
-// `--set key=value` (repeatable): any setting, for this map -- `--set
-// designer=architect --set archStyle=links` draws an Architect course
-// (architect-courses), whose own dials then decide the trees and houses.
+// `--set key=value` (repeatable): any setting, for this map (it drew an
+// Architect course with `designer=architect` until the designer was removed,
+// 2 November 2026).
 const extra = {};
 process.argv.forEach((a, i) => { if (a === '--set') { const [k, v] = process.argv[i + 1].split('='); extra[k] = isNaN(Number(v)) ? v : Number(v); } });
 const w = generateWorld({seed, biome, holes: +n, trees: 60, homes: true, ...extra});

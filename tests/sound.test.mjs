@@ -63,7 +63,7 @@ test('every club kind strikes with a sound, and a soft wedge is a chip',()=>{
 });
 
 test('every contact the physics reports maps to a sound, in the order it happened',()=>{
- const world=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:40,water:30});
+ const world=generateWorld({seed:'HOMES-QA',biome:'heartland',holes:9,homes:true,homeDensity:100,trees:40,water:30});
  const kinds=new Set();
  for(const hole of world.holes.slice(0,4)){
   for(const [vla,speed,aim] of [[12,70,0],[25,45,8],[40,30,-10],[11,75,25],[30,50,-30]]){
@@ -79,7 +79,7 @@ test('every contact the physics reports maps to a sound, in the order it happene
   }
  }
  assert(kinds.size>=2,`only ${[...kinds]} reported`);
- const known=new Set([...Object.keys(IMPACTS),'pole','prop']);
+ const known=new Set([...Object.keys(IMPACTS),'pole']);
  for(const k of kinds)assert(known.has(k),`no sound for contact "${k}"`);
 });
 

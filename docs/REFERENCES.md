@@ -746,6 +746,7 @@ not the page itself; where that matters, it says so.
 - Dead trees read for the cartoon overhaul (RESEARCH, *The overhaul's haunted pack*), via search summary: Wikipedia, *Snag (ecology)* -- https://en.wikipedia.org/wiki/Snag_(ecology); USDA Forest Service, snag decay classes -- https://www.fs.usda.gov/media/252908; dimensions.com, *Willow (Dead, Large)* -- https://www.dimensions.com/element/willow-dead-large. Dead-oak silhouettes were searched and found only in stock-photo descriptions; not used as a source.
 - Light for the cartoon overhaul (RESEARCH, *The overhaul's lighting*): Barla, Thollot and Markosian, *X-Toon: An Extended Toon Shader*, NPAR 2006 -- https://dl.acm.org/doi/10.1145/1124728.1124749 -- tone that varies with the view (the rim) as well as the light; from memory of the paper, not re-read. Wikipedia, *Belt of Venus* -- https://en.wikipedia.org/wiki/Belt_of_Venus -- the pink band opposite a set sun, above Earth's shadow; the colour and its height were placed by eye, not taken from it.
 - Game interface practice, read for the 1.0 polish (RESEARCH, *Game interface practice, for the 1.0 polish*): Microsoft, *Xbox Accessibility Guidelines 101, 102, 112* -- https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/101 (and /102, /112) -- text sizes, contrast ratios, navigation; Game Accessibility Guidelines, *Full list* and *Allow the game to be started without the need to navigate through multiple levels of menus* -- https://gameaccessibilityguidelines.com/full-list/ -- quick start, touch, motion, plain language; Game Developer, *Designing Sausage Sports Club* -- https://www.gamedeveloper.com/design/designing-sausage-sports-club -- a one-press start; W3C, *Understanding SC 2.5.8* and *SC 2.3.3* -- https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html, https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html; web.dev, *Accessible tap targets* -- https://web.dev/articles/accessible-tap-targets; Nielsen Norman Group, *Animation duration* -- https://www.nngroup.com/articles/animation-duration/; MDN, *Animation performance and frame rate* -- https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate. Not loaded: Apple's HIG accessibility page, Material Design's motion and accessibility pages, Celia Hodent's article (404).
+(The Architect courses entries below are kept for their sources; the designer itself was removed on 2 November 2026, and its world pieces -- paths, bridges, the clubhouse, markings, the land's story, life, built water -- are every generated course's now.)
 - Architect courses, designing a hole (RESEARCH, *Architect courses: designing a hole*), mostly via search summary, 29-30 October 2026: Pitchcare, *The anatomy of a golf course: fairways* -- https://pitchcare.com/blogs/news/the-anatomy-of-a-golf-course-fairways -- landing zones 175-225 yd for the average golfer, 20-40 yd wide; golfclubatlas forum -- https://www.golfclubatlas.com/forum/index.php/topic,67546.0.html -- opposite-side bunkers at different distances (forum, weak); bunker counts and size: MSU archive 2005 -- https://archive.lib.msu.edu/tic/gcnew/article/2005feb69.pdf -- an average of 49; 1986 -- https://archive.lib.msu.edu/tic/bulls/article/1986feb7.pdf -- 66 a club, about 2,120 sq ft each; template holes: https://golf.com/travel/what-are-template-holes-important-golf-design/, https://linksmagazine.com/template-holes/, https://evalu18.com/template-holes/, the Redan at 170-200 yd https://quarterzipsports.beehiiv.com/p/a-guide-to-timeless-hole-designs-every-golfer-should-know; the Principal's Nose: https://linksmagazine.com/the-conundrum-of-centerline-bunkers; schools of design: https://thefriedegg.com/three-schools-of-golf-course-design/, https://golf.com/travel/3-schools-golf-course-architecture/; green drainage: https://golfcourseindustry.com/article/getting-back-to-front-green-slope-right, https://www.golfcourseindustry.com/article/-design-concepts--modern-green-contours, https://archive.lib.msu.edu/tic/golfd/article/1956sep25.pdf; Oakmont's trees: https://usga.org/articles/2016/06/oakmont-restored.html. Read and not used: a published standard for bunker distance from the tee (none found); an ASGCA corridor-width standard (none found).
 - Architect courses, people (RESEARCH, *Architect courses: people*), via search summary, 29-30 October 2026: flag colours -- https://archive.lib.msu.edu/tic/bulls/article/2003feb9.pdf, https://www.parkerflags.com/what-do-different-colored-golf-flags-mean/; cart paths -- https://www.usga.org/content/dam/usga/pdf/imported/course-care/070301.pdf, https://www.golfcourseindustry.com/article/-design-conceptions--cart-path-design, https://archive.lib.msu.edu/tic/wetrt/article/1983feb50.pdf, accessible routes https://www.access-board.gov/aba/guides/chapter-10-golf-courses/; the made-up architects checked against https://en.wikipedia.org/wiki/List_of_golf_course_architects and directories (no match).
 - Architect courses, the hand (RESEARCH, *Architect courses: the hand*), via search summary, 29-30 October 2026: closely mown surrounds -- https://www.usga.org/content/usga/home-page/course-care/green-section-record/61/issue-10/establishing-and-maintaining-closely-mown-green-surrounds-.html; mowing heights -- https://www.usga.org/course-care/forethegolfer/2018/understanding-mowing-heights.html, https://www.golfcourseindustry.com/news/first-cut-bella-ridge-colorado; tee size per rounds -- https://archive.lib.msu.edu/tic/wetrt/article/1991mar66.pdf, https://archive.lib.msu.edu/tic/matnl/article/1974aug3.pdf, https://www.usga.org/content/usga/home-page/course-care/green-section-record/59/16/shifting-the-focus-of-tees-from-an-afterthought-to-a-priority.html.
@@ -753,3 +754,94 @@ not the page itself; where that matters, it says so.
 - Architect courses, the land's story (RESEARCH, *Architect courses: the land's story*), via the study's sources, 30 October 2026: the Dell -- https://www.top100golfcourses.com/news-item/d-is-for-dell-blind-par-threes-template-holes, https://thefriedegg.com/courses/lahinch-golf-club-old-course; the Pit -- https://thefriedegg.com/eclectic-18-uk-hole-no-13-north-berwick/, https://www.yourgolftravel.com/best-golf-holes/north-berwick-13th; the Barranca -- https://www.planetgolf.com/courses/usa/pasatiempo-golf-club, https://golfcoursenerd.substack.com/p/pasatiempo-golf-club-new-back-nine.
 - Architect courses, history and life (RESEARCH, *Architect courses: history and life*), 30 October 2026: the study's own sources for workstreams M and O (Machrihanish Dunes' sheep); no new source was fetched, and every count is PLACED.
 - Architect courses, the owner's review (RESEARCH, *Architect courses: the owner's review*), via search summary, 30 October 2026: five-unit fairway mowers -- Toro Reelmaster 3575-D https://turfnet.com/directory/equipment/2020-toro-3575-fairway-mower/, Jacobsen LF550 https://www.turfnet.com/classifieds/item/56907-jacobsen-lf550, Jacobsen F305 https://nuturf.com.au/images/product-tech-sds/F305.pdf, Kubota LM551 https://www.kubota.com.au/product/lm551-5-unit-fairway-mower, John Deere 6500A and 6700A https://deere.com/en/mowers/fairway-mowers/6500a-precisioncut-fairway-mower -- length, width, height with ROPS, unit layout. The fountain's sizes are PLACED from makers' pictures of pond aerators; no page fetched.
+
+## Fairway Course Builder (31 October 2026)
+
+The record is docs/COURSE_BUILDER.md (its *Sources* lists the study's); these
+are the data the builder was measured against, all downloaded for testing
+only, kept under the ignored bench/shots/lidar/, never committed.
+
+- USGS 3DEP lidar, project MN_MissouriRiverBigSioux_2021_B21 (the owner's
+  copy of four LAZ tiles) -- the test course's ground, trees and laser
+  brightness; public domain.
+- USGS 3DEP 1 m DEM, USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21 --
+  https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/MN_MissouriRiverBigSioux_2021_B21/TIFF/USGS_1M_15_x28y484_MN_MissouriRiverBigSioux_2021_B21.tif
+  (found through https://tnmaccess.nationalmap.gov/api/v1/products) -- the
+  bare-earth reference the builder's ground is measured against.
+- NAIP 2021 0.6 m quarter-quads m_4309527_ne, m_4309519_se, m_4309528_nw,
+  m_4309520_sw -- Microsoft's Planetary Computer,
+  https://planetarycomputer.microsoft.com/api/stac/v1 (collection naip);
+  public domain -- the aerial picture the trace was tuned on (RESEARCH,
+  *Course builder: the auto trace on a real course*).
+- OpenStreetMap's golf features round the course, through the Overpass API
+  (https://overpass-api.de; ODbL) -- the hand-drawn outlines the trace is
+  scored against and the numbered greens and tees the scripted build marks
+  holes from.
+- GolfPass, *Worthington Country Club scorecard and layout* --
+  https://www.golfpass.com/travel-advisor/courses/8463-worthington-country-club/scorecard-and-layout
+  -- par 71, the blue tees 6,282 yards hole by hole: the lengths the built
+  course is compared with and the tees matched by.
+- Google, *Set up the Map Tiles API* --
+  https://developers.google.com/maps/documentation/tile/get-api-key?setupProd=enable
+  -- and the *Map Tiles API overview*,
+  https://developers.google.com/maps/documentation/tile/overview: the steps
+  door 2 shows for a Google key (RESEARCH, *Getting a Google or Bing key*).
+- Microsoft, the Bing Maps blog, https://blogs.bing.com/maps/?p=25433, and
+  *Bing Maps coverage*, https://learn.microsoft.com/en-us/bingmaps/coverage:
+  free and Basic accounts ended 30 June 2025, Enterprise runs to 30 June
+  2028.
+- USGS, *The National Map product API* -- https://tnmaccess.nationalmap.gov/api/v1/docs
+  -- door 2's LIDAR search for the United States (RESEARCH, *Finding LIDAR
+  from the builder*); its LAZ tiles are on rockyweb.usgs.gov, which no page
+  may read.
+- USGS 3DEP on the Registry of Open Data on AWS -- https://registry.opendata.aws/usgs-lidar/
+  -- and *Entwine Point Tile*, https://entwine.io/en/latest/entwine-point-tile.html:
+  the copy door 2 downloads the square from (ept.js), Web Mercator.
+- Microsoft Planetary Computer, *USGS 3DEP Lidar Point Cloud (COPC)* --
+  https://planetarycomputer.microsoft.com/dataset/3dep-lidar-copc -- checked,
+  readable, not used (older surveys at Worthington).
+- Washington DNR, *Washington Lidar Portal* -- https://lidarportal.dnr.wa.gov/
+  and its script, https://lidarportal.dnr.wa.gov/js/lidar.js (read 1 November
+  2026): its `/query` and `download?geojson=&ids=` addresses, the
+  `#lat:lon:zoom` place in its address door 2 opens it on, and the `dlgate`
+  pass its download needs (RESEARCH, *Finding LIDAR from the builder*).
+- OpenStreetMap's map of Nile Shrine Golf Course, Mountlake Terrace WA,
+  through the Overpass API (1 November 2026; bench/shots/imagery/nile-shrine,
+  local): its trees and woods against the survey's (RESEARCH, *Whose trees*).
+- IGN, *LiDAR HD* -- https://geoservices.ign.fr/lidarhd -- France's tiles,
+  found through the data.geopf.fr WFS layer IGNF_LIDAR-HD_METADONNEE:metadata.
+- swisstopo, *swissSURFACE3D* -- https://www.swisstopo.admin.ch/en/height-model-swisssurface3d
+  -- found through its STAC catalogue and downloaded in the page since 1
+  November 2026; and swisstopo, *Approximate formulas for the transformation
+  between Swiss projection coordinates and WGS84* -- the LV95/LV03 working in
+  geo.js and its worked example.
+- Wikipedia, *National Lidar Dataset (United States)* --
+  https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States) -- the
+  starting list of state programmes; the 36 state portals as checked are in
+  src/builder/lidar-search.js `STATE_PORTALS`.
+- IOGP, *Guidance Note 7-2: Coordinate Conversions and Transformations
+  including Formulas* -- https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/
+  -- the Lambert conformal conic and transverse Mercator worked examples
+  tests/lidar-geo.test.mjs checks geo.js `projectionOf` against.
+- J. P. Snyder, *Map Projections -- A Working Manual*, USGS Professional
+  Paper 1395 (1987), pp. 61-64 and 104-110 -- the transverse Mercator and
+  Lambert conformal conic formulas.
+
+- The map of the landscapes and the globe (RESEARCH, *The landscapes' keys, the map and the globe*), 2 November 2026: U.S. EPA, *Level III and IV Ecoregions of the Continental United States* -- https://www.epa.gov/eco-research/level-iii-and-iv-ecoregions-continental-united-states -- the us_eco_l3 shapefile the study grouped into the landscapes (downloaded 1 November 2026, kept local); Natural Earth, 1:50m *Admin 1 -- states, provinces* (lakes version) and 1:110m *Land* -- https://www.naturalearthdata.com, the GeoJSON copies at https://github.com/nvkelso/natural-earth-vector/tree/master/geojson (downloaded 2 November 2026) -- Alaska's and Hawaii's outlines and the globe's land; d3-geo, `geoAlbersUsa` -- https://github.com/d3/d3-geo -- its standard parallels (29.5 and 45.5 N), Alaska's (55 and 65 N, scale 0.35) and Hawaii's (8 and 18 N) and their placings, read and followed; J. P. Snyder (above), pp. 98-103, the Albers equal-area conic formulas; Snyder pp. 145-153 the orthographic projection the globe is drawn in.
+- The Badlands carved (RESEARCH, *The Dakota Badlands*), 3 November 2026, generator 83: [Stream power law](https://en.wikipedia.org/wiki/Stream_power_law) (Wikipedia), the erosion law and its m/n of about 0.5; J. Braun and S. D. Willett, [A very efficient, O(n), implicit and parallel method to solve the basic stream power law equation](https://doi.org/10.1016/j.geomorph.2012.10.008), Geomorphology 180-181 (2013), 170-179, known through its abstract and Landlab's FastScape documentation, the receiver tree; not used directly, the game draws its tree at random and writes the steady state down at once.
+- Terrain true to place (RESEARCH, *Terrain true to place*), 3 November 2026, generators 76-80 -- each landscape's landform recipe and what it took: the Glen Rose Formation (Wikipedia) and the UT Austin geology field guide (the Hill Country's stair steps); USGS Bulletin 845 (Monterey's marine terraces); KGS RI-07-11 (the Bluegrass's sinkholes); the Ozarks and the Ozark Highlands ecoregion (Wikipedia); WGNHS bulletin B099 (North Woods' kettles and eskers); USGS Open-File Report 2004-1007 (the Mojave's alluvial fans); the Coachella Valley (Wikipedia); NPS Yosemite geology (the Sierra's granite domes); the Channeled Scablands (Wikipedia; Sagebrush's coulees); the Georgia Encyclopedia's Piedmont and sandhills articles; SCEC (SoCal's canyons); USGS, the San Francisco volcanic field (Ponderosa's cinder cones); USGS PP 1151-H and GolfPass on "lava golf" (Hawaii); the Blue Ridge Mountains and Cove (Appalachian Mountains) (Wikipedia); USDA MLRA 131A (the Mississippi's alluvial plain, the lowland recipe); and for the Lowcountry's tidal creeks, Madsen, GSA Southeastern 2014 (the Southeast Coastal Geomorphology SET network's tidal ranges, 1.5-2.0 m) -- https://gsa.confex.com/gsa/2014SE/webprogram/Handout/Paper237152/Madsen_SEGSA2014.pdf -- and the North Inlet, SC marsh studies seen as search summaries (NSF PAR 10450202; USC theses etd/402). The links are in RESEARCH.
+
+## The seasons: twigs and the spring bloom (3 November 2026)
+
+- Runions, Lane and Prusinkiewicz, *Modeling Trees with a Space Colonization Algorithm*, Eurographics Workshop on Natural Phenomena 2007, pp. 63-70: https://algorithmicbotany.org/papers/colonization.egwnp2007.html -- the method behind src/twigs.js. Only the page and abstract were read; attractor, step and kill values are ours (RESEARCH, *The twig layer*).
+- Lady Bird Johnson Wildflower Center, *Bluebonnet FAQ*: https://www.wildflower.org/bluebonnet-faq -- Central Texas peak in early April.
+- America's State Parks, *Antelope Valley California Poppy Reserve*: https://www.americasstateparks.org/state-park/antelope-valley-california-poppy-reserve/ -- season mid-February through May, peak late March to mid-April.
+- Arizona-Sonora Desert Museum, *Desert Wildflower Blooms*: https://www.desertmuseum.org/programs/flowering.php -- Arizona Upland spring, mid-February to mid-June, peak mid-March to late April. And *Wildflower Flourishes and Flops*: https://www.desertmuseum.org/programs/flw_mohave.php -- the Mojave later than the Sonoran.
+- National Park Service, Mojave National Preserve, *Wildflowers*: https://www.nps.gov/moja/planyourvisit/wildflowers.htm -- a big spring bloom is not annual.
+- National Park Service, Great Smoky Mountains, *Wildflowers*: https://www.nps.gov/grsm/learn/nature/wildflowers.htm -- peak mid to late April at low elevation, later on the peaks; rhododendrons June and July.
+- Lonely Planet, *Best national parks for wildflowers*: https://www.lonelyplanet.com/articles/best-national-parks-for-wildflowers-usa -- Rocky Mountain National Park, June at 8,000-9,000 ft, July-August above. A travel source, taken for lack of a better one.
+- Peninsula Clarion (Kenai, Alaska): https://www.peninsulaclarion.com/?p=31979 -- peak wildflowers near the summer solstice. A local report.
+
+- **The last landscapes on another's ground** (RESEARCH, 4 November 2026): the geology sources for the Sonoran, Red Rock, the Chihuahuan, Alaska, the Oregon Dunes, Puget Sound, the Redwood Coast and the Cross Timbers are linked in that section's table, each with what was taken from it.
+
+- **AI model generators** (RESEARCH, 5 November 2026): the sources for Meshy, Rodin, Tripo, Hunyuan3D and TRELLIS.2 are listed under that section, each with what was taken from it.

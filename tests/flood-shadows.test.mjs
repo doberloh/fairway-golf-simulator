@@ -34,7 +34,11 @@ test('the ground shader declares the samplers this budget was measured with', ()
  // measured with, so every tier's floodlight count still links; the two
  // freed are left for the next surface layers -- the owner's "leave room
  // for more", 30 October 2026.)
- assert.equal(groundSamplers(), 5);
+ // (The course builder, 31 October 2026, spent one of those two on a built
+ // course's second field texture, `builtB` (built-world.js): six, still one
+ // under the seven every tier's floodlight count was measured to link with,
+ // and the second test below holds each tier's spare unit.)
+ assert.equal(groundSamplers(), 6);
 });
 
 test('no tier asks for more casting floodlights than its texture units allow, with one spare', () => {

@@ -17,6 +17,7 @@ import {spawnSync} from 'node:child_process';
 import {existsSync, readdirSync, mkdirSync} from 'node:fs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {holdCard} from '../gpu-lock.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const [pack, ...flags] = process.argv.slice(2);
@@ -48,7 +49,10 @@ if (flags.includes('--render')) {
  args.push('--render', join(shots, `${pack}.png`));
 }
 const blender = findBlender();
+// One graphics job at a time (gpu-lock.mjs).
+const release = holdCard(`blender ${pack}`);
 const run = spawnSync(blender, args, {encoding: 'utf8', maxBuffer: 64 << 20});
+release();
 const lines = `${run.stdout}\n${run.stderr}`.split(/\r?\n/);
 for (const line of lines) if (/^(BUILT|SHEET)|Error|Traceback/.test(line)) console.log(line);
 if (run.status !== 0) {
