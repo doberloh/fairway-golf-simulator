@@ -153,6 +153,88 @@ often has the how-to already worked out.
   for Lakeshore Dunes. A redwood remake would be a new pack script there;
   Blender may use the graphics card without asking (AGENTS.md).
 
+### Join and reorder every shipped model's vertices
+
+**What.** Give every shipped model what the Meshy trees got: vertices joined where they
+can be, triangles in the order the graphics card's vertex cache likes. The card shades
+a vertex once if the next triangle reuses it soon, so the order alone can halve its
+work, with no change to how a model looks.
+
+**Why it is worth writing down.** On the Redwood Coast it took Low from 3.34 ms a frame
+to about 1.9 ms (RESEARCH.md, *Why the Meshy trees were slow*). That frame is bound by
+vertices, not pixels: the card took the same time at a third of the pixels. **But do not
+expect that gain everywhere.** That landscape's trees were the worst in the game and
+fill nearly all of it. Across all 46 folders in vendor the game already shades 0.74
+vertices a triangle, where 0.6 is about as good as it gets (`tools/vertex-report.mjs`,
+5 November 2026). The owner was told at first that every shipped model had the problem;
+that was wrong, and this entry replaces it.
+
+**Where the gain is**, shaded per triangle and triangles in the folder:
+
+| Folder | Shaded/tri | Triangles | Vertices now, exact join, position join |
+| --- | --- | --- | --- |
+| cartoon_pacific | 1.37 | 45,306 | 61,452, 52,270, 48,131 |
+| cartoon_southpines | 1.24 | 49,243 | 61,093, 36,137, 31,941 |
+| cartoon_prairiegrass | 1.62 | 9,631 | 15,583, 13,654, 12,036 |
+| cartoon_island | 1.48 | 10,818 | 15,982, 15,808, 10,744 |
+| cartoon_grass | 1.75 | 3,438 | 6,008, 5,232, 4,596 |
+| cartoon_rocks | 1.69 | 3,840 | 6,082, 6,078, 2,178 |
+| cartoon_houses, cartoon_streets, the architect folders | 1.6-2.0 | under 5,000 each | flat-shaded, little to join |
+
+Run `node tools/vertex-report.mjs` for today's figures; `--models` for each model. Weigh a
+folder by how many instances a course plants, not by its triangles: grass and sprays
+planted by the thousand matter far more than a clubhouse.
+
+**The worst are the trees built by `tools/blender/grown.py`** (*Built as it grows*): bay
+laurel, bigleaf maple and madrone shade 2.15-2.19 a triangle and their far versions 1.5,
+because each thin leaf owns its vertices. The redwood pack's were the same (2.51) until
+Meshy replaced them. Reordering cannot help those: a model cannot shade fewer than its
+vertices divided by its triangles. Their cure is in grown.py, sharing vertices along a
+spray, or fewer vertices through a different leaf shape.
+
+**How to build it.**
+
+1. In `tools/build-meshes.mjs`, after `extract` and before quantising (the loop over
+   `byRole`), join vertices identical in position, normal and paint. That is safe.
+   Joining by position alone smooths facets, so only do that with the owner's eye on it.
+2. Reorder each part's triangles and renumber vertices by first use. `cache_order` and
+   `by_first_use` in `tools/blender/meshy_parts.py` are the method, Tom Forsyth's
+   linear-speed one: port it to JavaScript. It took 12,000 triangles a few
+   seconds a model in Python, which is fine in a build step, and 627 models will add to that.
+3. Rebuild `src/asset-meshes.js`. It should shrink. Every model's bytes will change, where
+   the tool has so far kept them stable, so say so in the commit.
+
+**Traps, each met on the way.**
+
+- **Part order:** `farParts` (mesh-assets.js) uses a far version only if its parts match the
+  model's, role for role and in order, and silently falls back to a thinned full model
+  otherwise. The sign is triangles doubling (44-52 M against 22 M). Keep bark first.
+- **One-sided faces:** the game draws one side, so a join must not merge faces with
+  opposite normals, which the exact join cannot do but a position join could.
+- **Paint and wind:** a vertex carries paint and flex (`COLOR_0`); join on those too.
+- **Nothing moves on the course:** model shape is unchanged, so the fingerprint should stay
+  silent, but run `node tools/biome-fingerprint.mjs --check` to be sure.
+
+**How to measure.** Build both with hooks, from the same source, and alternate them on an
+idle card; another job on the card spoilt one run here.
+
+```bash
+OUT=bench/shots/dist-a node tools/capture/build-hooked.mjs
+```
+
+```bash
+node tools/frame-ab.mjs --goal <name> --cap 200 --util 30 --temp 80 --rest 1 --tier low --biome puget --rounds 2 --a <before.html> --b <after.html>
+```
+
+`--cap` counts every run under that goal name, so a cap below the log's total stops the
+run at once. Start with a landscape that plants the worst folders (cartoon_pacific,
+cartoon_southpines). Check that the trees look the same, then take it landscape by
+landscape: `--device weak-laptop` for a weak machine, whose figures are an estimate.
+
+**Rough cost.** Half a day for the exact join and reorder, and a look at a few landscapes.
+Expect a modest gain outside the folders above. **Who and when:** the owner, 5 November
+2026, to be decided later.
+
 ## New biomes (9 October)
 
 Sixteen landscapes the owner and Claude drew up together, with what each would
@@ -204,12 +286,3 @@ One line each: the idea, when, and the owner's reason.
 - **Leaderboards for the course of the week** (20 October 2026). Scrapped by the owner after seeing the three ways to do it: friends' scores swapped as codes, a public board on the website (a service to run and moderate), or the game posting scores itself (breaks "nothing ever sent anywhere").
 - **Networked multiplayer** (20 October 2026). The owner wanted it with no servers of their own; across the internet that still needs an address-check service, or a relay for about one connection in ten, and Netlify cannot be the relay (no lasting connections; a free site over its limit is suspended for the month). The owner picked *Challenge a friend by code* instead (now built, TODO *Challenge a friend*) and does not expect to ask again. The study is `docs/reports/MULTIPLAYER_FEASIBILITY.md` (local); RESEARCH *Challenge a friend* has the Netlify sources.
 - **A rock-built waterfall for Desert Resort** (5 November 2026). Offered after the landscape was built, for the waterfalls at Wynn, Southern Highlands and Canyon Gate. The owner declined: "No rock waterfalls please." No reason given.
-
-- **Join and reorder every shipped model's vertices.** What: in build-meshes, join
-  vertices that match and put each part's triangles in vertex-cache order, as
-  tools/blender/meshy_parts.py does for Meshy trees. Why: the shipped trees shade 2.5
-  vertices a triangle where about 0.6 can be had; the same change took the Redwood
-  Coast's Low frame from 2.75 to 1.72 ms for Meshy trees. Rough cost: a few hours,
-  then every landscape's A/B and a look, because joining shared paint or normals can
-  soften facets. Where: tools/build-meshes.mjs, tools/mesh-read.mjs. The owner's
-  session, 5 November 2026.

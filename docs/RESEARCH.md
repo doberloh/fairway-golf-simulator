@@ -14410,3 +14410,9 @@ a thin limb; leaf faces that were wood-coloured take the leaves' mean shade. The
 tries turned long fluted trunk faces green, on the young redwoods most; the last
 shape of the test, on captures meshy13, shows neither fault in the views taken. Later
 the long-face reach was widened for cedars and not re-captured.
+
+**How far the speed-up reaches (5 November 2026).** tools/vertex-report.mjs across all 47
+folders in vendor: 1,363,623 triangles, 0.74 vertices shaded a triangle, 969,348 vertices,
+901,973 after an exact join. So the redwood pack's 2.51 was the exception, not the rule,
+and the claim that shipped models share it was wrong. The figures and how to apply it are
+in IDEAS.md, *Join and reorder every shipped model's vertices*.
