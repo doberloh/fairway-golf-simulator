@@ -5,7 +5,7 @@ import {farWoodSites,FAR_SHAPES} from './far-woods.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts,bareParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
-import {GROUND_PLANTS,SPREAD_SIZED} from './species.js';
+import {EVERGREEN,GROUND_PLANTS,SPREAD_SIZED} from './species.js';
 import {plantPose} from './tree-seat.js';
 import {allows} from './grounds.js';
 import {wildAt} from './landforms.js';
@@ -153,14 +153,6 @@ const STILL=new Set(['cactus','agave','cholla']);
 const THIN_LEAVES=new Set(['palm','halatree','brackenfern','ocotillo','redwood','youngredwood','dougfir','hemlock','tanoak','baylaurel','madrone','bigleafmaple']);
 // Kept green through leaf fall; and the hue a broadleaf turns (HSL hue; the
 // rest turn orange, .055).
-const EVERGREEN=new Set(['afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
- 'longleafpine','loblollypine','slashpine','liveoak','liveoakmoss','magnolia','waxmyrtle','yaupon','cabbagepalm','sawpalmetto','citrustree',
- 'afghanpine','africansumac','pampasgrass','ashejuniper','mountainlaurel','joshuatree','mojaveyucca','fanpalm','datepalm','aleppopine','oleander','soaptreeyucca','sotol','lechuguilla','emoryoak','alligatorjuniper','beavertail',
- 'montereycypress','montereypine','coastliveoak','eucalyptus','torreypine','iceplant','coastalsage','chaparral','olivetree','peppertree',
- 'ponderosa','sugarpine','incensecedar','redfir','noblefir','manzanita','mountainmahogany','bitterbrush','beargrass',
- 'westernjuniper','utahjuniper','pinyonpine','blackbrush','cliffrose','soapweedyucca','easternredcedar','rmjuniper',
- 'rosebay','mountainlaurelshrub','shortleafpine','pitchpine','bayberry',
- 'redpine','jackpine','blackspruce','sitkaspruce','shorepine','casuarina','cookpine','ohia','tiplant']);
 const FALL_HUE={maple:0,aspen:.11,paperbirch:.12,americanbeech:.09};
 // THE SEASONS (the US landscapes goal, step 9; seasons.js). The round's
 // season is the view's (renderer.js sets it). Leaves turn in autumn

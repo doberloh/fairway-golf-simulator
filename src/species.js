@@ -112,3 +112,19 @@ export function tallHeight(bio, kind, a, scale = 1) {
  const [low, span] = OTHER_TALL[kind] ?? [bio.farCanopy.min, bio.farCanopy.range];
  return (low + a * span) * scale;
 }
+
+// KEPT GREEN THROUGH LEAF FALL AND WINTER (vegetation.js). A species that is not
+// here and has no season tints of its own turns orange in autumn, so an evergreen
+// left off is the bug the owner found on Puget Sound (5 November 2026): its cedars
+// turned with the maples. tests/seasons.test.mjs holds every conifer and palm to it.
+export const EVERGREEN = new Set(['afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
+ 'longleafpine','loblollypine','slashpine','liveoak','liveoakmoss','magnolia','waxmyrtle','yaupon','cabbagepalm','sawpalmetto','citrustree',
+ 'afghanpine','africansumac','pampasgrass','ashejuniper','mountainlaurel','joshuatree','mojaveyucca','fanpalm','datepalm','aleppopine','oleander','soaptreeyucca','sotol','lechuguilla','emoryoak','alligatorjuniper','beavertail',
+ 'montereycypress','montereypine','coastliveoak','eucalyptus','torreypine','iceplant','coastalsage','chaparral','olivetree','peppertree',
+ 'ponderosa','sugarpine','incensecedar','redfir','noblefir','manzanita','mountainmahogany','bitterbrush','beargrass',
+ 'westernjuniper','utahjuniper','pinyonpine','blackbrush','cliffrose','soapweedyucca','easternredcedar','rmjuniper',
+ 'rosebay','mountainlaurelshrub','shortleafpine','pitchpine','bayberry',
+ 'redpine','jackpine','blackspruce','sitkaspruce','shorepine','casuarina','cookpine','ohia','tiplant',
+ // Added 5 November 2026: the cedar and the palms that had no tints of their own,
+ // the evergreen broadleaves and shrubs that have none, and young conifers.
+ 'cedar', 'palm', 'hala', 'seedling', 'tanoak', 'swordfern', 'salal', 'naupaka', 'gorse', 'heather', 'sagebrush', 'creosote', 'cactus', 'cholla', 'agave']);

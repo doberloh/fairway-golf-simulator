@@ -176,3 +176,16 @@ test('a prairie grass wears its own colours through the year, and a field in blo
  assert.equal(hex(grassLook(BIOMES.bluebonnet.longGrass, 'grassindian', 'summer').accent), BIOMES.bluebonnet.longGrass.accent, 'the bluebonnets stay blue');
  for (const k of ['bluegrass', 'ozarks', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
 });
+
+// The owner, 5 November 2026, of Puget Sound in autumn: "The evergreen trees change
+// color". `cedar` was not on the list. The three conifers that do drop their needles
+// have their own tints.
+test('no evergreen turns in autumn: every conifer and palm is on the list or has its own colours', async () => {
+ const [{EVERGREEN}, {CONIFERS, PALMS}, {SEASON_TINTS}] = await Promise.all([import('../src/species.js'), import('../src/built-world.js'), import('../src/season-tints.js')]);
+ const shed = new Set(['baldcypress', 'westernlarch', 'tamarack']);
+ for (const k of [...CONIFERS, ...PALMS]) {
+  if (shed.has(k)) { assert.ok(SEASON_TINTS[k]?.autumn, `${k} turns by its own colours`); continue; }
+  assert.ok(EVERGREEN.has(k) || SEASON_TINTS[k]?.autumn, `${k} would turn orange in autumn`);
+ }
+ for (const k of ['cedar', 'tanoak', 'seedling', 'swordfern']) assert.ok(EVERGREEN.has(k), k);
+});

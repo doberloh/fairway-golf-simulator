@@ -2458,6 +2458,7 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   middle (layer-ops.js `anchorHit`). While looking, a second fix: a quick drag
   kept the first pointer position of each frame and dropped the last one waiting
   at release, so it could land short of where it was let go.
+- [x] **Evergreens stay green in autumn** (the owner, 5 November 2026, of Puget Sound). `cedar` was not on the keep-green list, so it turned with the maples; nor were palms, tanoak, young conifers and several evergreen shrubs. The list is species.js `EVERGREEN` now, and tests/seasons.test.mjs holds every conifer and palm to it. Seen on Puget Sound at Medium.
 - [x] **A course reopens with everything** (the owner, 5 November 2026): a course
   saved from the editor carries the door 2 session behind it (the survey's grids,
   every surveyed tree, the trace, boundary and box, pictures, OpenStreetMap's
