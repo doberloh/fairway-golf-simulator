@@ -1,0 +1,217 @@
+{
+ "name": "parkland",
+ "note": "The Classic Parkland pack on Meshy, the first landscape of the US golf courses work (the owner, 5 November 2026). Trees are taller and narrower than the game's rounded hand-built ones, as trees on real courses are, and stand in the open with grass to the trunk. Heights, widths and trunk widths are PLACED from the species' usual forest-grown form and the owner's course photos, so look at them against the pictures. Colours start from the game's own (oak #487039, maple #658d36, spruce #2c5349); the elm and tulip poplar colours are placed. Both pin oaks were sent back by the owner as pine-shaped and rewritten as oval and untiered. Shipped in vendor/blender-meshy_parkland, with AmericanElm as ParkElm and TulipPoplar as ParkPoplar because the hand-built models hold those names. `seasons` are each species' colours, PLACED, read by tools/blender/dump-tints.mjs. American elm has one version: elm 2 came out nearly bare and the owner dropped it. Targets match the Redwood Coast's biggest trees, the young redwoods at 12,600 (the owner, 6 November 2026): 12,000 triangles for a broadleaf, 12,600 for the spruce. They were about 6,000 and 7,300 until the owner asked why these trees should have less detail than the redwoods. The cost on Low is still to be measured.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_WhiteOak_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #487039. Bark pale ash grey #84807a.",
+   "aspect": "3:4",
+   "prompt": "A mature white oak tree on a parkland golf course, 28 m tall and 16 m wide, clearly taller than it is wide. Straight pale grey trunk with shallow scaly bark, running high up into the crown before it divides, bare for its lowest quarter. Eight to twelve strong tapering limbs angle upward and outward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a tall irregular oval crown with a bumpy uneven outline. Sky and limbs show through the gaps between the tufts. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no even tiers of branches, no Christmas tree outline, no acorns. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_WhiteOak_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #487039. Bark pale ash grey #84807a.",
+   "aspect": "3:4",
+   "prompt": "A younger white oak tree on a parkland golf course, 22 m tall and 12 m wide, slightly lopsided with one heavier side. Straight pale grey trunk with shallow scaly bark, bare for its lowest quarter. Six to ten strong tapering limbs angle upward and outward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a tall uneven oval crown with a bumpy outline and several small gaps showing sky and limbs. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches, no Christmas tree outline, no acorns. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PinOak_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves deep green #466f3a. Bark smooth grey-brown #6e665e.",
+   "aspect": "9:16",
+   "prompt": "A mature pin oak hardwood tree in full summer leaf, 24 m tall and 12 m wide, a tall full oval crown with a gently rounded top. One straight grey-brown trunk carries on up through the middle of the crown. Many limbs of uneven length leave the trunk at irregular heights, the upper ones angled upward, the middle ones reaching outward, and the lowest few drooping gently toward the ground. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are many and fairly small, chunky, overlapping a little, with a bumpy uneven outline and a few gaps showing sky and limbs. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no acorns. This is a broadleaf hardwood oak, not a conifer: no Christmas tree outline, no pointed spire top, no even tiers or layers of branches, no needles. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PinOak_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves deep green #466f3a. Bark smooth grey-brown #6e665e.",
+   "aspect": "9:16",
+   "prompt": "A younger pin oak hardwood tree in full summer leaf, 19 m tall and 10 m wide, a tall oval crown with a gently rounded top, a little uneven on one side. One straight grey-brown trunk carries on up through the middle of the crown. Limbs of uneven length leave the trunk at irregular heights, angled upward high on the tree and drooping gently at the bottom. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are many and fairly small, chunky, overlapping a little, with a few gaps showing sky and limbs. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no acorns. This is a broadleaf hardwood oak, not a conifer: no Christmas tree outline, no pointed spire top, no even tiers or layers of branches, no needles. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_SugarMaple_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #658d36. Bark mid grey-brown #6f675f.",
+   "aspect": "9:16",
+   "prompt": "A mature sugar maple tree, 26 m tall and 12 m wide, a tall upright egg shape. Straight furrowed grey-brown trunk, bare for its lowest fifth, continuing up through the crown. Tapering limbs sweep steeply upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky, sit close together, and make a dense egg-shaped crown with a bumpy broken outline and a few gaps. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no perfectly smooth egg, no even tiers of branches. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_SugarMaple_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #658d36. Bark mid grey-brown #6f675f.",
+   "aspect": "9:16",
+   "prompt": "A younger sugar maple tree, 20 m tall and 9 m wide, a slim upright oval, its top slightly off centre. Straight furrowed grey-brown trunk, bare for its lowest fifth. Tapering limbs sweep steeply upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky and sit close together, with a bumpy broken outline and a few gaps. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no perfectly smooth oval, no even tiers of branches. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_TulipPoplar_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves bright yellow-green #6c9440. Bark light grey #7f7b72.",
+   "aspect": "9:16",
+   "prompt": "A very tall tulip poplar tree, 36 m tall and 11 m wide, a tall narrow column. A perfectly straight pale grey trunk with fine ridges rises like a pole, bare for its lowest third. Above that, short tapering limbs angle upward at uneven heights. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky and staggered around the trunk, never in rows, forming a narrow crown with a bumpy outline and gaps showing the trunk. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no stacked layers, no even tiers of branches, no round crown, no flowers. A slender trunk, one thirtieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thick limb at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_TulipPoplar_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves bright yellow-green #6c9440. Bark light grey #7f7b72.",
+   "aspect": "9:16",
+   "prompt": "A tall younger tulip poplar tree, 28 m tall and 8 m wide, a slim column, its upper crown leaning very slightly. A straight pale grey trunk with fine ridges, bare for its lowest third. Above that, many short tapering limbs angle upward at uneven heights. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. There are many tufts, sixteen to twenty, chunky and staggered all around the trunk, never in rows, filling the whole column from the top of the bare trunk to the tip, with a bumpy outline and only small gaps showing the trunk. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no stacked layers, no even tiers of branches, no round crown, no flowers. A slender trunk, one thirtieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thick limb at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AmericanElm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves soft green #557a3a. Bark dark grey-brown #625a52.",
+   "aspect": "3:4",
+   "prompt": "A mature American elm tree, 30 m tall and 18 m wide, a classic tall vase shape. A straight furrowed grey-brown trunk rises bare for about a third of the height, then divides into several long thick limbs that fan up and outward like a vase, then arch gently over at their ends. Each arching end carries one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and the tufts sag a little at the outer edge of the vase. The middle of the vase is open, with limbs and sky visible through the crown. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round crown, no hanging strands. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently up to where it divides, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_NorwaySpruce_1",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles deep blue-green #2c5349. Bark red-brown #5f4a40.",
+   "aspect": "9:16",
+   "prompt": "A mature Norway spruce tree, 32 m tall and 9 m wide, a tall narrow spire. A straight red-brown trunk with flaky bark, narrowing continuously to nothing at the tip, seen in glimpses through the boughs. Tapering boughs all the way down, sweeping gently upward at their ends near the top and lower down dipping and then rising at the tips. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "skirts"
+  },
+  {
+   "name": "Blender_NorwaySpruce_2",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles deep blue-green #2c5349. Bark red-brown #5f4a40.",
+   "aspect": "9:16",
+   "prompt": "A younger Norway spruce tree, 24 m tall and 8 m wide, full and even all the way round, a tall narrow spire. A straight red-brown trunk with flaky bark, narrowing continuously to nothing at the tip, seen in glimpses through the boughs, straight from foot to tip with no lean. Tapering boughs all the way down, sweeping gently upward at their ends near the top and lower down dipping and then rising at the tips. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are close together, even in length on both sides, staggered with small gaps of sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "skirts"
+  }
+ ],
+ "seasons": {
+  "whiteoak": {
+   "spring": {
+    "leaf": "#9cb064",
+    "bark": "#84807a"
+   },
+   "summer": {
+    "leaf": "#487039",
+    "bark": "#84807a"
+   },
+   "autumn": {
+    "leaf": "#6b4c3a",
+    "bark": "#84807a"
+   },
+   "winter": {
+    "leaf": "#487039",
+    "bark": "#84807a"
+   }
+  },
+  "pinoak": {
+   "spring": {
+    "leaf": "#96a25a",
+    "bark": "#7d756c"
+   },
+   "summer": {
+    "leaf": "#466f3a",
+    "bark": "#7d756c"
+   },
+   "autumn": {
+    "leaf": "#7a5a3c",
+    "bark": "#7d756c"
+   },
+   "winter": {
+    "leaf": "#466f3a",
+    "bark": "#7d756c"
+   }
+  },
+  "parkmaple": {
+   "spring": {
+    "leaf": "#b2c84e",
+    "bark": "#7e766d"
+   },
+   "summer": {
+    "leaf": "#527a3c",
+    "bark": "#7e766d"
+   },
+   "autumn": {
+    "leaf": "#ab7f3e",
+    "bark": "#7e766d"
+   },
+   "winter": {
+    "leaf": "#527a3c",
+    "bark": "#7e766d"
+   }
+  },
+  "parkpoplar": {
+   "spring": {
+    "leaf": "#7cb04a",
+    "bark": "#7f7b72"
+   },
+   "summer": {
+    "leaf": "#5c8240",
+    "bark": "#7f7b72"
+   },
+   "autumn": {
+    "leaf": "#ab9b4e",
+    "bark": "#7f7b72"
+   },
+   "winter": {
+    "leaf": "#5c8240",
+    "bark": "#7f7b72"
+   }
+  },
+  "parkelm": {
+   "spring": {
+    "leaf": "#6a9848",
+    "bark": "#756d64"
+   },
+   "summer": {
+    "leaf": "#557a3a",
+    "bark": "#756d64"
+   },
+   "autumn": {
+    "leaf": "#928c4e",
+    "bark": "#756d64"
+   },
+   "winter": {
+    "leaf": "#557a3a",
+    "bark": "#756d64"
+   }
+  },
+  "norwayspruce": {
+   "spring": {
+    "leaf": "#3c6a46",
+    "bark": "#6f5a4e"
+   },
+   "summer": {
+    "leaf": "#30573c",
+    "bark": "#6f5a4e"
+   },
+   "autumn": {
+    "leaf": "#30573c",
+    "bark": "#6f5a4e"
+   },
+   "winter": {
+    "leaf": "#2c5036",
+    "bark": "#6f5a4e"
+   }
+  }
+ }
+}

@@ -117,6 +117,12 @@ often has the how-to already worked out.
 - **A third crown shape for the trees** -- a single-mass conifer, or a plume
   built from overlapping foliage. Medium. (was: *Only two crown shapes*)
 
+- **Bare winter trees, or better limbs, from Meshy 7.1.** One test on white oak 1 gave
+  very good tapering limbs and almost no leaves, a bare winter tree from a summer picture.
+  Those could stand as winter or dead trees, or be the wood under Meshy 6 leaves, which
+  would suit real taper and limbs. Rough cost: 30 credits a tree, plus joining two
+  models in tools/blender/meshy_game.py. Noticed by Claude, 6 November 2026.
+
 ## Under the hood
 
 - **Washington's surveys listed in the builder, through the bridge.** The

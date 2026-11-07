@@ -119,7 +119,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  const e = createEditor(doc());
  e.paint({kind: 'sand', x: 0, z: 30, radius: 4});
  e.shape({op: 'raise', x: 0, z: 30, radius: 6, strength: 1});
- e.setLandscape('newengland');
+ e.setLandscape('rockies');
  const out = validateDoc(e.toDoc());
  const w = worldFromDoc(out);
  assert.equal(w.surface(0, 30), 'sand');
@@ -128,7 +128,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  assert.equal(w.surface(-50, 0), 'water');
  assert.equal(w.surface(70, 0), 'heather');
  assert.ok(w.height(0, 30) > 100.3);
- assert.equal(out.landscape, 'newengland'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'newengland'}).bio.name);
+ assert.equal(out.landscape, 'rockies'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'rockies'}).bio.name);
  assert.equal(out.water.length, 1); assert.equal(out.water[0].level, 99, 'the pond keeps its level');
  assert.equal(out.trees.length, 3 * TREE_STRIDE);
  const untouched = createEditor(doc()).toDoc();

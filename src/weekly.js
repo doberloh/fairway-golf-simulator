@@ -79,8 +79,12 @@ export const WEEKLY_ROTATION = {
   // Phase 8c (PLACED, one a week on).
   {debut: 188, biome: 'northwoods'}, {debut: 189, biome: 'oregondunes'}, {debut: 190, biome: 'hawaii'},
   // The owner's addition of 3 November 2026 (PLACED, the week after).
-  {debut: 191, biome: 'badlands'}, {debut: 192, biome: 'desertresort'}],
- retired: {haunted: 'newengland'},
+  {debut: 191, biome: 'badlands'}, {debut: 192, biome: 'desertresort'},
+  // Classic Parkland (PLACED, the week after).
+  {debut: 193, biome: 'parkland'},
+  // Southern Pines (PLACED, the week after).
+  {debut: 194, biome: 'southpines'}],
+ retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;

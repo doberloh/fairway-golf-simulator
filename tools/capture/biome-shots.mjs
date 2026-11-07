@@ -30,14 +30,18 @@ const argv = process.argv.slice(2);
 const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const mode = argv.shift();
 // `--season s`: the course in that season (seasons.js; summer, the cards', by default).
-const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
+// `--review`: the set every landscape is judged by, the same seed and the same views,
+// so two landscapes compare picture for picture; run once for each `--season`.
+const review = argv.includes('--review') && argv.splice(argv.indexOf('--review'), 1).length > 0;
+if (review && !argv.includes('--size')) argv.push('--size', '1280x720');
+const label = opt('--label', 'latest'), only = review ? ['overview', 'h2-side', 'h3-low', 'h2-green', 'h1-low'] : opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
 // `--picks`: only the views each landscape's cards use (PICKS), when the land
 // has moved and the cards want retaking.
 const picks = argv.includes('--picks') && argv.splice(argv.indexOf('--picks'), 1).length > 0;
 // `--homes 60`: the course with fairway homes at that density, and `--seed s`
 // another course than the card's (the `street` views need houses; they are a
 // course setting, off by default).
-const homes = opt('--homes'), seedOverride = opt('--seed');
+const homes = opt('--homes'), seedOverride = review ? 'FAIRWAY' : opt('--seed');
 // `--size 1280x720`: a page of that size at density 1, for looking a set over
 // (not masters for the cards).
 const size = opt('--size')?.split('x').map(Number);
@@ -64,7 +68,7 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
  blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
  northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
- badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN'};
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -133,6 +137,8 @@ export const PICKS = {
  highplains: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  sandhills: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ parkland: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ southpines: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  longleaf: ['h1-behind', 'overview', 'h2-side', 'h3-high'],

@@ -519,7 +519,7 @@ export function fitPondBasin(h,p,shapedLand){
 
 export function insideOval(x,z,o,margin=0){return hazardMetric(x,z,o,margin)<1;}
 export function generateCourse(settings={},hole=0){
- const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=BIOMES[s.biome]||BIOMES.pnw;
+ const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=biomeOf(s.biome)||BIOMES.pnw;
  const planned=planCourse(s).holes[hole%s.holes],par=planned.par;
  // THE SKELETON COMES FROM course-plan.js, so the scorecard shown before a
  // course is built and the course that gets built cannot disagree: they run
@@ -1346,7 +1346,7 @@ export function* generateWorldSteps(settings={},options={}){
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
  // textures, vegetation -- treats it exactly like any other and needs no branch.
- const bio=BIOMES[s.biome],holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
+ const bio=biomeOf(s.biome),holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
  yield phaseAt(1);
  // WHERE AN EDGE COAST RUNS (`coastAt(z)`: the middle of the shore's ramp at
  // each z; the water itself starts about 40 m further out). 90 m in from the

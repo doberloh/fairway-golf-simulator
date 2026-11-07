@@ -3,6 +3,8 @@
 // knows a species by its key and never needed to say it; a new species needs its
 // line here, and tests/builder-parity.test.mjs says so.
 export const TREE_NAMES = {
+ southloblolly: 'Loblolly pine (Southern Pines)', southlongleaf: 'Longleaf pine (Southern Pines)', southwhitepine: 'Eastern white pine (Southern Pines)', southdogwood: 'Flowering dogwood (Southern Pines)',
+ whiteoak: 'White oak', pinoak: 'Pin oak', parkmaple: 'Sugar maple (parkland)', parkpoplar: 'Tulip poplar (parkland)', parkelm: 'American elm (parkland)', norwayspruce: 'Norway spruce',
  afghanpine: 'Afghan pine', africansumac: 'African sumac', alder: 'Red alder', aleppopine: 'Aleppo pine', alligatorjuniper: 'Alligator juniper', americanbeech: 'American beech', americanelm: 'American elm', ashejuniper: 'Ashe juniper', aspen: 'Quaking aspen',
  baldcypress: 'Bald cypress', balsamfir: 'Balsam fir', banyan: 'Banyan', baylaurel: 'California bay laurel', bigleafmaple: 'Bigleaf maple', blackjackoak: 'Blackjack oak', blackoak: 'Black oak', blackspruce: 'Black spruce', blueoak: 'Blue oak', bluespruce: 'Blue spruce', buckeye: 'California buckeye', buroak: 'Bur oak',
  cabbagepalm: 'Cabbage palm', cactus: 'Saguaro', casuarina: 'Casuarina', cedar: 'Western red cedar', cedarelm: 'Cedar elm', chestnutoak: 'Chestnut oak', citrustree: 'Citrus tree', coastliveoak: 'Coast live oak', cookpine: 'Cook pine', copperbeech: 'Copper beech', cottonwood: 'Cottonwood', crapemyrtle: 'Crape myrtle',

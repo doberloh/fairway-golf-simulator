@@ -722,8 +722,8 @@ const INLAND = Object.fromEntries(['bank', 'coastal', 'sea', 'inlandWater', 'rin
  'litter', 'fallen', 'landform', 'farForest', 'longGrass', 'light', 'rockMoss'].map(k => [k, ({...DEFAULTS, ...PALETTES.midwest, ...TRAITS.midwest})[k]]));
 
 const LAND = {
- puget: {}, sonoran: {}, rockies: {}, links: {}, heartland: {}, keys: {}, redwood: {},
- newengland: {}, lakedunes: {},
+ puget: {}, sonoran: {}, rockies: {}, links: {}, keys: {}, redwood: {},
+ lakedunes: {},
  // Phase 3, on existing models (see above).
  // High Plains: wheat country -- a grain elevator for the landmark (phase 8).
  // The High Plains: the Llano Estacado is nearly treeless -- shortgrass to
@@ -790,46 +790,40 @@ const LAND = {
   plants: [['greenash', .01], ['rmjuniper', .06], ['cottonwood', .01], ['chokecherry', .02], ['soapweedyucca', .14], ['leadplant', .2], ['sagebrush', .14], ['prairieforbs', .26], ['buffalograss', .06], ['shrub', .1]],
   ui: {panel: 'rgba(40,26,22,.88)', a1: '#fecdd3', a2: '#b4533a', hot: '#fff7ed', soft: '#e8d0c4', onHot: '#2a100a'},
   world: {clubhouse: 'loglodge', story: {walls: 'wire', ruins: ['logcabin'], landmark: 'windmill'}, life: {grazers: ['bison', 5]}}},
- // The Old Northeast: New England's region in high summer -- stately oaks,
- // maples, elms and beeches, stone clubhouses (the Golden Age courses).
- // No autumn leaf ground either (phase 8b; it read as orange paint).
- oldnortheast: {leafFall: false, leafLitter: false, fallen: null, rough: '#73803f', semi: '#5a8a42', tree: '#3f6a30', sky: '#b9d3e8',
+ // Classic Parkland: tall hardwoods in groups and lines along mown holes, grass right
+ // to the trunks. Two or three signature trees and a few accents on the course,
+ // the same woods beyond the rough (docs/studies/us-golf-courses, local). The
+ // first landscape planted only with trees from Meshy. Density and colours PLACED. The
+ // region's autumn sun and purple shade turned bark black and the rough olive on the
+ // first look, so this has summer light of its own, and its woods stand well back. The default lets
+ // crowns run through each other, which the owner saw at once on tall open trees
+ // (6 November 2026), so `crownShare` and the stands' `share` keep them apart.
+ parkland: {crownShare: .9, light: {shade: '#8494bc'}, sunColor: '#fff0d6', leafFall: false, leafLitter: false, fallen: null, rough: '#5f8a44', semi: '#538e42', tree: '#3f6a30', sky: '#b9d3e8', treeDensity: 2.2,
+  title: 'Golden Age', tag: 'Tall oaks and maples along mown fairways.',
   farForest: {cover: .85, size: 11, colors: ['#3f6a30', '#4a7436', '#56803a']},
-  longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]], count: 3500, near: 22, leaf: '#7a8a46', accent: '#a07a3e'},
-  // Phase 8b: the old estates' copper beech, hydrangeas by the clubhouse.
-  stands: {...TRAITS.northeast.stands, plants: [['oak', .35], ['maple', .25], ['americanbeech', .12, .9], ['copperbeech', .08], ['americanelm', .1], ['whitepine', .1, 1.2]]},
-  plants: [['oak', .26], ['maple', .22], ['americanelm', .13], ['americanbeech', .13, .9], ['copperbeech', .06], ['whitepine', .1, 1.2], ['hydrangea', .05], ['shrub', .05]],
+  longGrass: {families: [['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]], count: 900, near: 22, leaf: '#7a8a46', accent: '#a07a3e'},
+  stands: {...TRAITS.northeast.stands, edge: 95, wobble: 30, patch: .05, near: 70, spacing: 13, share: .8,
+   plants: [['whiteoak', .4], ['pinoak', .24], ['parkmaple', .24], ['parkpoplar', .05], ['norwayspruce', .03], ['parkelm', .04]]},
+  plants: [['whiteoak', .3], ['pinoak', .2], ['parkmaple', .24], ['parkpoplar', .09], ['parkelm', .07], ['norwayspruce', .06], ['shrub', .04]],
   ui: {panel: 'rgba(14,32,20,.88)', a1: '#bbf7d0', a2: '#166534', hot: '#fde68a', soft: '#b6d4bc', onHot: '#0a1f10'},
-  // A Tudor clubhouse (phase 8b), cream and dark timber.
   world: {clubhouse: 'tudor', bridge: 'stone', story: {walls: 'field', ruins: ['cottage'], landmark: 'church'},
    colours: {...WORLD.northeast.colours, clubhouse: {stone: '#f2ece0', bark: '#6a3a2a', accent: '#4a3a2a', dirt: '#2a3038'}}}},
- // The Pine Barrens: pitch pine and scrub oak on sand, heath and fescue,
- // salt wind (Shinnecock, Pine Valley).
- pinebarrens: {leafFall: false, rough: '#9a9460', semi: '#6e8a4a', tree: '#3c5a34', sand: '#ece0bc', treeDensity: 2,
-  landform: {type: 'dunes', scale: 160, hummock: 30, height: 4, marram: .35, heather: .55,
-   kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
-  longGrass: {families: [['grassfescue', 4, .8], ['grassmarram', 1, 1.0]], count: 6000, near: 14, leaf: '#93945a', accent: '#c9b06a'},
-  farForest: {cover: .7, size: 9, colors: ['#3c5a34', '#4a6638', '#5e6f3c']},
-  // Phase 8b: pitch pine for the stand-in pine, scrub oak, bayberry and the
-  // beach rose under it.
-  stands: {...TRAITS.northeast.stands, plants: [['pitchpine', .6], ['blackoak', .4]], under: {spacing: 8, plants: [['scruboak', .5], ['heather', .3], ['bayberry', .2]]}},
-  plants: [['pitchpine', .35], ['blackoak', .12], ['scruboak', .15], ['heather', .12], ['bayberry', .08], ['beachrose', .06], ['commonjuniper', .07], ['dunegrass', .05]],
-  ui: {panel: 'rgba(30,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#cfd4ae', onHot: '#181a08'},
-  // A Long Island shingled windmill for the landmark (phase 8b).
-  world: {clubhouse: 'shingle', bridge: 'wood', path: 'gravel', story: {walls: null, ruins: ['cottage'], landmark: 'shingledwindmill'}}},
  alaska: {},
  // Phase 5: the South (the US landscapes goal's South packs).
- // The Piedmont's red clay: the prairie drifts beyond play are bare clay
- // banks instead, at under half the cover (hardpan, painted red; PLACED).
- piedmont: {landform: {...TRAITS.south.landform, cover: .25, kinds: {a: 'hardpan'}}, groundTints: {hardpan: '#9c6048'}},
- // Longleaf Pines: tall bare longleafs over wiregrass, turkey oaks, pine
- // straw and sandy waste (Pinehurst).
- longleaf: {treeDensity: 2.4, rough: '#8a8a52',
-  stands: {...TRAITS.south.stands, share: .5, under: {spacing: 9, plants: [['wiregrass', .5], ['longleafgrass', .3], ['yaupon', .2]]},
-   plants: [['longleafpine', .6, 1.1], ['loblollypine', .15], ['turkeyoak', .15], ['blackjackoak', .1]]},
-  plants: [['longleafpine', .3, 1.1], ['loblollypine', .05], ['wiregrass', .25], ['longleafgrass', .15], ['turkeyoak', .12], ['yaupon', .08], ['blackjackoak', .05]],
-  // Pine straw's amber.
-  ui: {panel: 'rgba(36,28,14,.88)', a1: '#fde68a', a2: '#a16207', hot: '#fef9c3', soft: '#e0d2ae', onHot: '#221a06'}},
+ // Southern Pines: very tall pines on long bare trunks over wide corridors, pine straw
+ // under them, sandy waste and wiregrass (Pinehurst), dogwood and azalea colour
+ // (Augusta), darker white pines (Pine Valley). The second landscape planted only from
+ // Meshy, with Classic Parkland's lessons: crowns kept apart, woods set back, a
+ // mown green rough. The default rough tint is a pale yellow that blotched it, and the
+ // South's fairway read neon close up, so both are set here. Density and colours PLACED.
+ southpines: {groundTints: {pinestraw: '#73683e'}, crownShare: .9, treeDensity: 2.4, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a', sand: '#ece2c8', temperature: 24,
+  title: 'Long Shadows', tag: 'Tall pines, pine straw and white sand.',
+  fallen: {from: ['southloblolly', 'southlongleaf', 'southwhitepine'], kind: 'pinestraw'},
+  longGrass: {...TRAITS.south.longGrass, count: 1200},
+  stands: {...TRAITS.south.stands, edge: 80, wobble: 28, patch: .1, near: 55, spacing: 12, share: .8, under: {spacing: 9, plants: [['wiregrass', .5], ['longleafgrass', .3], ['yaupon', .2]]},
+   plants: [['southloblolly', .48], ['southlongleaf', .36], ['southwhitepine', .16]]},
+  plants: [['southloblolly', .34], ['southlongleaf', .3], ['southwhitepine', .1], ['southdogwood', .1], ['azalea', .06], ['wiregrass', .06], ['longleafgrass', .04]],
+  ui: {panel: 'rgba(30,26,16,.88)', a1: '#fcd9a8', a2: '#9a5a12', hot: '#fff3c4', soft: '#e4d4b0', onHot: '#231806'}},
  // Lowcountry: live oaks in Spanish moss, salt marsh, palmettos, slash pine.
  // Salt marsh (generator 74): the drifts beyond play are wide cordgrass flats
  // (native grass, painted the marsh's gold-green, two-thirds of the ground),
@@ -992,34 +986,8 @@ const LAND = {
    plants: [['westernjuniper', .6], ['russianolive', .4]]},
   plants: [['sagebrush', .3], ['westernjuniper', .1], ['rabbitbrush', .12], ['bitterbrush', .1], ['balsamroot', .1], ['cheatgrass', .13], ['russianolive', .05], ['globemallow', .05], ['shrub', .05]],
   ui: {panel: 'rgba(26,30,24,.88)', a1: '#ecfccb', a2: '#65a30d', hot: '#fef3c7', soft: '#d0d8c0', onHot: '#141c08'}},
- // Cross Timbers (the plains' region): the post oak and blackjack belt of
- // Oklahoma between the prairies, red cedar coming in, an oil pump jack.
- crosstimbers: {treeDensity: 1.6, rough: '#8a8448',
-  stands: {...TRAITS.plains.stands, share: .5, under: {spacing: 9, plants: [['shrub', 1]]},
-   plants: [['postoak', .5], ['blackjackoak', .35], ['easternredcedar', .15]]},
-  plants: [['postoak', .2], ['blackjackoak', .15], ['easternredcedar', .1], ['shrub', .1], ['prairieforbs', .2], ['buffalograss', .05], ['wildsunflower', .05], ['soapweedyucca', .05], ['cedarelm', .05], ['redbud', .05]],
-  ui: {panel: 'rgba(34,22,14,.88)', a1: '#fda4af', a2: '#be123c', hot: '#fff1f2', soft: '#e4c4c8', onHot: '#2a0810'},
-  world: {story: {walls: 'wire', farm: true, landmark: 'pumpjack'}}},
  // Phase 8b: Appalachia.
  blueridge: {},
- // The Ozarks: oak-hickory and shortleaf pine on limestone hills, red cedar
- // glades, dogwood and redbud.
- ozarks: {rockStyle: 'limestone', rock: '#c8c0a8', hills: {base: 40, severity: 90, reach: 85},
-  stands: {...TRAITS.appalachia.stands, under: {spacing: 8, plants: [['shrub', .6], ['mountainlaurelshrub', .4]]},
-   plants: [['oak', .35], ['shortleafpine', .3], ['shagbark', .2], ['easternredcedar', .15]]},
-  plants: [['oak', .16], ['shagbark', .1], ['shortleafpine', .14], ['easternredcedar', .08], ['sassafras', .08], ['floweringdogwood', .08], ['redbud', .08], ['chestnutoak', .08], ['shrub', .1], ['prairieforbs', .1]],
-  ui: {panel: 'rgba(30,22,16,.88)', a1: '#e9c9a0', a2: '#8a4a1a', hot: '#fef3c7', soft: '#dccbb8', onHot: '#241406'}},
- // The Bluegrass: Kentucky horse country -- rolling pasture, bur oaks and
- // hickories, black four-board fences, a black tobacco barn.
- bluegrass: {treeDensity: .5, rough: '#6e8a44', semi: '#4e8e40', hills: {base: 20, severity: 35, reach: 80},
-  // Pasture, not woods: open stands as the plains' (the first pictures were
-  // closed forest).
-  farForest: {cover: .45, size: 11, colors: ['#3e6232', '#4a6e38', '#567a3e']},
-  stands: {...TRAITS.plains.stands, under: {spacing: 9, plants: [['shrub', 1]]},
-   plants: [['buroak', .35], ['oak', .3], ['shagbark', .2], ['americanelm', .15]]},
-  plants: [['buroak', .15], ['oak', .12], ['americanelm', .1], ['maple', .1], ['sassafras', .06], ['shagbark', .08], ['tulippoplar', .08], ['shrub', .12], ['prairieforbs', .09], ['floweringdogwood', .05], ['redbud', .05]],
-  ui: {panel: 'rgba(14,24,30,.88)', a1: '#d4e8f8', a2: '#2a5f8a', hot: '#fef3c7', soft: '#c0d0dc', onHot: '#06141e'},
-  world: {clubhouse: 'clapboard', story: {walls: 'board', farm: 'tobaccobarn', ruins: ['stonecabin']}}},
  // Phase 8c: the north and Hawaii.
  northwoods: {}, hawaii: {},
  // Oregon Dunes (the Links' region): Bandon's dunes on the Pacific -- gorse,
@@ -1055,20 +1023,15 @@ export const worldOf = key => {
 // Old Northeast's.
 const GRASS_TINT = Object.fromEntries(['bluegrass', 'ozarks', 'blueridge'].map(k => [k, {leaf: '#7a8a46', accent: '#a07a3e'}]));
 const GRASSES = {
- heartland: [['grassbluestem', 3, 1.5], ['grassindian', 2, 1.7], ['grassswitch', 2, 1.5], ['grasslittlebluestem', 2, 1.1], ['grasstallfescue', 2, .9]],
- bluegrass: [['grasstallfescue', 3, .9], ['grassbluestem', 1, 1.2]],
- ozarks: [['grasstallfescue', 2, .9], ['grasslittlebluestem', 2, 1.1], ['grassbluestem', 1, 1.2]],
  blueridge: [['grasstallfescue', 2, .9], ['grassfescue', 2, .8]],
- piedmont: [['grasstallfescue', 2, .9], ['grassbluestem', 1, 1.2], ['grassfescue', 1, .8]],
- crosstimbers: [['grasslittlebluestem', 3, 1.1], ['grassindian', 2, 1.7], ['grassswitch', 1, 1.5], ['grasstallfescue', 1, .9]],
- oldnortheast: [['grasstallfescue', 2, .9], ['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]],
+ parkland: [['grasstallfescue', 2, .9], ['grassfescue', 2, .8], ['grassbluestem', 1, 1.1]],
  sandhills: [['grasslittlebluestem', 3, 1.0], ['grassswitch', 1, 1.4], ['grassbluestem', 1, 1.1], ['grassfescue', 1, .7]],
  hillcountry: [['grasslittlebluestem', 3, 1.0], ['grassindian', 2, 1.6], ['grassbunch', 1, .8]],
  bluebonnet: [['grasslittlebluestem', 2, 1.0], ['grassindian', 2, 1.7], ['grassswitch', 1, 1.5], ['grassbluestem', 1, 1.2]],
  lakedunes: [['grassmarram', 2, 1], ['grasslittlebluestem', 1, .9], ['grassfescue', 1, .7]],
  highplains: [['grassgrama', 3, .35], ['grasswheat', 2, .7], ['grasslittlebluestem', 1, .9]],
  gulfcoast: [['grassswitch', 2, 1.5], ['grassbluestem', 2, 1.2], ['grassbunch', 1, .8]],
- longleaf: [['grassindian', 2, 1.6], ['grassbluestem', 1, 1.2], ['grassfescue', 1, .8]],
+ southpines: [['grassbluestem', 1, 1.2], ['grassfescue', 2, .8]],
  ponderosa: [['grassgrama', 2, .35], ['grassalpine', 2, .4], ['grassfescue', 1, .6]],
  chihuahuan: [['grassgrama', 2, .35], ['grassbunch', 1, .8]],
  redrock: [['grassbunch', 2, .7], ['grassgrama', 1, .35]],
@@ -1110,28 +1073,16 @@ const TERRAIN = {
  // canyon under every hole.
  redwood: {landform: {type: 'steps', scale: 420, height: 7, steps: 2, riser: .16, from: .3, to: .85, ledge: 0, reach: 70,
   kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}, hills: {base: 22, severity: 26, reach: 75}},
- // The Cross Timbers: low sandstone cuestas, one side steep, on rolling
- // ground, the prairie's grass between them.
- crosstimbers: {landform: {type: 'steps', scale: 460, height: 8, steps: 2, riser: .16, from: .34, to: .8, ledge: .24, drift: .56, reach: 70,
-  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(24, 22)}}, hills: {base: 14, severity: 20, reach: 70}},
  // Stair-stepped limestone hills, pale ledges on the risers (Glen Rose).
  hillcountry: {landform: {type: 'steps', scale: 260, height: 26, steps: 6, riser: .35, from: .3, to: .78, ledge: .25, reach: 80,
   kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, groundTints: {rock: '#d8d0b8'}},
  // Low marine terraces stepping down, low granite bluffs between.
  monterey: {landform: {type: 'steps', scale: 380, height: 12, steps: 3, riser: .18, from: .3, to: .85, ledge: .3, reach: 60,
   kinds: {a: 'rock'}, gates: {a: gate(10, 10)}}},
- // A gentle roll pocked with shallow sinkholes, sparse limestone.
- bluegrass: {landform: {type: 'karst', roll: 8, cell: 140, chance: .55, radius: [12, 30], size: [2, 6], reach: 60,
-  kinds: {a: 'rock'}, gates: {a: gate(12, 10)}}},
- // A dissected plateau: steep hollows branching through it, limestone bluffs.
- ozarks: {landform: {type: 'channels', scale: 300, width: .05, wall: .35, depth: 22, table: 6, branches: .7, rim: .45, bare: .3, reach: 80,
-  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
  // Hummocky moraine, kettles holding bog, an esker, granite breaking through.
  northwoods: {landform: {type: 'glacial', hummock: 7, cell: 160, chance: .5, radius: [25, 55], size: [4, 9], esker: 220, eskerHeight: 6, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 10), b: gate(10, 12)}}, groundTints: {native: '#8a8a50'}},
- // The Golden Age parkland of the glacial north-east (Long Island's
- // moraines and kettles under its courses): the same, gentler.
- oldnortheast: {landform: {type: 'glacial', hummock: 4, cell: 200, chance: .3, radius: [25, 50], size: [3, 6], esker: 260, eskerHeight: 3, reach: 70,
+ parkland: {landform: {type: 'glacial', hummock: 4, cell: 200, chance: .3, radius: [25, 50], size: [3, 6], esker: 260, eskerHeight: 3, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 10), b: gate(12, 12)}}},
  // Granite knobs on a gentle floor, shallow sandy washes, hardpan beyond.
  // Round 2: the knobs read as sand dunes -- bare from a gentler slope, and
@@ -1156,9 +1107,6 @@ const TERRAIN = {
  // Box-walled coulees cut into the basalt, rimrock along their rims.
  sagebrush: {landform: {type: 'channels', scale: 420, width: .04, wall: .15, depth: 18, table: 4, branches: 0, rim: .4, bare: .6, reach: 85,
   kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
- // Red-clay gullies cut back into the rolling saprolite.
- piedmont: {landform: {type: 'channels', scale: 180, width: .04, wall: .3, depth: 4, table: 3, branches: .8, rim: .35, bare: .7, reach: 60,
-  kinds: {a: 'hardpan'}, gates: {a: gate(12, 10)}}},
  // SoCal's barrancas: steep V canyons through the chaparral hills.
  socal: {landform: {type: 'channels', scale: 260, width: .05, wall: .8, depth: 20, table: 8, branches: .6, rim: .5, bare: .4, reach: 80,
   kinds: {a: 'hardpan'}, gates: {a: gate(12, 12)}}, groundTints: {hardpan: '#b89a72'}},
@@ -1175,8 +1123,7 @@ const TERRAIN = {
  // Black lava flows down to the sea, a few cinder cones.
  hawaii: {landform: {type: 'volcanic', cell: 320, chance: .25, radius: [40, 80], size: [15, 35], flows: .56, flowHeight: 2, roll: 6, reach: 80,
   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#6a3a2a', rock: '#2e2a28'}},
- // Rounded sand ridges, bare sand on their tops.
- longleaf: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
+ southpines: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
  // Dead flat: levees along the bayous, backswamp hollows of marsh grass.
  bayou: {landform: {type: 'lowland', scale: 300, levee: 2.5, hollow: 1.5, swamp: .52, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
   hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},

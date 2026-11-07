@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of nine landscapes (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
+landscape holding 9 or 18 holes, in one of thirty-five landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six and Southern Pines three, their keys kept in `OLD_KEYS`), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)

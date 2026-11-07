@@ -11,13 +11,13 @@
 // enough to catch a rule that is outright broken -- and `full` is for the
 // answer you report. `standard` is the middle one for a change you believe in
 // but have not confirmed.
-export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes',
- 'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska',
- 'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
+export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'redwood', 'lakedunes',
+ 'highplains', 'sandhills', 'parkland', 'southpines', 'alaska',
+ 'lowcountry', 'bayou', 'flatwoods',
  'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan', 'desertresort',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
- 'sagebrush', 'redrock', 'crosstimbers',
- 'blueridge', 'ozarks', 'bluegrass',
+ 'sagebrush', 'redrock',
+ 'blueridge',
  'northwoods', 'oregondunes', 'hawaii'];
 export const COASTAL = ['keys', 'links', 'lakedunes'];
 

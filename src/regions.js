@@ -31,7 +31,6 @@ export const REGIONS = {
  highdesert: 'High Desert',
  desert: 'Desert Southwest',
  california: 'California Coast',
- midwest: 'Midwest',
  plains: 'Great Plains',
  texas: 'Texas',
  south: 'The South',
@@ -62,26 +61,23 @@ export const LANDSCAPES = {
  monterey: {name: 'Monterey', region: 'california', where: [37.0, -122.0]},
  socal: {name: 'SoCal Canyons', region: 'california', where: [34.0, -117.8]},
  winecountry: {name: 'Wine Country', region: 'california', where: [38.4, -121.4]},
- heartland: {name: 'Heartland', region: 'midwest', where: [42.5, -86.2]},
  sandhills: {name: 'Sand Hills', region: 'plains', where: [41.9, -100.8]},
  highplains: {name: 'High Plains', region: 'plains', where: [38.1, -97.8]},
- crosstimbers: {name: 'Cross Timbers', region: 'plains', where: [36.1, -97.2]},
  badlands: {name: 'Badlands', region: 'plains', where: [43.8, -102.3]},
  hillcountry: {name: 'Hill Country', region: 'texas', where: [30.5, -98.1]},
  bluebonnet: {name: 'Bluebonnet Prairie', region: 'texas', where: [32.7, -96.7]},
  gulfcoast: {name: 'Gulf Coast', region: 'texas', where: [29.8, -95.5]},
- longleaf: {name: 'Longleaf Pines', region: 'south', where: [35.2, -79.4]},
- piedmont: {name: 'Piedmont', region: 'south', where: [33.9, -82.0]},
+ // The second of the US golf courses' 15: Augusta, Pinehurst and Pine Valley. Its place
+ // is Pinehurst's.
+ southpines: {name: 'Southern Pines', region: 'south', where: [35.19, -79.47]},
  lowcountry: {name: 'Lowcountry', region: 'south', where: [32.1, -80.8]},
  bayou: {name: 'Bayou', region: 'south', where: [29.9, -90.2]},
  flatwoods: {name: 'Florida Flatwoods', region: 'florida', where: [28.4, -81.5]},
  keys: {name: 'Keys', region: 'florida', where: [25.8, -81.7], tropical: true},
  blueridge: {name: 'Blue Ridge', region: 'appalachia', where: [36.1, -81.8]},
- ozarks: {name: 'Ozarks', region: 'appalachia', where: [36.6, -93.2]},
- bluegrass: {name: 'Bluegrass', region: 'appalachia', where: [38.2, -84.5]},
- newengland: {name: 'New England', region: 'northeast', where: [44.3, -71.4]},
- oldnortheast: {name: 'Old Northeast', region: 'northeast', where: [41.0, -74.3]},
- pinebarrens: {name: 'Pine Barrens', region: 'northeast', where: [40.9, -72.4]},
+ // The first of the US golf courses' 15 (the owner, 5 November 2026): the Golden Age
+ // parkland of Winged Foot, Oakmont and Muirfield Village. Its place is Winged Foot's.
+ parkland: {name: 'Classic Parkland', region: 'northeast', where: [40.96, -73.76]},
  northwoods: {name: 'North Woods', region: 'northwoods', where: [44.8, -92.3]},
  lakedunes: {name: 'Lake Dunes', region: 'lakeshore', where: [43.8, -86.5]},
  oregondunes: {name: 'Oregon Dunes', region: 'links', where: [44.0, -124.1]},
@@ -96,8 +92,13 @@ for (const l of Object.values(LANDSCAPES)) { l.us ??= true; l.tropical ??= false
 // study's data/names.json `today`). Haunted Hollow went to Autumn first
 // (MIGRATIONS 14) and so on to New England. Used by the settings migration,
 // built course files, the profile's landscapes and the weekly rotation.
-export const OLD_KEYS = {pnw: 'puget', desert: 'sonoran', mountain: 'rockies', midwest: 'heartland',
- island: 'keys', autumn: 'newengland', lakeshore: 'lakedunes', haunted: 'newengland'};
+// The landscapes Classic Parkland replaced (the owner, 6 November 2026) read as it from
+// then on, through MIGRATIONS 28. Southern Pines' three, the same, through MIGRATIONS 30.
+export const OLD_KEYS = {pnw: 'puget', desert: 'sonoran', mountain: 'rockies', midwest: 'parkland',
+ island: 'keys', autumn: 'parkland', lakeshore: 'lakedunes', haunted: 'parkland',
+ newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland',
+ ozarks: 'parkland', crosstimbers: 'parkland',
+ piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines'};
 export const currentKey = key => OLD_KEYS[key] || key;
 
 export const regionOf = key => LANDSCAPES[currentKey(key)]?.region ?? null;

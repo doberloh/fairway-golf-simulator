@@ -20,9 +20,9 @@ const sample = (f, n = 120, span = 1400) => {
 const relief = ys => Math.max(...ys) - Math.min(...ys);
 
 test('each landscape named for its own terrain gets the recipe its research says', () => {
- const want = {hillcountry: 'steps', monterey: 'steps', bluegrass: 'karst', ozarks: 'channels', northwoods: 'glacial',
-  oldnortheast: 'glacial', mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels', piedmont: 'channels',
-  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', longleaf: 'sandridges', bayou: 'lowland', lowcountry: 'lowland', highplains: 'playas', sandhills: 'dunes',
+ const want = {hillcountry: 'steps', monterey: 'steps', northwoods: 'glacial',
+  mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels',
+  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', southpines: 'sandridges', bayou: 'lowland', lowcountry: 'lowland', highplains: 'playas', sandhills: 'dunes',
   flatwoods: 'lowland', gulfcoast: 'lowland', badlands: 'badlands'};
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
@@ -34,7 +34,7 @@ test('no two landscapes have the same ground', () => {
 });
 
 test('every recipe is finite, seeded and repeatable', () => {
- for (const k of ['hillcountry', 'bluegrass', 'ozarks', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'longleaf', 'bayou', 'badlands']) {
+ for (const k of ['hillcountry', 'blueridge', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'southpines', 'bayou', 'badlands']) {
   const a = landformOf(BIOMES[k], 'T1'), b = landformOf(BIOMES[k], 'T1');
   for (const [x, z] of [[0, 0], [123.4, -567.8], [-900, 300]]) {
    const y = a.lift(x, z);
@@ -48,11 +48,14 @@ test('every recipe is finite, seeded and repeatable', () => {
 
 test('the recipes make their shapes: sinkholes, steps, cones, hollows, flats', () => {
  const lifts = k => sample(landformOf(BIOMES[k], 'SHAPE').lift);
- // Karst: shallow sinkholes -- some ground well below its roll, none deep.
- const karst = landformOf(BIOMES.bluegrass, 'SHAPE');
- const sinks = sample((x, z) => karst.lift(x, z)).filter(y => y < -3).length;
- assert.ok(sinks > 50, `the Bluegrass has sinkholes (${sinks} samples in one)`);
- assert.ok(Math.min(...lifts('bluegrass')) > -16, 'and none deeper than its roll and its deepest sink');
+ // Karst: shallow sinkholes -- some ground well below its roll, none deep. The Bluegrass, which
+ // wore this recipe, left for Classic Parkland (6 November 2026), so the test holds it here.
+ const karst = landformOf({landform: {type: 'karst', roll: 8, cell: 140, chance: .55, radius: [12, 30], size: [2, 6], reach: 60,
+  kinds: {a: 'rock'}, gates: {a: {near: 12, ramp: 10}}}}, 'SHAPE');
+ const ground = sample((x, z) => karst.lift(x, z));
+ const sinks = ground.filter(y => y < -3).length;
+ assert.ok(sinks > 50, `karst has sinkholes (${sinks} samples in one)`);
+ assert.ok(Math.min(...ground) > -16, 'and none deeper than its roll and its deepest sink');
  // Stepped hills: the heights bunch at the treads.
  const steps = lifts('hillcountry'), H = BIOMES.hillcountry.landform.height, n = BIOMES.hillcountry.landform.steps;
  const onTread = steps.filter(y => { const f = (y / H) * n; return Math.abs(f - Math.round(f)) < .12; }).length / steps.length;
@@ -60,7 +63,7 @@ test('the recipes make their shapes: sinkholes, steps, cones, hollows, flats', (
  // Volcanic: cones rise well above the flows.
  assert.ok(Math.max(...lifts('ponderosa')) > 20, 'Ponderosa has cinder cones');
  // Channels: hollows cut well below the table.
- assert.ok(Math.min(...lifts('ozarks')) < -15, 'the Ozarks are cut by hollows');
+ assert.ok(Math.min(...lifts('blueridge')) < -15, 'the Blue Ridge is cut by hollows');
  // Lowland: the Bayou's recipe adds a few metres at most.
  assert.ok(relief(lifts('bayou')) < 6, `the Bayou's recipe stays within a few metres (${relief(lifts('bayou')).toFixed(1)})`);
 });
@@ -74,9 +77,9 @@ test('a lowland course is flat where a parkland one rolls', () => {
   ys.sort((a, b) => a - b);
   return ys[Math.floor(ys.length * .95)] - ys[Math.floor(ys.length * .05)];
  };
- const bayou = spread('bayou'), heartland = spread('heartland');
+ const bayou = spread('bayou'), parkland = spread('parkland');
  assert.ok(bayou < 6, `the Bayou spreads ${bayou.toFixed(1)} m between its low and high ground`);
- assert.ok(bayou < heartland / 2, `the Bayou (${bayou.toFixed(1)} m) is far flatter than the Heartland (${heartland.toFixed(1)} m)`);
+ assert.ok(bayou < parkland / 2, `the Bayou (${bayou.toFixed(1)} m) is far flatter than Classic Parkland (${parkland.toFixed(1)} m)`);
 });
 
 test('the Lowcountry\'s tidal creeks hold the sea in its marsh, and nothing in play is wet', () => {

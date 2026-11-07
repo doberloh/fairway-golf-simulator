@@ -138,17 +138,17 @@ test('migrating an already current save is a no-op, and gaps fall back to defaul
 // HAUNTED HOLLOW WAS REMOVED (the owner, 2 November 2026): a save on it opens
 // on Autumn, the landscape that stood in for it out of season -- New England
 // since the landscapes' new keys (schema 17).
-test('a save on Haunted Hollow opens on Autumn, now New England',()=>{
+test('a save on Haunted Hollow opens on Autumn, New England, now Classic Parkland',()=>{
  const s=migrateSettings({...DEFAULT_COURSE,seed:'GLOAM',biome:'haunted'},14);
- assert.equal(s.biome,'newengland');
- assert.equal(validateSettings(s).biome,'newengland');
+ assert.equal(s.biome,'parkland');
+ assert.equal(validateSettings(s).biome,'parkland');
  assert.ok(!BIOME_KEYS.includes('haunted'));
 });
 
 // THE LANDSCAPES' NEW KEYS (schema 17, 2 November 2026): a save on every old
 // key opens on the landscape it became, and keeps everything else.
 test('a save on an old landscape key opens on its new one',()=>{
- const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes',redwood:'redwood',links:'links'};
+ const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'parkland',island:'keys',autumn:'parkland',lakeshore:'lakedunes',redwood:'redwood',links:'links'};
  for(const [old,now] of Object.entries(to)){
   const s=migrateSettings({...DEFAULT_COURSE,seed:'RENAMED',biome:old,trees:37},16);
   assert.equal(validateSettings(s).biome,now,old);

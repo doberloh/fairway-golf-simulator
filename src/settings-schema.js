@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=27;
+export const SCHEMA_VERSION=31;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -479,7 +479,14 @@ export const SCHEMA_VERSION=27;
 //     Moved the Redwood Coast.
 // 89: a ring of stems no longer counts against the open scatter's target, which
 //     left the Redwood Coast with half its open trees. Moved the Redwood Coast.
-export const GENERATOR_VERSION=89;
+// 90: New England, the Old Northeast, the Heartland, the Bluegrass, the Ozarks and the
+//     Cross Timbers leave the game for Classic Parkland (the owner, 6 November 2026):
+//     a saved course on one of them now opens on Classic Parkland's ground. Moved
+//     those six. Nothing else moved.
+// 91: the Piedmont, Longleaf Pines and the Pine Barrens leave the game for Southern Pines
+//     (the owner, 7 November 2026): a saved course on one of them now opens on Southern
+//     Pines' ground. Moved those three. Nothing else moved.
+export const GENERATOR_VERSION=91;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -606,25 +613,29 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 // The landscapes a player may pick: the built ones (biomes.js LAND), in the
 // order the nine before the US landscapes goal had, so an endless run or
 // Surprise me picking by index lands where it did. regions.js lists them all.
-export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes',
+export const BIOME_KEYS=['puget','sonoran','rockies','links','keys','redwood','lakedunes',
  // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
- 'highplains','sandhills','oldnortheast','pinebarrens','alaska',
+ 'highplains','sandhills','alaska',
  // Phase 5 (SCHEMA 19): the South.
- 'longleaf','piedmont','lowcountry','bayou','flatwoods',
+ 'lowcountry','bayou','flatwoods',
  // Phase 6 (SCHEMA 20): Texas and the deserts.
  'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
  // Phase 7 (SCHEMA 21): California and the western mountains.
  'monterey','socal','winecountry','cascades','sierra','ponderosa',
  // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
- 'sagebrush','redrock','crosstimbers',
+ 'sagebrush','redrock',
  // Phase 8b (SCHEMA 23): Appalachia.
- 'blueridge','ozarks','bluegrass',
+ 'blueridge',
  // Phase 8c (SCHEMA 24): the North Woods, the Oregon Dunes and Hawaii.
  'northwoods','oregondunes','hawaii',
  // The owner's addition, 3 November 2026 (SCHEMA 26): the Dakota Badlands.
  'badlands',
  // The owner, 5 November 2026 (SCHEMA 27): the Las Vegas valley's watered courses.
- 'desertresort'];
+ 'desertresort',
+ // The first of the US golf courses' landscapes, 6 November 2026 (SCHEMA 28).
+ 'parkland',
+ // The second, 6 November 2026 (SCHEMA 30).
+ 'southpines'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -841,6 +852,14 @@ const MIGRATIONS={
  25:s=>s,
  // 26 -> 27: one more landscape (Desert Resort); no save changes shape.
  26:s=>s,
+ // 27 -> 28: one more landscape (Classic Parkland); no save changes shape.
+ 27:s=>s,
+ // 28 -> 29: the six landscapes Classic Parkland replaced leave (regions.js OLD_KEYS).
+ 28:s=>{const to=['newengland','oldnortheast','heartland','bluegrass','ozarks','crosstimbers'].includes(s.biome);return to?{...s,biome:'parkland'}:s;},
+ // 29 -> 30: one more landscape (Southern Pines); no save changes shape.
+ 29:s=>s,
+ // 30 -> 31: the three landscapes Southern Pines replaced leave (regions.js OLD_KEYS).
+ 30:s=>['piedmont','longleaf','pinebarrens'].includes(s.biome)?{...s,biome:'southpines'}:s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

@@ -2049,7 +2049,7 @@ export class GolfView{
   const PUBLIC={bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete',sandhills:'gravel'};
   const DRIVE={puget:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
    winecountry:'gravel',heartland:'gravel',sandhills:'gravel',highplains:'gravel',crosstimbers:'dirt',badlands:'gravel',hillcountry:'dirt',longleaf:'redclay',lowcountry:'shell',
-   bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',
+   bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',parkland:'brick',southpines:'gravel',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',
    alaska:'gravel',palms:'cobble',desertresort:'concrete',bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete'};
   // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
   // twenty-odd draws on a course whose paths are many short pieces).

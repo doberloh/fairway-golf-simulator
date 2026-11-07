@@ -2,7 +2,7 @@
 # it as one shape, which loses a thin crown first (RESEARCH.md, *AI model
 # generators*). Run by tools/meshy-run.mjs --far, on the processor:
 #
-#   blender -b -P meshy_far.py -- full.glb out_stem budget [boughs|clumps]
+#   blender -b -P meshy_far.py -- full.glb out_stem budget [boughs|clumps|tufts|skirts]
 #
 # writes <out_stem>.glb, <out_stem>.json (triangles and the outline score) and
 # <out_stem>_compare.png (the full model beside the far version).
@@ -10,7 +10,9 @@
 # Finds the trunk by colour and position, cuts the crown into boughs, and makes
 # each a ridged ribbon with its own length, droop, width and colour, the tip a
 # small cone (boughs, for conifers). A broadleaf's crown has no boughs to find, so
-# it is cut into clumps, each a faceted lump its own size (clumps). Materials are
+# it is cut into clumps, each a faceted lump its own size (clumps). A crown drawn as
+# soft tufts is cut from its leaves alone, each a rounded mass (tufts). A conifer drawn
+# as solid tiers is found tier by tier, each a scalloped cone (skirts). Materials are
 # named for the game's roles (`leaves`, `bark`) and colour is vertex paint.
 # The game draws one side of a face, so every shape here is closed and faces out.
 import bpy, json, math, os, sys
@@ -28,6 +30,12 @@ SIDES = 5
 RIBBON = 9  # triangles a bough, closed underneath
 CAP = 5  # triangles in the cone at a conifer's tip
 LUMP = 8  # triangles a clump
+TUFT_LIMB = 6  # triangles in the limb to a tuft
+SKIRT = 5  # scallops a tier, each two sides and two faces underneath
+# An icosahedron: the fewest triangles that read as round rather than as a diamond.
+PHI = (1 + 5 ** .5) / 2
+TUFT_V = np.array([(-1, PHI, 0), (1, PHI, 0), (-1, -PHI, 0), (1, -PHI, 0), (0, -1, PHI), (0, 1, PHI), (0, -1, -PHI), (0, 1, -PHI), (PHI, 0, -1), (PHI, 0, 1), (-PHI, 0, -1), (-PHI, 0, 1)], float) / math.hypot(1, PHI)
+TUFT_F = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)]
 
 
 tree = read_tree(full_path)
@@ -83,7 +91,7 @@ for p in islands:
     n = min(n, len(p) // 3 or 1)
     pieces += split(p, n) if n > 1 else [p]
 pieces.sort(key=lambda p: -area[p].sum())
-if STYLE == 'clumps':
+if STYLE in ('clumps', 'tufts', 'skirts'):
     pieces = []
 
 out_v, out_c, out_f, out_m = [], [], [], []
@@ -166,13 +174,35 @@ if STYLE == 'boughs' and top.any():
         out_f.append((ring[i], ring[(i + 1) % CAP], apex))
         out_m.append(0)
 
-if STYLE == 'clumps':
+if STYLE in ('clumps', 'tufts'):
     # A broadleaf crown: clumps of the crown's own faces, each a lump as long, wide
     # and deep as its clump, light above and dark below.
-    rest = np.where(~trunk)[0]
+    rest = np.where(~trunk & ~red if STYLE == 'tufts' else ~trunk)[0]
     points = centre[rest]
-    count = (BUDGET - trunk_tris) // LUMP
+    count = (BUDGET - trunk_tris) // (len(TUFT_F) if STYLE == 'tufts' else LUMP)
     pick = points[np.random.default_rng(len(rest)).choice(len(rest), count, replace=False)]
+    limbs = False
+    if STYLE == 'tufts':
+        # Separate tufts in the model are counted, so each is one mass with a limb to it.
+        root[:] = range(len(root))
+        for f in rest:
+            a_, b_, c_ = weld[tri[f]]
+            root[find(b_)] = find(a_)
+            root[find(c_)] = find(a_)
+        parts_ = {}
+        for f in rest:
+            parts_.setdefault(find(weld[tri[f][0]]), []).append(int(f))
+        whole = area[rest].sum()
+        big = [p for p in parts_.values() if area[p].sum() > whole * .02]
+        if 6 <= len(big) <= (BUDGET - trunk_tris) // (len(TUFT_F) + TUFT_LIMB):
+            count = len(big)
+            pick = np.array([centre[p].mean(0) for p in big])
+            limbs = True
+        elif np.ptp(np.percentile(points[:, 2], [5, 95])) < H * .5:
+            # A crown high on a bare trunk, its tufts joined: fewer masses, or they come out small.
+            count = min(count, 11)
+            pick = points[np.random.default_rng(len(rest)).choice(len(rest), count, replace=False)]
+            limbs = True
     for _ in range(14):
         lab = np.concatenate([((chunk[:, None] - pick[None]) ** 2).sum(2).argmin(1) for chunk in np.array_split(points, 40)])
         for k in range(count):
@@ -188,6 +218,29 @@ if STYLE == 'clumps':
         reach = sd / math.sqrt(len(pts)) * 1.9
         reach = np.maximum(reach, reach.max() * .4)
         col = np.average(colour[part], axis=0, weights=area[part] + 1e-9)
+        if STYLE == 'tufts':
+            tuft = reach * .95  # a little inside the clump, so the gaps between tufts stay open
+            at = [add(mid + (u * tuft) @ axes, col * (.7 + .28 * (1 + (u * tuft) @ axes[:, 2] / tuft.max()))) for u in TUFT_V]
+            for a_, b_, c_ in TUFT_F:
+                face(at[a_], at[b_], at[c_], (np.array(out_v[at[a_]]) + np.array(out_v[at[b_]]) + np.array(out_v[at[c_]])) / 3 - mid)
+            if limbs:
+                wood_col = colour[trunk & red].mean(0)
+                start = np.array([*ax_at(np.array([tree.crown_base]))[0], tree.crown_base])
+                fat = float(np.percentile(dist[trunk & red & (centre[:, 2] < lo[2] + H * .12)], 70)) * .4
+                along = (mid - start) / (np.linalg.norm(mid - start) + 1e-9)
+                across = np.cross(along, up)
+                across /= np.linalg.norm(across) + 1e-9
+                other = np.cross(along, across)
+                ring = lambda at, w: [add(at + (across * math.cos(i_ * math.tau / 3) + other * math.sin(i_ * math.tau / 3)) * w, wood_col) for i_ in range(3)]
+                low_, high_ = ring(start, fat), ring(mid, fat * .5)
+                for i_ in range(3):
+                    j_ = (i_ + 1) % 3
+                    side_ = np.array(out_v[low_[i_]]) + np.array(out_v[low_[j_]]) - start * 2
+                    face(low_[i_], low_[j_], high_[j_], side_, 1)
+                    face(low_[i_], high_[j_], high_[i_], side_, 1)
+            kept += 1
+            kept_area += area[part].sum()
+            continue
         corner = []
         for i in range(3):
             for s_ in (1, -1):
@@ -200,18 +253,59 @@ if STYLE == 'clumps':
         kept += 1
         kept_area += area[part].sum()
 
+if STYLE == 'skirts':
+    # Each tier's rim is where the crown's reach peaks on the way up the tree. A tier is a
+    # cone from its rim to halfway up the next one, so the stack reads solid from the side.
+    leaf = np.where(~trunk & ~red)[0]
+    z_leaf = centre[leaf, 2]
+    cuts = np.linspace(z_leaf.min(), z_leaf.max(), 121)
+    reach_at = np.zeros(120)
+    for i in range(120):
+        inside = (z_leaf >= cuts[i]) & (z_leaf < cuts[i + 1])
+        reach_at[i] = np.percentile(dist[leaf][inside], 95) if inside.sum() >= 5 else 0
+    smooth = np.convolve(reach_at, np.ones(3) / 3, 'same')
+    peaks = [i for i in range(120) if smooth[i] > 0 and smooth[i] >= smooth[max(0, i - 2):i + 3].max()]
+    peaks = [p for n, p in enumerate(peaks) if n == 0 or p - peaks[n - 1] > 1]
+    most = (BUDGET - trunk_tris) // (SKIRT * 4)
+    peaks = sorted(sorted(peaks, key=lambda p: -smooth[p])[:most])
+    rims = [(cuts[p] + cuts[p + 1]) / 2 for p in peaks]
+    for n, p in enumerate(peaks):
+        z0 = rims[n]
+        z1 = z_leaf.max() if n == len(peaks) - 1 else rims[n + 1] + (rims[n + 1] - z0) * .5
+        if n == len(peaks) - 1:
+            z1 = z_leaf.max()
+        band = leaf[(z_leaf >= z0) & (z_leaf < z1)]
+        col = np.average(colour[band], axis=0, weights=area[band] + 1e-9) if len(band) else colour[leaf].mean(0)
+        c = ax_at(np.array([z0]))[0]
+        rim = [add((c[0] + float(smooth[p]) * (1 if j % 2 == 0 else .84) * math.cos((j + n * .7) * math.pi / SKIRT), c[1] + float(smooth[p]) * (1 if j % 2 == 0 else .84) * math.sin((j + n * .7) * math.pi / SKIRT), z0), col * .85) for j in range(SKIRT * 2)]
+        tip_ = add((c[0], c[1], z1), col * 1.2)
+        under = add((c[0], c[1], z0 + (z1 - z0) * .12), col * .6)
+        for j in range(SKIRT * 2):
+            a_, b_ = rim[j], rim[(j + 1) % (SKIRT * 2)]
+            face(a_, b_, tip_, (np.array(out_v[a_]) + np.array(out_v[b_])) / 2 - np.array([c[0], c[1], z0]))
+            face(a_, b_, under, -up)
+        kept += 1
+
 # The trunk: a tube of the measured radius, each ring its own colour.
 wood = trunk & red
+low = wood & (centre[:, 2] < lo[2] + H * .12)
+foot = float(np.percentile(dist[low], 70)) if low.any() else H * .02
 rings = []
 for s in TRUNK_RINGS:
     z = lo[2] + H * .985 * s
     near = wood & (np.abs(centre[:, 2] - z) < H * .06)
     bark = colour[near].mean(0) if near.any() else (colour[wood].mean(0) if wood.any() else np.array([.3, .15, .1]))
-    c = ax_at(np.array([z]))[0]
+    # Straight between the foot and the crown: limbs and flare pulled the measured line about.
+    c = ax_at(np.array([np.clip(z, lo[2] + H * .985 * .07, max(tree.crown_base, lo[2] + H * .985 * .07)) if STYLE in ('tufts', 'skirts') else z]))[0]
     if s == 1:
-        rings.append([add((c[0], c[1], hi[2]), bark)])
+        # Under tufts the tube ends inside the crown: its tip showed as a spike above them.
+        rings.append([add((c[0], c[1], lo[2] + H * .88 if STYLE in ('tufts', 'skirts') else hi[2]), bark)])
         continue
     r = float(rad_at(np.array([z]))[0]) * (1.12 if s == 0 else 1.05)
+    if STYLE in ('tufts', 'skirts'):
+        # A tree that forks low measures its whole fork as trunk, and read_tree carries that
+        # width down to the ground, so the tube tapers from the wood at the foot instead.
+        r = min(r, foot * (1.12 if s == 0 else 1) * (1 - s) ** .6 + H * .002)
     rings.append([add((c[0] + r * math.cos(i * math.tau / SIDES), c[1] + r * math.sin(i * math.tau / SIDES), z), bark) for i in range(SIDES)])
 for low, high in zip(rings, rings[1:]):
     for i in range(SIDES):

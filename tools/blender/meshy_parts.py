@@ -8,6 +8,7 @@ import numpy as np
 
 BINS = 40
 PAINT_RANGE = (.35, 1.7)  # a shade, as a multiplier on the colour the game paints
+BARK_RANGE = (.75, 1.3)  # narrower for wood: a dark stain went black in the game's shade
 # A shipped crown's normals never face the ground (mean height 0.69) and its paint
 # averages 0.75. A Meshy crown's are half downward (mean 0), which the game's light
 # turns near black. So they are mirrored upward and bent out from the trunk, keeping
@@ -146,7 +147,11 @@ def read_tree(path):
         pts = centre[faces] - centre[faces].mean(0)
         spread = np.linalg.svd(pts, compute_uv=False)
         reach = np.ptp(pts @ np.linalg.svd(pts, full_matrices=False)[2][0])
-        if spread[1] < spread[0] * .3 and reach > H * .03:
+        # A forked limb is not long and thin as a whole, but it is a tube: its faces
+        # look every way, where a bough's root or a shaded leaf mass is a sheet facing
+        # one way. Southern Pines' crown limbs read as leaf until this (6 November 2026).
+        facing_one_way = np.linalg.norm(np.average(fn[faces], axis=0, weights=area[faces] + 1e-12))
+        if (spread[1] < spread[0] * .3 and reach > H * .03) or (reach > H * .05 and facing_one_way < .35):
             wood[faces] = True
     weights = area + 1e-12
     refs = {'leaf': float(np.average(luminance(colour[~wood]), weights=weights[~wood])) if (~wood).any() else 1.,
@@ -173,7 +178,7 @@ def leaf_light(pos, normal, tree):
 def game_paint(colour, pos, role, tree, under=None, level=LEAF_LEVEL):
     """RGB is a grey multiplier on the colour the game paints the role, stored
     halved, so seasons and tints still work; alpha is the wind's flex."""
-    shade = np.clip(luminance(np.asarray(colour)) / tree.refs['leaf' if role == 0 else 'bark'], *PAINT_RANGE)
+    shade = np.clip(luminance(np.asarray(colour)) / tree.refs['leaf' if role == 0 else 'bark'], *(PAINT_RANGE if role == 0 else BARK_RANGE))
     pos = np.asarray(pos)
     if role == 0:
         shade = shade * level * (1 - UNDER_SHADE * (0 if under is None else under))

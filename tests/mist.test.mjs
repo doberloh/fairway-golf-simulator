@@ -62,7 +62,7 @@ test('every biome has a mist profile and the desert stays dry', () => {
  assert.ok(profileFor('puget').sheet > profileFor('keys').sheet, 'the Sound holds more than the tropics');
  assert.ok(profileFor('rockies').haze >= profileFor('heartland').haze, 'valleys hold more than prairie');
 
- assert.deepEqual(profileFor('nonsense'), profileFor('heartland'), 'an unknown biome falls back rather than throwing');
+ assert.deepEqual(profileFor('nonsense'), profileFor('midwest'), 'an unknown biome falls back rather than throwing');
 });
 
 test('the sheet is thick in banks and clear between them', () => {

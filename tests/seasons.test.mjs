@@ -103,21 +103,7 @@ test('every landscape\'s rough has its green for three seasons, and spring is it
  assert.ok(far(seasonPalette(biomeOf('hawaii'), 'summer', 'hawaii').rough, RICH) < far(biomeOf('hawaii').rough, RICH));
 });
 
-test('New England has a real summer, and its autumn is the landscape it was built as', async () => {
- const {seasonPalette} = await import('../src/seasons.js');
- const {biomeOf} = await import('../src/biomes.js');
- const {regionOf} = await import('../src/regions.js');
- const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), greenness = h => { const [r, g, b] = rgb(h); return g - (r + b) / 2; };
- const bio = biomeOf('newengland'), region = regionOf('newengland'), summer = seasonPalette(bio, 'summer', region);
- assert.ok(greenness(summer.rough) > greenness(bio.rough) + 15, `a green rough: ${summer.rough} from ${bio.rough}`);
- for (const c of summer.farForest.colors) assert.ok(greenness(c) > 10, `green hills: ${c}`);
- assert.equal(summer.litter, null, 'no fallen leaves in the rough');
- assert.notEqual(summer.sunColor, bio.sunColor, 'not the low autumn sun');
- assert.deepEqual(seasonPalette(bio, 'autumn', region), {}, 'autumn is the record');
- // No other landscape is touched.
- assert.equal(seasonPalette(biomeOf('oldnortheast'), 'summer', 'northeast').farForest, undefined);
-});
-
+// (A landscape whose record IS its autumn ended with New England, 6 November 2026.)
 test('every landscape with a spring has a bloom, its months real and its colours hex', async () => {
  const {BLOOM} = await import('../src/seasons.js');
  const {LANDSCAPES} = await import('../src/regions.js');
@@ -167,14 +153,14 @@ test('a prairie grass wears its own colours through the year, and a field in blo
  // Seen 3 November 2026: every long grass took the landscape's one colour, so
  // tall fescue was New England's autumn orange in a Kentucky July and no
  // prairie turned.
- const rec = BIOMES.heartland.longGrass, hue = c => c.getHSL({}).h * 360;
+ const rec = BIOMES.badlands.longGrass, hue = c => c.getHSL({}).h * 360;
  assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'summer').leaf) > 120, 'little bluestem is blue-green in summer');
  assert.ok(hue(grassLook(rec, 'grasslittlebluestem', 'autumn').leaf) < 40, 'and copper in autumn');
- assert.ok(hue(grassLook(BIOMES.bluegrass.longGrass, 'grasstallfescue', 'summer').leaf) > 70, 'tall fescue is green in summer');
+ assert.ok(hue(grassLook(BIOMES.parkland.longGrass, 'grasstallfescue', 'summer').leaf) > 70, 'tall fescue is green in summer');
  const hex = c => `#${c.getHexString(T.SRGBColorSpace)}`;
  assert.equal(hex(grassLook(rec, 'grassbluestem', 'autumn').leaf), rec.leaf, 'an older family keeps the landscape\'s');
  assert.equal(hex(grassLook(BIOMES.bluebonnet.longGrass, 'grassindian', 'summer').accent), BIOMES.bluebonnet.longGrass.accent, 'the bluebonnets stay blue');
- for (const k of ['bluegrass', 'ozarks', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
+ for (const k of ['parkland', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
 });
 
 // The owner, 5 November 2026, of Puget Sound in autumn: "The evergreen trees change

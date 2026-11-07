@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {project} from '../src/landscape-map.js';
+import {currentKey} from '../src/regions.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STUDY = path.join(here, '..', 'docs', 'studies', 'us-landscapes');
@@ -76,7 +77,8 @@ const ringOf = (coords, tol, min) => {
 
 const part = read('map/partition.geojson');
 for (const f of part.features) {
- const key = keyOf[f.properties.sub];
+ // A landscape that has been replaced draws as the one that replaced it.
+ const key = keyOf[f.properties.sub] && currentKey(keyOf[f.properties.sub]);
  if (!key) throw new Error(`no landscape for ${f.properties.sub}`);
  if (key === 'alaska' || key === 'hawaii') continue; // boxes in the partition
  for (const p of polysOf(f.geometry)) for (const ring of p) { const r = ringOf(ring, TOL, MIN_AREA); if (r) add(key, !!f.properties.overlay, r); }

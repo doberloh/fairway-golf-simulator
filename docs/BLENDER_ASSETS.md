@@ -181,12 +181,35 @@ name (*What the game keeps from a model*), so nothing reaches it without `--conv
 `cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
 builders as the record. To change a tree, run `--convert` and copy it over.
 
+**The Southern Pines pack** (tools/meshy/southern.json, 6 November 2026): 8 trees in
+`vendor/blender-meshy_southern`, loblolly and longleaf pines, eastern white pine and
+flowering dogwood, as new species keys (`southloblolly` and so on) so no other landscape
+changes; the models hold SouthX names because the hand-built South holds the plain ones.
+The first longleaf pictures drew fine needle bursts, which the owner sent back: redrawn as
+large solid masses with a tufted edge, they kept their shape through the model step, and
+the eastern white pines, first too thin, were redrawn the same way (round 2, `game-r2`).
+`read_tree` also learned that a forked limb is wood: a brown patch that reaches past 5% of
+the tree and whose faces look every way is a tube, where a bough root or a shaded leaf
+mass is a sheet facing one way. A converted pine shows bark far above its old count; the
+broadleaf Classic Parkland pack, reconverted the same way, moved far less.
+
+**The Classic Parkland pack** (tools/meshy/parkland.json, 6 November 2026): 11 trees in
+`vendor/blender-meshy_parkland`, `game-r2` copied in by hand as the redwoods were, and
+the first pack whose species are new keys (`whiteoak`, `pinoak`, `parkmaple`,
+`parkpoplar`, `parkelm`, `norwayspruce`), so no other landscape changes. Two names
+are changed on the way in, because hand-built models still planted elsewhere hold them:
+the pack's AmericanElm ships as ParkElm and TulipPoplar as ParkPoplar. A Meshy pack has
+no Blender script, so its `seasons` field holds each species' colours, read by
+`tools/blender/dump-tints.mjs`. American elm 2 was dropped: its fine hanging leaves did
+not survive the model step. Foliage stays on `meshy-6`: 7.1 keeps the limbs and loses the
+leaves (RESEARCH).
+
 **The first model** (Redwood_1, 5 November 2026): the owner likes its full model's
 foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
 far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
 into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
 and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
-pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak).  RESEARCH.md, *AI model generators*.
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers.  RESEARCH.md, *AI model generators*.
 
 The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
 **No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just

@@ -69,14 +69,14 @@ const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf
 // fourteen footprints by four tiers by every slider is a sweep nobody runs
 // twice. Each case below is here for a stated reason, and a run that takes a
 // few minutes is a run that gets used.
-const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'lakedunes',
- 'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska',
- 'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
+const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'keys', 'redwood', 'lakedunes',
+ 'highplains', 'sandhills', 'alaska',
+ 'lowcountry', 'bayou', 'flatwoods',
  'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
- 'sagebrush', 'redrock', 'crosstimbers',
- 'blueridge', 'ozarks', 'bluegrass',
- 'northwoods', 'oregondunes', 'hawaii', 'badlands', 'desertresort'];
+ 'sagebrush', 'redrock',
+ 'blueridge',
+ 'northwoods', 'oregondunes', 'hawaii', 'badlands', 'desertresort', 'parkland', 'southpines'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {
@@ -134,7 +134,7 @@ function matrix() {
  // Midwest is an open course for contrast. High and Ultra are the tiers with
  // god rays.
  for (const quality of ['high', 'ultra'])
-  for (const biome of ['redwood', 'heartland'])
+  for (const biome of ['redwood'])
    cases.push({group: 'sun', name: `${quality} · ${biome} · facing the sun`, arm: 'gpu', quality, ...base, biome,
     camera: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'}});
  // Pixel ratio on its own. It is the biggest fill lever the tiers have and

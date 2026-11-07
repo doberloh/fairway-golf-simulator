@@ -887,7 +887,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float fy=wildOn>.5&&wildKinds.y>.5?cv.b*smoothstep(wildGateB.x,wildGateB.x+wildGateB.y,hd):0.;
   float fx=wildOn>.5&&wildKinds.x>.5?cv.a*smoothstep(wildGateA.x,wildGateA.x+wildGateA.y,hd):0.;
   paintCode=vec4(wildKinds.w,wildKinds.z,wildKinds.y,wildKinds.x);
-  paintShare=vec4(ff>0.?wildEdge(wildKinds.w,ff):0.,fz>0.?wildEdge(wildKinds.z,fz):0.,fy>0.?wildEdge(wildKinds.y,fy):0.,fx>0.?wildEdge(wildKinds.x,fx):0.);
+  // The field's cells are metres wide, so at .5 a patch's outline showed them as corners. The
+  // paint reads an average of five samples broken by noise; the lie below keeps ff itself.
+  float fp=ff;
+  if(fallenOn>.5&&wildKinds.w>.5){
+   vec2 fuv=(wp/extent+1.)*.5,fo=1.5/extent;
+   fp=(cv.g+texture2D(cover,fuv+fo).g+texture2D(cover,fuv-fo).g+texture2D(cover,fuv+vec2(fo.x,-fo.y)).g+texture2D(cover,fuv+vec2(-fo.x,fo.y)).g)*.2;
+   fp+=(patchNoise(wp/3.)-.5)*.34*step(.01,fp);
+  }
+  paintShare=vec4(fp>0.?wildEdge(wildKinds.w,fp):0.,fz>0.?wildEdge(wildKinds.z,fz):0.,fy>0.?wildEdge(wildKinds.y,fy):0.,fx>0.?wildEdge(wildKinds.x,fx):0.);
   // Which ground the lie says this is, for the detail atlas below.
   wildTop=fx>=.5?wildKinds.x:fy>=.5?wildKinds.y:fz>=.5?wildKinds.z:ff>=.5?wildKinds.w:0.;
  }

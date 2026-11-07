@@ -172,7 +172,7 @@ export const NAME_WORDS = {
    'Knob', 'Basin', 'Pasture', 'Meadow', 'Spring', 'Draw', 'Flat', 'Ridge',
    'Pocket', 'Rise', 'Bottom', 'Sandhill'],
  ],
- oldnortheast: [
+ parkland: [
   ['Elmcrest', 'Ivywood', 'Brookline', 'Copperbeech', 'Fieldstone', 'Gatehouse',
    'Linden', 'Chestnuthill', 'Tudor', 'Greystone', 'Hawthorne', 'Millbrook',
    'Orchardwood', 'Quarry', 'Rectory', 'Steeplechase', 'Thornbury', 'Whitestone',
@@ -203,6 +203,7 @@ export const NAME_WORDS = {
    'Reach', 'Moraine', 'Cirque', 'Sound', 'Fork'],
  ],
  // Phase 5 of the US landscapes goal: the South.
+ southpines: [["Rosinwood","Tallstraw","Sandfern","Bluesand","Pinesong","Drywash","Whitepost","Wildpine","Tarpaper","Longstraw","Sunstraw","Softpine","Talltimber","Strawline","Resinhill","Sandwalk","Longshadow","Towhee","Sapling","Tallpine","Bluejack","Sunpatch","Needlefield","Softsand","Nuthatch","Cardinal","Goldfinch","Redbud","Whitesand","Foxwire","Sandlapper"],["Pines","Hollow","Run","Ridge","Walk","Crossing","Bluff","Branch","Trace","Landing","Rest","Bottom","Rise","Stand","Meadow","Grove"]],
  longleaf: [
   ['Wiregrass','Longleaf','Pinestraw','Turkeyoak','Sandhill','Candlestick','Bobwhite','Woodpecker','Pinecone','Sand Pine','Gopher','Fox Squirrel','Sandspur','Resin','Turpentine','Naval Stores','Tarheel','Carolina','Pinewood','Sandy Run'],
   ['Pines','Ridge','Hollow','Run','Branch','Hills','Crossing','Glade','Flats','Station','Bend','Lake','Creek','Field','Woods','Grove','Barrens','Savanna','Pond','Gap'],
