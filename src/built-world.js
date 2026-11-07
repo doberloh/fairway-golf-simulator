@@ -322,11 +322,11 @@ export function rockFrom([x, z, size, shape, turn], y) {
 // WHAT A SURVEY DOES MEASURE IS HEIGHT, and a model is scaled to a tree's height
 // with its own proportions kept, so a smoke tree standing 15 m is a bush the size
 // of a house (`fitsHeight`; RESEARCH, *A survey sees a shape, not a species*).
-export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'youngredwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'rmjuniper', 'aleppopine', 'afghanpine', 'norwayspruce', 'southloblolly', 'southlongleaf', 'southwhitepine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
+export const CONIFERS = new Set(['pine', 'cedar', 'spruce', 'fir', 'hemlock', 'redcedar', 'redwood', 'youngredwood', 'lodgepole', 'bluespruce', 'whitepine', 'balsamfir', 'longleafpine', 'loblollypine', 'slashpine', 'baldcypress', 'ashejuniper', 'rmjuniper', 'aleppopine', 'afghanpine', 'norwayspruce', 'lowcypress', 'southloblolly', 'southlongleaf', 'southwhitepine', 'alligatorjuniper', 'montereycypress', 'montereypine', 'torreypine', 'ponderosa', 'sugarpine', 'incensecedar', 'redfir', 'noblefir', 'westernlarch', 'westernjuniper', 'utahjuniper', 'pinyonpine', 'easternredcedar', 'shortleafpine', 'pitchpine', 'redpine', 'jackpine', 'tamarack', 'blackspruce', 'sitkaspruce', 'shorepine', 'cookpine']);
 // Flowers are never a stored shrub (the Heartland pack: its shrubs drew as
 // prairie flowers).
 const FLOWERS = new Set(['columbine', 'lupine', 'prairieforbs', 'douglasiris']);
-export const PALMS = new Set(['palm', 'hala', 'royalpalm', 'travelerspalm', 'cabbagepalm', 'fanpalm', 'datepalm']);
+export const PALMS = new Set(['lowsabal', 'palm', 'hala', 'royalpalm', 'travelerspalm', 'cabbagepalm', 'fanpalm', 'datepalm']);
 // The species in `list` a tree of height `h` can be: none it would tower over by
 // more than a quarter of the species' tallest, and none under half its shortest
 // (PLACED, both). The two ends differ on purpose. A tree too tall for its model

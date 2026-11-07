@@ -43,13 +43,16 @@ check.
 The plan is local, docs/studies/us-golf-courses/PLAN.md: 42 landscapes pared to 15 real
 golf looks, one tree style. The owner's feedback lives on the hosted page.
 
-- [ ] **Classic Parkland and Southern Pines: a smoke run and a weak machine are owed.** The full
-  `npm test` passes (1,482, 7 November). Low was measured only on this fast card; the smoke run
+- [ ] **The three signed-off landscapes: a smoke run and a weak machine are owed.** The full
+  `npm test` passes (1,482, 7 November, Lowcountry and Gulf included). Low was measured only on this fast card; the smoke run
   has not been run on this branch. Many test files still name the retired keys and now run on
   the landscape that replaced them, which is what those tests want, so they were left.
 - [ ] **Classic Parkland's tufted trees are signed off from captures, not played.** All 11 in the
   build on rounds 4 and 5. Spruces keep a slight cool tint from the air; Redwood Coast's bark
   range still owed.
+- [ ] **Lowcountry and Gulf is signed off by the owner, from captures, not played** (7 November).
+  Mist kept, the owner's call. The Lowcountry, Bayou and Gulf Coast have left. Owed: a smoke run. Check in
+  the game: the `fronds` far palms and the dark patch low on Sabal palm 2's trunk.
 - [ ] **Southern Pines is signed off by the owner, from captures, not played** (7 November).
   All 8 tufted trees in the build. Piedmont, Longleaf Pines and Pine Barrens have left. Look
   at the softer fallen ground on the other landscapes that have it: seen only here.

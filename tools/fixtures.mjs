@@ -12,9 +12,9 @@
 // answer you report. `standard` is the middle one for a change you believe in
 // but have not confirmed.
 export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'redwood', 'lakedunes',
- 'highplains', 'sandhills', 'parkland', 'southpines', 'alaska',
- 'lowcountry', 'bayou', 'flatwoods',
- 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan', 'desertresort',
+ 'highplains', 'sandhills', 'parkland', 'southpines', 'lowgulf', 'alaska',
+ 'flatwoods',
+ 'hillcountry', 'bluebonnet', 'mojave', 'palms', 'chihuahuan', 'desertresort',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
  'sagebrush', 'redrock',
  'blueridge',

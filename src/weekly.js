@@ -83,8 +83,10 @@ export const WEEKLY_ROTATION = {
   // Classic Parkland (PLACED, the week after).
   {debut: 193, biome: 'parkland'},
   // Southern Pines (PLACED, the week after).
-  {debut: 194, biome: 'southpines'}],
- retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines'},
+  {debut: 194, biome: 'southpines'},
+  // Lowcountry and Gulf (PLACED, the week after).
+  {debut: 195, biome: 'lowgulf'}],
+ retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines', lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;

@@ -35,6 +35,7 @@ const LAND = {
  southpines: ['Long Shadows', 'Pine Straw', 'Wiregrass', 'Azalea', 'White Sand', 'Dogwood', 'Tall Pines', 'Waste Bunker', 'Bobwhite'],
  longleaf: ['Longleaf', 'Wiregrass', 'Pine Straw', 'Turkey Oak', 'Sandhill', 'Bobwhite', 'Firebreak', 'Gopher Hole', 'Resin'],
  piedmont: ['Red Clay', 'Dogwood', 'Magnolia', 'Tulip Poplar', 'Azalea', 'Mill Creek', 'Kudzu', 'Shoals', 'Sweetgum'],
+ lowgulf: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Pluff Mud', 'Rice Field', 'Marsh View'],
  lowcountry: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Spanish Moss', 'Rice Field', 'Marsh View'],
  bayou: ['Bald Cypress', 'Tupelo', 'Levee', 'Pirogue', 'Crawfish', 'Cypress Knees', 'Spanish Moss', 'Sugar Mill', 'Slow Water'],
  flatwoods: ['Slash Pine', 'Saw Palmetto', 'Cabbage Palm', 'Sawgrass', 'Cypress Dome', 'Gator Lake', 'Orange Grove', 'Sandhill Crane', 'White Sand'],

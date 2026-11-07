@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=31;
+export const SCHEMA_VERSION=33;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -486,7 +486,10 @@ export const SCHEMA_VERSION=31;
 // 91: the Piedmont, Longleaf Pines and the Pine Barrens leave the game for Southern Pines
 //     (the owner, 7 November 2026): a saved course on one of them now opens on Southern
 //     Pines' ground. Moved those three. Nothing else moved.
-export const GENERATOR_VERSION=91;
+// 92: the Lowcountry, the Bayou and the Gulf Coast leave the game for Lowcountry and Gulf
+//     (the owner, 7 November 2026): a saved course on one of them now opens on its
+//     ground. Moved those three. Nothing else moved.
+export const GENERATOR_VERSION=92;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -617,9 +620,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','keys','redwood','l
  // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
  'highplains','sandhills','alaska',
  // Phase 5 (SCHEMA 19): the South.
- 'lowcountry','bayou','flatwoods',
+ 'flatwoods',
  // Phase 6 (SCHEMA 20): Texas and the deserts.
- 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
+ 'hillcountry','bluebonnet','mojave','palms','chihuahuan',
  // Phase 7 (SCHEMA 21): California and the western mountains.
  'monterey','socal','winecountry','cascades','sierra','ponderosa',
  // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
@@ -635,7 +638,9 @@ export const BIOME_KEYS=['puget','sonoran','rockies','links','keys','redwood','l
  // The first of the US golf courses' landscapes, 6 November 2026 (SCHEMA 28).
  'parkland',
  // The second, 6 November 2026 (SCHEMA 30).
- 'southpines'];
+ 'southpines',
+ // The third, 7 November 2026 (SCHEMA 32).
+ 'lowgulf'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -860,6 +865,10 @@ const MIGRATIONS={
  29:s=>s,
  // 30 -> 31: the three landscapes Southern Pines replaced leave (regions.js OLD_KEYS).
  30:s=>['piedmont','longleaf','pinebarrens'].includes(s.biome)?{...s,biome:'southpines'}:s,
+ // 31 -> 32: one more landscape (Lowcountry and Gulf); no save changes shape.
+ 31:s=>s,
+ // 32 -> 33: the three landscapes Lowcountry and Gulf replaced leave (regions.js OLD_KEYS).
+ 32:s=>['lowcountry','bayou','gulfcoast'].includes(s.biome)?{...s,biome:'lowgulf'}:s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

@@ -26,14 +26,15 @@ test('a reference course for each landscape finds its landscape on the map', () 
  const at = {
   puget: [47.2, -122.57], monterey: [36.57, -121.95], sonoran: [33.64, -111.91], rockies: [43.59, -110.82],
   parkland: [41.93, -91.66], keys: [24.56, -81.77], lakedunes: [44.5, -86.23],
-  hawaii: [20.65, -156.44], alaska: [61.18, -149.86], lowcountry: [32.61, -80.02], redrock: [34.86, -111.8],
+  hawaii: [20.65, -156.44], alaska: [61.18, -149.86], lowgulf: [32.61, -80.02], redrock: [34.86, -111.8],
   palms: [33.72, -116.37], southpines: [39.85, -74.68], sandhills: [41.65, -101.0],
  };
  for (const [k, [lat, lon]] of Object.entries(at)) assert.equal(landscapeAt(US_SHAPES, lat, lon), k, `${k} at ${lat}, ${lon}`);
  // Every landscape's own place is inside its own shape or nearest it.
  let own = 0;
  for (const [k, l] of Object.entries(LANDSCAPES)) if (l.us && landscapeAt(US_SHAPES, ...l.where) === k) own++;
- assert.ok(own >= 33, `${own} of the landscapes find themselves at their own place`);
+ const us = Object.values(LANDSCAPES).filter(l => l.us).length;
+ assert.ok(own >= us - 1, `${own} of ${us} landscapes find themselves at their own place`);
  // Far out at sea, or abroad, is nowhere.
  assert.equal(landscapeAt(US_SHAPES, 35, -40), null);
  assert.equal(landscapeAt(US_SHAPES, 56.3, -2.8), null);

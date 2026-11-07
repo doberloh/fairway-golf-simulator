@@ -824,24 +824,19 @@ const LAND = {
    plants: [['southloblolly', .48], ['southlongleaf', .36], ['southwhitepine', .16]]},
   plants: [['southloblolly', .34], ['southlongleaf', .3], ['southwhitepine', .1], ['southdogwood', .1], ['azalea', .06], ['wiregrass', .06], ['longleafgrass', .04]],
   ui: {panel: 'rgba(30,26,16,.88)', a1: '#fcd9a8', a2: '#9a5a12', hot: '#fff3c4', soft: '#e4d4b0', onHot: '#231806'}},
- // Lowcountry: live oaks in Spanish moss, salt marsh, palmettos, slash pine.
- // Salt marsh (generator 74): the drifts beyond play are wide cordgrass flats
- // (native grass, painted the marsh's gold-green, two-thirds of the ground),
- // the water brackish (PLACED).
- lowcountry: {landform: {...TRAITS.south.landform, cover: .68, kinds: {a: 'native'}}, groundTints: {native: '#c4b468'}, water: '#4e6a5e',
-  rough: '#7a8a46', sky: '#c8d8de', temperature: 28, treeDensity: 1.5,
-  stands: {...TRAITS.south.stands, share: .35, under: {spacing: 8, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
-   plants: [['liveoakmoss', .45], ['slashpine', .2], ['cabbagepalm', .2], ['magnolia', .1], ['waxmyrtle', .05]]},
-  plants: [['liveoakmoss', .18], ['cabbagepalm', .15], ['slashpine', .1], ['magnolia', .04], ['spartina', .21], ['muhlygrass', .1], ['sawpalmetto', .12], ['waxmyrtle', .1]],
-  ui: {panel: 'rgba(18,32,28,.88)', a1: '#ccfbf1', a2: '#0f766e', hot: '#fde68a', soft: '#b8d4cc', onHot: '#06201c'}},
- // Bayou: bald cypress and its knees, tupelo, live oaks in moss, slow water.
- // Its bald cypress and their knees stand in the shallows too (course.js
- // inShallows).
- bayou: {inWater: ['baldcypress', 'cypressknees'], rough: '#6a7a3e', water: '#5a5a3e', sky: '#c8d0c4', temperature: 28,
-  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['cypressknees', .4], ['shrub', .3], ['waxmyrtle', .3]]},
-   plants: [['baldcypress', .45], ['watertupelo', .2], ['liveoakmoss', .25], ['sweetgum', .1]]},
-  plants: [['baldcypress', .2], ['liveoakmoss', .15], ['watertupelo', .1], ['cypressknees', .15], ['spartina', .15], ['shrub', .1], ['waxmyrtle', .1], ['sweetgum', .05]],
-  ui: {panel: 'rgba(28,30,16,.88)', a1: '#d9f99d', a2: '#4d7c0f', hot: '#fef3c7', soft: '#c8ccae', onHot: '#141808'}},
+ // Lowcountry and Gulf: the Lowcountry's salt marsh and tidal creeks, planted only from
+ // Meshy. Tall live oaks in a mix with loblollies, pine straw under them (the Harbour
+ // Town photos), sabal palms, and bald cypress in the shallows of ponds and lakes, as on
+ // the Bayou. No hanging moss, the owner's call (7 November 2026). Southern Pines' mown
+ // greens, for the same reasons. Density and colours PLACED.
+ lowgulf: {landform: {...TRAITS.south.landform, cover: .68, kinds: {a: 'native'}}, groundTints: {native: '#c4b468', pinestraw: '#73683e'}, water: '#4e6a5e', inWater: ['lowcypress'],
+  crownShare: .9, treeDensity: 2.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a', sky: '#c8d8de', temperature: 28,
+  title: 'Tidewater', tag: 'Live oaks, salt marsh and tidal creeks.',
+  fallen: {from: ['southloblolly', 'lowliveoak'], kind: 'pinestraw'},
+  stands: {...TRAITS.south.stands, edge: 80, wobble: 28, patch: .1, near: 55, spacing: 13, share: .7, under: {spacing: 9, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
+   plants: [['lowliveoak', .5], ['southloblolly', .3], ['lowsabal', .12], ['lowcypress', .08]]},
+  plants: [['lowliveoak', .28], ['southloblolly', .16], ['lowsabal', .12], ['lowcypress', .08], ['spartina', .16], ['muhlygrass', .08], ['sawpalmetto', .06], ['waxmyrtle', .06]],
+  ui: {panel: 'rgba(20,34,26,.88)', a1: '#d1fae5', a2: '#0f7a5e', hot: '#fde68a', soft: '#bcd8c8', onHot: '#06201c'}},
  // Florida Flatwoods: slash pine over saw palmetto, cabbage palms, cypress
  // domes, sawgrass, lakes -- inland (INLAND above), in the Keys' region.
  flatwoods: {...INLAND, tropical: false, rough: '#8a8a50', sand: '#f2ead4', treeDensity: 2.2,
@@ -868,15 +863,6 @@ const LAND = {
   plants: [['bluebonnet', .3], ['pecan', .12], ['cedarelm', .12], ['osageorange', .1], ['postoak', .06], ['prairieforbs', .15], ['shrub', .1], ['redbud', .05]],
   ui: {panel: 'rgba(16,22,40,.88)', a1: '#bfdbfe', a2: '#1d4ed8', hot: '#fef3c7', soft: '#c0c8dc', onHot: '#0a1230'},
   world: {clubhouse: 'farmhouse', bridge: 'wood', story: {walls: 'rail', farm: 'redbarn', ruins: ['cottage'], landmark: 'windpump'}}},
- // Gulf Coast: flat and wet coastal prairie by Houston, live oaks and
- // loblolly pines, yaupon and wax myrtle, cordgrass at the water.
- gulfcoast: {treeDensity: 2.4, rough: '#6e7e40', sky: '#c8d6dc', temperature: 31, hills: {base: 6, severity: 12, reach: 70},
-  scatter: {...TRAITS.texas.scatter, rocks: 30}, rockStyle: 'round',
-  stands: {...TRAITS.texas.stands, under: {spacing: 8, plants: [['yaupon', .5], ['waxmyrtle', .5]]},
-   plants: [['liveoak', .4], ['loblollypine', .4], ['pecan', .2]]},
-  plants: [['liveoak', .25], ['loblollypine', .15], ['pecan', .08], ['waxmyrtle', .12], ['yaupon', .1], ['spartina', .12], ['crapemyrtle', .05], ['sawpalmetto', .05], ['shrub', .08]],
-  ui: {panel: 'rgba(14,30,30,.88)', a1: '#99f6e4', a2: '#0f766e', hot: '#fef3c7', soft: '#b4d2cc', onHot: '#061e1c'},
-  world: {clubhouse: 'clapboard', bridge: 'wood', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2], heron: true, geese: 4}}},
  // Mojave: Joshua trees and creosote on a basin floor, rounded granite,
  // Mojave yucca and beavertail, smoke trees in the washes.
  mojave: {rough: '#c2ae84', sky: '#d4dce2', altitude: 900, temperature: 33, rock: '#c8ac88', rockStyle: 'round',
@@ -1030,7 +1016,6 @@ const GRASSES = {
  bluebonnet: [['grasslittlebluestem', 2, 1.0], ['grassindian', 2, 1.7], ['grassswitch', 1, 1.5], ['grassbluestem', 1, 1.2]],
  lakedunes: [['grassmarram', 2, 1], ['grasslittlebluestem', 1, .9], ['grassfescue', 1, .7]],
  highplains: [['grassgrama', 3, .35], ['grasswheat', 2, .7], ['grasslittlebluestem', 1, .9]],
- gulfcoast: [['grassswitch', 2, 1.5], ['grassbluestem', 2, 1.2], ['grassbunch', 1, .8]],
  southpines: [['grassbluestem', 1, 1.2], ['grassfescue', 2, .8]],
  ponderosa: [['grassgrama', 2, .35], ['grassalpine', 2, .4], ['grassfescue', 1, .6]],
  chihuahuan: [['grassgrama', 2, .35], ['grassbunch', 1, .8]],
@@ -1124,12 +1109,8 @@ const TERRAIN = {
  hawaii: {landform: {type: 'volcanic', cell: 320, chance: .25, radius: [40, 80], size: [15, 35], flows: .56, flowHeight: 2, roll: 6, reach: 80,
   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#6a3a2a', rock: '#2e2a28'}},
  southpines: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
- // Dead flat: levees along the bayous, backswamp hollows of marsh grass.
- bayou: {landform: {type: 'lowland', scale: 300, levee: 2.5, hollow: 1.5, swamp: .52, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
-  hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
  flatwoods: {landform: {type: 'lowland', scale: 340, levee: 1, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
   hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
- gulfcoast: {landform: {type: 'lowland', scale: 320, levee: 1.5, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}}, baseRoll: .3},
  // The Llano Estacado: a tableland nearly flat, round dry playas with bare
  // clay floors (generator 81). Playas scaled down from the real 3-28 ha
  // (radius 100-300 m) to 60-140 m, 1-1.8 m deep (a Texas water study
@@ -1155,7 +1136,7 @@ const TERRAIN = {
  // not a bluff. The marsh platform stands 1.9 m up -- above the beach band
  // (course.js BEACH_RISE and its fade), or every marsh would read as sand --
  // where the real one floods at every high tide. PLACED.
- lowcountry: {landform: {type: 'lowland', scale: 300, levee: 1, hollow: 1, swamp: .46, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)},
+ lowgulf: {landform: {type: 'lowland', scale: 300, levee: 1, hollow: 1, swamp: .46, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)},
   tide: {marsh: 1.9, bed: -2, scale: 260, width: .028}},
   // The bed 2 m down, about the coast's tidal range. The sea shader paints
   // shallow sea as a pale sandy shelf (renderer.js WATER_EDGES), and in the

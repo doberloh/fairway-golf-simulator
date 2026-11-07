@@ -97,7 +97,7 @@ const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - 
 export const RICH = '#4f8a34';
 export const GREEN = {
  winecountry: [.85, .6, .35], monterey: [.7, .35, .25], socal: [.6, .3, .2],
- bluegrass: [.65, .5, .3], piedmont: [.55, .4, .15], southpines: [.55, .4, .15], lowcountry: [.55, .4, .2], bayou: [.55, .45, .25], gulfcoast: [.55, .35, .2], longleaf: [.45, .3, .1], flatwoods: [.45, .35, .2],
+ bluegrass: [.65, .5, .3], piedmont: [.55, .4, .15], southpines: [.55, .4, .15], lowcountry: [.55, .4, .2], lowgulf: [.55, .4, .2], bayou: [.55, .45, .25], gulfcoast: [.55, .35, .2], longleaf: [.45, .3, .1], flatwoods: [.45, .35, .2],
  blueridge: [.55, .4, .15], ozarks: [.55, .4, .15], oldnortheast: [.5, .35, .1], parkland: [.5, .35, .1], pinebarrens: [.35, .2, .05], newengland: [.3, .55, 0], heartland: [.5, .35, .1], lakedunes: [.45, .3, .1], northwoods: [.5, .4, .1],
  hillcountry: [.6, .15, .05], bluebonnet: [.6, .15, .05], crosstimbers: [.55, .2, .05], highplains: [.55, .12, 0], sandhills: [.55, .15, 0], badlands: [.45, .08, 0],
  rockies: [.45, .35, .05], sierra: [.5, .3, .05], cascades: [.45, .35, .1], ponderosa: [.45, .2, .05], alaska: [.4, .35, .05],
@@ -211,7 +211,7 @@ export const BLOOM = {
  monterey: [3, 5, '#f08a20', '#6a5ac8'], socal: [3, 4, '#f08a20', '#6a7ad0'], winecountry: [3, 4, '#e8d030', '#f08a20'],
  heartland: [4, 5, '#f2efe0', '#e8c850', '#a080d0'], sandhills: [5, 7, '#8a7ad0', '#f0d040'], highplains: [5, 6, '#e8b040', '#b05aa8'], crosstimbers: [4, 5, '#d8502e', '#f0c020'], badlands: [5, 6, '#b090d0', '#f0e040'],
  hillcountry: [3, 4, '#3a5ac8', '#d8502e'], bluebonnet: [3, 4, '#3a5ac8', '#d8502e'], gulfcoast: [3, 4, '#e8a0c0', '#3a5ac8'],
- longleaf: [3, 5, '#e8c840', '#f0d8e0'], southpines: [3, 4, '#f2efe0', '#e070a0'], piedmont: [3, 4, '#f2efe0', '#e070a0'], lowcountry: [3, 4, '#e070a0', '#f2efe0'], bayou: [3, 4, '#6a4ac0', '#e8c840'], flatwoods: [3, 5, '#f0e040', '#f2efe0'],
+ longleaf: [3, 5, '#e8c840', '#f0d8e0'], southpines: [3, 4, '#f2efe0', '#e070a0'], piedmont: [3, 4, '#f2efe0', '#e070a0'], lowcountry: [3, 4, '#e070a0', '#f2efe0'], lowgulf: [3, 4, '#9fb05c', '#f2efe0'], bayou: [3, 4, '#6a4ac0', '#e8c840'], flatwoods: [3, 5, '#f0e040', '#f2efe0'],
  blueridge: [4, 5, '#f2efe0', '#8a7ad0'], ozarks: [4, 5, '#f2efe0', '#9a7ad0'], bluegrass: [4, 5, '#f0e040', '#f2efe0'],
  newengland: [5, 6, '#f2efe0', '#f0d040', '#e0a0c8'], oldnortheast: [4, 5, '#f0d040', '#a080d0'], parkland: [4, 5, '#f0d040', '#a080d0'], pinebarrens: [5, 6, '#f2efe0', '#e0a0c8'],
  northwoods: [5, 6, '#f2efe0', '#e0a0c8'], lakedunes: [5, 6, '#f0d040', '#a080d0'], oregondunes: [4, 6, '#f0c020', '#e0a0c8'], alaska: [6, 7, '#6a5ac8', '#c8288a'], links: [5, 6, '#e0a0c8', '#f0d040'],

@@ -216,9 +216,9 @@ from what lies between the holes on real courses of its kind
   Sierra's domes), **channels** (Sagebrush coulees, Blue Ridge hollows,
   SoCal barrancas), **playas** (the High Plains' round dry pans
   with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder
-  cones and lava flows), **sandridges** (Southern Pines) and **lowland** (the
-  Bayou's, Flatwoods' and Gulf Coast's levees and backswamps, on a corridor
-  roll scaled down by `baseRoll`; the Lowcountry's with `tide`: its marsh
+  cones and lava flows), **sandridges** (Southern Pines) and **lowland** (Flatwoods'
+  levees and backswamps, on a corridor
+  roll scaled down by `baseRoll`; Lowcountry and Gulf's with `tide`: its marsh
   laid at the tide line by the recipe's `level`, last of all, and tidal
   creeks cut through it below the sea, which `sea` fills, the marsh's core
   bare of trees -- generator 80).

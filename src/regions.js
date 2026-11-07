@@ -66,12 +66,12 @@ export const LANDSCAPES = {
  badlands: {name: 'Badlands', region: 'plains', where: [43.8, -102.3]},
  hillcountry: {name: 'Hill Country', region: 'texas', where: [30.5, -98.1]},
  bluebonnet: {name: 'Bluebonnet Prairie', region: 'texas', where: [32.7, -96.7]},
- gulfcoast: {name: 'Gulf Coast', region: 'texas', where: [29.8, -95.5]},
  // The second of the US golf courses' 15: Augusta, Pinehurst and Pine Valley. Its place
  // is Pinehurst's.
  southpines: {name: 'Southern Pines', region: 'south', where: [35.19, -79.47]},
- lowcountry: {name: 'Lowcountry', region: 'south', where: [32.1, -80.8]},
- bayou: {name: 'Bayou', region: 'south', where: [29.9, -90.2]},
+ // The third of the US golf courses' 15: Harbour Town, Sea Island and Kiawah. Its place
+ // is Harbour Town's.
+ lowgulf: {name: 'Lowcountry and Gulf', region: 'south', where: [32.13, -80.81]},
  flatwoods: {name: 'Florida Flatwoods', region: 'florida', where: [28.4, -81.5]},
  keys: {name: 'Keys', region: 'florida', where: [25.8, -81.7], tropical: true},
  blueridge: {name: 'Blue Ridge', region: 'appalachia', where: [36.1, -81.8]},
@@ -93,12 +93,14 @@ for (const l of Object.values(LANDSCAPES)) { l.us ??= true; l.tropical ??= false
 // (MIGRATIONS 14) and so on to New England. Used by the settings migration,
 // built course files, the profile's landscapes and the weekly rotation.
 // The landscapes Classic Parkland replaced (the owner, 6 November 2026) read as it from
-// then on, through MIGRATIONS 28. Southern Pines' three, the same, through MIGRATIONS 30.
+// then on, through MIGRATIONS 28. Southern Pines' three, the same, through MIGRATIONS 30,
+// and Lowcountry and Gulf's three through MIGRATIONS 32.
 export const OLD_KEYS = {pnw: 'puget', desert: 'sonoran', mountain: 'rockies', midwest: 'parkland',
  island: 'keys', autumn: 'parkland', lakeshore: 'lakedunes', haunted: 'parkland',
  newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland',
  ozarks: 'parkland', crosstimbers: 'parkland',
- piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines'};
+ piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines',
+ lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf'};
 export const currentKey = key => OLD_KEYS[key] || key;
 
 export const regionOf = key => LANDSCAPES[currentKey(key)]?.region ?? null;

@@ -68,7 +68,7 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
  blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
  northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
- badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW'};
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW', lowgulf: 'MARSH'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -139,6 +139,7 @@ export const PICKS = {
  oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  parkland: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  southpines: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ lowgulf: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  longleaf: ['h1-behind', 'overview', 'h2-side', 'h3-high'],

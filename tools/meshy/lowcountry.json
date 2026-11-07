@@ -1,0 +1,118 @@
+{
+ "name": "lowcountry",
+ "note": "The Lowcountry and Gulf pack on Meshy, the third of the US golf courses' landscapes (7 November 2026): Harbour Town, Sea Island, Kiawah. The owner has no photos here, so sizes, trunk widths and forms are PLACED from the reference photos: tall leaning live oaks with pale trunks, in a mix with loblolly pines. The loblolly is Southern Pines' own model. One picture per model, in the tufted language the owner chose for Classic Parkland. No hanging moss: the first pictures had it as thick solid curtains, because fine hanging detail does not survive the model step, and the owner turned it down. `seasons` are PLACED, read by tools/blender/dump-tints.mjs. Shipped in vendor/blender-meshy_lowcountry as LowLiveOak, LowCypress and LowSabal, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_LiveOak_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves deep dull green #3f5c34. Bark pale grey-brown #7d7468.",
+   "aspect": "3:4",
+   "prompt": "A mature southern live oak tree on a Lowcountry golf course, 22 m tall and 17 m wide, clearly taller than it is wide. A pale grey-brown trunk with shallow ridged bark, leaning a little and bare for its lowest third, dividing into a few thick curving limbs that reach up and out. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a tall uneven dome with a bumpy outline. Sky and limbs show through the gaps between the tufts. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. Nothing hangs from the limbs, no moss, no vines. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one sixteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width where it divides, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_LiveOak_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves deep dull green #3f5c34. Bark pale grey-brown #7d7468.",
+   "aspect": "3:4",
+   "prompt": "A tall southern live oak tree from a coastal woodland on a Lowcountry golf course, 26 m tall and 14 m wide, drawn upward by the trees around it. A long pale grey-brown trunk with shallow ridged bark, gently curved in an S and bare for its lowest two fifths, forking high into several thick rising limbs. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky, overlap only a little, and together make a tall irregular oval head with a bumpy outline and sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. Nothing hangs from the limbs, no moss, no vines. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_BaldCypress_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves soft mid green #5c7a44. Bark grey-brown #84766a.",
+   "aspect": "9:16",
+   "prompt": "A mature bald cypress tree beside the water on a Gulf Coast golf course, 32 m tall and 10 m wide. A very straight grey-brown trunk with long shallow vertical ribs, tapering strongly, bare for its lowest third, with a low fluted foot only in the bottom tenth of the tree. Short level limbs leave the trunk all the way up, longer lower down, shorter toward a narrow rounded top. Each limb ends in one large solid soft tuft of foliage, like a small fluffy cloud, wider than it is tall, with a lightly tufted scalloped edge. The tufts are chunky, staggered unevenly up the trunk and never level with each other, with sky between them, making a tall narrow open crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk above the foot, one twenty-fifth of the tree's height wide, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no water, no base, no knees, no text."
+  },
+  {
+   "name": "Blender_BaldCypress_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves soft mid green #5c7a44. Bark grey-brown #84766a.",
+   "aspect": "9:16",
+   "prompt": "An old bald cypress tree on a Gulf Coast golf course, 28 m tall and 12 m wide, with a flat-topped crown. A straight grey-brown trunk with long shallow vertical ribs, bare for its lowest two fifths, with a low fluted foot only in the bottom tenth of the tree. Near the top it opens into six to eight thick limbs that rise and then spread level. Each limb ends in one large solid soft tuft of foliage, like a soft fluffy cloud, wider than it is tall, with a lightly tufted scalloped edge, and a few smaller tufts sit lower on the trunk on short limbs. The tufts are chunky and overlap only a little, making a broad uneven flat top with a bumpy outline and sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk above the foot, one twentieth of the tree's height wide, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no water, no base, no knees, no text."
+  },
+  {
+   "name": "Blender_SabalPalm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7042. Trunk grey-brown #837a6c.",
+   "aspect": "9:16",
+   "prompt": "A mature sabal palm, the cabbage palmetto, on a Lowcountry golf course, 15 m tall and 6 m wide. A single straight grey-brown trunk, one twentieth of the palm's height wide, its sides very slightly tapering, marked with faint rough rings, with a little criss-cross of old leaf bases just under the crown. At the top one dense rounded head of twenty to thirty thick stiff fronds radiating in every direction, the lower ones arching down. Each frond is one solid chunky folded fan, like a thick pleated paper fan with a few deep soft pleats and a blunt scalloped edge. Paint each frond as a thick solid three-dimensional form: no thin strips, no fine leaflets, no fibres, no fine detail, no thin lines, no wisps. No feather fronds, no coconut palm shape, no coconuts, no fruit. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_SabalPalm_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7042. Trunk grey-brown #837a6c.",
+   "aspect": "9:16",
+   "prompt": "A younger sabal palm, the cabbage palmetto, on a Lowcountry golf course, 9 m tall and 5 m wide. A single gently leaning grey-brown trunk, one sixteenth of the palm's height wide, covered from mid-height to the crown in chunky criss-cross old leaf bases, smoother and ringed below. At the top one dense rounded head of twenty to thirty thick stiff fronds radiating in every direction, the lower ones arching down. Each frond is one solid chunky folded fan, like a thick pleated paper fan with a few deep soft pleats and a blunt scalloped edge. Paint each frond as a thick solid three-dimensional form: no thin strips, no fine leaflets, no fibres, no fine detail, no thin lines, no wisps. No feather fronds, no coconut palm shape, no coconuts, no fruit. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "lowliveoak": {
+   "spring": {
+    "leaf": "#4a6a3c",
+    "bark": "#7d7468"
+   },
+   "summer": {
+    "leaf": "#3f5c34",
+    "bark": "#7d7468"
+   },
+   "autumn": {
+    "leaf": "#3f5c34",
+    "bark": "#7d7468"
+   },
+   "winter": {
+    "leaf": "#3c5632",
+    "bark": "#7d7468"
+   }
+  },
+  "lowcypress": {
+   "spring": {
+    "leaf": "#8aa45c",
+    "bark": "#84766a"
+   },
+   "summer": {
+    "leaf": "#5c7a44",
+    "bark": "#84766a"
+   },
+   "autumn": {
+    "leaf": "#766048",
+    "bark": "#84766a"
+   },
+   "winter": {
+    "leaf": "#5c7a44",
+    "bark": "#84766a"
+   }
+  },
+  "lowsabal": {
+   "spring": {
+    "leaf": "#567a46",
+    "bark": "#837a6c"
+   },
+   "summer": {
+    "leaf": "#4f7042",
+    "bark": "#837a6c"
+   },
+   "autumn": {
+    "leaf": "#4f7042",
+    "bark": "#837a6c"
+   },
+   "winter": {
+    "leaf": "#4c6a40",
+    "bark": "#837a6c"
+   }
+  }
+ }
+}

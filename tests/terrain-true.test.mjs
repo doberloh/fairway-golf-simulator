@@ -2,7 +2,7 @@
 // terrain is also lifelike to the regions where the courses are built").
 // Each landscape biomes.js TERRAIN names gets its own recipe (landforms.js),
 // and each recipe has to do the thing its research says: the Bluegrass is
-// pocked with sinkholes, the Bayou is dead flat, the Hill Country steps, the
+// pocked with sinkholes, Flatwoods is dead flat, the Hill Country steps, the
 // Ozarks are cut by hollows, Ponderosa has cinder cones. Measured on the
 // recipes themselves and on generated courses.
 import test from 'node:test';
@@ -22,8 +22,8 @@ const relief = ys => Math.max(...ys) - Math.min(...ys);
 test('each landscape named for its own terrain gets the recipe its research says', () => {
  const want = {hillcountry: 'steps', monterey: 'steps', northwoods: 'glacial',
   mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels',
-  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', southpines: 'sandridges', bayou: 'lowland', lowcountry: 'lowland', highplains: 'playas', sandhills: 'dunes',
-  flatwoods: 'lowland', gulfcoast: 'lowland', badlands: 'badlands'};
+  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', southpines: 'sandridges', lowgulf: 'lowland', highplains: 'playas', sandhills: 'dunes',
+  flatwoods: 'lowland', badlands: 'badlands'};
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
 
@@ -34,7 +34,7 @@ test('no two landscapes have the same ground', () => {
 });
 
 test('every recipe is finite, seeded and repeatable', () => {
- for (const k of ['hillcountry', 'blueridge', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'southpines', 'bayou', 'badlands']) {
+ for (const k of ['hillcountry', 'blueridge', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'southpines', 'flatwoods', 'badlands']) {
   const a = landformOf(BIOMES[k], 'T1'), b = landformOf(BIOMES[k], 'T1');
   for (const [x, z] of [[0, 0], [123.4, -567.8], [-900, 300]]) {
    const y = a.lift(x, z);
@@ -64,8 +64,8 @@ test('the recipes make their shapes: sinkholes, steps, cones, hollows, flats', (
  assert.ok(Math.max(...lifts('ponderosa')) > 20, 'Ponderosa has cinder cones');
  // Channels: hollows cut well below the table.
  assert.ok(Math.min(...lifts('blueridge')) < -15, 'the Blue Ridge is cut by hollows');
- // Lowland: the Bayou's recipe adds a few metres at most.
- assert.ok(relief(lifts('bayou')) < 6, `the Bayou's recipe stays within a few metres (${relief(lifts('bayou')).toFixed(1)})`);
+ // Lowland: Flatwoods' recipe adds a few metres at most.
+ assert.ok(relief(lifts('flatwoods')) < 6, `Flatwoods' recipe stays within a few metres (${relief(lifts('flatwoods')).toFixed(1)})`);
 });
 
 test('a lowland course is flat where a parkland one rolls', () => {
@@ -77,15 +77,15 @@ test('a lowland course is flat where a parkland one rolls', () => {
   ys.sort((a, b) => a - b);
   return ys[Math.floor(ys.length * .95)] - ys[Math.floor(ys.length * .05)];
  };
- const bayou = spread('bayou'), parkland = spread('parkland');
- assert.ok(bayou < 6, `the Bayou spreads ${bayou.toFixed(1)} m between its low and high ground`);
- assert.ok(bayou < parkland / 2, `the Bayou (${bayou.toFixed(1)} m) is far flatter than Classic Parkland (${parkland.toFixed(1)} m)`);
+ const flatwoods = spread('flatwoods'), parkland = spread('parkland');
+ assert.ok(flatwoods < 6, `Flatwoods spreads ${flatwoods.toFixed(1)} m between its low and high ground`);
+ assert.ok(flatwoods < parkland / 2, `Flatwoods (${flatwoods.toFixed(1)} m) is far flatter than Classic Parkland (${parkland.toFixed(1)} m)`);
 });
 
 test('the Lowcountry\'s tidal creeks hold the sea in its marsh, and nothing in play is wet', () => {
  // Generator 80: the marsh laid at the tide line beyond play, creeks cut
  // through it below the sea (landforms.js `lowland` with `tide`).
- const w = world({holes: 9, biome: 'lowcountry', seed: 'LC-a'});
+ const w = world({holes: 9, biome: 'lowgulf', seed: 'LC-a'});
  let wet = 0, creek = 0, marsh = 0, cells = 0;
  for (let x = -w.halfX; x < w.halfX; x += 5) for (let z = -w.halfZ; z < w.halfZ; z += 5) {
   const s = w.surface(x, z), y = w.height(x, z);

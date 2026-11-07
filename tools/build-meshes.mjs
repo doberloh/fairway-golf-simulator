@@ -71,7 +71,7 @@ const PICK = {
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
-  'Pecan_1', 'Pecan_2', 'SouthLoblolly_1', 'SouthLoblolly_2', 'SouthLongleaf_1', 'SouthLongleaf_2', 'SouthWhitePine_1', 'SouthWhitePine_2', 'SouthDogwood_1', 'SouthDogwood_2', 'WhiteOak_1', 'WhiteOak_2', 'PinOak_1', 'PinOak_2', 'SugarMaple_1', 'SugarMaple_2', 'ParkPoplar_1', 'ParkPoplar_2', 'ParkElm_1', 'NorwaySpruce_1', 'NorwaySpruce_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
+  'Pecan_1', 'Pecan_2', 'LowLiveOak_1', 'LowLiveOak_2', 'LowCypress_1', 'LowCypress_2', 'LowSabal_1', 'LowSabal_2', 'SouthLoblolly_1', 'SouthLoblolly_2', 'SouthLongleaf_1', 'SouthLongleaf_2', 'SouthWhitePine_1', 'SouthWhitePine_2', 'SouthDogwood_1', 'SouthDogwood_2', 'WhiteOak_1', 'WhiteOak_2', 'PinOak_1', 'PinOak_2', 'SugarMaple_1', 'SugarMaple_2', 'ParkPoplar_1', 'ParkPoplar_2', 'ParkElm_1', 'NorwaySpruce_1', 'NorwaySpruce_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
   'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
   'PinyonPine_1', 'PinyonPine_2', 'WesternJuniper_1', 'WesternJuniper_2', 'GrainElevator_1', 'Shelterbelt_1',
   'ChestnutOak_1', 'ChestnutOak_2', 'ShortleafPine_1', 'ShortleafPine_2', 'CopperBeech_1', 'CopperBeech_2', 'PitchPine_1',
@@ -360,6 +360,12 @@ const PICK = {
  tiplant: ['blender:Blender_TiPlant_1'],
  heliconia: ['blender:Blender_Heliconia_1'],
  boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
+ // THE LOWCOUNTRY AND GULF PACK (tools/meshy/lowcountry.json, made on Meshy; the owner, 7
+ // November 2026). In vendor/blender-meshy_lowcountry, its names changed on the way in
+ // because the hand-built South's models hold them.
+ lowliveoak: ['blender:Blender_LowLiveOak_1', 'blender:Blender_LowLiveOak_2'],
+ lowcypress: ['blender:Blender_LowCypress_1', 'blender:Blender_LowCypress_2'],
+ lowsabal: ['blender:Blender_LowSabal_1', 'blender:Blender_LowSabal_2'],
  // THE SOUTHERN PINES PACK (tools/meshy/southern.json, made on Meshy; the owner, 6
  // November 2026). In vendor/blender-meshy_southern, its names changed on the way in
  // because the hand-built South's models hold them.

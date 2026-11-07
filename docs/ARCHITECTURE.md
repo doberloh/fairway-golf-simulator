@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of thirty-five landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six and Southern Pines three, their keys kept in `OLD_KEYS`), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
+landscape holding 9 or 18 holes, in one of thirty-three landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six, Southern Pines three and Lowcountry and Gulf three, their keys kept in `OLD_KEYS`), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -274,7 +274,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A test file that builds many courses on one thread sets the whole suite's wait -- PROJECT_HANDOFF *A FILE IS ONE THREAD*
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.
-- A sea among the holes (`sea` without `edgeCoast`, the Lowcountry's creeks) needs the ground near the sea, the marsh above the beach band and the band its own colour -- PROJECT_HANDOFF *A sea among the holes*.
+- A sea among the holes (`sea` without `edgeCoast`, Lowcountry and Gulf's creeks) needs the ground near the sea, the marsh above the beach band and the band its own colour -- PROJECT_HANDOFF *A sea among the holes*.
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 - The range's greens are a list that `greenDistance` and the ground shader both loop over -- keep the two the same rule; one cup is live at a time (`course.pin`). [THE RANGE'S GREENS ARE A LIST]

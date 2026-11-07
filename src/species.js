@@ -85,6 +85,9 @@ export const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mang
  redpine:[20,28,4,6],jackpine:[10,16,3.5,5],tamarack:[12,18,3,4],blackspruce:[6,12,1,1.6],sitkaspruce:[30,45,6,8],shorepine:[8,12,3.5,5],monkeypod:[13,20,12,17],casuarina:[16,26,5,7],cookpine:[28,42,3,4.5],ohia:[7,12,3.5,5],plumeria:[4.5,7,2.5,3.5],
  // Appalachia's and the Northeast parkland's (PLACED within their specs).
  chestnutoak:[18,26,7,10],shortleafpine:[20,28,4,6],sassafras:[8,13,3,4.5],copperbeech:[18,26,9,12],pitchpine:[9,16,4,6],
+ // Lowcountry and Gulf's (tools/meshy/lowcountry.json; PLACED, from the pack's own sizes:
+ // taller and narrower than a lone open-grown tree, on the owner's rule).
+ lowliveoak:[20,27,6,8],lowcypress:[24,34,3.5,5],lowsabal:[9,16,2.2,3.2],
  // Southern Pines' (tools/meshy/southern.json; PLACED from each tree's usual form).
  southloblolly:[24,32,4,5.5],southlongleaf:[24,32,4,5.5],southwhitepine:[22,32,4,5.5],southdogwood:[5,9,2.5,3.5],
  // Classic Parkland's (tools/meshy/parkland.json; PLACED from each tree's usual
@@ -122,7 +125,7 @@ export function tallHeight(bio, kind, a, scale = 1) {
 // here and has no season tints of its own turns orange in autumn, so an evergreen
 // left off is the bug the owner found on Puget Sound (5 November 2026): its cedars
 // turned with the maples. tests/seasons.test.mjs holds every conifer and palm to it.
-export const EVERGREEN = new Set(['southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
+export const EVERGREEN = new Set(['lowliveoak','lowsabal','southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
  'longleafpine','loblollypine','slashpine','liveoak','liveoakmoss','magnolia','waxmyrtle','yaupon','cabbagepalm','sawpalmetto','citrustree',
  'afghanpine','africansumac','pampasgrass','ashejuniper','mountainlaurel','joshuatree','mojaveyucca','fanpalm','datepalm','aleppopine','oleander','soaptreeyucca','sotol','lechuguilla','emoryoak','alligatorjuniper','beavertail',
  'montereycypress','montereypine','coastliveoak','eucalyptus','torreypine','iceplant','coastalsage','chaparral','olivetree','peppertree',

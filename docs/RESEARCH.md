@@ -14659,3 +14659,63 @@ edge before it softened. Fixed in the tests. **What this cost in honesty:** the 
 seeds chosen as clean on the Heartland, and on Classic Parkland's ground some are not, so it moved
 to seeds that are. The blemishes are small and are listed in TODO. After the fixes all pass,
 and the fingerprints show only the three retired landscapes removed.
+
+**Lowcountry and Gulf, step 1 (7 November 2026).** tools/meshy/lowcountry.json: southern live oak,
+bald cypress and sabal palm, 2 of each, one picture each, 54 credits. The loblolly is Southern
+Pines'. The owner has no photos here, so form comes from the Harbour Town reference photos: tall
+live oaks with pale leaning trunks in a mix with loblollies, reddish pine straw beds under them.
+Sizes PLACED: live oaks 22 x 17 m and 26 x 14 m, narrower than a lone open-grown tree (often wider
+than tall) on the owner's rule of taller and skinnier, and closer to the photos' woodland trees.
+The first oak pictures had Spanish moss as thick solid curtains, because fine hanging detail does
+not survive the model step. It read as hanging cones and **the owner turned it down** (7 November):
+plain oaks, nothing hanging. It is real at these courses, on live oaks across the coastal Carolinas
+and Georgia; the choice is about how it looks at this level of detail, not about whether it is
+true. The prompts now say nothing hangs, and the moss colour left the pack too, since the colour
+line alone would have asked for moss again (the dry run showed it). 18 credits.
+
+**Lowcountry models, round 1 (7 November 2026).** Bald cypress 1 and 2, sabal palm 1 and 2, 30
+credits each, 12,277 to 12,461 triangles. Far versions in `tufts`: cypress 331 and 201 triangles,
+outline .696 and .677; palms 331, .676 and .684. **The far palms are wrong:** tufts turn a palm's
+crown into round clumps, a broadleaf on a pole. `boughs` was tried and rejected: 419 triangles,
+outline .561 and .634, stacked flat layers like a pagoda. Both ignore where a frond starts.
+
+**`fronds`, a far style for palms (7 November 2026).** The crown is cut by direction from a hub at
+the top of the trunk, and each of 14 fronds (PLACED) is one blade of four rows and a tip, 21
+triangles, whose spine runs through the frond's own faces, so its droop is kept. 339 triangles
+with the trunk, 81 under budget; the trunk holds its width to the hub. Outline .589 and .637,
+below tufts' .676 and .684: the score counts covered area, and lumps cover more than blades.
+**Go by the picture**, as with the pines: these read as palms and the lumps did not. Live oak models
+in `tufts`, 60 credits, 12,529 and 12,567 triangles: far 305 and 331, outline .742 both.
+
+**Lowcountry and Gulf in the game (7 November 2026).** Key `lowgulf`, SCHEMA 32, beside lowcountry,
+bayou and gulfcoast until sign-off, so no other landscape moves and GENERATOR stays 91. Marsh, tide
+and creeks are the Lowcountry's own. Sizes PLACED: live oak 20-27 m, 12-16 m across; bald cypress
+24-34 m, 7-10 m; sabal 9-16 m, 4.4-6.4 m. Tree density 2.2 (the old Lowcountry 1.5, Southern Pines
+2.4), PLACED for the study's medium to heavy. On seed FAIRWAY, 18 holes: 1,499 live oaks, 1,052
+loblollies, 622 sabals, 397 cypresses. Bald cypress also stands in pond shallows (`inWater`), as
+on the Bayou; there are no knees. Understory shrubs and marsh grasses are still hand-built models.
+Course-name first words are new and PLACED, not checked against real clubs one by one.
+
+**What the first screenshots changed.** The Lowcountry's spring bloom, pink first, is mixed into the
+native ground by half and drawn in drifts, and on this much marsh it made a solid salmon field. A
+spartina marsh greens up instead, so the bloom's first colour is a green-gold, #9fb05c (PLACED). Bald
+cypress autumn #8a5a3e came out orange-red in the game's light; #766048 reads as rust (PLACED). The
+white flecks along creek banks are the water lapping (`lakeWaves`), kept. The thick mist in low views
+by water is the South's profile on this wet ground, in every season; the owner kept it.
+
+**Its cost on Low (7 November 2026, a fast card, not a weak machine).** One run, 120 frames each:
+first tee 1.10 ms and 10.4 M triangles, fifth tee 0.60 ms and 8.3 M. The old Lowcountry on the same
+build: 1.60 ms and 16.4 M, 1.00 ms and 9.9 M. Start to main menu 11.85 s against 13.94 s, one run
+each. The fingerprints show every existing landscape unchanged and one new.
+
+**Three more retired (7 November 2026).** The owner signed off Lowcountry and Gulf, and the Lowcountry,
+the Bayou and the Gulf Coast left for it: 36 landscapes to 33, GENERATOR 92, SCHEMA 33, keys in
+OLD_KEYS. The Gulf Coast was in the Texas region, by Houston, so its saved courses move to a
+Carolina landscape: the study's call. The Bayou's knees and tupelos are no longer planted anywhere
+new; the models stay, because built courses name trees by species.
+
+**The second full test run (7 November 2026).** 1,482 tests, 5 failing, in two files. Four in
+terrain-true named retired landscapes and now use Flatwoods and lowgulf; one in landscape-map held
+a fixed count of 33 places, now worked out from the list with one miss allowed, as it always did.
+The other 1,477 passed in that run and the two files passed after the fix; no source changed
+between. No cart path or other blemish came up from these three leaving.

@@ -71,12 +71,12 @@ const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf
 // few minutes is a run that gets used.
 const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'keys', 'redwood', 'lakedunes',
  'highplains', 'sandhills', 'alaska',
- 'lowcountry', 'bayou', 'flatwoods',
- 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
+ 'flatwoods',
+ 'hillcountry', 'bluebonnet', 'mojave', 'palms', 'chihuahuan',
  'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
  'sagebrush', 'redrock',
  'blueridge',
- 'northwoods', 'oregondunes', 'hawaii', 'badlands', 'desertresort', 'parkland', 'southpines'];
+ 'northwoods', 'oregondunes', 'hawaii', 'badlands', 'desertresort', 'parkland', 'southpines', 'lowgulf'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {

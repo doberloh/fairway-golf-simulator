@@ -18,8 +18,9 @@ up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 
 `vendor/blender-meshy_redwood/` holds 28 tree models, the Redwood Coast's redwoods,
 firs, hemlocks, red cedars and tanoaks, `vendor/blender-meshy_parkland/` 22, Classic
-Parkland's oaks, maples, poplars, elm and spruces, and `vendor/blender-meshy_southern/` 16,
-Southern Pines' pines and dogwoods. The full models were generated on Meshy's paid
+Parkland's oaks, maples, poplars, elm and spruces, `vendor/blender-meshy_southern/` 16,
+Southern Pines' pines and dogwoods, and `vendor/blender-meshy_lowcountry/` 12, Lowcountry and
+Gulf's live oaks, bald cypresses and sabal palms. The full models were generated on Meshy's paid
 Pro plan (https://www.meshy.ai), under which the output is private with full
 commercial use, then converted, and the far versions rebuilt from them, by this
 project's own tools (`tools/meshy-run.mjs`, `tools/blender/meshy_*.py`). The pictures they

@@ -181,6 +181,11 @@ name (*What the game keeps from a model*), so nothing reaches it without `--conv
 `cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
 builders as the record. To change a tree, run `--convert` and copy it over.
 
+**The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
+`vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new
+species keys (`lowliveoak`, `lowcypress`, `lowsabal`) under LowX model names; the loblolly is
+Southern Pines' own. No hanging moss, the owner's call. The palms use the `fronds` far style.
+
 **The Southern Pines pack** (tools/meshy/southern.json, 6 November 2026): 8 trees in
 `vendor/blender-meshy_southern`, loblolly and longleaf pines, eastern white pine and
 flowering dogwood, as new species keys (`southloblolly` and so on) so no other landscape
@@ -209,7 +214,7 @@ foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
 far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
 into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
 and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
-pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers.  RESEARCH.md, *AI model generators*.
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers, and `farStyle: fronds` into curved blades from the top of the trunk, for palms.  RESEARCH.md, *AI model generators*.
 
 The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
 **No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just
