@@ -1,7 +1,7 @@
 # What the Meshy tools share: reading a tree into wood and leaf, and writing a
 # model the way the game takes one (docs/BLENDER_ASSETS.md, *What the game keeps
 # from a model*). Used by meshy_far.py and meshy_game.py.
-import json, math, struct
+import json, math, os, struct
 from types import SimpleNamespace
 import bpy
 import numpy as np
@@ -55,11 +55,24 @@ def read_tree(path):
         return pixels[y, x]
 
     colour = (sample(tuv).sum(1) + sample(tuv.mean(1))) / 4  # three corners and the centre
-    red = colour[:, 1] < colour[:, 0] * 1.25  # wood: grey bark as well as red, never leaf
     centre = verts[tri].mean(1)
+    red = colour[:, 1] < colour[:, 0] * 1.25  # wood: grey bark as well as red, never leaf
     area = np.array([p.area for p in polys])
     lo, hi = verts.min(0), verts.max(0)
     H = hi[2] - lo[2]
+    # Green wood (a palo verde's limbs, a saguaro): when the tree's foot is not
+    # wood-coloured, its colours are split in two and the group at the foot is the
+    # wood. One colour all over is all wood. A brown-barked tree never gets here.
+    foot = centre[:, 2] < lo[2] + H * .06
+    # A model marked brown-barked (`wood`, MESHY_WOOD) never takes this split.
+    if os.environ.get('MESHY_WOOD') != 'brown' and foot.any() and red[foot].mean() < .5:
+        lum = luminance(colour)
+        mids = np.stack([colour[lum <= np.percentile(lum, 25)].mean(0), colour[lum >= np.percentile(lum, 75)].mean(0)])
+        for _ in range(12):
+            lab = ((colour[:, None] - mids[None]) ** 2).sum(2).argmin(1)
+            mids = np.stack([colour[lab == k].mean(0) if (lab == k).any() else mids[k] for k in (0, 1)])
+        own = np.bincount(lab[foot], minlength=2).argmax()
+        red = lab == own if np.abs(mids[0] - mids[1]).max() > .03 else np.ones(len(colour), bool)
 
     # The trunk: at each height its axis and radius from the wood-coloured faces,
     # narrowing only as it rises, so a limb never counts as trunk.

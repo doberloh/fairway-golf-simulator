@@ -96,7 +96,7 @@ test('every landscape\'s rough has its green for three seasons, and spring is it
   assert.ok(far(spring.rough, summer.rough) >= 14, `${key}: spring's rough ${spring.rough} too near summer's ${summer.rough}`);
   assert.ok(greenness(spring.rough) > greenness(bio.rough), `${key}: spring is greener than the record`);
  }
- const wine = biomeOf('winecountry');
+ const wine = biomeOf('calcoast');
  for (const season of ['spring', 'summer']) assert.ok(greenness(seasonPalette(wine, season, 'california').rough) > 15, `wine country's rough is green in ${season}`);
  assert.ok(greenness(seasonPalette(biomeOf('mojave'), 'spring', 'desert').rough) < 30, 'a desert stays a desert');
  assert.deepEqual(seasonPalette(biomeOf('mojave'), 'summer', 'desert'), {}, 'its summer is its record');

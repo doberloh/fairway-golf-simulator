@@ -1,0 +1,46 @@
+{
+ "name": "seaside",
+ "note": "The Seaside Links pack on Meshy, batch two of the US golf courses' landscapes (7 November 2026): St Andrews, Bandon Dunes, Chambers Bay, Whistling Straits. Nearly treeless: shore pine, and the lone Douglas fir is the Pacific Northwest pack's. Form from the owner's Chambers Bay photographs, gold fescue dunes with firs only far off. Sizes PLACED. Shore pines on the coast are often wind-shaped; drawn upright on the owner's rule. `seasons` are PLACED. Shipped in vendor/blender-meshy_seaside as SlShorePine, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_ShorePine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull green #3c5a3a. Bark dark grey-brown #4e463e.",
+   "aspect": "1:1",
+   "prompt": "A shore pine tree among coastal dunes beside a links golf course, 10 m tall and 8 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A short dark grey-brown trunk that divides low into several crooked rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a dense rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_ShorePine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull green #3c5a3a. Bark dark grey-brown #4e463e.",
+   "aspect": "3:4",
+   "prompt": "A younger shore pine tree among coastal dunes beside a links golf course, 7 m tall and 5 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A dark grey-brown trunk with crooked rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a small rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twelfth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to crooked limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "slshore": {
+   "spring": {
+    "leaf": "#3c5a3a",
+    "bark": "#4e463e"
+   },
+   "summer": {
+    "leaf": "#3c5a3a",
+    "bark": "#4e463e"
+   },
+   "autumn": {
+    "leaf": "#3c5a3a",
+    "bark": "#4e463e"
+   },
+   "winter": {
+    "leaf": "#3c5a3a",
+    "bark": "#4e463e"
+   }
+  }
+ }
+}

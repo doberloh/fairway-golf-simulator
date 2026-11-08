@@ -131,11 +131,11 @@ test('a shadow map draws only the trees inside it, and every one of them', () =>
 
 test('the thinned twin stands in from its map onward and is never drawn into the picture', async () => {
  const {modelParts, farParts} = await import('../src/mesh-assets.js');
- const parts = modelParts('Blender_Redwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const parts = modelParts('Blender_RwRedwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  const group = new T.Group(), n = 40, mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
  const m = new T.Matrix4();
  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeTranslation((i % 8) * 30 - 105, 0, Math.floor(i / 8) * 30 - 520));
- mesh.castShadow = true; mesh.userData = {model: 'Blender_Redwood_1', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_RwRedwood_1', part: leaf, role: 'leaf'};
  group.add(mesh);
  const cull = cullInstances(group, {thinShadowsFrom: 1}), cam = camera(), near = sunOver(60), far = sunOver(400);
  cull.update(cam, null, [near, far]);
@@ -143,7 +143,7 @@ test('the thinned twin stands in from its map onward and is never drawn into the
  assert.ok(twin, 'no twin was made');
  assert.equal(twin.instanceMatrix, mesh.instanceMatrix, 'the twin must share the instance buffer');
  assert.ok(twin.geometry.index.count < parts[leaf].geometry.index.count * .6, 'the shipped twin is a fraction of the crown');
- assert.equal(twin.geometry, farParts('Blender_Redwood_1')[leaf].geometry);
+ assert.equal(twin.geometry, farParts('Blender_RwRedwood_1')[leaf].geometry);
  // Map 0 keeps the whole tree; map 1 draws the twin instead.
  assert.ok(shadowCount(mesh, near) > 0); assert.equal(shadowCount(twin, near), 0);
  assert.equal(shadowCount(mesh, far), 0); assert.ok(shadowCount(twin, far) > 0);
@@ -178,13 +178,13 @@ test('thinning keeps a third of the sprays, grown about their own centres', asyn
 
 test('small crowns are drawn thinned, every held crown exactly once, and none near the camera', async () => {
  const {modelParts} = await import('../src/mesh-assets.js');
- const parts = modelParts('Blender_Redwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const parts = modelParts('Blender_RwRedwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  const group = new T.Group(), spots = [];
  for (let z = -500; z <= 1500; z += 50) for (let x = -200; x <= 200; x += 50) spots.push([x, z]);
  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), spots.length), m = new T.Matrix4();
  // Unit-height models scaled to 60 m trees.
  spots.forEach(([x, z], i) => mesh.setMatrixAt(i, m.makeScale(60, 60, 60).setPosition(x, 0, z)));
- mesh.castShadow = true; mesh.userData = {model: 'Blender_Redwood_1', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_RwRedwood_1', part: leaf, role: 'leaf'};
  group.add(mesh);
  const cull = cullInstances(group, {farPainted: .15}), cam = camera();
  cull.update(cam, null);

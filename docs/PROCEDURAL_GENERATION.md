@@ -211,12 +211,18 @@ from what lies between the holes on real courses of its kind
   (the Hill Country's limestone staircases, Monterey's marine terraces),
   **karst** (the Bluegrass's shallow sinkholes), **glacial** (the North
   Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
-  (granite knobs and washes in the Mojave and Desert Palms, a rare low knob
-  and no washes on the built floor of Desert Resort, the High
+  (granite knobs and washes in the Mojave; Desert Mountain's knobs off and long joined ranges in their place (`range`, their upper
+  slopes piled with boulders, kept out of the long shape a hole lies on by `longLift`), laid
+  before the holes and only on the big mountain's side (`range.side`), a mountain front: the
+  routing (routing.js) refuses a hole on them, lays the course along the front (`frontTurn`) and
+  pulls most holes up against them; the land tilted up toward the big mountain (`tilt`) and rejoining the holes over
+  130 m (`wideFade`), about 1.5 holes in 18 teeing off a rocky outcrop (`rockTees`,
+  course.js, laid after the corridor fade so it stands in play), and past the course one big
+  mountain (`ringMassif`, landscape-edge.js) in place of a ring of peaks; a rare low knob and no washes on Desert Resort's built floor; the High
   Sierra's domes), **channels** (Sagebrush coulees, Blue Ridge hollows,
   SoCal barrancas), **playas** (the High Plains' round dry pans
-  with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder
-  cones and lava flows), **sandridges** (Southern Pines) and **lowland** (Flatwoods'
+  with bare clay floors, generator 81), **volcanic** (Ponderosa's cinder
+  cones and lava flows), **sandridges** (Southern Pines) and **lowland** (Florida Palms'
   levees and backswamps, on a corridor
   roll scaled down by `baseRoll`; Lowcountry and Gulf's with `tide`: its marsh
   laid at the tide line by the recipe's `level`, last of all, and tidal

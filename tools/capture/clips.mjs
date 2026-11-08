@@ -26,14 +26,14 @@ fs.mkdirSync(`${OUT}/master`, {recursive: true});
 // light is a time of day (`when`, a sun height -- capture.mjs) unless it names
 // an hour outright.
 export const CLIPS = [
- {name: 'links-golden', biome: 'links', seed: 'DUNE', hole: 1, when: 'golden', seconds: 9,
+ {name: 'links-golden', biome: 'seaside', seed: 'DUNE', hole: 1, when: 'golden', seconds: 9,
   keys: [{fromPin: 230, around: 8, height: 32, pitch: -12}, {fromPin: 140, around: 4, height: 26, pitch: -13},
    {fromPin: 55, around: 0, height: 16, pitch: -15}]},
  {name: 'desert-noon', biome: 'sonoran', seed: 'MESA', hole: 2, when: 'noon', seconds: 9,
   keys: [{fromPin: 250, around: -6, height: 24, pitch: -10}, {fromPin: 150, around: -3, height: 30, pitch: -14},
    {fromPin: 50, around: 8, height: 18, pitch: -17}]},
  // Bird's eye, at first light, with the morning mist still lying in the valleys.
- {name: 'pacific-northwest-dawn', biome: 'puget', seed: 'CEDAR', hole: 1, when: 'dawn', seconds: 9,
+ {name: 'pacific-northwest-dawn', biome: 'pacnw', seed: 'CEDAR', hole: 1, when: 'dawn', seconds: 9,
   keys: [{fromPin: 340, around: 25, height: 120, pitch: -26}, {fromPin: 210, around: 12, height: 105, pitch: -32},
    {fromPin: 90, around: 0, height: 90, pitch: -40}]},
  {name: 'autumn-golden', biome: 'newengland', seed: 'MAPLE', hole: 1, when: 'golden', seconds: 9,
@@ -57,7 +57,7 @@ export const CLIPS = [
    {fromPin: 72, around: 230, height: 22, pitch: -14}]},
  {name: 'desert-tee-shot', biome: 'sonoran', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
- {name: 'night-floodlit', biome: 'puget', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
+ {name: 'night-floodlit', biome: 'pacnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
   keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
    {fromPin: 105, around: 210, height: 40, pitch: -17}]},
  // Added for 1.0: a drive with the round screen on -- the meter, the golfer

@@ -23,7 +23,7 @@ test('every stand record is whole, and names plants its landscape can draw', () 
 });
 
 test('a stand is planted thick, back from play, on ground that holds a tree', () => {
- for (const biome of ['puget', 'sonoran', 'newengland']) {
+ for (const biome of ['pacnw', 'sonoran', 'newengland']) {
   const w = build(biome), stand = w.trees.filter(t => t.stand), open = w.trees.filter(t => !t.stand);
   assert.ok(stand.length > open.length, `${biome}: ${stand.length} stand trees against ${open.length} in the open`);
   const o = w.bio.stands;
@@ -36,12 +36,12 @@ test('a stand is planted thick, back from play, on ground that holds a tree', ()
 
 test('a landscape without a stand plants none, nor does the range', () => {
  assert.equal(standsOf({}, 'x'), null);
- const range = generateWorld({seed: 'stand', biome: 'puget', holes: 1, range: true, trees: 60});
+ const range = generateWorld({seed: 'stand', biome: 'pacnw', holes: 1, range: true, trees: 60});
  assert.equal(range.trees.filter(t => t.stand).length, 0);
 });
 
 test('the sites and the field are the seed\'s alone', () => {
- const o = standsOf(BIOMES.puget, 'a');
+ const o = standsOf(BIOMES.pacnw, 'a');
  const a = standSites(o, 300, 200, 'a'), b = standSites(o, 300, 200, 'a'), c = standSites(o, 300, 200, 'b');
  assert.deepEqual(a, b);
  assert.notDeepEqual(a.map(p => p.x), c.map(p => p.x));
@@ -50,8 +50,8 @@ test('the sites and the field are the seed\'s alone', () => {
  assert.equal(o.at(0, 0, 500), 1, 'far outside every corridor is always a stand');
  assert.equal(choose([['a', 1], ['b', 3]], .1), 'a');
  assert.equal(choose([['a', 1], ['b', 3]], .9), 'b');
- assert.deepEqual(build('puget', 's1').trees.filter(t => t.stand).map(t => [t.x, t.z, t.kind]).slice(0, 50),
-  build('puget', 's1').trees.filter(t => t.stand).map(t => [t.x, t.z, t.kind]).slice(0, 50));
+ assert.deepEqual(build('pacnw', 's1').trees.filter(t => t.stand).map(t => [t.x, t.z, t.kind]).slice(0, 50),
+  build('pacnw', 's1').trees.filter(t => t.stand).map(t => [t.x, t.z, t.kind]).slice(0, 50));
 });
 
 // The forest painted on the far hills (ground.js, rendering only): a record
@@ -98,7 +98,7 @@ test('the understory is plants a ball passes through, planted inside stands only
  for (const [key, bio] of Object.entries(BIOMES)) {
   for (const [kind] of bio.stands?.under?.plants ?? []) assert.ok(GROUND_PLANTS.has(kind), `${key}: ${kind} has a trunk`);
  }
- const w = build('puget'), under = w.trees.filter(t => t.under);
+ const w = build('pacnw'), under = w.trees.filter(t => t.under);
  assert.ok(under.length > 100, `only ${under.length} understory plants`);
  const o = standsOf(w.bio, w.seed);
  for (const t of under.slice(0, 400)) assert.ok(o.at(t.x, t.z, w.nearest(t.x, t.z).d) >= .5, 'understory outside a stand');

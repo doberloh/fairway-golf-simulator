@@ -56,12 +56,12 @@ export const SCREENS = [
  {name: 'big-map', go: async p => { await round(p); await p.keyboard.press('KeyM'); await wait(p, 1500); }},
  {name: 'pause', go: async p => { await round(p); await p.keyboard.press('Escape'); await wait(p, 1200); }},
  {name: 'scorecard', go: async p => { await round(p); await p.keyboard.press('Escape'); await wait(p, 800); await click(p, 'scoreNav'); await wait(p, 1800); }},
- {name: 'night-round', go: async p => { await round(p, {biome: 'links', seed: 'DUNE', hole: 3, hour: 21.5}); await p.evaluate(() => window.__view.setFloodlights(true)); await wait(p, 4000); }},
+ {name: 'night-round', go: async p => { await round(p, {biome: 'seaside', seed: 'DUNE', hole: 3, hour: 21.5}); await p.evaluate(() => window.__view.setFloodlights(true)); await wait(p, 4000); }},
  // A putt being read (added for the website's greens panel): one golfer, a
  // 7-iron onto Links' 176-yard par 3, then the slope grid and the heat map on.
  // Fails rather than saving if the ball misses the green.
  {name: 'putting', go: async p => {
-  await round(p, {biome: 'links', seed: 'DUNE', hole: 3, when: 'afternoon', group: {...GROUP, players: GROUP.players.slice(0, 1)}});
+  await round(p, {biome: 'seaside', seed: 'DUNE', hole: 3, when: 'afternoon', group: {...GROUP, players: GROUP.players.slice(0, 1)}});
   await p.evaluate(s => window.__takeShot(s), {speed: 54.5, vla: 16.5, hla: 0, spin: 6900, spinAxis: 0});
   await wait(p, 2000);
   await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 30000}); await wait(p, 4000);

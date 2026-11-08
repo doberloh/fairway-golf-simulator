@@ -25,7 +25,7 @@ import {gapAt,coverRadius,FLOAT_TOLERANCE} from './seat-core.js';
 export {BIOMES, biomeOf} from './biomes.js';
 import {BIOMES, biomeOf} from './biomes.js';
 import {blowoutField,isBlowout,BLOWOUT_WATER} from './blowouts.js';
-import {landformOf,wildField,wildGround,fallenBake,fallenAt,WILD_WATER,fbm,saltOf} from './landforms.js';
+import {landformOf,wildField,wildGround,fallenBake,fallenAt,WILD_WATER,fbm,saltOf,massifHeading} from './landforms.js';
 import {standsOf,standSites,choose} from './stands.js';
 import {allows,isNatural} from './grounds.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
@@ -1346,7 +1346,7 @@ export function* generateWorldSteps(settings={},options={}){
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
  // textures, vegetation -- treats it exactly like any other and needs no branch.
- const bio=biomeOf(s.biome),holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
+ const bio=biomeOf(s.biome),holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint,shift:routeShift}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
  yield phaseAt(1);
  // WHERE AN EDGE COAST RUNS (`coastAt(z)`: the middle of the shore's ramp at
  // each z; the water itself starts about 40 m further out). 90 m in from the
@@ -1368,7 +1368,9 @@ export function* generateWorldSteps(settings={},options={}){
    for(let q=1;q<line.length;q++){const a=line[q-1],b=line[q],k=Math.max(2,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/8));
     for(let i=0;i<=k;i++){const x=a.x+(b.x-a.x)*i/k,z=a.z+(b.z-a.z)*i/k,j0=Math.max(0,Math.floor((z-40-z0)/step)),j1=Math.min(n-1,Math.ceil((z+40-z0)/step));for(let j=j0;j<=j1;j++)east[j]=Math.max(east[j],x+30);}}
   }
-  const raw=Array.from(east,e=>Number.isFinite(e)?Math.min(coastFar,e-130):coastFar),W=6;
+  // A cliff coast (`cliffCoast`, below) needs no 80 m ramp: its line runs `offset` metres OUTSIDE
+  // the eastern holes' line, so the sea never comes in among them.
+  const raw=Array.from(east,e=>Number.isFinite(e)?Math.min(coastFar,bio.cliffCoast?e+bio.cliffCoast.offset:e-130):coastFar),W=6;
   const at=(arr,j)=>arr[Math.min(n-1,Math.max(0,j))];
   const dil=raw.map((_,j)=>{let m=-Infinity;for(let d=-W;d<=W;d++)m=Math.max(m,at(raw,j+d));return m;});
   const sm=dil.map((_,j)=>{let t=0;for(let d=-W;d<=W;d++)t+=at(dil,j+d);return t/(2*W+1);});
@@ -1383,7 +1385,11 @@ export function* generateWorldSteps(settings={},options={}){
  // Not on the driving range: it is a hand-built hole whose flatness is the
  // instrument (PROJECT_HANDOFF *The range is a hole*), and a crag or a wash
  // across it is a variable nobody set.
- const landform=landformOf(s.range?{}:bio,s.seed),liftScale=(s.landform??70)/70;
+ let landform=landformOf(s.range?{}:bio,s.seed);
+ // A course routed round its ranges (routing.js) was moved to the middle after routing; the ranges
+ // move with it, or the holes would land back on them.
+ if(landform.longLift&&routeShift&&(routeShift.x||routeShift.z)){const o=routeShift,F=f=>f&&((x,z,...r)=>f(x+o.x,z+o.z,...r));
+  landform={...landform,lift:F(landform.lift),longLift:F(landform.longLift),raw:F(landform.raw),treeKeep:F(landform.treeKeep),rocky:F(landform.rocky)};}const liftScale=(s.landform??70)/70;
  // THE GREEN-END ALLOWANCE IS RAMPED, NOT SWITCHED.
  //
  // This read `zz===h.length ? 25+fringe+semiRough : 0` -- an exact float
@@ -1499,7 +1505,16 @@ export function* generateWorldSteps(settings={},options={}){
  // `baseHeight`: where the ground sits above the sea before it rolls, for a
  // landscape whose sea comes in among the holes (the Lowcountry's creeks,
  // generator 80). 12 m everywhere else. PLACED.
- const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:bio.baseHeight??12)+severity*baseRoll*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
+ // THE LAND TILTED UP TOWARD THE BIG MOUNTAIN (`tilt`, Desert Mountain; the owner, 7 November 2026:
+ // "a landscape overall high point and a landscape overall low point. The entire landscape would be
+ // gradually rising towards wherever the big mountain is placed"). Everything rides on it -- the
+ // ground, the holes, the ponds' levels, the far ring past the edge -- through `base`: a rise of
+ // `tilt.height` either side of the middle, eased over `tilt.over` metres (tanh), so the slope is
+ // at most height/over at the middle and the far country levels off. Scaled by the elevation
+ // setting as the hills are, so a flat course stays gentle. PLACED.
+ const cliffSalt=saltOf(s.seed,'cliff');
+ const tiltAt=bio.tilt&&!s.range&&!coastal?(()=>{const a=massifHeading(s.seed),ux=Math.cos(a),uz=Math.sin(a),T=bio.tilt.height*Math.min(1,.4+severity);return (x,z)=>T*Math.tanh((x*ux+z*uz)/bio.tilt.over);})():()=>0;
+ const base=(x,z)=>tiltAt(x,z)+Math.max(coastal?1.8:-100,(coastal?3.5:bio.baseHeight??12)+severity*baseRoll*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
  // Hazards follow their local ground elevation instead of draining every lake
  // down to a single sea level. Depth is the selected maximum basin depth.
  for(const h of holes){h.ponds=h.ponds.filter(p=>{const q=h.toWorld(p);return nearby(q.x,q.z)===h&&Array.from({length:24},(_,i)=>{const edge=ovalRadius(p,i*Math.PI/12,1);const v=h.toWorld({x:p.x+edge.x,z:p.z+edge.z});return nearby(v.x,v.z)===h;}).every(Boolean)&&!holes.some(other=>other!==h&&['tee','green','fringe','fairway'].includes(localSurface(other,other.toLocal(q).x,other.toLocal(q).z)));});for(const p of h.ponds){const q=h.toWorld(p);p.level=base(q.x,q.z)-.45;}}
@@ -1542,26 +1557,141 @@ export function* generateWorldSteps(settings={},options={}){
  const rollingAt=(x,z)=>.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71);
  const hillsAt=(x,z)=>relief*(bio.hills.base+severity*bio.hills.severity)*rollingAt(x,z);
  const countryAt=(x,z)=>base(x,z)+hillsAt(x,z)+(landform.sinks?0:liftScale*landform.lift(x,z));
+ // A recipe may keep part of its lift out of the long shape (`longLift`, Desert Mountain's ranges):
+ // a hole crossing a range then keeps the valley floor -- a draw -- instead of climbing onto it,
+ // which hid a landing area 13 m deep (round 5).
+ const longAt=landform.longLift&&!landform.sinks?(x,z)=>base(x,z)+hillsAt(x,z)+liftScale*landform.longLift(x,z):countryAt;
  const fieldBox=[-halfX-COUNTRY_MARGIN,-halfZ-COUNTRY_MARGIN,halfX+COUNTRY_MARGIN,halfZ+COUNTRY_MARGIN];
- const longShape=s.range||coastal?null:softField(...fieldBox,24,countryAt,COUNTRY_SOFT);
+ const longShape=s.range||coastal?null:softField(...fieldBox,24,longAt,COUNTRY_SOFT);
  const longMean=longShape?fieldMean(...fieldBox,60,longShape):0,longSpread=longShape?Math.sqrt(fieldMean(...fieldBox,60,(x,z)=>(longShape(x,z)-longMean)**2)):0;
  const longKeep=Math.min(1,severity*COUNTRY_KEEP,severity*COUNTRY_SPREAD/(longSpread||1));
  const floorAt=longShape?(x,z)=>longMean+longKeep*(longShape(x,z)-longMean):base;
  const clearOf=s.range||coastal?(x,z)=>nearest(x,z).d:softField(...fieldBox,12,(x,z)=>nearest(x,z).d,CLEAR_SOFT);
+ // TEES UP ON THE ROCK (`rockTees`, Desert Mountain; the owner, 7 November
+ // 2026: "is there any way we can have some of our tee shots hit off of these
+ // mountain structures? Maybe like 1.5 holes per 18"). On that share of holes
+ // a long rock outcrop -- the landform's own football shape, its long axis down
+ // the hole -- rises under the back tee, and the middle tee too where the room
+ // allows, rocky all over and flat only where each pad is cut (round 3, the
+ // owner: "Instead of flattening the entire top. Let's just try flattening only
+ // the tee box ... Make sure we don't introduce blind shots"), wholly on
+ // its own hole's ground, and gone 10 m short of the fairway, so the drive is played down off it. Added after
+ // the corridor fade (`land`), since the fade would flatten it like any other
+ // landform. Its own draws (':rock-tees'), so no other hole moves. Every
+ // number PLACED: height 10 to 16 m, 26 m half-width, its body full to 0.6 of
+ // it, the tees within 0.55; 9 m clear round each pad, and in front of each, a
+ // lane 8 m either side (widening 15% of the way out) where no rock stands above
+ // the body, so nothing on the outcrop blocks the drive.
+ const perches=[];
+ if(bio.rockTees&&!s.range){
+  const pr=random(s.seed+':rock-tees'),want=Math.floor(holes.length*bio.rockTees+pr()),order=holes.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(pr()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  for(const i of order){
+   if(perches.length>=want)break;
+   const h=holes[i],t=Object.values(h.tees),mow=h.mowStart??h.fairwayStart;
+   if(!t.length||mow==null)continue;
+   // The tees on it sit on the flat top (d under .55); its foot stops 10 m short of
+   // the mown fairway, and every part of it is this hole's own ground. The middle tee too
+   // where that fits, else the back tee alone, else no outcrop on this hole.
+   const zs=t.map(q=>q.z).sort((a,b)=>a-b),back=zs[0],r=26;
+   // Never shorter than 46 m end to end each way (a short one stood round, a crater): the
+   // extra length goes behind the tees, so its foot stays where it was.
+   const fit=front=>{const z0=back-14,L=Math.max(46,(front-z0)/2/.4),zc=Math.min((z0+front)/2,mow-10-L);
+    return Math.abs(back-zc)/L<=.4&&Math.abs(front-8-zc)/L<=.4?{zc,L,front}:null;};
+   const f=(zs.length>1&&fit(zs[1]+8))||fit(back+8);
+   if(!f)continue;
+   const {zc,L,front}=f;
+   const a=h.toWorld({x:h.center(zc),z:zc}),b=h.toWorld({x:h.center(zc+10),z:zc+10}),len=Math.hypot(b.x-a.x,b.z-a.z)||1;
+   const p={h,cx:a.x,cz:a.z,ux:(b.x-a.x)/len,uz:(b.z-a.z)/len,L,r,top:front,height:10+6*pr(),
+    pads:t.filter(q=>q.z<=front-8+1e-6).map(q=>h.toWorld(q))};
+   let own=true;
+   for(let u=-1;u<=1&&own;u+=.1)for(let v=-1;v<=1&&own;v+=.1){if(u*u+v*v>1)continue;const x=p.cx+u*L*p.ux-v*r*p.uz,z=p.cz+u*L*p.uz+v*r*p.ux;if(nearby(x,z)!==h)own=false;}
+   if(own)perches.push(p);
+  }
+ }
+ // Where (x, z) sits on a perch: its normalised distance d (0 on the crest line's middle, 1 at
+ // the foot), the perch, and the lift there -- its body full inside d .6, falling to nothing at 1,
+ // and the landform's boulders over all of it at 0.6 of their size, fading out at the foot.
+ const perchAt=(x,z)=>{let best=null,bd=1;for(const p of perches){const dx=x-p.cx,dz=z-p.cz,u=Math.abs(dx*p.ux+dz*p.uz)/p.L,v=(dz*p.ux-dx*p.uz)/p.r,d=Math.sqrt(Math.pow(u,1.4)+v*v);if(d<bd){bd=d;best=p;}}
+  if(!best)return null;const t=Math.min(1,Math.max(0,(1-bd)/.4));
+  // (Round 2 kept the top flat and the boulders on the flanks, never above the top: at full size
+  // there they stood round the rim and read as a crater.)
+  let rock=landform.rocky?.6*landform.rocky(x,z)*Math.min(1,Math.max(0,(1-bd)/.2)):0;
+  // The lane in front of each pad falls away from it at 0.25 (about 14 degrees), steeper than
+  // any line from the eye to the fairway, so neither the outcrop's top nor the tee cut in front
+  // blocks the drive (a test caught the flat top doing so, round 3; at 0.15 a middle tee 20 m
+  // ahead still stood half a metre into the back tee's line).
+  let cap=Infinity;
+  for(const q of best.pads){const ax=x-q.x,az=z-q.z,c=Math.min(1,Math.max(0,(Math.hypot(ax,az)-9)/5)),al=ax*best.ux+az*best.uz,ac=Math.abs(az*best.ux-ax*best.uz);
+   rock*=c*c*(3-2*c);if(al>-4&&ac<8+Math.max(al,0)*.15){rock=Math.min(rock,0);cap=Math.min(cap,best.height+.3-Math.max(al,0)*.25);}}
+  return {d:bd,p:best,lift:Math.max(0,Math.min(cap,best.height*t*t*(3-2*t)+rock))};};
+ // How far an outcrop opens the wild ground's gates: all of it, to just past its foot (round 2
+ // opened its flanks only, from d .5), as ground.js reads it from the same numbers (`perchUniforms`).
+ const perchOpen=(x,z)=>{let o=0;for(const p of perches){const dx=x-p.cx,dz=z-p.cz,u=Math.abs(dx*p.ux+dz*p.uz)/p.L,v=(dz*p.ux-dx*p.uz)/p.r,d=Math.sqrt(Math.pow(u,1.4)+v*v),b=Math.min(1,Math.max(0,(d-.9)/.15));o=Math.max(o,1-b*b*(3-2*b));}return o;};
+ for(const p of perches)p.h.rockTee=true;
+ if(perches.length){
+  // Rock on it wherever it stands steep, and no trees on it at all.
+  const raw0=landform.raw,keep0=landform.treeKeep;
+  landform={...landform,
+   raw:(x,z,y,slope=0)=>{const r=raw0(x,z,y,slope),q=perchAt(x,z);if(q)r[0]=Math.max(r[0],Math.min(1,(slope-.15)/.2));return r;},
+   treeKeep:(x,z)=>{const q=perchAt(x,z);return q?0:keep0(x,z);}};
+ }
+ // A cliff coast's face is rock wherever it stands steep (the sandstone the owner's photographs show).
+ if(bio.cliffCoast){const raw3=landform.raw;landform={...landform,needsSlope:true,raw:(x,z,y,slope=0)=>{const r=raw3(x,z,y,slope);if(Math.abs(x-coastAt(z))<60)r[0]=Math.max(r[0],Math.min(1,(slope-.35)/.3));return r;}};}
+ // (Round 6's first try raised rock in every space the holes left, `wrapMountains`, and boxed the
+ // whole course in; the owner: "The holes need to move to wrap around the mountains that are
+ // generated". The holes are routed round the ranges instead: routing.js.)
+ // (Round 4 of Desert Mountain laid ridges along both sides of every hole here, `hugRidges`; the
+ // owner turned them down the same day as "placed after the holes". The landform's ranges, with the
+ // holes in the draws between them, replaced them: landforms.js `knobs`, `range`.)
  function land(x,z,n){
   if(coastal){n??=nearest(x,z);const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
   const near=smooth((clearOf(x,z)-CLEAR_EDGE)/(landform.reach??bio.hills.reach));
   const fade=roadLines?Math.min(near,roadValley(x,z)):near,floor=floorAt(x,z);
   let y=floor+(countryAt(x,z)-floor)*fade;
+  // NO BENCH ROUND THE HOLES (`wideFade`, Desert Mountain; the owner: "I can still see 'platforms'
+  // outlining every hole"). A hole lies on the softened long shape; the country rejoined it over
+  // `reach`, so wherever the two differ a few metres the join stood as a bench tracing the hole.
+  // With `longLift` the ranges keep `reach`, and the rest of the country rejoins over
+  // `wideFade` metres instead. Only a recipe that asks; every other landscape is unchanged.
+  if(landform.longLift&&bio.wideFade&&!landform.sinks){
+   const wide=smooth((clearOf(x,z)-CLEAR_EDGE)/bio.wideFade),fw=roadLines?Math.min(wide,roadValley(x,z)):wide;
+   const ranges=liftScale*(landform.lift(x,z)-landform.longLift(x,z)),rest=countryAt(x,z)-ranges;
+   // (A shorter approach for the ranges alone, `rangeFade` [5, 11], was tried in round 6 and taken
+   // out: with it the finished ground stood a range across a fairway -- seed FAIRWAY's hole 2, 45 m up
+   // across 50 m -- where `land` itself read flat. Not understood; written down in RESEARCH.)
+   y=floor+(rest-floor)*fw+ranges*fade;
+  }
   if(landform.sinks)y+=liftScale*landform.lift(x,z,fade);
   // A recipe that sets ground to a height, not by a height (the Lowcountry's
   // marsh at the tide line and its creeks below it), does so last, faded in
   // from play as the lift is.
   if(landform.level)y=landform.level(x,z,y,fade);
+  if(perches.length){const q=perchAt(x,z);if(q)y+=q.lift;}
   // A coast that seeks play never ramps down within 5 m of a corridor's
   // envelope, and is sea from 25 m
   // (`nearest().d`, the real corridor, doglegs and all): the sea comes in
   // close and the holes' own ground stays a cliff above it.
+  // SANDSTONE CLIFFS (`cliffCoast`, the California Coast; the owner, 8 November 2026: "actual craggy
+  // cliffs on the ocean side that are part of the landscape ... like a sandstone cliff, with vertical
+  // lines that trail into the water"; Torrey Pines' and Pebble Beach's in the owner's photographs).
+  // The land drops to the sea over `width` metres at the coast line, its foot wandering in coves
+  // and headlands (`cove` metres over 140 m) and fluted every few metres (`flute` metres of
+  // vertical grooves); below it, rock ribs run out from the foot (`ribs` metres high, dying away
+  // over 40 m), some breaking the surface. No inlets between holes: the sea is kept east of the line
+  // alone (Monterey's ramp let it in wherever the ground stood 25 m from a hole -- the "pits").
+  // PLACED, every number.
+  // Round 2 (the owner: "very straight lines on the actual cliff part. And really sharp angles"):
+  // the coast line is the holes' line in straight 10 m pieces, so it is averaged over 160 m first;
+  // coves at two scales; the grooves soft (plain noise, not ridged).
+  if(bio.edgeCoast&&bio.cliffCoast){const o=bio.cliffCoast;let base0=0;for(let k=-4;k<=4;k++)base0+=coastAt(z+k*20);base0/=9;
+   const line=base0+o.cove*(fbm(z/150,3.3,cliffSalt,3)-.5)*2+o.cove*.4*(fbm(z/55,5.9,cliffSalt+3,2)-.5)*2+o.flute*(fbm(z/13,7.1,cliffSalt+1,2)-.5)*2,u=(x-line)/o.width;
+   if(u>-1){const c=Math.min(1,Math.max(0,(u+1)/2)),k=c*c*(3-2*c),out=Math.max(0,x-line-o.width);
+    const rib=o.ribs*Math.pow(fbm(z/22,x/50,cliffSalt+2,2),2.5)*Math.exp(-out/40);
+    // Deep water at a cliff's foot (the sea's own depth setting is a beach's, a few metres, and
+    // read as a pale sand flat against the rock).
+    y=y*(1-k)+(-Math.max(9,s.waterMax*2)+rib)*k;}
+   return y;}
   if(bio.edgeCoast){n??=nearest(x,z);const coast=smooth((x-(coastAt(z)+Math.sin(z/150)*30*(bio.coastSeek?.3:1)))/90)*(bio.coastSeek?smooth((n.d-5)/20):1);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
   return y;
  }
@@ -1790,6 +1920,7 @@ export function* generateWorldSteps(settings={},options={}){
    // pad ahead of it, and never so far across that it leaves the hole.
    const home={x:pad.t.x,z:pad.localZ};
    const backLimit=home.z-TEE_SLIDE;
+   const homeW=h.rockTee?h.toWorld(home):null,homeQ=homeW?perchAt(homeW.x,homeW.z):null,onPerch=!!homeQ&&homeQ.d<.55;
    const frontLimit=Math.min(home.z+TEE_SLIDE,(h.mowStart??h.fairwayStart)-pad.rz-10,aheadZ-pad.rz-14);
  // GROUND AS IT WILL BE ONCE THE TEES ALREADY BUILT ON THIS HOLE ARE THERE.
    //
@@ -1818,6 +1949,9 @@ export function* generateWorldSteps(settings={},options={}){
     const side=siteRng()<.5?-1:1,corridor=fairwayWidth(h,cz,0,side);
     const reach=corridor+s.semiRough+34;
     const cx=attempt===0?home.x:h.center(cz)+side*(corridor*.15+siteRng()*(reach-corridor*.15));
+    // A tee on a rock outcrop stays on the flat cut for it, its home (`rockTees`). After the
+    // draws, so a course without one takes the same numbers as before.
+    if(onPerch&&attempt>0)continue;
     // Nothing a tee may not stand on. Sampled round the collar, because a pad
     // half on a green is as wrong as a pad wholly on one.
     // Round the collar's outline. A box has corners, and a corner on a green
@@ -2384,7 +2518,7 @@ export function* generateWorldSteps(settings={},options={}){
   // ground.js asks in the same order.
   if(found==='rough'&&(wild||fallenField)&&!(st&&st.edge<Math.min(WILD_WATER,st.bank))
    &&!n.h.ponds.some(p=>ovalDistance(n.p.x,n.p.z,p)<WILD_WATER)){
-   const g=wildGround(wild,landform,x,z,n.d);
+   const g=wildGround(wild,landform,x,z,n.d,perches.length?perchOpen(x,z):0);
    if(g)return g;
    if(fallenField&&fallenAt(fallenField,x,z))return bio.fallen.kind;
   }
@@ -2921,7 +3055,7 @@ export function* generateWorldSteps(settings={},options={}){
  const life=!s.range?placeLife({holes,s,surface,nearest,halfX,halfZ,paths,trees}):[];
  // Rip-rap, tie walls and fountains (waterworks.js; phase 5).
  const waterworks=!s.range?placeWaterworks({holes,s,surface}):[];
- const world={coastAt,coastMin,coastMax,teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,streetProps:streetFurniture({lot:roadLot,roads,club:buildings.find(b=>b.kind==='clubhouse')}),waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={perches:perches.map(({cx,cz,ux,uz,L,r})=>({cx,cz,ux,uz,L,r})),coastAt,coastMin,coastMax,teeSites,lakeOwner,largeLakes,homes,buildings,life,walls,wallBoxes:wallBoxes(walls,height),storyProps,roads,lot:roadLot,boundary,streetProps:streetFurniture({lot:roadLot,roads,club:buildings.find(b=>b.kind==='clubhouse')}),waterworks,rocks,paths,bridges,markers,wear,streams,footprint,groundGrid,groundCover,straw,blowouts,wild,fallenField,surfaceField:sandField,landform,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

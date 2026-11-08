@@ -21,6 +21,13 @@ const LAND = {
  rockies: ['Summit', 'Scree', 'Snowmelt', 'High Meadow', 'Larch', 'Lookout', 'Tarn', 'Marmot', 'Cirque'],
  links: ['Dunes', 'Gorse', 'Whins', 'Marram', 'Seaside', 'Skylark', 'Sandhills', 'Tide', 'Lang Whang'],
  heartland: ['Prairie', 'Bur Oak', 'Big Sky', 'Bluestem', 'Meadowlark', 'Windbreak', 'Cornerpost', 'Thunder', 'Homestead'],
+ hiresort: ['Cook Pine Row', 'Honolua', 'Monkeypod', 'Ironwood Belt', 'Trade Breeze', 'Pineapple Hill', 'Whale Watch', 'Molokai View', 'Plantation'],
+ dmountain: ['Pinnacle', 'Saguaro', 'Boulder Pass', 'Palo Verde', 'Javelina', 'Dry Wash', 'Monsoon', 'Cactus Wren', 'Granite Knob'],
+ dresort: ['Afghan Row', 'Willow Pond', 'Olive Court', 'Date Grove', 'Fan Palms', 'Mirage', 'Shadow Pines', 'Sundown Lake', 'The Oasis'],
+ pacnw: ['Cedar Hollow', 'Fir Lane', 'Hemlock', 'Big Leaf', 'Alder Creek', 'Salal', 'Old Growth', 'Rain Shadow', 'Timberline'],
+ calcoast: ['Lone Cypress', 'Headland', 'Kelp Bed', 'Kelp Point', 'Seal Rock', 'Ice Plant', 'Point Lobos', 'Cormorant', 'Carmel Bay'],
+ seaside: ['Gorse', 'Marram', 'Whin', 'Sea Thrift', 'Lighthouse', 'Shore Pine', 'Driftline', 'Gull Point', 'Breakers'],
+ flpalms: ['Coconut Row', 'Sea Grape', 'Dune Ridge', 'Coquina', 'Royal Palm', 'Live Oak', 'Pelican', 'Intracoastal', 'Gulfstream'],
  keys: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],
  newengland: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
@@ -72,7 +79,7 @@ function candidates(h, i, n, biome) {
  if (n === 18 && i === 8) out.push('Halfway', 'The Turn');
  if (i === 0) out.push(['First', 'Starter', 'Opening', 'Off We Go'][Math.floor((h.length || 0) * 7) % 4]);
  if (h.ponds?.length) {
-  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'keys' ? ['Lagoon', 'Salt Pond'] : biome === 'rockies' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
+  const water = biome === 'seaside' ? ['Burn', 'Lochan'] : biome === 'keys' ? ['Lagoon', 'Salt Pond'] : biome === 'rockies' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
   out.push(...water);
  }
  const bend = Math.abs(h.doglegAngle || 0);

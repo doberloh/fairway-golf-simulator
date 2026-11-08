@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of thirty-three landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six, Southern Pines three and Lowcountry and Gulf three, their keys kept in `OLD_KEYS`), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
+landscape holding 9 or 18 holes, in one of twenty-eight landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six, Southern Pines three, Lowcountry and Gulf three, Florida Palms two, Hawaiian Resort one, Desert Resort two, Pacific Northwest (`pacnw`) Puget Sound, California Coast (`calcoast`) three and Seaside Links (`seaside`) three, their keys kept in `OLD_KEYS`; Desert Mountain, `dmountain`, stands beside the landscapes it will replace; the Redwood Coast keeps its key with new trees), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -246,6 +246,9 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - `nearest().d` is signed and is not the mown edge; use ramps, not steps. [IS SIGNED]
 - Outline harmonics are scaled at generation, never in the shader; keep the amplitude caps. [OUTLINE HARMONICS], [AMPLITUDE CAP]
 - Tees are re-sited after the land exists; face them after siting, and check blindness on terrain that includes the pads. [Tees are sited, not placed]
+- A rock tee's outcrop is laid after the corridor fade, keeps a falling lane in front of each pad so no drive is blind, and opens the wild ground's gates; course.js `perchOpen` and ground.js `perchOpen` are the same numbers. [Tees up on the rock]
+- Desert Mountain's holes are routed round its ranges (routing.js reads `rangeShareOf`), which stand on the big mountain's side only; the landform moves with the course's `shift`. [Holes routed round the ranges]
+- The California Coast's cliff line is averaged over 160 m and its sea kept deep. [Sandstone cliffs]
 - Never assume a canopy height; ask `canopyTop` (redwoods reach 186 m). [NEVER ASSUME A CANOPY HEIGHT]
 - A painted model (the cartoon packs) carries `color` and `flex`: its crown never receives the shadow map and is never thinned into a twin. [A PAINTED CROWN]
 - An InstancedMesh that moves must set `userData.noCull`, or the instance cull puts it back where it was built. [ANYTHING INSTANCED THAT MOVES]

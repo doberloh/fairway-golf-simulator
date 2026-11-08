@@ -8,6 +8,13 @@ import {GROUND_PLANTS, TREE_SIZE, tallHeight} from '../src/species.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 import {standIn} from '../src/builder/tree-shape.js';
 import {biomeOf} from '../src/biomes.js';
+
+// Desert Palms, which these tests were written on, left for Desert Resort on 7 November 2026.
+// Its planting is kept here, on Desert Resort's record, so the species machinery is still
+// tested on a palm desert with the numbers it was written for.
+const desertPalms = {...biomeOf('dresort'),
+ plants: [['fanpalm', .2], ['datepalm', .12], ['oleander', .12], ['bougainvillea', .06], ['creosote', .2], ['brittlebush', .08], ['desertwillow', .06], ['tamarisk', .06], ['smoketree', .05], ['aleppopine', .03], ['agave', .02]],
+ stands: {...biomeOf('dresort').stands, plants: [['fanpalm', .4], ['datepalm', .3], ['tamarisk', .3]]}};
 import {greenDistance, generateWorld, DEFAULT_COURSE} from '../src/course.js';
 import {GROUND_CODE} from '../src/ground.js';
 import {BUILT_GROUND_CODE} from '../src/built-world.js';
@@ -79,9 +86,9 @@ test('trees keep their sizes; the landscape picks what draws them', () => {
  const [t, s] = world.trees;
  assert.equal(t.h, 18); assert.equal(t.radius, .5); assert.ok(biomeOf('parkland').plants.some(([k]) => k === t.kind), t.kind);
  assert.equal(s.kind, 'shrub');
- assert.equal(speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'pine' || speciesFor(biomeOf('puget'), 'conifer', 20, 1, 2) === 'cedar', true);
- assert.ok(['palm', 'hala'].includes(speciesFor(biomeOf('keys'), 'palm', 9, 3, 4)));
- assert.ok(speciesFor(biomeOf('links'), 'tree', 12, 0, 0), 'a landscape with no trees still draws one');
+ assert.equal(['nwfir', 'nwcedar', 'nwhemlock'].includes(speciesFor(biomeOf('pacnw'), 'conifer', 20, 1, 2)), true);
+ assert.ok(['flcoconut', 'flroyal', 'lowsabal'].includes(speciesFor(biomeOf('flpalms'), 'palm', 9, 3, 4)), 'Florida Palms (the Keys until 7 November 2026) draws a palm as one of its own');
+ assert.ok(speciesFor(biomeOf('seaside'), 'tree', 12, 0, 0), 'a landscape with no trees still draws one');
 });
 
 test('any landscape: the same file in Desert keeps every lie', () => {
@@ -129,13 +136,13 @@ test('where two ground types meet, a point is the one with the most weight round
 // The owner, 5 November 2026, of TPC Summerlin on Desert Palms: "There isn't a
 // single palm tree in here." A survey's roles are only conifer and broadleaf.
 test('a surveyed tree can draw as a palm, in the landscape\'s shares', () => {
- const bio = biomeOf('palms'), count = {}, n = 20000;
+ const bio = desertPalms, count = {}, n = 20000;
  for (let i = 0; i < n; i++) { const k = speciesFor(bio, 'broadleaf', 7, i * .5 - 2000, i * .25 + 300); count[k] = (count[k] ?? 0) + 1; }
  assert.ok(Object.keys(count).every(k => !GROUND_PLANTS.has(k)), 'a tree is never a shrub');
  const palms = (count.fanpalm ?? 0) + (count.datepalm ?? 0);
  assert.ok(Math.abs(palms / n - .32 / .52) < .05, `palms are their share of the trees, ${palms} of ${n}`);
  assert.ok(count.tamarisk > 0 && count.desertwillow > 0 && count.smoketree > 0, 'the rest of the landscape still shows');
- let firs = 0; for (let i = 0; i < 2000; i++) firs += CONIFERS.has(speciesFor(biomeOf('puget'), 'broadleaf', 20, i * .5, i * .75));
+ let firs = 0; for (let i = 0; i < 2000; i++) firs += CONIFERS.has(speciesFor(biomeOf('pacnw'), 'broadleaf', 20, i * .5, i * .75));
  assert.ok(firs > 800, 'a wide reading is no broadleaf: a survey of a fir forest reads mostly wide');
  let narrow = 0; for (let i = 0; i < 2000; i++) narrow += PALMS.has(speciesFor(bio, 'conifer', 12, i * .5, -i * .25));
  assert.ok(narrow > 1500, 'a narrow surveyed tree in the palm desert is mostly a palm');
@@ -145,7 +152,7 @@ test('a surveyed tree can draw as a palm, in the landscape\'s shares', () => {
 // The owner, 5 November 2026: "does height make more sense". A survey measures
 // height and nothing else about the species.
 test('a surveyed tree draws as a species of its height', () => {
- const bio = biomeOf('palms'), seen = h => { const set = new Set(); for (let i = 0; i < 4000; i++) set.add(speciesFor(bio, 'broadleaf', h, i * .5 - 900, i * .75 + 40)); return set; };
+ const bio = desertPalms, seen = h => { const set = new Set(); for (let i = 0; i < 4000; i++) set.add(speciesFor(bio, 'broadleaf', h, i * .5 - 900, i * .75 + 40)); return set; };
  const giant = seen(20);
  assert.ok(!giant.has('smoketree') && !giant.has('tamarisk') && !giant.has('desertwillow'), 'no bush the size of a house');
  assert.ok(giant.has('fanpalm') && giant.has('datepalm'), 'the tall trees are the tall species');
@@ -166,8 +173,8 @@ test('the height a surveyed tree is matched against is the one the generator pla
   }
   assert.ok(speciesFor(bio, 'tree', 12, 1, 2), key);
  }
- const {trees} = generateWorld({...DEFAULT_COURSE, biome: 'palms', holes: 9, seed: 'SURVEY'});
- const bio = biomeOf('palms'), grown = trees.filter(t => TREE_SIZE[t.kind]);
+ const {trees} = generateWorld({...DEFAULT_COURSE, biome: 'dresort', holes: 9, seed: 'SURVEY'});
+ const bio = biomeOf('dresort'), grown = trees.filter(t => TREE_SIZE[t.kind]);
  assert.ok(grown.length > 50, `a generated course plants its trees, ${grown.length}`);
  // A stand grows its trees a fifth taller (course.js `stands.grow`), which the
  // quarter's give allows for; and the generator plants saplings, so no low end.
@@ -175,7 +182,7 @@ test('the height a surveyed tree is matched against is the one the generator pla
 });
 
 test('a survey\'s narrow reading does not steer the species; a named tree\'s role does', () => {
- const bio = biomeOf('palms');
+ const bio = desertPalms;
  let palms = 0, oldReading = 0;
  for (let i = 0; i < 2000; i++) {
   palms += PALMS.has(drawnSpecies(bio, undefined, false, 'conifer', 7, i * .5, -i * .25));
@@ -187,11 +194,11 @@ test('a survey\'s narrow reading does not steer the species; a named tree\'s rol
 });
 
 test('the 3D editor draws the species the game draws', () => {
- const bio = biomeOf('palms');
+ const bio = desertPalms;
  assert.equal(standIn(bio, 'fanpalm'), 'palm');
  assert.equal(standIn(bio, 'aleppopine'), 'pine');
  assert.equal(standIn(bio, 'tamarisk'), 'cactus');
- assert.equal(standIn(biomeOf('puget'), 'alder'), 'oak');
+ assert.equal(standIn(biomeOf('pacnw'), 'alder'), 'oak');
  assert.equal(drawnSpecies(bio, 'tamarisk', false, 'broadleaf', 9, 1, 2), 'tamarisk', 'a tree picked by name stays');
  assert.notEqual(drawnSpecies(bio, 'redwood', false, 'conifer', 9, 1, 2), 'redwood', 'a species this landscape does not grow does not');
  assert.equal(drawnSpecies(bio, 'redwood', true, 'conifer', 9, 1, 2), 'redwood', 'the landscape it was grown in keeps it');

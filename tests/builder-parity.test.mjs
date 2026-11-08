@@ -23,13 +23,13 @@ const holes = () => Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, i
 function doc(rise = () => 100) {
  const nx = 201, heights = new Float32Array(nx * nx);
  for (let j = 0; j < nx; j++) for (let i = 0; i < nx; i++) heights[j * nx + i] = rise(-100 + i, -100 + j);
- return validateDoc({type: 'built', name: 'Both', landscape: 'winecountry', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz: nx, heights}, patches: [],
+ return validateDoc({type: 'built', name: 'Both', landscape: 'calcoast', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz: nx, heights}, patches: [],
   surfaces: {green: [box(-10, 70, 10, 90)], fairway: [box(-12, -60, 12, 60)], sand: [box(20, 0, 26, 6)]}, water: [], holes: holes(), trees: new Float32Array(0), treeKinds: []});
 }
 const land2d = (rise = () => 100) => { const nx = 201, ground = new Float32Array(nx * nx); for (let j = 0; j < nx; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = rise(-100 + i, -100 + j); return {nx, nz: nx, cell: 1, halfX: 100, halfZ: 100, ground}; };
 const trace = (land = land2d()) => { const m = createTrace(land); m.fill(box(-12, -60, 12, 60), 'fairway'); m.fill(box(-10, 70, 10, 90), 'green'); return m; };
-const make = (land, m, extra = {}) => validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: holes().map(({number, tees, green}) => ({number, tees, green})), trees: m.state.trees, homes: m.state.homes, rocks: m.state.rocks, bunkers: m.state.bunkers, creekLines: m.state.creekLines, name: 'Two', landscape: 'winecountry', ...extra}));
-const bio = BIOMES.winecountry, trees = treeCover(bio);
+const make = (land, m, extra = {}) => validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: holes().map(({number, tees, green}) => ({number, tees, green})), trees: m.state.trees, homes: m.state.homes, rocks: m.state.rocks, bunkers: m.state.bunkers, creekLines: m.state.creekLines, name: 'Two', landscape: 'calcoast', ...extra}));
+const bio = BIOMES.calcoast, trees = treeCover(bio);
 
 test('the tree brush scatters across its width at many sizes, never in a line', () => {
  const e = createEditor(doc()), rng = seeded(5);
@@ -69,17 +69,17 @@ test('a tree painted in 2D keeps its species and size in the course', () => {
 test('Place tree: every landscape\'s trees by name, and the one picked is the one that grows', async () => {
  for (const k of BIOME_KEYS) {
   const choices = treeChoices(BIOMES[k]);
-  if (!choices.length) { assert.equal(k, 'links', 'only a treeless links has none to pick'); continue; }
+  if (!choices.length) { assert.equal(k, 'seaside', 'only a treeless links has none to pick'); continue; }
   for (const [species, name] of choices) { assert.ok(TREE_NAMES[species], `${k}: ${species} has no name`); assert.equal(name, TREE_NAMES[species]); assert.ok(familyModels(FAMILY_OF[species] ?? species).length, `${k}: ${species} has no model`); }
   assert.equal(new Set(choices.map(c => c[1])).size, choices.length, `${k}: a name twice`);
   const [species] = choices[0], s = previewOf({kind: 'tree', species, height: 20}, BIOMES[k]);
   assert.equal(s.pieces.length, 1); assert.equal(s.pieces[0].size, 20); assert.equal(s.title, TREE_NAMES[species]);
  }
  const e = createEditor(doc());
- e.placeTree({x: 50, z: 50, h: 18, species: 'blueoak'}); e.placeTree({x: 60, z: 60, h: 18}); e.placeTree({x: 70, z: 70, h: 12, species: 'blueoak'});
+ e.placeTree({x: 50, z: 50, h: 18, species: 'ccliveoak'}); e.placeTree({x: 60, z: 60, h: 18}); e.placeTree({x: 70, z: 70, h: 12, species: 'ccliveoak'});
  assert.equal(e.state.treeKinds.length, 1); assert.equal(e.state.trees[1][6], -1, 'unpicked, the landscape chooses');
  const w = worldFromDoc(e.toDoc());
- assert.equal(w.trees[0].kind, 'blueoak'); assert.equal(w.trees[2].kind, 'blueoak'); assert.equal(w.trees[0].h, 18);
+ assert.equal(w.trees[0].kind, 'ccliveoak'); assert.equal(w.trees[2].kind, 'ccliveoak'); assert.equal(w.trees[0].h, 18);
  e.undo(); assert.equal(e.state.trees.length, 2);
  const land = land2d(), m = trace(land);
  m.addTree({x: 50, z: 50, h: 18, species: 'valleyoak'}); m.addTree({x: 60, z: 60, h: 14, crown: 4});

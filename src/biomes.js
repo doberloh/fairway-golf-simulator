@@ -714,16 +714,8 @@ INTERFACE.california = {panel: 'rgba(36,30,14,.88)', a1: '#fef08a', a2: '#ca8a04
 WORLD.california = {...WORLD.midwest, clubhouse: 'adobe', path: 'asphalt', bridge: 'wood',
  story: {walls: null, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#efe6d4', bark: '#6a5040', accent: '#b4553a', dirt: '#3a2c24', leaf: '#3a2c24'}}};
-// The Florida region is the Keys' (islands, sea); the Flatwoods are inland:
-// these of its fields come from the Heartland's record instead (defaults
-// included: a field the Heartland leaves to DEFAULTS was copied undefined
-// and crashed the generator, phase 5).
-const INLAND = Object.fromEntries(['bank', 'coastal', 'sea', 'inlandWater', 'ringLift', 'ringFace', 'ringIslands', 'hop', 'shoreSand', 'mapWater',
- 'litter', 'fallen', 'landform', 'farForest', 'longGrass', 'light', 'rockMoss'].map(k => [k, ({...DEFAULTS, ...PALETTES.midwest, ...TRAITS.midwest})[k]]));
-
 const LAND = {
- puget: {}, sonoran: {}, rockies: {}, links: {}, keys: {}, redwood: {},
- lakedunes: {},
+ sonoran: {}, rockies: {}, redwood: {},
  // Phase 3, on existing models (see above).
  // High Plains: wheat country -- a grain elevator for the landmark (phase 8).
  // The High Plains: the Llano Estacado is nearly treeless -- shortgrass to
@@ -837,14 +829,96 @@ const LAND = {
    plants: [['lowliveoak', .5], ['southloblolly', .3], ['lowsabal', .12], ['lowcypress', .08]]},
   plants: [['lowliveoak', .28], ['southloblolly', .16], ['lowsabal', .12], ['lowcypress', .08], ['spartina', .16], ['muhlygrass', .08], ['sawpalmetto', .06], ['waxmyrtle', .06]],
   ui: {panel: 'rgba(20,34,26,.88)', a1: '#d1fae5', a2: '#0f7a5e', hot: '#fde68a', soft: '#bcd8c8', onHot: '#06201c'}},
- // Florida Flatwoods: slash pine over saw palmetto, cabbage palms, cypress
- // domes, sawgrass, lakes -- inland (INLAND above), in the Keys' region.
- flatwoods: {...INLAND, tropical: false, rough: '#8a8a50', sand: '#f2ead4', treeDensity: 2.2,
-  stands: {...TRAITS.south.stands, under: {spacing: 8, plants: [['sawpalmetto', .7], ['waxmyrtle', .3]]},
-   plants: [['slashpine', .55, 1.1], ['cabbagepalm', .2], ['liveoakmoss', .15], ['baldcypress', .1]]},
-  plants: [['slashpine', .25, 1.1], ['sawpalmetto', .25], ['cabbagepalm', .15], ['sawgrass', .15], ['liveoakmoss', .08], ['baldcypress', .03], ['muhlygrass', .04], ['citrustree', .05]],
-  ui: {panel: 'rgba(14,30,34,.88)', a1: '#bae6fd', a2: '#0369a1', hot: '#fde68a', soft: '#b4d0dc', onHot: '#061a24'},
-  world: {clubhouse: 'plantation', bridge: 'wood', story: {walls: null, ruins: ['cottage']}, life: {grazers: ['deer', 2], heron: true}}},
+// Hawaiian Resort: Kapalua's green slopes above the Pacific, Cook pines standing in lines
+ // and belts (the owner's photographs), ironwood windbreaks, monkeypods as specimens and
+ // coconut palms by the sea. No lava: the old Hawaii's black flows read as the Big Island,
+ // not a resort. Planted only from Meshy. Density and colours PLACED.
+ hiresort: {crownShare: .9, treeDensity: 1.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a',
+  title: 'Plantation Point', tag: 'Cook pines in lines, green slopes and the Pacific.',
+  stands: {...TRAITS.hawaii.stands, edge: 80, near: 55, patch: .25, spacing: 14, share: .5, under: {spacing: 12, plants: [['naupaka', .5], ['tiplant', .3], ['hibiscus', .2]]},
+   plants: [['hicookpine', .42], ['hiironwood', .3], ['himonkeypod', .14], ['flcoconut', .14]]},
+  plants: [['hicookpine', .24], ['flcoconut', .18], ['himonkeypod', .1], ['hiironwood', .12], ['naupaka', .12], ['tiplant', .08], ['hibiscus', .06], ['plumeria', .05], ['bougainvillea', .05]],
+  ui: {panel: 'rgba(10,36,30,.88)', a1: '#a7f3d0', a2: '#047857', hot: '#fcd34d', soft: '#b2d8c8', onHot: '#062018'}},
+ // Desert Mountain: Troon North and We-Ko-Pa, target golf -- green ribbons of turf winding
+ // through and round rocky granite hills in the high Sonoran desert, saguaros, palo verde and
+ // mesquite (the owner's Troon North photographs). Desert Target until the owner's note of
+ // 7 November 2026: mountainous, rocky and craggy, between the desert and the Rockies, with
+ // Desert Resort the flatter desert. Planted from Meshy; cholla, ocotillo, agave and the desert shrubs
+ // are still hand-built. Density PLACED.
+ dmountain: {treeDensity: 1.2, title: 'Granite Crags', tag: 'Holes winding through rocky granite hills and saguaros.',
+  stands: {...TRAITS.desert.stands, share: .55, spacing: 11, under: {spacing: 8, plants: [['creosote', .4], ['brittlebush', .25], ['agave', .15], ['jojoba', .2]]},
+   plants: [['dtmesquite', .3], ['dtpaloverde', .3], ['dtsaguaro', .25], ['cholla', .15]]},
+  plants: [['dtsaguaro', .2], ['dtpaloverde', .15], ['dtmesquite', .12], ['cholla', .1], ['ocotillo', .08], ['agave', .08], ['creosote', .12], ['brittlebush', .08], ['jojoba', .07]],
+  ui: {panel: 'rgba(40,24,14,.88)', a1: '#fed7aa', a2: '#c2410c', hot: '#fde68a', soft: '#e6c8a8', onHot: '#2a1606'}},
+ // Desert Resort, the US golf courses' own: Shadow Creek, TPC Summerlin and PGA West -- a
+ // watered parkland set down on the desert floor, tall dark Afghan and Aleppo pines along the
+ // holes (the owner's Shadow Creek photographs), willows by the ponds, olives, date and very tall
+ // thin fan palms (Palm Desert), velvet mesquite, past the edge the open desert. No cypress, the
+ // owner's rule (5 November). Planted from Meshy. Density and colours PLACED.
+ dresort: {rough: '#6a9448', semi: '#659546', fairway: '#629b50', sand: '#efe6d6', rock: '#a9a59c', sky: '#bcd4ea', water: '#3e7fa0',
+  altitude: 700, temperature: 33, rockStyle: 'angular', treeDensity: 2, crownShare: .9, arid: false, sandLand: false, dust: false, speckleRock: false,
+  title: 'Desert Oasis', tag: 'Tall pines, willows and palms on watered green.',
+  longGrass: {...TRAITS.desert.longGrass, count: 300},
+  stands: {...TRAITS.desert.stands, edge: 60, patch: .22, near: 40, spacing: 13, under: {spacing: 9, plants: [['creosote', .7], ['brittlebush', .3]]},
+   plants: [['creosote', .5], ['brittlebush', .14], ['dtmesquite', .16], ['drafghan', .1], ['africansumac', .1]]},
+  plants: [['drafghan', .22], ['draleppo', .16], ['drolive', .1], ['dtmesquite', .07], ['drfan', .08], ['drdate', .06], ['drwillow', .06], ['oleander', .06], ['africansumac', .05], ['pampasgrass', .03], ['creosote', .04], ['bougainvillea', .03], ['brittlebush', .04]],
+  ui: {panel: 'rgba(12,34,30,.88)', a1: '#99f6e4', a2: '#0d9488', hot: '#fde68a', soft: '#b8dcd2', onHot: '#05201c'},
+  world: {clubhouse: 'pavilion', path: 'asphalt', bridge: 'stone', fountain: true, life: {geese: 4},
+   colours: {clubhouse: {stone: '#ece0cc', bark: '#7d5a3c', accent: '#b4553a', dirt: '#3a2c26'}, riprap: '#a89c88', wall: '#d8ccb8', ruin: '#cfc2ac', bridgeStone: '#c8bca8'}}},
+ // Pacific Northwest: Sahalee and Pumpkin Ridge -- holes cut through tall dark Douglas fir, western
+ // red cedar and hemlock lining every hole, bigleaf maple and red alder at the edges, ferns and
+ // huckleberry under them (the owner's Sahalee photographs). Puget Sound's ground and air. Planted
+ // only from Meshy, the understorey hand-built. Density and colours PLACED.
+ pacnw: {crownShare: .9, treeDensity: 4.4, title: 'Cedar Hollow', tag: 'Holes cut through tall fir, cedar and hemlock.',
+  stands: {edge: 46, wobble: 20, ramp: 18, patch: .2, scale: 260, near: 34, spacing: 9, share: .7,
+   under: {spacing: 8, plants: [['fern', .55], ['huckleberry', .45]]},
+   plants: [['nwfir', .34], ['nwcedar', .24], ['nwhemlock', .22], ['nwmaple', .1], ['nwalder', .1]]},
+  // Needles under its own conifers (the trait's pine/spruce/cedar are not its trees; 8 November 2026).
+  fallen: {from: ['nwfir', 'nwcedar', 'nwhemlock'], kind: 'pinestraw'},
+  plants: [['nwfir', .3], ['nwcedar', .22], ['nwhemlock', .18], ['nwmaple', .1], ['nwalder', .1], ['fern', .06], ['huckleberry', .04]],
+  ui: {panel: 'rgba(14,32,28,.88)', a1: '#a9d6bc', a2: '#2e6a50', hot: '#f2d38a', soft: '#b6cfc0', onHot: '#0b1f18'}},
+ // California Coast: Pebble Beach, Riviera and Torrey Pines -- holes along the Pacific on the
+ // marine terraces, Monterey cypress and Monterey pine on the headlands as single specimens and
+ // small groups, Torrey pines and eucalyptus, coast live oaks inland, ice plant and coastal sage
+ // (the owner's photographs). Monterey's ground, sea and stacks. Planted from Meshy, the low
+ // plants hand-built. Density and colours PLACED.
+ calcoast: {sea: true, edgeCoast: true, coastSeek: true, shoreSand: false, hills: {base: 16, severity: 45, reach: 50}, treeDensity: 1.6,
+  // Sandstone cliffs at the sea, the coast line just outside the eastern holes (course.js `cliffCoast`).
+  cliffCoast: {offset: 46, width: 11, cove: 24, flute: 3.5, ribs: 0},
+  groundTints: {rock: '#c09a6a'},
+  rough: '#7a8a4e', sky: '#c8d6de', temperature: 18, rockStyle: 'angular', seaStacks: 6, crownShare: .9,
+  title: 'Cypress Bluff', tag: 'Cypress on the headlands above the Pacific.',
+  longGrass: {...TRAITS.california.longGrass, leaf: '#8a9056', accent: '#b8a870'},
+  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['coastalsage', .5], ['shrub', .5]]},
+   plants: [['ccmpine', .4], ['cccypress', .3], ['ccliveoak', .15], ['cceuc', .15]]},
+  fallen: {from: ['ccmpine', 'cctorrey', 'cccypress'], kind: 'pinestraw'},
+  plants: [['cccypress', .18], ['ccmpine', .14], ['cctorrey', .06], ['ccliveoak', .08], ['cceuc', .06], ['iceplant', .16], ['coastalsage', .14], ['chaparral', .06], ['californiapoppy', .04], ['shrub', .08]],
+  ui: {panel: 'rgba(12,28,36,.88)', a1: '#9fe6f5', a2: '#13708a', hot: '#fde9b4', soft: '#b6d2d8', onHot: '#05202a'}},
+ // Seaside Links: St Andrews, Bandon Dunes, Chambers Bay and Whistling Straits -- the links
+ // ground, fescue and marram, gorse and heather, upright shore pines in small clumps and the odd lone Douglas fir (Bandon), very light; trees at 0 in Course studio
+ // gives Scotland, as the owner ruled ("Scottish Links ... would look a lot like Bandon dunes
+ // without trees"). The links region's ground, grasses and coast. Density and colours PLACED.
+ seaside: {treeDensity: .6, title: 'Gorse Bluff', tag: 'Fescue, gorse and dunes above the sea.',
+  // The rough thick with fescue and marram (the owner: "rough coastlines that are thick with fescue
+  // and tall grasses"): more than twice the links' tall grass. PLACED.
+  longGrass: {...TRAITS.links.longGrass, count: 16000},
+  stands: {edge: 70, wobble: 30, ramp: 25, patch: .12, scale: 200, near: 40, spacing: 8, share: .15,
+   plants: [['gorse', .6], ['slshore', .3], ['shrub', .1]]},
+  plants: [['gorse', .42], ['heather', .36], ['slshore', .12], ['nwfir', .02], ['shrub', .08]],
+  ui: {panel: 'rgba(30,32,22,.88)', a1: '#e8dc9a', a2: '#7a6a2a', hot: '#f6e3a0', soft: '#d4ccaa', onHot: '#201c08'}},
+  // Florida Palms: the Keys' coast, white sand and blue water, planted only from Meshy: tall
+ // thin coconut palms in loose groups (the owner's Seminole photograph), sabal and royal
+ // palms, live oaks and a few loblollies (TPC Sawgrass), sea grape and saw palmetto under
+ // them. Southern Pines' mown greens, for the same reasons. Density and colours PLACED.
+ // Mainland, not an island: the Atlantic along one side with its beach (Seminole), flat
+ // ground and lakes inland (TPC Sawgrass). The first capture took the Keys' ring island,
+ // which read as the Keys.
+ flpalms: {sea: true, coastal: false, edgeCoast: true, inlandWater: true, shoreSand: true, ringIslands: 0, crownShare: .9, treeDensity: .7, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a',
+  title: 'Palm Coast', tag: 'Tall palms, live oaks, white sand and blue water.',
+  stands: {...TRAITS.florida.stands, edge: 90, near: 60, patch: .3, spacing: 16, share: .3, under: {spacing: 14, plants: [['sawpalmetto', .5], ['seagrape', .3], ['hibiscus', .2]]},
+   plants: [['lowsabal', .32], ['lowliveoak', .26], ['flcoconut', .2], ['flroyal', .1], ['southloblolly', .12]]},
+  plants: [['flcoconut', .2], ['lowsabal', .16], ['flroyal', .08], ['lowliveoak', .12], ['southloblolly', .06], ['seagrape', .1], ['sawpalmetto', .1], ['hibiscus', .05], ['bougainvillea', .04], ['sawgrass', .05], ['muhlygrass', .04]],
+  ui: {panel: 'rgba(8,32,44,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fda4af', soft: '#acd6e2', onHot: '#04202e'}},
  // Phase 6: Texas and the deserts (the Texas and deserts packs).
  hillcountry: {},
  // Bluebonnet Prairie: the Blackland Prairie, flat and open, pecan and cedar
@@ -870,32 +944,6 @@ const LAND = {
    plants: [['joshuatree', .55], ['smoketree', .1], ['cholla', .2], ['mojaveyucca', .15]]},
   plants: [['joshuatree', .22], ['creosote', .25], ['mojaveyucca', .12], ['cholla', .1], ['beavertail', .08], ['brittlebush', .08], ['smoketree', .05], ['tamarisk', .02], ['agave', .03], ['jojoba', .05]],
   ui: {panel: 'rgba(38,30,22,.88)', a1: '#fde4c0', a2: '#9a5b24', hot: '#fff7ed', soft: '#e6d4bc', onHot: '#2a1a0c'}},
- // Desert Palms: the Coachella Valley's resorts -- fan and date palms,
- // oleander and tamarisk windbreaks, bougainvillea, mountains behind.
- palms: {rough: '#b8a878', semi: '#5e8a40', sky: '#d0dce6', temperature: 34, altitude: 100,
-  landform: {...TRAITS.desert.landform, chance: .2},
-  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['oleander', .5], ['creosote', .5]]},
-   plants: [['fanpalm', .4], ['datepalm', .3], ['tamarisk', .3]]},
-  plants: [['fanpalm', .2], ['datepalm', .12], ['oleander', .12], ['bougainvillea', .06], ['creosote', .2], ['brittlebush', .08], ['desertwillow', .06], ['tamarisk', .06], ['smoketree', .05], ['aleppopine', .03], ['agave', .02]],
-  ui: {panel: 'rgba(36,18,28,.88)', a1: '#fbcfe8', a2: '#be185d', hot: '#fef9c3', soft: '#e4c8d4', onHot: '#2a0a18'},
-  world: {clubhouse: 'pavilion'}},
- // Desert Resort (the owner, 5 November 2026, of TPC Summerlin and Shadow Creek:
- // "the Mojave foliage just doesnt match"): a planted, watered parkland set down
- // on bare desert, with a hard edge between them. Afghan and Aleppo pines in lines,
- // olive and mesquite by the tees, palms as accents, white sand, blue lakes in
- // rock-lined edges; past the edge, pale cobble and creosote. Colours PLACED from
- // the pictures; RESEARCH.md *Desert resort courses*.
- desertresort: {rough: '#6a9448', semi: '#659546', fairway: '#629b50', sand: '#efe6d6', rock: '#a9a59c', sky: '#bcd4ea', water: '#3e7fa0',
-  altitude: 700, temperature: 33, rockStyle: 'angular', treeDensity: 2, tree: '#3f6438', treeKind: 'pine', arid: false, sandLand: false, dust: false, speckleRock: false, title: 'Oasis Valley', tag: 'Green fairways and tall pines on the desert floor.',
-  longGrass: {...TRAITS.desert.longGrass, count: 300},
-  // Past the planted belts the valley's own open scrub, not a wood: the pines
-  // are the open scatter's, along the holes (first pictures, 5 November 2026).
-  stands: {...TRAITS.desert.stands, edge: 60, patch: .22, near: 40, spacing: 13, under: {spacing: 9, plants: [['creosote', .7], ['brittlebush', .3]]},
-   plants: [['creosote', .55], ['brittlebush', .15], ['mesquite', .15], ['afghanpine', .08], ['africansumac', .07]]},
-  plants: [['afghanpine', .25], ['aleppopine', .2], ['olivetree', .12], ['mesquite', .08], ['africansumac', .08], ['fanpalm', .07], ['datepalm', .05], ['oleander', .05], ['pampasgrass', .03], ['creosote', .03], ['bougainvillea', .02], ['brittlebush', .02]],
-  ui: {panel: 'rgba(14,32,28,.88)', a1: '#bbf7d0', a2: '#15803d', hot: '#fde68a', soft: '#c0dccc', onHot: '#06201a'},
-  world: {clubhouse: 'pavilion', path: 'asphalt', bridge: 'stone', fountain: true, life: {geese: 4},
-   colours: {clubhouse: {stone: '#ece0cc', bark: '#7d5a3c', accent: '#b4553a', dirt: '#3a2c26'}, riprap: '#a89c88', wall: '#d8ccb8', ruin: '#cfc2ac', bridgeStone: '#c8bca8'}}},
  // Chihuahuan: lechuguilla, sotol and soaptree yucca on limestone, ocotillo,
  // mesquite, Emory oak and alligator juniper up the slopes (Big Bend).
  chihuahuan: {rough: '#b0a07a', sky: '#d8dade', altitude: 1200, temperature: 30, rock: '#c0aa8a', rockStyle: 'angular',
@@ -904,36 +952,6 @@ const LAND = {
   plants: [['creosote', .22], ['lechuguilla', .14], ['sotol', .12], ['soaptreeyucca', .1], ['ocotillo', .08], ['mesquite', .1], ['cholla', .06], ['beavertail', .04], ['emoryoak', .05], ['alligatorjuniper', .05], ['agave', .04]],
   ui: {panel: 'rgba(32,26,24,.88)', a1: '#fecaca', a2: '#9f1239', hot: '#fef3c7', soft: '#dccac4', onHot: '#260a10'}},
  // Phase 7: California and the western mountains.
- // Monterey: the Pebble Beach shore -- Monterey cypress and pine on the
- // headlands, ice plant, coastal sage, the sea along one side with stacks
- // standing in it (renderer.js addSeaStacks), cool fog.
- monterey: {sea: true, edgeCoast: true, coastSeek: true, shoreSand: false, hills: {base: 16, severity: 45, reach: 50}, treeDensity: 1.6,
-  rough: '#7a8a4e', sky: '#c8d6de', temperature: 18, rockStyle: 'angular', seaStacks: 6,
-  longGrass: {...TRAITS.california.longGrass, leaf: '#8a9056', accent: '#b8a870'},
-  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['coastalsage', .5], ['shrub', .5]]},
-   plants: [['montereypine', .5], ['montereycypress', .3], ['coastliveoak', .2]]},
-  plants: [['montereycypress', .2], ['montereypine', .15], ['coastliveoak', .1], ['iceplant', .18], ['coastalsage', .15], ['chaparral', .07], ['californiapoppy', .05], ['shrub', .1]],
-  ui: {panel: 'rgba(14,26,34,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fef3c7', soft: '#b8d4da', onHot: '#06202a'}},
- // SoCal Canyons: chaparral hills and barrancas -- sycamores and coast live
- // oaks in the canyons, eucalyptus windbreaks, Torrey pines, jacarandas in
- // bloom and pepper trees round the clubhouse, ice plant on the banks.
- socal: {hills: {base: 40, severity: 110, reach: 80}, rough: '#b8a468',
-  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .6], ['coastalsage', .4]]},
-   plants: [['coastliveoak', .4], ['sycamore', .25], ['eucalyptus', .25], ['torreypine', .1]]},
-  plants: [['coastliveoak', .15], ['sycamore', .1], ['eucalyptus', .12], ['chaparral', .18], ['coastalsage', .15], ['torreypine', .05], ['jacaranda', .06], ['peppertree', .06], ['olivetree', .05], ['iceplant', .08]],
-  ui: {panel: 'rgba(40,24,30,.88)', a1: '#e9d5ff', a2: '#7e22ce', hot: '#fef3c7', soft: '#dccce4', onHot: '#200a28'},
-  world: {clubhouse: 'pavilion'}},
- // Wine Country: vineyards on a valley floor between valley oaks and blue oaks
- // (its ground and ranges are TERRAIN's, generator 81),
- // poppies, olives, a stone winery clubhouse.
- winecountry: {rough: '#b4a464',
-  stands: {...TRAITS.california.stands, under: {spacing: 8, plants: [['chaparral', .5], ['shrub', .5]]},
-   plants: [['valleyoak', .4], ['blueoak', .3], ['coastliveoak', .2], ['buckeye', .1]]},
-  // The vines stand in rows now (course.js, `vineyard`); a few strays.
-  vineyard: {blocks: 2},
-  plants: [['grapevine', .03], ['valleyoak', .2], ['blueoak', .14], ['californiapoppy', .2], ['olivetree', .08], ['buckeye', .05], ['coastliveoak', .08], ['chaparral', .06], ['shrub', .16]],
-  ui: {panel: 'rgba(34,14,24,.88)', a1: '#f5d0fe', a2: '#86198f', hot: '#fef3c7', soft: '#e0c8dc', onHot: '#22061e'},
-  world: {clubhouse: 'stonehouse'}},
  // Cascades (the Rockies' region): Douglas and noble fir, hemlock, western
  // larch, beargrass and huckleberry, basalt, a snow volcano on the horizon
  // (renderer.js addBackdrop) over a lower range.
@@ -975,14 +993,7 @@ const LAND = {
  // Phase 8b: Appalachia.
  blueridge: {},
  // Phase 8c: the north and Hawaii.
- northwoods: {}, hawaii: {},
- // Oregon Dunes (the Links' region): Bandon's dunes on the Pacific -- gorse,
- // shore pine and Sitka spruce, beachgrass, salal; a shingled lodge.
- oregondunes: {rough: '#9a9a62', sky: '#c4d4dc', temperature: 15, treeDensity: 1.4,
-  stands: {...TRAITS.links.stands, share: .3, plants: [['gorse', .5], ['shorepine', .35], ['sitkaspruce', .15]]},
-  plants: [['shorepine', .2], ['sitkaspruce', .08], ['gorse', .25], ['dunegrass', .3], ['shrub', .1], ['salal', .07]],
-  ui: {panel: 'rgba(16,26,28,.88)', a1: '#ccfbf1', a2: '#115e59', hot: '#fef3c7', soft: '#b8ccc8', onHot: '#06201c'},
-  world: {clubhouse: 'shingle', story: {walls: null, ruins: ['cottage'], landmark: 'lighthouse'}}},
+ northwoods: {},
 };
 
 // A landscape's world block: the generic one, its region's, its own.
@@ -1047,11 +1058,6 @@ const TERRAIN = {
  // The Cascades: sharper and closer-set than the Rockies, deep valleys under
  // jagged volcanic ridges (PLACED; the volcanoes themselves stand far behind).
  cascades: {landform: {...TRAITS.mountain.landform, scale: 230, height: 62, steps: 3, jag: .7}},
- // The Oregon coast: sand standing well above a links', on a higher shore.
- oregondunes: {landform: {...TRAITS.links.landform, scale: 250, hummock: 48, height: 12}, hills: {base: 20, severity: 40, reach: 50}},
- // Puget Sound: drumlins, the ice's long north-south hills, and kettles.
- puget: {landform: {type: 'glacial', hummock: 13, hummockX: 170, hummockZ: 800, cell: 260, chance: .3, radius: [30, 70], size: [4, 9], esker: 300, eskerHeight: 0, reach: 70,
-  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(8, 10)}}, hills: {base: 26, severity: 40, reach: 70}},
  // The Redwood Coast: a river's terraces, low and soft, where the courses lie
  // and the redwoods grow tallest. The young, steep ridges of the Coast Ranges
  // stand behind them as the ring; the gorges and rock this had before put a
@@ -1061,9 +1067,6 @@ const TERRAIN = {
  // Stair-stepped limestone hills, pale ledges on the risers (Glen Rose).
  hillcountry: {landform: {type: 'steps', scale: 260, height: 26, steps: 6, riser: .35, from: .3, to: .78, ledge: .25, reach: 80,
   kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, groundTints: {rock: '#d8d0b8'}},
- // Low marine terraces stepping down, low granite bluffs between.
- monterey: {landform: {type: 'steps', scale: 380, height: 12, steps: 3, riser: .18, from: .3, to: .85, ledge: .3, reach: 60,
-  kinds: {a: 'rock'}, gates: {a: gate(10, 10)}}},
  // Hummocky moraine, kettles holding bog, an esker, granite breaking through.
  northwoods: {landform: {type: 'glacial', hummock: 7, cell: 160, chance: .5, radius: [25, 55], size: [4, 9], esker: 220, eskerHeight: 6, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 10), b: gate(10, 12)}}, groundTints: {native: '#8a8a50'}},
@@ -1075,26 +1078,12 @@ const TERRAIN = {
  mojave: {landform: {type: 'knobs', cell: 200, chance: .5, radius: [25, 60], size: [10, 28], profile: 1.3, round: .6, floor: 3,
   wash: 240, washWidth: .02, washDepth: 1.2, bare: .1, reach: 80,
   kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#a8a294'}},
- // Nearly flat, built ground: a rare low knob, no washes, and the desert's pale
- // cobble starting short and hard where the watering stops. Grey limestone
- // ranges behind (Earth Magazine; RESEARCH). Gates PLACED from the pictures.
- desertresort: {landform: {type: 'knobs', cell: 260, chance: .1, radius: [20, 40], size: [4, 10], profile: 1.3, round: .6, floor: 1, wash: 0, bare: .2, reach: 80,
-  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(16, 8), b: gate(18, 6), floor: gate(14, 3)}}, groundTints: {hardpan: '#c6b69a', waste: '#b5a68c', rock: '#a09a8e'},
-  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false},
- // A flat valley floor, the odd knob, steep bare ranges behind.
- palms: {landform: {type: 'knobs', cell: 260, chance: .22, radius: [20, 45], size: [6, 16], profile: 1.3, round: .6, floor: 1.5,
-  wash: 300, washWidth: .015, washDepth: .8, bare: .2, reach: 80,
-  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}},
-  hills: {base: 6, severity: 15, reach: 80}, ringLift: 1100, ringPeaks: true, ringMesas: false},
  // Bare glaciated granite domes and whaleback slabs, scree at their feet.
  sierra: {landform: {type: 'knobs', cell: 230, chance: .5, radius: [40, 90], size: [15, 40], profile: 2.2, round: .5, floor: 6, wash: 0, bare: .18, reach: 90,
   kinds: {a: 'rock', b: 'scree'}, gates: {a: gate(10, 12), b: gate(10, 12)}}},
  // Box-walled coulees cut into the basalt, rimrock along their rims.
  sagebrush: {landform: {type: 'channels', scale: 420, width: .04, wall: .15, depth: 18, table: 4, branches: 0, rim: .4, bare: .6, reach: 85,
   kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
- // SoCal's barrancas: steep V canyons through the chaparral hills.
- socal: {landform: {type: 'channels', scale: 260, width: .05, wall: .8, depth: 20, table: 8, branches: .6, rim: .5, bare: .4, reach: 80,
-  kinds: {a: 'hardpan'}, gates: {a: gate(12, 12)}}, groundTints: {hardpan: '#b89a72'}},
  // Cinder cones of red-brown cinder and black basalt flows.
  ponderosa: {landform: {type: 'volcanic', cell: 300, chance: .45, radius: [50, 110], size: [25, 60], flows: .62, flowHeight: 2.5, roll: 5, reach: 90,
   kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#8a4a36', rock: '#3a3632'}},
@@ -1105,12 +1094,57 @@ const TERRAIN = {
  // kept on their sides.
  blueridge: {landform: {type: 'channels', scale: 320, width: .07, wall: .9, depth: 28, table: 12, branches: .9, rim: .65, bare: .05, reach: 85,
   kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}},
- // Black lava flows down to the sea, a few cinder cones.
- hawaii: {landform: {type: 'volcanic', cell: 320, chance: .25, radius: [40, 80], size: [15, 35], flows: .56, flowHeight: 2, roll: 6, reach: 80,
-  kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#6a3a2a', rock: '#2e2a28'}},
  southpines: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
- flatwoods: {landform: {type: 'lowland', scale: 340, levee: 1, hollow: 1, swamp: .55, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
-  hills: {base: 3, severity: 4, reach: 60}, baseRoll: .2},
+ // Desert Mountain: long, wide, joined granite ranges (`range`) with boulder-piled upper slopes,
+ // the holes in the draws between them, rising close beside the play (reach 26 m); one big
+ // mountain shaped on Superstition Mountain past the course (`ringMassif`); a rocky outcrop
+ // under the back tee on about 1.5 holes in 18 (`rockTees`). The owner, 7 November 2026, over five
+ // rounds: "in between" the desert and the mountain courses; "football shaped", "more rocky" (the
+ // fins of ridged noise turned down); one big mountain and flat desert; then the football knobs
+ // ("a bit jarring. The bigger mountains look much more natural") and ridges laid along each hole
+ // ("placed after the holes") turned down for ranges with "the holes ... playing into the natural
+ // draws between mountains". The knob scatter is kept at chance 0. Since 8 November 2026 the
+ // ranges stand only on the big mountain's side (`side`, a mountain front the holes curve along;
+ // the owner picked it over a bigger play area and both together). Every number PLACED.
+ dmountain: {landform: {type: 'knobs', cell: 200, chance: 0, radius: [30, 60], stretch: 2.4, tip: 1.4, size: [24, 54], profile: 2, round: .55, floor: 2,
+  range: {scale: 380, stretch: 2.4, from: .55, to: .66, height: 70, shape: 1.1, crest: 220, side: 150},
+  boulders: 24, rock: .6, wash: 260, washWidth: .022, washDepth: 1.4, bare: .08, reach: 22,
+  // Rock and hardpan start 2 m off the turf (round 4: the ridges stand right at the rough).
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(2, 5), b: gate(8, 8), floor: gate(2, 4)}},
+  // The rock the colour of the rock props standing on it (`rock`, #b57c4e; the owner, round 4:
+  // "ours are far too grey. Work on color matching the landscapes to the rock props"). Was #8e7d6a.
+  groundTints: {rock: '#b07a50'},
+  hills: {base: 8, severity: 22, reach: 80}, ringLift: 900, ringMesas: false,
+  // The land rising toward the big mountain, and no bench round the holes (course.js `tilt`,
+  // `wideFade`; the owner, round 6). PLACED.
+  tilt: {height: 38, over: 1400}, wideFade: 130,
+  ringMassif: {at: 2200, length: 9000, face: 1400, back: 3500},
+  // About 1.5 holes in 18 tee off a rock outcrop (course.js, *Tees up on the rock*).
+  rockTees: .083},
+ // Desert Resort: nearly flat, built ground -- a rare low knob, no washes, and the desert's pale
+ // cobble starting short and hard where the watering stops. Grey limestone ranges behind (Earth
+ // Magazine; RESEARCH). The first Desert Resort's recipe, a little broader (PLACED); it left at
+ // the sign-off, 7 November 2026.
+ dresort: {landform: {type: 'knobs', cell: 280, chance: .1, radius: [20, 40], size: [4, 10], profile: 1.3, round: .6, floor: 1, wash: 0, bare: .2, reach: 80,
+  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(16, 8), b: gate(18, 6), floor: gate(14, 3)}}, groundTints: {hardpan: '#c6b69a', waste: '#b5a68c', rock: '#a09a8e'},
+  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false},
+ // Florida Palms: low and flat behind the beach, wet hollows for its lakes. The Florida
+ // Flatwoods' lowland recipe, a little broader (PLACED); the Flatwoods left at the sign-off.
+ // Pacific Northwest: Puget Sound's glacial ground, its hummocks a metre taller (PLACED, so the two
+ // differ while both stand: no two landscapes may share their ground).
+ pacnw: {landform: {type: 'glacial', hummock: 14, hummockX: 170, hummockZ: 800, cell: 260, chance: .3, radius: [30, 70], size: [4, 9], esker: 300, eskerHeight: 0, reach: 70,
+  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 12), b: gate(8, 10)}}, hills: {base: 26, severity: 40, reach: 70}},
+ // California Coast: Monterey's marine terraces, a metre taller (PLACED, so the two differ while
+ // both stand).
+ // Seaside Links: the links region's dunes, a little broader (PLACED, so it differs from Scottish
+ // Links while both stand).
+ // Round 2 (the owner: "too smooth"; Bandon's and Chambers Bay's rough between holes, the owner's
+ // photographs): taller dunes, smaller hummocks, a sharp rumple over all of it, more marram.
+ seaside: {landform: {...TRAITS.links.landform, scale: 160, hummock: 22, height: 8, rugged: 1.6, marram: .38}},
+ calcoast: {landform: {type: 'steps', scale: 380, height: 13, steps: 3, riser: .18, from: .3, to: .85, ledge: .3, reach: 60,
+  kinds: {a: 'rock'}, gates: {a: gate(10, 10)}}},
+ flpalms: {landform: {type: 'lowland', scale: 380, levee: 1, hollow: 1.2, swamp: .5, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
+  hills: {base: 5, severity: 6, reach: 60}, baseRoll: .25},
  // The Llano Estacado: a tableland nearly flat, round dry playas with bare
  // clay floors (generator 81). Playas scaled down from the real 3-28 ha
  // (radius 100-300 m) to 60-140 m, 1-1.8 m deep (a Texas water study
@@ -1128,7 +1162,6 @@ const TERRAIN = {
  // and gentle, the ranges standing 600-800 m over it at the horizon (the
  // Napa Valley Vintners' guide: 30 mi by up to 5 mi, Atlas Peak 2,663 ft).
  // In place of rolling hills everywhere (generator 81). PLACED.
- winecountry: {hills: {base: 14, severity: 22, reach: 80}, ringLift: 520, baseRoll: .6},
  // Salt marsh at the tide line, tidal creeks winding through it to the sea,
  // hammocks of live oak standing a few metres above (generator 80). The sea
  // is the creeks' water: `sea` draws it, and the ground sits 4 m above it

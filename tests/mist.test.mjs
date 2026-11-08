@@ -59,7 +59,7 @@ test('every biome has a mist profile and the desert stays dry', () => {
  assert.ok(profileFor('sonoran').haze > 0, 'but keeps some dry distance haze');
 
  // The wet coastal biomes should hold the most.
- assert.ok(profileFor('puget').sheet > profileFor('keys').sheet, 'the Sound holds more than the tropics');
+ assert.ok(profileFor('pacnw').sheet > profileFor('keys').sheet, 'the Sound holds more than the tropics');
  assert.ok(profileFor('rockies').haze >= profileFor('heartland').haze, 'valleys hold more than prairie');
 
  assert.deepEqual(profileFor('nonsense'), profileFor('midwest'), 'an unknown biome falls back rather than throwing');
@@ -71,7 +71,7 @@ test('the sheet is thick in banks and clear between them', () => {
  // Reference photographs of PNW courses at dawn show the opposite -- a fairway
  // you can see across running into a treeline you cannot -- so what matters is
  // that the fog is genuinely thick in a bank AND genuinely clear in a gap.
- const worst = ['puget', 'rockies', 'newengland', 'links', 'heartland', 'keys'];
+ const worst = ['pacnw', 'rockies', 'newengland', 'seaside', 'heartland', 'keys'];
 
  for (const biome of worst) {
   const d = mistDensities(profileFor(biome), 1, 1);
@@ -88,7 +88,7 @@ test('the sheet is thick in banks and clear between them', () => {
  }
 
  // Midday is clear: the sheet is gone entirely and the haze is only depth cue.
- const noon = mistDensities(profileFor('puget'), 0, 1);
+ const noon = mistDensities(profileFor('pacnw'), 0, 1);
  assert.equal(noon.sheet, 0, 'no ground sheet at midday');
  assert.ok(visibilityOf(noon.haze) > 12000, 'and the air is clear to the horizon');
 
@@ -104,14 +104,14 @@ test('the sheet is thick in banks and clear between them', () => {
  // Mist thickens with damp, monotonically, and never inverts.
  let previousHaze = 0;
  for (let damp = 0; damp <= 1; damp += .05) {
-  const d = mistDensities(profileFor('puget'), damp, 1);
+  const d = mistDensities(profileFor('pacnw'), damp, 1);
   assert.ok(d.haze >= previousHaze - 1e-12, 'haze only thickens as the air dampens');
   previousHaze = d.haze;
  }
 
  // The tier strength scales it, so low and medium switch it off completely.
- assert.equal(mistDensities(profileFor('puget'), 1, 0).haze, 0, 'strength 0 means no mist at all');
- assert.equal(mistDensities(profileFor('puget'), 1, 0).sheet, 0);
+ assert.equal(mistDensities(profileFor('pacnw'), 1, 0).haze, 0, 'strength 0 means no mist at all');
+ assert.equal(mistDensities(profileFor('pacnw'), 1, 0).sheet, 0);
 
  // Desert stays dry however damp the clock says it is.
  for (const damp of [0, .5, 1]) assert.equal(mistDensities(profileFor('sonoran'), damp, 1).sheet, 0);
@@ -155,7 +155,7 @@ test('fog gathers on water, and only where there is water', () => {
 });
 
 test('water mist follows the biome and skips the desert', () => {
- for (const biome of ['puget', 'newengland', 'links', 'heartland', 'rockies', 'keys']) {
+ for (const biome of ['pacnw', 'newengland', 'seaside', 'heartland', 'rockies', 'keys']) {
   const d = mistDensities(profileFor(biome), 1, 1);
   assert.ok(d.water > 0, `${biome} gets fog on its water`);
   assert.ok(visibilityOf(d.water) > 100, `${biome} water fog is not a wall (${Math.round(visibilityOf(d.water))}m)`);
@@ -163,7 +163,7 @@ test('water mist follows the biome and skips the desert', () => {
  // Dry air. Fog sitting on a desert pond would read as a mistake.
  assert.equal(mistDensities(profileFor('sonoran'), 1, 1).water, 0);
  // And none of it at midday, whatever the biome.
- for (const biome of ['puget', 'links']) assert.equal(mistDensities(profileFor(biome), 0, 1).water, 0);
+ for (const biome of ['pacnw', 'seaside']) assert.equal(mistDensities(profileFor(biome), 0, 1).water, 0);
  // Tier strength switches it off with everything else.
- assert.equal(mistDensities(profileFor('puget'), 1, 0).water, 0);
+ assert.equal(mistDensities(profileFor('pacnw'), 1, 0).water, 0);
 });

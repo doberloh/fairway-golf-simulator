@@ -55,7 +55,7 @@ test('maximum mountain terrain has one connected mesh and exact matching contact
  g.dispose();
 });
 test('bunker floors are excavated and pine straw is restricted to conifers',()=>{
- const w=generateWorld({biome:'puget',trees:40,water:0,elevation:65});assert(w.straw.length>20);for(const patch of w.straw)assert(w.trees.some(t=>t.x===patch.x&&t.z===patch.z&&['pine','spruce','cedar'].includes(t.kind)));
+ const w=generateWorld({biome:'pacnw',trees:40,water:0,elevation:65});assert(w.straw.length>20);for(const patch of w.straw)assert(w.trees.some(t=>t.x===patch.x&&t.z===patch.z&&w.bio.fallen.from.includes(t.kind)));
  for(const h of w.holes)for(const b of h.bunkers){const center=h.height(b.x,b.z),a=h.height(b.x+.5,b.z),c=h.height(b.x,b.z+.5);assert(Math.abs(a-center)<.2);assert(Math.abs(c-center)<.2);let edge=Infinity;for(let i=0;i<24;i++){const q=ovalRadius(b,i*Math.PI/12);edge=Math.min(edge,h.height(b.x+q.x,b.z+q.z));}assert(edge-center>.35);}
 });
 test('putt totals include manual and decimal putts, survive save and undo, and select only scramble result',()=>{

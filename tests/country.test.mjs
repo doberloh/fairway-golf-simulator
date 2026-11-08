@@ -17,7 +17,7 @@ test('a soft field keeps a tilted plane and takes the point off a crease', () =>
 });
 
 test('no hole lies in a trough: the ground beside a corridor is level with it on average', () => {
- for (const biome of ['rockies', 'puget', 'sandhills']) {
+ for (const biome of ['rockies', 'pacnw', 'sandhills']) {
   const w = generateWorld(validateSettings({biome, holes: 9, seed: 'COUNTRY'}));
   let on = 0, onN = 0, off = 0, offN = 0;
   for (let x = -w.halfX; x < w.halfX; x += 16) for (let z = -w.halfZ; z < w.halfZ; z += 16) {

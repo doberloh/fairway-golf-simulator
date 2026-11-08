@@ -69,7 +69,13 @@ export const FAMILY_OF = {
  // California and the western mountains.
  montereycypress: 'montereycypress', montereypine: 'montereypine', coastliveoak: 'coastliveoak', eucalyptus: 'eucalyptus', sycamore: 'sycamore', torreypine: 'torreypine', iceplant: 'iceplant', coastalsage: 'coastalsage', chaparral: 'chaparral', valleyoak: 'valleyoak', blueoak: 'blueoak', buckeye: 'buckeye', grapevine: 'grapevine', californiapoppy: 'californiapoppy', olivetree: 'olivetree', jacaranda: 'jacaranda', peppertree: 'peppertree', ponderosa: 'ponderosa', sugarpine: 'sugarpine', incensecedar: 'incensecedar', redfir: 'redfir', noblefir: 'noblefir', westernlarch: 'westernlarch', manzanita: 'manzanita', gambeloak: 'gambeloak', mountainmahogany: 'mountainmahogany', bitterbrush: 'bitterbrush', mulesear: 'mulesear', beargrass: 'beargrass',
  // Texas and the deserts.
- lowliveoak: 'lowliveoak', lowcypress: 'lowcypress', lowsabal: 'lowsabal', southloblolly: 'southloblolly', southlongleaf: 'southlongleaf', southwhitepine: 'southwhitepine', southdogwood: 'southdogwood',
+ hicookpine: 'hicookpine', hiironwood: 'hiironwood', himonkeypod: 'himonkeypod',
+ dtsaguaro: 'dtsaguaro', dtpaloverde: 'dtpaloverde', dtmesquite: 'dtmesquite',
+ drafghan: 'drafghan', draleppo: 'draleppo', drwillow: 'drwillow', drolive: 'drolive', drdate: 'drdate', drfan: 'drfan',
+ nwfir: 'nwfir', nwcedar: 'nwcedar', nwhemlock: 'nwhemlock', nwmaple: 'nwmaple', nwalder: 'nwalder',
+ cccypress: 'cccypress', ccmpine: 'ccmpine', cctorrey: 'cctorrey', ccliveoak: 'ccliveoak', cceuc: 'cceuc',
+ slshore: 'slshore',
+ flcoconut: 'flcoconut', flroyal: 'flroyal', lowliveoak: 'lowliveoak', lowcypress: 'lowcypress', lowsabal: 'lowsabal', southloblolly: 'southloblolly', southlongleaf: 'southlongleaf', southwhitepine: 'southwhitepine', southdogwood: 'southdogwood',
  whiteoak: 'whiteoak', pinoak: 'pinoak', parkmaple: 'parkmaple', parkpoplar: 'parkpoplar', parkelm: 'parkelm', norwayspruce: 'norwayspruce',
  afghanpine: 'afghanpine', africansumac: 'africansumac', pampasgrass: 'pampasgrass',
  ashejuniper: 'ashejuniper', postoak: 'postoak', pecan: 'pecan', cedarelm: 'cedarelm', osageorange: 'osageorange', mountainlaurel: 'mountainlaurel', redbud: 'redbud', bluebonnet: 'bluebonnet', joshuatree: 'joshuatree', mojaveyucca: 'mojaveyucca', fanpalm: 'fanpalm', datepalm: 'datepalm', aleppopine: 'aleppopine', oleander: 'oleander', tamarisk: 'tamarisk', smoketree: 'smoketree', soaptreeyucca: 'soaptreeyucca', sotol: 'sotol', lechuguilla: 'lechuguilla', desertwillow: 'desertwillow', emoryoak: 'emoryoak', alligatorjuniper: 'alligatorjuniper', beavertail: 'beavertail',

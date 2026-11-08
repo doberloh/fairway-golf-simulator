@@ -31,7 +31,7 @@ function blockers(w, h, tee) {
  return out;
 }
 
-const CASES = ['puget', 'redwood', 'heartland', 'rockies', 'links', 'newengland', 'sonoran', 'keys'];
+const CASES = ['pacnw', 'redwood', 'heartland', 'rockies', 'seaside', 'newengland', 'sonoran', 'flpalms'];
 
 test('no tee shot has a trunk on the line the hole asks for', () => {
  // Measured at 4.5% of 648 before the launch corridor existed, the close ones
@@ -54,7 +54,7 @@ test('no tee shot has a trunk on the line the hole asks for', () => {
 test('the corridor only looks forward, so trees beside and behind a tee survive', () => {
  // Deliberate: trees around a tee box are wanted. They give it something to sit
  // in and they break up the basin the terracing leaves. A bubble would kill them.
- const w = world({holes: 9, biome: 'puget', seed: 'corridor-pnw', fairwayFeature: 0});
+ const w = world({holes: 9, biome: 'pacnw', seed: 'corridor-pnw', fairwayFeature: 0});
  const corr = launchCorridors(w.holes);
  let beside = 0, behind = 0;
  for (const h of w.holes) for (const tee of Object.values(h.tees)) {
@@ -72,7 +72,7 @@ test('the corridor only looks forward, so trees beside and behind a tee survive'
 });
 
 test('the corridor asks about height, not just distance', () => {
- const w = world({holes: 9, biome: 'puget', seed: 'corridor-pnw', fairwayFeature: 0});
+ const w = world({holes: 9, biome: 'pacnw', seed: 'corridor-pnw', fairwayFeature: 0});
  const h = w.holes[0], tee = h.tees.blue, corr = launchCorridors(w.holes, w.height);
  const from = h.toWorld(tee), aim = h.toWorld(fairwayAim(h, tee, LAUNCH.reach));
  const a = Math.atan2(aim.x - from.x, aim.z - from.z), dx = Math.sin(a), dz = Math.cos(a);
@@ -99,7 +99,8 @@ test('the corridor rejects candidates without thinning the forest', () => {
  // measured at 1233 of 1638 before the launch corridor existed and 1227 after,
  // a cost of six trees. Asserting "equals target" there would be blaming the
  // corridor for the ocean.
- const SEA_LIMITED = {keys: 1200};
+ // (The Keys, the island, left for Florida Palms on 7 November 2026; Florida Palms is mainland.)
+ const SEA_LIMITED = {};
  for (const biome of CASES) {
   const w = world({holes: 9, biome, seed: 'corridor-' + biome, fairwayFeature: 0});
   const {trees: perHole, holes} = w.settings;
@@ -130,7 +131,7 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
  // ROUGH, not of ground -- mown turf can never hold a tree, so counting it in
  // the denominator would understate the rest.
  const SEEDS = ['a', 'b', 'c', 'd'];
- for (const biome of ['heartland', 'puget', 'redwood']) {
+ for (const biome of ['heartland', 'pacnw', 'redwood']) {
   const each = SEEDS.map(seed => {
    const w = world({holes: 9, biome, seed});
    const tees = w.holes.flatMap(h => Object.values(h.tees).map(t => h.toWorld(t)));
@@ -184,7 +185,7 @@ test('no bush or house stands in the view from any tee', async () => {
  const {blocksView} = await import('../src/course.js');
  const {GROUND_PLANTS} = await import('../src/species.js');
  const bad = [];
- for (const biome of ['puget', 'rockies', 'links']) {
+ for (const biome of ['pacnw', 'rockies', 'seaside']) {
   const w = world({holes: 9, biome, seed: 'view-' + biome, trees: 65, homes: true, homeDensity: 70});
   const corr = launchCorridors(w.holes, w.height);
   for (const t of w.trees) if (GROUND_PLANTS.has(t.kind) && blocksView(corr, t.x, t.z, t.y + t.h, t.r)) bad.push(`${biome} ${t.kind} ${t.h.toFixed(1)} m`);

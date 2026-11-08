@@ -96,7 +96,7 @@ test('tees are sited on ground that suits them, and never on ground they may not
  // dozen nearby sites and takes the one the ground already suits, which is
  // where the variety comes from as well as the smaller earthworks.
  let tees=0,offCentre=0,staggered=0,onWrongGround=0,markerAdrift=0;
- for(const biome of ['puget','rockies','links']) for(const seed of ['V1','V2','V3']){
+ for(const biome of ['pacnw','rockies','seaside']) for(const seed of ['V1','V2','V3']){
   const w=generateWorld({seed,biome,holes:9,trees:0});
   for(const h of w.holes){
    const pads=Object.values(h.tees).map(t=>({t,p:teePad(t)})).filter(e=>e.p);
@@ -137,7 +137,7 @@ test('the back tee is never below the one in front, and a flat course keeps flat
  // off the tee inverted them. Measured over 270 holes: 34% had at least one tee
  // stacked backwards, worst single step 2.9 m.
  let backwards=0,tees=0,lifted=0;
- for(const biome of ['puget','rockies','links']) for(const seed of ['T1','T2','T3']){
+ for(const biome of ['pacnw','rockies','seaside']) for(const seed of ['T1','T2','T3']){
   const w=generateWorld({seed,biome,holes:9,trees:0});
   for(const h of w.holes){
    // Object key order is back tee first.

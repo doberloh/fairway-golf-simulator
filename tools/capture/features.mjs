@@ -13,7 +13,7 @@ const hour = (p, h, flood) => p.evaluate(([h, flood]) => { const v = window.__vi
 const SCENES = {
  // A tilted green read with the grid and its flow, from the putting camera.
  'putting-grid': async p => {
-  await course(p, {biome: 'puget', holes: 9, seed: 'REPORT1', greenDifficulty: 70}, 1);
+  await course(p, {biome: 'pacnw', holes: 9, seed: 'REPORT1', greenDifficulty: 70}, 1);
   await hour(p, 14);
   await p.evaluate(() => { const v = window.__view, pin = v.course.pin; v.config.greenGrid = true; v.config.greenFlow = true; v.config.greenHeat = false; v.setGreenReading(); window.__play({x: pin.x + 7, z: pin.z - 5}); });
   await p.waitForTimeout(2500);
@@ -37,7 +37,7 @@ const SCENES = {
   await p.waitForTimeout(3000);
  },
  'night-golf': async p => {
-  await course(p, {biome: 'links', holes: 9, seed: 'DUNE'}, 2);
+  await course(p, {biome: 'seaside', holes: 9, seed: 'DUNE'}, 2);
   await hour(p, 21.8, true);
   await p.waitForTimeout(4000);
  },

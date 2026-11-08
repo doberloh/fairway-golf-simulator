@@ -2047,10 +2047,10 @@ export class GolfView{
   // catalogue's lists (RESEARCH, *Each landscape's road surface*).
   const roadKey=w.bio?.key||w.settings?.biome;
   const PUBLIC={bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete',sandhills:'gravel'};
-  const DRIVE={puget:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
+  const DRIVE={puget:'gravel',pacnw:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
    winecountry:'gravel',heartland:'gravel',sandhills:'gravel',highplains:'gravel',crosstimbers:'dirt',badlands:'gravel',hillcountry:'dirt',longleaf:'redclay',lowcountry:'shell',lowgulf:'shell',
-   bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',parkland:'brick',southpines:'gravel',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',
-   alaska:'gravel',palms:'cobble',desertresort:'concrete',bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete'};
+   bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',parkland:'brick',southpines:'gravel',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',seaside:'gravel',
+   alaska:'gravel',palms:'cobble',desertresort:'concrete',dresort:'concrete',bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete'};
   // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
   // twenty-odd draws on a course whose paths are many short pieces).
   const byKind=new Map();

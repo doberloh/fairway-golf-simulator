@@ -1,0 +1,118 @@
+{
+ "name": "redwood2",
+ "note": "The Redwood Coast pack rebuilt on Meshy (7 November 2026), the owner's request: the first pack, 5 November, drew fine sprays of needles; this one uses the tufted wording. Coast redwood, young redwood and tanoak; Douglas fir, western hemlock and western red cedar are the Pacific Northwest pack's. Form from the owner's Northwood photographs: very tall straight redwood trunks bare for half their height, crowns high, fog between them. Sizes PLACED. `seasons` are PLACED.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_Redwood_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull blue-green #2e4c40. Bark cinnamon red-brown #7a4a36.",
+   "aspect": "9:16",
+   "prompt": "A very tall old coast redwood tree beside a golf course, 55 m tall and 15 m wide, a tall narrow column. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. One straight slim trunk of cinnamon red-brown fibrous bark with shallow vertical flutes, completely bare for its lowest half. Above that long level boughs reaching well out from the trunk all the way to a narrow rounded top, the lower boughs reaching out a quarter of the tree's height on one side or the other. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slim trunk, only one twenty-fourth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a narrow point at the top, its sides never parallel, slim compared with the wide boughs. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Redwood_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull blue-green #2e4c40. Bark cinnamon red-brown #7a4a36.",
+   "aspect": "9:16",
+   "prompt": "A tall coast redwood tree beside a golf course, 45 m tall and 10 m wide, a narrow column. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. One straight cinnamon red-brown trunk with fibrous fluted bark, bare for its lowest two fifths. Above that short level and gently drooping boughs to a narrow pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_YoungRedwood_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull blue-green #2e4c40. Bark cinnamon red-brown #7a4a36.",
+   "aspect": "9:16",
+   "prompt": "A young coast redwood tree beside a golf course, 28 m tall and 7 m wide, a narrow spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight cinnamon red-brown trunk with fibrous bark, bare for its lowest quarter. Short boughs dipping a little and rising at their tips all the way up to a pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_YoungRedwood_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "skirts",
+   "colour": "Foliage deep dull blue-green #2e4c40. Bark cinnamon red-brown #7a4a36.",
+   "aspect": "9:16",
+   "prompt": "A young coast redwood tree beside a golf course, 20 m tall and 6 m wide, a narrow spire with boughs nearly to the ground. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight cinnamon red-brown trunk glimpsed through the boughs. Short boughs dipping and rising at their tips all the way up to a pointed top. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Tanoak_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a6238. Bark grey-brown #6a6258.",
+   "aspect": "3:4",
+   "prompt": "A tanoak tree under redwoods beside a golf course, 20 m tall and 10 m wide, clearly taller than it is wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey-brown trunk, bare for its lowest third, dividing into a few rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a narrow open rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one sixteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to rising limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Tanoak_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a6238. Bark grey-brown #6a6258.",
+   "aspect": "3:4",
+   "prompt": "A younger tanoak tree under redwoods beside a golf course, 14 m tall and 8 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A grey-brown trunk dividing at a third of its height into a few rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make an open uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one fourteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to rising limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "rwredwood": {
+   "spring": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   },
+   "summer": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   },
+   "autumn": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   },
+   "winter": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   }
+  },
+  "rwyoung": {
+   "spring": {
+    "leaf": "#365646",
+    "bark": "#7a4a36"
+   },
+   "summer": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   },
+   "autumn": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   },
+   "winter": {
+    "leaf": "#2e4c40",
+    "bark": "#7a4a36"
+   }
+  },
+  "rwtanoak": {
+   "spring": {
+    "leaf": "#4a6238",
+    "bark": "#6a6258"
+   },
+   "summer": {
+    "leaf": "#4a6238",
+    "bark": "#6a6258"
+   },
+   "autumn": {
+    "leaf": "#4a6238",
+    "bark": "#6a6258"
+   },
+   "winter": {
+    "leaf": "#4a6238",
+    "bark": "#6a6258"
+   }
+  }
+ }
+}

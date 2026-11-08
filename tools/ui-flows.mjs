@@ -47,7 +47,7 @@ const ARRIVE = {
 // saved round), set before the page opens.
 const SEED = {
  lastPlay: () => localStorage.setItem('fairway-last-play-v1', JSON.stringify({version: 1, kind: 'weekly', courseId: null, group: {players: [{name: 'Alex', team: 'A'}], mode: 'stroke', tee: 'white'}})),
- savedCourse: () => localStorage.setItem('fairway-courses-v1', JSON.stringify({version: 1, courses: [{id: 'cflow', name: 'Flow Test', created: 1, generator: 0, schema: 1, settings: {seed: 'FLOW', biome: 'links', holes: 9}}]})),
+ savedCourse: () => localStorage.setItem('fairway-courses-v1', JSON.stringify({version: 1, courses: [{id: 'cflow', name: 'Flow Test', created: 1, generator: 0, schema: 1, settings: {seed: 'FLOW', biome: 'seaside', holes: 9}}]})),
 };
 
 const PATHS = {
@@ -60,7 +60,7 @@ const PATHS = {
   {mode: 'New course in studio', arrive: 'studio', steps: ['#menuStudio', '#growStudio']},
   {mode: 'Driving range', arrive: 'range', steps: ['#menuRange', {last: true}, {text: 'Open the driving range'}]},
   {mode: 'A challenge', arrive: 'challenge', steps: ['#menuChallenges', {last: true}, '#challengeGo']},
-  {mode: 'Studio, on Links', arrive: 'studio', steps: ['#menuStudio', {last: false, text: 'Landscape'}, '#drawer [data-biome="links"]', '#growStudio']},
+  {mode: 'Studio, on Seaside Links', arrive: 'studio', steps: ['#menuStudio', {last: false, text: 'Landscape'}, '#drawer [data-biome="seaside"]', '#growStudio']},
  ],
  // Play round 1 (the 1.0 polish): Tee off on every step of Play.
  after: [
@@ -70,7 +70,7 @@ const PATHS = {
   {mode: 'Saved course', arrive: 'round', seed: 'savedCourse', steps: ['#menuPlay', '#drawer [data-game="saved"]', '#drawer [data-course="cflow"]', '#startRound']},
   {mode: 'Surprise me', arrive: 'round', steps: ['#menuPlay', '#drawer [data-game="surprise"]', '#startRound']},
   {mode: 'New course in studio', arrive: 'studio', steps: ['#menuStudio', '#growStudio']},
-  {mode: 'Studio, on Links', arrive: 'studio', steps: ['#menuStudio', '#drawer [data-biome="links"]', '#growStudio']},
+  {mode: 'Studio, on Seaside Links', arrive: 'studio', steps: ['#menuStudio', '#drawer [data-biome="seaside"]', '#growStudio']},
   // Round 3: the range and Challenges start from their first step.
   {mode: 'Driving range', arrive: 'range', steps: ['#menuRange', '#rangeGo']},
   {mode: 'A challenge', arrive: 'challenge', steps: ['#menuChallenges', '#challengeGo']},

@@ -54,7 +54,7 @@ test('far crowns sit on the drawn ground, their base no higher than it anywhere 
 });
 
 test('the drawn ground reproduces the ring\'s own vertices', () => {
- const w = generateWorld({seed: 'FARWOODS', biome: 'lakedunes', holes: 9}), at = drawnGround(w), m = ringMesh(w);
+ const w = generateWorld({seed: 'FARWOODS', biome: 'seaside', holes: 9}), at = drawnGround(w), m = ringMesh(w);
  for (let v = m.count; v < m.positions.length / 3; v += 13) {
   const x = m.positions[v * 3], y = m.positions[v * 3 + 1], z = m.positions[v * 3 + 2];
   assert.ok(Math.abs(at(x, z) - y) < .01, `vertex ${v}: ${at(x, z)} against ${y}`);
@@ -72,13 +72,9 @@ test('each far shape is flat-based at its origin and no wider at its base than t
  }
 });
 
-test('Island, all sea round it, grows far woods only on its far islets; Low and Medium draw them as groves, never not at all', () => {
- // Round 3 of the far landscape: Island's far sea carries islets (2.5-6 km
- // out); its far woods stand on them and nowhere nearer -- the sea round the
- // course stays open.
- const w = generateWorld({seed: 'FARWOODS', biome: 'keys', holes: 9}), isle = farWoodSites(w);
- assert.ok(isle.length > 0, 'the islets are wooded');
- for (const s of isle) assert.ok(Math.hypot(Math.max(0, Math.abs(s.x) - w.halfX), Math.max(0, Math.abs(s.z) - w.halfZ)) > 1500, `a far crown ${s.x.toFixed(0)},${s.z.toFixed(0)} short of the islets`);
+// (The Keys, the only ring island, left for Florida Palms on 7 November 2026: no landscape builds an
+// island now, so the island-only test that stood here went with it. TODO *The island code has no landscape*.)
+test('Low and Medium draw far woods as groves, never not at all', () => {
  assert.equal(tierOf('low').farWoods, 'groves');
  assert.equal(tierOf('medium').farWoods, 'groves');
  for (const t of ['high', 'ultra']) assert.equal(tierOf(t).farWoods ?? true, true);

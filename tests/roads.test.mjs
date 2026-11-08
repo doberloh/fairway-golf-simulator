@@ -10,7 +10,7 @@ import {inBuilding} from '../src/clubhouse.js';
 // the clubhouse's side of the property, the parking lot beside the clubhouse,
 // the drive between them -- and no road across a fairway, ever.
 
-const LANDS = ['heartland', 'puget', 'rockies', 'sonoran', 'links', 'newengland', 'keys'];
+const LANDS = ['heartland', 'pacnw', 'rockies', 'sonoran', 'seaside', 'newengland', 'keys'];
 const worlds = Object.fromEntries(LANDS.map(b => [b, world({seed: 'RD-1', holes: 9, biome: b})]));
 
 test('no road or lot lies on anything played', () => {

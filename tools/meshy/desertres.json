@@ -1,0 +1,226 @@
+{
+ "name": "desertres",
+ "note": "The Desert Resort pack on Meshy, the seventh of the US golf courses' landscapes (7 November 2026): Shadow Creek, TPC Summerlin, PGA West. Afghan and Aleppo pines, weeping willow, olive, date palm and Mexican fan palm; its velvet mesquite is Desert Target's. Form from the owner's Shadow Creek and Summerlin photographs, tall open dark pines over green turf, and the reference photographs of Palm Desert, whose fan palms are very tall and thin with tiny heads. Sizes PLACED. The willow is a dome of overlapping fluffy tufts with a soft low fringe: long solid masses came out as sausages, and stepped chains of tufts as cones, which the owner turned down. The owner also turned down wind-swept shapes and a strong S in a trunk (7 November). No cypress here, the owner's rule (5 November). `seasons` are PLACED. Shipped in vendor/blender-meshy_desertres as DrAfghan, DrAleppo, DrWillow, DrOlive, DrDate, DrFan, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_AfghanPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull green #3f6438. Bark grey-brown #6a5c50.",
+   "aspect": "3:4",
+   "prompt": "A tall Afghan pine on a Las Vegas desert golf course, 20 m tall and 9 m wide, clearly taller than it is wide. A straight grey-brown trunk with shallow plated bark, bare for its lowest third, one twentieth of the tree's height wide near the ground. Rising limbs of different lengths leave it all the way up. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a tall open uneven crown with a bumpy outline, darker and denser near the top. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AfghanPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull green #3f6438. Bark grey-brown #6a5c50.",
+   "aspect": "3:4",
+   "prompt": "A younger Afghan pine on a Las Vegas desert golf course, 14 m tall and 7 m wide. A straight grey-brown trunk, bare for its lowest quarter, one sixteenth of the tree's height wide near the ground. Rising limbs of different lengths leave it all the way up. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a narrow uneven oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AleppoPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4c7044. Bark grey-brown #7a6a5c.",
+   "aspect": "3:4",
+   "prompt": "An old Aleppo pine on a desert golf course, 17 m tall and 10 m wide. A leaning grey-brown trunk with a gentle curve, bare for its lowest third, one eighteenth of the tree's height wide near the ground, forking high into a few long crooked limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts stand well apart and make an open lopsided crown with a flat uneven top. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AleppoPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4c7044. Bark grey-brown #7a6a5c.",
+   "aspect": "3:4",
+   "prompt": "An Aleppo pine on a desert golf course, 13 m tall and 8 m wide. A nearly straight grey-brown trunk with only the slightest natural bend, no S-curve, no twist, bare for its lowest quarter, one sixteenth of the tree's height wide near the ground, with long rising limbs at different heights, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts stand well apart and make an open uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_WeepingWillow_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage soft dull green #6a8a48. Bark grey-brown #6a6054.",
+   "aspect": "3:4",
+   "prompt": "A weeping willow beside a pond on a desert resort golf course, 14 m tall and 12 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A short thick grey-brown trunk forking low into several limbs that rise and arch outward. The whole crown is one tall rounded dome of big soft fluffy tufts, wider than they are long, that overlap one another from the top down like layers of soft shawls, each layer draping a little over the one below, with a lightly tufted scalloped edge. The lowest layers hang low round the crown in an uneven soft fringe, and the gaps between the tufts show a few arching limbs. No long hanging shapes, no sausages, no cones, no stacks of balls, no chains, no strands, no curtains. The fringe stops at a third of the tree's height, so the trunk stands clear below it. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_WeepingWillow_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage soft dull green #6a8a48. Bark grey-brown #6a6054.",
+   "aspect": "3:4",
+   "prompt": "A younger weeping willow on a desert resort golf course, 10 m tall and 9 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A grey-brown trunk forking at a third of its height into a few limbs that rise and arch outward. The whole crown is one tall rounded dome of big soft fluffy tufts, wider than they are long, that overlap one another from the top down like layers of soft shawls, each layer draping a little over the one below, with a lightly tufted scalloped edge. The lowest layers hang low round the crown in an uneven soft fringe, and the gaps between the tufts show a few arching limbs. No long hanging shapes, no sausages, no cones, no stacks of balls, no chains, no strands, no curtains. The fringe stops at a third of the tree's height, so the trunk stands clear below it. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Olive_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull silver-green #7a8a6a. Bark pale grey-brown #7a7268.",
+   "aspect": "1:1",
+   "prompt": "An old olive tree at a desert resort golf course, 8 m tall and 7 m wide. A short thick twisted pale grey-brown trunk with deep hollows and knots, dividing low into several crooked rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make an uneven open rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Olive_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull silver-green #7a8a6a. Bark pale grey-brown #7a7268.",
+   "aspect": "1:1",
+   "prompt": "An olive tree at a desert resort golf course, 6 m tall and 5 m wide. A twisted pale grey-brown trunk, leaning a little, dividing at a third of its height into a few crooked rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a small uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_DatePalm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull blue-green #5c7a50. Trunk tan-brown #8a7860.",
+   "aspect": "9:16",
+   "prompt": "A tall date palm at a desert resort, 20 m tall and 9 m wide. A straight thick tan-brown trunk, one fifteenth of the palm's height wide, its sides very slightly tapering, covered all the way up in a neat raised diamond pattern of old leaf bases. At the top a dense rounded crown of thirty to forty stiff arching fronds, the highest rising straight up, the lowest hanging down. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_DatePalm_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull blue-green #5c7a50. Trunk tan-brown #8a7860.",
+   "aspect": "9:16",
+   "prompt": "A younger date palm at a desert resort, 11 m tall and 8 m wide. A straight thick tan-brown trunk, one eleventh of the palm's height wide, covered all the way up in a neat raised diamond pattern of old leaf bases. At the top a very full round crown of forty stiff arching fronds, as wide as the trunk is tall. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_FanPalm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7a44. Trunk grey-brown #84786a. Skirt of dead fronds dull tan #9a8a68.",
+   "aspect": "9:16",
+   "prompt": "A very tall old Mexican fan palm at a desert resort, 26 m tall and 5 m wide. An extremely thin straight grey-brown trunk, one thirtieth of the palm's height wide, with a small flare at the foot. At the very top a small round head of twenty stiff fronds, tiny against the height of the palm, and just under it a short neat skirt of dead tan fronds hugging the trunk, one smooth solid mass. Each frond is one solid chunky folded fan, like a thick pleated paper fan with a few deep soft pleats and a blunt scalloped edge. Paint each frond as a thick solid three-dimensional form: no thin strips, no fine leaflets, no fibres, no fine detail, no thin lines, no wisps. No feather fronds, no fruit. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_FanPalm_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7a44. Trunk grey-brown #84786a. Skirt of dead fronds dull tan #9a8a68.",
+   "aspect": "9:16",
+   "prompt": "A Mexican fan palm at a desert resort, 17 m tall and 5 m wide. A thin straight grey-brown trunk, one twenty-fifth of the palm's height wide, with a small flare at the foot. At the top a round head of twenty-five stiff fronds, and under it a neat skirt of dead tan fronds hugging the trunk, one smooth solid mass, one fifth of the palm's height long. Each frond is one solid chunky folded fan, like a thick pleated paper fan with a few deep soft pleats and a blunt scalloped edge. Paint each frond as a thick solid three-dimensional form: no thin strips, no fine leaflets, no fibres, no fine detail, no thin lines, no wisps. No feather fronds, no fruit. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "drafghan": {
+   "spring": {
+    "leaf": "#446a3c",
+    "bark": "#6a5c50"
+   },
+   "summer": {
+    "leaf": "#3f6438",
+    "bark": "#6a5c50"
+   },
+   "autumn": {
+    "leaf": "#3f6438",
+    "bark": "#6a5c50"
+   },
+   "winter": {
+    "leaf": "#3c5e36",
+    "bark": "#6a5c50"
+   }
+  },
+  "draleppo": {
+   "spring": {
+    "leaf": "#527648",
+    "bark": "#7a6a5c"
+   },
+   "summer": {
+    "leaf": "#4c7044",
+    "bark": "#7a6a5c"
+   },
+   "autumn": {
+    "leaf": "#4c7044",
+    "bark": "#7a6a5c"
+   },
+   "winter": {
+    "leaf": "#486a42",
+    "bark": "#7a6a5c"
+   }
+  },
+  "drwillow": {
+   "spring": {
+    "leaf": "#76964e",
+    "bark": "#6a6054"
+   },
+   "summer": {
+    "leaf": "#6a8a48",
+    "bark": "#6a6054"
+   },
+   "autumn": {
+    "leaf": "#7e8248",
+    "bark": "#6a6054"
+   },
+   "winter": {
+    "leaf": "#6a7a4c",
+    "bark": "#6a6054"
+   }
+  },
+  "drolive": {
+   "spring": {
+    "leaf": "#7e8e6e",
+    "bark": "#7a7268"
+   },
+   "summer": {
+    "leaf": "#7a8a6a",
+    "bark": "#7a7268"
+   },
+   "autumn": {
+    "leaf": "#7a8a6a",
+    "bark": "#7a7268"
+   },
+   "winter": {
+    "leaf": "#768468",
+    "bark": "#7a7268"
+   }
+  },
+  "drdate": {
+   "spring": {
+    "leaf": "#607e52",
+    "bark": "#8a7860"
+   },
+   "summer": {
+    "leaf": "#5c7a50",
+    "bark": "#8a7860"
+   },
+   "autumn": {
+    "leaf": "#5c7a50",
+    "bark": "#8a7860"
+   },
+   "winter": {
+    "leaf": "#5a744e",
+    "bark": "#8a7860"
+   }
+  },
+  "drfan": {
+   "spring": {
+    "leaf": "#547e46",
+    "bark": "#84786a"
+   },
+   "summer": {
+    "leaf": "#4f7a44",
+    "bark": "#84786a"
+   },
+   "autumn": {
+    "leaf": "#4f7a44",
+    "bark": "#84786a"
+   },
+   "winter": {
+    "leaf": "#4c7442",
+    "bark": "#84786a"
+   }
+  }
+ }
+}

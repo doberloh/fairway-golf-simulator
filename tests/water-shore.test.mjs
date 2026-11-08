@@ -16,7 +16,7 @@ test('a pond may reach into play, and the carry stays a golf shot', () => {
  // carry is a broken hole, not a design.
  let splits = 0, holes = 0, longest = 0;
  for (const seed of ['A', 'B', 'C', 'D', 'E', 'F']) {
-  const w = buildWorld({seed, biome: 'puget', holes: 9, water: 100, rivers: 1, creeks: 2});
+  const w = buildWorld({seed, biome: 'pacnw', holes: 9, water: 100, rivers: 1, creeks: 2});
   for (const h of w.holes) {
    holes++;
    let run = null, best = 0;
@@ -43,7 +43,7 @@ test('a fairway stops behind semi-rough where it meets water', () => {
  // Enough seeds that the band being measured actually turns up. The invariant
  // under test is `fairwayTouching === 0`, which more courses only strengthen.
  for (const seed of ['A', 'B', 'C', 'D', 'E', 'F']) {
-  const w = buildWorld({seed, biome: 'puget', holes: 9, water: 100, rivers: 1, creeks: 2});
+  const w = buildWorld({seed, biome: 'pacnw', holes: 9, water: 100, rivers: 1, creeks: 2});
   for (const h of w.holes) for (let z = 10; z < h.length - 10; z += 3) {
    const half = h.width(z);
    for (let x = -half; x <= half; x += 2) {
@@ -67,7 +67,7 @@ test('the band is switched off by a zero semi-rough setting, not floored', () =>
  // Only the band is asserted: a green's fringe collar and a tee apron are both
  // reported as semi whatever this setting says, so a blanket "no semi anywhere"
  // check fails on ground that has nothing to do with water.
- const w = buildWorld({seed: 'A', biome: 'puget', holes: 9, water: 100, semiRough: 0});
+ const w = buildWorld({seed: 'A', biome: 'pacnw', holes: 9, water: 100, semiRough: 0});
  let besideWater = 0;
  for (const h of w.holes) for (let z = 10; z < h.length - 10; z += 3) {
   const half = h.width(z);
@@ -87,7 +87,7 @@ test('the band sits outside the painted shore, and scales with the setting', () 
  // running to the shore. It is measured from the shore's outer stop now, and the
  // visible width is the hole's own semi-rough at every setting.
  for (const semiRough of [2, 6, 10, 15]) {
-  const w = buildWorld({seed: 'A', biome: 'puget', holes: 9, water: 100, semiRough});
+  const w = buildWorld({seed: 'A', biome: 'pacnw', holes: 9, water: 100, semiRough});
   const reach = shoreBands(10, true, 16).outer + semiRough;
   let widest = 0;
   for (const h of w.holes) for (const p of h.ponds) for (const dir of [-1, 1]) {

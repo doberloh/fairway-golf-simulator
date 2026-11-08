@@ -9,9 +9,16 @@ import {validateDoc} from '../src/course-doc.js';
 import {withSpecies, withSizes} from '../src/builder/tree-plan.js';
 import {changeMark, sameMark} from '../src/builder/game-look.js';
 import {biomeOf} from '../src/biomes.js';
+
+// Desert Palms, which these tests were written on, left for Desert Resort on 7 November 2026.
+// Its planting is kept here, on Desert Resort's record, so the species machinery is still
+// tested on a palm desert with the numbers it was written for.
+const desertPalms = {...biomeOf('dresort'),
+ plants: [['fanpalm', .2], ['datepalm', .12], ['oleander', .12], ['bougainvillea', .06], ['creosote', .2], ['brittlebush', .08], ['desertwillow', .06], ['tamarisk', .06], ['smoketree', .05], ['aleppopine', .03], ['agave', .02]],
+ stands: {...biomeOf('dresort').stands, plants: [['fanpalm', .4], ['datepalm', .3], ['tamarisk', .3]]}};
 import {tallHeight} from '../src/species.js';
 
-const bio = biomeOf('palms'), at = (plan, i, role = 2, h = 9, stored = undefined) => treeAt(bio, plan, false, stored, role, h, 3, .3, i * .7 - 900, i * .3 + 40);
+const bio = desertPalms, at = (plan, i, role = 2, h = 9, stored = undefined) => treeAt(bio, plan, false, stored, role, h, 3, .3, i * .7 - 900, i * .3 + 40);
 
 test('with no plan a surveyed tree is what it was', () => {
  const t = at(null, 5);

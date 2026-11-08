@@ -7,7 +7,7 @@ import {makeGroundGrid, makeGroundGridSteps} from '../src/terrain-grid.js';
 // comes out. These are the tests that would catch a yield landing mid-row, or a
 // loop reordered while it was being banded.
 
-const SETTINGS = {holes: 9, biome: 'puget', seed: 'stepped', trees: 120};
+const SETTINGS = {holes: 9, biome: 'pacnw', seed: 'stepped', trees: 120};
 
 test('draining the steps gives the same world as calling it straight', () => {
  const direct = generateWorld(SETTINGS);

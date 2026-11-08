@@ -7,8 +7,8 @@
 // `landscapeMap(doc, {built, chosen, onPick})`: the USA, every landscape a
 // shape, the built ones (the keys a player can pick) solid and clickable,
 // the rest dimmed and named "coming"; hovering or focusing one names it
-// under the map, a click (or Enter) picks it. Scottish Links, outside the
-// map, is a button beside it. Keyboard and phone players have the landscape
+// under the map, a click (or Enter) picks it. A landscape outside the
+// map would be a button beside it (Scottish Links was, until 8 November 2026). Keyboard and phone players have the landscape
 // list it sits over (the studio's pictures, Endless's cards): the map is a
 // second way in, never the only one.
 import {US_SHAPES} from './us-map-data.js';

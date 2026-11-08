@@ -1,0 +1,136 @@
+{
+ "name": "deserttarget",
+ "note": "The Desert Target pack on Meshy, the sixth of the US golf courses' landscapes (7 November 2026): Troon North, We-Ko-Pa. Saguaro (four, the owner asked for two more), palo verde and velvet mesquite; the mesquite is shared with Desert Resort. Form from the owner's Troon North photographs and the reference photographs of We-Ko-Pa and the Phoenician. Sizes PLACED. A saguaro has no leaves to find, so its far version is the cactus style, columns. `seasons` are PLACED: the palo verde's spring is its yellow bloom, drawn dull because the game's light lifts it. Shipped in vendor/blender-meshy_deserttarget as DtSaguaro, DtPaloVerde, DtMesquite, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_Saguaro_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "cactus",
+   "colour": "Body dull grey-green #5c7a54.",
+   "aspect": "9:16",
+   "prompt": "A tall old saguaro cactus in the Sonoran desert, 12 m tall and 4 m wide. One thick straight column, rounded at the top, one eighth of its height wide, with three arms that leave it at different heights, curve out sideways and then turn straight up, each with a rounded end and each a different length. The cactus is one smooth solid form with rounded ends and deep soft vertical ribs, wide and shallow, running its whole length. No spines, no needles, no thin lines, no fine detail, no flowers, no fruit, no leaves. Whole healthy cactus, no broken top. Stylised cartoon game asset, matte hand-painted colour. Single cactus alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Saguaro_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "cactus",
+   "colour": "Body dull grey-green #5c7a54.",
+   "aspect": "9:16",
+   "prompt": "A younger saguaro cactus in the Sonoran desert, 8 m tall and 2.5 m wide. One thick straight column, rounded at the top, one seventh of its height wide, with a single short arm leaving it halfway up, curving out and then turning straight up with a rounded end. The cactus is one smooth solid form with rounded ends and deep soft vertical ribs, wide and shallow, running its whole length. No spines, no needles, no thin lines, no fine detail, no flowers, no fruit, no leaves. Whole healthy cactus, no broken top. Stylised cartoon game asset, matte hand-painted colour. Single cactus alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Saguaro_3",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "cactus",
+   "colour": "Body dull grey-green #5c7a54.",
+   "aspect": "9:16",
+   "prompt": "A very old saguaro cactus in the Sonoran desert, 14 m tall and 6 m wide. One thick straight column, rounded at the top, one eighth of its height wide, standing upright, with five arms leaving it at different heights on different sides, each curving out and then turning straight up with a rounded end, every arm a different length and thickness, one short arm high up near the top. The cactus is one smooth solid form with rounded ends and deep soft vertical ribs, wide and shallow, running its whole length. No spines, no needles, no thin lines, no fine detail, no flowers, no fruit, no leaves. Whole healthy cactus, no broken top. Stylised cartoon game asset, matte hand-painted colour. Single cactus alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Saguaro_4",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "cactus",
+   "colour": "Body dull grey-green #5c7a54.",
+   "aspect": "9:16",
+   "prompt": "A young saguaro cactus in the Sonoran desert, 4 m tall and 0.7 m wide, before it has grown any arms. One straight upright column, one sixth of its height wide, the same width from the ground to the top like a thick post, standing firmly on the ground with a wide flat foot, rounded at the top. Not swollen, not pinched, not a cucumber shape. No arms. The cactus is one smooth solid form with rounded ends and deep soft vertical ribs, wide and shallow, running its whole length. No spines, no needles, no thin lines, no fine detail, no flowers, no fruit, no leaves. Whole healthy cactus, no broken top. Stylised cartoon game asset, matte hand-painted colour. Single cactus alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PaloVerde_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull yellow-green #7f9a50. Bark and limbs dull green #8aa060.",
+   "aspect": "3:4",
+   "prompt": "A blue palo verde tree in the Arizona desert beside a golf course, 9 m tall and 8 m wide. Three or four smooth dull green trunks rise from one low point and fork again and again into many rising limbs, all smooth and green, all clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts are small and many, airy and open, making a loose rounded crown with a bumpy outline that the limbs show through. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PaloVerde_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull yellow-green #7f9a50. Bark and limbs dull green #8aa060.",
+   "aspect": "3:4",
+   "prompt": "A palo verde tree in the Arizona desert beside a golf course, 7 m tall and 6 m wide. One short smooth dull green trunk leaning a little, forking low into many rising smooth green limbs, all clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts are small and many, airy and open, making a lopsided loose crown with a bumpy outline that the limbs show through. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Mesquite_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #5a7440. Bark dark brown #5e5046.",
+   "aspect": "3:4",
+   "prompt": "A velvet mesquite tree on an Arizona golf course, 10 m tall and 9 m wide. A dark brown rough trunk that twists as it rises and forks low into several crooked limbs, all clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts are small, soft and open, making an uneven rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The trunk one twelfth of the tree's height wide near the ground, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Mesquite_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #5a7440. Bark dark brown #5e5046.",
+   "aspect": "3:4",
+   "prompt": "A velvet mesquite tree on an Arizona golf course, 7 m tall and 7 m wide. Two or three dark brown crooked trunks rising from one low point and leaning apart, forking into crooked limbs, all clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts are small, soft and open, making a wide uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "dtsaguaro": {
+   "spring": {
+    "leaf": "#6e8c60",
+    "bark": "#6e8c60"
+   },
+   "summer": {
+    "leaf": "#6e8c60",
+    "bark": "#6e8c60"
+   },
+   "autumn": {
+    "leaf": "#6e8c60",
+    "bark": "#6e8c60"
+   },
+   "winter": {
+    "leaf": "#6a885c",
+    "bark": "#6a885c"
+   }
+  },
+  "dtpaloverde": {
+   "spring": {
+    "leaf": "#b0a04c",
+    "bark": "#8aa060"
+   },
+   "summer": {
+    "leaf": "#7f9a50",
+    "bark": "#8aa060"
+   },
+   "autumn": {
+    "leaf": "#7a9050",
+    "bark": "#8aa060"
+   },
+   "winter": {
+    "leaf": "#7a8c54",
+    "bark": "#8aa060"
+   }
+  },
+  "dtmesquite": {
+   "spring": {
+    "leaf": "#6a8446",
+    "bark": "#5e5046"
+   },
+   "summer": {
+    "leaf": "#5a7440",
+    "bark": "#5e5046"
+   },
+   "autumn": {
+    "leaf": "#66703e",
+    "bark": "#5e5046"
+   },
+   "winter": {
+    "leaf": "#5a6a44",
+    "bark": "#5e5046"
+   }
+  }
+ }
+}

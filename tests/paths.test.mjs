@@ -229,7 +229,7 @@ test('a path end does not fold back on itself', () => {
 // once crossed dry-shod (Mountain W-3).
 import {unbridgedWater} from '../src/paths.js';
 test('every path over water is a bridge', () => {
- for (const [biome, seed] of [['rockies', 'W-3'], ['parkland', 'W-1'], ['redwood', 'W-2'], ['puget', 'W-4']]) {
+ for (const [biome, seed] of [['rockies', 'W-3'], ['parkland', 'W-1'], ['redwood', 'W-2'], ['pacnw', 'W-4']]) {
   const w = world({seed, holes: 9, biome, water: 80, lakes: 1, creeks: 2});
   const bad = unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water');
   assert.equal(bad.length, 0, `${biome} ${seed}: ${bad.length} path points on water off a bridge`);
@@ -243,14 +243,14 @@ test('every path over water is a bridge', () => {
 test('cart paths loop back instead of ending, and round their corners', async () => {
  const {pathShape} = await import('../src/paths.js');
  const {world} = await import('./worlds.mjs');
- const clean = [['parkland', 'PA-5'], ['parkland', 'PA-4'], ['puget', 'PA-1'], ['puget', 'PA-2'], ['puget', 'PA-5'], ['links', 'PA-5']];
+ const clean = [['parkland', 'PA-5'], ['parkland', 'PA-4'], ['pacnw', 'PA-1'], ['pacnw', 'PA-2'], ['pacnw', 'PA-5'], ['seaside', 'PA-5']];
  for (const [biome, seed] of clean) {
   const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
   assert.equal(s.looseEnds.length, 0, `${biome} ${seed}: a dead end`);
   assert.equal(s.sharp.length, 0, `${biome} ${seed}: a sharp corner (${Math.round(s.worstTurn)} degrees)`);
  }
  let ends = 0, sharp = 0, pieces = 0;
- for (const [biome, seed] of [['parkland', 'PA-1'], ['parkland', 'PA-3'], ['puget', 'PA-4'], ['rockies', 'PA-1'], ['rockies', 'PA-2'], ['rockies', 'PA-3'], ['rockies', 'PA-4'], ['links', 'PA-1'], ['links', 'PA-2'], ['links', 'PA-3']]) {
+ for (const [biome, seed] of [['parkland', 'PA-1'], ['parkland', 'PA-3'], ['pacnw', 'PA-4'], ['rockies', 'PA-1'], ['rockies', 'PA-2'], ['rockies', 'PA-3'], ['rockies', 'PA-4'], ['seaside', 'PA-1'], ['seaside', 'PA-2'], ['seaside', 'PA-3']]) {
   const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
   ends += s.looseEnds.length; sharp += s.sharp.length; pieces += w.paths.length;
  }

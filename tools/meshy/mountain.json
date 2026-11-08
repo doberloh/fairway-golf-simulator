@@ -1,0 +1,155 @@
+{
+ "name": "mountain",
+ "note": "The Mountain pack on Meshy, the last batch of the US golf courses' landscapes (8 November 2026): Castle Pines, Banff, Edgewood Tahoe. Ponderosa and lodgepole pine, Engelmann spruce, quaking aspen; the Douglas fir is the Pacific Northwest's.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_PonderosaPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles mid green #4f6e3a. Bark cinnamon orange #b0683c.",
+   "aspect": "9:16",
+   "prompt": "A tall old ponderosa pine tree on a Rocky Mountain golf course, 35 m tall and 11 m wide, taller than wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight trunk of cinnamon-orange bark in large flat plates, bare for its lowest half. Long stout limbs reach out and turn up at their ends, carrying the foliage in big rounded clumps toward the tips, to an open, slightly rounded top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PonderosaPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles mid green #4f6e3a. Bark cinnamon orange #b0683c.",
+   "aspect": "9:16",
+   "prompt": "A younger ponderosa pine tree on a Rocky Mountain golf course, 22 m tall and 8 m wide, a narrow open spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight trunk of dark brown bark turning cinnamon, bare for its lowest third. Limbs reach out and up with the foliage in rounded clumps toward their tips, all the way to a pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_LodgepolePine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles yellow green #4e6b3a. Bark grey brown #8a6c4e.",
+   "aspect": "9:16",
+   "prompt": "A tall lodgepole pine tree on a Rocky Mountain golf course, 26 m tall and 5 m wide, very tall and slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A perfectly straight slim grey-brown trunk with thin scaly bark, bare for its lowest half. A short narrow crown of short boughs in its upper half, to a narrow pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one thirtieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_LodgepolePine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles yellow green #4e6b3a. Bark grey brown #8a6c4e.",
+   "aspect": "9:16",
+   "prompt": "A younger lodgepole pine tree on a Rocky Mountain golf course, 18 m tall and 4 m wide, very slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A perfectly straight slim grey-brown trunk, bare for its lowest third. Short boughs from a third of the way up to a narrow pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-eighth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_EngelmannSpruce_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles blue green #3f5e52. Bark grey brown #6e5a4e.",
+   "aspect": "9:16",
+   "prompt": "A tall Engelmann spruce tree on a Rocky Mountain golf course, 32 m tall and 7 m wide, a narrow spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey-brown trunk with thin scaly bark, seen between the boughs. Short boughs that droop a little and lift at their tips, all the way down nearly to the ground, to a sharp narrow top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_EngelmannSpruce_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles blue green #3f5e52. Bark grey brown #6e5a4e.",
+   "aspect": "9:16",
+   "prompt": "A younger Engelmann spruce tree on a Rocky Mountain golf course, 20 m tall and 6 m wide, a narrow spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey-brown trunk, seen between the boughs. Short boughs all the way down nearly to the ground, to a sharp narrow top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "wood": "brown"
+  },
+  {
+   "name": "Blender_QuakingAspen_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #7aa04a. Bark chalk white #e8e4d8.",
+   "aspect": "9:16",
+   "prompt": "A tall quaking aspen tree on a Rocky Mountain golf course, 18 m tall and 7 m wide, tall and slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight slim chalk-white trunk with a few dark knots and marks, bare for its lowest half. Short slender limbs angle upward in the upper half. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a narrow rounded oval crown in the upper half of the tree. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_QuakingAspen_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #7aa04a. Bark chalk white #e8e4d8.",
+   "aspect": "9:16",
+   "prompt": "A younger quaking aspen tree on a Rocky Mountain golf course, 12 m tall and 5 m wide, slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight slim chalk-white trunk with dark marks, bare for its lowest third. Short slender limbs angle upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a narrow oval crown. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "mtponderosa": {
+   "spring": {
+    "leaf": "#4f6e3a",
+    "bark": "#b0683c"
+   },
+   "summer": {
+    "leaf": "#4f6e3a",
+    "bark": "#b0683c"
+   },
+   "autumn": {
+    "leaf": "#4f6e3a",
+    "bark": "#b0683c"
+   },
+   "winter": {
+    "leaf": "#4f6e3a",
+    "bark": "#b0683c"
+   }
+  },
+  "mtlodge": {
+   "spring": {
+    "leaf": "#4e6b3a",
+    "bark": "#8a6c4e"
+   },
+   "summer": {
+    "leaf": "#4e6b3a",
+    "bark": "#8a6c4e"
+   },
+   "autumn": {
+    "leaf": "#4e6b3a",
+    "bark": "#8a6c4e"
+   },
+   "winter": {
+    "leaf": "#4e6b3a",
+    "bark": "#8a6c4e"
+   }
+  },
+  "mtspruce": {
+   "spring": {
+    "leaf": "#3f5e52",
+    "bark": "#6e5a4e"
+   },
+   "summer": {
+    "leaf": "#3f5e52",
+    "bark": "#6e5a4e"
+   },
+   "autumn": {
+    "leaf": "#3f5e52",
+    "bark": "#6e5a4e"
+   },
+   "winter": {
+    "leaf": "#3f5e52",
+    "bark": "#6e5a4e"
+   }
+  },
+  "mtaspen": {
+   "spring": {
+    "leaf": "#9cbc64",
+    "bark": "#e8e4d8"
+   },
+   "summer": {
+    "leaf": "#7aa04a",
+    "bark": "#e8e4d8"
+   },
+   "autumn": {
+    "leaf": "#e0b030",
+    "bark": "#e8e4d8"
+   },
+   "winter": {
+    "leaf": "#7aa04a",
+    "bark": "#e8e4d8"
+   }
+  }
+ }
+}

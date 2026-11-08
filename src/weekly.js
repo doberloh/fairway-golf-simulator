@@ -58,7 +58,9 @@ export const weekKey = (date = new Date(), generator = GENERATOR_VERSION) => `${
 // November 2026 (the owner), so every week the rotation gives it is played on
 // the landscape named instead -- Autumn, the nearest in mood (PLACED; it had
 // stood in for Haunted Hollow out of season since 26 October). The rotation
-// itself is untouched, so no other week moves.
+// itself is untouched, so no other week moves. Every landscape removed since
+// (Classic Parkland's, the Pacific Northwest's and the others' replacements, up
+// to the seven of 8 November 2026) goes the same way, to the one that replaced it.
 export const WEEKLY_ROTATION = {
  nine: ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'haunted'],
  // The US landscapes goal's phase 3 (2 November 2026): a debut a week from
@@ -85,8 +87,22 @@ export const WEEKLY_ROTATION = {
   // Southern Pines (PLACED, the week after).
   {debut: 194, biome: 'southpines'},
   // Lowcountry and Gulf (PLACED, the week after).
-  {debut: 195, biome: 'lowgulf'}],
- retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines', lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf'},
+  {debut: 195, biome: 'lowgulf'},
+  // Florida Palms (PLACED, the week after).
+  {debut: 196, biome: 'flpalms'},
+  // Hawaiian Resort (PLACED, the week after).
+  {debut: 197, biome: 'hiresort'},
+  // Desert Mountain (PLACED, the week after).
+  {debut: 198, biome: 'dmountain'},
+  // Desert Resort (PLACED, the week after).
+  {debut: 199, biome: 'dresort'},
+  // Pacific Northwest (PLACED, the week after).
+  {debut: 200, biome: 'pacnw'},
+  // California Coast (PLACED, the week after).
+  {debut: 201, biome: 'calcoast'},
+  // Seaside Links (PLACED, the week after).
+  {debut: 202, biome: 'seaside'}],
+ retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines', lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf', keys: 'flpalms', flatwoods: 'flpalms', hawaii: 'hiresort', desertresort: 'dresort', palms: 'dresort', puget: 'pacnw', monterey: 'calcoast', socal: 'calcoast', winecountry: 'calcoast', links: 'seaside', oregondunes: 'seaside', lakedunes: 'seaside'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;

@@ -5,7 +5,7 @@ import {blowoutField, blowoutAt, blowoutGate, isBlowout, BLOWOUT_NEAR, BLOWOUT_R
 import {generateWorld} from '../src/course.js';
 import {ownerAtlasSize} from '../src/owner-atlas.js';
 
-// BLOWOUTS (Lakeshore Dunes): paint and lie read one baked field. These tests
+// BLOWOUTS (Lakeshore Dunes until 8 November 2026, now the Sand Hills): paint and lie read one baked field. These tests
 // hold the half that Node can see -- the field, how it is read back, the gate,
 // and the world's lie -- and check the shader asks its questions in the same
 // order (ground.js cannot run here; see TESTING.md).
@@ -42,9 +42,9 @@ test('the gate keeps every blowout off the playing lines', () => {
 
 const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
-test('a Lakeshore Dunes course has open sand in its dune rough, and nowhere it should not', () => {
+test('a Sand Hills course has open sand in its dune rough, and nowhere it should not', () => {
  for (const seed of ['S1', 'S2']) {
-  const w = generateWorld({seed, biome: 'lakedunes', holes: 9, trees: 60, homes: true, ...WATER});
+  const w = generateWorld({seed, biome: 'sandhills', holes: 9, trees: 60, homes: true, ...WATER});
   assert.ok(w.blowouts, 'the field is built');
   let rough = 0, blow = 0;
   for (let x = -w.halfX; x < w.halfX; x += 7) for (let z = -w.halfZ; z < w.halfZ; z += 7) {
@@ -66,7 +66,7 @@ test('a Lakeshore Dunes course has open sand in its dune rough, and nowhere it s
 });
 
 test('no other biome builds a field, so nothing else can change', () => {
- for (const biome of ['links', 'keys', 'heartland']) {
+ for (const biome of ['seaside', 'keys', 'heartland']) {
   const w = generateWorld({seed: 'S1', biome, holes: 9, trees: 0});
   assert.equal(w.blowouts, null, biome);
  }

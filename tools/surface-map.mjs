@@ -8,7 +8,7 @@ import {GROUNDS} from '../src/grounds.js';
 import {BIOMES} from '../src/biomes.js';
 import {writeFileSync} from 'node:fs';
 import {deflateSync} from 'node:zlib';
-const [seed = 'overhaul', n = '18', out = 'map.png', biome = 'links'] = process.argv.slice(2);
+const [seed = 'overhaul', n = '18', out = 'map.png', biome = 'seaside'] = process.argv.slice(2);
 // `--share '{"run":100}'`: the biome's sharedFairways options changed for this
 // map only, to judge a rule before writing it (the far-landscape goal).
 const shareAt = process.argv.indexOf('--share');

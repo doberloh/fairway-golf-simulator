@@ -215,7 +215,7 @@ export default function ({journey, SHOTS}) {
   if (!(await semiCells() > semi0)) throw Error('Extrapolate should lay semi-rough round the fairway');
   // The landscape decides the ground types offered: heather is a links' own.
   if (await page.locator('.cb-kind option[value="heather"]').count()) throw Error('the Midwest should not offer heather');
-  await page.locator('.cb-landscape').selectOption('links');
+  await page.locator('.cb-landscape').selectOption('seaside');
   await page.locator('[data-tool="outline"]').click(); await page.locator('.cb-kind').selectOption('heather');
   for (const [x, z] of [[100, 80], [130, 80], [130, 100], [100, 100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');

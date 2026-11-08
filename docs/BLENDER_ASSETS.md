@@ -157,7 +157,9 @@ text to model was dropped before it ever ran):
    `bench/meshy/<pack>/game-r<round>/` (`tools/blender/meshy_game.py`, no credits):
    wood split from leaf as `bark` and `leaves`, the texture's light and dark baked to
    a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
-   model's `paintLevel`), triangles put in the order the card's vertex cache likes. Far versions are
+   model's `paintLevel`, and `wood: "brown"` for a brown-barked tree whose dark trunk foot would
+   otherwise send it down the green-wood split meant for palo verde and saguaro -- Engelmann spruce 2,
+   8 November 2026), triangles put in the order the card's vertex cache likes. Far versions are
    written in that form already, closed all round because the game draws one side.
    `tools/blender/meshy_parts.py` holds what the two share.
 
@@ -180,6 +182,13 @@ name (*What the game keeps from a model*), so nothing reaches it without `--conv
 `vendor/blender-meshy_redwood` is `game-r2` copied in by hand, models and far versions.
 `cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
 builders as the record. To change a tree, run `--convert` and copy it over.
+
+**Batch one** (7 November 2026), the owner's call to run pictures and models for several
+landscapes together and bring them into the game one at a time: tools/meshy/florida.json
+(coconut and royal palm, shipped in `vendor/blender-meshy_florida` as FlCoconut and FlRoyal),
+hawaiian.json (Cook pine, ironwood, monkeypod), deserttarget.json (four saguaros, palo verde,
+velvet mesquite) and desertres.json (Afghan and Aleppo pines, weeping willow, olive, date palm,
+Mexican fan palm). All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were).
 
 **The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
 `vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new
@@ -214,7 +223,7 @@ foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
 far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
 into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
 and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
-pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers, and `farStyle: fronds` into curved blades from the top of the trunk, for palms.  RESEARCH.md, *AI model generators*.
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers, and `farStyle: fronds` into curved blades from the top of the trunk, for palms (its trunk in ten rings, so a bowed coconut palm stays smooth), and `farStyle: cactus` into a straight column with a bent column for each arm, for a saguaro. When a tree's foot is not wood-coloured -- green bark, a cactus -- `read_tree` splits its colours in two and calls the group at the foot the wood.  RESEARCH.md, *AI model generators*.
 
 The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
 **No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just

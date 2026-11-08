@@ -32,7 +32,8 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  assert.equal(seen.filter(b => b === 'parkland').length, 3);
  // From it, ten weeks running visit the ten landscapes, Autumn twice.
  const after = Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12)));
- assert.equal(new Set(after).size, 8);
+ // (Seven since 8 November 2026: Lakeshore Dunes' and the Links' turns are both Seaside Links'.)
+ assert.equal(new Set(after).size, 7);
  assert.ok(!after.includes('haunted'));
  assert.equal(after.filter(b => b === 'parkland').length, 3);
  // After the last debut (week 191, 30 August 2027) a rotation visits every
@@ -50,11 +51,12 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
 // debut week would have shown.
 test('the tenth landscape joins on its own week and moves no earlier week', () => {
  // (The keys are the landscapes' new ones since 2 November 2026; the rotation
- // is the same landscapes in the same order.)
- const old = w => ['puget', 'sonoran', 'rockies', 'links', 'parkland', 'keys', 'redwood', 'parkland', 'parkland'][((w % 9) + 9) % 9];
+ // is the same landscapes in the same order; since 8 November 2026 Puget Sound's weeks are the Pacific
+ // Northwest's and the Links' Seaside Links'.)
+ const old = w => ['pacnw', 'sonoran', 'rockies', 'seaside', 'parkland', 'flpalms', 'redwood', 'parkland', 'parkland'][((w % 9) + 9) % 9];
  for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
  assert.equal(weekIndex(at('2026-11-09')), 149);
- assert.equal(weeklyBiome(at('2026-11-09')), 'lakedunes');
+ assert.equal(weeklyBiome(at('2026-11-09')), 'seaside');
  assert.equal(weeklyBiome(at('2026-11-08')), old(148), 'the Sunday before is still the old rotation');
  assert.equal(weeklyBiome(at('2026-11-16')), old(149), 'the week after shows what the debut week would have');
  // Then a ten-week cycle, each landscape once, until the next debut

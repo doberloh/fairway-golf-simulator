@@ -85,6 +85,20 @@ export const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mang
  redpine:[20,28,4,6],jackpine:[10,16,3.5,5],tamarack:[12,18,3,4],blackspruce:[6,12,1,1.6],sitkaspruce:[30,45,6,8],shorepine:[8,12,3.5,5],monkeypod:[13,20,12,17],casuarina:[16,26,5,7],cookpine:[28,42,3,4.5],ohia:[7,12,3.5,5],plumeria:[4.5,7,2.5,3.5],
  // Appalachia's and the Northeast parkland's (PLACED within their specs).
  chestnutoak:[18,26,7,10],shortleafpine:[20,28,4,6],sassafras:[8,13,3,4.5],copperbeech:[18,26,9,12],pitchpine:[9,16,4,6],
+ // Hawaiian Resort's (tools/meshy/hawaiian.json; PLACED, from the pack's own sizes).
+ hicookpine:[26,36,3,4],hiironwood:[15,22,4.5,5.5],himonkeypod:[13,18,7,9],
+ // Desert Mountain's (tools/meshy/deserttarget.json; PLACED, from the pack's own sizes).
+ dtsaguaro:[7,14,1.2,2.5],dtpaloverde:[6,9,3,4.5],dtmesquite:[6,10,3.5,5],
+ // Desert Resort's (tools/meshy/desertres.json; PLACED, from the pack's own sizes).
+ drafghan:[14,20,3.5,5],draleppo:[12,17,4,5.5],drwillow:[9,14,4.5,6],drolive:[5,8,2.8,3.8],drdate:[10,20,4,4.5],drfan:[16,26,2.2,2.8],
+ // Pacific Northwest's (tools/meshy/northwest.json; PLACED, from the pack's own sizes).
+ nwfir:[32,45,4,5],nwcedar:[26,38,4,5.5],nwhemlock:[24,36,3.5,4.5],nwmaple:[16,20,5,10],nwalder:[14,20,3,4],
+ // California Coast's (tools/meshy/calcoast.json; PLACED, from the pack's own sizes).
+ cccypress:[11,18,5.5,8],ccmpine:[20,26,5.5,6.5],cctorrey:[14,16,5,6.5],ccliveoak:[11,14,4.5,7],cceuc:[24,32,4.5,6],
+ // Seaside Links's (tools/meshy/seaside.json; PLACED, from the pack's own sizes).
+ slshore:[7,10,2.5,4],
+ // Florida Palms' (tools/meshy/florida.json; PLACED, from the pack's own sizes).
+ flcoconut:[14,22,3,4.5],flroyal:[16,24,3,4.5],
  // Lowcountry and Gulf's (tools/meshy/lowcountry.json; PLACED, from the pack's own sizes:
  // taller and narrower than a lone open-grown tree, on the owner's rule).
  lowliveoak:[20,27,6,8],lowcypress:[24,34,3.5,5],lowsabal:[9,16,2.2,3.2],
@@ -125,7 +139,7 @@ export function tallHeight(bio, kind, a, scale = 1) {
 // here and has no season tints of its own turns orange in autumn, so an evergreen
 // left off is the bug the owner found on Puget Sound (5 November 2026): its cedars
 // turned with the maples. tests/seasons.test.mjs holds every conifer and palm to it.
-export const EVERGREEN = new Set(['lowliveoak','lowsabal','southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
+export const EVERGREEN = new Set(['slshore','cccypress','ccmpine','cctorrey','ccliveoak','cceuc','nwfir','nwcedar','nwhemlock','drwillow','drafghan','draleppo','drolive','drdate','drfan','dtsaguaro','dtpaloverde','dtmesquite','hicookpine','hiironwood','himonkeypod','flcoconut','flroyal','lowliveoak','lowsabal','southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
  'longleafpine','loblollypine','slashpine','liveoak','liveoakmoss','magnolia','waxmyrtle','yaupon','cabbagepalm','sawpalmetto','citrustree',
  'afghanpine','africansumac','pampasgrass','ashejuniper','mountainlaurel','joshuatree','mojaveyucca','fanpalm','datepalm','aleppopine','oleander','soaptreeyucca','sotol','lechuguilla','emoryoak','alligatorjuniper','beavertail',
  'montereycypress','montereypine','coastliveoak','eucalyptus','torreypine','iceplant','coastalsage','chaparral','olivetree','peppertree',

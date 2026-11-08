@@ -10,7 +10,7 @@ const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
  const nx = 201, nz = 201, heights = new Float32Array(nx * nz).fill(100);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}, line: [[-5, -80], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Edit me', landscape: 'puget', halfX: 100, halfZ: 100,
+ return validateDoc({type: 'built', name: 'Edit me', landscape: 'pacnw', halfX: 100, halfZ: 100,
   land: {x0: -100, z0: -100, cell: 1, nx, nz, heights},
   patches: [{x0: -15, z0: 65, cell: .25, nx: 121, nz: 121, heights: new Float32Array(121 * 121).fill(100)}],
   surfaces: {green: [box(-10, 70, 10, 90)], fairway: [box(-12, -60, 12, 60)], semi: [box(-18, -66, 18, 66)], sand: [box(20, 0, 26, 6)], heather: [box(50, -50, 90, 50)]},

@@ -2016,12 +2016,12 @@ const JOURNEYS = [
    await t.step('a region pressed on the map picks its landscape', async () => {
     await t.page.click('#drawer .lmap-land.live[data-land="sonoran"]');
     await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="sonoran"]')?.classList.contains('active')), 'Sonoran chosen', 3 * SLOW);
-    await t.page.click('#drawer .lmap-chip[data-land="links"]');
-    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="links"]')?.classList.contains('active')), 'Scottish Links chosen', 3 * SLOW);
+    await t.page.click('#drawer .lmap-land.live[data-land="seaside"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="seaside"]')?.classList.contains('active')), 'Seaside Links chosen', 3 * SLOW);
    });
    await t.step('a landscape picture pressed moves the map with it', async () => {
-    await t.page.click('#drawer [data-biome="keys"]');
-    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer .lmap-land.on')?.dataset.land === 'keys'), 'the Keys lit on the map', 3 * SLOW);
+    await t.page.click('#drawer [data-biome="flpalms"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer .lmap-land.on')?.dataset.land === 'flpalms'), 'Florida Palms lit on the map', 3 * SLOW);
     // Pictures to look at: the sheet on a desktop and on a phone.
     await t.page.waitForTimeout(1500 * SLOW);
     await t.page.screenshot({path: 'bench/shots/smoke/landscape-map.png'}).catch(() => {});

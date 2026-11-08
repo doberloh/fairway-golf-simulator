@@ -24,10 +24,10 @@ test('the projection puts the USA on the picture, Alaska and Hawaii in their ins
 
 test('a reference course for each landscape finds its landscape on the map', () => {
  const at = {
-  puget: [47.2, -122.57], monterey: [36.57, -121.95], sonoran: [33.64, -111.91], rockies: [43.59, -110.82],
-  parkland: [41.93, -91.66], keys: [24.56, -81.77], lakedunes: [44.5, -86.23],
-  hawaii: [20.65, -156.44], alaska: [61.18, -149.86], lowgulf: [32.61, -80.02], redrock: [34.86, -111.8],
-  palms: [33.72, -116.37], southpines: [39.85, -74.68], sandhills: [41.65, -101.0],
+  pacnw: [47.2, -122.57], calcoast: [36.57, -121.95], sonoran: [33.64, -111.91], rockies: [43.59, -110.82],
+  parkland: [41.93, -91.66], flpalms: [24.56, -81.77], seaside: [43.18, -124.39],
+  hiresort: [20.65, -156.44], alaska: [61.18, -149.86], lowgulf: [32.61, -80.02], redrock: [34.86, -111.8],
+  dresort: [33.72, -116.37], southpines: [39.85, -74.68], sandhills: [41.65, -101.0],
  };
  for (const [k, [lat, lon]] of Object.entries(at)) assert.equal(landscapeAt(US_SHAPES, lat, lon), k, `${k} at ${lat}, ${lon}`);
  // Every landscape's own place is inside its own shape or nearest it.
@@ -42,7 +42,7 @@ test('a reference course for each landscape finds its landscape on the map', () 
 
 test('an overlay wins over the shape under it, and a click off the map is nothing', () => {
  const [x, y] = project(36.57, -121.95);
- assert.equal(landscapeAtPoint(US_SHAPES, x, y), 'monterey');
+ assert.equal(landscapeAtPoint(US_SHAPES, x, y), 'calcoast');
  assert.equal(landscapeAtPoint(US_SHAPES, 5, 5), null);
  const d = shapePath(US_SHAPES[0].rings);
  assert.match(d, /^M[0-9.]+,[0-9.]+L/);

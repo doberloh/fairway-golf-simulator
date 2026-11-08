@@ -2,7 +2,7 @@
 # it as one shape, which loses a thin crown first (RESEARCH.md, *AI model
 # generators*). Run by tools/meshy-run.mjs --far, on the processor:
 #
-#   blender -b -P meshy_far.py -- full.glb out_stem budget [boughs|clumps|tufts|skirts|fronds]
+#   blender -b -P meshy_far.py -- full.glb out_stem budget [boughs|clumps|tufts|skirts|fronds|cactus]
 #
 # writes <out_stem>.glb, <out_stem>.json (triangles and the outline score) and
 # <out_stem>_compare.png (the full model beside the far version).
@@ -13,7 +13,8 @@
 # it is cut into clumps, each a faceted lump its own size (clumps). A crown drawn as
 # soft tufts is cut from its leaves alone, each a rounded mass (tufts). A conifer drawn
 # as solid tiers is found tier by tier, each a scalloped cone (skirts). A palm is cut by
-# direction from the top of its trunk, each frond a curved blade (fronds). Materials are
+# direction from the top of its trunk, each frond a curved blade (fronds). A cactus is
+# a column on its axis, each arm standing out from it a bent column (cactus). Materials are
 # named for the game's roles (`leaves`, `bark`) and colour is vertex paint.
 # The game draws one side of a face, so every shape here is closed and faces out.
 import bpy, json, math, os, sys
@@ -27,6 +28,7 @@ STYLE = args[3] if len(args) > 3 else 'boughs'
 LEVEL = float(args[4]) if len(args) > 4 else .82
 
 TRUNK_RINGS = [0, .02, .07, .3, .6, 1]  # up the trunk, as shares of its height
+FROND_RINGS = [0, .02, .07, .2, .35, .5, .65, .8, .93, 1]  # a palm's, to its hub: a bowed trunk stays smooth
 SIDES = 5
 RIBBON = 9  # triangles a bough, closed underneath
 CAP = 5  # triangles in the cone at a conifer's tip
@@ -35,6 +37,7 @@ TUFT_LIMB = 6  # triangles in the limb to a tuft
 SKIRT = 5  # scallops a tier, each two sides and two faces underneath
 FROND = 21  # triangles a frond: four rows of three, a tip, closed underneath
 FRONDS = 14  # PLACED: about what the palm models show from one side
+CACTUS_ARMS = 5  # at most: a saguaro's column and its largest arms
 # An icosahedron: the fewest triangles that read as round rather than as a diamond.
 PHI = (1 + 5 ** .5) / 2
 TUFT_V = np.array([(-1, PHI, 0), (1, PHI, 0), (-1, -PHI, 0), (1, -PHI, 0), (0, -1, PHI), (0, 1, PHI), (0, -1, -PHI), (0, 1, -PHI), (PHI, 0, -1), (PHI, 0, 1), (-PHI, 0, -1), (-PHI, 0, 1)], float) / math.hypot(1, PHI)
@@ -94,7 +97,7 @@ for p in islands:
     n = min(n, len(p) // 3 or 1)
     pieces += split(p, n) if n > 1 else [p]
 pieces.sort(key=lambda p: -area[p].sum())
-if STYLE in ('clumps', 'tufts', 'skirts', 'fronds'):
+if STYLE in ('clumps', 'tufts', 'skirts', 'fronds', 'cactus'):
     pieces = []
 
 out_v, out_c, out_f, out_m = [], [], [], []
@@ -357,16 +360,85 @@ if STYLE == 'fronds':
         kept += 1
         kept_area += area[part].sum()
 
+if STYLE == 'cactus':
+    # A saguaro has no leaves to find and no trunk apart from its body. Cutting the body
+    # into pieces by position, the first try, tilted each piece its own way: a zig-zag.
+    # So the main column stands straight up from the body's foot -- the measured axis bent
+    # toward the arms -- and each arm is found as the body standing out from it, joined
+    # faces big enough to see: a bend out, then a column up.
+    zs = centre[:, 2]
+    foot_ = zs < lo[2] + H * .2
+    xy0 = np.median(centre[foot_, :2], 0) if foot_.any() else (lo[:2] + hi[:2]) / 2
+    dist = np.linalg.norm(centre[:, :2] - xy0, axis=1)
+    ax_at = lambda z: np.tile(xy0, (len(z), 1))
+    r0 = float(np.percentile(dist[foot_ & (zs > lo[2] + H * .04)], 60)) if foot_.any() else H * .06
+    body_col = np.average(colour, axis=0, weights=area + 1e-9)
+
+    def tube(path, w, sides, side=None):
+        # `side` holds one sideways direction through a bend: a frame turned by the bend's
+        # own direction pinched the arm at its elbow.
+        rows = []
+        for n_, p_ in enumerate(path):
+            a_ = path[min(n_ + 1, len(path) - 1)] - path[max(n_ - 1, 0)]
+            a_ = a_ / (np.linalg.norm(a_) + 1e-9)
+            x_ = side if side is not None else np.cross(a_, up if abs(a_[2]) < .9 else np.array([1., 0, 0]))
+            x_ = x_ / (np.linalg.norm(x_) + 1e-9)
+            y_ = np.cross(a_, x_)
+            shade = .8 + .28 * n_ / max(1, len(path) - 1)
+            rows.append([add(p_ + (x_ * math.cos(i * math.tau / sides) + y_ * math.sin(i * math.tau / sides)) * w, body_col * shade) for i in range(sides)])
+        for n_ in range(len(rows) - 1):
+            for i in range(sides):
+                j = (i + 1) % sides
+                way = (np.array(out_v[rows[n_][i]]) + np.array(out_v[rows[n_][j]])) / 2 - path[n_]
+                face(rows[n_][i], rows[n_][j], rows[n_ + 1][j], way, 1)
+                face(rows[n_][i], rows[n_ + 1][j], rows[n_ + 1][i], way, 1)
+        for ends, row, sign in ((path[-1] - path[-2], rows[-1], .7), (path[0] - path[1], rows[0], .15)):
+            ends = ends / (np.linalg.norm(ends) + 1e-9)
+            cap = add(np.array(out_v[row[0]]) * 0 + (path[-1] if row is rows[-1] else path[0]) + ends * w * sign, body_col * (1.15 if sign > .5 else .75))
+            for i in range(sides):
+                face(row[i], row[(i + 1) % sides], cap, ends, 1)
+
+    near_axis = dist < r0 * 1.3
+    top_z = float(np.percentile(zs[near_axis], 99.5)) if near_axis.any() else hi[2]
+    tube([np.array([*ax_at(np.array([z]))[0], z]) for z in np.linspace(lo[2], top_z - r0 * .7, 5)], r0 * 1.02, 8)
+    kept += 1
+    stand_out = np.where(dist > r0 * 1.5)[0]
+    root[:] = range(len(root))
+    for f in stand_out:
+        a_, b_, c_ = weld[tri[f]]
+        root[find(b_)] = find(a_)
+        root[find(c_)] = find(a_)
+    arms = {}
+    for f in stand_out:
+        arms.setdefault(find(weld[tri[f][0]]), []).append(int(f))
+    for arm in sorted(arms.values(), key=lambda p: -area[p].sum())[:CACTUS_ARMS]:
+        if area[arm].sum() < area.sum() * .02:
+            continue
+        pts = centre[arm]
+        low_ = pts[pts[:, 2] <= np.percentile(pts[:, 2], 8)].mean(0)
+        top_ = pts[pts[:, 2] >= np.percentile(pts[:, 2], 97)].mean(0)
+        upper = pts[pts[:, 2] > low_[2] + (top_[2] - low_[2]) * .4]
+        xy = np.median(upper[:, :2], 0) if len(upper) > 3 else top_[:2]
+        # Only the arm's outer faces stand out, so their spread reads thin: PLACED floor.
+        rr = max(float(np.percentile(np.linalg.norm(upper[:, :2] - xy, axis=1), 70)) if len(upper) > 3 else 0, r0 * .6)
+        base = np.array([*ax_at(np.array([low_[2]]))[0], low_[2]])
+        elbow = np.array([xy[0], xy[1], low_[2] + rr * .6])
+        reach = np.array([xy[0] - base[0], xy[1] - base[1], 0.])
+        tube([base, (base + elbow) / 2 + np.array([0, 0, rr * .2]), elbow, np.array([xy[0], xy[1], (elbow[2] + top_[2]) / 2]), np.array([xy[0], xy[1], top_[2] - rr * .7])], rr, 6, np.cross(reach, up))
+        kept += 1
+        kept_area += area[arm].sum()
+
 # The trunk: a tube of the measured radius, each ring its own colour.
 wood = trunk & red
 low = wood & (centre[:, 2] < lo[2] + H * .12)
 foot = float(np.percentile(dist[low], 70)) if low.any() else H * .02
 rings = []
-for s in TRUNK_RINGS:
+for s in (FROND_RINGS if STYLE == 'fronds' else [] if STYLE == 'cactus' else TRUNK_RINGS):
     z = lo[2] + H * .985 * s
     if STYLE == 'fronds':
-        # A palm's trunk keeps its width right up to the hub.
-        z = lo[2] + (hub_z - lo[2]) * {.3: .4, .6: .93}.get(s, s)
+        # A palm's trunk keeps its width right up to the hub, and its rings are close
+        # enough to follow a coconut palm's bow without a kink.
+        z = lo[2] + (hub_z - lo[2]) * s
     near = wood & (np.abs(centre[:, 2] - z) < H * .06)
     bark = colour[near].mean(0) if near.any() else (colour[wood].mean(0) if wood.any() else np.array([.3, .15, .1]))
     # Straight between the foot and the crown: limbs and flare pulled the measured line about.
@@ -460,6 +532,8 @@ pos, col = np.array(out_v), np.array(out_c)
 parts = []
 for role, name in enumerate(('leaves', 'bark')):
     chosen = np.array([f for f, m in zip(out_f, out_m) if m == role], np.int64)
+    if not len(chosen):
+        continue  # a cactus is all body: no leaves part
     ids, remap = np.unique(chosen, return_inverse=True)
     remap = remap.reshape(-1, 3)
     normal = vertex_normals(pos[ids], remap)
@@ -471,8 +545,12 @@ write_glb(stem + '.glb', parts[::-1])  # bark first, as the shipped models
 
 s = bpy.context.scene
 cx = (lo[:2] + hi[:2]) / 2
-full.location = (-H * .3 - cx[0], -cx[1], 0)
-far.location = (H * .3 - cx[0], -cx[1], 0)
+# Side by side with room for a wide tree: a broad oak or cypress, framed by height
+# alone, ran off the picture and overlapped its far version (batch two, 7 November 2026).
+W = hi[0] - lo[0]
+gap = max(H * .3, W * .58)
+full.location = (-gap - cx[0], -cx[1], 0)
+far.location = (gap - cx[0], -cx[1], 0)
 s.render.engine = 'CYCLES'
 s.cycles.device = 'CPU'
 s.cycles.samples = 32
@@ -490,7 +568,7 @@ cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
 s.collection.objects.link(cam)
 s.camera = cam
 cam.data.type = 'ORTHO'
-cam.data.ortho_scale = H * 1.12
+cam.data.ortho_scale = max(H * 1.12, (2 * gap + W) * 1.06)
 cam.location = (0, -H * 4, lo[2] + H * .5)
 cam.rotation_euler = (math.pi / 2, 0, 0)
 s.render.filepath = stem + '_compare.png'

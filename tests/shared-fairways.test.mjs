@@ -12,7 +12,7 @@ import {world} from './worlds.mjs';
 // Cached (worlds.mjs): five tests read the same eighteen-hole links, and each
 // built its own -- the file was a minute and a half (the testing audit, 31
 // October 2026). Nothing here writes to a cached course.
-const links = seed => world({seed, biome: 'links', holes: 18, trees: 60, homes: true});
+const links = seed => world({seed, biome: 'seaside', holes: 18, trees: 60, homes: true});
 
 test('an 18-hole links shares fairways between holes running side by side', () => {
  let total = 0;
@@ -64,7 +64,7 @@ test('only a biome that asks for it shares fairways or routes side by side', () 
  for (const [key, bio] of Object.entries(BIOMES)) if (regionOf(key) !== 'links') {
   assert.ok(!bio.sharedFairways && !bio.routeParallel && !bio.fairwayScale, `${key} shares`);
  }
- const w = generateWorld({seed: 'overhaul', biome: 'puget', holes: 18, trees: 60, homes: true});
+ const w = generateWorld({seed: 'overhaul', biome: 'pacnw', holes: 18, trees: 60, homes: true});
  assert.equal(w.holes.filter(h => h.sharedFairway).length, 0);
 });
 
@@ -90,11 +90,11 @@ test('a shared strip is fairway in the world, midway between the two holes', () 
 test('sharing is reproducible and leaves a lone hole alone', () => {
  // A second, uncached build against the cached one; this one is written to
  // below, so it is never the cache's.
- const w = generateWorld({seed: 'S1', biome: 'links', holes: 18, trees: 60, homes: true});
+ const w = generateWorld({seed: 'S1', biome: 'seaside', holes: 18, trees: 60, homes: true});
  assert.deepEqual(w.holes.map(h => !!h.sharedFairway), links('S1').holes.map(h => !!h.sharedFairway));
  // A single hole has nobody to share with.
  const h = w.holes[0], before = h.leftWidth(h.length / 2);
- shareFairways([h], BIOMES.links.sharedFairways);
+ shareFairways([h], BIOMES.seaside.sharedFairways);
  assert.equal(h.leftWidth(h.length / 2), before);
 });
 

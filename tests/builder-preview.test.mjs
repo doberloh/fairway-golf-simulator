@@ -22,10 +22,10 @@ test('every tool on every landscape shows models that exist', () => {
 });
 
 test('trees are the landscape\'s own, and a house is a house', () => {
- const s = previewOf({kind: 'tree'}, BIOMES.winecountry);
+ const s = previewOf({kind: 'tree'}, BIOMES.calcoast);
  assert.ok(s.pieces.length >= 2); assert.ok(s.golfer, 'a golfer to measure by');
  assert.ok(s.pieces.every(p => p.size >= 5));
- assert.equal(previewOf({kind: 'house'}, BIOMES.puget).pieces[0].family, 'house');
+ assert.equal(previewOf({kind: 'house'}, BIOMES.pacnw).pieces[0].family, 'house');
 });
 
 test('the cover preview shows the smallest and largest it will paint', () => {
@@ -39,7 +39,7 @@ test('the cover preview shows the smallest and largest it will paint', () => {
 });
 
 test('no tool, no preview', () => {
- assert.equal(previewOf(null, BIOMES.puget), null);
- assert.equal(previewOf({kind: 'navigate'}, BIOMES.puget), null);
- assert.equal(previewOf({kind: 'cover', cover: 'nothing', min: 1, max: 2}, BIOMES.puget), null);
+ assert.equal(previewOf(null, BIOMES.pacnw), null);
+ assert.equal(previewOf({kind: 'navigate'}, BIOMES.pacnw), null);
+ assert.equal(previewOf({kind: 'cover', cover: 'nothing', min: 1, max: 2}, BIOMES.pacnw), null);
 });

@@ -30,7 +30,7 @@ test('a draft keeps the land, the layers, the trees, houses and holes so far, an
  assert.equal(r.osm.said, 'Laid: 2 green'); assert.equal(r.osm.codes[5], 2, 'OpenStreetMap kept, so Refine still works');
  assert.deepEqual(r.trace.hidden, ['sand']); assert.deepEqual(r.trace.homes, d.trace.homes);
  // A draft with no land yet (step 1): its box and sources only.
- const early = await readDraft(await writeDraft({step: 0, name: 'x', landscape: 'links', box: d.box, sources: d.sources}));
+ const early = await readDraft(await writeDraft({step: 0, name: 'x', landscape: 'seaside', box: d.box, sources: d.sources}));
  assert.equal(early.land, null); assert.deepEqual(early.box, d.box);
  assert.equal(r.landEdits, null); assert.deepEqual(r.creeks, []);
 });
@@ -39,7 +39,7 @@ test('since version 2, a draft keeps what the 3D editor sent back: its shaping a
  const nx = 4, nz = 3, N = nx * nz;
  const land = {nx, nz, cell: 1, halfX: 1.5, halfZ: 1, center: {x: 0, y: 0}, unit: {h: 1, v: 1}, method: 'classified', ground: new Float32Array(N).fill(5), rgb: null};
  const landEdits = Float32Array.from({length: N}, (_, k) => k === 5 ? 1.25 : 0), creeks = [{points: [[0, 0, 2, 4, .5, 1, 0, 1, 0], [3, 0, 2, 3.9, .5, 1, 0, 1, 0]]}];
- const r = await readDraft(await writeDraft({step: 5, name: 'x', landscape: 'links', land, landEdits, creeks}));
+ const r = await readDraft(await writeDraft({step: 5, name: 'x', landscape: 'seaside', land, landEdits, creeks}));
  assert.deepEqual([...r.landEdits], [...landEdits]); assert.deepEqual(r.creeks, creeks);
 });
 

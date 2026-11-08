@@ -19,8 +19,11 @@ up to 0.9.4 carry their own ATTRIBUTION.md and notices for what they shipped.
 `vendor/blender-meshy_redwood/` holds 28 tree models, the Redwood Coast's redwoods,
 firs, hemlocks, red cedars and tanoaks, `vendor/blender-meshy_parkland/` 22, Classic
 Parkland's oaks, maples, poplars, elm and spruces, `vendor/blender-meshy_southern/` 16,
-Southern Pines' pines and dogwoods, and `vendor/blender-meshy_lowcountry/` 12, Lowcountry and
-Gulf's live oaks, bald cypresses and sabal palms. The full models were generated on Meshy's paid
+Southern Pines' pines and dogwoods, `vendor/blender-meshy_lowcountry/` 12, Lowcountry and
+Gulf's live oaks, bald cypresses and sabal palms, `vendor/blender-meshy_florida/` 8, Florida
+Palms' coconut and royal palms, `vendor/blender-meshy_hawaiian/` 12, Hawaiian Resort's Cook pines, ironwoods
+and monkeypods, `vendor/blender-meshy_deserttarget/` 16, Desert Mountain's (Desert Target until 7 November) saguaros, palo verde and
+mesquite, and `vendor/blender-meshy_desertres/` 24, Desert Resort's pines, willows, olives and palms, `vendor/blender-meshy_northwest/` 20, the Pacific Northwest's Douglas firs, western red cedars, hemlocks, bigleaf maples and red alders, `vendor/blender-meshy_calcoast/` 20, the California Coast's Monterey cypresses and pines, Torrey pines, coast live oaks and eucalyptus, `vendor/blender-meshy_seaside/` 4, Seaside Links' shore pines, and `vendor/blender-meshy_redwood2/` 12, the Redwood Coast's redwoods, young redwoods and tanoaks (7 November 2026). The full models were generated on Meshy's paid
 Pro plan (https://www.meshy.ai), under which the output is private with full
 commercial use, then converted, and the far versions rebuilt from them, by this
 project's own tools (`tools/meshy-run.mjs`, `tools/blender/meshy_*.py`). The pictures they

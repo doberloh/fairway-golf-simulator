@@ -49,8 +49,8 @@ test('a round carries its full settings, unlike a course', () => {
  // A course record deliberately drops play-scope settings so a shared course
  // cannot carry the author's club distances. A round is the opposite: it has to
  // come back under the same yardages and turf it was played on.
- const saved = lib.saveRound(record({settings: {...DEFAULT_COURSE, biome: 'links', holes: 9}}));
- assert.equal(saved.settings.biome, 'links', 'generation settings survive');
+ const saved = lib.saveRound(record({settings: {...DEFAULT_COURSE, biome: 'seaside', holes: 9}}));
+ assert.equal(saved.settings.biome, 'seaside', 'generation settings survive');
  assert.ok('fringe' in saved.settings, 'and so do play-scope settings');
 });
 

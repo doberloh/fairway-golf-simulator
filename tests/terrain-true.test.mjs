@@ -2,7 +2,7 @@
 // terrain is also lifelike to the regions where the courses are built").
 // Each landscape biomes.js TERRAIN names gets its own recipe (landforms.js),
 // and each recipe has to do the thing its research says: the Bluegrass is
-// pocked with sinkholes, Flatwoods is dead flat, the Hill Country steps, the
+// pocked with sinkholes, Florida Palms is dead flat, the Hill Country steps, the
 // Ozarks are cut by hollows, Ponderosa has cinder cones. Measured on the
 // recipes themselves and on generated courses.
 import test from 'node:test';
@@ -20,10 +20,10 @@ const sample = (f, n = 120, span = 1400) => {
 const relief = ys => Math.max(...ys) - Math.min(...ys);
 
 test('each landscape named for its own terrain gets the recipe its research says', () => {
- const want = {hillcountry: 'steps', monterey: 'steps', northwoods: 'glacial',
-  mojave: 'knobs', palms: 'knobs', sierra: 'knobs', sagebrush: 'channels',
-  socal: 'channels', blueridge: 'channels', ponderosa: 'volcanic', hawaii: 'volcanic', southpines: 'sandridges', lowgulf: 'lowland', highplains: 'playas', sandhills: 'dunes',
-  flatwoods: 'lowland', badlands: 'badlands'};
+ const want = {hillcountry: 'steps', calcoast: 'steps', northwoods: 'glacial',
+  mojave: 'knobs', dresort: 'knobs', dmountain: 'knobs', sierra: 'knobs', sagebrush: 'channels',
+  blueridge: 'channels', ponderosa: 'volcanic', southpines: 'sandridges', lowgulf: 'lowland', highplains: 'playas', sandhills: 'dunes',
+  flpalms: 'lowland', badlands: 'badlands'};
  for (const [k, type] of Object.entries(want)) assert.equal(BIOMES[k].landform.type, type, k);
 });
 
@@ -34,7 +34,7 @@ test('no two landscapes have the same ground', () => {
 });
 
 test('every recipe is finite, seeded and repeatable', () => {
- for (const k of ['hillcountry', 'blueridge', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'hawaii', 'southpines', 'flatwoods', 'badlands']) {
+ for (const k of ['hillcountry', 'blueridge', 'northwoods', 'mojave', 'sierra', 'ponderosa', 'dmountain', 'southpines', 'flpalms', 'badlands']) {
   const a = landformOf(BIOMES[k], 'T1'), b = landformOf(BIOMES[k], 'T1');
   for (const [x, z] of [[0, 0], [123.4, -567.8], [-900, 300]]) {
    const y = a.lift(x, z);
@@ -64,8 +64,18 @@ test('the recipes make their shapes: sinkholes, steps, cones, hollows, flats', (
  assert.ok(Math.max(...lifts('ponderosa')) > 20, 'Ponderosa has cinder cones');
  // Channels: hollows cut well below the table.
  assert.ok(Math.min(...lifts('blueridge')) < -15, 'the Blue Ridge is cut by hollows');
- // Lowland: Flatwoods' recipe adds a few metres at most.
- assert.ok(relief(lifts('flatwoods')) < 6, `Flatwoods' recipe stays within a few metres (${relief(lifts('flatwoods')).toFixed(1)})`);
+ // Lowland: Florida Palms' recipe (the Flatwoods', which left on 7 November 2026) adds a few metres at most.
+ assert.ok(relief(lifts('flpalms')) < 6, `Florida Palms' recipe stays within a few metres (${relief(lifts('flpalms')).toFixed(1)})`);
+ // Desert Mountain (the owner, 7 November 2026): the Sonoran's knobs grown into rocky hills --
+ // taller, long ridges, their upper halves piled with `boulders` (the fins of the first
+ // try, ridged noise, the owner turned down the same day).
+ const sonoran = lifts('sonoran'), mountain = lifts('dmountain');
+ const tall = ys => ys.filter(y => y > 12).length / ys.length;
+ assert.ok(Math.max(...mountain) > Math.max(...sonoran) * 1.15, `Desert Mountain stands taller (${Math.max(...mountain).toFixed(0)} m against ${Math.max(...sonoran).toFixed(0)})`);
+ assert.ok(tall(mountain) > tall(sonoran) * 1.5, `and more of it is hill (${(tall(mountain) * 100).toFixed(0)}% against ${(tall(sonoran) * 100).toFixed(0)}%)`);
+ const plain = landformOf({...BIOMES.dmountain, landform: {...BIOMES.dmountain.landform, boulders: 0}}, 'SHAPE');
+ const rough = ys => { let s = 0; for (let i = 1; i < ys.length; i++) s += Math.abs(ys[i] - ys[i - 1]); return s / ys.length; };
+ assert.ok(rough(mountain) > rough(sample(plain.lift)) * 1.1, 'its boulders break the hill tops');
 });
 
 test('a lowland course is flat where a parkland one rolls', () => {
@@ -73,13 +83,13 @@ test('a lowland course is flat where a parkland one rolls', () => {
  // relief at the most. Ponds, bunkers and greens' own shaping add a little.
  const spread = biome => {
   const w = world({holes: 9, biome, seed: 'FLAT-' + biome}), ys = [];
-  for (let x = -w.halfX; x < w.halfX; x += 12) for (let z = -w.halfZ; z < w.halfZ; z += 12) ys.push(w.height(x, z));
+  for (let x = -w.halfX; x < w.halfX; x += 12) for (let z = -w.halfZ; z < w.halfZ; z += 12) if (w.surface(x, z) !== 'water') ys.push(w.height(x, z)); // land only: Florida Palms has the sea along one side
   ys.sort((a, b) => a - b);
   return ys[Math.floor(ys.length * .95)] - ys[Math.floor(ys.length * .05)];
  };
- const flatwoods = spread('flatwoods'), parkland = spread('parkland');
- assert.ok(flatwoods < 6, `Flatwoods spreads ${flatwoods.toFixed(1)} m between its low and high ground`);
- assert.ok(flatwoods < parkland / 2, `Flatwoods (${flatwoods.toFixed(1)} m) is far flatter than Classic Parkland (${parkland.toFixed(1)} m)`);
+ const flat = spread('flpalms'), parkland = spread('parkland');
+ assert.ok(flat < 6, `Florida Palms spreads ${flat.toFixed(1)} m between its low and high ground`);
+ assert.ok(flat < parkland / 2, `Florida Palms (${flat.toFixed(1)} m) is far flatter than Classic Parkland (${parkland.toFixed(1)} m)`);
 });
 
 test('the Lowcountry\'s tidal creeks hold the sea in its marsh, and nothing in play is wet', () => {
@@ -99,21 +109,24 @@ test('the Lowcountry\'s tidal creeks hold the sea in its marsh, and nothing in p
  assert.ok(marsh / cells > .08, `a marsh lies at the tide line (${(marsh / cells * 100).toFixed(1)}%)`);
 });
 
-test('Monterey\'s holes play along the sea, and nothing in play is wet', () => {
+test('the California Coast\'s holes play along the sea, and nothing in play is wet', () => {
  // The owner, 3 November 2026: "Make sure the holes can genuinely play along
  // the coast." course.js `coastAt` (generator 79): the shore follows the
- // eastern holes and never comes within 5 m of a corridor.
- const w = world({holes: 18, biome: 'monterey', seed: 'MT-b'}), wl = w.waterLevel ?? 0, along = new Set();
+ // eastern holes and never comes within 5 m of a corridor. Monterey left on 8 November 2026; the
+ // California Coast's cliff (`cliffCoast`) stands 46 m outside the eastern holes and drops 11 m to
+ // the sea, so the sea is looked for 80 m out: 2-4 holes of 18 over seeds MT-b, FAIRWAY, A and B
+ // (Monterey had 3 or more within 50 m).
+ const w = world({holes: 18, biome: 'calcoast', seed: 'MT-b'}), wl = w.waterLevel ?? 0, along = new Set();
  let wet = 0;
  for (let x = -w.halfX; x < w.halfX; x += 5) for (let z = -w.halfZ; z < w.halfZ; z += 5) {
   const s = w.surface(x, z);
   if (['fairway', 'green', 'tee', 'fringe', 'semi'].includes(s) && w.height(x, z) < wl + .3) wet++;
   if (s !== 'fairway' && s !== 'green') continue;
-  for (const [dx, dz] of [[50, 0], [35, 35], [35, -35], [0, 50], [0, -50], [25, 0]])
+  for (const [dx, dz] of [[80, 0], [56, 56], [56, -56], [0, 80], [0, -80], [40, 0]])
    if (w.height(x + dx, z + dz) < wl - .5 && w.surface(x + dx, z + dz) === 'water') { along.add(w.nearest(x, z).h.hole); break; }
  }
  assert.equal(wet, 0, 'tee, fairway, green or semi under the sea');
- assert.ok(along.size >= 3, `only ${along.size} holes of 18 have the sea within 50 m of their fairway or green`);
+ assert.ok(along.size >= 3, `only ${along.size} holes of 18 have the sea within 80 m of their fairway or green`);
 });
 
 test('the High Plains are a flat table with dry playas; the Sand Hills stand taller than a links', () => {
@@ -124,7 +137,8 @@ test('the High Plains are a flat table with dry playas; the Sand Hills stand tal
  assert.ok(relief(lifts) < 6, `the table and its pans stay within a few metres (${relief(lifts).toFixed(1)})`);
  assert.ok(pans > 100, `playas with bare floors (${pans} samples)`);
  const dunes = k => relief(sample(landformOf(BIOMES[k], 'SHAPE').lift));
- assert.ok(dunes('sandhills') > 2 * dunes('links'), `the Sand Hills (${dunes('sandhills').toFixed(1)} m) over the Links (${dunes('links').toFixed(1)} m)`);
+ // (Seaside Links' dunes stand 8 m, the old Links' 5: half again, not twice; 8 November 2026.)
+ assert.ok(dunes('sandhills') > 1.5 * dunes('seaside'), `the Sand Hills (${dunes('sandhills').toFixed(1)} m) over Seaside Links (${dunes('seaside').toFixed(1)} m)`);
 });
 
 test('the Badlands are carved: peaks off the prairie, sunk near a hole, the road on the floor', () => {

@@ -2,7 +2,7 @@
 // November 2026; the owner's plan, docs/studies/us-landscapes/PLAN.md, local).
 //
 // The game's landscapes are the regions of the USA -- eighteen regions, each
-// holding one or more landscapes -- plus Scottish Links, outside the map. A
+// holding one or more landscapes (Scottish Links, outside the map, left on 8 November 2026). A
 // landscape's record in biomes.js lays its own entries over its region's
 // (`REGION` there), so it states only what differs.
 //
@@ -22,7 +22,7 @@
 //            reference courses for it (Alaska, Hawaii and Scotland a city) --
 //            the dot on its thumbnail's globe
 //   tropical one green look the year round (seasons.js)
-//   us       on the map of the USA (Scottish Links is not)
+//   us       on the map of the USA (every landscape since Scottish Links left)
 
 export const REGIONS = {
  pnw: 'Pacific Northwest',
@@ -38,14 +38,13 @@ export const REGIONS = {
  appalachia: 'Appalachians and Ozarks',
  northeast: 'Northeast',
  northwoods: 'North Woods',
- lakeshore: 'Great Lakes Shore',
+ // lakeshore (Great Lakes Shore) left with Lake Dunes, 8 November 2026; its traits in biomes.js stay unused.
  links: 'Links',
  hawaii: 'Hawaii',
  alaska: 'Alaska',
 };
 
 export const LANDSCAPES = {
- puget: {name: 'Puget Sound', region: 'pnw', where: [47.3, -122.6]},
  redwood: {name: 'Redwood Coast', region: 'redwood', where: [38.8, -123.5]},
  cascades: {name: 'Cascades', region: 'mountain', where: [45.7, -121.9]},
  sierra: {name: 'High Sierra', region: 'mountain', where: [39.3, -120.2]},
@@ -55,12 +54,7 @@ export const LANDSCAPES = {
  redrock: {name: 'Red Rock', region: 'highdesert', where: [37.1, -109.5]},
  sonoran: {name: 'Sonoran', region: 'desert', where: [33.6, -111.7]},
  mojave: {name: 'Mojave', region: 'desert', where: [36.4, -114.9]},
- palms: {name: 'Desert Palms', region: 'desert', where: [33.7, -116.3]},
- desertresort: {name: 'Desert Resort', region: 'desert', where: [36.15, -115.2]},
  chihuahuan: {name: 'Chihuahuan', region: 'desert', where: [31.8, -106.3]},
- monterey: {name: 'Monterey', region: 'california', where: [37.0, -122.0]},
- socal: {name: 'SoCal Canyons', region: 'california', where: [34.0, -117.8]},
- winecountry: {name: 'Wine Country', region: 'california', where: [38.4, -121.4]},
  sandhills: {name: 'Sand Hills', region: 'plains', where: [41.9, -100.8]},
  highplains: {name: 'High Plains', region: 'plains', where: [38.1, -97.8]},
  badlands: {name: 'Badlands', region: 'plains', where: [43.8, -102.3]},
@@ -72,19 +66,22 @@ export const LANDSCAPES = {
  // The third of the US golf courses' 15: Harbour Town, Sea Island and Kiawah. Its place
  // is Harbour Town's.
  lowgulf: {name: 'Lowcountry and Gulf', region: 'south', where: [32.13, -80.81]},
- flatwoods: {name: 'Florida Flatwoods', region: 'florida', where: [28.4, -81.5]},
- keys: {name: 'Keys', region: 'florida', where: [25.8, -81.7], tropical: true},
+ // The fourth of the US golf courses' 15: Seminole and TPC Sawgrass. Its place is
+ // Seminole's. Green all year like the Keys (`tropical`), PLACED.
+ hiresort: {name: 'Hawaiian Resort', region: 'hawaii', where: [20.99,-156.65], tropical: true},
+ dmountain: {name: 'Desert Mountain', region: 'desert', where: [33.79,-111.88]},
+ dresort: {name: 'Desert Resort', region: 'desert', where: [36.12,-115.06]},
+ pacnw: {name: 'Pacific Northwest', region: 'pnw', where: [47.62,-122.03]},
+ calcoast: {name: 'California Coast', region: 'california', where: [36.57,-121.95]},
+ seaside: {name: 'Seaside Links', region: 'links', where: [43.18,-124.39]},
+ flpalms: {name: 'Florida Palms', region: 'florida', where: [26.88, -80.06], tropical: true},
  blueridge: {name: 'Blue Ridge', region: 'appalachia', where: [36.1, -81.8]},
  // The first of the US golf courses' 15 (the owner, 5 November 2026): the Golden Age
  // parkland of Winged Foot, Oakmont and Muirfield Village. Its place is Winged Foot's.
  parkland: {name: 'Classic Parkland', region: 'northeast', where: [40.96, -73.76]},
  northwoods: {name: 'North Woods', region: 'northwoods', where: [44.8, -92.3]},
- lakedunes: {name: 'Lake Dunes', region: 'lakeshore', where: [43.8, -86.5]},
- oregondunes: {name: 'Oregon Dunes', region: 'links', where: [44.0, -124.1]},
- hawaii: {name: 'Hawaii', region: 'hawaii', where: [20.8, -156.3], tropical: true},
  alaska: {name: 'Alaska', region: 'alaska', where: [61.2, -149.9]},
  // Outside the map: St Andrews.
- links: {name: 'Scottish Links', region: 'links', where: [56.3, -2.8], us: false},
 };
 for (const l of Object.values(LANDSCAPES)) { l.us ??= true; l.tropical ??= false; }
 
@@ -94,13 +91,16 @@ for (const l of Object.values(LANDSCAPES)) { l.us ??= true; l.tropical ??= false
 // built course files, the profile's landscapes and the weekly rotation.
 // The landscapes Classic Parkland replaced (the owner, 6 November 2026) read as it from
 // then on, through MIGRATIONS 28. Southern Pines' three, the same, through MIGRATIONS 30,
-// and Lowcountry and Gulf's three through MIGRATIONS 32.
-export const OLD_KEYS = {pnw: 'puget', desert: 'sonoran', mountain: 'rockies', midwest: 'parkland',
- island: 'keys', autumn: 'parkland', lakeshore: 'lakedunes', haunted: 'parkland',
+// and Lowcountry and Gulf's three through MIGRATIONS 32. Florida Palms, Hawaiian Resort and
+// Desert Resort replaced five more through MIGRATIONS 37 (the owner, 7 November 2026).
+export const OLD_KEYS = {pnw: 'pacnw', desert: 'sonoran', mountain: 'rockies', midwest: 'parkland',
+ island: 'flpalms', autumn: 'parkland', lakeshore: 'seaside', haunted: 'parkland',
  newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland',
  ozarks: 'parkland', crosstimbers: 'parkland',
  piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines',
- lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf'};
+ lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf',
+ keys: 'flpalms', flatwoods: 'flpalms', hawaii: 'hiresort', desertresort: 'dresort', palms: 'dresort',
+ puget: 'pacnw', monterey: 'calcoast', socal: 'calcoast', winecountry: 'calcoast', links: 'seaside', oregondunes: 'seaside', lakedunes: 'seaside'};
 export const currentKey = key => OLD_KEYS[key] || key;
 
 export const regionOf = key => LANDSCAPES[currentKey(key)]?.region ?? null;

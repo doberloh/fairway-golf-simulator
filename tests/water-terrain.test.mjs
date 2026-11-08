@@ -23,34 +23,15 @@ import {ovalRadius, insideOval, fairwayWidth, NO_INLAND_WATER, BEACH_RISE} from 
 import {world as buildWorld} from './worlds.mjs';
 import {shoreBands} from '../src/streams.js';
 
-test('an island has no inland water at all, whatever the settings say', () => {
- // The ocean IS the water on an island: the land is a narrow strip with sea on
- // every side, so a pond is both redundant and the hardest thing to site. The
- // controls keep their values -- switching a course to island and back returns
- // the water it had -- so this is asserted at the MAXIMUM of every one of them.
- assert.ok(NO_INLAND_WATER.has('keys'));
- for (const seed of ['A', 'B', 'C']) {
-  const w = buildWorld({seed, biome: 'keys', holes: 9,
-   water: 100, lakes: 3, rivers: 2, creeks: 3});
-  assert.equal(w.holes.reduce((n, h) => n + h.ponds.length, 0), 0, 'ponds on an island');
-  assert.equal((w.largeLakes || []).length, 0, 'lakes on an island');
-  assert.equal(w.streams.streams.length, 0, 'channels on an island');
-  // And it is still surrounded by water, which is the point of the biome.
-  let wet = 0, total = 0;
-  for (let x = -w.halfX; x < w.halfX; x += 30) for (let z = -w.halfZ; z < w.halfZ; z += 30) {
-   total++;
-   if (w.surface(x, z) === 'water') wet++;
-  }
-  assert.ok(wet / total > .35, `only ${(wet / total * 100).toFixed(0)}% water around an island`);
- }
-});
+// (The Keys, the only ring island, left for Florida Palms on 7 November 2026: no landscape builds an
+// island now, so the island-only test that stood here went with it. TODO *The island code has no landscape*.)
 
 test('no watercourse is drawn on the seabed', () => {
  // Links has a coast too, and channels are laid across a span reaching well past
  // the course while the profile only ever trimmed them for the CUT budget. On a
  // coast that put stations out at sea -- 87 to 95% of them on island seeds
  // before islands stopped carrying channels at all.
- const w = buildWorld({seed: 'SEA', biome: 'links', holes: 9, rivers: 2, creeks: 3});
+ const w = buildWorld({seed: 'SEA', biome: 'seaside', holes: 9, rivers: 2, creeks: 3});
  let total = 0, drowned = 0;
  for (const stream of w.streams.streams || []) for (const p of stream.points || []) {
   total++;
@@ -63,7 +44,7 @@ test('a channel is chosen for crossing the course, not for being long', () => {
  // Once runs are trimmed at the shoreline, an attempt lying entirely off the map
  // is untrimmed and therefore longest, so length alone selected it: both channels
  // on a measured links seed came back about a kilometre outside the course.
- const w = buildWorld({seed: 'TFLCsss', biome: 'links', holes: 9,
+ const w = buildWorld({seed: 'TFLCsss', biome: 'seaside', holes: 9,
   rivers: 1, creeks: 1, elevation: 75});
  let best = 0;
  for (const stream of w.streams.streams || []) {
@@ -75,7 +56,7 @@ test('a channel is chosen for crossing the course, not for being long', () => {
 
 test('no pond sits in the sea on a coastal course', () => {
  for (const seed of ['A', 'B', 'C', 'D']) {
-  const w = buildWorld({seed, biome: 'links', holes: 9, water: 100});
+  const w = buildWorld({seed, biome: 'seaside', holes: 9, water: 100});
   for (const h of w.holes) for (const p of h.ponds) {
    const c = h.toWorld(p);
    assert.ok(w.land(c.x, c.z) >= 0, 'a pond centre in open water');
@@ -98,7 +79,7 @@ test('the beach claims rough only, never mown turf', () => {
  // hazard is sitting on it. Lateral proxies for "this ought to be fairway" all
  // leak: the stretch between the tee and mowStart is genuinely rough, and a
  // point inside one hole's corridor can be owned by a neighbouring hole.
- for (const biome of ['keys', 'links']) {
+ for (const biome of ['flpalms', 'seaside']) {
   let cells = 0;
   for (const seed of ['A', 'B', 'C']) {
    const w = buildWorld({seed, biome, holes: 9, trees: 0});
@@ -116,15 +97,23 @@ test('the beach claims rough only, never mown turf', () => {
 
 test('and there is still a beach to walk on', () => {
  // The obvious way to fix sand fairways is to stop making sand.
- const w = buildWorld({seed: 'A', biome: 'keys', holes: 9, trees: 0});
+ const w = buildWorld({seed: 'A', biome: 'flpalms', holes: 9, trees: 0});
+ // From the sea inward, from whichever side it lies (Florida Palms has it along one side; the
+ // Keys, an island, had it on all four): each line walks in from past the edge to the first
+ // shore and measures the sand behind it.
  let widths = [];
- for (let z = -w.halfZ + 40; z < w.halfZ; z += 160) {
-  for (let x = -w.halfX; x < w.halfX; x += 4) {
-   if (w.surface(x, z) === 'water' && w.surface(x + 4, z) !== 'water') {
-    let run = 0;
-    for (let d = 4; d < 120; d += 2) { if (w.surface(x + d, z) === 'sand') run += 2; else break; }
-    if (run > 0) widths.push(run);
-    break;
+ const at = (u, v, alongX) => alongX ? w.surface(u, v) : w.surface(v, u);
+ for (const alongX of [true, false]) for (const dir of [1, -1]) {
+  const half = alongX ? w.halfX : w.halfZ, across = alongX ? w.halfZ : w.halfX;
+  for (let v = -across + 40; v < across; v += 160) {
+   for (let s = -half - 400; s < half + 400; s += 4) {
+    const u = s * dir;
+    if (at(u, v, alongX) === 'water' && at(u + 4 * dir, v, alongX) !== 'water') {
+     let run = 0;
+     for (let d = 4; d < 120; d += 2) { if (at(u + d * dir, v, alongX) === 'sand') run += 2; else break; }
+     if (run > 0) widths.push(run);
+     break;
+    }
    }
   }
  }

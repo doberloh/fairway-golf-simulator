@@ -1,0 +1,190 @@
+{
+ "name": "calcoast",
+ "note": "The California Coast pack on Meshy, batch two of the US golf courses' landscapes (7 November 2026): Pebble Beach, Riviera, Torrey Pines. Monterey cypress, Monterey pine, Torrey pine, coast live oak and eucalyptus. Form from the owner's Spyglass Hill and Torrey Pines photographs: tall open Monterey pines with flat tops, broad irregular Torrey pines. Sizes PLACED. The Monterey cypress is drawn upright and broad, not the wind-sculpted lone cypress, on the owner's rule against wind-swept trees; its broad flat top is its shape, so it stays about as wide as tall. `seasons` are PLACED. Shipped in vendor/blender-meshy_calcoast as CcMontereyCypress, CcMontereyPine, CcTorreyPine, CcCoastLiveOak, CcEucalyptus, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_MontereyCypress_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark dull green #2f4a36. Bark grey-brown #6a6058.",
+   "aspect": "1:1",
+   "prompt": "An old Monterey cypress tree on a California coast golf course, 18 m tall and 16 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A thick grey-brown trunk dividing low into four heavy limbs of clearly different lengths, rising and spreading at different angles, clearly visible, so the tree is irregular and not symmetrical. Each limb carries a few broad flat solid tufts of foliage, soft and chunky, with a lightly tufted scalloped edge, the tufts of different sizes at uneven heights, some low and wide, some high and small, wider on one side of the crown than the other, with sky and limbs seen between them. A broad, irregular, flat-topped crown with an uneven outline. Not symmetrical, no mirror image, no neat stacked tiers, no round dome. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MontereyCypress_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark dull green #2f4a36. Bark grey-brown #6a6058.",
+   "aspect": "1:1",
+   "prompt": "A younger Monterey cypress tree on a California coast golf course, 14 m tall and 11 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A grey-brown trunk dividing at a third of its height into a few heavy rising limbs, clearly visible. Each limb carries one broad flat solid tuft of foliage with a lightly tufted scalloped edge, making a rounded crown with a flattish top and sky between the tufts. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MontereyPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull green #3a5a3c. Bark dark grey-brown #4e443c.",
+   "aspect": "9:16",
+   "prompt": "A tall Monterey pine tree on a California coast golf course, 26 m tall and 13 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A long straight dark grey-brown trunk with deep furrowed bark, bare for its lowest half. Above that several thick limbs rise and fork into an open crown with a flattish top. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a loose open head with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MontereyPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull green #3a5a3c. Bark dark grey-brown #4e443c.",
+   "aspect": "9:16",
+   "prompt": "A Monterey pine tree on a California coast golf course, 20 m tall and 11 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight dark grey-brown trunk, bare for its lowest third, with rising limbs at different heights. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make an open uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_TorreyPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull grey-green #4a6248. Bark grey-brown #5e544a.",
+   "aspect": "1:1",
+   "prompt": "An old Torrey pine tree on a California coast golf course, 16 m tall and 13 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A grey-brown trunk dividing at a third of its height into several long crooked limbs that rise and spread, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts stand well apart at the ends of the limbs, making a broad open irregular crown. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_TorreyPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dull grey-green #4a6248. Bark grey-brown #5e544a.",
+   "aspect": "3:4",
+   "prompt": "A younger Torrey pine tree on a California coast golf course, 14 m tall and 10 m wide, taller than wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A nearly straight grey-brown trunk with only the slightest natural bend, no S-curve, no twist, dividing at half its height into a few long limbs that rise steeply upward, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts are tall, rounded and full, deeper than they are wide, set close enough to make one loose rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. No flat pads, no flat-topped layers, no horizontal plates of foliage, not a bonsai, not a cloud-pruned tree. A slender trunk, one fourteenth of the tree's height wide near the ground, narrowing gently upward, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_CoastLiveOak_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark dull green #3a5434. Bark dark grey #4a4642.",
+   "aspect": "1:1",
+   "prompt": "An old coast live oak tree on a California golf course, 14 m tall and 14 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A short thick dark grey trunk dividing low into several long crooked limbs that rise and spread, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a broad rounded dome with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_CoastLiveOak_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark dull green #3a5434. Bark dark grey #4a4642.",
+   "aspect": "3:4",
+   "prompt": "A coast live oak tree on a California golf course, 11 m tall and 9 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A dark grey trunk dividing at a third of its height into a few crooked rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one tenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to crooked limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Eucalyptus_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull blue-green #5a7462. Bark pale cream-grey with tan patches #b0a690.",
+   "aspect": "9:16",
+   "prompt": "A tall blue gum eucalyptus tree on a California golf course, 32 m tall and 12 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A tall straight smooth pale cream-grey trunk with tan patches where bark has peeled, bare for its lowest half, forking high into a few long rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a tall open uneven crown with a bumpy outline and sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to long limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Eucalyptus_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull blue-green #5a7462. Bark pale cream-grey with tan patches #b0a690.",
+   "aspect": "9:16",
+   "prompt": "A blue gum eucalyptus tree in a windbreak row on a California golf course, 24 m tall and 9 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight smooth pale cream-grey trunk with tan patches, bare for its lowest third, with long rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a narrow open crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to long limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "cccypress": {
+   "spring": {
+    "leaf": "#2f4a36",
+    "bark": "#6a6058"
+   },
+   "summer": {
+    "leaf": "#2f4a36",
+    "bark": "#6a6058"
+   },
+   "autumn": {
+    "leaf": "#2f4a36",
+    "bark": "#6a6058"
+   },
+   "winter": {
+    "leaf": "#2f4a36",
+    "bark": "#6a6058"
+   }
+  },
+  "ccmpine": {
+   "spring": {
+    "leaf": "#3a5a3c",
+    "bark": "#4e443c"
+   },
+   "summer": {
+    "leaf": "#3a5a3c",
+    "bark": "#4e443c"
+   },
+   "autumn": {
+    "leaf": "#3a5a3c",
+    "bark": "#4e443c"
+   },
+   "winter": {
+    "leaf": "#3a5a3c",
+    "bark": "#4e443c"
+   }
+  },
+  "cctorrey": {
+   "spring": {
+    "leaf": "#4a6248",
+    "bark": "#5e544a"
+   },
+   "summer": {
+    "leaf": "#4a6248",
+    "bark": "#5e544a"
+   },
+   "autumn": {
+    "leaf": "#4a6248",
+    "bark": "#5e544a"
+   },
+   "winter": {
+    "leaf": "#4a6248",
+    "bark": "#5e544a"
+   }
+  },
+  "ccliveoak": {
+   "spring": {
+    "leaf": "#46623c",
+    "bark": "#4a4642"
+   },
+   "summer": {
+    "leaf": "#3a5434",
+    "bark": "#4a4642"
+   },
+   "autumn": {
+    "leaf": "#3a5434",
+    "bark": "#4a4642"
+   },
+   "winter": {
+    "leaf": "#3a5434",
+    "bark": "#4a4642"
+   }
+  },
+  "cceuc": {
+   "spring": {
+    "leaf": "#5a7462",
+    "bark": "#b0a690"
+   },
+   "summer": {
+    "leaf": "#5a7462",
+    "bark": "#b0a690"
+   },
+   "autumn": {
+    "leaf": "#5a7462",
+    "bark": "#b0a690"
+   },
+   "winter": {
+    "leaf": "#5a7462",
+    "bark": "#b0a690"
+   }
+  }
+ }
+}

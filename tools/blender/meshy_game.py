@@ -30,6 +30,8 @@ for role, (name, faces) in enumerate((('leaves', np.where(~tree.wood)[0]), ('bar
                 ids[v] = len(ids)
     remap = np.array([[ids[v] for v in f] for f in source], np.int64).reshape(-1, 3)
     count = len(ids)
+    if not count:
+        continue  # a cactus is all body: no leaves part
     pos, weight, colour = np.zeros((count, 3)), np.zeros(count), np.zeros((count, 3))
     corners = tree.tri[faces].ravel()
     pos[remap.ravel()] = tree.verts[corners]

@@ -39,7 +39,7 @@ test('a mark moves alone: its set and order stay', () => {
 function doc() {
  const nx = 201, heights = new Float32Array(nx * nx).fill(100);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}, {x: -5, z: -60, set: 'front'}], green: {x: 0, z: 80}, line: [[-5, -80], [10, 0], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Marks', landscape: 'puget', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz: nx, heights}, patches: [], surfaces: {}, water: [], holes, trees: new Float32Array(0), treeKinds: []});
+ return validateDoc({type: 'built', name: 'Marks', landscape: 'pacnw', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz: nx, heights}, patches: [], surfaces: {}, water: [], holes, trees: new Float32Array(0), treeKinds: []});
 }
 
 test('in the 3D editor: each mark drags, the line follows, one undo a drag', () => {

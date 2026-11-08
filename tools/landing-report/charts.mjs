@@ -70,7 +70,7 @@ const save = (name, svg) => { fs.writeFileSync(`${OUT}/${name}.svg`, svg); conso
   notes: [{x: rb.end.z / YARD, y: .12, text: 'finishes', color: BEFORE, anchor: 'middle'}, {x: ra.end.z / YARD, y: .12, text: 'finishes', color: AFTER, anchor: 'middle'}]}));
 }
 // 3 and 4 use the game's own course.
-const w = generateWorld({...DEFAULT_COURSE, biome: 'puget', seed: 'REPORT1', holes: 9, wind: 0});
+const w = generateWorld({...DEFAULT_COURSE, biome: 'pacnw', seed: 'REPORT1', holes: 9, wind: 0});
 // 3. The bunker shot from the clip: position along the line of play over time.
 {
  const h = w.holes[1], origin = {x: -126.46, z: 159.64}, aim = 95.16, rad = aim / DEG, course = Object.create(h);
