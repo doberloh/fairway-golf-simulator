@@ -1899,3 +1899,17 @@ set, 41 of 41 journeys (39 on the full run, the two whose harness was stale afte
 rerun) on the build before the bougainvillea's colour change, which is a colour only; the packager's
 verification of every zip. **Not run:** a graphics profile. **Not played by a person** in this form:
 the fifteen landscapes, the routed courses and the night fix were seen only in captures.
+
+## Addendum, 8 November 2026: v0.9.9
+
+**v0.9.9** is a hotfix published at the owner's request ("push a hotfix release version of the
+game to github, and the live website once that is fixed"), as "Fairway 0.9.9 (beta)", tag
+`v0.9.9`, not a pre-release, the same six files, from the merge of `green-mowing-hotfix` into
+`main`, notes in `docs/releases/v0.9.9.md`. One change, drawing only: on a built course a green's
+mowing reaches its traced edge and a tee is mown (ground.js; PROJECT_HANDOFF, *A BUILT COURSE'S
+MOWING READS THE BUILT EDGES*). **Every version number is 0.9.8's** (generator 102, schema 47,
+built 3, profile 3: nothing a course or a save holds changed); **the package version is 0.9.9**, so
+0.9.8's friend-challenge codes do not play on it (said in the notes). Sizes as 0.9.8 to within a few
+hundred bytes. **Checked:** the full tests (1,489, none failing), the fingerprints (unchanged), the
+full smoke set on this build, the fix seen in the game on four bench courses. **Not played by a
+person.**

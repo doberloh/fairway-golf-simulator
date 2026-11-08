@@ -303,6 +303,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The ground shader is a chain of `.replace()` anchors; every link is load-bearing, and `tests/ground-shader-structure.test.mjs` checks it. Never script a shader edit whose replacement you have not printed. [THE GROUND SHADER IS A CHAIN]
 - No backticks inside ground.js shader comments: the shader is a JS template literal. [NO BACKTICKS]
 - A uniform can be fully plumbed and still dead; keep cue uniforms on the wiring test. [A UNIFORM CAN BE FULLY PLUMBED]
+- On a built course, anything in ground.js after the `BUILT_COURSE` block that reads a hole row's shapes (greenD, the tee pad) must read the baked field instead. [A BUILT COURSE'S MOWING READS THE BUILT EDGES]
 - Live floodlamps are room in every lit shader: past the card's budget the lit ground draws as nothing (floodlights.js `lampBudget`, at most 96). [A LIVE LAMP IS ROOM IN EVERY LIT SHADER]
 - The toon ramp flattens lighting at midday; a shape cue must change colour, not the lighting normal. [THE TOON RAMP]
 - textures.js patches three's ramp and tone-mapping chunks at import (coloured ramp, `GRADE`). [THE RAMP IS COLOURED]
