@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=27;
+export const SCHEMA_VERSION=47;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -479,7 +479,61 @@ export const SCHEMA_VERSION=27;
 //     Moved the Redwood Coast.
 // 89: a ring of stems no longer counts against the open scatter's target, which
 //     left the Redwood Coast with half its open trees. Moved the Redwood Coast.
-export const GENERATOR_VERSION=89;
+// 90: New England, the Old Northeast, the Heartland, the Bluegrass, the Ozarks and the
+//     Cross Timbers leave the game for Classic Parkland (the owner, 6 November 2026):
+//     a saved course on one of them now opens on Classic Parkland's ground. Moved
+//     those six. Nothing else moved.
+// 91: the Piedmont, Longleaf Pines and the Pine Barrens leave the game for Southern Pines
+//     (the owner, 7 November 2026): a saved course on one of them now opens on Southern
+//     Pines' ground. Moved those three. Nothing else moved.
+// 92: the Lowcountry, the Bayou and the Gulf Coast leave the game for Lowcountry and Gulf
+//     (the owner, 7 November 2026): a saved course on one of them now opens on its
+//     ground. Moved those three. Nothing else moved.
+// 93: the Keys and Florida Flatwoods leave for Florida Palms, Hawaii for Hawaiian Resort, and
+//     the first Desert Resort and Desert Palms for Desert Resort (the owner, 7 November 2026):
+//     a saved course on one of them now opens on its replacement's ground. Moved those five.
+//     Desert Target became Desert Mountain the same day, its ground new and redrawn twice
+//     before this was committed: long rocky ridges piled with boulders scattered on a flat
+//     desert floor, about 1.5 holes in 18 teeing off a rocky outcrop (`rockTees`), one big
+//     mountain past the course (`ringMassif`), and in the end long joined ranges laid first and
+//     the holes routed round and along them (`range`; routing.js). Nothing else moved.
+// 94: Puget Sound leaves for the Pacific Northwest; Monterey, SoCal Canyons and Wine Country for
+//     the California Coast; Scottish Links, Oregon Dunes and Lake Dunes for Seaside Links (the
+//     owner, 8 November 2026): a saved course on one of them now opens on its replacement's ground.
+//     Moved those seven. Nothing else moved.
+// 95: Pine needles under the Pacific Northwest's and the California Coast's own conifers (their
+//     `fallen` named the old pine, spruce and cedar, which they no longer plant, so no needles lay
+//     anywhere); Desert Mountain's ranges smaller (share from .55 of the noise, full at .66; was
+//     .48 to .6) after the owner found the course boxed in again (8 November 2026). Moved those three.
+// 96: Desert Mountain's ranges stand only on the big mountain's side, thicker there (`range.side`
+//     150 m, `sideBoost` .08), and its holes are laid along that mountain front (routing.js
+//     `frontTurn`): the owner's pick of three trials on four seeds (8 November 2026). Moved Desert
+//     Mountain only.
+// 97: The owner signed off Desert Mountain (8 November 2026): the Sonoran, Mojave, Chihuahuan and Red
+//     Rock leave for it, so a saved course on one of them opens on Desert Mountain's ground; and its
+//     ponds come down to about 1.5 in 18 holes (`pondShare` .37 of holes try for one at the default
+//     Pond frequency; was about 4.4). Moved Desert Mountain and those four.
+// 98: The last batch's trees from Meshy (the owner, 8 November 2026): the Badlands plant green ash,
+//     Rocky Mountain juniper and plains cottonwood, the North Woods (now Northern Woods) red pine,
+//     eastern white pine, paper birch, sugar maple, white oak and aspen in place of the hand-built
+//     trees, both with crowns kept apart. Mountain and Prairie & Sand Hills added beside the ones they
+//     will replace (new keys move nothing). Moved the Badlands and the North Woods.
+// 99: The owner signed off Mountain and Northern Woods (8 November 2026): the Rockies, Cascades, High
+//     Sierra, Ponderosa, Sagebrush, Blue Ridge and Alaska leave for Mountain, so a saved course on one
+//     of them opens on Mountain's ground. Moved those seven.
+// 100: The owner signed off Prairie & Sand Hills (8 November 2026): the Sand Hills, High Plains,
+//     Bluebonnet Prairie and Hill Country leave for it, so a saved course on one of them opens on its
+//     ground. Moved those four. The fifteen US golf looks are all in.
+// 101: The Badlands routed round its formations (the owner, 8 November 2026: "the same kind of desert
+//     routing work while still keeping the badlands look"): routing.js reads them (`formationShareOf`),
+//     the field moves with the course's `shift`, and the carving is only lowered 12 m near a hole and
+//     back over 30 m (`sink` 80, `reach` 80 before). Moved the Badlands.
+// 102: No cart paths, clubhouse, public road, parking lot, drive or cart barn on a generated course
+//     (the owner, 8 November 2026: "Just get rid of the road. Clubhouse area. Parking lot. And cart
+//     paths ... We can maybe add them back later"; course.js `facilities`, off). The public road also
+//     keeps off ground steeper than 30% where it can (roads.js `ROAD_STEEPEST`), for when they return.
+//     Moved every landscape.
+export const GENERATOR_VERSION=102;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:
@@ -606,25 +660,45 @@ export const stampLabel=g=>Number.isInteger(g)&&g>=BUILT_STAMP?`Built ${g-BUILT_
 // The landscapes a player may pick: the built ones (biomes.js LAND), in the
 // order the nine before the US landscapes goal had, so an endless run or
 // Surprise me picking by index lands where it did. regions.js lists them all.
-export const BIOME_KEYS=['puget','sonoran','rockies','links','heartland','keys','redwood','newengland','lakedunes',
+export const BIOME_KEYS=['redwood',
  // Phase 3 of the US landscapes goal (SCHEMA 18): five more on existing models.
- 'highplains','sandhills','oldnortheast','pinebarrens','alaska',
- // Phase 5 (SCHEMA 19): the South.
- 'longleaf','piedmont','lowcountry','bayou','flatwoods',
+ 
  // Phase 6 (SCHEMA 20): Texas and the deserts.
- 'hillcountry','bluebonnet','gulfcoast','mojave','palms','chihuahuan',
+ 
  // Phase 7 (SCHEMA 21): California and the western mountains.
- 'monterey','socal','winecountry','cascades','sierra','ponderosa',
+ 
  // Phase 8a (SCHEMA 22): the high desert and the Cross Timbers.
- 'sagebrush','redrock','crosstimbers',
+ 
  // Phase 8b (SCHEMA 23): Appalachia.
- 'blueridge','ozarks','bluegrass',
- // Phase 8c (SCHEMA 24): the North Woods, the Oregon Dunes and Hawaii.
- 'northwoods','oregondunes','hawaii',
+ 
+ // Phase 8c (SCHEMA 24): the North Woods and the Oregon Dunes.
+ 'northwoods',
  // The owner's addition, 3 November 2026 (SCHEMA 26): the Dakota Badlands.
  'badlands',
- // The owner, 5 November 2026 (SCHEMA 27): the Las Vegas valley's watered courses.
- 'desertresort'];
+ // The first of the US golf courses' landscapes, 6 November 2026 (SCHEMA 28).
+ 'parkland',
+ // The second, 6 November 2026 (SCHEMA 30).
+ 'southpines',
+ // The third, 7 November 2026 (SCHEMA 32).
+ 'lowgulf',
+ // The fourth, 7 November 2026 (SCHEMA 34).
+ 'flpalms',
+ // Hawaiian Resort, 7 November 2026 (SCHEMA 35).
+ 'hiresort',
+ // Desert Mountain, 7 November 2026 (SCHEMA 36).
+ 'dmountain',
+ // Desert Resort, 7 November 2026 (SCHEMA 37).
+ 'dresort',
+ // Pacific Northwest, 7 November 2026 (SCHEMA 39).
+ 'pacnw',
+ // California Coast, 7 November 2026 (SCHEMA 40).
+ 'calcoast',
+ // Seaside Links, 7 November 2026 (SCHEMA 41).
+ 'seaside',
+ // Mountain, 8 November 2026 (SCHEMA 44).
+ 'mountains',
+ // Prairie and Sand Hills, 8 November 2026 (SCHEMA 45).
+ 'prairie'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the
@@ -650,7 +724,7 @@ export const SETTINGS=[
  {key:'seed',category:'course',kind:'text',max:50,def:'EVERGREEN',label:'Course seed',tip:'The same seed and settings rebuild the same course, within one generator version.'},
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees; all three tee sets are built, and each golfer picks theirs when playing. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
- {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'puget',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
+ {key:'biome',category:'course',kind:'choice',options:BIOME_KEYS,def:'pacnw',label:'Landscape',tip:'Regional planting, ground colours, light, temperature and altitude.'},
  // Looks only (the owner, 2 November 2026: snow is for looks): never part of
  // the ground, so no generator step and no world key (seasons.js).
  {key:'season',category:'course',kind:'choice',options:['today','spring','summer','autumn','winter'],def:'today',label:'Season',tip:'Today\'s season from the date, or one you pick: spring green, summer, autumn colour, or winter with bare trees and snow in the north. Looks only; the ball plays the same.'},
@@ -841,6 +915,51 @@ const MIGRATIONS={
  25:s=>s,
  // 26 -> 27: one more landscape (Desert Resort); no save changes shape.
  26:s=>s,
+ // 27 -> 28: one more landscape (Classic Parkland); no save changes shape.
+ 27:s=>s,
+ // 28 -> 29: the six landscapes Classic Parkland replaced leave (regions.js OLD_KEYS).
+ 28:s=>{const to=['newengland','oldnortheast','heartland','bluegrass','ozarks','crosstimbers'].includes(s.biome);return to?{...s,biome:'parkland'}:s;},
+ // 29 -> 30: one more landscape (Southern Pines); no save changes shape.
+ 29:s=>s,
+ // 30 -> 31: the three landscapes Southern Pines replaced leave (regions.js OLD_KEYS).
+ 30:s=>['piedmont','longleaf','pinebarrens'].includes(s.biome)?{...s,biome:'southpines'}:s,
+ // 31 -> 32: one more landscape (Lowcountry and Gulf); no save changes shape.
+ 31:s=>s,
+ // 32 -> 33: the three landscapes Lowcountry and Gulf replaced leave (regions.js OLD_KEYS).
+ 32:s=>['lowcountry','bayou','gulfcoast'].includes(s.biome)?{...s,biome:'lowgulf'}:s,
+ // 33 -> 34: one more landscape (Florida Palms); no save changes shape.
+ 33:s=>s,
+ // 34 -> 35: one more landscape (Hawaiian Resort); no save changes shape.
+ 34:s=>s,
+ // 35 -> 36: one more landscape (Desert Mountain); no save changes shape.
+ 35:s=>s,
+ // 36 -> 37: one more landscape (Desert Resort); no save changes shape.
+ 36:s=>s,
+ // 37 -> 38: the five landscapes Florida Palms, Hawaiian Resort and Desert Resort replaced
+ // leave (regions.js OLD_KEYS).
+ 37:s=>{const to={keys: 'flpalms', flatwoods: 'flpalms', hawaii: 'hiresort', desertresort: 'dresort', palms: 'dresort'}[s.biome];return to?{...s,biome:to}:s;},
+ // 38 -> 39: one more landscape (Pacific Northwest); no save changes shape.
+ 38:s=>s,
+ // 39 -> 40: one more landscape (California Coast); no save changes shape.
+ 39:s=>s,
+ // 40 -> 41: one more landscape (Seaside Links); no save changes shape.
+ 40:s=>s,
+ // 41 -> 42: the seven landscapes Pacific Northwest, California Coast and Seaside Links replaced
+ // leave (regions.js OLD_KEYS; the owner, 8 November 2026).
+ 41:s=>{const to={puget: 'pacnw', monterey: 'calcoast', socal: 'calcoast', winecountry: 'calcoast', links: 'seaside', oregondunes: 'seaside', lakedunes: 'seaside'}[s.biome];return to?{...s,biome:to}:s;},
+ // 42 -> 43: the Sonoran, Mojave, Chihuahuan and Red Rock leave for Desert Mountain (regions.js
+ // OLD_KEYS; the owner signed it off, 8 November 2026).
+ 42:s=>{const to={sonoran: 'dmountain', mojave: 'dmountain', chihuahuan: 'dmountain', redrock: 'dmountain'}[s.biome];return to?{...s,biome:to}:s;},
+ // 43 -> 44: one more landscape (Mountain); no save changes shape.
+ 43:s=>s,
+ // 44 -> 45: one more landscape (Prairie and Sand Hills); no save changes shape.
+ 44:s=>s,
+ // 45 -> 46: the Rockies, Cascades, High Sierra, Ponderosa, Sagebrush, Blue Ridge and Alaska leave
+ // for Mountain (regions.js OLD_KEYS; the owner signed it off, 8 November 2026).
+ 45:s=>{const to={rockies: 'mountains', cascades: 'mountains', sierra: 'mountains', ponderosa: 'mountains', sagebrush: 'mountains', blueridge: 'mountains', alaska: 'mountains'}[s.biome];return to?{...s,biome:to}:s;},
+ // 46 -> 47: the Sand Hills, High Plains, Bluebonnet Prairie and Hill Country leave for Prairie &
+ // Sand Hills (regions.js OLD_KEYS; the owner signed it off, 8 November 2026).
+ 46:s=>{const to={sandhills: 'prairie', highplains: 'prairie', bluebonnet: 'prairie', hillcountry: 'prairie'}[s.biome];return to?{...s,biome:to}:s;},
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

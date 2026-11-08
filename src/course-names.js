@@ -85,6 +85,15 @@ export const NAME_WORDS = {
    'Creek', 'Bottoms', 'Rise', 'Flats', 'Commons', 'Acres', 'Draw', 'Bend',
    'Ridge', 'Lane', 'Prairies', 'Stand'],
  ],
+ hiresort: [["Kaiwi Point","Honolua","Makaluapuna","Kolea Row","Cook Pine","Pineapple Hill","Trade Breeze","Napili Bay","Kukui","Koa Ridge","Pueo","Maunalei","Mokuleia","Windward Row","Ironwood Belt","Molokai View","Whale Watch","Oneloa","Kahana"],["Club","Point","Ridge","Bay","Plantation","Bluff","Hills","Links","Course","Village","Heights","Coast","Gardens","Greens","Reserve","Lookout","Valley","Shores","Estate","Trail"]],
+ dmountain: [["Granite Spire","Tall Cactus Ridge","Boulder Pass","Palo Verde Wash","Gila Ridge","Desert Bloom","Javelina Wash","Roadrunner Flats","Granite Knob","Monsoon","Cactus Wren","Thrasher","Sun Ridge","Vista Wash","Dry Creek","Ironrock","Mesquite Bend","Hohokam Trail","Far Range View"],["Club","Course","Ridge","Canyon","Wash","Mesa","Pass","Point","Summit","Springs","Vista","Trail","Hills","Ranch","Valley","Flats","Peak","Rim","Basin","Reserve"]],
+ dresort: [["Silver Willow","Oasis Pines","Afghan Row","Pine Shade","Willow Pond","Olive Court","Date Palm Walk","Fan Palm Walk","Range Edge","Cool Spring","Red Ridge View","Cool Shade","Heat Shimmer","Neon Sky","Evening Ridge","Moonlit Pond","Quiet Cove","Lone Willow","Sundown Lake"],["Club","Course","Lakes","Pines","Oasis","Springs","Estates","Greens","Pointe","Ridge","Village","Reserve","Commons","Links","Gardens","Park","Hills","Canyon","Vista","Grove"]],
+ pacnw: [["Cedar Crest","Cedar Hollow","Fir Ridge","Hemlock Run","Snoqualmie","Sammamish","Douglas Ridge","Alder Creek","Big Leaf","Rain Shadow","Evergreen","Cascade View","Mossy Rock","Old Growth","Carnation","Fern Glen","Issaquah","Tolt River","Grey Mist"],["Club","Country Club","Ridge","Woods","Forest","Hollow","Glen","Lodge","Pines","Hills","Course","Reserve","Creek","Trail","Valley","Heights","Grove","Point","Run","Timbers"]],
+ calcoast: [["Cypress Bluff","Coast Road","Sea Fog","Carmel Bay","Monterey Pines","Marine Layer","Still Cove","Black Mountain","Kelp Point","Del Mar","La Jolla","Marine Terrace","Palisades","Kelp Bed","Cliffside","Cormorant","Sunset Cliffs","Surf Cove","Cypress Ridge"],["Club","Links","Country Club","Point","Bluffs","Cove","Course","Shores","Headlands","Reserve","Highlands","Beach","Bay","Ridge","Coast","Heights","Cliffs","Pines","Vista","Sands"]],
+ seaside: [["Gorse Bluff","Marram Ridge","Fescue Hollow","Sea Rocket","Tern Hollow","Bent Grass","Sandpiper","Whin Hill","Heather Brae","Old Wall","Gull Point","Salt Wind","Cape Arago","Grey Seal","North Spit","Sea Thrift","Spindrift","Lighthouse","Breakers"],["Links","Dunes","Club","Golf Links","Bluffs","Point","Head","Strand","Sands","Course","Machair","Shore","Cliffs","Bay","Heath","Downs","Coast","Ridge","Hollow","Brae"]],
+ mountains: [["Pika","Lodgepole","Aspen Glade","Spruce Bench","High Meadow","Fireweed Flat","Bristlecone","Switchback","Kinnikinnick","Columbine","Snowcap","Granite Bench","Trout Run","Scree Slope","Quaking","Larkspur","Krummholz","Ridgeline","Snowfield","Glacier View"],["Club","Country Club","Ridge","Lodge","Pines","Meadows","Course","Reserve","Creek","Trail","Valley","Heights","Park","Peak","Basin","Bench","Summit","Highlands","Timbers","Links"]],
+ prairie: [["Bluestem Flat","Big Sky","Prairie Rose","Prairie Wind","Plover Flat","Cedar Draw","Sand Draw","Gopher Hill","Prairie Fire","Sandreed Flat","Cedar Brake","Pheasant Run","Wind Ridge","Grass Sea","Box Elder","Sod House","Yucca Hill","Long Prairie","Wild Plum","Sky Ridge"],["Club","Country Club","Ridge","Dunes","Links","Prairie","Course","Reserve","Creek","Hills","Valley","Heights","Bluffs","Draw","Station","Ranch","Plains","Meadows","Fields","Run"]],
+ flpalms: [["Starfish Point","Pelican Light","Dune Ridge","Shell Mound","Palmgrove","Coquina","Sea Turtle","Pelican Point","Sabal Ridge","Royal Row","Coconut Row","Bluewater","Intracoastal","Silver Snook","Snook","Saltwind","Osprey Point","Sea Oats Ridge","Blue Current"],["Club","Links","Point","Beach","Ridge","Dunes","Palms","Shores","Harbor","Isle","Inlet","Landing","Cove","Bay","Reach","Sound","Hammock","Woods","Grove","Bluff"]],
  keys: [
   ['Coral', 'Lagoon', 'Frangipani', 'Barracuda', 'Palm', 'Reef', 'Conch',
    'Windward', 'Leeward', 'Bonefish', 'Tarpon', 'Hibiscus', 'Plumeria',
@@ -172,7 +181,7 @@ export const NAME_WORDS = {
    'Knob', 'Basin', 'Pasture', 'Meadow', 'Spring', 'Draw', 'Flat', 'Ridge',
    'Pocket', 'Rise', 'Bottom', 'Sandhill'],
  ],
- oldnortheast: [
+ parkland: [
   ['Elmcrest', 'Ivywood', 'Brookline', 'Copperbeech', 'Fieldstone', 'Gatehouse',
    'Linden', 'Chestnuthill', 'Tudor', 'Greystone', 'Hawthorne', 'Millbrook',
    'Orchardwood', 'Quarry', 'Rectory', 'Steeplechase', 'Thornbury', 'Whitestone',
@@ -203,6 +212,7 @@ export const NAME_WORDS = {
    'Reach', 'Moraine', 'Cirque', 'Sound', 'Fork'],
  ],
  // Phase 5 of the US landscapes goal: the South.
+ southpines: [["Rosinwood","Tallstraw","Sandfern","Bluesand","Pinesong","Drywash","Whitepost","Wildpine","Tarpaper","Longstraw","Sunstraw","Softpine","Talltimber","Strawline","Resinhill","Sandwalk","Longshadow","Towhee","Sapling","Tallpine","Bluejack","Sunpatch","Needlefield","Softsand","Nuthatch","Cardinal","Goldfinch","Redbud","Whitesand","Foxwire","Sandlapper"],["Pines","Hollow","Run","Ridge","Walk","Crossing","Bluff","Branch","Trace","Landing","Rest","Bottom","Rise","Stand","Meadow","Grove"]],
  longleaf: [
   ['Wiregrass','Longleaf','Pinestraw','Turkeyoak','Sandhill','Candlestick','Bobwhite','Woodpecker','Pinecone','Sand Pine','Gopher','Fox Squirrel','Sandspur','Resin','Turpentine','Naval Stores','Tarheel','Carolina','Pinewood','Sandy Run'],
   ['Pines','Ridge','Hollow','Run','Branch','Hills','Crossing','Glade','Flats','Station','Bend','Lake','Creek','Field','Woods','Grove','Barrens','Savanna','Pond','Gap'],
@@ -211,6 +221,7 @@ export const NAME_WORDS = {
   ['Red Clay','Dogwood','Magnolia','Tulip','Sweetgum','Azalea','Mockingbird','Peachtree','Mill Creek','Kudzu','Shoals','Fall Line','Catawba','Chattahoochee','Hickory Nut','Honeysuckle','Muscadine','Cotton Mill','Brick Kiln','Sourwood'],
   ['Hills','Run','Creek','Ridge','Hollow','Bend','Shoals','Mill','Branch','Crossing','Farms','Grove','Lake','Knob','Fork','Springs','Gap','Woods','Meadow','Station'],
  ],
+ lowgulf: [["Spartina Flat","Saltgrass","Slack Tide","Ebbtide","Mudflat","Oyster Shell","Blue Crab","Loggerhead","Skimmer","Wood Stork","Kingfisher","Sea Oat","Tidewrack","Pelican Bank","Low Tide","Shell Ring","Marshlight","Sabal","Creekbank"],["Marsh","Creek","Landing","Island","Plantation","Point","Neck","Bluff","Sound","Hammock","Inlet","Cove","Reach","Dock","Banks","Oaks","Ferry","Harbor","Shoals","Woods"]],
  lowcountry: [
   ['Spartina','Oyster','Palmetto','Marsh Hen','Egret','Fiddler Crab','Live Oak','Spanish Moss','Sea Island','Rice Field','Indigo','Plough Mud','Pluff','Shrimp Boat','Heron','Sweetgrass','Tabby','Wando','Edisto','Marsh Tacky'],
   ['Marsh','Creek','Landing','Island','Plantation','Point','Neck','Bluff','Sound','Hammock','Inlet','Cove','Reach','Dock','Banks','Oaks','Ferry','Harbor','Shoals','Woods'],

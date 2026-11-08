@@ -39,7 +39,7 @@ test('the report names the build, the versions and where the player was', () => 
  const text = diagnosticReport({
   build: {label: 'abc1234 (2026-09-25 13:40)'},
   app: {generator: 32, schema: 8, mode: 'play', course: 'Sitka Bluff', hole: '7 of 18',
-        biome: 'puget', tier: 'high', frameCap: 60},
+        biome: 'pacnw', tier: 'high', frameCap: 60},
  });
  assert.match(text, /version\s+abc1234/);
  assert.match(text, /generator\s+32/);

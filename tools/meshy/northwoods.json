@@ -1,0 +1,82 @@
+{
+ "name": "northwoods",
+ "note": "The Northern Woods pack on Meshy, the last batch (8 November 2026): Forest Dunes, Crystal Downs. Red pine and paper birch; the sugar maple and white oak are Classic Parkland's, the eastern white pine Southern Pines'. Shipped in vendor/blender-meshy_northwoods as NoRedPine, NoPaperBirch, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_RedPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dark green #4a6e38. Bark red orange #b0603a.",
+   "aspect": "9:16",
+   "prompt": "A tall red pine tree in the Great Lakes woods beside a golf course, 30 m tall and 9 m wide, tall and narrow. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A perfectly straight trunk of reddish-orange bark in flat plates, bare for its lowest half. Stout limbs carry the foliage in rounded clumps in the upper third, to a rounded top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RedPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dark green #4a6e38. Bark red orange #b0603a.",
+   "aspect": "9:16",
+   "prompt": "A younger red pine tree in the Great Lakes woods beside a golf course, 20 m tall and 7 m wide, narrow. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight trunk of reddish bark, bare for its lowest third. Limbs carry the foliage in rounded clumps toward their tips, to a rounded pointed top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PaperBirch_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #6e9a44. Bark white #ece8e0.",
+   "aspect": "9:16",
+   "prompt": "A paper birch tree in the Great Lakes woods beside a golf course, 20 m tall and 9 m wide, tall and slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight slim white trunk with dark horizontal marks and a few black patches, bare for its lowest third. Slender limbs angle upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a narrow oval crown in the upper two-thirds. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one twenty-fourth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PaperBirch_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #6e9a44. Bark white #ece8e0.",
+   "aspect": "9:16",
+   "prompt": "A younger paper birch tree in the Great Lakes woods beside a golf course, 14 m tall and 6 m wide, slim. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight slim white trunk with dark marks, bare for its lowest third. Slender limbs angle upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a narrow oval crown. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "norpine": {
+   "spring": {
+    "leaf": "#4a6e38",
+    "bark": "#b0603a"
+   },
+   "summer": {
+    "leaf": "#4a6e38",
+    "bark": "#b0603a"
+   },
+   "autumn": {
+    "leaf": "#4a6e38",
+    "bark": "#b0603a"
+   },
+   "winter": {
+    "leaf": "#4a6e38",
+    "bark": "#b0603a"
+   }
+  },
+  "nobirch": {
+   "spring": {
+    "leaf": "#9cc070",
+    "bark": "#ece8e0"
+   },
+   "summer": {
+    "leaf": "#6e9a44",
+    "bark": "#ece8e0"
+   },
+   "autumn": {
+    "leaf": "#e8c040",
+    "bark": "#ece8e0"
+   },
+   "winter": {
+    "leaf": "#6e9a44",
+    "bark": "#ece8e0"
+   }
+  }
+ }
+}

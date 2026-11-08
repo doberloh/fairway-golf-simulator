@@ -1,0 +1,154 @@
+{
+ "name": "southern",
+ "note": "The Southern Pines pack on Meshy, the second of the US golf courses' landscapes (the owner, 6 November 2026): Augusta, Pinehurst, Pine Valley. Sizes and trunk widths are PLACED from each tree's usual form and the owner's course photos. Targets match the Redwood Coast's and Classic Parkland's: 12,600 triangles for a pine, 12,000 for the dogwood. Lessons from Classic Parkland are in the prompts: no even tiers, and nothing fine and hanging, which did not survive the model step. Foliage stays on meshy-6. The first longleaf pictures drew fine needle bursts, which the owner sent back so the model step could keep them: they are now large solid masses. Shipped in vendor/blender-meshy_southern as SouthLoblolly, SouthLongleaf, SouthWhitePine and SouthDogwood, because the hand-built models hold the plain names. `seasons` are PLACED, read by tools/blender/dump-tints.mjs. Eastern white pine was too thin on the first try, so the owner had it redrawn in the longleaf's language.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_LoblollyPine_1",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles deep green #3f6a38. Bark red-brown #6e4e3c.",
+   "aspect": "9:16",
+   "prompt": "A mature loblolly pine tree on a southern golf course, 30 m tall and 10 m wide. A very long straight red-brown trunk with large flat plates of bark, completely bare for its lowest three fifths. Above that a rounded open crown: eight to twelve thick tapering limbs angle upward and fork. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky, overlap only a little, and together make a loose oval head sitting high on the trunk, with a bumpy outline and sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_LoblollyPine_2",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles deep green #3f6a38. Bark red-brown #6e4e3c.",
+   "aspect": "9:16",
+   "prompt": "A younger loblolly pine tree on a southern golf course, 24 m tall and 8 m wide, its crown leaning slightly to one side. A long straight red-brown trunk with flat plates of bark, bare for its lowest half. Above that a small oval open crown of six to ten thick tapering limbs angled upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky, overlap only a little, with a bumpy outline and sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_LongleafPine_1",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles bright green #4f7a3e. Bark orange-brown #7a5238.",
+   "aspect": "9:16",
+   "prompt": "A mature longleaf pine tree in the Carolina sandhills, 30 m tall and 10 m wide. A very long perfectly straight orange-brown trunk with scaly plates of bark, completely bare for its lowest two thirds. At the top an open flat-topped crown of six to eight thick crooked limbs. Each limb ends in one large solid rounded mass of foliage, like a big soft dome, wider than it is tall, with a lightly tufted scalloped edge. The masses are chunky and well separated, with sky between them, and together they make a broad, open, irregular head. Paint the foliage as thick, solid three-dimensional forms, never as thin lines: no fine needles, no spiky bursts, no starbursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_LongleafPine_2",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles bright green #4f7a3e. Bark orange-brown #7a5238.",
+   "aspect": "9:16",
+   "prompt": "A younger longleaf pine tree in the Carolina sandhills, 23 m tall and 8 m wide. A long straight orange-brown trunk with scaly plates of bark, bare for its lowest three fifths. At the top an open uneven crown of five or six thick crooked limbs. Each limb ends in one large solid rounded mass of foliage, like a big soft dome, wider than it is tall, with a lightly tufted scalloped edge. The masses are chunky and well separated, with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as thin lines: no fine needles, no spiky bursts, no starbursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_EasternWhitePine_1",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles soft blue-green #3f6650. Bark dark grey-brown #5a5048.",
+   "aspect": "9:16",
+   "prompt": "A mature eastern white pine tree, 30 m tall and 12 m wide, a full tall crown. One straight dark grey-brown trunk carries on through the crown nearly to the top, bare for its lowest quarter. Thick level limbs of uneven length leave the trunk at irregular heights, some sweeping up at their ends. Each limb carries one large solid soft mass of blue-green foliage, broad and flat like a thick cushion, wider than it is tall, with a lightly tufted scalloped edge. The masses are chunky and overlap a little, so the crown reads full, with a few windows of sky between them. Paint the foliage as thick, solid three-dimensional forms, never as thin lines: no fine needles, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_EasternWhitePine_2",
+   "target": 12600,
+   "far": 500,
+   "colour": "Needles soft blue-green #3f6650. Bark dark grey-brown #5a5048.",
+   "aspect": "9:16",
+   "prompt": "A younger eastern white pine tree, 23 m tall and 9 m wide, a full crown, a little heavier on one side. One straight dark grey-brown trunk carries on through the crown nearly to the top, bare for its lowest quarter. Thick level limbs of uneven length leave the trunk at irregular heights. Each limb carries one large solid soft mass of blue-green foliage, broad and flat like a thick cushion, wider than it is tall, with a lightly tufted scalloped edge. The masses are chunky and overlap a little, so the crown reads full, with a few windows of sky between them. Paint the foliage as thick, solid three-dimensional forms, never as thin lines: no fine needles, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no even tiers of branches, no Christmas tree outline, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "farStyle": "tufts"
+  },
+  {
+   "name": "Blender_Dogwood_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #5f8a48. Bark grey-brown #6a5e54.",
+   "aspect": "3:4",
+   "prompt": "A flowering dogwood tree in full summer leaf, a small understorey tree 8 m tall and 7 m wide. A short slim grey-brown trunk forks low into several strong limbs that spread outward at uneven heights. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky and spread sideways in gentle uneven layers, making a full crown with a rounded bumpy top and a few gaps. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No flowers, no berries. No solid core, no perfect spheres, no flat discs, no hanging strands. A slender trunk, one fifteenth of the tree's height wide near the ground, narrowing gently upward, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Dogwood_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves fresh green #5f8a48. Bark grey-brown #6a5e54.",
+   "aspect": "3:4",
+   "prompt": "A younger flowering dogwood tree in full summer leaf, a small understorey tree 6 m tall and 5 m wide, leaning a little toward the light. A short slim grey-brown trunk forks low into a few strong limbs at uneven heights. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge. The tufts are chunky, making a full crown with a rounded bumpy top and a few gaps. Paint the foliage as thick, solid three-dimensional forms, never as separate needles or leaves: no fine needles, no visible leaves, no leaf shapes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No flowers, no berries. No solid core, no perfect spheres, no flat discs, no hanging strands. A slender trunk, one fifteenth of the tree's height wide near the ground, narrowing gently upward, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "southloblolly": {
+   "spring": {
+    "leaf": "#47703e",
+    "bark": "#8a7566"
+   },
+   "summer": {
+    "leaf": "#3f6a38",
+    "bark": "#8a7566"
+   },
+   "autumn": {
+    "leaf": "#3f6a38",
+    "bark": "#8a7566"
+   },
+   "winter": {
+    "leaf": "#3c6436",
+    "bark": "#8a7566"
+   }
+  },
+  "southlongleaf": {
+   "spring": {
+    "leaf": "#567f42",
+    "bark": "#88725f"
+   },
+   "summer": {
+    "leaf": "#4f7a3e",
+    "bark": "#88725f"
+   },
+   "autumn": {
+    "leaf": "#4f7a3e",
+    "bark": "#88725f"
+   },
+   "winter": {
+    "leaf": "#4a7240",
+    "bark": "#88725f"
+   }
+  },
+  "southwhitepine": {
+   "spring": {
+    "leaf": "#4a7050",
+    "bark": "#6f665e"
+   },
+   "summer": {
+    "leaf": "#41694a",
+    "bark": "#6f665e"
+   },
+   "autumn": {
+    "leaf": "#41694a",
+    "bark": "#6f665e"
+   },
+   "winter": {
+    "leaf": "#3e6447",
+    "bark": "#6f665e"
+   }
+  },
+  "southdogwood": {
+   "spring": {
+    "leaf": "#fff4ea",
+    "bark": "#6f655c"
+   },
+   "summer": {
+    "leaf": "#5f8a48",
+    "bark": "#6f655c"
+   },
+   "autumn": {
+    "leaf": "#8a5a4c",
+    "bark": "#6f655c"
+   },
+   "winter": {
+    "leaf": "#5f8a48",
+    "bark": "#6f655c"
+   }
+  }
+ }
+}

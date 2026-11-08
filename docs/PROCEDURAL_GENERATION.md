@@ -104,7 +104,7 @@ A hole may also be given a **specimen**: a feature tree or a cluster of stones s
 
 **Haunted Hollow's giant pumpkins and toadstools** were generation output too, solid and placed per hole from their own stream; they went with the landscape on 2 November 2026 (generator 54).
 
-Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
+Trees leave room for each other where a biome asks them to (`crownShare`; Classic Parkland .9, because tall open crowns clipping show at once): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
 
 A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
 
@@ -163,7 +163,7 @@ Every landscape's land is its own: the last eight on another's took recipes of t
 
 ## One cart path network (generator 86)
 
-Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
+(Since 8 November 2026 a generated course has no cart paths, clubhouse, road or lot: course.js `facilities`, off. What follows is how they are made when it is on.) Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
 
 ## The country is one surface (generator 85)
 
@@ -211,14 +211,21 @@ from what lies between the holes on real courses of its kind
   (the Hill Country's limestone staircases, Monterey's marine terraces),
   **karst** (the Bluegrass's shallow sinkholes), **glacial** (the North
   Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
-  (granite knobs and washes in the Mojave and Desert Palms, a rare low knob
-  and no washes on the built floor of Desert Resort, the High
-  Sierra's domes), **channels** (Sagebrush coulees, Ozark hollows, Piedmont
-  gullies, SoCal barrancas), **playas** (the High Plains' round dry pans
-  with bare clay floors, generator 81), **volcanic** (Ponderosa's and Hawaii's cinder
-  cones and lava flows), **sandridges** (Longleaf) and **lowland** (the
-  Bayou's, Flatwoods' and Gulf Coast's levees and backswamps, on a corridor
-  roll scaled down by `baseRoll`; the Lowcountry's with `tide`: its marsh
+  (granite knobs and washes in the Mojave; Desert Mountain's knobs off and long joined ranges in their place (`range`, their upper
+  slopes piled with boulders, kept out of the long shape a hole lies on by `longLift`), laid
+  before the holes and only on the big mountain's side (`range.side`), a mountain front (and few
+  ponds: `pondShare` .37 of holes try for one at the default Pond frequency, about 1.5 in 18): the
+  routing (routing.js) refuses a hole on them, lays the course along the front (`frontTurn`) and
+  pulls most holes up against them; the land tilted up toward the big mountain (`tilt`) and rejoining the holes over
+  130 m (`wideFade`), about 1.5 holes in 18 teeing off a rocky outcrop (`rockTees`,
+  course.js, laid after the corridor fade so it stands in play), and past the course one big
+  mountain (`ringMassif`, landscape-edge.js) in place of a ring of peaks; a rare low knob and no washes on Desert Resort's built floor; the High
+  Sierra's domes), **channels** (Sagebrush coulees, Blue Ridge hollows,
+  SoCal barrancas), **playas** (the High Plains' round dry pans
+  with bare clay floors, generator 81), **volcanic** (Ponderosa's cinder
+  cones and lava flows), **sandridges** (Southern Pines) and **lowland** (Florida Palms'
+  levees and backswamps, on a corridor
+  roll scaled down by `baseRoll`; Lowcountry and Gulf's with `tide`: its marsh
   laid at the tide line by the recipe's `level`, last of all, and tidal
   creeks cut through it below the sea, which `sea` fills, the marsh's core
   bare of trees -- generator 80).

@@ -117,6 +117,12 @@ often has the how-to already worked out.
 - **A third crown shape for the trees** -- a single-mass conifer, or a plume
   built from overlapping foliage. Medium. (was: *Only two crown shapes*)
 
+- **Bare winter trees, or better limbs, from Meshy 7.1.** One test on white oak 1 gave
+  very good tapering limbs and almost no leaves, a bare winter tree from a summer picture.
+  Those could stand as winter or dead trees, or be the wood under Meshy 6 leaves, which
+  would suit real taper and limbs. Rough cost: 30 credits a tree, plus joining two
+  models in tools/blender/meshy_game.py. Noticed by Claude, 6 November 2026.
+
 ## Under the hood
 
 - **Washington's surveys listed in the builder, through the bridge.** The
@@ -132,6 +138,16 @@ often has the how-to already worked out.
   while the bridge runs. The same may suit other state portals with a query
   of their own (not checked). Claude, 1 November 2026 (RESEARCH, *Finding
   LIDAR from the builder*).
+- **British Columbia's surveys in the builder (LidarBC).** Door 2's list has
+  no LidarBC, so a course in BC is sent to NRCan's federal point clouds, and
+  these can be empty where LidarBC is not: at Lakepoint, Fort St. John, the
+  federal index has nothing and LidarBC has 2024 tiles. LidarBC's public tile
+  index (ArcGIS `LiDAR_BC_S3_Public`, layer 4 for point clouds, each row with
+  its `s3Url`) answers a box directly. Why: the whole province's open LIDAR
+  found from inside the builder, not by hand. Small to medium: lidar-search.js
+  a `lidarbc` source; not checked whether its hosts allow a browser to fetch,
+  or whether it needs the bridge. Claude, 6 November 2026, while finding
+  Lakepoint's LIDAR for the owner.
 - **Spin at the rim.** A putt reaches the lip carrying only rolling spin; one
   with sidespin should take the lip differently. Medium. (was: *Spin-dependent
   rim behaviour*)

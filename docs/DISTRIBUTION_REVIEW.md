@@ -1863,3 +1863,39 @@ fingerprint before the last trees; the packager's verification of every zip; the
 or a profile, waived by the owner on 5 November; 36 of 41 journeys passed on a build
 just before the last wood change, and the other five on the next. **Not played by a
 person** in this form, including the Meshy trees and far-version swaps in motion.
+
+**Branch `us-golf-courses`, 8 November 2026 (not a release).** With the US golf looks' Meshy trees
+(batches one and two and the last batch) the built game is **59,139,292 bytes (32.8 MB gzipped)**,
+18.0 MB over 0.9.7, and `dist/builder.html` 52,929,252 bytes (28.8 MB gzipped); `src/asset-meshes.js`
+alone is 49.3 MB of it (44.5 MB before the last batch). Released as 0.9.8 with the
+trees (the addendum for v0.9.8 below).
+
+## Addendum, 8 November 2026: v0.9.8
+
+**v0.9.8** is published at the owner's request ("Merge and release to github. Then update the demo on
+the live website"; a patch version, "We will stay below 1.0"), as "Fairway 0.9.8 (beta)", tag
+`v0.9.8`, not a pre-release, the same six files as 0.9.7, from the merge of `us-golf-courses` into
+`main`, with its notes in `docs/releases/v0.9.8.md`. It carries the US golf looks: forty-two
+landscapes pared to fifteen (every retired key kept in `OLD_KEYS` and migrated), Meshy trees in
+every landscape, Desert Mountain and the Badlands routed round their ranges and formations, no
+cart paths, clubhouse, road or lot on a generated course (course.js `facilities`, off), relief on
+the maps, and the floodlight lamp budget. **`GENERATOR_VERSION` is 102** (89 in 0.9.7), so a
+saved 0.9.7 round is told its course changed; **`SCHEMA_VERSION` 47** (27, migrated: settings
+carry over, a retired landscape opens on its heir); **`BUILT_VERSION` 3** and
+**`PROFILE_VERSION` 3** unchanged. **The package version is 0.9.8**, so 0.9.7's friend-challenge
+codes do not play on it (said in the notes). **The website's demo is redeployed** at the owner's
+word.
+
+The built game is **57,317,898 bytes (31.4 MB gzipped)**, 16.2 MB over 0.9.7, almost all of it the
+trees (`src/asset-meshes.js`), and `Fairway Builder.html` 52,924,216 bytes (28.8 MB gzipped).
+Accepted as the trees' cost, as 0.9.7's growth was, and not reviewed further here. The zips:
+Windows 101.4 MB, macOS Apple silicon 87.2 MB, macOS Intel 89.6 MB, Linux 98.0 MB, each 9 verified
+files; the source zip 32.6 MB, 634 files. The Meshy models are the paid plan's output (ATTRIBUTION.md,
+*Generated with Meshy*).
+
+**Checked:** `node tools/test.mjs` (1,489, none failing; one to-do, the road check kept for when
+facilities return) on the branch, whose tree the merge keeps; the biome fingerprints; the full smoke
+set, 41 of 41 journeys (39 on the full run, the two whose harness was stale after the fix, on their
+rerun) on the build before the bougainvillea's colour change, which is a colour only; the packager's
+verification of every zip. **Not run:** a graphics profile. **Not played by a person** in this form:
+the fifteen landscapes, the routed courses and the night fix were seen only in captures.

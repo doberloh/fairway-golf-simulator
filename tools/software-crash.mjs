@@ -41,7 +41,7 @@ async function run(name, c) {
   await page.waitForFunction(() => window.lab && window.__view && !document.getElementById('splash'), null, {timeout: 300000});
   const mem = () => page.evaluate(() => ({heap: Math.round((performance.memory?.usedJSHeapSize || 0) / 1e6), renderer: window.__view.renderer.getContext().getParameter(window.__view.renderer.getContext().RENDERER)}));
   say(`menu up ${JSON.stringify(await mem())}`);
-  await page.evaluate(() => window.lab.course({biome: 'puget', holes: 9, seed: 'WEAK', season: 'summer'}));
+  await page.evaluate(() => window.lab.course({biome: 'pacnw', holes: 9, seed: 'WEAK', season: 'summer'}));
   say(`course built at ${c.quality}; heap ${(await mem()).heap} MB`);
   await page.waitForTimeout(8000);
   if (crashed) return {name, steps, crashed};

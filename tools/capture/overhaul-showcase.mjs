@@ -99,8 +99,8 @@ const beforeOf = (biome, view) => {
 const PREFIX = [[/floating trees/i, 'trees'], [/far woods/i, 'farwoods'], [/rock stacks/i, 'stack'], [/tee boxes/i, 'tee'],
  [/tee surrounds/i, 'teefade'], [/water depth/i, 'water'], [/craggy|grass-to-rock/i, 'crag'], [/shared links fairways, rounds 4/i, 'share'],
  [/broadleaves/i, 'broadleaf'], [/conifers/i, 'conifer'], [/boulders/i, 'rocks'], [/shrubs/i, 'shrubs'],
- [/desert/i, 'sonoran'], [/long grass/i, 'grass'], [/^brush/i, 'brush'], [/island/i, 'keys'], [/haunted/i, 'haunted'],
- [/houses/i, 'houses'], [/pumpkins/i, 'props'], [/deadfall/i, 'deadfall'], [/redwood/i, 'redwood'], [/lakeshore/i, 'lakedunes'],
+ [/desert/i, 'dmountain'], [/long grass/i, 'grass'], [/^brush/i, 'brush'], [/island/i, 'keys'], [/haunted/i, 'haunted'],
+ [/houses/i, 'houses'], [/pumpkins/i, 'props'], [/deadfall/i, 'deadfall'], [/redwood/i, 'redwood'], [/lakeshore/i, 'seaside'],
  [/furniture/i, 'course'], [/landforms/i, 'land'], [/ground textures/i, 'turf'], [/stands/i, 'stands'], [/shared links/i, 'links-share'],
  [/lighting/i, 'light'], [/reading the ground/i, 'read'], [/heather/i, 'heather'], [/wildflowers/i, 'flowers']];
 function roundPictures(title) {
@@ -136,12 +136,12 @@ function rounds() {
 // runs) across -- plus the shared fairways' maps (`share3-r<n>/`).
 const GOAL_ITEMS = [
  {title: 'The far landscape', views: ['far-out', 'far-side', 'far-high'], biomes},
- {title: 'The tee\'s clean-up lap', views: ['tee-top', 'h1-teekit'], biomes: ['sonoran', 'links', 'heartland']},
- {title: 'Diamond-mowed greens', views: ['h2-putt', 'h2-green', 'range-green'], biomes: ['links', 'sonoran', 'heartland']},
- {title: 'Trees in still water', views: ['h1-pond', 'shore-near'], biomes: ['lakedunes', 'heartland', 'newengland', 'puget']},
- {title: 'The straight tone step', views: ['h2-green-b'], biomes: ['heartland', 'links']},
- {title: 'Waves at the water\'s edge', views: ['shore-near', 'sea-near', 'stream-near', 'h1-pond'], biomes: ['lakedunes', 'heartland', 'keys', 'puget', 'rockies']},
- {title: 'Links shared fairways, the far-landscape goal', views: ['share-top', 'share-tee', 'share-tee-b'], biomes: ['links'], maps: true},
+ {title: 'The tee\'s clean-up lap', views: ['tee-top', 'h1-teekit'], biomes: ['dmountain', 'seaside', 'heartland']},
+ {title: 'Diamond-mowed greens', views: ['h2-putt', 'h2-green', 'range-green'], biomes: ['seaside', 'dmountain', 'heartland']},
+ {title: 'Trees in still water', views: ['h1-pond', 'shore-near'], biomes: ['seaside', 'heartland', 'newengland', 'pacnw']},
+ {title: 'The straight tone step', views: ['h2-green-b'], biomes: ['heartland', 'seaside']},
+ {title: 'Waves at the water\'s edge', views: ['shore-near', 'sea-near', 'stream-near', 'h1-pond'], biomes: ['seaside', 'heartland', 'keys', 'pacnw', 'mountains']},
+ {title: 'Links shared fairways, the far-landscape goal', views: ['share-top', 'share-tee', 'share-tee-b'], biomes: ['seaside'], maps: true},
 ];
 function farGoal() {
  const goal = section('The far-landscape and mowing goal');

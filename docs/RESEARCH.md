@@ -4270,7 +4270,7 @@ holes (7.0-8.9 s before, 7.2-8.6 after) and about a second shorter on eighteen
 overlay.
 
 **Why it is two seconds at all: the floodlights.** Every pole is a spot light
-(57 on nine holes, 141 on the longest eighteen; `FLOOD_LAMP_CAP` is 192), and
+(57 on nine holes, 141 on the longest eighteen; `FLOOD_LAMP_CAP` was 192, and since 8 November 2026 at most 96 are live: `lampBudget`), and
 three writes the spot-light count into every lit material's program. With the
 cap set to 8 as an experiment, the same runs gave `compileAsync` 0-0.6 s
 instead of 2.0 on nine holes (once 2 ms: the menu backdrop had already built
@@ -14416,3 +14416,760 @@ folders in vendor: 1,363,623 triangles, 0.74 vertices shaded a triangle, 969,348
 901,973 after an exact join. So the redwood pack's 2.51 was the exception, not the rule,
 and the claim that shipped models share it was wrong. The figures and how to apply it are
 in IDEAS.md, *Join and reorder every shipped model's vertices*.
+
+**Classic Parkland, the first picture and model (6 November 2026).** tools/meshy/parkland.json:
+6 trees, 2 versions each, taller and narrower than the hand-built ones (the owner). Sizes
+and trunk widths are PLACED from each species' usual forest-grown form. gpt-image-2 gave a
+usable shape at once for white oak, sugar maple, tulip poplar, spruce and elm. The word
+"pyramid" and tiered limbs gave a pine, so both pin oaks went back; "tall oval crown",
+"not a conifer", "no even tiers" fixed it. Rejected: a free picture beside each tree in the
+plan. Pollinations (image.pollinations.ai, no key, one image per 45 s) gave cropped, wrong
+shapes, and the owner scrapped the idea.
+
+**Triangle targets raised (6 November 2026).** About 6,000 was copied from the tanoak (5,500)
+and the hand-built maple (6,300). The owner asked why not match the redwoods, and there was
+no good reason: 12,000 now, 12,600 for the spruce, the young redwoods' figure. White oak 1:
+6,128 to 12,187 triangles, same 0.49 width to height, same 30 credits. The trunk rounds out
+and flares, limbs appear and the leaf masses soften, but the crown stays sparser than its
+picture, so doubling the count does not fill it. Bark 209 triangles, leaves 11,978, far
+version 413 at outline 0.659; the split is normal for the pack (young redwood 182, tanoak
+27). **The cost on Low is not measured**: it has about twice the triangles of the
+hand-built tree it would replace. Trial: FAIRWAY_MESHY with it as Oak_1 to 3, New
+England seed 7, hole 1, one tools/capture/angles.mjs run: it loads, stands and takes the
+game's light. Not seen close up, not played.
+
+**All 12 Classic Parkland models (6 November 2026).** 11 more at 30 credits each, one at a
+time: 10,501 to 12,630 triangles against targets of 12,000 and 12,600, far versions 413 or
+500. Outline scores 0.68 to 0.73 for the full broadleaf crowns, 0.62 for elm 1, 0.55 and
+0.56 for the spruces. **American elm 2 scored 0.34, and the score was telling the truth:**
+its fine hanging leaves did not survive the model step and it came out nearly bare, while
+the far version's solid lumps fill the crown it should have had. Fine hanging foliage in
+a picture is a risk for a model, so a bare preview is worth a look before converting.
+
+**Meshy 7.1 against Meshy 6 (6 November 2026).** The owner asked why not the flagship.
+meshy-7.1 is Meshy's newest and costs the same, 30 credits for a textured 2K model
+(docs.meshy.ai/en/api/pricing). Meshy 6 was picked untested, because `remove_lighting`
+only works with its texture model. One test, white oak 1, same approved picture, target
+12,000: 7.1 gave 10,703 triangles and very good tapering limbs, but almost no leaves, a
+pale bare winter tree, where Meshy 6 gave 12,187 and a full crown. **So foliage stays on
+Meshy 6.** One test on one tree. Also confirmed from `game_paint`: a model's hue never
+reaches the game, only its light and dark, so a blue spruce preview is not a fault.
+
+**Classic Parkland, first look in the game (6 November 2026).** Three faults on the first
+capture, all from borrowing New England's region record. The orange sun (#ffcc8e) and
+purple shade (#9a7fa6) turned grey bark near black and the rough olive, so the paint was
+checked first and was innocent (bark means 1.03 to 1.19, the tanoak 1.37, the hand-built
+oak 0.87). Closed hardwood stands made a forest with holes cut in it, and from above the
+narrow crowns read as pines. Summer light of its own (#fff0d6, shade #8494bc) and woods
+further back (edge 95 m, patch .05, near 70 m; all PLACED) gave open parkland. The same
+number of crowns stays pointed seen from straight above, and a tulip poplar close up
+reads as stacked discs.
+
+**Crowns clipping (6 November 2026).** The owner saw it playing. Not a bug in the checks:
+`crownShare` defaults to 0, so on the open scatter trees keep only their trunks 1.5 m
+apart and crowns run through each other, and stands allowed overlap to half their summed
+reach. Tall open trees show it at once. Classic Parkland now has `crownShare` .9 and
+stands `share` .8, spacing 13 m (PLACED), as a record of its own, so no other landscape
+moves. The open entry on turning it on elsewhere stands.
+
+**Classic Parkland's seasons (6 November 2026).** The owner: spring washed out with the
+trees alike, autumn too vivid, summer good. My first colours were PLACED and spring was
+one pale green five times. Autumn now follows what the species do, muted, with the sugar
+maple the only bright tree. White oak: "a deep burgundy-purple" in one source, orange and
+red in another; followed burgundy, as wine-brown #6b4c3a
+(https://themarthablog.com/?p=105677 is one such listing; sources disagree, and no single
+one was treated as final). Pin oak: reddish-brown to brown
+(https://www.woodlanddunes.org/?p=7377) or red-bronze
+(https://storymaps.arcgis.com/stories/116c411218f547b8bcea69f23bc0b3b7); followed
+red-bronze, #7a5a3c. Sugar maple: yellow, orange and red, varying by year and leaf;
+#ab7f3e. Tulip poplar: yellow; gold #ab9b4e. American elm: yellow
+(https://mortonarb.org/app/uploads/2021/10/Fall-color-report-10-28-2021-Edited-by-Beth-1.pdf);
+dull yellow #928c4e. Norway spruce does not change. These look dull as numbers on purpose: the first muted set
+(#7c432f, #c97a2e) still came out bright red and orange in the game, because its light lifts
+and saturates leaf colour, so a colour here starts well below where it should end up.
+**Which source said which was read from
+search summaries, not the pages, and the hex values are PLACED by eye.** No source was found
+for spring: those colours are PLACED from general knowledge (oaks pale or bronzed, maple
+chartreuse, poplar clear green, elm early and soft green). The spruce needed adding to
+`EVERGREEN` or it would have stood bare in winter.
+
+**Six landscapes retired for Classic Parkland (6 November 2026).** The owner signed it off
+and asked for those it replaced to go: New England, the Old Northeast, the Heartland, the
+Bluegrass, the Ozarks and the Cross Timbers. 43 landscapes to 37. GENERATOR_VERSION 90 and
+SCHEMA 29, because a saved course on one now opens on Classic Parkland's ground. Their keys
+stay in OLD_KEYS, and the map's six areas redraw as Classic Parkland. The Midwest region held
+only the Heartland, so it left REGIONS. Fingerprints before: only `parkland` differed from
+main. After: only the six removed. **First considered and dropped:** keeping their records
+hidden so old rounds kept their exact ground; the owner asked for them to go. **What the
+quick checks caught:** my Classic Parkland course names held real clubs (Medinah, Aronimink),
+so it took the Old Northeast's vetted list; and course.js read `BIOMES[s.biome]` straight, so
+a retired key would have crashed, now `biomeOf`. Only the fast tests and the suites naming
+the six ran, at the owner's word.
+
+**Southern Pines (6 November 2026).** 8 models, 240 credits, 13,000 triangles or so, far
+versions outline .47 to .68. Solid masses survive the model step where fine lines do not:
+the longleaf redrawn as big tufted domes kept its shape, the elm's hanging leaves did not.
+Longleaf 1 came out with 1,774 bark triangles where the others have 100 to 400, because its
+limbs are heavy; it reads well. Classic Parkland's settings carried straight over and needed
+no second pass: `crownShare` .9, woods back (edge 80 m, patch .1, near 55 m, spacing 12 m,
+share .8, PLACED), and `fallen` naming the new pine keys, which gives the pine straw. Ground
+is Longleaf's sandridges. Dogwood's spring leaf is its bloom, #d4d2be: a tree paints one leaf
+colour, so the bloom is the whole crown. Seen in captures only.
+
+**Green limbs and the bark's colour (6 November 2026).** The owner saw green branches on
+Southern Pines. `read_tree` kept wood-coloured patches in the crown only if long and thin
+as a whole, to keep out the brown wedges at bough roots, so a forked limb failed and was
+painted leaf (bark 170 to 400 triangles a tree). A render of the two roles showed it at
+once. The new test is the area-weighted mean face normal: a patch reaching past 5% of the
+height with a mean under .35 is a tube, faces looking every way, where a wedge or a shaded
+mass is a sheet (bark now 700 to 4,167 on the pines, dogwoods unchanged). The thresholds are
+PLACED. No wedges in the captures. Trunks went bright orange in sun and near black in
+shade: the game's light saturates dark warm colours, as it did autumn leaves, so bark
+starts paler and greyer (loblolly #8a7566, not #6e4e3c). Also: the default `roughTint`,
+a pale yellow, blotched the rough, and the South's fairway read neon close up, so
+Southern Pines sets both.
+
+**Frame cost on Low (6 November 2026).** tools/frame-ab.mjs, built game, one round of 120
+frames, this machine's card, seeds at the default, tee 1 then tee 5: Longleaf Pines (hand
+built) GPU 1.16 / 0.70 ms, 250 / 160 draws, 12.9 / 7.4 M triangles. Southern Pines 0.93 / 0.63,
+265 / 174, 7.6 / 7.0 M. Classic Parkland 0.85 / 0.58, 303 / 209, 6.0 / 5.7 M. Redwood Coast 1.34
+/ 1.13, 378 / 272, 21.4 / 20.3 M. So twice the triangles a tree cost less overall, because crown
+spacing and woods set back plant fewer trees. One round each on a fast card, not a weak
+machine; draws are up, and that is what weighs on a weak one. The page grew to 44.5 MB.
+
+**The limb fix on Classic Parkland (6 November 2026).** The same `read_tree` rule, re-run
+on the 11 trees in `game-r2` from their stored models, no credits. Bark triangles: white oak
+1 209 to 364, white oak 2 170 to 247, sugar maple 1 336 to 367, elm 197 to 228, spruce 1 197
+to 222; the other six unchanged. The pines of Southern Pines went from 170-400 to 700-4,167,
+so the fix matters far less here: the broadleaf crowns are solid leaf with few limbs longer
+than 5% of the height, and that PLACED threshold passes over the thin twigs. Bark and leaf
+sheets show the white oaks' forks gained and no new wedges, but the sheets crop the trees
+and nobody has looked in the game. Ground fingerprints unchanged, so no version bump.
+
+**Tufted foliage on broadleaf trees (6 November 2026).** The Parkland prompts asked for
+"masses of lobed leaves" and forbade "lumps" and "foliage balls", and the models came out as
+crumpled lettuce. The owner asked for fluffy tufts, as the longleaf rewrite got. White oak 1's
+prompt now gives limbs ending in solid rounded tufts with a scalloped edge, and forbids visible
+leaves, lobes and anything thinner than a limb. Four pictures (9 credits each, takes 3 to 6) all
+read as soft tufts on clear limbs. Whether this survives the model step is not yet known. The
+old prompt is kept locally in bench/meshy/parkland/parkland-before-tufts.json.
+
+**The tufted white oak's model (6 November 2026).** Take 6, meshy-6, 12,494 triangles, 30
+credits. The tufts survived as smooth rounded masses and the far outline rose from .659 to .77.
+Limbs became real wood: bark 1,255 triangles against 364, leaves 11,239. The scalloped edges
+did not survive. The far version's `clumps` style gave 46 eight-sided diamonds, which read
+poorly against round tufts, so a `tufts` style was added: 18 twenty-sided masses cut from the
+leaves alone, 405 triangles. Their size is PLACED at .95 of the clump's measured reach: outline
+.813 at 1, .786 at .95, .713 at .85, with gaps opening as it falls. Not seen in the game.
+The other 10 trees' prompts follow the same wording, each keeping its own outline; a spruce's
+boughs are each drawn as one long tuft and stay on the `boughs` far style.
+
+**The rest of the tufted pack (6 November 2026).** Nine models, round 4, 30 credits each, all
+near target (12,242 to 13,142). Bark triangles, against the old pack: white oak 2 1,633 (247),
+pin oak 1 1,124 (159), pin oak 2 375 (131), sugar maple 1 1,216 (367), sugar maple 2 858 (171),
+tulip poplar 1 1,018 (255), elm 1,994 (228), spruce 192 and 817 (222, 277). So limbs drawn thick
+reach the game as wood, which the limb fix alone could not do. Far outlines with `tufts`: .70
+to .82; the spruces on `boughs` rose from about .55 to about .61. The elm's far trunk reads thick,
+because it forks low and the tube is measured at the fork; not yet fixed. First poplar 2 picture
+had too few tufts (owner); asking for sixteen to twenty, filling the column, gave a full one.
+
+**Second pass on the tufted pack (6 November 2026).** Owner approved 8 models and rejected Norway
+spruce 2 (picture and model). Its picture leaned and drooped to one side, and its model came out
+ragged, so its prompt now derives from spruce 1's, which passed, smaller and asked to be full,
+straight and even. Tulip poplar 2's fuller picture gave bark 1,456, far outline .757. The elm's
+fat far trunk was the whole fork measured as trunk, a width `read_tree` carries down to the
+ground. Tapering from the radius at 7% of the height did not help, for that reason. Under `tufts`
+the tube now tapers from the wood at the foot (70th percentile below 12% of the height), a PLACED
+curve (1 - height)^.6, outline .696 to .73, and stops at 88% of the height, inside the crown,
+because its tip showed as a spike above the tufts.
+
+**A far version for solid tiers (6 November 2026).** Norway spruce 2's redrawn model came out as
+thick solid skirts, and `boughs`, which looks for separate boughs, turned them into thin blades
+(outline .566). The `skirts` style finds each tier where the crown's reach peaks up the tree
+(120 bands, 95th percentile, 5 either way) and stacks a ten-pointed cone from its rim to halfway
+up the next tier, 20 triangles each: 13 tiers, 305 triangles, and 16 tiers, 365, both under the
+500 budget. The outline score fell slightly (.579 and .588, against .566 and .612) because a
+cone fills the gaps between tiers, but the render reads as the tree, where the blades did not. So
+that score alone would have kept the worse version. Rim scallop .84 and the half-tier overlap are
+PLACED. Not seen in the game.
+
+**Tufted Parkland in the game (6 November 2026).** First capture of all 11 trees: seed FAIRWAY,
+`--review`, four seasons. The tufts read as soft and cartoon, and far versions blend into the
+nearer ones. Three looks are open: trunks and limbs near black with the sun behind them, the
+maple and poplar very bright in summer, and the spruce teal from above. No yellow rough showed,
+so that fix is not owed here. Card pictures retaken on the landscape's own seed. On Low, one
+round on this machine, GPU .73 / .58 ms at tees 1 and 5 against .85 / .58 for the leafy pack, same
+303 / 209 draws and 6.0 / 5.8 M triangles: no added cost. A fast card, not a weak machine.
+
+**Dark trunks, lime crowns, teal spruce (6 November 2026).** Trunks went near black because bark
+shared the leaves' paint range: Meshy's dark stains reached .35 of the bark colour before the
+game's shade. Bark now has its own range, .75 to 1.3, PLACED, so a trunk keeps its colour and shows
+less stain. Pin oak, maple, elm and spruce bark went paler too. Maple summer #5f8a3a to #527a3c,
+poplar #6c9440 to #5c8240, spruce #2c5349 to #30573c, each less yellow or less blue. Reconverted
+both packs, ground unchanged. Earlier bark counts stand; only paint moved. Seen on seed FAIRWAY:
+the lime is gone, shaded trunks read dark grey rather than black, and spruces are greener with
+a slight cool tint from the air, which may be the sky light rather than the leaf colour.
+
+**Tufted Southern Pines (6 November 2026).** Classic Parkland signed off by the owner. The two
+loblollies and two dogwoods take the tufted wording, one picture each, far style `tufts`; the old
+prompts stay locally in bench/meshy/southern/southern-before-tufts.json. Whether these survive
+the model step is not yet known. The longleafs and white pines already use this language.
+
+**Tufted loblolly and dogwood models (6 November 2026).** Round 3, 30 credits each, 12,472 to
+13,135 triangles. Loblolly bark 3,943 and 4,484, the long trunk and limbs, dogwood 898 and 1,062.
+With `tufts`, the loblolly's far version cut a small crown into 22 fragments floating round a pole.
+So when the model's leaves form 6 or more separate islands over 2% of the leaf area, each island
+is one mass with a six-triangle limb to the crown base; when they join but the crown spans under
+half the height, 11 masses, also with limbs. Loblolly 331 and 253 triangles, outline .76 and .72,
+against 485 and .767 and .761: slightly lower score, plainly better tree. Both thresholds PLACED.
+
+**Far versions for the other pines (7 November 2026).** The longleafs and white pines were on
+`boughs`, which gave flat blades, a cone on top and a bent trunk, the limbs pulling the measured
+axis. Both moved to `tufts`, and under `tufts` and `skirts` the trunk now runs straight between
+the foot and the crown base. Outlines .707 to .804. White pine 1 took the 11-mass path and reads a
+little broadleaf; accepted at distance. Not seen in the game.
+
+**Tufted Southern Pines in the game (7 November 2026).** Seed FAIRWAY, four seasons. The pines and
+dogwoods read well. On Low, one round on this machine: GPU .78 / .63 ms at tees 1 and 5, 261 / 174
+draws, 6.9 / 6.9 M triangles, against .93 / .63 and 7.6 / 7.0 M before the rebuild. The pine straw
+patches are the weak point: angular outlines and too orange against the rough.
+
+**Softer fallen ground (7 November 2026).** Straw patches showed the owner-atlas cells as corners
+at the .5 line. The shader now paints from an average of five samples, 1.5 m apart, broken by noise
+(PLACED: .34 over a 3 m scale). The lie still reads the same bytes at .5, so the paint can differ
+from the lie by a metre or so at an edge. This reaches every landscape with fallen ground. Southern
+Pines' tint is duller too (#73683e, was the default #8b5e34), a record change. Four texture reads
+more on those landscapes: Low read GPU .82 / .63 ms against .78 / .63, one round each, within noise.
+
+**Dogwood colours (7 November 2026).** With a smooth crown, spring #d4d2be read grey and autumn
+#6e4a3e near black. Now #fff4ea and #8a5a4c; #a65542 went too red under the game's light.
+
+**Three landscapes retired for Southern Pines (7 November 2026).** The owner signed it off, so
+the Piedmont, Longleaf Pines and the Pine Barrens left: 38 landscapes to 35. GENERATOR_VERSION 91
+and SCHEMA 31, because a saved course on one now opens on Southern Pines' ground. Their keys stay
+in OLD_KEYS and their weeks in `retired`, and the map's three areas redraw as Southern Pines, so
+the New Jersey pines are Southern Pines on the map; the three reference courses stand for it
+(Augusta National, Pinehurst, Pine Valley). The old tree models stay: built courses name trees
+by species. No landscape wears the karst recipe now; it stays in landforms.js until the end
+cleanup, and tests/terrain-true.test.mjs holds the Bluegrass's old recipe to keep it honest.
+
+**The first full test run on the branch (7 November 2026).** 1,482 tests, 10 failing at first: nine
+named a retired landscape on purpose, one was the ground shader test, which pinned the fallen
+edge before it softened. Fixed in the tests. **What this cost in honesty:** the cart path test held
+seeds chosen as clean on the Heartland, and on Classic Parkland's ground some are not, so it moved
+to seeds that are. The blemishes are small and are listed in TODO. After the fixes all pass,
+and the fingerprints show only the three retired landscapes removed.
+
+**Lowcountry and Gulf, step 1 (7 November 2026).** tools/meshy/lowcountry.json: southern live oak,
+bald cypress and sabal palm, 2 of each, one picture each, 54 credits. The loblolly is Southern
+Pines'. The owner has no photos here, so form comes from the Harbour Town reference photos: tall
+live oaks with pale leaning trunks in a mix with loblollies, reddish pine straw beds under them.
+Sizes PLACED: live oaks 22 x 17 m and 26 x 14 m, narrower than a lone open-grown tree (often wider
+than tall) on the owner's rule of taller and skinnier, and closer to the photos' woodland trees.
+The first oak pictures had Spanish moss as thick solid curtains, because fine hanging detail does
+not survive the model step. It read as hanging cones and **the owner turned it down** (7 November):
+plain oaks, nothing hanging. It is real at these courses, on live oaks across the coastal Carolinas
+and Georgia; the choice is about how it looks at this level of detail, not about whether it is
+true. The prompts now say nothing hangs, and the moss colour left the pack too, since the colour
+line alone would have asked for moss again (the dry run showed it). 18 credits.
+
+**Lowcountry models, round 1 (7 November 2026).** Bald cypress 1 and 2, sabal palm 1 and 2, 30
+credits each, 12,277 to 12,461 triangles. Far versions in `tufts`: cypress 331 and 201 triangles,
+outline .696 and .677; palms 331, .676 and .684. **The far palms are wrong:** tufts turn a palm's
+crown into round clumps, a broadleaf on a pole. `boughs` was tried and rejected: 419 triangles,
+outline .561 and .634, stacked flat layers like a pagoda. Both ignore where a frond starts.
+
+**`fronds`, a far style for palms (7 November 2026).** The crown is cut by direction from a hub at
+the top of the trunk, and each of 14 fronds (PLACED) is one blade of four rows and a tip, 21
+triangles, whose spine runs through the frond's own faces, so its droop is kept. 339 triangles
+with the trunk, 81 under budget; the trunk holds its width to the hub. Outline .589 and .637,
+below tufts' .676 and .684: the score counts covered area, and lumps cover more than blades.
+**Go by the picture**, as with the pines: these read as palms and the lumps did not. Live oak models
+in `tufts`, 60 credits, 12,529 and 12,567 triangles: far 305 and 331, outline .742 both.
+
+**Lowcountry and Gulf in the game (7 November 2026).** Key `lowgulf`, SCHEMA 32, beside lowcountry,
+bayou and gulfcoast until sign-off, so no other landscape moves and GENERATOR stays 91. Marsh, tide
+and creeks are the Lowcountry's own. Sizes PLACED: live oak 20-27 m, 12-16 m across; bald cypress
+24-34 m, 7-10 m; sabal 9-16 m, 4.4-6.4 m. Tree density 2.2 (the old Lowcountry 1.5, Southern Pines
+2.4), PLACED for the study's medium to heavy. On seed FAIRWAY, 18 holes: 1,499 live oaks, 1,052
+loblollies, 622 sabals, 397 cypresses. Bald cypress also stands in pond shallows (`inWater`), as
+on the Bayou; there are no knees. Understory shrubs and marsh grasses are still hand-built models.
+Course-name first words are new and PLACED, not checked against real clubs one by one.
+
+**What the first screenshots changed.** The Lowcountry's spring bloom, pink first, is mixed into the
+native ground by half and drawn in drifts, and on this much marsh it made a solid salmon field. A
+spartina marsh greens up instead, so the bloom's first colour is a green-gold, #9fb05c (PLACED). Bald
+cypress autumn #8a5a3e came out orange-red in the game's light; #766048 reads as rust (PLACED). The
+white flecks along creek banks are the water lapping (`lakeWaves`), kept. The thick mist in low views
+by water is the South's profile on this wet ground, in every season; the owner kept it.
+
+**Its cost on Low (7 November 2026, a fast card, not a weak machine).** One run, 120 frames each:
+first tee 1.10 ms and 10.4 M triangles, fifth tee 0.60 ms and 8.3 M. The old Lowcountry on the same
+build: 1.60 ms and 16.4 M, 1.00 ms and 9.9 M. Start to main menu 11.85 s against 13.94 s, one run
+each. The fingerprints show every existing landscape unchanged and one new.
+
+**Three more retired (7 November 2026).** The owner signed off Lowcountry and Gulf, and the Lowcountry,
+the Bayou and the Gulf Coast left for it: 36 landscapes to 33, GENERATOR 92, SCHEMA 33, keys in
+OLD_KEYS. The Gulf Coast was in the Texas region, by Houston, so its saved courses move to a
+Carolina landscape: the study's call. The Bayou's knees and tupelos are no longer planted anywhere
+new; the models stay, because built courses name trees by species.
+
+**The second full test run (7 November 2026).** 1,482 tests, 5 failing, in two files. Four in
+terrain-true named retired landscapes and now use Flatwoods and lowgulf; one in landscape-map held
+a fixed count of 33 places, now worked out from the list with one miss allowed, as it always did.
+The other 1,477 passed in that run and the two files passed after the fix; no source changed
+between. No cart path or other blemish came up from these three leaving.
+
+**Florida Palms, step 1 (7 November 2026).** tools/meshy/florida.json: coconut and royal palm, 2 of
+each, one picture each, 36 credits. The sabal palm and live oak are Lowcountry and Gulf's, the
+loblolly Southern Pines'. Coconut form comes from the owner's photograph of Seminole at Juno Beach:
+trunks very thin and bowed, small wind-swept crowns, palms in loose groups over white sand. The
+owner's two other uploads look like Seminole Legacy at Tallahassee, a different course of live oaks
+and pines. Royal palm form is its usual one, no photograph being to hand. Sizes PLACED: coconut
+22 x 8 m and 15 x 7 m, royal 24 x 8 m and 16 x 7 m. A feather frond's leaflets would not survive
+the model step, so each frond is one thick blade with a notched edge: fewer, broader fronds than
+the real trees.
+
+**Batch one, step 1 (7 November 2026).** The owner agreed to run steps 1 and 2 for several
+landscapes together and steps 3 to 5 one at a time, since those edit the same files and use the
+card. tools/meshy/hawaiian.json (Cook pine, ironwood, monkeypod), deserttarget.json (saguaro, palo
+verde, velvet mesquite), desertres.json (Afghan and Aleppo pines, weeping willow, olive, date palm,
+Mexican fan palm): 12 species, 2 of each, 234 credits with 2 redraws. Form from the owner's Kapalua,
+Troon North, Shadow Creek and Summerlin photographs and the reference sets. All sizes PLACED. The
+monkeypod stays about as wide as tall, against the taller and skinnier rule, narrowed from a real
+one, because the umbrella is the tree. **What failed:** the willow as long solid hanging masses came
+out as sausages. Stepped chains of five or six fluffy tufts on each hanging branch worked first
+time. A saguaro has no leaves for the far version to find, so its far style is still to be worked
+out at step 2.
+
+**Batch one, step 2 (7 November 2026).** 24 models, 30 credits each, 11,400 to 12,568 triangles. The
+owner sent back Ironwood 2 (wind-swept), Aleppo pine 2 (an S-curved trunk) and both willows (the
+stepped tufts read as cones): no wind-swept shapes is now the rule in every prompt, and the willow's
+third try is one dome of draping tufts with a low fringe. **Three far-version faults, fixed in
+tools/blender:**
+- *Green wood.* read_tree called wood whatever is not mostly green, so a palo verde had no wood and
+  Blender stopped. Now, when a tree's foot is not wood-coloured, its colours split in two and the
+  group at the foot is the wood; one colour all over is all wood. A brown-barked tree never takes
+  this path, so no shipped tree changes. (Wrong on 8 November 2026: Engelmann spruce 2's dark trunk
+  foot took it and its needles came out as bark, 1,736 leaf triangles against 10,638 of bark, and its
+  far version a bare spike; a rebuilt model did the same. A pack model's `wood: "brown"` now skips
+  the split (MESHY_WOOD): 11,337 leaf, 1,158 bark, far outline .633.) Palo verde far 405 and 331 triangles, outline .689, .646.
+- *A cactus.* `tufts` and `clumps` made floating diamonds of a saguaro, and cutting it by position
+  made a zig-zag. The `cactus` style stands a straight eight-sided column on the body's foot (the
+  measured axis bent toward the arms) and finds each arm as the joined faces standing out from it, a
+  six-sided tube out and up, its sideways direction held through the bend (turning it pinched the
+  elbow); the arm width has a PLACED floor of 0.6 of the column's, as only an arm's outer faces
+  stand out. 260 and 140 triangles, outline .92 and .911, the best of any far version. A cactus is
+  all body, so it ships with no leaves part.
+- *A bowed palm trunk* kinked between the coarse trunk rings. `fronds` now uses ten rings to the hub:
+  coconut far 379 triangles, outline .633 and .582 (was .553, .517).
+
+**Batch one, the rest of step 2 (7 November 2026).** The owner approved all 28, and asked for two
+more saguaros: Saguaro 3, very old with five arms, and Saguaro 4, young with none, its first picture
+redrawn because "a little swelling above the middle" drew a cucumber pinched at the foot. Ironwood
+2, Aleppo pine 2 and both willows built, 12,472 to 12,580 triangles; the willows' draping tufts
+survived the model step. Far versions: 331, 305, 331 and 405 triangles, outline .781, .738, .752,
+.828.
+
+**Florida Palms in the game (7 November 2026).** Key `flpalms`, SCHEMA 34, beside the Keys and Florida
+Flatwoods until sign-off, GENERATOR still 92. It takes the Keys' coastal ground, sea and white sand,
+and is green all year like the Keys (`tropical`): PLACED, since Seminole and TPC Sawgrass overseed in
+winter. Southern Pines' softer greens. Sizes PLACED: coconut 14-22 m, royal 16-24 m. Tree density
+1.6, the study's light to medium: on seed FAIRWAY, 18 holes, 1,657 trees and shrubs, of them 258
+coconut, 278 sabal, 101 royal, 161 live oak and 75 loblolly. Two first words clashed with the Keys
+and Longleaf and were replaced; the rest are new and PLACED, not checked against real clubs.
+
+**Batch one in the game (7 November 2026).** Florida Palms, Hawaiian Resort (`hiresort`), Desert Target
+(`dtarget`) and Desert Resort (`dresort`), SCHEMA 37, GENERATOR still 92: the fingerprints show every
+existing landscape's ground unchanged, four new, and one record change, the old Desert Resort's
+name. Captured on seed FAIRWAY, one at a time on the card. **What the captures changed:**
+- *Florida Palms* first took the Keys' ring island in the sea, which read as the Keys. It is now
+  mainland, `edgeCoast` with the ocean along one side for Seminole and `inlandWater` lakes for
+  Sawgrass, on Flatwoods' lowland recipe a little broader (scale 380). Mainland then grew 20,906 trees
+  and shrubs, a forest: the woods beyond play, set by `stands`, not `treeDensity`. Spacing 8 to 16,
+  edge 50 to 90 m, patch .15 to .3: 5,536, open and scattered. Green all year like the Keys
+  (`tropical`), PLACED.
+- *Hawaiian Resort* takes Hawaii's region, sea and mountains but no lava: Kapalua is green slopes.
+  7,111 plants on seed FAIRWAY.
+- *Desert Target*: the saguaros showed nearly black in the game's light at #5c7a54, so #6e8c60
+  (PLACED). A saguaro's two shades of rib split its full model into leaf and bark parts, so the
+  species is in vegetation.js STILL and never sways. 12,679 plants.
+- *Desert Resort*: the willows went bare in winter, against the owner's winter-green rule for this
+  landscape (5 November), so `drwillow` is in EVERGREEN. 13,389 plants.
+- *Course names*: words that name real courses or resorts came out -- Seminole, Kapalua, Pinnacle
+  Peak, Ponte (Vedra), Gulf Stream, Superstition, Desert Willow, Saguaro -- the course-names test's
+  rule, which catches only its own list. The rest are PLACED, not searched one by one.
+
+**Their cost on Low (7 November 2026, a fast card, one run of 120 frames each):** first and fifth tee,
+ms. Florida Palms 1.40, 1.30 against the Keys 1.20, 1.40; Hawaiian Resort 1.20, 0.80 against Hawaii
+1.20, 1.00; Desert Target 1.10, 0.80 against the Sonoran 1.20, 0.90; Desert Resort 1.30, 0.90 against
+the old Desert Resort 1.30, 1.00. The game file is 52.2 MB, from 45.8 MB with Florida only: 38 new
+models. The full tests: 1,480 of 1,482; the two failures are the map's (a new landscape has no shape
+until its predecessors retire through OLD_KEYS).
+
+**Batch two, step 1 (7 November 2026).** tools/meshy/northwest.json (Douglas fir, western red cedar,
+western hemlock, bigleaf maple, red alder), calcoast.json (Monterey cypress, Monterey pine, Torrey
+pine, coast live oak, eucalyptus), seaside.json (shore pine) and redwood2.json (coast redwood, young
+redwood, tanoak): the owner's request to rebuild the Redwood Coast in the tufted wording. 28 pictures,
+252 credits. Form from the owner's Sahalee, Spyglass Hill, Torrey Pines, Chambers Bay and Northwood
+photographs. Conifers use the Norway spruce wording the owner approved; all trees stand still and
+upright, so the Monterey cypress and shore pine are not wind-shaped as on the real coast.
+
+**The owner's sign-off, 7 November 2026.** Florida Palms, Hawaiian Resort and Desert Resort signed
+off from the captures. The Keys and Florida Flatwoods now open as Florida Palms, Hawaii as Hawaiian
+Resort, the first Desert Resort and Desert Palms as Desert Resort (OLD_KEYS; MIGRATIONS 37; GENERATOR
+93; SCHEMA 38): thirty-two landscapes. The fingerprints: those five removed, nothing else moved. The
+Florida Palms and Desert Resort terrain kept their own recipes, a little broader than the ones they
+replaced, as signed off. Two tests named the Keys on purpose (an Island save, the old nine's weekly
+rotation) and now expect Florida Palms; the smoke run's map journey clicks Florida Palms.
+
+**Desert Mountain (7 November 2026).** The owner, of Desert Target: "name it desert mountain and change
+the landscape so that the courses wind through and around mountainous, rocky, and craggy terrain? Not
+as drastic as our mountain courses today. But in between. Like a true desert mountain course. We can
+have resort be the flatter option." Key `dtarget` became `dmountain` (never released, no migration);
+the models keep their Dt prefix and the pack its name. The ground is the Sonoran's granite knobs grown
+into rocky hills: cell 270 to 180 m, chance .38 to .7, heights 16-44 to 24-56 m, profile 1.1 to .85
+(steeper sides), round .45 to .4, reach 90 to 45 m (they rise nearer the holes), bare .1 to .08; hills
+base 25 to 45 and severity 75 to 120 (the desert's and the Rockies' are 25/75 and 70/180), ring lift
+620 with peaks in place of mesas. New in landforms.js `knobs`: `crag` (removed the same day for `boulders`, *Desert Mountain, round 2*, below), which multiplied a knob's height
+by 1 + crag x (ridged noise x 2.4 - .8) at `cragScale` metres -- sharp crests and clefts that read as
+stacked boulders. Plain noise, the first try (crag .35 at 16 m), only made the domes lumpy; ridged at
+.6 and 12 m, the second, made needle spires; .4 at 22 m with two octaves, the third, reads as broken
+granite tops (the owner's Troon North photographs). Every number PLACED. Ground heights on seed
+FAIRWAY, 18 holes, the 90th percentile above the hole line: 40 m out 3.3 m, 80 m out 7.2, 150 m out
+13.9 (the Sonoran 2.3, 4.3, 7.3; the Rockies 3.1, 6.6, 14.9); the highest 150 m out 42 m (the Rockies
+83); bare rock at 13% of points 80 m out (the Sonoran 1%, the Rockies 5%). 9,293 plants (the Sonoran
+12,775). On Low, one run of 120 frames: first and fifth tee 1.10 and 0.70 ms against the Sonoran's
+1.10 and 1.00.
+
+**Batch two, step 2 (7 November 2026).** The owner approved 25 of the 28 pictures; 25 models made on
+Meshy 6, 750 credits, none failed. Redrawn on the owner's notes, two pictures each (54 credits):
+bigleaf maple 1 ("I don't think this is the right canopy shape": the first was a pointed stack of
+clumps; open-grown bigleaf maples are broad domes as wide as tall on a short trunk dividing low, so
+20 by 20 m, square picture, four or five limbs sweeping out in a vase), Torrey pine 2 ("too bonsai":
+flat pads on a twisting trunk; now a nearly straight trunk, steep rising limbs, tall rounded tufts,
+no flat pads), coast redwood 1 ("Skinnier trunk and make the leaves a little wider": trunk one
+twenty-fourth of the height from one sixteenth, boughs to a quarter of the height each side, 15 m
+wide from 11).
+
+**Desert Mountain, round 2 (7 November 2026).** The owner, of the first round: "closer. But I'm
+imagining less 'blister' like mountains and more almost football shaped. Additionally the top of the
+mountain areas have fin like structures. It needs to be more rocky if that makes sense. Additionally
+is there any way we can have some of our tee shots hit off of these mountain structures? Maybe like a
+1.5 holes per 18 will be that way?" Read as: the round domes are the blisters, the ridged noise's
+sharp crests the fins (a crest of ridged noise is a narrow blade), and rocky means boulders. Changed:
+(1) landforms.js `scatter` takes `stretch`: a feature's radius becomes its half-width, its length 0.65
+to 1.35 times stretch times that, on a heading within 50 degrees of the landscape's own so the ridges
+roughly run together, and `tip` below 2 points the ends (distance sqrt(u^tip + v^2)). Desert Mountain:
+cell 200, half-width 30-60 m, stretch 2.4, tip 1.4, heights 24-54 m, profile 2 and round .55 (a
+rounded back, steep at the foot). (2) `crag` gave way to `boulders`: on the upper part of a knob
+(from 15% to 50% of its height) rounded caps on a jittered grid 24 m a cell and half that again, each
+the tallest cap over the point, clefts sharp between them, times `rock` .6 -- about -8 to +14 m.
+Ground on seed FAIRWAY, 18 holes, 90th percentile above the hole line: 40 m out 3.2 m, 80 m out 8.1,
+150 m out 14.0 (round 1: 3.3, 7.2, 13.9); the highest 150 m out 45 m; bare rock at 10% of points 80 m
+out. (3) Tees up on the rock (`rockTees` .083; course.js; PROJECT_HANDOFF *Tees up on the rock*): an
+outcrop 10-16 m high, 26 m half-width, the long half-length (the span of the tees on it, plus 14 m
+behind, divided by .4, at least 46 m), flat to d .6 and smooth to its foot; boulders at 0.4 size on
+its flanks between d .66 and 1. Over ten seeds: 1.7 holes in 18 and 0.8 in 9 (about one nine-hole
+course in four has none -- seed FAIRWAY's nine is one, so the rock-tee captures are on seed TROON);
+the back tee stands 3.6 to 22.9 m above the start of the fairway, most 11 to 20. On Low, one run of 120
+frames: first and fifth tee 1.20 and 0.90 ms (round 1: 1.10 and 0.70). Every number PLACED. Not played.
+
+**Desert Mountain, round 3 (7 November 2026).** The owner: "For the external landscape around
+desert mountain. Let's just draw one big mountain (look at the shape of superstition mountain. That
+should be the shape of it. and then we would have flat desert with the smaller football style mountain
+pieces scattered about. Then. For the tee boxes on the cliffs. Instead of flattening the entire top.
+Let's just try flattening only the tee box. That will leave the rocky areas in between where the tee
+boxes are on the top. Make sure we don't introduce blind shots by doing that." Sources:
+https://en.wikipedia.org/wiki/Superstition_Mountain -- summit 5,059 ft (1,542 m), prominence 1,817 ft
+(554 m), "approximately 3,000 feet (910 m) above the Salt River Valley"; the west face dacite lava and
+rhyolitic tuff, the softer tuff weathered away leaving "the dacite cliffs exposed", the Flatiron near
+Peak 5024; Apache Junction to the west. https://en.wikipedia.org/wiki/Superstition_Mountains -- the
+range (highest Mound Mountain, 6,266 ft); nothing on the face's length. The Superstition Ridgeline
+trail along its top: 10.8 to 11.4 miles one way (hikingproject.com 18.3 km; Gaia GPS 10.8 mi), so a
+massif some 15 km of crest; the length used is PLACED shorter for the view. (1) `ringMassif`
+(landscape-edge.js): one massif 2,200 m past the course's edge on a seeded side, 9,000 m long, its long
+axis across the line of sight; `ringLift` 900 m (the valley-to-summit 910); a face 1,400 m deep -- a
+talus apron rising to 22% of the height over its first 40%, then cliff bands to the crest by 86% --
+its foot wandering 350 m in and out (buttresses and gullies) and fluted by ribs 150 m apart (10% of
+the height on the cliff bands); a back falling 85% over 3,500 m; steep ends over the outer 28% of its
+length; a crest broad and nearly level, 10% higher at one seeded end, with knobs at 1,600 m and small
+ones at 500 m. The first try, knobs every 900 and 260 m at 3 km, stood as an even saw and paled in the
+haze. Its rings are drawn at the mesa spacing (16% apart, at most 220 m) so the cliffs are not smeared.
+The ring of peaks (`ringPeaks`, `ringLift` 620) is gone. (2) The floor flattened: hills base 45 to 8,
+severity 120 to 22; the football ridges thinned from chance .7 to .5. Seed FAIRWAY, 18 holes, 90th
+percentile above the hole line: 40 m out 2.5 m, 80 m out 5.6, 150 m out 9.2 (the Sonoran 2.3, 4.3,
+7.3); the highest 150 m out 55.7 m; bare rock at 6% of points 80 m out. (3) Rock tees rocky all over:
+the boulders at 0.6 of the landform's on the whole outcrop, fading out at its foot; 9 m clear round
+each pad; in front of each pad a lane 8 m either side, widening 15% of the way out, with no rock
+standing and the ground falling at 0.25 from the pad's height; each pad held on its home. A test
+traces the eye on the back tee to 60 m past the fairway's start: blocked with the round-2 flat top, and
+at a fall of 0.15 by half a metre (a middle tee 20 m ahead, cut barely lower); at 0.25 none of 17
+rock-tee holes over ten eighteens is blocked by its outcrop (one hole, seed E's 10th, is blocked
+0.3 m at 120 m past the fairway's start by a rise in the fairway, from the forward tee on the floor
+as much). Back tee above the start of the fairway: 0.4 to 19.8 m, most 7 to 15. On Low, one run of
+120 frames: first and fifth tee 1.40 and 0.90 ms (round 2: 1.20 and 0.90; the far rings' extra rows for
+the cliffs). Every number PLACED. Not played.
+
+**Desert Mountain, round 4 (7 November 2026).** The owner: "We have a mismatch on the color of the
+rock props that are sticking out of the mountain sections and the mountains themselves. I think ours
+are far too grey. Work on color matching the landscapes to the rock props", and "Our holes have far
+too much empty space around them. Real desert mountain sections courses run right up to the
+mountains. Curving through them like a snake ... If the player needs more landing area. They can widen
+the fairways." (1) The props' rock is #b57c4e (the desert's `rock`); the painted rock was #8e7d6a, a
+grey-brown. Now #b07a50, a touch darker than the props, since the ground's paint is lit flatter than a
+prop's faces. The far mountain's faces take it too. (2) `hugRidges` (course.js; PROJECT_HANDOFF
+*Holes that run through the rock*): every 60 m down each side of every hole from 10 m before the
+fairway to 30 m short of the green, chance .8, half-width 14-26 m, half-length 40-75 m, height 9-24
+m, the inner foot 2 m outside the corridor, the landform's boulders on them at 0.8, none inside any
+corridor or within 6 m of a tee's line of play. The landform's own ridges thinned from chance .5 to
+.4; rock and hardpan start 2 m off the turf (gates a 6 to 2, floor 5 to 2, b 12 to 8). Seed FAIRWAY,
+18 holes, 90th percentile above the hole line: 40 m out 4.5 m, 80 m out 8.3, 150 m out 10.6 (round 3:
+2.5, 5.6, 9.2); bare rock at 14% of points 80 m out (round 3: 6%). Blind tee shots (bench, quick tier on
+Desert Mountain, 108 shots): blocked more than 1 m 4, more than 3 m 2 -- without the ridges 2 and 0.
+Traced: in every one the highest ground on the line is the fairway itself, 100 to 180 m out, seen
+from a forward tee sited 20-30 m off the centre line; no ridge stands in a tee's line (the line-of-play
+rule, added for this, changed nothing, so it is a guard rather than the cause). Rock tees: still none
+blind over ten eighteens. On Low: 1.40 and 0.90 ms at the first and fifth tees, as round 3. Every
+number PLACED. Not played.
+
+**Desert Mountain, round 5 (7 November 2026).** The owner, of round 4's ridges along the holes: "it
+looks like there are several in natural mountain formations. Maybe these are being placed after the
+holes? Maybe we should make the mountains much longer and a little wider and then place the holes in
+places where it makes sense? There is also a pencil looking mountain ... I really just want to see the
+holes look like they are playing into the natural draws between mountains", and "The deliberate
+football shapes are a bit jarring. The bigger mountains look much more natural". The holes are routed
+before any ground exists, so the ground was made to fit them: (1) `range` (landforms.js `knobs`): fbm
+in three octaves, domain-warped over 900 m, at a 380 m scale stretched 2.4 times along a seeded trend;
+the share above .5 rises to full height by .76; height 70 m times the share to the power 1.1 times a
+crest of ridged noise at 220 m (.5 to 1); boulders on the upper slopes; saguaros and palo verde on the
+lower slopes only. A first try at a 520 m scale, full by .66, stood as two huge flat-topped blocks. (2)
+`longLift`: the ranges kept out of the long shape (PROJECT_HANDOFF *Holes in the draws*); with them in,
+seed C's hole 7 climbed a range and hid its landing area 13.6 m deep. (3) `reach` 26 m blocked 6 of
+108 tee shots by over 3 m on the bench's quick courses (the Rockies 2, the Sonoran 0); 36 m, 2 (the
+floor's roll cut from 5 to 2 m made no difference and stays). (4) Knob scatter chance 0; round 4's
+`hugRidges` removed from course.js. Seed FAIRWAY, 18 holes, 90th percentile above the hole line: 40 m
+out 1.5 m, 80 m out 9.0, 150 m out 18.7; the highest 150 m out 81.6 m; bare rock at 15% of points 80 m
+out. Rock tees: none blind over ten eighteens. On Low: 1.20 and 0.80 ms at the first and fifth tees.
+Every number PLACED. Not played.
+
+**Batch two, step 3 (7 November 2026).** The owner: "I think we have all the models ready so you can
+start the other landscapes". 30 models converted (round 1, then round 2 for hemlock 1, red cedar 1,
+Monterey cypress 1, coast redwood 1 and 2 and young redwood 1, copied over), none failed. Added
+beside the landscapes they will replace, one at a time: Pacific Northwest (`pacnw`; `pnw` is an old
+save key): Puget Sound's glacial ground, density 4.4 (Puget Sound's region 4), stands share .7 at 9 m,
+fir .34, cedar .24, hemlock .22, maple .1, alder .1, fern and huckleberry under them; California
+Coast (`calcoast`): Monterey's terraces, sea, stacks and coast-seeking shore, density 1.6, cypress
+and Monterey pine as specimens; Seaside Links (`seaside`): the links region's ground, grasses and
+coast, density .6, shore pine .12 and a lone Douglas fir .02 among gorse and heather, stands share
+.15. The Redwood Coast keeps its key: redwood, young redwood and tanoak are the new models
+(vendor/blender-meshy_redwood2, 2 each); its trees stand where they stood. Tried and taken back: its
+Douglas fir as the Pacific Northwest's `nwfir` -- a different size moved its trees (it would have been
+generator 94) and stood the woods back from its tees, 58% of course density round them against the
+tee-corridor test's floor ("the moat is back"); it keeps the first pack's `fir`. Pacific Northwest's
+hummocks 14 m against Puget Sound's 13, California Coast's terraces 13 against Monterey's 12, Seaside
+Links' dunes at a 160 m scale against 150: no two landscapes may share their ground (terrain-true). Names checked against every landscape's and the
+real-destination list (Sahalee, Pumpkin Ridge, Cypress Point, Spyglass, Riviera, Torrey and Pebble
+taken out). On Low, one run of 120 frames, first and fifth tee (processor / graphics card, ms):
+Pacific Northwest 1.1/1.13 and 0.8/0.83 (Puget Sound 1.3/1.11, 0.9/0.66); California Coast 1.1/0.72,
+0.8/0.53 (Monterey 1.0/0.77, 0.8/0.57); Seaside Links 1.0/0.80, 0.7/0.63 (Scottish Links 0.8/0.83,
+0.7/0.68); the Redwood Coast 1.1/1.42, 0.8/1.26, 24 M triangles -- after a fix: its new models went in
+without their far versions (the mesh build's list of trees that ship one), and it first measured
+6.8/6.74 ms and 108 M triangles. Every density and colour PLACED. Not played.
+
+**Round 13 (8 November 2026): fifteen landscapes; the Badlands routed round its formations; no
+facilities.** The owner: "Prairie and sand I sign off", then of the Badlands "Let's do the same kind of
+desert routing work while still keeping the badlands look. I'm not sure we want a full course slope
+though" (no: Desert Mountain's `tilt` is its own), and "Just get rid of the road. Clubhouse area.
+Parking lot. And cart paths from generated courses ... We can maybe add them back later." The Sand
+Hills, High Plains, Bluebonnet Prairie and Hill Country left for Prairie & Sand Hills (GENERATOR 100,
+SCHEMA 47; the Texas region with them): fifteen landscapes, the plan's. The Badlands (GENERATOR 101):
+routing.js reads the formations (`formationShareOf`: the carving over 2 m, full by 12 m) as Desert
+Mountain's ranges -- no hole on them, most against them -- the field moves with the course's `shift`,
+and the carving is lowered 12 m near a hole and back over 30 m (`sink` 80 and `reach` 80 before).
+Seeds FAIRWAY and SAWTOOTH (9 holes), FAIRWAY and A (18): fairway steeper than 15% 1.6%, 2.7%, 4.1%,
+3.5%; a course builds in 3.0-5.1 s; holes with a wall over 8 m within 18 m of their rough for over 30%
+of their length 2-3 a course (by a rough probe; the picture shows more holes in a winding valley
+between formations); blind tee shots, quick tier, one red tee 2.5 m short of seeing its landing, none
+other. The public road then climbed a formation (56%, 52% on another side): roads.js now prefers a line
+no steeper than 30% between 4 m samples (`ROAD_STEEPEST`, PLACED) and the gentlest side, but on seed
+SAWTOOTH no side is gentle -- moot while there are no roads. Facilities (GENERATOR 102): course.js
+`facilities` (off; not a player setting) gates the cart paths and the clubhouse, and the clubhouse
+gates the road, the lot, the drive and the cart barn; seed FAIRWAY's nine on Classic Parkland had 19
+paths, 2 roads, a lot, a clubhouse and a cart barn, and 185 and 344 path and road cells (6 m grid), now
+none. The tests of those parts turn `facilities` on.
+
+**Round 12 (8 November 2026): Mountain and Northern Woods signed off; spring on the prairie; a
+Badlands trial.** The owner: "I sign off on mountain and northern woods! Mark them done", of Prairie &
+Sand Hills "Wouldnt the tall grasses in the spring be more green? Is that how they are in real life?",
+and of the Badlands "a preview on what it would look like if the course actually went up into the
+mountains ... little to no extra room on the sides of the fairway". The Rockies, Cascades, High
+Sierra, Ponderosa, Sagebrush, Blue Ridge and Alaska left for Mountain (GENERATOR 99, SCHEMA 46; 19
+landscapes); the regions left empty (Appalachia, the High Desert, Alaska) went with them; Mountain's
+pin moved to Edgewood Tahoe (38.97, -119.94; Castle Pines fell inside the High Plains' shape). Spring:
+yes -- in the Nebraska Sand Hills the cool-season grasses green in April and May and the warm-season
+grasses that make most of the cover (sand bluestem, prairie sandreed, switchgrass, little bluestem)
+green from late May, the old year's stems still standing tan among them; so the spring ground was too
+straw. `springNative` .55 takes Prairie & Sand Hills' wild ground that share of the way to the rough's
+rich green in spring (#79924e against the Sand Hills' #ac9c6e) and adds it to its tall grass's greening
+(PLACED; general knowledge of the Sand Hills' grasses, no source fetched -- worth checking against a
+range-management source). The Badlands trial (`upInto`, landforms.js, off): near a hole the ground is a
+smooth bench rising up to 28 m over several hundred metres, the carving back at full height over 20 m
+(`reach`; 80 in the game). The carving itself under the fairway gave half the fairway steeper than 25%;
+the formations' own edge as the bench a third over 15%; the broad bench 1.5% (FAIRWAY) and 16%
+(SAWTOOTH, where the carving reaches the edge of wide fairways). It does not send holes into the
+formations: the routing still lays most holes where there are none, so most of the course stays on
+the prairie. Doing that is routing work like Desert Mountain's (`range`), not tried.
+
+**Round 11 (8 November 2026): Desert Mountain signed off; the last batch in; relief on the maps.**
+The owner: "Lets set the pond frequency down so that we get 1.5 ponds per 18 holes. Im finally signing
+off on desert mountain", then "Lets start getting everything in game including the desert changes..
+Then yes please add the relief shading into the in game map also." Ponds: at the default Pond
+frequency (35) every hole tries for one pond and Desert Mountain kept about 4.4 in 18 (share 1, eight
+courses); `pondShare` lets only a share of holes try, drawn from its own stream: .1 gave 0.13, .3 gave
+1.13, .32 1.13 (16 courses), .4 1.92 (12), .37 exactly 1.50 over 20 courses (0-4 a course) -- kept,
+PLACED. The Sonoran, Mojave, Chihuahuan and Red Rock left for Desert Mountain (GENERATOR 97, SCHEMA
+43); the map now gives Desert Mountain their shapes, and Florida Palms' and North Woods' pins moved to
+PGA National (26.84, -80.13) and Forest Dunes (44.65, -84.52), inside their own shapes (they sat in
+Lowcountry and Gulf's and Classic Parkland's). The last batch's 22 models in: Mountain (`mountains`)
+and Prairie & Sand Hills (`prairie`, "Prairie and Sand Hills" is 22 letters, over the 20 a name may
+have) added beside the landscapes they will replace, the Badlands and Northern Woods (renamed from
+North Woods) keeping their keys with the new trees (GENERATOR 98, SCHEMA 45). Sizes from the pack
+prompts, PLACED: ponderosa 22-35 m tall, lodgepole 18-26, Engelmann spruce 20-32, aspen 12-18, plains
+cottonwood 18-24 and 13-22 m wide, hackberry 11-15, eastern red cedar 8-12, green ash 13-18, Rocky
+Mountain juniper 7-10, red pine 20-30, paper birch 14-20. The Mountain's ground is the Rockies' crags
+a little lower (height 62 against 70, hills 60/150 against 70/180), Prairie & Sand Hills' the Sand
+Hills' dunes a little broader and lower (scale 260 against 230, hummock 50 against 55, height 13
+against 14): PLACED, different so the two can stand side by side. The game's mesh file grew from
+44.5 MB to 49.3 MB. Relief: light from the screen's top left and above, (-.6, .7, -.4); the
+multiplier is 1 + .9 (lit/flat - 1), held to .6-1.3, so flat ground is unchanged (PLACED); on the
+hole map an overlay, black at 1 - m below 1, white at .8 (m - 1) above. Not seen in the game yet.
+Found by the captures: in winter the game refused the bare trees of 17 Meshy models ("Computed radius
+is NaN"; the last batch's aspen, cottonwood, hackberry and paper birch among them) -- twigs.js divided
+by a crown point's zero distance when it sat exactly on a branch node; such a point is now used up
+(tests/twigs.test.mjs checks every Meshy tree's bare parts). The first Prairie & Sand Hills capture
+stood a forest beside the holes: its stands (12,663 plants, like the Sand Hills' 12,638) held 1,932
+hackberries and 919 plains cottonwoods; now the Sand Hills' low mix (shrub .45, sand cherry .25, cedar
+.25, hackberry .05): 2 cottonwoods and 320 hackberries on seed FAIRWAY's nine. The card lock
+(tools/gpu-lock.mjs) crashed a picture run when the lock was released between its check and its look
+(ENOENT); it retries now.
+
+**Round 9 (8 November 2026): Desert Mountain three ways, on four seeds.** The owner: "Use 4
+different seeds and get screenshots for both having mountains only on the mountain side, and bigger
+play area. Then combine both". Two switches; the owner picked the first alone ("Mountains one side"), generator 96: `range.side` (landforms.js
+`rangeShareOf`) keeps the ranges past a wavy line through the routing's start, square to the big
+mountain's heading, fading over 150 m (to 45 m past the line) and thicker past it (threshold lowered
+by `sideBoost` .08); routing.js turns the footprint to run along that line with its loop on the open
+side (`frontTurn`; without it, two seeds of four routed away from the front into empty desert).
+`spread` (a landscape's) grows the footprint by its factor, the gap between corridors by 50 m a whole
+of it past 1 (so 1.4: 20 m more) and the green-to-tee walk by the factor. Every number PLACED.
+First try of `side` faded over 250 m either side: the ranges thinned where the holes were and
+seeds TROON and A had almost no rock in the course. Holes with rock beside over 30% of their length
+(scratchpad hug probe, 18 holes, seeds FAIRWAY, TROON, A, B): one side 4, 3, 3, 6; both 3, 0, 6, 5.
+From above, one side gives a mountain front with the holes curving along it on every seed; a 1.4
+spread on its own changes little, as the ranges are still everywhere. Captured (18 holes, views
+`high` and `overview`): the high view sat in the clouds over the bigger courses, and hiding the
+renderer's clouds group (`--no-clouds`) did not clear them -- not understood. The PC went down
+twice (22:15, 22:18) after the second batch; no card work since. Not played.
+
+**Round 8 (8 November 2026): batch two in the game; Desert Mountain's ranges smaller.** The
+owner: "For the other landscapes consider them signed off. Add to game and remove the landscapes the
+replace", and of an 18-hole Desert Mountain "looks like the whole course is surrounded again. Would
+making the overall playing landscape larger for 9 and 18 hole courses help with the routing. Or maybe
+we need to pull back the mountain size a bit?" Puget Sound, Monterey, SoCal Canyons, Wine Country,
+Scottish Links, Oregon Dunes and Lake Dunes left (GENERATOR 94, SCHEMA 42; OLD_KEYS, the weekly's
+`retired`, the map); 28 landscapes. The Challenge Course moved from Puget Sound to the Pacific
+Northwest with its seed (`CHALLENGE-1`; tests/challenge-spots still finds every spot). Found on the
+way: the Pacific Northwest and the California Coast laid no pine needles at all -- their `fallen`
+came from the region's trait and named pine, spruce and cedar, which they no longer plant -- so each
+now names its own conifers (GENERATOR 95). Highplains, Sand Hills, Badlands, Hawaiian Resort, Hill
+Country, Bluebonnet, Cascades, High Sierra and Ponderosa have the same mismatch and are left to the
+last batch, which replaces most of them. The California Coast's cliff stands 46 m outside its eastern
+holes, so few holes have the sea close: 2-4 of 18 within 80 m of a fairway or green over seeds MT-b,
+FAIRWAY, A and B, 1-3 within 50 m (Monterey had 3 or more within 50 m). Desert Mountain: a larger
+playing area was not tried -- the ranges are a field over the whole land at a fixed scale, so a larger
+area holds more of them and the holes still route into the gaps between; making them smaller is what
+opens the course. The range share from .48-.6 to .55-.66 of the noise (PLACED): on an 18-hole course,
+seed FAIRWAY, the desert now opens to the east and north. About 30% of holes have rock within 40 m of
+the rough (round 7: 40%). Seen in the 18-hole capture: the entrance road climbs straight over a range
+(roads.js `costGrid` does not keep off them). Full tests: 1,480 of 1,482 pass (8 November); the 2 left are the map tests: Desert Mountain has no map shape until sign-off, and Florida Palms' and North Woods' own places fall just inside Lowcountry and Gulf's and Classic Parkland's shapes. Not played.
+
+**Round 7 (8 November 2026): Desert Mountain routed round its ranges, the California Coast's cliffs,
+Seaside Links rougher.** The owner: Desert Mountain "Getting closer ... wrap the holes around the
+mountains more ... a landscape overall high point and a landscape overall low point ... gradually rising
+towards wherever the big mountain is placed ... I can still see 'platforms' outlining every hole"; then
+"you've enclosed the whole course in mountain ... The holes need to move to wrap around the mountains that
+are generated", "like 60% of them should be pushed up against the side of a mountain", and "make sure that
+we don't lose our Cliffside tee boxes". California Coast: "actual craggy cliffs on the ocean side ... like
+a sandstone cliff, with vertical lines that trail into the water", "a 'pit' between holes", then "very
+straight lines on the actual cliff part. And really sharp angles". Seaside Links: "rough coastlines that
+are thick with fescue and tall grasses", "the spaces between holes is very rugged ... too smooth".
+Desert Mountain: `tilt` 38 m either side of the middle toward the big mountain over 1,400 m (tanh),
+scaled by elevation (at least 40%); `wideFade` 130 m; the ranges' edges sharper (share from .48 to .6 of
+the noise; .55 to .66 since round 8); holes routed off the ranges and toward their sides (PROJECT_HANDOFF *Holes routed round the
+ranges*; every number there PLACED). Holes with rock rising over 8 m beside their rough for over 30% of their
+length, seeds FAIRWAY (9), TROON, A, B, C (18), at `reach` 22: 9 of 81 within 24 m of the rough, 32 of
+81 (40%) within 40 m (seed FAIRWAY's hole 2 runs along a sheer wall 50 m off its centre line) -- short
+of the owner's 60%; at `reach` 10 about 40%, but a fairway stood on a range's side.
+Tries that reached 40%: the side bonus alone 3%, sliding 70 m then 160 m, turning, placements built along
+range edges. Blind tee shots, bench quick tier: 0 of 108 (the Sonoran and the Rockies 4). Rock tees: 17
+over ten eighteens, none blind by their outcrop. An 18-hole course builds in about 5.6 s against the
+Sonoran's 4.0. Removed: `wrapMountains` (rock in every space the holes left, from 16-34 m to full 60 m by
+80-120 m: it boxed the course in), `rangeFade`. California Coast: `cliffCoast` offset 46 m, width 11 m,
+coves 24 m at 150 m and 10 m at 55 m, grooves 3.5 m at 13 m, sea at least 9 m deep; rock tint #c09a6a
+(Torrey Pines' sandstone); ribs at the foot tried (5-9 m, ridged) and taken out (they stood as underwater
+teeth). Seaside Links: dunes `rugged` 1.6 m (fbm at 17 m and ridged at 31 m), hummocks 22 m (links 38),
+dunes 8 m tall (links 5), marram from .38 (links .55), tall grass 16,000 (links 7,000). Every number
+PLACED. Not played.
+
+**Night lighting (the owner, 7 November 2026: "It looks like somewhere in this process we Broke night
+lighting").** Not found. The same night view (hole 2 from the side, 10 PM, floodlights on, seed
+FAIRWAY) captured on main (9a1fe62), on the branch's last commit (dcb0af6) and on the working tree:
+the Sonoran, the Redwood Coast and Classic Parkland match picture for picture. All seven new
+landscapes light as the old ones do; Desert Resort's dark grey band above the course is its limestone
+ranges, not the sky, and its bougainvillea shows bright magenta under the lamps. Asked the owner where
+it was seen. The owner: it was in the Course Builder; saved for later. The capture tool has a `h2-night` view for this now.
+
+**Found (8 November 2026): too many live lamps for the shaders.** Day and floodlit-night pictures
+of all fifteen bench courses (bench/courses, built from real courses) and two generated nines: ten of
+the built courses went flat dark blue at night, ground, turf and trees missing, with "THREE.WebGLProgram:
+Shader Error ... FRAGMENT shader uniforms count" in the console (MeshToonMaterial and
+MeshStandardMaterial). Every pole was a live spot light (`FLOOD_LAMP_CAP` 192). Poles and outcome:
+Nile Shrine 98, Battle Creek 115, Key West and Snohomish 116 held; Ekwanok 121, Sahalee and Salish
+Cliffs 124, Arcadia Bluffs 126, Druids Glen and Bully Pulpit 128, Chambers Bay and TPC Scottsdale 129
+failed; generated nines 57 held. The card reads `MAX_FRAGMENT_UNIFORM_VECTORS` 1024, so a lamp is
+about 8 vectors (failing between 116 and 121 leaves 56-96 for the rest of the shader). Generated
+eighteens reach 141 poles (a parkland eighteen on seed FAIRWAY: 100), so they broke too. Fix:
+floodlights.js `lampBudget` = (uniforms - 256) / 8, at most 96, at least 4 (256 and 96 PLACED),
+the hole being played first, then nearest the ball. Retaken: all ten lit, no shader errors, 96 lamps
+each; the generated eighteen too. Not measured on a phone; a phone reporting 224 gets the nearest four.
+
+**The bougainvillea's magenta (8 November 2026).** The owner's "glowing piece on desert resort": not
+lit differently (flowers take the plant's one toon material), but #c8288a, the summer accent, came
+out clipped to neon (about #ff10a0 on screen) in the game's light, and at night under the lamps it
+was the brightest thing in the picture while leaves went dark. As with leaf colours, a saturated
+start saturates further. Now #a03a72 in spring and summer, #b0583e in autumn (was #d05a3a) and
+#8e4a70 in winter (was #a8487e), all PLACED by eye on Desert Resort, seed FAIRWAY, the plant nearest
+hole 1's poles, by day (15:00) and floodlit night (22:00): still plainly magenta by day, dark wine at
+night. Real bracts are a strong magenta; this is the game's paint for it, not a measured colour.
+
+**Batch two, the owner's review of the models (7 November 2026).** Approved 20 of 25. Sent back:
+western hemlock 1 ("a bunch of bowl cuts stacked"), coast redwood 2 ("the bowl cut look of the
+leaves"), young redwood 1 ("Bowl cut style again ... Needs to show branches at least. Young redwood 2
+looks better"), western red cedar 1 ("Too mustache like") and Monterey cypress 1 ("too symmetrical";
+agreed: old Monterey cypresses are irregular, limbs of unequal length at different angles). The
+cause of the bowl cuts: their pictures drew the boughs as level rings round the trunk, and the model
+step turned each ring into a smooth skirt; the cedar's hooked bough ends became curls. Redrawn,
+two pictures each (90 credits), with boughs one at a time on visible bare limbs at different heights
+on different sides, "never level rings or tiers around the trunk, no stacked layers, no skirts", the
+cedar's hooks gone, the cypress's limbs and pads uneven but the tree upright (no wind-swept trees).
+Models built from the three redraws the owner picked (bigleaf maple 1, Torrey pine 2, coast redwood 1;
+90 credits); coast redwood 1's picture had level tiers, and its model came out with the stacked rings
+the owner turned down on redwood 2. Credits: 2,756 left. Then the owner picked one redraw of each of
+the five (hemlock 1 take 3, red cedar 1 take 2, coast redwood 2 take 2, young redwood 1 take 3,
+Monterey cypress 1 take 2), approved the bigleaf maple 1 and Torrey pine 2 models, and sent coast
+redwood 1 back again ("Bowl cut style again here"): redrawn twice more with the bough-by-bough wording
+(18 credits), the five built as models round 2 (150 credits), none failed, and none came out as a bowl
+cut. Their far versions in the `skirts` style were stacked tiers -- the bowl cut again, in the
+distance -- so the four conifers' far versions were rebuilt in `tufts` (clumps along the limbs;
+outline .63 to .71 against .57 to .67); the cypress keeps `tufts` as it had. Credits: 2,588 left.

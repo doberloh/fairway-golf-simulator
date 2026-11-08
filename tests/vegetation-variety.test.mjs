@@ -6,7 +6,7 @@ import {addVegetation,carryFade,CARRY_EDGE} from '../src/vegetation.js';
 import {addHomes} from '../src/homes.js';
 
 const build=(settings={})=>{
- const world=generateWorld({seed:'VARIETY',biome:'puget',holes:9,trees:70,water:20,...settings});
+ const world=generateWorld({seed:'VARIETY',biome:'pacnw',holes:9,trees:70,water:20,...settings});
  const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
  addVegetation(view);
  const meshes=[];view.group.traverse(o=>{if(o.isInstancedMesh)meshes.push(o);});
@@ -37,7 +37,7 @@ test('boulders are several distinct stones, not one icosahedron repeated',()=>{
 
 test('a stand of conifers draws on several models and varies each one',()=>{
  const {world,view}=build();
- const conifers=new Set(world.trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)));
+ const conifers=new Set(world.trees.filter(t=>['nwfir','nwcedar','nwhemlock'].includes(t.kind)));
  assert(conifers.size>20,'this fixture needs a forest');
  // Imported geometry supplies the shape now, so variety lives in which model a
  // tree is, how it is scaled and how it is tinted -- not in a tier formula.
@@ -67,7 +67,7 @@ test('a stand of conifers draws on several models and varies each one',()=>{
 test('every biome builds its vegetation, models and procedural alike',()=>{
  // The desert is the case that matters here: its species split across imported
  // cacti, imported arid trees, and ocotillo and agave that stay procedural.
- for(const biome of ['puget','rockies','sonoran','links','heartland','keys','newengland']){
+ for(const biome of ['pacnw','mountains','dmountain','seaside','heartland','keys','newengland']){
   const world=generateWorld({seed:'BIOMES',biome,holes:9,trees:55,water:20});
   const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
   assert.doesNotThrow(()=>addVegetation(view),`${biome} failed to build`);
@@ -135,7 +135,7 @@ test('houses are drawn from imported models fitted to the box physics collides w
 // keeps its grass short so the golfer sees the fairway; it grows back over
 // CARRY_EDGE m outside, and the fairway itself is no carry.
 test("a tee shot's carry is kept clear of tall grass, and only the carry",()=>{
- const w=generateWorld({seed:'overhaul',biome:'links',holes:9});
+ const w=generateWorld({seed:'overhaul',biome:'seaside',holes:9});
  const inCarry=carryFade(w);
  for(const h of w.holes){
   const z=(h.mowStart??h.fairwayStart??22)*.6,c=h.toWorld({x:h.center(z),z});

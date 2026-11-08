@@ -114,7 +114,12 @@ export function growTwigs({leaf, bark = [], seed = 'twigs'}) {
   const pulls = new Map();
   for (let a = 0; a < A; a++) {
    if (used[a]) continue;
-   const n = nodes[near[a]], d = Math.sqrt(best[a]), to = pulls.get(near[a]) || [0, 0, 0];
+   const n = nodes[near[a]], d = Math.sqrt(best[a]);
+   // A point sitting exactly on a node is reached already. Dividing by its zero distance turned a
+   // branch to NaN, and the browser refused the winter tree (8 November 2026: the last batch's
+   // aspen, cottonwood, hackberry and paper birch, "Computed radius is NaN").
+   if (!(d > 1e-9)) { used[a] = 1; continue; }
+   const to = pulls.get(near[a]) || [0, 0, 0];
    to[0] += (pull[a * 3] - n.x) / d; to[1] += (pull[a * 3 + 1] - n.y) / d; to[2] += (pull[a * 3 + 2] - n.z) / d;
    pulls.set(near[a], to);
   }

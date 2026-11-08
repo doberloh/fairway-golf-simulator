@@ -29,7 +29,7 @@ test('each landscape tells its own story', () => {
 });
 
 test('the story stands out of play: off every played surface, the paths and the water', () => {
- for (const biome of ['heartland', 'links', 'rockies', 'newengland']) {
+ for (const biome of ['heartland', 'seaside', 'mountains', 'newengland']) {
   const w = lots(biome);
   for (const b of w.buildings.filter(b => b.story)) {
    assert.ok(!PLAYED.includes(w.surface(b.x, b.z)), `${biome}: a ${b.kind} on ${w.surface(b.x, b.z)}`);
@@ -48,9 +48,9 @@ test('the story stands out of play: off every played surface, the paths and the 
 });
 
 test('a wall is solid: a ball rolled at it stops against it, and is never out of bounds for it', () => {
- // A wall on mown rough (ST-2): on ST-1 the generator's longest wall stands in
+ // A wall on mown rough (ST-3 on Seaside Links since 8 November 2026; ST-2 on the old Links): on ST-1 the generator's longest wall stands in
  // native grass, which stops a rolled ball short of it.
- const w = world({seed: 'ST-2', holes: 9, biome: 'links'}), l = w.walls.filter(x => !x.pit).sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0];
+ const w = world({seed: 'ST-3', holes: 9, biome: 'seaside'}), l = w.walls.filter(x => !x.pit).sort((p, q) => Math.hypot(q.bx - q.ax, q.bz - q.az) - Math.hypot(p.bx - p.ax, p.bz - p.az))[0];
  const mx = (l.ax + l.bx) / 2, mz = (l.az + l.bz) / 2, dx = l.bx - l.ax, dz = l.bz - l.az, n = Math.hypot(dx, dz);
  const h = w.nearest(mx, mz).h, from = h.toLocal({x: mx + dz / n * 12, z: mz - dx / n * 12}), at = h.toLocal({x: mx, z: mz});
  const aim = Math.atan2(at.x - from.x, at.z - from.z) * 180 / Math.PI;

@@ -157,7 +157,9 @@ text to model was dropped before it ever ran):
    `bench/meshy/<pack>/game-r<round>/` (`tools/blender/meshy_game.py`, no credits):
    wood split from leaf as `bark` and `leaves`, the texture's light and dark baked to
    a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
-   model's `paintLevel`), triangles put in the order the card's vertex cache likes. Far versions are
+   model's `paintLevel`, and `wood: "brown"` for a brown-barked tree whose dark trunk foot would
+   otherwise send it down the green-wood split meant for palo verde and saguaro -- Engelmann spruce 2,
+   8 November 2026), triangles put in the order the card's vertex cache likes. Far versions are
    written in that form already, closed all round because the game draws one side.
    `tools/blender/meshy_parts.py` holds what the two share.
 
@@ -181,12 +183,47 @@ name (*What the game keeps from a model*), so nothing reaches it without `--conv
 `cartoon_redwood.py` now makes only the seedling and floor plants, and keeps the tree
 builders as the record. To change a tree, run `--convert` and copy it over.
 
+**Batch one** (7 November 2026), the owner's call to run pictures and models for several
+landscapes together and bring them into the game one at a time: tools/meshy/florida.json
+(coconut and royal palm, shipped in `vendor/blender-meshy_florida` as FlCoconut and FlRoyal),
+hawaiian.json (Cook pine, ironwood, monkeypod), deserttarget.json (four saguaros, palo verde,
+velvet mesquite) and desertres.json (Afghan and Aleppo pines, weeping willow, olive, date palm,
+Mexican fan palm). All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
+
+**The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
+`vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new
+species keys (`lowliveoak`, `lowcypress`, `lowsabal`) under LowX model names; the loblolly is
+Southern Pines' own. No hanging moss, the owner's call. The palms use the `fronds` far style.
+
+**The Southern Pines pack** (tools/meshy/southern.json, 6 November 2026): 8 trees in
+`vendor/blender-meshy_southern`, loblolly and longleaf pines, eastern white pine and
+flowering dogwood, as new species keys (`southloblolly` and so on) so no other landscape
+changes; the models hold SouthX names because the hand-built South holds the plain ones.
+The first longleaf pictures drew fine needle bursts, which the owner sent back: redrawn as
+large solid masses with a tufted edge, they kept their shape through the model step, and
+the eastern white pines, first too thin, were redrawn the same way (round 2, `game-r2`).
+`read_tree` also learned that a forked limb is wood: a brown patch that reaches past 5% of
+the tree and whose faces look every way is a tube, where a bough root or a shaded leaf
+mass is a sheet facing one way. A converted pine shows bark far above its old count; the
+broadleaf Classic Parkland pack, reconverted the same way, moved far less.
+
+**The Classic Parkland pack** (tools/meshy/parkland.json, 6 November 2026): 11 trees in
+`vendor/blender-meshy_parkland`, `game-r2` copied in by hand as the redwoods were, and
+the first pack whose species are new keys (`whiteoak`, `pinoak`, `parkmaple`,
+`parkpoplar`, `parkelm`, `norwayspruce`), so no other landscape changes. Two names
+are changed on the way in, because hand-built models still planted elsewhere hold them:
+the pack's AmericanElm ships as ParkElm and TulipPoplar as ParkPoplar. A Meshy pack has
+no Blender script, so its `seasons` field holds each species' colours, read by
+`tools/blender/dump-tints.mjs`. American elm 2 was dropped: its fine hanging leaves did
+not survive the model step. Foliage stays on `meshy-6`: 7.1 keeps the limbs and loses the
+leaves (RESEARCH).
+
 **The first model** (Redwood_1, 5 November 2026): the owner likes its full model's
 foliage ("Blocky is not the problem. But flat literal squares are"). Meshy's own
 far version, from Remesh, loses the crown. `tools/blender/meshy_far.py` finds the trunk by colour and position, cuts the crown
 into boughs, and rebuilds each as a ridged ribbon with its own length, droop, width
 and colour, with a small cone at the tip. A broadleaf has no boughs to find, so the
-pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak).  RESEARCH.md, *AI model generators*.
+pack's `farStyle: clumps` cuts its crown into faceted lumps instead (the tanoak), `farStyle: tufts` into rounded masses, for crowns drawn as soft tufts, and `farStyle: skirts` into stacked scalloped cones, for conifers drawn as solid tiers, and `farStyle: fronds` into curved blades from the top of the trunk, for palms (its trunk in ten rings, so a bowed coconut palm stays smooth), and `farStyle: cactus` into a straight column with a bent column for each arm, for a saguaro. When a tree's foot is not wood-coloured -- green bark, a cactus -- `read_tree` splits its colours in two and calls the group at the foot the wood.  RESEARCH.md, *AI model generators*.
 
 The key lives in `.env` at the root (git-ignored), or in `MESHY_API_KEY`.
 **No tree is asked for a broken top** (the owner, 5 November 2026: "Lets just
@@ -761,7 +798,7 @@ each, silhouette first; every one ships (generator 62).
 | `Blender_Mangrove_1` | `mangrove` | A dark rounded cap low over a cage of arching prop roots | 3,410 |
 | `Blender_GumboLimbo_1` | `gumbolimbo` | Thick crooked copper limbs carrying loose flat leaf rosettes, sky between | 4,830 |
 | `Blender_Banyan_1` | `banyan` | A fused trunk, level limbs and sixteen root columns under a broad low canopy, about 30 m across | 4,460 |
-| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent) with green showing | 3,340 |
+| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent, a deep #a03a72 since 8 November 2026) with green showing | 3,340 |
 | `Blender_Hibiscus_1` | `hibiscus` | A vase of glossy leaf masses on splayed stems, big red flowers (accent) | 2,750 |
 
 ### The silhouette pass on the packs before the goal (2 November 2026)

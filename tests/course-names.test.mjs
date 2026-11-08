@@ -72,10 +72,10 @@ test('the same course always suggests the same name', () => {
  }
  // Changing either half changes the answer, or the name says nothing about
  // which course it belongs to.
- assert.notEqual(suggestCourseName({biome: 'links', seed: 'A'}),
-  suggestCourseName({biome: 'links', seed: 'B'}));
- assert.notEqual(suggestCourseName({biome: 'links', seed: 'A'}),
-  suggestCourseName({biome: 'sonoran', seed: 'A'}));
+ assert.notEqual(suggestCourseName({biome: 'seaside', seed: 'A'}),
+  suggestCourseName({biome: 'seaside', seed: 'B'}));
+ assert.notEqual(suggestCourseName({biome: 'seaside', seed: 'A'}),
+  suggestCourseName({biome: 'dmountain', seed: 'A'}));
 });
 
 test('a suggested name is always a name the library will accept', () => {
@@ -101,8 +101,8 @@ test('a suggested name is always a name the library will accept', () => {
 });
 
 test('a course code carries the name, which is the point of naming it', () => {
- const name = suggestCourseName({biome: 'links', seed: 'HORIZON-4946'});
- const code = exportCourse({name, settings: {...DEFAULT_COURSE, biome: 'links', seed: 'HORIZON-4946'}});
+ const name = suggestCourseName({biome: 'seaside', seed: 'HORIZON-4946'});
+ const code = exportCourse({name, settings: {...DEFAULT_COURSE, biome: 'seaside', seed: 'HORIZON-4946'}});
  assert.equal(importCourse(code).name, name);
 });
 

@@ -18,6 +18,6 @@ test('mountains and dunes grow between holes, and every biome has mixed vegetati
   // shallows of a pond (generator 72).
   assert(w.trees.filter(t=>!t.feature).every(t=>allows(w.surface(t.x,t.z),'trees')||(w.bio.inWater?.includes(t.kind)&&w.surface(t.x,t.z)==='water')));
   assert(w.trees.some(t=>!t.feature),'no scatter trees at all -- the assertion above is vacuous');
-  if(['rockies','links'].includes(biome)){let peak=0;for(let x=-w.halfX;x<w.halfX;x+=40)for(let z=-w.halfZ;z<w.halfZ;z+=40)peak=Math.max(peak,w.height(x,z));assert(peak>(biome==='rockies'?80:30));}
+  if(['mountains','seaside'].includes(biome)){let peak=0;for(let x=-w.halfX;x<w.halfX;x+=40)for(let z=-w.halfZ;z<w.halfZ;z+=40)peak=Math.max(peak,w.height(x,z));assert(peak>(biome==='mountains'?80:30));}
  }
 });

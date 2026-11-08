@@ -71,7 +71,7 @@ const PICK = {
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
   'RoyalPalm_1', 'RoyalPalm_2', 'Mangrove_1', 'GumboLimbo_1', 'Banyan_1',
   'LongleafPine_1', 'LongleafPine_2', 'LoblollyPine_1', 'LoblollyPine_2', 'SlashPine_1', 'SlashPine_2', 'CabbagePalm_1', 'CabbagePalm_2', 'LiveOak_1', 'LiveOak_2', 'LiveOakMoss_1', 'LiveOakMoss_2', 'BaldCypress_1', 'BaldCypress_2', 'WaterTupelo_1', 'Magnolia_1', 'Magnolia_2', 'TulipPoplar_1', 'TulipPoplar_2', 'Sweetgum_1', 'Sweetgum_2',
-  'Pecan_1', 'Pecan_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
+  'Pecan_1', 'Pecan_2', 'NoRedPine_1', 'NoRedPine_2', 'NoPaperBirch_1', 'NoPaperBirch_2', 'BdGreenAsh_1', 'BdGreenAsh_2', 'BdRockyMountainJuniper_1', 'BdRockyMountainJuniper_2', 'PrPlainsCottonwood_1', 'PrPlainsCottonwood_2', 'PrHackberry_1', 'PrHackberry_2', 'PrEasternRedCedar_1', 'PrEasternRedCedar_2', 'MtPonderosaPine_1', 'MtPonderosaPine_2', 'MtLodgepolePine_1', 'MtLodgepolePine_2', 'MtEngelmannSpruce_1', 'MtEngelmannSpruce_2', 'MtQuakingAspen_1', 'MtQuakingAspen_2', 'RwRedwood_1', 'RwRedwood_2', 'RwYoungRedwood_1', 'RwYoungRedwood_2', 'RwTanoak_1', 'RwTanoak_2', 'SlShorePine_1', 'SlShorePine_2', 'CcMontereyCypress_1', 'CcMontereyCypress_2', 'CcMontereyPine_1', 'CcMontereyPine_2', 'CcTorreyPine_1', 'CcTorreyPine_2', 'CcCoastLiveOak_1', 'CcCoastLiveOak_2', 'CcEucalyptus_1', 'CcEucalyptus_2', 'NwDouglasFir_1', 'NwDouglasFir_2', 'NwRedCedar_1', 'NwRedCedar_2', 'NwHemlock_1', 'NwHemlock_2', 'NwBigleafMaple_1', 'NwBigleafMaple_2', 'NwRedAlder_1', 'NwRedAlder_2', 'DrAfghan_1', 'DrAfghan_2', 'DrAleppo_1', 'DrAleppo_2', 'DrWillow_1', 'DrWillow_2', 'DrOlive_1', 'DrOlive_2', 'DrDate_1', 'DrDate_2', 'DrFan_1', 'DrFan_2', 'DtSaguaro_1', 'DtSaguaro_2', 'DtSaguaro_3', 'DtSaguaro_4', 'DtPaloVerde_1', 'DtPaloVerde_2', 'DtMesquite_1', 'DtMesquite_2', 'HiCookPine_1', 'HiCookPine_2', 'HiIronwood_1', 'HiIronwood_2', 'HiMonkeypod_1', 'HiMonkeypod_2', 'FlCoconut_1', 'FlCoconut_2', 'FlRoyal_1', 'FlRoyal_2', 'LowLiveOak_1', 'LowLiveOak_2', 'LowCypress_1', 'LowCypress_2', 'LowSabal_1', 'LowSabal_2', 'SouthLoblolly_1', 'SouthLoblolly_2', 'SouthLongleaf_1', 'SouthLongleaf_2', 'SouthWhitePine_1', 'SouthWhitePine_2', 'SouthDogwood_1', 'SouthDogwood_2', 'WhiteOak_1', 'WhiteOak_2', 'PinOak_1', 'PinOak_2', 'SugarMaple_1', 'SugarMaple_2', 'ParkPoplar_1', 'ParkPoplar_2', 'ParkElm_1', 'NorwaySpruce_1', 'NorwaySpruce_2', 'AfghanPine_1', 'AfghanPine_2', 'AfricanSumac_1', 'AfricanSumac_2', 'FanPalm_1', 'FanPalm_2', 'DatePalm_1', 'DatePalm_2',
   'CoastLiveOak_1', 'Eucalyptus_1', 'Eucalyptus_2', 'MontereyCypress_1', 'MontereyPine_1', 'Sycamore_1', 'GrapeVine_1', 'ValleyOak_1', 'ValleyOak_2', 'IncenseCedar_1', 'NobleFir_1', 'Ponderosa_1', 'Ponderosa_2', 'RedFir_1', 'SugarPine_1', 'WesternLarch_1',
   'PinyonPine_1', 'PinyonPine_2', 'WesternJuniper_1', 'WesternJuniper_2', 'GrainElevator_1', 'Shelterbelt_1',
   'ChestnutOak_1', 'ChestnutOak_2', 'ShortleafPine_1', 'ShortleafPine_2', 'CopperBeech_1', 'CopperBeech_2', 'PitchPine_1',
@@ -134,12 +134,15 @@ const PICK = {
  // overhaul), which replaced a grove grown by this project's own code: one
  // hand with every other landscape, and 1,000-1,900 faces a tree where the
  // grown ones were 13,000-53,000.
- redwood: ['blender:Blender_Redwood_1', 'blender:Blender_Redwood_2', 'blender:Blender_Redwood_3'],
- youngredwood: ['blender:Blender_YoungRedwood_1', 'blender:Blender_YoungRedwood_2', 'blender:Blender_YoungRedwood_3'],
+ // The Redwood Coast rebuilt from Meshy in the tufted wording (tools/meshy/redwood2.json; the owner,
+ // 7 November 2026), in vendor/blender-meshy_redwood2. The first Meshy pack's redwoods
+ // (vendor/blender-meshy_redwood) stay on disk for the other names it still serves.
+ redwood: ['meshy_redwood2:Blender_RwRedwood_1', 'meshy_redwood2:Blender_RwRedwood_2'],
+ youngredwood: ['meshy_redwood2:Blender_RwYoungRedwood_1', 'meshy_redwood2:Blender_RwYoungRedwood_2'],
  dougfir: ['blender:Blender_Fir_1', 'blender:Blender_Fir_2'],
  hemlock: ['blender:Blender_Hemlock_1', 'blender:Blender_Hemlock_2'],
  redcedar: ['blender:Blender_RedCedar_1', 'blender:Blender_RedCedar_2'],
- tanoak: ['blender:Blender_Tanoak_1', 'blender:Blender_Tanoak_2'],
+ tanoak: ['meshy_redwood2:Blender_RwTanoak_1', 'meshy_redwood2:Blender_RwTanoak_2'],
  swordfern: ['blender:Blender_SwordFern_1', 'blender:Blender_SwordFern_2'],
  salal: ['blender:Blender_Salal_1', 'blender:Blender_Salal_2'],
  sorrel: ['blender:Blender_Sorrel_1'],
@@ -360,6 +363,88 @@ const PICK = {
  tiplant: ['blender:Blender_TiPlant_1'],
  heliconia: ['blender:Blender_Heliconia_1'],
  boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
+ // THE HAWAIIAN RESORT PACK (tools/meshy/hawaiian.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_hawaiian, its names prefixed because hand-built models hold the plain ones.
+ hicookpine: ['blender:Blender_HiCookPine_1', 'blender:Blender_HiCookPine_2'],
+ hiironwood: ['blender:Blender_HiIronwood_1', 'blender:Blender_HiIronwood_2'],
+ himonkeypod: ['blender:Blender_HiMonkeypod_1', 'blender:Blender_HiMonkeypod_2'],
+ // THE DESERT MOUNTAIN PACK (tools/meshy/deserttarget.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_deserttarget, its names prefixed because hand-built models hold the plain ones.
+ dtsaguaro: ['blender:Blender_DtSaguaro_1', 'blender:Blender_DtSaguaro_2', 'blender:Blender_DtSaguaro_3', 'blender:Blender_DtSaguaro_4'],
+ dtpaloverde: ['blender:Blender_DtPaloVerde_1', 'blender:Blender_DtPaloVerde_2'],
+ dtmesquite: ['blender:Blender_DtMesquite_1', 'blender:Blender_DtMesquite_2'],
+ // THE DESERT RESORT PACK (tools/meshy/desertres.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_desertres, its names prefixed because hand-built models hold the plain ones.
+ drafghan: ['blender:Blender_DrAfghan_1', 'blender:Blender_DrAfghan_2'],
+ draleppo: ['blender:Blender_DrAleppo_1', 'blender:Blender_DrAleppo_2'],
+ drwillow: ['blender:Blender_DrWillow_1', 'blender:Blender_DrWillow_2'],
+ drolive: ['blender:Blender_DrOlive_1', 'blender:Blender_DrOlive_2'],
+ drdate: ['blender:Blender_DrDate_1', 'blender:Blender_DrDate_2'],
+ drfan: ['blender:Blender_DrFan_1', 'blender:Blender_DrFan_2'],
+ // THE PACIFIC NORTHWEST PACK (tools/meshy/northwest.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_northwest, its names prefixed because hand-built models hold the plain ones.
+ nwfir: ['blender:Blender_NwDouglasFir_1', 'blender:Blender_NwDouglasFir_2'],
+ nwcedar: ['blender:Blender_NwRedCedar_1', 'blender:Blender_NwRedCedar_2'],
+ nwhemlock: ['blender:Blender_NwHemlock_1', 'blender:Blender_NwHemlock_2'],
+ nwmaple: ['blender:Blender_NwBigleafMaple_1', 'blender:Blender_NwBigleafMaple_2'],
+ nwalder: ['blender:Blender_NwRedAlder_1', 'blender:Blender_NwRedAlder_2'],
+ // THE CALIFORNIA COAST PACK (tools/meshy/calcoast.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_calcoast, its names prefixed because hand-built models hold the plain ones.
+ cccypress: ['blender:Blender_CcMontereyCypress_1', 'blender:Blender_CcMontereyCypress_2'],
+ ccmpine: ['blender:Blender_CcMontereyPine_1', 'blender:Blender_CcMontereyPine_2'],
+ cctorrey: ['blender:Blender_CcTorreyPine_1', 'blender:Blender_CcTorreyPine_2'],
+ ccliveoak: ['blender:Blender_CcCoastLiveOak_1', 'blender:Blender_CcCoastLiveOak_2'],
+ cceuc: ['blender:Blender_CcEucalyptus_1', 'blender:Blender_CcEucalyptus_2'],
+ // THE SEASIDE LINKS PACK (tools/meshy/seaside.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_seaside, its names prefixed because hand-built models hold the plain ones.
+ slshore: ['blender:Blender_SlShorePine_1', 'blender:Blender_SlShorePine_2'],
+ // THE MOUNTAIN PACK (tools/meshy/mountain.json, made on Meshy; the owner, 8 November 2026).
+ // In vendor/blender-meshy_mountain, its names prefixed because hand-built models hold the plain ones.
+ mtponderosa: ['blender:Blender_MtPonderosaPine_1', 'blender:Blender_MtPonderosaPine_2'],
+ mtlodge: ['blender:Blender_MtLodgepolePine_1', 'blender:Blender_MtLodgepolePine_2'],
+ mtspruce: ['blender:Blender_MtEngelmannSpruce_1', 'blender:Blender_MtEngelmannSpruce_2'],
+ mtaspen: ['blender:Blender_MtQuakingAspen_1', 'blender:Blender_MtQuakingAspen_2'],
+ // THE PRAIRIE AND SAND HILLS PACK (tools/meshy/prairie.json, made on Meshy; the owner, 8 November 2026).
+ // In vendor/blender-meshy_prairie, its names prefixed because hand-built models hold the plain ones.
+ prcotton: ['blender:Blender_PrPlainsCottonwood_1', 'blender:Blender_PrPlainsCottonwood_2'],
+ prhack: ['blender:Blender_PrHackberry_1', 'blender:Blender_PrHackberry_2'],
+ prcedar: ['blender:Blender_PrEasternRedCedar_1', 'blender:Blender_PrEasternRedCedar_2'],
+ // THE BADLANDS PACK (tools/meshy/badlands.json, made on Meshy; the owner, 8 November 2026).
+ // In vendor/blender-meshy_badlands, its names prefixed because hand-built models hold the plain ones.
+ bdash: ['blender:Blender_BdGreenAsh_1', 'blender:Blender_BdGreenAsh_2'],
+ bdjuniper: ['blender:Blender_BdRockyMountainJuniper_1', 'blender:Blender_BdRockyMountainJuniper_2'],
+ // THE NORTHERN WOODS PACK (tools/meshy/northwoods.json, made on Meshy; the owner, 8 November 2026).
+ // In vendor/blender-meshy_northwoods, its names prefixed because hand-built models hold the plain ones.
+ norpine: ['blender:Blender_NoRedPine_1', 'blender:Blender_NoRedPine_2'],
+ nobirch: ['blender:Blender_NoPaperBirch_1', 'blender:Blender_NoPaperBirch_2'],
+ // THE FLORIDA PALMS PACK (tools/meshy/florida.json, made on Meshy; the owner, 7 November
+ // 2026). In vendor/blender-meshy_florida, as FlCoconut and FlRoyal: the Keys' hand-built
+ // royal palm holds the plain name.
+ flcoconut: ['blender:Blender_FlCoconut_1', 'blender:Blender_FlCoconut_2'],
+ flroyal: ['blender:Blender_FlRoyal_1', 'blender:Blender_FlRoyal_2'],
+ // THE LOWCOUNTRY AND GULF PACK (tools/meshy/lowcountry.json, made on Meshy; the owner, 7
+ // November 2026). In vendor/blender-meshy_lowcountry, its names changed on the way in
+ // because the hand-built South's models hold them.
+ lowliveoak: ['blender:Blender_LowLiveOak_1', 'blender:Blender_LowLiveOak_2'],
+ lowcypress: ['blender:Blender_LowCypress_1', 'blender:Blender_LowCypress_2'],
+ lowsabal: ['blender:Blender_LowSabal_1', 'blender:Blender_LowSabal_2'],
+ // THE SOUTHERN PINES PACK (tools/meshy/southern.json, made on Meshy; the owner, 6
+ // November 2026). In vendor/blender-meshy_southern, its names changed on the way in
+ // because the hand-built South's models hold them.
+ southloblolly: ['blender:Blender_SouthLoblolly_1', 'blender:Blender_SouthLoblolly_2'],
+ southlongleaf: ['blender:Blender_SouthLongleaf_1', 'blender:Blender_SouthLongleaf_2'],
+ southwhitepine: ['blender:Blender_SouthWhitePine_1', 'blender:Blender_SouthWhitePine_2'],
+ southdogwood: ['blender:Blender_SouthDogwood_1', 'blender:Blender_SouthDogwood_2'],
+ // THE CLASSIC PARKLAND PACK (tools/meshy/parkland.json, made on Meshy; the owner,
+ // 6 November 2026): taller and narrower than the hand-built hardwoods. In
+ // vendor/blender-meshy_parkland; the pack's AmericanElm and TulipPoplar ship as
+ // ParkElm and ParkPoplar, because the Heartland's and Piedmont's models hold those names.
+ whiteoak: ['blender:Blender_WhiteOak_1', 'blender:Blender_WhiteOak_2'],
+ pinoak: ['blender:Blender_PinOak_1', 'blender:Blender_PinOak_2'],
+ parkmaple: ['blender:Blender_SugarMaple_1', 'blender:Blender_SugarMaple_2'],
+ parkpoplar: ['blender:Blender_ParkPoplar_1', 'blender:Blender_ParkPoplar_2'],
+ parkelm: ['blender:Blender_ParkElm_1'],
+ norwayspruce: ['blender:Blender_NorwaySpruce_1', 'blender:Blender_NorwaySpruce_2'],
  // THE DESERT RESORT PACK (tools/blender/cartoon_resort.py; the owner, 5 November
  // 2026): the Las Vegas valley's pine, sumac and lake-edge pampas grass.
  afghanpine: ['blender:Blender_AfghanPine_1', 'blender:Blender_AfghanPine_2'],

@@ -256,13 +256,17 @@ export function findBlender(env = process.env) {
 }
 
 // One Blender at a time (AGENTS.md); it never touches the graphics card.
-export function makeFar(models, {dir, say = console.log, run = (stem, source, budget, style, level) => spawnSync(findBlender(), ['--factory-startup', '-b', '-P',
- join(ROOT, 'tools', 'blender', 'meshy_far.py'), '--', source, stem, String(budget), style, String(level)], {encoding: 'utf8', timeout: 600000})}) {
+// A model's `wood` ("brown") reaches read_tree as MESHY_WOOD: the bark is brown, so the green-wood
+// split (palo verde, saguaro) is skipped -- a dark spruce trunk foot set it off and swapped trunk and
+// needles (Engelmann spruce 2, 8 November 2026).
+const woodEnv = model => ({...process.env, MESHY_WOOD: model?.wood || ''});
+export function makeFar(models, {dir, say = console.log, run = (stem, source, budget, style, level, model) => spawnSync(findBlender(), ['--factory-startup', '-b', '-P',
+ join(ROOT, 'tools', 'blender', 'meshy_far.py'), '--', source, stem, String(budget), style, String(level)], {encoding: 'utf8', timeout: 600000, env: woodEnv(model)})}) {
  const made = [], failed = [];
  for (const model of models.filter(m => m.far)) {
   const source = join(dir, `${model.name}.glb`), stem = join(dir, `${model.name}_Far`);
   if (!existsSync(source)) { failed.push({name: model.name, why: 'no model yet'}); say(`${model.name}: no model yet`); continue; }
-  run(stem, source, model.far, model.farStyle || 'boughs', model.paintLevel || .82);
+  run(stem, source, model.far, model.farStyle || 'boughs', model.paintLevel || .82, model);
   if (!existsSync(`${stem}.json`)) { failed.push({name: model.name, why: 'Blender wrote nothing'}); say(`${model.name}: FAILED, Blender wrote nothing`); continue; }
   const r = JSON.parse(readFileSync(`${stem}.json`, 'utf8'));
   made.push(model.name);
@@ -271,14 +275,14 @@ export function makeFar(models, {dir, say = console.log, run = (stem, source, bu
  return {made, failed};
 }
 
-export function convert(models, {dir, game, say = console.log, run = (source, out, level) => spawnSync(findBlender(), ['--factory-startup', '-b', '-P',
- join(ROOT, 'tools', 'blender', 'meshy_game.py'), '--', source, out, String(level)], {encoding: 'utf8', timeout: 600000})}) {
+export function convert(models, {dir, game, say = console.log, run = (source, out, level, model) => spawnSync(findBlender(), ['--factory-startup', '-b', '-P',
+ join(ROOT, 'tools', 'blender', 'meshy_game.py'), '--', source, out, String(level)], {encoding: 'utf8', timeout: 600000, env: woodEnv(model)})}) {
  mkdirSync(game, {recursive: true});
  const made = [], failed = [];
  for (const model of models) {
   const source = join(dir, `${model.name}.glb`), out = join(game, `${model.name}.glb`);
   if (!existsSync(source)) { failed.push({name: model.name, why: 'no model yet'}); say(`${model.name}: no model yet`); continue; }
-  run(source, out, model.paintLevel || .82);
+  run(source, out, model.paintLevel || .82, model);
   if (!existsSync(`${out}.json`)) { failed.push({name: model.name, why: 'Blender wrote nothing'}); say(`${model.name}: FAILED, Blender wrote nothing`); continue; }
   const r = JSON.parse(readFileSync(`${out}.json`, 'utf8'));
   if (model.far) {

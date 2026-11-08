@@ -1,0 +1,82 @@
+{
+ "name": "badlands",
+ "note": "The Badlands pack on Meshy, the last batch (8 November 2026): Bully Pulpit. Green ash and Rocky Mountain juniper; the plains cottonwood is the Prairie pack's. Shipped in vendor/blender-meshy_badlands as BdGreenAsh, BdRockyMountainJuniper, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_GreenAsh_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #557e38. Bark grey #8a8478.",
+   "aspect": "3:4",
+   "prompt": "A green ash tree in a Badlands river bottom beside a golf course, 18 m tall and 12 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey trunk with diamond-furrowed bark, bare for its lowest third. Several limbs angle upward and outward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make an upright oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_GreenAsh_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #557e38. Bark grey #8a8478.",
+   "aspect": "3:4",
+   "prompt": "A younger green ash tree in a Badlands river bottom beside a golf course, 13 m tall and 8 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey trunk, bare for its lowest third. Limbs angle upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a narrow oval crown. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RockyMountainJuniper_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage blue grey green #5a7068. Bark red brown #7a5040.",
+   "aspect": "9:16",
+   "prompt": "A Rocky Mountain juniper tree in a Badlands draw beside a golf course, 10 m tall and 4 m wide, a narrow irregular column. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk with shredding bark, seen low down. Short dense boughs from near the ground to an uneven narrow top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one fourteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RockyMountainJuniper_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage blue grey green #5a7068. Bark red brown #7a5040.",
+   "aspect": "9:16",
+   "prompt": "A younger Rocky Mountain juniper tree in a Badlands draw beside a golf course, 7 m tall and 3 m wide, narrow. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk, seen low down. Short dense boughs from near the ground to a narrow top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twelfth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "bdash": {
+   "spring": {
+    "leaf": "#8cb064",
+    "bark": "#8a8478"
+   },
+   "summer": {
+    "leaf": "#557e38",
+    "bark": "#8a8478"
+   },
+   "autumn": {
+    "leaf": "#d0b040",
+    "bark": "#8a8478"
+   },
+   "winter": {
+    "leaf": "#557e38",
+    "bark": "#8a8478"
+   }
+  },
+  "bdjuniper": {
+   "spring": {
+    "leaf": "#5a7068",
+    "bark": "#7a5040"
+   },
+   "summer": {
+    "leaf": "#5a7068",
+    "bark": "#7a5040"
+   },
+   "autumn": {
+    "leaf": "#5a7068",
+    "bark": "#7a5040"
+   },
+   "winter": {
+    "leaf": "#5a7068",
+    "bark": "#7a5040"
+   }
+  }
+ }
+}

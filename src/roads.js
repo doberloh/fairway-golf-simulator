@@ -72,28 +72,39 @@ export function sidesByDistance(box, p) {
 
 // A straight road outside the box on one side, moved further out until
 // nothing played lies under it (sampled every 4 m along it and across its
-// width), inside the world's edge; null when none fits (a coast).
-function layRoad(side, box, half, surface, club) {
+// width), inside the world's edge; null when none fits (a coast). Nor ground
+// steeper than ROAD_STEEPEST between two samples (8 November 2026: the road
+// climbed a Badlands formation at 56% and a Desert Mountain range once they
+// stood beside the holes). PLACED.
+export const ROAD_STEEPEST = .3;
+function layRoad(side, box, half, surface, club, height = null) {
  const across = side.axis === 'x' ? 'z' : 'x';
  const lo = Math.max(-half[across] + 8, (across === 'x' ? box.x0 : box.z0) - 120), hi = Math.min(half[across] - 8, (across === 'x' ? box.x1 : box.z1) + 120);
  const base = side.axis === 'x' ? (side.sign > 0 ? box.x1 : box.x0) : (side.sign > 0 ? box.z1 : box.z0);
  const pt = (at, u) => (side.axis === 'x' ? {x: at, z: u} : {x: u, z: at});
- const clearAt = at => {
+ // Its steepest grade between two samples, or -1 where play or the clubhouse is under it.
+ const gradeAt = at => {
+  let prev = null, steepest = 0;
   for (let u = lo; u <= hi; u += 4) for (const o of [-ROAD_WIDTH.boundary / 2, 0, ROAD_WIDTH.boundary / 2]) {
    const p = pt(at + o * side.sign, u);
-   if (PLAYED.has(surface(p.x, p.z)) || inBuilding(club, p.x, p.z, 4)) return false;
+   if (PLAYED.has(surface(p.x, p.z)) || inBuilding(club, p.x, p.z, 4)) return -1;
+   if (height && !o) { const y = height(p.x, p.z); if (prev !== null) steepest = Math.max(steepest, Math.abs(y - prev) / 4); prev = y; }
   }
-  return true;
+  return steepest;
  };
+ const lay = (at, g) => { const points = []; for (let u = lo; u <= hi + .01; u += 20) points.push(pt(at, Math.min(u, hi))); return {at, lo, hi, points, g}; };
+ // The first gentle place out from the holes; if none is, the gentlest clear one (hill country has
+ // no straight line without a slope, and a road is still wanted).
+ let gentlest = null;
  for (let m = ROAD_MARGIN; m <= ROAD_MARGIN + 200; m += 10) {
   const at = base + side.sign * m;
-  if (Math.abs(at) > half[side.axis] - 6) return null;
-  if (!clearAt(at)) continue;
-  const points = [];
-  for (let u = lo; u <= hi + .01; u += 20) points.push(pt(at, Math.min(u, hi)));
-  return {at, lo, hi, points};
+  if (Math.abs(at) > half[side.axis] - 6) break;
+  const g = gradeAt(at);
+  if (g < 0) continue;
+  if (g <= ROAD_STEEPEST) return lay(at, g);
+  if (!gentlest || g < gentlest.g) gentlest = {at, g};
  }
- return null;
+ return gentlest ? lay(gentlest.at, gentlest.g) : null;
 }
 
 export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, club, paths = [], streams = null, pathTouches = () => false}) {
@@ -103,7 +114,8 @@ export function placeRoads({holes, s, surface, nearest, height, halfX, halfZ, cl
  // THE PUBLIC ROAD: on the clubhouse's side if it fits there, else the next
  // nearest side; none on a course with no straight dry edge (an island).
  let side = null, laid = null;
- for (const sd of sidesByDistance(box, club)) { laid = layRoad(sd, box, half, surface, club); if (laid) { side = sd; break; } }
+ // The nearest side with a gentle line; else the side whose line is gentlest.
+ for (const sd of sidesByDistance(box, club)) { const l = layRoad(sd, box, half, surface, club, height); if (!l) continue; if (!laid || l.g < laid.g) { laid = l; side = sd; } if (l.g <= ROAD_STEEPEST) break; }
  const roads = [], boundary = laid ? {axis: side.axis, sign: side.sign, at: laid.at, width: ROAD_WIDTH.boundary} : null;
  if (laid) roads.push({kind: 'boundary', width: ROAD_WIDTH.boundary, points: laid.points});
  const toward = p => (laid ? Math.abs((side.axis === 'x' ? p.x : p.z) - laid.at) : 0);

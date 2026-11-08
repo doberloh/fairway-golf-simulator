@@ -845,3 +845,9 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - **The last landscapes on another's ground** (RESEARCH, 4 November 2026): the geology sources for the Sonoran, Red Rock, the Chihuahuan, Alaska, the Oregon Dunes, Puget Sound, the Redwood Coast and the Cross Timbers are linked in that section's table, each with what was taken from it.
 
 - **AI model generators** (RESEARCH, 5 November 2026): the sources for Meshy, Rodin, Tripo, Hunyuan3D and TRELLIS.2 are listed under that section, each with what was taken from it.
+
+## Classic Parkland trees (6 November 2026)
+
+- Meshy API pricing and Image to 3D, https://docs.meshy.ai/en/api/pricing and https://docs.meshy.ai/en/api/image-to-3d: meshy-7.1 and meshy-6 both 30 credits textured; `remove_lighting` only with the Meshy 6 texture model.
+- Autumn colour of the species, read as search summaries: https://themarthablog.com/?p=105677, https://www.woodlanddunes.org/?p=7377, https://storymaps.arcgis.com/stories/116c411218f547b8bcea69f23bc0b3b7, https://mortonarb.org/app/uploads/2021/10/Fall-color-report-10-28-2021-Edited-by-Beth-1.pdf.
+- Pollinations (image.pollinations.ai): read and rejected for pictures of each tree: cropped, wrong shapes, one image per 45 seconds.

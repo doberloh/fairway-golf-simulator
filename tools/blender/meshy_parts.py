@@ -1,13 +1,14 @@
 # What the Meshy tools share: reading a tree into wood and leaf, and writing a
 # model the way the game takes one (docs/BLENDER_ASSETS.md, *What the game keeps
 # from a model*). Used by meshy_far.py and meshy_game.py.
-import json, math, struct
+import json, math, os, struct
 from types import SimpleNamespace
 import bpy
 import numpy as np
 
 BINS = 40
 PAINT_RANGE = (.35, 1.7)  # a shade, as a multiplier on the colour the game paints
+BARK_RANGE = (.75, 1.3)  # narrower for wood: a dark stain went black in the game's shade
 # A shipped crown's normals never face the ground (mean height 0.69) and its paint
 # averages 0.75. A Meshy crown's are half downward (mean 0), which the game's light
 # turns near black. So they are mirrored upward and bent out from the trunk, keeping
@@ -54,11 +55,24 @@ def read_tree(path):
         return pixels[y, x]
 
     colour = (sample(tuv).sum(1) + sample(tuv.mean(1))) / 4  # three corners and the centre
-    red = colour[:, 1] < colour[:, 0] * 1.25  # wood: grey bark as well as red, never leaf
     centre = verts[tri].mean(1)
+    red = colour[:, 1] < colour[:, 0] * 1.25  # wood: grey bark as well as red, never leaf
     area = np.array([p.area for p in polys])
     lo, hi = verts.min(0), verts.max(0)
     H = hi[2] - lo[2]
+    # Green wood (a palo verde's limbs, a saguaro): when the tree's foot is not
+    # wood-coloured, its colours are split in two and the group at the foot is the
+    # wood. One colour all over is all wood. A brown-barked tree never gets here.
+    foot = centre[:, 2] < lo[2] + H * .06
+    # A model marked brown-barked (`wood`, MESHY_WOOD) never takes this split.
+    if os.environ.get('MESHY_WOOD') != 'brown' and foot.any() and red[foot].mean() < .5:
+        lum = luminance(colour)
+        mids = np.stack([colour[lum <= np.percentile(lum, 25)].mean(0), colour[lum >= np.percentile(lum, 75)].mean(0)])
+        for _ in range(12):
+            lab = ((colour[:, None] - mids[None]) ** 2).sum(2).argmin(1)
+            mids = np.stack([colour[lab == k].mean(0) if (lab == k).any() else mids[k] for k in (0, 1)])
+        own = np.bincount(lab[foot], minlength=2).argmax()
+        red = lab == own if np.abs(mids[0] - mids[1]).max() > .03 else np.ones(len(colour), bool)
 
     # The trunk: at each height its axis and radius from the wood-coloured faces,
     # narrowing only as it rises, so a limb never counts as trunk.
@@ -146,7 +160,11 @@ def read_tree(path):
         pts = centre[faces] - centre[faces].mean(0)
         spread = np.linalg.svd(pts, compute_uv=False)
         reach = np.ptp(pts @ np.linalg.svd(pts, full_matrices=False)[2][0])
-        if spread[1] < spread[0] * .3 and reach > H * .03:
+        # A forked limb is not long and thin as a whole, but it is a tube: its faces
+        # look every way, where a bough's root or a shaded leaf mass is a sheet facing
+        # one way. Southern Pines' crown limbs read as leaf until this (6 November 2026).
+        facing_one_way = np.linalg.norm(np.average(fn[faces], axis=0, weights=area[faces] + 1e-12))
+        if (spread[1] < spread[0] * .3 and reach > H * .03) or (reach > H * .05 and facing_one_way < .35):
             wood[faces] = True
     weights = area + 1e-12
     refs = {'leaf': float(np.average(luminance(colour[~wood]), weights=weights[~wood])) if (~wood).any() else 1.,
@@ -173,7 +191,7 @@ def leaf_light(pos, normal, tree):
 def game_paint(colour, pos, role, tree, under=None, level=LEAF_LEVEL):
     """RGB is a grey multiplier on the colour the game paints the role, stored
     halved, so seasons and tints still work; alpha is the wind's flex."""
-    shade = np.clip(luminance(np.asarray(colour)) / tree.refs['leaf' if role == 0 else 'bark'], *PAINT_RANGE)
+    shade = np.clip(luminance(np.asarray(colour)) / tree.refs['leaf' if role == 0 else 'bark'], *(PAINT_RANGE if role == 0 else BARK_RANGE))
     pos = np.asarray(pos)
     if role == 0:
         shade = shade * level * (1 - UNDER_SHADE * (0 if under is None else under))

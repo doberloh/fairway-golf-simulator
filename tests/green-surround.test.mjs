@@ -10,7 +10,7 @@ import {world} from './worlds.mjs';
 // where a shrub should be allowed to sit.
 const trunked = t => !GROUND_PLANTS.has(t.kind);
 
-const BIOMES = ['heartland', 'puget', 'redwood'];
+const BIOMES = ['heartland', 'pacnw', 'redwood'];
 const near = (w, g, t) => {
  const lx = t.x - g.x, lz = t.z - g.z, d = Math.hypot(lx, lz);
  return {d, onApproach: d > 1e-6 && (lx * g.dx + lz * g.dz) / d >= Math.cos(GREEN.arc)};
@@ -87,7 +87,7 @@ test('the tee fan keeps planting out of the view from every tee, not just its ow
 test('the fan does not simply clear everything round a tee', () => {
  // It is forward-only. Ground behind and outside the widest tee still plants,
  // which is what stops this undoing the encroachment work.
- const w = world({holes: 9, biome: 'puget', seed: 'fan-pnw'});
+ const w = world({holes: 9, biome: 'pacnw', seed: 'fan-pnw'});
  const fans = teeFans(w.holes);
  const tees = w.holes.flatMap(h => Object.values(h.tees).map(t => h.toWorld(t)));
  let close = 0;

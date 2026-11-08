@@ -69,14 +69,8 @@ const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf
 // fourteen footprints by four tiers by every slider is a sweep nobody runs
 // twice. Each case below is here for a stated reason, and a run that takes a
 // few minutes is a run that gets used.
-const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'lakedunes',
- 'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska',
- 'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
- 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan',
- 'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
- 'sagebrush', 'redrock', 'crosstimbers',
- 'blueridge', 'ozarks', 'bluegrass',
- 'northwoods', 'oregondunes', 'hawaii', 'badlands', 'desertresort'];
+const BIOMES = ['dmountain', 'mountains', 'redwood',
+ 'prairie',      'northwoods', 'badlands', 'parkland', 'southpines', 'lowgulf', 'flpalms', 'hiresort', 'dresort', 'pacnw', 'calcoast', 'seaside'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {
@@ -116,7 +110,7 @@ function matrix() {
  // designer, 2 November 2026: its paths, markings, clubhouse and wear are on
  // every generated course now, so every group measures them.)
  // `--landscapes all` (or a list, a,b,c) measures more than the usual three.
- const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['heartland', 'puget', 'links'];
+ const archBiomes = flag('landscapes', null) === 'all' ? BIOMES : flag('landscapes', null) ? String(flag('landscapes')).split(',') : ['parkland', 'pacnw', 'seaside'];
  // BUILT COURSES (the course builder, 31 October 2026; docs/COURSE_BUILDER.md):
  // the same landscape and seed on Low, grown from its seed against its frozen
  // copy played from a .fairway file (freeze.js, built-world.js). The goal's
@@ -134,7 +128,7 @@ function matrix() {
  // Midwest is an open course for contrast. High and Ultra are the tiers with
  // god rays.
  for (const quality of ['high', 'ultra'])
-  for (const biome of ['redwood', 'heartland'])
+  for (const biome of ['redwood'])
    cases.push({group: 'sun', name: `${quality} · ${biome} · facing the sun`, arm: 'gpu', quality, ...base, biome,
     camera: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'}});
  // Pixel ratio on its own. It is the biggest fill lever the tiers have and
@@ -146,7 +140,7 @@ function matrix() {
  // stand-in for "no graphics card", and it is the only arm on this machine
  // that can fail to hold a budget.
  for (const quality of ['low', 'medium'])
-  cases.push({group: 'weak', name: `${quality} · software`, arm: 'software', quality, ...base, biome: 'puget'});
+  cases.push({group: 'weak', name: `${quality} · software`, arm: 'software', quality, ...base, biome: 'pacnw'});
  return ONLY ? cases.filter(c => c.group === ONLY) : cases;
 }
 

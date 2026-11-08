@@ -1,0 +1,82 @@
+{
+ "name": "florida",
+ "note": "The Florida Palms pack on Meshy, the fourth of the US golf courses' landscapes (7 November 2026): Seminole, TPC Sawgrass. Coconut and royal palms are new here; its sabal palm and live oak are Lowcountry and Gulf's, its loblolly Southern Pines'. Sizes, trunk widths and forms are PLACED from the owner's Seminole photograph, tall thin leaning coconut palms with wind-blown crowns over white sand, and for the royal palm from its usual form, no photograph of one being to hand. One picture per model, in the solid language the owner chose: a feather frond's fine leaflets would not survive the model step, so each frond is one thick blade. `seasons` are PLACED, read by tools/blender/dump-tints.mjs. Shipped in vendor/blender-meshy_florida as FlCoconut and FlRoyal, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_CoconutPalm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4c7a3e. Trunk grey-brown #8a7c68.",
+   "aspect": "9:16",
+   "prompt": "A tall old coconut palm on a Florida golf course, 22 m tall and 8 m wide. A very slender grey-brown trunk, one thirtieth of the palm's height wide, leaning a little and curving gently upward along its whole length like a long bow, with faint rings, its sides very slightly tapering. At the very top a small loose crown of fourteen to eighteen long arching fronds, the crown small against the height of the palm, swept a little to one side as if by a steady sea breeze. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no coconuts, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_CoconutPalm_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4c7a3e. Trunk grey-brown #8a7c68.",
+   "aspect": "9:16",
+   "prompt": "A younger coconut palm on a Florida golf course, 15 m tall and 7 m wide. A slender grey-brown trunk, one twenty-fifth of the palm's height wide, leaning well over to one side near the ground and then curving back upward in a long sweep, with faint rings, its sides very slightly tapering. At the top a full rounded crown of eighteen to twenty-two long arching fronds, the lower ones drooping, each one curving out and down. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no coconuts, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RoyalPalm_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7d42. Trunk pale grey #9a948a. Crownshaft soft green #6a8c50.",
+   "aspect": "9:16",
+   "prompt": "A tall Florida royal palm at a golf clubhouse, 24 m tall and 8 m wide. A perfectly straight smooth pale grey trunk like a concrete column, one eighteenth of the palm's height wide, gently swollen a little above its middle and narrowing again toward the top. Above the trunk a smooth soft green crownshaft, a clean tapering green column one sixth of the palm's height tall, as wide as the top of the trunk. From the top of the crownshaft a neat crown of twelve to sixteen long arching fronds, the highest rising straight up, the rest arching out and over. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RoyalPalm_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "fronds",
+   "colour": "Fronds dull green #4f7d42. Trunk pale grey #9a948a. Crownshaft soft green #6a8c50.",
+   "aspect": "9:16",
+   "prompt": "A younger Florida royal palm lining a golf club drive, 16 m tall and 7 m wide. A straight smooth pale grey trunk like a concrete column, one fourteenth of the palm's height wide, gently swollen low down and narrowing toward the top. Above the trunk a smooth soft green crownshaft, a clean tapering green column one fifth of the palm's height tall, as wide as the top of the trunk. From the top of the crownshaft a full crown of fourteen to eighteen long arching fronds, rising and then arching out and over, the lowest drooping a little. Each frond is one long solid curved blade, thick and chunky, tapering to a point, with a softly notched edge and a few deep soft grooves along it. Paint each frond as a thick solid three-dimensional form: no thin strips, no separate leaflets, no fibres, no fine detail, no thin lines, no wisps. No fan fronds, no fruit, no skirt of dead fronds. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "flcoconut": {
+   "spring": {
+    "leaf": "#527f42",
+    "bark": "#8a7c68"
+   },
+   "summer": {
+    "leaf": "#4c7a3e",
+    "bark": "#8a7c68"
+   },
+   "autumn": {
+    "leaf": "#4c7a3e",
+    "bark": "#8a7c68"
+   },
+   "winter": {
+    "leaf": "#4a743c",
+    "bark": "#8a7c68"
+   }
+  },
+  "flroyal": {
+   "spring": {
+    "leaf": "#558246",
+    "bark": "#9a948a"
+   },
+   "summer": {
+    "leaf": "#4f7d42",
+    "bark": "#9a948a"
+   },
+   "autumn": {
+    "leaf": "#4f7d42",
+    "bark": "#9a948a"
+   },
+   "winter": {
+    "leaf": "#4c7740",
+    "bark": "#9a948a"
+   }
+  }
+ }
+}

@@ -25,7 +25,7 @@ test('the picture fills its frame, turned a quarter when that fits better', () =
 test('drawing touches only the frame it is given', () => {
  const calls = [];
  const ctx = new Proxy({}, {get: (o, k) => (k in o ? o[k] : (...args) => calls.push([k, ...args])), set: (o, k, v) => { o[k] = v; return true; }});
- drawCoursePicture(ctx, courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'sonoran'}), 200, 120);
+ drawCoursePicture(ctx, courseLayout({seed: 'HEMLOCK', holes: 9, biome: 'dmountain'}), 200, 120);
  const pts = calls.filter(c => c[0] === 'lineTo' || c[0] === 'moveTo').map(c => [c[1], c[2]]);
  assert.ok(pts.length > 100);
  assert.ok(pts.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y) && x > -60 && x < 260 && y > -60 && y < 180));

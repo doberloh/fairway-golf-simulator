@@ -21,6 +21,15 @@ const LAND = {
  rockies: ['Summit', 'Scree', 'Snowmelt', 'High Meadow', 'Larch', 'Lookout', 'Tarn', 'Marmot', 'Cirque'],
  links: ['Dunes', 'Gorse', 'Whins', 'Marram', 'Seaside', 'Skylark', 'Sandhills', 'Tide', 'Lang Whang'],
  heartland: ['Prairie', 'Bur Oak', 'Big Sky', 'Bluestem', 'Meadowlark', 'Windbreak', 'Cornerpost', 'Thunder', 'Homestead'],
+ hiresort: ['Cook Pine Row', 'Honolua', 'Monkeypod', 'Ironwood Belt', 'Trade Breeze', 'Pineapple Hill', 'Whale Watch', 'Molokai View', 'Plantation'],
+ dmountain: ['Pinnacle', 'Saguaro', 'Boulder Pass', 'Palo Verde', 'Javelina', 'Dry Wash', 'Monsoon', 'Cactus Wren', 'Granite Knob'],
+ dresort: ['Afghan Row', 'Willow Pond', 'Olive Court', 'Date Grove', 'Fan Palms', 'Mirage', 'Shadow Pines', 'Sundown Lake', 'The Oasis'],
+ pacnw: ['Cedar Hollow', 'Fir Lane', 'Hemlock', 'Big Leaf', 'Alder Creek', 'Salal', 'Old Growth', 'Rain Shadow', 'Timberline'],
+ calcoast: ['Lone Cypress', 'Headland', 'Kelp Bed', 'Kelp Point', 'Seal Rock', 'Ice Plant', 'Point Lobos', 'Cormorant', 'Carmel Bay'],
+ seaside: ['Gorse', 'Marram', 'Whin', 'Sea Thrift', 'Lighthouse', 'Shore Pine', 'Driftline', 'Gull Point', 'Breakers'],
+ mountains: ['Timberline', 'Aspen Glade', 'Lodgepole', 'Spruce Bench', 'High Meadow', 'Elk Park', 'Switchback', 'Snowcap', 'Ponderosa'],
+ prairie: ['Blowout', 'Big Sky', 'Bluestem', 'Cedar Draw', 'Sandhill', 'Meadowlark', 'Cottonwood Bend', 'Switchgrass', 'Long Prairie'],
+ flpalms: ['Coconut Row', 'Sea Grape', 'Dune Ridge', 'Coquina', 'Royal Palm', 'Live Oak', 'Pelican', 'Intracoastal', 'Gulfstream'],
  keys: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],
  newengland: ['Maples', 'Copper', 'Harvest', 'Stone Wall', 'Cider Mill', 'Russet', 'Orchard', 'Woodsmoke', 'Steeple'],
@@ -28,11 +37,14 @@ const LAND = {
  highplains: ['Elevator', 'Shelterbelt', 'Big Sky', 'Grama', 'Windbreak', 'Section Line', 'Pumpjack', 'Thunderhead', 'Creekside'],
  badlands: ['Sawtooth', 'Yellow Mounds', 'Sod Table', 'Clinker', 'Bison Wallow', 'Wheatgrass', 'Juniper Draw', 'Pinnacles', 'Prairie Dog Town'],
  sandhills: ['Windmill', 'Blowout', 'Stock Tank', 'Soapweed', 'Choppy Sand', 'Lone Cedar', 'Sharptail', 'Hay Meadow', 'Ranch Gate'],
+ parkland: ['Old Oak', 'Maple Row', 'Long Avenue', 'Poplar Walk', 'The Elm', 'Spruce Corner', 'Clubhouse Lawn', 'Stone Bridge', 'Cathedral'],
  oldnortheast: ['Copper Beech', 'Elm Walk', 'Fieldstone', 'Gatehouse', 'Old Oak', 'Ivy', 'Quarry', 'Carriage Road', 'Steeple'],
  pinebarrens: ['Pitch Pine', 'Scrub Oak', 'Bayberry', 'Heath', 'Windmill', 'Salt Meadow', 'Cranberry Bog', 'Sound View', 'Sand Road'],
  alaska: ['Fireweed', 'Black Spruce', 'Glacier View', 'Moose Run', 'Birch', 'Muskeg', 'Midnight Sun', 'Willow', 'Raven'],
+ southpines: ['Long Shadows', 'Pine Straw', 'Wiregrass', 'Azalea', 'White Sand', 'Dogwood', 'Tall Pines', 'Waste Bunker', 'Bobwhite'],
  longleaf: ['Longleaf', 'Wiregrass', 'Pine Straw', 'Turkey Oak', 'Sandhill', 'Bobwhite', 'Firebreak', 'Gopher Hole', 'Resin'],
  piedmont: ['Red Clay', 'Dogwood', 'Magnolia', 'Tulip Poplar', 'Azalea', 'Mill Creek', 'Kudzu', 'Shoals', 'Sweetgum'],
+ lowgulf: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Pluff Mud', 'Rice Field', 'Marsh View'],
  lowcountry: ['Live Oak', 'Spartina', 'Oyster Bed', 'Palmetto', 'Egret', 'Tidal Creek', 'Spanish Moss', 'Rice Field', 'Marsh View'],
  bayou: ['Bald Cypress', 'Tupelo', 'Levee', 'Pirogue', 'Crawfish', 'Cypress Knees', 'Spanish Moss', 'Sugar Mill', 'Slow Water'],
  flatwoods: ['Slash Pine', 'Saw Palmetto', 'Cabbage Palm', 'Sawgrass', 'Cypress Dome', 'Gator Lake', 'Orange Grove', 'Sandhill Crane', 'White Sand'],
@@ -69,7 +81,7 @@ function candidates(h, i, n, biome) {
  if (n === 18 && i === 8) out.push('Halfway', 'The Turn');
  if (i === 0) out.push(['First', 'Starter', 'Opening', 'Off We Go'][Math.floor((h.length || 0) * 7) % 4]);
  if (h.ponds?.length) {
-  const water = biome === 'links' ? ['Burn', 'Lochan'] : biome === 'keys' ? ['Lagoon', 'Salt Pond'] : biome === 'rockies' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
+  const water = biome === 'seaside' ? ['Burn', 'Lochan'] : biome === 'keys' ? ['Lagoon', 'Salt Pond'] : biome === 'rockies' ? ['Tarn', 'Snowmelt Pond'] : ['Pond', 'Mere', 'Waterside', 'Long Pond', 'Lily Pond'];
   out.push(...water);
  }
  const bend = Math.abs(h.doglegAngle || 0);

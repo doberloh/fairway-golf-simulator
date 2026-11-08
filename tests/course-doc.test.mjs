@@ -9,7 +9,7 @@ function tinyDoc(over = {}) {
  const nx = 121, nz = 101, heights = new Float32Array(nx * nz);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) heights[j * nx + i] = 470 + Math.sin(i * .07) * 3.21 + j * .013;
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -50 + i * 10, z: -40, set: 'middle'}], green: {x: -50 + i * 10, z: 40}, line: [[-50 + i * 10, -40], [-50 + i * 10, 40]]}));
- return {type: 'built', name: 'Test Links', landscape: 'heartland', designer: null, halfX: 60, halfZ: 50,
+ return {type: 'built', name: 'Test Links', landscape: 'parkland', designer: null, halfX: 60, halfZ: 50,
   land: {x0: -60, z0: -50, cell: 1, nx, nz, heights},
   patches: [{x0: -10, z0: 30, cell: .25, nx: 81, nz: 81, heights: new Float32Array(81 * 81).fill(472.5)}],
   surfaces: {green: [square(0, 40, 8)], fairway: [square(0, 0, 15)], tee: [square(0, -40, 3)], sand: [square(12, 30, 2.5)]},
@@ -38,7 +38,7 @@ test('a built course comes back from its file as it went in', async () => {
  const bytes = await writeBuiltFile(doc, 1);
  assert.ok(isBuiltFile(bytes));
  const back = await readBuiltFile(bytes);
- assert.equal(back.name, 'Test Links'); assert.equal(back.landscape, 'heartland'); assert.equal(back.builtVersion, 1);
+ assert.equal(back.name, 'Test Links'); assert.equal(back.landscape, 'parkland'); assert.equal(back.builtVersion, 1);
  assert.equal(back.holes.length, 9); assert.deepEqual(back.holes[3].tees[0], {x: -20, z: -40, set: 'middle'});
  assert.equal(back.trees.length, 2 * TREE_STRIDE); assert.equal(back.trees[2], 15);
  assert.deepEqual(back.surfaces.green, doc.surfaces.green);

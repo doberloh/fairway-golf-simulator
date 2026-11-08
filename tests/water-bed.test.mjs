@@ -58,7 +58,7 @@ function doc(rise = () => 100) {
  const nx = 201, nz = 201, heights = new Float32Array(nx * nz);
  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) heights[j * nx + i] = rise(-100 + i, -100 + j);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}, line: [[-5, -80], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Ponds', landscape: 'puget', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights}, patches: [],
+ return validateDoc({type: 'built', name: 'Ponds', landscape: 'pacnw', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights}, patches: [],
   surfaces: {green: [[square(-10, 70, 10, 90)]], fairway: [[square(-12, -60, 12, 60)]]}, water: [], holes, trees: new Float32Array(0), treeKinds: []});
 }
 

@@ -1,0 +1,118 @@
+{
+ "name": "prairie",
+ "note": "The Prairie and Sand Hills pack on Meshy, the last batch (8 November 2026): Sand Hills, Prairie Dunes, Ballyneal -- nearly treeless; a few clumps. Plains cottonwood (shared with the Badlands), hackberry, eastern red cedar. Shipped in vendor/blender-meshy_prairie as PrPlainsCottonwood, PrHackberry, PrEasternRedCedar, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_PlainsCottonwood_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves bright green #6a9440. Bark grey brown #8a8070.",
+   "aspect": "1:1",
+   "prompt": "A big old plains cottonwood tree on a prairie golf course, 24 m tall and 22 m wide, as wide as it is tall. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A massive deeply furrowed grey-brown trunk dividing low, at a quarter of its height, into a few huge limbs. The great limbs sweep up and out in a wide vase, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make one broad, spreading, rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one tenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_PlainsCottonwood_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves bright green #6a9440. Bark grey brown #8a8070.",
+   "aspect": "3:4",
+   "prompt": "A younger plains cottonwood tree on a prairie golf course, 18 m tall and 13 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey-brown furrowed trunk dividing at a third of its height into several limbs. The limbs angle upward and outward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a tall broad oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one fourteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Hackberry_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #5e8a3e. Bark warty grey #8a8478.",
+   "aspect": "3:4",
+   "prompt": "A hackberry tree on a prairie golf course, 15 m tall and 11 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey trunk with corky warty bark, bare for its lowest third. Several limbs angle upward and outward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make a rounded oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one sixteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Hackberry_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #5e8a3e. Bark warty grey #8a8478.",
+   "aspect": "3:4",
+   "prompt": "A younger hackberry tree on a prairie golf course, 11 m tall and 7 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey trunk with corky bark, bare for its lowest third. Limbs angle upward. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, about as tall as it is wide, with a lightly tufted scalloped edge, and smaller tufts sit between them. The tufts are chunky, overlap only a little, and together make a crown with a bumpy outline and several small gaps showing sky and limbs. The tufts make an upright oval crown. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no flat discs, no round lollipop shape, no even tiers of branches. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thick limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_EasternRedCedar_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark green #3e5a36. Bark red brown #7a4a34.",
+   "aspect": "9:16",
+   "prompt": "An eastern red cedar tree on a prairie golf course, 12 m tall and 4 m wide, a narrow dense column. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk with stringy bark, seen low down. Short dense boughs from near the ground to a narrow rounded point. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_EasternRedCedar_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dark green #3e5a36. Bark red brown #7a4a34.",
+   "aspect": "9:16",
+   "prompt": "A younger eastern red cedar tree on a prairie golf course, 8 m tall and 3 m wide, a narrow column. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk with stringy bark, seen low down. Short dense boughs from near the ground to a narrow point. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one sixteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "prcotton": {
+   "spring": {
+    "leaf": "#9cc06a",
+    "bark": "#8a8070"
+   },
+   "summer": {
+    "leaf": "#6a9440",
+    "bark": "#8a8070"
+   },
+   "autumn": {
+    "leaf": "#d8b030",
+    "bark": "#8a8070"
+   },
+   "winter": {
+    "leaf": "#6a9440",
+    "bark": "#8a8070"
+   }
+  },
+  "prhack": {
+   "spring": {
+    "leaf": "#8cb05e",
+    "bark": "#8a8478"
+   },
+   "summer": {
+    "leaf": "#5e8a3e",
+    "bark": "#8a8478"
+   },
+   "autumn": {
+    "leaf": "#c8b048",
+    "bark": "#8a8478"
+   },
+   "winter": {
+    "leaf": "#5e8a3e",
+    "bark": "#8a8478"
+   }
+  },
+  "prcedar": {
+   "spring": {
+    "leaf": "#3e5a36",
+    "bark": "#7a4a34"
+   },
+   "summer": {
+    "leaf": "#3e5a36",
+    "bark": "#7a4a34"
+   },
+   "autumn": {
+    "leaf": "#3e5a36",
+    "bark": "#7a4a34"
+   },
+   "winter": {
+    "leaf": "#3e5a36",
+    "bark": "#7a4a34"
+   }
+  }
+ }
+}

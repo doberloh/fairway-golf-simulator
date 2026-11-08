@@ -11,22 +11,16 @@
 // enough to catch a rule that is outright broken -- and `full` is for the
 // answer you report. `standard` is the middle one for a change you believe in
 // but have not confirmed.
-export const BIOMES = ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'redwood', 'newengland', 'lakedunes',
- 'highplains', 'sandhills', 'oldnortheast', 'pinebarrens', 'alaska',
- 'longleaf', 'piedmont', 'lowcountry', 'bayou', 'flatwoods',
- 'hillcountry', 'bluebonnet', 'gulfcoast', 'mojave', 'palms', 'chihuahuan', 'desertresort',
- 'monterey', 'socal', 'winecountry', 'cascades', 'sierra', 'ponderosa',
- 'sagebrush', 'redrock', 'crosstimbers',
- 'blueridge', 'ozarks', 'bluegrass',
- 'northwoods', 'oregondunes', 'hawaii'];
-export const COASTAL = ['keys', 'links', 'lakedunes'];
+export const BIOMES = ['dmountain', 'mountains', 'redwood',
+ 'prairie', 'parkland', 'southpines', 'lowgulf', 'flpalms', 'seaside', 'calcoast', 'pacnw', 'dresort', 'hiresort',    'northwoods'];
+export const COASTAL = ['flpalms', 'seaside', 'calcoast'];
 
 // Water on, because most of what goes wrong goes wrong near water.
 export const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 const TIERS = {
- quick:    {biomes: ['puget', 'rockies'], seeds: ['S1', 'S2']},
- standard: {biomes: ['puget', 'rockies', 'links'], seeds: ['S1', 'S2', 'S3', 'S4']},
+ quick:    {biomes: ['pacnw', 'mountains'], seeds: ['S1', 'S2']},
+ standard: {biomes: ['pacnw', 'mountains', 'seaside'], seeds: ['S1', 'S2', 'S3', 'S4']},
  full:     {biomes: BIOMES, seeds: ['S1', 'S2', 'S3', 'S4', 'S5']},
 };
 

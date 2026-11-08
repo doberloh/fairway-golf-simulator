@@ -13,7 +13,7 @@ useStorage();
 const lib=await import('../src/course-library.js');
 const {listCourses,saveCourse,deleteCourse,renameCourse,findCourse,exportCourse,importCourse,settingsDiff,courseSettings,MAX_NAME}=lib;
 
-const sample={...DEFAULT_COURSE,seed:'SHARED-1',biome:'links',holes:18,courseYards:6480,rivers:1,pondSize:200,homes:true};
+const sample={...DEFAULT_COURSE,seed:'SHARED-1',biome:'seaside',holes:18,courseYards:6480,rivers:1,pondSize:200,homes:true};
 
 // Builds a well-formed code around an arbitrary payload, so tests can present a
 // code whose checksum is correct but whose contents are not a course.

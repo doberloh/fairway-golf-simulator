@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {biomeOf} from './biomes.js';
-import {fbm,saltOf,carvedField,landformOf} from './landforms.js';
+import {fbm,saltOf,carvedField,landformOf,massifHeading} from './landforms.js';
 // Join the detailed ground's exact perimeter vertices to progressively wider
 // landscape rings. No overlapping rectangular backdrop or exposed tile edge.
 //
@@ -49,7 +49,35 @@ export function ringRelief(w){
  // at a tenth the resolution. Scenery only. PLACED.
  const carved=bio.ringCarve?carvedField(bio.ringCarve,w.settings.seed,'far'):null,fine=carved&&!w.settings.range&&!w.built?landformOf(bio,w.settings.seed):null;
  const carvedAt=(x,z,distance)=>{if(!carved)return 0;const t=T.MathUtils.smoothstep(distance,carved.o.near,carved.o.far);return t?t*(carved.height(x,z)-(fine?fine.lift(x,z,1):0)):0;};
- const ridgeAt=(x,z)=>peaks?peaks(x,z):mesas?mesas(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
+ // ONE MOUNTAIN (`ringMassif`, Desert Mountain; the owner, 7 November 2026: "Let's just draw one
+ // big mountain (look at the shape of superstition mountain. That should be the shape of it. and
+ // then we would have flat desert"). Superstition Mountain stands about 910 m over the Salt River
+ // Valley, its west face dacite cliffs left standing as the softer tuff weathered away, the
+ // Flatiron near its crest, its ridgeline some 11 miles of trail (RESEARCH, *Desert Mountain,
+ // round 3*). Here: one long massif `at` metres past the course's edge on a seeded side, its long
+ // axis across the line of sight so its face looks at the course -- an apron of talus, then cliff
+ // bands to a crest broken into knobs and notches, a long gentler back, steep ends -- and flat
+ // desert everywhere else. Every number PLACED; scenery only.
+ const massif=bio.ringMassif?(()=>{const o=bio.ringMassif,s=saltOf(w.settings.seed,'massif'),ss=T.MathUtils.smoothstep,r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);};
+  const a=massifHeading(w.settings.seed),R=Math.max(w.halfX,w.halfZ)+o.at,cx=Math.cos(a)*R,cz=Math.sin(a)*R,nx=Math.cos(a),nz=Math.sin(a),half=o.length/2;
+  // Where it stands, for a camera to look at (tools/capture's `massif` view).
+  w.massifSpot={x:cx,z:cz};
+  const rg=(x,k,oc)=>{const q=1-Math.abs(2*fbm(x,k,s+k,oc)-1);return q*q;};
+  return (x,z)=>{
+   const dx=x-cx,dz=z-cz,along=dx*-nz+dz*nx,v=dx*nx+dz*nz;
+   const u=Math.abs(along)/half;if(u>1.25)return 0;
+   // Buttresses and gullies down the face: its foot wanders in and out along the mountain.
+   const front=-o.face+(fbm(along/420,3.7,s+5,2)-.5)*o.face*.5;
+   const p=v<0?(v-front)/-front:0;if(v<front)return 0;
+   // Ribs and gullies standing down the cliff bands, as the dacite face is fluted.
+   const rib=v<0?1-.1*rg(along/150,8.3,2)*ss(p,.3,.6)*(1-ss(p,.9,1)):1;
+   const rise=(v<0?.22*ss(p,0,.4)+.78*ss(p,.4,.86):1-.85*ss(v,0,o.back))*rib;
+   // The crest: broad and nearly level, highest toward one end, a few knobs and saddles (the
+   // summits of its ridgeline). Round 1 of it, knobs every 260 m, stood as an even saw.
+   const lean=r(2)<.5?-1:1,crest=.8+.1*lean*along/half+.12*rg(along/1600,1.3,2)+.03*Math.pow(rg(along/500,4.1,2),2);
+   return rise*crest*(1-ss(u,.72,1.15));
+  };})():null;
+ const ridgeAt=(x,z)=>massif?massif(x,z):peaks?peaks(x,z):mesas?mesas(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
  // FAR ISLANDS (the far-landscape goal, round 3): a landscape with
  // `ringIslands` (Island: sea to every horizon) raises a few islets out of its
  // far sea -- each a low hill with a beach skirt, its outline wandering, from
@@ -58,7 +86,7 @@ export function ringRelief(w){
  const isles=bio.ringIslands?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
   const list=Array.from({length:bio.ringIslands},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
   return (x,z)=>{let h=0;for(const q of list){const dd=Math.hypot(x-q.x,z-q.z)/q.R*(1+.25*(fbm(x/260,z/260,s+11,2)-.5));if(dd<1.3)h=Math.max(h,(1-ss(dd,.85,1.25))*3.5+(1-ss(dd,.2,.95))*q.H);}return h;};})():null;
- return {peaks,mesas,isles,carved,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance)};
+ return {peaks,mesas,isles,carved,massif,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance)};
 }
 // THE RING AS PLAIN ARRAYS (the far-landscape goal, 26 October 2026). The
 // drawn landscape is these triangles, not `ringRelief` sampled finely: out
@@ -106,7 +134,7 @@ function buildRing(w){
  // as many vertices round each ring.
  // Carved far country: rows of 70 m out to where its ridges are lost in the
  // haze, about the size of its own drainage.
- const mesaRings=!!(relief.mesas||relief.isles||relief.carved),grow=mesaRings?1.16:1.28,most=mesaRings?220:1e9,fineTo=relief.carved?3600:0;
+ const mesaRings=!!(relief.mesas||relief.isles||relief.carved||relief.massif),grow=mesaRings?1.16:1.28,most=mesaRings?220:1e9,fineTo=relief.carved?3600:0;
  for(let step=8;steps[steps.length-1]<REACH;step=Math.min(steps[steps.length-1]<fineTo?70:most,step*grow))steps.push(Math.min(REACH,steps[steps.length-1]+step));
  // How long each ring is, from a coarse walk round it, to size its spacing.
  const around=d=>{let L=0,prev=null;for(let k=0;k<=256;k++){const [x0,z0]=perimeter(k/256*count),r=Math.hypot(x0,z0),p=[x0+x0/r*d,z0+z0/r*d];if(prev)L+=Math.hypot(p[0]-prev[0],p[1]-prev[1]);prev=p;}return L;};

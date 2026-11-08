@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {project} from '../src/landscape-map.js';
+import {currentKey} from '../src/regions.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STUDY = path.join(here, '..', 'docs', 'studies', 'us-landscapes');
@@ -76,16 +77,17 @@ const ringOf = (coords, tol, min) => {
 
 const part = read('map/partition.geojson');
 for (const f of part.features) {
- const key = keyOf[f.properties.sub];
+ // A landscape that has been replaced draws as the one that replaced it.
+ const key = keyOf[f.properties.sub] && currentKey(keyOf[f.properties.sub]);
  if (!key) throw new Error(`no landscape for ${f.properties.sub}`);
- if (key === 'alaska' || key === 'hawaii') continue; // boxes in the partition
+ if (['alaska', 'hawaii'].includes(keyOf[f.properties.sub])) continue; // boxes in the partition
  for (const p of polysOf(f.geometry)) for (const ring of p) { const r = ringOf(ring, TOL, MIN_AREA); if (r) add(key, !!f.properties.overlay, r); }
 }
 const states = read('map/source/ne_50m_admin_1_states_provinces_lakes.geojson');
 for (const name of ['Alaska', 'Hawaii']) {
  const f = states.features.find(q => q.properties.name === name && q.properties.admin === 'United States of America');
  if (!f) throw new Error(`no ${name}`);
- for (const p of polysOf(f.geometry)) { const r = ringOf(p[0], TOL, name === 'Hawaii' ? .2 : MIN_AREA); if (r) add(name.toLowerCase(), false, r); }
+ for (const p of polysOf(f.geometry)) { const r = ringOf(p[0], TOL, name === 'Hawaii' ? .2 : MIN_AREA); if (r) add(currentKey(name.toLowerCase()), false, r); } // Hawaii is Hawaiian Resort's since 7 November 2026
 }
 
 // The globe: land as [lon, lat] in half degrees.

@@ -72,3 +72,16 @@ test('a plant with no bark is grown from its foot', () => {
  const nodes = growTwigs({leaf, seed: 'no bark'});
  assert.ok(nodes.length > 3 && nodes[0].y < .1);
 });
+
+// A CROWN POINT ON A NODE (8 November 2026): its zero distance once turned a branch to NaN, and the
+// browser refused the bare winter tree ("Computed radius is NaN") on 17 Meshy models, among them the
+// last batch's aspen, cottonwood, hackberry and paper birch. Every Meshy tree's bare parts are finite.
+test('every Meshy tree grows finite bare branches', async () => {
+ const {MESH_MODELS} = await import('../src/asset-meshes.js');
+ const names = Object.keys(MESH_MODELS).filter(n => /^Blender_(Mt|Pr|Bd|No|Rw|Nw|Cc|Sl)[A-Z]/.test(n) && !n.endsWith('_Far'));
+ assert.ok(names.length > 40, `${names.length} models`);
+ for (const n of names) for (const p of bareParts(n) ?? []) {
+  const a = p.geometry.attributes.position.array;
+  for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) assert.fail(`${n}: a ${p.role} position is ${a[i]}`);
+ }
+});

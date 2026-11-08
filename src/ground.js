@@ -73,6 +73,9 @@ function wildUniforms(w, hasWild, hasFallen) {
   // going past the property line), narrower in the shader so its grass stays grass.
   ringFaceFrom: {value: biomeOf(w.settings.biome).ringCarve ? .9 : biomeOf(w.settings.biome).ringMesas ? .86 : .74},
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
+  // Up to two rock-tee outcrops (course.js, *Tees up on the rock*): centre and long axis, then
+  // half-length, half-width and whether it is there.
+  ...Object.fromEntries([0, 1].flatMap(i => { const p = w.perches?.[i]; return [['perch' + i + 'A', {value: p ? new T.Vector4(p.cx, p.cz, p.ux, p.uz) : new T.Vector4()}], ['perch' + i + 'B', {value: new T.Vector4(p?.L ?? 1, p?.r ?? 1, p ? 1 : 0, 0)}]]; })),
   ...Object.fromEntries(Object.entries(tints).map(([k, v]) => ['gt_' + k, {value: v}])),
   // The landscape's spring bloom (seasons.js bloomIn, on the round's copy of
   // the record): 0 out of bloom, and the drift below costs one comparison.
@@ -376,7 +379,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  // The overhaul's ground types (GROUND_CODE above; landforms.js).
- uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;
+ uniform float wildOn,fallenOn,ringFloor,ringFace,ringFaceFrom;uniform vec4 wildKinds;uniform vec2 wildGateA,wildGateB,wildGateF;uniform vec4 perch0A,perch0B,perch1A,perch1B;
  uniform float heightBase;uniform float litterVary;uniform vec3 gt_rock,gt_coral,gt_scree,gt_hardpan,gt_waste,gt_pinestraw,gt_litter,gt_heather,gt_native;
  uniform float bloomOn;uniform vec3 bloomA,bloomB;
  uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
@@ -493,6 +496,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The colour's soft edge either side of the 0.5 the lie switches at (round
  // 2: .42-.58 left hard-edged blobs of heather on the links).
  float wildSoft(float f){return smoothstep(.34,.66,f);}
+ // A rock tee's outcrop opens the wild gates on its flanks (course.js perchOpen, the same numbers).
+ float perchOpen1(vec2 p,vec4 a,vec4 b){if(b.z<.5)return 0.;vec2 d=p-a.xy;float u=abs(dot(d,a.zw))/b.x,v=(d.y*a.z-d.x*a.w)/b.y,dd=sqrt(pow(u,1.4)+v*v);return 1.-smoothstep(.9,1.05,dd);}
+ float perchOpen(vec2 p){return max(perchOpen1(p,perch0A,perch0B),perchOpen1(p,perch1A,perch1B));}
  // (An Architect course's native grass took a mower's crisp edge here until the
  // designer was removed, 2 November 2026; every ground type keeps the soft
  // edge above.)
@@ -881,13 +887,21 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  vec4 paintCode=vec4(0.),paintShare=vec4(0.);float ringGrain=-1.;
  if((wildOn>.5||fallenOn>.5)&&kind<.5&&waterNear>=${WILD_WATER.toFixed(1)}&&streamNear>=${WILD_WATER.toFixed(1)}&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   vec4 cv=texture2D(cover,(wp/extent+1.)*.5);
-  float hd=holeDistance(owner.r,wp);
+  float hd=holeDistance(owner.r,wp),po=perchOpen(wp);
   float ff=fallenOn>.5&&wildKinds.w>.5?cv.g:0.;
-  float fz=wildOn>.5&&wildKinds.z>.5?smoothstep(wildGateF.x,wildGateF.x+wildGateF.y,hd):0.;
-  float fy=wildOn>.5&&wildKinds.y>.5?cv.b*smoothstep(wildGateB.x,wildGateB.x+wildGateB.y,hd):0.;
-  float fx=wildOn>.5&&wildKinds.x>.5?cv.a*smoothstep(wildGateA.x,wildGateA.x+wildGateA.y,hd):0.;
+  float fz=wildOn>.5&&wildKinds.z>.5?max(smoothstep(wildGateF.x,wildGateF.x+wildGateF.y,hd),po):0.;
+  float fy=wildOn>.5&&wildKinds.y>.5?cv.b*max(smoothstep(wildGateB.x,wildGateB.x+wildGateB.y,hd),po):0.;
+  float fx=wildOn>.5&&wildKinds.x>.5?cv.a*max(smoothstep(wildGateA.x,wildGateA.x+wildGateA.y,hd),po):0.;
   paintCode=vec4(wildKinds.w,wildKinds.z,wildKinds.y,wildKinds.x);
-  paintShare=vec4(ff>0.?wildEdge(wildKinds.w,ff):0.,fz>0.?wildEdge(wildKinds.z,fz):0.,fy>0.?wildEdge(wildKinds.y,fy):0.,fx>0.?wildEdge(wildKinds.x,fx):0.);
+  // The field's cells are metres wide, so at .5 a patch's outline showed them as corners. The
+  // paint reads an average of five samples broken by noise; the lie below keeps ff itself.
+  float fp=ff;
+  if(fallenOn>.5&&wildKinds.w>.5){
+   vec2 fuv=(wp/extent+1.)*.5,fo=1.5/extent;
+   fp=(cv.g+texture2D(cover,fuv+fo).g+texture2D(cover,fuv-fo).g+texture2D(cover,fuv+vec2(fo.x,-fo.y)).g+texture2D(cover,fuv+vec2(-fo.x,fo.y)).g)*.2;
+   fp+=(patchNoise(wp/3.)-.5)*.34*step(.01,fp);
+  }
+  paintShare=vec4(fp>0.?wildEdge(wildKinds.w,fp):0.,fz>0.?wildEdge(wildKinds.z,fz):0.,fy>0.?wildEdge(wildKinds.y,fy):0.,fx>0.?wildEdge(wildKinds.x,fx):0.);
   // Which ground the lie says this is, for the detail atlas below.
   wildTop=fx>=.5?wildKinds.x:fy>=.5?wildKinds.y:fz>=.5?wildKinds.z:ff>=.5?wildKinds.w:0.;
  }

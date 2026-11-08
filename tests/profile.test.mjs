@@ -7,7 +7,7 @@ const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, bla
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
- course: {name: 'Sitka Bluff', settings: {seed: 'abc', holes: 9}, seed: 'abc', biome: 'puget', generator: 1, schema: 1}, ...extra});
+ course: {name: 'Sitka Bluff', settings: {seed: 'abc', holes: 9}, seed: 'abc', biome: 'pacnw', generator: 1, schema: 1}, ...extra});
 
 test('no profiles until a name is given, and the first one is main', () => {
  localStorage.clear();
@@ -313,13 +313,13 @@ test('achievements, progress, weekly bests and sand strokes are kept', () => {
  localStorage.clear();
  const {store, profile} = addProfile(null, 'Sam');
  profile.achievements = {ace: 5};
- profile.progress = {rounds: 3, biomes: ['puget'], weeks: [145], once: ['g1:done']};
+ profile.progress = {rounds: 3, biomes: ['pacnw'], weeks: [145], once: ['g1:done']};
  profile.weekly = {'WEEK-2026-42@g35': 78};
  tallyShot(profile, {lie: 'sand', stroke: 3, hole: {index: 0, par: 4, yards: 380}, strokes: 3}, meta());
  storeProfiles(store);
  const back = findProfile(loadProfiles(), profile.id);
  assert.deepEqual(back.achievements, {ace: 5});
- assert.deepEqual(back.progress, {rounds: 3, biomes: ['puget'], weeks: [145], chalWeeks: [], once: ['g1:done']});
+ assert.deepEqual(back.progress, {rounds: 3, biomes: ['pacnw'], weeks: [145], chalWeeks: [], once: ['g1:done']});
  assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
  assert.deepEqual(back.rounds[0].card[0].sand, [3]);
 });

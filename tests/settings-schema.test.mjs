@@ -77,7 +77,7 @@ test('every schema version between 1 and the current one has a migration',()=>{
  // setting means bumping SCHEMA_VERSION and writing the step that supplies it --
  // this is the assertion that notices when only the first half was done.
  for(let v=1;v<SCHEMA_VERSION;v++){
-  const migrated=migrateSettings({seed:'STEP',biome:v<17?'pnw':'puget'},v); // the keys were renamed going into 17
+  const migrated=migrateSettings({seed:'STEP',biome:v<17?'pnw':'pacnw'},v); // the keys were renamed going into 17
   assert.doesNotThrow(()=>validateSettings(migrated),`a version ${v} save does not survive migration`);
   for(const f of SETTINGS)
    assert.notEqual(migrated[f.key],undefined,`a version ${v} save comes through without ${f.key}`);
@@ -92,7 +92,7 @@ test('a version 1 save migrates silently: dead tee toggles go, pond size arrives
  // 120 is the size the generator always used, so a migrated course keeps its ponds.
  assert.equal(s.pondSize,120);
  assert.equal(s.seed,'OLD');
- assert.equal(s.biome,'links');
+ assert.equal(s.biome,'seaside','the Scottish Links became Seaside Links (8 November 2026)');
  assert.equal(s.water,60);
  assert.equal(s.turf.stimp,9,'play settings ride along untouched');
  // 3 -> 4: hole locations started moving through the week. A save from before
@@ -138,17 +138,18 @@ test('migrating an already current save is a no-op, and gaps fall back to defaul
 // HAUNTED HOLLOW WAS REMOVED (the owner, 2 November 2026): a save on it opens
 // on Autumn, the landscape that stood in for it out of season -- New England
 // since the landscapes' new keys (schema 17).
-test('a save on Haunted Hollow opens on Autumn, now New England',()=>{
+test('a save on Haunted Hollow opens on Autumn, New England, now Classic Parkland',()=>{
  const s=migrateSettings({...DEFAULT_COURSE,seed:'GLOAM',biome:'haunted'},14);
- assert.equal(s.biome,'newengland');
- assert.equal(validateSettings(s).biome,'newengland');
+ assert.equal(s.biome,'parkland');
+ assert.equal(validateSettings(s).biome,'parkland');
  assert.ok(!BIOME_KEYS.includes('haunted'));
 });
 
 // THE LANDSCAPES' NEW KEYS (schema 17, 2 November 2026): a save on every old
 // key opens on the landscape it became, and keeps everything else.
 test('a save on an old landscape key opens on its new one',()=>{
- const to={pnw:'puget',desert:'sonoran',mountain:'rockies',midwest:'heartland',island:'keys',autumn:'newengland',lakeshore:'lakedunes',redwood:'redwood',links:'links'};
+ // (Since 8 November 2026 Puget Sound, Lakeshore Dunes and the Links are the Pacific Northwest and Seaside Links.)
+ const to={pnw:'pacnw',desert:'dmountain',mountain:'mountains',midwest:'parkland',island:'flpalms',autumn:'parkland',lakeshore:'seaside',redwood:'redwood',links:'seaside'};
  for(const [old,now] of Object.entries(to)){
   const s=migrateSettings({...DEFAULT_COURSE,seed:'RENAMED',biome:old,trees:37},16);
   assert.equal(validateSettings(s).biome,now,old);
@@ -162,7 +163,7 @@ test('a save on an old landscape key opens on its new one',()=>{
 test('a save from an Architect course opens as a generated one',()=>{
  const s=migrateSettings({...DEFAULT_COURSE,seed:'ARCH',biome:'links',designer:'architect',archStyle:'links',archClub:'championship',archAge:'old',archStory:'lots'},15);
  for(const k of ['designer','archStyle','archClub','archAge','archStory'])assert.ok(!(k in s),`${k} kept`);
- assert.equal(s.seed,'ARCH');assert.equal(s.biome,'links');
+ assert.equal(s.seed,'ARCH');assert.equal(s.biome,'seaside');
  assert.doesNotThrow(()=>validateSettings(s));
 });
 
@@ -180,7 +181,7 @@ test('a surprise course is always valid, always a nine, and never the same twice
  assert(seeds.size>55,`only ${seeds.size} distinct seeds in 60 rolls`);
  assert(biomes.size>=5,`only ${biomes.size} biomes in 60 rolls`);
  // Overrides win, so callers can pin anything they need.
- assert.equal(randomSettings(random('x'),{biome:'links',holes:18,courseYards:6480}).biome,'links');
+ assert.equal(randomSettings(random('x'),{biome:'seaside',holes:18,courseYards:6480}).biome,'seaside');
  assert.equal(randomSettings(random('x'),{holes:18,courseYards:6480}).holes,18);
 });
 

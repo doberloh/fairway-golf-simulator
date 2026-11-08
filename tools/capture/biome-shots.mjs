@@ -12,7 +12,8 @@
 //       bench/shots/biome-shots/<label>/<biome>/<view>.png, and a contact sheet
 //       (`--size 1280x720`: that page at density 1, to look a set over;
 //       `--picks` in place of `--views`: only the views each landscape's cards
-//       use, when the land has moved and the cards want retaking)
+//       use, when the land has moved and the cards want retaking; `--holes 18`
+//       an eighteen, with the `high` view over the whole course)
 //   node tools/capture/biome-shots.mjs encode [--from <label>] [--only biome,...]
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
@@ -30,14 +31,19 @@ const argv = process.argv.slice(2);
 const opt = (n, d = null) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const mode = argv.shift();
 // `--season s`: the course in that season (seasons.js; summer, the cards', by default).
-const label = opt('--label', 'latest'), only = opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
+// `--review`: the set every landscape is judged by, the same seed and the same views,
+// so two landscapes compare picture for picture; run once for each `--season`.
+const review = argv.includes('--review') && argv.splice(argv.indexOf('--review'), 1).length > 0;
+if (review && !argv.includes('--size')) argv.push('--size', '1280x720');
+const label = opt('--label', 'latest'), only = review ? ['overview', 'h2-side', 'h3-low', 'h2-green', 'h1-low'] : opt('--views')?.split(','), from = opt('--from', 'latest'), season = opt('--season', 'summer');
 // `--picks`: only the views each landscape's cards use (PICKS), when the land
 // has moved and the cards want retaking.
 const picks = argv.includes('--picks') && argv.splice(argv.indexOf('--picks'), 1).length > 0;
 // `--homes 60`: the course with fairway homes at that density, and `--seed s`
 // another course than the card's (the `street` views need houses; they are a
 // course setting, off by default).
-const homes = opt('--homes'), seedOverride = opt('--seed');
+const homes = opt('--homes'), seedOverride = review ? 'FAIRWAY' : opt('--seed'), holes = Number(opt('--holes', 9)); // --holes 18: a whole eighteen
+const noClouds = argv.includes('--no-clouds') && argv.splice(argv.indexOf('--no-clouds'), 1).length > 0; // a high camera over a big course sits in them
 // `--size 1280x720`: a page of that size at density 1, for looking a set over
 // (not masters for the cards).
 const size = opt('--size')?.split('x').map(Number);
@@ -64,16 +70,21 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
  blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
  northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
- badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN'};
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW', lowgulf: 'MARSH', flpalms: 'SEMINOLE', prairie: 'BALLYHOO', mountains: 'TIMBERLINE', seaside: 'GORSE', calcoast: 'CYPRESS', pacnw: 'SAHALEE', dresort: 'WILLOWPOND', dmountain: 'BOULDERS', hiresort: 'KAPALUA'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
 const VIEWS = [
  {name: 'overview', hole: 0, when: 'afternoon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
+ // The whole course from high off its south edge (for `--holes 18`; 8 November 2026).
+ {name: 'high', hole: 0, when: 'afternoon', cam: `w => ({x: 0, z: -w.halfZ * 1.2, yaw: 0, height: Math.max(w.halfX, w.halfZ) * .72, pitch: -36})`},
  {name: 'overview-golden', hole: 0, when: 'golden', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'h1-tee', hole: 0, when: 'morning', cam: {hole: 0, along: 0, height: 1.8, look: 'pin', pitch: -2.5}},
  {name: 'h1-behind', hole: 0, when: 'afternoon', cam: {hole: 0, fromPin: 80, around: 170, height: 30, pitch: -17}},
  {name: 'h2-side', hole: 1, when: 'afternoon', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
+ // Night, the floodlights on: hole 2 from the side, as h2-side (the owner, 7 November 2026: "we
+ // Broke night lighting").
+ {name: 'h2-night', hole: 1, when: 'night', cam: {hole: 1, fromPin: 95, around: 130, height: 34, pitch: -18}},
  {name: 'h2-green', hole: 1, when: 'noon', cam: {hole: 1, fromPin: 24, around: 25, height: 2.4, pitch: -7}},
  {name: 'h3-high', hole: 2, when: 'afternoon', cam: {hole: 2, fromPin: 160, around: 95, height: 55, pitch: -18}},
  {name: 'h4-tee-golden', hole: 3, when: 'golden', cam: {hole: 3, along: -6, height: 3, look: 'pin', pitch: -4}},
@@ -81,6 +92,17 @@ const VIEWS = [
  // Under the canopy (round 2, for Giant Redwood, whose crowns are over 100 m
  // up: the views from 30-55 m stood inside them).
  {name: 'h1-low', hole: 0, when: 'afternoon', cam: {hole: 0, fromPin: 70, around: 175, height: 4, pitch: -3}},
+ // A coast from the sea (the California Coast's sandstone cliffs): 110 m out from the shore line at
+ // the course's middle, looking back at it.
+ {name: 'cliff', hole: 0, when: 'afternoon', cam: `w => { const z = w.holes[0].worldGreen.z * .3, cx = (w.coastAt ? w.coastAt(z) : w.halfX) ; return {x: cx + 110, z: z - 60, yaw: -115, height: 22, pitch: -6}; }`},
+ // The one big mountain (Desert Mountain's `ringMassif`): from the course's edge on its side,
+ // looking at it. Straight up the middle where there is none.
+ {name: 'massif', hole: 0, when: 'afternoon', cam: `w => { const m = w.massifSpot || {x: 0, z: 1}, l = Math.hypot(m.x, m.z) || 1, x = m.x / l * w.halfX * .3, z = m.z / l * w.halfZ * .3; return {x, z, yaw: Math.atan2(m.x - x, m.z - z) * 180 / Math.PI, height: 30, pitch: 1}; }`},
+ // A rock tee (Desert Mountain's `rockTees`): from the back tee down the hole, and the outcrop
+ // from beside its foot. The first hole that has one; the first hole's tee where none does.
+ {name: 'rock-tee', hole: 0, when: 'afternoon', cam: `w => { const h = w.holes.find(q => q.rockTee) || w.holes[0], t = h.toWorld(h.tees.blue), g = h.worldGreen; return {x: t.x, z: t.z, yaw: Math.atan2(g.x - t.x, g.z - t.z) * 180 / Math.PI, height: 1.8, pitch: -6}; }`},
+ {name: 'rock-tee-back', hole: 0, when: 'afternoon', cam: `w => { const h = w.holes.find(q => q.rockTee) || w.holes[0], t = h.toWorld(h.tees.blue), z = (h.mowStart ?? h.fairwayStart ?? 60) + 10, a = h.toWorld({x: h.center(z), z}); return {x: a.x, z: a.z, yaw: Math.atan2(t.x - a.x, t.z - a.z) * 180 / Math.PI, height: 2, pitch: 3}; }`},
+ {name: 'rock-tee-high', hole: 0, when: 'afternoon', cam: `w => { const h = w.holes.find(q => q.rockTee) || w.holes[0], t = h.toWorld(h.tees.blue), a = h.toWorld({x: h.center(60), z: 60}), dx = a.x - t.x, dz = a.z - t.z, l = Math.hypot(dx, dz) || 1, x = t.x + dx / l * 70 + dz / l * 80, z = t.z + dz / l * 70 - dx / l * 80; return {x, z, yaw: Math.atan2(t.x - x, t.z - z) * 180 / Math.PI, height: 45, pitch: -22}; }`},
  {name: 'h2-low', hole: 1, when: 'afternoon', cam: {hole: 1, fromPin: 90, around: 150, height: 3, pitch: -1}},
  {name: 'h3-low', hole: 2, when: 'morning', cam: {hole: 2, fromPin: 110, around: 10, height: 2.5, pitch: -1}},
  {name: 'far-high', hole: 0, when: 'afternoon', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
@@ -133,6 +155,18 @@ export const PICKS = {
  highplains: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  sandhills: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  oldnortheast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ parkland: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ southpines: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ lowgulf: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ flpalms: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ prairie: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ mountains: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
+ seaside: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ calcoast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ pacnw: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ dresort: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ dmountain: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ hiresort: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  pinebarrens: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  alaska: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  longleaf: ['h1-behind', 'overview', 'h2-side', 'h3-high'],
@@ -173,13 +207,16 @@ async function take(biomes) {
    const dir = path.join(ROOT, label, biome);
    fs.mkdirSync(dir, {recursive: true});
    const p = await openGame(b, size ? {width: size[0], height: size[1], density: 1, quality: 'ultra'} : {width: 1920, height: 1080, density: 2, quality: 'ultra'});
-   await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
+   await p.evaluate(c => window.lab.course(c), {biome, holes, seed: seedOverride || SEEDS[biome], season, ...(homes ? {homes: true, homeDensity: Number(homes)} : {})});
    await p.addStyleTag({content: HIDE_HUD});
    let hole = 0;
    for (const v of VIEWS.filter(v => (picks ? PICKS[biome] : only ?? [v.name]).includes(v.name))) {
     if (v.hole !== hole) { await p.evaluate(h => window.lab.hole(h), v.hole); hole = v.hole; await p.waitForTimeout(4000); await p.addStyleTag({content: HIDE_HUD}); }
-    await p.evaluate(([cam, at]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
-     window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when)]);
+    await p.evaluate(([cam, at, flood, bare]) => { const view = window.__view; view.daylight.hour = at; view.daylight.rate = 0;
+     if (view.setFloodlights) view.setFloodlights(flood);
+     if (bare && view.clouds) view.clouds.group.visible = false;
+     window.lab.camera(typeof cam === 'string' ? (0, eval)(cam)(view.world) : cam); }, [v.cam, hourFor(biome, v.when), v.when === 'night', noClouds]);
+    if (v.when === 'night') await p.waitForTimeout(3000);
     await hideBallAndAim(p);
     // Near grass is built a tile a frame, and the far cascades redraw every
     // fourth frame; give both time.

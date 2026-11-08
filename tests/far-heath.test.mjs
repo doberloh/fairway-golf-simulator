@@ -17,7 +17,7 @@ const build = (settings, quality = {foliage: 1, grass: 1, longGrassReach: 190}) 
  view.group.traverse(o => {if (o.name === 'Far heath') heath = o;});
  return {w, heath};
 };
-const LINKS = {seed: 'DUNE-7', holes: 18, biome: 'links'};
+const LINKS = {seed: 'DUNE-7', holes: 18, biome: 'seaside'};
 
 test('the far heath stands on heather, at the ground, in the cushions\' colours', () => {
  const {w, heath} = build(LINKS);
@@ -56,6 +56,6 @@ test('a tier with less grass draws a thinner heath, and nowhere without heather 
  const low = build(LINKS, {foliage: 1, grass: .35, longGrassReach: 90}).heath;
  assert.ok(low.count < full * .5, `Low drew ${low.count} of ${full}`);
  assert.equal(low.userData.cullReach, 90);
- assert.equal(build({seed: 'DUNE-7', holes: 9, biome: 'puget'}).heath, null, 'PNW has no heather');
+ assert.equal(build({seed: 'DUNE-7', holes: 9, biome: 'pacnw'}).heath, null, 'PNW has no heather');
  assert.equal(build({...LINKS, holes: 9}, {foliage: 1, grass: 1, longGrassReach: 0}).heath, null, 'drawn with no reach to sink it by');
 });

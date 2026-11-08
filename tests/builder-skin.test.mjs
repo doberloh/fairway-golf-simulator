@@ -34,10 +34,9 @@ test('every landscape names what its faces and aprons are', () => {
   assert.ok(!apron || own.includes(apron), `${k}: ${apron} is not the landscape's own`);
  }
  // Chambers Bay's dunes, seen in the builder: no grey rock on a dune.
- assert.deepEqual(skinKinds(BIOMES.oregondunes), {face: 'native', apron: 'heather'});
- assert.equal(skinKinds(BIOMES.heartland).face, 'native');
+ assert.deepEqual(skinKinds(BIOMES.seaside), {face: 'native', apron: 'heather'});
  assert.deepEqual(skinKinds(BIOMES.badlands), {face: 'rock', apron: 'hardpan'});
- assert.equal(skinKinds(BIOMES.rockies).apron, 'scree');
+ assert.equal(skinKinds(BIOMES.mountains).apron, 'scree');
 });
 
 test('a butte gets rock on its sides, its apron below, grass on its top and the plain', () => {

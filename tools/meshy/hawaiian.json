@@ -1,0 +1,118 @@
+{
+ "name": "hawaiian",
+ "note": "The Hawaiian Resort pack on Meshy, the fifth of the US golf courses' landscapes (7 November 2026): Kapalua, Mauna Kea. Cook pine, ironwood and monkeypod are new here; its coconut palm is Florida Palms'. Form from the owner's Kapalua photographs, tall narrow uneven Cook pines standing in lines, and the reference photographs of Wailea and Waikoloa for the monkeypod. Sizes PLACED. The monkeypod's wide umbrella is its identity, so it stays about as wide as tall, against the owner's usual taller and skinnier: narrowed from a real one, which is much wider. `seasons` are PLACED. Shipped in vendor/blender-meshy_hawaiian as HiCookPine, HiIronwood, HiMonkeypod, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_CookPine_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull green #3c6440. Bark grey-brown #7a6a5c.",
+   "aspect": "9:16",
+   "prompt": "A very tall Cook pine on a Hawaiian golf course, 34 m tall and 7 m wide, standing like a narrow uneven column. A long straight grey-brown trunk with a very slight lean, one twenty-fifth of the tree's height wide near the ground, tapering steadily all the way to the top. Short level limbs leave the trunk all the way up, every one a different length, each ending in one solid rounded tuft of foliage, long and soft, with a lightly tufted scalloped edge. The tufts are uneven, with gaps of sky and trunk between them, the lowest limbs starting a fifth of the way up and the top narrowing to a soft rounded point. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_CookPine_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep dull green #3c6440. Bark grey-brown #7a6a5c.",
+   "aspect": "9:16",
+   "prompt": "A younger Cook pine on a Hawaiian golf course, 26 m tall and 6 m wide, a narrow uneven column with a soft point at the top, leaning a very little. A straight grey-brown trunk, one twentieth of the tree's height wide near the ground, tapering steadily to the top. Short level limbs leave the trunk from near the ground to the top, every one a different length, each ending in one solid rounded tuft of foliage with a lightly tufted scalloped edge, closer together than on an old tree, with small gaps of sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Ironwood_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull grey-green #54704a. Bark brown-grey #75695e.",
+   "aspect": "3:4",
+   "prompt": "A tall ironwood, the coastal she-oak, on a Hawaiian golf course, 22 m tall and 10 m wide, clearly taller than it is wide. A straight brown-grey trunk with shallow furrowed bark, bare for its lowest third, one eighteenth of the tree's height wide near the ground, dividing into several rising limbs. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts droop softly at their lower edges and together make a tall open oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, narrowing gently to two-thirds of its width where it divides, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Ironwood_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull grey-green #54704a. Bark brown-grey #75695e.",
+   "aspect": "3:4",
+   "prompt": "A younger ironwood, the coastal she-oak, on a Hawaiian golf course, 16 m tall and 9 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight brown-grey trunk, bare for its lowest third, dividing into several rising limbs spread evenly all round. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts droop softly at their lower edges and make an open rounded crown with a bumpy outline, balanced on both sides. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one sixteenth of the tree's height wide near the ground, narrowing gently upward, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Monkeypod_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a7a3c. Bark grey-brown #6e6256.",
+   "aspect": "1:1",
+   "prompt": "A great monkeypod rain tree on a Hawaiian golf course, 18 m tall and 18 m wide. A short thick grey-brown trunk dividing low into several long limbs that rise and spread outward like the ribs of an umbrella, all bare and clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts sit side by side across the top of the limbs and make one broad gently domed umbrella with a bumpy outline, its underside open. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The trunk one tenth of the tree's height wide near the ground, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Monkeypod_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a7a3c. Bark grey-brown #6e6256.",
+   "aspect": "1:1",
+   "prompt": "A younger monkeypod rain tree on a Hawaiian golf course, 14 m tall and 14 m wide. A grey-brown trunk leaning a little, dividing at a third of the tree's height into a few long limbs that rise and spread outward, bare and clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make an uneven open umbrella with a bumpy outline, higher on one side than the other. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The trunk one twelfth of the tree's height wide near the ground, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "hicookpine": {
+   "spring": {
+    "leaf": "#42693f",
+    "bark": "#7a6a5c"
+   },
+   "summer": {
+    "leaf": "#3c6440",
+    "bark": "#7a6a5c"
+   },
+   "autumn": {
+    "leaf": "#3c6440",
+    "bark": "#7a6a5c"
+   },
+   "winter": {
+    "leaf": "#3a5e3e",
+    "bark": "#7a6a5c"
+   }
+  },
+  "hiironwood": {
+   "spring": {
+    "leaf": "#5a744c",
+    "bark": "#75695e"
+   },
+   "summer": {
+    "leaf": "#54704a",
+    "bark": "#75695e"
+   },
+   "autumn": {
+    "leaf": "#54704a",
+    "bark": "#75695e"
+   },
+   "winter": {
+    "leaf": "#526a48",
+    "bark": "#75695e"
+   }
+  },
+  "himonkeypod": {
+   "spring": {
+    "leaf": "#54803f",
+    "bark": "#6e6256"
+   },
+   "summer": {
+    "leaf": "#4a7a3c",
+    "bark": "#6e6256"
+   },
+   "autumn": {
+    "leaf": "#4a7a3c",
+    "bark": "#6e6256"
+   },
+   "winter": {
+    "leaf": "#48743a",
+    "bark": "#6e6256"
+   }
+  }
+ }
+}

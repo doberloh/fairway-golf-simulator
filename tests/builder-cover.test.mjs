@@ -18,7 +18,7 @@ const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
  const nx = 201, nz = 201, heights = new Float32Array(nx * nz).fill(100);
  const holes = Array.from({length: 9}, (_, i) => ({number: i + 1, par: 4, index: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}, line: [[-5, -80], [-2, 0], [0, 80]]}));
- return validateDoc({type: 'built', name: 'Cover', landscape: 'winecountry', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights}, patches: [],
+ return validateDoc({type: 'built', name: 'Cover', landscape: 'calcoast', halfX: 100, halfZ: 100, land: {x0: -100, z0: -100, cell: 1, nx, nz, heights}, patches: [],
   surfaces: {green: [box(-10, 70, 10, 90)], fairway: [box(-12, -60, 12, 60)], sand: [box(20, 0, 26, 6)]}, water: [{rings: box(-60, -10, -40, 10), level: 99, kind: 'pond'}], holes,
   trees: new Float32Array([30, 30, 15, 4, .4, 2, -1, 70, 70, 12, 3, .3, 1, -1]), treeKinds: [], homes: [{x: 60, z: -60, rotation: 0, width: 20, depth: 15}]});
 }
@@ -31,13 +31,13 @@ test('every landscape offers rocks and bushes of its own', () => {
   for (const c of o.slice(1)) for (const [p] of c.plants) assert.ok(p === 'shrub' || GROUND_PLANTS.has(p), `${k}: ${p}`);
   assert.ok(o[1].plants.every(([p]) => !FLOWER_PLANTS.has(p)), k);
  }
- assert.ok(coverOptions(BIOMES.winecountry).some(c => c.key === 'flowers'), 'poppies in wine country');
+ assert.ok(coverOptions(BIOMES.calcoast).some(c => c.key === 'flowers'), 'poppies on the California Coast');
  for (const r of Object.values(COVER_RANGE)) assert.ok(r.low < r.from[0] && r.from[0] < r.from[1] && r.from[1] < r.high);
 });
 
 test('sizes stay between the sliders, and a dab keeps off what stands there', () => {
  assert.equal(coverSize(1, 3, 0), 1); assert.equal(coverSize(1, 3, 1), 3); assert.equal(coverSize(2, 1, 1), 2, 'a minimum past the maximum wins');
- const [rocks, bushes] = coverOptions(BIOMES.winecountry);
+ const [rocks, bushes] = coverOptions(BIOMES.calcoast);
  const got = scatterCover({cover: rocks, x: 0, z: 0, radius: 20, min: .5, max: 2, density: 1, rng: seeded(), open: () => true});
  assert.ok(got.length > 10);
  for (const {rock: [x, z, size, shape]} of got) { assert.ok(Math.hypot(x, z) <= 20.01); assert.ok(size >= .5 && size <= 2); assert.ok(shape >= 0 && shape < 4); }
@@ -49,7 +49,7 @@ test('sizes stay between the sliders, and a dab keeps off what stands there', ()
 });
 
 test('the brush paints open ground only, a drag is one undo, and the file keeps it all', async () => {
- const e = createEditor(doc()), [rocks, bushes] = coverOptions(BIOMES.winecountry), group = {}, rng = seeded(7), trees = e.state.trees.length;
+ const e = createEditor(doc()), [rocks, bushes] = coverOptions(BIOMES.calcoast), group = {}, rng = seeded(7), trees = e.state.trees.length;
  const undo = e.state.undo.length;
  for (const x of [-30, -25]) e.paintCover({cover: rocks, x, z: 50, radius: 12, min: .5, max: 2, density: 1, group, rng});
  assert.ok(e.state.rocks.length > 5);
@@ -71,7 +71,7 @@ test('the brush paints open ground only, a drag is one undo, and the file keeps 
 });
 
 test('clearing cover takes rocks and low plants, never a tree', () => {
- const e = createEditor(doc()), [rocks, bushes] = coverOptions(BIOMES.winecountry), rng = seeded(3);
+ const e = createEditor(doc()), [rocks, bushes] = coverOptions(BIOMES.calcoast), rng = seeded(3);
  e.paintCover({cover: rocks, x: 30, z: 45, radius: 6, min: .5, max: 1, density: 1, rng});
  e.paintCover({cover: bushes, x: 30, z: 45, radius: 12, min: .5, max: 1, density: 1, rng});
  const n = e.clearCover({x: 30, z: 40, radius: 40});
@@ -81,7 +81,7 @@ test('clearing cover takes rocks and low plants, never a tree', () => {
 
 test('the 2D editor paints the same cover, undoes a drag at once, and the course keeps it', () => {
  const land = {nx: 201, nz: 201, cell: 1, halfX: 100, halfZ: 100, ground: new Float32Array(201 * 201).fill(100)};
- const m = createTrace(land, {rocks: [[0, 0, 1, 0, 0]]}), [rocks, bushes] = coverOptions(BIOMES.winecountry), rng = seeded(11);
+ const m = createTrace(land, {rocks: [[0, 0, 1, 0, 0]]}), [rocks, bushes] = coverOptions(BIOMES.calcoast), rng = seeded(11);
  m.fill([[[-30, -30], [30, -30], [30, 30], [-30, 30]]], 'fairway');
  m.beginStroke();
  m.paintCover({cover: rocks, x: 60, z: 60, radius: 12, min: .5, max: 2, density: 1, rng});
@@ -92,7 +92,7 @@ test('the 2D editor paints the same cover, undoes a drag at once, and the course
  assert.ok(plants.every(t => t.role === 3 && bushes.plants.some(p => p[0] === t.kind)));
  // Nothing on the fairway.
  assert.equal(m.paintCover({cover: rocks, x: 0, z: 0, radius: 20, min: .5, max: 2, density: 1, rng}), 0);
- const doc = validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: Array.from({length: 9}, (_, i) => ({number: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}})), trees: m.state.trees, homes: [], rocks: m.state.rocks, name: 'Two', landscape: 'winecountry'}));
+ const doc = validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: Array.from({length: 9}, (_, i) => ({number: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}})), trees: m.state.trees, homes: [], rocks: m.state.rocks, name: 'Two', landscape: 'calcoast'}));
  assert.equal(doc.rocks.length, nRocks); assert.equal(doc.trees.length / 7, plants.length);
  assert.ok(doc.treeKinds.length >= 1);
  m.undo();
@@ -144,7 +144,7 @@ test('a course\'s ground does not soften going to 2D and back, however often', (
   assert.equal(at(second, x, z), at(first, x, z)); assert.equal(at(third, x, z), at(first, x, z));
  }
  // A survey's land still gets its smoothing.
- const t = draftFromDoc(start), surveyed = validateDoc(docFromLand({land: {...t.land, method: 'classified'}, traced: {layers: {masks: t.trace.masks}}, holes: t.holes, trees: [], homes: [], name: 'S', landscape: 'puget'}));
+ const t = draftFromDoc(start), surveyed = validateDoc(docFromLand({land: {...t.land, method: 'classified'}, traced: {layers: {masks: t.trace.masks}}, holes: t.holes, trees: [], homes: [], name: 'S', landscape: 'pacnw'}));
  assert.ok(Math.abs(at(surveyed, 1, 80) - 100) < Math.abs(at(first, 1, 80) - 100), 'a survey is smoothed');
 });
 

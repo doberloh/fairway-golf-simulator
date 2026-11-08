@@ -1,0 +1,190 @@
+{
+ "name": "northwest",
+ "note": "The Pacific Northwest pack on Meshy, batch two of the US golf courses' landscapes (7 November 2026): Sahalee, Pumpkin Ridge. Douglas fir, western red cedar, western hemlock, bigleaf maple and red alder; the Douglas fir is shared with Seaside Links and the Redwood Coast. Form from the owner's Sahalee photographs, walls of tall dark narrow conifers along the holes. Sizes PLACED. The conifers use the Norway spruce wording the owner approved, the broadleaves the tufted one. No wind-swept shapes, the owner's rule. `seasons` are PLACED. Shipped in vendor/blender-meshy_northwest as NwDouglasFir, NwRedCedar, NwHemlock, NwBigleafMaple, NwRedAlder, because the hand-built models hold the plain names.",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_DouglasFir_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "skirts",
+   "colour": "Needles deep dull green #2f5040. Bark grey-brown #5e5048.",
+   "aspect": "9:16",
+   "prompt": "A very tall old Douglas fir tree on a Pacific Northwest golf course, 45 m tall and 10 m wide, a tall narrow spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight thick grey-brown trunk with deep furrowed bark, bare for its lowest quarter, narrowing to a point at the tip. Tapering boughs of different lengths all the way up, level or dipping a little and rising at their tips. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_DouglasFir_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "skirts",
+   "colour": "Needles deep dull green #2f5040. Bark grey-brown #5e5048.",
+   "aspect": "9:16",
+   "prompt": "A younger Douglas fir tree on a Pacific Northwest golf course, 32 m tall and 9 m wide, a narrow spire with boughs almost to the ground. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight grey-brown trunk with furrowed bark, glimpsed through the boughs, narrowing to a point. Tapering boughs of different lengths all the way down, dipping and then rising at their tips. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-fifth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RedCedar_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull yellow-green #46603c. Bark red-brown #6e5040.",
+   "aspect": "9:16",
+   "prompt": "A tall western red cedar tree on a Pacific Northwest golf course, 38 m tall and 11 m wide, a narrow spire. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk with long stringy bark and a flared, slightly buttressed foot. Long boughs that hang gently downward from the trunk with their ends lifting only a little, all the way up, with a slender leader at the top. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. No curls, no hooks, no upturned curled tips, no scroll or moustache shapes. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RedCedar_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "skirts",
+   "colour": "Foliage dull yellow-green #46603c. Bark red-brown #6e5040.",
+   "aspect": "9:16",
+   "prompt": "A younger western red cedar tree on a Pacific Northwest golf course, 26 m tall and 9 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight red-brown trunk with stringy bark, glimpsed through the boughs. Drooping boughs that sweep up again at their ends, all the way down to near the ground, with a slender leader at the top. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Hemlock_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Needles dark dull green #34503e. Bark brown #5e4c42.",
+   "aspect": "9:16",
+   "prompt": "A tall western hemlock tree on a Pacific Northwest golf course, 36 m tall and 9 m wide, a narrow spire whose very top leader bends gently over. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight brown trunk with ridged bark, bare for its lowest fifth. Soft, gently drooping boughs of different lengths all the way up. Each bough is a separate long soft tuft of foliage, thick and chunky with a lightly tufted scalloped edge, held out on its own visible bare limb, and the boughs grow singly at different heights on different sides of the trunk, some longer, some shorter, with the trunk and the limbs clearly seen between them and plenty of sky. An irregular, open, uneven outline. Never level rings or tiers around the trunk, no stacked layers, no skirts, no bowl, umbrella or saucer shapes, no repeating pattern. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twenty-second of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_Hemlock_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "skirts",
+   "colour": "Needles dark dull green #34503e. Bark brown #5e4c42.",
+   "aspect": "9:16",
+   "prompt": "A younger western hemlock tree on a Pacific Northwest golf course, 24 m tall and 8 m wide, a narrow spire with a gently nodding top. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight brown trunk glimpsed through soft drooping boughs that reach nearly to the ground. Each bough is one long solid soft tuft of foliage, thick and chunky, with a lightly tufted scalloped edge, and the boughs are staggered with sky between them. Paint the foliage as thick, solid three-dimensional forms, never as separate needles: no fine needles, no thin lines, no spiky bursts, no thin wisps, no hanging strands, nothing thinner than a limb. No solid core, no perfect spheres, no flat cone shape, no cones. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to a thin point at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_BigleafMaple_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4f7238. Bark grey-brown #6a645a.",
+   "aspect": "1:1",
+   "prompt": "A big old open-grown bigleaf maple tree on a Pacific Northwest golf course, 20 m tall and 20 m wide, as wide as it is tall. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A short thick grey-brown trunk dividing low, at a quarter of the tree's height, into four or five massive limbs that sweep outward and upward in a wide vase shape, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make one broad, spreading, rounded dome-shaped crown, widest in its upper half, with a gently domed top and a bumpy uneven outline, the lower edge of the crown high and level. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No pointed top, no cone or pyramid shape, no stacked tiers, no solid core, no perfect spheres, no lollipop shape. The trunk is one tenth of the tree's height wide near the ground, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_BigleafMaple_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4f7238. Bark grey-brown #6a645a.",
+   "aspect": "3:4",
+   "prompt": "A younger bigleaf maple tree on a Pacific Northwest golf course, 16 m tall and 10 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A grey-brown trunk dividing at a third of its height into a few rising limbs, clearly visible. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make an open rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one fourteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to rising limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RedAlder_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a6a3a. Bark pale grey #8a8a80.",
+   "aspect": "9:16",
+   "prompt": "A tall red alder tree on a Pacific Northwest golf course, 20 m tall and 8 m wide, clearly taller than it is wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight smooth pale grey trunk with pale patches, bare for its lowest third, carrying short rising limbs. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a narrow open oval crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one twentieth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thin limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_RedAlder_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull green #4a6a3a. Bark pale grey #8a8a80.",
+   "aspect": "9:16",
+   "prompt": "A younger red alder tree on a Pacific Northwest golf course, 14 m tall and 6 m wide. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side, no lean. A straight smooth pale grey trunk, bare for its lowest third, carrying short rising limbs. Each limb ends in one large solid rounded tuft of foliage, like a soft fluffy cloud, with a lightly tufted scalloped edge. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. The tufts make a narrow open crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. A slender trunk, one eighteenth of the tree's height wide near the ground, narrowing gently to two-thirds of that width at mid-height and to thin limbs at the top, its sides never parallel. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  }
+ ],
+ "seasons": {
+  "nwfir": {
+   "spring": {
+    "leaf": "#35584a",
+    "bark": "#5e5048"
+   },
+   "summer": {
+    "leaf": "#2f5040",
+    "bark": "#5e5048"
+   },
+   "autumn": {
+    "leaf": "#2f5040",
+    "bark": "#5e5048"
+   },
+   "winter": {
+    "leaf": "#2f5040",
+    "bark": "#5e5048"
+   }
+  },
+  "nwcedar": {
+   "spring": {
+    "leaf": "#4c6842",
+    "bark": "#6e5040"
+   },
+   "summer": {
+    "leaf": "#46603c",
+    "bark": "#6e5040"
+   },
+   "autumn": {
+    "leaf": "#46603c",
+    "bark": "#6e5040"
+   },
+   "winter": {
+    "leaf": "#46603c",
+    "bark": "#6e5040"
+   }
+  },
+  "nwhemlock": {
+   "spring": {
+    "leaf": "#3a5844",
+    "bark": "#5e4c42"
+   },
+   "summer": {
+    "leaf": "#34503e",
+    "bark": "#5e4c42"
+   },
+   "autumn": {
+    "leaf": "#34503e",
+    "bark": "#5e4c42"
+   },
+   "winter": {
+    "leaf": "#34503e",
+    "bark": "#5e4c42"
+   }
+  },
+  "nwmaple": {
+   "spring": {
+    "leaf": "#5c7e40",
+    "bark": "#6a645a"
+   },
+   "summer": {
+    "leaf": "#4f7238",
+    "bark": "#6a645a"
+   },
+   "autumn": {
+    "leaf": "#8a7e46",
+    "bark": "#6a645a"
+   },
+   "winter": {
+    "leaf": "#4f7238",
+    "bark": "#6a645a"
+   }
+  },
+  "nwalder": {
+   "spring": {
+    "leaf": "#567640",
+    "bark": "#8a8a80"
+   },
+   "summer": {
+    "leaf": "#4a6a3a",
+    "bark": "#8a8a80"
+   },
+   "autumn": {
+    "leaf": "#66683e",
+    "bark": "#8a8a80"
+   },
+   "winter": {
+    "leaf": "#4a6a3a",
+    "bark": "#8a8a80"
+   }
+  }
+ }
+}

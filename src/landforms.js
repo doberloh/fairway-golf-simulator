@@ -82,22 +82,34 @@ function terrace(t, steps, riser = .26) {
 // knobs): `near(x, z)` gives the nearest one's normalised distance d (0 at
 // its centre, 1 at its rim, wobbled so none is a circle) and the feature
 // {cx, cz, r, size}. `o.radius` and `o.size` are [min, max] metres.
+// `o.stretch` (Desert Mountain's, the owner's "football shaped", 7 November
+// 2026) draws each one long: `radius` is then the half-width and the length
+// 0.65 to 1.35 times `stretch` times it, turned to a seeded heading within 50 degrees either side
+// of the landscape's own, so the ridges roughly run together as a range does;
+// `o.tip` below 2 points the ends (2 is an ellipse). None by default.
 function scatter(o, seed, what) {
- const s = saltOf(seed, what), cell = o.cell;
+ const s = saltOf(seed, what), cell = o.cell, k = o.stretch || 1, tip = o.tip ?? 2;
+ const span = k > 1 ? Math.max(1, Math.ceil(o.radius[1] * k * 1.35 * 1.15 / cell)) : 1, trend = hash(7, 11, s + 6) * Math.PI;
  const at = (ci, cj) => {
   if (hash(ci, cj, s) > o.chance) return null;
   const r = o.radius[0] + hash(ci, cj, s + 1) * (o.radius[1] - o.radius[0]);
   const size = o.size[0] + hash(ci, cj, s + 2) * (o.size[1] - o.size[0]);
-  return {cx: (ci + .2 + .6 * hash(ci, cj, s + 3)) * cell, cz: (cj + .2 + .6 * hash(ci, cj, s + 4)) * cell, r, size};
+  const m = {cx: (ci + .2 + .6 * hash(ci, cj, s + 3)) * cell, cz: (cj + .2 + .6 * hash(ci, cj, s + 4)) * cell, r, size};
+  if (k > 1) { const a = trend + (hash(ci, cj, s + 5) - .5) * Math.PI * .55; m.ca = Math.cos(a); m.sa = Math.sin(a); m.k = k * (.65 + .7 * hash(ci, cj, s + 7)); }
+  return m;
  };
  return (x, z) => {
   const ci = Math.floor(x / cell), cj = Math.floor(z / cell);
   let best = null, bd = Infinity;
-  for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) {
+  for (let i = ci - span; i <= ci + span; i++) for (let j = cj - span; j <= cj + span; j++) {
    const m = at(i, j);
    if (!m) continue;
    const wob = 1 + .18 * (fbm(x / 27, z / 27, s + 9, 2) - .5) * 2;
-   const d = Math.hypot(x - m.cx, z - m.cz) / (m.r * wob);
+   let d;
+   if (k > 1) {
+    const dx = x - m.cx, dz = z - m.cz, u = Math.abs(dx * m.ca + dz * m.sa) / (m.r * m.k), v = (dz * m.ca - dx * m.sa) / m.r;
+    d = Math.sqrt(Math.pow(u, tip) + v * v) / wob;
+   } else d = Math.hypot(x - m.cx, z - m.cz) / (m.r * wob);
    if (d < bd) { bd = d; best = m; }
   }
   return bd < 1 ? {d: bd, m: best} : {d: bd, m: null};
@@ -315,8 +327,14 @@ const RECIPES = {
  badlands(o, seed) {
   const sc = saltOf(seed, 'badl-cluster'), sf = saltOf(seed, 'badl-floor');
   const {height: carved, cluster} = carvedField(o, seed, 'near');
+  // UP INTO THE BADLANDS (`upInto`, metres; the owner, 8 November 2026, a preview: "what it would look
+  // like if the course actually went up into the mountains ... little to no extra room on the sides of
+  // the fairway"): near a hole the ground is a smooth bench rising with the formations (their `cluster`
+  // field's broad rise, up to `upInto` metres over several hundred) instead of the prairie, and the carving returns at full height over
+  // the recipe's `reach` -- so a hole climbs onto the tables with the gullies and spires close beside.
+  // Off by default. PLACED.
   const shape = (x, z, fade) => {
-   let t = carved(x, z) - (1 - fade) * o.sink;
+   let t = o.upInto ? o.upInto * smooth(.35, .65, fbm(x / 900, z / 900, sc + 7, 2)) * (1 - fade) + carved(x, z) * fade : carved(x, z) - (1 - fade) * o.sink;
    if (t <= 0) return 0;
    // The foot rounds into the grass over a couple of metres.
    t = t * t / (t + 2);
@@ -325,6 +343,8 @@ const RECIPES = {
   };
   return {
    sinks: true,
+   // Routed round (`formationShareOf`): course.js moves this field with the course's `shift`.
+   routed: !!o.routed,
    needsSlope: true,
    needsHeight: true,
    lift: (x, z, fade = 1) => shape(x, z, fade) + o.swale * (fbm(x / 160, z / 160, sc + 3, 2) - .5) * fade,
@@ -410,7 +430,10 @@ const RECIPES = {
    // two. At their full height (the first try) they stood a creek's narrow
    // head 8.7 m under a hummock it could not be carved through -- water
    // lying on a dune top (tests/course-living.test.mjs).
-   lift: (x, z) => o.height * .35 * (fbm(x / o.hummock, z / o.hummock, sd + 5, 2) - .5) * 2 + o.height * .9 * crest(x, z),
+   // `rugged` (Seaside Links, 8 November 2026; the owner: "the spaces between holes is very rugged.
+   // Right now i think we are too smooth"): a second, sharper rumple every 17 m or so, that many
+   // metres either way. None by default.
+   lift: (x, z) => o.height * .35 * (fbm(x / o.hummock, z / o.hummock, sd + 5, 2) - .5) * 2 + o.height * .9 * crest(x, z) + (o.rugged ? o.rugged * (fbm(x / 17, z / 17, sd + 9, 2) - .5) * 2 + o.rugged * .6 * (ridged(x / 31, z / 31, sd + 11, 2) - .3) : 0),
    raw: (x, z) => [smooth(o.marram, o.marram + .2, crest(x, z) + .25 * (fbm(x / 19, z / 19, sd + 7, 2) - .5)),
     o.heather ? smooth(o.heather, o.heather + .22, fbm(x / 70, z / 70, sh, 3)) : 0],
    treeKeep: () => 1,
@@ -520,9 +543,47 @@ const RECIPES = {
  // gentle floor crossed by shallow washes (USGS OF 2004-1007); the High
  // Sierra's exfoliation domes and whaleback slabs, glacier-polished (NPS
  // Yosemite); Desert Palms' fans at a mountain front. `profile` sets the
- // shape: below 1 a steep-sided knob, above 1 a broad dome.
+ // shape: below 1 a steep-sided knob, above 1 a broad dome. `boulders` (Desert
+ // Mountain's, 7 November 2026) piles a knob's upper part with rounded granite
+ // boulders `boulders` metres across, and half that again on them: each a
+ // rounded cap, the clefts between them sharp, standing up to `rock` times
+ // their width -- the granite boulder piles of Pinnacle Peak and Troon North.
+ // Tried first, and turned down by the owner: ridged noise (sharp crests read
+ // as fins, "it needs to be more rocky"), and before that plain noise (only
+ // lumpy domes). None by default. `range` (Desert Mountain round 5, 7 November
+ // 2026) lays continuous mountain ranges over the floor: a warped noise field
+ // stretched `stretch` times along a seeded trend, the share of it above `from`
+ // rising to full height by `to`, crests broken by ridged noise, boulders on
+ // the upper part -- long, wide, joined mountains, the holes left in the draws
+ // between them by the corridor fade. The owner turned down the scattered
+ // football knobs ("the deliberate football shapes are a bit jarring. The
+ // bigger mountains look much more natural") and ridges laid along each hole
+ // ("in natural mountain formations ... placed after the holes").
  knobs(o, seed) {
-  const sw = saltOf(seed, 'knob-wash'), near = scatter(o, seed, 'knob');
+  // (The ranges' field is `rangeShareOf`, below the recipes: routing.js reads it too.)
+  const sw = saltOf(seed, 'knob-wash'), sb = saltOf(seed, 'boulder'), near = scatter(o, seed, 'knob');
+  // The tallest of the round caps over (x, z) on a jittered grid `b` metres a cell; 0 to about .9.
+  const caps = (x, z, b, salt) => {
+   const ci = Math.floor(x / b), cj = Math.floor(z / b);
+   let h = 0;
+   for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) {
+    if (hash(i, j, salt) > .88) continue;
+    const r = b * (.55 + .4 * hash(i, j, salt + 1));
+    const dd = Math.hypot(x - (i + .25 + .5 * hash(i, j, salt + 2)) * b, z - (j + .25 + .5 * hash(i, j, salt + 3)) * b) / r;
+    if (dd < 1) h = Math.max(h, r / b * Math.sqrt(1 - dd * dd));
+   }
+   return h;
+  };
+  const pile = (x, z) => o.boulders * (caps(x, z, o.boulders, sb) + .5 * caps(x + 7, z - 3, o.boulders * .5, sb + 11) - .55);
+  // The ranges: their share of full height at (x, z), 0 on the floor.
+  const sr = saltOf(seed, 'range'), R = o.range, rangeShare = rangeShareOf(o, seed);
+  const rangeAt = R ? (x, z) => {
+   const m = rangeShare(x, z);
+   if (m <= 0) return 0;
+   const crest = .5 + .5 * ridged(x / R.crest, z / R.crest, sr + 7, 2);
+   const h = R.height * Math.pow(m, R.shape ?? .8) * crest;
+   return Math.max(0, h + (o.boulders ? o.rock * smooth(.25, .6, m) * pile(x, z) : 0));
+  } : () => 0;
   const washOf = (x, z) => {
    if (!o.wash) return 0;
    const wx = fbm(x / 400, z / 400, sw + 3, 2) - .5, wz = fbm(x / 400 + 9, z / 400 - 4, sw + 4, 2) - .5;
@@ -531,18 +592,26 @@ const RECIPES = {
   };
   return {
    needsSlope: true,
+   // The boulder piles alone, in metres about nothing, for a rock tee's outcrop (course.js).
+   rocky: o.boulders ? (x, z) => o.rock * pile(x, z) : null,
+   // The ranges stay out of the long shape a hole lies on (course.js `longLift`): holes keep the draws.
+   longLift: R ? (x, z) => { const {d, m} = near(x, z); return (m ? m.size * Math.pow(Math.max(0, 1 - Math.pow(d, o.profile ?? 1.6)), o.round ?? .7) : 0) + o.floor * (fbm(x / 300, z / 300, sw + 9, 2) - .5) * 2 - (o.washDepth || 0) * washOf(x, z); } : undefined,
    lift: (x, z) => {
     const {d, m} = near(x, z);
-    const knob = m ? m.size * Math.pow(Math.max(0, 1 - Math.pow(d, o.profile ?? 1.6)), o.round ?? .7) : 0;
-    return knob + o.floor * (fbm(x / 300, z / 300, sw + 9, 2) - .5) * 2 - (o.washDepth || 0) * washOf(x, z);
+    let knob = m ? m.size * Math.pow(Math.max(0, 1 - Math.pow(d, o.profile ?? 1.6)), o.round ?? .7) : 0;
+    // Boulders on the upper part only: the foot of a knob stays a smooth apron of grus.
+    if (o.boulders && knob > 0) knob = Math.max(0, knob + o.rock * smooth(.15, .5, knob / m.size) * pile(x, z));
+    return Math.max(knob, rangeAt(x, z)) + o.floor * (fbm(x / 300, z / 300, sw + 9, 2) - .5) * 2 - (o.washDepth || 0) * washOf(x, z);
    },
    // A: bare granite on the knob where it is steep enough to shed its soil;
    // B: the washes' sand.
    raw: (x, z, y, slope = 0) => {
     const {d, m} = near(x, z);
-    return [m ? (1 - smooth(.8, 1, d)) * smooth(o.bare ?? .25, (o.bare ?? .25) + .2, slope) : 0, washOf(x, z)];
+    const onRange = R ? smooth(.05, .2, rangeShare(x, z)) : 0;
+    return [Math.max(m ? (1 - smooth(.8, 1, d)) : 0, onRange) * smooth(o.bare ?? .25, (o.bare ?? .25) + .2, slope), washOf(x, z)];
    },
-   treeKeep: (x, z) => { const {d, m} = near(x, z); return m ? smooth(.7, 1, d) : 1; },
+   // Saguaros and palo verde climb a range's lower slopes; its upper part is bare.
+   treeKeep: (x, z) => { const {d, m} = near(x, z); return Math.min(m ? smooth(.7, 1, d) : 1, R ? 1 - smooth(.35, .7, rangeShare(x, z)) : 1); },
   };
  },
  // CHANNELS CUT INTO A TABLE: the Columbia Plateau's coulees -- dry flood
@@ -765,6 +834,48 @@ export const fallenAt = (field, x, z) => Math.abs(x) < field.ex && Math.abs(z) <
 
 // A smoothstep from `near` metres outside the corridor envelope over `ramp`,
 // written as the shader writes it.
+// THE BIG MOUNTAIN'S HEADING (`ringMassif`, Desert Mountain): the angle from the course's middle
+// toward it, from the seed. landscape-edge.js stands the mountain there and course.js tilts the
+// land up toward it (`tilt`), so the two must read the same number.
+// THE RANGES' FIELD (`knobs` `range`): their share of full height at (x, z), 0 on the floor. Its own
+// function because the routing reads it before any ground exists (routing.js, Desert Mountain round
+// 6: holes routed along the floor between the ranges, so they wrap round them).
+// THE BADLANDS' FORMATIONS FOR THE ROUTING (`routed`; the owner, 8 November 2026: "Let's do the same
+// kind of desert routing work while still keeping the badlands look"): where the carving stands over
+// 2 m, rising to 1 by 12 m, from the same field the landform draws (`carvedField` 'near'), so
+// routing.js treats the formations as Desert Mountain's ranges -- no hole on them, most holes up
+// against them. Null for a recipe without it. PLACED.
+export function formationShareOf(o, seed) {
+ if (o?.type !== 'badlands' || !o.routed) return null;
+ const {height} = carvedField(o, seed, 'near');
+ return (x, z) => smooth(2, 12, height(x, z));
+}
+
+export function rangeShareOf(o, seed) {
+ const R = o?.range;
+ if (!R) return null;
+ const sr = saltOf(seed, 'range'), ra = hash(3, 5, sr) * Math.PI, rc = Math.cos(ra), rs = Math.sin(ra);
+ // ON THE BIG MOUNTAIN'S SIDE ONLY (`side`, metres; the owner, 8 November 2026, a trial): the ranges
+ // stop at a wavy line through the routing's start, square to the big mountain's heading
+ // (`massifHeading`), fading over `side` metres; past it they stand thicker (their threshold
+ // lowered by `sideBoost`), a mountain front -- so the holes, which keep off the ranges, gather on
+ // the open side and run along its foot. PLACED.
+ const ma = R.side ? massifHeading(seed) : 0, mx = Math.cos(ma), mz = Math.sin(ma), boost = R.sideBoost ?? .08;
+ const sideOf = !R.side ? () => 1 : (x, z) => smooth(-R.side, R.side * .3, x * mx + z * mz + (fbm((z * mx - x * mz) / 700, 3.7, sr + 3, 2) - .5) * R.side * 2);
+ return (x, z) => {
+  const wx = (fbm(x / 900, z / 900, sr + 1, 2) - .5) * R.scale * .8, wz = (fbm(x / 900 + 4.1, z / 900 - 2.3, sr + 2, 2) - .5) * R.scale * .8;
+  const px = x + wx, pz = z + wz, u = (px * rc + pz * rs) / (R.scale * R.stretch), v = (pz * rc - px * rs) / R.scale;
+  if (!R.side) return smooth(R.from, R.to, fbm(u, v, sr, 3));
+  const t = sideOf(x, z);
+  return t <= 0 ? 0 : t * smooth(R.from - boost * t, R.to - boost * t, fbm(u, v, sr, 3));
+ };
+}
+
+export function massifHeading(seed) {
+ const s = saltOf(seed, 'massif'), v = Math.sin((s + 7919) * 12.9898) * 43758.5453;
+ return (v - Math.floor(v)) * 6.2832;
+}
+
 export function wildGate(d, gate) {
  if (!gate) return 0;
  const t = Math.max(0, Math.min(1, (d - gate.near) / gate.ramp));
@@ -772,12 +883,15 @@ export function wildGate(d, gate) {
 }
 
 // The ground type at a rough point, or null. `d` is nearest().d, signed.
-// Inside the field's own extent only, as the shader asks.
-export function wildGround(field, recipe, x, z, d) {
+// Inside the field's own extent only, as the shader asks. `open` (0 to 1) opens
+// every gate that far whatever `d` says: a rock tee's outcrop (course.js,
+// *Tees up on the rock*) is wild ground though it stands in the corridor.
+export function wildGround(field, recipe, x, z, d, open = 0) {
  const {kinds, gates} = recipe;
  if (!field || Math.abs(x) >= field.ex || Math.abs(z) >= field.ez) return null;
- if (kinds.a && wildAt(field, 'a', x, z) * wildGate(d, gates.a) >= .5) return kinds.a;
- if (kinds.b && wildAt(field, 'b', x, z) * wildGate(d, gates.b) >= .5) return kinds.b;
- if (kinds.floor && wildGate(d, gates.floor) >= .5) return kinds.floor;
+ const g = q => Math.max(wildGate(d, q), q ? open : 0);
+ if (kinds.a && wildAt(field, 'a', x, z) * g(gates.a) >= .5) return kinds.a;
+ if (kinds.b && wildAt(field, 'b', x, z) * g(gates.b) >= .5) return kinds.b;
+ if (kinds.floor && g(gates.floor) >= .5) return kinds.floor;
  return null;
 }

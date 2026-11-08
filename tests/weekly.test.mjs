@@ -27,16 +27,19 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  // Before Lakeshore Dunes' debut, nine weeks running visit eight landscapes:
  // Haunted Hollow's turn (removed 2 November 2026) goes to Autumn.
  const seen = Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12)));
- assert.equal(new Set(seen).size, 8);
- assert.equal(seen.filter(b => b === 'newengland').length, 2);
+ // (Seven since 6 November 2026: the Heartland's and New England's turns are Classic Parkland's.)
+ assert.equal(new Set(seen).size, 7);
+ assert.equal(seen.filter(b => b === 'parkland').length, 3);
  // From it, ten weeks running visit the ten landscapes, Autumn twice.
  const after = Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12)));
- assert.equal(new Set(after).size, 9);
+ // (Seven since 8 November 2026: Lakeshore Dunes' and the Links' turns are both Seaside Links'.)
+ assert.equal(new Set(after).size, 7);
  assert.ok(!after.includes('haunted'));
- assert.equal(after.filter(b => b === 'newengland').length, 2);
+ assert.equal(after.filter(b => b === 'parkland').length, 3);
  // After the last debut (week 191, 30 August 2027) a rotation visits every
  // landscape.
- const later = Array.from({length: BIOME_KEYS.length + 1}, (_, i) => weeklyBiome(new Date(2027, 7, 30 + 7 * i, 12)));
+ // (A retired landscape's weeks are Classic Parkland's, so a cycle is longer than the list.)
+ const later = Array.from({length: 60}, (_, i) => weeklyBiome(new Date(2027, 7, 30 + 7 * i, 12)));
  for (const k of BIOME_KEYS) assert.ok(later.includes(k), k);
  assert.ok(!later.includes('haunted'));
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');
@@ -48,12 +51,12 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
 // debut week would have shown.
 test('the tenth landscape joins on its own week and moves no earlier week', () => {
  // (The keys are the landscapes' new ones since 2 November 2026; the rotation
- // is the same landscapes in the same order.)
- const old = w => ['puget', 'sonoran', 'rockies', 'links', 'heartland', 'keys', 'redwood', 'newengland', 'newengland'][((w % 9) + 9) % 9];
- assert.deepEqual(WEEKLY_ROTATION.nine.slice(0, 8), BIOME_KEYS.slice(0, 8), 'the old rotation is the first eight keys, in order, then the retired one');
+ // is the same landscapes in the same order; since 8 November 2026 Puget Sound's weeks are the Pacific
+ // Northwest's and the Links' Seaside Links'.)
+ const old = w => ['pacnw', 'dmountain', 'mountains', 'seaside', 'parkland', 'flpalms', 'redwood', 'parkland', 'parkland'][((w % 9) + 9) % 9];
  for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
  assert.equal(weekIndex(at('2026-11-09')), 149);
- assert.equal(weeklyBiome(at('2026-11-09')), 'lakedunes');
+ assert.equal(weeklyBiome(at('2026-11-09')), 'seaside');
  assert.equal(weeklyBiome(at('2026-11-08')), old(148), 'the Sunday before is still the old rotation');
  assert.equal(weeklyBiome(at('2026-11-16')), old(149), 'the week after shows what the debut week would have');
  // Then a ten-week cycle, each landscape once, until the next debut
