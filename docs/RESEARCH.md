@@ -15144,6 +15144,15 @@ floodlights.js `lampBudget` = (uniforms - 256) / 8, at most 96, at least 4 (256 
 the hole being played first, then nearest the ball. Retaken: all ten lit, no shader errors, 96 lamps
 each; the generated eighteen too. Not measured on a phone; a phone reporting 224 gets the nearest four.
 
+**The bougainvillea's magenta (8 November 2026).** The owner's "glowing piece on desert resort": not
+lit differently (flowers take the plant's one toon material), but #c8288a, the summer accent, came
+out clipped to neon (about #ff10a0 on screen) in the game's light, and at night under the lamps it
+was the brightest thing in the picture while leaves went dark. As with leaf colours, a saturated
+start saturates further. Now #a03a72 in spring and summer, #b0583e in autumn (was #d05a3a) and
+#8e4a70 in winter (was #a8487e), all PLACED by eye on Desert Resort, seed FAIRWAY, the plant nearest
+hole 1's poles, by day (15:00) and floodlit night (22:00): still plainly magenta by day, dark wine at
+night. Real bracts are a strong magenta; this is the game's paint for it, not a measured colour.
+
 **Batch two, the owner's review of the models (7 November 2026).** Approved 20 of 25. Sent back:
 western hemlock 1 ("a bunch of bowl cuts stacked"), coast redwood 2 ("the bowl cut look of the
 leaves"), young redwood 1 ("Bowl cut style again ... Needs to show branches at least. Young redwood 2

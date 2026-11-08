@@ -450,19 +450,21 @@ def hexrgb(h):
 # small shifts of green, the sea grape's red autumn leaves, the gumbo
 # limbo's pale spring flush, the bougainvillea's orange-red autumn bracts
 # and fewer, duller ones in winter (PLACED: the mesh cannot lose bracts,
-# so winter's are a duller magenta).
+# so winter's are a duller magenta). The magenta starts deep and dull (8 November
+# 2026): #c8288a came out neon in the game's light, clipping by day and the brightest
+# thing on a floodlit night (the owner: "the glowing piece on desert resort").
 BARK = {'RoyalPalm': '#b8b4aa', 'TravelersPalm': '#8a8478', 'SeaGrape': '#7a6a58', 'Mangrove': '#7a5a48',
         'GumboLimbo': '#b0644a', 'Banyan': '#8a847a', 'Bougainvillea': '#6a5a40', 'Hibiscus': '#6a5a40'}
 LOOK = {'RoyalPalm': ('#5a873c', '#7cae4c'), 'TravelersPalm': ('#58873c', None), 'SeaGrape': ('#58873c', '#b0738a'),
         'Mangrove': ('#3d6632', None), 'GumboLimbo': ('#4f7a36', None), 'Banyan': ('#47763a', None),
-        'Bougainvillea': ('#4f7a36', '#c8288a'), 'Hibiscus': ('#3f6a34', '#d03a3a')}
+        'Bougainvillea': ('#4f7a36', '#a03a72'), 'Hibiscus': ('#3f6a34', '#d03a3a')}
 SEASONS = {
     'spring': {'RoyalPalm': ('#5c8a3e', '#7cae4c'), 'TravelersPalm': ('#5a8a3e', None), 'SeaGrape': ('#5a8a3e', '#9aae6a'),
                'Mangrove': ('#3f6a34', None), 'GumboLimbo': ('#7a9a4a', None), 'Banyan': ('#4a7a3a', None)},
-    'autumn': {'SeaGrape': ('#74703a', '#b0738a'), 'Bougainvillea': ('#4f7a36', '#d05a3a')},
+    'autumn': {'SeaGrape': ('#74703a', '#b0738a'), 'Bougainvillea': ('#4f7a36', '#b0583e')},
     'winter': {'RoyalPalm': ('#58843c', '#7cae4c'), 'TravelersPalm': ('#56843c', None), 'SeaGrape': ('#56843c', '#b0738a'),
                'Mangrove': ('#3b6230', None), 'GumboLimbo': ('#55783a', None), 'Banyan': ('#457238', None),
-               'Bougainvillea': ('#5a8a3e', '#a8487e'), 'Hibiscus': ('#4f7a36', '#d03a3a')},
+               'Bougainvillea': ('#5a8a3e', '#8e4a70'), 'Hibiscus': ('#4f7a36', '#d03a3a')},
 }
 
 

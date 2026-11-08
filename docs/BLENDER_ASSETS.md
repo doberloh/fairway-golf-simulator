@@ -798,7 +798,7 @@ each, silhouette first; every one ships (generator 62).
 | `Blender_Mangrove_1` | `mangrove` | A dark rounded cap low over a cage of arching prop roots | 3,410 |
 | `Blender_GumboLimbo_1` | `gumbolimbo` | Thick crooked copper limbs carrying loose flat leaf rosettes, sky between | 4,830 |
 | `Blender_Banyan_1` | `banyan` | A fused trunk, level limbs and sixteen root columns under a broad low canopy, about 30 m across | 4,460 |
-| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent) with green showing | 3,340 |
+| `Blender_Bougainvillea_1` | `bougainvillea` | A mound of magenta bract sprays (accent, a deep #a03a72 since 8 November 2026) with green showing | 3,340 |
 | `Blender_Hibiscus_1` | `hibiscus` | A vase of glossy leaf masses on splayed stems, big red flowers (accent) | 2,750 |
 
 ### The silhouette pass on the packs before the goal (2 November 2026)
