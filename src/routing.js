@@ -1,6 +1,6 @@
 import {FOOTPRINTS,footprintCurve} from './footprints.js';
 import {biomeOf} from './biomes.js';
-import {rangeShareOf,massifHeading} from './landforms.js';
+import {rangeShareOf,formationShareOf,massifHeading} from './landforms.js';
 // Seeded corridor packing: successive tees follow greens, with a compact,
 // collision-checked routing instead of rows of parallel holes.
 export function placeHole(h,origin,rotation){
@@ -35,7 +35,8 @@ export function routeHoles(holes,s,random){
  // ranges and curve round them. The course is then moved to the middle as always, and the land is
  // moved with it (`shift`, course.js). Its own draws, so every other landscape routes as before.
  // PLACED: MOUNT_CLEAR, the 400 tries, the first hole's 300 sites within 700 m.
- const mount=s.range?null:rangeShareOf(biomeOf(s.biome).landform,s.seed),MOUNT_CLEAR=.02;
+ // (The Badlands' formations the same way, `formationShareOf`, 8 November 2026.)
+ const mount=s.range?null:rangeShareOf(biomeOf(s.biome).landform,s.seed)??formationShareOf(biomeOf(s.biome).landform,s.seed),MOUNT_CLEAR=.02;
  const onRock=pts=>{if(!mount)return false;for(const p of pts)if(mount(p.x,p.z)>MOUNT_CLEAR)return true;return false;};
  // AND UP AGAINST THEM (the owner, the same day: "we really need to get those holes up against the
  // mountains, not in between them ... like 60% of them"). About 60% of holes (their own draws) want

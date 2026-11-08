@@ -29,7 +29,7 @@ export const CLIPS = [
  {name: 'links-golden', biome: 'seaside', seed: 'DUNE', hole: 1, when: 'golden', seconds: 9,
   keys: [{fromPin: 230, around: 8, height: 32, pitch: -12}, {fromPin: 140, around: 4, height: 26, pitch: -13},
    {fromPin: 55, around: 0, height: 16, pitch: -15}]},
- {name: 'desert-noon', biome: 'sonoran', seed: 'MESA', hole: 2, when: 'noon', seconds: 9,
+ {name: 'desert-noon', biome: 'dmountain', seed: 'MESA', hole: 2, when: 'noon', seconds: 9,
   keys: [{fromPin: 250, around: -6, height: 24, pitch: -10}, {fromPin: 150, around: -3, height: 30, pitch: -14},
    {fromPin: 50, around: 8, height: 18, pitch: -17}]},
  // Bird's eye, at first light, with the morning mist still lying in the valleys.
@@ -39,7 +39,7 @@ export const CLIPS = [
  {name: 'autumn-golden', biome: 'newengland', seed: 'MAPLE', hole: 1, when: 'golden', seconds: 9,
   keys: [{fromPin: 210, around: -8, height: 24, pitch: -10}, {fromPin: 120, around: -4, height: 20, pitch: -12},
    {fromPin: 45, around: 0, height: 14, pitch: -14}]},
- {name: 'mountain-morning', biome: 'rockies', seed: 'SUMMIT', hole: 4, when: 'morning', seconds: 9,
+ {name: 'mountain-morning', biome: 'mountains', seed: 'SUMMIT', hole: 4, when: 'morning', seconds: 9,
   keys: [{fromPin: 95, around: 175, height: 34, pitch: -13}, {fromPin: 90, around: 205, height: 32, pitch: -13},
    {fromPin: 95, around: 235, height: 34, pitch: -13}]},
  {name: 'island-afternoon', biome: 'keys', seed: 'LAGOON', hole: 1, when: 'afternoon', seconds: 9,
@@ -55,7 +55,7 @@ export const CLIPS = [
  {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 1, when: 'afternoon', seconds: 9,
   keys: [{fromPin: 72, around: 190, height: 22, pitch: -14}, {fromPin: 68, around: 210, height: 21, pitch: -14},
    {fromPin: 72, around: 230, height: 22, pitch: -14}]},
- {name: 'desert-tee-shot', biome: 'sonoran', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
+ {name: 'desert-tee-shot', biome: 'dmountain', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
  {name: 'night-floodlit', biome: 'pacnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
   keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
@@ -63,7 +63,7 @@ export const CLIPS = [
  // Added for 1.0: a drive with the round screen on -- the meter, the golfer
  // chips, the shot flying and the shot card coming up over its apex. The whole
  // page is recorded (the interface is not on the canvas).
- {name: 'round-screen-drive', biome: 'sonoran', seed: 'MESA', hole: 2, when: 'afternoon', seconds: 15, ui: true,
+ {name: 'round-screen-drive', biome: 'dmountain', seed: 'MESA', hole: 2, when: 'afternoon', seconds: 15, ui: true,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
 ];
 const GROUP = {players: [{name: 'Alex', profile: 'pfair', team: 'A', hand: 'RH'}, {name: 'Sam', profile: 'psam', team: 'A', hand: 'RH'}, {name: 'Jordan', profile: 'pjo', team: 'B', hand: 'LH'}], mode: 'stroke', tee: 'blue'};

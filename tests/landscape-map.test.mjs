@@ -24,10 +24,10 @@ test('the projection puts the USA on the picture, Alaska and Hawaii in their ins
 
 test('a reference course for each landscape finds its landscape on the map', () => {
  const at = {
-  pacnw: [47.2, -122.57], calcoast: [36.57, -121.95], sonoran: [33.64, -111.91], rockies: [43.59, -110.82],
+  pacnw: [47.2, -122.57], calcoast: [36.57, -121.95], dmountain: [33.64, -111.91], mountains: [43.59, -110.82],
   parkland: [41.93, -91.66], flpalms: [24.56, -81.77], seaside: [43.18, -124.39],
-  hiresort: [20.65, -156.44], alaska: [61.18, -149.86], lowgulf: [32.61, -80.02], redrock: [34.86, -111.8],
-  dresort: [33.72, -116.37], southpines: [39.85, -74.68], sandhills: [41.65, -101.0],
+  hiresort: [20.65, -156.44], lowgulf: [32.61, -80.02],
+  dresort: [33.72, -116.37], southpines: [39.85, -74.68], prairie: [41.65, -101.0],
  };
  for (const [k, [lat, lon]] of Object.entries(at)) assert.equal(landscapeAt(US_SHAPES, lat, lon), k, `${k} at ${lat}, ${lon}`);
  // Every landscape's own place is inside its own shape or nearest it.

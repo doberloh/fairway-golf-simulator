@@ -38,7 +38,7 @@ test('far woods stand outside the course, out of the water, the same every time'
 // own triangles), not on the fine relief it was placed by. The bench's
 // `farSeated` checks every course; this holds the pieces together.
 test('far crowns sit on the drawn ground, their base no higher than it anywhere under them', () => {
- const w = generateWorld({seed: 'FARWOODS', biome: 'rockies', holes: 9}), at = drawnGround(w);
+ const w = generateWorld({seed: 'FARWOODS', biome: 'mountains', holes: 9}), at = drawnGround(w);
  for (const groves of [false, true]) {
   const sites = farWoodSites(w, {groves});
   assert.ok(sites.length > 1000);

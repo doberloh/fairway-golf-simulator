@@ -15,7 +15,7 @@ import {worlds} from './worlds.mjs';
 test('every bunker, sand and lip, is on ground its own hole owns', () => {
  const fixture = {holes: 9, trees: 0, rivers: 1, creeks: 2, water: 60, lakes: 1};
  let checked = 0;
- for (const w of worlds([{...fixture, seed: 'S1', biome: 'pacnw'}, {...fixture, seed: 'S1', biome: 'sonoran'}]))
+ for (const w of worlds([{...fixture, seed: 'S1', biome: 'pacnw'}, {...fixture, seed: 'S1', biome: 'dmountain'}]))
   for (const h of w.holes) for (const b of h.bunkers) {
    checked++;
    for (let i = 0; i < 96; i++) {

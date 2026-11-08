@@ -1863,3 +1863,9 @@ fingerprint before the last trees; the packager's verification of every zip; the
 or a profile, waived by the owner on 5 November; 36 of 41 journeys passed on a build
 just before the last wood change, and the other five on the next. **Not played by a
 person** in this form, including the Meshy trees and far-version swaps in motion.
+
+**Branch `us-golf-courses`, 8 November 2026 (not a release).** With the US golf looks' Meshy trees
+(batches one and two and the last batch) the built game is **59,139,292 bytes (32.8 MB gzipped)**,
+18.0 MB over 0.9.7, and `dist/builder.html` 52,929,252 bytes (28.8 MB gzipped); `src/asset-meshes.js`
+alone is 49.3 MB of it (44.5 MB before the last batch). Not reviewed further: the owner decides
+whether the trees are worth it before a release.

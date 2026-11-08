@@ -98,8 +98,8 @@ test('every landscape\'s rough has its green for three seasons, and spring is it
  }
  const wine = biomeOf('calcoast');
  for (const season of ['spring', 'summer']) assert.ok(greenness(seasonPalette(wine, season, 'california').rough) > 15, `wine country's rough is green in ${season}`);
- assert.ok(greenness(seasonPalette(biomeOf('mojave'), 'spring', 'desert').rough) < 30, 'a desert stays a desert');
- assert.deepEqual(seasonPalette(biomeOf('mojave'), 'summer', 'desert'), {}, 'its summer is its record');
+ assert.ok(greenness(seasonPalette(biomeOf('dmountain'), 'spring', 'desert').rough) < 30, 'a desert stays a desert');
+ assert.deepEqual(seasonPalette(biomeOf('dmountain'), 'summer', 'desert'), {}, 'its summer is its record');
  assert.ok(far(seasonPalette(biomeOf('hawaii'), 'summer', 'hawaii').rough, RICH) < far(biomeOf('hawaii').rough, RICH));
 });
 
@@ -117,12 +117,12 @@ test('every landscape with a spring has a bloom, its months real and its colours
 
 test('a bloom falls in the spring it falls in, and only there', async () => {
  const {bloomIn} = await import('../src/seasons.js');
- assert.equal(bloomIn('sonoran', 'spring').amount, 1);
+ assert.equal(bloomIn('dmountain', 'spring').amount, 1);
  assert.equal(bloomIn('newengland', 'spring').amount, .5, 'half of it is in June');
- assert.equal(bloomIn('rockies', 'spring'), null, 'the Rockies bloom in summer');
- assert.equal(bloomIn('alaska', 'spring'), null);
+ assert.equal(bloomIn('mountains', 'spring'), null, 'the Rockies bloom in summer');
+ assert.equal(bloomIn('mountains', 'spring'), null);
  assert.equal(bloomIn('keys', 'spring'), null, 'the tropics have no spring');
- for (const s of ['summer', 'autumn', 'winter']) assert.equal(bloomIn('sonoran', s), null);
+ for (const s of ['summer', 'autumn', 'winter']) assert.equal(bloomIn('dmountain', s), null);
  assert.equal(bloomIn('nowhere', 'spring'), null);
 });
 
@@ -130,10 +130,10 @@ test('the wild ground takes the bloom in spring, and no other season, and not th
  const {seasonPalette} = await import('../src/seasons.js');
  const {biomeOf} = await import('../src/biomes.js');
  const blue = h => parseInt(h.slice(5, 7), 16) - parseInt(h.slice(1, 3), 16);
- const bio = biomeOf('hillcountry'), spring = seasonPalette(bio, 'spring', 'texas');
+ const bio = biomeOf('prairie'), spring = seasonPalette(bio, 'spring', 'texas');
  assert.ok(blue(spring.groundTints.native) > blue(bio.groundTints?.native ?? '#b3a35a'), 'bluebonnets blue the native ground');
  assert.ok(!('green' in spring));
- assert.equal(seasonPalette(biomeOf('rockies'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
+ assert.equal(seasonPalette(biomeOf('mountains'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
  assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
  const summer = seasonPalette(bio, 'summer', 'texas');
  assert.equal(summer.bloom, undefined); assert.equal(summer.groundTints, undefined);
@@ -159,8 +159,10 @@ test('a prairie grass wears its own colours through the year, and a field in blo
  assert.ok(hue(grassLook(BIOMES.parkland.longGrass, 'grasstallfescue', 'summer').leaf) > 70, 'tall fescue is green in summer');
  const hex = c => `#${c.getHexString(T.SRGBColorSpace)}`;
  assert.equal(hex(grassLook(rec, 'grassbluestem', 'autumn').leaf), rec.leaf, 'an older family keeps the landscape\'s');
- assert.equal(hex(grassLook(BIOMES.bluebonnet.longGrass, 'grassindian', 'summer').accent), BIOMES.bluebonnet.longGrass.accent, 'the bluebonnets stay blue');
- for (const k of ['parkland', 'blueridge']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
+ // (Bluebonnet Prairie's field, held here since it left for Prairie & Sand Hills, 8 November 2026.)
+ const bluebonnets = {...BIOMES.badlands.longGrass, accent: '#4a62c8', bloomHeads: true};
+ assert.equal(hex(grassLook(bluebonnets, 'grassindian', 'summer').accent), bluebonnets.accent, 'the bluebonnets stay blue');
+ for (const k of ['parkland', 'mountains']) assert.ok(hue(grassLook(BIOMES[k].longGrass, 'grassbluestem', 'summer').leaf) > 60, `${k}: no autumn orange in summer`);
 });
 
 // The owner, 5 November 2026, of Puget Sound in autumn: "The evergreen trees change

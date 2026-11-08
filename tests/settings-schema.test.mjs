@@ -149,7 +149,7 @@ test('a save on Haunted Hollow opens on Autumn, New England, now Classic Parklan
 // key opens on the landscape it became, and keeps everything else.
 test('a save on an old landscape key opens on its new one',()=>{
  // (Since 8 November 2026 Puget Sound, Lakeshore Dunes and the Links are the Pacific Northwest and Seaside Links.)
- const to={pnw:'pacnw',desert:'sonoran',mountain:'rockies',midwest:'parkland',island:'flpalms',autumn:'parkland',lakeshore:'seaside',redwood:'redwood',links:'seaside'};
+ const to={pnw:'pacnw',desert:'dmountain',mountain:'mountains',midwest:'parkland',island:'flpalms',autumn:'parkland',lakeshore:'seaside',redwood:'redwood',links:'seaside'};
  for(const [old,now] of Object.entries(to)){
   const s=migrateSettings({...DEFAULT_COURSE,seed:'RENAMED',biome:old,trees:37},16);
   assert.equal(validateSettings(s).biome,now,old);

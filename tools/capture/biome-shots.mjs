@@ -70,7 +70,7 @@ const SEEDS = {puget: 'CASCADE', sonoran: 'MESA', rockies: 'SUMMIT', links: 'DUN
  sagebrush: 'RIMROCK', redrock: 'HOODOO', crosstimbers: 'POSTOAK',
  blueridge: 'BLUEHAZE', ozarks: 'SHORTLEAF', bluegrass: 'FOURBOARD',
  northwoods: 'LOONLAKE', oregondunes: 'SHOREPINE', hawaii: 'MONKEYPOD',
- badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW', lowgulf: 'MARSH', flpalms: 'SEMINOLE', seaside: 'GORSE', calcoast: 'CYPRESS', pacnw: 'SAHALEE', dresort: 'WILLOWPOND', dmountain: 'BOULDERS', hiresort: 'KAPALUA'};
+ badlands: 'SAWTOOTH', desertresort: 'SUMMERLIN', parkland: 'OLDOAK', southpines: 'PINESTRAW', lowgulf: 'MARSH', flpalms: 'SEMINOLE', prairie: 'BALLYHOO', mountains: 'TIMBERLINE', seaside: 'GORSE', calcoast: 'CYPRESS', pacnw: 'SAHALEE', dresort: 'WILLOWPOND', dmountain: 'BOULDERS', hiresort: 'KAPALUA'};
 
 // The candidate views: a lab.camera pose, or the source of a function of the
 // world run in the page (tools/capture/overhaul.mjs, the same form).
@@ -159,6 +159,8 @@ export const PICKS = {
  southpines: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  lowgulf: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
  flpalms: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
+ prairie: ['overview', 'h1-behind', 'h2-side', 'h3-high'],
+ mountains: ['h1-behind', 'overview', 'h2-side', 'h5-approach'],
  seaside: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  calcoast: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],
  pacnw: ['overview', 'h1-behind', 'h2-side', 'h5-approach'],

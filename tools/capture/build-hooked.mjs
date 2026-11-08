@@ -39,6 +39,16 @@ const hook = {
   return fs.readFileSync(from, 'utf8');
  },
  transform(code, id) {
+  // THE MODEL A TREE IS DRAWN WITH, CHOSEN (tools/capture/landscape-models.mjs,
+  // 8 November 2026): a tree carrying `model` is drawn with that one of its
+  // species' models; the seeded pick is still drawn, so nothing else moves.
+  // And the species tables, so the tool can list every model a species has.
+  if (id.replace(/\\/g, '/').endsWith('/src/vegetation.js')) {
+   const PICK = 'const model=models[Math.floor(rng()*models.length)];';
+   if (code.split(PICK).length !== 2) throw Error(`build-hooked: the line the model hook attaches to has changed in src/vegetation.js:\n${PICK}`);
+   return code.replace(PICK, 'const pick=models[Math.floor(rng()*models.length)],model=t.model&&models.includes(t.model)?t.model:pick;')
+    + '\nwindow.__plants={FAMILY_OF,familyModels,GROUND_PLANTS};\n';
+  }
   if (!id.replace(/\\/g, '/').endsWith('/src/main.js')) return null;
   if (code.split(LINE).length !== 2) throw Error(`build-hooked: the line the hooks attach to has changed in src/main.js:\n${LINE}`);
   return code.replace(LINE, LINE + HOOK);

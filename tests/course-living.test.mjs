@@ -27,7 +27,7 @@ test('homes occupy dry gentle rough and keep trees out of their footprints',()=>
 test('green surroundings stay within their measured envelope',()=>{
  const seeds=['SHOULDERS','S1','S2','S3','S4','S5','S6','S7'];
  const worst=seeds.map(seed=>{
-  const w=generateWorld({seed,biome:'rockies',elevation:100,landform:100,greenDifficulty:0,trees:0,water:0});
+  const w=generateWorld({seed,biome:'mountains',elevation:100,landform:100,greenDifficulty:0,trees:0,water:0});
   let max=0;
   for(const h of w.holes)for(let a=0;a<Math.PI*2;a+=Math.PI/12){
    // FOLLOW THE OUTLINE, DO NOT ASSUME IT. This sampled a fixed ring at

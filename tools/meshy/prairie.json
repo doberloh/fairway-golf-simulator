@@ -1,6 +1,6 @@
 {
  "name": "prairie",
- "note": "The Prairie and Sand Hills pack on Meshy, the last batch (8 November 2026): Sand Hills, Prairie Dunes, Ballyneal -- nearly treeless; a few clumps. Plains cottonwood (shared with the Badlands), hackberry, eastern red cedar.",
+ "note": "The Prairie and Sand Hills pack on Meshy, the last batch (8 November 2026): Sand Hills, Prairie Dunes, Ballyneal -- nearly treeless; a few clumps. Plains cottonwood (shared with the Badlands), hackberry, eastern red cedar. Shipped in vendor/blender-meshy_prairie as PrPlainsCottonwood, PrHackberry, PrEasternRedCedar, because the hand-built models hold the plain names.",
  "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
  "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
  "models": [

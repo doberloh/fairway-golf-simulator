@@ -13,7 +13,7 @@ test('a lake never lands on top of a pond', () => {
  // not merely touch -- the worst pair had water surfaces 14.19 m apart, one
  // body's plane hanging over the other's basin.
  let pairs = 0, lakes = 0;
- for (const biome of ['pacnw', 'rockies']) for (const seed of ['A', 'B', 'C']) {
+ for (const biome of ['pacnw', 'mountains']) for (const seed of ['A', 'B', 'C']) {
   const w = buildWorld({seed, biome, holes: 9, water: 100, lakes: 3});
   lakes += (w.largeLakes || []).length;
   const bodies = [];

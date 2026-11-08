@@ -163,7 +163,7 @@ Every landscape's land is its own: the last eight on another's took recipes of t
 
 ## One cart path network (generator 86)
 
-Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
+(Since 8 November 2026 a generated course has no cart paths, clubhouse, road or lot: course.js `facilities`, off. What follows is how they are made when it is on.) Every generated course's cart paths are one network. A short piece joined at both ends is taken out as a jog only if the network stays whole without it, and a part left over is joined to the nearest of the rest, straight or by the router.
 
 ## The country is one surface (generator 85)
 
@@ -213,7 +213,8 @@ from what lies between the holes on real courses of its kind
   Woods' and Old Northeast's hummocks, kettles and eskers), **knobs**
   (granite knobs and washes in the Mojave; Desert Mountain's knobs off and long joined ranges in their place (`range`, their upper
   slopes piled with boulders, kept out of the long shape a hole lies on by `longLift`), laid
-  before the holes and only on the big mountain's side (`range.side`), a mountain front: the
+  before the holes and only on the big mountain's side (`range.side`), a mountain front (and few
+  ponds: `pondShare` .37 of holes try for one at the default Pond frequency, about 1.5 in 18): the
   routing (routing.js) refuses a hole on them, lays the course along the front (`frontTurn`) and
   pulls most holes up against them; the land tilted up toward the big mountain (`tilt`) and rejoining the holes over
   130 m (`wideFade`), about 1.5 holes in 18 teeing off a rocky outcrop (`rockTees`,

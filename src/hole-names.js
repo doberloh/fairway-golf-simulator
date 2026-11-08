@@ -27,6 +27,8 @@ const LAND = {
  pacnw: ['Cedar Hollow', 'Fir Lane', 'Hemlock', 'Big Leaf', 'Alder Creek', 'Salal', 'Old Growth', 'Rain Shadow', 'Timberline'],
  calcoast: ['Lone Cypress', 'Headland', 'Kelp Bed', 'Kelp Point', 'Seal Rock', 'Ice Plant', 'Point Lobos', 'Cormorant', 'Carmel Bay'],
  seaside: ['Gorse', 'Marram', 'Whin', 'Sea Thrift', 'Lighthouse', 'Shore Pine', 'Driftline', 'Gull Point', 'Breakers'],
+ mountains: ['Timberline', 'Aspen Glade', 'Lodgepole', 'Spruce Bench', 'High Meadow', 'Elk Park', 'Switchback', 'Snowcap', 'Ponderosa'],
+ prairie: ['Blowout', 'Big Sky', 'Bluestem', 'Cedar Draw', 'Sandhill', 'Meadowlark', 'Cottonwood Bend', 'Switchgrass', 'Long Prairie'],
  flpalms: ['Coconut Row', 'Sea Grape', 'Dune Ridge', 'Coquina', 'Royal Palm', 'Live Oak', 'Pelican', 'Intracoastal', 'Gulfstream'],
  keys: ['Reef', 'Lagoon', 'Palms', 'Trade Wind', 'Coral', 'Frigate', 'Sea Grape', 'Lighthouse Point', 'Shallows'],
  redwood: ['Giants', 'Cathedral', 'Fern Hollow', 'Elk Meadow', 'Old Growth', 'Sorrel', 'Nurse Log', 'Burl', 'Twin Trunks'],

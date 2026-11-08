@@ -48,7 +48,7 @@ test('fairway edges vary independently and interior bunkers obey their occurrenc
  for(const frequency of [0,100]){let inside=0,count=0;for(let i=0;i<9;i++){const h=generateCourse({seed:'ASYMMETRY',water:0,bunkerCount:8,fairwayBunkers:frequency},i);assert(Array.from({length:10},(_,j)=>h.length*(.1+j*.08)).some(z=>Math.abs(h.leftWidth(z)-h.rightWidth(z))>1.5));for(const b of h.bunkers.filter(b=>!b.greenSide)){count++;if(Math.abs(b.x-h.center(b.z))<fairwayWidth(h,b.z,0,b.x-h.center(b.z)))inside++;}}assert(count>3);assert.equal(inside,frequency?count:0);}
 });
 test('maximum mountain terrain has one connected mesh and exact matching contact heights',()=>{
- const w=generateWorld({seed:'HORIZON-3704',biome:'rockies',holes:18,elevation:100,water:70,bunkerCount:8,trees:0}),g=groundGeometry(w.groundGrid),p=g.attributes.position,idx=g.index;
+ const w=generateWorld({seed:'HORIZON-3704',biome:'mountains',holes:18,elevation:100,water:70,bunkerCount:8,trees:0}),g=groundGeometry(w.groundGrid),p=g.attributes.position,idx=g.index;
  for(let i=0;i<idx.count;i+=Math.max(3,Math.floor(idx.count/600/3)*3)){const ids=[idx.getX(i),idx.getX(i+1),idx.getX(i+2)],x=ids.reduce((sum,k)=>sum+p.getX(k),0)/3,z=ids.reduce((sum,k)=>sum+p.getZ(k),0)/3,y=ids.reduce((sum,k)=>sum+p.getY(k),0)/3;assert(Math.abs(w.height(x,z)-y)<.003);assert(Number.isFinite(y));}
  // Adjacent coordinates across old owner boundaries cannot jump many metres.
  for(let x=-w.halfX;x<w.halfX;x+=23)for(let z=-w.halfZ;z<w.halfZ;z+=29)assert(Math.abs(w.height(x+.001,z)-w.height(x-.001,z))<.08);

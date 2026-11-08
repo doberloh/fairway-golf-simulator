@@ -23,7 +23,7 @@ test('every stand record is whole, and names plants its landscape can draw', () 
 });
 
 test('a stand is planted thick, back from play, on ground that holds a tree', () => {
- for (const biome of ['pacnw', 'sonoran', 'newengland']) {
+ for (const biome of ['pacnw', 'dmountain', 'newengland']) {
   const w = build(biome), stand = w.trees.filter(t => t.stand), open = w.trees.filter(t => !t.stand);
   assert.ok(stand.length > open.length, `${biome}: ${stand.length} stand trees against ${open.length} in the open`);
   const o = w.bio.stands;

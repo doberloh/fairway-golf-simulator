@@ -1,6 +1,6 @@
 {
  "name": "badlands",
- "note": "The Badlands pack on Meshy, the last batch (8 November 2026): Bully Pulpit. Green ash and Rocky Mountain juniper; the plains cottonwood is the Prairie pack's.",
+ "note": "The Badlands pack on Meshy, the last batch (8 November 2026): Bully Pulpit. Green ash and Rocky Mountain juniper; the plains cottonwood is the Prairie pack's. Shipped in vendor/blender-meshy_badlands as BdGreenAsh, BdRockyMountainJuniper, because the hand-built models hold the plain names.",
  "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
  "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
  "models": [

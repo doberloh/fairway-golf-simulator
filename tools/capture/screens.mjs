@@ -17,7 +17,7 @@ const click = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
 const step = (p, label) => p.evaluate(l => { const b = [...document.querySelectorAll('#drawer .sx-steps .sx-step')].find(x => x.getAttribute('aria-label') === l || x.textContent.trim().toUpperCase().endsWith(l.toUpperCase())); if (!b) throw Error('no step ' + l); b.click(); }, label);
 const pressText = (p, text) => p.getByRole('button', {name: text, exact: true}).filter({visible: true}).first().click({timeout: 15000});
 // A course in play, at a time of day, the opening flyover over.
-async function round(p, {biome = 'sonoran', seed = 'MESA', hole = 2, when = 'afternoon', hour = null, group = GROUP} = {}) {
+async function round(p, {biome = 'dmountain', seed = 'MESA', hole = 2, when = 'afternoon', hour = null, group = GROUP} = {}) {
  await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome, holes: 9, seed}, group]);
  await p.evaluate(h => window.lab.hole(h), hole);
  await p.evaluate(at => { const v = window.__view; v.daylight.hour = at; v.daylight.rate = 0; }, hour ?? hourFor(biome, when));

@@ -14977,6 +14977,83 @@ Pacific Northwest 1.1/1.13 and 0.8/0.83 (Puget Sound 1.3/1.11, 0.9/0.66); Califo
 without their far versions (the mesh build's list of trees that ship one), and it first measured
 6.8/6.74 ms and 108 M triangles. Every density and colour PLACED. Not played.
 
+**Round 13 (8 November 2026): fifteen landscapes; the Badlands routed round its formations; no
+facilities.** The owner: "Prairie and sand I sign off", then of the Badlands "Let's do the same kind of
+desert routing work while still keeping the badlands look. I'm not sure we want a full course slope
+though" (no: Desert Mountain's `tilt` is its own), and "Just get rid of the road. Clubhouse area.
+Parking lot. And cart paths from generated courses ... We can maybe add them back later." The Sand
+Hills, High Plains, Bluebonnet Prairie and Hill Country left for Prairie & Sand Hills (GENERATOR 100,
+SCHEMA 47; the Texas region with them): fifteen landscapes, the plan's. The Badlands (GENERATOR 101):
+routing.js reads the formations (`formationShareOf`: the carving over 2 m, full by 12 m) as Desert
+Mountain's ranges -- no hole on them, most against them -- the field moves with the course's `shift`,
+and the carving is lowered 12 m near a hole and back over 30 m (`sink` 80 and `reach` 80 before).
+Seeds FAIRWAY and SAWTOOTH (9 holes), FAIRWAY and A (18): fairway steeper than 15% 1.6%, 2.7%, 4.1%,
+3.5%; a course builds in 3.0-5.1 s; holes with a wall over 8 m within 18 m of their rough for over 30%
+of their length 2-3 a course (by a rough probe; the picture shows more holes in a winding valley
+between formations); blind tee shots, quick tier, one red tee 2.5 m short of seeing its landing, none
+other. The public road then climbed a formation (56%, 52% on another side): roads.js now prefers a line
+no steeper than 30% between 4 m samples (`ROAD_STEEPEST`, PLACED) and the gentlest side, but on seed
+SAWTOOTH no side is gentle -- moot while there are no roads. Facilities (GENERATOR 102): course.js
+`facilities` (off; not a player setting) gates the cart paths and the clubhouse, and the clubhouse
+gates the road, the lot, the drive and the cart barn; seed FAIRWAY's nine on Classic Parkland had 19
+paths, 2 roads, a lot, a clubhouse and a cart barn, and 185 and 344 path and road cells (6 m grid), now
+none. The tests of those parts turn `facilities` on.
+
+**Round 12 (8 November 2026): Mountain and Northern Woods signed off; spring on the prairie; a
+Badlands trial.** The owner: "I sign off on mountain and northern woods! Mark them done", of Prairie &
+Sand Hills "Wouldnt the tall grasses in the spring be more green? Is that how they are in real life?",
+and of the Badlands "a preview on what it would look like if the course actually went up into the
+mountains ... little to no extra room on the sides of the fairway". The Rockies, Cascades, High
+Sierra, Ponderosa, Sagebrush, Blue Ridge and Alaska left for Mountain (GENERATOR 99, SCHEMA 46; 19
+landscapes); the regions left empty (Appalachia, the High Desert, Alaska) went with them; Mountain's
+pin moved to Edgewood Tahoe (38.97, -119.94; Castle Pines fell inside the High Plains' shape). Spring:
+yes -- in the Nebraska Sand Hills the cool-season grasses green in April and May and the warm-season
+grasses that make most of the cover (sand bluestem, prairie sandreed, switchgrass, little bluestem)
+green from late May, the old year's stems still standing tan among them; so the spring ground was too
+straw. `springNative` .55 takes Prairie & Sand Hills' wild ground that share of the way to the rough's
+rich green in spring (#79924e against the Sand Hills' #ac9c6e) and adds it to its tall grass's greening
+(PLACED; general knowledge of the Sand Hills' grasses, no source fetched -- worth checking against a
+range-management source). The Badlands trial (`upInto`, landforms.js, off): near a hole the ground is a
+smooth bench rising up to 28 m over several hundred metres, the carving back at full height over 20 m
+(`reach`; 80 in the game). The carving itself under the fairway gave half the fairway steeper than 25%;
+the formations' own edge as the bench a third over 15%; the broad bench 1.5% (FAIRWAY) and 16%
+(SAWTOOTH, where the carving reaches the edge of wide fairways). It does not send holes into the
+formations: the routing still lays most holes where there are none, so most of the course stays on
+the prairie. Doing that is routing work like Desert Mountain's (`range`), not tried.
+
+**Round 11 (8 November 2026): Desert Mountain signed off; the last batch in; relief on the maps.**
+The owner: "Lets set the pond frequency down so that we get 1.5 ponds per 18 holes. Im finally signing
+off on desert mountain", then "Lets start getting everything in game including the desert changes..
+Then yes please add the relief shading into the in game map also." Ponds: at the default Pond
+frequency (35) every hole tries for one pond and Desert Mountain kept about 4.4 in 18 (share 1, eight
+courses); `pondShare` lets only a share of holes try, drawn from its own stream: .1 gave 0.13, .3 gave
+1.13, .32 1.13 (16 courses), .4 1.92 (12), .37 exactly 1.50 over 20 courses (0-4 a course) -- kept,
+PLACED. The Sonoran, Mojave, Chihuahuan and Red Rock left for Desert Mountain (GENERATOR 97, SCHEMA
+43); the map now gives Desert Mountain their shapes, and Florida Palms' and North Woods' pins moved to
+PGA National (26.84, -80.13) and Forest Dunes (44.65, -84.52), inside their own shapes (they sat in
+Lowcountry and Gulf's and Classic Parkland's). The last batch's 22 models in: Mountain (`mountains`)
+and Prairie & Sand Hills (`prairie`, "Prairie and Sand Hills" is 22 letters, over the 20 a name may
+have) added beside the landscapes they will replace, the Badlands and Northern Woods (renamed from
+North Woods) keeping their keys with the new trees (GENERATOR 98, SCHEMA 45). Sizes from the pack
+prompts, PLACED: ponderosa 22-35 m tall, lodgepole 18-26, Engelmann spruce 20-32, aspen 12-18, plains
+cottonwood 18-24 and 13-22 m wide, hackberry 11-15, eastern red cedar 8-12, green ash 13-18, Rocky
+Mountain juniper 7-10, red pine 20-30, paper birch 14-20. The Mountain's ground is the Rockies' crags
+a little lower (height 62 against 70, hills 60/150 against 70/180), Prairie & Sand Hills' the Sand
+Hills' dunes a little broader and lower (scale 260 against 230, hummock 50 against 55, height 13
+against 14): PLACED, different so the two can stand side by side. The game's mesh file grew from
+44.5 MB to 49.3 MB. Relief: light from the screen's top left and above, (-.6, .7, -.4); the
+multiplier is 1 + .9 (lit/flat - 1), held to .6-1.3, so flat ground is unchanged (PLACED); on the
+hole map an overlay, black at 1 - m below 1, white at .8 (m - 1) above. Not seen in the game yet.
+Found by the captures: in winter the game refused the bare trees of 17 Meshy models ("Computed radius
+is NaN"; the last batch's aspen, cottonwood, hackberry and paper birch among them) -- twigs.js divided
+by a crown point's zero distance when it sat exactly on a branch node; such a point is now used up
+(tests/twigs.test.mjs checks every Meshy tree's bare parts). The first Prairie & Sand Hills capture
+stood a forest beside the holes: its stands (12,663 plants, like the Sand Hills' 12,638) held 1,932
+hackberries and 919 plains cottonwoods; now the Sand Hills' low mix (shrub .45, sand cherry .25, cedar
+.25, hackberry .05): 2 cottonwoods and 320 hackberries on seed FAIRWAY's nine. The card lock
+(tools/gpu-lock.mjs) crashed a picture run when the lock was released between its check and its look
+(ENOENT); it retries now.
+
 **Round 9 (8 November 2026): Desert Mountain three ways, on four seeds.** The owner: "Use 4
 different seeds and get screenshots for both having mountains only on the mountain side, and bigger
 play area. Then combine both". Two switches; the owner picked the first alone ("Mountains one side"), generator 96: `range.side` (landforms.js

@@ -208,12 +208,14 @@ test('the menu backdrop can be adopted as hole one without regrowing it', () => 
 // the run is in it, and a seed without a pick grows exactly what it did.
 test('a run pinned to a landscape keeps it on every hole; an unpinned seed is unchanged', async () => {
  const {runLandscape, landscapeSeed} = await import('../src/endless.js');
- const seed = landscapeSeed('HORIZON-1234', 'sonoran');
- assert.equal(seed, 'HORIZON-1234~sonoran');
+ const seed = landscapeSeed('HORIZON-1234', 'dmountain');
+ assert.equal(seed, 'HORIZON-1234~dmountain');
+ // A run pinned to the Sonoran (left 8 November 2026) plays on Desert Mountain.
+ assert.equal(runLandscape('HORIZON-1234~sonoran'), 'dmountain');
  // A run from before the new keys (2 November 2026) finds its landscape.
- assert.equal(runLandscape('HORIZON-1234~desert'), 'sonoran');
- assert.equal(runLandscape(seed), 'sonoran');
- for (let i = 0; i < 6; i++) assert.equal(endlessHole(seed, i).biome, 'sonoran');
+ assert.equal(runLandscape('HORIZON-1234~desert'), 'dmountain');
+ assert.equal(runLandscape(seed), 'dmountain');
+ for (let i = 0; i < 6; i++) assert.equal(endlessHole(seed, i).biome, 'dmountain');
  assert.equal(runLandscape('HORIZON-1234'), null);
  assert.equal(landscapeSeed('HORIZON-1234', 'nowhere'), 'HORIZON-1234');
  const plain = endlessHole('HORIZON-1234', 3), again = endlessHole('HORIZON-1234', 3);

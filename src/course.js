@@ -569,7 +569,11 @@ export function generateCourse(settings={},hole=0){
  const mowStart=par===3?Math.max(Math.max(...Object.values(tees).map(t=>t.z))+22,length*.55,length-(greenSize+38)):fairwayStart;
  const tee={x:0,z:0},green={x:center(length),z:length},bounds={x:Math.max(220,s.doglegAngle*3+100),minZ:-180,maxZ:length+150},ponds=[],bunkers=[];
  const fairwayGuide={fairwayStart,length,greenSize,greenAspect,leftWidth,rightWidth,width};
- for(let i=0;i<(NO_INLAND_WATER.has(s.biome)?0:Math.round(s.water/27));i++){
+ // A LANDSCAPE'S SHARE OF HOLES WITH A POND (`pondShare`; Desert Mountain, the owner, 8 November
+ // 2026: "1.5 ponds per 18 holes"): at the default Pond frequency only that share of holes try for
+ // one, scaled with the setting; drawn from its own stream, so the hole's own draws do not move.
+ const pondTries=NO_INLAND_WATER.has(s.biome)?0:bio.pondShare==null?Math.round(s.water/27):random(s.seed+':pond:'+hole)()<bio.pondShare*s.water/35?Math.max(1,Math.round(s.water/27)):0;
+ for(let i=0;i<pondTries;i++){
   // Banks are anchored a fixed gap outside the fairway edge, so a larger pond
   // grows away from play rather than into it.
   // pondSize is a plain multiplier on both dimensions; its default of 120 leaves
@@ -1388,7 +1392,7 @@ export function* generateWorldSteps(settings={},options={}){
  let landform=landformOf(s.range?{}:bio,s.seed);
  // A course routed round its ranges (routing.js) was moved to the middle after routing; the ranges
  // move with it, or the holes would land back on them.
- if(landform.longLift&&routeShift&&(routeShift.x||routeShift.z)){const o=routeShift,F=f=>f&&((x,z,...r)=>f(x+o.x,z+o.z,...r));
+ if((landform.longLift||landform.routed)&&routeShift&&(routeShift.x||routeShift.z)){const o=routeShift,F=f=>f&&((x,z,...r)=>f(x+o.x,z+o.z,...r));
   landform={...landform,lift:F(landform.lift),longLift:F(landform.longLift),raw:F(landform.raw),treeKeep:F(landform.treeKeep),rocky:F(landform.rocky)};}const liftScale=(s.landform??70)/70;
  // THE GREEN-END ALLOWANCE IS RAMPED, NOT SWITCHED.
  //
@@ -2525,10 +2529,16 @@ export function* generateWorldSteps(settings={},options={}){
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  yield phaseAt(4);
+ // NO FACILITIES FOR NOW (the owner, 8 November 2026: "Just get rid of the road. Clubhouse area. Parking
+ // lot. And cart paths from generated courses ... We can maybe add them back later"): the cart paths,
+ // the clubhouse and with it the public road, the lot, the drive and the cart barn are made only when a
+ // caller asks (`facilities`, not a player setting: the tests of those parts turn it on). A built
+ // course keeps its own (built-world.js).
+ const facilities=!s.range&&!!s.facilities;
  // CART PATHS FIRST (architect-courses, phase 2): the houses and the trees
  // that follow ask `surface`, which now knows where the paths run.
  const setDecks=bs=>{for(const b of bs){const ca=Math.sin(b.angle),cb=Math.cos(b.angle);b.deck=Math.max(height(b.x+ca*b.span/2,b.z+cb*b.span/2),height(b.x-ca*b.span/2,b.z-cb*b.span/2),height(b.x,b.z))+.45;}};
- if(!s.range){({paths,bridges,connect:pathConnect,block:pathBlock,shape:pathShapeOf}=routePaths({holes,s,surface,streams,height,ravines:[]}));pathIdx=pathIndex(paths);
+ if(facilities){({paths,bridges,connect:pathConnect,block:pathBlock,shape:pathShapeOf}=routePaths({holes,s,surface,streams,height,ravines:[]}));pathIdx=pathIndex(paths);
   // A BRIDGE'S DECK (phase 5): its top 0.45 m over the higher of its two ends
   // and its middle, decided here once so the drawn deck and the solid one
   // (physics.js) are the same plank.
@@ -2542,7 +2552,7 @@ export function* generateWorldSteps(settings={},options={}){
  // path runs from its door to the first tee and back from the last green.
  // None on the range.
  const buildings=[];
- if(!s.range){
+ if(facilities){
   const fans0=teeFans(holes);
   // NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under
   // the Midwest farmhouse): the whole footprint clear of the paths, and its

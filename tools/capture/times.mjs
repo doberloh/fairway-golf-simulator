@@ -27,8 +27,8 @@ const tee = h => ({hole: h, along: 0, height: 9, look: 'pin', pitch: -6});
 // picked from angles.mjs's test sheets.
 export const LANDSCAPES = [
  {name: 'pacific-northwest', biome: 'pacnw', seed: 'CEDAR', hole: 1, cam: behind},
- {name: 'sonoran', biome: 'sonoran', seed: 'MESA', hole: 1, cam: behind},
- {name: 'rockies', biome: 'rockies', seed: 'SUMMIT', hole: 1, cam: tee(1)},
+ {name: 'dmountain', biome: 'dmountain', seed: 'MESA', hole: 1, cam: behind},
+ {name: 'mountains', biome: 'mountains', seed: 'SUMMIT', hole: 1, cam: tee(1)},
  {name: 'seaside', biome: 'seaside', seed: 'DUNE', hole: 1, cam: behind},
  {name: 'heartland', biome: 'heartland', seed: 'MEADOW', hole: 3, cam: behind},
  {name: 'keys', biome: 'keys', seed: 'LAGOON', hole: 1, cam: {...behind, around: 130}},

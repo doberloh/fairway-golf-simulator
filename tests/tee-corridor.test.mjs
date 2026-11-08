@@ -31,7 +31,7 @@ function blockers(w, h, tee) {
  return out;
 }
 
-const CASES = ['pacnw', 'redwood', 'heartland', 'rockies', 'seaside', 'newengland', 'sonoran', 'flpalms'];
+const CASES = ['pacnw', 'redwood', 'heartland', 'mountains', 'seaside', 'newengland', 'dmountain', 'flpalms'];
 
 test('no tee shot has a trunk on the line the hole asks for', () => {
  // Measured at 4.5% of 648 before the launch corridor existed, the close ones
@@ -185,7 +185,7 @@ test('no bush or house stands in the view from any tee', async () => {
  const {blocksView} = await import('../src/course.js');
  const {GROUND_PLANTS} = await import('../src/species.js');
  const bad = [];
- for (const biome of ['pacnw', 'rockies', 'seaside']) {
+ for (const biome of ['pacnw', 'mountains', 'seaside']) {
   const w = world({holes: 9, biome, seed: 'view-' + biome, trees: 65, homes: true, homeDensity: 70});
   const corr = launchCorridors(w.holes, w.height);
   for (const t of w.trees) if (GROUND_PLANTS.has(t.kind) && blocksView(corr, t.x, t.z, t.y + t.h, t.r)) bad.push(`${biome} ${t.kind} ${t.h.toFixed(1)} m`);

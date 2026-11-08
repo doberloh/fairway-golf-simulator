@@ -39,8 +39,12 @@ export function holdCard(what, {giveUpMin = 180} = {}) {
    if (e.code !== 'EEXIST') throw e;
    const o = owner();
    // A holder that died, or one that made the directory and has not yet
-   // written its name (give it 10 s), is cleared.
-   const stale = o ? !alive(o.pid) : Date.now() - fs.statSync(LOCK).mtimeMs > 10000;
+   // written its name (give it 10 s), is cleared. The lock can be released
+   // between our mkdir and this look (8 November 2026: a picture run crashed
+   // on it, ENOENT): then simply try again.
+   let age = 0;
+   if (!o) { try { age = Date.now() - fs.statSync(LOCK).mtimeMs; } catch (s) { if (s.code === 'ENOENT') continue; throw s; } }
+   const stale = o ? !alive(o.pid) : age > 10000;
    if (stale) { fs.rmSync(LOCK, {recursive: true, force: true}); continue; }
    if (!said) { console.log(`gpu lock: waiting for ${o?.what ?? 'another job'} (pid ${o?.pid ?? '?'})`); said = true; }
    if (Date.now() - started > giveUpMin * 60000) throw Error(`gpu lock: still held by ${o?.what} after ${giveUpMin} min`);

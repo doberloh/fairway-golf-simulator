@@ -92,7 +92,7 @@ test('holes, trees, water and the landscape are records with undo', () => {
  const level = e.addPond({ring: [[60, -90], [80, -90], [80, -75], [60, -75]]});
  assert.ok(level < 100); assert.equal(e.surfaceAt(70, -80), 'water'); assert.equal(e.state.water.length, 2);
  e.undo(); assert.equal(e.state.water.length, 1); assert.equal(e.surfaceAt(70, -80), 'rough', 'undoing a pond takes its water off the grid too');
- e.setLandscape('sonoran'); assert.equal(e.state.landscape, 'sonoran');
+ e.setLandscape('dmountain'); assert.equal(e.state.landscape, 'dmountain');
 });
 
 test('a dug bunker is sand in a hollow; a drawn creek is water in its channel, falling downstream; each one undo', () => {
@@ -119,7 +119,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  const e = createEditor(doc());
  e.paint({kind: 'sand', x: 0, z: 30, radius: 4});
  e.shape({op: 'raise', x: 0, z: 30, radius: 6, strength: 1});
- e.setLandscape('rockies');
+ e.setLandscape('mountains');
  const out = validateDoc(e.toDoc());
  const w = worldFromDoc(out);
  assert.equal(w.surface(0, 30), 'sand');
@@ -128,7 +128,7 @@ test('the document it gives back is a valid course that plays what was edited', 
  assert.equal(w.surface(-50, 0), 'water');
  assert.equal(w.surface(70, 0), 'heather');
  assert.ok(w.height(0, 30) > 100.3);
- assert.equal(out.landscape, 'rockies'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'rockies'}).bio.name);
+ assert.equal(out.landscape, 'mountains'); assert.equal(w.bio.name, worldFromDoc({...out, landscape: 'mountains'}).bio.name);
  assert.equal(out.water.length, 1); assert.equal(out.water[0].level, 99, 'the pond keeps its level');
  assert.equal(out.trees.length, 3 * TREE_STRIDE);
  const untouched = createEditor(doc()).toDoc();

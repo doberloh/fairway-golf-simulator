@@ -36,7 +36,7 @@ test('Desert Mountain tees some holes off a rock outcrop, above the fairway', ()
 });
 
 test('no other landscape grows a rock tee', () => {
- for (const biome of ['sonoran', 'dresort', 'rockies']) {
+ for (const biome of ['dresort', 'mountains', 'seaside']) {
   const w = world({seed: 'TROON', biome, holes: 9});
   assert.equal(w.holes.filter(h => h.rockTee).length, 0, biome);
   assert.equal(w.perches.length, 0, biome);

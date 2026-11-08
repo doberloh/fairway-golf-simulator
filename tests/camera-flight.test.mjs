@@ -165,7 +165,7 @@ test('the arrival pose stands clear of the ground and the canopy on every hole',
  // Behind the tee is exactly where terrain tends to rise -- a hole cut into a
  // hillside puts its own back slope there -- so this is the case that would put
  // the camera inside a hill or inside a tree if the lift were a flat number.
- for (const biome of ['pacnw', 'rockies', 'redwood', 'seaside']) {
+ for (const biome of ['pacnw', 'mountains', 'redwood', 'seaside']) {
   const w = world({holes: 9, biome, seed: 'arrival-' + biome});
   for (const h of w.holes) {
    const q = holeEstablishingPose(h);

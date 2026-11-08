@@ -75,7 +75,7 @@ test('the same course always suggests the same name', () => {
  assert.notEqual(suggestCourseName({biome: 'seaside', seed: 'A'}),
   suggestCourseName({biome: 'seaside', seed: 'B'}));
  assert.notEqual(suggestCourseName({biome: 'seaside', seed: 'A'}),
-  suggestCourseName({biome: 'sonoran', seed: 'A'}));
+  suggestCourseName({biome: 'dmountain', seed: 'A'}));
 });
 
 test('a suggested name is always a name the library will accept', () => {

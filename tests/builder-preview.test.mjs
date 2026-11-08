@@ -29,7 +29,7 @@ test('trees are the landscape\'s own, and a house is a house', () => {
 });
 
 test('the cover preview shows the smallest and largest it will paint', () => {
- const bio = BIOMES.alaska, s = previewOf({kind: 'cover', cover: 'rocks', min: .4, max: 3}, bio);
+ const bio = BIOMES.mountains, s = previewOf({kind: 'cover', cover: 'rocks', min: .4, max: 3}, bio);
  assert.deepEqual(s.pieces.map(p => p.size), [.4, 1.7, 3]);
  assert.ok(s.pieces.every(p => p.by === 'across' && p.family === 'boulderangular'));
  assert.match(s.caption, /0\.4 m to 3\.0 m/);

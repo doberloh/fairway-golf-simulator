@@ -92,10 +92,10 @@ test('trees keep their sizes; the landscape picks what draws them', () => {
 });
 
 test('any landscape: the same file in Desert keeps every lie', () => {
- const d = worldFromDoc({...doc(), landscape: 'sonoran'});
+ const d = worldFromDoc({...doc(), landscape: 'dmountain'});
  for (const [x, z] of [[0, 90], [0, 0], [80, 0], [-80, 0], [-50, 0], [20, 80]]) assert.equal(d.surface(x, z), at(x, z));
  assert.equal(d.trees[0].h, 18); assert.equal(d.trees[0].radius, .5);
- assert.equal(d.bio.name, biomeOf('sonoran').name);
+ assert.equal(d.bio.name, biomeOf('dmountain').name);
 });
 
 // THE BUILDER ON EVERY LANDSCAPE (the US landscapes goal, PLAN 2's "both
@@ -160,8 +160,10 @@ test('a surveyed tree draws as a species of its height', () => {
  const young = seen(1.5);
  assert.ok(young.size === 6, 'too short for all of them: any, not whichever has the lowest floor');
  assert.ok(seen(8).has('fanpalm'), 'a young palm is a palm');
- let conifers = 0; for (let i = 0; i < 2000; i++) conifers += CONIFERS.has(speciesFor(biomeOf('rockies'), 'broadleaf', 7, i * .5, i * .75));
- assert.ok(conifers > 1200, 'short trees keep the mix: no one species takes the wood');
+ // (The Rockies' mix until 8 November 2026; the Mountain's one broadleaf is its aspen, so Northern
+ // Woods', every one taller than 7 m, holds the test.)
+ const short = new Map(); for (let i = 0; i < 2000; i++) { const s = speciesFor(biomeOf('northwoods'), 'broadleaf', 7, i * .5, i * .75); short.set(s, (short.get(s) ?? 0) + 1); }
+ assert.ok(short.size >= 2 && Math.max(...short.values()) < 1600, `short trees keep the mix: no one species takes the wood (${JSON.stringify([...short])})`);
 });
 
 test('the height a surveyed tree is matched against is the one the generator plants', () => {

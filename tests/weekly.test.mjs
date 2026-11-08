@@ -53,7 +53,7 @@ test('the tenth landscape joins on its own week and moves no earlier week', () =
  // (The keys are the landscapes' new ones since 2 November 2026; the rotation
  // is the same landscapes in the same order; since 8 November 2026 Puget Sound's weeks are the Pacific
  // Northwest's and the Links' Seaside Links'.)
- const old = w => ['pacnw', 'sonoran', 'rockies', 'seaside', 'parkland', 'flpalms', 'redwood', 'parkland', 'parkland'][((w % 9) + 9) % 9];
+ const old = w => ['pacnw', 'dmountain', 'mountains', 'seaside', 'parkland', 'flpalms', 'redwood', 'parkland', 'parkland'][((w % 9) + 9) % 9];
  for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
  assert.equal(weekIndex(at('2026-11-09')), 149);
  assert.equal(weeklyBiome(at('2026-11-09')), 'seaside');

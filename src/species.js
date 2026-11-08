@@ -97,6 +97,14 @@ export const TREE_SIZE={royalpalm:[15,21,3,4.5],travelerspalm:[6,9,2.5,3.5],mang
  cccypress:[11,18,5.5,8],ccmpine:[20,26,5.5,6.5],cctorrey:[14,16,5,6.5],ccliveoak:[11,14,4.5,7],cceuc:[24,32,4.5,6],
  // Seaside Links's (tools/meshy/seaside.json; PLACED, from the pack's own sizes).
  slshore:[7,10,2.5,4],
+ // Mountain's (tools/meshy/mountain.json; PLACED, from the pack's own sizes).
+ mtponderosa:[22,35,4,5.5],mtlodge:[18,26,2,2.5],mtspruce:[20,32,3,3.5],mtaspen:[12,18,2.5,3.5],
+ // Prairie and Sand Hills's (tools/meshy/prairie.json; PLACED, from the pack's own sizes).
+ prcotton:[18,24,6.5,11],prhack:[11,15,3.5,5.5],prcedar:[8,12,1.5,2],
+ // Badlands's (tools/meshy/badlands.json; PLACED, from the pack's own sizes).
+ bdash:[13,18,4,6],bdjuniper:[7,10,1.5,2],
+ // Northern Woods's (tools/meshy/northwoods.json; PLACED, from the pack's own sizes).
+ norpine:[20,30,3.5,4.5],nobirch:[14,20,3,4.5],
  // Florida Palms' (tools/meshy/florida.json; PLACED, from the pack's own sizes).
  flcoconut:[14,22,3,4.5],flroyal:[16,24,3,4.5],
  // Lowcountry and Gulf's (tools/meshy/lowcountry.json; PLACED, from the pack's own sizes:
@@ -139,7 +147,7 @@ export function tallHeight(bio, kind, a, scale = 1) {
 // here and has no season tints of its own turns orange in autumn, so an evergreen
 // left off is the bug the owner found on Puget Sound (5 November 2026): its cedars
 // turned with the maples. tests/seasons.test.mjs holds every conifer and palm to it.
-export const EVERGREEN = new Set(['slshore','cccypress','ccmpine','cctorrey','ccliveoak','cceuc','nwfir','nwcedar','nwhemlock','drwillow','drafghan','draleppo','drolive','drdate','drfan','dtsaguaro','dtpaloverde','dtmesquite','hicookpine','hiironwood','himonkeypod','flcoconut','flroyal','lowliveoak','lowsabal','southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
+export const EVERGREEN = new Set(['norpine','bdjuniper','prcedar','mtponderosa','mtlodge','mtspruce','slshore','cccypress','ccmpine','cctorrey','ccliveoak','cceuc','nwfir','nwcedar','nwhemlock','drwillow','drafghan','draleppo','drolive','drdate','drfan','dtsaguaro','dtpaloverde','dtmesquite','hicookpine','hiironwood','himonkeypod','flcoconut','flroyal','lowliveoak','lowsabal','southloblolly','southlongleaf','southwhitepine','norwayspruce','afghanpine','africansumac','spruce','pine','fir','hemlock','redcedar','redwood','youngredwood','whitepine','balsamfir','lodgepole','bluespruce','juniper','commonjuniper',
  'longleafpine','loblollypine','slashpine','liveoak','liveoakmoss','magnolia','waxmyrtle','yaupon','cabbagepalm','sawpalmetto','citrustree',
  'afghanpine','africansumac','pampasgrass','ashejuniper','mountainlaurel','joshuatree','mojaveyucca','fanpalm','datepalm','aleppopine','oleander','soaptreeyucca','sotol','lechuguilla','emoryoak','alligatorjuniper','beavertail',
  'montereycypress','montereypine','coastliveoak','eucalyptus','torreypine','iceplant','coastalsage','chaparral','olivetree','peppertree',

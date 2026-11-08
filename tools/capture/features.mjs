@@ -30,7 +30,7 @@ const SCENES = {
  },
  // A launch-monitor shot landed, its numbers on the shot card.
  'shot-data': async p => {
-  await course(p, {biome: 'rockies', holes: 9, seed: 'SUMMIT'}, 0);
+  await course(p, {biome: 'mountains', holes: 9, seed: 'SUMMIT'}, 0);
   await hour(p, 10.5);
   await p.evaluate(() => window.__takeShot({speed: 52, vla: 16, hla: -.8, spin: 5200, spinAxis: 3}));
   await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 60000});

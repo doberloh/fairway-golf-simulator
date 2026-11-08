@@ -715,30 +715,7 @@ WORLD.california = {...WORLD.midwest, clubhouse: 'adobe', path: 'asphalt', bridg
  story: {walls: null, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#efe6d4', bark: '#6a5040', accent: '#b4553a', dirt: '#3a2c24', leaf: '#3a2c24'}}};
 const LAND = {
- sonoran: {}, rockies: {}, redwood: {},
- // Phase 3, on existing models (see above).
- // High Plains: wheat country -- a grain elevator for the landmark (phase 8).
- // The High Plains: the Llano Estacado is nearly treeless -- shortgrass to
- // the horizon, trees only in the farms' shelterbelts and along the draws
- // (generator 82: its first pictures stood the table in the plains' woods).
- // Brush, not trees, round the holes, as the Sand Hills. PLACED.
- highplains: {treeDensity: .15, farForest: {cover: .03, size: 8, scrub: true, paint: .3, colors: ['#6a7040', '#7a7e46', '#8a8a4c']},
-  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .5], ['soapweedyucca', .3], ['easternredcedar', .2]]},
-  world: {story: {walls: 'wire', farm: true, shelterbelt: true, landmark: 'grainelevator'}}},
- // The Sand Hills: the plains grassed over dunes, sand blowing out of them,
- // almost no trees.
- // (Round 2 of its pictures: at half density with the plains' stands it
- // stood in a wood; now a few cedars and cottonwoods in the valleys.)
- sandhills: {treeDensity: .2, blowouts: .25, farForest: {cover: .04, size: 8, scrub: true, paint: .3, colors: ['#5d6a38', '#6e7a3e', '#7f8a44']},
-  // Channel b is the blowouts' (landforms.js), so the dunes paint only a.
-  landform: {type: 'dunes', scale: 170, hummock: 42, height: 6, marram: .5, heather: 0,
-   kinds: {a: 'native'}, gates: {a: {near: 9, ramp: 14}}},
-  // Brush, not trees, along the corridors, as the Links' gorse (round 3).
-  stands: {...TRAITS.plains.stands, patch: .01, share: 0, plants: [['shrub', .4], ['easternredcedar', .3], ['sandcherry', .3]]},
-  // Phase 8: soapweed yucca, the Sand Hills' own plant, and buffalo grass.
-  plants: [['dunegrass', .35], ['shrub', .1], ['easternredcedar', .08], ['prairieforbs', .25], ['cottonwood', .02], ['sandcherry', .05], ['soapweedyucca', .1], ['buffalograss', .05]],
-  ui: {panel: 'rgba(40,32,14,.88)', a1: '#fcd9a8', a2: '#b45309', hot: '#fff7ed', soft: '#ead5b4', onHot: '#2a1c08'},
-  world: {story: {walls: 'wire', landmark: 'windmill'}}},
+ redwood: {},
  // The Badlands (the owner, 3 November 2026; the study's plains.badlands):
  // South Dakota's White River badlands and North Dakota's Little Missouri --
  // mixed-grass prairie tables broken into banded clay. Western wheatgrass and
@@ -752,7 +729,9 @@ const LAND = {
  // on the horizon; every rock face is painted in level beds (`strata`,
  // ground.js). Bison on the tables. Every figure not in RESEARCH is PLACED
  // from the study's pictures.
- badlands: {title: 'Badlands Wall', tag: 'Banded spires over the mixed-grass prairie.',
+ // The last batch's trees (8 November 2026): Meshy green ash and Rocky Mountain juniper, and the
+ // Prairie's plains cottonwood, in place of the hand-built ones; crowns kept apart (`crownShare`).
+ badlands: {crownShare: .9, fallen: {from: ['bdjuniper'], kind: 'pinestraw'}, title: 'Badlands Wall', tag: 'Banded spires over the mixed-grass prairie.',
   rough: '#9a9868', rock: '#c8b8a4', sky: '#bed6ec', altitude: 750, temperature: 22, sun: 45, treeKind: 'pine',
   rockStyle: 'badlands', rockMoss: '#c8a050', treeDensity: .5, hills: {base: 30, severity: 60, reach: 80},
   ringLift: 34, ringFace: 'rock',
@@ -762,7 +741,7 @@ const LAND = {
   ringCarve: {tile: 7000, grid: 350, scale: 1300, from: .44, to: .5, spine: 900, slope: 1.2, concavity: .5, wander: 14, blur: 1,
    peakFrom: 90, peak: 1.3, cap: 110, capAt: .52, capScale: 1200, near: 140, far: 700},
   landform: {type: 'badlands', tile: 1500, grid: 750, scale: 300, from: .46, to: .54, spine: 260, slope: 1.9, concavity: .5, wander: 14, blur: 1,
-   peakFrom: 44, peak: 1.7, cap: 50, capAt: .42, capScale: 320, sink: 80, ledges: 2.2, ledge: .22, swale: 3, reach: 80,
+   peakFrom: 44, peak: 1.7, cap: 50, capAt: .42, capScale: 320, sink: 12, routed: true, ledges: 2.2, ledge: .22, swale: 3, reach: 30,
    kinds: {a: 'rock', b: 'hardpan'}, gates: {a: {near: 14, ramp: 18}, b: {near: 10, ramp: 16}}},
   groundTints: {hardpan: '#c8b8a0', rock: '#c4b4a0'},
   // The beds (ground.js strataUniforms): tan rock most often, then pink,
@@ -774,12 +753,12 @@ const LAND = {
   // in green woods; the badlands are open grass, junipers dotted in the
   // draws, ash and chokecherry along a creek.
   stands: {...TRAITS.plains.stands, edge: 260, wobble: 40, share: .06, patch: .03, spacing: 14, under: {spacing: 12, plants: [['chokecherry', .5], ['shrub', .5]]},
-   plants: [['rmjuniper', .7], ['greenash', .15], ['chokecherry', .15]]},
+   plants: [['bdjuniper', .7], ['bdash', .15], ['chokecherry', .15]]},
   // Round 2: the open grass is prairie -- yucca, sage, leadplant and forbs
   // -- with only the odd tree; the trees are the stands' (in the draws).
   // Green ash first: the specimen tree in a fairway is the first species
   // (course.js featureTree), and a full-size lone juniper stood oversized.
-  plants: [['greenash', .01], ['rmjuniper', .06], ['cottonwood', .01], ['chokecherry', .02], ['soapweedyucca', .14], ['leadplant', .2], ['sagebrush', .14], ['prairieforbs', .26], ['buffalograss', .06], ['shrub', .1]],
+  plants: [['bdash', .01], ['bdjuniper', .06], ['prcotton', .01], ['chokecherry', .02], ['soapweedyucca', .14], ['leadplant', .2], ['sagebrush', .14], ['prairieforbs', .26], ['buffalograss', .06], ['shrub', .1]],
   ui: {panel: 'rgba(40,26,22,.88)', a1: '#fecdd3', a2: '#b4533a', hot: '#fff7ed', soft: '#e8d0c4', onHot: '#2a100a'},
   world: {clubhouse: 'loglodge', story: {walls: 'wire', ruins: ['logcabin'], landmark: 'windmill'}, life: {grazers: ['bison', 5]}}},
  // Classic Parkland: tall hardwoods in groups and lines along mown holes, grass right
@@ -800,7 +779,6 @@ const LAND = {
   ui: {panel: 'rgba(14,32,20,.88)', a1: '#bbf7d0', a2: '#166534', hot: '#fde68a', soft: '#b6d4bc', onHot: '#0a1f10'},
   world: {clubhouse: 'tudor', bridge: 'stone', story: {walls: 'field', ruins: ['cottage'], landmark: 'church'},
    colours: {...WORLD.northeast.colours, clubhouse: {stone: '#f2ece0', bark: '#6a3a2a', accent: '#4a3a2a', dirt: '#2a3038'}}}},
- alaska: {},
  // Phase 5: the South (the US landscapes goal's South packs).
  // Southern Pines: very tall pines on long bare trunks over wide corridors, pine straw
  // under them, sandy waste and wiregrass (Pinehurst), dogwood and azalea colour
@@ -906,6 +884,32 @@ const LAND = {
    plants: [['gorse', .6], ['slshore', .3], ['shrub', .1]]},
   plants: [['gorse', .42], ['heather', .36], ['slshore', .12], ['nwfir', .02], ['shrub', .08]],
   ui: {panel: 'rgba(30,32,22,.88)', a1: '#e8dc9a', a2: '#7a6a2a', hot: '#f6e3a0', soft: '#d4ccaa', onHot: '#201c08'}},
+ // Mountain: Castle Pines, Banff and Edgewood Tahoe -- holes through ponderosa and lodgepole pine,
+ // Engelmann spruce and stands of quaking aspen, a Douglas fir or two (the Pacific Northwest's), under
+ // the high peaks (the owner's photographs; docs/studies/us-golf-courses). The Rockies' region and air.
+ // Planted only from Meshy, the understorey and meadow flowers hand-built. Density PLACED.
+ mountains: {crownShare: .9, treeDensity: 3.4, title: 'Timberline', tag: 'Pines, spruce and aspen under the high peaks.',
+  fallen: {from: ['mtponderosa', 'mtlodge', 'mtspruce', 'nwfir'], kind: 'pinestraw'},
+  stands: {edge: 45, wobble: 18, ramp: 18, patch: .2, scale: 240, near: 35, spacing: 9, share: .6,
+   under: {spacing: 8, plants: [['huckleberry', .6], ['fern', .4]]},
+   plants: [['mtlodge', .3], ['mtspruce', .28], ['mtponderosa', .2], ['mtaspen', .16], ['nwfir', .06]]},
+  plants: [['mtponderosa', .2], ['mtlodge', .18], ['mtspruce', .18], ['mtaspen', .16], ['nwfir', .05], ['sagebrush', .08], ['willowthicket', .05], ['lupine', .05], ['columbine', .05]],
+  ui: {panel: 'rgba(16,28,30,.88)', a1: '#b6dccb', a2: '#3c7a62', hot: '#f6d58c', soft: '#c2d4cc', onHot: '#0b1c16'}},
+ // Prairie and Sand Hills: Sand Hills, Prairie Dunes and Ballyneal -- grassed-over dunes with sand
+ // blowing out of them, nearly treeless: a few clumps of eastern red cedar and hackberry, and plains
+ // cottonwoods in the low ground (the owner's photographs). The Sand Hills' region and air. Planted
+ // only from Meshy, the grasses and forbs hand-built. Density PLACED.
+ // Its wild ground and tall grass green up in spring (`springNative`, seasons.js; the owner, 8 November 2026).
+ prairie: {crownShare: .9, treeDensity: .3, blowouts: .25, springNative: .55, title: 'Blowout Ridge', tag: 'Grassed dunes under a big sky, a few cedars.',
+  fallen: {from: ['prcedar'], kind: 'pinestraw'},
+  farForest: {cover: .04, size: 8, scrub: true, paint: .3, colors: ['#5d6a38', '#6e7a3e', '#7f8a44']},
+  stands: {edge: 60, wobble: 25, ramp: 25, patch: .01, scale: 260, near: 45, spacing: 12, share: 0,
+   under: {spacing: 9, plants: [['shrub', .7], ['prairieforbs', .3]]},
+   // The Sand Hills' low stands (shrub, sand cherry, cedar), a few hackberries; no cottonwood: a
+   // stand of 900 big cottonwoods and 1,900 hackberries stood as a forest on the first capture.
+   plants: [['shrub', .45], ['sandcherry', .25], ['prcedar', .25], ['prhack', .05]]},
+  plants: [['dunegrass', .35], ['prairieforbs', .25], ['soapweedyucca', .1], ['shrub', .08], ['prcedar', .07], ['sandcherry', .05], ['buffalograss', .05], ['prhack', .03], ['prcotton', .02]],
+  ui: {panel: 'rgba(34,30,18,.88)', a1: '#ead9a0', a2: '#8a7a2e', hot: '#f8e7b4', soft: '#dcd2b0', onHot: '#221c08'}},
   // Florida Palms: the Keys' coast, white sand and blue water, planted only from Meshy: tall
  // thin coconut palms in loose groups (the owner's Seminole photograph), sabal and royal
  // palms, live oaks and a few loblollies (TPC Sawgrass), sea grape and saw palmetto under
@@ -919,81 +923,18 @@ const LAND = {
    plants: [['lowsabal', .32], ['lowliveoak', .26], ['flcoconut', .2], ['flroyal', .1], ['southloblolly', .12]]},
   plants: [['flcoconut', .2], ['lowsabal', .16], ['flroyal', .08], ['lowliveoak', .12], ['southloblolly', .06], ['seagrape', .1], ['sawpalmetto', .1], ['hibiscus', .05], ['bougainvillea', .04], ['sawgrass', .05], ['muhlygrass', .04]],
   ui: {panel: 'rgba(8,32,44,.88)', a1: '#a5f3fc', a2: '#0e7490', hot: '#fda4af', soft: '#acd6e2', onHot: '#04202e'}},
- // Phase 6: Texas and the deserts (the Texas and deserts packs).
- hillcountry: {},
- // Bluebonnet Prairie: the Blackland Prairie, flat and open, pecan and cedar
- // elm along the creeks, Osage orange hedgerows, bluebonnets everywhere.
- bluebonnet: {treeDensity: 1.4, rough: '#7e8a4a', hills: {base: 14, severity: 20, reach: 70},
-  // The fields in bloom: the prairie's native drifts beyond play painted
-  // bluebonnet blue (drawing only; PLACED).
-  groundTints: {native: '#6276c4'},
-  // The field in bloom from a distance: the long grass's heads bluebonnet
-  // blue, half as many tufts again (rendering only; PLACED -- the pack's
-  // clumps are under half a metre and read only close to).
-  longGrass: {...TRAITS.texas.longGrass, count: 6000, accent: '#4a62c8', bloomHeads: true},
-  scatter: {...TRAITS.texas.scatter, rocks: 60}, rockStyle: 'round',
-  stands: {...TRAITS.texas.stands, under: {spacing: 9, plants: [['shrub', 1]]},
-   plants: [['pecan', .3], ['cedarelm', .3], ['osageorange', .2], ['postoak', .2]]},
-  plants: [['bluebonnet', .3], ['pecan', .12], ['cedarelm', .12], ['osageorange', .1], ['postoak', .06], ['prairieforbs', .15], ['shrub', .1], ['redbud', .05]],
-  ui: {panel: 'rgba(16,22,40,.88)', a1: '#bfdbfe', a2: '#1d4ed8', hot: '#fef3c7', soft: '#c0c8dc', onHot: '#0a1230'},
-  world: {clubhouse: 'farmhouse', bridge: 'wood', story: {walls: 'rail', farm: 'redbarn', ruins: ['cottage'], landmark: 'windpump'}}},
- // Mojave: Joshua trees and creosote on a basin floor, rounded granite,
- // Mojave yucca and beavertail, smoke trees in the washes.
- mojave: {rough: '#c2ae84', sky: '#d4dce2', altitude: 900, temperature: 33, rock: '#c8ac88', rockStyle: 'round',
-  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['creosote', .6], ['beavertail', .2], ['brittlebush', .2]]},
-   plants: [['joshuatree', .55], ['smoketree', .1], ['cholla', .2], ['mojaveyucca', .15]]},
-  plants: [['joshuatree', .22], ['creosote', .25], ['mojaveyucca', .12], ['cholla', .1], ['beavertail', .08], ['brittlebush', .08], ['smoketree', .05], ['tamarisk', .02], ['agave', .03], ['jojoba', .05]],
-  ui: {panel: 'rgba(38,30,22,.88)', a1: '#fde4c0', a2: '#9a5b24', hot: '#fff7ed', soft: '#e6d4bc', onHot: '#2a1a0c'}},
- // Chihuahuan: lechuguilla, sotol and soaptree yucca on limestone, ocotillo,
- // mesquite, Emory oak and alligator juniper up the slopes (Big Bend).
- chihuahuan: {rough: '#b0a07a', sky: '#d8dade', altitude: 1200, temperature: 30, rock: '#c0aa8a', rockStyle: 'angular',
-  stands: {...TRAITS.desert.stands, under: {spacing: 8, plants: [['lechuguilla', .4], ['sotol', .3], ['creosote', .3]]},
-   plants: [['mesquite', .35], ['alligatorjuniper', .25], ['emoryoak', .25], ['soaptreeyucca', .15]]},
-  plants: [['creosote', .22], ['lechuguilla', .14], ['sotol', .12], ['soaptreeyucca', .1], ['ocotillo', .08], ['mesquite', .1], ['cholla', .06], ['beavertail', .04], ['emoryoak', .05], ['alligatorjuniper', .05], ['agave', .04]],
-  ui: {panel: 'rgba(32,26,24,.88)', a1: '#fecaca', a2: '#9f1239', hot: '#fef3c7', soft: '#dccac4', onHot: '#260a10'}},
- // Phase 7: California and the western mountains.
- // Cascades (the Rockies' region): Douglas and noble fir, hemlock, western
- // larch, beargrass and huckleberry, basalt, a snow volcano on the horizon
- // (renderer.js addBackdrop) over a lower range.
- cascades: {ringLift: 600, rockStyle: 'basalt', backdrop: 'Volcano', sky: '#bccfe0',
-  stands: {...TRAITS.mountain.stands, under: {spacing: 8, plants: [['huckleberry', .5], ['beargrass', .3], ['fern', .2]]},
-   plants: [['fir', .35], ['noblefir', .25], ['hemlock', .25], ['westernlarch', .15]]},
-  plants: [['fir', .25], ['hemlock', .15], ['noblefir', .15], ['westernlarch', .08], ['redcedar', .07], ['beargrass', .1], ['huckleberry', .1], ['fern', .05], ['vinemaple', .05]],
-  ui: {panel: 'rgba(14,28,26,.88)', a1: '#a7f3d0', a2: '#047857', hot: '#fef3c7', soft: '#b4d4c8', onHot: '#06201a'},
-  world: {clubhouse: 'lodge'}},
- // High Sierra: sugar pine, incense cedar, red fir and ponderosa over
- // manzanita and mule's ear, glaciated granite slabs.
- sierra: {rockStyle: 'granite', sky: '#b8d2ec',
-  stands: {...TRAITS.mountain.stands, under: {spacing: 8, plants: [['manzanita', .6], ['mulesear', .4]]},
-   plants: [['redfir', .3], ['sugarpine', .25], ['incensecedar', .25], ['ponderosa', .2]]},
-  plants: [['sugarpine', .15], ['incensecedar', .15], ['redfir', .12], ['ponderosa', .1], ['lodgepole', .08], ['manzanita', .15], ['mulesear', .08], ['lupine', .05], ['willowthicket', .05], ['aspen', .07]],
-  ui: {panel: 'rgba(20,24,34,.88)', a1: '#c7d2fe', a2: '#4338ca', hot: '#fef3c7', soft: '#c4c8dc', onHot: '#0c0a2a'},
-  // No split-rail fences on the granite (phase 7: too steep for one to
-  // stand on the test course, and none in the high country; PLACED).
-  world: {story: {walls: null, ruins: ['minehead', 'cottage']}}},
- // Ponderosa: the open ponderosa park of the Mogollon Rim -- tall
- // orange-barked pines far apart, Gambel oak, mountain mahogany,
- // bitterbrush and sage, black basalt.
- ponderosa: {rockStyle: 'basalt', treeDensity: 2.4, rough: '#8a8a5a', altitude: 2100, temperature: 24, hills: {base: 40, severity: 90, reach: 90},
-  stands: {...TRAITS.mountain.stands, under: {spacing: 9, plants: [['bitterbrush', .5], ['sagebrush', .5]]},
-   plants: [['ponderosa', .75], ['gambeloak', .25]]},
-  plants: [['ponderosa', .4], ['gambeloak', .15], ['mountainmahogany', .08], ['bitterbrush', .12], ['aspen', .05], ['lupine', .05], ['sagebrush', .1], ['mulesear', .05]],
-  ui: {panel: 'rgba(36,22,16,.88)', a1: '#ffedd5', a2: '#9a3412', hot: '#fef3c7', soft: '#e4cfc0', onHot: '#2a1006'},
-  world: {clubhouse: 'loglodge'}},
- // Phase 8: the high desert and the Cross Timbers.
- redrock: {},
- // Sagebrush: the Columbia Plateau's steppe -- sage and bunchgrass on rolling
- // basalt, rimrock for its stone, western juniper, balsamroot in flower.
- sagebrush: {sandLand: false, rough: '#9a9a6a', rock: '#4a4440', rockStyle: 'rimrock', rockMoss: '#8e8a5a', altitude: 600, temperature: 24,
-  landform: TRAITS.midwest.landform,
-  stands: {...TRAITS.highdesert.stands, under: {spacing: 8, plants: [['sagebrush', .5], ['bitterbrush', .5]]},
-   plants: [['westernjuniper', .6], ['russianolive', .4]]},
-  plants: [['sagebrush', .3], ['westernjuniper', .1], ['rabbitbrush', .12], ['bitterbrush', .1], ['balsamroot', .1], ['cheatgrass', .13], ['russianolive', .05], ['globemallow', .05], ['shrub', .05]],
-  ui: {panel: 'rgba(26,30,24,.88)', a1: '#ecfccb', a2: '#65a30d', hot: '#fef3c7', soft: '#d0d8c0', onHot: '#141c08'}},
- // Phase 8b: Appalachia.
- blueridge: {},
- // Phase 8c: the north and Hawaii.
- northwoods: {},
+ // (The Rockies, Cascades, High Sierra, Ponderosa, Sagebrush, Blue Ridge and Alaska left for Mountain,
+ // and the Sand Hills, High Plains, Bluebonnet Prairie and Hill Country for Prairie & Sand Hills, on
+ // 8 November 2026.)
+ // Northern Woods: Forest Dunes and Crystal Downs -- red pine and eastern white pine (Southern Pines'),
+ // paper birch, sugar maple and white oak (Classic Parkland's) and a few aspen (the Mountain's), round
+ // blue lakes (the owner's plan, 8 November 2026). Planted only from Meshy, the understorey hand-built;
+ // jack pine, tamarack and balsam fir left with the hand-built trees. Density PLACED.
+ northwoods: {crownShare: .9, fallen: {from: ['norpine', 'southwhitepine'], kind: 'pinestraw'},
+  stands: {edge: 50, wobble: 22, ramp: 20, patch: .2, scale: 240, near: 35, spacing: 9, share: .6,
+   under: {spacing: 8, plants: [['shrub', .5], ['bracken', .5]]},
+   plants: [['norpine', .35], ['southwhitepine', .2], ['nobirch', .2], ['parkmaple', .15], ['whiteoak', .1]]},
+  plants: [['norpine', .26], ['southwhitepine', .12], ['nobirch', .17], ['parkmaple', .12], ['whiteoak', .07], ['mtaspen', .07], ['shrub', .1], ['fern', .05], ['fireweed', .04]]},
 };
 
 // A landscape's world block: the generic one, its region's, its own.
@@ -1041,59 +982,18 @@ const GRASSES = {
 // study's pictures. A change here moves generated ground: GENERATOR_VERSION.
 const gate = (near, ramp) => ({near, ramp});
 const TERRAIN = {
- // THE LAST ON ANOTHER'S GROUND (generator 87, 4 November 2026; RESEARCH
- // *The last landscapes on another's ground*). The Sonoran: Basin and Range,
- // broad basins and bajadas round granite ranges, not the mesas it shared
- // with Red Rock.
- sonoran: {landform: {type: 'knobs', cell: 280, chance: .36, radius: [40, 95], size: [16, 44], profile: 1.1, round: .45, floor: 4,
-  wash: 260, washWidth: .022, washDepth: 1.4, bare: .1, reach: 90,
-  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#8e7d6a'}},
- // Red Rock: benches and tall Navajo sandstone cliffs, three great steps.
- redrock: {landform: {type: 'steps', scale: 380, height: 50, steps: 3, riser: .09, from: .3, to: .74, ledge: .22, reach: 70,
-  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, hills: {base: 14, severity: 40, reach: 90}},
- // Alaska: a glaciated valley floor under the ranges, moraines, kettles and
- // the odd esker, where the Rockies have crags.
- alaska: {landform: {type: 'glacial', hummock: 9, cell: 170, chance: .45, radius: [30, 70], size: [4, 10], esker: 240, eskerHeight: 5, reach: 80,
-  kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 12), b: gate(8, 10)}}, hills: {base: 30, severity: 60, reach: 80}},
- // The Cascades: sharper and closer-set than the Rockies, deep valleys under
- // jagged volcanic ridges (PLACED; the volcanoes themselves stand far behind).
- cascades: {landform: {...TRAITS.mountain.landform, scale: 230, height: 62, steps: 3, jag: .7}},
+ // (The Sonoran, Mojave, Chihuahuan and Red Rock left for Desert Mountain on 8 November 2026.)
  // The Redwood Coast: a river's terraces, low and soft, where the courses lie
  // and the redwoods grow tallest. The young, steep ridges of the Coast Ranges
  // stand behind them as the ring; the gorges and rock this had before put a
  // canyon under every hole.
  redwood: {landform: {type: 'steps', scale: 420, height: 7, steps: 2, riser: .16, from: .3, to: .85, ledge: 0, reach: 70,
   kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}, hills: {base: 22, severity: 26, reach: 75}},
- // Stair-stepped limestone hills, pale ledges on the risers (Glen Rose).
- hillcountry: {landform: {type: 'steps', scale: 260, height: 26, steps: 6, riser: .35, from: .3, to: .78, ledge: .25, reach: 80,
-  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}, groundTints: {rock: '#d8d0b8'}},
  // Hummocky moraine, kettles holding bog, an esker, granite breaking through.
  northwoods: {landform: {type: 'glacial', hummock: 7, cell: 160, chance: .5, radius: [25, 55], size: [4, 9], esker: 220, eskerHeight: 6, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(10, 10), b: gate(10, 12)}}, groundTints: {native: '#8a8a50'}},
  parkland: {landform: {type: 'glacial', hummock: 4, cell: 200, chance: .3, radius: [25, 50], size: [3, 6], esker: 260, eskerHeight: 3, reach: 70,
   kinds: {a: 'rock', b: 'native'}, gates: {a: gate(12, 10), b: gate(12, 12)}}},
- // Granite knobs on a gentle floor, shallow sandy washes, hardpan beyond.
- // Round 2: the knobs read as sand dunes -- bare from a gentler slope, and
- // grey granite rather than the desert's tan rock.
- mojave: {landform: {type: 'knobs', cell: 200, chance: .5, radius: [25, 60], size: [10, 28], profile: 1.3, round: .6, floor: 3,
-  wash: 240, washWidth: .02, washDepth: 1.2, bare: .1, reach: 80,
-  kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(8, 10), b: gate(12, 10), floor: gate(5, 6)}}, groundTints: {rock: '#a8a294'}},
- // Bare glaciated granite domes and whaleback slabs, scree at their feet.
- sierra: {landform: {type: 'knobs', cell: 230, chance: .5, radius: [40, 90], size: [15, 40], profile: 2.2, round: .5, floor: 6, wash: 0, bare: .18, reach: 90,
-  kinds: {a: 'rock', b: 'scree'}, gates: {a: gate(10, 12), b: gate(10, 12)}}},
- // Box-walled coulees cut into the basalt, rimrock along their rims.
- sagebrush: {landform: {type: 'channels', scale: 420, width: .04, wall: .15, depth: 18, table: 4, branches: 0, rim: .4, bare: .6, reach: 85,
-  kinds: {a: 'rock'}, gates: {a: gate(10, 12)}}},
- // Cinder cones of red-brown cinder and black basalt flows.
- ponderosa: {landform: {type: 'volcanic', cell: 300, chance: .45, radius: [50, 110], size: [25, 60], flows: .62, flowHeight: 2.5, roll: 5, reach: 90,
-  kinds: {a: 'rock', b: 'hardpan'}, gates: {a: gate(10, 12), b: gate(10, 12)}}, groundTints: {hardpan: '#8a4a36', rock: '#3a3632'}},
- // The Blue Ridge: forested ridges and coves -- small valleys between
- // ridges, closed at one or both ends -- on gneiss and granite, cliffs rare
- // (Blue Ridge Mountains; Cove (Appalachian Mountains)): V hollows
- // branching between rounded ridges, rock only on the steepest, the woods
- // kept on their sides.
- blueridge: {landform: {type: 'channels', scale: 320, width: .07, wall: .9, depth: 28, table: 12, branches: .9, rim: .65, bare: .05, reach: 85,
-  kinds: {a: 'rock'}, gates: {a: gate(12, 12)}}},
  southpines: {landform: {type: 'sandridges', scale: 240, height: 9, bare: .84, reach: 60, kinds: {a: 'waste'}, gates: {a: gate(12, 12)}}},
  // Desert Mountain: long, wide, joined granite ranges (`range`) with boulder-piled upper slopes,
  // the holes in the draws between them, rising close beside the play (reach 26 m); one big
@@ -1117,7 +1017,7 @@ const TERRAIN = {
   hills: {base: 8, severity: 22, reach: 80}, ringLift: 900, ringMesas: false,
   // The land rising toward the big mountain, and no bench round the holes (course.js `tilt`,
   // `wideFade`; the owner, round 6). PLACED.
-  tilt: {height: 38, over: 1400}, wideFade: 130,
+  tilt: {height: 38, over: 1400}, wideFade: 130, pondShare: .37,
   ringMassif: {at: 2200, length: 9000, face: 1400, back: 3500},
   // About 1.5 holes in 18 tee off a rock outcrop (course.js, *Tees up on the rock*).
   rockTees: .083},
@@ -1143,21 +1043,16 @@ const TERRAIN = {
  seaside: {landform: {...TRAITS.links.landform, scale: 160, hummock: 22, height: 8, rugged: 1.6, marram: .38}},
  calcoast: {landform: {type: 'steps', scale: 380, height: 13, steps: 3, riser: .18, from: .3, to: .85, ledge: .3, reach: 60,
   kinds: {a: 'rock'}, gates: {a: gate(10, 10)}}},
+ // Mountain: the Rockies' crags, a little lower and gentler round the holes (PLACED, and apart from the
+ // Rockies' own while both stand).
+ mountains: {landform: {type: 'crags', scale: 320, height: 62, steps: 4, from: .45, cluster: .42, scree: true, reach: 120, jag: .55,
+  kinds: {a: 'rock', b: 'scree'}, gates: {a: gate(14, 18), b: gate(10, 14)}}, hills: {base: 60, severity: 150, reach: 90}},
+ // Prairie and Sand Hills: the Sand Hills' dunes, a touch broader and lower (PLACED, and apart from
+ // the Sand Hills' own while both stand).
+ prairie: {landform: {type: 'dunes', scale: 260, hummock: 50, height: 13, marram: .5, heather: 0,
+  kinds: {a: 'native'}, gates: {a: gate(9, 14)}}, hills: {base: 24, severity: 18, reach: 70}},
  flpalms: {landform: {type: 'lowland', scale: 380, levee: 1, hollow: 1.2, swamp: .5, reach: 50, kinds: {a: 'native'}, gates: {a: gate(12, 12)}},
   hills: {base: 5, severity: 6, reach: 60}, baseRoll: .25},
- // The Llano Estacado: a tableland nearly flat, round dry playas with bare
- // clay floors (generator 81). Playas scaled down from the real 3-28 ha
- // (radius 100-300 m) to 60-140 m, 1-1.8 m deep (a Texas water study
- // assumed 3 ft). PLACED.
- highplains: {landform: {type: 'playas', roll: 2, cover: .56, cell: 500, chance: .55, radius: [60, 140], size: [1, 1.8], reach: 70,
-  kinds: {a: 'native', b: 'hardpan'}, gates: {a: gate(24, 22), b: gate(14, 14)}}, groundTints: {hardpan: '#bcae8e'},
-  hills: {base: 5, severity: 5, reach: 70}, baseRoll: .3},
- // The Sand Hills: grassed dunes far taller than a links' -- linear dunes of
- // 6-10 m relief, barchanoid ridges 37-90 m (UNL; a Brown County study) --
- // so the crests here reach about 13 m, the corridors' roll lifted with them
- // (generator 81). PLACED.
- sandhills: {landform: {type: 'dunes', scale: 230, hummock: 55, height: 14, marram: .5, heather: 0,
-  kinds: {a: 'native'}, gates: {a: {near: 9, ramp: 14}}}, hills: {base: 24, severity: 18, reach: 70}},
  // Napa's valley floor between the Mayacamas and the Vaca ranges: alluvial
  // and gentle, the ranges standing 600-800 m over it at the horizon (the
  // Napa Valley Vintners' guide: 30 mi by up to 5 mi, Atlas Peak 2,663 ft).

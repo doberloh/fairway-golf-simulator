@@ -79,6 +79,7 @@ import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWate
 
 import {makeBloom} from './bloom.js';
 import {hideForProbe,restoreAfterProbe} from './water-bodies.js';
+import {reliefShade,reliefOverlay} from './map-relief.js';
 // The interface font, for text painted onto a canvas: the same one the page
 // uses (style.css --font-ui), so a sign on the course matches the HUD over it.
 const UI_FONT='system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
@@ -2047,8 +2048,8 @@ export class GolfView{
   // catalogue's lists (RESEARCH, *Each landscape's road surface*).
   const roadKey=w.bio?.key||w.settings?.biome;
   const PUBLIC={bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete',sandhills:'gravel'};
-  const DRIVE={puget:'gravel',pacnw:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
-   winecountry:'gravel',heartland:'gravel',sandhills:'gravel',highplains:'gravel',crosstimbers:'dirt',badlands:'gravel',hillcountry:'dirt',longleaf:'redclay',lowcountry:'shell',lowgulf:'shell',
+  const DRIVE={puget:'gravel',pacnw:'gravel',redwood:'gravel',cascades:'gravel',sierra:'gravel',rockies:'gravel',mountains:'gravel',ponderosa:'dirt',sagebrush:'dirt',redrock:'dirt',chihuahuan:'dirt',
+   winecountry:'gravel',heartland:'gravel',sandhills:'gravel',prairie:'gravel',highplains:'gravel',crosstimbers:'dirt',badlands:'gravel',hillcountry:'dirt',longleaf:'redclay',lowcountry:'shell',lowgulf:'shell',
    bayou:'gravel',blueridge:'gravel',ozarks:'gravel',newengland:'gravel',oldnortheast:'brick',parkland:'brick',southpines:'gravel',pinebarrens:'shell',northwoods:'gravel',lakedunes:'gravel',oregondunes:'gravel',seaside:'gravel',
    alaska:'gravel',palms:'cobble',desertresort:'concrete',dresort:'concrete',bluebonnet:'concrete',gulfcoast:'concrete',flatwoods:'concrete'};
   // ONE MESH A SURFACE (the owner's review, measured: a mesh a piece was
@@ -3753,8 +3754,25 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const q=mapPosition(transform,(i+.5)/N*w,(j+.5)/N*h),p=course.toWorld(q),g=GROUNDS[world.surface(p.x,p.z)];if(!g)continue;col.set(g.map);img.data.set([col.r*255,col.g*255,col.b*255,255],(j*N+i)*4);}
   tc.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(tile,0,0,w,h);
  }
+ // RELIEF ON THE HOLE MAP (map-relief.js; the owner, 8 November 2026): the same light from the top
+ // left of the screen, as a dark and light film over the ground (the holes are drawn over it). The
+ // hole map turns its hole to point up, so the heights are read through the map itself, once each on
+ // a grid of screen points (N+1 by N+1, about 5,300 lookups: the still layer redraws on every pan and
+ // zoom, and a lookup per neighbour cost 13-40 ms a redraw), each pixel lit from the corner below it
+ // and the ones to its right and below.
+ if(!full){
+  const N=72,tile=document.createElement('canvas');tile.width=tile.height=N;const tc=tile.getContext('2d'),img=tc.createImageData(N,N),px=w/N,py=h/N,H=new Float32Array((N+1)*(N+1));
+  const at=(sx,sy)=>course.toWorld(mapPosition(transform,sx,sy));
+  for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const p=at(i*px,j*py);H[j*(N+1)+i]=world.land(p.x,p.z);}
+  const o0=at(0,0),oR=at(px,0),oD=at(0,py),sR=Math.hypot(oR.x-o0.x,oR.z-o0.z),sD=Math.hypot(oD.x-o0.x,oD.z-o0.z)||sR;
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const y=H[j*(N+1)+i];if(!(y>=0))continue;const r=H[j*(N+1)+i+1],d=y+(H[(j+1)*(N+1)+i]-y)*sR/sD,o=reliefOverlay(reliefShade(y,r,d,sR));img.data.set([o[0],o[1],o[2],Math.round(o[3]*255)],(j*N+i)*4);}
+  tc.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(tile,0,0,w,h);
+ }
 
- if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':GROUNDS[world.surface(x,z)]?.map??world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
+ // RELIEF (map-relief.js; the owner, 8 November 2026): lit from the top left of the SCREEN, and
+ // the map turns the world through 180 degrees (`mapPoint` negates both axes), so the pixel to the
+ // right on screen is the ground at -x and the one below it the ground at -z.
+ if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150),s=Math.max(world.halfX,world.halfZ)/75;for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),relief=y<0?1:reliefShade(y,world.land(x-s,z),world.land(x,z-s),s),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':GROUNDS[world.surface(x,z)]?.map??world.bio.rough).multiplyScalar((.9+Math.min(Math.max(y,0),80)/500)*relief).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
   // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
   //
   // This used to be drawn at `w/2 - halfX*scale`, which silently assumes the

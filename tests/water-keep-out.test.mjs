@@ -21,7 +21,7 @@ import {measured} from './worlds.mjs';
 // testing audit, 31 October 2026): one thread, these were three minutes and
 // the whole suite's wall. Each test's loop is in tests/measure/water-keep-out.mjs.
 const SETTINGS = [];
-for (const biome of ['pacnw', 'sonoran', 'rockies', 'seaside', 'heartland', 'newengland'])
+for (const biome of ['pacnw', 'dmountain', 'mountains', 'seaside', 'heartland', 'newengland'])
  // EIGHT SEEDS, NOT FOUR. Several assertions here are rates across the whole
  // fixture -- what fraction of ponds bite into a fairway, whether a channel
  // terminating in a hollow turns up at all -- and four seeds was too small a

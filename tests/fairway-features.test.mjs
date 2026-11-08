@@ -11,7 +11,7 @@ import {measured} from './worlds.mjs';
 // `measured`; the testing audit, 31 October 2026 -- one thread, they were two
 // minutes). Each test's loop over a course is in tests/measure/fairway-features.mjs.
 
-const BIOMES = ['heartland', 'pacnw', 'seaside', 'rockies'], SEEDS = ['a', 'b', 'c'], SHARES = [0, 25, 100];
+const BIOMES = ['heartland', 'pacnw', 'seaside', 'mountains'], SEEDS = ['a', 'b', 'c'], SHARES = [0, 25, 100];
 const list = SHARES.flatMap(share => BIOMES.flatMap(biome => SEEDS.map(seed => ({holes: 9, biome, seed, fairwayFeature: share}))));
 const all = await measured(list, './measure/fairway-features.mjs');
 const at = share => all.filter((_, i) => list[i].fairwayFeature === share);

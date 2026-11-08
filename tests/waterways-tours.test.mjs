@@ -119,7 +119,7 @@ test('the flyover never flies through the ground or the trees',()=>{
  // hill unless the ring is lifted over it, and a canopy standing a few metres
  // off the flight line still gets in the way. Both are checked on the worst
  // terrain the generator makes: full mountain, and a forest at full planting.
- for(const extra of [{biome:'rockies',elevation:100,landform:100,trees:40},{trees:100,elevation:60}]){
+ for(const extra of [{biome:'mountains',elevation:100,landform:100,trees:40},{trees:100,elevation:60}]){
   const w=generateWorld({seed:'SHOULDERS',holes:9,water:0,homes:false,...extra});
   let ground=Infinity,canopy=Infinity;
   for(const h of w.holes){

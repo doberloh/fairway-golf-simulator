@@ -1,6 +1,6 @@
 {
  "name": "mountain",
- "note": "The Mountain pack on Meshy, the last batch of the US golf courses' landscapes (8 November 2026): Castle Pines, Banff, Edgewood Tahoe. Ponderosa and lodgepole pine, Engelmann spruce, quaking aspen; the Douglas fir is the Pacific Northwest's.",
+ "note": "The Mountain pack on Meshy, the last batch of the US golf courses' landscapes (8 November 2026): Castle Pines, Banff, Edgewood Tahoe. Ponderosa and lodgepole pine, Engelmann spruce, quaking aspen; the Douglas fir is the Pacific Northwest's. Shipped in vendor/blender-meshy_mountain as MtPonderosaPine, MtLodgepolePine, MtEngelmannSpruce, MtQuakingAspen, because the hand-built models hold the plain names.",
  "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
  "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
  "models": [

@@ -11,7 +11,7 @@ test('water depths match actual lake bottoms and are independent of water elevat
  // whose depth could be checked. What this test is actually about -- a pond's
  // depth matching the setting and not drifting with the water's elevation --
  // is unchanged, and mountain and desert still exercise it across the range.
- for(const biome of ['rockies','sonoran'])for(const depth of [.3,4]){const w=buildWorld({seed:'DEPTH',biome,water:100,waterMin:depth,waterMax:depth,trees:0});let count=0;
+ for(const biome of ['mountains','dmountain'])for(const depth of [.3,4]){const w=buildWorld({seed:'DEPTH',biome,water:100,waterMin:depth,waterMax:depth,trees:0});let count=0;
   for(const h of w.holes)for(const p of h.ponds){count++;assert.equal(p.depth,depth);assert(Math.abs(p.level-h.height(p.x,p.z)-depth)<.01);assert.equal(h.surface(p.x,p.z),'water');}assert(count>0);
  }
 });

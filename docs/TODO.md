@@ -44,7 +44,9 @@ The plan is local, docs/studies/us-golf-courses/PLAN.md: 42 landscapes pared to 
 golf looks, one tree style. The owner's feedback lives on the hosted page.
 
 - [ ] **The signed-off landscapes: a smoke run and a weak machine are owed.** The full
-  `npm test`: 1,480 of 1,482 pass (8 November); the 2 left are the map tests: Desert Mountain has no map shape until sign-off, and Florida Palms' and North Woods' own places fall just inside Lowcountry and Gulf's and Classic Parkland's shapes (8 November, the seven retirements included). Low was measured only on this
+  `npm test`, one file at a time: 1,482 of 1,486 pass (8 November, the deserts out and the last batch
+  in); the 3 left wait on the Mountain and Prairie & Sand Hills -- no map shape of their own until
+  sign-off, no menu pictures until captured -- and the palette clash found then is fixed. Low was measured only on this
   fast card; the smoke run has not been run on this branch. The tests and tools that named a
   retired key now name its replacement (8 November).
 - [ ] **Classic Parkland's tufted trees are signed off from captures, not played.** All 11 in the
@@ -62,24 +64,11 @@ golf looks, one tree style. The owner's feedback lives on the hosted page.
   (`ringIslands`, the far islets, no inland water on an island); Florida Palms, which replaced it, is
   mainland. The island-only tests went with it (water-terrain, landscape-water, far-woods); the
   code is unreachable and untested. The owner decides: remove it, or keep it for a later island.
-- [ ] **Desert Mountain waits for the owner's sign-off** (7 November): round 7 on the owner's notes --
-  orange-tan rock the colour of the props, long joined ranges laid first and the holes routed round
-  and along them (`range`, routing.js; round 8's smaller ranges, after the owner found an eighteen boxed in: about 30% of holes with a
-  rock wall within 40 m of their rough, short of the owner's 60% -- a shorter fade reached 40% but stood a fairway on a range, not understood), the land tilted
-  toward the big mountain, one big mountain on the horizon shaped on
-  Superstition Mountain (`ringMassif`), and about 1.5 holes in 18 teeing off a rocky outcrop with
-  only the tee cut flat (`rockTees`; the back tee, sometimes the middle one). Captured on seed FAIRWAY and the rock tee on seed TROON, not
-  played: check in the game a drive off the outcrop, the walk or cart path to its top (none climbs it
-  yet), and a ball landing on its rock flank. At sign-off it replaces the Sonoran, Mojave, Chihuahuan
-  and Red Rock. Until then a map test fails, as expected: it takes their map shape only through
-  OLD_KEYS; that test also finds Florida Palms' and North Woods' own places outside their shapes
-  (tools/us-map.mjs or their `where`). Seen in the 18-hole capture and not fixed: the entrance road climbs straight over a range.
-  Round 9 (8 November): three trials built as switches and captured on four seeds -- ranges on the
-  big mountain's side only (`range.side`, routing `frontTurn`), a bigger area (`spread`), both. The
-  owner picked one side: on since generator 96; no blind tee shots (quick tier), 17 rock tees over ten
-  eighteens. Owed: the five-view set on seed FAIRWAY in four seasons (card work, at the owner's word
-  after the 7 November crashes); `spread` stays in the code switched off. The `--no-clouds` capture switch does not hide the clouds;
-  look before using it again.
+- [ ] **Desert Mountain is signed off by the owner, from captures, not played** (8 November): the
+  Sonoran, Mojave, Chihuahuan and Red Rock have left (GENERATOR 97, SCHEMA 43); ponds about 1.5 in 18
+  (`pondShare` .37). Check in the game: a drive off a rock tee, the walk to its top (no path climbs
+  it), a ball on its rock flank. Not fixed: the entrance road can climb straight over a range (roads.js
+  `costGrid`). Owed: a smoke run (its map journey clicks Desert Mountain).
 - [ ] **Batch two is signed off by the owner, from captures, not played** (8 November): Pacific
   Northwest (`pacnw`), California Coast (`calcoast`) and Seaside Links (`seaside`) are in, and Puget
   Sound, Monterey, SoCal Canyons, Wine Country, Scottish Links, Oregon Dunes and Lake Dunes have left
@@ -91,17 +80,36 @@ golf looks, one tree style. The owner's feedback lives on the hosted page.
   Northwest now. Owed: a smoke run (its map journey clicks Seaside Links).
   Check on High: the new redwoods' far versions (tufts) were missing from the mesh build at first and
   drew whole crowns to the horizon (6.8 ms on Low); fixed, measured on Low only.
-- [ ] **The last batch: 22 pictures drawn, waiting for the owner** (8 November): Mountain (ponderosa
+- [ ] **The last batch is in the game** (8 November; Mountain, Northern Woods and Prairie & Sand Hills
+  signed off by the owner, from captures, not played -- the Rockies, Cascades, High Sierra, Ponderosa,
+  Sagebrush, Blue Ridge and Alaska have left for Mountain (GENERATOR 99), the Sand Hills, High Plains,
+  Bluebonnet Prairie and Hill Country for Prairie & Sand Hills (GENERATOR 100, SCHEMA 47); fifteen
+  landscapes; the Badlands waits for the owner): Mountain (ponderosa
   and lodgepole pine, Engelmann spruce, quaking aspen), Prairie and Sand Hills (plains cottonwood,
   hackberry, eastern red cedar), Badlands (green ash, Rocky Mountain juniper), Northern Woods (red pine,
   paper birch); packs tools/meshy/mountain.json, prairie.json, badlands.json, northwoods.json. The
   junipers came out as tall pines and the red cedars too open; the owner approved all 22 as they
   are. Models built (round 1; Engelmann spruce 2 round 2, `wood: "brown"`), far and game versions
-  made, waiting for the owner's review on the page. Not in the game.
+  made and approved by the owner. In the game (GENERATOR 98): Mountain (`mountains`) and Prairie &
+  Sand Hills (`prairie`) beside the landscapes they will replace; the Badlands and Northern Woods
+  (renamed from North Woods) with the new trees. Captured on seed FAIRWAY in four seasons, menu
+  pictures made; not played. Until their sign-off the map tests fail for the two new keys (no map
+  shape of their own).
 - [ ] **Pine needles under trees the landscape does not plant** (8 November): High Plains, Sand
-  Hills, Badlands, Hawaiian Resort, Hill Country, Bluebonnet, Cascades, High Sierra and Ponderosa take
+  Hills, Hawaiian Resort, Hill Country, Bluebonnet, Cascades, High Sierra and Ponderosa take
   `fallen` (pine, spruce, cedar) from their region and plant none of them, so no needles lie
-  anywhere. The last batch replaces most; give each survivor its own conifers then.
+  anywhere. The last batch replaces most; give each survivor its own conifers then. (The Badlands,
+  Northern Woods, Mountain and Prairie & Sand Hills name their own since 8 November.)
+- [ ] **The Badlands routed round its formations, waiting for the owner's look** (8 November;
+  GENERATOR 101, `formationShareOf`, `sink` 12, `reach` 30). Not played. The `upInto` bench trial
+  stays in landforms.js switched off.
+- [ ] **No cart paths, clubhouse, road or lot on a generated course** (8 November, the owner; course.js
+  `facilities`, off; GENERATOR 102). To bring back later: the public road must bend round the Badlands'
+  formations and Desert Mountain's ranges first (a to-do test in terrain-true). The landscape menu
+  pictures were taken with them and may still show a clubhouse or paths.
+- [ ] **Relief shading on the course map and the hole map is not seen in the game** (8 November;
+  src/map-relief.js). Check: hills light on their top-left faces on both maps (a hollow look means the
+  light is upside down), and a pan or zoom on the hole map does not stutter.
 - [ ] **Lowcountry and Gulf is signed off by the owner, from captures, not played** (7 November).
   Mist kept, the owner's call. The Lowcountry, Bayou and Gulf Coast have left. Owed: a smoke run. Check in
   the game: the `fronds` far palms and the dark patch low on Sabal palm 2's trunk.
@@ -2502,6 +2510,27 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+## US golf courses (branch `us-golf-courses`)
+
+- [x] **Desert Mountain, rounds 2-9** (signed off 8 November 2026) (7 November): round 7 on the owner's notes --
+  orange-tan rock the colour of the props, long joined ranges laid first and the holes routed round
+  and along them (`range`, routing.js; round 8's smaller ranges, after the owner found an eighteen boxed in: about 30% of holes with a
+  rock wall within 40 m of their rough, short of the owner's 60% -- a shorter fade reached 40% but stood a fairway on a range, not understood), the land tilted
+  toward the big mountain, one big mountain on the horizon shaped on
+  Superstition Mountain (`ringMassif`), and about 1.5 holes in 18 teeing off a rocky outcrop with
+  only the tee cut flat (`rockTees`; the back tee, sometimes the middle one). Captured on seed FAIRWAY and the rock tee on seed TROON, not
+  played: check in the game a drive off the outcrop, the walk or cart path to its top (none climbs it
+  yet), and a ball landing on its rock flank. At sign-off it replaces the Sonoran, Mojave, Chihuahuan
+  and Red Rock. Until then a map test fails, as expected: it takes their map shape only through
+  OLD_KEYS; that test also finds Florida Palms' and North Woods' own places outside their shapes
+  (tools/us-map.mjs or their `where`). Seen in the 18-hole capture and not fixed: the entrance road climbs straight over a range.
+  Round 9 (8 November): three trials built as switches and captured on four seeds -- ranges on the
+  big mountain's side only (`range.side`, routing `frontTurn`), a bigger area (`spread`), both. The
+  owner picked one side: on since generator 96; no blind tee shots (quick tier), 17 rock tees over ten
+  eighteens. The five-view set on seed FAIRWAY in four seasons retaken (7 November, one run at a time);
+  `spread` stays in the code switched off. Waiting for the owner's sign-off. The `--no-clouds` capture switch does not hide the clouds;
+  look before using it again.
 
 ## US landscapes (branch `course-builder`, from 2 November 2026)
 

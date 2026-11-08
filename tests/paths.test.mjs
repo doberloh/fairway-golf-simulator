@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {world} from './worlds.mjs';
+import {world as plainWorld} from './worlds.mjs';
+// Facilities are off on a generated course since 8 November 2026 (course.js `facilities`); these tests
+// turn them on to keep the parts working for when they return.
+const world = settings => plainWorld({facilities: true, ...settings});
 import {pathIndex} from '../src/paths.js';
 import {pathRelief, STANCE} from '../src/relief.js';
 import {GROUNDS, allows, isNatural} from '../src/grounds.js';
@@ -162,7 +165,7 @@ test('the paths are one network, joined where they meet', () => {
 // NOTHING BUILT ON A PATH (the owner, 31 October 2026: a path ran under the
 // Midwest farmhouse; 8 clubhouses in 15 courses had one under them).
 test('no building or house stands on a path, and the clubhouse\'s own path goes round it', () => {
- for (const biome of ['parkland', 'rockies', 'sonoran']) {
+ for (const biome of ['parkland', 'mountains', 'dmountain']) {
   const w = world({seed: 'PA-3', holes: 18, biome});
   for (const b of w.buildings) {
    // The clubhouse's own path runs up to its front (`door`), and no further.
@@ -229,7 +232,7 @@ test('a path end does not fold back on itself', () => {
 // once crossed dry-shod (Mountain W-3).
 import {unbridgedWater} from '../src/paths.js';
 test('every path over water is a bridge', () => {
- for (const [biome, seed] of [['rockies', 'W-3'], ['parkland', 'W-1'], ['redwood', 'W-2'], ['pacnw', 'W-4']]) {
+ for (const [biome, seed] of [['mountains', 'W-3'], ['parkland', 'W-1'], ['redwood', 'W-2'], ['pacnw', 'W-4']]) {
   const w = world({seed, holes: 9, biome, water: 80, lakes: 1, creeks: 2});
   const bad = unbridgedWater(w.paths, w.bridges, (x, z) => w.surface(x, z) === 'water');
   assert.equal(bad.length, 0, `${biome} ${seed}: ${bad.length} path points on water off a bridge`);
@@ -250,7 +253,7 @@ test('cart paths loop back instead of ending, and round their corners', async ()
   assert.equal(s.sharp.length, 0, `${biome} ${seed}: a sharp corner (${Math.round(s.worstTurn)} degrees)`);
  }
  let ends = 0, sharp = 0, pieces = 0;
- for (const [biome, seed] of [['parkland', 'PA-1'], ['parkland', 'PA-3'], ['pacnw', 'PA-4'], ['rockies', 'PA-1'], ['rockies', 'PA-2'], ['rockies', 'PA-3'], ['rockies', 'PA-4'], ['seaside', 'PA-1'], ['seaside', 'PA-2'], ['seaside', 'PA-3']]) {
+ for (const [biome, seed] of [['parkland', 'PA-1'], ['parkland', 'PA-3'], ['pacnw', 'PA-4'], ['mountains', 'PA-1'], ['mountains', 'PA-2'], ['mountains', 'PA-3'], ['mountains', 'PA-4'], ['seaside', 'PA-1'], ['seaside', 'PA-2'], ['seaside', 'PA-3']]) {
   const w = world({seed, holes: 9, biome}), s = pathShape(w.paths, w.buildings);
   ends += s.looseEnds.length; sharp += s.sharp.length; pieces += w.paths.length;
  }

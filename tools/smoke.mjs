@@ -2014,8 +2014,8 @@ const JOURNEYS = [
     if (v.globes !== BIOME_KEYS.length) throw new Error(`${v.globes} globes for ${BIOME_KEYS.length} landscapes`);
    });
    await t.step('a region pressed on the map picks its landscape', async () => {
-    await t.page.click('#drawer .lmap-land.live[data-land="sonoran"]');
-    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="sonoran"]')?.classList.contains('active')), 'Sonoran chosen', 3 * SLOW);
+    await t.page.click('#drawer .lmap-land.live[data-land="dmountain"]');
+    await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="dmountain"]')?.classList.contains('active')), 'Desert Mountain chosen', 3 * SLOW);
     await t.page.click('#drawer .lmap-land.live[data-land="seaside"]');
     await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="seaside"]')?.classList.contains('active')), 'Seaside Links chosen', 3 * SLOW);
    });

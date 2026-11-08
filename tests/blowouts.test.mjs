@@ -44,7 +44,7 @@ const WATER = {rivers: 1, creeks: 2, water: 60, lakes: 1};
 
 test('a Sand Hills course has open sand in its dune rough, and nowhere it should not', () => {
  for (const seed of ['S1', 'S2']) {
-  const w = generateWorld({seed, biome: 'sandhills', holes: 9, trees: 60, homes: true, ...WATER});
+  const w = generateWorld({seed, biome: 'prairie', holes: 9, trees: 60, homes: true, ...WATER});
   assert.ok(w.blowouts, 'the field is built');
   let rough = 0, blow = 0;
   for (let x = -w.halfX; x < w.halfX; x += 7) for (let z = -w.halfZ; z < w.halfZ; z += 7) {

@@ -327,8 +327,14 @@ const RECIPES = {
  badlands(o, seed) {
   const sc = saltOf(seed, 'badl-cluster'), sf = saltOf(seed, 'badl-floor');
   const {height: carved, cluster} = carvedField(o, seed, 'near');
+  // UP INTO THE BADLANDS (`upInto`, metres; the owner, 8 November 2026, a preview: "what it would look
+  // like if the course actually went up into the mountains ... little to no extra room on the sides of
+  // the fairway"): near a hole the ground is a smooth bench rising with the formations (their `cluster`
+  // field's broad rise, up to `upInto` metres over several hundred) instead of the prairie, and the carving returns at full height over
+  // the recipe's `reach` -- so a hole climbs onto the tables with the gullies and spires close beside.
+  // Off by default. PLACED.
   const shape = (x, z, fade) => {
-   let t = carved(x, z) - (1 - fade) * o.sink;
+   let t = o.upInto ? o.upInto * smooth(.35, .65, fbm(x / 900, z / 900, sc + 7, 2)) * (1 - fade) + carved(x, z) * fade : carved(x, z) - (1 - fade) * o.sink;
    if (t <= 0) return 0;
    // The foot rounds into the grass over a couple of metres.
    t = t * t / (t + 2);
@@ -337,6 +343,8 @@ const RECIPES = {
   };
   return {
    sinks: true,
+   // Routed round (`formationShareOf`): course.js moves this field with the course's `shift`.
+   routed: !!o.routed,
    needsSlope: true,
    needsHeight: true,
    lift: (x, z, fade = 1) => shape(x, z, fade) + o.swale * (fbm(x / 160, z / 160, sc + 3, 2) - .5) * fade,
@@ -832,6 +840,17 @@ export const fallenAt = (field, x, z) => Math.abs(x) < field.ex && Math.abs(z) <
 // THE RANGES' FIELD (`knobs` `range`): their share of full height at (x, z), 0 on the floor. Its own
 // function because the routing reads it before any ground exists (routing.js, Desert Mountain round
 // 6: holes routed along the floor between the ranges, so they wrap round them).
+// THE BADLANDS' FORMATIONS FOR THE ROUTING (`routed`; the owner, 8 November 2026: "Let's do the same
+// kind of desert routing work while still keeping the badlands look"): where the carving stands over
+// 2 m, rising to 1 by 12 m, from the same field the landform draws (`carvedField` 'near'), so
+// routing.js treats the formations as Desert Mountain's ranges -- no hole on them, most holes up
+// against them. Null for a recipe without it. PLACED.
+export function formationShareOf(o, seed) {
+ if (o?.type !== 'badlands' || !o.routed) return null;
+ const {height} = carvedField(o, seed, 'near');
+ return (x, z) => smooth(2, 12, height(x, z));
+}
+
 export function rangeShareOf(o, seed) {
  const R = o?.range;
  if (!R) return null;

@@ -101,8 +101,12 @@ export const WEEKLY_ROTATION = {
   // California Coast (PLACED, the week after).
   {debut: 201, biome: 'calcoast'},
   // Seaside Links (PLACED, the week after).
-  {debut: 202, biome: 'seaside'}],
- retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines', lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf', keys: 'flpalms', flatwoods: 'flpalms', hawaii: 'hiresort', desertresort: 'dresort', palms: 'dresort', puget: 'pacnw', monterey: 'calcoast', socal: 'calcoast', winecountry: 'calcoast', links: 'seaside', oregondunes: 'seaside', lakedunes: 'seaside'},
+  {debut: 202, biome: 'seaside'},
+  // Mountain (PLACED, the week after).
+  {debut: 203, biome: 'mountains'},
+  // Prairie and Sand Hills (PLACED, the week after).
+  {debut: 204, biome: 'prairie'}],
+ retired: {haunted: 'parkland', newengland: 'parkland', oldnortheast: 'parkland', heartland: 'parkland', bluegrass: 'parkland', ozarks: 'parkland', crosstimbers: 'parkland', piedmont: 'southpines', longleaf: 'southpines', pinebarrens: 'southpines', lowcountry: 'lowgulf', bayou: 'lowgulf', gulfcoast: 'lowgulf', keys: 'flpalms', flatwoods: 'flpalms', hawaii: 'hiresort', desertresort: 'dresort', palms: 'dresort', puget: 'pacnw', monterey: 'calcoast', socal: 'calcoast', winecountry: 'calcoast', links: 'seaside', oregondunes: 'seaside', lakedunes: 'seaside', sonoran: 'dmountain', mojave: 'dmountain', chihuahuan: 'dmountain', redrock: 'dmountain', rockies: 'mountains', cascades: 'mountains', sierra: 'mountains', ponderosa: 'mountains', sagebrush: 'mountains', blueridge: 'mountains', alaska: 'mountains', sandhills: 'prairie', highplains: 'prairie', bluebonnet: 'prairie', hillcountry: 'prairie'},
 };
 export function biomeForWeek(w, rotation) {
  let keys = rotation.nine, start = 0, lead = null;

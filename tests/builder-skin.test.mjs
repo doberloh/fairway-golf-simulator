@@ -36,7 +36,7 @@ test('every landscape names what its faces and aprons are', () => {
  // Chambers Bay's dunes, seen in the builder: no grey rock on a dune.
  assert.deepEqual(skinKinds(BIOMES.seaside), {face: 'native', apron: 'heather'});
  assert.deepEqual(skinKinds(BIOMES.badlands), {face: 'rock', apron: 'hardpan'});
- assert.equal(skinKinds(BIOMES.rockies).apron, 'scree');
+ assert.equal(skinKinds(BIOMES.mountains).apron, 'scree');
 });
 
 test('a butte gets rock on its sides, its apron below, grass on its top and the plain', () => {

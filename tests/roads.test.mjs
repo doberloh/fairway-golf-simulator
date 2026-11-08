@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {world} from './worlds.mjs';
+import {world as plainWorld} from './worlds.mjs';
+// Facilities are off on a generated course since 8 November 2026 (course.js `facilities`); these tests
+// turn them on to keep the parts working for when they return.
+const world = settings => plainWorld({facilities: true, ...settings});
 import {roadOnPlay, roadOnHouse, lotSize, pastBoundary, ROAD_WIDTH, STREET, driveEnd, driveFrame, mailboxAt} from '../src/roads.js';
 import {pathIndex, pathShape, unbridgedWater} from '../src/paths.js';
 import {outOfBounds} from '../src/physics.js';
@@ -10,7 +13,7 @@ import {inBuilding} from '../src/clubhouse.js';
 // the clubhouse's side of the property, the parking lot beside the clubhouse,
 // the drive between them -- and no road across a fairway, ever.
 
-const LANDS = ['heartland', 'pacnw', 'rockies', 'sonoran', 'seaside', 'newengland', 'keys'];
+const LANDS = ['heartland', 'pacnw', 'mountains', 'dmountain', 'seaside', 'newengland', 'keys'];
 const worlds = Object.fromEntries(LANDS.map(b => [b, world({seed: 'RD-1', holes: 9, biome: b})]));
 
 test('no road or lot lies on anything played', () => {
@@ -62,7 +65,7 @@ test('the lot has its streets kit: a wheel stop a stall, islands at the rows, po
 // the lot's ring of islands and is the landscape's own.
 test('the cart barn stands off play, and the lot\'s islands carry the landscape\'s trees', () => {
  let barns = 0;
- for (const biome of ['heartland', 'sonoran', 'keys']) {
+ for (const biome of ['heartland', 'dmountain', 'keys']) {
   const w = world({biome, holes: 9, seed: 'RD-1'}), barn = w.buildings.find(b => b.kind === 'cartbarn');
   if (barn) {
    barns++;
@@ -81,7 +84,7 @@ test('the cart barn stands off play, and the lot\'s islands carry the landscape\
 // THE STREETS (roads.js placeStreets, generator 84): every drive reaches a
 // street, every street reaches a road, and none of it touches what is played,
 // water or anything built.
-const ESTATES = ['heartland', 'newengland', 'sonoran', 'bayou', 'lowcountry', 'keys'].map(biome => world({seed: 'RD-1', holes: 9, biome, homes: true, homeDensity: 70, rivers: 1, creeks: 2, lakes: 1}));
+const ESTATES = ['heartland', 'newengland', 'dmountain', 'bayou', 'lowcountry', 'keys'].map(biome => world({seed: 'RD-1', holes: 9, biome, homes: true, homeDensity: 70, rivers: 1, creeks: 2, lakes: 1}));
 const ways = w => w.roads.filter(r => r.kind !== 'lane');
 
 test('every drive left reaches a street or a road, down a lane from its own end', () => {

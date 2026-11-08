@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {world, measured} from './worlds.mjs';
+import {world as plainWorld, measured} from './worlds.mjs';
+// Facilities are off on a generated course since 8 November 2026 (course.js `facilities`); these tests
+// turn them on to keep the parts working for when they return.
+const world = settings => plainWorld({facilities: true, ...settings});
 import {inBuilding, CLUBHOUSE_SIZE} from '../src/clubhouse.js';
 import {simulateShot} from '../src/physics.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
@@ -18,7 +21,7 @@ const A = biome => world({seed: 'CLUB-T', holes: 9, biome});
 // Every landscape's course, built on worker threads and measured there
 // (worlds.mjs `measured`; the testing audit, 31 October 2026). What each test
 // reads is in tests/measure/clubhouse.mjs.
-const EVERY = BIOME_KEYS.map(biome => ({seed: 'CLUB-T', holes: 9, biome}));
+const EVERY = BIOME_KEYS.map(biome => ({seed: 'CLUB-T', holes: 9, biome, facilities: true}));
 const M = await measured(EVERY, './measure/clubhouse.mjs');
 const of = s => M[EVERY.indexOf(s)];
 

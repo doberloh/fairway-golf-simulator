@@ -45,8 +45,8 @@ const UA = 'FairwayCourseBuilder/0.1 (testing; github.com/doberloh/fairway-golf-
 export const COURSES = {
  worthington: {name: 'Worthington Country Club', osm: 'way["leisure"="golf_course"]["name"~"Worthington Country Club|GreatLIFE"]', landscape: 'heartland'},
  sahalee: {name: 'Sahalee Country Club', osm: 'way(1002185812)', landscape: 'pacnw'},
- 'tpc-scottsdale': {name: 'TPC Scottsdale (Stadium)', osm: 'way(78388948)', landscape: 'sonoran'},
- breckenridge: {name: 'Breckenridge Golf Club', osm: 'way(1571231453)', landscape: 'rockies'},
+ 'tpc-scottsdale': {name: 'TPC Scottsdale (Stadium)', osm: 'way(78388948)', landscape: 'dmountain'},
+ breckenridge: {name: 'Breckenridge Golf Club', osm: 'way(1571231453)', landscape: 'mountains'},
  // On the Oregon Dunes, the Pacific links (the US landscapes goal, step 10;
  // PLACED: the study puts it "in the lowland, but built as Links").
  'chambers-bay': {name: 'Chambers Bay', osm: 'way(26787026)', landscape: 'seaside'},
