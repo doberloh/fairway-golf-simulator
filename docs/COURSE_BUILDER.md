@@ -152,7 +152,9 @@ wherever the search reached (Worthington's hole 3 on the practice green).
 The single biggest piece (stage 1). `worldFromDoc(doc)` returns the same world
 object `generateWorld` does, from stored data: height from a sampler over the
 land and patches through the same ground mesh, so the ball and the picture
-agree; surfaces from a baked field the shader and `surface()` both read; holes
+agree; surfaces from a baked field the shader and `surface()` both read (and
+since 8 November 2026 the green's and the tee's mowing read their edges from it
+too: ground.js `greenD=dGreen`, `teeBuilt`); holes
 from records; water from stored outlines and levels; trees from the list; the
 landscape's far ring past the property. Clubhouse, cart paths, markings and
 story are not carried in the first version. The test that proves it: a

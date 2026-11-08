@@ -672,7 +672,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float teeGround=0.;
  // The pad a fragment lies on, for its mowing (the polish goal): its signed
  // edge distance (negative inside) and the point in the pad's own frame.
- float teePadD=1e3;vec2 teeF=vec2(0.),teeAxis=vec2(0.,1.),teeHalf=vec2(1.);
+ float teePadD=1e3,teeBuilt=0.;vec2 teeF=vec2(0.),teeAxis=vec2(0.,1.),teeHalf=vec2(1.);
  // THE TEE'S OWN TURF (the far-landscape goal; TODO: "the tee pad reads as
  // one flat, very saturated green"). It wore the semi-rough's colour; a tee is
  // mown nearly as close as a fairway and kept like a green's surround, so its
@@ -780,6 +780,13 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   vec2 bu=(wp/extent+1.)*.5;vec4 ba=texture2D(field,bu),bb=texture2D(builtB,bu);
   float bR=${(2*BUILT_FIELD.range).toFixed(1)};
   float dSand=(.5-ba.r)*bR,dGreen=(.5-ba.g)*bR,dFair=(.5-ba.b)*bR,dTee=(.5-ba.a)*bR,dWater=(.5-bb.r)*bR,dSemi=(.5-bb.g)*bR,dGround=(.5-bb.a)*bR;
+  // THE GREEN'S EDGE IS THE BUILT GREEN'S (the owner, 8 November 2026: "the green
+  // mowing does not fully fill the whole green surface"). Everything below that
+  // reads greenD -- the clean-up lap round the edge, the collar's lap -- measured
+  // it from the hole row's own green, which on a built hole is only a skeleton:
+  // between that green and the course's traced one, the lap's plain tone took a
+  // wide band of the green where the diamonds should be.
+  greenD=dGreen;
   // The type with the most weight among the four texels round the point
   // (built-world.js builtGroundAt, in the same order: paint and lie agree).
   ivec2 bsz=textureSize(builtB,0),b0=ivec2(floor(bu*vec2(bsz)-.5));vec2 bf=fract(bu*vec2(bsz)-.5);
@@ -793,10 +800,16 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
   if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
   if(dGround<=0.&&gcode>9.5){turf=gcode>10.5?gt_road:gt_path;kind=1.;wildTop=0.;}
-  if(dTee<=0.){turf=teeTurf;kind=1.;teeGround=1.;wildTop=0.;}
+  // A BUILT TEE IS MOWN TOO (the owner, 8 November 2026: "tee boxes have no mow
+  // lines in builder"). Its edge is the built tee's own (dTee); its bands run
+  // with the hole's line of play (the hole frame, p), and its clean-up lap
+  // follows its outline (teeBuilt, in the mowing below). It had teePadD left
+  // at 1e3 above, so no tee on a built course was ever mown.
+  if(dTee<=0.){turf=teeTurf;kind=1.;teeGround=1.;wildTop=0.;teePadD=dTee;teeF=p;teeAxis=vec2(0.,1.);teeBuilt=1.;}
   if(dGreen<=builtFringe){turf=tint_fringe;kind=3.;wildTop=0.;}
   if(dGreen<=0.){turf=tint_green;kind=4.;}
   if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
+  if(kind>2.5)teePadD=1e3;
   else if(dSand<.35&&kind<2.5)turf=mix(turf,tint_sand,.20);
   // A pond's or lake's shore, as a generated pond's: a cut edge, the soil a
   // lip at the waterline, the mown turf brought down to it.
@@ -1130,6 +1143,11 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // against the view, in the pad's own frame.
   float re=.05,rr=${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)};
   vec2 tg=vec2(teeBox(teeF+vec2(re,0.),teeHalf,rr)-teeBox(teeF-vec2(re,0.),teeHalf,rr),teeBox(teeF+vec2(0.,re),teeHalf,rr)-teeBox(teeF-vec2(0.,re),teeHalf,rr));
+  // A built tee has no box: its outline's way is the edge distance's slope over
+  // the ground (as the green's lap reads it), turned into the hole's frame.
+  if(teeBuilt>.5){vec2 bx=dFdx(groundPoint.xz),by=dFdy(groundPoint.xz);float bdet=bx.x*by.y-bx.y*by.x;
+   vec2 bg=abs(bdet)>1e-8?vec2(by.y*dFdx(teePadD)-bx.y*dFdy(teePadD),bx.x*dFdy(teePadD)-by.x*dFdx(teePadD))/bdet:vec2(0.,1.);
+   tg=vec2(bg.x*tr.z-bg.y*tr.w,bg.x*tr.w+bg.y*tr.z);}
   vec2 vw=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vl=vec2(vw.x*tr.z-vw.y*tr.w,vw.x*tr.w+vw.y*tr.z),vt=vec2(vl.x*teeAxis.y-vl.y*teeAxis.x,vl.x*teeAxis.x+vl.y*teeAxis.y);
   float lapTone=-.5+.35*dot(normalize(vec2(-tg.y,tg.x)+1e-5),vt);
   // Round 5: the bands shade with the view too -- the passes run along the
@@ -1146,7 +1164,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // point) -- carries divots, filled with the sand-and-seed mix and left
   // paler. Quarter-metre cells, about one in seven, faded at the strip's
   // edges and with distance so they never shimmer. PLACED.
-  float zone=(1.-smoothstep(2.3,2.85,abs(teeF.x)))*smoothstep(-3.4,-2.8,teeF.y)*(1.-smoothstep(-.9,-.5,teeF.y));
+  // (Not on a built tee: its markers' place is not in the shader.)
+  float zone=(1.-smoothstep(2.3,2.85,abs(teeF.x)))*smoothstep(-3.4,-2.8,teeF.y)*(1.-smoothstep(-.9,-.5,teeF.y))*(1.-teeBuilt);
   // Round 5: each divot an oval, longer along the line of play the way a
   // divot is cut (about 7 x 11 cm), at its own spot in its cell -- the
   // round-4 squares were the cells themselves, and read as blocks close to.

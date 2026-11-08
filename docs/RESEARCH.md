@@ -15144,6 +15144,15 @@ floodlights.js `lampBudget` = (uniforms - 256) / 8, at most 96, at least 4 (256 
 the hole being played first, then nearest the ball. Retaken: all ten lit, no shader errors, 96 lamps
 each; the generated eighteen too. Not measured on a phone; a phone reporting 224 gets the nearest four.
 
+**Built courses' greens and tees mown (8 November 2026, hotfix 0.9.9).** The owner's screenshot of a
+built green showed a plain band inside the edge where the diamonds stopped; tees on built courses had
+no bands at all. Cause and fix in PROJECT_HANDOFF, *A BUILT COURSE'S MOWING READS THE BUILT EDGES*.
+Seen in the game on Worthington's 1st, Ekwanok's 2nd, TPC Scottsdale's 1st and Northwood's 1st
+(bench/courses), from above each green and from behind each back tee, before and after: the
+diamonds now run out to the 0.65 m clean-up lap at the traced edge, and the tees carry their 0.6 m
+bands and lap. The band's width before was the gap between the traced green and the row's skeleton
+green, so it varied by green. Generated courses do not take the block and are unchanged.
+
 **The bougainvillea's magenta (8 November 2026).** The owner's "glowing piece on desert resort": not
 lit differently (flowers take the plant's one toon material), but #c8288a, the summer accent, came
 out clipped to neon (about #ff10a0 on screen) in the game's light, and at night under the lamps it

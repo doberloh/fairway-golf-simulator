@@ -31,6 +31,10 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+- [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
+  the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
+  corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
+
 ## Release 0.9.8 (8 November 2026)
 
 - [ ] **Play 0.9.8 by hand.** Released at the owner's word, the website's demo redeployed with it.
@@ -2513,6 +2517,11 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+- [x] **Built courses' greens not mown to their edge, and their tees not mown at all** (the owner,
+  8 November 2026, with a screenshot). Fixed in ground.js (PROJECT_HANDOFF, *A BUILT COURSE'S MOWING
+  READS THE BUILT EDGES*), seen in the game on four bench courses; released as 0.9.9. Not played by
+  hand.
 
 - [x] **Desert Resort's bougainvillea is bright magenta under the floodlights** (7 November 2026).
   Fixed 8 November: its magenta (#c8288a) clipped to neon in the game's light by day and was the
