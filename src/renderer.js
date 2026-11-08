@@ -4,7 +4,7 @@ import {phoneLift,liftsView} from './phone-view.js';
 import {addStreams} from './streams.js';
 import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
 import {Line2} from 'three/addons/lines/Line2.js';
-import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
+import {polesFor,orderPoles,POLE_REACH,lampBudget} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
 import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
 import {aimTarget,createShotEffects} from './shot-visuals.js';
@@ -443,11 +443,10 @@ const FLOOD_INTENSITY=4200;
 // the mast: a taller pole aimed with the old cone lit a tighter circle from
 // further away, which is the opposite of what raising it was for.
 const FLOOD_CONE=1.15;
-// How many poles may be live lights at once. Set above the 141 the longest
-// eighteen-hole course produces, so in practice every pole is lit and the
-// nearest-first fallback never runs -- it exists so a future course that grows
-// past this degrades instead of stalling.
-const FLOOD_LAMP_CAP=192;
+// How many poles may be live lights at once: floodlights.js lampBudget, from
+// what this graphics card's shaders can hold (at most 96; 8 November 2026). It
+// was 192, above every course, until built courses of 121 lamps and more lost
+// their lit ground at night.
 // How far sunward of its slice a cascade's shadow camera starts, so trees that
 // stand that far off still throw their shadows in: 1 km, the same allowance the
 // view cull keeps for off-screen casters (instance-cull.js, shadowCap). Three's
@@ -2785,7 +2784,7 @@ export class GolfView{
   // off three skips the depth pass entirely, and a stale map behind a lamp at
   // zero intensity contributes nothing.
   const casters=this.floodCasters();
-  this.floodLamps=Array.from({length:Math.min(poles.length,FLOOD_LAMP_CAP)},(_,i)=>{
+  this.floodLamps=Array.from({length:Math.min(poles.length,lampBudget(this.renderer?.capabilities?.maxFragmentUniforms))},(_,i)=>{
    const lamp=new T.SpotLight('#fff4d2',0,POLE_REACH*2,FLOOD_CONE,.55,2);
    lamp.visible=false;lamp.intensity=0;
    lamp.castShadow=i<casters;
@@ -2882,12 +2881,11 @@ export class GolfView{
  // the ground the ball has already left.
  updateFloodlights(focus){
   if(!this.floodlit||!this.floodLamps)return;
-  // Every pole is lit while there are few enough of them to afford, which on any
-  // course this generator builds is all of them: a nine takes 57 and the longest
-  // eighteen 141, and measured on a night course the difference between four
-  // live lights and all of them is nothing -- 8.5 ms median either way, because
-  // none of them casts a shadow. Past the cap the nearest follow the ball, which
-  // is what the whole scene used to do.
+  // Every pole is lit while the card's shaders can hold them (lampBudget, at
+  // most 96): a nine takes 57, so all of it; an eighteen takes 98 to 141, so the
+  // nearest 96 follow the ball. Measured on a night course, four live lights
+  // and all of them cost the same, 8.5 ms median, because none casts a shadow;
+  // the limit is room in the shader, not time.
   // The hole being played gets the first lamps, and the first lamps are the ones
   // that cast shadows. Everything else lights the course without casting.
   const near=orderPoles(this.poles,this.course?.hole,focus,this.floodLamps.length);

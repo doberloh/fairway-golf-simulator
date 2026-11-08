@@ -4270,7 +4270,7 @@ holes (7.0-8.9 s before, 7.2-8.6 after) and about a second shorter on eighteen
 overlay.
 
 **Why it is two seconds at all: the floodlights.** Every pole is a spot light
-(57 on nine holes, 141 on the longest eighteen; `FLOOD_LAMP_CAP` is 192), and
+(57 on nine holes, 141 on the longest eighteen; `FLOOD_LAMP_CAP` was 192, and since 8 November 2026 at most 96 are live: `lampBudget`), and
 three writes the spot-light count into every lit material's program. With the
 cap set to 8 as an experiment, the same runs gave `compileAsync` 0-0.6 s
 instead of 2.0 on nine holes (once 2 ms: the menu backdrop had already built
@@ -15129,6 +15129,20 @@ the Sonoran, the Redwood Coast and Classic Parkland match picture for picture. A
 landscapes light as the old ones do; Desert Resort's dark grey band above the course is its limestone
 ranges, not the sky, and its bougainvillea shows bright magenta under the lamps. Asked the owner where
 it was seen. The owner: it was in the Course Builder; saved for later. The capture tool has a `h2-night` view for this now.
+
+**Found (8 November 2026): too many live lamps for the shaders.** Day and floodlit-night pictures
+of all fifteen bench courses (bench/courses, built from real courses) and two generated nines: ten of
+the built courses went flat dark blue at night, ground, turf and trees missing, with "THREE.WebGLProgram:
+Shader Error ... FRAGMENT shader uniforms count" in the console (MeshToonMaterial and
+MeshStandardMaterial). Every pole was a live spot light (`FLOOD_LAMP_CAP` 192). Poles and outcome:
+Nile Shrine 98, Battle Creek 115, Key West and Snohomish 116 held; Ekwanok 121, Sahalee and Salish
+Cliffs 124, Arcadia Bluffs 126, Druids Glen and Bully Pulpit 128, Chambers Bay and TPC Scottsdale 129
+failed; generated nines 57 held. The card reads `MAX_FRAGMENT_UNIFORM_VECTORS` 1024, so a lamp is
+about 8 vectors (failing between 116 and 121 leaves 56-96 for the rest of the shader). Generated
+eighteens reach 141 poles (a parkland eighteen on seed FAIRWAY: 100), so they broke too. Fix:
+floodlights.js `lampBudget` = (uniforms - 256) / 8, at most 96, at least 4 (256 and 96 PLACED),
+the hole being played first, then nearest the ball. Retaken: all ten lit, no shader errors, 96 lamps
+each; the generated eighteen too. Not measured on a phone; a phone reporting 224 gets the nearest four.
 
 **Batch two, the owner's review of the models (7 November 2026).** Approved 20 of 25. Sent back:
 western hemlock 1 ("a bunch of bowl cuts stacked"), coast redwood 2 ("the bowl cut look of the

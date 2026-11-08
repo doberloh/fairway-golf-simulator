@@ -303,6 +303,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The ground shader is a chain of `.replace()` anchors; every link is load-bearing, and `tests/ground-shader-structure.test.mjs` checks it. Never script a shader edit whose replacement you have not printed. [THE GROUND SHADER IS A CHAIN]
 - No backticks inside ground.js shader comments: the shader is a JS template literal. [NO BACKTICKS]
 - A uniform can be fully plumbed and still dead; keep cue uniforms on the wiring test. [A UNIFORM CAN BE FULLY PLUMBED]
+- Live floodlamps are room in every lit shader: past the card's budget the lit ground draws as nothing (floodlights.js `lampBudget`, at most 96). [A LIVE LAMP IS ROOM IN EVERY LIT SHADER]
 - The toon ramp flattens lighting at midday; a shape cue must change colour, not the lighting normal. [THE TOON RAMP]
 - textures.js patches three's ramp and tone-mapping chunks at import (coloured ramp, `GRADE`). [THE RAMP IS COLOURED]
 - Every lit fragment shader gets at most 16 texture units, and the ground is the hungriest; its four float tables are one texture (`packTables`), the hole table read by `texelFetch` -- PROJECT_HANDOFF *ONE TEXTURE FOR EVERY TABLE*. [HOLE_ATLAS] A hole's twelve hazard slots hold three kinds: bunkers, ponds (meta.y the pond's index) and a collection area (meta.y -1; Architect made them, nothing generates one now, and the slot stays for built courses); a bunker past them is the surface field's -- PROJECT_HANDOFF *THE SURFACE FIELD*.

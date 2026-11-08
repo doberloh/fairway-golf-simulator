@@ -1996,8 +1996,8 @@ const JOURNEYS = [
 
  // THE MAP OF THE LANDSCAPES (the US landscapes goal, 2 November 2026;
  // ui-map.js): Course studio's landscapes have the map over them and a globe
- // on every picture; a region pressed on the map picks its landscape, and the
- // landscape outside the map is its own button.
+ // on every picture; a region pressed on the map picks its landscape (every
+ // landscape is on the map since 5 November 2026).
  {
   name: 'landscape-map',
   what: 'Course studio: the map of the landscapes picks one, every picture carries its globe',
@@ -2010,13 +2010,31 @@ const JOURNEYS = [
     const v = await t.page.evaluate(() => ({live: new Set([...document.querySelectorAll('#drawer .lmap-land.live')].map(p => p.dataset.land)).size,
      coming: document.querySelectorAll('#drawer .lmap-land.coming').length, globes: document.querySelectorAll('#drawer .sd-pic .globe-corner svg').length}));
     console.log(`       ${v.live} landscapes to pick on the map, ${v.coming} shapes coming, ${v.globes} globes`);
-    if (v.live !== BIOME_KEYS.length - 1) throw new Error(`${v.live} landscapes on the map, not ${BIOME_KEYS.length - 1} (Scottish Links is beside it)`);
+    // Every landscape is on the map since Scottish Links left (5 November 2026).
+    if (v.live !== BIOME_KEYS.length) throw new Error(`${v.live} landscapes on the map, not ${BIOME_KEYS.length}`);
     if (v.globes !== BIOME_KEYS.length) throw new Error(`${v.globes} globes for ${BIOME_KEYS.length} landscapes`);
    });
+   // Pressed where the region is on top, as a player would: the middle of a
+   // region's box can be another region (Desert Mountain spans several states
+   // round a hollow, 8 November 2026), and a click there never reaches it.
+   const pressLand = async key => {
+    const at = await t.page.evaluate(k => {
+     for (const p of document.querySelectorAll('#drawer .lmap-land.live[data-land="' + k + '"]')) {
+      const r = p.getBoundingClientRect();
+      for (let j = 1; j < 80; j++) for (let i = 1; i < 80; i++) {
+       const x = r.left + r.width * i / 80, y = r.top + r.height * j / 80;
+       if (document.elementFromPoint(x, y)?.closest('.lmap-land')?.dataset.land === k) return {x, y};
+      }
+     }
+     return null;
+    }, key);
+    if (!at) throw new Error(key + ' has no point on the map a press reaches');
+    await t.page.mouse.click(at.x, at.y);
+   };
    await t.step('a region pressed on the map picks its landscape', async () => {
-    await t.page.click('#drawer .lmap-land.live[data-land="dmountain"]');
+    await pressLand('dmountain');
     await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="dmountain"]')?.classList.contains('active')), 'Desert Mountain chosen', 3 * SLOW);
-    await t.page.click('#drawer .lmap-land.live[data-land="seaside"]');
+    await pressLand('seaside');
     await t.until(() => t.page.evaluate(() => document.querySelector('#drawer [data-biome="seaside"]')?.classList.contains('active')), 'Seaside Links chosen', 3 * SLOW);
    });
    await t.step('a landscape picture pressed moves the map with it', async () => {
@@ -2070,7 +2088,9 @@ const JOURNEYS = [
   async run(t) {
    await menuReady(t);
    const {generatorFor, SCHEMA_VERSION} = await import('../src/settings-schema.js');
-   const settings = {biome: 'heartland', holes: 9, seed: 'HT-2'};
+   // A current landscape: an old key (heartland, before 8 November 2026) stamped with
+   // today's schema skips the migration that would carry it, and the store drops it.
+   const settings = {biome: 'parkland', holes: 9, seed: 'HT-2'};
    await t.step('the course in Saved courses, played', async () => {
     await t.page.evaluate(([s, g, v]) => {
      const key = 'fairway-courses-v1', d = JSON.parse(localStorage.getItem(key) || '{"version":1,"courses":[]}');

@@ -119,6 +119,24 @@ export function activePoles(poles, focus, limit = 4) {
   .map(p => p.pole);
 }
 
+// HOW MANY POLES MAY BE LIVE LIGHTS AT ONCE, on this graphics card (8 November
+// 2026). Every live spot light is a set of uniforms in every lit shader, and a
+// card holds only so many (MAX_FRAGMENT_UNIFORM_VECTORS: 1024 on this desktop,
+// 224 the least WebGL 2 promises). Past it the shaders fail to build and the
+// lit ground, turf and trees draw as nothing -- a course gone flat dark blue
+// at night, the owner's "broken night lighting" on a built course. Here they
+// failed at 121 lamps and held at 116; the course builder's real courses make
+// 98 to 129, and the longest generated eighteen 141. Measured, so not placed:
+// eight vectors a lamp (failing between 116 and 121 against 1024 leaves 56 to
+// 96 for the rest of the shader). PLACED: the 256 kept back for the rest, so a
+// heavier material than the ones measured still builds, and the cap of 96.
+// Fewer lamps than poles is the old way of lighting, the nearest following the
+// ball (orderPoles); at least four, the number that once lit the whole course.
+export const LAMP_UNIFORMS = 8, UNIFORMS_KEPT = 256, LAMP_CAP = 96, LAMP_FLOOR = 4;
+// No reading (a test's view has no graphics card): the cap.
+export const lampBudget = maxFragmentUniforms => !maxFragmentUniforms ? LAMP_CAP
+ : Math.max(LAMP_FLOOR, Math.min(LAMP_CAP, Math.floor((maxFragmentUniforms - UNIFORMS_KEPT) / LAMP_UNIFORMS)));
+
 // THE ORDER LAMPS ARE HANDED OUT IN, and it decides which poles cast shadows.
 //
 // A shadow-casting light is an extra depth render of the whole scene every

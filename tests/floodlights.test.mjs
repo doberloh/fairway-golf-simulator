@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld, fairwayWidth} from '../src/course.js';
-import {polesFor, activePoles, orderPoles, POLE_HEIGHT, POLE_SPACING, POLE_REACH} from '../src/floodlights.js';
+import {polesFor, activePoles, orderPoles, POLE_HEIGHT, POLE_SPACING, POLE_REACH, lampBudget, LAMP_CAP, LAMP_FLOOR} from '../src/floodlights.js';
 import {loadDaylight, MENU_HOURS, showcaseHour, roundHour, solarState, advance} from '../src/daylight.js';
 
 const world = generateWorld({seed: 'LIGHTS', holes: 9, water: 0, homes: false});
@@ -221,4 +221,22 @@ test('ordering survives a missing focus and an empty course', () => {
  const poles = [at(1, 5, 0), at(0, 1, 0)];
  assert.equal(orderPoles(poles, 1, null).length, 2, 'no focus is not a reason to go dark');
  assert.equal(orderPoles(poles, 1, null)[0].hole, 1);
+});
+
+// THE LAMPS A CARD CAN HOLD (8 November 2026): on this desktop's 1024 uniform
+// vectors the shaders failed at 121 live lamps and held at 116, and a course
+// gone dark blue at night was the result on ten built courses.
+test('no more live lamps than the graphics card can hold in its shaders', () => {
+ assert.equal(lampBudget(1024), 96, 'the desktop card: 96, under the 116 that held');
+ assert.ok(lampBudget(1024) < 116);
+ assert.equal(lampBudget(4096), LAMP_CAP, 'never past the cap');
+ assert.equal(lampBudget(224), LAMP_FLOOR, 'the least WebGL 2 promises: the nearest four');
+ assert.equal(lampBudget(undefined), LAMP_CAP, 'no card to read (a test view): the cap');
+ // A longest eighteen hands the nearest lamps out, the hole being played first.
+ const world = generateWorld({holes: 18, seed: 'FLOOD-LONG', biome: 'parkland'});
+ const poles = world.holes.flatMap(h => polesFor(h).map(p => ({...h.toWorld({x: p.x, z: p.z}), hole: h.hole})));
+ assert.ok(poles.length > lampBudget(1024), `an eighteen has more poles (${poles.length}) than lamps`);
+ const lit = orderPoles(poles, world.holes[3].hole, world.holes[3].worldTee, lampBudget(1024));
+ assert.equal(lit.length, 96);
+ assert.ok(lit.slice(0, polesFor(world.holes[3]).length).every(p => p.hole === world.holes[3].hole), 'the hole being played is lit first');
 });

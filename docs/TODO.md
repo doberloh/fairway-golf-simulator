@@ -56,10 +56,13 @@ golf looks, one tree style. The owner's feedback lives on the hosted page.
   not played** (7 November). The Keys, Florida Flatwoods, Hawaii, the first Desert Resort and Desert
   Palms have left (GENERATOR 93, SCHEMA 38). Owed: a smoke run (its map journey now clicks Florida
   Palms, not the Keys). Check in the game: the cactus and green-wood far versions, Florida's open scatter.
-- [ ] **Night lighting is broken in the Course Builder** (the owner, 7 November 2026; saved for
-  later at the owner's word). The game at night matches main and the last commit (RESEARCH, *Night
-  lighting*); the builder was not looked at. Also seen: Desert Resort's bougainvillea bright magenta
-  under the lamps.
+- [ ] **Desert Resort's bougainvillea is bright magenta under the floodlights** (7 November 2026,
+  seen while looking for the night problem below in Done). Not looked at further.
+- [ ] **Seaside Links is hard to press on the landscape map** (8 November 2026, the smoke run): its
+  region is thin coastal strips over other regions, so a player has to find a strip; the smoke
+  journey `landscape-map` now presses a point where each region is on top. Its picture works.
+- [ ] **Mountain's lupine has a brown disc floating beside it** (8 November 2026, the model pictures
+  for the status page, tools/capture/landscape-models.mjs). Not looked at further.
 - [ ] **The island code has no landscape** (7 November 2026). The Keys was the only ring island
   (`ringIslands`, the far islets, no inland water on an island); Florida Palms, which replaced it, is
   mainland. The island-only tests went with it (water-terrain, landscape-water, far-woods); the
@@ -2510,6 +2513,12 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+- [x] **Night lighting is broken in the Course Builder** (the owner, 7 November 2026). Fixed 8
+  November: every floodlight pole was a live lamp, and past about 118 the shaders run out of room and
+  the lit ground draws as nothing -- ten of the fifteen bench courses (98-129 poles) and long generated
+  eighteens. floodlights.js `lampBudget`: at most 96 live, nearest the ball; tests/floodlights.test.mjs.
+  Retaken in the game, all lit (RESEARCH, *Night lighting*). Not played by hand.
 
 ## US golf courses (branch `us-golf-courses`)
 
