@@ -79,6 +79,15 @@ check.
   the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
   the retaken pictures; play it (not played); the brittlebush is shardy close up.
 
+## Release 0.9.10 (9 November 2026)
+
+- [ ] **Play 0.9.10 by hand.** Released at the owner's word ("Merge this all back into main and
+  create a new patch version release, Push to github, and update and push the demo to the live
+  website"), the website's demo redeployed with it. The 22 remakes, the sumac, the lighter coast
+  greens and the barn, silo and ruin taken out were seen only in captures; Troon North's two
+  courses in the Course Builder's picker were tested, not seen (DISTRIBUTION_REVIEW, the addendum
+  for v0.9.10).
+
 ## Release 0.9.8 (8 November 2026)
 
 - [ ] **Play 0.9.8 by hand.** Released at the owner's word, the website's demo redeployed with it.
