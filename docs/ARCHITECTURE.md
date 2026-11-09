@@ -109,6 +109,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/textures.js`, `src/mesh-assets.js`, `src/asset-meshes.js` (generated; never edit) -- textures, wind, imported models
 - `src/instance-cull.js`, `src/occlusion.js`, `src/owner-atlas.js` -- drawing only what is seen, soft shade, ground ownership
 - `src/low-trees.js` -- Low's rule for drawing fewer trees, never the hole's (pure; tests/low-trees.test.mjs)
+- `src/built-field.js`, `src/bake-pool.js`, `src/bake-worker.js` -- a built course's field of distances to its outlines, baked in bands of rows on other cores (tests/built-field.test.mjs)
 - `src/ground-lod.js` -- the ground drawn as squares, coarser with distance, within a pixel or two of the ground the ball meets (pure; tests/ground-lod.test.mjs)
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
 - `src/map-relief.js` -- the maps' relief shading, lit from the top left of the screen (pure; tests/map-relief.test.mjs) [Relief on the maps]
