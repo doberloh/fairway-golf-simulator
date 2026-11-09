@@ -159,7 +159,15 @@ text to model was dropped before it ever ran):
    a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
    model's `paintLevel`, and `wood: "brown"` for a brown-barked tree whose dark trunk foot would
    otherwise send it down the green-wood split meant for palo verde and saguaro -- Engelmann spruce 2,
-   8 November 2026), triangles put in the order the card's vertex cache likes. Far versions are
+   8 November 2026), triangles put in the order the card's vertex cache likes. A model may also name
+   `accent` colours with the `plain` ones they are told from: those faces become a third part,
+   `accent`, painted from the species' accent colour (flowers; the paint keeps only light and dark,
+   so a magenta bract came out green or, by the wood test, bark), `leafColours` for faces that are leaf
+   whatever the wood test says (the cholla's pale joints), `stalks` to grow a thin stalk to each
+   piece of the flower part (Meshy drops pencil-thin stems: the muhly's plumes floated), `barkLevel`
+   to darken or lighten the bark's paint (it is measured from its own mean), `leafOnly` for a model with no
+   wood (a grass, the ocotillo's green canes), and `gameTris` to thin it first (the boulder). The
+   colours are read off with `tools/blender/meshy_colours.py`. Far versions are
    written in that form already, closed all round because the game draws one side.
    `tools/blender/meshy_parts.py` holds what the two share.
 
@@ -188,7 +196,17 @@ landscapes together and bring them into the game one at a time: tools/meshy/flor
 (coconut and royal palm, shipped in `vendor/blender-meshy_florida` as FlCoconut and FlRoyal),
 hawaiian.json (Cook pine, ironwood, monkeypod), deserttarget.json (four saguaros, palo verde,
 velvet mesquite) and desertres.json (Afghan and Aleppo pines, weeping willow, olive, date palm,
-Mexican fan palm). All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
+Mexican fan palm; since 9 November 2026 also the African sumac, shipped as DrSumac 1 and 2 under the
+plain `africansumac` key, its leaf lifted a step in the pack's `seasons` because the first conversion
+read near black-green in the game). The Redwood Coast's bigleaf maple and sapling became Meshy models the same night
+(the owner's Models to check): copies of the Pacific Northwest's bigleaf maple and the Redwood Coast's young
+redwood as RwBigleafMaple and RwSapling in vendor/blender-meshy_redwood2, because two kinds cannot share a
+model (tools/build-meshes.mjs refuses it); the maple's seasons moved to redwood2.json's `seasons`, or its autumn
+gold would have gone with the hand-built model. tools/meshy/remakes.json holds the hand-built plants the owner
+sent back (Mx names), shipped from vendor/blender-meshy_remakes in place of the bay laurel, madrone, plumeria,
+ocotillo, brittlebush, sagebrush, creosote, muhly grass, bougainvillea and round boulder, and since the same night the teddy-bear cholla (the family keeps its hand-built prickly pear and barrel); the five
+of those with season tints keep them in the pack's `seasons`. The plumeria ships no
+far version: its near model has a flower part the far one lacks, so they would not pair. All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
 
 **The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
 `vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new
@@ -888,7 +906,9 @@ across at 0.9 m tall -- vegetation.js `GRASS_WIDEST` squeezes it in.
 **Desert Resort (5 November 2026).** `cartoon_resort`: Afghan pine
 (`afghanpine`, a full layered egg to the ground with the trunk seen only near
 it), African sumac (`africansumac`, a broad crown on a fork, its tufts round
-the lobes) and pampas grass (`pampasgrass`, a mound of arching leaves and a
+the lobes; replaced by Meshy's on 9 November 2026 -- the owner, seeing it on the
+desert: "They don't look like anything we built" -- its builder kept as the record,
+no longer exported) and pampas grass (`pampasgrass`, a mound of arching leaves and a
 fan of cream plumes), sixteen rounds each, two variants, far twins for the two
 trees (about 5,000, 5,300 and 3,800 triangles at their largest). Lessons: a
 pine's egg is many small masses, not a few big ones (54 for the 16 m variant;

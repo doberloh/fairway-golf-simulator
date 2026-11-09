@@ -520,7 +520,8 @@ export const WORLD = {
   story: {walls: 'hedge', ruins: ['cottage']}, life: {grazers: ['deer', 3], heron: true},
   colours: {clubhouse: {stone: '#8b6a4a', bark: '#4f5b46', accent: '#ddd2bb', dirt: '#2c3438'}, riprap: '#7d7972', wall: '#c2b8a4', ruin: '#8f8c7e', bridgeStone: '#bdb6a6'}},
  desert: {edge: 'riprap', fountain: false, clubhouse: 'adobe', path: 'granite', bridge: 'wood',
-  story: {walls: null, ruins: ['cottage']}, life: {grazers: ['roadrunner', 2]},
+  // No ruin (the owner, Models to check, 9 November 2026: the desert cottage stood as one flat wall).
+  story: {walls: null, ruins: []}, life: {grazers: ['roadrunner', 2]},
   colours: {clubhouse: {stone: '#d7a77a', bark: '#7d5a3c', accent: '#8a5a36', dirt: '#3a2c26'}, riprap: '#b5865c', wall: '#c2b8a4', ruin: '#cfa27a', bridgeStone: '#bdb6a6'}},
  mountain: {edge: 'riprap', fountain: false, clubhouse: 'chalet', path: 'gravel', bridge: 'wood',
   // Split-rail fences, not field walls (the US landscapes goal's mountain pack).
@@ -672,7 +673,9 @@ PALETTES.south = {...PALETTES.midwest, name: 'The South', title: 'Magnolia Run',
  rough: '#6e7a3c', semi: '#4f8a3e', fairway: '#549a44', tree: '#3e6a30', sky: '#c4d6e2', sand: '#ece2c8', water: '#4a6e5e', altitude: 150, temperature: 27, treeKind: 'pine', sun: 44};
 INTERFACE.south = {panel: 'rgba(20,34,22,.88)', a1: '#fecdd3', a2: '#be185d', hot: '#fef3c7', soft: '#d8c8c4', onHot: '#2a0f18'};
 WORLD.south = {...WORLD.midwest, clubhouse: 'plantation', path: 'asphalt', bridge: 'wood',
- story: {walls: null, farm: true, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true, geese: 4},
+ // No barn and silo (the owner, Models to check, 9 November 2026: a Midwest barn read oddly at
+ // Pinehurst and in the Lowcountry).
+ story: {walls: null, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true, geese: 4},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#f2efe6', bark: '#5a5e62', accent: '#7a3a2a', dirt: '#2a3a2a', leaf: '#2a3a2a'}}};
 // Texas (phase 6): the Hill Country's rolling limestone, Ashe juniper and live
 // oak, post oak and pecan; bluebonnets in the rough; a limestone ranch house.

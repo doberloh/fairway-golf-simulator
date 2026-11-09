@@ -34,13 +34,59 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
-  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
-  like anything we built"). The dark round puff-ball trees on the desert are `africansumac`, both
-  of its hand-built Blender models (cartoon_resort.py; 5% of the course's plants and 10% of its
-  stands), the only Desert Resort tree not from Meshy. Queued: reference photos first, then
-  tools/meshy-run.mjs, as the other Meshy trees were (docs/BLENDER_ASSETS.md); planting it moves
-  Desert Resort's ground only if its share changes (fingerprint).
+- [ ] **Models to check: every remake in the game and approved, Low measured; not played** (9 November 2026, after the African sumac: "go
+  through the rest of the Landscape's and figure out if there's any other missed models that are
+  trees like this. Also look for any other model that doesn't look exactly right"). Every model a
+  9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
+  tools/capture/landscape-models.mjs. Four trees are still hand-built: the Redwood Coast's bay
+  laurel, madrone and bigleaf maple (the Pacific Northwest's Meshy maple would do) and its sapling,
+  Hawaiian Resort's plumeria, Desert Mountain's ocotillo. Ten other things look off: brittlebush
+  and sagebrush read as rocks; creosote looks dead; cholla like popcorn; muhly grass like a pale
+  rock; bougainvillea shapeless; the plain shrub a blob in six landscapes; coast live oak 1, shore
+  pine 1 and huckleberry nearly black; rocks with sticker-like patches; a Midwest barn in the
+  south and a one-wall desert ruin; western hemlock's nodding tip. Each is on the US golf status
+  page's Models to check with pictures. **The owner answered the same night.** Done, seen in
+  captures, not played: the bigleaf maple is the Pacific Northwest's Meshy maple and the sapling a
+  small Meshy young redwood (copied as RwBigleafMaple and RwSapling in vendor/blender-meshy_redwood2,
+  two kinds cannot share a model); coast live oak, shore pine and huckleberry two steps lighter;
+  no barn and silo in the south, no ruin in the desert (generator 103). Left as they are: the plain
+  shrub, the hemlock tip. On Meshy (tools/meshy/remakes.json, Mx names): one picture each of bay
+  laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, cholla, muhly grass,
+  bougainvillea and a plain round boulder, two models each (198 credits), on the page's Pictures to
+  review. **The owner picked 20 and sent the cholla back** ("This looks alien": giant fuzzy blobs).
+  The 20 are made (600 credits) and in the game from vendor/blender-meshy_remakes, in place of the
+  hand-built bay laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, muhly grass,
+  bougainvillea and round boulder; seen in captures (bench/shots/landscape-models/r17, r17b, r17c),
+  not played. The conversion gained a flower part (`accent`, tools/blender/meshy_game.py *FLOWERS*)
+  for the bougainvillea's magenta, the plumeria's cream, the ocotillo's red tips and the muhly's
+  plumes, which otherwise came out green or as bark; and `gameTris`, which thinned the boulder
+  from 1,550 triangles to 400. Creosote lifted, brittlebush and sagebrush toned down (vegetation.js
+  `shades`, PLACED by eye). The cholla redrawn as a real teddy-bear cholla, four pictures (36
+  credits) on the page; the owner picked one of each, made and shipped in place of the hand-built
+  teddy-bear cholla (the `cholla` family keeps its prickly pear and barrel), its pale joints read as
+  leaf by the pack's `leafColours` (the wood test took them for bark). The muhly sent back ("It looks
+  like a big yellow puff on top. We need to get some sort of separation"): redrawn with every plume on
+  its own stalk, four pictures (36 credits) on the page; and its plumes painted pink in summer
+  (vegetation.js `accents`, #a4ad74 to #d08cb0) -- the yellow was the summer table's, and Florida
+  Palms never leaves summer. The owner picked the third picture of each (made as `--round 2`, 60
+  credits); Meshy kept the plumes apart but dropped every stalk, so the conversion grows a thin green
+  stalk to each plume (`stalks`, meshy_game.py *STALKS*). Cholla 1 sent back ("colors are off. Make
+  them match cholla 2"): its joints lifted (`paintLevel` .95) and its trunk darkened (`barkLevel`
+  .45), measured against cholla 2 in the capture. Both on the page's Pictures to review as the game
+  draws them; the owner approved both ("Use both chollas", "use both of these as well") and asked for
+  everything in the game, with every landscape's models retaken for review. Frame check on Low run
+  (RESEARCH, *The remakes' frame cost on Low*): Redwood Coast's graphics +0.24 ms a frame (about 13%,
+  the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
+  the retaken pictures; play it (not played); the brittlebush is shardy close up.
+
+## Release 0.9.10 (9 November 2026)
+
+- [ ] **Play 0.9.10 by hand.** Released at the owner's word ("Merge this all back into main and
+  create a new patch version release, Push to github, and update and push the demo to the live
+  website"), the website's demo redeployed with it. The 22 remakes, the sumac, the lighter coast
+  greens and the barn, silo and ruin taken out were seen only in captures; Troon North's two
+  courses in the Course Builder's picker were tested, not seen (DISTRIBUTION_REVIEW, the addendum
+  for v0.9.10).
 
 ## Release 0.9.8 (8 November 2026)
 
@@ -2524,6 +2570,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+- [x] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
+  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
+  like anything we built"). The dark puff-ball trees were the hand-built `africansumac`, the only
+  Desert Resort tree not from Meshy. Eleven reference photographs (RESEARCH, *African sumac*), two
+  models in tools/meshy/desertres.json, the owner's pick of the four pictures (take 1 of each), 96
+  credits in all; shipped as Blender_DrSumac_1 and 2 in vendor/blender-meshy_desertres under the
+  same species key, with far versions; the hand-built ones no longer exported. The leaf lifted a
+  step (summer #6e9050) after the first look in the game read near black. Every landscape's
+  ground unchanged (fingerprint). Seen in captures, not played; the frame cost on Low not measured
+  (two models of about 12,500 triangles, like the pack's others, each with a far version).
 
 - [x] **Skin from the land on Desert Mountain** (the owner, 9 November 2026: "can we do that for
   the desert mountain course as well?"). One code path for every landscape already; TPC Scottsdale

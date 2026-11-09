@@ -533,7 +533,10 @@ export const SCHEMA_VERSION=47;
 //     paths ... We can maybe add them back later"; course.js `facilities`, off). The public road also
 //     keeps off ground steeper than 30% where it can (roads.js `ROAD_STEEPEST`), for when they return.
 //     Moved every landscape.
-export const GENERATOR_VERSION=102;
+// 103: No barn and silo in the south, no ruin in the desert (the owner's answers on the status page's
+//     Models to check, 9 November 2026: "Take both of these out of the game"; biomes.js WORLD.south and
+//     WORLD.desert `story`). Moved Southern Pines, Lowcountry and Gulf, Desert Mountain and Desert Resort.
+export const GENERATOR_VERSION=103;
 
 // THE ARCHITECT'S OWN VERSION -- RETIRED with the designer on 2 November 2026
 // (the owner). Its history, kept for the record of what Architect built:

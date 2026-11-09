@@ -13853,6 +13853,67 @@ built*, below.
 - **African sumac** (*Searsia lancea*): 20-30 ft to 30-40 ft, as wide; sources split on
   how weeping it is ([Wikipedia](https://en.wikipedia.org/wiki/Searsia_lancea),
   [Oregon State](https://landscapeplants.oregonstate.edu/node/795)). No Nevada source.
+  Remade on Meshy, 9 November 2026, from eleven photographs in
+  [Wikimedia Commons' Searsia lancea category](https://commons.wikimedia.org/wiki/Category:Searsia_lancea)
+  (Tempe, Berkeley, Clovis; Gauteng; saved locally): a short dark fissured trunk forking low
+  into crooked limbs, an open rounded crown as wide as tall or wider, fine willow-like leaves
+  drooping at their tips. A nursery listing gives 20-30 ft tall and 20-35 ft wide
+  ([Bradford Greenhouses](https://plants.bradfordgreenhouses.com/11090013/Plant/36492/African_Sumac)).
+  The two models are asked for 8 m by 10 m and 6 m by 6 m (PLACED inside species.js's 6-10 m);
+  the leaf colour (#6e9050 in summer) is PLACED from the approved pictures.
+- **The remakes** (the owner's Models to check, 9 November 2026; tools/meshy/remakes.json). Forms
+  asked of Meshy, from what each plant is: California bay laurel, several trunks and a dense rounded
+  dome; Pacific madrone, smooth orange-red peeling bark, an open crooked crown; plumeria, thick grey
+  candelabra limbs with leaf clusters and flowers at the tips (not the bare sticks of the hand-built
+  one); ocotillo, 10-20 straight grey-green canes from one point, leafed in short tufts, red flower
+  spikes; brittlebush, a silvery sage-green dome with yellow daisies on bare stalks; big sagebrush,
+  twisted woody stems under silvery blue-green tufts; creosote, an open vase of slender stems with
+  olive-green clumps (the hand-built one read as dead brown); teddy-bear cholla, a dark trunk and
+  fuzzy pale golden-green jointed arms; pink muhly grass, a green fountain with a pink haze on top;
+  bougainvillea, a green mound with magenta bract clusters, about half and half; a plain grey round
+  boulder with no moss patches (the round boulder's flat upward-face patches read as stickers).
+  Sizes PLACED inside each species' own; no outside source read this round. The owner picked 20 and
+  sent the cholla back: the first pictures were giant fuzzy yellow blobs on a trunk, where a real
+  teddy-bear cholla is a small knobbly cactus of hand-long, wrist-thick lumpy joints under a pale
+  halo of spines, with dead dark joints on the trunk; the prompt now says so and forbids fur and
+  blobs.
+- **The remakes in the game** (same night). Flower colours read off each model's texture
+  (tools/blender/meshy_colours.py, groups by area): bougainvillea bracts #c82467 and #bd6260 (23% of
+  the surface on model 1), plumeria flowers #eef1cc (7%), ocotillo tips #e14705 (14%), muhly plumes
+  #ec93a7 and #f57aaf (about 45%). Before the flower part, the wood test (green under 1.25 times red)
+  took the bracts and plumes for bark. Boulder thinned 1,550 to 400 triangles (the hand-built round
+  stones were about 250); thinned before the seams were joined it opened into shards, so they are
+  joined first. Shades PLACED by eye from the captures: creosote #5d6b39 to #6e8c3a (read dead
+  brown), brittlebush #a9b39b to #8a9c72 and sagebrush #9aa58c to #86987a (read white). The cholla's
+  joints (#a9b46c, #9ba962, #b8c078, #8b9757) passed the wood test and came out bark, 2,825 of 3,144
+  triangles; named as leaf colours, 2,406 are leaf. Muhly plumes pink in summer, #a4ad74 to #d08cb0,
+  and spring #9aa86a to #b89aa0 (PLACED by eye): in life the plumes come in September to November
+  and the summer clump is green, but the game's model always carries them and Florida Palms is
+  summer all year, so the owner saw a yellow puff. Departure kept on purpose. Cholla 1 matched to
+  cholla 2 by the capture's own pixels (mean RGB in a box): joints 102/138/70 against 111/142/73 once
+  its paint level went .82 to .95 (paint mean .66 to .77, cholla 2's .77); trunk 86/67/40 at the same
+  bark paint mean as cholla 2 (1.03 against 1.04) -- the paint is measured from each model's own
+  bark mean, and cholla 1's bark includes dark dead joints -- so darkened by .45 to 60/46/26 against
+  54/41/21. The muhly's grown stalks: four-sided, radius 0.7% of the plant's height tapering to
+  60%, from 12% of the height and a fifth of the way out toward each plume, to 30% into the plume;
+  320 and 304 triangles. PLACED by eye.
+- **The remakes' frame cost on Low** (9 November 2026, real GPU arm, RTX 4090 with Remote Desktop
+  holding the card near 35-40%): `tools/profile.mjs --only built --landscapes
+  redwood,dmountain,flpalms`, main's build (9f8273a, kept in a scratch worktree) against this
+  branch's, run main, branch, main. Graphics time per frame, generated course: Redwood Coast 1.84
+  and 1.86 ms on main against 2.09 on the branch (+0.24 ms, about 13%; 25.7 to 26.4 million
+  triangles drawn, 325 to 329 draws -- the bay laurel and madrone remakes); Desert Mountain 1.58
+  and 1.62 against 1.59 (creosote, cholla, ocotillo: flat, though the scene draws a million more
+  triangles); Florida Palms 0.95 and 0.96 against 0.95 (the muhly: flat). The frozen built copies
+  moved the same way. The first main run read the branch's processor time 0.2-0.4 ms higher on
+  every landscape, Florida Palms included; the second main run matched the branch within 0.1 ms,
+  so that was drift. Accepted: a quarter of a millisecond on one landscape, on a card this fast;
+  a weak card would see it scaled up, and the software arm (`--only weak`) was not run.
+- **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
+  #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
+  these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live
+  oak from 34 to 50, where the sumac had gone from 40 to 85, because their models carry darker
+  shading of their own; the second step brought them to 83 and 69. PLACED by eye.
 - **Pampas grass** (*Cortaderia selloana*): 2.5-4 m, spread 1.5-2.5 m, plumes 45-90 cm
   ([RHS](https://www.rhs.org.uk/plants/4431/wd/details)); nurseries give less
   ([Star Nursery](https://www.starnursery.com/product/pampas-grass)). RHS followed.

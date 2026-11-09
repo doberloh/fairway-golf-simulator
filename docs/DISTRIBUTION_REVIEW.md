@@ -1913,3 +1913,22 @@ built 3, profile 3: nothing a course or a save holds changed); **the package ver
 hundred bytes. **Checked:** the full tests (1,489, none failing), the fingerprints (unchanged), the
 full smoke set on this build, the fix seen in the game on four bench courses. **Not played by a
 person.**
+
+## Addendum, 9 November 2026: v0.9.10
+
+**v0.9.10** is published at the owner's request ("Merge this all back into main and create a new
+patch version release, Push to github, and update and push the demo to the live website"), as
+"Fairway 0.9.10 (beta)", tag `v0.9.10`, not a pre-release, the same six files, from the merge of
+`meshy-african-sumac` into `main` (which carries `desert-mountain-skin`, merged before it), notes in
+`docs/releases/v0.9.10.md`. Content: 22 Meshy remakes and the African sumac
+(vendor/blender-meshy_remakes, blender-meshy_desertres, blender-meshy_redwood2; ATTRIBUTION), the
+coast greens lightened, the southern barn and silo and the desert ruin removed, the built Desert
+Mountain skin and two-course boundaries. **Generator 103** (was 102: four landscapes' ground moved
+with the buildings), schema 47, built 3, profile 3, so a saved round on those four landscapes shows
+the version notice and 0.9.9's friend-challenge codes do not play (said in the notes). **Sizes:** the
+page 58.4 MB, each zip about 2.0 MB larger than 0.9.9's (Windows 103.4 MB, Linux 100.0 MB, Apple
+Silicon 89.2 MB, Intel 91.6 MB, source 33.6 MB). **Checked:** the full tests (1,490, none failing),
+the fingerprints (no unrecorded change), the packager's verification of every zip, a Low frame check
+of the remakes against main (RESEARCH, *The remakes' frame cost on Low*). **Not run:** the smoke
+set (no interface file changed since 0.9.9). **Not played by a person**: the plants were seen only
+in captures.

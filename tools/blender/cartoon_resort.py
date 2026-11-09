@@ -8,11 +8,12 @@
 # Silhouette first: the Afghan pine is a straight dark column of a tree, a tall
 # cone when young and an upright, irregular, open spire when old -- never the
 # Aleppo's leaning round head beside it. The African sumac is a dense low dome on
-# a short dark trunk with a fringe of drooping tips. Pampas grass is a fountain of
+# a short dark trunk with a fringe of drooping tips. (Since 9 November 2026 the game's
+# African sumac is Meshy's, tools/meshy/desertres.json; `africansumac` below stays as the
+# record and is no longer exported.) Pampas grass is a fountain of
 # long arching leaves with cream plumes standing well above it.
 #
 # REFS afghanpine=Blender_AfghanPine_1,Blender_AfghanPine_2
-# REFS africansumac=Blender_AfricanSumac_1,Blender_AfricanSumac_2
 # REFS pampasgrass=Blender_PampasGrass_1,Blender_PampasGrass_2
 import math, os, random, sys
 from mathutils import Vector
@@ -246,8 +247,6 @@ def pampasgrass(height, spread, leaves, plumes):
 MODELS = [
     ('Blender_AfghanPine_1', afghanpine(16, 10.5, 54, .16)),
     ('Blender_AfghanPine_2', afghanpine(11, 8, 46, .08)),
-    ('Blender_AfricanSumac_1', africansumac(8, 10.5, 5, 3)),
-    ('Blender_AfricanSumac_2', africansumac(6, 6.5, 3, 2)),
     ('Blender_PampasGrass_1', pampasgrass(3.2, 3.2, 150, 32)),
     ('Blender_PampasGrass_2', pampasgrass(2.5, 2.4, 120, 24)),
 ]
@@ -281,5 +280,5 @@ def tints(season):
 
 
 ct.export(MODELS, colours={'leaf': (0.30, 0.42, 0.24), 'bark': (0.45, 0.40, 0.33), 'accent': (0.80, 0.75, 0.60)},
-          far={'Blender_AfghanPine_1', 'Blender_AfghanPine_2', 'Blender_AfricanSumac_1', 'Blender_AfricanSumac_2'},
+          far={'Blender_AfghanPine_1', 'Blender_AfghanPine_2'},
           tints=tints(SEASON))

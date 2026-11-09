@@ -113,6 +113,24 @@
     "leaf": "#4a6238",
     "bark": "#6a6258"
    }
+  },
+  "bigleafmaple": {
+   "spring": {
+    "leaf": "#a6c45e",
+    "bark": "#6a6656"
+   },
+   "summer": {
+    "leaf": "#4f7e36",
+    "bark": "#6a6656"
+   },
+   "autumn": {
+    "leaf": "#d6b03a",
+    "bark": "#6a6656"
+   },
+   "winter": {
+    "leaf": "#4f7e36",
+    "bark": "#6a6656"
+   }
   }
  }
 }

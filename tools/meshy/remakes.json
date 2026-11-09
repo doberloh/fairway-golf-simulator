@@ -1,0 +1,435 @@
+{
+ "name": "remakes",
+ "note": "The models the owner sent back from the US golf status page's Models to check (9 November 2026): the last hand-built trees (the Redwood Coast's California bay laurel and Pacific madrone, Hawaiian Resort's plumeria) and the hand-built plants that did not look right (ocotillo, brittlebush, sagebrush, creosote, cholla, muhly grass, bougainvillea) and the round boulder whose flat moss patches looked stuck on. Each is named Mx (a remake) because the hand-built models hold the plain names. Forms from what each plant is in life (RESEARCH, *The remakes*); sizes PLACED inside the species' own. The plants are kept light in triangles because they are planted in their thousands (creosote 7,729 on one Desert Resort course). No wind-swept shapes, no strong S in a trunk, no foliage as sausages or cones, no broken tops (the owner's rules).",
+ "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and underneath, lighter toward the tips and the top. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
+ "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
+ "models": [
+  {
+   "name": "Blender_MxBayLaurel_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep olive green #4f7036. Bark grey-brown #6c6a58.",
+   "aspect": "3:4",
+   "prompt": "A California bay laurel growing under coast redwoods, 16 m tall and 12 m wide. Two or three grey-brown trunks rising together from the ground, gently leaning apart, clearly visible, without any strong S-curve. Rising limbs end in large soft rounded tufts of dense foliage, like fluffy clouds, with a lightly tufted scalloped edge. The tufts make a dense rounded dome crown with a bumpy outline, a little gap here and there showing a limb. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunks, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxBayLaurel_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage deep olive green #4f7036. Bark grey-brown #6c6a58.",
+   "aspect": "1:1",
+   "prompt": "A younger California bay laurel, 9 m tall and 8 m wide. One grey-brown trunk forking low into a few rising limbs, clearly visible. Each limb ends in one large soft rounded tuft of dense foliage, like a fluffy cloud, with a lightly tufted scalloped edge. The tufts make a rounded crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxMadrone_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage glossy deep green #3a6a36. Bark smooth orange-red #a8452a, paler where it peels.",
+   "aspect": "1:1",
+   "prompt": "A Pacific madrone at the edge of a redwood forest, 14 m tall and 12 m wide. A smooth orange-red trunk and limbs, peeling in thin paler patches, the trunk dividing at a third of its height into several crooked limbs that rise and spread, clearly visible, without any strong S-curve. Each limb ends in a large soft rounded tuft of foliage, like a fluffy cloud, with a lightly tufted scalloped edge. The tufts make an open irregular rounded crown with a bumpy outline, sky and red limbs showing between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxMadrone_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage glossy deep green #3a6a36. Bark smooth orange-red #a8452a, paler where it peels.",
+   "aspect": "3:4",
+   "prompt": "A younger Pacific madrone, 9 m tall and 7 m wide, leaning very slightly. A smooth orange-red trunk, peeling in thin paler patches, dividing at half its height into a few crooked rising limbs, clearly visible. Each limb ends in one large soft rounded tuft of foliage, like a fluffy cloud, with a lightly tufted scalloped edge. The tufts make an open uneven crown with a bumpy outline. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree is perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxPlumeria_1",
+   "target": 8000,
+   "far": 300,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #5a853a. Limbs smooth pale grey #8a8680. Flowers white with yellow centres.",
+   "aspect": "4:3",
+   "prompt": "A plumeria (frangipani) tree at a Hawaiian resort golf course, 6 m tall and 7 m wide, wider than it is tall. A short smooth pale grey trunk dividing low into many thick rounded grey limbs that fork again and again and rise and spread like a candelabra, clearly visible. Each limb tip carries a big rounded cluster of broad green leaves, like a soft tuft, with a small bunch of white flowers with yellow centres on top. The clusters make a broad open rounded crown, with sky and grey limbs showing between them. Paint the leaf clusters as solid three-dimensional forms, never as separate leaves: no fine detail, no thin lines, no thin wisps. No flat stars, no bare dead branches. The tree is perfectly still on a calm day. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "accent": [
+    "#eef1cc"
+   ],
+   "plain": [
+    "#589218",
+    "#67a425",
+    "#757867",
+    "#82ba43",
+    "#b1ce85"
+   ]
+  },
+  {
+   "name": "Blender_MxPlumeria_2",
+   "target": 8000,
+   "far": 300,
+   "farStyle": "tufts",
+   "colour": "Leaves mid green #5a853a. Limbs smooth pale grey #8a8680. Flowers white with yellow centres, a few pink.",
+   "aspect": "1:1",
+   "prompt": "A smaller plumeria (frangipani) tree at a Hawaiian resort, 4 m tall and 4 m wide. A short smooth pale grey trunk dividing into a few thick rounded forking grey limbs, clearly visible. Each limb tip carries a big rounded cluster of broad green leaves, like a soft tuft, with a small bunch of white and pink flowers on top. The clusters make an open rounded crown. Paint the leaf clusters as solid three-dimensional forms, never as separate leaves: no fine detail, no thin lines, no thin wisps. No flat stars, no bare dead branches. The tree is perfectly still on a calm day. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text.",
+   "accent": [
+    "#eccdc3"
+   ],
+   "plain": [
+    "#3c8e25",
+    "#367c23",
+    "#4a9731",
+    "#5aa939",
+    "#6bba40",
+    "#817c73",
+    "#a59e8c",
+    "#7cc54a"
+   ]
+  },
+  {
+   "name": "Blender_MxOcotillo_1",
+   "target": 4000,
+   "aspect": "3:4",
+   "colour": "Canes grey-green #7a7a5a. Leaves small bright green #6f8a45. Flowers red-orange.",
+   "prompt": "An ocotillo in the Sonoran desert, 5 m tall and 3 m wide. Fifteen to twenty long straight thin grey-green canes rising from one point at the ground and fanning out evenly like an open vase, each cane the same thickness from foot to tip, clearly separate with sky between them. Small bright green leaves cover each cane in short soft tufts along its length, and each cane ends in a slim tapering spike of red-orange flowers. Upright and even, perfectly still, nothing swept to one side, no curling canes. Paint the leaves as small solid forms along the canes, no fine detail, no thin wisps. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafOnly": true,
+   "accent": [
+    "#e14705",
+    "#bc4b07",
+    "#e23b09"
+   ],
+   "plain": [
+    "#4e5f0b",
+    "#59690f",
+    "#435108",
+    "#7d5c0b",
+    "#708a31",
+    "#87a638",
+    "#96b738",
+    "#5d6e29",
+    "#c07f23"
+   ]
+  },
+  {
+   "name": "Blender_MxOcotillo_2",
+   "target": 4000,
+   "aspect": "3:4",
+   "colour": "Canes grey-green #7a7a5a. Leaves small bright green #6f8a45. Flowers red-orange.",
+   "prompt": "A younger ocotillo in the Sonoran desert, 3 m tall and 2 m wide. Ten long straight thin grey-green canes rising from one point at the ground and fanning out like an open vase, each the same thickness from foot to tip, clearly separate with sky between them. Small bright green leaves cover each cane in short soft tufts along its length, and a few canes end in a slim spike of red-orange flowers. Upright and even, perfectly still, nothing swept to one side, no curling canes. Paint the leaves as small solid forms along the canes, no fine detail, no thin wisps. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafOnly": true,
+   "accent": [
+    "#e14705",
+    "#bc4b07",
+    "#e23b09"
+   ],
+   "plain": [
+    "#4e5f0b",
+    "#59690f",
+    "#435108",
+    "#7d5c0b",
+    "#708a31",
+    "#87a638",
+    "#96b738",
+    "#5d6e29",
+    "#c07f23"
+   ]
+  },
+  {
+   "name": "Blender_MxBrittlebush_1",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Leaves soft silvery sage green #9aae84, a little greener underneath. Flowers bright yellow daisies on bare stalks.",
+   "prompt": "A brittlebush in the Arizona desert, 1 m tall and 1.4 m wide. A low rounded dome of soft silvery sage-green leaves held in many small soft tufts, the green clearly a plant and not a stone, with a few short woody stems showing at the base. Above the dome, many thin bare stalks hold small bright yellow daisy flowers well clear of the leaves. Paint the leaves as small soft solid tufts, no fine detail, no thin wisps. Not grey, not a rock, no smooth lumps. Perfectly still, nothing swept to one side. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "wood": "brown"
+  },
+  {
+   "name": "Blender_MxBrittlebush_2",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Leaves soft silvery sage green #9aae84, a little greener underneath. Flowers bright yellow daisies.",
+   "prompt": "A small young brittlebush, 0.7 m tall and 1 m wide. A low rounded mound of soft silvery sage-green leaves in small soft tufts, clearly a plant and not a stone, short woody stems at the base, and a few thin stalks holding bright yellow daisy flowers just above. Paint the leaves as small soft solid tufts, no fine detail, no thin wisps. Not grey, not a rock, no smooth lumps. Perfectly still. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "wood": "brown"
+  },
+  {
+   "name": "Blender_MxSagebrush_1",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Leaves silvery blue-green #8fa07e. Stems twisted grey-brown #6a5d4e.",
+   "prompt": "A big sagebrush on the high plains, 1.2 m tall and 1.5 m wide. Several twisted grey-brown woody stems rising from the ground, clearly visible near the base, holding an irregular open rounded crown of silvery blue-green foliage in many small soft tufts, with gaps and stems showing between them. Clearly a shrub and not a stone. Paint the foliage as small soft solid tufts, no fine detail, no thin wisps. Not grey, not a rock, no smooth lumps. Perfectly still, nothing swept to one side. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxSagebrush_2",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Leaves silvery blue-green #8fa07e. Stems twisted grey-brown #6a5d4e.",
+   "prompt": "A smaller big sagebrush, 0.8 m tall and 1 m wide. A few twisted grey-brown woody stems at the base holding a low irregular crown of silvery blue-green foliage in small soft tufts, gaps showing a stem. Clearly a shrub and not a stone. Paint the foliage as small soft solid tufts, no fine detail, no thin wisps. Not grey, not a rock, no smooth lumps. Perfectly still. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxCreosote_1",
+   "target": 2500,
+   "aspect": "1:1",
+   "colour": "Leaves bright olive green #6e8a3a. Stems grey-brown #6a5a48. A few tiny yellow flowers.",
+   "prompt": "A creosote bush in the Mojave desert, 2 m tall and 2 m wide. Many slender grey-brown stems rising from the ground and spreading outward like an open vase, clearly visible, holding small rounded clumps of bright olive-green foliage along their upper half, with sky showing through the open bush. A few tiny yellow flowers. Healthy and green, not dry, not brown, not dead. Paint the foliage as small soft solid clumps, no fine detail, no thin wisps. Perfectly still, nothing swept to one side. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxCreosote_2",
+   "target": 2500,
+   "aspect": "1:1",
+   "colour": "Leaves bright olive green #6e8a3a. Stems grey-brown #6a5a48.",
+   "prompt": "A smaller creosote bush, 1.3 m tall and 1.4 m wide. Slender grey-brown stems rising from the ground and spreading outward like an open vase, holding small rounded clumps of bright olive-green foliage along their upper half, sky showing through. Healthy and green, not dry, not brown, not dead. Paint the foliage as small soft solid clumps, no fine detail, no thin wisps. Perfectly still. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_MxCholla_1",
+   "target": 3000,
+   "aspect": "3:4",
+   "colour": "Joints pale green-grey #a9b07a under a silvery straw halo of spines #d8d2a8. Dead joints and trunk dark brown-grey #4a4238.",
+   "prompt": "A teddy-bear cholla cactus in the Sonoran desert, 1.5 m tall and 0.8 m wide, shaped like a small upright cactus shrub. One short, thick, dark brown-grey trunk, rough and knobbly with old dead joints, rising to two thirds of the height, then many short stubby branches crowded together at the top. Every branch is a chain of small cylinder joints, each joint only a hand long and as thick as a wrist, lumpy with small rounded bumps in rows, joined end to end at slight angles. The joints are pale green-grey and covered in short dense straight silvery straw-coloured spines that make a thin bright pale halo around each joint, the green showing through. A few dark dead joints hang low on the trunk. The joints are small against the whole plant, dozens of them. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafColours": [
+    "#a9b46c",
+    "#9ba962",
+    "#b8c078",
+    "#8b9757"
+   ],
+   "plain": [
+    "#5c4d3d",
+    "#42332c"
+   ],
+   "paintLevel": 0.95,
+   "barkLevel": 0.45
+  },
+  {
+   "name": "Blender_MxCholla_2",
+   "target": 3000,
+   "aspect": "3:4",
+   "colour": "Joints pale green-grey #a9b07a under a silvery straw halo of spines #d8d2a8. Trunk dark brown-grey #4a4238.",
+   "prompt": "A young teddy-bear cholla cactus, 0.9 m tall and 0.6 m wide. A short dark brown-grey knobbly trunk with a cluster of short stubby branches at its top, each a chain of three or four small lumpy cylinder joints, each joint a hand long and wrist thick, with small rounded bumps in rows. The joints are pale green-grey under short dense straight silvery straw-coloured spines that make a thin bright pale halo around each one, the green showing through. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafColours": [
+    "#a9b46c",
+    "#9ba962",
+    "#b8c078",
+    "#8b9757"
+   ],
+   "plain": [
+    "#5c4d3d",
+    "#42332c"
+   ]
+  },
+  {
+   "name": "Blender_MxMuhly_1",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Blades mid green #6a8a4a. Plumes soft pink #d88ab0, paler at their tips.",
+   "prompt": "A clump of pink muhly grass in autumn bloom, 1 m tall and 1 m wide. A low dense fountain of thin arching mid-green blades, half the height. Rising from it, fifteen to twenty slender upright stalks fanning outward like a loose bouquet, each ending in its own airy pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafOnly": true,
+   "accent": [
+    "#f298ad",
+    "#fab9c5",
+    "#e37594",
+    "#c65479",
+    "#fbaebc",
+    "#f69bae",
+    "#e9869f",
+    "#d5708b",
+    "#b66373"
+   ],
+   "plain": [
+    "#719b28",
+    "#81a13b",
+    "#657d28",
+    "#6d9633",
+    "#507129"
+   ],
+   "stalks": true
+  },
+  {
+   "name": "Blender_MxMuhly_2",
+   "target": 2500,
+   "aspect": "4:3",
+   "colour": "Blades mid green #6a8a4a. Plumes soft pink #d88ab0, paler at their tips.",
+   "prompt": "A smaller clump of pink muhly grass in bloom, 0.8 m tall and 0.8 m wide. A low fountain of arching mid-green blades, and above it ten to twelve slender stalks spreading outward like a bouquet, each topped by its own pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafOnly": true,
+   "accent": [
+    "#f298ad",
+    "#fab9c5",
+    "#e37594",
+    "#c65479",
+    "#fbaebc",
+    "#f69bae",
+    "#e9869f",
+    "#d5708b",
+    "#b66373"
+   ],
+   "plain": [
+    "#719b28",
+    "#81a13b",
+    "#657d28",
+    "#6d9633",
+    "#507129"
+   ],
+   "stalks": true
+  },
+  {
+   "name": "Blender_MxBougainvillea_1",
+   "target": 4000,
+   "aspect": "4:3",
+   "colour": "Leaves mid green #4f7a36. Flower bracts magenta #c0307a in clusters.",
+   "prompt": "A bougainvillea shrub at a resort, 2.5 m tall and 3 m wide. A mounded green shrub of soft rounded leafy tufts on arching woody stems, its outline uneven and bumpy, with many clusters of bright magenta flower bracts scattered over the green, more toward the top and the tips. About as much green as magenta. Paint leaves and flowers as small soft solid clusters, no single petals or leaves drawn, no thin wisps. No big smooth lumps of colour. Perfectly still, nothing swept to one side. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "wood": "brown",
+   "accent": [
+    "#c82467",
+    "#bd6260",
+    "#ba3063",
+    "#b56f61"
+   ],
+   "plain": [
+    "#88b538",
+    "#9cb647",
+    "#809d32",
+    "#8ebe42",
+    "#9bc950",
+    "#868e41",
+    "#a88f50",
+    "#a8a759"
+   ]
+  },
+  {
+   "name": "Blender_MxBougainvillea_2",
+   "target": 4000,
+   "aspect": "1:1",
+   "colour": "Leaves mid green #4f7a36. Flower bracts magenta #c0307a in clusters.",
+   "prompt": "A smaller bougainvillea shrub, 1.6 m tall and 1.8 m wide. A mounded green shrub of soft rounded leafy tufts with clusters of bright magenta flower bracts scattered over it, about as much green as magenta. Paint leaves and flowers as small soft solid clusters, no single petals or leaves drawn, no thin wisps. No big smooth lumps of colour. Perfectly still. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "wood": "brown",
+   "accent": [
+    "#c82467",
+    "#bd6260",
+    "#ba3063",
+    "#b56f61"
+   ],
+   "plain": [
+    "#88b538",
+    "#9cb647",
+    "#809d32",
+    "#8ebe42",
+    "#9bc950",
+    "#868e41",
+    "#a88f50",
+    "#a8a759"
+   ]
+  },
+  {
+   "name": "Blender_MxBoulder_1",
+   "target": 1500,
+   "aspect": "4:3",
+   "colour": "Stone even light grey #a8a8a2, a little darker in its creases.",
+   "prompt": "A rounded weathered granite boulder lying in a meadow, 1.6 m wide and 1 m tall, with a flat underside. Smooth rounded lumpy form with a few soft creases and shallow cracks, slightly wider than it is tall. Plain light grey stone, no moss, no lichen, no patches, no spots, no stickers. Stylised cartoon game asset, matte hand-painted colour. Single stone alone, no ground, no grass, no base, no text.",
+   "gameTris": 400
+  },
+  {
+   "name": "Blender_MxBoulder_2",
+   "target": 1500,
+   "aspect": "4:3",
+   "colour": "Stone even light grey #a8a8a2, a little darker in its creases.",
+   "prompt": "A low rounded weathered boulder, 1.4 m wide and 0.7 m tall, with a flat underside, split by one soft crack across its top. Smooth rounded form with soft creases. Plain light grey stone, no moss, no lichen, no patches, no spots, no stickers. Stylised cartoon game asset, matte hand-painted colour. Single stone alone, no ground, no grass, no base, no text.",
+   "gameTris": 400
+  }
+ ],
+ "seasons": {
+  "baylaurel": {
+   "spring": {
+    "leaf": "#5b7a3e",
+    "bark": "#6c6a58"
+   },
+   "summer": {
+    "leaf": "#4f7036",
+    "bark": "#6c6a58"
+   },
+   "autumn": {
+    "leaf": "#4f7036",
+    "bark": "#6c6a58"
+   },
+   "winter": {
+    "leaf": "#56743a",
+    "bark": "#6c6a58"
+   }
+  },
+  "madrone": {
+   "spring": {
+    "leaf": "#3f6e3a",
+    "accent": "#f2eedc",
+    "bark": "#a8452a"
+   },
+   "summer": {
+    "leaf": "#3a6a36",
+    "accent": "#3a6a36",
+    "bark": "#a8452a"
+   },
+   "autumn": {
+    "leaf": "#3a6436",
+    "accent": "#d8502a",
+    "bark": "#a8452a"
+   },
+   "winter": {
+    "leaf": "#355f33",
+    "accent": "#c8402a",
+    "bark": "#a8452a"
+   }
+  },
+  "plumeria": {
+   "spring": {
+    "leaf": "#5f8a3e",
+    "bark": "#8a8680",
+    "accent": "#f6f0dc"
+   },
+   "summer": {
+    "leaf": "#5a853a",
+    "bark": "#8a8680",
+    "accent": "#f6f0dc"
+   },
+   "autumn": {
+    "leaf": "#6a8a3e",
+    "bark": "#8a8680",
+    "accent": "#f6f0dc"
+   },
+   "winter": {
+    "leaf": "#6a8a3e",
+    "bark": "#8a8680",
+    "accent": "#6a8a3e"
+   }
+  },
+  "bougainvillea": {
+   "spring": {
+    "leaf": "#4f7a36",
+    "accent": "#a03a72",
+    "bark": "#6a5a40"
+   },
+   "summer": {
+    "leaf": "#4f7a36",
+    "accent": "#a03a72",
+    "bark": "#6a5a40"
+   },
+   "autumn": {
+    "leaf": "#4f7a36",
+    "accent": "#b0583e",
+    "bark": "#6a5a40"
+   },
+   "winter": {
+    "leaf": "#5a8a3e",
+    "accent": "#8e4a70",
+    "bark": "#6a5a40"
+   }
+  },
+  "muhlygrass": {
+   "spring": {
+    "leaf": "#6a8a4a",
+    "accent": "#b89aa0"
+   },
+   "summer": {
+    "leaf": "#6a8a4a",
+    "accent": "#d08cb0"
+   },
+   "autumn": {
+    "leaf": "#7a8a52",
+    "accent": "#d28ab8"
+   },
+   "winter": {
+    "leaf": "#b0a080",
+    "accent": "#c0b090"
+   }
+  }
+ }
+}
