@@ -178,21 +178,41 @@
    "target": 3000,
    "aspect": "3:4",
    "colour": "Joints pale green-grey #a9b07a under a silvery straw halo of spines #d8d2a8. Dead joints and trunk dark brown-grey #4a4238.",
-   "prompt": "A teddy-bear cholla cactus in the Sonoran desert, 1.5 m tall and 0.8 m wide, shaped like a small upright cactus shrub. One short, thick, dark brown-grey trunk, rough and knobbly with old dead joints, rising to two thirds of the height, then many short stubby branches crowded together at the top. Every branch is a chain of small cylinder joints, each joint only a hand long and as thick as a wrist, lumpy with small rounded bumps in rows, joined end to end at slight angles. The joints are pale green-grey and covered in short dense straight silvery straw-coloured spines that make a thin bright pale halo around each joint, the green showing through. A few dark dead joints hang low on the trunk. The joints are small against the whole plant, dozens of them. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+   "prompt": "A teddy-bear cholla cactus in the Sonoran desert, 1.5 m tall and 0.8 m wide, shaped like a small upright cactus shrub. One short, thick, dark brown-grey trunk, rough and knobbly with old dead joints, rising to two thirds of the height, then many short stubby branches crowded together at the top. Every branch is a chain of small cylinder joints, each joint only a hand long and as thick as a wrist, lumpy with small rounded bumps in rows, joined end to end at slight angles. The joints are pale green-grey and covered in short dense straight silvery straw-coloured spines that make a thin bright pale halo around each joint, the green showing through. A few dark dead joints hang low on the trunk. The joints are small against the whole plant, dozens of them. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafColours": [
+    "#a9b46c",
+    "#9ba962",
+    "#b8c078",
+    "#8b9757"
+   ],
+   "plain": [
+    "#5c4d3d",
+    "#42332c"
+   ]
   },
   {
    "name": "Blender_MxCholla_2",
    "target": 3000,
    "aspect": "3:4",
    "colour": "Joints pale green-grey #a9b07a under a silvery straw halo of spines #d8d2a8. Trunk dark brown-grey #4a4238.",
-   "prompt": "A young teddy-bear cholla cactus, 0.9 m tall and 0.6 m wide. A short dark brown-grey knobbly trunk with a cluster of short stubby branches at its top, each a chain of three or four small lumpy cylinder joints, each joint a hand long and wrist thick, with small rounded bumps in rows. The joints are pale green-grey under short dense straight silvery straw-coloured spines that make a thin bright pale halo around each one, the green showing through. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text."
+   "prompt": "A young teddy-bear cholla cactus, 0.9 m tall and 0.6 m wide. A short dark brown-grey knobbly trunk with a cluster of short stubby branches at its top, each a chain of three or four small lumpy cylinder joints, each joint a hand long and wrist thick, with small rounded bumps in rows. The joints are pale green-grey under short dense straight silvery straw-coloured spines that make a thin bright pale halo around each one, the green showing through. It must read at once as a real desert cactus, like a photograph of a teddy-bear cholla simplified into a cartoon: never a tree, never fur, never balloons or blobs, nothing soft or plush. Upright and even, nothing swept to one side. Whole healthy cactus. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "leafColours": [
+    "#a9b46c",
+    "#9ba962",
+    "#b8c078",
+    "#8b9757"
+   ],
+   "plain": [
+    "#5c4d3d",
+    "#42332c"
+   ]
   },
   {
    "name": "Blender_MxMuhly_1",
    "target": 2500,
    "aspect": "4:3",
-   "colour": "Leaves fine green #6a8a4a. Flower haze soft pink-purple #d08cb8.",
-   "prompt": "A clump of pink muhly grass in autumn at a southern golf course, 1 m tall and 1.2 m wide. A dense rounded fountain of fine green grass leaves rising from one point, and above it a soft airy cloud of pink-purple flower heads, like a pink mist resting on top, through which the green shows a little. Paint the grass and the pink cloud as soft solid shapes with a lightly tufted edge, no single blades drawn, no thin lines. Not cream, not a rock. Perfectly still, nothing swept to one side. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "colour": "Blades mid green #6a8a4a. Plumes soft pink #d88ab0, paler at their tips.",
+   "prompt": "A clump of pink muhly grass in autumn bloom, 1 m tall and 1 m wide. A low dense fountain of thin arching mid-green blades, half the height. Rising from it, fifteen to twenty slender upright stalks fanning outward like a loose bouquet, each ending in its own airy pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
    "leafOnly": true,
    "accent": [
     "#ec93a7",
@@ -215,8 +235,8 @@
    "name": "Blender_MxMuhly_2",
    "target": 2500,
    "aspect": "4:3",
-   "colour": "Leaves fine green #6a8a4a. Flower haze soft pink-purple #d08cb8.",
-   "prompt": "A smaller clump of pink muhly grass, 0.7 m tall and 0.9 m wide. A rounded fountain of fine green grass leaves with a soft airy pink-purple cloud of flower heads resting on top. Paint the grass and the pink cloud as soft solid shapes with a lightly tufted edge, no single blades drawn, no thin lines. Not cream, not a rock. Perfectly still. Whole healthy plant. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
+   "colour": "Blades mid green #6a8a4a. Plumes soft pink #d88ab0, paler at their tips.",
+   "prompt": "A smaller clump of pink muhly grass in bloom, 0.8 m tall and 0.8 m wide. A low fountain of arching mid-green blades, and above it ten to twelve slender stalks spreading outward like a bouquet, each topped by its own pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
    "leafOnly": true,
    "accent": [
     "#ec93a7",
@@ -388,11 +408,11 @@
   "muhlygrass": {
    "spring": {
     "leaf": "#6a8a4a",
-    "accent": "#9aa86a"
+    "accent": "#b89aa0"
    },
    "summer": {
     "leaf": "#6a8a4a",
-    "accent": "#a4ad74"
+    "accent": "#d08cb0"
    },
    "autumn": {
     "leaf": "#7a8a52",

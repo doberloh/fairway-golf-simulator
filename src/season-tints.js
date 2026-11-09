@@ -146,7 +146,7 @@ export const SEASON_TINTS = {
  mtlodge: {"spring":{"leaf":"#4e6b3a","bark":"#8a6c4e"},"summer":{"leaf":"#4e6b3a","bark":"#8a6c4e"},"autumn":{"leaf":"#4e6b3a","bark":"#8a6c4e"},"winter":{"leaf":"#4e6b3a","bark":"#8a6c4e"}},
  mtponderosa: {"spring":{"leaf":"#4f6e3a","bark":"#b0683c"},"summer":{"leaf":"#4f6e3a","bark":"#b0683c"},"autumn":{"leaf":"#4f6e3a","bark":"#b0683c"},"winter":{"leaf":"#4f6e3a","bark":"#b0683c"}},
  mtspruce: {"spring":{"leaf":"#3f5e52","bark":"#6e5a4e"},"summer":{"leaf":"#3f5e52","bark":"#6e5a4e"},"autumn":{"leaf":"#3f5e52","bark":"#6e5a4e"},"winter":{"leaf":"#3f5e52","bark":"#6e5a4e"}},
- muhlygrass: {"spring":{"leaf":"#6a8a4a","accent":"#9aa86a"},"summer":{"leaf":"#6a8a4a","accent":"#a4ad74"},"autumn":{"leaf":"#7a8a52","accent":"#d28ab8"},"winter":{"leaf":"#b0a080","accent":"#c0b090"}},
+ muhlygrass: {"spring":{"leaf":"#6a8a4a","accent":"#b89aa0"},"summer":{"leaf":"#6a8a4a","accent":"#d08cb0"},"autumn":{"leaf":"#7a8a52","accent":"#d28ab8"},"winter":{"leaf":"#b0a080","accent":"#c0b090"}},
  mulesear: {"spring":{"leaf":"#7a9460","bark":"#9a6a1e","accent":"#e8c030"},"summer":{"leaf":"#8a9662","bark":"#9a6a1e","accent":"#e0b830"},"autumn":{"leaf":"#a08a5a","bark":"#a08a5a","accent":"#a08a5a"},"winter":{"leaf":"#8a7a5a","bark":"#8a7a5a","accent":"#8a7a5a"}},
  nobirch: {"spring":{"leaf":"#9cc070","bark":"#ece8e0"},"summer":{"leaf":"#6e9a44","bark":"#ece8e0"},"autumn":{"leaf":"#e8c040","bark":"#ece8e0"},"winter":{"leaf":"#6e9a44","bark":"#ece8e0"}},
  noblefir: {"spring":{"leaf":"#6f9a8a","bark":"#6e6a66","accent":"#6e5a7a"},"summer":{"leaf":"#4d7a72","bark":"#6e6a66","accent":"#7e7650"},"autumn":{"leaf":"#4a7670","bark":"#6e6a66","accent":"#8a6a44"},"winter":{"leaf":"#45706a","bark":"#6e6a66","accent":"#45706a"}},

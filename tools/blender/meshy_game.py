@@ -45,6 +45,16 @@ if len(accent_ref):
     near = lambda refs: ((col[:, None] - to_srgb(refs)[None]) ** 2).sum(2).min(1)
     accent = near(accent_ref) < near(plain_ref)
 wood = tree.wood & ~accent
+# `leafColours` (MESHY_LEAFCOL): faces nearer these than any `plain` colour are leaf whatever the wood
+# test said -- a teddy-bear cholla's pale yellow-green joints passed it (green under 1.25 times red).
+leaf_ref = linear(os.environ.get('MESHY_LEAFCOL', '').split(','))
+if len(leaf_ref):
+    if not len(plain_ref):
+        raise SystemExit('leaf colours need plain ones to tell them from')
+    to_srgb = lambda c: np.where(c <= .0031308, c * 12.92, 1.055 * np.clip(c, 0, 1) ** (1 / 2.4) - .055)
+    col = to_srgb(tree.colour)
+    near = lambda refs: ((col[:, None] - to_srgb(refs)[None]) ** 2).sum(2).min(1)
+    wood &= ~(near(leaf_ref) < near(plain_ref))
 if os.environ.get('MESHY_LEAFONLY'):
     wood = np.zeros(len(tree.tri), bool)
 leaf = ~wood & ~accent
@@ -52,6 +62,8 @@ if accent.any():
     tree.refs['accent'] = float(np.average(luminance(tree.colour[accent]), weights=tree.area[accent] + 1e-12))
     if leaf.any():
         tree.refs['leaf'] = float(np.average(luminance(tree.colour[leaf]), weights=tree.area[leaf] + 1e-12))
+if leaf.any() and not np.array_equal(leaf, ~tree.wood):
+    tree.refs['leaf'] = float(np.average(luminance(tree.colour[leaf]), weights=tree.area[leaf] + 1e-12))
 if wood.any() and not np.array_equal(wood, tree.wood):
     tree.refs['bark'] = float(np.average(luminance(tree.colour[wood]), weights=tree.area[wood] + 1e-12))
 _, weld = np.unique(np.round(tree.verts, 4), axis=0, return_inverse=True)

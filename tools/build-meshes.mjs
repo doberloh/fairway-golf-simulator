@@ -90,7 +90,9 @@ const PICK = {
  palotree: ['blender:Blender_Palo_1', 'blender:Blender_Palo_2', 'blender:Blender_Palo_3'],
  mesquitetree: ['blender:Blender_Mesquite_1', 'blender:Blender_Mesquite_2', 'blender:Blender_Mesquite_3'],
  saguaro: ['blender:Blender_Saguaro_1', 'blender:Blender_Saguaro_2', 'blender:Blender_Saguaro_3'],
- cholla: ['blender:Blender_Cholla_1', 'blender:Blender_Cholla_2', 'blender:Blender_PricklyPear_1', 'blender:Blender_Barrel_1'],
+ // The teddy-bear cholla from Meshy since 9 November 2026 (the owner's Models to check; the first pictures
+ // "look alien", the second taken); the family keeps its hand-built prickly pear and barrel.
+ cholla: ['blender:Blender_MxCholla_1', 'blender:Blender_MxCholla_2', 'blender:Blender_PricklyPear_1', 'blender:Blender_Barrel_1'],
  // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json): canes as leaf, red tips as flowers.
  ocotillo: ['blender:Blender_MxOcotillo_1', 'blender:Blender_MxOcotillo_2'],
  agaveplant: ['blender:Blender_Agave_1', 'blender:Blender_Agave_2'],

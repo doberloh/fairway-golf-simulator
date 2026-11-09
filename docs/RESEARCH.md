@@ -13884,7 +13884,12 @@ built*, below.
   took the bracts and plumes for bark. Boulder thinned 1,550 to 400 triangles (the hand-built round
   stones were about 250); thinned before the seams were joined it opened into shards, so they are
   joined first. Shades PLACED by eye from the captures: creosote #5d6b39 to #6e8c3a (read dead
-  brown), brittlebush #a9b39b to #8a9c72 and sagebrush #9aa58c to #86987a (read white).
+  brown), brittlebush #a9b39b to #8a9c72 and sagebrush #9aa58c to #86987a (read white). The cholla's
+  joints (#a9b46c, #9ba962, #b8c078, #8b9757) passed the wood test and came out bark, 2,825 of 3,144
+  triangles; named as leaf colours, 2,406 are leaf. Muhly plumes pink in summer, #a4ad74 to #d08cb0,
+  and spring #9aa86a to #b89aa0 (PLACED by eye): in life the plumes come in September to November
+  and the summer clump is green, but the game's model always carries them and Florida Palms is
+  summer all year, so the owner saw a yellow puff. Departure kept on purpose.
 - **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
   #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
   these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live

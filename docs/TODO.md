@@ -34,7 +34,7 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Models to check: the remakes are in, the cholla waits on its second pictures** (9 November 2026, after the African sumac: "go
+- [ ] **Models to check: the remakes are in, the muhly waits on its second pictures** (9 November 2026, after the African sumac: "go
   through the rest of the Landscape's and figure out if there's any other missed models that are
   trees like this. Also look for any other model that doesn't look exactly right"). Every model a
   9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
@@ -62,11 +62,15 @@ check.
   plumes, which otherwise came out green or as bark; and `gameTris`, which thinned the boulder
   from 1,550 triangles to 400. Creosote lifted, brittlebush and sagebrush toned down (vegetation.js
   `shades`, PLACED by eye). The cholla redrawn as a real teddy-bear cholla, four pictures (36
-  credits) on the page. **Owed:** the cholla's pick, model and shipping (the `cholla` family keeps
-  its prickly pear and barrel); a frame check on Low (asked, not run) -- the plants are planted in
-  thousands (creosote 7,729 on one course); and two that are weak in the game: the muhly is a hollow
-  shell of flakes, and stays tan even in autumn because every long grass is drawn part way to the
-  landscape's colours (vegetation.js `grassLook`, older than this); the brittlebush is shardy close up.
+  credits) on the page; the owner picked one of each, made and shipped in place of the hand-built
+  teddy-bear cholla (the `cholla` family keeps its prickly pear and barrel), its pale joints read as
+  leaf by the pack's `leafColours` (the wood test took them for bark). The muhly sent back ("It looks
+  like a big yellow puff on top. We need to get some sort of separation"): redrawn with every plume on
+  its own stalk, four pictures (36 credits) on the page; and its plumes painted pink in summer
+  (vegetation.js `accents`, #a4ad74 to #d08cb0) -- the yellow was the summer table's, and Florida
+  Palms never leaves summer. **Owed:** the muhly's pick, model (a new `--round`: its first models
+  are paid for) and shipping; a frame check on Low (asked, not run) -- the plants are planted in
+  thousands (creosote 7,729 on one course); the brittlebush is shardy close up.
 
 ## Release 0.9.8 (8 November 2026)
 
