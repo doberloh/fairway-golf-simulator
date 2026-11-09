@@ -15341,3 +15341,25 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
 - **First before/after, High, Dinosaur Mountain** (before the saguaro fix): frame -26% (17.3 to 12.5
   ms, mean of five views), triangles -27 to -33%, the worst frame 282 to 43 ms. The course's load
   went up 5-6 s (31-33 to 38 s): building the ground's squares and the far versions. Owed.
+- **Every tier on Dinosaur Mountain, after the saguaro fix** (ab3, against the starting build in the
+  same run; mean of six views): Low 7.8 to 3.6 ms (-54%; triangles 113-173 M to 9-16 M), Medium
+  9.0 to 4.8 (-47%), High 15.0 to 9.1 (-40%), Ultra 19.2 to 11.8 (-39%). Worst frames: High 51 to 28
+  ms, Ultra 153 to 34.
+- **Where High's frame went next** (frame-variants, tools/variants/built-large.mjs and
+  ground-shader.mjs): with the ground in 192 m squares it was ~350 draws a frame (each square into the
+  picture and three shadow maps) and the processor's time was mostly per-draw uniform uploads;
+  384 m squares cut the draws, but then drawing the ground was 40-65% of the card's frame -- not its
+  shading (every one of its cues off saved at most 2%, and 0.7 times the pixels only 12-22%) but its
+  full-detail squares: 0.5 m triangles far off, smaller than a pixel. **Settled:** full detail in 192
+  m squares, coarse squares on a 128-cell grid (a 384 m square of plain 3 m ground is one draw), and
+  the tolerance 2 picture pixels on High and Ultra, 3 Medium, 4 Low (PLACED; a CSS pixel on a screen
+  at twice its density). High at the first tee 8.2 to 7.4 ms, over hole 1 8.8 to 7.8, 250 m up 12.7
+  to 10.6. Rejected: thinning tree shadows from the nearest map (+2% to -9%, inside the noise).
+- **The builder's Game view opening** (builder-frames --profile, readable build): 16.3 of its 21 s of
+  "Building the course" was `bakeDistance`, the field of distances to every outline, on one core.
+  Rooting squared distances instead of `Math.hypot` gave the same bytes on all 17 bench courses and
+  saved nothing (65.1 s against 64.8 s for all 17) -- the cost is the texels within 6 m of every edge
+  of every ground type's outline, not the root -- so it was reverted. **Kept:** the bake moved to
+  src/built-field.js and run as bands of rows on up to eight workers (bake-pool.js), byte for byte
+  the whole field (tests/built-field.test.mjs). Building the course 21.4 to 5.3 s; Game view 45-51 to
+  29 s. Left: "Preparing the graphics" 18.9 s (shader programs) and drawing 4.7 s.

@@ -95,7 +95,7 @@ export const TIERS = {
   // The ground drawn coarser with distance (ground-lod.js; the frame-rate goal,
   // 9 November 2026): the most a square may stand off the ground the ball
   // meets, in pixels -- Low and Medium may look different (the owner). PLACED.
-  groundTolerance: 3,
+  groundTolerance: 4,
   // LOW DRAWS FEWER TREES, NEVER THE HOLE'S (the owner, 9 November 2026;
   // low-trees.js has the rule and its PLACED distances; instance-cull.js
   // draws it). Medium and up draw every tree.
@@ -161,7 +161,7 @@ export const TIERS = {
   // As low, a little later. PLACED.
   farPainted: .25,
   // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
-  groundTolerance: 2,
+  groundTolerance: 3,
   // Half a stand's understory: shrubs a ball passes through, so a share is
   // only a look (vegetation.js). PLACED.
   understory: .5,
@@ -212,7 +212,7 @@ export const TIERS = {
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
   // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
-  groundTolerance: 1,
+  groundTolerance: 2,
   understory: 1,
   longGrassReach: 190,
   // Shafts are composited additively over the finished frame, so this is how
@@ -291,8 +291,9 @@ export const TIERS = {
   // *Rules set aside*.
   farPainted: .03,
   // The ground drawn coarser with distance (ground-lod.js; 9 November 2026):
-  // the most a square may stand off the ground the ball meets, in pixels. PLACED.
-  groundTolerance: 1,
+  // the most a square may stand off the ground the ball meets, in the picture's own
+  // pixels (a CSS pixel on a screen at twice its density). PLACED.
+  groundTolerance: 2,
   // The whole understory of a stand (vegetation.js `under`).
   understory: 1,
   longGrassReach: 260,

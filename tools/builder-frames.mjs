@@ -6,6 +6,8 @@
 //   ... --page dist/builder.html       another build of the builder
 //   ... --frames 150 --label x         frames a sample; where the results go (bench/ab)
 //   ... --util 45 --temp 80 --rest 1   the gate's limits (tools/gpu-gate.mjs)
+//   ... --profile                      DevTools' sampling profiler over Game view's opening:
+//                                      the processor's self time by function, heaviest first
 //
 // WHY (the frame-rate goal, 9 November 2026). The owner: "i saw the slowdown
 // when loading the game view in the builder for the dinosaur mountain course".
@@ -104,10 +106,20 @@ try {
  await measure('editor', null, 'editor');
 
  // GAME VIEW: the button pressed to the game's picture shown and settled.
+ const cdp = flag('profile', false) ? await page.context().newCDPSession(page) : null;
+ if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', {interval: 200}); await cdp.send('Profiler.start'); }
  const t2 = await page.evaluate(() => performance.now());
  await page.locator('[data-gameview]').click();
  await page.waitForFunction(() => document.querySelector('[data-gameview]')?.textContent === 'Back to editor', null, {timeout: 600000});
  const t3 = await page.evaluate(() => performance.now());
+ if (cdp) {
+  const {profile} = await cdp.send('Profiler.stop');
+  const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n])), dt = profile.timeDeltas;
+  profile.samples.forEach((id, i) => { const n = byId.get(id).callFrame, key = `${n.functionName || '(anon)'} ${n.url.split('/').pop()}:${n.lineNumber}`; self.set(key, (self.get(key) || 0) + (dt[i] || 0)); });
+  console.log('  Game view opening, processor self time, heaviest first');
+  for (const [k, us] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)) console.log(`   ${(us / 1e6).toFixed(2).padStart(6)} s  ${k}`);
+  await cdp.detach();
+ }
  report('open Game view', t2, t3, await phases(t2, t3));
  await measure('game-open');
  const holes = await page.evaluate(() => document.querySelector('.cb-gamehole')?.options.length ?? 0);

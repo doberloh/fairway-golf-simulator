@@ -20,8 +20,10 @@
 // a mesh sharing the ground's attributes and switches them each frame.
 
 export const GROUND_LOD = Object.freeze({
- leafCells: 64,     // a leaf square's side in grid cells (192 m at 3 m)
- gridCells: 64,     // a coarser square's grid: 64 x 64 cells of its own spacing
+ leafCells: 64,     // a leaf square's side in grid cells (192 m at 3 m): the most drawn at full detail
+                    // in one piece (384 m leaves drew millions of sub-pixel triangles far off)
+ gridCells: 128,    // a square's grid: 128 x 128 cells of its own spacing, so a 384 m
+                    // square of plain 3 m ground is one draw (64 drew too many squares)
  skirtMin: 2,       // metres a skirt hangs below its edge at least
 });
 

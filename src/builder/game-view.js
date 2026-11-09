@@ -16,7 +16,8 @@
 // clock is the view's own here (`borrowedClock`, rate 0), so the player's saved
 // time of day is neither used up nor overwritten.
 import {GolfView} from '../renderer.js';
-import {worldFromDoc} from '../built-world.js';
+import {worldFromDoc, builtExtent} from '../built-world.js';
+import {bakeBuiltFieldPooled} from '../bake-pool.js';
 import {loadGraphics, QUALITY, QUALITY_LABELS} from '../graphics.js';
 import {clearOfGround, flyAxes, samePose} from './game-look.js';
 
@@ -128,7 +129,10 @@ export function createGameView(parent, {onBack, busy}) {
     if (fresh) {
      busy('Building the course…'); await breathe();
      hole.replaceChildren(...doc.holes.map((h, i) => make('option', {value: i, textContent: `Hole ${h.number}`})));
-     world = worldFromDoc(doc, {season: season.value});
+     // The field baked on other cores (bake-pool.js): 16 of the 21 seconds of
+     // building Dinosaur Mountain here, on one core, before 9 November 2026.
+     const {ex, ez} = builtExtent(doc), field = await bakeBuiltFieldPooled(doc, ex, ez);
+     world = worldFromDoc(doc, {season: season.value}, {field});
      await draw(pose);
     } else if (!samePose(pose, placedFrom)) view.placeCamera(pose.eye, pose.yaw, pose.pitch);
     placedFrom = pose;

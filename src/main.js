@@ -77,7 +77,8 @@ import {LANDSCAPE_SHOTS,EVERY_LANDSCAPE} from './landscape-shots.js';
 import {createPictureStore} from './course-pictures.js';
 import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
 import {createBuiltStore} from './built-store.js';
-import {worldFromDoc} from './built-world.js';
+import {worldFromDoc,builtExtent} from './built-world.js';
+import {bakeBuiltFieldPooled} from './bake-pool.js';
 import {isBuiltFile} from './course-doc.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
@@ -3586,7 +3587,11 @@ async function generateProgressively(next,onProgress){
   const doc=await builtStore.load(next.built);
   if(!doc)throw Error('This built course is no longer on this device. Open its .fairway file again.');
   builtStore.forget(next.built);
-  return worldFromDoc(doc,next);
+  // Its field baked on other cores first (bake-pool.js; the frame-rate goal):
+  // seconds of a large course's load, on one core, before.
+  const {ex,ez}=builtExtent(doc),field=await bakeBuiltFieldPooled(doc,ex,ez);
+  onProgress?.(.5);
+  return worldFromDoc(doc,next,{field});
  }
  // The ground grid's heights on other cores (gen-pool.js). Not for one hole --
  // the range, an endless hole -- where starting the workers costs more than
