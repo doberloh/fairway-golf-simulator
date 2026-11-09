@@ -7577,10 +7577,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     const e=groups[key]??={meshes:0,instances:0,triangles:0,held:0,alwaysDrawn:0};
     e.meshes++;e.instances+=n;e.triangles+=per*n;e.held+=held;if(!o.frustumCulled&&o.userData.cullTotal===undefined)e.alwaysDrawn++;
     const r=o.isInstancedMesh?(o.boundingSphere?.radius??null):(g.boundingSphere?.radius??null);
-    meshes.push({group:key,name:o.name||o.material?.type||'',instances:n,triangles:per*n,radius:r==null?null:Math.round(r),shadow:!!o.castShadow});
+    meshes.push({group:key,name:o.userData.model?`${o.userData.model} ${o.userData.role}${o.userData.farGeometry?' (has far)':''}`:(o.name||o.material?.type||''),perInstance:Math.round(per),instances:n,held,triangles:per*n,radius:r==null?null:Math.round(r),shadow:!!o.castShadow});
    });
    meshes.sort((a,b)=>b.triangles-a.triangles);
-   return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null,ready:view.readyTimes??null};
+   // `drawn`: by what is held in view now (instances held x triangles each), the
+   // heaviest in this frame rather than on the whole course.
+   const drawn=[...meshes].sort((a,b)=>b.held*b.perInstance-a.held*a.perInstance).slice(0,20);
+   return {groups,heaviest:meshes.slice(0,12),drawn,count:meshes.length,cull:view.cull?.stats()??null,ready:view.readyTimes??null};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuChallenges').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}challengeSetup=true;openPanel('round');};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openPlayOn('weekly',1);};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};

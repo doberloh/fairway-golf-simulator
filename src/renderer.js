@@ -65,6 +65,8 @@ import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starR
 import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET,PIN_FLAGS,pinBandOf} from './course.js';
 import {addVegetation,farWoodGeometry,snowTopped} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
+import {buildGroundLod, select as selectGround, nodeBox as groundNodeBox} from './ground-lod.js';
+import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
@@ -1125,6 +1127,11 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
+  // THE GROUND DRAWN COARSER WITH DISTANCE (ground-lod.js; the frame-rate goal,
+  // 9 November 2026). The mesh above is kept, undrawn, for its material, its
+  // shadow switch and its box; what is drawn is the quadtree's squares, each
+  // its own mesh over the same vertices, chosen every frame (updateGroundLod).
+  this.buildGroundLodMeshes(world.groundGrid,terrain);
   for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
   // A BUILT course's ponds and lakes (built-world.js): any outline, holes for
   // its islands, at its stored level -- the same water body a pond is.
@@ -1176,7 +1183,7 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
-  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0)});
+  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0),thinTrees:!!this.quality.thinTrees});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -2902,7 +2909,7 @@ export class GolfView{
    lamp.target.updateMatrixWorld();
   });
  }
- setHole(index,instant=false){this.registerCascadeMaterials();
+ setHole(index,instant=false){this.flownHole=undefined;this.registerCascadeMaterials();
   // Warmed again per hole, not only per course: the flag, the cup, the rings
   // and the ball's own materials are per-hole objects, and a first compile of
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
@@ -3383,7 +3390,55 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // The free camera put exactly somewhere, for measurements and screenshots that
  // must be taken from the same place every time (lab.camera). Angles in radians.
  placeCamera(eye,yaw,pitch){this.config.mode='free';this.wasFree=true;this.camFlight=null;this.trackingBall=false;this.targetPos.set(eye.x,eye.y,eye.z);this.freeYaw=yaw;this.freePitch=pitch;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.look);}
- flyToHole(index){const h=this.world.holes[index],p=h.toWorld({x:36,z:h.length-45});this.config.mode='free';this.wasFree=true;this.targetPos.set(p.x,h.height(36,h.length-45)+38,p.z);this.freeYaw=Math.atan2(h.worldPin.x-p.x,h.worldPin.z-p.z);this.freePitch=-.48;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
+ // THE GROUND'S SQUARES (ground-lod.js). The ground's vertices once, with the
+ // skirts' lowered copies after them; each square's mesh shares them and has
+ // its own triangles, made the first time it is drawn.
+ buildGroundLodMeshes(grid,terrain){
+  const lod=buildGroundLod(grid),pos=terrain.attributes.position.array,nor=terrain.attributes.normal.array,rel=terrain.attributes.localRelief?.array,n=pos.length/3,m=lod.extra.from.length;
+  const P=new Float32Array((n+m)*3),N=new Float32Array((n+m)*3),R=rel?new Float32Array(n+m):null;
+  P.set(pos);N.set(nor);if(R)R.set(rel);
+  for(let k=0;k<m;k++){const v=lod.extra.from[k],o=(n+k)*3;P[o]=pos[v*3];P[o+1]=pos[v*3+1]-lod.extra.drop[k];P[o+2]=pos[v*3+2];N[o]=nor[v*3];N[o+1]=nor[v*3+1];N[o+2]=nor[v*3+2];if(R)R[n+k]=rel[v];}
+  const attrs={position:new T.BufferAttribute(P,3),normal:new T.BufferAttribute(N,3)};if(R)attrs.localRelief=new T.BufferAttribute(R,1);
+  const group=new T.Group();group.name='Continuous ground';this.group.add(group);
+  this.groundLod={lod,grid,attrs,group,meshes:new Map(),shown:new Set(),key:''};
+  // Kept for its material, shadow switch and box; its triangles are the
+  // squares' now, so its own index goes.
+  this.terrain.name='Ground (undrawn)';this.terrain.visible=false;terrain.computeBoundingBox();terrain.setIndex(null);
+ }
+ groundLodMesh(node,fine){
+  const G=this.groundLod;let pair=G.meshes.get(node);if(!pair){pair={};G.meshes.set(node,pair);}
+  const which=fine?'fine':'coarse';if(pair[which])return pair[which];
+  const geometry=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))geometry.setAttribute(name,a);
+  geometry.setIndex(new T.BufferAttribute(fine?node.fine:node.coarse,1));
+  const b=groundNodeBox(G.grid,node),skirt=Math.max(2,node.error*2+2);
+  geometry.boundingBox=new T.Box3(new T.Vector3(b.x0,b.y0-skirt,b.z0),new T.Vector3(b.x1,b.y1,b.z1));
+  geometry.boundingSphere=geometry.boundingBox.getBoundingSphere(new T.Sphere());
+  const mesh=new T.Mesh(geometry,this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name=fine?'ground, fine':'ground, coarse';
+  G.group.add(mesh);pair[which]=mesh;return mesh;
+ }
+ // Every frame: the squares for this camera, each drawn no coarser than
+ // the tier's tolerance in pixels allows (graphics.js `groundTolerance`).
+ updateGroundLod(){
+  const G=this.groundLod;if(!G)return;
+  const c=this.camera.position,h=this.renderer.domElement.height||1,tol=this.quality.groundTolerance??1;
+  const key=`${Math.round(c.x*2)},${Math.round(c.y*2)},${Math.round(c.z*2)},${this.camera.fov},${h},${tol}`;
+  if(key!==G.key){
+   G.key=key;
+   const focal=h/(2*Math.tan(T.MathUtils.degToRad(this.camera.fov)/2)),want=new Set();
+   for(const {node,fine} of selectGround(G.lod,G.grid,c,focal,tol))want.add(this.groundLodMesh(node,fine));
+   for(const m of G.shown)if(!want.has(m))m.visible=false;
+   for(const m of want)m.visible=true;
+   G.shown=want;
+  }
+  const cast=this.terrain.castShadow;for(const m of G.shown)m.castShadow=cast;
+ }
+ // LOW'S TREES (low-trees.js; the owner, 9 November 2026): the hole being
+ // played -- in free flight the hole last flown to, if any -- the ball, and
+ // whether the camera is flying. The hole's line is sampled once per hole.
+ lowTreeRegion(){const flying=this.config.mode==='free',hole=flying&&this.flownHole!==undefined?this.world?.holes[this.flownHole]:this.course;
+  if(this.lowPathOf!==hole){this.lowPathOf=hole;this.lowPath=holePath(hole);}
+  return {path:this.lowPath,ball:this.ball?.visible!==false&&this.ball?{x:this.ball.position.x,z:this.ball.position.z}:null,flying};}
+ flyToHole(index){this.flownHole=index;const h=this.world.holes[index],p=h.toWorld({x:36,z:h.length-45});this.config.mode='free';this.wasFree=true;this.targetPos.set(p.x,h.height(36,h.length-45)+38,p.z);this.freeYaw=Math.atan2(h.worldPin.x-p.x,h.worldPin.z-p.z);this.freePitch=-.48;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
  // The glow ball, and the two things around it that would otherwise stay lit for
  // a daytime that is no longer happening: the aim ring and the shot trail.
  //
@@ -3620,12 +3675,13 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
   // exactly as three places them when it draws the map.
+  this.updateGroundLod();
   if(this.cull){
    const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];
    for(const l of lights){if(l.shadow.autoUpdate===false)continue;l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
    // A re-sort changes which trees each map draws, the floodlights' included
    // (they draw what the view does): their shadows are redrawn to match.
-   if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights)&&this.floodlit)this.floodShadowDirty=true;
+   if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null)&&this.floodlit)this.floodShadowDirty=true;
   }
   if(this.floodShadowDirty&&this.floodlit){
    const now=performance.now();
@@ -3691,7 +3747,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // Screen bearing, 0 pointing up, for rotating the marker toward its subject.
   return {x,y,clamped:outside,angle:Math.atan2(dx,-dy)*180/Math.PI};
  }
- pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
+ // A click on the ground: where the ray first goes under the ground the ball
+ // meets (world.height), stepped by how far above it the ray is, then halved
+ // in on the crossing. Since 9 November 2026: the drawn ground is squares of
+ // varying detail (ground-lod.js), and a raycast through a 20-million-triangle
+ // mesh took seconds on a large built course.
+ pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);
+  const o=this.raycaster.ray.origin,d=this.raycaster.ray.direction,above=s=>o.y+d.y*s-this.world.height(o.x+d.x*s,o.z+d.z*s);
+  let s=0,a=above(0);if(!(a>0))return null;
+  for(let i=0;i<5000&&s<20000;i++){const next=s+Math.max(.25,Math.min(25,a*.5)),b=above(next);
+   if(b<=0){let lo=s,hi=next;for(let k=0;k<32;k++){const mid=(lo+hi)/2;if(above(mid)>0)lo=mid;else hi=mid;}return this.course.toLocal(new T.Vector3(o.x+d.x*hi,o.y+d.y*hi,o.z+d.z*hi));}
+   s=next;a=b;}
+  return null;}
 }
 // THE MAP'S STILL LAYERS (the frame-rate goal, 22 October 2026). The hole map
 // is redrawn every 60-80 ms, and every frame in the free camera, and each draw

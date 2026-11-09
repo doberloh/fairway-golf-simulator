@@ -15259,3 +15259,85 @@ redwood 1 back again ("Bowl cut style again here"): redrawn twice more with the 
 cut. Their far versions in the `skirts` style were stacked tiers -- the bowl cut again, in the
 distance -- so the four conifers' far versions were rebuilt in `tufts` (clumps along the limbs;
 outline .63 to .71 against .57 to .67); the cypress keeps `tufts` as it had. Credits: 2,588 left.
+
+## Frame rate on every tier: the large built courses (9 November 2026)
+
+The owner withdrew the 26 October acceptance ("Large courses in the builder can tank framerates
+even on this PC") and named the case: Dinosaur Mountain (Gold Canyon, Arizona), the owner's own
+built course, opened in the Course Builder's game view. Everything here is the RTX 4090 unless it
+says otherwise, so it is headroom, not a weak machine. Tools: `tools/builder-frames.mjs` (new: the
+builder's page opened as a player opens it, its waits timed by the builder's own busy notice, frames
+with profile-probe.js, which now times a named canvas, `__profUse`), `tools/frame-ab.mjs --built
+<file>` (new: a built course served beside the page; `--scene` lists what the scene holds;
+`fly1`/`fly5`/`fly9`/`flyhigh` spots for free flight).
+
+**What the course is.** The file is 99 MB, 89 MB of it the builder's own working copy (builder.zip),
+which the game never reads. The game reads 45,223 trees, 600 homes and a ground of 3,114 by 2,859
+cells at 1 m: the size of Troon North Monument (47,697 trees, 3,512 by 2,157).
+
+**The builder, High, before anything changed** (two runs, within a few percent):
+
+| | |
+|---|---|
+| Open the file into the editor | 12.7-13.1 s, nearly all reading the file |
+| Open Game view | 48-51 s: building the course 21.2-21.4 s, drawing it 3.7-3.8 s, preparing the graphics 22.9-25.9 s |
+| Game view where it opened | 16.9 ms processor, 17.3 ms card a frame (p95 28 ms); 583 draws, **255 million triangles a frame** |
+| At holes 1, 5, 9 | 11.2 / 12.9 / 6.5 ms processor, 12.4 / 13.2 / 8.4 ms card; 100-225 million triangles |
+| Flying ahead fast (W, Shift) | 5.5 ms median, p99 35.5 ms, **worst frame 352-391 ms** |
+| The editor's own 3D view | 0.3 ms, 192 draws, 6.2 million triangles |
+
+**The same course in the game, High, from the first tee** (`lab.scene`, by what is held in view):
+233 million triangles a frame, 487 draws. The continuous ground is one mesh of 20.5 million
+triangles. Four saguaro models hold about 2,200 instances each in view at 7,600-9,000 bark
+triangles apiece (17-20 million each, 70 million together); the two ocotillos about 4,000 each
+(22 million with their flowers); palo verde and mesquite are mostly on their far versions (230-335
+near). Every one of them is drawn again into the shadow maps. The saguaros have far versions (80-260
+triangles against 11,400-11,800) but High swaps a painted tree only when it is under 5% of the
+screen's height (`farPainted`), so nearly all are drawn in full; Redwood Coast alone has its own
+line (`farPaintedFrom` .34) for the same reason. The course took 31.4 s to load in the game.
+
+**Every shipped model:** 570, 253 with a far version. 70 models over 3,000 triangles have none, the
+Meshy remakes and the Blender-built shrubs and small trees among them (plumeria 8,359, pampas grass
+6,528, naupaka 5,100-5,200, ocotillo 3,022-3,726, cholla 3,144-3,147, creosote 2,247-2,399).
+
+**The starting point on every tier** (frame-ab, one build, six views: the tees of holes 1, 5 and 9,
+the overview, 40 m over hole 1, 250 m over the course; milliseconds a frame, the slower of processor
+and card; bench/ab/base-*):
+
+| | Low | Medium | High | Ultra |
+|---|---|---|---|---|
+| Dinosaur Mountain, tees | 4.8-8.1 | 5.5-8.9 | 10.1-12.8 | 11.3-15.8 |
+| Dinosaur Mountain, overview / high over it | 6.9 / 8.9 | 6.3 / 11.4 | 18.1-24.9 / 18.5 | 33.7 / 21.8 |
+| Dinosaur Mountain, triangles a frame | 113-173 M | 113-174 M | 152-235 M | 160-262 M |
+| Troon North, tees | 4.9-6.7 | | | |
+| Course load (the file handed in to drawn) | 33.5 s | 35.5 s | 32.2 s | 32.3 s |
+
+Low draws nearly as much as Medium: no tier setting reached the trees on a built course.
+
+**What was built first, and why** (9 November 2026):
+
+- **A far version for every model** (tools/far-cluster.mjs, called by build-meshes.mjs): vertex
+  clustering to about an eighth of each part's triangles. 130 models, 460,897 triangles to 68,381;
+  the page 1 MB larger. Considered and not taken: meshoptimizer's simplifier (better shapes, but a new
+  package; the install was refused here), Blender's decimate for each pack (thirty-odd jobs, and the
+  packs' scripts rebuild the near models too). **The saguaros' Blender twins were one part where the
+  model has two**, so `farParts` ignored them and drew every saguaro's 7,600-9,000-triangle trunk at
+  any distance -- about 70 M triangles of Dinosaur Mountain's frame; a shipped twin that does not line
+  up part for part is now made again by the packing step (four saguaros).
+- **The swap cross-faded** (instance-cull.js `ditherFade`, SWAP_BAND 1.3): a screen-pattern dissolve,
+  its level in the instance colour's red. Considered: a per-instance attribute (a model's part
+  geometry is shared between meshes, so the attribute would be shared too); true transparency (needs
+  sorting, and thousands of crowns); a fade over time (rewrites every square every frame of the fade,
+  which is the cull's most expensive work). **A first build wrote the cross-fade's level into every
+  mesh, not only those that swap**, and drew the saguaro trunks -- whose material had no dissolve --
+  bright orange inside every band; caught in the first before/after pictures, fixed, and tested.
+- **Low's tree rule** (low-trees.js; PROJECT_HANDOFF, *LOW DRAWS FEWER TREES*).
+- **The ground drawn coarser with distance** (ground-lod.js): a quadtree of 192 m leaves, each drawn
+  as the grid's own triangles or as the plain 3 m grid, and coarser squares of 64 by 64 cells at 6,
+  12, 24 m and up, chosen each frame so no square stands off the ground the ball meets by more than
+  the tier's tolerance in pixels (1 on High and Ultra, 2 Medium, 3 Low; PLACED). Skirts hang twice a
+  square's error, at least 2 m, from every edge. The full mesh is kept undrawn for its material; a
+  click on the ground now steps along `world.height` instead of a raycast through 20 M triangles.
+- **First before/after, High, Dinosaur Mountain** (before the saguaro fix): frame -26% (17.3 to 12.5
+  ms, mean of five views), triangles -27 to -33%, the worst frame 282 to 43 ms. The course's load
+  went up 5-6 s (31-33 to 38 s): building the ground's squares and the far versions. Owed.

@@ -8,6 +8,14 @@
 //   ... --device iphone-13      that device's screen and processor, its graphics scaled
 //   ... --shots                 a screenshot per spot, compared A against B
 //   ... --homes 45              the course with fairway homes at that density (its streets)
+//   ... --scene                 after each spot, what the scene holds by group
+//                               (lab.scene: triangles built, instances held in view)
+//   ... --built <x.fairway>     a BUILT course from its file instead of a seeded one
+//                               (the frame-rate goal, 9 November 2026: large built
+//                               courses, Dinosaur Mountain first); `load ms` is then
+//                               the wait from the file handed in to the course drawn
+//   ... --spots fly1,fly5,flyhigh  free flight: 40 m over the middle of a hole, and
+//                               250 m over the course (Low's trees follow the camera)
 //
 // WHY NOT tools/profile.mjs. The profiler measures ONE build against a saved
 // baseline from another day, and on this card that comparison is mostly noise:
@@ -45,6 +53,11 @@ const BIOME = flag('biome', 'redwood'), HOLES = Number(flag('holes', 9)), SEED =
 const ROUNDS = Number(flag('rounds', 2)), FRAMES = Number(flag('frames', 150)), SETTLE = Number(flag('settle', 40));
 const HOMES = flag('homes', null), SHOTS = !!flag('shots', false), LABEL = flag('label', new Date().toISOString().replace(/[:.]/g, '-'));
 const PREFS = JSON.parse(flag('prefs', '{}'));
+// A built course's file, served beside the page and fetched by it: a 99 MB
+// course as a JSON array of numbers through page.evaluate (the profiler's way)
+// would be gigabytes of text.
+const BUILT = flag('built', null);
+const SCENE = !!flag('scene', false);
 
 // Where the camera stands. A tee, 4 m behind it at eye height, looking at the
 // pin: what a player sees most. Tees 1, 5 and 9 of seed PROFILE span the cull's
@@ -55,6 +68,14 @@ const SPOTS = {
  tee9: {camera: {hole: 8, along: -4, height: 1.8, look: 'pin'}},
  sun: {camera: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'}},
  overview: {view: 'overview'},
+ // FREE FLIGHT (the owner, 9 November 2026: "when in fly cam we need to have a
+ // solution for that as well"): the camera off the hole, where Low's trees
+ // follow the camera rather than the hole. 40 m over a hole's middle, and
+ // 250 m up behind the first tee looking over the course.
+ fly1: {camera: {hole: 0, along: 150, height: 40, look: 'pin'}},
+ fly5: {camera: {hole: 4, along: 150, height: 40, look: 'pin'}},
+ fly9: {camera: {hole: 8, along: 150, height: 40, look: 'pin'}},
+ flyhigh: {camera: {hole: 0, along: -150, height: 250, look: 'pin'}},
  // THE PLAY CAMERA, behind the ball on the tee: what a round actually draws,
  // HUD and all. The free camera above redraws the map every frame, which play
  // does every 60-80 ms, so the two cost differently on the processor.
@@ -80,10 +101,14 @@ const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist
 const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf8');
 const OUT = path.join(ROOT, 'bench', 'ab');
 
+const builtBytes = BUILT ? fs.readFileSync(path.resolve(ROOT, BUILT)) : null;
 function serve(file) {
  const html = fs.readFileSync(path.resolve(ROOT, file));
  return new Promise(resolve => {
-  const server = createServer((_, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); });
+  const server = createServer((req, res) => {
+   if (builtBytes && req.url === '/built.fairway') { res.writeHead(200, {'Content-Type': 'application/zip'}); res.end(builtBytes); return; }
+   res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html);
+  });
   server.listen(0, '127.0.0.1', () => resolve({server, port: server.address().port}));
  });
 }
@@ -144,6 +169,15 @@ async function measureBuild(file, tag, round) {
     await page.screenshot({path: shot});
    }
    out[name] = {...st, shot};
+   if (SCENE) {
+    const sc = await page.evaluate(() => window.lab.scene());
+    out[name].scene = sc;
+    const groups = Object.entries(sc.groups).sort((x, y) => y[1].triangles - x[1].triangles);
+    console.log(`
+    ${name}: ${Math.round(st.trisPerFrame).toLocaleString('en')} triangles drawn a frame, ${Math.round(st.callsPerFrame)} draws`);
+    for (const [g, e] of groups.slice(0, 10)) console.log(`      ${g.padEnd(24)} ${Math.round(e.triangles).toLocaleString('en').padStart(14)} built  ${e.meshes} meshes  ${e.instances} instances  ${e.held} held`);
+    for (const m of sc.drawn ?? sc.heaviest.slice(0, 12)) console.log(`        ${m.name.padEnd(44)} ${String(m.perInstance ?? '').padStart(6)} each  x${m.instances} (${m.held ?? '?'} held, ${(((m.held ?? 0) * (m.perInstance ?? 0)) / 1e6).toFixed(1)} M)  ${m.shadow ? 'shadow' : ''}`);
+   }
   };
   for (const name of spotNames.filter(n => 'menu' in SPOTS[n])) {
    const id = SPOTS[name].menu;
@@ -152,7 +186,11 @@ async function measureBuild(file, tag, round) {
    for (let i = 0; i < 4 && await page.evaluate(() => document.getElementById('mainMenu').hidden); i++) { await page.keyboard.press('Escape'); await frames(page, 10); }
   }
   if (spotNames.every(n => 'menu' in SPOTS[n])) { out.errors = errors; return out; }
-  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED, season: SEASON, ...(HOMES ? {homes: true, homeDensity: Number(HOMES)} : {})});
+  const loadFrom = await page.evaluate(() => performance.now());
+  const built = BUILT ? await page.evaluate(async () => window.lab.built(new Uint8Array(await (await fetch('/built.fairway')).arrayBuffer()))) : null;
+  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED, season: SEASON, ...(HOMES ? {homes: true, homeDensity: Number(HOMES)} : {}), ...(built ? {built} : {})});
+  await frames(page, 2);
+  out.loadMs = await page.evaluate(t0 => performance.now() - t0, loadFrom);
   const renderer = await page.evaluate(() => {
    const gl = document.createElement('canvas').getContext('webgl2');
    const d = gl && gl.getExtension('WEBGL_debug_renderer_info');
@@ -208,7 +246,7 @@ if (failed) process.exit(1);
 
 // ------------------------------------------------------------------ report
 const scale = gpuScale(DEVICE);
-console.log(`\n${TIER} · ${BIOME} ${SEED} · ${DEVICE.label} · ${DEVICE.viewport.join('x')} @${DEVICE.dpr}` +
+console.log(`\n${TIER} · ${BUILT ? path.basename(BUILT) : BIOME + " " + SEED} · ${DEVICE.label} · ${DEVICE.viewport.join('x')} @${DEVICE.dpr}` +
  (scale > 1.01 ? ` · CPU throttled ${cpuThrottle(DEVICE).toFixed(1)}x, GPU estimate = card ms x ${scale.toFixed(0)}` : ''));
 console.log('  spot      build   CPU ms   GPU ms   draws   triangles   page ms' + (scale > 1.01 ? '   est. device GPU ms' : ''));
 const summary = {};
@@ -230,6 +268,11 @@ for (const name of spotNames) {
 {
  const starts = tag => results[tag].map(r => r.startMs).filter(Boolean);
  for (const [tag] of builds) console.log(`  start to main menu, ${tag}: median ${(med(starts(tag)) / 1000).toFixed(2)} s  (runs ${starts(tag).map(v => (v / 1000).toFixed(2)).join(' ')})`);
+ const loads = tag => results[tag].map(r => r.loadMs).filter(Boolean);
+ for (const [tag] of builds) if (loads(tag).length) console.log(`  course load, ${tag}: median ${(med(loads(tag)) / 1000).toFixed(2)} s  (runs ${loads(tag).map(v => (v / 1000).toFixed(2)).join(' ')})`);
+ // The heavy frames a player feels as a stutter: the worst p99 and the worst
+ // single frame over every spot (frame-spikes.mjs has the long view).
+ for (const [tag] of builds) console.log(`  heaviest frames, ${tag}: p99 ${Math.max(...spotNames.map(n => med(results[tag].map(r => r[n].p99)) ?? 0)).toFixed(1)} ms, worst ${Math.max(...spotNames.map(n => Math.max(...results[tag].map(r => r[n].worst ?? 0)))).toFixed(1)} ms`);
 }
 if (B) {
  // The headline: the mean over the spots of each build's frame (the slower of

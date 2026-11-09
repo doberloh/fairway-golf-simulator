@@ -92,6 +92,14 @@ export const TIERS = {
   // at 30% rather than 15% measured 10-17% of a Low frame on Autumn
   // (CARTOON_OVERHAUL *Frame rate*). PLACED.
   farPainted: .3,
+  // The ground drawn coarser with distance (ground-lod.js; the frame-rate goal,
+  // 9 November 2026): the most a square may stand off the ground the ball
+  // meets, in pixels -- Low and Medium may look different (the owner). PLACED.
+  groundTolerance: 3,
+  // LOW DRAWS FEWER TREES, NEVER THE HOLE'S (the owner, 9 November 2026;
+  // low-trees.js has the rule and its PLACED distances; instance-cull.js
+  // draws it). Medium and up draw every tree.
+  thinTrees: true,
   // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
   understory: .25,
   // How far the long grass between the holes is drawn, in metres; it sinks
@@ -152,6 +160,8 @@ export const TIERS = {
   farTrees: .15,
   // As low, a little later. PLACED.
   farPainted: .25,
+  // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
+  groundTolerance: 2,
   // Half a stand's understory: shrubs a ball passes through, so a share is
   // only a look (vegetation.js). PLACED.
   understory: .5,
@@ -201,6 +211,8 @@ export const TIERS = {
   // Painted trees below 5% of the screen's height draw their shipped twin
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
+  // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
+  groundTolerance: 1,
   understory: 1,
   longGrassReach: 190,
   // Shafts are composited additively over the finished frame, so this is how
@@ -278,6 +290,9 @@ export const TIERS = {
   // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
   // *Rules set aside*.
   farPainted: .03,
+  // The ground drawn coarser with distance (ground-lod.js; 9 November 2026):
+  // the most a square may stand off the ground the ball meets, in pixels. PLACED.
+  groundTolerance: 1,
   // The whole understory of a stand (vegetation.js `under`).
   understory: 1,
   longGrassReach: 260,
@@ -485,5 +500,6 @@ export function needsRebuild(a, b) {
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
   (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
-  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true);
+  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true) ||
+  !!x.thinTrees !== !!y.thinTrees;
 }

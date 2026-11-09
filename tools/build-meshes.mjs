@@ -26,6 +26,7 @@
 // to int8, which is roughly a third of the float encoding and visually free at
 // the sizes these are drawn.
 import {readFileSync, writeFileSync, readdirSync, existsSync} from 'node:fs';
+import {simplifyTo} from './far-cluster.mjs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -592,6 +593,8 @@ function locate(entry) {
 }
 
 let taken = 0, missing = [];
+// Every model's own geometry, kept for the far versions made after the loop.
+const sources = new Map();
 for (const [family, entries] of Object.entries(PICK)) {
  for (const entry of entries) {
   const {name, hit} = locate(entry);
@@ -635,7 +638,7 @@ for (const [family, entries] of Object.entries(PICK)) {
   // ingested.
   const q = reach < 32767 / 16384 ? 16384 : Math.floor(32767 / reach);
   const parts = [];
-  for (const [role, g] of byRole) {
+  const encode = (role, g) => {
    const count = g.position.length / 3;
    const position = new Int16Array(count * 3), normal = new Int8Array(count * 3);
    for (let i = 0; i < count; i++) {
@@ -675,14 +678,53 @@ for (const [family, entries] of Object.entries(PICK)) {
     part.uvAt = push(uv);
     if (span !== 1) part.uvSpan = +span.toFixed(4);
    }
-   parts.push(part);
-  }
+   return part;
+  };
+  for (const [role, g] of byRole) parts.push(encode(role, g));
+  if (!name.endsWith('_Far')) sources.set(name, {family, byRole, encode, radius, rx, rz, q});
   // (`tall`, a figure's own height in metres, went with the people on 2
   // November 2026.)
   models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), ...(q !== 16384 ? {q} : {}), parts};
   taken++;
  }
 }
+
+// A FAR VERSION FOR EVERY MODEL THAT HAS NONE (the frame-rate goal, 9
+// November 2026; tools/far-cluster.mjs). 126 models over 1,500 triangles had
+// no far version, so every one standing in view was drawn in full however far
+// off -- the Meshy remakes, most Blender packs, Dinosaur Mountain's ocotillos
+// among them. Each part is simplified on its own to about an eighth of its
+// triangles and quantised as its model was, so the renderer's `farParts`
+// takes it part for part, as it takes a Blender twin. A model whose
+// Blender twin ships (the `fartwin` list) keeps that one.
+const AUTO_FAR_MIN = 1500, AUTO_FAR_SHARE = 1 / 8;
+let autoFar = 0, autoFarTris = [0, 0];
+const replaced = [];
+for (const [name, s] of sources) {
+ // A shipped twin is kept only where it lines up with its model part for part
+ // (mesh-assets.js `farParts` ignores one that does not): the Desert Mountain
+ // saguaros' Blender twins were one part where the model has two, so every
+ // saguaro's trunk was drawn in full at any distance.
+ const shipped = models[name + '_Far'], roles = [...s.byRole.keys()];
+ if (shipped && shipped.parts.length === roles.length && shipped.parts.every((p, i) => p.role === roles[i])) continue;
+ if (shipped) replaced.push(name);
+ if (/^(house|clubhouse|building|waterworks|lifeforms)/.test(s.family)) continue;
+ const total = [...s.byRole.values()].reduce((a, g) => a + g.index.length / 3, 0);
+ if (total < AUTO_FAR_MIN) continue;
+ const far = [];
+ let kept = 0;
+ for (const [role, g] of s.byRole) {
+  const small = simplifyTo(g, AUTO_FAR_SHARE);
+  const use = small ? {...small, uv: null, color: small.color} : g;
+  kept += use.index.length / 3;
+  far.push(s.encode(role, use));
+ }
+ if (kept > total * .6) continue;
+ models[name + '_Far'] = {family: 'fartwin', height: 1, radius: s.radius !== undefined ? +s.radius.toFixed(4) : 0, rx: +s.rx.toFixed(4), rz: +s.rz.toFixed(4), textured: false, ...(s.q !== 16384 ? {q: s.q} : {}), parts: far};
+ autoFar++; autoFarTris[0] += total; autoFarTris[1] += kept;
+}
+if (replaced.length) console.log(`shipped far versions that did not line up, made again here: ${replaced.join(', ')}`);
+console.log(`far versions made here: ${autoFar} (${autoFarTris[0].toLocaleString('en')} triangles to ${autoFarTris[1].toLocaleString('en')})`);
 
 // The house atlases. These are palette grids, so a house takes all of its colour
 // from one of them -- every roof in a given atlas is the same swatch. Kenney

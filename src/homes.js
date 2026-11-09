@@ -120,6 +120,13 @@ export function addHomes(view){
  const fenceModel=familyModels('gardenfence')[0],shrubModels=familyModels('gardenshrub');
  const footing=new T.Color(view.world.bio.rock).lerp(new T.Color('#6b6357'),.45);
  const home=new T.Matrix4(),local=new T.Matrix4(),at=new T.Vector3(),spin=new T.Quaternion(),size=new T.Vector3(),UP=new T.Vector3(0,1,0);
+ // EVERY HOUSE'S FOOTING AND DRIVE, BATCHED (the frame-rate goal, 9 November
+ // 2026). They were a mesh each, with a material each: 600 homes on Dinosaur
+ // Mountain made about 1,000 draws of a box, the most of any one thing near
+ // its houses. Now two instanced meshes of a unit box, one material each,
+ // which the view cull draws only where seen. The same boxes, the same
+ // places: a box's UVs are per face, whatever its size.
+ const footings=[],drives=[],houseAt=new T.Matrix4(),boxAt=new T.Matrix4(),tilt=new T.Quaternion(),ACROSS=new T.Vector3(1,0,0);
  for(const h of view.world.homes){
   const group=new T.Group();group.position.set(h.x,h.y,h.z);group.rotation.y=h.rotation;
   const timber=surfaceMaterial(warm?'#b08a63':'#7d6c55',{roughness:.95});
@@ -130,7 +137,8 @@ export function addHomes(view){
   // landscape's own rock, darkened toward the soil, set in close to the walls
   // -- it was a wide pale-grey plinth (#aaa898, 0.35 m proud) that read as a
   // concrete slab under every house.
-  box(h.width+.18,h.footing+2.6,h.depth+.18,0,-(h.footing+2.6)/2+.3,0,surfaceMaterial(footing),false);
+  houseAt.compose(at.set(h.x,h.y,h.z),spin.setFromAxisAngle(UP,h.rotation),size.setScalar(1));
+  footings.push(houseAt.clone().multiply(boxAt.compose(at.set(0,-(h.footing+2.6)/2+.3,0),tilt.identity(),size.set(h.width+.18,h.footing+2.6,h.depth+.18))));
   if(models.length){
    // The building itself is an imported model, fitted to the same
    // width x height x depth box that simulateShot collides against, so what is
@@ -174,8 +182,8 @@ export function addHomes(view){
    const ground=z=>view.world.height(h.x+gx*c+z*s,h.z-gx*s+z*c)-h.y;
    const back=ground(gz-4.5),front=ground(gz+4.5);
    if(!paving&&toon)paving=warm?pavingTexture('#e4c8a0',true):pavingTexture();
-   const drive=box(3.4,.06,9,gx,(back+front)/2+.04,gz,paving?surfaceMaterial('#ffffff',{map:paving}):surfaceMaterial('#b3ae9e'),false);
-   drive.rotation.x=Math.atan2(back-front,9);
+   houseAt.compose(at.set(h.x,h.y,h.z),spin.setFromAxisAngle(UP,h.rotation),size.setScalar(1));
+   drives.push(houseAt.clone().multiply(boxAt.compose(at.set(gx,(back+front)/2+.04,gz),tilt.setFromAxisAngle(ACROSS,Math.atan2(back-front,9)),size.set(3.4,.06,9))));
   }
   // THE GARDEN IN THE OVERHAUL'S HAND (tools/blender/cartoon_garden.py): a
   // picket fence in 1.6 m sections and clipped garden shrubs, instanced with
@@ -200,6 +208,9 @@ export function addHomes(view){
    for(let i=0;i<4;i++){const r=.5+((h.shade*7+i)%3)*.22,bush=new T.Mesh(new T.SphereGeometry(r,7,5),leaf);bush.position.set(-h.width*.4+i*(h.width*.27),r*.75,h.depth/2+.9);bush.castShadow=true;bush.receiveShadow=true;group.add(bush);}}
   view.group.add(group);
  }
+ const batch=(list,material,name)=>{if(!list.length)return;const mesh=new T.InstancedMesh(new T.BoxGeometry(1,1,1),material,list.length);list.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.castShadow=false;mesh.receiveShadow=true;mesh.name=name;mesh.computeBoundingSphere();view.group.add(mesh);};
+ batch(footings,surfaceMaterial(footing),'House footings');
+ batch(drives,paving?surfaceMaterial('#ffffff',{map:paving}):surfaceMaterial('#b3ae9e'),'House drives');
  if(!entries.length)return;
  // One material for every house: the paint carries the shading and the
  // instance colour each role's colour, so a street is one draw call per model

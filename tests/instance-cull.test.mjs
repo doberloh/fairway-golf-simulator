@@ -176,7 +176,11 @@ test('thinning keeps a third of the sprays, grown about their own centres', asyn
  for (const k of ['x', 'y', 'z']) assert.ok(Math.abs((a.max[k] - a.min[k]) - (b.max[k] - b.min[k])) < (a.max[k] - a.min[k]) * .12, `envelope ${k}`);
 });
 
-test('small crowns are drawn thinned, every held crown exactly once, and none near the camera', async () => {
+// Since 9 November 2026 (the frame-rate goal: "fade in not pop in") a crown
+// within the swap's band is held by both meshes, cross-faded: the near one
+// dissolved by a level of 1-15 in its colour's red (steps of four), the far one
+// by the same level plus 16 -- each draws the pixels the other leaves.
+test('small crowns are drawn thinned, every held crown exactly once or cross-faded, and none near the camera', async () => {
  const {modelParts} = await import('../src/mesh-assets.js');
  const parts = modelParts('Blender_RwRedwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
  const group = new T.Group(), spots = [];
@@ -190,12 +194,18 @@ test('small crowns are drawn thinned, every held crown exactly once, and none ne
  cull.update(cam, null);
  const far = group.children.find(o => o.name === 'far trees');
  assert.ok(far && far.count > 0 && mesh.count > 0, `near ${mesh.count}, far ${far?.count}`);
- const where = o => held(o).map(t => [t.x, t.z]);
+ const where = o => held(o).map(t => [t.x, t.z, Math.floor(t.r / 4 + 1e-3)]);
  const near = where(mesh), thin = where(far), key = ([x, z]) => x + ',' + z;
- // Exactly once: no crown in both, none lost.
- const a = new Set(near.map(key));
- for (const t of thin) assert.ok(!a.has(key(t)), `crown at ${key(t)} drawn twice`);
+ // Exactly once, or in both with complementary dissolves; none lost.
+ const a = new Map(near.map(t => [key(t), t[2]]));
+ let both = 0;
+ for (const t of thin) if (a.has(key(t))) {
+  both++;
+  const nearLevel = a.get(key(t)), farLevel = t[2];
+  assert.ok(nearLevel >= 1 && nearLevel < 16 && farLevel === 16 + nearLevel, `crown at ${key(t)} held twice without a cross-fade: ${nearLevel} / ${farLevel}`);
+ } else assert.equal(t[2], 0, 'a crown held once is not dissolved');
  assert.equal(near.length + thin.length, cull.stats().drawn);
+ assert.ok(both < thin.length, 'most far crowns are past the band');
  // Thinned ones are the distant ones; nothing within 150 m is thinned (300 m
  // for the grown redwood this was written for; the cartoon one's leaf part is
  // its narrow top third, so it is small on screen sooner).
@@ -240,22 +250,27 @@ test('a cartoon crown is never thinned: it swaps only to the twin it ships', asy
 
 // Kept from before the shipped twins: without a twin of its own, a crown with
 // paint is never thinned by the grown trees' arithmetic.
-test('a painted crown without a shipped twin is never thinned into shards', async () => {
- const {modelParts} = await import('../src/mesh-assets.js');
+// Since 9 November 2026 every model over 1,500 triangles ships a far version
+// (tools/far-cluster.mjs, made when the models are packed), so a painted crown
+// big enough to be thinned is never without one -- and its far mesh is that
+// shipped version, never sprays thinned into shards.
+test('a painted crown big enough to thin ships a far version, and is drawn with it, never thinned into shards', async () => {
+ const {modelParts, hasShippedTwin} = await import('../src/mesh-assets.js');
+ const {MESH_MODELS} = await import('../src/asset-meshes.js');
  const {TWIN_MIN_TRIANGLES} = await import('../src/instance-cull.js');
- const parts = modelParts('Blender_Naupaka_1'), leaf = parts.findIndex(p => p.role === 'leaf');
- assert.ok(parts[leaf].geometry.index.count / 3 >= TWIN_MIN_TRIANGLES, 'the cartoon gorse has more triangles than the twin threshold');
- assert.ok(parts[leaf].geometry.attributes.flex, 'and carries its paint');
+ for (const name of Object.keys(MESH_MODELS)) {
+  if (name.endsWith('_Far') || /House|Clubhouse|Bridge|RipRap|Bulkhead|Sheep|Goose|Deer|Elk|Heron|Roadrunner|Bird|Bison/.test(name)) continue;
+  const leaf = modelParts(name)?.find(p => p.role === 'leaf');
+  if (leaf?.geometry.attributes.flex && leaf.geometry.index.count / 3 >= TWIN_MIN_TRIANGLES) assert.ok(hasShippedTwin(name), `${name} has no far version`);
+ }
+ const parts = modelParts('Blender_Naupaka_1'), leaf = parts.findIndex(p => p.role === 'leaf'), twin = modelParts('Blender_Naupaka_1_Far');
  const group = new T.Group(), m = new T.Matrix4(), n = 200;
  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeScale(15, 15, 15).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 80));
  mesh.castShadow = true; mesh.userData = {model: 'Blender_Naupaka_1', part: leaf, role: 'leaf'};
  group.add(mesh);
- const cull = cullInstances(group, {farTrees: .15, thinShadowsFrom: 1}), cam = camera();
- cull.update(cam, null);
- assert.ok(!group.children.some(o => o.name === 'far trees' || o.name === 'shadow twin'), 'no twin mesh for a cartoon crown');
- assert.equal(cull.stats().thinCrowns, 0);
- assert.equal(mesh.count, cull.stats().drawn);
+ cullInstances(group, {farPainted: .15, thinShadowsFrom: 1}).update(camera(), null);
+ for (const o of group.children.filter(o => o.name === 'far trees' || o.name === 'shadow twin')) assert.equal(o.geometry, twin[leaf].geometry, `${o.name} uses the shipped far version`);
 });
 
 test('the tiers that split cascades split them inside their own shadow reach', async () => {
@@ -300,4 +315,76 @@ test('a plant whose shadow is near work casts into the nearest map alone', () =>
  assert.ok(shadowCount(mesh, nearMap) > 0, 'nothing in the nearest map');
  assert.equal(shadowCount(mesh, farMap), 0, 'drawn into a further map');
  assert.ok(mesh.count > 0, 'the count is put back');
+});
+
+// LOW'S TREES (low-trees.js; the owner, 9 November 2026): with `thinTrees` a
+// tree mesh holds fewer trees away from the hole, and every tree within the
+// hole's reach of its line, or the ball's of the ball, is still held.
+test('Low thins the far trees and never one of the hole', async () => {
+ const {LOW_TREES, holePath, pathDistance2} = await import('../src/low-trees.js');
+ const {group, mesh, spots} = field();
+ mesh.userData.model = 'Tree';   // a model's part: thinnable
+ const cull = cullInstances(group, {thinTrees: true}), cam = camera();
+ // A hole running north up the middle of the field, the ball 100 m along it.
+ const hole = {length: 400, toWorld: ({x, z}) => ({x, z: z - 480})};
+ const region = {path: holePath(hole), ball: {x: 0, z: -380}, flying: false};
+ cull.update(cam, null, [], region);
+ const kept = held(mesh), inView = cullInstances(field().group);
+ assert.ok(kept.length > 0);
+ const own = spots.filter(([x, z]) => pathDistance2(region.path, x, z) <= LOW_TREES.holeReach ** 2 || (x - region.ball.x) ** 2 + (z - region.ball.z) ** 2 <= LOW_TREES.ballReach ** 2);
+ const keptAt = new Set(kept.map(t => `${Math.round(t.x)},${Math.round(t.z)}`));
+ // Every tree of the hole that the camera can see is held.
+ const all = field(); const plain = cullInstances(all.group); plain.update(camera(), null);
+ const visibleAll = new Set(held(all.mesh).map(t => `${Math.round(t.x)},${Math.round(t.z)}`));
+ for (const [x, z] of own) if (visibleAll.has(`${x},${z}`)) assert.ok(keptAt.has(`${x},${z}`), `a tree of the hole at ${x},${z} was thinned`);
+ // And fewer are held than with every tree drawn.
+ assert.ok(kept.length < visibleAll.size, `thinned ${kept.length} against ${visibleAll.size}`);
+ // Flying 250 m from the camera keeps the camera's own ring.
+ cull.update(cam, null, [], {...region, flying: true});
+ const flyKept = new Set(held(mesh).map(t => `${Math.round(t.x)},${Math.round(t.z)}`));
+ for (const key of visibleAll) { const [x, z] = key.split(',').map(Number); if (Math.hypot(x - cam.position.x, z - cam.position.z) < LOW_TREES.flyReach - 70) assert.ok(flyKept.has(key), `flying, ${key} was thinned`); }
+ void inView;
+});
+
+test('without thinTrees, nothing is thinned', () => {
+ const {group, mesh} = field();
+ mesh.userData.model = 'Tree';
+ const cull = cullInstances(group), cam = camera();
+ cull.update(cam, null, [], {path: new Float32Array([0, 5000, 0, 5010]), ball: null, flying: false});
+ const all = field(); const plain = cullInstances(all.group); plain.update(camera(), null);
+ assert.equal(mesh.count, all.mesh.count);
+});
+
+// With instance colours to carry it, the swap's band is a true cross-fade.
+test('crowns within the swap band are held by both meshes, dissolved to complement', async () => {
+ const {modelParts} = await import('../src/mesh-assets.js');
+ const parts = modelParts('Blender_RwRedwood_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const group = new T.Group(), spots = [];
+ for (let z = -500; z <= 1500; z += 10) for (let x = -200; x <= 200; x += 50) spots.push([x, z]);
+ const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), spots.length), m = new T.Matrix4(), c = new T.Color(.5, .5, .5);
+ spots.forEach(([x, z], i) => { mesh.setMatrixAt(i, m.makeScale(60, 60, 60).setPosition(x, 0, z)); mesh.setColorAt(i, c); });
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_RwRedwood_1', part: leaf, role: 'leaf'};
+ group.add(mesh);
+ const cull = cullInstances(group, {farPainted: .15}), cam = camera();
+ cull.update(cam, null);
+ const far = group.children.find(o => o.name === 'far trees');
+ const level = o => held(o).map(t => [t.x + ',' + t.z, Math.floor(t.r / 4 + 1e-3)]);
+ const near = new Map(level(mesh)), thin = level(far);
+ let both = 0;
+ for (const [k, lv] of thin) if (near.has(k)) { both++; assert.ok(near.get(k) >= 1 && near.get(k) < 16 && lv === 16 + near.get(k), `${k}: ${near.get(k)} / ${lv}`); }
+ assert.ok(both > 0, 'some crowns are in the band');
+ // The colour underneath the level is the tree's own.
+ for (const t of held(mesh)) assert.ok(Math.abs(t.r - Math.floor(t.r / 4 + 1e-3) * 4 - .5) < 1e-3);
+});
+
+// A mesh with no far version is never given a dissolve level (the saguaro
+// trunks, 9 November 2026: their material had no dissolve, and the level drew
+// them bright orange inside every swap band).
+test('a mesh that does not swap carries no dissolve level', () => {
+ const {group, mesh} = field();
+ const c = new T.Color(.5, .5, .5); for (let i = 0; i < mesh.count; i++) mesh.setColorAt(i, c);
+ mesh.userData.model = 'Tree';
+ const cull = cullInstances(group, {farPainted: .3, farTrees: .3});
+ cull.update(camera(), null);
+ for (const t of held(mesh)) assert.ok(t.r < 1, `a level was written: ${t.r}`);
 });
