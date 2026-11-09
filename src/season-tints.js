@@ -5,7 +5,7 @@
 // follows the general rules (seasons.js).
 export const SEASON_TINTS = {
  afghanpine: {"spring":{"leaf":"#47703f","bark":"#6a5c50"},"summer":{"leaf":"#3f6438","bark":"#6a5c50"},"autumn":{"leaf":"#3f6438","bark":"#6a5c50"},"winter":{"leaf":"#3c5e38","bark":"#6a5c50"}},
- africansumac: {"spring":{"leaf":"#6a8a4a","bark":"#4a3c34"},"summer":{"leaf":"#5c7c44","bark":"#4a3c34"},"autumn":{"leaf":"#5c7c44","bark":"#4a3c34"},"winter":{"leaf":"#587640","bark":"#4a3c34"}},
+ africansumac: {"spring":{"leaf":"#7c9c5a","bark":"#4a3c34"},"summer":{"leaf":"#6e9050","bark":"#4a3c34"},"autumn":{"leaf":"#6e9050","bark":"#4a3c34"},"winter":{"leaf":"#688a4a","bark":"#4a3c34"}},
  aldertree: {"spring":{"leaf":"#8ab456","bark":"#8c8a82"},"summer":{"leaf":"#4e7a38","bark":"#8c8a82"},"autumn":{"leaf":"#7a7a3a","bark":"#8c8a82"},"winter":{"leaf":"#4e7a38","bark":"#8c8a82"}},
  aleppopine: {"spring":{"leaf":"#7a9a52","bark":"#7a7068"},"summer":{"leaf":"#6f8f4c","bark":"#7a7068"},"autumn":{"leaf":"#6f8f4c","bark":"#7a7068"},"winter":{"leaf":"#6c8a4a","bark":"#7a7068"}},
  alligatorjuniper: {"spring":{"leaf":"#6d8a78","bark":"#8a8580"},"summer":{"leaf":"#678572","bark":"#8a8580"},"autumn":{"leaf":"#678572","bark":"#8a8580"},"winter":{"leaf":"#647f6e","bark":"#8a8580"}},

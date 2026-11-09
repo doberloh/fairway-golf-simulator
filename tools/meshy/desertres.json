@@ -1,6 +1,6 @@
 {
  "name": "desertres",
- "note": "The Desert Resort pack on Meshy, the seventh of the US golf courses' landscapes (7 November 2026): Shadow Creek, TPC Summerlin, PGA West. Afghan and Aleppo pines, weeping willow, olive, date palm and Mexican fan palm; its velvet mesquite is Desert Target's. Form from the owner's Shadow Creek and Summerlin photographs, tall open dark pines over green turf, and the reference photographs of Palm Desert, whose fan palms are very tall and thin with tiny heads. Sizes PLACED. The willow is a dome of overlapping fluffy tufts with a soft low fringe: long solid masses came out as sausages, and stepped chains of tufts as cones, which the owner turned down. The owner also turned down wind-swept shapes and a strong S in a trunk (7 November). No cypress here, the owner's rule (5 November). `seasons` are PLACED. Shipped in vendor/blender-meshy_desertres as DrAfghan, DrAleppo, DrWillow, DrOlive, DrDate, DrFan, because the hand-built models hold the plain names.",
+ "note": "The Desert Resort pack on Meshy, the seventh of the US golf courses' landscapes (7 November 2026): Shadow Creek, TPC Summerlin, PGA West. Afghan and Aleppo pines, weeping willow, olive, date palm and Mexican fan palm; its velvet mesquite is Desert Target's. Form from the owner's Shadow Creek and Summerlin photographs, tall open dark pines over green turf, and the reference photographs of Palm Desert, whose fan palms are very tall and thin with tiny heads. Sizes PLACED. The willow is a dome of overlapping fluffy tufts with a soft low fringe: long solid masses came out as sausages, and stepped chains of tufts as cones, which the owner turned down. The owner also turned down wind-swept shapes and a strong S in a trunk (7 November). No cypress here, the owner's rule (5 November). `seasons` are PLACED. Shipped in vendor/blender-meshy_desertres as DrAfghan, DrAleppo, DrWillow, DrOlive, DrDate, DrFan, because the hand-built models hold the plain names. The African sumac (the owner, 9 November 2026: the hand-built one \"doesn't look like anything we built\") added from reference photographs of cultivated trees in Tempe, Berkeley and Clovis and wild ones in Gauteng (Wikimedia Commons; docs/studies/us-golf-courses/photos/Desert Resort/african-sumac): a short dark trunk forking low into crooked limbs, an open rounded crown as wide as tall or wider, fine willow-like leaves drooping at the tips. Sizes PLACED inside species.js africansumac.",
  "style": "Stylised cartoon game art in soft, flat painted colour. Simple clean shapes with a gentle gradient: darker near the trunk and under each bough, lighter toward the tips. Matte, muted natural palette. No photographic detail, no photo bark, no noise, no speckle, no hard shadows, no highlights, no shine, no ink outlines, no text.",
  "view": "One view only, seen from the side at eye level, the whole plant in frame from foot to tip with a margin around it, centred, on a plain white background, in even soft light, with no cast shadow.",
  "models": [
@@ -111,6 +111,24 @@
    "colour": "Fronds dull green #4f7a44. Trunk grey-brown #84786a. Skirt of dead fronds dull tan #9a8a68.",
    "aspect": "9:16",
    "prompt": "A Mexican fan palm at a desert resort, 17 m tall and 5 m wide. A thin straight grey-brown trunk, one twenty-fifth of the palm's height wide, with a small flare at the foot. At the top a round head of twenty-five stiff fronds, and under it a neat skirt of dead tan fronds hugging the trunk, one smooth solid mass, one fifth of the palm's height long. Each frond is one solid chunky folded fan, like a thick pleated paper fan with a few deep soft pleats and a blunt scalloped edge. Paint each frond as a thick solid three-dimensional form: no thin strips, no fine leaflets, no fibres, no fine detail, no thin lines, no wisps. No feather fronds, no fruit. Only a small swelling at the very foot of the trunk, no wide base. Whole healthy palm, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single palm alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AfricanSumac_1",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull mid green #557040, a little darker inside the crown. Bark very dark grey-brown #4a3f38.",
+   "aspect": "4:3",
+   "prompt": "A mature African sumac, an evergreen shade tree on a Las Vegas desert resort golf course, 8 m tall and 10 m wide, wider than it is tall. A short dark grey-brown trunk with rough fissured bark, one twelfth of the tree's height wide near the ground, forking low, at a quarter of its height, into three or four crooked limbs that rise and spread outward, clearly visible, without any strong S-curve. Each limb ends in a few large soft rounded tufts of foliage, like fluffy clouds, with a lightly tufted scalloped edge whose lower rim droops softly down a little. The tufts make a broad open rounded crown with an uneven bumpy outline, lifted well clear of the ground on the limbs. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones, no strands, no curtains. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
+  },
+  {
+   "name": "Blender_AfricanSumac_2",
+   "target": 12000,
+   "far": 420,
+   "farStyle": "tufts",
+   "colour": "Foliage dull mid green #557040, a little darker inside the crown. Bark very dark grey-brown #4a3f38.",
+   "aspect": "1:1",
+   "prompt": "A younger African sumac, an evergreen shade tree on a Las Vegas desert resort golf course, 6 m tall and 6 m wide. One dark grey-brown trunk with rough bark, leaning very slightly, one tenth of the tree's height wide near the ground, dividing at a third of its height into a few crooked rising limbs, clearly visible. Each limb ends in one large soft rounded tuft of foliage, like a fluffy cloud, with a lightly tufted scalloped edge whose lower rim droops softly down a little. The tufts make an open rounded crown with an uneven bumpy outline. The tufts are chunky and overlap only a little, with sky and limbs showing through the gaps between them. Paint the foliage as thick, solid three-dimensional forms, never as separate leaves: no visible leaves, no leaf shapes, no lobes, no fine detail, no thin lines, no thin wisps, nothing thinner than a limb. No long hanging shapes, no sausages, no cones, no strands, no curtains. No solid core, no perfect spheres, no round lollipop shape, no flat discs, no even tiers of branches. The tree stands upright and even, perfectly still on a calm day, nothing swept to one side. Only a small flare in the very bottom of the trunk, no wide base. Whole healthy tree, no broken or snapped top. Stylised cartoon game asset, matte hand-painted colour. Single tree alone, no ground, no base, no text."
   }
  ],
  "seasons": {
@@ -220,6 +238,24 @@
    "winter": {
     "leaf": "#4c7442",
     "bark": "#84786a"
+   }
+  },
+  "africansumac": {
+   "spring": {
+    "leaf": "#7c9c5a",
+    "bark": "#4a3c34"
+   },
+   "summer": {
+    "leaf": "#6e9050",
+    "bark": "#4a3c34"
+   },
+   "autumn": {
+    "leaf": "#6e9050",
+    "bark": "#4a3c34"
+   },
+   "winter": {
+    "leaf": "#688a4a",
+    "bark": "#4a3c34"
    }
   }
  }

@@ -188,7 +188,9 @@ landscapes together and bring them into the game one at a time: tools/meshy/flor
 (coconut and royal palm, shipped in `vendor/blender-meshy_florida` as FlCoconut and FlRoyal),
 hawaiian.json (Cook pine, ironwood, monkeypod), deserttarget.json (four saguaros, palo verde,
 velvet mesquite) and desertres.json (Afghan and Aleppo pines, weeping willow, olive, date palm,
-Mexican fan palm). All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
+Mexican fan palm; since 9 November 2026 also the African sumac, shipped as DrSumac 1 and 2 under the
+plain `africansumac` key, its leaf lifted a step in the pack's `seasons` because the first conversion
+read near black-green in the game). All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
 
 **The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
 `vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new
@@ -888,7 +890,9 @@ across at 0.9 m tall -- vegetation.js `GRASS_WIDEST` squeezes it in.
 **Desert Resort (5 November 2026).** `cartoon_resort`: Afghan pine
 (`afghanpine`, a full layered egg to the ground with the trunk seen only near
 it), African sumac (`africansumac`, a broad crown on a fork, its tufts round
-the lobes) and pampas grass (`pampasgrass`, a mound of arching leaves and a
+the lobes; replaced by Meshy's on 9 November 2026 -- the owner, seeing it on the
+desert: "They don't look like anything we built" -- its builder kept as the record,
+no longer exported) and pampas grass (`pampasgrass`, a mound of arching leaves and a
 fan of cream plumes), sixteen rounds each, two variants, far twins for the two
 trees (about 5,000, 5,300 and 3,800 triangles at their largest). Lessons: a
 pine's egg is many small masses, not a few big ones (54 for the 16 m variant;

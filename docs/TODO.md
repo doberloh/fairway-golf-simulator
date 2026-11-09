@@ -34,13 +34,6 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
-  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
-  like anything we built"). The dark round puff-ball trees on the desert are `africansumac`, both
-  of its hand-built Blender models (cartoon_resort.py; 5% of the course's plants and 10% of its
-  stands), the only Desert Resort tree not from Meshy. Queued: reference photos first, then
-  tools/meshy-run.mjs, as the other Meshy trees were (docs/BLENDER_ASSETS.md); planting it moves
-  Desert Resort's ground only if its share changes (fingerprint).
 
 ## Release 0.9.8 (8 November 2026)
 
@@ -2524,6 +2517,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+- [x] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
+  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
+  like anything we built"). The dark puff-ball trees were the hand-built `africansumac`, the only
+  Desert Resort tree not from Meshy. Eleven reference photographs (RESEARCH, *African sumac*), two
+  models in tools/meshy/desertres.json, the owner's pick of the four pictures (take 1 of each), 96
+  credits in all; shipped as Blender_DrSumac_1 and 2 in vendor/blender-meshy_desertres under the
+  same species key, with far versions; the hand-built ones no longer exported. The leaf lifted a
+  step (summer #6e9050) after the first look in the game read near black. Every landscape's
+  ground unchanged (fingerprint). Seen in captures, not played; the frame cost on Low not measured
+  (two models of about 12,500 triangles, like the pack's others, each with a far version).
 
 - [x] **Skin from the land on Desert Mountain** (the owner, 9 November 2026: "can we do that for
   the desert mountain course as well?"). One code path for every landscape already; TPC Scottsdale

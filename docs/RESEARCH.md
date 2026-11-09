@@ -13853,6 +13853,14 @@ built*, below.
 - **African sumac** (*Searsia lancea*): 20-30 ft to 30-40 ft, as wide; sources split on
   how weeping it is ([Wikipedia](https://en.wikipedia.org/wiki/Searsia_lancea),
   [Oregon State](https://landscapeplants.oregonstate.edu/node/795)). No Nevada source.
+  Remade on Meshy, 9 November 2026, from eleven photographs in
+  [Wikimedia Commons' Searsia lancea category](https://commons.wikimedia.org/wiki/Category:Searsia_lancea)
+  (Tempe, Berkeley, Clovis; Gauteng; saved locally): a short dark fissured trunk forking low
+  into crooked limbs, an open rounded crown as wide as tall or wider, fine willow-like leaves
+  drooping at their tips. A nursery listing gives 20-30 ft tall and 20-35 ft wide
+  ([Bradford Greenhouses](https://plants.bradfordgreenhouses.com/11090013/Plant/36492/African_Sumac)).
+  The two models are asked for 8 m by 10 m and 6 m by 6 m (PLACED inside species.js's 6-10 m);
+  the leaf colour (#6e9050 in summer) is PLACED from the approved pictures.
 - **Pampas grass** (*Cortaderia selloana*): 2.5-4 m, spread 1.5-2.5 m, plumes 45-90 cm
   ([RHS](https://www.rhs.org.uk/plants/4431/wd/details)); nurseries give less
   ([Star Nursery](https://www.starnursery.com/product/pampas-grass)). RHS followed.
