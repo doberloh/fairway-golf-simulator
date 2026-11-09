@@ -42,7 +42,7 @@ export const TIERS = {
   pixelRatio: .75,
   // The far woods (vegetation.js addFarWoods; the polish goal) are grove
   // domes only on Low -- 20 triangles a site, never bare ground (the owner),
-  // and the cheapest for the weakest machines, the owner's one worry.
+  // and the cheapest for the weakest machines (the owner's worry then; every tier counts since 9 November).
   farWoods: 'groves',
   shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},

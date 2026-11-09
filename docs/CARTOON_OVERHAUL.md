@@ -235,9 +235,11 @@ unless a source is given, and is listed in RESEARCH.md.
 The goal ended and the owner looked at the work: "really amazing work". Their
 calls, which stand until they say otherwise:
 
-- **The High and Ultra frame-rate gap is accepted** (*Frame rate*, below):
+- **The High and Ultra frame-rate gap was accepted** (*Frame rate*, below):
   "220 frames per second is still way higher than a golf sim actually needs."
-  The open worry is low-end machines on Low -- Low went from about 0.55 to
+  **Withdrawn 9 November 2026**: "Large courses in the builder can tank
+  framerates even on this PC" -- every tier and device is in scope again
+  (AGENTS.md). The open worry then was low-end machines on Low -- Low went from about 0.55 to
   1.0 ms a frame on Autumn on the 4090, and the software `weak` group has not
   been run (TODO; it needs the owner's word each time -- a software run once
   took the machine down).

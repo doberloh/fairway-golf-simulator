@@ -31,6 +31,14 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+- [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
+  builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
+  moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
+  withdrawn (AGENTS.md). A goal is drafted on branch `frame-rate-all-tiers`, its text, targets,
+  device stand-ins and graphics-card limits in docs/studies/frame-rate-all-tiers/GOAL.md (local),
+  waiting on the owner to start it. It takes in *Low on a weak machine, measured against main* and
+  the processor's share on large built courses; the real devices stay *A real phone, an iPad and a
+  weak laptop*.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
@@ -1454,8 +1462,9 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   the twelve-sided crown lobes up close; the one-off long frame (about 120 ms
   on the 4090) the first time the camera turns onto new ground. High and
   Ultra stay 2-3.6 ms a frame over main on the 4090 (Autumn, PNW, Mountain,
-  Midwest) -- **accepted by the owner, 26 October 2026** ("220 frames per
-  second is still way higher than a golf sim actually needs").
+  Midwest) -- accepted by the owner 26 October 2026, **withdrawn 9 November
+  2026** ("Large courses in the builder can tank framerates even on this PC";
+  *Frame rate on every tier and device*, above).
 - [ ] **Low on a weak machine, measured against main** (the owner's one
   frame-rate worry, 26 October 2026). Low doubled on the 4090 (Autumn 0.55 to
   1.0 ms) but nobody has measured a machine without a real graphics card:

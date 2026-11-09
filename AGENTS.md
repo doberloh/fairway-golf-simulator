@@ -43,10 +43,11 @@ and the graphics card used without asking. **Both ended with the merge.**
   card unless the owner asks*). Once asked, run the job through
   `tools/gpu-run.mjs --goal <the request's name>`, which reads the card first
   and logs the run.
-- **The frame-rate gap on High and Ultra stays accepted** (the owner, 26
-  October 2026: "220 frames per second is still way higher than a golf sim
-  actually needs"). The worry is low-end machines on Low: a change that adds
-  cost to Low or Medium is measured there before it is called done.
+- **Frame rate matters on every tier and every device** (the owner, 9
+  November 2026, withdrawing the 26 October acceptance of the High and Ultra
+  gap: "Large courses in the builder can tank framerates even on this PC").
+  A change that adds cost to any tier is measured on it before it is called
+  done.
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
