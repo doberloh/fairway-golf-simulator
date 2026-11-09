@@ -34,7 +34,7 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Models to check, waiting on the owner** (9 November 2026, after the African sumac: "go
+- [ ] **Models to check: the Meshy remakes wait on the owner's picks** (9 November 2026, after the African sumac: "go
   through the rest of the Landscape's and figure out if there's any other missed models that are
   trees like this. Also look for any other model that doesn't look exactly right"). Every model a
   9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
@@ -45,7 +45,18 @@ check.
   rock; bougainvillea shapeless; the plain shrub a blob in six landscapes; coast live oak 1, shore
   pine 1 and huckleberry nearly black; rocks with sticker-like patches; a Midwest barn in the
   south and a one-wall desert ruin; western hemlock's nodding tip. Each is on the US golf status
-  page's Models to check with pictures, waiting for Remake it or It is fine. Nothing built.
+  page's Models to check with pictures. **The owner answered the same night.** Done, seen in
+  captures, not played: the bigleaf maple is the Pacific Northwest's Meshy maple and the sapling a
+  small Meshy young redwood (copied as RwBigleafMaple and RwSapling in vendor/blender-meshy_redwood2,
+  two kinds cannot share a model); coast live oak, shore pine and huckleberry two steps lighter;
+  no barn and silo in the south, no ruin in the desert (generator 103). Left as they are: the plain
+  shrub, the hemlock tip. On Meshy (tools/meshy/remakes.json, Mx names): one picture each of bay
+  laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, cholla, muhly grass,
+  bougainvillea and a plain round boulder, two models each (198 credits), on the page's Pictures to
+  review. **Owed:** the owner's picks; then models (30 credits each), far versions, conversion (the
+  boulder needs a stone role the tree conversion does not make), shipping in place of the hand-built
+  ones, and a frame check on Low -- the plants are planted in thousands (creosote 7,729 on one course),
+  so their triangle targets are kept to 2,500-4,000.
 
 ## Release 0.9.8 (8 November 2026)
 

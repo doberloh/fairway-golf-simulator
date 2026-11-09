@@ -152,19 +152,19 @@
   },
   "ccliveoak": {
    "spring": {
-    "leaf": "#46623c",
+    "leaf": "#6a9058",
     "bark": "#4a4642"
    },
    "summer": {
-    "leaf": "#3a5434",
+    "leaf": "#5e8250",
     "bark": "#4a4642"
    },
    "autumn": {
-    "leaf": "#3a5434",
+    "leaf": "#5e8250",
     "bark": "#4a4642"
    },
    "winter": {
-    "leaf": "#3a5434",
+    "leaf": "#5e8250",
     "bark": "#4a4642"
    }
   },

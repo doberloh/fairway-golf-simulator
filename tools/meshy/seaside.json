@@ -26,19 +26,19 @@
  "seasons": {
   "slshore": {
    "spring": {
-    "leaf": "#3c5a3a",
+    "leaf": "#5e8458",
     "bark": "#4e463e"
    },
    "summer": {
-    "leaf": "#3c5a3a",
+    "leaf": "#5e8458",
     "bark": "#4e463e"
    },
    "autumn": {
-    "leaf": "#3c5a3a",
+    "leaf": "#5e8458",
     "bark": "#4e463e"
    },
    "winter": {
-    "leaf": "#3c5a3a",
+    "leaf": "#5e8458",
     "bark": "#4e463e"
    }
   }

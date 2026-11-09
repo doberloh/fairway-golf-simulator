@@ -65,7 +65,7 @@ const PICK = {
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'YoungRedwood_1', 'YoungRedwood_2', 'YoungRedwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
-  'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'BigleafMaple_1', 'BigleafMaple_2', 'BayLaurel_1', 'BayLaurel_2',
+  'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'RwBigleafMaple_1', 'RwBigleafMaple_2', 'RwSapling_1', 'RwSapling_2', 'BayLaurel_1', 'BayLaurel_2',
   'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1', 'BlueSpruce_2', 'AmericanElm_1', 'AmericanElm_2', 'Shagbark_1', 'Shagbark_2',
   'BurOak_1', 'BurOak_2', 'PaperBirch_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'BalsamFir_2',
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
@@ -146,7 +146,9 @@ const PICK = {
  swordfern: ['blender:Blender_SwordFern_1', 'blender:Blender_SwordFern_2'],
  salal: ['blender:Blender_Salal_1', 'blender:Blender_Salal_2'],
  sorrel: ['blender:Blender_Sorrel_1'],
- seedling: ['blender:Blender_Seedling_1', 'blender:Blender_Seedling_2'],
+ // The sapling is the Meshy young redwood, small, copied as RwSapling (two kinds cannot share a model) (the owner, Models to check, 9 November 2026: the
+ // hand-built one read as a toy Christmas tree among the Meshy redwoods).
+ seedling: ['blender:Blender_RwSapling_1', 'blender:Blender_RwSapling_2'],
  // LAKESHORE DUNES (tools/blender/cartoon_lakeshore.py). Every name starting
  // `Blender_` comes out of a script in tools/blender/ and lives in a
  // `vendor/blender-<pack>/` folder; docs/BLENDER_ASSETS.md says how to remake
@@ -167,7 +169,9 @@ const PICK = {
  // the three-stem `_1` is 6,700 triangles).
  madrone: ['blender:Blender_Madrone_1', 'blender:Blender_Madrone_2'],
  garryoak: ['blender:Blender_GarryOak_1', 'blender:Blender_GarryOak_2'],
- bigleafmaple: ['blender:Blender_BigleafMaple_1', 'blender:Blender_BigleafMaple_2'],
+ // The Redwood Coast's bigleaf maple is the Pacific Northwest's Meshy one, copied as RwBigleafMaple (the owner, Models to
+ // check, 9 November 2026).
+ bigleafmaple: ['blender:Blender_RwBigleafMaple_1', 'blender:Blender_RwBigleafMaple_2'],
  pacificdogwood: ['blender:Blender_PacificDogwood_1'],
  baylaurel: ['blender:Blender_BayLaurel_1', 'blender:Blender_BayLaurel_2'],
  vinemaple: ['blender:Blender_VineMaple_1'],

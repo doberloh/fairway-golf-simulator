@@ -13861,6 +13861,23 @@ built*, below.
   ([Bradford Greenhouses](https://plants.bradfordgreenhouses.com/11090013/Plant/36492/African_Sumac)).
   The two models are asked for 8 m by 10 m and 6 m by 6 m (PLACED inside species.js's 6-10 m);
   the leaf colour (#6e9050 in summer) is PLACED from the approved pictures.
+- **The remakes** (the owner's Models to check, 9 November 2026; tools/meshy/remakes.json). Forms
+  asked of Meshy, from what each plant is: California bay laurel, several trunks and a dense rounded
+  dome; Pacific madrone, smooth orange-red peeling bark, an open crooked crown; plumeria, thick grey
+  candelabra limbs with leaf clusters and flowers at the tips (not the bare sticks of the hand-built
+  one); ocotillo, 10-20 straight grey-green canes from one point, leafed in short tufts, red flower
+  spikes; brittlebush, a silvery sage-green dome with yellow daisies on bare stalks; big sagebrush,
+  twisted woody stems under silvery blue-green tufts; creosote, an open vase of slender stems with
+  olive-green clumps (the hand-built one read as dead brown); teddy-bear cholla, a dark trunk and
+  fuzzy pale golden-green jointed arms; pink muhly grass, a green fountain with a pink haze on top;
+  bougainvillea, a green mound with magenta bract clusters, about half and half; a plain grey round
+  boulder with no moss patches (the round boulder's flat upward-face patches read as stickers).
+  Sizes PLACED inside each species' own; no outside source read this round.
+- **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
+  #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
+  these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live
+  oak from 34 to 50, where the sumac had gone from 40 to 85, because their models carry darker
+  shading of their own; the second step brought them to 83 and 69. PLACED by eye.
 - **Pampas grass** (*Cortaderia selloana*): 2.5-4 m, spread 1.5-2.5 m, plumes 45-90 cm
   ([RHS](https://www.rhs.org.uk/plants/4431/wd/details)); nurseries give less
   ([Star Nursery](https://www.starnursery.com/product/pampas-grass)). RHS followed.
