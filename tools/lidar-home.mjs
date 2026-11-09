@@ -22,6 +22,10 @@ export const LIDAR_COURSES = {
  'salish-cliffs': {name: 'Salish Cliffs Golf Club, Kamilche WA', from: 'the owner\'s Downloads: Washington DNR Mason County refresh 2024 (2025), State Plane WA South (US feet), with its DTM and DSM'},
  snohomish: {name: 'Snohomish Golf Course, Snohomish WA', from: 'the owner\'s Downloads: Washington DNR Snohomish River Valley refresh 2024 (2025), State Plane WA South (US feet), with its DTM and DSM'},
  'nile-shrine': {name: 'Nile Shrine Golf Course, Mountlake Terrace WA', from: 'the owner\'s builder test (1 November 2026): four rockyweb tiles of USGS WA_KingCounty_2021_B21'},
+ // The owner's own course, built in the builder; its .fairway is in bench/courses/dinosaur-mountain,
+ // the frame-rate goal's first case (9 November 2026). The survey is the builder's saved square (an
+ // .ept.zip, lidar-search.js `eptZipSource`), which lidarFiles does not read: build-courses has no entry.
+ 'dinosaur-mountain': {name: 'Gold Canyon Golf Resort, Dinosaur Mountain, Gold Canyon AZ', from: 'the owner\'s builder download (9 November 2026): USGS AZ_MaricopaPinal_1_2020, a 3,300 m square'},
 };
 
 export const lidarDir = key => path.join(LIDAR_HOME, LIDAR_FOLDERS[key] ?? key);

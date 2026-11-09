@@ -37,7 +37,10 @@ check.
   withdrawn (AGENTS.md). A goal is drafted on branch `frame-rate-all-tiers`, its text, targets,
   device stand-ins and order of work in docs/studies/frame-rate-all-tiers/GOAL.md (local); the
   computer is free on the branch (AGENTS.md, deleted in the merge);
-  waiting on the owner to start it. It takes in *Low on a weak machine, measured against main* and
+  waiting on the owner to start it. The owner's answers (9 November): Dinosaur Mountain's game view in
+  the builder is the first case (bench/courses/dinosaur-mountain); the targets stand; Low and Medium may
+  look different; free flight needs its own answer for Low's trees; pop-in becomes fade-in on every
+  tier. It takes in *Low on a weak machine, measured against main* and
   the processor's share on large built courses; the real devices stay *A real phone, an iPad and a
   weak laptop*.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
