@@ -53,6 +53,10 @@ export const COURSES = {
  // The owner's addition of 3 November 2026: Bully Pulpit at Medora, North
  // Dakota, on the Badlands (its survey fetched from 3DEP).
  'bully-pulpit': {name: 'Bully Pulpit', osm: 'way(245874307)', landscape: 'badlands', skin: true},
+ // Troon North's Monument (9 November 2026), the course Desert Mountain was drawn from
+ // (the owner's Troon North photographs): its granite hills skinned from the land.
+ // One boundary round both of the club's courses; the Monument's holes by name.
+ 'troon-north': {name: 'Troon North (Monument)', osm: 'relation(1389558)', course: 'Monument Course', bbox: [-111.8800, 33.7355, -111.8455, 33.7520], landscape: 'dmountain', skin: true},
  'key-west': {name: 'Key West Golf Club', osm: 'way(84902763)', landscape: 'flpalms'},
  northwood: {name: 'Northwood Golf Club', osm: 'way(1246462624)', landscape: 'redwood'},
  ekwanok: {name: 'Ekwanok Country Club', osm: 'way(424514357)', landscape: 'newengland'},
@@ -109,7 +113,8 @@ async function build(key) {
  const el = edge.elements[0]; if (!el) throw Error('OpenStreetMap has no such course');
  const geom = el.geometry ?? el.members.flatMap(m => m.geometry ?? []);
  const lats = geom.map(p => p.lat), lons = geom.map(p => p.lon), padLat = 80 / 111320, padLon = 80 / (111320 * Math.cos(lats[0] * Math.PI / 180));
- const ll = {lon0: Math.min(...lons) - padLon, lat0: Math.min(...lats) - padLat, lon1: Math.max(...lons) + padLon, lat1: Math.max(...lats) + padLat};
+ // `bbox` [lon0, lat0, lon1, lat1]: the one course's own square, where the boundary is a club's.
+ const ll = c.bbox ? {lon0: c.bbox[0], lat0: c.bbox[1], lon1: c.bbox[2], lat1: c.bbox[3]} : {lon0: Math.min(...lons) - padLon, lat0: Math.min(...lats) - padLat, lon1: Math.max(...lons) + padLon, lat1: Math.max(...lats) + padLat};
  // 2. The survey: the folder's, else 3DEP's Entwine copy over the course.
  const M = await lazModule();
  let sources = await courseSources(key, M);
@@ -134,7 +139,8 @@ async function build(key) {
  // door 2's own query (osm.js overpassQuery), retried when the server is busy.
  const json = await overpass(overpassQuery([ll.lon0, ll.lat0, ll.lon1, ll.lat1]), osmFile);
  const feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats);
- const wantId = `${el.type}/${el.id}`, course = courses.find(q => q.id === wantId) ?? courses[0];
+ // `course`: which of the boundary's courses, when it holds two (osm-course.js `only`).
+ const wantId = `${el.type}/${el.id}${c.course ? ':' + c.course : ''}`, course = courses.find(q => q.id === wantId) ?? courses[0];
  say(`map: ${courses.map(q => `${q.name} (${q.id}) ${q.holes} holes`).join('; ')}; building ${course.name}`);
  const model = createTrace(land, {trees: []}), laid = layOsm(model, feats), osmTrees = model.state.trees;
  say(`laid ${Object.entries(laid).map(([k, n]) => `${n} ${k}`).join(', ')}`);
@@ -142,7 +148,7 @@ async function build(key) {
  // A scorecard in the course's folder (card.json: par, blue, white, red), when
  // the map numbers greens rather than drawing hole lines.
  const cardFile = path.join(dir, 'card.json'), card = fs.existsSync(cardFile) ? JSON.parse(fs.readFileSync(cardFile, 'utf8')) : null;
- const raw = osmHoles(feats, {within: course.rings, codes: model.state.codes, land, card});
+ const raw = osmHoles(feats, {within: course.rings, only: course.only ?? null, codes: model.state.codes, land, card});
  const codes = refineTrace(land, model.state.codes, {mode: 'lidar'}), shift = refineTrace.lastShift ?? {x: 0, z: 0};
  // Eighteen when the map numbers all eighteen, else nine when it numbers 1 to
  // 9 (a club's nine: Breckenridge's Bear nine, a stray hole 12 beside it).

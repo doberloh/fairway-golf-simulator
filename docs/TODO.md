@@ -34,6 +34,13 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
+- [ ] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
+  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
+  like anything we built"). The dark round puff-ball trees on the desert are `africansumac`, both
+  of its hand-built Blender models (cartoon_resort.py; 5% of the course's plants and 10% of its
+  stands), the only Desert Resort tree not from Meshy. Queued: reference photos first, then
+  tools/meshy-run.mjs, as the other Meshy trees were (docs/BLENDER_ASSETS.md); planting it moves
+  Desert Resort's ground only if its share changes (fingerprint).
 
 ## Release 0.9.8 (8 November 2026)
 
@@ -2517,6 +2524,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+- [x] **Skin from the land on Desert Mountain** (the owner, 9 November 2026: "can we do that for
+  the desert mountain course as well?"). One code path for every landscape already; TPC Scottsdale
+  has no mountains in its survey, so Troon North's Monument was built from 3DEP and skinned
+  (tools/build-courses.mjs `troon-north`). The desert's apron is now its floor, hardpan, not the
+  washes' sand (skin.js `skinKinds`); a club boundary holding two courses is split by its hole
+  lines' course names (osm-course.js `only`). Seen in the game on Troon North's tors; the picker's
+  split not seen in the builder's page, only tested; not played by a person. docs/COURSE_BUILDER.md.
 
 - [x] **Built courses' greens not mown to their edge, and their tees not mown at all** (the owner,
   8 November 2026, with a screenshot). Fixed in ground.js (PROJECT_HANDOFF, *A BUILT COURSE'S MOWING

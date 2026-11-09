@@ -13409,6 +13409,22 @@ Chambers Bay's dunes, 3 November 2026). On real surveys: Bully Pulpit
 6.3 and 19.6 ha, 5-7 s; 0.6 reads the Badlands' breaks well and was left
 alone.
 
+**Desert Mountain on Troon North (9 November 2026).** The owner asked for
+the same on Desert Mountain. Its only survey then, TPC Scottsdale, lies on
+the valley floor (454-479 m across 1.7 km), so the button found the canal's
+banks and nothing else: 0.6 ha of rock, 4 ha below (left unskinned in the
+bench). Troon North's Monument course (3DEP AZ_MaricopaPinal_1_2020, 189
+million points, 1 m; tools/build-courses.mjs `troon-north`) has granite
+tors among its holes: 11.1 ha of face (15.1 ha at the build's 1 m grid)
+read as the tors in the game, at the same 0.6. What did not read: the apron
+was waste sand -- the landform's second kind -- and lay in pale blotches all
+over the tors' flanks (53.6 ha). In the generator that sand is the washes'
+(landforms.js knobs: `b` is the wash, the floor everything else), so a
+landform naming a `floor` now takes it for the apron: hardpan on Desert
+Mountain and Desert Resort, the other thirteen landscapes unchanged
+(tests/builder-skin.test.mjs). The small rock patches left on the flanks
+match boulder outcrops there and were kept; the 0.6 was not changed.
+
 ## Cart-path corners on steep ground (generator 77, 3 November 2026)
 
 The owner's rule (2 November 2026): every corner rounded. What was left
