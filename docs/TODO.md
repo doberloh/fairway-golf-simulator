@@ -49,6 +49,12 @@ check.
   Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
   call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
   built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
+- [ ] **Two builder smoke journeys fail on main too** (found 9 November 2026, running the builder's
+  smoke for the frame-rate goal; both fail the same on the build at 21eecc1). `builder-door-2`: "the
+  tree height scale should grow the trees, taller and wider, at once: 0 -> 0" -- the journey reads no
+  trees to measure. `builder-door-2-worthington` (local only): it expects Worthington's survey to
+  suggest the Heartland, which the pare to fifteen landscapes removed; it suggests Classic Parkland.
+  The journeys need updating, or the slider looking at; not part of the goal.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
