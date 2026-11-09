@@ -15382,3 +15382,17 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   changed; the cull compares every square's decisions with the last write's and writes nothing when
   none changed (its swap mixes rounded to the dissolve's 16 steps, Low's share up to 64ths). After:
   5.8 ms, the check 0.07 ms, the rewrite 0.78 ms.
+- **The devices, estimated, after the first pass** (frame-ab --device on the build of 13:05; the
+  graphics time is this card's scaled by compute and bandwidth -- PLACED, a ranking, not a promise):
+  on generated courses the iPhone 13 on Medium 43-161 ms a frame (Redwood Coast 63-161, Pacific
+  Northwest 43-102; target 16.7), the older laptop on Low 106-294 (target 33); on Dinosaur Mountain
+  the laptop with a Radeon 780M on Medium 38-81, the MacBook Air M1 63-136, the iPhone 13 88-183, the
+  older laptop on Low 112-362, the budget Android 1,100-1,650. **What stops them:** a Medium frame of
+  Redwood Coast is about 2 ms of this card; 60 a second on an iPhone needs about 0.44 ms, four to five
+  times less, and the older laptop on Low about a third of Low's frame now. Low still draws 9-16 M
+  triangles, and its ground shader is its largest single cost (27-38% of the card's frame, its
+  triangles a small part of it). Automatic resolution (down to half the tier's pixels, on by default,
+  off in every measurement here) would take some of the ground's share in real play. Closing the gap
+  is not a setting: it is a tier made for phones and weak laptops -- a cheaper ground shader, a
+  fraction of the trees' far versions, one shadow map or none -- which changes the look the most and is
+  the owner's call. The real check is a real device (TODO, *A real phone, an iPad and a weak laptop*).
