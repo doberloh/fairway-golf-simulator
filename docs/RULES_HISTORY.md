@@ -338,6 +338,19 @@ been measured on generated nine-hole courses; nobody had profiled the large
 built courses where it fails. Lesson: an acceptance measured on one kind of
 course does not cover the kinds it never saw.
 
+**The frame-rate branch unlocks the computer, 9 November 2026.** The goal's
+first draft carried a "GPU allowed" budget (40 runs, 3 minutes apart, the
+software arm left out). Before starting it the owner asked instead for "an
+agent rule that goes away when this branch is merged back in that overrides
+the need to ask to use the GPU or CPU and allows the agent to use the full PC
+utilization". So AGENTS.md *On the frame-rate-all-tiers branch, the whole
+computer is free* follows the course builder's: no asking, no cap, the
+software arm in, the processor at full use, and the crash precautions kept --
+the gate, one graphics job at a time, software rendering alone, retry once,
+stop after a crash. One addition, about measuring rather than safety: nothing
+heavy on the processor beside a frame measurement, because a busy machine has
+inflated timings tenfold here before. It deletes itself in the merge.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

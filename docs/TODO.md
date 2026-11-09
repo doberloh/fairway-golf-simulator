@@ -35,7 +35,8 @@ check.
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
   withdrawn (AGENTS.md). A goal is drafted on branch `frame-rate-all-tiers`, its text, targets,
-  device stand-ins and graphics-card limits in docs/studies/frame-rate-all-tiers/GOAL.md (local),
+  device stand-ins and order of work in docs/studies/frame-rate-all-tiers/GOAL.md (local); the
+  computer is free on the branch (AGENTS.md, deleted in the merge);
   waiting on the owner to start it. It takes in *Low on a weak machine, measured against main* and
   the processor's share on large built courses; the real devices stay *A real phone, an iPad and a
   weak laptop*.
