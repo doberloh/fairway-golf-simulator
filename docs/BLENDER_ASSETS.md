@@ -163,7 +163,9 @@ text to model was dropped before it ever ran):
    `accent` colours with the `plain` ones they are told from: those faces become a third part,
    `accent`, painted from the species' accent colour (flowers; the paint keeps only light and dark,
    so a magenta bract came out green or, by the wood test, bark), `leafColours` for faces that are leaf
-   whatever the wood test says (the cholla's pale joints), `leafOnly` for a model with no
+   whatever the wood test says (the cholla's pale joints), `stalks` to grow a thin stalk to each
+   piece of the flower part (Meshy drops pencil-thin stems: the muhly's plumes floated), `barkLevel`
+   to darken or lighten the bark's paint (it is measured from its own mean), `leafOnly` for a model with no
    wood (a grass, the ocotillo's green canes), and `gameTris` to thin it first (the boulder). The
    colours are read off with `tools/blender/meshy_colours.py`. Far versions are
    written in that form already, closed all round because the game draws one side.

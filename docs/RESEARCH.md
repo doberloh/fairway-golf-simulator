@@ -13889,7 +13889,14 @@ built*, below.
   triangles; named as leaf colours, 2,406 are leaf. Muhly plumes pink in summer, #a4ad74 to #d08cb0,
   and spring #9aa86a to #b89aa0 (PLACED by eye): in life the plumes come in September to November
   and the summer clump is green, but the game's model always carries them and Florida Palms is
-  summer all year, so the owner saw a yellow puff. Departure kept on purpose.
+  summer all year, so the owner saw a yellow puff. Departure kept on purpose. Cholla 1 matched to
+  cholla 2 by the capture's own pixels (mean RGB in a box): joints 102/138/70 against 111/142/73 once
+  its paint level went .82 to .95 (paint mean .66 to .77, cholla 2's .77); trunk 86/67/40 at the same
+  bark paint mean as cholla 2 (1.03 against 1.04) -- the paint is measured from each model's own
+  bark mean, and cholla 1's bark includes dark dead joints -- so darkened by .45 to 60/46/26 against
+  54/41/21. The muhly's grown stalks: four-sided, radius 0.7% of the plant's height tapering to
+  60%, from 12% of the height and a fifth of the way out toward each plume, to 30% into the plume;
+  320 and 304 triangles. PLACED by eye.
 - **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
   #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
   these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live

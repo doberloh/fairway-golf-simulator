@@ -34,7 +34,7 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Models to check: the remakes are in, the muhly waits on its second pictures** (9 November 2026, after the African sumac: "go
+- [ ] **Models to check: the remakes are in, the cholla and muhly wait on the owner's second look** (9 November 2026, after the African sumac: "go
   through the rest of the Landscape's and figure out if there's any other missed models that are
   trees like this. Also look for any other model that doesn't look exactly right"). Every model a
   9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
@@ -68,9 +68,13 @@ check.
   like a big yellow puff on top. We need to get some sort of separation"): redrawn with every plume on
   its own stalk, four pictures (36 credits) on the page; and its plumes painted pink in summer
   (vegetation.js `accents`, #a4ad74 to #d08cb0) -- the yellow was the summer table's, and Florida
-  Palms never leaves summer. **Owed:** the muhly's pick, model (a new `--round`: its first models
-  are paid for) and shipping; a frame check on Low (asked, not run) -- the plants are planted in
-  thousands (creosote 7,729 on one course); the brittlebush is shardy close up.
+  Palms never leaves summer. The owner picked the third picture of each (made as `--round 2`, 60
+  credits); Meshy kept the plumes apart but dropped every stalk, so the conversion grows a thin green
+  stalk to each plume (`stalks`, meshy_game.py *STALKS*). Cholla 1 sent back ("colors are off. Make
+  them match cholla 2"): its joints lifted (`paintLevel` .95) and its trunk darkened (`barkLevel`
+  .45), measured against cholla 2 in the capture. Both on the page's Pictures to review as the game
+  draws them. **Owed:** the owner's look at those; a frame check on Low (asked, not run) -- the plants
+  are planted in thousands (creosote 7,729 on one course); the brittlebush is shardy close up.
 
 ## Release 0.9.8 (8 November 2026)
 

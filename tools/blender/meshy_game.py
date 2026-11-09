@@ -99,7 +99,68 @@ for name, faces, kind in (('leaves', np.where(leaf)[0], 'leaf'), ('bark', np.whe
     if kind != 'bark':
         normal, under = leaf_light(pos, normal, tree)
     paint = game_paint(colour, pos, 0 if kind != 'bark' else 1, tree, under, LEVEL, ref=kind)
+    # `barkLevel` (MESHY_BARKLEVEL): the bark's paint is measured from its own mean, so a trunk with dark
+    # dead joints on it reads lighter than one without -- cholla 1 against cholla 2 (the owner: "cholla 1
+    # colors are off. Make them match cholla 2"). A pack entry darkens or lightens it here.
+    if kind == 'bark' and os.environ.get('MESHY_BARKLEVEL'):
+        paint[:, :3] *= float(os.environ['MESHY_BARKLEVEL'])
     parts.append((name, pos, normal, paint, remap))
+
+# STALKS (MESHY_STALKS, a pack entry's `stalks`; the muhly's second round, 9 November 2026): Meshy
+# keeps a fist-sized plume but drops the pencil-thin stalk under it, so the owner's separated plumes
+# floated over the clump. Each plume -- a connected piece of the flower part -- gets a thin green
+# four-sided stalk, from inside the clump to the plume's lowest point, as leaf.
+if os.environ.get('MESHY_STALKS') and accent.any():
+    faces = np.where(accent)[0]
+    root = {}
+
+    def find(x):
+        while root.setdefault(x, x) != x:
+            root[x] = root[root[x]]
+            x = root[x]
+        return x
+    for f in faces:
+        a, b, c = weld[tree.tri[f]]
+        root[find(b)] = find(a)
+        root[find(c)] = find(a)
+    pieces = {}
+    for f in faces:
+        pieces.setdefault(find(weld[tree.tri[f][0]]), []).append(f)
+    base_z = tree.lo[2] + tree.H * .12
+    centre_xy = tree.ax_at(np.array([base_z]))[0]
+    blades = (~accent).copy()
+    if blades.any():
+        centre_xy = np.average(tree.centre[blades][:, :2], axis=0, weights=tree.area[blades])
+    R = tree.H * .007
+    spos, sfaces = [], []
+    for piece in pieces.values():
+        if len(piece) < 4:
+            continue
+        corners = tree.verts[tree.tri[piece].ravel()]
+        top = corners[corners[:, 2].argmin()]
+        mid = corners.mean(0)
+        top = np.array([mid[0], mid[1], top[2] + (mid[2] - top[2]) * .3])  # a little into the plume
+        bottom = np.array([centre_xy[0] + (top[0] - centre_xy[0]) * .2, centre_xy[1] + (top[1] - centre_xy[1]) * .2, base_z])
+        axis = top - bottom
+        axis /= np.linalg.norm(axis) + 1e-12
+        side = np.cross(axis, [0, 0, 1])
+        side = side / (np.linalg.norm(side) + 1e-12) if np.linalg.norm(side) > 1e-6 else np.array([1., 0, 0])
+        other = np.cross(axis, side)
+        k = len(spos)
+        for end, r in ((bottom, R), (top, R * .6)):
+            for a in range(4):
+                ang = a * np.pi / 2
+                spos.append(end + (side * np.cos(ang) + other * np.sin(ang)) * r)
+        for a in range(4):
+            b = (a + 1) % 4
+            sfaces += [[k + a, k + b, k + 4 + b], [k + a, k + 4 + b, k + 4 + a]]
+    if spos:
+        spos, sfaces = np.array(spos), np.array(sfaces, np.int64)
+        snormal = vertex_normals(spos, sfaces)
+        flex = np.clip((spos[:, 2] - tree.lo[2]) / tree.H, 0, 1)
+        paint = np.stack([np.full(len(spos), .45)] * 3 + [flex], -1)  # a shade of .9, halved as game_paint stores it
+        parts.append(('leaves', spos, snormal, paint, sfaces))
+        report['stalks'] = {'vertices': int(len(spos)), 'triangles': int(len(sfaces))}
 
 # Bark first, as the shipped models: a far version pairs up part for part.
 order = {'bark': 0, 'leaves': 1, 'accent': 2}

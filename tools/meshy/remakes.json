@@ -188,7 +188,9 @@
    "plain": [
     "#5c4d3d",
     "#42332c"
-   ]
+   ],
+   "paintLevel": 0.95,
+   "barkLevel": 0.45
   },
   {
    "name": "Blender_MxCholla_2",
@@ -215,21 +217,24 @@
    "prompt": "A clump of pink muhly grass in autumn bloom, 1 m tall and 1 m wide. A low dense fountain of thin arching mid-green blades, half the height. Rising from it, fifteen to twenty slender upright stalks fanning outward like a loose bouquet, each ending in its own airy pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
    "leafOnly": true,
    "accent": [
-    "#ec93a7",
-    "#d89498",
-    "#f57aaf",
-    "#de8192",
-    "#b17e7a"
+    "#f298ad",
+    "#fab9c5",
+    "#e37594",
+    "#c65479",
+    "#fbaebc",
+    "#f69bae",
+    "#e9869f",
+    "#d5708b",
+    "#b66373"
    ],
    "plain": [
-    "#aacc65",
-    "#6d9838",
-    "#7b9133",
-    "#97af48",
-    "#546123",
-    "#61543f",
-    "#b19b66"
-   ]
+    "#719b28",
+    "#81a13b",
+    "#657d28",
+    "#6d9633",
+    "#507129"
+   ],
+   "stalks": true
   },
   {
    "name": "Blender_MxMuhly_2",
@@ -239,21 +244,24 @@
    "prompt": "A smaller clump of pink muhly grass in bloom, 0.8 m tall and 0.8 m wide. A low fountain of arching mid-green blades, and above it ten to twelve slender stalks spreading outward like a bouquet, each topped by its own pink plume. Each plume is a separate soft oval tuft, about the size of a fist to a forearm, clearly apart from its neighbours with open air and sky between them, never merged into one dome or one cloud. Paint the plumes as solid soft three-dimensional tufts, not as fine hairs or mist. The blades are thick soft strips, not hairs. Upright and even, nothing swept to one side. Stylised cartoon game asset, matte hand-painted colour. Single plant alone, no ground, no base, no text.",
    "leafOnly": true,
    "accent": [
-    "#ec93a7",
-    "#d89498",
-    "#f57aaf",
-    "#de8192",
-    "#b17e7a"
+    "#f298ad",
+    "#fab9c5",
+    "#e37594",
+    "#c65479",
+    "#fbaebc",
+    "#f69bae",
+    "#e9869f",
+    "#d5708b",
+    "#b66373"
    ],
    "plain": [
-    "#aacc65",
-    "#6d9838",
-    "#7b9133",
-    "#97af48",
-    "#546123",
-    "#61543f",
-    "#b19b66"
-   ]
+    "#719b28",
+    "#81a13b",
+    "#657d28",
+    "#6d9633",
+    "#507129"
+   ],
+   "stalks": true
   },
   {
    "name": "Blender_MxBougainvillea_1",
