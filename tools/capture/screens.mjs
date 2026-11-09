@@ -62,10 +62,11 @@ export const SCREENS = [
  // Fails rather than saving if the ball misses the green.
  {name: 'putting', go: async p => {
   await round(p, {biome: 'seaside', seed: 'DUNE', hole: 3, when: 'afternoon', group: {...GROUP, players: GROUP.players.slice(0, 1)}});
-  await p.evaluate(s => window.__takeShot(s), {speed: 54.5, vla: 16.5, hla: 0, spin: 6900, spinAxis: 0});
-  await wait(p, 2000);
-  await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 30000}); await wait(p, 4000);
-  if (!await p.evaluate(() => window.lab.state().camera.onGreen)) throw Error('the tee shot missed the green');
+  // The ball put on the green, 4 m short of the pin on the line from the tee
+  // (8 November 2026: a scripted tee shot misses whenever the hole changes).
+  await p.evaluate(() => { const v = window.__view, pin = v.course.pin, tee = v.course.tee || v.course.worldTee; const dx = (tee?.x ?? pin.x) - pin.x, dz = (tee?.z ?? pin.z - 40) - pin.z, d = Math.hypot(dx, dz) || 1; window.__play({x: pin.x + dx / d * 4, z: pin.z + dz / d * 4}); });
+  await wait(p, 4000);
+  if (!await p.evaluate(() => window.lab.state().camera.onGreen)) throw Error('the ball is not on the green');
   await p.evaluate(() => { for (const id of ['readSlope', 'readHeat']) document.getElementById(id).click(); });
   await wait(p, 2500);
  }},
@@ -73,8 +74,9 @@ export const SCREENS = [
   await click(p, 'menuRange'); await wait(p, 1200);
   await pressText(p, 'Open the driving range').catch(async () => { await step(p, 'The range'); await wait(p, 600); await pressText(p, 'Open the driving range'); });
   await wait(p, 9000);
-  // The range controls open by themselves on arrival; put them away for the picture.
-  await p.keyboard.press('Escape'); await wait(p, 800);
+  // (Until 0.9.8 the range controls opened by themselves on arrival and Escape
+  // put them away; they no longer do, and Escape opened the pause menu over the
+  // picture, 8 November 2026.)
   for (const s of RANGE) {
    await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 30000});
    await p.evaluate(s => window.__takeShot(s), s); await wait(p, 2500);

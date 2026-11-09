@@ -11,33 +11,32 @@
 // website.
 //
 // Needs the capture build first: node tools/capture/build-hooked.mjs
-//   node tools/capture/times.mjs [landscape...]   (no names: all nine)
+//   node tools/capture/times.mjs [landscape...]   (no names: all fifteen)
 // One landscape (four pictures) is about a minute on the graphics card; run a
 // few at a time with a pause between (docs/CAPTURE.md, *GPU batches*).
 import {launch, openGame, assertUltra, saveStill, HIDE_HUD, hourFor, hideBallAndAim, gpuGate} from './capture.mjs';
 
 const OUT = `${process.env.MEDIA_OUT || 'bench/shots/media'}/times`;
-const behind = {fromPin: 70, around: 170, height: 22, pitch: -14};
-const tee = h => ({hole: h, along: 0, height: 9, look: 'pin', pitch: -6});
-// One camera per landscape: the seeds and views of the gallery's best-liked
-// pictures (gallery.mjs), so a landscape looks the same as it always has.
-// Midwest, Island and Giant Redwood were moved after the first set (18 October
-// 2026): a tree filled the Midwest frame, a palm frond and trunk crowded the
-// Island one, and the Giant Redwood tee looked at a hillside. Their views were
-// picked from angles.mjs's test sheets.
+// THE FIFTEEN US GOLF LANDSCAPES (8 November 2026, the website's 0.9.8 rework):
+// every one on seed FAIRWAY from the view its own cards in the game use first
+// (biome-shots.mjs PICKS; the owner chose those): from 80 m behind hole 1's
+// green and 30 m up, looking back down the hole, except where that view had a
+// tree in front of the green or, for the Redwood Coast, no golf at all (OWN). The old
+// nine (Pacific Northwest, Desert, Midwest, Island ...) went with 0.9.7/0.9.8.
+const behind1 = {hole: 0, fromPin: 80, around: 170, height: 30, pitch: -17};
 export const LANDSCAPES = [
- {name: 'pacific-northwest', biome: 'pacnw', seed: 'CEDAR', hole: 1, cam: behind},
- {name: 'dmountain', biome: 'dmountain', seed: 'MESA', hole: 1, cam: behind},
- {name: 'mountains', biome: 'mountains', seed: 'SUMMIT', hole: 1, cam: tee(1)},
- {name: 'seaside', biome: 'seaside', seed: 'DUNE', hole: 1, cam: behind},
- {name: 'heartland', biome: 'heartland', seed: 'MEADOW', hole: 3, cam: behind},
- {name: 'keys', biome: 'keys', seed: 'LAGOON', hole: 1, cam: {...behind, around: 130}},
- {name: 'giant-redwood', biome: 'redwood', seed: 'GIANT', hole: 1, cam: {...behind, around: 210}},
- {name: 'newengland', biome: 'newengland', seed: 'MAPLE', hole: 1, cam: behind},
- // Picked from angles.mjs's sheet (23 October 2026): a fairway ribbon between
- // grassed dunes with sand torn into their faces, woods behind.
- {name: 'lakeshore-dunes', biome: 'seaside', seed: 'BEACON', hole: 2, cam: {...behind, height: 34, pitch: -18}},
-];
+ ['classic-parkland', 'parkland'], ['southern-pines', 'southpines'], ['lowcountry-gulf', 'lowgulf'],
+ ['florida-palms', 'flpalms'], ['hawaiian-resort', 'hiresort'], ['desert-mountain', 'dmountain'],
+ ['desert-resort', 'dresort'], ['seaside-links', 'seaside'], ['california-coast', 'calcoast'],
+ ['pacific-northwest', 'pacnw'], ['mountain', 'mountains'], ['prairie-sand-hills', 'prairie'],
+ ['badlands', 'badlands'], ['northern-woods', 'northwoods'],
+].map(([name, biome]) => ({name, biome, seed: 'FAIRWAY', hole: 0, cam: behind1}))
+ .concat([{name: 'redwood-coast', biome: 'redwood'}]);
+// Where hole 1's view had a tree in front of the green, a view picked from
+// angles.mjs's sheets instead (8 November 2026): 70 m out, 22 m up.
+const near = (hole, around) => ({hole, cam: {hole, fromPin: 70, around, height: 22, pitch: -14}});
+const OWN = {'redwood-coast': near(2, 210), 'pacific-northwest': near(2, 210), 'southern-pines': near(3, 170), 'mountain': near(1, 210)};
+for (const l of LANDSCAPES) Object.assign(l, {seed: 'FAIRWAY'}, OWN[l.name] || {});
 // Night: 10 PM, the floodlights on (they light the fairway and green; the
 // glow ball is hidden with the rest).
 export const TIMES = [

@@ -25,45 +25,43 @@ fs.mkdirSync(`${OUT}/master`, {recursive: true});
 // order; the tee shot and the night clip are for the media page. A clip's
 // light is a time of day (`when`, a sun height -- capture.mjs) unless it names
 // an hour outright.
+// THE FIFTEEN US GOLF LANDSCAPES (8 November 2026, the website's 0.9.8 rework):
+// eight flyovers for the background, every one on seed FAIRWAY, then the
+// media page's tee shot, floodlit night and round-screen drive. New names
+// throughout: the site caches media forever under a name (its AGENTS.md).
+// `season` plays the course in that season (Classic Parkland's autumn).
+const APPROACH = [{fromPin: 230, around: 6, height: 32, pitch: -12}, {fromPin: 140, around: 3, height: 26, pitch: -13}, {fromPin: 55, around: 0, height: 16, pitch: -15}];
 export const CLIPS = [
- {name: 'links-golden', biome: 'seaside', seed: 'DUNE', hole: 1, when: 'golden', seconds: 9,
-  keys: [{fromPin: 230, around: 8, height: 32, pitch: -12}, {fromPin: 140, around: 4, height: 26, pitch: -13},
-   {fromPin: 55, around: 0, height: 16, pitch: -15}]},
- {name: 'desert-noon', biome: 'dmountain', seed: 'MESA', hole: 2, when: 'noon', seconds: 9,
-  keys: [{fromPin: 250, around: -6, height: 24, pitch: -10}, {fromPin: 150, around: -3, height: 30, pitch: -14},
-   {fromPin: 50, around: 8, height: 18, pitch: -17}]},
+ {name: 'seaside-links-golden', biome: 'seaside', seed: 'FAIRWAY', hole: 0, when: 'golden', seconds: 9, keys: APPROACH},
+ {name: 'desert-mountain-noon', biome: 'dmountain', seed: 'FAIRWAY', hole: 0, when: 'noon', seconds: 9, keys: APPROACH},
  // Bird's eye, at first light, with the morning mist still lying in the valleys.
- {name: 'pacific-northwest-dawn', biome: 'pacnw', seed: 'CEDAR', hole: 1, when: 'dawn', seconds: 9,
+ {name: 'pacific-northwest-dawn-us', biome: 'pacnw', seed: 'FAIRWAY', hole: 0, when: 'dawn', seconds: 9,
   keys: [{fromPin: 340, around: 25, height: 120, pitch: -26}, {fromPin: 210, around: 12, height: 105, pitch: -32},
    {fromPin: 90, around: 0, height: 90, pitch: -40}]},
- {name: 'autumn-golden', biome: 'newengland', seed: 'MAPLE', hole: 1, when: 'golden', seconds: 9,
-  keys: [{fromPin: 210, around: -8, height: 24, pitch: -10}, {fromPin: 120, around: -4, height: 20, pitch: -12},
-   {fromPin: 45, around: 0, height: 14, pitch: -14}]},
- {name: 'mountain-morning', biome: 'mountains', seed: 'SUMMIT', hole: 4, when: 'morning', seconds: 9,
-  keys: [{fromPin: 95, around: 175, height: 34, pitch: -13}, {fromPin: 90, around: 205, height: 32, pitch: -13},
-   {fromPin: 95, around: 235, height: 34, pitch: -13}]},
- {name: 'island-afternoon', biome: 'keys', seed: 'LAGOON', hole: 1, when: 'afternoon', seconds: 9,
-  keys: [{fromPin: 90, around: 120, height: 26, pitch: -12}, {fromPin: 82, around: 150, height: 24, pitch: -12},
-   {fromPin: 90, around: 180, height: 26, pitch: -12}]},
- {name: 'midwest-afternoon', biome: 'heartland', seed: 'MEADOW', hole: 1, when: 'afternoon', seconds: 9,
-  keys: [{fromPin: 230, around: -5, height: 20, pitch: -9}, {fromPin: 140, around: 0, height: 17, pitch: -10},
-   {fromPin: 60, around: 5, height: 12, pitch: -11}]},
- // Re-routed 19 October 2026: the first route (62 m out, 16 m up, swinging from
- // 40 degrees one side of the tee line to 40 the other) flew through a fir's
- // crown half a second in. This one swings round the clean view times.mjs
- // picked for Redwood's stills (70 m out, 22 m up, 210 degrees round).
- {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 1, when: 'afternoon', seconds: 9,
-  keys: [{fromPin: 72, around: 190, height: 22, pitch: -14}, {fromPin: 68, around: 210, height: 21, pitch: -14},
-   {fromPin: 72, around: 230, height: 22, pitch: -14}]},
- {name: 'desert-tee-shot', biome: 'dmountain', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
+ // Higher than APPROACH: at 26 m it flew through a maple's crown.
+ {name: 'classic-parkland-autumn', biome: 'parkland', seed: 'FAIRWAY', hole: 0, when: 'golden', season: 'autumn', seconds: 9,
+  keys: [{fromPin: 230, around: 6, height: 48, pitch: -15}, {fromPin: 140, around: 3, height: 40, pitch: -17}, {fromPin: 60, around: 0, height: 26, pitch: -18}]},
+ // Round the green, the range behind it.
+ {name: 'mountain-morning-us', biome: 'mountains', seed: 'FAIRWAY', hole: 0, when: 'morning', seconds: 9,
+  keys: [{fromPin: 95, around: 150, height: 34, pitch: -14}, {fromPin: 90, around: 175, height: 32, pitch: -14},
+   {fromPin: 95, around: 200, height: 34, pitch: -14}]},
+ {name: 'florida-palms-afternoon', biome: 'flpalms', seed: 'FAIRWAY', hole: 0, when: 'afternoon', seconds: 9,
+  keys: [{fromPin: 90, around: 140, height: 26, pitch: -13}, {fromPin: 84, around: 165, height: 24, pitch: -13},
+   {fromPin: 90, around: 190, height: 26, pitch: -13}]},
+ // Round the view times.mjs picked (hole 2's green through the redwoods).
+ {name: 'redwood-coast-afternoon', biome: 'redwood', seed: 'FAIRWAY', hole: 2, when: 'afternoon', seconds: 9,
+  keys: [{fromPin: 72, around: 195, height: 22, pitch: -14}, {fromPin: 68, around: 210, height: 21, pitch: -14},
+   {fromPin: 72, around: 225, height: 22, pitch: -14}]},
+ {name: 'badlands-golden', biome: 'badlands', seed: 'FAIRWAY', hole: 0, when: 'golden', seconds: 9, keys: APPROACH},
+ {name: 'desert-mountain-tee-shot', biome: 'dmountain', seed: 'FAIRWAY', hole: 1, hour: 10.5, seconds: 7,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
- {name: 'night-floodlit', biome: 'pacnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
+ {name: 'night-floodlit-us', biome: 'parkland', seed: 'FAIRWAY', hole: 1, hour: 21.5, flood: true, seconds: 12,
   keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
    {fromPin: 105, around: 210, height: 40, pitch: -17}]},
- // Added for 1.0: a drive with the round screen on -- the meter, the golfer
- // chips, the shot flying and the shot card coming up over its apex. The whole
- // page is recorded (the interface is not on the canvas).
- {name: 'round-screen-drive', biome: 'dmountain', seed: 'MESA', hole: 2, when: 'afternoon', seconds: 15, ui: true,
+ // A drive with the round screen on -- the meter, the golfer chips, the shot
+ // flying and the shot card coming up over its apex. The whole page is
+ // recorded (the interface is not on the canvas).
+ {name: 'round-screen-drive-us', biome: 'dmountain', seed: 'FAIRWAY', hole: 1, when: 'afternoon', seconds: 15, ui: true,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
 ];
 const GROUP = {players: [{name: 'Alex', profile: 'pfair', team: 'A', hand: 'RH'}, {name: 'Sam', profile: 'psam', team: 'A', hand: 'RH'}, {name: 'Jordan', profile: 'pjo', team: 'B', hand: 'LH'}], mode: 'stroke', tee: 'blue'};
@@ -76,7 +74,7 @@ try {
   console.log(`${s.name}: card ${gpuGate()}% before`);
   const t0 = Date.now();
   const p = await openGame(b, {width: 1920, height: 1080, density: 2, virtualClock: true});
-  await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome: s.biome, holes: 9, seed: s.seed}, GROUP]);
+  await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome: s.biome, holes: 9, seed: s.seed, ...(s.season ? {season: s.season} : {})}, GROUP]);
   await p.evaluate(h => window.lab.hole(h), s.hole);
   await p.waitForTimeout(9000);
   if (!s.ui) await p.addStyleTag({content: HIDE_HUD});
