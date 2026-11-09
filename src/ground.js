@@ -730,7 +730,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -1494,5 +1494,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v74';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v75';return m;
 }

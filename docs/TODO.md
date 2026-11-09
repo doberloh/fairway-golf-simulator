@@ -34,15 +34,21 @@ check.
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
-  withdrawn (AGENTS.md). A goal is drafted on branch `frame-rate-all-tiers`, its text, targets,
-  device stand-ins and order of work in docs/studies/frame-rate-all-tiers/GOAL.md (local); the
-  computer is free on the branch (AGENTS.md, deleted in the merge);
-  waiting on the owner to start it. The owner's answers (9 November): Dinosaur Mountain's game view in
-  the builder is the first case (bench/courses/dinosaur-mountain); the targets stand; Low and Medium may
-  look different; free flight needs its own answer for Low's trees; pop-in becomes fade-in on every
-  tier. It takes in *Low on a weak machine, measured against main* and
-  the processor's share on large built courses; the real devices stay *A real phone, an iPad and a
-  weak laptop*.
+  withdrawn (AGENTS.md). **Running as a /goal** on branch `frame-rate-all-tiers` (its spec, log and
+  status page in docs/studies/frame-rate-all-tiers/GOAL.md, local; the computer free on the branch,
+  AGENTS.md, deleted in the merge). Built so far (RESEARCH, *Frame rate on every tier: the large built
+  courses*): far versions for every model, the swap cross-faded, Low's trees (the owner's rule), the
+  ground drawn coarser with distance (with a 1.5 m level), the field baked on every core, the houses'
+  footings and drives batched, two per-frame processor costs cut, the builder's cost readout and
+  weight note. Dinosaur Mountain 39-54% faster on every tier; Game view opens in 29 s, not 45-51.
+  **Seen only in captures and measured, not played -- to check:** the dissolve where trees turn into
+  their far versions (does it shimmer?); Low's thinning far from the hole, and its fade-in as you
+  walk; free flight on Low (the 250 m ring); seams between the ground's squares (skirts) and the
+  distant ground's shape; the builder's readout and its weight note; a large course's load. **Owed by
+  the goal:** the device stand-ins on generated courses are far from their targets (iPhone 13 on
+  Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
+  call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
+  built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
