@@ -13897,6 +13897,18 @@ built*, below.
   54/41/21. The muhly's grown stalks: four-sided, radius 0.7% of the plant's height tapering to
   60%, from 12% of the height and a fifth of the way out toward each plume, to 30% into the plume;
   320 and 304 triangles. PLACED by eye.
+- **The remakes' frame cost on Low** (9 November 2026, real GPU arm, RTX 4090 with Remote Desktop
+  holding the card near 35-40%): `tools/profile.mjs --only built --landscapes
+  redwood,dmountain,flpalms`, main's build (9f8273a, kept in a scratch worktree) against this
+  branch's, run main, branch, main. Graphics time per frame, generated course: Redwood Coast 1.84
+  and 1.86 ms on main against 2.09 on the branch (+0.24 ms, about 13%; 25.7 to 26.4 million
+  triangles drawn, 325 to 329 draws -- the bay laurel and madrone remakes); Desert Mountain 1.58
+  and 1.62 against 1.59 (creosote, cholla, ocotillo: flat, though the scene draws a million more
+  triangles); Florida Palms 0.95 and 0.96 against 0.95 (the muhly: flat). The frozen built copies
+  moved the same way. The first main run read the branch's processor time 0.2-0.4 ms higher on
+  every landscape, Florida Palms included; the second main run matched the branch within 0.1 ms,
+  so that was drift. Accepted: a quarter of a millisecond on one landscape, on a card this fast;
+  a weak card would see it scaled up, and the software arm (`--only weak`) was not run.
 - **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
   #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
   these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live

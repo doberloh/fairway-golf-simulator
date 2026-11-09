@@ -34,7 +34,7 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Models to check: every remake in the game and approved; a frame check on Low owed** (9 November 2026, after the African sumac: "go
+- [ ] **Models to check: every remake in the game and approved, Low measured; not played** (9 November 2026, after the African sumac: "go
   through the rest of the Landscape's and figure out if there's any other missed models that are
   trees like this. Also look for any other model that doesn't look exactly right"). Every model a
   9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
@@ -74,8 +74,10 @@ check.
   them match cholla 2"): its joints lifted (`paintLevel` .95) and its trunk darkened (`barkLevel`
   .45), measured against cholla 2 in the capture. Both on the page's Pictures to review as the game
   draws them; the owner approved both ("Use both chollas", "use both of these as well") and asked for
-  everything in the game, with every landscape's models retaken for review. **Owed:** a frame check on Low (asked, not run) -- the plants
-  are planted in thousands (creosote 7,729 on one course); the brittlebush is shardy close up.
+  everything in the game, with every landscape's models retaken for review. Frame check on Low run
+  (RESEARCH, *The remakes' frame cost on Low*): Redwood Coast's graphics +0.24 ms a frame (about 13%,
+  the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
+  the retaken pictures; play it (not played); the brittlebush is shardy close up.
 
 ## Release 0.9.8 (8 November 2026)
 
