@@ -38,6 +38,27 @@ def luminance(c):
 
 def read_tree(path):
     full = load(path)
+    # A model planted in the hundreds can be thinned here, before anything is read
+    # (MESHY_TRIS, a pack entry's `gameTris`): the round boulder came from Meshy at
+    # 1,550 triangles where the hand-built stones it replaced had about 250. The
+    # collapse keeps texture coordinates, so the paint reads as before.
+    want = int(os.environ.get('MESHY_TRIS') or 0)
+    have = sum(len(p.vertices) - 2 for p in full.data.polygons)
+    if want and have > want:
+        # glTF arrives cut along its texture seams; thinned that way, each piece
+        # shrank on its own and the stone opened into shards (round 17). Joined
+        # first -- texture coordinates live on the corners, so none are lost.
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=1e-5)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        mod = full.modifiers.new('thin', 'DECIMATE')
+        mod.ratio = want / have
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.quads_convert_to_tris()
+        bpy.ops.object.mode_set(mode='OBJECT')
     mesh = full.data
     image = next(n.image for n in full.active_material.node_tree.nodes if n.type == 'TEX_IMAGE')
     W, H_ = image.size
@@ -188,10 +209,12 @@ def leaf_light(pos, normal, tree):
     return n / (np.linalg.norm(n, axis=1, keepdims=True) + 1e-12), under
 
 
-def game_paint(colour, pos, role, tree, under=None, level=LEAF_LEVEL):
+def game_paint(colour, pos, role, tree, under=None, level=LEAF_LEVEL, ref=None):
     """RGB is a grey multiplier on the colour the game paints the role, stored
-    halved, so seasons and tints still work; alpha is the wind's flex."""
-    shade = np.clip(luminance(np.asarray(colour)) / tree.refs['leaf' if role == 0 else 'bark'], *(PAINT_RANGE if role == 0 else BARK_RANGE))
+    halved, so seasons and tints still work; alpha is the wind's flex. `ref`
+    names the part whose mean the shade is measured from (a flower part's own,
+    meshy_game.py); by default the role's."""
+    shade = np.clip(luminance(np.asarray(colour)) / tree.refs[ref or ('leaf' if role == 0 else 'bark')], *(PAINT_RANGE if role == 0 else BARK_RANGE))
     pos = np.asarray(pos)
     if role == 0:
         shade = shade * level * (1 - UNDER_SHADE * (0 if under is None else under))

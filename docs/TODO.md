@@ -34,7 +34,7 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
-- [ ] **Models to check: the Meshy remakes wait on the owner's picks** (9 November 2026, after the African sumac: "go
+- [ ] **Models to check: the remakes are in, the cholla waits on its second pictures** (9 November 2026, after the African sumac: "go
   through the rest of the Landscape's and figure out if there's any other missed models that are
   trees like this. Also look for any other model that doesn't look exactly right"). Every model a
   9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
@@ -53,10 +53,20 @@ check.
   shrub, the hemlock tip. On Meshy (tools/meshy/remakes.json, Mx names): one picture each of bay
   laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, cholla, muhly grass,
   bougainvillea and a plain round boulder, two models each (198 credits), on the page's Pictures to
-  review. **Owed:** the owner's picks; then models (30 credits each), far versions, conversion (the
-  boulder needs a stone role the tree conversion does not make), shipping in place of the hand-built
-  ones, and a frame check on Low -- the plants are planted in thousands (creosote 7,729 on one course),
-  so their triangle targets are kept to 2,500-4,000.
+  review. **The owner picked 20 and sent the cholla back** ("This looks alien": giant fuzzy blobs).
+  The 20 are made (600 credits) and in the game from vendor/blender-meshy_remakes, in place of the
+  hand-built bay laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, muhly grass,
+  bougainvillea and round boulder; seen in captures (bench/shots/landscape-models/r17, r17b, r17c),
+  not played. The conversion gained a flower part (`accent`, tools/blender/meshy_game.py *FLOWERS*)
+  for the bougainvillea's magenta, the plumeria's cream, the ocotillo's red tips and the muhly's
+  plumes, which otherwise came out green or as bark; and `gameTris`, which thinned the boulder
+  from 1,550 triangles to 400. Creosote lifted, brittlebush and sagebrush toned down (vegetation.js
+  `shades`, PLACED by eye). The cholla redrawn as a real teddy-bear cholla, four pictures (36
+  credits) on the page. **Owed:** the cholla's pick, model and shipping (the `cholla` family keeps
+  its prickly pear and barrel); a frame check on Low (asked, not run) -- the plants are planted in
+  thousands (creosote 7,729 on one course); and two that are weak in the game: the muhly is a hollow
+  shell of flakes, and stays tan even in autumn because every long grass is drawn part way to the
+  landscape's colours (vegetation.js `grassLook`, older than this); the brittlebush is shardy close up.
 
 ## Release 0.9.8 (8 November 2026)
 

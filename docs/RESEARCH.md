@@ -13872,7 +13872,19 @@ built*, below.
   fuzzy pale golden-green jointed arms; pink muhly grass, a green fountain with a pink haze on top;
   bougainvillea, a green mound with magenta bract clusters, about half and half; a plain grey round
   boulder with no moss patches (the round boulder's flat upward-face patches read as stickers).
-  Sizes PLACED inside each species' own; no outside source read this round.
+  Sizes PLACED inside each species' own; no outside source read this round. The owner picked 20 and
+  sent the cholla back: the first pictures were giant fuzzy yellow blobs on a trunk, where a real
+  teddy-bear cholla is a small knobbly cactus of hand-long, wrist-thick lumpy joints under a pale
+  halo of spines, with dead dark joints on the trunk; the prompt now says so and forbids fur and
+  blobs.
+- **The remakes in the game** (same night). Flower colours read off each model's texture
+  (tools/blender/meshy_colours.py, groups by area): bougainvillea bracts #c82467 and #bd6260 (23% of
+  the surface on model 1), plumeria flowers #eef1cc (7%), ocotillo tips #e14705 (14%), muhly plumes
+  #ec93a7 and #f57aaf (about 45%). Before the flower part, the wood test (green under 1.25 times red)
+  took the bracts and plumes for bark. Boulder thinned 1,550 to 400 triangles (the hand-built round
+  stones were about 250); thinned before the seams were joined it opened into shards, so they are
+  joined first. Shades PLACED by eye from the captures: creosote #5d6b39 to #6e8c3a (read dead
+  brown), brittlebush #a9b39b to #8a9c72 and sagebrush #9aa58c to #86987a (read white).
 - **Dark crowns lifted** (same night): coast live oak summer leaf #3a5434 to #5e8250, shore pine
   #3c5a3a to #5e8458, huckleberry #3f5f34 to #6a9058. One step (as the sumac's) was not enough on
   these: measured in the crown of the capture, the shore pine went from 46 to 60 green and the live

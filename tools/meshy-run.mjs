@@ -259,7 +259,10 @@ export function findBlender(env = process.env) {
 // A model's `wood` ("brown") reaches read_tree as MESHY_WOOD: the bark is brown, so the green-wood
 // split (palo verde, saguaro) is skipped -- a dark spruce trunk foot set it off and swapped trunk and
 // needles (Engelmann spruce 2, 8 November 2026).
-const woodEnv = model => ({...process.env, MESHY_WOOD: model?.wood || ''});
+// A model's `accent`, `plain` and `leafOnly` reach meshy_game.py the same way (its flower part), and `gameTris`
+// the thinning read_tree does first (tools/blender/meshy_game.py, *FLOWERS*; meshy_parts.py).
+const woodEnv = model => ({...process.env, MESHY_WOOD: model?.wood || '', MESHY_ACCENT: (model?.accent || []).join(','),
+ MESHY_PLAIN: (model?.plain || []).join(','), MESHY_LEAFONLY: model?.leafOnly ? '1' : '', MESHY_TRIS: String(model?.gameTris || '')});
 export function makeFar(models, {dir, say = console.log, run = (stem, source, budget, style, level, model) => spawnSync(findBlender(), ['--factory-startup', '-b', '-P',
  join(ROOT, 'tools', 'blender', 'meshy_far.py'), '--', source, stem, String(budget), style, String(level)], {encoding: 'utf8', timeout: 600000, env: woodEnv(model)})}) {
  const made = [], failed = [];
@@ -291,7 +294,9 @@ export function convert(models, {dir, game, say = console.log, run = (source, ou
    copyFileSync(far, join(game, `${model.name}_Far.glb`));
   }
   made.push(model.name);
-  say(`${model.name}: leaves ${r.leaves.triangles} triangles, bark ${r.bark.triangles}, ${r.leaves.vertices + r.bark.vertices} vertices`);
+  const part = k => r[k] || {triangles: 0, vertices: 0};
+  say(`${model.name}: leaves ${part('leaves').triangles} triangles, bark ${part('bark').triangles}` + (r.accent?.triangles ? `, flowers ${r.accent.triangles}` : '')
+   + `, ${part('leaves').vertices + part('bark').vertices + part('accent').vertices} vertices`);
  }
  return {made, failed};
 }

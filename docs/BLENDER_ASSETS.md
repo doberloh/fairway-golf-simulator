@@ -159,7 +159,12 @@ text to model was dropped before it ever ran):
    a grey vertex paint, wind flex set, seam vertices joined, leaf normals turned up and out (a pack may set a
    model's `paintLevel`, and `wood: "brown"` for a brown-barked tree whose dark trunk foot would
    otherwise send it down the green-wood split meant for palo verde and saguaro -- Engelmann spruce 2,
-   8 November 2026), triangles put in the order the card's vertex cache likes. Far versions are
+   8 November 2026), triangles put in the order the card's vertex cache likes. A model may also name
+   `accent` colours with the `plain` ones they are told from: those faces become a third part,
+   `accent`, painted from the species' accent colour (flowers; the paint keeps only light and dark,
+   so a magenta bract came out green or, by the wood test, bark), `leafOnly` for a model with no
+   wood (a grass, the ocotillo's green canes), and `gameTris` to thin it first (the boulder). The
+   colours are read off with `tools/blender/meshy_colours.py`. Far versions are
    written in that form already, closed all round because the game draws one side.
    `tools/blender/meshy_parts.py` holds what the two share.
 
@@ -195,7 +200,10 @@ read near black-green in the game). The Redwood Coast's bigleaf maple and saplin
 redwood as RwBigleafMaple and RwSapling in vendor/blender-meshy_redwood2, because two kinds cannot share a
 model (tools/build-meshes.mjs refuses it); the maple's seasons moved to redwood2.json's `seasons`, or its autumn
 gold would have gone with the hand-built model. tools/meshy/remakes.json holds the hand-built plants the owner
-sent back (Mx names), pictures made, waiting on the owner's picks. All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
+sent back (Mx names), shipped from vendor/blender-meshy_remakes in place of the bay laurel, madrone, plumeria,
+ocotillo, brittlebush, sagebrush, creosote, muhly grass, bougainvillea and round boulder (the cholla waits on its
+second pictures); the five of those with season tints keep them in the pack's `seasons`. The plumeria ships no
+far version: its near model has a flower part the far one lacks, so they would not pair. All four are in the game, their models prefixed Fl, Hi, Dt and Dr because hand-built models hold the plain names (Dt for Desert Target, Desert Mountain's first name; the pack keeps it); the saguaro (`dtsaguaro`) is in vegetation.js STILL, so it never sways. No wind-swept shapes, the owner's rule. Batch two (7 November 2026) the same way: the Pacific Northwest's five trees prefixed Nw (vendor/blender-meshy_northwest), the California Coast's five Cc (blender-meshy_calcoast), Seaside Links' shore pine Sl (blender-meshy_seaside), and the Redwood Coast's redwoods, young redwoods and tanoaks Rw (blender-meshy_redwood2), taking over the plain `redwood`, `youngredwood` and `tanoak` names in tools/build-meshes.mjs. A pack's trees must also be in that file's list of models that ship a far version, or the game draws their whole crowns to the horizon (the Redwood Coast measured 6.8 ms on Low until they were). The last batch (8 November 2026) the same way: the Mountain's four trees prefixed Mt (blender-meshy_mountain), Prairie & Sand Hills' three Pr (blender-meshy_prairie), the Badlands' two Bd and Northern Woods' two No; Engelmann spruce 2 from its second round, converted with `wood: "brown"`.
 
 **The Lowcountry and Gulf pack** (tools/meshy/lowcountry.json, 7 November 2026): 6 trees in
 `vendor/blender-meshy_lowcountry`, southern live oak, bald cypress and sabal palm, as new

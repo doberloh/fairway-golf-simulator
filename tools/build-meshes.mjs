@@ -43,7 +43,10 @@ const PICK = {
  // THE CARTOON BOULDERS (tools/blender/cartoon_rocks.py), one family per
  // geology, picked by a biome's `rockStyle`; four each, the generator's
  // `shape` choosing.
- boulderround: ['blender:Blender_BoulderRound_1', 'blender:Blender_BoulderRound_2', 'blender:Blender_BoulderRound_3', 'blender:Blender_BoulderRound_4'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ // the hand-built round stones' flat moss patches read as stickers. Two, the generator's `shape`
+ // taking them in turn (vegetation.js `r.shape % models.length`); thinned to 400 triangles.
+ boulderround: ['blender:Blender_MxBoulder_1', 'blender:Blender_MxBoulder_2'],
  boulderangular: ['blender:Blender_BoulderAngular_1', 'blender:Blender_BoulderAngular_2', 'blender:Blender_BoulderAngular_3', 'blender:Blender_BoulderAngular_4'],
  boulderlayered: ['blender:Blender_BoulderLayered_1', 'blender:Blender_BoulderLayered_2', 'blender:Blender_BoulderLayered_3', 'blender:Blender_BoulderLayered_4'],
  sprucetree: ['blender:Blender_Spruce_1', 'blender:Blender_Spruce_2', 'blender:Blender_Spruce_3'],
@@ -65,7 +68,7 @@ const PICK = {
   'Redwood_1', 'Redwood_2', 'Redwood_3', 'YoungRedwood_1', 'YoungRedwood_2', 'YoungRedwood_3', 'Fir_1', 'Fir_2', 'Hemlock_1', 'Hemlock_2', 'RedCedar_1', 'RedCedar_2',
   'Tanoak_1', 'Tanoak_2', 'LakeCottonwood_1', 'LakeCottonwood_2', 'LakeCottonwood_3', 'LakeBlackOak_1', 'LakeBlackOak_2',
   'LakeBlackOak_3', 'LakeSugarMaple_1', 'LakeSugarMaple_2',
-  'Madrone_1', 'Madrone_2', 'GarryOak_1', 'GarryOak_2', 'RwBigleafMaple_1', 'RwBigleafMaple_2', 'RwSapling_1', 'RwSapling_2', 'BayLaurel_1', 'BayLaurel_2',
+  'MxMadrone_1', 'MxMadrone_2', 'GarryOak_1', 'GarryOak_2', 'RwBigleafMaple_1', 'RwBigleafMaple_2', 'RwSapling_1', 'RwSapling_2', 'MxBayLaurel_1', 'MxBayLaurel_2',
   'Lodgepole_1', 'Lodgepole_2', 'BlueSpruce_1', 'BlueSpruce_2', 'AmericanElm_1', 'AmericanElm_2', 'Shagbark_1', 'Shagbark_2',
   'BurOak_1', 'BurOak_2', 'PaperBirch_1', 'PaperBirch_2', 'WhitePine_1', 'WhitePine_2', 'BalsamFir_1', 'BalsamFir_2',
   'AmericanBeech_1', 'AmericanBeech_2', 'Ironwood_1', 'Ironwood_2',
@@ -88,15 +91,19 @@ const PICK = {
  mesquitetree: ['blender:Blender_Mesquite_1', 'blender:Blender_Mesquite_2', 'blender:Blender_Mesquite_3'],
  saguaro: ['blender:Blender_Saguaro_1', 'blender:Blender_Saguaro_2', 'blender:Blender_Saguaro_3'],
  cholla: ['blender:Blender_Cholla_1', 'blender:Blender_Cholla_2', 'blender:Blender_PricklyPear_1', 'blender:Blender_Barrel_1'],
- ocotillo: ['blender:Blender_Ocotillo_1', 'blender:Blender_Ocotillo_2', 'blender:Blender_Ocotillo_3'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json): canes as leaf, red tips as flowers.
+ ocotillo: ['blender:Blender_MxOcotillo_1', 'blender:Blender_MxOcotillo_2'],
  agaveplant: ['blender:Blender_Agave_1', 'blender:Blender_Agave_2'],
  // THE CARTOON LONG GRASS (tools/blender/cartoon_grass.py): decoration
  // between the holes, one family per grass (vegetation.js addLongGrass).
  // THE CARTOON BRUSH (tools/blender/cartoon_brush.py): the shrubs the
  // landscapes lacked, and the understory of the stands.
- creosotebush: ['blender:Blender_Creosote_1', 'blender:Blender_Creosote_2'],
- brittlebush: ['blender:Blender_Brittlebush_1', 'blender:Blender_Brittlebush_2'],
- sagebrush: ['blender:Blender_Sagebrush_1', 'blender:Blender_Sagebrush_2'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ creosotebush: ['blender:Blender_MxCreosote_1', 'blender:Blender_MxCreosote_2'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ brittlebush: ['blender:Blender_MxBrittlebush_1', 'blender:Blender_MxBrittlebush_2'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ sagebrush: ['blender:Blender_MxSagebrush_1', 'blender:Blender_MxSagebrush_2'],
  brackenfern: ['blender:Blender_Bracken_1', 'blender:Blender_Bracken_2'],
  huckleberrybush: ['blender:Blender_Huckleberry_1', 'blender:Blender_Huckleberry_2'],
  grassfescue: ['blender:Blender_Fescue_1', 'blender:Blender_Fescue_2', 'blender:Blender_Fescue_3'],
@@ -167,13 +174,15 @@ const PICK = {
  // put Puget Sound's Low frame up 24% (RESEARCH, *The Pacific pack*). The
  // others stay in the pack, not shipped (the madrone's two-stem `_2` ships:
  // the three-stem `_1` is 6,700 triangles).
- madrone: ['blender:Blender_Madrone_1', 'blender:Blender_Madrone_2'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ madrone: ['blender:Blender_MxMadrone_1', 'blender:Blender_MxMadrone_2'],
  garryoak: ['blender:Blender_GarryOak_1', 'blender:Blender_GarryOak_2'],
  // The Redwood Coast's bigleaf maple is the Pacific Northwest's Meshy one, copied as RwBigleafMaple (the owner, Models to
  // check, 9 November 2026).
  bigleafmaple: ['blender:Blender_RwBigleafMaple_1', 'blender:Blender_RwBigleafMaple_2'],
  pacificdogwood: ['blender:Blender_PacificDogwood_1'],
- baylaurel: ['blender:Blender_BayLaurel_1', 'blender:Blender_BayLaurel_2'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json):
+ baylaurel: ['blender:Blender_MxBayLaurel_1', 'blender:Blender_MxBayLaurel_2'],
  vinemaple: ['blender:Blender_VineMaple_1'],
  oregongrape: ['blender:Blender_OregonGrape_1'],
  scotchbroom: ['blender:Blender_ScotchBroom_1'],
@@ -214,7 +223,8 @@ const PICK = {
  mangrove: ['blender:Blender_Mangrove_1'],
  gumbolimbo: ['blender:Blender_GumboLimbo_1'],
  banyan: ['blender:Blender_Banyan_1'],
- bougainvillea: ['blender:Blender_Bougainvillea_1'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json): magenta bracts as flowers.
+ bougainvillea: ['blender:Blender_MxBougainvillea_1', 'blender:Blender_MxBougainvillea_2'],
  hibiscus: ['blender:Blender_Hibiscus_1'],
  // THE SOUTH'S PACKS (tools/blender/cartoon_southpines.py, cartoon_southoaks.py,
  // cartoon_piedmont.py, cartoon_southcoast.py): every variant.
@@ -242,7 +252,8 @@ const PICK = {
  yaupon: ['blender:Blender_Yaupon_1'],
  spartina: ['blender:Blender_Spartina_1'],
  sawgrass: ['blender:Blender_Sawgrass_1'],
- muhlygrass: ['blender:Blender_MuhlyGrass_1'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json): the pink plumes as flowers.
+ muhlygrass: ['blender:Blender_MxMuhly_1', 'blender:Blender_MxMuhly_2'],
  waxmyrtle: ['blender:Blender_WaxMyrtle_1'],
  citrustree: ['blender:Blender_CitrusTree_1'],
  // THE TEXAS AND DESERTS PACKS (tools/blender/cartoon_texas.py,
@@ -363,7 +374,8 @@ const PICK = {
  casuarina: ['blender:Blender_Casuarina_1'],
  cookpine: ['blender:Blender_CookPine_1'],
  ohia: ['blender:Blender_Ohia_1'],
- plumeria: ['blender:Blender_Plumeria_1'],
+ // From Meshy since 9 November 2026 (the owner's Models to check, tools/meshy/remakes.json): cream flowers as flowers.
+ plumeria: ['blender:Blender_MxPlumeria_1', 'blender:Blender_MxPlumeria_2'],
  tiplant: ['blender:Blender_TiPlant_1'],
  heliconia: ['blender:Blender_Heliconia_1'],
  boulderlava: ['blender:Blender_LavaRock_1', 'blender:Blender_LavaRock_2'],
