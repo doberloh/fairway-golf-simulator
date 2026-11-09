@@ -54,6 +54,9 @@ export async function openGame(browser, {width = 1920, height = 1080, density = 
  page.on('pageerror', e => page.errors.push(e.message));
  page.on('console', m => m.type() === 'error' && page.errors.push(m.text().slice(0, 160)));
  await page.addInitScript(q => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: q, autoResolution: false, frameCap: 0, textSize: 100})), quality);
+ // The Swing Meter's first-swing coach, seen: it sat over every picture of a
+ // round (8 November 2026, the website's 0.9.8 rework).
+ await page.addInitScript(() => localStorage.setItem('fairway-coach-v1', '1'));
  // A named player, or the first-visit welcome sits over every picture.
  // In the profile store's own current format (3): an older one is upgraded on
  // load and the upgrade announces "New: XP and levels" over every picture
