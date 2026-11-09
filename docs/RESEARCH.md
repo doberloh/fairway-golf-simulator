@@ -15335,7 +15335,9 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
 - **The ground drawn coarser with distance** (ground-lod.js): a quadtree of 192 m leaves, each drawn
   as the grid's own triangles or as the plain 3 m grid, and coarser squares of 64 by 64 cells at 6,
   12, 24 m and up, chosen each frame so no square stands off the ground the ball meets by more than
-  the tier's tolerance in pixels (1 on High and Ultra, 2 Medium, 3 Low; PLACED). Skirts hang twice a
+  the tier's tolerance in pixels (first 1 on High and Ultra, 2 Medium, 3 Low; settled below at 2, 3
+  and 4, with 384 m coarse squares on a 128-cell grid and a 1.5 m level -- *Where High's frame went
+  next*, *The ground at 1.5 m*; PLACED). Skirts hang twice a
   square's error, at least 2 m, from every edge. The full mesh is kept undrawn for its material; a
   click on the ground now steps along `world.height` instead of a raycast through 20 M triangles.
 - **First before/after, High, Dinosaur Mountain** (before the saguaro fix): frame -26% (17.3 to 12.5
