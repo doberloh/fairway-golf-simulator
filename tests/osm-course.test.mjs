@@ -28,6 +28,24 @@ test('two courses at one club: each its own holes, the one with more first; the 
  const all = osmHoles(f); assert.deepEqual(all.doubled, [1], 'read together, number 1 is claimed twice');
 });
 
+test('two courses in one boundary, told apart by their hole lines\' course names (Troon North)', () => {
+ const json = {elements: [
+  way(1, {leisure: 'golf_course', name: 'Troon North'}, box(0, 0, 1000, 500)),
+  way(10, {golf: 'hole', ref: '1', par: '4', 'golf:course:name': 'Monument Course'}, [[100, 450], [100, 100]], false),
+  way(11, {golf: 'hole', ref: '2', par: '3', 'golf:course:name': 'Monument Course'}, [[200, 100], [200, 280]], false),
+  way(20, {golf: 'hole', ref: '1', par: '5', 'golf:course:name': 'Pinnacle Course'}, [[700, 450], [700, 20]], false),
+  way(30, {golf: 'green'}, box(90, 90, 110, 110)), way(31, {golf: 'green'}, box(190, 270, 210, 290)), way(32, {golf: 'green'}, box(690, 10, 710, 30)),
+ ]};
+ const f = osmFeatures(json, toLocal), cs = osmCourses(json, toLocal, f);
+ assert.deepEqual(cs.map(c => [c.id, c.name, c.only, c.holes]), [['way/1:Monument Course', 'Troon North: Monument Course', 'Monument Course', 2], ['way/1:Pinnacle Course', 'Troon North: Pinnacle Course', 'Pinnacle Course', 1]]);
+ const mon = osmHoles(f, {within: cs[0].rings, only: cs[0].only}), pin = osmHoles(f, {within: cs[1].rings, only: cs[1].only});
+ assert.deepEqual(mon[0].green, {x: 100, z: 100}); assert.deepEqual(mon.doubled, [], 'the Pinnacle\'s 1 does not claim the Monument\'s');
+ assert.deepEqual(pin[0].green, {x: 700, z: 20}); assert.equal(pin.filter(Boolean).length, 1);
+ // One course name, or none: one course, as before.
+ const one = osmCourses({elements: json.elements.filter(e => e.id !== 20)}, toLocal, osmFeatures({elements: json.elements.filter(e => e.id !== 20)}, toLocal));
+ assert.deepEqual(one.map(c => [c.id, c.only]), [['way/1', undefined]]);
+});
+
 test('numbered greens with no hole lines: each green its tee by the best pairing over all, a scorecard settling it', () => {
  // Three greens in a row; three tees, each 300 m before its own green and
  // near the green before.

@@ -37,6 +37,9 @@ test('every landscape names what its faces and aprons are', () => {
  assert.deepEqual(skinKinds(BIOMES.seaside), {face: 'native', apron: 'heather'});
  assert.deepEqual(skinKinds(BIOMES.badlands), {face: 'rock', apron: 'hardpan'});
  assert.equal(skinKinds(BIOMES.mountains).apron, 'scree');
+ // The deserts' sand is in their washes; below their rock, the floor (Troon North).
+ assert.deepEqual(skinKinds(BIOMES.dmountain), {face: 'rock', apron: 'hardpan'});
+ assert.deepEqual(skinKinds(BIOMES.dresort), {face: 'rock', apron: 'hardpan'});
 });
 
 test('a butte gets rock on its sides, its apron below, grass on its top and the plain', () => {

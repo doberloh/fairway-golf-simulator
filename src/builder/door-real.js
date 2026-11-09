@@ -1179,7 +1179,7 @@ export function open(draft = null) {
    st.model.state.undo.length = 0;
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
    st.osm = {raw: json, codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
-    courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
+    courses: courses.map(c => ({id: c.id, name: c.name, only: c.only ?? null, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
    await stage('Finding the holes…', .85);
    const n = osmCourseHoles();
    await stage('Drawing the trace…', .95);
@@ -1207,7 +1207,7 @@ export function open(draft = null) {
   const c = o.courses.find(q => q.id === o.course), sh = o.shift ?? {x: 0, z: 0};
   const ring = c?.rings[0] ?? o.edge;
   st.boundary = ring ? ring.map(([x, z]) => [x + sh.x, z + sh.z]) : st.boundary;
-  const raw = osmHoles(o.feats, {within: c?.rings ?? null, codes: o.codes, land: st.land});
+  const raw = osmHoles(o.feats, {within: c?.rings ?? null, only: c?.only ?? null, codes: o.codes, land: st.land});
   const holes = fitHoles(shiftHoles(raw, sh), st.model.state.codes, st.land), n = holes.filter(Boolean).length;
   // Eighteen when all eighteen are numbered; nine when 1 to 9 are and the
   // back nine is not (a club's nine with a stray number beside it).
@@ -1440,7 +1440,7 @@ export function open(draft = null) {
   const o = st.osm, toLocal = o.raw && localOfLonLat();
   if (!toLocal) return;
   const json = JSON.parse(o.raw), feats = osmFeatures(json, toLocal), courses = osmCourses(json, toLocal, feats);
-  Object.assign(o, {feats, edge: osmBoundary(json, toLocal), courses: courses.map(c => ({id: c.id, name: c.name, holes: c.holes, rings: c.rings})), shift: o.shift ?? {x: 0, z: 0}});
+  Object.assign(o, {feats, edge: osmBoundary(json, toLocal), courses: courses.map(c => ({id: c.id, name: c.name, only: c.only ?? null, holes: c.holes, rings: c.rings})), shift: o.shift ?? {x: 0, z: 0}});
  }
  // A saved picture placed on this land again (picture-file.js `place`); null
  // when it cannot be, as a tile mosaic on land that no longer says where it is.

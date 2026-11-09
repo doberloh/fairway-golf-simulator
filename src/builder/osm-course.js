@@ -8,7 +8,9 @@
 //   Champions, Sahalee's three nines), each a leisure=golf_course of its own
 //   with holes numbered 1 to 18 -- read together, one course's hole 7
 //   overwrote the other's. `osmCourses` lists them with how many numbered
-//   holes lie in each; `osmHoles(feats, {within})` takes only one's.
+//   holes lie in each; `osmHoles(feats, {within})` takes only one's. Where
+//   one boundary holds two (Troon North's Monument and Pinnacle), the hole
+//   lines' `golf:course:name` splits it, and `{only}` takes one name's.
 // - MOVED WITH THE MAP: refining lines the map up with the LIDAR by a shift
 //   (trace.js refineTrace.lastShift); the holes, drawn on the same map, move
 //   with it (`shiftHoles`) -- until this day they stayed where the map was.
@@ -63,8 +65,17 @@ export function osmCourses(json, toLocal, feats) {
   if (e.tags?.leisure !== 'golf_course') continue;
   const rings = courseRings(e, toLocal).sort((a, b) => ringArea(b) - ringArea(a));
   if (!rings.length) continue;
-  const refs = new Set(lines.filter(l => lineIn(rings, l.points)).map(l => +l.tags.ref));
-  out.push({id: `${e.type}/${e.id}`, name: e.tags.name || 'A golf course', rings, area: rings.reduce((s, r) => s + ringArea(r), 0), holes: refs.size});
+  const mine = lines.filter(l => lineIn(rings, l.points)), area = rings.reduce((s, r) => s + ringArea(r), 0), club = e.tags.name || 'A golf course';
+  // TWO COURSES IN ONE BOUNDARY (Troon North, 9 November 2026: one
+  // leisure=golf_course round the Monument and the Pinnacle, each numbered 1
+  // to 18): when its hole lines name two courses or more
+  // (`golf:course:name`), each is a course of its own (`only`).
+  const names = [...new Set(mine.map(l => l.tags['golf:course:name']).filter(Boolean))];
+  if (names.length >= 2) {
+   for (const only of names) out.push({id: `${e.type}/${e.id}:${only}`, name: `${club}: ${only}`, only, rings, area, holes: new Set(mine.filter(l => l.tags['golf:course:name'] === only).map(l => +l.tags.ref)).size});
+   continue;
+  }
+  out.push({id: `${e.type}/${e.id}`, name: club, rings, area, holes: new Set(mine.map(l => +l.tags.ref)).size});
  }
  return out.sort((a, b) => b.holes - a.holes || b.area - a.area);
 }
@@ -75,11 +86,12 @@ export function osmCourses(json, toLocal, feats) {
 // when given. A line drawn green-first is turned round by the green nearest
 // one of its ends. Returns the holes (index = number - 1) and `doubled`, the
 // numbers more than one line claimed (the first kept).
-export function osmHoles(feats, {within = null, codes = null, land = null, card = null} = {}) {
+export function osmHoles(feats, {within = null, only = null, codes = null, land = null, card = null} = {}) {
  const greens = feats.areas.filter(a => a.tags.golf === 'green').map(a => ringMiddle(a.rings[0]));
  const holes = [], doubled = [];
  for (const l of holeLines(feats)) {
   if (within && !lineIn(within, l.points)) continue;
+  if (only && l.tags['golf:course:name'] !== only) continue;
   let pts = l.points;
   const near = p => Math.min(Infinity, ...greens.map(g => Math.hypot(g.x - p[0], g.z - p[1])));
   if (greens.length && near(pts[0]) < near(pts.at(-1))) pts = [...pts].reverse();

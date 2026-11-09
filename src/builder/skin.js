@@ -28,12 +28,18 @@ import {layerRings} from './real-course.js';
 // ridge. Seen on Chambers Bay, 3 November 2026: the old fallback, rock, put
 // grey stone on dunes, in a landscape whose Paint list has no rock. Only the
 // landscape's own (layers.js layersFor).
+//
+// A landform with a `floor` (the deserts: Desert Mountain, Desert Resort) has
+// its second kind in the washes -- sand down the drainage lines -- and its
+// floor round the foot of the rock, so the floor is the apron there. Seen on
+// Troon North, 9 November 2026: waste sand as the apron lay in pale blotches
+// all over the granite hills' flanks.
 const FACE_KINDS = new Set(['rock', 'hardpan', 'scree', 'coral']);
 const APRON_KINDS = new Set(['scree', 'hardpan', 'waste', 'native', 'heather']);
 export function skinKinds(bio) {
  const k = bio?.landform?.kinds || {};
  const face = [k.a, k.b, k.floor].find(x => FACE_KINDS.has(x)) || k.a || 'rock';
- const apron = [k.b, k.floor, k.a].find(x => x && x !== face && APRON_KINDS.has(x)) || null;
+ const apron = [k.floor, k.b, k.a].find(x => x && x !== face && APRON_KINDS.has(x)) || null;
  return {face, apron};
 }
 

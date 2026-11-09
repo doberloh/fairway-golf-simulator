@@ -1355,6 +1355,24 @@ in, which the skin makes common: a point now takes the type with the most
 weight among the four texels round it, in ground.js and `builtGroundAt`
 alike (BUILT_VERSION 3).
 
+**Desert Mountain, on Troon North (9 November 2026).** The owner: "can we do
+that for the desert mountain course as well? Does that code path work across
+all landscapes?" It is one path for every landscape -- each takes its face and
+apron from its own landform, and the test holds all fifteen to their own Paint
+list -- but TPC Scottsdale, the bench's Desert Mountain course, has no
+mountain in its survey (the canal's banks were all it found). So Troon
+North's Monument was built (tools/build-courses.mjs `troon-north`, skinned;
+par 72, 6,902 yd from the back; the virtual golfers 80.5, none stuck; a tee
+shot played in the game). Its granite tors read as rock; the apron, waste
+sand, blotched their flanks white, so a desert's apron is now its floor,
+hardpan (RESEARCH, *The builder skins the land*). Seen in the game, not played
+by a person. Two things door 2 needed for it: the map's boundary there is
+the club's, round the Monument and the Pinnacle both numbered 1 to 18, so
+its holes mixed; a boundary whose hole lines carry two `golf:course:name`s
+is now two courses in the picker (osm-course.js `only`); and the build
+tool takes a course's own square (`bbox`) and which of the two (`course`).
+Nothing a file stores changed: no BUILT_VERSION step.
+
 ### The owner's first feedback (4 November 2026)
 
 The owner's list after first looking at the goal's work, built with nothing
