@@ -37,7 +37,11 @@ export const TIERS = {
  // change a played surface and trunks are collidable, so two players on
  // different tiers must hit the same trees. A tier-driven draw distance (draw
  // fewer, collide with all) was the remaining lever; the owner closed it as
- // won't do on 30 September, on the look. Automatic resolution is what Low has.
+ // won't do on 30 September, on the look, and reopened it for Low only on 9
+ // November: "Medium should still show all trees. Low can draw less trees but
+ // only if we can ensure that we draw all of the trees for the hole we are on
+ // at a minimum." Medium and up draw every tree; Low may skip far ones, never
+ // one of the hole being played. Every tier collides with all of them.
  low: {
   pixelRatio: .75,
   // The far woods (vegetation.js addFarWoods; the polish goal) are grove

@@ -5612,7 +5612,11 @@ to put "potential gfx improvements" instead of inventing features overnight.
   drawing fewer trees and plants, so it is closed rather than left open. What
   weak hardware has instead: Low's own trims, distant crowns drawn as their
   thinned twins (F2; the grown trees only, since 16 October), and automatic
-  resolution (F4).
+  resolution (F4). **Reopened for Low only, 9 November 2026** (the owner: "Medium should still
+  show all trees. Low can draw less trees but only if we can ensure that we draw all of the trees
+  for the hole we are on at a minimum"): Medium and up still draw every tree; Low may skip far ones,
+  never one of the hole being played (PROJECT_HANDOFF, *GRAPHICS TIERS MAY NOT TOUCH*). Open work in
+  *Frame rate on every tier and device*.
 
 - [x] **Floodlight shadows, on every tier, with a switch (30 September).**
   Branch `frame-and-lights`. The texture unit they were blocked on was freed by

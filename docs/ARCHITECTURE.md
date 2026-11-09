@@ -279,7 +279,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The cull draws a `cullReach` mesh only so far and a `shadowNear` one into the nearest shadow map only -- PROJECT_HANDOFF *A MESH CAN BE DRAWN ONLY SO FAR*.
 - Stand trees (`stand: true`) are not the open scatter: metrics of planting near play leave them out; painted trees swap to a shipped twin by `farPainted` -- PROJECT_HANDOFF *A STAND IS NOT THE SCATTER*.
 - A sea among the holes (`sea` without `edgeCoast`, Lowcountry and Gulf's creeks) needs the ground near the sea, the marsh above the beach band and the band its own colour -- PROJECT_HANDOFF *A sea among the holes*.
-- Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
+- Graphics tiers never touch a played surface; two players on different tiers hit the same trees. Only Low may leave trees undrawn, never the hole being played's (9 Nov). [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 - The range's greens are a list that `greenDistance` and the ground shader both loop over -- keep the two the same rule; one cup is live at a time (`course.pin`). [THE RANGE'S GREENS ARE A LIST]
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
