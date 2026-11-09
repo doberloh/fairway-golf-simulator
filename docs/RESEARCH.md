@@ -15384,6 +15384,21 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   changed; the cull compares every square's decisions with the last write's and writes nothing when
   none changed (its swap mixes rounded to the dissolve's 16 steps, Low's share up to 64ths). After:
   5.8 ms, the check 0.07 ms, the rewrite 0.78 ms.
+- **Generated courses, the regression the final round found** (frame-ab against the starting build,
+  two rounds): Ultra came out slower -- Redwood Coast +7 to +10%, Pacific Northwest +9% -- with 12-40%
+  more draws. Three causes, each measured: the ground in squares on a ground of 1.6-2.3 M triangles
+  (draws for nothing: now only past 4 M, `GROUND_LOD.minTriangles`, PLACED); the dissolve on every tree
+  material (a shader that may discard keeps the card from skipping hidden pixels early: 6.1% of the
+  mean, 14.4% of the 95th percentile, priced by a build with `ditherFade` off) -- now only on fade
+  meshes holding the trees inside a fade; and the swap band (1.3 times the line drew a wide ring of
+  Redwood crowns twice, its line a third of the screen: now 1.15, and the near half of a cross-fade
+  casts no shadow). After: Redwood Coast Ultra -6.6% (p95 -5.5%), Pacific Northwest -1.6% (p95 +3%,
+  inside the noise), Redwood Low -6% (p95 +2%), Pacific Northwest Low -19%.
+- **The course's load** (frame-ab --built, three rounds, and the game's own timers in two halves): the
+  world builds in 0.1-0.6 s either way; preparing the shaders is the load, and it swung 19.2 to 25.3 s
+  across runs of one build -- builds with and without the hazard loop's exit, and with and without the
+  dissolve, could not be told apart. The load is unchanged within that noise; its field bake (4.3 s
+  of one core) is gone to the workers.
 - **The devices, estimated, after the first pass** (frame-ab --device on the build of 13:05; the
   graphics time is this card's scaled by compute and bandwidth -- PLACED, a ranking, not a promise):
   on generated courses the iPhone 13 on Medium 43-161 ms a frame (Redwood Coast 63-161, Pacific

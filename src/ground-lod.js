@@ -25,6 +25,10 @@ export const GROUND_LOD = Object.freeze({
  gridCells: 128,    // a square's grid: 128 x 128 cells of its own spacing, so a 384 m
                     // square of plain 3 m ground is one draw (64 drew too many squares)
  skirtMin: 2,       // metres a skirt hangs below its edge at least
+ // Only a ground this big is drawn in squares (PLACED): a generated course's is
+ // 1.6-2.3 M triangles, one draw, and its squares cost Ultra 7-9% in draws
+ // (Redwood Coast, Pacific Northwest) for nothing; Dinosaur Mountain's is 20.5 M.
+ minTriangles: 4e6,
 });
 
 const MAX = 0x7fffffff;

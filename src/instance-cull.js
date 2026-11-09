@@ -13,8 +13,30 @@ import {treeHash, squareKeep, LOW_TREES} from './low-trees.js';
 // across SWAP_BAND of the swap line both are drawn, the near version leaving
 // the pixels the pattern gives the far one -- levels 16 and up are the far
 // version's half, drawn exactly where the near one is not.
-const FADE_STEPS = 16, SWAP_BAND = 1.3;
+const FADE_STEPS = 16, SWAP_BAND = 1.15;  // 1.3 drew a wide ring of crowns twice on the Redwood Coast (its line is a third of the screen)
 const fadeWrapped = new WeakSet();
+// THE DISSOLVE ONLY WHERE SOMETHING DISSOLVES (9 November 2026): a shader that
+// can discard a pixel keeps the card from skipping hidden pixels early, so a
+// tree material carrying the dissolve made every tree dearer to draw behind
+// another -- 6% of an Ultra frame on the generated Redwood Coast, 14% of its
+// heavy frames, with nothing fading. So the dissolve lives on a copy of each
+// material, drawn by a fade mesh holding only the trees inside a fade (cull
+// `write`); every other tree is drawn with the material as it was.
+// Copied with the patches already on it (wind, rim, snow -- three's clone
+// leaves out an assigned onBeforeCompile and cache key), and before the
+// renderer's cascades, mist and cloud shadows register the scene, which then
+// register the copy as a material of its own.
+const fadeCopies = new WeakMap();
+function fadeMaterial(material) {
+ let copy = fadeCopies.get(material);
+ if (copy) return copy;
+ copy = material.clone();
+ if (Object.prototype.hasOwnProperty.call(material, 'onBeforeCompile')) copy.onBeforeCompile = material.onBeforeCompile;
+ if (Object.prototype.hasOwnProperty.call(material, 'customProgramCacheKey')) copy.customProgramCacheKey = material.customProgramCacheKey;
+ ditherFade(copy);
+ fadeCopies.set(material, copy);
+ return copy;
+}
 function ditherFade(material) {
  if (fadeWrapped.has(material)) return;
  fadeWrapped.add(material);
@@ -264,7 +286,30 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   return [record, farRecord];
  });
 
- for (const r of records) if (r.srcColour && (r.thinnable || r.near || r.far)) for (const mat of [].concat(r.mesh.material)) ditherFade(mat);
+ for (const r of records) {
+  if (!r.srcColour || !(r.thinnable || r.near || r.far)) continue;
+  // A grown tree's pieces carry their root on the geometry (`treeRoot`), which
+  // a second mesh would share in another order: those keep the dissolve on
+  // their own material.
+  if (r.rootAttr || Array.isArray(r.mesh.material)) { ditherFade(r.mesh.material); continue; }
+  const fade = new T.InstancedMesh(r.mesh.geometry, fadeMaterial(r.mesh.material), r.n);
+  fade.instanceMatrix.setUsage(T.DynamicDrawUsage);
+  fade.instanceColor = new T.InstancedBufferAttribute(new Float32Array(r.n * 3), 3);
+  // A near crown fading out casts no shadow: its far half, fading in, casts it --
+  // a shape a shadow far off cannot tell apart, and a draw saved in every map.
+  fade.castShadow = r.mesh.castShadow && !r.near; fade.receiveShadow = r.mesh.receiveShadow; fade.frustumCulled = false;
+  fade.userData = {noCull: true, fadeOf: r.mesh, model: r.mesh.userData.model, role: r.mesh.userData.role};
+  fade.name = 'fading trees'; fade.count = 0; fade.visible = false;
+  fade.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+   const k = shadowOf.get(shadowCamera);
+   if (k === undefined) return;
+   this.userData.cullHeld = this.count;
+   this.count = r.shadowNear && k > 0 ? 0 : all || !r.fadeCum ? this.count : r.fadeCum[k];
+  };
+  fade.onAfterShadow = restore;
+  r.mesh.parent.add(fade);
+  r.fade = fade;
+ }
  const visible = new Uint8Array(boxes.length).fill(1);
  // Low's share of each square's trees (`thinTrees`), 1 where all are drawn.
  const keep = new Float32Array(boxes.length).fill(1);
@@ -319,14 +364,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  const write = () => {
   for (const r of records) {
    const {mesh, order, src, srcColour, srcRoot, rootAttr, runs} = r, hidden = mesh.userData.cullHidden;
-   // A material put on the mesh after the cull was built (a clone, a swap) has
-   // no dissolve, and would draw every fading tree tinted red: wrapped here, the
-   // moment the cull writes to it (the saguaro trunks, 9 November 2026).
-   if (srcColour && (r.thinnable || r.near || r.far)) for (const mat of [].concat(mesh.material)) ditherFade(mat);
    const dst = mesh.instanceMatrix.array, dstColour = mesh.instanceColor?.array, dstRoot = srcRoot ? rootAttr.array : null;
+   const fade = r.fade, fDst = fade?.instanceMatrix.array, fColour = fade?.instanceColor.array;
    const groups = all ? 0 : casters.length;
    if (!r.cum || r.cum.length !== groups + 1) r.cum = new Int32Array(groups + 1);
-   let out = 0;
+   if (fade && (!r.fadeCum || r.fadeCum.length !== groups + 1)) r.fadeCum = new Int32Array(groups + 1);
+   let out = 0, fo = 0;
    for (let g = 0; g <= groups; g++) {
     for (let j = 0; j < runs.length; j += 3) {
      if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
@@ -346,11 +389,17 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      if (k0 < 1) { let e = start; while (e < end && r.hash[e] < k0) e++; end = e; }
      for (let k = start; k < end; k++) {
       if (hidden && hidden[order[k]]) continue;
+      // Within the fade band of the share: dissolved by how far in (ditherFade).
+      const thin = k0 < 1 ? Math.round(Math.max(0, Math.min(1, 1 - (k0 - r.hash[k]) / LOW_TREES.fade)) * FADE_STEPS) : 0;
+      const level = !dstColour ? 0 : r.far ? (swapQ ? FADE_STEPS + swapQ : 0) : Math.max(thin < FADE_STEPS ? thin : FADE_STEPS - 1, swapQ);
+      if (level && fade) {
+       for (let q = 0; q < 16; q++) fDst[fo * 16 + q] = src[k * 16 + q];
+       fColour[fo * 3] = srcColour[k * 3] + level * 4; fColour[fo * 3 + 1] = srcColour[k * 3 + 1]; fColour[fo * 3 + 2] = srcColour[k * 3 + 2];
+       fo++;
+       continue;
+      }
       for (let q = 0; q < 16; q++) dst[out * 16 + q] = src[k * 16 + q];
       if (dstColour) {
-       // Within the fade band of the share: dissolved by how far in (ditherFade).
-       const thin = k0 < 1 ? Math.round(Math.max(0, Math.min(1, 1 - (k0 - r.hash[k]) / LOW_TREES.fade)) * FADE_STEPS) : 0;
-       const level = r.far ? (swapQ ? FADE_STEPS + swapQ : 0) : Math.max(thin < FADE_STEPS ? thin : FADE_STEPS - 1, swapQ);
        dstColour[out * 3] = srcColour[k * 3] + level * 4;
        dstColour[out * 3 + 1] = srcColour[k * 3 + 1];
        dstColour[out * 3 + 2] = srcColour[k * 3 + 2];
@@ -360,8 +409,15 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      }
     }
     r.cum[g] = out;
+    if (fade) r.fadeCum[g] = fo;
    }
-   r.drawn = out; mesh.count = out; mesh.visible = out > 0;
+   if (fade) {
+    fade.count = fo; fade.visible = fo > 0;
+    const fm = fade.instanceMatrix, fc = fade.instanceColor;
+    fm.clearUpdateRanges(); fm.addUpdateRange(0, fo * 16); fm.needsUpdate = true;
+    fc.clearUpdateRanges(); fc.addUpdateRange(0, fo * 3); fc.needsUpdate = true;
+   }
+   r.drawn = out + fo; mesh.count = out; mesh.visible = out > 0;
    if (r.twin) { r.twin.count = out; r.twin.visible = out > 0; }
    // Only the part in use goes to the graphics card.
    const im = mesh.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(0, out * 16); im.needsUpdate = true;
@@ -386,10 +442,10 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // toon). Every mesh shown for `fn`, then each put back as it was; the
   // instance counts are untouched -- a compile needs only the object.
   forCompile(fn) {
-   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null]);
-   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; }
+   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null, r.fade ? r.fade.visible : null]);
+   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; if (r.fade) r.fade.visible = true; }
    try { return fn(); }
-   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; }); }
+   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; if (r.fade) r.fade.visible = was[i][2]; }); }
   },
   // `lights`: the shadow-casting lights to sort for, nearest map first (the
   // cascades, or the one sun). Their shadow cameras must already be placed for

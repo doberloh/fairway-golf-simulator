@@ -367,14 +367,23 @@ test('crowns within the swap band are held by both meshes, dissolved to compleme
  group.add(mesh);
  const cull = cullInstances(group, {farPainted: .15}), cam = camera();
  cull.update(cam, null);
+ // Since the dissolve moved to fade meshes (it kept the card from skipping
+ // hidden pixels on every tree): the crowns in the band are in the near
+ // mesh's fade mesh and the far mesh's, with complementary levels; the meshes
+ // themselves hold only whole crowns, and only the fade meshes' material
+ // carries the dissolve.
  const far = group.children.find(o => o.name === 'far trees');
- const level = o => held(o).map(t => [t.x + ',' + t.z, Math.floor(t.r / 4 + 1e-3)]);
- const near = new Map(level(mesh)), thin = level(far);
+ const fadeOf = m => group.children.find(o => o.name === 'fading trees' && o.userData.fadeOf === m);
+ const level = o => o ? held(o).map(t => [t.x + ',' + t.z, Math.floor(t.r / 4 + 1e-3)]) : [];
+ for (const m of [mesh, far]) for (const [, lv] of level(m)) assert.equal(lv, 0, 'a whole crown carries no level');
+ const nearFade = new Map(level(fadeOf(mesh))), farFade = level(fadeOf(far));
  let both = 0;
- for (const [k, lv] of thin) if (near.has(k)) { both++; assert.ok(near.get(k) >= 1 && near.get(k) < 16 && lv === 16 + near.get(k), `${k}: ${near.get(k)} / ${lv}`); }
+ for (const [k, lv] of farFade) if (nearFade.has(k)) { both++; assert.ok(nearFade.get(k) >= 1 && nearFade.get(k) < 16 && lv === 16 + nearFade.get(k), `${k}: ${nearFade.get(k)} / ${lv}`); }
  assert.ok(both > 0, 'some crowns are in the band');
+ assert.ok(!String(mesh.material.customProgramCacheKey()).endsWith('-thinfade'), 'the tree\'s own material has no dissolve');
+ assert.ok(String(fadeOf(mesh).material.customProgramCacheKey()).endsWith('-thinfade'), 'the fade mesh\'s has');
  // The colour underneath the level is the tree's own.
- for (const t of held(mesh)) assert.ok(Math.abs(t.r - Math.floor(t.r / 4 + 1e-3) * 4 - .5) < 1e-3);
+ for (const t of held(fadeOf(mesh))) assert.ok(Math.abs(t.r - Math.floor(t.r / 4 + 1e-3) * 4 - .5) < 1e-3);
 });
 
 // A mesh with no far version is never given a dissolve level (the saguaro
