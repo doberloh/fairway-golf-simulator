@@ -34,6 +34,18 @@ check.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
+- [ ] **Models to check, waiting on the owner** (9 November 2026, after the African sumac: "go
+  through the rest of the Landscape's and figure out if there's any other missed models that are
+  trees like this. Also look for any other model that doesn't look exactly right"). Every model a
+  9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
+  tools/capture/landscape-models.mjs. Four trees are still hand-built: the Redwood Coast's bay
+  laurel, madrone and bigleaf maple (the Pacific Northwest's Meshy maple would do) and its sapling,
+  Hawaiian Resort's plumeria, Desert Mountain's ocotillo. Ten other things look off: brittlebush
+  and sagebrush read as rocks; creosote looks dead; cholla like popcorn; muhly grass like a pale
+  rock; bougainvillea shapeless; the plain shrub a blob in six landscapes; coast live oak 1, shore
+  pine 1 and huckleberry nearly black; rocks with sticker-like patches; a Midwest barn in the
+  south and a one-wall desert ruin; western hemlock's nodding tip. Each is on the US golf status
+  page's Models to check with pictures, waiting for Remake it or It is fine. Nothing built.
 
 ## Release 0.9.8 (8 November 2026)
 
