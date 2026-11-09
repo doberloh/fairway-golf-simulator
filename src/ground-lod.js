@@ -162,6 +162,11 @@ export function buildGroundLod(g, rules = GROUND_LOD) {
    const l = Math.floor(j0 / L) * leavesX + Math.floor(i0 / L), own = leafTris[l];
    const sk = skirt(own, Math.max(rules.skirtMin, node.fineError * 2 + rules.skirtMin), box);
    const all = new Uint32Array(own.length + sk.length); all.set(own); all.set(sk, own.length); node.fine = all;
+   const m = g.mid5 ? middle(g, i0, j0, Math.min(i0 + L, g.nx), Math.min(j0 + L, g.nz)) : null;
+   if (m) {
+    node.midError = m.error;
+    node.mid = Uint32Array.from([...m.tris, ...skirt(m.tris, Math.max(rules.skirtMin, node.fineError * 2 + rules.skirtMin), box)]);
+   }
   }
   if (!Number.isFinite(node.minY)) { node.minY = 0; node.maxY = 0; }
   nodes.push(node);
@@ -171,13 +176,55 @@ export function buildGroundLod(g, rules = GROUND_LOD) {
  return {nodes, root, extra: {from: Uint32Array.from(extraFrom), drop: Float32Array.from(extraDrop)}, box: (n) => nodeBox(g, n)};
 }
 
+// A LEAF AT 1.5 m (the frame-rate goal, 9 November 2026): the grid's own
+// cells, each refined one drawn from its corners, the middles of its edges and
+// its centre (terrain-grid.js `mid5`, vertices the grid already made) -- 8
+// triangles where the grid draws 72 -- a cell beside a refined one as a fan
+// round its centre through the middles of its edges that border refined cells,
+// as the grid's own fan does through every half-metre point, and a plain cell
+// as its two triangles. Every edge is cut at the same points from both sides,
+// so the level has no cracks of its own. `error`: the most any half-metre
+// point of the grid stands off it.
+function middle(g, i0, j0, i1, j1) {
+ const tris = [], w = g.nx + 1, M = g.mid5, P = g.positions;
+ let error = 0;
+ const lerp3 = (h00, h10, h01, h11, fx, fz) => fx + fz <= 1 ? h00 + (h10 - h00) * fx + (h01 - h00) * fz : h11 + (h01 - h11) * (1 - fx) + (h10 - h11) * (1 - fz);
+ for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+  const key = j * g.nx + i, m = key * 5, a = j * w + i, b = a + 1, c = a + w, d = c + 1, cell = g.cells?.get(key);
+  if (cell?.heights) {
+   const mb = M[m], mr = M[m + 1], mt = M[m + 2], ml = M[m + 3], e = M[m + 4];
+   tris.push(a, ml, mb, mb, ml, e, mb, e, b, b, e, mr, ml, c, e, e, c, mt, e, mt, mr, mr, mt, d);
+   // The half-metre heights against the 3 x 3 they are drawn from.
+   const n = cell.n, h = cell.heights, H = n / 2, at = (x, z) => h[z * (n + 1) + x];
+   for (let z = 0; z <= n; z++) for (let x = 0; x <= n; x++) {
+    const sx = Math.min(1, Math.floor(x / H)), sz = Math.min(1, Math.floor(z / H)), fx = (x - sx * H) / H, fz = (z - sz * H) / H;
+    const v = lerp3(at(sx * H, sz * H), at(sx * H + H, sz * H), at(sx * H, sz * H + H), at(sx * H + H, sz * H + H), fx, fz);
+    const off = Math.abs(at(x, z) - v); if (off > error) error = off;
+   }
+  } else if (cell?.ring) {
+   const ring = [a, M[m + 3], c, M[m + 2], d, M[m + 1], b, M[m]].filter(v => v >= 0), e = M[m + 4];
+   for (let k = 0; k < ring.length; k++) tris.push(e, ring[k], ring[(k + 1) % ring.length]);
+   // A dropped ring point against the line between the points either side of it.
+   const kept = new Set(ring), rs = cell.ring;
+   for (let k = 0; k < rs.length; k++) {
+    if (kept.has(rs[k].id)) continue;
+    let p = k, q = k; while (!kept.has(rs[p].id)) p = (p + rs.length - 1) % rs.length; while (!kept.has(rs[q].id)) q = (q + 1) % rs.length;
+    const span = (q - p + rs.length) % rs.length || 1, f = ((k - p + rs.length) % rs.length) / span;
+    const off = Math.abs(rs[k].y - (rs[p].y + (rs[q].y - rs[p].y) * f)); if (off > error) error = off;
+   }
+  } else tris.push(a, c, b, b, c, d);
+ }
+ void P;
+ return {tris, error};
+}
+
 // A square's box in metres.
 export function nodeBox(g, n) {
  return {x0: -g.halfX + n.i0 * g.dx, x1: -g.halfX + Math.min(n.i0 + n.cells, g.nx) * g.dx,
   z0: -g.halfZ + n.j0 * g.dz, z1: -g.halfZ + Math.min(n.j0 + n.cells, g.nz) * g.dz, y0: n.minY, y1: n.maxY};
 }
 
-// Which squares to draw, and how: [{node, fine}] covering the ground once.
+// Which squares to draw, and how: [{node, fine, mid}] covering the ground once.
 // `camera` {x, y, z}; `focal`: the screen's height in pixels over twice the
 // tangent of half the field of view; `tolerance`: pixels. A square is split
 // while its error, at its nearest point's distance, would show as more than
@@ -191,9 +238,14 @@ export function select(lod, g, camera, focal, tolerance) {
  };
  const walk = n => {
   const d = dist(n);
-  if (n.level === 0) { out.push({node: n, fine: n.fineError * focal / d > tolerance}); return; }
+  // A leaf: the 3 m grid while its refinement is under the tolerance, then the
+  // 1.5 m level while that is, then the grid's own triangles.
+  if (n.level === 0) {
+   const coarse = n.fineError * focal / d <= tolerance, mid = !coarse && n.mid && n.midError * focal / d <= tolerance;
+   out.push({node: n, fine: !coarse && !mid, mid: !!mid}); return;
+  }
   if (n.error * focal / d > tolerance && n.children.length) { for (const c of n.children) walk(c); return; }
-  out.push({node: n, fine: false});
+  out.push({node: n, fine: false, mid: false});
  };
  if (lod.root) walk(lod.root);
  return out;

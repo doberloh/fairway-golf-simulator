@@ -297,7 +297,24 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  const wide = new T.PerspectiveCamera(), frustum = new T.Frustum(), vp = new T.Matrix4();
  const lastPos = new T.Vector3(Infinity, 0, 0), lastFwd = new T.Vector3(), lastSun = new T.Vector3();
  const fwd = new T.Vector3(), away = new T.Vector3(), box = new T.Box3();
- let lastFov = 0, lastAspect = 0, stale = true, all = true, rebuilds = 0, rebuildMs = 0;
+ let lastFov = 0, lastAspect = 0, stale = true, all = true, rebuilds = 0, rebuildMs = 0, skipped = 0;
+ // What every square was last written by: in view, its first shadow map, its
+ // two swap mixes, Low's share, and for each reach a mesh has, past it or not.
+ const reaches = [...new Set(records.map(r => r.reach).filter(Boolean))];
+ const sig = new Uint8Array(boxes.length * (5 + reaches.length)), was = new Uint8Array(sig.length);
+ let written = false;
+ const same = () => {
+  const w = 5 + reaches.length;
+  for (let c = 0; c < boxes.length; c++) {
+   const o = c * w;
+   sig[o] = visible[c]; sig[o + 1] = pass[c]; sig[o + 2] = Math.round(thin[c] * FADE_STEPS); sig[o + 3] = Math.round(thinPainted[c] * FADE_STEPS); sig[o + 4] = Math.round(keep[c] * 64);
+   for (let r = 0; r < reaches.length; r++) sig[o + 5 + r] = dist[c] > reaches[r] ? 1 : 0;
+  }
+  let equal = written;
+  if (equal) for (let k = 0; k < sig.length; k++) if (sig[k] !== was[k]) { equal = false; break; }
+  was.set(sig); written = true;
+  return equal;
+ };
 
  const write = () => {
   for (const r of records) {
@@ -399,6 +416,10 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    if (!moved && !stale) return false;
    lastPos.copy(camera.position); lastFwd.copy(fwd); lastFov = camera.fov; lastAspect = camera.aspect;
    if (sunDir) lastSun.copy(sunDir);
+   // A rebuild something asked for (a tree hidden, a tune, Low's hole moved)
+   // always writes; one the camera's travel set off writes only if a square's
+   // decision changed (`same` below).
+   const forced = stale || all;
    stale = false; all = false;
    const started = performance.now();
 
@@ -421,7 +442,9 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    }
    if (thinTrees && region) {
     const cam = {x: camera.position.x, z: camera.position.z}, reg = {...region, camera: cam};
-    for (let c = 0; c < boxes.length; c++) keep[c] = squareKeep(reg, {x0: boxes[c].min.x, x1: boxes[c].max.x, z0: boxes[c].min.z, z1: boxes[c].max.z});
+    const rules = tune.lowTrees ? {...LOW_TREES, ...tune.lowTrees} : LOW_TREES;
+    // Rounded up to 64ths: never under the share, and steady between rebuilds.
+    for (let c = 0; c < boxes.length; c++) keep[c] = Math.min(1, Math.ceil(squareKeep(reg, {x0: boxes[c].min.x, x1: boxes[c].max.x, z0: boxes[c].min.z, z1: boxes[c].max.z}, rules) * 64) / 64);
    }
    for (let c = 0; c < boxes.length; c++) {
     const b = boxes[c];
@@ -446,7 +469,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      const b = boxes[c], d = b.distanceToPoint(camera.position);
      if (d < tune.near) { into[c] = 1; continue; }
      const share = (b.max.y - b.min.y) / d * focal;
-     into[c] = share <= small ? 0 : share >= small * SWAP_BAND ? 1 : (share - small) / (small * (SWAP_BAND - 1));
+     into[c] = share <= small ? 0 : share >= small * SWAP_BAND ? 1 : Math.round((share - small) / (small * (SWAP_BAND - 1)) * FADE_STEPS) / FADE_STEPS;
     }
    };
    mark(thin, tune.farTrees ?? farTrees);
@@ -466,6 +489,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
     for (const plane of shadowFrustum.planes) plane.constant += grow;
     for (let c = 0; c < boxes.length; c++) if (visible[c] && shadowFrustum.intersectsBox(boxes[c])) pass[c] = i;
    }
+   // NOTHING CHANGED, NOTHING WRITTEN (the frame-rate goal, 9 November 2026):
+   // every decision a square's trees are written by, compared with the last
+   // write's. A camera drifting across the overview rewrote and uploaded every
+   // tree in view every frame (1.8 ms of a Medium frame on Dinosaur Mountain)
+   // for squares that had not changed.
+   if (!forced && same()) { skipped++; return false; }
    write();
    rebuilds++; rebuildMs = performance.now() - started;
    return true;
@@ -483,7 +512,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    for (const r of records) { if (r.near) nearCrowns += r.drawn; if (r.far) farCrowns += r.drawn; }
    return {meshes: records.length, squares: boxes.length, squaresDrawn: shown, instances, drawn, shadow,
     thinCrowns: nearCrowns + farCrowns ? +(farCrowns / (nearCrowns + farCrowns)).toFixed(3) : 0,
-    rebuilds, lastRebuildMs: +rebuildMs.toFixed(2)};
+    rebuilds, skipped, lastRebuildMs: +rebuildMs.toFixed(2)};
   }
  };
 }

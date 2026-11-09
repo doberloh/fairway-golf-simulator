@@ -15363,3 +15363,22 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   src/built-field.js and run as bands of rows on up to eight workers (bake-pool.js), byte for byte
   the whole field (tests/built-field.test.mjs). Building the course 21.4 to 5.3 s; Game view 45-51 to
   29 s. Left: "Preparing the graphics" 18.9 s (shader programs) and drawing 4.7 s.
+- **The ground at 1.5 m** (ground-lod.js `middle`; terrain-grid.js `mid5`): a full-detail leaf has
+  a middle level drawn from the 1.5 m points the grid already made (each refined cell's corners, edge
+  middles and centre: 8 triangles for the grid's 72; a cell beside a refined one a fan through its
+  edge middles), chosen when the refinement it drops is under the tolerance. On the test ground (1.2
+  by 0.9 km of rough land) the leaves hold 6.6 M full-detail triangles and 0.95 M at 1.5 m, the
+  middle level wrong by at most 6 cm against the full detail's 25 cm off the 3 m grid. The grid
+  records the ids (five a cell, 20 bytes; 20 MB on Dinosaur Mountain) and makes nothing new.
+- **The older laptop, estimated** (frame-ab --device weak-laptop: Intel UHD 620 at 1920 x 1080,
+  the processor throttled 2.7 times, the card's time scaled 76 times; PLACED estimate): Dinosaur
+  Mountain on Low after the first pass, 112-362 ms a frame of graphics (3-9 a second) at 14-16 M
+  triangles. The target is 33 ms. Low has to draw nearer 1-2 M.
+- **The overview's processor share** (frame-variants --cpuprofile, Medium, Dinosaur Mountain): 9.3 ms
+  of sampled work a frame, of which the cull rewriting every tree in view at every 4 m of camera
+  travel (1.8 ms) and the camera-in-a-tree check testing all 45,223 trees and walking all 105,000
+  instances (1.5 ms). **Built:** the check looks only at trees within reach of the camera (a 32 m grid;
+  reach `VIEW_CLEAR_REACH` times 1.9 plus the widest crown) and touches only trees whose state
+  changed; the cull compares every square's decisions with the last write's and writes nothing when
+  none changed (its swap mixes rounded to the dissolve's 16 steps, Low's share up to 64ths). After:
+  5.8 ms, the check 0.07 ms, the rewrite 0.78 ms.

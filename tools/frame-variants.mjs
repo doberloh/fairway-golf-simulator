@@ -47,6 +47,8 @@ const SPOTS = {
  sun: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'},
  // The play camera behind the ball on that tee (frame-ab.mjs says why).
  play1: {play: 0}, play5: {play: 4}, play9: {play: 8},
+ // The overview (the whole hole from above), as frame-ab.mjs has it.
+ overview: {view: 'overview'},
  // Free flight (frame-ab.mjs says why).
  fly1: {hole: 0, along: 150, height: 40, look: 'pin'}, fly5: {hole: 4, along: 150, height: 40, look: 'pin'},
  flyhigh: {hole: 0, along: -150, height: 250, look: 'pin'},
@@ -123,7 +125,8 @@ try {
  };
  const run = code => page.evaluate(c => { const v = window.__view; return new Function('v', c)(v); }, code);
  for (const spot of spotNames) {
-  if (SPOTS[spot].play !== undefined) { await page.evaluate(n => window.lab.hole(n), SPOTS[spot].play); await page.evaluate(() => window.lab.view('player')); }
+  if (SPOTS[spot].view) await page.evaluate(v => window.lab.view(v), SPOTS[spot].view);
+  else if (SPOTS[spot].play !== undefined) { await page.evaluate(n => window.lab.hole(n), SPOTS[spot].play); await page.evaluate(() => window.lab.view('player')); }
   else await page.evaluate(o => window.lab.camera(o), SPOTS[spot]);
   await frames(page, 30);
   // WHERE THE PROCESSOR'S TIME GOES, from DevTools' sampling profiler over the

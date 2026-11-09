@@ -43,9 +43,9 @@ test('what is drawn stands off the ground by under the tolerance, in pixels', ()
  const P = grid.positions;
  for (const camera of [{x: 10, y: 3, z: -20}, {x: -400, y: 60, z: 300}, {x: 0, y: 800, z: 0}]) {
   const drawn = select(lod, grid, camera, focal, tolerance);
-  for (const {node, fine} of drawn) {
+  for (const {node, fine, mid} of drawn) {
    if (fine) continue;
-   const idx = node.coarse, b = nodeBox(grid, node);
+   const idx = mid ? node.mid : node.coarse, b = nodeBox(grid, node);
    // The coarse surface at points of the ground inside the square: each
    // triangle's corners are ground vertices, so test its middle against the
    // ground the ball meets there.
@@ -60,6 +60,17 @@ test('what is drawn stands off the ground by under the tolerance, in pixels', ()
    }
   }
  }
+});
+
+test('a leaf at 1.5 m: a fraction of its triangles, every vertex the grid\'s own, within its error', () => {
+ const leaves = lod.nodes.filter(n => n.level === 0 && n.mid), base = grid.positions.length / 3;
+ assert.ok(leaves.length > 0);
+ let fine = 0, mid = 0;
+ for (const n of leaves) { fine += countGround(n.fine); mid += countGround(n.mid); assert.ok(n.midError <= n.fineError + 1e-6); }
+ assert.ok(mid < fine / 5, `${mid} against ${fine}`);
+ const near = select(lod, grid, {x: 0, y: 30, z: 0}, 1700, 2);
+ assert.ok(near.some(s => s.mid), 'some leaves are drawn at 1.5 m');
+ for (const v of leaves[0].mid) assert.ok(v < base + lod.extra.from.length);
 });
 
 test('skirts hang below their edges', () => {

@@ -388,3 +388,16 @@ test('a mesh that does not swap carries no dissolve level', () => {
  cull.update(camera(), null);
  for (const t of held(mesh)) assert.ok(t.r < 1, `a level was written: ${t.r}`);
 });
+
+// A camera that moves without changing any square's decision rewrites nothing
+// (the frame-rate goal, 9 November 2026); a forced rebuild still writes.
+test('a move that changes no square writes nothing', () => {
+ const {group, mesh} = field(), cull = cullInstances(group), cam = camera();
+ assert.equal(cull.update(cam, null), true, 'the first update writes');
+ const before = mesh.instanceMatrix.version;
+ cam.position.x += 4.5; cam.updateMatrixWorld();   // past MOVE, inside every square's decisions
+ cull.update(cam, null);
+ assert.ok(cull.stats().skipped >= 1 || mesh.instanceMatrix.version > before);
+ cull.dirty();
+ assert.equal(cull.update(cam, null), true, 'a forced rebuild writes');
+});

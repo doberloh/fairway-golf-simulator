@@ -1,5 +1,5 @@
 import {darkenBy} from './species.js';
-import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
+import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared,VIEW_CLEAR_REACH,VIEW_CONE} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 import {farWoodSites,FAR_SHAPES} from './far-woods.js';
@@ -411,6 +411,27 @@ function addSpecies(view,kind,trees){
 export function addVegetation(view){
  view.treeInstances=[];view.viewBlockers=[];let lastHidden=new Set(),lastMode='',held=null,last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
  // An instance is drawn unless the camera is standing inside that tree.
+ // The trees by 32 m square, and how far one can reach the camera: its crown
+ // (cameraInsideTree) or, off the line to what the camera looks at, VIEW_CLEAR_REACH
+ // along and a crown and a cone across (treeBlocksView). Built the first time.
+ let grid=null,reach=0;const SQUARE=32;
+ const nearCamera=c=>{
+  if(!grid){grid=new Map();let r=0;for(const t of view.world.trees){r=Math.max(r,t.r||0);const k=Math.floor(t.x/SQUARE)+','+Math.floor(t.z/SQUARE);let l=grid.get(k);if(!l)grid.set(k,l=[]);l.push(t);}
+   reach=VIEW_CLEAR_REACH*(1+VIEW_CONE)+r*1.9+4;}
+  const out=[],i0=Math.floor((c.x-reach)/SQUARE),i1=Math.floor((c.x+reach)/SQUARE),j0=Math.floor((c.z-reach)/SQUARE),j1=Math.floor((c.z+reach)/SQUARE);
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const l=grid.get(i+','+j);if(l)for(const t of l)out.push(t);}
+  return out;
+ };
+ // Each owner's instances, across every batch, rebuilt when a batch is added
+ // (the houses' view blockers come after the trees).
+ let places=null,placesFor=0,fresh=false;
+ const placesOf=()=>{
+  const batches=[...view.treeInstances,...view.viewBlockers];
+  if(places&&placesFor===batches.length)return places;
+  places=new Map();placesFor=batches.length;fresh=true;
+  for(const batch of batches)batch.owners.forEach((o,i)=>{let l=places.get(o);if(!l)places.set(o,l=[]);l.push([batch,i]);});
+  return places;
+ };
  view.clearCameraTrees=()=>{
   // The vegetation tests build a view with no camera -- they only ever look
   // at the geometry -- so this has to be safe to call without one.
@@ -433,26 +454,37 @@ export function addVegetation(view){
   const clearView=(mode&&mode!=='free'&&mode!=='overview')||!!view.orbiting;
   const target=view.ball?.visible?view.ball.position:look;
   const blocks=t=>cameraInsideTree(view.camera.position,t)||(clearView&&(treeBlocksView(view.camera.position,target,t)||treeBlocksView(view.camera.position,look,t)));
-  const hidden=new Set(view.world.trees.filter(blocks));
+  // ONLY THE TREES THAT COULD BE IN THE WAY (the frame-rate goal, 9 November
+  // 2026): a tree blocks the camera only standing within its crown's reach of
+  // it, or within VIEW_CLEAR_REACH of it and a crown and a cone off the line
+  // (camera-tours.js) -- so the trees in squares that far round the camera,
+  // never every tree on the course: 45,000 a frame on Dinosaur Mountain, a
+  // millisecond and a half of every moving frame. The same trees come out.
+  const hidden=new Set(nearCamera(view.camera.position).filter(blocks));
   const others=new Set();for(const b of view.viewBlockers)for(const o of b.owners)others.add(o);
   for(const o of others)if(blocks(o))hidden.add(o);
   if(keepsCleared(held,view.camera.position))for(const o of held.owners)hidden.add(o);else held=null;
+  // Only the trees whose state changed are touched: each owner's instances
+  // are found through `placesOf`, not by walking every instance of every mesh
+  // (105,000 on Dinosaur Mountain, every moving frame).
+  const flip=new Set();for(const o of hidden)if(!lastHidden.has(o))flip.add(o);for(const o of lastHidden)if(!hidden.has(o))flip.add(o);
   lastHidden=hidden;
-  for(const batch of [...view.treeInstances,...view.viewBlockers]){
-   let changed=false;const culled=view.cull?.has(batch.mesh);
-   batch.owners.forEach((t,i)=>{
-    const hide=hidden.has(t)?1:0;
-    if(hide!==batch.hidden[i]){
-     // A culled mesh no longer holds instance i at index i -- the cull packs
-     // what is in view to the front -- so there it is the flag that hides the
-     // tree, and the cull that rewrites the buffer.
-     if(!culled)batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
-     batch.hidden[i]=hide;changed=true;
-    }
-   });
-   if(changed&&culled)view.cull.dirty();
-   else if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
+  const places=placesOf();
+  // A batch added since (a new mesh starts with nothing hidden): every hidden
+  // owner is set again, so none of it shows inside the camera.
+  if(fresh){fresh=false;for(const o of hidden)flip.add(o);}
+  if(!flip.size)return;
+  const touched=new Set();
+  for(const o of flip)for(const [batch,i] of places.get(o)??[]){
+   const hide=hidden.has(o)?1:0;
+   if(hide===batch.hidden[i])continue;
+   // A culled mesh no longer holds instance i at index i -- the cull packs
+   // what is in view to the front -- so there it is the flag that hides the
+   // tree, and the cull that rewrites the buffer.
+   if(!view.cull?.has(batch.mesh))batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
+   batch.hidden[i]=hide;touched.add(batch);
   }
+  for(const batch of touched){if(view.cull?.has(batch.mesh))view.cull.dirty();else batch.mesh.instanceMatrix.needsUpdate=true;}
  };
  // A STAND'S UNDERSTORY (course.js, `under`) is shrubs and ferns a ball
  // passes through, so a tier may draw a share of it without two players

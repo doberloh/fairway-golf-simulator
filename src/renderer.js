@@ -3405,15 +3405,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // squares' now, so its own index goes.
   this.terrain.name='Ground (undrawn)';this.terrain.visible=false;terrain.computeBoundingBox();terrain.setIndex(null);
  }
- groundLodMesh(node,fine){
+ groundLodMesh(node,which){
   const G=this.groundLod;let pair=G.meshes.get(node);if(!pair){pair={};G.meshes.set(node,pair);}
-  const which=fine?'fine':'coarse';if(pair[which])return pair[which];
+  if(pair[which])return pair[which];
   const geometry=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))geometry.setAttribute(name,a);
-  geometry.setIndex(new T.BufferAttribute(fine?node.fine:node.coarse,1));
+  geometry.setIndex(new T.BufferAttribute(node[which],1));
   const b=groundNodeBox(G.grid,node),skirt=Math.max(2,node.error*2+2);
   geometry.boundingBox=new T.Box3(new T.Vector3(b.x0,b.y0-skirt,b.z0),new T.Vector3(b.x1,b.y1,b.z1));
   geometry.boundingSphere=geometry.boundingBox.getBoundingSphere(new T.Sphere());
-  const mesh=new T.Mesh(geometry,this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name=fine?'ground, fine':'ground, coarse';
+  const mesh=new T.Mesh(geometry,this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
   G.group.add(mesh);pair[which]=mesh;return mesh;
  }
  // Every frame: the squares for this camera, each drawn no coarser than
@@ -3425,7 +3425,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(key!==G.key){
    G.key=key;
    const focal=h/(2*Math.tan(T.MathUtils.degToRad(this.camera.fov)/2)),want=new Set();
-   for(const {node,fine} of selectGround(G.lod,G.grid,c,focal,tol))want.add(this.groundLodMesh(node,fine));
+   for(const {node,fine,mid} of selectGround(G.lod,G.grid,c,focal,tol))want.add(this.groundLodMesh(node,fine?'fine':mid?'mid':'coarse'));
    for(const m of G.shown)if(!want.has(m))m.visible=false;
    for(const m of want)m.visible=true;
    G.shown=want;
