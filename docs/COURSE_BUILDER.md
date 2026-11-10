@@ -1989,3 +1989,19 @@ already mostly on the fairway, and offers the bend as the fix for a hole
 flagged off the fairway -- so a hole the map drew wrong is not bent into
 looking right (RESEARCH, *Doglegs from the trace*). A saved file plays as
 saved; no version moves. Not played by a person.
+
+### Never losing work: the kept draft (10 November 2026)
+
+Item 12. Door 2's draft (the same as Save writes) is kept in the browser's
+IndexedDB (autosave.js, its own database `fairway-builder-autosave`) at each
+step and every 3 minutes once there is land, quietly, and on leaving the
+page; a keep asked for while one is being written runs after it, so the
+latest is kept. Door 2 opened fresh offers it back (name, step, time) with
+Bring it back or Discard; a Save to a file drops it. **Found on the way:**
+the first build shared the LIDAR folder's database name, `fairway-builder`,
+at version 1 with no store for it, so every keep failed silently; and Build
+it for me named a course the map leaves unnamed "A golf course"
+(osm-course.js's word) -- it takes the place's name now. PLACED: one draft
+kept, door 2 only (the 3D editor's work goes into door 2's draft through
+Back to 2D, and is saved with Save). Checked by the builder-build-for-me
+journey. Not seen by a person.

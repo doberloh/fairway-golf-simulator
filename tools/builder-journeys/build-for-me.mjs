@@ -81,6 +81,11 @@ export default function ({journey}) {
   page.on('dialog', d => d.accept());
   await page.getByRole('button', {name: 'Back', exact: true}).click();
   await page.getByRole('button', {name: /Generate a real life course/}).click();
+  // THE KEPT DRAFT (item 12): door 2 opened again offers back the course built a moment ago.
+  await page.locator('.cb-recover').waitFor({timeout: 10000});
+  { const kept = await page.locator('.cb-recover').textContent(); if (!/Testville Golf Club/.test(kept)) throw Error(`the kept work should name the course: ${kept}`); }
+  await t.shot('recover');
+  await page.locator('[data-recover="no"]').click();
   await page.locator('.cb-buildname').fill('Testville Golf Club');
   await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});

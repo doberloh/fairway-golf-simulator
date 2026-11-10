@@ -484,6 +484,11 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   frames it too. On the plan: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
+  **Your work is kept as you go**: door 2's draft is kept in this browser at
+  each step and every three minutes, so a closed tab or a crash costs a few
+  minutes at most; opening door 2 again offers **Bring it back** or
+  **Discard**. Saving to a file drops the kept copy (the file holds it). It
+  never leaves the computer.
   **Build it for me** is at the top of the first step: type the course's
   name (and its town, if the name is common), press it, and the builder
   runs the steps below for you -- finds the course (a golf course on the map

@@ -27,6 +27,8 @@ import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refresh
 import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn, nodeAt} from './pen.js';
 import {createSteady} from './steady.js';
+import {keepDraft, keptDraft, dropDraft} from './autosave.js';
+import {readDraft} from './draft.js';
 import {blobs, checkHoles, mapVerdict, mapHas, bendFor} from './map-checks.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
@@ -679,6 +681,7 @@ export function open(draft = null) {
   plan.showLayer('picture', n !== 5 && st.picOn !== false); plan.showLayer('coverage', n === 0); showCodes();
   stepBar();
   palette.hidden = true;
+  if (n > 0) keepNow();
   panel.replaceChildren(el('div', {class: 'cb-intro'}, el('b', {}, STEPS[n].slice(2)), el('span', {}, INTRO[n])), ...steps[n]().filter(Boolean));
   menus();
   // Step 1's left drag draws the property box and step 4's left click places
@@ -1126,7 +1129,9 @@ export function open(draft = null) {
   }
   await refineOsm('lidar');
   const course = st.osm.courses.find(c => c.id === st.osm.course);
-  if (course?.name && (!st.name || st.name === 'My real course')) st.name = course.name;
+  // The map's own name for the course; 'A golf course' is osm-course.js's word
+  // for one the map leaves unnamed, so the place's name is used instead.
+  if (course?.name && course.name !== 'A golf course' && (!st.name || st.name === 'My real course')) st.name = course.name;
   else if (!st.name || st.name === 'My real course') st.name = place.label.split(',')[0];
   const marked = st.holes.slice(0, st.holesN).filter(h => h?.green && h.tees.length).length;
   log(`The course from OpenStreetMap, lined up with the LIDAR: ${marked} of ${st.holesN} holes marked (${took()}).`);
@@ -1139,8 +1144,18 @@ export function open(draft = null) {
   else if (marked === st.holesN && can(5)) { go(4); go(5); say(`Built in ${took()}: ${st.name}, ${st.holesN} holes. Look it over here; open it in the editor, or go back to any step to change it.`); }
   else { go(3); say(`Built in ${took()}, but OpenStreetMap leaves ${st.holesN - marked} of ${st.holesN} holes without a tee or a green: mark them here (Next hole), then the name and the review.`, true); }
  }
+ // A KEPT DRAFT OFFERED BACK, on a fresh door 2 (item 12).
+ const recoverBox = el('div');
+ if (!draft) keptDraft().then(k => {
+  if (!k || st.land) return;
+  const when = new Date(k.at).toLocaleString(undefined, {weekday: 'short', hour: '2-digit', minute: '2-digit'});
+  recoverBox.replaceChildren(el('div', {class: 'cb-field cb-recover'}, el('div', {class: 'cb-panehead'}, 'Work kept from last time', el('small', {}, when)),
+   el('small', {}, `${k.name || 'A course'}, at step ${(k.step ?? 0) + 1}, kept in this browser ${when}. Bring it back to carry on, or discard it.`),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-recover': 'yes', onclick: async () => { setBusy('Bringing it back…'); try { await openSaved(await readDraft(k.bytes)); } catch (e) { say('Could not bring it back: ' + e.message, true); } finally { setBusy(''); } }}, 'Bring it back'),
+    el('button', {class: 'cb-btn', type: 'button', 'data-recover': 'no', onclick: () => { dropDraft(); recoverBox.replaceChildren(); say('The kept work is discarded.'); }}, 'Discard'))));
+ });
  function stepLidar() {
-  return [buildField(), findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
+  return [recoverBox, buildField(), findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
    el('small', {}, 'LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with its .hdr, BIL, SRTM HGT), or a ZIP of them (a state portal\'s download). Several at once; a .prj or .hdr beside a file is read with it. Their coverage shows yellow on the relief.'),
    el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Pick LIDAR files from anywhere on this computer', onclick: chooseLand}, 'Choose LIDAR files'), fileList),
   el('div', {class: 'cb-field'}, el('label', {}, 'The property'), el('small', {}, 'Drag a box on the relief round the course with the left button (up to 3 x 3 km); 150 m past it are built too, for the land beyond. The wheel zooms; the right button or Space drags the view.'), boxText),
@@ -1865,6 +1880,28 @@ export function open(draft = null) {
  const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: async () => writeDraft(await whole()),
   said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
  setSaver(saver);
+ // THE KEPT DRAFT (autosave.js; item 12): door 2's draft written to this
+ // browser's storage at each step and every 3 minutes once there is land,
+ // quietly (no wait shown); a later visit offers it back. A Save to a file
+ // drops it, as the file holds the work.
+ let keptMark = '', keeping = false, again = false;
+ const markNow = () => JSON.stringify([st.step, st.name, st.holes.length, st.holes.map(h => h ? [h.tees.length, h.aims.length, h.green?.x] : 0), st.model?.state.undo.length ?? -1, st.pics.length, !!st.land]);
+ async function keepNow() {
+  if (!st.land) return;
+  // A keep asked for while one is being written runs once it is done, so the
+  // latest state is the one kept.
+  if (keeping) { again = true; return; }
+  const mark = markNow(); if (mark === keptMark) return;
+  keeping = true;
+  try { const bytes = writeDraft({...snapshot(), pics: await packPictures(st.pics, {onStep: () => {}})}); if (await keepDraft(await bytes, {name: st.name, step: st.step})) keptMark = mark; }
+  catch { /* the next try */ } finally { keeping = false; if (again) { again = false; keepNow(); } }
+ }
+ st.keepNow = keepNow;
+ const keepTimer = setInterval(() => { if (!document.body.contains(canvas)) return; keepNow(); }, 3 * 60e3);
+ window.addEventListener('pagehide', () => { if (document.body.contains(canvas)) keepNow(); });
+ const saidBefore = saver.said;
+ saver.said = (r, bytes) => { saidBefore(r, bytes); if (r.how !== 'failed') dropDraft(); };
+ void keepTimer;
  // BACK FROM THE 3D EDITOR (the owner, 1 November 2026: "add a button to go
  // back to the 2d editor from the 3d editor", then "go back and forth between
  // 2d and 3d work. while keeping changes made in both directions"): door 2
