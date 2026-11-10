@@ -2005,3 +2005,15 @@ it for me named a course the map leaves unnamed "A golf course"
 kept, door 2 only (the 3D editor's work goes into door 2's draft through
 Back to 2D, and is saved with Save). Checked by the builder-build-for-me
 journey. Not seen by a person.
+
+### The picture's brightness, contrast and date (10 November 2026)
+
+Item 20. Viewing has **Picture brightness** and **Picture contrast** (50-180%
+and 50-200%) and Reset: a canvas filter on the picture layer as the plan
+draws it (plan-view.js `setFilter`); the picture kept in the file is not
+changed. **When it was photographed**: for USGS NAIP the newest primary
+photograph under the land's centre, from the service's catalogue
+(`identify`; imagery.js `dateAt`, tested) -- Worthington's is 21 August
+2021, NAIP at 0.6 m -- shown under Showing. Not kept in a draft yet (shown
+again when fetched again); Google and Bing give no date here. Not seen by a
+person.

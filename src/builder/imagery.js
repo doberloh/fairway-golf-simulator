@@ -135,6 +135,14 @@ Object.assign(PROVIDERS, {
  // directly. RESEARCH, *Sharper pictures for the builder*.
  naip: free({name: 'USGS NAIP, sharpest (United States)', covers: [-180, 17, -64, 72], maxZoom: 20, block: 4, credit: 'USDA NAIP, USGS The National Map: Orthoimagery',
   terms: 'United States government imagery (NAIP and high-resolution orthoimagery): free to use. The sharpest free source here: 60 cm a pixel or finer.',
+  // WHEN IT WAS TAKEN (item 20): the photographs under a point, from the
+  // service's catalogue; the newest primary one's date, or null.
+  async dateAt(lon, lat, get = fetch) {
+   const R = 6378137, x = lon * Math.PI / 180 * R, y = Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * R;
+   const j = await (await get(`https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/identify?geometry=${x.toFixed(1)},${y.toFixed(1)}&geometryType=esriGeometryPoint&sr=3857&returnGeometry=false&returnCatalogItems=true&returnPixelValues=false&f=json`)).json();
+   const items = (j.catalogItems?.features ?? []).map(f => f.attributes).filter(a => a.acquisition_date && (a.Category == null || a.Category === 1));
+   return items.length ? new Date(Math.max(...items.map(a => a.acquisition_date))) : null;
+  },
   tile: (x, y, z, w = 1, h = 1) => `https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/exportImage?bbox=${mercatorBox(x, y, z, w, h).map(v => v.toFixed(2)).join(',')}&bboxSR=3857&imageSR=3857&size=${256 * w},${256 * h}&format=jpg&f=image`}),
  usgs: free({name: 'USGS tiles (United States)', covers: [-180, 17, -64, 72], maxZoom: 16, credit: 'USDA, USGS The National Map: Orthoimagery',
   terms: 'United States government imagery (NAIP): free to use. Its tiles stop at about 1.7 m a pixel: USGS NAIP, sharpest, is the same photographs at their own sharpness.',

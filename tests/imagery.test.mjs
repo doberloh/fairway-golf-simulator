@@ -83,3 +83,10 @@ test('the place search marks golf courses, so the club wins over its town (build
   {lon: '-95.62', lat: '43.625', display_name: 'Worthington Country Club, Worthington', class: 'leisure', type: 'golf_course'}]}));
  assert.deepEqual(found.map(f => !!f.golf), [false, true]);
 });
+
+test('USGS NAIP says when its photograph was taken: the newest primary one under the point (builder-ux)', async () => {
+ const get = async () => ({json: async () => ({catalogItems: {features: [{attributes: {acquisition_date: Date.UTC(2021, 7, 15), Category: 1}}, {attributes: {acquisition_date: Date.UTC(2021, 7, 21), Category: 1}}, {attributes: {acquisition_date: Date.UTC(2023, 0, 1), Category: 2}}]}})});
+ const d = await PROVIDERS.naip.dateAt(-95.62, 43.63, get);
+ assert.equal(d.toISOString().slice(0, 10), '2021-08-21');
+ assert.equal(await PROVIDERS.naip.dateAt(0, 0, async () => ({json: async () => ({})})), null);
+});

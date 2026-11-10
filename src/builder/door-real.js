@@ -208,6 +208,7 @@ export function open(draft = null) {
  // The LIDAR as the relief, its brightness or its slope (lidarTexels).
  function paintLidar() { const land = L(); if (land) plan.setLayer('relief', d => lidarTexels(land, st.lidarView, d)); }
  // Each layer's opacity, and the LIDAR under the picture or over it.
+ function lookPicture() { plan.setFilter('picture', `brightness(${st.picLight ?? 1}) contrast(${st.picContrast ?? 1})`); }
  function viewLayers() {
   plan.setAlpha('relief', st.lidarAlpha); plan.setAlpha('picture', st.picAlpha); plan.setAlpha('codes', st.traceAlpha);
   plan.setOrder(st.lidarOnTop ? ['picture', 'relief'] : ['relief', 'picture']);
@@ -1379,6 +1380,7 @@ export function open(draft = null) {
    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
     alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); showHint(); }}, 'Back to its position')),
    st.pics.length ? el('small', {}, 'Showing (every picture fetched or brought is kept, each with its own lining up)') : null,
+   ...st.pics.filter(q => q.pic?.date).map(q => el('small', {class: 'cb-picdate'}, `${q.label}: photographed ${new Date(q.pic.date).toLocaleDateString(undefined, {year: 'numeric', month: 'long', day: 'numeric'})}.`)),
    st.pics.length ? el('select', {class: 'cb-picshow', onchange: e => showPic(e.target.value)}, [...new Map(st.pics.map(p => [p.group, p.label])), ['lidar', 'The LIDAR\'s own']].map(([g, label]) => el('option', {value: g, selected: g === st.picShow}, label + (g === 'files' ? ` (${st.pics.filter(p => p.group === 'files').length})` : '')))) : null,
    ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found);
   // THE LIDAR AND THE PICTURE TOGETHER (the owner, 1 November 2026): each
@@ -1388,6 +1390,11 @@ export function open(draft = null) {
    el('small', {}, 'LIDAR opacity'), pct('lidarAlpha'),
    el('small', {}, 'Picture opacity'), pct('picAlpha'),
    el('small', {}, 'Trace opacity'), pct('traceAlpha', () => plan.draw()),
+   // THE PICTURE'S BRIGHTNESS AND CONTRAST (item 20): how it is drawn here
+   // only; the picture kept in the file is unchanged.
+   el('small', {}, 'Picture brightness'), el('input', {type: 'range', min: 50, max: 180, value: Math.round((st.picLight ?? 1) * 100), 'data-look': 'brightness', oninput: e => { st.picLight = +e.target.value / 100; lookPicture(); }}),
+   el('small', {}, 'Picture contrast'), el('input', {type: 'range', min: 50, max: 200, value: Math.round((st.picContrast ?? 1) * 100), 'data-look': 'contrast', oninput: e => { st.picContrast = +e.target.value / 100; lookPicture(); }}),
+   el('button', {class: 'cb-btn', type: 'button', title: 'The picture as fetched', onclick: () => { st.picLight = st.picContrast = 1; lookPicture(); go(2); }}, 'Reset the picture\'s look'),
    el('button', {class: 'cb-btn cb-lidartop', type: 'button', onclick: e => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); e.target.textContent = st.lidarOnTop ? 'Picture on top' : 'LIDAR on top'; }}, st.lidarOnTop ? 'Picture on top' : 'LIDAR on top')));
   // OPENSTREETMAP FIRST (the owner, 1 November 2026): the course as mappers
   // have drawn it, kept as it is or refined from the picture or the LIDAR.
@@ -1510,6 +1517,8 @@ export function open(draft = null) {
    // pixel), never finer than 30 cm (the builder-ux goal).
    const pic = kept ?? await mosaic(await p.start(apiKey), box, {want: Math.max(.3, st.land.cell), onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
    IMAGERY.set(cacheKey, pic);
+   // The photograph's date, where the source can say (USGS NAIP).
+   if (p.dateAt && !pic.date) { const c = ll(0, 0); pic.date = await p.dateAt(c.lon, c.lat).catch(() => null); }
    st.pics = st.pics.filter(q => q.group !== key).concat([{group: key, label: p.name, pic, provider: key, place: {kind: 'tiles', ...pic.tile}, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}]);
    if (!st.credits.includes(pic.credit)) st.credits.push(pic.credit);
    showPic(key, {offset: {x: 0, z: 0}});

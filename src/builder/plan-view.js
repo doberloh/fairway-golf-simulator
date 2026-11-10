@@ -47,6 +47,8 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
    const id = c.getContext('2d').createImageData(w, h); paint(id.data, i0, j0, w, h); c.getContext('2d').putImageData(id, i0, j0); api.draw();
   },
   showLayer(name, on) { v.show[name] = on; api.draw(); },
+  // How a layer looks while drawn: a CSS filter ('brightness(1.2) contrast(1.1)'), or null.
+  setFilter(name, f) { (v.filter ??= {})[name] = f || 'none'; api.draw(); },
   setAlpha(name, a) { v.alpha[name] = Math.max(0, Math.min(1, a)); api.draw(); },
   // The layers' drawing order, bottom first (names left out keep their place).
   setOrder(names) { v.order = [...names, ...ORDER.filter(n => !names.includes(n))]; api.draw(); },
@@ -73,7 +75,11 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
   for (const name of v.order) {
    const c = v.layers[name], a = v.alpha[name] ?? 1; if (!c || !v.show[name] || a <= 0) continue;
    const s = v.shift[name] ?? {x: 0, z: 0}, [x0, y0] = api.toScreen(-halfX - cell / 2 + s.x, -halfZ - cell / 2 + s.z);
+   // A layer's look (the picture's brightness and contrast, builder-ux item
+   // 20): a canvas filter while it is drawn, the layer itself unchanged.
+   ctx.filter = v.filter?.[name] ?? 'none';
    ctx.globalAlpha = a; ctx.setTransform(v.scale * cell, 0, 0, v.scale * cell, x0, y0); ctx.drawImage(c, 0, 0);
+   ctx.filter = 'none';
   }
   ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
   overlay?.(ctx, api);

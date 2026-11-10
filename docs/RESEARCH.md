@@ -15666,3 +15666,9 @@ all leaves 7 things to check, all the map's numbering or lines crossing.
 **Rejected:** bending every hole automatically (above); a bend from the
 fairway's own centre line (a fairway's outline is often merged with its
 neighbour's on the map, so its centre line runs between two holes).
+
+**The photo's date** (10 November 2026): the NAIP Plus service's
+`identify` with `returnCatalogItems=true` lists the photographs under a
+point with `acquisition_date` (milliseconds), `Year`, `resolution_value`
+and `Category` (1 the primary mosaic). Under Worthington's centre: 16 items,
+the newest primary m_4309519_se_15_060_20210821 -- 21 August 2021, 0.6 m.

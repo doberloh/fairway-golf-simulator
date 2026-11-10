@@ -120,7 +120,9 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-provider').selectOption('naip');
   await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.some(p => p.group === 'naip'), null, {timeout: 60000}); await idle();
-  if (!blocks.length || !blocks.every(u => /exportImage\?bbox=.*size=[0-9]+,[0-9]+&format=jpg/.test(u))) throw Error(`NAIP should be asked for blocks: ${blocks.slice(0, 2)}`);
+  // The picture's blocks (the date is asked for apart, through identify).
+  const pictureBlocks = blocks.filter(u => !/[/]identify[?]/.test(u));
+  if (!pictureBlocks.length || !pictureBlocks.every(u => /exportImage\?bbox=.*size=[0-9]+,[0-9]+&format=jpg/.test(u))) throw Error(`NAIP should be asked for blocks: ${pictureBlocks.slice(0, 2)}`);
   console.log(`       USGS NAIP: ${blocks.length} block request${blocks.length === 1 ? '' : 's'}, against ${tiles} tiles from the USGS tile cache`);
   await page.locator('.cb-picshow').selectOption('usgs');
   // The LIDAR and the picture together: opacities, either on top, the slope.
