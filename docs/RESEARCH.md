@@ -15413,3 +15413,11 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   is not a setting: it is a tier made for phones and weak laptops -- a cheaper ground shader, a
   fraction of the trees' far versions, one shadow map or none -- which changes the look the most and is
   the owner's call. The real check is a real device (TODO, *A real phone, an iPad and a weak laptop*).
+- **The final build** (9 November 2026, 16:00, ab6 against the starting build, Dinosaur Mountain, six
+  views): Low 7.4 to 1.3 ms a frame (-82%), Medium 8.8 to 2.8 (-68%), High 15.3 to 6.2 (-60%), Ultra
+  20.0 to 8.2 (-59%). With the clock stopped (frame-look, High and Ultra) 0.04-3.7% of pixels differ by
+  0.01-1.2 of 255 on average, distant trees only; hole 9's tee on High read 6.7% because the camera,
+  aimed at the pin, turned a few pixels (every edge shifted, clouds and mowing stripes included; the
+  same view read 0.45% the first time and 1.0% on Ultra in the same run). The full tests (1,513), the
+  fingerprints, the game's 41 smoke journeys and six of the builder's eight (both failures the same on
+  the starting build; TODO) pass.
