@@ -67,11 +67,15 @@ which this work does not need, and full profile sweeps. The precautions from
 the crashes stay:
 
 - **Not while the owner plays.** Graphics jobs go through `node
-  tools/gpu-run.mjs --goal builder-ux --util 45 --temp 80 --rest 1 --
-  <command>` (the capture tools gate themselves), which reads `nvidia-smi`
-  first and logs the run. A game in the process list, or the card above 45%:
-  wait, and say so.
-- **One graphics job at a time**, minutes rather than hours. Above 80 °C, stop
+  tools/gpu-run.mjs --goal builder-ux --util 60 --temp 85 --rest 1 --
+  <command>`, which reads `nvidia-smi` first and logs the run. The tools
+  that gate themselves (`builder-frames.mjs`, the `frame-*` tools, captures)
+  have stricter defaults and a cap of 6 runs: pass them `--goal builder-ux
+  --util 60 --temp 85 --rest 1 --cap 1000`. A game in the process list, or
+  the card above 60% (the owner, 9 November 2026, raised from 45%): wait,
+  and say so.
+- **One graphics job at a time**, minutes rather than hours. Above 85 °C (the
+  owner, 9 November 2026, raised from 80 °C), stop
   and cool down for 10 minutes. Nothing heavy on the processor beside a frame
   measurement.
 - **After every job, leave nothing running**: browsers, browser-pane tabs and

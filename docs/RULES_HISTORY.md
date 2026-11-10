@@ -363,6 +363,10 @@ card is free for the builder* is narrower than the frame-rate one: the
 builder's journeys, captures, `tools/builder-frames.mjs` and the builder in
 the browser pane, with no run cap; no software rendering, which this work
 does not need; the same crash precautions. It deletes itself in the merge.
+The same evening the owner raised its gate from 45% and 80 °C to 60% and
+85 °C ("increase the GPU threshold to 60% and 85C"), and the tools that gate
+themselves are passed the same limits, since their own defaults (10%, 60 °C,
+6 runs) would have stopped the goal overnight.
 
 ## The graphics profile
 
