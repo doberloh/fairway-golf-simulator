@@ -40,6 +40,9 @@ function create() {
  fold.type = 'button'; fold.className = 'cb-previewfold'; fold.title = 'Fold the preview away, or open it again'; fold.setAttribute('aria-label', 'Fold the preview');
  fold.addEventListener('click', () => { box.classList.toggle('cb-folded'); fold.textContent = box.classList.contains('cb-folded') ? '+' : '–'; });
  fold.textContent = '–';
+ // On a short window (a laptop's 768 pixels) it starts folded: open it was a
+ // quarter of the plan (builder-ux, item 15).
+ if (typeof innerHeight === 'number' && innerHeight < 900) { box.classList.add('cb-folded'); fold.textContent = '+'; }
  box.append(fold, title, canvas, note);
  const renderer = new T.WebGLRenderer({canvas, antialias: true, alpha: false, powerPreference: 'low-power'});
  renderer.setPixelRatio(Math.min(3, (devicePixelRatio || 1) * 2)); renderer.setSize(W, H, false);

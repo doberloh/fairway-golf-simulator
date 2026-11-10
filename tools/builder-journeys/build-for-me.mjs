@@ -65,6 +65,18 @@ export default function ({journey}) {
   const saved = Buffer.from(await page.evaluate(() => { const b = window.fairwayBuilder.lastSaved; let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); }), 'base64');
   await playOneShot(t, saved, 'builder-build-for-me');
   console.log(`       saved for Fairway (${(saved.length / 1e6).toFixed(1)} MB); the game opened it and a tee shot was played`);
+  // SCREENS THAT FIT (item 15): on a small laptop's 1366 x 768 and a large
+  // 2560 x 1440, the step bar's Next, the status bar and the panel stay in
+  // the window, and nothing makes the page scroll sideways.
+  for (const [w, h] of [[1366, 768], [2560, 1440]]) {
+   await page.setViewportSize({width: w, height: h}); await page.waitForTimeout(400);
+   await page.locator('.cb-stepchip', {hasText: 'Trace'}).click(); await page.waitForTimeout(300);
+   const fit = await page.evaluate(() => { const r = q => document.querySelector(q)?.getBoundingClientRect(); return {next: r('.cb-next'), status: r('.cb-statusbar'), side: r('.cb-sidepanel'), palette: r('.cb-palette'), wide: document.documentElement.scrollWidth, vw: innerWidth, vh: innerHeight}; });
+   const inside = b => b && b.left >= 0 && b.top >= 0 && b.right <= fit.vw + 1 && b.bottom <= fit.vh + 1;
+   if (!inside(fit.next) || !inside(fit.status) || !inside(fit.side) || !inside(fit.palette) || fit.wide > fit.vw + 1) throw Error(`at ${w} x ${h} something leaves the window: ${JSON.stringify(fit)}`);
+   await t.shot(`fit-${w}`);
+  }
+  await page.setViewportSize({width: 1600, height: 1000}); await page.locator('.cb-stepchip', {hasText: 'Review'}).click();
   // THE HOLE NAVIGATOR (item 19): back on the holes step, "." frames the next
   // hole; zoomed in, the overview map shows in the corner.
   await page.locator('.cb-stepchip', {hasText: 'Holes'}).click();

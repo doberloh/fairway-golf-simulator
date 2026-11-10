@@ -2042,3 +2042,15 @@ and the trace step's **History** fold lists the last 15 changes with **Back
 to here**. PLACED: names kept for the session only, not in a draft; the 3D
 editor's Undo is not named yet. The builder-door-2 journey checks a pen
 fill is named Outline fill. Not seen by a person.
+
+### Screens that fit (10 November 2026)
+
+Item 15. The builder-build-for-me journey sets the window to a small
+laptop's 1366 x 768 and to 2560 x 1440 and fails if the step bar's Next, the
+status bar, the side panel or the palette leaves it, or the page scrolls
+sideways; both pass, pictures in bench/shots/builder-smoke. On short
+windows (under 860 pixels) the palette's buttons are shorter so all of it
+shows, and the tool preview starts folded (open, it covered a quarter of the
+plan at 768). Not checked: a 4K screen at 150% scaling itself (the journey
+can only change the window, not the screen's scaling), and phones, which
+are out of scope. Not seen by a person.
