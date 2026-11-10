@@ -305,6 +305,18 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const holeTools = el('div', {class: 'cb-btns'},
   button('Back tee', {kind: 'tee', set: 'back'}), button('Middle tee', {kind: 'tee', set: 'middle'}), button('Front tee', {kind: 'tee', set: 'front'}),
   button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}), button('Drag markers', {kind: 'marks'}),
+  // ADD AND REMOVE A HOLE (item 9): a new hole where the view is looking, its
+  // green 300 m on the way the camera faces; or the selected hole taken out.
+  el('button', {class: 'cb-btn', type: 'button', 'data-hole': 'add', title: 'A new hole after the last, its tee where the view is centred and its green 300 m on: drag its markers where it belongs', onclick: () => {
+   const b = canvas.getBoundingClientRect(), p = view.pick({clientX: b.left + b.width / 2, clientY: b.top + b.height / 2}); if (!p) { status.textContent = 'Point the view at the ground first.'; return; }
+   const {eye, look} = view.eye(); selected = editor.addHole({x: p.x, z: p.z, dx: look.x - eye.x, dz: look.z - eye.z});
+   refreshHoles(); refreshSave(); view.frameHole(selected); status.textContent = `Hole ${selected + 1} added: drag its tee and green where they belong (Drag markers). Undo takes it out.`;
+  }}, 'Add a hole'),
+  el('button', {class: 'cb-btn', type: 'button', 'data-hole': 'remove', title: 'Take the selected hole out; the holes after it are renumbered', onclick: () => {
+   if (!confirm(`Take hole ${selected + 1} out? The holes after it are renumbered.`)) return;
+   if (!editor.removeHole(selected)) { status.textContent = 'A course keeps at least one hole.'; return; }
+   selected = Math.min(selected, s.holes.length - 1); refreshHoles(); refreshSave(); status.textContent = 'Hole taken out; the rest renumbered. Undo puts it back.';
+  }}, 'Remove this hole'),
   // Par set by hand, hole by hole (the owner, 1 November 2026: "let the user
   // set the par. per hole"); the yards are the line's, not typed.
   parSelect);

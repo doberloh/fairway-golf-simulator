@@ -2095,3 +2095,13 @@ larger picture (a drawImage of one canvas a frame).
 - **The guide** is built by `npm run build` (dist/builder-guide.html, 1.4 MB)
   and its pictures were taken from the final build.
 - **Open, with what to try by hand**: TODO.md, *The builder made easy*.
+
+### Adding and removing holes in the 3D editor (10 November 2026)
+
+Item 9, finished. Under Holes: **Add a hole** puts a new hole after the last,
+its back tee where the view is centred and its green 300 m on the way the
+camera faces, par 4, selected and framed for its markers to be dragged; and
+**Remove this hole** (asked once) takes the selected hole out and renumbers
+the rest. A course keeps at least one. One undo each (editing.js `addHole`,
+`removeHole`, tested); the builder-tools journey adds one and removes it.
+PLACED: 300 m and par 4 for a new hole. Not seen by a person.

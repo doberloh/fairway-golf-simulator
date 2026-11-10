@@ -99,6 +99,18 @@ export default function ({journey, SHOTS}) {
   const report = await page.evaluate(() => [...document.querySelectorAll('.cb-side li')].map(li => li.textContent).filter(t => /par/.test(t)).slice(0, 3));
   console.log(`       ${report.join(' | ')}`);
   await t.shot('reports');
+  // ADD AND REMOVE A HOLE (builder-ux, item 9): one added where the view
+  // looks, then taken out again (the question answered yes).
+  {
+   const holes = () => page.evaluate(() => window.fairwayBuilder.editor.editor.state.holes.length);
+   const n0 = await holes();
+   await page.locator('[data-hole="add"]').click();
+   if (await holes() !== n0 + 1) throw Error(`Add a hole should add one: ${n0} -> ${await holes()}`);
+   await t.shot('hole-added');
+   page.once('dialog', d => d.accept());
+   await page.locator('[data-hole="remove"]').click();
+   if (await holes() !== n0) throw Error('Remove this hole should take it out again');
+  }
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const saved = path.join(SHOTS, 'builder-tools-saved.fairway');
   await download.saveAs(saved);

@@ -1061,8 +1061,6 @@ person.**
   witness (map-checks.js takes `card`; there is no box for it); scoring the
   checks on damaged maps of the bench courses; Worthington's numbering, which
   no fix can settle without the real routing.
-- [ ] **Adding and removing holes in the 3D editor** (item 9; door 2 has 9 or
-  18 and Clear this hole).
 - [ ] **Plain words, the full sweep** (item 14): every tooltip (tips.js) and
   message for LIDAR, EPT, DEM, cell and the like where they are not the subject.
 - [ ] **Not measured:** the 2D plan's frame time with the picture on its own
@@ -1150,8 +1148,8 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   -- one corner checked by eye, not the whole course. The study's 80% target
   is not met.
 - [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
-- [ ] **The editor cannot add or remove holes, or stamp a green's contours
-  beyond the brush.** Ponds and creeks: since the builder-ux goal (10 November
+- [ ] **The editor cannot stamp a green's contours beyond the brush.** (Adding
+  and removing holes: since 10 November 2026, the builder-ux goal.) Ponds and creeks: since the builder-ux goal (10 November
   2026) a pond moves (as before) and is deleted with its water body, and a
   creek is selected and deleted (not moved: delete it and draw it again), in
   both editors; a deleted pond's bed and creek's channel stay in the land

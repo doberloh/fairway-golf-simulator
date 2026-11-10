@@ -367,6 +367,21 @@ export function createEditor(doc) {
    };
   },
   setPar(hole, par) { api.editHoles(hs => { hs[hole].par = par; }); },
+  // ADDING AND REMOVING HOLES (the builder-ux goal, item 9; TODO: the editor
+  // could not "add or remove holes"): a new hole after the last, its back tee
+  // at `at` and its green 300 m (328 yards) on in the direction given, par 4,
+  // for its marks to be dragged where it belongs; or a hole taken out, the rest
+  // renumbered in order. A course keeps at least one. One undo each.
+  addHole({x, z, dx = 0, dz = -1}) {
+   const L = Math.hypot(dx, dz) || 1, gx = x + dx / L * 300, gz = z + dz / L * 300;
+   api.editHoles(hs => { const n = hs.length + 1; hs.push({number: n, par: 4, index: n, tees: [{x, z, set: 'back'}], green: {x: gx, z: gz}, line: [[x, z], [gx, gz]]}); });
+   return state.holes.length - 1;
+  },
+  removeHole(hole) {
+   if (state.holes.length <= 1 || !state.holes[hole]) return false;
+   api.editHoles(hs => { hs.splice(hole, 1); hs.forEach((h, k) => { h.number = k + 1; if (h.index > hs.length) h.index = k + 1; }); });
+   return true;
+  },
   addTree(tree) { remember('records', 0, 0, 0, 0); state.trees.push(tree); },
   // ONE TREE PICKED BY NAME (the owner, 5 November 2026): its size from its height
   // and role, its species kept. Null `species`: the landscape chooses, as before.
