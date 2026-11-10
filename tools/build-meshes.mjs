@@ -698,6 +698,12 @@ for (const [family, entries] of Object.entries(PICK)) {
 // takes it part for part, as it takes a Blender twin. A model whose
 // Blender twin ships (the `fartwin` list) keeps that one.
 const AUTO_FAR_MIN = 1500, AUTO_FAR_SHARE = 1 / 8;
+// Thin canes keep more (9 November 2026): merging nearby points is at its worst
+// on sticks, and an eighth of the ocotillo's triangles drew its canes as a
+// leafy clump with red tips -- seen in free flight on Low, where Low and
+// Medium swap to it from about 30-40 m. Only what has been seen is listed; the
+// grasses, yuccas and sotol are thin too and unchecked (TODO).
+const AUTO_FAR_FINER = {ocotillo: 1 / 3};
 let autoFar = 0, autoFarTris = [0, 0];
 const replaced = [];
 for (const [name, s] of sources) {
@@ -714,7 +720,7 @@ for (const [name, s] of sources) {
  const far = [];
  let kept = 0;
  for (const [role, g] of s.byRole) {
-  const small = simplifyTo(g, AUTO_FAR_SHARE);
+  const small = simplifyTo(g, AUTO_FAR_FINER[s.family] ?? AUTO_FAR_SHARE);
   const use = small ? {...small, uv: null, color: small.color} : g;
   kept += use.index.length / 3;
   far.push(s.encode(role, use));

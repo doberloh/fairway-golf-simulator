@@ -15317,7 +15317,8 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
 **What was built first, and why** (9 November 2026):
 
 - **A far version for every model** (tools/far-cluster.mjs, called by build-meshes.mjs): vertex
-  clustering to about an eighth of each part's triangles. 130 models, 460,897 triangles to 68,381;
+  clustering to about an eighth of each part's triangles (a third for the ocotillo since the evening:
+  below). 130 models, 460,897 triangles to 69,838 (68,381 before the ocotillo's);
   the page 1 MB larger. Considered and not taken: meshoptimizer's simplifier (better shapes, but a new
   package; the install was refused here), Blender's decimate for each pack (thirty-odd jobs, and the
   packs' scripts rebuild the near models too). **The saguaros' Blender twins were one part where the
@@ -15455,9 +15456,17 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   drawn camera and the flight's start for both.
   **Seen in the Low flight, left as Low's look** (the owner, 9 November: Low and Medium may look
   different): (1) the ocotillo's far version -- made by the new automatic far versions
-  (tools/far-cluster.mjs; it had none on main) -- turns its thin canes into a leafy clump with red tips.
-  Low and Medium swap a plant to its far version below 15% of the screen's height, about 30-40 m for a
-  4-5 m ocotillo, so the clump is seen at an ordinary size; vertex clustering is at its worst on thin
-  sticks. Open in TODO for the owner's eye. (2) A pond on Low is a shade bluer with finer ripples:
+  (tools/far-cluster.mjs; it had none on main) -- turned its thin canes into a leafy clump with red
+  tips. Low and Medium swap a plant to its far version below 15% of the screen's height, about 30-40 m
+  for a 4-5 m ocotillo, so the clump was seen at an ordinary size; vertex clustering is at its worst on
+  thin sticks. **Fixed the same evening**: the ocotillo's far versions keep a third of their triangles
+  instead of an eighth (build-meshes `AUTO_FAR_FINER`; its two models' far versions about 2.6 times
+  larger, 1,457 triangles more in the whole catalogue), and the canes read as canes again (the same
+  flight, bench/ab/motion/oco-motion-low, local: 0.5-1.0% of pixels, all at ocotillos). Its cost on
+  Dinosaur Mountain, frame-ab against the build without it, two rounds, six spots: **Low +4.2%** by the
+  spots' mean (1.30 to 1.36 ms; 14-20% more triangles in view, the course is thick with ocotillos;
+  the 95th percentile unchanged, 1.95 to 1.94), **Medium +1.5%** (2.91 to 2.96 ms; 95th percentile 4.49
+  to 4.65). The grasses, yuccas and sotol are thin too and were not looked at (TODO). (2) A pond on Low
+  is a shade bluer with finer ripples:
   Low has no water mirror, and the sky picture its ponds show (taken from each pond's middle) now
   holds Low's thinned trees and coarser ground.
