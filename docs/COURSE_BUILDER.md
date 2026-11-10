@@ -1950,3 +1950,16 @@ the Edit menu) work on what Select shape has chosen, through trace-edit.js
 layer only). PLACED: a paste lands centred on the pointer, Duplicate 15 m to
 the south-east; the copy comes selected. The 3D editor has neither yet. Not
 seen by a person.
+
+### The hole navigator and the overview map (10 November 2026)
+
+Item 19, on door 2's plan. A hole clicked in the holes list or the scorecard
+is framed from its tees to its green with 45 m round it (`frameHole`); View
+has This hole, framed (Shift+F), Next hole (.) and Previous hole (,) from
+the trace step on, and Whole land (F). Zoomed in, an **overview map** of the
+whole land (180 pixels) sits in the plan's corner with the view outlined;
+a click moves the view there. Its picture is taken from the plan whenever
+the whole land is in view, so it shows what the plan last showed whole.
+PLACED: no overview in the 3D editor (it has From above and This hole).
+The builder-build-for-me journey presses "." on the holes step. Not seen by
+a person.

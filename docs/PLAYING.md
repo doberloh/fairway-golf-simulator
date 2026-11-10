@@ -476,7 +476,12 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   The plan of the land fills the middle, the step's own panel is on
   the right, and a status bar along the bottom says what the tool in hand
   does, what just happened, where the pointer is and the ground's height
-  there, with **Undo**, **Redo** and the zoom buttons. On the plan: **the wheel zooms, the right button or Space drags the view**
+  there, with **Undo**, **Redo** and the zoom buttons. Zoomed in, a small
+  **overview map** of the whole land sits in the plan's corner with what is
+  in view outlined; click it to go there. **F** shows the whole land,
+  **Shift+F** frames the hole you are on, **.** and **,** go to the next
+  and previous hole and frame it, and a click on a hole in the holes list
+  frames it too. On the plan: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
   **Build it for me** is at the top of the first step: type the course's

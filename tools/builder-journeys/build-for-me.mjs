@@ -57,6 +57,16 @@ export default function ({journey}) {
   if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1) throw Error(`each service asked once (the picture in blocks): ${JSON.stringify(asked)}`);
   console.log(`       built in ${((Date.now() - t0) / 1000).toFixed(0)} s: ${st.built.steps.join(' ')}`);
   await t.shot('review');
+  // THE HOLE NAVIGATOR (item 19): back on the holes step, "." frames the next
+  // hole; zoomed in, the overview map shows in the corner.
+  await page.locator('.cb-stepchip', {hasText: 'Holes'}).click();
+  await page.locator('canvas.cb-plan').click({position: {x: 5, y: 5}, trial: true});
+  await page.keyboard.press('.');
+  await page.waitForFunction(() => !document.querySelector('.cb-mini').hidden, null, {timeout: 5000}).catch(() => {});
+  const nav = await page.evaluate(() => { const s = window.fairwayBuilder.door2, h = s.holes[s.hole], v = s.plan.view; return {hole: s.hole, cx: v.cx, gx: h.green.x, tx: h.tees[0].x, mini: !document.querySelector('.cb-mini').hidden}; });
+  if (nav.hole !== 1 || Math.abs(nav.cx - (nav.gx + nav.tx) / 2) > 30) throw Error(`"." should frame hole 2: ${JSON.stringify(nav)}`);
+  if (!nav.mini) throw Error('zoomed in on a hole, the overview map should show');
+  await t.shot('navigator');
 
   // A WRONG MAP (item 24; the owner: Worthington's "holes pointing to the
   // wrong place"): the same club with hole 3's line drawn to hole 7's green.

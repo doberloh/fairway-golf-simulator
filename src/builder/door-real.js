@@ -135,6 +135,12 @@ export function open(draft = null) {
  // Replaced a 400-pixel column holding everything, about three screens tall
  // in the trace step, with Next at its foot.
  const panel = el('div', {style: 'display:flex;flex-direction:column;gap:10px'});
+ // THE OVERVIEW MAP (item 19): the whole land, small, in the plan's corner,
+ // with the part in view outlined; a click there moves the view to it. Its
+ // picture is taken whenever the whole land is in view (Whole land, F).
+ const mini = el('canvas', {class: 'cb-mini', width: 180, height: 180, hidden: true, title: 'The whole land: the outline is what is in view; click to go there'});
+ const miniPic = document.createElement('canvas'); miniPic.width = 180; miniPic.height = 180;
+ mini.addEventListener('click', e => { const land = L(); if (!land) return; const r = mini.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fz = (e.clientY - r.top) / r.height; plan.look(-land.halfX + fx * 2 * land.halfX, -land.halfZ + fz * 2 * land.halfZ); });
  const stepChips = el('div', {class: 'cb-stepchips'}), stepNeeds = el('div', {class: 'cb-stepneeds', role: 'status'});
  const nextBtn = el('button', {class: 'cb-btn cb-hot cb-next', type: 'button'}, 'Next');
  const palette = el('nav', {class: 'cb-palette', 'aria-label': 'Tools', hidden: true});
@@ -142,7 +148,7 @@ export function open(draft = null) {
  const section = el('section', {class: 'cb-door2 cb-ws'},
   el('div', {class: 'cb-stepbar'}, stepChips, stepNeeds, nextBtn),
   palette,
-  el('div', {class: 'cb-planbox'}, canvas),
+  el('div', {class: 'cb-planbox'}, canvas, mini),
   el('aside', {class: 'cb-sidepanel cb-steps', 'aria-label': 'This step'}, panel),
   el('footer', {class: 'cb-statusbar'}, undoBtn, redoBtn, hintBar, notes, posText, zoomText,
    el('button', {class: 'cb-btn', type: 'button', title: 'Zoom in (+)', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', title: 'Zoom out (-)', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
@@ -294,6 +300,7 @@ export function open(draft = null) {
  // --------------------------------------------------------------- overlay
  function overlay(ctx, p) {
   const px = p.px; if (!L()) return;
+  queueMicrotask(() => drawMini(ctx, p));
   zoomText.textContent = `${(px / p.view.scale).toFixed(2)} m a screen pixel`;
   showHint();
   if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land && !st.compareSkin) drawVec(ctx, p);
@@ -607,6 +614,27 @@ export function open(draft = null) {
   ctx.fillStyle = 'rgba(3,12,10,.85)'; ctx.fillRect(lx - 5 * px, ly - 14 * px, w + 10 * px, 20 * px); ctx.fillStyle = '#ffffff'; ctx.fillText(words, lx, ly);
   ctx.restore();
  }
+ function drawMini(ctx, p) {
+  const land = L(); if (!land || st.step === 0) { mini.hidden = true; return; }
+  const W = ctx.canvas.width, H = ctx.canvas.height, [ax, ay] = p.toScreen(-land.halfX, -land.halfZ), [bx, by] = p.toScreen(land.halfX, land.halfZ);
+  const whole = ax >= -2 && ay >= -2 && bx <= W + 2 && by <= H + 2;
+  if (whole) { const g = miniPic.getContext('2d'); g.clearRect(0, 0, 180, 180); g.drawImage(ctx.canvas, ax, ay, bx - ax, by - ay, 0, 0, 180, 180); st.miniTaken = true; st.miniDirty = false; }
+  mini.hidden = whole || !st.miniTaken;
+  if (mini.hidden) return;
+  const g = mini.getContext('2d'); g.clearRect(0, 0, 180, 180); g.drawImage(miniPic, 0, 0);
+  const w0 = p.toWorld?.(0, 0) ?? plan.toWorld(0, 0), w1 = plan.toWorld(W, H), m = (x, z) => [(x + land.halfX) / (2 * land.halfX) * 180, (z + land.halfZ) / (2 * land.halfZ) * 180];
+  const [x0, y0] = m(w0.x, w0.z), [x1, y1] = m(w1.x, w1.z);
+  g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(x0, y0, x1 - x0, y1 - y0); g.strokeStyle = '#fde68a'; g.lineWidth = 1.5; g.strokeRect(x0, y0, x1 - x0, y1 - y0);
+ }
+ // FRAMING A HOLE (item 19): its tees, aim points and green in view with room round them.
+ function frameHole(n) {
+  const h = st.holes[n], pts = h ? [...h.tees, ...h.aims, ...(h.green ? [h.green] : [])] : [];
+  if (!pts.length) return false;
+  const xs = pts.map(q => q.x), zs = pts.map(q => q.z), pad = 45, w = Math.max(...xs) - Math.min(...xs) + 2 * pad, d = Math.max(...zs) - Math.min(...zs) + 2 * pad;
+  plan.look((Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2, Math.min(canvas.width / w, canvas.height / d));
+  return true;
+ }
+ function goHole(n) { if (!st.holesN) return; st.hole = (n + st.holesN) % st.holesN; if (st.step === 3) go(3); frameHole(st.hole); say(`Hole ${st.hole + 1}${st.holes[st.hole]?.green ? '' : ': not marked yet'}.`); }
  // The pen put down: no nodes, not closed.
  function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
  function closeOutline() {
@@ -711,7 +739,11 @@ export function open(draft = null) {
     {label: 'Paste at the pointer', key: 'Ctrl+V', enabled: () => tracing() && !!st.clip, run: () => pasteAt(st.hover ?? {x: st.clip.mid.x + 20, z: st.clip.mid.z + 20})},
     {label: 'Duplicate', key: 'Ctrl+D', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; pasteAt({x: st.chosen.mid.x + 15, z: st.chosen.mid.z + 15}); }},
     {label: 'Delete', key: 'Delete', enabled: () => tracing() && !!st.chosen, run: () => { const what = st.chosen.what; st.model.remove(st.chosen.pick); st.chosen = null; paintCodes(); refreshCount(); plan.draw(); say(`The ${what} deleted. Undo puts it back.`); }}],
-   view: [{label: 'Zoom in', key: ['=', '+'], run: () => plan.zoomBy(1.5)}, {label: 'Zoom out', key: '-', run: () => plan.zoomBy(1 / 1.5)}, {label: 'Whole land', key: 'F', run: () => plan.fit()}, {sep: true},
+   view: [{label: 'Zoom in', key: ['=', '+'], run: () => plan.zoomBy(1.5)}, {label: 'Zoom out', key: '-', run: () => plan.zoomBy(1 / 1.5)}, {label: 'Whole land', key: 'F', run: () => { st.miniDirty = true; plan.fit(); }}, {sep: true},
+    // THE HOLE NAVIGATOR (item 19).
+    {label: 'This hole, framed', key: 'Shift+F', enabled: () => st.step >= 2 && !!st.holes[st.hole]?.tees?.length, run: () => frameHole(st.hole)},
+    {label: 'Next hole', key: '.', enabled: () => st.step >= 2 && st.holes.some(h => h?.tees?.length), run: () => goHole(st.hole + 1)},
+    {label: 'Previous hole', key: ',', enabled: () => st.step >= 2 && st.holes.some(h => h?.tees?.length), run: () => goHole(st.hole - 1)}, {sep: true},
     {label: 'The picture', checked: () => st.picOn !== false, run: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }},
     {label: 'The trace', checked: () => !!st.traceOn, run: () => { st.traceOn = !st.traceOn; showCodes(); }},
     {label: 'The trace as it will play (smooth)', checked: () => !!st.smoothView, run: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } }},
@@ -1673,7 +1705,7 @@ export function open(draft = null) {
   const sum = (list, f) => list.reduce((t, x) => t + (f(x) ?? 0), 0);
   const total = (label, list) => el('tr', {class: 'cb-cardsum'}, el('td', {}, label), el('td', {}, sum(list, x => x.c?.par)), el('td'), ...['blue', 'white', 'red'].map(k => el('td', {}, Math.round(sum(list, x => x.c?.[k])))));
   const body = rows.map(({n, h, c}) => el('tr', {class: n === st.hole ? 'cb-cur' : ''},
-   el('td', {style: 'cursor:pointer', title: 'Mark this hole', onclick: () => { st.hole = n; go(3); }}, n + 1),
+   el('td', {style: 'cursor:pointer', title: 'Mark this hole', onclick: () => { st.hole = n; go(3); frameHole(n); }}, n + 1),
    el('td', {}, el('select', {class: 'cb-par', 'data-hole': n, disabled: !c, title: 'This hole\'s par: worked from the blue yards (*), or set by hand', onchange: e => { if (!h) return; h.par = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
     el('option', {value: 'auto', selected: !c || c.auto}, c ? `${parFor(c.blue)}*` : '--'), [3, 4, 5, 6].map(v => el('option', {value: v, selected: !!c && !c.auto && c.par === v}, v)))),
    el('td', {}, el('select', {class: 'cb-index', 'data-hole': n, disabled: !c, title: 'This hole\'s handicap index: 1 the hardest, where strokes are given first', onchange: e => { if (!h) return; h.index = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
@@ -1690,7 +1722,7 @@ export function open(draft = null) {
    skipped.length ? el('small', {class: 'cb-err'}, `The game skips an aim point that is no farther on than the one before (or is at the green): ${skipped.map(x => `hole ${x.n + 1} (${x.c.skipped})`).join(', ')}.`) : null);
  }
  function stepHoles() {
-  const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
+  const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); frameHole(n); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
   const marks = [['back', 'Back tee'], ['middle', 'Middle tee'], ['front', 'Front tee'], ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, onclick: () => { st.mark = m; go(3); }}, t));
   return [checkBox(), el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
    el('small', {}, 'Drag any tee, aim point or green to move it, on any hole. Click the plan to place: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
