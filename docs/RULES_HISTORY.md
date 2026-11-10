@@ -352,6 +352,18 @@ heavy on the processor beside a frame measurement, because a busy machine has
 inflated timings tenfold here before. It deleted itself in the merge (9 November 2026, released as
 v0.9.11), and main asks before graphics work again.
 
+**The builder-ux branch frees the graphics card for the builder, 9 November
+2026.** The builder-ux goal (making the Course Builder easy to use) has to
+drive the builder in a browser over and over to see each screen, and the
+owner starts it at bedtime. *A `/goal` that says "GPU allowed"* covers only
+short profile runs and says a goal cannot widen that, so the goal would have
+stopped at its first look. Offered the frame-rate branch's answer, the owner
+said "Yes, add and commit". AGENTS.md *On the builder-ux branch, the graphics
+card is free for the builder* is narrower than the frame-rate one: the
+builder's journeys, captures, `tools/builder-frames.mjs` and the builder in
+the browser pane, with no run cap; no software rendering, which this work
+does not need; the same crash precautions. It deletes itself in the merge.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

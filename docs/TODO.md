@@ -114,6 +114,27 @@ check.
   the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
   the retaken pictures; play it (not played); the brittlebush is shardy close up.
 
+## Fairway Tour (picked 9 November 2026; the next feature, after the builder-ux goal)
+
+The owner, 9 November 2026: "Fairway tour is going to be our next feature."
+Built from two ideas that left IDEAS.md the same day, *Computer opponents* and
+*A tournament weekend*, plus a season to string events together. Nothing is
+designed yet; the first job is a plan for the owner to approve.
+
+- [ ] **Plan the Fairway Tour with the owner, before any code.** Three steps,
+  each worth shipping alone: (1) **computer opponents**, golfers who choose a
+  club and an aim and miss the way a real golfer of their handicap misses,
+  through the shared ball model (a solo player gets a match; match play gets an
+  opponent); (2) **a tournament weekend**, four rounds on one course against a
+  field, with a leaderboard and a cut; (3) **a season**, events across the
+  landscapes with standings, kept offline in the profile. The rules go in pure
+  modules with Node tests (AGENTS.md, *Game rules live in pure modules*); any
+  new round format joins `tests/round-matrix.test.mjs`. Settle with the owner:
+  how a computer golfer's miss is modelled and anchored (RESEARCH), how big a
+  field is and how its scores are made without playing every shot, whether
+  built courses can host events, and what the season rewards. Large. (Claude,
+  from the owner's pick, 9 November 2026.)
+
 ## Release 0.9.11 (9 November 2026)
 
 - [ ] **Play 0.9.11 by hand.** Released at the owner's word ("Lets get this merged into main and do
@@ -1013,21 +1034,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 
-- [ ] **Reopening a course with everything: play it by hand.** Driven in the
-  built builder on TPC Scottsdale with real data (the USGS picture, OpenStreetMap,
-  a par changed in 3D, saved, reopened, Back to 2D: all back, no errors), and the
-  file's game side by tests. Not seen: a Google or Bing picture, a picture file,
-  a hand-matched picture, a reopened file imported by hand in the game on a
-  phone. COURSE_BUILDER, *The builder's section*.
 - [ ] **A course file saved before 5 November 2026 from a survey in feet** comes
   back on Back to 2D in the wrong place: its unit was not stored and it is read
   as metres (draft-from-doc.js). None of the test courses is one; settle it by
   telling feet from the EPSG code if a player's file turns up.
-- [ ] **Trees placed for you: play it by hand.** The LIDAR sizes toggle and the species
-  ticks driven in the built builder on Northwood's file: live in the 3D view, in Game
-  view, saved, reopened, Back to 2D, no errors. Not seen: a change made in the 2D
-  panel carried to the game, and a round played. COURSE_BUILDER, *The trees placed
-  for you*.
 - [ ] **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
 - [ ] **The Redwood Coast's trees, the owner's verdict.** Rebuilt as they grow
   (BLENDER_ASSETS, *Built as it grows*), 17 rounds or more each. Bay laurel, bigleaf
@@ -1051,105 +1061,19 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   eighteen plays at par), is partly the golfers aiming through trees on
   doglegs; its yardages are short of the card by a median 22 yards for the same
   reason.
-- [ ] **Refining OpenStreetMap's trace: measured, not played by a person**
+- [ ] **Refining OpenStreetMap's trace from the LIDAR: measured on Worthington only**
   (door 2, *Refine with the picture / the LIDAR*). Since 1 November it lines
   the map up by its bunkers', ponds' and greens' edges and keeps its shapes:
   every damaged test map (nine from the picture, Worthington from its LIDAR
   in two directions) came back within half a metre (RESEARCH, *OpenStreetMap
   is itself off the place*). Not yet measured from the LIDAR on courses other
   than Worthington: their 3DEP downloads were rate-limited and are paused
-  (tools/lidar-fetch.mjs resumes them).
+  (tools/lidar-fetch.mjs resumes them). Played by the owner by 9 November 2026; only the measurement on the other courses is open.
 - [ ] **Google and Bing imagery not tried with a real key** (door 2, *Fetch
   imagery for this land*): their session, metadata and tile addresses follow
   the providers' documentation and are tested against a fake fetch; the free
   providers each answered one tile by hand (31 October 2026), and the journey
   stands in for USGS and Nominatim. The owner's own key is the check.
-- [ ] **Door 2's new steps are not played by a person** (the owner's order of
-  31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
-  review): the builder-door-2 journey drives every control once.
-- [ ] **Not played by a person: the trace step's 1 November list** (the
-  owner's list after testing; docs/COURSE_BUILDER.md, *The amended goal*,
-  item 10): the landscape in the trace step, every layer listed with empty
-  ones marked, Extrapolate, the banner, the renamed brushes, Google's key
-  steps, the course boundary and Fill outside it, houses (tool, zone,
-  OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
-  builder-door-2-osm journeys drive each once and the game plays a tee shot
-  on a course with a house; nobody has looked at a built house in the game
-  or painted with the smooth view by hand. In the editor since 1 November
-  2026 (drawn, the House tool, Clear houses): the builder-door-2-osm journey
-  draws the map's house, has one refused on the fairway, stands one on the
-  rough and undoes it; not played by a person.
-- [ ] **Not played by a person: Viewing, the picture's lock, Move shape**
-  (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
-  step). The builder-door-2 journey sets the opacities, draws the LIDAR's
-  slope over the picture, unlocks, drags, nudges and locks the picture, and
-  moves a bunker and undoes it. To check by hand: whether a half-seen slope
-  over a real picture makes the bunkers easy to line up, and whether picking
-  the chosen layer before the topmost surprises anyone. Move shape is in
-  the editor too (the builder-tools journey drags a bunker and undoes it;
-  under a tree's crown it takes the tree). Turn shape too, in both (the
-  builder-door-2 journey turns a bunker a quarter and undoes it).
-- [ ] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
-  amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
-  square or IGN tiles, rockyweb's tiles through the bridge or the browser's
-  downloads, the 36 state portals), Save on every screen with Save again and
-  door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
-  its smoothed surfaces, State Plane surveys placed. Checked: the
-  builder-door-2 journey (search with the National Map stood in for, Save
-  and Save again with a stand-in dialog, a renamed Save, a draft reopened,
-  the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
-  square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
-  real rockyweb range through a test bridge. **Not checked**: the rockyweb
-  download read from the LIDAR folder (a browser download a script cannot
-  watch), the bridge path from the page (the owner's running bridge needs a
-  restart to have the route), IGN's in-page download end to end, a real
-  save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
-  same night: swissSURFACE3D found and downloaded in the page.)
-- [ ] **Not played by a person: amendment 17** (docs/COURSE_BUILDER.md; every
-  course in bench/lidar built, 1 November 2026): the fourteen courses in
-  bench/courses (built by tools/build-courses.mjs, opened in the game by
-  tools/play-built.mjs -- see RESEARCH *Every course in bench/lidar, built*
-  for which played and what each report says); door 2's Course choice,
-  holes moved with the refined map, Fit holes to the trace, the map's par
-  kept; Saved courses not adding a built file twice. **To check by hand**:
-  play a few holes on each course; Worthington's holes 2, 3, 6, 8, 9, 10,
-  14, whose tees the map never drew; Key West's 2nd (a straight map line
-  across water); the TPC Scottsdale card numbers quoted from memory.
-- [ ] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
-  owner's second list of 1 November 2026): the scorecard (par and index
-  set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
-  Back to 2D carrying the 3D work home (round-trip.js: layers, shaping,
-  holes, trees, houses, creeks), Close and Back asking twice, the editor's landscape-only paint
-  and its landscape look, Tree height (the whole tree since), Size a tree,
-  the editor's close-up sheet (sharp edges near the camera, lined up with
-  the whole picture, outlines without notches; seen only in
-  tools/builder-look.mjs pictures), Clear trees from tees and greens,
-  Fill outside removing the trees too, the views following the window.
-  Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
-  and builder-tools journeys and tests/tree-clear.test.mjs and
-  tests/round-trip.test.mjs. **To check by hand**: several trips between 2D
-  and 3D on a real course (the journey makes one, with sand and a hill); a window dragged to a second screen of another scaling (the
-  journeys only resize); how the editor's stand-in trees read against the
-  game's; clearing trees on a real course (not yet measured how many it
-  draws in at Worthington or Nile Shrine).
-- [ ] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
-  owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
-  folder (every download saved there, read back instead of downloaded
-  again, Load from the folder, ZIPs unpacked), Washington's portal opened on
-  the place, Download all tiles, a tooltip on every button, places found as
-  buttons, the files' coverage in yellow, whose trees beside OpenStreetMap,
-  and Fill outside keeping or removing what is there. Checked: the
-  builder-lidar-folder journey (with a stand-in folder: the square
-  downloaded once and read back with nothing asked of USGS, listed ticked,
-  coverage drawn, every shown button with a tooltip, the result a button),
-  the builder-door-2-osm journey (whose trees three ways, outside kept and
-  removed), tests/lidar-folder, builder-tips, osm and trace-edit, and Nile
-  Shrine's own survey by script (RESEARCH, *Whose trees*). **To check by
-  hand**: Chrome's folder dialog, the leave-to-use prompt and the folder
-  remembered on a later visit (IndexedDB; a stand-in cannot be stored
-  there); Washington's portal from the link and its ZIP loaded; whether
-  2,362 of OpenStreetMap's wood trees added at Nile Shrine stand where trees
-  are; the tooltips' wording.
 - [ ] **The auto trace from the LIDAR alone, before the holes: started, far
   from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
   trace from the LIDAR alone*): mean overlap over the nine courses green 12,
@@ -1181,14 +1105,6 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
 - [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
 - [ ] **The editor cannot move or delete a pond or creek once drawn** (only
   Undo), add or remove holes, or stamp a green's contours beyond the brush.
-- [ ] **The owner plays the builder and a built course** at the end of the
-  goal: the builder's doors and editor, a Worthington round in the game.
-  Nothing in the builder has been played by a person; the smoke journeys
-  drive every door (builder-door-2 on a made-up survey; the local
-  builder-door-2-worthington on Worthington's own tiles, the holes clicked by
-  the script from OpenStreetMap). `node tools/built-compare.mjs --file <your
-  course.fairway> --dem ... --osm ... --scorecard ...` measures the owner's own
-  door 2 course the same way.
 - [ ] **Before a release carrying the builder**: check the website's demo
   check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
   game's does not confuse it (tell the owner).
@@ -2737,6 +2653,111 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
+- [x] **Reopening a course with everything: play it by hand.** Driven in the
+  built builder on TPC Scottsdale with real data (the USGS picture, OpenStreetMap,
+  a par changed in 3D, saved, reopened, Back to 2D: all back, no errors), and the
+  file's game side by tests. Not seen: a Google or Bing picture, a picture file,
+  a hand-matched picture, a reopened file imported by hand in the game on a
+  phone. COURSE_BUILDER, *The builder's section*. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Trees placed for you: play it by hand.** The LIDAR sizes toggle and the species
+  ticks driven in the built builder on Northwood's file: live in the 3D view, in Game
+  view, saved, reopened, Back to 2D, no errors. Not seen: a change made in the 2D
+  panel carried to the game, and a round played. COURSE_BUILDER, *The trees placed
+  for you*. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Door 2's new steps are not played by a person** (the owner's order of
+  31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
+  review): the builder-door-2 journey drives every control once. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: the trace step's 1 November list** (the
+  owner's list after testing; docs/COURSE_BUILDER.md, *The amended goal*,
+  item 10): the landscape in the trace step, every layer listed with empty
+  ones marked, Extrapolate, the banner, the renamed brushes, Google's key
+  steps, the course boundary and Fill outside it, houses (tool, zone,
+  OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
+  builder-door-2-osm journeys drive each once and the game plays a tee shot
+  on a course with a house; nobody has looked at a built house in the game
+  or painted with the smooth view by hand. In the editor since 1 November
+  2026 (drawn, the House tool, Clear houses): the builder-door-2-osm journey
+  draws the map's house, has one refused on the fairway, stands one on the
+  rough and undoes it; not played by a person. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: Viewing, the picture's lock, Move shape**
+  (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
+  step). The builder-door-2 journey sets the opacities, draws the LIDAR's
+  slope over the picture, unlocks, drags, nudges and locks the picture, and
+  moves a bunker and undoes it. To check by hand: whether a half-seen slope
+  over a real picture makes the bunkers easy to line up, and whether picking
+  the chosen layer before the topmost surprises anyone. Move shape is in
+  the editor too (the builder-tools journey drags a bunker and undoes it;
+  under a tree's crown it takes the tree). Turn shape too, in both (the
+  builder-door-2 journey turns a bunker a quarter and undoes it). **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
+  amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
+  square or IGN tiles, rockyweb's tiles through the bridge or the browser's
+  downloads, the 36 state portals), Save on every screen with Save again and
+  door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
+  its smoothed surfaces, State Plane surveys placed. Checked: the
+  builder-door-2 journey (search with the National Map stood in for, Save
+  and Save again with a stand-in dialog, a renamed Save, a draft reopened,
+  the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
+  square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
+  real rockyweb range through a test bridge. **Not checked**: the rockyweb
+  download read from the LIDAR folder (a browser download a script cannot
+  watch), the bridge path from the page (the owner's running bridge needs a
+  restart to have the route), IGN's in-page download end to end, a real
+  save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
+  same night: swissSURFACE3D found and downloaded in the page.) **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 17** (docs/COURSE_BUILDER.md; every
+  course in bench/lidar built, 1 November 2026): the fourteen courses in
+  bench/courses (built by tools/build-courses.mjs, opened in the game by
+  tools/play-built.mjs -- see RESEARCH *Every course in bench/lidar, built*
+  for which played and what each report says); door 2's Course choice,
+  holes moved with the refined map, Fit holes to the trace, the map's par
+  kept; Saved courses not adding a built file twice. **To check by hand**:
+  play a few holes on each course; Worthington's holes 2, 3, 6, 8, 9, 10,
+  14, whose tees the map never drew; Key West's 2nd (a straight map line
+  across water); the TPC Scottsdale card numbers quoted from memory. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
+  owner's second list of 1 November 2026): the scorecard (par and index
+  set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
+  Back to 2D carrying the 3D work home (round-trip.js: layers, shaping,
+  holes, trees, houses, creeks), Close and Back asking twice, the editor's landscape-only paint
+  and its landscape look, Tree height (the whole tree since), Size a tree,
+  the editor's close-up sheet (sharp edges near the camera, lined up with
+  the whole picture, outlines without notches; seen only in
+  tools/builder-look.mjs pictures), Clear trees from tees and greens,
+  Fill outside removing the trees too, the views following the window.
+  Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
+  and builder-tools journeys and tests/tree-clear.test.mjs and
+  tests/round-trip.test.mjs. **To check by hand**: several trips between 2D
+  and 3D on a real course (the journey makes one, with sand and a hill); a window dragged to a second screen of another scaling (the
+  journeys only resize); how the editor's stand-in trees read against the
+  game's; clearing trees on a real course (not yet measured how many it
+  draws in at Worthington or Nile Shrine). **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
+  owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
+  folder (every download saved there, read back instead of downloaded
+  again, Load from the folder, ZIPs unpacked), Washington's portal opened on
+  the place, Download all tiles, a tooltip on every button, places found as
+  buttons, the files' coverage in yellow, whose trees beside OpenStreetMap,
+  and Fill outside keeping or removing what is there. Checked: the
+  builder-lidar-folder journey (with a stand-in folder: the square
+  downloaded once and read back with nothing asked of USGS, listed ticked,
+  coverage drawn, every shown button with a tooltip, the result a button),
+  the builder-door-2-osm journey (whose trees three ways, outside kept and
+  removed), tests/lidar-folder, builder-tips, osm and trace-edit, and Nile
+  Shrine's own survey by script (RESEARCH, *Whose trees*). **To check by
+  hand**: Chrome's folder dialog, the leave-to-use prompt and the folder
+  remembered on a later visit (IndexedDB; a stand-in cannot be stored
+  there); Washington's portal from the link and its ZIP loaded; whether
+  2,362 of OpenStreetMap's wood trees added at Nile Shrine stand where trees
+  are; the tooltips' wording. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **The owner plays the builder and a built course** at the end of the
+  goal: the builder's doors and editor, a Worthington round in the game.
+  Nothing in the builder has been played by a person; the smoke journeys
+  drive every door (builder-door-2 on a made-up survey; the local
+  builder-door-2-worthington on Worthington's own tiles, the holes clicked by
+  the script from OpenStreetMap). `node tools/built-compare.mjs --file <your
+  course.fairway> --dem ... --osm ... --scorecard ...` measures the owner's own
+  door 2 course the same way. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
 - [x] **A small shape can be moved when seen from afar** (5 November 2026, found
   by the smoke's builder-tools). A bunker ten pixels across has all four anchors
   within reach of its middle, so pressing it only ever turned it, in both

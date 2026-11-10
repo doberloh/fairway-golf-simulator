@@ -1729,3 +1729,31 @@ from where the survey lies (landscape-map.js `landscapeAt` at the land's
 centre, taken unasked when the land is built unless one was chosen) and
 marks the survey on the map; a survey off the map, or in a landscape not
 built yet, says so.
+
+## The builder-ux goal (branch `builder-ux`, from 9 November 2026)
+
+By 9 November 2026 the owner had played every part of the builder that TODO
+listed as "not played by a person" (those entries are closed in TODO's
+`# Done`). The owner's verdict: the layer rule (paint goes under the layers
+above it) and Skin from the land are right and stay; a real course takes
+about 15 minutes with OpenStreetMap data, which is fast; but "The UI is
+extremely basic and really confusing. It needs to run more like an MS
+Paint/real 3d editor than what it does today."
+
+What the goal is to do, in short: make the layer rule visible; steady the
+brush so strokes come out smooth; turn every outline tool into a pen with
+nodes, a live preview of the curve that will be filled, and closing on the
+first node; give the steps a clear flow; add a one-press "Build it for me"
+from a course name; make the pictures under the course sharp (the free US
+tiles stop at about 1.7 m a pixel, and big courses are cut to 400 tiles,
+src/builder/imagery.js `zoomFor`); and a UI/UX pass over every flow, with a
+paint-program layout (menu bar, tool palette, options, layers, status bar)
+in the game's own interface kit. Claude added: moving and deleting ponds,
+creeks and holes, doglegs from the trace, named undo with a history, an
+automatic draft, first-visit tips, plain wording, and checks at small and
+large screen sizes.
+
+Nothing is built yet. The full brief, with the targets, the order of work
+and the graphics-card precautions, is local: docs/studies/builder-ux/GOAL.md.
+Findings, decisions and what was rejected go into this section as the work
+lands.
