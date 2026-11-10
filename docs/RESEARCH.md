@@ -15421,3 +15421,8 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   same view read 0.45% the first time and 1.0% on Ultra in the same run). The full tests (1,513), the
   fingerprints, the game's 41 smoke journeys and six of the builder's eight (both failures the same on
   the starting build; TODO) pass.
+- **Low and Medium, with the clock stopped** (frame-look look3, Dinosaur Mountain, the final build
+  against the starting one): Low 0.2-5.6% of pixels differ by 0.05-2.0 of 255 on average (the far
+  trees thinned, the far versions, the ground coarser at 4 px), Medium 0.08-2.9% by 0.02-0.8. Both may
+  look different (the owner); the pictures are on the status page for the owner's look. No page errors;
+  the pin label, wind arrows and map drawn on both.
