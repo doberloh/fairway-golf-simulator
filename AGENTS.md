@@ -276,6 +276,11 @@ file is indistinguishable from a forgotten one. What each holds:
 - **REFERENCES.md** -- every outside source behind RESEARCH and
   LANDSCAPE_RESEARCH.
 - **PLAYING.md** -- everything a player can see, set or press.
+- **BUILDER_GUIDE.md** -- the player's guide to the Course Builder, with
+  screenshots, shipped in the zips as `Fairway Builder Guide.html`. Any
+  change to the builder updates its words, and a changed screen retakes its
+  pictures (`tools/capture/builder-guide.mjs`). (The owner, 10 November
+  2026; being written on the builder-ux branch.)
 - **README.md** (root) -- what the project is, how to build it, what the
   repository holds, what is claimed.
 - **docs/README.md** -- the index; a document added, removed or renamed is not

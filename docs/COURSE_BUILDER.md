@@ -1751,7 +1751,14 @@ paint-program layout (menu bar, tool palette, options, layers, status bar)
 in the game's own interface kit. Claude added: moving and deleting ponds,
 creeks and holes, doglegs from the trace, named undo with a history, an
 automatic draft, first-visit tips, plain wording, and checks at small and
-large screen sizes.
+large screen sizes. The owner added, on 10 November 2026: a measure tool and
+live yardages, copy and paste, a hole navigator, brightness and contrast for
+the picture, a clear step from the builder into the game, a player's guide
+with screenshots shipped in the zips (`Fairway Builder Guide.html`, kept
+current by every builder change: AGENTS.md's documentation list), a test
+that old course files and drafts still open, and **the auto trace moved into
+an Experimental menu** ("so that users dont think its going to do a good
+job"), with no more work on its accuracy.
 
 Nothing is built yet. The full brief, with the targets, the order of work
 and the graphics-card precautions, is local: docs/studies/builder-ux/GOAL.md.
