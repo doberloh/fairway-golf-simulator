@@ -43,6 +43,10 @@ export default function ({journey}) {
   page.on('download', d => d.cancel().catch(() => {}));
 
   await page.getByRole('button', {name: /Generate a real life course/}).click();
+  // FIRST-VISIT TIPS (item 13): the step's tip shows until Got it closes it.
+  if (!await page.locator('.cb-intro').count()) throw Error('the first step should open on its tip');
+  await page.locator('.cb-gotit').click();
+  if (await page.locator('.cb-intro').count()) throw Error('Got it should close the tip');
   await page.locator('.cb-buildname').fill('Testville Golf Club');
   await t.shot('start');
   const t0 = Date.now();
@@ -106,6 +110,7 @@ export default function ({journey}) {
   { const kept = await page.locator('.cb-recover').textContent(); if (!/Testville Golf Club/.test(kept)) throw Error(`the kept work should name the course: ${kept}`); }
   await t.shot('recover');
   await page.locator('[data-recover="no"]').click();
+  if (await page.locator('.cb-intro').count()) throw Error('a tip closed once should not show again');
   await page.locator('.cb-buildname').fill('Testville Golf Club');
   await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});

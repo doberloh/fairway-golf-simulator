@@ -754,7 +754,7 @@ export function open(draft = null) {
   stepBar();
   palette.hidden = true;
   if (n > 0) keepNow();
-  panel.replaceChildren(el('div', {class: 'cb-intro'}, el('b', {}, STEPS[n].slice(2)), el('span', {}, INTRO[n])), ...steps[n]().filter(Boolean));
+  panel.replaceChildren(introFor(n), ...steps[n]().filter(Boolean));
   menus();
   // Step 1's left drag draws the property box and step 4's left click places
   // a marker (the view drags with the right button or Space there); step 3
@@ -779,6 +779,17 @@ export function open(draft = null) {
   'Mark each hole: its back tee (and the others if you like), any bends, and its green, then Next hole. The scorecard below fills itself in.',
   'Name the course, and credit the survey and the picture you used.',
   'Look the course over as it will play. Open it in the editor to shape it in 3D, or save it now.'];
+ // FIRST-VISIT TIPS (item 13): each step's line is a tip until it is closed
+ // with Got it, remembered in this browser; after that the step opens on its
+ // work. Help > Show the step tips again brings them back.
+ const TIPS_KEY = 'fairway-builder-tips-seen';
+ const tipsSeen = () => { try { return new Set(JSON.parse(localStorage.getItem(TIPS_KEY) || '[]')); } catch { return new Set(); } };
+ function introFor(n) {
+  if (tipsSeen().has(n)) return null;
+  return el('div', {class: 'cb-intro'}, el('b', {}, STEPS[n].slice(2)), el('span', {}, INTRO[n]),
+   el('button', {class: 'cb-btn cb-gotit', type: 'button', title: 'Close this tip; it will not show again (Help > Show the step tips again)', onclick: e => { const seen = tipsSeen(); seen.add(n); try { localStorage.setItem(TIPS_KEY, JSON.stringify([...seen])); } catch { /* private window */ } e.target.closest('.cb-intro').remove(); }}, 'Got it'));
+ }
+ st.showTipsAgain = () => { try { localStorage.removeItem(TIPS_KEY); } catch { /* none kept */ } go(st.step); };
  const NEXT = ['Next: build the land', 'Next: trace the course', 'Next: the holes', 'Next: the name', 'Next: review the course', null];
  const BLOCKED = ['', 'Choose LIDAR files first', 'Build the land first', 'Start the trace first', 'Every hole needs a tee and a green first', 'Every hole needs a tee and a green first'];
  function needs(n) {
@@ -826,6 +837,7 @@ export function open(draft = null) {
     {label: 'The LIDAR over the picture', checked: () => !!st.lidarOnTop, run: () => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); go(st.step); }}],
    tools: [...toolItems, {sep: true}, {label: 'Smaller brush', key: '[', enabled: tracing, run: () => brushSize(-1)}, {label: 'Larger brush', key: ']', enabled: tracing, run: () => brushSize(1)},
     {sep: true}, {heading: 'Experimental'}, {label: 'Auto trace (a rough start to fix by hand)', enabled: () => st.step === 2 && !!st.land, run: () => autoTrace()}],
+   help: [{label: 'Show the step tips again', run: () => st.showTipsAgain()}],
    keys: [{group: 'The plan', label: 'Move the view', key: 'Right-drag or Space+drag'}, {group: 'The plan', label: 'Zoom', key: 'Wheel'}, {group: 'The plan', label: 'Close an outline', key: 'Enter or double-click'}, {group: 'The plan', label: 'Drop an outline or a selection', key: 'Esc'}, {group: 'The plan', label: 'Nudge the unlocked picture', key: 'Arrows (Shift: 1 m)'}],
   });
  }

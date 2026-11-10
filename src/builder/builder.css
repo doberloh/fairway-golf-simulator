@@ -308,3 +308,4 @@ select option{background:#03100e;color:var(--ink)}
 .cb-history .cb-btn{padding:2px 6px;font-size:11px}
 /* Short windows (builder-ux, item 15): the palette's buttons shorter, so all of it shows at 768 pixels. */
 @media (max-height:860px){.cb-tool{height:34px}.cb-palette hr{margin:3px 4px}.cb-stepbar{padding:5px 12px}.cb-stepchip{padding:3px 10px 3px 3px}}
+.cb-intro .cb-gotit{align-self:flex-end;padding:4px 10px;font-size:12px}

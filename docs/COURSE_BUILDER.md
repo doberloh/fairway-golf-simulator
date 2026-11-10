@@ -2115,3 +2115,12 @@ numbers and totals (tested) -- and every hole more than 12% and 40 yards off
 its card is listed with the other doubts. Kept for the session (not in a
 draft). The builder-build-for-me journey pastes a card with hole 1 at 420
 yards and finds hole 1 alone flagged. Not seen by a person.
+
+### First-visit tips (10 November 2026)
+
+Item 13, finished. Each door 2 step's line is a tip until **Got it** closes it,
+remembered in the browser (localStorage, `fairway-builder-tips-seen`); Help >
+Show the step tips again brings them back, and Help > The builder guide says
+where the guide is. Door 1 stays the sample course (no file, no connection).
+The builder-build-for-me journey closes the first tip and finds it gone when
+door 2 opens again. Not seen by a person.

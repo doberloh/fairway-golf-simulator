@@ -88,7 +88,7 @@ export async function saveNow() {
 // with Save and Save as, Help ends the bar. A screen adds its own: `file`
 // items after Save, then Edit, View and Tools as it has them. `keys`: lines
 // for the shortcuts sheet that are not commands (the view's mouse and keys).
-export function useMenus({file = [], edit = null, view = null, tools = null, keys = []} = {}) {
+export function useMenus({file = [], edit = null, view = null, tools = null, help = [], keys = []} = {}) {
  const canSave = () => !!saver;
  setMenus([
   {name: 'File', items: [
@@ -97,7 +97,7 @@ export function useMenus({file = [], edit = null, view = null, tools = null, key
    {sep: true}, {label: 'Open a course file…', key: 'Ctrl+O', run: () => openFile()},
    {label: 'The builder\'s start', run: () => (window.fairwayBuilder.leave ?? home)()}]},
   ...(edit ? [{name: 'Edit', items: edit}] : []), ...(view ? [{name: 'View', items: view}] : []), ...(tools ? [{name: 'Tools', items: tools}] : []),
-  {name: 'Help', items: [{label: 'Keyboard shortcuts', key: '?', run: showKeys}]},
+  {name: 'Help', items: [{label: 'Keyboard shortcuts', key: '?', run: showKeys}, ...help, {label: 'The builder guide', title: 'Fairway Builder Guide.html, beside the builder in the download', run: () => { const m = document.getElementById('cbSaveNote'); if (m) m.textContent = 'The guide is Fairway Builder Guide.html, beside the builder in your download: open it in your browser.'; }}]},
  ], keys);
 }
 

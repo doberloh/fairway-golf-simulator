@@ -475,7 +475,9 @@ changes, newest first, each with **Back to here**.
   step done, the one you are on filled, the ones you cannot reach yet dimmed
   (hold the pointer over one to see why) -- with what the step still needs
   beside them and one **Next** button at the right end, always in the same
-  place. Each step's panel opens with a line saying what the step is for.
+  place. Each step's panel opens with a tip saying what the step is for,
+  until you close it with **Got it** (Help > Show the step tips again brings
+  them back).
   The plan of the land fills the middle, the step's own panel is on
   the right, and a status bar along the bottom says what the tool in hand
   does, what just happened, where the pointer is and the ground's height

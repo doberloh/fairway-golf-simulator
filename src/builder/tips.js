@@ -78,6 +78,7 @@ export const TIPS = {
  'Next': 'Go on to the next step',
  'Bring it back': 'Open the work kept in this browser from last time, at the step it was on',
  'Discard': 'Throw away the work kept from last time',
+ 'Got it': 'Close this tip; it will not show again',
  'Extrapolate': 'Lay the second layer in a band round the first (semi-rough round a fairway)',
  'Smooth all edges': 'Round every ragged edge of every layer',
  'Tidy specks': 'Take off tiny patches and fill tiny holes on every layer',
