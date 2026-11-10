@@ -818,7 +818,7 @@ mountain's sides, a badland face; native grass where the landscape has no
 rock, as on dunes -- and its apron (scree, bare clay, the desert's hard
 floor, heather) on the gentler ground just below, leaving flat tops, the holes' turf, sand,
 paths and water alone; it is a best effort from the heights, so paint over
-it or Undo it in one step, or paint the ground by hand instead; the **Pen** draws one by its edge; dig a bunker,
+it or Undo it in one step, or paint the ground by hand instead (on door 2's plan it has its own box, says how many hectares of each it painted, and **Before (hold)** shows the course as it was until you let go); the **Pen** draws one by its edge; dig a bunker,
 draw a pond or a creek (it runs downhill), paint **Water** with the brush or the pen (it gets a
 level and a bed when the stroke ends, and erased water goes), **Place tree**
 (one, the kind you pick by name or any of the landscape's, at a height you set,

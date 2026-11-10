@@ -1876,3 +1876,16 @@ Item 5: each step's panel opens with a line saying what the step is for
 (`INTRO`). The tool preview, which sat over a corner of the plan, folds to
 its title line (preview.js). Checked by the builder-door-2 journey (the line
 and the message for semi under sand). Not seen by a person.
+
+### Skin from the land, given its place (10 November 2026)
+
+Item 4 (the owner: "amazing, sets it apart"). Its output is unchanged. On
+door 2's plan it has its own box under the layers; it says what it painted
+in hectares ("scree on 3.2 ha of steep ground, hardpan on 5.1 ha below
+it"); and **Before (hold)** draws the trace as it was before the skin for as
+long as it is held (Space or Enter toggles it from the keyboard). PLACED: a
+held button rather than a slider between the two -- the eye compares two
+whole pictures better by flicking than by a wipe. The 3D editor keeps its
+button in Surfaces, with no compare. Not seen by a person; no journey runs
+the skin on a survey steep enough (tools/capture/builder-skin.mjs does, on
+real courses).

@@ -211,7 +211,7 @@ export function open(draft = null) {
  const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; } else d[o + 3] = 0; };
  function paintCodes() {
   if (!st.land || !st.model) { plan.clearLayer('codes'); return; }
-  const c = st.model.state.layers.view;
+  const c = st.compareSkin && st.preSkin ? st.preSkin : st.model.state.layers.view;
   plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
   dirtyVec();
  }
@@ -236,7 +236,7 @@ export function open(draft = null) {
   st.vec = LAYER_ORDER.filter(k => Ls.masks.has(k) && !Ls.hidden.has(k)).reverse().map(k => { const c = Uint8Array.from(Ls.masks.get(k)); tidyMask(c, nx, nz, speck, pock); return {kind: k, rings: layerRings(c, st.land)}; });
   showCodes();
  }
- function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && !(st.smoothView && st.vec); plan.draw(); }
+ function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && (!(st.smoothView && st.vec) || !!st.compareSkin); plan.draw(); }
  function drawVec(ctx, p) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   if (vecCanvas.width !== W || vecCanvas.height !== H) { vecCanvas.width = W; vecCanvas.height = H; }
@@ -293,7 +293,7 @@ export function open(draft = null) {
   const px = p.px; if (!L()) return;
   zoomText.textContent = `${(px / p.view.scale).toFixed(2)} m a screen pixel`;
   showHint();
-  if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land) drawVec(ctx, p);
+  if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land && !st.compareSkin) drawVec(ctx, p);
   if (st.step === 0 && st.preview) {
    // Each file's box in yellow with its name, the property in white.
    const g = st.land ? st.gridder : st.preview.gridder, rect = b => { const a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0), [ax, ay] = p.toScreen(a.x, a.z), [cx, cy] = p.toScreen(c.x, c.z); return [ax, ay, cx - ax, cy - ay]; };
@@ -570,6 +570,7 @@ export function open(draft = null) {
   const tick = () => { plan.draw(); if (st.ghost && performance.now() < st.ghost.until) requestAnimationFrame(tick); else st.ghost = null; };
   requestAnimationFrame(tick);
  }
+ function endCompare() { if (!st.compareSkin) return; st.compareSkin = false; paintCodes(); showCodes(); }
  // The pen put down: no nodes, not closed.
  function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
  function closeOutline() {
@@ -713,9 +714,12 @@ export function open(draft = null) {
  function skinLand() {
   say('Reading the land…');
   setTimeout(() => {
+   const before = Uint8Array.from(st.model.state.layers.view);
    const g = st.landEdits ? Float32Array.from(st.land.ground, (v, k) => v + st.landEdits[k]) : st.land.ground, got = st.model.skin({bio: BIOMES[st.landscape], ground: g}), name = k => LABEL(k).toLowerCase();
-   paintCodes(); refreshCount(); plan.draw();
-   say(got.cells.face || got.cells.apron ? `Skinned from the land: ${name(got.kinds.face)} on the steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} below it` : ''}. Paint over it or Undo.` : 'Nothing here is steep enough to skin; paint the ground by hand instead.');
+   const ha = n => `${(n * st.land.cell ** 2 / 1e4).toFixed(1)} ha`;
+   if (got.cells.face || got.cells.apron) { st.preSkin = before; st.compareSkin = false; }
+   paintCodes(); refreshCount(); plan.draw(); go(2);
+   say(got.cells.face || got.cells.apron ? `Skinned from the land: ${name(got.kinds.face)} on ${ha(got.cells.face)} of steep ground${got.kinds.apron ? `, ${name(got.kinds.apron)} on ${ha(got.cells.apron)} below it` : ''}. Hold Before to compare; paint over it or Undo.` : 'Nothing here is steep enough to skin; paint the ground by hand instead.');
   }, 40);
  }
  // GROUND COVER (cover.js): what to lay, its two sizes and how thick. The
@@ -1267,7 +1271,11 @@ export function open(draft = null) {
   // SKIN FROM THE LAND (the owner: "amazing, sets it apart"): its own place.
   const skin = el('div', {class: 'cb-field cb-skin'}, el('div', {class: 'cb-panehead'}, 'Skin from the land', el('small', {}, 'reads the slopes')),
    el('small', {}, 'Paints the landscape\'s rock on the steep ground and its apron below, read from the land\'s heights. Paint over it, or Undo.'),
-   el('button', {class: 'cb-btn cb-hot', type: 'button', style: 'width:100%', onclick: skinLand, title: 'Paint the steep ground the landscape\'s rock and the ground below it its apron, read from the land\'s heights -- a best effort; paint over it, or Undo'}, 'Skin from the land'));
+   el('div', {class: 'cb-btns'},
+    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: skinLand, title: 'Paint the steep ground the landscape\'s rock and the ground below it its apron, read from the land\'s heights -- a best effort; paint over it, or Undo'}, 'Skin from the land'),
+    // BEFORE AND AFTER (item 4): held down, the trace as it was before the skin.
+    el('button', {class: 'cb-btn cb-compare', type: 'button', disabled: !st.preSkin, title: 'Hold to see the course as it was before Skin from the land; let go to see it after',
+     onpointerdown: () => { if (!st.preSkin) return; st.compareSkin = true; paintCodes(); showCodes(); }, onpointerup: endCompare, onpointerleave: endCompare, onkeydown: e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); st.compareSkin = !st.compareSkin; paintCodes(); showCodes(); } }}, 'Before (hold)')));
   return [options, layers, skin,
    fold('osm', 'OpenStreetMap', st.osm ? 'laid' : 'not fetched', false, ...osmBits),
    picture, viewing,
