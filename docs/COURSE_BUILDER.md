@@ -2124,3 +2124,13 @@ Show the step tips again brings them back, and Help > The builder guide says
 where the guide is. Door 1 stays the sample course (no file, no connection).
 The builder-build-for-me journey closes the first tip and finds it gone when
 door 2 opens again. Not seen by a person.
+
+### Plain words, the sweep (10 November 2026)
+
+Item 14, finished. Every tooltip (tips.js, 120 lines) and every message door
+2 shows was searched for the builder's own words -- EPSG, raster, mask,
+codes, cells, EPT, DEM, gridder -- and read: none was left in what a player
+sees but "cells" in one tooltip (now "the squares it was painted in"); LIDAR
+stays where it is the subject, explained the first time ("the laser survey of
+the ground") in the first step's tooltip, its tip and the doors. The 3D
+editor's status lines (HINT) were read the same way and kept.

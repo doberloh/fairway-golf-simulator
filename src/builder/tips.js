@@ -45,7 +45,7 @@ export const TIPS = {
  'Zoom out': 'Further (or the wheel)',
  'Whole land': 'Fit the whole land in view',
  // Door 2's steps.
- '1 LIDAR': 'Step 1: find, download or load the LIDAR, and box the property',
+ '1 LIDAR': 'Step 1: find, download or load the LIDAR (the laser survey of the ground), and box the property',
  '2 Land': 'Step 2: build the ground, the canopy and the trees',
  '3 Trace': 'Step 3: a picture, OpenStreetMap, and the surfaces traced',
  '4 Holes': 'Step 4: each hole\'s tees, aim points and green',
@@ -86,7 +86,7 @@ export const TIPS = {
  'Redo': 'Put back what Undo took (Ctrl+Shift+Z or Ctrl+Y)',
  'Picture on/off': 'Show or hide the picture',
  'Trace on/off': 'Show or hide the traced surfaces',
- 'Smooth / cell view': 'Show the trace as the course will draw it, or as its painted cells',
+ 'Smooth / cell view': 'Show the trace as the course will draw it, or as the squares it was painted in',
  'Draw the boundary': 'Click round the course corner by corner',
  'Draw it again': 'Click round the course again; the old line is replaced',
  'Back tee': 'Click the plan to place this hole\'s back tee',

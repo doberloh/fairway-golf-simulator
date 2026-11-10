@@ -1063,8 +1063,6 @@ person.**
   journey's damaged club and the real Worthington stand in for it. And
   Worthington's numbering, which no fix can settle without the real routing
   (the card box, since 10 November, flags lengths that disagree with it).
-- [ ] **Plain words, the full sweep** (item 14): every tooltip (tips.js) and
-  message for LIDAR, EPT, DEM, cell and the like where they are not the subject.
 - [ ] **Not measured:** the 2D plan's frame time with the picture on its own
   finer grid (one canvas drawImage a frame; up to about 36 million pixels);
   the kept draft's time to write on a large course (it runs quietly every 3
