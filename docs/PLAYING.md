@@ -789,24 +789,34 @@ a hectare, each named. **Clean up** works on the layer picked there: **Erase bru
 layers**, **Smooth edges**, **Smooth all edges**, **Tidy specks** and
 **Extrapolate**, as in door 2's trace. It has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
-with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
-surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
+with **shown/hidden** and an **Erase** brush for each; **click a layer to
+paint it**. **Surfaces** has one **Paint brush** (B) and one **Pen** (P)
+for the layer chosen there or in Layers -- the brush steadied as in door 2
+(Steadiness, and Smooth the edge when I let go), the pen drawing its curve
+through the nodes you click (the first node, a double-click or Enter fills
+it; Shift-click a sharp corner; Backspace takes the last node off) -- with
+a line saying what the layer goes under. A surface goes on its own layer and
+covers nothing beneath it. **The menus** hold the editor's commands and keys:
+**H** move, **V** select, **B** brush, **P** pen, **R** raise, **L** lower,
+**C** creek, **U** bunker, **T** place tree, **O** house, **F** from above,
+**G** Game view, **[** and **]** the brush's size; W, A, S, D, Q and E stay
+the camera's. Left-drag moves round the course,
 right-drag turns, the wheel zooms; **W A S D** fly forward, left, back and
 right, **Q** and **E** down and up, Shift three times as fast (faster the
 higher you are); **From above** and **This hole** jump the view. The surfaces
 are drawn as the course will have them -- each one's outline smoothed --
 not in the editing grid's squares; while you paint, the squares show for a
 moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
-Roughen and Restore (the brush's size and strength above them); **Paint** any
-surface or ground type -- **Road** among them in every landscape, and
-**Outline** with Road draws a parking lot by its edge; **Skin from the land** (under Paint) paints, in one
+Roughen and Restore (the brush's size and strength above them); paint any
+surface or ground type -- **Road** among them in every landscape, and the
+**Pen** on Road draws a parking lot by its edge; **Skin from the land** (under Surfaces) paints, in one
 go, the landscape's own rock on the land's steep ground -- a butte's or a
 mountain's sides, a badland face; native grass where the landscape has no
 rock, as on dunes -- and its apron (scree, bare clay, the desert's hard
 floor, heather) on the gentler ground just below, leaving flat tops, the holes' turf, sand,
 paths and water alone; it is a best effort from the heights, so paint over
-it or Undo it in one step, or paint the ground by hand instead; **Outline** draws one by its edge; dig a bunker,
-draw a pond or a creek (it runs downhill), paint or outline **Water** (it gets a
+it or Undo it in one step, or paint the ground by hand instead; the **Pen** draws one by its edge; dig a bunker,
+draw a pond or a creek (it runs downhill), paint **Water** with the brush or the pen (it gets a
 level and a bed when the stroke ends, and erased water goes), **Place tree**
 (one, the kind you pick by name or any of the landscape's, at a height you set,
 never on turf, sand, water, paths or roads), **Tree

@@ -19,7 +19,9 @@ export default function ({journey, SHOTS}) {
   const click = async (fx, fy, opts) => { const [x, y] = at(fx, fy); await page.mouse.click(x, y, opts); await page.waitForTimeout(120); };
   const s0 = await state();
   // An outline of semi-rough: four corners, Enter.
-  await page.locator('.cb-group', {hasText: 'Outline'}).getByRole('button', {name: 'Semi', exact: true}).click();
+  // The layer chosen, then the Pen (builder-ux: one pen, not an Outline button per surface).
+  await page.locator('.cb-layerpick').selectOption('semi');
+  await page.getByRole('button', {name: 'Pen', exact: true}).click();
   for (const [fx, fy] of [[.30, .30], [.36, .30], [.36, .36], [.30, .36]]) await click(fx, fy);
   await page.keyboard.press('Enter');
   // A pond: four corners and Enter.

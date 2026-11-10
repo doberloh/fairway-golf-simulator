@@ -4,7 +4,9 @@
 // change goes through the editing model (editing.js), which is tested in
 // Node; this file only turns the mouse and keys into its calls and tells the
 // view what to redraw.
-import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave, useMenus} from './builder.js';
+import {penCurve} from './pen.js';
+import {createSteady} from './steady.js';
 import {createEditor, PAINT} from './editing.js';
 import {createView} from './view.js';
 import {writeBuiltFile, validateDoc} from '../course-doc.js';
@@ -17,7 +19,7 @@ import {fileName} from '../course-file.js';
 import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
-import {layersFor} from './layers.js';
+import {layersFor, LAYER_ORDER} from './layers.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {preview} from './preview.js';
 import {treePlanControls} from './tree-plan.js';
@@ -59,6 +61,12 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  // The smoke journeys look (never drive) through this, as the game's do through lab.
  window.fairwayBuilder.editor = current;
 
+ // The pen's sharp nodes (Shift-click), by index in the draft.
+ const sharp = new Set();
+ // The steadied brush's string (0-100, a string of 0 to 30 screen pixels) and
+ // whether a stroke's edge is smoothed when let go (steady.js; as door 2's).
+ let steadiness = 50, smoothStroke = true;
+ const STEADIED = new Set(['paint', 'erase', 'eraseAll']);
  let tool = {kind: 'navigate'}, radius = 8, strength = .5, selected = 0, draft = [], down = null, rampA = null;
  // The layer the clean-up tools work on, the tree tools' numbers, how thick
  // ground cover lies, and Extrapolate's. As door 2's (PLACED there).
@@ -72,12 +80,12 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   cover: t => ({kind: 'cover', cover: t.cover, ...coverSizes[t.cover]})};
  const showModel = () => preview().show(ITEM[tool.kind]?.(tool) ?? null, s.landscape);
  const setTool = t => {
-  tool = t; draft = []; rampA = null; view.draft([]); view.setToolActive(t.kind !== 'navigate');
+  tool = t; draft = []; sharp.clear(); rampA = null; view.draft([]); view.setToolActive(t.kind !== 'navigate');
   if (t.kind !== 'sizeTree') { unpick(); view.cursor(null); }
   if (t.kind !== 'select') choose(null);
   // Only what the tool in hand uses (`data-for`; the owner, 4 November 2026).
   for (const n of tools.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(t.kind);
-  for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t));
+  for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t) || (b.dataset.tool === 'brush' && t.kind === 'paint') || (b.dataset.tool === 'pen' && t.kind === 'outline'));
   status.textContent = HINT[t.kind]?.(t) ?? '';
   canvas.style.cursor = '';
   refreshCoverSizes(); showModel();
@@ -128,13 +136,13 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const layerList = el('ul', {style: 'list-style:none;padding:0;margin:0;font-size:12px'});
  function refreshLayers() {
   const a = s.raster.cell ** 2;
+  underLine.replaceChildren(...underWords());
   layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
-   return el('li', {'data-layer': k, style: 'display:flex;gap:4px;align-items:center;margin:2px 0'},
-    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
+   return el('li', {'data-layer': k, class: k === layer ? 'cb-chosen' : '', title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
+    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: e => { e.stopPropagation(); editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
     el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
     el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
  }
- const paintButtons = (kind) => el('div', {class: 'cb-btns'}, landscapeKinds().map(k => button(label(k), {kind, surface: k})));
  // The tree height scale, as the slider is dragged (editing.js treeScale).
  const scaleText = el('span', {}, `${s.treeScale.toFixed(2)}x`);
  let scaling = 0;
@@ -202,7 +210,21 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const coverButtons = () => el('div', {class: 'cb-btns'}, coverOptions(BIOMES[s.landscape]).map(c => button(c.label, {kind: 'cover', cover: c.key})), button('Clear cover', {kind: 'clearCover'}));
  // THE CLEAN-UP, as door 2's. Whole-course ones redraw the whole sheet.
  const layerNow = () => layer === 'rough' ? null : layer;
- const layerPick = el('select', {class: 'cb-layerpick', style: 'width:100%', title: 'The layer Erase, Smooth edges, Tidy and Extrapolate work on (Rough: every layer)', onchange: e => { layer = e.target.value; status.textContent = HINT[tool.kind]?.(tool) ?? ''; }});
+ const layerPick = el('select', {class: 'cb-layerpick', style: 'width:100%', title: 'The layer the brush, the pen, Erase, Smooth edges, Tidy and Extrapolate work on (Rough: every layer)', onchange: e => chooseLayer(e.target.value)});
+ // The layer chosen: the brush and the pen in hand go on painting it.
+ function chooseLayer(k) {
+  layer = k; layerPick.value = k;
+  if (tool.kind === 'paint' || tool.kind === 'outline') setTool({...tool, surface: k}); else status.textContent = HINT[tool.kind]?.(tool) ?? '';
+  refreshLayers();
+ }
+ // WHAT A STROKE GOES UNDER (as door 2's): the layers above the chosen one
+ // that hold something stay on top of it.
+ const underLine = el('small', {class: 'cb-under'});
+ function underWords() {
+  if (layer === 'rough') return ['Rough takes every layer off where you paint it.'];
+  const order = editor.layersPresent(), i = order.indexOf(layer), above = (i < 0 ? order.filter(k => LAYER_ORDER.indexOf(k) < LAYER_ORDER.indexOf(layer)) : order.slice(0, i)).filter(k => k !== 'rough');
+  return above.length ? [`${label(layer)} goes under `, el('b', {}, above.map(k => label(k)).join(', ')), ', which stay on top where they are painted.'] : [`${label(layer)} is the top layer painted here: it shows wherever you paint it.`];
+ }
  const fillLayerPick = () => { layerPick.replaceChildren(...[...new Set([...landscapeKinds(), ...editor.layersPresent()])].map(k => el('option', {value: k, selected: k === layer}, label(k)))); };
  function cleaned() { const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); view.refreshLayers(); refreshLayers(); refreshSave(); }
  function clearTurfTrees() {
@@ -218,18 +240,29 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    el('button', {class: 'cb-btn', type: 'button', onclick: undo}, 'Undo'),
    el('button', {class: 'cb-btn', type: 'button', onclick: redo}, 'Redo'))),
   el('div', {class: 'cb-group', 'data-for': 'shape paint erase eraseAll smoothEdges clear clearHomes bunker creek cover clearCover'}, el('b', {}, 'Brush'),
-   range('Size', 1, 60, 1, radius, v => { radius = v; }), el('div', {'data-for': 'shape'}, range('Strength', .05, 1, .05, strength, v => { strength = v; }))),
+   range('Size', 1, 60, 1, radius, v => { radius = v; }),
+   // THE STEADIED BRUSH (steady.js), as door 2's.
+   el('div', {'data-for': 'paint erase eraseAll'}, range('Steadiness', 0, 100, 1, steadiness, v => { steadiness = v; }),
+    el('label', {'data-for': 'paint erase', title: 'Round the stroke\'s edge when you let go'}, el('input', {type: 'checkbox', class: 'cb-smoothstroke', checked: smoothStroke, onchange: e => { smoothStroke = e.target.checked; }}), ' Smooth the edge when I let go')), el('div', {'data-for': 'shape'}, range('Strength', .05, 1, .05, strength, v => { strength = v; }))),
   // The sizes the brush in hand lays, for ground cover and trees alike.
   el('div', {class: 'cb-group', 'data-for': 'cover'}, el('b', {}, 'What it lays'),
    el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax),
    range('How thick', .05, 1, .05, coverThick, v => { coverThick = v; })),
   el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Paint'), paintButtons('paint'),
+  // ONE BRUSH AND ONE PEN, ON THE LAYER CHOSEN (the builder-ux goal, 10
+  // November 2026): the layer is the paint program's colour, chosen here or by
+  // clicking it in Layers. Replaced a Paint and an Outline button for each of
+  // the landscape's surfaces -- 22 buttons that were really two tools.
+  el('div', {class: 'cb-group cb-surfaces'}, el('b', {}, 'Surfaces'),
+   el('label', {}, 'Layer ', layerPick),
+   el('div', {class: 'cb-btns'},
+    el('button', {class: 'cb-btn', type: 'button', 'data-tool': 'brush', title: 'Paint brush (B): drag to paint the chosen layer', onclick: () => setTool({kind: 'paint', surface: layer})}, 'Paint brush'),
+    el('button', {class: 'cb-btn', type: 'button', 'data-tool': 'pen', title: 'Pen (P): click nodes round a shape -- the curve shown is what fills -- then click the first node, double-click or press Enter to fill the chosen layer', onclick: () => setTool({kind: 'outline', surface: layer})}, 'Pen'),
+    button('Erase brush', {kind: 'erase'}), button('Erase all layers', {kind: 'eraseAll'}), button('Smooth edges', {kind: 'smoothEdges'})),
+   underLine,
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Outline'), paintButtons('outline')),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Clean up'), layerPick, el('div', {class: 'cb-btns'},
-    button('Erase brush', {kind: 'erase'}), button('Erase all layers', {kind: 'eraseAll'}), button('Smooth edges', {kind: 'smoothEdges'}),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Clean up'), el('div', {class: 'cb-btns'},
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.smoothEdges({radius: 1.5, kind: layerNow()}); cleaned(); }}, 'Smooth all edges'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.tidy({kind: layerNow()}); cleaned(); }}, 'Tidy specks')),
    el('small', {}, 'Extrapolate the layer above: lay another round it, a width out.'),
@@ -340,17 +373,27 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   }}, 'Back to 2D'),
   work ? el('button', {class: 'cb-btn', type: 'button', title: 'A copy of this course to give to someone: what the game plays, without the pictures, the map data and the rest of your builder work', onclick: shareCopy}, 'Save a copy to share') : null,
   gameButton,
-  el('button', {class: 'cb-btn', type: 'button', onclick: () => {
-   if (!confirm('Close this course and go back to the builder\'s start?')) return;
-   if (!confirm(s.changed ? 'Are you sure? It has changes that are not saved, and they will be lost.' : 'Are you sure? The course closes (anything saved stays in its file).')) return;
-   leave(); home();
-  }}, 'Close'));
+  el('button', {class: 'cb-btn', type: 'button', onclick: () => closeCourse()}, 'Close'));
+ function closeCourse() {
+  if (!confirm('Close this course and go back to the builder\'s start?')) return;
+  if (!confirm(s.changed ? 'Are you sure? It has changes that are not saved, and they will be lost.' : 'Are you sure? The course closes (anything saved stays in its file).')) return;
+  leave(); home();
+ }
 
  // ---- the mouse on the ground.
+ // One dab of a steadied brush, and the stroke's box grown to hold it.
+ const dab = q => {
+  const box = tool.kind === 'paint' ? editor.paint({kind: tool.surface, x: q.x, z: q.z, radius, group: down.group}) : editor.erase({kind: tool.kind === 'erase' ? layerNow() : undefined, x: q.x, z: q.z, radius, group: down.group});
+  view.refreshSurface(box);
+  const b = down.box; down.box = b ? [Math.min(b[0], q.x), Math.max(b[1], q.x), Math.min(b[2], q.z), Math.max(b[3], q.z)] : [q.x, q.x, q.z, q.z];
+ };
  const apply = (p, first) => {
   if (tool.kind === 'shape' && tool.op !== 'ramp') {
    if (first) down.level = editor.height(p.x, p.z);
    view.refreshLand(editor.shape({op: tool.op, x: p.x, z: p.z, radius, strength, level: down.level, group: down.group}));
+  } else if (STEADIED.has(tool.kind) && down.steady) {
+   down.lastP = p;
+   for (const q of first ? down.steady.down(p) : down.steady.move(p)) dab(q);
   } else if (tool.kind === 'paint') view.refreshSurface(editor.paint({kind: tool.surface, x: p.x, z: p.z, radius, group: down.group}));
   else if (tool.kind === 'erase') view.refreshSurface(editor.erase({kind: layerNow(), x: p.x, z: p.z, radius, group: down.group}));
   else if (tool.kind === 'eraseAll') view.refreshSurface(editor.erase({x: p.x, z: p.z, radius, group: down.group}));
@@ -374,8 +417,14 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   if (e.button !== 0 || tool.kind === 'navigate') return;
   const p = view.pick(e); if (!p) return;
   canvas.setPointerCapture(e.pointerId);
-  if (OUTLINES.has(tool.kind)) { draft.push([p.x, p.z]); view.draft([...draft, draft[0]]); return; }
-  if (tool.kind === 'creek') { draft.push([p.x, p.z]); view.draft(draft); return; }
+  // THE PEN (pen.js; the builder-ux goal): a click on the first node closes
+  // the shape and fills it; any other click adds a node (Shift: a sharp
+  // corner). The curve drawn is the one filled.
+  if (OUTLINES.has(tool.kind) || tool.kind === 'creek') {
+   const first = draft.length >= 3 && OUTLINES.has(tool.kind) ? view.screenOf(draft[0][0], draft[0][1]) : null;
+   if (first && Math.hypot(first.x - e.clientX, first.y - e.clientY) <= 12) { finishOutline(); return; }
+   draft.push([p.x, p.z]); if (e.shiftKey) sharp.add(draft.length - 1); showDraft(); return;
+  }
   if (tool.kind === 'bunker') { const b = editor.digBunker({x: p.x, z: p.z, radius: Math.max(2, radius)}); view.refreshLand(b); view.refreshSurface(b); return; }
   if (tool.kind === 'tee') { editor.setTee(selected, tool.set, p.x, p.z); refreshHoles(); return; }
   if (tool.kind === 'green') { editor.setGreen(selected, p.x, p.z); refreshHoles(); return; }
@@ -399,7 +448,12 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    if (g.hole !== selected) { selected = g.hole; refreshHoles(); }
    down = {hold: editor.holdMark(g.hole, g)}; canvas.style.cursor = 'grabbing'; return;
   }
-  down = {group: {}, last: p}; apply(p, true);
+  down = {group: {}, last: p};
+  if (STEADIED.has(tool.kind)) {
+   const a = view.screenOf(p.x, p.z), b = view.screenOf(p.x + 1, p.z), perM = a && b ? Math.max(.05, Math.hypot(b.x - a.x, b.y - a.y)) : 1;
+   down.steady = createSteady({string: steadiness / 100 * 30 / perM, spacing: Math.max(s.raster.cell * .5, radius * .25)});
+  }
+  apply(p, true);
  });
  let pending = null;
  canvas.addEventListener('pointermove', e => {
@@ -408,6 +462,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    if (tool.kind === 'sizeTree') showPicked();
    else view.cursor(['shape', 'paint', 'erase', 'eraseAll', 'smoothEdges', 'clear', 'clearHomes', 'cover', 'clearCover'].includes(tool.kind) ? p.x : null, p.z, radius);
    status.textContent = `${editor.surfaceAt(p.x, p.z)} · ${p.y.toFixed(1)} m · ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`;
+   if (draft.length && (OUTLINES.has(tool.kind) || tool.kind === 'creek')) showDraft(p);
   }
   if (tool.kind === 'marks' && !down) canvas.style.cursor = markUnder(e) ? 'grab' : '';
   if (tool.kind === 'select' && !down) canvas.style.cursor = !chosen ? '' : view.anchorAt(e) >= 0 ? 'grab' : p && editor.onPick(chosen, p.x, p.z) ? 'move' : '';
@@ -453,10 +508,22 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    if (got.box) { view.refreshSurface(got.box); refreshLayers(); }
    else if (pick.type === 'tree') view.refreshTrees(); else if (pick.type === 'rock') view.refreshRocks(); else if (pick.type === 'home') view.refreshHomes();
    choose(got.pick); refreshSave(); return;
+  } if (down?.steady) {
+   for (const q of down.steady.up(down.lastP ?? null)) dab(q);
+   if (down.box && smoothStroke && tool.kind !== 'eraseAll' && (tool.kind === 'paint' ? tool.surface : layer) !== 'rough') {
+    const [x0, x1, z0, z1] = down.box, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, area = Math.hypot(x1 - x0, z1 - z0) / 2 + radius + 2;
+    view.refreshSurface(editor.smoothEdges({x: cx, z: cz, radius: 1.5, area, kind: tool.kind === 'paint' ? tool.surface : layerNow(), group: down.group}));
+   }
   } if (down) { down = null; if (tool.kind === 'shape') { view.refreshHoles(selected); view.refreshTrees(); } if (['paint', 'erase', 'eraseAll', 'smoothEdges'].includes(tool.kind)) { const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); refreshLayers(); } } });
+ // The pen's curve through the nodes (and the pointer, while drawing), closed
+ // for a shape and open for a creek, as view.draft draws it.
+ const penOf = (nodes, open) => { const pts = penCurve(nodes, {closed: !open, sharp: [...sharp], step: Math.max(.5, s.raster.cell)}); return open || pts.length < 3 ? pts : [...pts, pts[0]]; };
+ function showDraft(hover = null) { const nodes = hover ? [...draft, [hover.x, hover.z]] : draft; view.draft(nodes.length > 1 ? penOf(nodes, tool.kind === 'creek') : nodes); }
  const finishOutline = () => {
   if (draft.length < (tool.kind === 'creek' ? 2 : 3)) return;
-  if (tool.kind === 'creek') { if (draft.length < 2) return; const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
+  // What is filled is the pen's curve, the line that was shown.
+  { const curve = penCurve(draft, {closed: tool.kind !== 'creek', sharp: [...sharp], step: Math.max(.5, s.raster.cell)}); draft = curve; sharp.clear(); }
+  if (tool.kind === 'creek') { const b = editor.addCreek({points: draft, width: Math.max(1.5, Math.min(12, radius / 2))}); view.refreshLand(b); view.refreshWater(); draft = []; view.draft([]); return; }
   if (tool.kind === 'treeZone' || tool.kind === 'homeZone') {
    const seed = s.undo.length + 1, n = tool.kind === 'treeZone' ? editor.treeZone(draft, {density: zoneDensity, seed}) : editor.homeZone(draft, {seed});
    status.textContent = n ? `${n} ${tool.kind === 'treeZone' ? 'tree' : 'house'}${n === 1 ? '' : tool.kind === 'treeZone' ? 's' : 's'} in the zone. Undo takes them out.` : 'Nothing fits there: it needs open ground.';
@@ -472,12 +539,11 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  canvas.addEventListener('dblclick', () => { if (OUTLINES.has(tool.kind) || tool.kind === 'creek') { draft.pop(); finishOutline(); } });
  const onKey = e => {
   if (!current || current.editor !== editor || e.target.tagName === 'INPUT') return;
-  if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) { toggleGame(); return; }
+  // G (Game view), Ctrl+Z and Ctrl+Y are the menus' now (useMenus below).
   if (game?.showing) { if (e.key === 'Escape') toggleGame(); return; }
   if (e.key === 'Enter') finishOutline();
-  else if (e.key === 'Escape') { if (chosen) { choose(null); return; } draft = []; view.draft([]); setTool({kind: 'navigate'}); }
-  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
-  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  else if (e.key === 'Escape') { if (chosen) { choose(null); return; } draft = []; sharp.clear(); view.draft([]); setTool({kind: 'navigate'}); }
+  else if (e.key === 'Backspace' && draft.length) { e.preventDefault(); sharp.delete(draft.length - 1); draft.pop(); showDraft(); }
  };
  document.addEventListener('keydown', onKey);
  function after(step) {
@@ -521,6 +587,39 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   },
  });
  setTool({kind: 'navigate'});
+ // THE 3D EDITOR'S MENUS (menu.js; the builder-ux goal). Its keys leave W, A,
+ // S, D, Q and E to the camera's flying (view.js), so Erase and Smooth edges
+ // have none here; G is Game view, as before.
+ const surfaceTool = kind => () => setTool({kind, surface: layer});
+ const shapeTool = op => () => setTool({kind: 'shape', op});
+ const backBtn = () => [...document.querySelectorAll('#cbTopTools .cb-btn')].find(b => b.textContent === 'Back to 2D');
+ const notGame = () => !game?.showing;
+ useMenus({
+  file: [{label: 'Save a copy to share…', enabled: () => !!work, run: () => shareCopy()}, {sep: true}, {label: 'Back to 2D', run: () => backBtn()?.click()}, {label: 'Close the course', run: () => closeCourse()}],
+  edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: notGame, run: () => undo()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: notGame, run: () => redo()}],
+  view: [{label: 'From above', key: 'F', enabled: notGame, run: () => view.planView()}, {label: 'This hole', enabled: notGame, run: () => view.frameHole(selected)}, {sep: true}, {label: 'Game view', key: 'G', checked: () => !!game?.showing, run: () => toggleGame()}],
+  tools: [
+   {label: 'Move the view', key: 'H', enabled: notGame, checked: () => tool.kind === 'navigate', run: () => setTool({kind: 'navigate'})},
+   {label: 'Select shape', key: 'V', enabled: notGame, checked: () => tool.kind === 'select', run: () => setTool({kind: 'select'})},
+   {sep: true},
+   {label: 'Paint brush (the chosen layer)', key: 'B', enabled: notGame, checked: () => tool.kind === 'paint', run: surfaceTool('paint')},
+   {label: 'Pen (the chosen layer)', key: 'P', enabled: notGame, checked: () => tool.kind === 'outline', run: surfaceTool('outline')},
+   {label: 'Erase brush', enabled: notGame, checked: () => tool.kind === 'erase', run: () => setTool({kind: 'erase'})},
+   {label: 'Smooth edges', enabled: notGame, checked: () => tool.kind === 'smoothEdges', run: () => setTool({kind: 'smoothEdges'})},
+   {sep: true},
+   {label: 'Raise the ground', key: 'R', enabled: notGame, run: shapeTool('raise')},
+   {label: 'Lower the ground', key: 'L', enabled: notGame, run: shapeTool('lower')},
+   {sep: true},
+   {label: 'Draw a creek', key: 'C', enabled: notGame, run: () => setTool({kind: 'creek'})},
+   {label: 'Dig a bunker', key: 'U', enabled: notGame, run: () => setTool({kind: 'bunker'})},
+   {label: 'Place tree', key: 'T', enabled: notGame, run: () => setTool({kind: 'placeTree'})},
+   {label: 'House', key: 'O', enabled: notGame, run: () => setTool({kind: 'house'})},
+   {sep: true},
+   {label: 'Smaller brush', key: '[', enabled: notGame, run: () => sizeBrush(-1)}, {label: 'Larger brush', key: ']', enabled: notGame, run: () => sizeBrush(1)},
+  ],
+  keys: [{group: 'The 3D view', label: 'Move, turn', key: 'Left-drag, right-drag'}, {group: 'The 3D view', label: 'Zoom', key: 'Wheel'}, {group: 'The 3D view', label: 'Fly', key: 'W A S D, Q down, E up'}, {group: 'The 3D view', label: 'Close a shape and fill it', key: 'Enter, double-click, or the first node'}, {group: 'The 3D view', label: 'Take the last node off', key: 'Backspace'}, {group: 'The 3D view', label: 'Drop a shape or a selection', key: 'Esc'}],
+ });
+ function sizeBrush(d) { radius = Math.max(1, Math.min(60, Math.round(radius * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = tools.querySelector('.cb-group input[type=range]'); if (r) r.value = radius; status.textContent = `Brush ${radius} m round.`; }
  status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : HINT.navigate();
  return current;
 }

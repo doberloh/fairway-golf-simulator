@@ -58,7 +58,9 @@ export default function ({journey, ROOT, SHOTS}) {
   for (let k = 0; k <= 12; k++) { await page.mouse.move(cx - 60 + k * 10, cy); await page.waitForTimeout(30); }
   await page.mouse.up();
   // Paint sand where the view is centred.
-  await page.locator('.cb-group', {hasText: 'Paint'}).getByRole('button', {name: 'Sand', exact: true}).click();
+  // The layer chosen, then the one Paint brush (builder-ux: no button per surface).
+  await page.locator('.cb-layerpick').selectOption('sand');
+  await page.getByRole('button', {name: 'Paint brush', exact: true}).click();
   await page.mouse.move(cx, cy + 40); await page.mouse.down(); await page.mouse.move(cx + 20, cy + 40); await page.mouse.up();
   const after = await page.evaluate(() => window.fairwayBuilder.editor.editor.state.undo.length);
   if (after < before + 2) throw Error(`the raise and the paint should be two undo steps (${before} -> ${after})`);

@@ -1838,3 +1838,24 @@ sources: RESEARCH, *The builder's pen and steadied brush*. Checked by the
 builder-door-2 journey (the pen's nodes, Backspace, closing on the first
 node, a dragged node, the bowed fill; a shaky stroke 12.5 m wide plain and
 7.5 m steadied). Not seen by a person.
+
+### The 3D editor: one brush, one pen, menus (10 November 2026)
+
+The editor's Paint and Outline groups listed every surface of the landscape
+as a button each -- 22 buttons that were two tools. Now **Surfaces** holds
+one **Paint brush** and one **Pen** for the layer chosen in its list or by
+clicking a row of Layers (the chosen row marked), with the line saying what
+it goes under, Erase, Erase all, Smooth edges and Skin from the land. The
+brush is steadied (steady.js, as door 2's: the string measured in metres
+where the stroke starts, from the camera); the pen draws pen.js's curve
+through the nodes and fills it (the first node, a double-click or Enter;
+Shift for a corner; Backspace). **PLACED:** in 3D a click on the first node
+fills at once -- there is no adjusting the nodes after closing, as there is
+on door 2's plan, because a node on uneven ground is hard to pick up again in
+perspective. **The menus** (useMenus) give the editor File (Save a copy to
+share, Back to 2D, Close), Edit, View (From above F, This hole, Game view G)
+and Tools with keys; W, A, S, D, Q and E are left to the camera's flying, so
+Erase and Smooth edges have no key here. **Not done:** the editor's left
+column is still a column of grouped buttons, not door 2's icon palette with
+the options on the right. The journeys choose the layer and press the one
+brush or pen. Not seen by a person.

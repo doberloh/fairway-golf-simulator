@@ -371,7 +371,8 @@ export default function ({journey, SHOTS}) {
   // cones (tree-shape.js `standIn`); the journey expected the old links'
   // round shrubs until the builder-ux goal (10 November 2026). Only meshes
   // that hold trees count: an empty bushes mesh is always there.
-  const paints = await page.locator('.cb-tools [data-tool^="paint:"]').evaluateAll(b => b.map(x => x.dataset.tool.slice(6)));
+  // The layers the brush and pen offer (builder-ux: one brush and pen, the layer chosen).
+  const paints = await page.locator('.cb-layerpick option').evaluateAll(o => o.map(x => x.value));
   if (!paints.includes('heather') || paints.includes('pinestraw') || paints.includes('litter')) throw Error(`a links should offer its own ground types only: ${paints}`);
   const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.count && o.geometry.type === 'ConeGeometry') shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
   if (look.sky !== '#c8d7df' || look.shape !== 'cone') throw Error(`the editor should look like Seaside Links: ${JSON.stringify(look)}`);
@@ -413,7 +414,8 @@ export default function ({journey, SHOTS}) {
   const mid = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view, b = v.canvas.getBoundingClientRect(), p = v.pick({clientX: b.left + b.width / 2, clientY: b.top + b.height / 2}); return {sx: b.left + b.width / 2, sy: b.top + b.height / 2, ...p}; });
   const heightAt = () => page.evaluate(([x, z]) => window.fairwayBuilder.editor.editor.height(x, z), [mid.x, mid.z]);
   const h3d0 = await heightAt();
-  for (const tool of ['paint:sand', 'shape:raise']) {
+  await page.locator('.cb-layerpick').selectOption('sand');
+  for (const tool of ['brush', 'shape:raise']) {
    await page.locator(`[data-tool="${tool}"]`).click();
    await page.mouse.move(mid.sx - 20, mid.sy); await page.mouse.down(); await page.mouse.move(mid.sx + 20, mid.sy, {steps: 6}); await page.mouse.up(); await page.waitForTimeout(150);
   }
