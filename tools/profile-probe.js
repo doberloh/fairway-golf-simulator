@@ -27,8 +27,22 @@
   return ctx;
  };
 
+ // ---- or a context named later: a page with more than one (the Course
+ // Builder's editor and its game view each have their own; the frame-rate
+ // goal, 9 November 2026) says which canvas to watch. Draws are counted on
+ // every context instrumented, the card timed on the one named.
+ window.__profUse = canvas => {
+  const ctx = canvas && (realGetContext.call(canvas, 'webgl2') || realGetContext.call(canvas, 'webgl'));
+  if (!ctx || ctx === state.gl) return !!ctx;
+  if (!ctx.__profInstrumented) instrument(ctx);
+  Object.assign(state, {gl: ctx, pool: [], pending: [], active: null});
+  state.ext = ctx.getExtension('EXT_disjoint_timer_query_webgl2') || ctx.getExtension('EXT_disjoint_timer_query') || null;
+  return true;
+ };
+
  const TRI = {};
  function instrument(gl) {
+  gl.__profInstrumented = true;
   for (const k of ['TRIANGLES', 'TRIANGLE_STRIP', 'TRIANGLE_FAN']) TRI[gl[k]] = k;
   state.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2')
            || gl.getExtension('EXT_disjoint_timer_query') || null;

@@ -13742,7 +13742,7 @@ Everything here is the RTX 4090 unless it says software, so it is headroom and n
 | Software, Low (seconds a frame) | 3.31 | 8.06 | 3.2 M to 13.2 M |
 | Software, Medium (seconds a frame) | 3.81 | 8.57 | 3.2 M to 15.5 M |
 
-**One line is worse and stays worse: a machine with no graphics card.** Its frame is 2.4 times the baseline's. That machine could not play at 3.3 s a frame and cannot at 8 s; the cost is the trees' triangles on Puget Sound, each a real model, and the owner closed drawing fewer of them (*graphics.js*, won't do, 30 September, and "every model made is used"). So the goal's "no worse than the baseline" holds for every case with a graphics card and fails for this one, reported and not fixed.
+**One line is worse and stays worse: a machine with no graphics card.** Its frame is 2.4 times the baseline's. That machine could not play at 3.3 s a frame and cannot at 8 s; the cost is the trees' triangles on Puget Sound, each a real model, and the owner closed drawing fewer of them (*graphics.js*, won't do, 30 September, and "every model made is used"; reopened for Low on 9 November, every tree of the hole being played still drawn). So the goal's "no worse than the baseline" holds for every case with a graphics card and fails for this one, reported and not fixed.
 
 **Frame tests on Low**, against the build of 3 November (generator 75), by mean frame: New England in winter +14.3% (0.85 to 0.98 ms; triangles +26%, the twigs), New England in spring +16.0% (1.00 to 1.16 ms, the bloom), Hill Country in spring +5.4%, High Plains in summer -1.9%, the Keys in summer +13.1% (one of its rounds read 1.2 ms against 0.9 on the processor), the Mojave in summer -1.0%. The largest is 0.16 ms, about a hundredth of a 60 fps frame on this card. The twigs' first figure (processor 1.6 to 4.5 ms) came from a run with agents on the processor and does not stand: at the same tees the processor reads 0.6 to 0.7 and 0.9 to 1.0 ms. **The Heartland grasses' 0.6 ms on the processor** did not come back in the High Plains, the worst clumps (0.8 ms level); not measured again on the Heartland.
 
@@ -15259,3 +15259,246 @@ redwood 1 back again ("Bowl cut style again here"): redrawn twice more with the 
 cut. Their far versions in the `skirts` style were stacked tiers -- the bowl cut again, in the
 distance -- so the four conifers' far versions were rebuilt in `tufts` (clumps along the limbs;
 outline .63 to .71 against .57 to .67); the cypress keeps `tufts` as it had. Credits: 2,588 left.
+
+## Frame rate on every tier: the large built courses (9 November 2026)
+
+The owner withdrew the 26 October acceptance ("Large courses in the builder can tank framerates
+even on this PC") and named the case: Dinosaur Mountain (Gold Canyon, Arizona), the owner's own
+built course, opened in the Course Builder's game view. Everything here is the RTX 4090 unless it
+says otherwise, so it is headroom, not a weak machine. Tools: `tools/builder-frames.mjs` (new: the
+builder's page opened as a player opens it, its waits timed by the builder's own busy notice, frames
+with profile-probe.js, which now times a named canvas, `__profUse`), `tools/frame-ab.mjs --built
+<file>` (new: a built course served beside the page; `--scene` lists what the scene holds;
+`fly1`/`fly5`/`fly9`/`flyhigh` spots for free flight).
+
+**What the course is.** The file is 99 MB, 89 MB of it the builder's own working copy (builder.zip),
+which the game never reads. The game reads 45,223 trees, 600 homes and a ground of 3,114 by 2,859
+cells at 1 m: the size of Troon North Monument (47,697 trees, 3,512 by 2,157).
+
+**The builder, High, before anything changed** (two runs, within a few percent):
+
+| | |
+|---|---|
+| Open the file into the editor | 12.7-13.1 s, nearly all reading the file |
+| Open Game view | 48-51 s: building the course 21.2-21.4 s, drawing it 3.7-3.8 s, preparing the graphics 22.9-25.9 s |
+| Game view where it opened | 16.9 ms processor, 17.3 ms card a frame (p95 28 ms); 583 draws, **255 million triangles a frame** |
+| At holes 1, 5, 9 | 11.2 / 12.9 / 6.5 ms processor, 12.4 / 13.2 / 8.4 ms card; 100-225 million triangles |
+| Flying ahead fast (W, Shift) | 5.5 ms median, p99 35.5 ms, **worst frame 352-391 ms** |
+| The editor's own 3D view | 0.3 ms, 192 draws, 6.2 million triangles |
+
+**The same course in the game, High, from the first tee** (`lab.scene`, by what is held in view):
+233 million triangles a frame, 487 draws. The continuous ground is one mesh of 20.5 million
+triangles. Four saguaro models hold about 2,200 instances each in view at 7,600-9,000 bark
+triangles apiece (17-20 million each, 70 million together); the two ocotillos about 4,000 each
+(22 million with their flowers); palo verde and mesquite are mostly on their far versions (230-335
+near). Every one of them is drawn again into the shadow maps. The saguaros have far versions (80-260
+triangles against 11,400-11,800) but High swaps a painted tree only when it is under 5% of the
+screen's height (`farPainted`), so nearly all are drawn in full; Redwood Coast alone has its own
+line (`farPaintedFrom` .34) for the same reason. The course took 31.4 s to load in the game.
+
+**Every shipped model:** 570, 253 with a far version. 70 models over 3,000 triangles have none, the
+Meshy remakes and the Blender-built shrubs and small trees among them (plumeria 8,359, pampas grass
+6,528, naupaka 5,100-5,200, ocotillo 3,022-3,726, cholla 3,144-3,147, creosote 2,247-2,399).
+
+**The starting point on every tier** (frame-ab, one build, six views: the tees of holes 1, 5 and 9,
+the overview, 40 m over hole 1, 250 m over the course; milliseconds a frame, the slower of processor
+and card; bench/ab/base-*):
+
+| | Low | Medium | High | Ultra |
+|---|---|---|---|---|
+| Dinosaur Mountain, tees | 4.8-8.1 | 5.5-8.9 | 10.1-12.8 | 11.3-15.8 |
+| Dinosaur Mountain, overview / high over it | 6.9 / 8.9 | 6.3 / 11.4 | 18.1-24.9 / 18.5 | 33.7 / 21.8 |
+| Dinosaur Mountain, triangles a frame | 113-173 M | 113-174 M | 152-235 M | 160-262 M |
+| Troon North, tees | 4.9-6.7 | | | |
+| Course load (the file handed in to drawn) | 33.5 s | 35.5 s | 32.2 s | 32.3 s |
+
+Low draws nearly as much as Medium: no tier setting reached the trees on a built course.
+
+**What was built first, and why** (9 November 2026):
+
+- **A far version for every model** (tools/far-cluster.mjs, called by build-meshes.mjs): vertex
+  clustering to about an eighth of each part's triangles at first: 130 models, 460,897 triangles to
+  68,381. Since the evening each is stepped up until its outline holds (*The outline kept*, below):
+  112 models, 418,788 triangles to 123,402, and 18 drawn in full;
+  the page 1 MB larger. Considered and not taken: meshoptimizer's simplifier (better shapes, but a new
+  package; the install was refused here), Blender's decimate for each pack (thirty-odd jobs, and the
+  packs' scripts rebuild the near models too). **The saguaros' Blender twins were one part where the
+  model has two**, so `farParts` ignored them and drew every saguaro's 7,600-9,000-triangle trunk at
+  any distance -- about 70 M triangles of Dinosaur Mountain's frame; a shipped twin that does not line
+  up part for part is now made again by the packing step (four saguaros).
+- **The swap cross-faded** (instance-cull.js `ditherFade`, SWAP_BAND 1.3): a screen-pattern dissolve,
+  its level in the instance colour's red. Considered: a per-instance attribute (a model's part
+  geometry is shared between meshes, so the attribute would be shared too); true transparency (needs
+  sorting, and thousands of crowns); a fade over time (rewrites every square every frame of the fade,
+  which is the cull's most expensive work). **A first build wrote the cross-fade's level into every
+  mesh, not only those that swap**, and drew the saguaro trunks -- whose material had no dissolve --
+  bright orange inside every band; caught in the first before/after pictures, fixed, and tested.
+- **Low's tree rule** (low-trees.js; PROJECT_HANDOFF, *LOW DRAWS FEWER TREES*).
+- **The ground drawn coarser with distance** (ground-lod.js): a quadtree of 192 m leaves, each drawn
+  as the grid's own triangles or as the plain 3 m grid, and coarser squares of 64 by 64 cells at 6,
+  12, 24 m and up, chosen each frame so no square stands off the ground the ball meets by more than
+  the tier's tolerance in pixels (first 1 on High and Ultra, 2 Medium, 3 Low; settled below at 2, 3
+  and 4, with 384 m coarse squares on a 128-cell grid and a 1.5 m level -- *Where High's frame went
+  next*, *The ground at 1.5 m*; PLACED). Skirts hang twice a
+  square's error, at least 2 m, from every edge. The full mesh is kept undrawn for its material; a
+  click on the ground now steps along `world.height` instead of a raycast through 20 M triangles.
+- **First before/after, High, Dinosaur Mountain** (before the saguaro fix): frame -26% (17.3 to 12.5
+  ms, mean of five views), triangles -27 to -33%, the worst frame 282 to 43 ms. The course's load
+  went up 5-6 s (31-33 to 38 s): building the ground's squares and the far versions. Owed.
+- **Every tier on Dinosaur Mountain, after the saguaro fix** (ab3, against the starting build in the
+  same run; mean of six views): Low 7.8 to 3.6 ms (-54%; triangles 113-173 M to 9-16 M), Medium
+  9.0 to 4.8 (-47%), High 15.0 to 9.1 (-40%), Ultra 19.2 to 11.8 (-39%). Worst frames: High 51 to 28
+  ms, Ultra 153 to 34.
+- **Where High's frame went next** (frame-variants, tools/variants/built-large.mjs and
+  ground-shader.mjs): with the ground in 192 m squares it was ~350 draws a frame (each square into the
+  picture and three shadow maps) and the processor's time was mostly per-draw uniform uploads;
+  384 m squares cut the draws, but then drawing the ground was 40-65% of the card's frame -- not its
+  shading (every one of its cues off saved at most 2%, and 0.7 times the pixels only 12-22%) but its
+  full-detail squares: 0.5 m triangles far off, smaller than a pixel. **Settled:** full detail in 192
+  m squares, coarse squares on a 128-cell grid (a 384 m square of plain 3 m ground is one draw), and
+  the tolerance 2 picture pixels on High and Ultra, 3 Medium, 4 Low (PLACED; a CSS pixel on a screen
+  at twice its density). High at the first tee 8.2 to 7.4 ms, over hole 1 8.8 to 7.8, 250 m up 12.7
+  to 10.6. Rejected: thinning tree shadows from the nearest map (+2% to -9%, inside the noise).
+- **The builder's Game view opening** (builder-frames --profile, readable build): 16.3 of its 21 s of
+  "Building the course" was `bakeDistance`, the field of distances to every outline, on one core.
+  Rooting squared distances instead of `Math.hypot` gave the same bytes on all 17 bench courses and
+  saved nothing (65.1 s against 64.8 s for all 17) -- the cost is the texels within 6 m of every edge
+  of every ground type's outline, not the root -- so it was reverted. **Kept:** the bake moved to
+  src/built-field.js and run as bands of rows on up to eight workers (bake-pool.js), byte for byte
+  the whole field (tests/built-field.test.mjs). Building the course 21.4 to 5.3 s; Game view 45-51 to
+  29 s. Left: "Preparing the graphics" 18.9 s (shader programs) and drawing 4.7 s.
+- **The ground at 1.5 m** (ground-lod.js `middle`; terrain-grid.js `mid5`): a full-detail leaf has
+  a middle level drawn from the 1.5 m points the grid already made (each refined cell's corners, edge
+  middles and centre: 8 triangles for the grid's 72; a cell beside a refined one a fan through its
+  edge middles), chosen when the refinement it drops is under the tolerance. On the test ground (1.2
+  by 0.9 km of rough land) the leaves hold 6.6 M full-detail triangles and 0.95 M at 1.5 m, the
+  middle level wrong by at most 6 cm against the full detail's 25 cm off the 3 m grid. The grid
+  records the ids (five a cell, 20 bytes; 20 MB on Dinosaur Mountain) and makes nothing new.
+- **The older laptop, estimated** (frame-ab --device weak-laptop: Intel UHD 620 at 1920 x 1080,
+  the processor throttled 2.7 times, the card's time scaled 76 times; PLACED estimate): Dinosaur
+  Mountain on Low after the first pass, 112-362 ms a frame of graphics (3-9 a second) at 14-16 M
+  triangles. The target is 33 ms. Low has to draw nearer 1-2 M.
+- **The overview's processor share** (frame-variants --cpuprofile, Medium, Dinosaur Mountain): 9.3 ms
+  of sampled work a frame, of which the cull rewriting every tree in view at every 4 m of camera
+  travel (1.8 ms) and the camera-in-a-tree check testing all 45,223 trees and walking all 105,000
+  instances (1.5 ms). **Built:** the check looks only at trees within reach of the camera (a 32 m grid;
+  reach `VIEW_CLEAR_REACH` times 1.9 plus the widest crown) and touches only trees whose state
+  changed; the cull compares every square's decisions with the last write's and writes nothing when
+  none changed (its swap mixes rounded to the dissolve's 16 steps, Low's share up to 64ths). After:
+  5.8 ms, the check 0.07 ms, the rewrite 0.78 ms.
+- **Generated courses, the regression the final round found** (frame-ab against the starting build,
+  two rounds): Ultra came out slower -- Redwood Coast +7 to +10%, Pacific Northwest +9% -- with 12-40%
+  more draws. Three causes, each measured: the ground in squares on a ground of 1.6-2.3 M triangles
+  (draws for nothing: now only past 4 M, `GROUND_LOD.minTriangles`, PLACED); the dissolve on every tree
+  material (a shader that may discard keeps the card from skipping hidden pixels early: 6.1% of the
+  mean, 14.4% of the 95th percentile, priced by a build with `ditherFade` off) -- now only on fade
+  meshes holding the trees inside a fade; and the swap band (1.3 times the line drew a wide ring of
+  Redwood crowns twice, its line a third of the screen: now 1.15, and the near half of a cross-fade
+  casts no shadow). After: Redwood Coast Ultra -6.6% (p95 -5.5%), Pacific Northwest -1.6% (p95 +3%,
+  inside the noise), Redwood Low -6% (p95 +2%), Pacific Northwest Low -19%.
+- **The course's load** (frame-ab --built, three rounds, and the game's own timers in two halves): the
+  world builds in 0.1-0.6 s either way; preparing the shaders is the load, and it swung 19.2 to 25.3 s
+  across runs of one build -- builds with and without the hazard loop's exit, and with and without the
+  dissolve, could not be told apart. The load is unchanged within that noise; its field bake (4.3 s
+  of one core) is gone to the workers.
+- **The devices, estimated, after the first pass** (frame-ab --device on the build of 13:05; the
+  graphics time is this card's scaled by compute and bandwidth -- PLACED, a ranking, not a promise):
+  on generated courses the iPhone 13 on Medium 43-161 ms a frame (Redwood Coast 63-161, Pacific
+  Northwest 43-102; target 16.7), the older laptop on Low 106-294 (target 33); on Dinosaur Mountain
+  the laptop with a Radeon 780M on Medium 38-81, the MacBook Air M1 63-136, the iPhone 13 88-183, the
+  older laptop on Low 112-362, the budget Android 1,100-1,650. **What stops them:** a Medium frame of
+  Redwood Coast is about 2 ms of this card; 60 a second on an iPhone needs about 0.44 ms, four to five
+  times less, and the older laptop on Low about a third of Low's frame now. Low still draws 9-16 M
+  triangles, and its ground shader is its largest single cost (27-38% of the card's frame, its
+  triangles a small part of it). Automatic resolution (down to half the tier's pixels, on by default,
+  off in every measurement here) would take some of the ground's share in real play. Closing the gap
+  is not a setting: it is a tier made for phones and weak laptops -- a cheaper ground shader, a
+  fraction of the trees' far versions, one shadow map or none -- which changes the look the most and is
+  the owner's call. The real check is a real device (TODO, *A real phone, an iPad and a weak laptop*).
+- **The final build** (9 November 2026, 16:00, ab6 against the starting build, Dinosaur Mountain, six
+  views): Low 7.4 to 1.3 ms a frame (-82%), Medium 8.8 to 2.8 (-68%), High 15.3 to 6.2 (-60%), Ultra
+  20.0 to 8.2 (-59%). With the clock stopped (frame-look, High and Ultra) 0.04-3.7% of pixels differ by
+  0.01-1.2 of 255 on average, distant trees only; hole 9's tee on High read 6.7% because the camera,
+  aimed at the pin, turned a few pixels (every edge shifted, clouds and mowing stripes included; the
+  same view read 0.45% the first time and 1.0% on Ultra in the same run). The full tests (1,513), the
+  fingerprints, the game's 41 smoke journeys and six of the builder's eight (both failures the same on
+  the starting build; TODO) pass.
+- **Low and Medium, with the clock stopped** (frame-look look3, Dinosaur Mountain, the final build
+  against the starting one): Low 0.2-5.6% of pixels differ by 0.05-2.0 of 255 on average (the far
+  trees thinned, the far versions, the ground coarser at 4 px), Medium 0.08-2.9% by 0.02-0.8. Both may
+  look different (the owner); the pictures are on the status page for the owner's look. No page errors;
+  the pin label, wind arrows and map drawn on both.
+- **The last changes measured alone, and the look in motion** (after the hand-over, the goal's
+  check asked for them): the footings and drives batched, against a build with homes.js as it was,
+  Dinosaur Mountain High by the houses (hole 9's tee, its play camera, 40 m over hole 1), three rounds:
+  6.96 to 5.59 ms a frame (-19.6%). The hazard loop's early end, against a build without it (the first
+  tee, hole 9's tee, the overview), three rounds: 5.76 to 5.55 ms (-3.7%). The field baked on every core
+  on the other large course too: Troon North in the builder, Game view 48.3 to 30.8 s, building the
+  course 21.0 to 5.5 s, frames there 24.6 to 11.7 ms, the worst frame flying 79 to 21 ms. **In motion**
+  (tools/frame-motion.mjs, now `--built`: a driver off the first tee and the overview on a virtual
+  clock, frame for frame against the starting build): Low 0.6-6.2% of pixels differ by 0.2-2.5 of 255
+  on average (the far trees thinned), High 0.08-1.5% by 0.02-0.46; no page errors; the frames show no
+  pop, gap or tint. Free flight in motion: measured on Low and High (the next bullet). Still unmeasured: the devices themselves (the
+  stand-ins are estimates by design; the real ones are the owner's). The course's load could not be told
+  apart by build (its shaders swing 19-25 s run to run).
+- **Free flight in motion** (frame-motion flies after the overview: 40 m over hole 1, aimed at the pin,
+  flown level toward it at the fast free-flight speed, the pose set outright from the virtual clock
+  every frame): Dinosaur Mountain, against the starting build, **Low 1.9-4.4% of pixels** (0.7-1.4 of
+  255 on average: Low's thinned and far trees), **High 0.36-0.79%** (0.12-0.24: far crowns, a little
+  shadow speckle), no page errors, no pop, gap or tint.
+  **What first looked like High failing was the test** (9 November 2026, worth knowing for the next
+  comparison on a built course): the flight's frames differed in 26-37% of pixels, every edge a few
+  pixels off. Not the camera's easing (the same with the pose set outright), nor extra draws (one a
+  frame in both). The drawn camera, recorded with each picture, had the same place, lens and canvas
+  but headings 0.4 degrees apart: a BUILT course cuts its cups afresh every round (built-world.js
+  `placeBuiltPins`, `Round.pinSeed`), so each load's pin stood a metre or two from the other's,
+  and the flight was aimed at it. An earlier check that found the two poses identical had happened to
+  draw close pins. frame-motion now starts both builds' rounds on one pin seed, and records the
+  drawn camera and the flight's start for both.
+  **Seen in the Low flight, left as Low's look** (the owner, 9 November: Low and Medium may look
+  different): (1) the ocotillo's far version -- made by the new automatic far versions
+  (tools/far-cluster.mjs; it had none on main) -- turned its thin canes into a leafy clump with red
+  tips. Low and Medium swap a plant to its far version below 15% of the screen's height, about 30-40 m
+  for a 4-5 m ocotillo, so the clump was seen at an ordinary size; vertex clustering is at its worst on
+  thin sticks. Fixed the same evening, first for the ocotillo alone (a third of its triangles: Low
+  +4.2% on Dinosaur Mountain, Medium +1.5%), then for every model (*The outline kept*, next). (2) A
+  pond on Low is a shade bluer with finer ripples:
+  Low has no water mirror, and the sky picture its ponds show (taken from each pond's middle) now
+  holds Low's thinned trees and coarser ground.
+- **The outline kept** (9 November 2026, evening; tools/far-cluster.mjs `outlineScore`,
+  `farVersion`, `FAR_OUTLINE`). The ocotillo was not alone. Every automatic far version drawn beside
+  its model, 100 pixels tall (Low's swap size: 15% of a 675-pixel screen), from the front and the
+  side, level and from 35 degrees above, and scored three ways: **kept**, the share of the model's
+  outline the far version still covers (each outline grown by a pixel first, so a one-pixel shift
+  costs nothing); **extra**, the share of the far version drawn where the model is not (a clump); and
+  **area**, the far version's pixels over the model's with no allowance. The worst view counts.
+  The yardstick is the far versions made by hand in Blender (253 on main, seen by the owner for
+  weeks): kept 0.95 at the median and 0.88 at the tenth percentile, extra 0.08 at the ninetieth, area
+  0.91 at the median and 0.82 at the fifth percentile. The automatic ones at an eighth: kept 0.79 at
+  the median, 0.62 at the tenth percentile -- the lake junipers' low mats kept 0.19-0.23 (flattened to
+  a line), the Pacific dogwood's tiers of leaves 0.55 (a few slivers on a bare trunk), the ocotillo's
+  canes 0.79 with 0.12 extra (the clump). **The bar, PLACED a little below the hand-made ones: kept
+  0.85, extra 0.10, area 0.80.** The build tries an eighth, a sixth, a quarter, a third and a half and
+  takes the first that passes; where none does, the model gets no far version and is drawn in full at
+  every distance, as before the far versions.
+  Two scores were tried and found wanting before the area: from the side alone, the sassafras's
+  layered leaves thinned to dashes kept 0.88 (a layer seen edge-on is a few pixels, and the pixel's
+  allowance forgives a line); the view from above did not catch it either (the leaves are where they
+  were, only thinner). Its area, 0.58, did. A plain overlap of the two outlines, without the
+  allowance, was rejected first: a one-pixel shift of a thin cane costs it all.
+  Result: 112 far versions (16 at an eighth, 13 a sixth, 37 a quarter, 23 a third, 23 a half), and
+  **18 models drawn in full**: both ocotillos, the three halas, sotol, sassafras, the Pacific dogwood,
+  both lake junipers, switchgrass, lake dune grass, a creosote, a heather, sorrel, Scotch broom, flame
+  azalea and the corn patch. Their shapes -- canes, blades, flat mats and layered sprays -- do not
+  survive merging nearby points at any share up to a half; a better simplifier (meshoptimizer's,
+  refused as a new package) or far versions made by hand in Blender would serve them.
+  Its cost, frame-ab against the build with every far version at an eighth, two rounds: Dinosaur
+  Mountain **Low +14.1%** by the spots' mean (1.34 to 1.53 ms; 95th percentile 1.89 to 2.29),
+  **Medium +22.8%** (3.05 to 3.75 ms; 4.57 to 5.59) -- its ocotillos drawn in full; the Hawaii resort
+  Low +4.9% (1.37 to 1.43 ms; the halas); the Redwood Coast Low -10.9% (2.13 to 1.90), not a gain:
+  the owner's browser held the card at 25-41% through it, so read it as no change. Against where the
+  branch began, Dinosaur Mountain is still 79% faster on Low (7.4 to 1.5 ms) and 57% on Medium (8.8
+  to 3.8). **The owner's choice** (9 November 2026), offered the ocotillo's one-third far version
+  as an exception (Low +4.2%, Medium +1.5%; it read as canes in the flight, but kept 0.61-0.68 of
+  its area): the strict rule for every model. In motion (frame-motion, Low, the outline build
+  against the eighth): 0.2-1.3% of pixels, the ocotillos whole again, no page errors.

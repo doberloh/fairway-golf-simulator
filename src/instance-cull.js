@@ -1,3 +1,65 @@
+import {treeHash, squareKeep, LOW_TREES} from './low-trees.js';
+
+// A TREE FADES IN, IT DOES NOT POP (the owner, 9 November 2026: "i would like
+// to see things fade in not pop in"). On Low a tree whose place in the order
+// (`treeHash`) is within the fade band of its square's share is drawn
+// dissolved: each pixel in or out by a fixed screen pattern, so it needs no
+// sorting and no blending, and costs a compare. The amount rides in the
+// instance colour's red, in steps of four (a tint is never above about 1.5),
+// so it needs no attribute of its own -- a tree's parts share their geometry
+// between meshes, and an attribute is the geometry's. Every other instance
+// carries none and draws as before.
+// THE SAME DISSOLVE CROSS-FADES A TREE INTO ITS FAR VERSION, on every tier:
+// across SWAP_BAND of the swap line both are drawn, the near version leaving
+// the pixels the pattern gives the far one -- levels 16 and up are the far
+// version's half, drawn exactly where the near one is not.
+const FADE_STEPS = 16, SWAP_BAND = 1.15;  // 1.3 drew a wide ring of crowns twice on the Redwood Coast (its line is a third of the screen)
+const fadeWrapped = new WeakSet();
+// THE DISSOLVE ONLY WHERE SOMETHING DISSOLVES (9 November 2026): a shader that
+// can discard a pixel keeps the card from skipping hidden pixels early, so a
+// tree material carrying the dissolve made every tree dearer to draw behind
+// another -- 6% of an Ultra frame on the generated Redwood Coast, 14% of its
+// heavy frames, with nothing fading. So the dissolve lives on a copy of each
+// material, drawn by a fade mesh holding only the trees inside a fade (cull
+// `write`); every other tree is drawn with the material as it was.
+// Copied with the patches already on it (wind, rim, snow -- three's clone
+// leaves out an assigned onBeforeCompile and cache key), and before the
+// renderer's cascades, mist and cloud shadows register the scene, which then
+// register the copy as a material of its own.
+const fadeCopies = new WeakMap();
+function fadeMaterial(material) {
+ let copy = fadeCopies.get(material);
+ if (copy) return copy;
+ copy = material.clone();
+ if (Object.prototype.hasOwnProperty.call(material, 'onBeforeCompile')) copy.onBeforeCompile = material.onBeforeCompile;
+ if (Object.prototype.hasOwnProperty.call(material, 'customProgramCacheKey')) copy.customProgramCacheKey = material.customProgramCacheKey;
+ ditherFade(copy);
+ fadeCopies.set(material, copy);
+ return copy;
+}
+function ditherFade(material) {
+ if (fadeWrapped.has(material)) return;
+ fadeWrapped.add(material);
+ const compile = material.onBeforeCompile, key = material.customProgramCacheKey;
+ material.customProgramCacheKey = () => (key ? key.call(material) : '') + '-thinfade';
+ material.onBeforeCompile = (shader, renderer) => {
+  compile?.call(material, shader, renderer);
+  shader.vertexShader = 'varying float vThin;\n' + shader.vertexShader.replace('void main() {', 'void main() {\n vThin = 0.;')
+   .replace('#include <color_vertex>', `#ifdef USE_INSTANCING_COLOR
+ float thinLvl = floor(instanceColor.r * .25 + .001);
+ vThin = thinLvl < ${FADE_STEPS}. ? thinLvl / ${FADE_STEPS}. : -(thinLvl - ${FADE_STEPS}.) / ${FADE_STEPS}.;
+ vec3 thinColor = vec3(instanceColor.r - thinLvl * 4., instanceColor.gb);
+ #define instanceColor thinColor
+#endif
+#include <color_vertex>
+#ifdef USE_INSTANCING_COLOR
+ #undef instanceColor
+#endif`);
+  shader.fragmentShader = 'varying float vThin;\n' + shader.fragmentShader.replace('void main() {',
+   'void main() {\n if (vThin != 0.) { float thinN = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(.06711056, .00583715)))); if (vThin > 0. ? thinN < vThin : thinN >= -vThin) discard; }');
+ };
+ material.needsUpdate = true;
+}
 import * as T from 'three';
 import {farParts, hasShippedTwin} from './mesh-assets.js';
 
@@ -57,7 +119,11 @@ const MARGIN = () => tune.margin * Math.PI / 180;
 // as their thinned twins (`farParts`) rather than in full. Infinity: never.
 // `farTrees`: a crown drawn smaller than this share of the screen's height is
 // drawn as its thinned twin (F2). 0: never.
-export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0} = {}) {
+// `thinTrees`: Low's rule (low-trees.js) -- outside the hole's trees, each
+// square draws only the share of its trees its distance allows. The trees in
+// a square are stored in the order they leave (`treeHash`), so the share is a
+// prefix of the square's run and a tree never flickers.
+export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false} = {}) {
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);
@@ -75,9 +141,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  const records = meshes.flatMap(mesh => {
   const geo = mesh.geometry;
   if (!geo.boundingSphere) geo.computeBoundingSphere();
-  const n = mesh.count, cell = new Int32Array(n);
+  const n = mesh.count, cell = new Int32Array(n), hashOf = new Float32Array(n);
   for (let i = 0; i < n; i++) {
    mesh.getMatrixAt(i, m);
+   // Where the instance stands: every part of one tree has the same, so its
+   // bark and leaves leave together.
+   hashOf[i] = treeHash(m.elements[12], m.elements[14]);
    sphere.copy(geo.boundingSphere).applyMatrix4(m);
    const key = Math.floor(sphere.center.x / CELL) + ',' + Math.floor(sphere.center.z / CELL);
    let c = cellOf.get(key);
@@ -86,8 +155,11 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    boxes[c].expandByPoint(corner.copy(sphere.center).addScalar(sphere.radius));
    cell[i] = c;
   }
-  // Sorted by square, so each visible square is one run.
-  const order = Int32Array.from({length: n}, (_, i) => i).sort((a, b) => cell[a] - cell[b]);
+  // Sorted by square, so each visible square is one run -- and within a
+  // square by the order trees leave on Low (`treeHash`), so Low's share of a
+  // square is a prefix of its run.
+  const order = Int32Array.from({length: n}, (_, i) => i).sort((a, b) => cell[a] - cell[b] || hashOf[a] - hashOf[b]);
+  const hash = Float32Array.from(order, i => hashOf[i]);
   const matrix = mesh.instanceMatrix.array, colour = mesh.instanceColor?.array;
   const src = new Float32Array(n * 16), srcColour = colour ? new Float32Array(n * 3) : null;
   // A procedural tree's pieces carry the root of the tree they belong to
@@ -116,7 +188,11 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;
-  const record = {mesh, n, order, src, srcColour, srcRoot, rootAttr, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false,
+  // Which of the course's instanced things Low may thin: the trees and plants
+  // (a model's part, or a grown tree's bark and leaves) -- not the long grass,
+  // which has its own reach, nor anything else.
+  const thinnable = thinTrees && !mesh.userData.cullReach && (!!mesh.userData.model || mesh.userData.role === 'leaf' || !!rootAttr);
+  const record = {mesh, n, order, hash, thinnable, src, srcColour, srcRoot, rootAttr, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false,
    reach: mesh.userData.cullReach ?? 0, shadowNear: !!mesh.userData.shadowNear};
   const thinFrom = () => tune.thinShadowsFrom ?? thinShadowsFrom;
   // A SHADOW OF THE SAME TREE, DRAWN CHEAPER. From map `thinShadowsFrom` out,
@@ -196,7 +272,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   farMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh};
   farMesh.name = 'far trees'; farMesh.count = 0; farMesh.visible = false;
   mesh.parent.add(farMesh);
-  const farRecord = {mesh: farMesh, n, order, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear};
+  const farRecord = {mesh: farMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear};
   record.near = true;
   farMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
@@ -210,7 +286,34 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   return [record, farRecord];
  });
 
+ for (const r of records) {
+  if (!r.srcColour || !(r.thinnable || r.near || r.far)) continue;
+  // A grown tree's pieces carry their root on the geometry (`treeRoot`), which
+  // a second mesh would share in another order: those keep the dissolve on
+  // their own material.
+  if (r.rootAttr || Array.isArray(r.mesh.material)) { ditherFade(r.mesh.material); continue; }
+  const fade = new T.InstancedMesh(r.mesh.geometry, fadeMaterial(r.mesh.material), r.n);
+  fade.instanceMatrix.setUsage(T.DynamicDrawUsage);
+  fade.instanceColor = new T.InstancedBufferAttribute(new Float32Array(r.n * 3), 3);
+  // A near crown fading out casts no shadow: its far half, fading in, casts it --
+  // a shape a shadow far off cannot tell apart, and a draw saved in every map.
+  fade.castShadow = r.mesh.castShadow && !r.near; fade.receiveShadow = r.mesh.receiveShadow; fade.frustumCulled = false;
+  fade.userData = {noCull: true, fadeOf: r.mesh, model: r.mesh.userData.model, role: r.mesh.userData.role};
+  fade.name = 'fading trees'; fade.count = 0; fade.visible = false;
+  fade.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+   const k = shadowOf.get(shadowCamera);
+   if (k === undefined) return;
+   this.userData.cullHeld = this.count;
+   this.count = r.shadowNear && k > 0 ? 0 : all || !r.fadeCum ? this.count : r.fadeCum[k];
+  };
+  fade.onAfterShadow = restore;
+  r.mesh.parent.add(fade);
+  r.fade = fade;
+ }
  const visible = new Uint8Array(boxes.length).fill(1);
+ // Low's share of each square's trees (`thinTrees`), 1 where all are drawn.
+ const keep = new Float32Array(boxes.length).fill(1);
+ let region = null, regionKey = '';
  // Each square's distance from the camera at the last rebuild, for a mesh
  // drawn only so far (`cullReach`, metres: the long grass).
  const dist = new Float32Array(boxes.length);
@@ -230,37 +333,74 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  // square map i needs plus a few it does not; never fewer. `pass` is that group;
  // `cum` in each record is where each group ends.
  let casters = [];                    // the shadow cameras, nearest map first
- const thin = new Uint8Array(boxes.length);  // 1: this square's crowns are drawn as twins
- const thinPainted = new Uint8Array(boxes.length);  // the same, for painted trees (`farPainted`)
+ // How near each square's crowns are drawn: 1 near, 0 as their twins, and
+ // between, inside SWAP_BAND of the line, the two cross-faded.
+ const thin = new Float32Array(boxes.length).fill(1);
+ const thinPainted = new Float32Array(boxes.length).fill(1);  // the same, for painted trees (`farPainted`)
  const pass = new Uint8Array(boxes.length), shadowOf = new Map(), shadowFrustum = new T.Frustum();
  const casterPos = new T.Vector3(), casterAim = new T.Vector3();
  const wide = new T.PerspectiveCamera(), frustum = new T.Frustum(), vp = new T.Matrix4();
  const lastPos = new T.Vector3(Infinity, 0, 0), lastFwd = new T.Vector3(), lastSun = new T.Vector3();
  const fwd = new T.Vector3(), away = new T.Vector3(), box = new T.Box3();
- let lastFov = 0, lastAspect = 0, stale = true, all = true, rebuilds = 0, rebuildMs = 0;
+ let lastFov = 0, lastAspect = 0, stale = true, all = true, rebuilds = 0, rebuildMs = 0, skipped = 0;
+ // What every square was last written by: in view, its first shadow map, its
+ // two swap mixes, Low's share, and for each reach a mesh has, past it or not.
+ const reaches = [...new Set(records.map(r => r.reach).filter(Boolean))];
+ const sig = new Uint8Array(boxes.length * (5 + reaches.length)), was = new Uint8Array(sig.length);
+ let written = false;
+ const same = () => {
+  const w = 5 + reaches.length;
+  for (let c = 0; c < boxes.length; c++) {
+   const o = c * w;
+   sig[o] = visible[c]; sig[o + 1] = pass[c]; sig[o + 2] = Math.round(thin[c] * FADE_STEPS); sig[o + 3] = Math.round(thinPainted[c] * FADE_STEPS); sig[o + 4] = Math.round(keep[c] * 64);
+   for (let r = 0; r < reaches.length; r++) sig[o + 5 + r] = dist[c] > reaches[r] ? 1 : 0;
+  }
+  let equal = written;
+  if (equal) for (let k = 0; k < sig.length; k++) if (sig[k] !== was[k]) { equal = false; break; }
+  was.set(sig); written = true;
+  return equal;
+ };
 
  const write = () => {
   for (const r of records) {
    const {mesh, order, src, srcColour, srcRoot, rootAttr, runs} = r, hidden = mesh.userData.cullHidden;
    const dst = mesh.instanceMatrix.array, dstColour = mesh.instanceColor?.array, dstRoot = srcRoot ? rootAttr.array : null;
+   const fade = r.fade, fDst = fade?.instanceMatrix.array, fColour = fade?.instanceColor.array;
    const groups = all ? 0 : casters.length;
    if (!r.cum || r.cum.length !== groups + 1) r.cum = new Int32Array(groups + 1);
-   let out = 0;
+   if (fade && (!r.fadeCum || r.fadeCum.length !== groups + 1)) r.fadeCum = new Int32Array(groups + 1);
+   let out = 0, fo = 0;
    for (let g = 0; g <= groups; g++) {
     for (let j = 0; j < runs.length; j += 3) {
      if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
      // Past a mesh's reach -- by its nearest point, so a square only goes once
      // all of it is beyond, where the clumps have sunk away.
      if (!all && r.reach && dist[runs[j]] > r.reach) continue;
-     const th = r.painted ? thinPainted : thin;
-     if (r.near && th[runs[j]] && !all) continue;
-     if (r.far && (all || !th[runs[j]])) continue;
-     const start = runs[j + 1], end = start + runs[j + 2];
+     const th = r.painted ? thinPainted : thin, mix = all ? 1 : r.srcColour ? th[runs[j]] : th[runs[j]] >= .5 ? 1 : 0;  // no colours to carry a dissolve: switched at the middle
+     if (r.near && mix <= 0) continue;
+     if (r.far && mix >= 1) continue;
+     // Inside the band: the near version leaves (1 - mix) of its pixels, the
+     // far version draws exactly those (levels 16 and up).
+     const swapQ = (r.near || r.far) && mix > 0 && mix < 1 ? Math.round((1 - mix) * (FADE_STEPS - 1)) : 0;
+     const start = runs[j + 1];
+     let end = start + runs[j + 2];
+     // Low: the square's trees up to its share -- a prefix, by hash.
+     const k0 = r.thinnable && !all ? keep[runs[j]] : 1;
+     if (k0 < 1) { let e = start; while (e < end && r.hash[e] < k0) e++; end = e; }
      for (let k = start; k < end; k++) {
       if (hidden && hidden[order[k]]) continue;
+      // Within the fade band of the share: dissolved by how far in (ditherFade).
+      const thin = k0 < 1 ? Math.round(Math.max(0, Math.min(1, 1 - (k0 - r.hash[k]) / LOW_TREES.fade)) * FADE_STEPS) : 0;
+      const level = !dstColour ? 0 : r.far ? (swapQ ? FADE_STEPS + swapQ : 0) : Math.max(thin < FADE_STEPS ? thin : FADE_STEPS - 1, swapQ);
+      if (level && fade) {
+       for (let q = 0; q < 16; q++) fDst[fo * 16 + q] = src[k * 16 + q];
+       fColour[fo * 3] = srcColour[k * 3] + level * 4; fColour[fo * 3 + 1] = srcColour[k * 3 + 1]; fColour[fo * 3 + 2] = srcColour[k * 3 + 2];
+       fo++;
+       continue;
+      }
       for (let q = 0; q < 16; q++) dst[out * 16 + q] = src[k * 16 + q];
       if (dstColour) {
-       dstColour[out * 3] = srcColour[k * 3];
+       dstColour[out * 3] = srcColour[k * 3] + level * 4;
        dstColour[out * 3 + 1] = srcColour[k * 3 + 1];
        dstColour[out * 3 + 2] = srcColour[k * 3 + 2];
       }
@@ -269,8 +409,15 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      }
     }
     r.cum[g] = out;
+    if (fade) r.fadeCum[g] = fo;
    }
-   r.drawn = out; mesh.count = out; mesh.visible = out > 0;
+   if (fade) {
+    fade.count = fo; fade.visible = fo > 0;
+    const fm = fade.instanceMatrix, fc = fade.instanceColor;
+    fm.clearUpdateRanges(); fm.addUpdateRange(0, fo * 16); fm.needsUpdate = true;
+    fc.clearUpdateRanges(); fc.addUpdateRange(0, fo * 3); fc.needsUpdate = true;
+   }
+   r.drawn = out + fo; mesh.count = out; mesh.visible = out > 0;
    if (r.twin) { r.twin.count = out; r.twin.visible = out > 0; }
    // Only the part in use goes to the graphics card.
    const im = mesh.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(0, out * 16); im.needsUpdate = true;
@@ -295,16 +442,24 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // toon). Every mesh shown for `fn`, then each put back as it was; the
   // instance counts are untouched -- a compile needs only the object.
   forCompile(fn) {
-   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null]);
-   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; }
+   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null, r.fade ? r.fade.visible : null]);
+   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; if (r.fade) r.fade.visible = true; }
    try { return fn(); }
-   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; }); }
+   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; if (r.fade) r.fade.visible = was[i][2]; }); }
   },
   // `lights`: the shadow-casting lights to sort for, nearest map first (the
   // cascades, or the one sun). Their shadow cameras must already be placed for
   // this frame -- the renderer calls this after the cascades have moved.
-  update(camera, sunDir, lights = []) {
+  // `lowRegion` (Low only, `thinTrees`): {path, ball, camera, flying} --
+  // low-trees.js says what each is. A new hole, a ball moved 10 m or a change
+  // into or out of free flight rebuilds, as a camera move does.
+  update(camera, sunDir, lights = [], lowRegion = null) {
    if (!tune.shadowMaps) lights = [];
+   if (thinTrees && lowRegion) {
+    const b = lowRegion.ball, key = `${lowRegion.path?.length}:${lowRegion.path?.[0]}:${lowRegion.path?.[1]}:${b ? Math.round(b.x / 10) + ',' + Math.round(b.z / 10) : '-'}:${lowRegion.flying ? 1 : 0}`;
+    if (key !== regionKey) { regionKey = key; stale = true; }
+    region = lowRegion;
+   }
    camera.updateMatrixWorld();
    camera.getWorldDirection(fwd);
    if (lights.length !== casters.length || lights.some((l, i) => l.shadow.camera !== casters[i])) {
@@ -317,6 +472,10 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    if (!moved && !stale) return false;
    lastPos.copy(camera.position); lastFwd.copy(fwd); lastFov = camera.fov; lastAspect = camera.aspect;
    if (sunDir) lastSun.copy(sunDir);
+   // A rebuild something asked for (a tree hidden, a tune, Low's hole moved)
+   // always writes; one the camera's travel set off writes only if a square's
+   // decision changed (`same` below).
+   const forced = stale || all;
    stale = false; all = false;
    const started = performance.now();
 
@@ -337,6 +496,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
     const flat = Math.hypot(sunDir.x, sunDir.z);
     if (flat > 1e-4) { reach = flat / sunDir.y; away.set(-sunDir.x / flat, 0, -sunDir.z / flat); }
    }
+   if (thinTrees && region) {
+    const cam = {x: camera.position.x, z: camera.position.z}, reg = {...region, camera: cam};
+    const rules = tune.lowTrees ? {...LOW_TREES, ...tune.lowTrees} : LOW_TREES;
+    // Rounded up to 64ths: never under the share, and steady between rebuilds.
+    for (let c = 0; c < boxes.length; c++) keep[c] = Math.min(1, Math.ceil(squareKeep(reg, {x0: boxes[c].min.x, x1: boxes[c].max.x, z0: boxes[c].min.z, z1: boxes[c].max.z}, rules) * 64) / 64);
+   }
    for (let c = 0; c < boxes.length; c++) {
     const b = boxes[c];
     dist[c] = b.distanceToPoint(camera.position);
@@ -355,12 +520,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    // hovering at the boundary does not swap it back and forth.
    const focal = 1 / (2 * Math.tan(T.MathUtils.degToRad(camera.fov) / 2));
    const mark = (into, small) => {
-    if (!(small > 0)) { into.fill(0); return; }
+    if (!(small > 0)) { into.fill(1); return; }
     for (let c = 0; c < boxes.length; c++) {
      const b = boxes[c], d = b.distanceToPoint(camera.position);
-     if (d < tune.near) { into[c] = 0; continue; }
+     if (d < tune.near) { into[c] = 1; continue; }
      const share = (b.max.y - b.min.y) / d * focal;
-     into[c] = share < small * (into[c] ? 1.15 : 1) ? 1 : 0;
+     into[c] = share <= small ? 0 : share >= small * SWAP_BAND ? 1 : Math.round((share - small) / (small * (SWAP_BAND - 1)) * FADE_STEPS) / FADE_STEPS;
     }
    };
    mark(thin, tune.farTrees ?? farTrees);
@@ -380,6 +545,12 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
     for (const plane of shadowFrustum.planes) plane.constant += grow;
     for (let c = 0; c < boxes.length; c++) if (visible[c] && shadowFrustum.intersectsBox(boxes[c])) pass[c] = i;
    }
+   // NOTHING CHANGED, NOTHING WRITTEN (the frame-rate goal, 9 November 2026):
+   // every decision a square's trees are written by, compared with the last
+   // write's. A camera drifting across the overview rewrote and uploaded every
+   // tree in view every frame (1.8 ms of a Medium frame on Dinosaur Mountain)
+   // for squares that had not changed.
+   if (!forced && same()) { skipped++; return false; }
    write();
    rebuilds++; rebuildMs = performance.now() - started;
    return true;
@@ -397,7 +568,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    for (const r of records) { if (r.near) nearCrowns += r.drawn; if (r.far) farCrowns += r.drawn; }
    return {meshes: records.length, squares: boxes.length, squaresDrawn: shown, instances, drawn, shadow,
     thinCrowns: nearCrowns + farCrowns ? +(farCrowns / (nearCrowns + farCrowns)).toFixed(3) : 0,
-    rebuilds, lastRebuildMs: +rebuildMs.toFixed(2)};
+    rebuilds, skipped, lastRebuildMs: +rebuildMs.toFixed(2)};
   }
  };
 }

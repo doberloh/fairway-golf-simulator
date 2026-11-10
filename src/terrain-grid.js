@@ -28,6 +28,13 @@ export function* makeGroundGridSteps(sample,halfX,halfZ,spacing=3,refine=null){
  base+=LOOP_WEIGHT[0];
  const g={nx,nz,dx,dz,halfX,halfZ,values};if(!refine)return g;
  const mask=new Uint8Array(nx*nz),N=6,cells=new Map(),positions=[],indices=[],extra=new Map();
+ // THE MIDDLE POINTS, RECORDED (the frame-rate goal, 9 November 2026): for each
+ // cell, the ids of the vertices already made at the middle of its four edges
+ // and its centre -- bottom, right, top, left, centre; -1 where there is none.
+ // Nothing is made for it and nothing it makes changes: ground-lod.js draws a
+ // square of refined ground from these 1.5 m points, a ninth of the triangles,
+ // where the full half-metre detail would be under a pixel.
+ const H=N/2,mid5=new Int32Array(nx*nz*5).fill(-1);
  for(let j=0;j<=nz;j++){for(let i=0;i<=nx;i++)positions.push(-halfX+i*dx,values[j*(nx+1)+i],-halfZ+j*dz);
   yield base+LOOP_WEIGHT[1]*(j/nz);}
  base+=LOOP_WEIGHT[1];
@@ -45,16 +52,16 @@ export function* makeGroundGridSteps(sample,halfX,halfZ,spacing=3,refine=null){
  for(let j=0;j<nz;j++){
   for(let i=0;i<nx;i++){
   const key=j*nx+i,a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;
-  if(mask[key]){const heights=new Float32Array((N+1)**2),ids=[];for(let z=0;z<=N;z++)for(let x=0;x<=N;x++){const id=vertex(i*N+x,j*N+z);ids.push(id);heights[z*(N+1)+x]=positions[id*3+1];}for(let z=0;z<N;z++)for(let x=0;x<N;x++){const k=z*(N+1)+x;indices.push(ids[k],ids[k+N+1],ids[k+1],ids[k+1],ids[k+N+1],ids[k+N+2]);}cells.set(key,{n:N,heights});
+  if(mask[key]){const heights=new Float32Array((N+1)**2),ids=[];for(let z=0;z<=N;z++)for(let x=0;x<=N;x++){const id=vertex(i*N+x,j*N+z);ids.push(id);heights[z*(N+1)+x]=positions[id*3+1];}for(let z=0;z<N;z++)for(let x=0;x<N;x++){const k=z*(N+1)+x;indices.push(ids[k],ids[k+N+1],ids[k+1],ids[k+1],ids[k+N+1],ids[k+N+2]);}cells.set(key,{n:N,heights});const m=key*5;mid5[m]=ids[H];mid5[m+1]=ids[H*(N+1)+N];mid5[m+2]=ids[N*(N+1)+H];mid5[m+3]=ids[H*(N+1)];mid5[m+4]=ids[H*(N+1)+H];
   }else if(marked(i-1,j)||marked(i,j+1)||marked(i+1,j)||marked(i,j-1)){
    const ring=[],edges=[marked(i-1,j),marked(i,j+1),marked(i+1,j),marked(i,j-1)];
-   for(let edge=0;edge<4;edge++)for(let k=0;k<N;k+=edges[edge]?1:N){const [u,v]=[[0,k],[k,N],[N,N-k],[N-k,0]][edge],id=vertex(i*N+u,j*N+v);ring.push({u:u/N,v:v/N,y:positions[id*3+1],id});}
-   const mid=vertex(i*N+N/2,j*N+N/2);for(let k=0;k<ring.length;k++)indices.push(mid,ring[k].id,ring[(k+1)%ring.length].id);cells.set(key,{ring,y:positions[mid*3+1]});
+   for(let edge=0;edge<4;edge++)for(let k=0;k<N;k+=edges[edge]?1:N){const [u,v]=[[0,k],[k,N],[N,N-k],[N-k,0]][edge],id=vertex(i*N+u,j*N+v);ring.push({u:u/N,v:v/N,y:positions[id*3+1],id});if(k===H)mid5[key*5+[3,2,1,0][edge]]=id;}
+   const mid=vertex(i*N+N/2,j*N+N/2);mid5[key*5+4]=mid;for(let k=0;k<ring.length;k++)indices.push(mid,ring[k].id,ring[(k+1)%ring.length].id);cells.set(key,{ring,y:positions[mid*3+1]});
   }else indices.push(a,c,b,b,c,d);
   }
   yield base+LOOP_WEIGHT[3]*(j/nz);
  }
- g.cells=cells;g.positions=new Float32Array(positions);g.indices=new Uint32Array(indices);return g;
+ g.cells=cells;g.mid5=mid5;g.positions=new Float32Array(positions);g.indices=new Uint32Array(indices);return g;
 }
 const plane=(A,B,C,D,a,b)=>a+b<=1?A+(B-A)*a+(C-A)*b:D+(C-D)*(1-a)+(B-D)*(1-b);
 export function groundHeight(g,x,z,fallback){

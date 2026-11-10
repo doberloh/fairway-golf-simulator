@@ -35,6 +35,9 @@ const flag = (name, fallback) => {
 const A = flag('a'), B = flag('b'), TIERS = String(flag('tiers', 'ultra')).split(',');
 const BIOME = flag('biome', 'redwood'), SEED = flag('seed', 'PROFILE'), LABEL = flag('label', 'look');
 const OUT = path.join(ROOT, 'bench', 'ab', 'look', LABEL);
+// `--built <x.fairway>`: a built course from its file, served beside the page
+// (the frame-rate goal, 9 November 2026).
+const BUILT = flag('built', null), builtBytes = BUILT ? fs.readFileSync(path.resolve(ROOT, BUILT)) : null;
 // The play camera as the course opens, then fixed free-camera poses.
 const SPOTS = [
  ['play1', null],
@@ -56,7 +59,7 @@ const frames = (page, n) => page.evaluate(n => new Promise(done => {
 
 async function shoot(file, tag, tier) {
  const html = fs.readFileSync(path.resolve(ROOT, file));
- const server = await new Promise(r => { const s = createServer((_, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); }); s.listen(0, '127.0.0.1', () => r(s)); });
+ const server = await new Promise(r => { const s = createServer((req, res) => { if (builtBytes && req.url === '/built.fairway') { res.writeHead(200, {'Content-Type': 'application/zip'}); res.end(builtBytes); return; } res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); }); s.listen(0, '127.0.0.1', () => r(s)); });
  const browser = await chromium.launch({headless: true, args: GPU_ARGS});
  const out = {errors: [], checks: {}};
  try {
@@ -73,7 +76,8 @@ async function shoot(file, tag, tier) {
   // THE CLOCK STOPS before the course exists, so its clouds start where the
   // seed puts them and never move.
   await page.evaluate(() => { const v = window.__view, r = v.render; v.render = function () { return r.call(this, 0); }; });
-  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: 9, seed: SEED});
+  const built = builtBytes ? await page.evaluate(async () => window.lab.built(new Uint8Array(await (await fetch('/built.fairway')).arrayBuffer()))) : null;
+  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: 9, seed: SEED, ...(built ? {built} : {})});
   await page.evaluate(() => { const v = window.__view; v.elapsed = 0; if (v.waterTime) v.waterTime.value = 0; });
   // The interface's own timers (the hole's quiet start, label fades) run on
   // the page's clock, not the renderer's: let them finish.

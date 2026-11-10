@@ -150,3 +150,23 @@ test("a tee shot's carry is kept clear of tall grass, and only the carry",()=>{
   if(free(fw))assert.equal(inCarry(fw.x,fw.z),1,`hole ${h.hole+1}: its fairway counts as carry`);
  }
 });
+
+// THE CAMERA INSIDE A TREE (vegetation.js clearCameraTrees): the tree round the
+// camera is hidden and comes back when the camera leaves -- checked since 9
+// November 2026, when the check started looking only at the trees near the
+// camera and touching only the trees whose state changed (the frame-rate goal).
+test('a tree the camera stands in is hidden, and shown again when it leaves', () => {
+ const world = generateWorld({seed: 'CAMERA-TREE', biome: 'pacnw', holes: 9});
+ const view = {world, style: 'cartoon', group: new T.Group(), treeInstances: [], quality: {foliage: 1, grass: 1}, resources: [], config: {mode: 'free'}};
+ addVegetation(view);
+ const tree = world.trees.find(t => t.h > 10 && t.r > 2);
+ const hiddenOf = t => view.treeInstances.flatMap(b => b.owners.map((o, i) => o === t ? b.hidden[i] : null)).filter(v => v !== null);
+ view.camera = {position: new T.Vector3(tree.x, tree.y + tree.h * .6, tree.z)}; view.look = new T.Vector3(tree.x + 50, tree.y + 5, tree.z);
+ view.clearCameraTrees();
+ assert.ok(hiddenOf(tree).length && hiddenOf(tree).every(v => v === 1), 'the tree round the camera is hidden');
+ const far = world.trees.find(t => Math.hypot(t.x - tree.x, t.z - tree.z) > 300);
+ assert.ok(hiddenOf(far).every(v => v === 0), 'a tree 300 m off is not');
+ view.camera.position.set(tree.x + 400, tree.y + 200, tree.z); view.look.set(tree.x + 450, tree.y, tree.z);
+ view.clearCameraTrees();
+ assert.ok(hiddenOf(tree).every(v => v === 0), 'shown again once the camera has gone');
+});

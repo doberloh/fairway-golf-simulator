@@ -327,6 +327,31 @@ and the people go with Architect, while paths, bridges, markings, walls,
 landmarks and wildlife stay, and that the goal needs no asking for the
 graphics card or processor: "computer is open to you fully".
 
+**The frame-rate gap is no longer accepted, 9 November 2026.** The 26
+October acceptance of High and Ultra's cost ("220 frames per second is still
+way higher than a golf sim actually needs") had become a rule in AGENTS.md
+that kept every later check on Low and stopped there. Two days after 0.9.10,
+asked whether a speed pass should aim only at weak machines on Low, the owner
+withdrew it: "Large courses in the builder can tank framerates even on this
+PC", and asked for a goal across every tier and every device. The number had
+been measured on generated nine-hole courses; nobody had profiled the large
+built courses where it fails. Lesson: an acceptance measured on one kind of
+course does not cover the kinds it never saw.
+
+**The frame-rate branch unlocks the computer, 9 November 2026.** The goal's
+first draft carried a "GPU allowed" budget (40 runs, 3 minutes apart, the
+software arm left out). Before starting it the owner asked instead for "an
+agent rule that goes away when this branch is merged back in that overrides
+the need to ask to use the GPU or CPU and allows the agent to use the full PC
+utilization". So AGENTS.md *On the frame-rate-all-tiers branch, the whole
+computer is free* follows the course builder's: no asking, no cap, the
+software arm in, the processor at full use, and the crash precautions kept --
+the gate, one graphics job at a time, software rendering alone, retry once,
+stop after a crash. One addition, about measuring rather than safety: nothing
+heavy on the processor beside a frame measurement, because a busy machine has
+inflated timings tenfold here before. It deleted itself in the merge (9 November 2026, released as
+v0.9.11), and main asks before graphics work again.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

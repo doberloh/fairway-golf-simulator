@@ -1059,7 +1059,14 @@ the builder has been played by a person (TODO lists what to check).
 - **Checks** (`checks.js`): a tee off its pad or in water, a green mark off
   its green, a green too small for a cup 3 m from the edge, a green steeper
   than 6% on average, a green under a pond's level, a tree on a green -- each
-  with where it is.
+  with where it is. **And a course's weight** (`courseWeight`, 9 November 2026,
+  the frame-rate goal; the owner: "We might need to add some optimization
+  options into the builder"): past 25,000 trees or 400 houses (PLACED, from
+  Dinosaur Mountain and Troon North) a note names them, says how many trees
+  stand more than 250 m from every hole's line, and points at where those stand
+  thickest -- trees an author may thin, a choice left to the author because a
+  ball can hit them. Dinosaur Mountain: 45,223 trees, 600 houses, 32,076 far
+  from play.
 - **A test round** (`test-round.js`): the virtual golfer (tests/
   virtual-golfer.mjs, unchanged) plays every hole twice -- a steady golfer and
   a looser one -- with the round's own rules and pins, and reports strokes
@@ -1574,6 +1581,18 @@ graphics card, so neither the picture nor the times below have been checked.
   clock. None of them saved: `borrowedClock`, rate 0, nothing written.
 - **Size**: the game's drawing code joins the builder's page: 26.6 to 28.2 MB
   (1.1 MB more gzipped).
+- **What the picture costs** (9 November 2026, the frame-rate goal): the bar
+  shows frames a second, the processor's work in a frame, and the triangles and
+  draws in it, every half second, read from the renderer's own counts -- so a
+  heavy spot is seen while building. **Rejected: builder-only drawing switches**
+  (fewer trees, a coarser ground in Game view only): Game view is there to show
+  what a player sees, and every fix to the game's drawing reaches it anyway.
+- **The wait to open it, measured on Dinosaur Mountain** (tools/builder-frames.mjs,
+  RTX 4090): 45-51 s before 9 November 2026 -- building the course 21 s, of
+  which 16 s baking the field of distances to every outline on one core --
+  29 s after, the field baked in bands on other cores (bake-pool.js): building
+  5.3 s, drawing 4.7 s, preparing the graphics 18.9 s (the shader programs,
+  already compiled in parallel; left). Frames there 6-17 ms before, 3-9 ms after.
 - **Rejected**: opening the game's page beside the builder (file:// pages cannot
   hand each other a course reliably, and it is 36 MB and a full start every time);
   dressing the editor's own view as the game (it answers a brush in a frame because

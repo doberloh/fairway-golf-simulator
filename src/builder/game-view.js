@@ -16,7 +16,8 @@
 // clock is the view's own here (`borrowedClock`, rate 0), so the player's saved
 // time of day is neither used up nor overwritten.
 import {GolfView} from '../renderer.js';
-import {worldFromDoc} from '../built-world.js';
+import {worldFromDoc, builtExtent} from '../built-world.js';
+import {bakeBuiltFieldPooled} from '../bake-pool.js';
 import {loadGraphics, QUALITY, QUALITY_LABELS} from '../graphics.js';
 import {clearOfGround, flyAxes, samePose} from './game-look.js';
 
@@ -33,7 +34,12 @@ export function createGameView(parent, {onBack, busy}) {
  const graphics = loadGraphics(), quality = make('select', {className: 'cb-gamequality', title: 'The game\'s graphics setting'}, ...QUALITY.map(value => make('option', {value, textContent: (QUALITY_LABELS[value] ?? value).split(' · ')[0]})));
  quality.value = graphics.quality; season.value = 'summer';
  const label = (text, ...input) => make('label', {}, text + ' ', ...input);
- const bar = make('div', {className: 'cb-gamebar'}, back, label('Hole', hole), label('Season', season), label('Time', time, clock), label('Graphics', quality),
+ // WHAT THE PICTURE COSTS (the owner, 9 November 2026: "We might need to add some
+ // optimization options into the builder"): frames a second, the work in a
+ // frame, and what is drawn -- so a heavy spot is seen while building. Read
+ // from the renderer's own counts, every half second.
+ const cost = make('span', {className: 'cb-gamecost', title: 'Frames a second, the work the processor does in a frame, and the triangles and draws in it, on this computer at this graphics setting'});
+ const bar = make('div', {className: 'cb-gamebar'}, back, label('Hole', hole), label('Season', season), label('Time', time, clock), label('Graphics', quality), cost,
   make('span', {className: 'cb-gamehint', textContent: 'W A S D fly, Q and E down and up, Shift faster; drag to look, the wheel moves ahead. G goes back.'}));
  const root = make('div', {className: 'cb-game'}, stage, bar);
  root.style.visibility = 'hidden';
@@ -44,6 +50,7 @@ export function createGameView(parent, {onBack, busy}) {
  view.borrowedClock = true; view.daylight.rate = 0; view.daylight.floodlights = false;
 
  let world = null, on = false, raf = 0, last = 0, placedFrom = null, working = false;
+ let tally = {since: performance.now(), frames: 0, work: 0, tris: 0, draws: 0};
  const held = new Set();
  const clockText = () => { const h = Math.floor(view.daylight.hour), m = Math.round((view.daylight.hour - h) * 60); clock.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; };
  const noRound = () => { for (const k of ['ball', 'ballRing', 'aimLine', 'aimRing']) if (view[k]) view[k].visible = false; };
@@ -72,7 +79,15 @@ export function createGameView(parent, {onBack, busy}) {
    view.targetPos.y = clearOfGround(view.targetPos.y, world.height(view.targetPos.x, view.targetPos.z));
    view.updateFreeLook();
   }
+  const t0 = performance.now(), info = view.renderer.info;
+  info.autoReset = false; info.reset();
   view.render(dt);
+  tally.frames++; tally.work += performance.now() - t0; tally.tris += info.render.triangles; tally.draws += info.render.calls;
+  if (now - tally.since >= 500) {
+   const n = tally.frames, s = (now - tally.since) / 1000;
+   cost.textContent = `${Math.round(n / s)} fps · ${(tally.work / n).toFixed(1)} ms work · ${(tally.tris / n / 1e6).toFixed(1)} M triangles · ${Math.round(tally.draws / n)} draws`;
+   tally = {since: now, frames: 0, work: 0, tris: 0, draws: 0};
+  }
  };
  // Season and graphics change the drawing, not the course: the same world,
  // built again, from where the camera is.
@@ -114,7 +129,10 @@ export function createGameView(parent, {onBack, busy}) {
     if (fresh) {
      busy('Building the course…'); await breathe();
      hole.replaceChildren(...doc.holes.map((h, i) => make('option', {value: i, textContent: `Hole ${h.number}`})));
-     world = worldFromDoc(doc, {season: season.value});
+     // The field baked on other cores (bake-pool.js): 16 of the 21 seconds of
+     // building Dinosaur Mountain here, on one core, before 9 November 2026.
+     const {ex, ez} = builtExtent(doc), field = await bakeBuiltFieldPooled(doc, ex, ez);
+     world = worldFromDoc(doc, {season: season.value}, {field});
      await draw(pose);
     } else if (!samePose(pose, placedFrom)) view.placeCamera(pose.eye, pose.yaw, pose.pitch);
     placedFrom = pose;

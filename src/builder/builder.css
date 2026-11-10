@@ -98,6 +98,7 @@ select option{background:#03100e;color:var(--ink)}
 .cb-gamebar label{display:flex;align-items:center;gap:6px}
 .cb-gamebar select{background:#03100e;border:1px solid var(--line);padding:4px 6px}
 .cb-gamebar input[type=range]{width:130px}
+.cb-gamecost{font:12px/1.2 ui-monospace,Consolas,monospace;opacity:.85;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cb-gamehint{margin-left:auto}
 .cb-cover{display:flex;align-items:center;gap:8px;margin:4px 0}
 .cb-covermap{width:72px;height:72px;flex:none;image-rendering:pixelated;border:1px solid var(--line)}

@@ -32,3 +32,17 @@ test('a tee off its pad, a tee in water, a green too small, a steep green and a 
  const small = createEditor(doc({surfaces: {green: [box(-2, 78, 2, 82)], tee: [box(-9, -84, -1, -76)]}}));
  assert.match(checkCourse(small).map(c => c.text).join('\n'), /too small for a cup/);
 });
+
+// A COURSE'S WEIGHT (the frame-rate goal, 9 November 2026): past HEAVY's trees
+// or houses, a note names them and points at the far trees' thickest stand.
+test('a heavy course is named, with where its trees stand furthest from play', async () => {
+ const {courseWeight, HEAVY} = await import('../src/builder/checks.js');
+ const {TREE_STRIDE} = await import('../src/course-doc.js');
+ assert.equal(courseWeight(doc()), null, 'a light course has no note');
+ const n = HEAVY.trees + 10, trees = new Float32Array(n * TREE_STRIDE);
+ // Most near the holes' line (x near 0), a stand of 4,000 far off at x 800.
+ for (let i = 0; i < n; i++) { trees[i * TREE_STRIDE] = i < 4000 ? 800 + (i % 40) : (i % 100) - 50; trees[i * TREE_STRIDE + 1] = (i % 150) - 75; }
+ const note = courseWeight({...doc(), trees});
+ assert.ok(note && /heavy course/.test(note.text) && /4,000 of the trees/.test(note.text), note?.text);
+ assert.ok(note.at.x > 700, `points at the far stand: ${note.at.x}`);
+});

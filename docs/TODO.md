@@ -31,6 +31,41 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+- [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
+  builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
+  moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
+  withdrawn (AGENTS.md). **Done as a /goal** on branch `frame-rate-all-tiers` (its spec, log and
+  status page in docs/studies/frame-rate-all-tiers/GOAL.md, local), cleared by the owner, merged and
+  **released as 0.9.11** (9 November 2026); the branch's free use of the computer ended with the
+  merge. Built (RESEARCH, *Frame rate on every tier: the large built
+  courses*): far versions for every model, the swap cross-faded, Low's trees (the owner's rule), the
+  ground drawn coarser with distance (with a 1.5 m level), the field baked on every core, the houses'
+  footings and drives batched, two per-frame processor costs cut, the builder's cost readout and
+  weight note, the dissolve on fade meshes only. Dinosaur Mountain 59-82% faster on every tier (Low 7.4 to
+  1.3 ms on the RTX 4090, Ultra 20.0 to 8.2), generated courses no slower; Game view opens in 29 s, not
+  45-51. High and Ultra miss 120 a second at the 95th percentile on the large built courses (their
+  heavy frames redraw a far shadow map: 8-15 ms).
+  **Seen only in captures and measured, not played -- to check:** the dissolve where trees turn into
+  their far versions (does it shimmer?); Low's thinning far from the hole, and its fade-in as you
+  walk; free flight on Low (the 250 m ring); seams between the ground's squares (skirts) and the
+  distant ground's shape; the builder's readout and its weight note; a large course's load. **Owed by
+  the goal:** the device stand-ins on generated courses are far from their targets (iPhone 13 on
+  Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
+  call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
+  built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
+  **Eighteen plants have no far version** (9 November 2026; RESEARCH, *The outline kept*): the
+  automatic far versions now keep their model's outline as the hand-made ones do, and canes, blades,
+  flat mats and layered sprays could not at any share up to a half -- both ocotillos, the halas,
+  sotol, sassafras, the Pacific dogwood, the lake junipers and others are drawn in full at every
+  distance, as on main. That costs Low most on Dinosaur Mountain (its ocotillos). Far versions made
+  by hand in Blender (cartoon.py `far_twin`) for the ones that are planted thickly would win it
+  back; the build's list of them is printed by tools/build-meshes.mjs.
+- [ ] **Two builder smoke journeys fail on main too** (found 9 November 2026, running the builder's
+  smoke for the frame-rate goal; both fail the same on the build at 21eecc1). `builder-door-2`: "the
+  tree height scale should grow the trees, taller and wider, at once: 0 -> 0" -- the journey reads no
+  trees to measure. `builder-door-2-worthington` (local only): it expects Worthington's survey to
+  suggest the Heartland, which the pare to fifteen landscapes removed; it suggests Classic Parkland.
+  The journeys need updating, or the slider looking at; not part of the goal.
 - [ ] **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
   the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
   corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
@@ -78,6 +113,16 @@ check.
   (RESEARCH, *The remakes' frame cost on Low*): Redwood Coast's graphics +0.24 ms a frame (about 13%,
   the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
   the retaken pictures; play it (not played); the brittlebush is shardy close up.
+
+## Release 0.9.11 (9 November 2026)
+
+- [ ] **Play 0.9.11 by hand.** Released at the owner's word ("Lets get this merged into main and do
+  a new patch version. Push to github as well as the live website"), the website's demo redeployed
+  with it. The frame-rate work was measured and seen only in captures and in motion on the virtual
+  clock: the dissolve to far versions, Low's thinning and fade-in as you walk and fly, the distant
+  ground's seams, the builder's readout and weight note, and High and Ultra after the far versions'
+  outline rule are still to be seen in play (the list under *Frame rate on every tier and device*;
+  DISTRIBUTION_REVIEW, the addendum for v0.9.11).
 
 ## Release 0.9.10 (9 November 2026)
 
@@ -1454,8 +1499,9 @@ The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
   the twelve-sided crown lobes up close; the one-off long frame (about 120 ms
   on the 4090) the first time the camera turns onto new ground. High and
   Ultra stay 2-3.6 ms a frame over main on the 4090 (Autumn, PNW, Mountain,
-  Midwest) -- **accepted by the owner, 26 October 2026** ("220 frames per
-  second is still way higher than a golf sim actually needs").
+  Midwest) -- accepted by the owner 26 October 2026, **withdrawn 9 November
+  2026** ("Large courses in the builder can tank framerates even on this PC";
+  *Frame rate on every tier and device*, above).
 - [ ] **Low on a weak machine, measured against main** (the owner's one
   frame-rate worry, 26 October 2026). Low doubled on the 4090 (Autumn 0.55 to
   1.0 ms) but nobody has measured a machine without a real graphics card:
@@ -5603,7 +5649,11 @@ to put "potential gfx improvements" instead of inventing features overnight.
   drawing fewer trees and plants, so it is closed rather than left open. What
   weak hardware has instead: Low's own trims, distant crowns drawn as their
   thinned twins (F2; the grown trees only, since 16 October), and automatic
-  resolution (F4).
+  resolution (F4). **Reopened for Low only, 9 November 2026** (the owner: "Medium should still
+  show all trees. Low can draw less trees but only if we can ensure that we draw all of the trees
+  for the hole we are on at a minimum"): Medium and up still draw every tree; Low may skip far ones,
+  never one of the hole being played (PROJECT_HANDOFF, *GRAPHICS TIERS MAY NOT TOUCH*). Open work in
+  *Frame rate on every tier and device*.
 
 - [x] **Floodlight shadows, on every tier, with a switch (30 September).**
   Branch `frame-and-lights`. The texture unit they were blocked on was freed by

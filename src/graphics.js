@@ -37,12 +37,16 @@ export const TIERS = {
  // change a played surface and trunks are collidable, so two players on
  // different tiers must hit the same trees. A tier-driven draw distance (draw
  // fewer, collide with all) was the remaining lever; the owner closed it as
- // won't do on 30 September, on the look. Automatic resolution is what Low has.
+ // won't do on 30 September, on the look, and reopened it for Low only on 9
+ // November: "Medium should still show all trees. Low can draw less trees but
+ // only if we can ensure that we draw all of the trees for the hole we are on
+ // at a minimum." Medium and up draw every tree; Low may skip far ones, never
+ // one of the hole being played. Every tier collides with all of them.
  low: {
   pixelRatio: .75,
   // The far woods (vegetation.js addFarWoods; the polish goal) are grove
   // domes only on Low -- 20 triangles a site, never bare ground (the owner),
-  // and the cheapest for the weakest machines, the owner's one worry.
+  // and the cheapest for the weakest machines (the owner's worry then; every tier counts since 9 November).
   farWoods: 'groves',
   shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},
@@ -88,6 +92,14 @@ export const TIERS = {
   // at 30% rather than 15% measured 10-17% of a Low frame on Autumn
   // (CARTOON_OVERHAUL *Frame rate*). PLACED.
   farPainted: .3,
+  // The ground drawn coarser with distance (ground-lod.js; the frame-rate goal,
+  // 9 November 2026): the most a square may stand off the ground the ball
+  // meets, in pixels -- Low and Medium may look different (the owner). PLACED.
+  groundTolerance: 4,
+  // LOW DRAWS FEWER TREES, NEVER THE HOLE'S (the owner, 9 November 2026;
+  // low-trees.js has the rule and its PLACED distances; instance-cull.js
+  // draws it). Medium and up draw every tree.
+  thinTrees: true,
   // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
   understory: .25,
   // How far the long grass between the holes is drawn, in metres; it sinks
@@ -148,6 +160,8 @@ export const TIERS = {
   farTrees: .15,
   // As low, a little later. PLACED.
   farPainted: .25,
+  // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
+  groundTolerance: 3,
   // Half a stand's understory: shrubs a ball passes through, so a share is
   // only a look (vegetation.js). PLACED.
   understory: .5,
@@ -197,6 +211,8 @@ export const TIERS = {
   // Painted trees below 5% of the screen's height draw their shipped twin
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
+  // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
+  groundTolerance: 2,
   understory: 1,
   longGrassReach: 190,
   // Shafts are composited additively over the finished frame, so this is how
@@ -274,6 +290,10 @@ export const TIERS = {
   // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
   // *Rules set aside*.
   farPainted: .03,
+  // The ground drawn coarser with distance (ground-lod.js; 9 November 2026):
+  // the most a square may stand off the ground the ball meets, in the picture's own
+  // pixels (a CSS pixel on a screen at twice its density). PLACED.
+  groundTolerance: 2,
   // The whole understory of a stand (vegetation.js `under`).
   understory: 1,
   longGrassReach: 260,
@@ -481,5 +501,6 @@ export function needsRebuild(a, b) {
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
   (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
-  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true);
+  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true) ||
+  !!x.thinTrees !== !!y.thinTrees;
 }

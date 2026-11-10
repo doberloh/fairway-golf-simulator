@@ -4,6 +4,8 @@
 //   node tools/capture/build-hooked.mjs          (once: the game with window.__view)
 //   node tools/frame-variants.mjs --goal <name> --cap 40 --variants tools/variants/ultra.mjs
 //   ... --tier ultra --spots tee1,tee5 --frames 120 --repeat 2
+//   ... --built <x.fairway>    a built course from its file (the frame-rate goal,
+//                              9 November 2026), served beside the page
 //
 // A variants file exports `variants`: [{name, apply, undo}], where `apply` and
 // `undo` are JavaScript run in the page with `v` bound to the renderer
@@ -45,7 +47,13 @@ const SPOTS = {
  sun: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'},
  // The play camera behind the ball on that tee (frame-ab.mjs says why).
  play1: {play: 0}, play5: {play: 4}, play9: {play: 8},
+ // The overview (the whole hole from above), as frame-ab.mjs has it.
+ overview: {view: 'overview'},
+ // Free flight (frame-ab.mjs says why).
+ fly1: {hole: 0, along: 150, height: 40, look: 'pin'}, fly5: {hole: 4, along: 150, height: 40, look: 'pin'},
+ flyhigh: {hole: 0, along: -150, height: 250, look: 'pin'},
 };
+const BUILT = flag('built', null), builtBytes = BUILT ? fs.readFileSync(path.resolve(ROOT, BUILT)) : null;
 const spotNames = String(flag('spots', 'tee1,tee5')).split(',');
 const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist',
  '--disable-gpu-vsync', '--disable-frame-rate-limit', '--disable-background-timer-throttling',
@@ -63,7 +71,10 @@ const frames = (page, n) => page.evaluate(n => new Promise(done => {
 const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', 6)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 5))});
 const started = Date.now();
 const server = await new Promise(resolve => {
- const s = createServer((_, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); });
+ const s = createServer((req, res) => {
+  if (builtBytes && req.url === '/built.fairway') { res.writeHead(200, {'Content-Type': 'application/zip'}); res.end(builtBytes); return; }
+  res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html);
+ });
  s.listen(0, '127.0.0.1', () => resolve(s));
 });
 const browser = await chromium.launch({headless: true, args: GPU_ARGS});
@@ -81,7 +92,23 @@ try {
  page.on('pageerror', e => errors.push(String(e.message).split('\n')[0]));
  await page.goto(`http://127.0.0.1:${server.address().port}/`, {waitUntil: 'load'});
  await page.waitForFunction(() => window.lab && window.lab.course, null, {timeout: 60000});
- await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED});
+ const built = builtBytes ? await page.evaluate(async () => window.lab.built(new Uint8Array(await (await fetch('/built.fairway')).arrayBuffer()))) : null;
+ // WHERE A COURSE'S LOAD GOES (`--loadprofile`; the frame-rate goal, 9
+ // November 2026): DevTools' sampling profiler over lab.course, self time per
+ // function, heaviest first, and the load's own length.
+ const loadCdp = flag('loadprofile', false) ? await page.context().newCDPSession(page) : null;
+ if (loadCdp) { await loadCdp.send('Profiler.enable'); await loadCdp.send('Profiler.setSamplingInterval', {interval: 200}); await loadCdp.send('Profiler.start'); }
+ const loadFrom = Date.now();
+ await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED, ...(built ? {built} : {})});
+ if (loadCdp) {
+  const {profile} = await loadCdp.send('Profiler.stop');
+  const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n])), dt = profile.timeDeltas;
+  profile.samples.forEach((id, i) => { const n = byId.get(id).callFrame, key = `${n.functionName || '(anon)'} ${n.url.split('/').pop()}:${n.lineNumber}`; self.set(key, (self.get(key) || 0) + (dt[i] || 0)); });
+  console.log(`
+  course load: ${((Date.now() - loadFrom) / 1000).toFixed(1)} s; processor self time, heaviest first`);
+  for (const [k, us] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 35)) console.log(`   ${(us / 1e6).toFixed(2).padStart(6)} s  ${k}`);
+  await loadCdp.detach();
+ }
  await frames(page, 60);
  // What is built, by group (lab.scene): where the triangles are.
  if (flag('scene', false)) {
@@ -98,7 +125,8 @@ try {
  };
  const run = code => page.evaluate(c => { const v = window.__view; return new Function('v', c)(v); }, code);
  for (const spot of spotNames) {
-  if (SPOTS[spot].play !== undefined) { await page.evaluate(n => window.lab.hole(n), SPOTS[spot].play); await page.evaluate(() => window.lab.view('player')); }
+  if (SPOTS[spot].view) await page.evaluate(v => window.lab.view(v), SPOTS[spot].view);
+  else if (SPOTS[spot].play !== undefined) { await page.evaluate(n => window.lab.hole(n), SPOTS[spot].play); await page.evaluate(() => window.lab.view('player')); }
   else await page.evaluate(o => window.lab.camera(o), SPOTS[spot]);
   await frames(page, 30);
   // WHERE THE PROCESSOR'S TIME GOES, from DevTools' sampling profiler over the
@@ -162,7 +190,7 @@ logRun({goal: flag('goal', null), run: gate.run, tool: 'frame-variants', label: 
  seconds: Math.round((Date.now() - started) / 1000), failed});
 if (failed) process.exit(1);
 
-console.log(`\n${TIER} · ${BIOME} ${SEED} · ${DEVICE.viewport.join('x')} @${DEVICE.dpr} · each against the frames either side of it`);
+console.log(`\n${TIER} · ${BUILT ? path.basename(BUILT) : BIOME + " " + SEED} · ${DEVICE.viewport.join('x')} @${DEVICE.dpr} · each against the frames either side of it`);
 console.log('  spot   variant                          base CPU/GPU     variant CPU/GPU    GPU change   draws     triangles');
 for (const row of rows) {
  const {s, base} = row, d = ((s.gpuMedian ?? 0) - base.gpu) / base.gpu * 100;

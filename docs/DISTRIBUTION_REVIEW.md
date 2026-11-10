@@ -1932,3 +1932,27 @@ the fingerprints (no unrecorded change), the packager's verification of every zi
 of the remakes against main (RESEARCH, *The remakes' frame cost on Low*). **Not run:** the smoke
 set (no interface file changed since 0.9.9). **Not played by a person**: the plants were seen only
 in captures.
+
+## Addendum, 9 November 2026: v0.9.11
+
+**v0.9.11** is published at the owner's request ("Lets get this merged into main and do a new patch
+version. Push to github as well as the live website"), as "Fairway 0.9.11 (beta)", tag `v0.9.11`,
+not a pre-release, the same six files, from the merge of `frame-rate-all-tiers` into `main`, notes
+in `docs/releases/v0.9.11.md`. Content: the frame-rate work (RESEARCH, *Frame rate on every tier:
+the large built courses*) -- far versions made when the models are packed, each keeping its model's
+outline (112; 18 models drawn in full), the swap to them dissolved, Low's distant trees thinned
+(never the hole's), the far ground of the very largest courses drawn coarser, a built course's
+field baked on other cores, houses' footings and drives batched, the builder's cost readout and
+weight note. **Version numbers unchanged** (generator 103, schema 47, built 3), so saves, rounds
+and 0.9.10's friend-challenge codes carry over. **Sizes:** the page 58.4 to 60.4 MB (the far
+versions, about 1.9 MB, and the new modules), the builder's 54.0 to 56.0 MB; each zip about 2.2 MB
+larger than 0.9.10's (Windows 105.6 MB, Linux 102.2 MB, Apple Silicon 91.4 MB, Intel 93.8 MB,
+source 34.8 MB). **A second inline worker** (src/bake-worker.js, a built course's field baked on
+other cores): bundled into the page as the ground workers are (`?worker&inline`), so it runs from
+file:// and from the bridge alike; a browser that refuses workers bakes on the main thread as
+before. Nothing else about the offline build changed. **Checked:** the full tests (1,515, none
+failing; the owner, at the release: no need to run them again), the packager's verification of
+every zip, the smoke set on the branch (41 of 41, before the evening's far-version changes), every
+change measured against the build before it on the graphics card and seen still and in motion.
+**Not measured again after the far versions' outline rule:** High and Ultra (it was measured on
+Low and Medium). **Not played by a person.**
