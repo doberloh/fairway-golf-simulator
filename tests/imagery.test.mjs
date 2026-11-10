@@ -76,3 +76,10 @@ test('USGS NAIP Plus is asked for blocks of tiles by their Web Mercator box (bui
  assert.ok(asked.length > 0 && asked.every(u => +u.split(',')[3] <= 4 && +u.split(',')[4] <= 4), `blocks of at most four tiles a side: ${asked}`);
  assert.ok(asked.length * 3 < tiles, `far fewer requests than tiles: ${asked.length} for ${tiles}`);
 });
+
+test('the place search marks golf courses, so the club wins over its town (builder-ux)', async () => {
+ const found = await PROVIDERS.usgs.search(null, 'Worthington Country Club', async () => ({json: async () => [
+  {lon: '-95.6', lat: '43.62', display_name: 'Worthington, Nobles County, Minnesota', class: 'place', type: 'town'},
+  {lon: '-95.62', lat: '43.625', display_name: 'Worthington Country Club, Worthington', class: 'leisure', type: 'golf_course'}]}));
+ assert.deepEqual(found.map(f => !!f.golf), [false, true]);
+});

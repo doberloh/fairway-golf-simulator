@@ -52,7 +52,7 @@ export function surveyLas() {
 // A plain 256-pixel tile, for the stand-in imagery provider.
 const CRC = new Int32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c; });
 const chunk = (type, data) => { const tb = Buffer.from(type, 'latin1'), body = Buffer.concat([tb, data]); let c = -1; for (const v of body) c = CRC[(c ^ v) & 255] ^ (c >>> 8); const o = Buffer.alloc(12 + data.length); o.writeUInt32BE(data.length, 0); body.copy(o, 4); o.writeUInt32BE((c ^ -1) >>> 0, 8 + data.length); return o; };
-function tilePng(rgb) {
+export function tilePng(rgb) {
  const raw = Buffer.alloc((256 * 3 + 1) * 256);
  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) raw.set((x >> 5 & 1) ^ (y >> 5 & 1) ? rgb : rgb.map(v => v * .8), y * (256 * 3 + 1) + 1 + x * 3);
  const head = Buffer.alloc(13); head.writeUInt32BE(256, 0); head.writeUInt32BE(256, 4); head[8] = 8; head[9] = 2;

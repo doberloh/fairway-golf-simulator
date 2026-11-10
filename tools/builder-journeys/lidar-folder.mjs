@@ -15,7 +15,7 @@ const GEO = {lat: 43.63, lon: -95.62}, R = 6378137;
 const merc = (lon, lat) => ({x: lon * Math.PI / 180 * R, y: R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))});
 // One Entwine piece: 200 x 200 points over the 1.8 km square, in Web Mercator
 // (a LAS 1.2 file, point format 0; the builder reads it as it reads LAZ).
-function piece() {
+export function piece() {
  const h = 900 / 111320, w = h / Math.cos(GEO.lat * Math.PI / 180), a = merc(GEO.lon - w, GEO.lat - h), b = merc(GEO.lon + w, GEO.lat + h), n = 200;
  const head = 227, len = 20, buf = new ArrayBuffer(head + len * n * n), v = new DataView(buf), u = new Uint8Array(buf);
  u.set(new TextEncoder().encode('LASF'), 0); u[24] = 1; u[25] = 2; v.setUint16(94, head, true); v.setUint32(96, head, true); u[104] = 0; v.setUint16(105, len, true); v.setUint32(107, n * n, true);

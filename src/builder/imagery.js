@@ -119,7 +119,9 @@ const free = o => ({...o, free: true, async start() { return {tile: o.tile, cred
 // search a second at most -- one press of Search is one request).
 async function nominatim(_key, text, get = fetch) {
  const j = await (await get(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(text)}`)).json();
- return j.map(r => ({lon: +r.lon, lat: +r.lat, label: r.display_name}));
+ // `golf`: the place is a golf course on the map (leisure=golf_course), so Build
+ // it for me can tell the club from the town it is named after (builder-ux).
+ return j.map(r => ({lon: +r.lon, lat: +r.lat, label: r.display_name, ...(r.type === 'golf_course' ? {golf: true} : {})}));
 }
 Object.assign(PROVIDERS, {
 // THE SHARPEST FREE US PICTURE (the builder-ux goal, 10 November 2026; the

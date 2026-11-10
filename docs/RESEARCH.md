@@ -15577,3 +15577,36 @@ the next step if that shows.
 **Tried and not used:** USDA's own NAIP service
 (gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer)
 failed to connect from here (a TLS error, curl exit 35) on 10 November 2026.
+
+## Build it for me, on a real course (10 November 2026, the builder-ux goal)
+
+The owner's yardstick: "A real course for me depending on if there is open
+street map data can be like 15 mins." Build it for me (door-real.js
+`buildForMe`) runs door 2's own steps from a name. Measured on **Worthington
+Country Club**, Minnesota, against the real services, from this PC over its
+home connection (bench/shots/build-for-me.mjs, local; one run):
+
+| Step | Done at |
+| --- | --- |
+| The place (Nominatim; two golf courses of that name, Minnesota and Florida, so it asks which -- one click) | a few seconds |
+| The LIDAR: USGS 3DEP *MN MORiverBigSioux 1 B21*, a 1.5 km square plus its margin, through Entwine | 134 s |
+| The land, 1,850 x 1,845 cells at 1 m | 172 s |
+| The picture, USGS NAIP Plus, 2,560 x 2,304 pixels | 184 s |
+| OpenStreetMap (Overpass about 35 s), laid, refined with the LIDAR, the holes found | 232 s |
+
+**3 minutes 52 seconds** from the press to the review, with 18 of 18 holes
+marked from the map and no page error; the player's part is typing the name
+and one click to choose Minnesota. The map laid 18 fairways, 26 tees, 23
+greens, 20 bunkers, 15 ponds, 143 roads, 8 paths and 430 houses. The owner
+says Worthington's map is "completely wrong. Many holes pointing to the wrong
+place" -- the review shows hole lines crossing (13 to 16); item 24 of the
+goal is to check the map rather than trust it. The run against the card:
+5,962 yards from the back (the card's blue, 6,282).
+
+**PLACED:** the square is 1.5 km (door 2's default); the survey is the one
+covering most of it, the newest on a tie; the picture the first free source
+offered there. **Found on the way:** the first two runs built the town of
+Worthington, because a script passed the name through a shell that split it
+at its spaces ("Worthington" alone finds the town). The place search now
+marks golf courses (`golf`, from Nominatim's `type` golf_course), and Build it
+for me takes a single golf course without asking.

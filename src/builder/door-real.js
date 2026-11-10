@@ -968,8 +968,84 @@ export function open(draft = null) {
   await readFiles([...got.values()]);
   say(`All ${n} tiles read from your LIDAR folder (${dir.name}): they stay there for next time. Drag a box on the relief round the course, then build the land.`);
  }
+ // BUILD IT FOR ME (the builder-ux goal, item 6; the owner: "A real course for
+ // me depending on if there is open street map data can be like 15 mins. Its
+ // really fast and i like that"): door 2's own steps, run one after another
+ // from a course's name -- the place, the newest USGS survey that covers the
+ // most of the square, the land, the sharpest picture, OpenStreetMap's course
+ // lined up with the LIDAR, its holes and its name -- stopping only to ask what
+ // it cannot decide (which place of several) or when something is missing (no
+ // survey that downloads here, a course not on the map). Every step stays
+ // there to do by hand, and everything it did can be changed after.
+ function buildField() {
+  const name = el('input', {class: 'cb-buildname', placeholder: 'A golf course, by name (and town)', value: st.find?.label ?? '', onkeydown: e => { if (e.key === 'Enter') buildForMe(name.value); }});
+  return el('div', {class: 'cb-field cb-buildme'}, el('label', {}, 'Build it for me'),
+   el('small', {}, 'Type the course\'s name and the builder does the steps for you: finds it, downloads the USGS LIDAR, builds the land, fetches the aerial picture, lays the course from OpenStreetMap and lines it up, and marks the holes. United States courses; it goes online as it works. You can change everything after.'),
+   el('div', {class: 'cb-row', style: 'margin:4px 0'}, name, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-build': 'go', title: 'Run every step for this course', onclick: () => buildForMe(name.value)}, 'Build it for me')), buildList);
+ }
+ const buildList = el('ul');
+ async function buildForMe(text, place = null) {
+  if (!place && !text.trim()) return say('Type the course\'s name first.', true);
+  // The folder first, while the press still counts as one (a browser asks for
+  // leave to use a folder only inside a click).
+  const dir = await ensureFolder();
+  const t0 = Date.now(), took = () => `${Math.round((Date.now() - t0) / 1000)} s`, done = [];
+  const log = line => { done.push(line); say(line); };
+  if (!place) {
+   setBusy(`Finding ${text.trim()}…`);
+   let found = [];
+   try { found = await PROVIDERS.usgs.search(null, text.trim()); } catch (e) { setBusy(''); return say('The search failed: ' + e.message, true); }
+   setBusy('');
+   if (!found.length) return say(`Nothing found called ${text.trim()}. Try the name with its town.`, true);
+   // A golf course on the map wins over the town it is named after; one golf
+   // course is taken without asking. Otherwise the player picks, golf courses
+   // first, and the build goes on.
+   const golf = found.filter(f => f.golf);
+   if (golf.length === 1) found = golf; else if (golf.length > 1) found = [...golf, ...found.filter(f => !f.golf)];
+   if (found.length > 1 && golf.length !== 1) { resultList(buildList, found, f => { buildList.replaceChildren(); buildForMe(text, f); }); return say(`${found.length} places found: click the one you mean, and the build goes on.`); }
+   place = found[0];
+  }
+  st.find = place; st.findSize ??= 1500;
+  // 1. The newest USGS survey that covers the most of the square.
+  setBusy(`Searching USGS for LIDAR round ${place.label.split(',')[0]}…`);
+  const box = squareAround(place.lon, place.lat, st.findSize); st.findBox = box;
+  let surveys = [];
+  try { surveys = (await searchLidar('usgs', box)).filter(f => f.ept); } catch (e) { setBusy(''); return say('The LIDAR search failed: ' + e.message, true); }
+  setBusy('');
+  if (!surveys.length) { go(0); await searchAll(); return say('No USGS survey here downloads in the builder. The sources that cover the place are listed under Find LIDAR: download one, load it, and carry on by hand.', true); }
+  const ranked = surveys.map(f => ({f, share: coverFor(f, box).share ?? 0, date: String(f.date ?? '')})).sort((a, b) => b.share - a.share || b.date.localeCompare(a.date));
+  const pick = ranked[0].f;
+  const before = st.sources.length;
+  await fetchLidar(pick);
+  if (st.sources.length === before) return;
+  log(`LIDAR: ${pick.title} (${took()}).`);
+  // 2. The land.
+  await buildLand();
+  if (!st.land) return;
+  log(`The land built (${took()}).`);
+  go(2);
+  // 3. The sharpest picture this place has.
+  const offer = providersAt(place.lon, place.lat).filter(k => PROVIDERS[k].free);
+  if (offer.length) { await fetchImagery(offer[0], '', {}); if (st.pics.length) log(`The picture: ${PROVIDERS[offer[0]].name} (${took()}).`); }
+  // 4. OpenStreetMap's course, lined up with the LIDAR.
+  await loadOsm();
+  const laid = st.osm?.laid ? Object.values(st.osm.laid).reduce((a, b) => a + b, 0) : 0;
+  if (!st.model || !laid) {
+   if (!st.model) manualTrace();
+   return say(`OpenStreetMap has no course drawn here (${took()}): the land and the picture are ready -- draw the course with the tools, then mark the holes.`, true);
+  }
+  await refineOsm('lidar');
+  const course = st.osm.courses.find(c => c.id === st.osm.course);
+  if (course?.name && (!st.name || st.name === 'My real course')) st.name = course.name;
+  else if (!st.name || st.name === 'My real course') st.name = place.label.split(',')[0];
+  const marked = st.holes.slice(0, st.holesN).filter(h => h?.green && h.tees.length).length;
+  log(`The course from OpenStreetMap, lined up with the LIDAR: ${marked} of ${st.holesN} holes marked (${took()}).`);
+  st.built = {took: (Date.now() - t0) / 1000, steps: done};
+  if (marked === st.holesN && can(5)) { go(4); go(5); say(`Built in ${took()}: ${st.name}, ${st.holesN} holes. Look it over here; open it in the editor, or go back to any step to change it.`); }
+  else { go(3); say(`Built in ${took()}, but OpenStreetMap leaves ${st.holesN - marked} of ${st.holesN} holes without a tee or a green: mark them here (Next hole), then the name and the review.`, true); }
+ }
  function stepLidar() {
-  return [findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
+  return [buildField(), findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
    el('small', {}, 'LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with its .hdr, BIL, SRTM HGT), or a ZIP of them (a state portal\'s download). Several at once; a .prj or .hdr beside a file is read with it. Their coverage shows yellow on the relief.'),
    el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Pick LIDAR files from anywhere on this computer', onclick: chooseLand}, 'Choose LIDAR files'), fileList),
   el('div', {class: 'cb-field'}, el('label', {}, 'The property'), el('small', {}, 'Drag a box on the relief round the course with the left button (up to 3 x 3 km); 150 m past it are built too, for the land beyond. The wheel zooms; the right button or Space drags the view.'), boxText),
@@ -1142,6 +1218,7 @@ export function open(draft = null) {
  // chosen one. A place outside the map, or a landscape not built yet, leaves
  // the choice as it was and says so.
  const surveyPlace = () => { const ll = lonLatOfLocal(); return ll ? ll(0, 0) : null; };
+ st.surveyPlace = surveyPlace;   // for the smoke journeys and bench/shots/build-for-me.mjs
  const suggestion = () => { const c = surveyPlace(); return c ? landscapeAt(US_SHAPES, c.lat, c.lon) : null; };
  const suggestLandscape = () => { const k = suggestion(); if (k && BIOME_KEYS.includes(k) && !st.landscapePicked) st.landscape = k; };
  const suggestionLine = () => {

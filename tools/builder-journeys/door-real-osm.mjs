@@ -21,7 +21,7 @@ let wayId = 0;
 const way = (tags, pts) => ({type: 'way', id: ++wayId, tags, geometry: pts.map(([x, z]) => ll(x, z))});
 const disc = (x, z, r) => { const p = Array.from({length: 24}, (_, k) => [x + r * Math.cos(k / 24 * 2 * Math.PI), z + r * Math.sin(k / 24 * 2 * Math.PI)]); return [...p, p[0]]; };
 const rect = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]];
-function answer() {
+export function answer() {
  const elements = [];
  for (let n = 0; n < 9; n++) {
   const x = -160 + n * 40;

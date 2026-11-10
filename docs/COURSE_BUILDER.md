@@ -1900,3 +1900,21 @@ Details and the measurement: RESEARCH, *Sharper pictures for the builder*.
 Checked by the builder-door-2 journey (offered first, asked for blocks, with a
 stand-in server) and tests/imagery.test.mjs. Not seen by a person in the
 builder; the saved file's growth not measured.
+
+### Build it for me (10 November 2026)
+
+Item 6. At the top of door 2's first step: a course's name and one press,
+and door 2's own steps run in turn (`buildForMe`): the place (a golf course
+on the map wins over the town it is named after; several of the same name
+are listed to pick from, and the build goes on), the USGS survey covering
+most of the 1.5 km square (newest on a tie) downloaded through Entwine, the
+land, the first free picture source (USGS NAIP in the US), OpenStreetMap laid
+and refined with the LIDAR, the club's holes, boundary and name; then the
+review, or the holes step if the map left holes unmarked. It stops with
+what to do by hand when there is no survey that downloads in the page, or
+no course on the map. The folder for the LIDAR is asked for first, while the
+press still counts. **Worthington Country Club, real services: 3 min 52 s,
+18 of 18 holes** (RESEARCH, *Build it for me, on a real course*); the
+builder-build-for-me journey runs it with every service stood in for. Not
+yet: a Cancel between the steps (each step's own wait has its words; the
+OpenStreetMap wait has its Cancel). Not seen by a person.

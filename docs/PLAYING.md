@@ -479,6 +479,17 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   there, with **Undo**, **Redo** and the zoom buttons. On the plan: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
+  **Build it for me** is at the top of the first step: type the course's
+  name (and its town, if the name is common), press it, and the builder
+  runs the steps below for you -- finds the course (a golf course on the map
+  is taken over the town it is named after; if two places share the name it
+  asks which), downloads the newest USGS survey that covers most of a 1.5 km
+  square round it, builds the land, fetches the sharpest free picture, lays
+  OpenStreetMap's course and lines it up with the LIDAR, takes its holes and
+  its name, and stops on the review -- or on the holes step if the map left
+  some holes without a tee or a green. United States courses only; it goes
+  online as it works. On Worthington Country Club it took 3 minutes 52
+  seconds. Everything it did can be changed afterwards in the steps.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
      place, **Find** (or Enter), click the place you mean in the list (each
      is a button marked **Use ›**), choose the square round it (1 to 3 km), and
