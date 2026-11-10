@@ -457,13 +457,25 @@ Everything it makes is a **.fairway file**: open it in the game
 with *Import courses from a file* on Saved courses, or drop it there, and give
 the file to anyone else who has Fairway. It opens on three doors.
 
+**The menus** along the top -- **File**, **Edit**, **View**, **Tools**, **Help** --
+hold every command with its key beside it, and the keys work anywhere
+but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
+(or Ctrl+Shift+Z) undo and redo, **Ctrl+O** opens a course file, and **?**
+(Help > Keyboard shortcuts) lists every key on the screen you are on.
+
 - **Generate and modify a course.** Pick a landscape (on the map or the
   list) and any
   studio setting, grow the course, and press **Take it over**: from then on
   everything on it is yours to change.
 - **Generate a real life course.** Build a course from LIDAR of a real
-  place, in six steps (the buttons along the top of the left side), on a plan
-  of the land: **the wheel zooms, the right button or Space drags the view**
+  place, in six steps, shown along the top as a row of chips -- a tick on each
+  step done, the one you are on filled, the ones you cannot reach yet dimmed
+  (hold the pointer over one to see why) -- with what the step still needs
+  beside them and one **Next** button at the right end, always in the same
+  place. The plan of the land fills the middle, the step's own panel is on
+  the right, and a status bar along the bottom says what the tool in hand
+  does, what just happened, where the pointer is and the ground's height
+  there, with **Undo**, **Redo** and the zoom buttons. On the plan: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
@@ -597,11 +609,22 @@ the file to anyone else who has Fairway. It opens on three doors.
      6 m), **the LIDAR's only**, or **OpenStreetMap's only**. Undo takes a
      change back.
 
-     Or **Auto trace** (the greens, tees, fairways, sand and water found
-     for you -- from the LIDAR alone, with no picture, the mown turf, the
-     built-up pads as greens and tees, sand and water; a start to correct,
-     weaker than with a picture or OpenStreetMap) or **Manual trace** (a blank course to draw), and the same
-     tools for either. First the **Landscape**: it decides which ground types
+     Or **Draw it myself**: a blank course to draw with the tools. The
+     **auto trace** (the greens, tees, fairways, sand and water guessed
+     from the LIDAR and the picture) is under **Experimental**, the folded
+     section at the foot of the panel, or **Tools > Experimental**: it is a
+     rough start you will need to fix by hand, far from a finished course.
+     **The tools are the palette down the left of the plan**, an icon each
+     with its key in the corner: **H** Move the view, **V** Select shape,
+     **B** Paint brush, **E** Erase brush (**Shift+E** erase all layers),
+     **P** Outline fill, **S** Smooth edges, **C** Draw a creek, **U** Dig a
+     bunker, **T** Place tree (**Shift+T** Tree brush, **Z** Tree zone, **X**
+     Clear trees), **G** Ground cover (**Shift+G** Clear cover), **O** House
+     (**Shift+O** House zone); **[** and **]** make the brush smaller and
+     larger. The panel on the right opens with the tool's options, then the
+     **Layers**, then **Skin from the land**, then sections that fold:
+     OpenStreetMap, Picture, Viewing, Landscape, Course boundary, Clean up
+     and Experimental. First the **Landscape**: it decides which ground types
      are offered (rock and scree in the mountains, native grass and heather
      on a links, pine straw where needles fall) and is the course's look.
      It is **chosen for you from where the survey lies** -- the map of the
@@ -616,8 +639,10 @@ the file to anyone else who has Fairway. It opens on three doors.
      landscape offers, each with its area or *empty*, Rough with the ground
      under no layer at all; click one to paint it, and its **shown/hidden**
      button hides it from view (the course keeps it). Painting Rough takes
-     every layer off. The tool in use says what it does in a box at the top
-     middle of the view, for as long as it is held. **Paint brush** paints
+     every layer off; under the list, a line says which layers the one you
+     are painting goes under (they stay on top where they are painted). The
+     tool in use says what it does in the status bar, for as long as it is
+     held. **Paint brush** paints
      the chosen layer, **Erase brush** takes the chosen layer off (what lies
      under it shows), **Erase all layers** takes every layer off, **Outline
      fill** fills a shape (click its corners; double-click or Enter closes

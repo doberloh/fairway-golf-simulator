@@ -388,9 +388,9 @@ export default function ({journey, SHOTS}) {
   if (!/Back from the 3D editor with .*layer/.test(await page.locator('.cb-note').textContent())) throw Error('door 2 should say what came back');
   const planFit = await page.evaluate(() => { const c = document.querySelector('canvas.cb-plan'); return [c.width, Math.round(c.getBoundingClientRect().width * devicePixelRatio)]; });
   if (Math.abs(planFit[0] - planFit[1]) > 2) throw Error(`door 2's plan should fill its place again: ${planFit}`);
-  // ...and its bar and notes inside the window (a stale canvas size once
-  // pushed them below it).
-  const below = await page.evaluate(() => ['.cb-planbar', '.cb-note'].map(q => document.querySelector(q).getBoundingClientRect().bottom - innerHeight));
+  // ...and its status bar and notes inside the window (a stale canvas size
+  // once pushed them below it; the plan bar became the status bar, builder-ux).
+  const below = await page.evaluate(() => ['.cb-statusbar', '.cb-note'].map(q => document.querySelector(q).getBoundingClientRect().bottom - innerHeight));
   if (below.some(v => v > 1)) throw Error(`door 2's plan bar and notes should be inside the window: ${below}`);
   await t.shot('back-to-2d');
   await page.getByRole('button', {name: 'Open in the editor'}).click();

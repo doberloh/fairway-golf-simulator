@@ -23,7 +23,8 @@
 // work is in pure modules beside this one: real-course.js (land, picture,
 // course), trace-edit.js (the trace being drawn), imagery.js (fetched
 // pictures), lidar/trace.js (the auto trace).
-import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
+import {icon} from './icons.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
@@ -82,6 +83,14 @@ const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bp
 const outsideGround = bio => bio.fallen?.kind ?? bio.landform?.kinds?.floor ?? (['native', 'heather'].includes(bio.landform?.kinds?.a) ? bio.landform.kinds.a : null);
 const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'florida'].includes(regionOf(key)) ? 15 : 80;
 const MARK_NAME = {back: 'back tee', middle: 'middle tee', front: 'front tee', aim: 'aim point', green: 'green'};
+// THE TRACE STEP'S TOOLS, in the palette's order, with their keys (the
+// builder-ux goal): [key, name, shortcut, the palette's group].
+const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape', 'V', 0],
+ ['brush', 'Paint brush', 'B', 1], ['erase', 'Erase brush', 'E', 1], ['eraseAll', 'Erase all layers', 'Shift+E', 1], ['outline', 'Outline fill', 'P', 1], ['smooth', 'Smooth edges', 'S', 1],
+ ['creek', 'Draw a creek', 'C', 2], ['bunker', 'Dig a bunker', 'U', 2],
+ ['tree', 'Place tree', 'T', 3], ['treeBrush', 'Tree brush', 'Shift+T', 3], ['treeZone', 'Tree zone', 'Z', 3], ['treeErase', 'Clear trees', 'X', 3], ['sizeTree', 'Size a tree', null, 3],
+ ['cover', 'Ground cover', 'G', 4], ['coverErase', 'Clear cover', 'Shift+G', 4],
+ ['home', 'House', 'O', 5], ['homeZone', 'House zone', 'Shift+O', 5], ['homeErase', 'Clear houses', null, 5]];
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
 // Imagery fetched this session, by provider and place (fetchImagery): kept
@@ -103,20 +112,34 @@ export function open(draft = null) {
   chosen: null, carry: null, sizing: null, treeScale: 1, treeKind: '', cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
  const canvas = el('canvas', {class: 'cb-plan'});
- const notes = el('div', {class: 'cb-note', style: 'text-align:left;padding:6px 10px;max-width:none'});
- const say = (t, err = false) => { notes.textContent = t; notes.classList.toggle('cb-err', err); };
- const zoomText = el('span'), hintBar = el('div', {class: 'cb-toolhint', hidden: true});
+ const notes = el('div', {class: 'cb-note', role: 'status'});
+ const say = (t, err = false) => { notes.textContent = t; notes.title = t; notes.classList.toggle('cb-err', err); };
+ const zoomText = el('span', {class: 'cb-stat'}), posText = el('span', {class: 'cb-stat'}), hintBar = el('div', {class: 'cb-toolhint', hidden: true});
  const plan = createPlanView(canvas, {onTool, overlay, onWindowChange: ui.onWindowChange});
  st.plan = plan;
  st.toCanvas = (x, z) => plan.toScreen(x, z);
- const panel = el('div', {style: 'display:flex;flex-direction:column;gap:10px'}), nav = el('div', {class: 'cb-stepnav'});
- const section = el('section', {class: 'cb-door2'},
-  el('div', {class: 'cb-steps'}, el('h2', {style: 'font:800 22px/1 var(--head);text-transform:uppercase;margin:0'}, 'A real life course'), nav, panel),
-  el('div', {class: 'cb-planbox'}, canvas, hintBar,
-   el('div', {class: 'cb-planbar'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
-    el('button', {class: 'cb-btn', type: 'button', onclick: () => plan.fit()}, 'Whole land'), el('span', {}, 'Wheel zooms; right-drag, Space-drag or Move the view drags it.'), zoomText),
-   notes));
+ // THE WORKSPACE (the builder-ux goal, 10 November 2026; DESIGN in the
+ // goal's brief): the steps along the top with the one Next button, the tool
+ // palette down the left (the trace step), the plan, the step's panel on the
+ // right -- tool options, layers, then folding sections -- and a status bar
+ // with what the tool does, where the pointer is and what just happened.
+ // Replaced a 400-pixel column holding everything, about three screens tall
+ // in the trace step, with Next at its foot.
+ const panel = el('div', {style: 'display:flex;flex-direction:column;gap:10px'});
+ const stepChips = el('div', {class: 'cb-stepchips'}), stepNeeds = el('div', {class: 'cb-stepneeds', role: 'status'});
+ const nextBtn = el('button', {class: 'cb-btn cb-hot cb-next', type: 'button'}, 'Next');
+ const palette = el('nav', {class: 'cb-palette', 'aria-label': 'Tools', hidden: true});
+ const undoBtn = el('button', {class: 'cb-btn', type: 'button', title: 'Undo (Ctrl+Z)', onclick: () => undoNow()}, 'Undo'), redoBtn = el('button', {class: 'cb-btn', type: 'button', title: 'Redo (Ctrl+Y)', onclick: () => undoNow(true)}, 'Redo');
+ const section = el('section', {class: 'cb-door2 cb-ws'},
+  el('div', {class: 'cb-stepbar'}, stepChips, stepNeeds, nextBtn),
+  palette,
+  el('div', {class: 'cb-planbox'}, canvas),
+  el('aside', {class: 'cb-sidepanel cb-steps', 'aria-label': 'This step'}, panel),
+  el('footer', {class: 'cb-statusbar'}, undoBtn, redoBtn, hintBar, notes, posText, zoomText,
+   el('button', {class: 'cb-btn', type: 'button', title: 'Zoom in (+)', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', title: 'Zoom out (-)', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
+   el('button', {class: 'cb-btn', type: 'button', title: 'The whole land in view (F)', onclick: () => plan.fit()}, 'Whole land')));
  show(section);
+ function undoNow(redo = false) { if (!st.model) return; st.chosen = st.sizing = null; if (redo) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
  preview().mount(section.querySelector('.cb-planbox'));
  // THE MODEL OF WHAT THE TOOL PAINTS OR PLACES (preview.js; the owner, 4
  // November 2026), for the trace's tools; the other steps show none.
@@ -254,7 +277,7 @@ export function open(draft = null) {
    })[st.tool] ?? '';
    if (t && st.tool !== 'move') t += ' ' + view;
   }
-  if (hintBar.textContent !== t) hintBar.textContent = t;
+  if (hintBar.textContent !== t) { hintBar.textContent = t; hintBar.title = t; }
   hintBar.hidden = !t;
  }
 
@@ -325,6 +348,9 @@ export function open(draft = null) {
  let dragFrom = null;
  function onTool(type, p, e) {
   st.hover = p;
+  // Where the pointer is, and the ground's height there (metres), in the status bar.
+  const land = L();
+  if (p && land?.ground) { const i = Math.round((p.x + land.halfX) / land.cell), j = Math.round((p.z + land.halfZ) / land.cell), g = i >= 0 && j >= 0 && i < land.nx && j < land.nz ? land.ground[j * land.nx + i] : NaN; posText.textContent = `${p.x.toFixed(0)}, ${(-p.z).toFixed(0)} m${Number.isFinite(g) ? ` · ground ${g.toFixed(1)} m` : ''}`; }
   const t = st.tool;
   if (st.step === 0 && st.preview) {
    if (type === 'down') dragFrom = p;
@@ -467,8 +493,7 @@ export function open(draft = null) {
   // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
   const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
   if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && st.model) { e.preventDefault(); st.chosen = st.sizing = null; if (e.shiftKey) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && st.model) { e.preventDefault(); st.chosen = st.sizing = null; st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }
+  // Undo and Redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z) are the Edit menu's now (menus()).
  };
  window.addEventListener('keydown', onKey);
 
@@ -480,8 +505,10 @@ export function open(draft = null) {
   st.step = n; st.outline = [];
   if (n !== 5) { plan.clearLayer('course'); st.doc = null; }
   plan.showLayer('picture', n !== 5 && st.picOn !== false); plan.showLayer('coverage', n === 0); showCodes();
-  nav.replaceChildren(...STEPS.map((s, i) => el('button', {class: 'cb-btn' + (i === n ? ' cb-on' : ''), type: 'button', disabled: !can(i), onclick: () => go(i)}, s)));
+  stepBar();
+  palette.hidden = true;
   panel.replaceChildren(...steps[n]().filter(Boolean));
+  menus();
   // Step 1's left drag draws the property box and step 4's left click places
   // a marker (the view drags with the right button or Space there); step 3
   // keeps its tool; the rest only move the view. (First built with Move on
@@ -490,9 +517,57 @@ export function open(draft = null) {
   plan.draw();
  }
  st.go = go;
+ // THE STEP BAR (the builder-ux goal; the owner: "The 'flow' through the steps
+ // isnt always clear"): each step a chip -- ticked when done, filled where you
+ // are, dimmed with the reason when it cannot be reached yet -- what this step
+ // still needs, and one Next button, always in the same place. Replaced six
+ // equal buttons in a grid and a Next at the foot of a long column.
+ const NEXT = ['Next: build the land', 'Next: trace the course', 'Next: the holes', 'Next: the name', 'Next: review the course', null];
+ const BLOCKED = ['', 'Choose LIDAR files first', 'Build the land first', 'Start the trace first', 'Every hole needs a tee and a green first', 'Every hole needs a tee and a green first'];
+ function needs(n) {
+  if (n === 0) return !st.preview && !st.land ? 'Choose LIDAR files, search for LIDAR, or load them from your folder.' : !st.box && !st.land ? 'Drag a box round the property on the relief.' : '';
+  if (n === 1) return st.land ? '' : 'Build the land from the LIDAR.';
+  if (n === 2) return st.model ? '' : 'Start the trace: lay OpenStreetMap\'s course, or draw it yourself.';
+  if (n === 3) {
+   const missing = st.holes.slice(0, st.holesN).map((h, i) => !h?.tees.length || !h?.green ? i + 1 : 0).filter(Boolean);
+   return missing.length ? `${missing.length === 1 ? 'Hole' : 'Holes'} ${missing.length > 4 ? missing.slice(0, 4).join(', ') + ` and ${missing.length - 4} more` : missing.join(', ')} still ${missing.length === 1 ? 'needs' : 'need'} a tee and a green.` : '';
+  }
+  if (n === 4) return st.name?.trim() ? '' : 'Give the course a name.';
+  return '';
+ }
+ function stepBar() {
+  const n = st.step, done = i => i < n && can(i + 1);
+  stepChips.replaceChildren(...STEPS.flatMap((s, i) => [
+   i ? el('span', {class: 'cb-steparrow', 'aria-hidden': 'true'}, '›') : null,
+   el('button', {class: 'cb-stepchip' + (i === n ? ' cb-here' : done(i) ? ' cb-done' : ''), type: 'button', disabled: !can(i), title: can(i) ? s.slice(2) : BLOCKED[i], 'aria-current': i === n ? 'step' : null, onclick: () => go(i)},
+    el('i', {}, done(i) ? '✓' : String(i + 1)), s.slice(2))].filter(Boolean)));
+  stepNeeds.textContent = needs(n);
+  nextBtn.hidden = !NEXT[n];
+  if (NEXT[n]) { nextBtn.textContent = NEXT[n]; nextBtn.classList.toggle('cb-wait', !can(n + 1)); nextBtn.title = can(n + 1) ? '' : BLOCKED[n + 1]; nextBtn.onclick = () => { if (can(n + 1)) go(n + 1); else say(n + 1 === 4 ? 'Every hole needs a tee and a green.' : needs(n) || 'Finish this step first.', true); }; }
+ }
+ st.stepBar = stepBar;
+ // DOOR 2'S MENUS (menu.js): Edit's undo, View's zoom and what is shown, every
+ // trace tool with its key, and the experimental auto trace.
+ const tracing = () => st.step === 2 && !!st.model;
+ function menus() {
+  const toolItems = TOOL_LIST.map(([k, label, key]) => ({label, key, enabled: tracing, checked: () => st.tool === k, run: () => setTool(k)}));
+  useMenus({
+   edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}],
+   view: [{label: 'Zoom in', key: ['=', '+'], run: () => plan.zoomBy(1.5)}, {label: 'Zoom out', key: '-', run: () => plan.zoomBy(1 / 1.5)}, {label: 'Whole land', key: 'F', run: () => plan.fit()}, {sep: true},
+    {label: 'The picture', checked: () => st.picOn !== false, run: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }},
+    {label: 'The trace', checked: () => !!st.traceOn, run: () => { st.traceOn = !st.traceOn; showCodes(); }},
+    {label: 'The trace as it will play (smooth)', checked: () => !!st.smoothView, run: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } }},
+    {label: 'The LIDAR over the picture', checked: () => !!st.lidarOnTop, run: () => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); go(st.step); }}],
+   tools: [...toolItems, {sep: true}, {label: 'Smaller brush', key: '[', enabled: tracing, run: () => brushSize(-1)}, {label: 'Larger brush', key: ']', enabled: tracing, run: () => brushSize(1)},
+    {sep: true}, {heading: 'Experimental'}, {label: 'Auto trace (a rough start to fix by hand)', enabled: () => st.step === 2 && !!st.land, run: () => autoTrace()}],
+   keys: [{group: 'The plan', label: 'Move the view', key: 'Right-drag or Space+drag'}, {group: 'The plan', label: 'Zoom', key: 'Wheel'}, {group: 'The plan', label: 'Close an outline', key: 'Enter or double-click'}, {group: 'The plan', label: 'Drop an outline or a selection', key: 'Esc'}, {group: 'The plan', label: 'Nudge the unlocked picture', key: 'Arrows (Shift: 1 m)'}],
+  });
+ }
+ function brushSize(d) { st.size = Math.max(1, Math.min(60, Math.round(st.size * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = panel.querySelector('.cb-brushsize'); if (r) r.value = st.size; showHint(); plan.draw(); }
  const toolSet = (title, keys) => el('div', {class: 'cb-toolset'}, title ? el('b', {}, title) : null, el('div', {class: 'cb-btns'}, ...toolButtons.filter(b => keys.includes(b.dataset.tool))));
  const toolOption = (keys, ...nodes) => el('div', {class: 'cb-toolopt', 'data-for': keys.join(' ')}, ...nodes);
- function showToolOptions() { for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); st.coverPut?.(); }
+ function showToolOptions() {
+  if (st.toolTitle) st.toolTitle.textContent = (TOOL_LIST.find(t => t[0] === st.tool)?.[1]) ?? (st.tool === 'boundary' ? 'Course boundary' : st.tool === 'align' ? 'Lining up the picture' : 'Tools'); for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); st.coverPut?.(); }
  // What is selected, with its outline and anchors. A tree is round: no anchors.
  function chooseShape(pick) {
   if (!pick) { st.chosen = null; return; }
@@ -544,7 +619,8 @@ export function open(draft = null) {
    toolOption(['cover', 'treeBrush'], el('small', {}, 'Smallest', minText), minIn, el('small', {}, 'Largest', maxText), maxIn,
     el('small', {}, 'How thick it lies'), el('input', {type: 'range', min: .05, max: 1, step: .05, value: st.coverThick, oninput: e => { st.coverThick = +e.target.value; }}))];
  }
- const next = (n, text) => el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { if (can(n)) go(n); else say(n === 4 ? 'Every hole needs a tee and a green.' : 'Finish this step first.', true); }}, text);
+ // The Next button lives in the step bar now (stepBar); a step's panel ends without one.
+ const next = () => null;
  let toolButtons = [];
  // The picture is unlocked only while the Align tool is held: any other tool
  // locks it again, so a brush stroke never drags it.
@@ -872,19 +948,28 @@ export function open(draft = null) {
  }
 
  // 3. Trace: the picture, then auto or manual, then the tools.
- const countText = el('small'), layerBox = el('ul', {class: 'cb-layers', style: 'list-style:none;padding:0'});
+ const countText = el('small'), layerBox = el('ul', {class: 'cb-layers', style: 'list-style:none;padding:0'}), underLine = el('div', {class: 'cb-under'});
  // THE LAYERS (the owner, 1 November 2026): each surface its own, top first;
  // click one to paint it, the eye to hide it from view.
  // The layers offered: the landscape's own (layersFor) and any other that
  // holds something, in the game's order, rough last.
  const kindsShown = () => { const own = layersFor(BIOMES[st.landscape]), have = st.model?.layersPresent() ?? []; return [...LAYER_ORDER.filter(k => own.includes(k) || have.includes(k)), 'rough']; };
+ // WHAT A STROKE GOES UNDER (the builder-ux goal): the layers above the one
+ // being painted that hold something stay on top of it, so say which.
+ function underWords() {
+  const all = kindsShown(), i = all.indexOf(st.kind);
+  if (st.kind === 'rough') return ['Rough takes every layer off where you paint it.'];
+  const Ls = st.model.state.layers, above = all.slice(0, Math.max(0, i)).filter(k => k !== 'rough' && Ls.masks.get(k)?.some(v => v));
+  return above.length ? [`${LABEL(st.kind)} goes under `, el('b', {}, above.map(k => LABEL(k)).join(', ')), ', which stay on top where they are painted.'] : [`${LABEL(st.kind)} is the top layer painted here: it shows wherever you paint it.`];
+ }
  function layersList() {
   if (!st.model) return;
+  underLine.replaceChildren(...underWords());
   const L = st.model.state.layers, a = st.land.cell ** 2, own = layersFor(BIOMES[st.landscape]);
   layerBox.replaceChildren(...kindsShown().map(k => {
    const rough = k === 'rough', m = L.masks.get(k), n = rough ? L.codes.reduce((t, c) => t + (c ? 0 : 1), 0) : m ? m.reduce((t, v) => t + v, 0) : 0;
    const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n * a / 1e4).toFixed(2)} ha`;
-   return el('li', {class: (k === st.kind ? 'cb-cur' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
+   return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
     rough ? el('span', {style: 'width:52px;flex:none'}) : el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 6px;font-size:11px;width:52px;flex:none', onclick: e => { e.stopPropagation(); st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }}, L.hidden.has(k) ? 'hidden' : 'shown'),
     el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), el('span', {style: 'flex:1'}, LABEL(k) + (rough || own.includes(k) ? '' : ' (not this landscape\'s)')),
     el('small', {}, rough ? `${ha}, under no layer` : n ? ha : 'empty'));
@@ -953,8 +1038,13 @@ export function open(draft = null) {
   const showProv = () => { const p = PROVIDERS[prov.value]; keyIn.hidden = !!p.free; keyIn.value = keys[prov.value] || ''; terms.textContent = `${p.free ? '' : p.keyHelp + ' '}${p.terms}`; howTo.hidden = !p.howTo; howTo.replaceChildren(el('summary', {}, `How to get a ${p.name} key`), el('ol', {}, (p.howTo ?? []).map(t => el('li', {}, t)))); };
   prov.onchange = showProv; showProv();
   const place = el('input', {placeholder: 'A place: the survey does not say where it is'}), found = el('ul');
-  const tools = [['move', 'Move the view'], ['select', 'Select shape'], ['brush', 'Paint brush'], ['erase', 'Erase brush'], ['eraseAll', 'Erase all layers'], ['outline', 'Outline fill'], ['smooth', 'Smooth edges'], ['creek', 'Draw a creek'], ['bunker', 'Dig a bunker'], ['tree', 'Place tree'], ['treeBrush', 'Tree brush'], ['treeZone', 'Tree zone'], ['treeErase', 'Clear trees'], ['sizeTree', 'Size a tree'], ['cover', 'Ground cover'], ['coverErase', 'Clear cover'], ['home', 'House'], ['homeZone', 'House zone'], ['homeErase', 'Clear houses']];
-  toolButtons = tools.map(([k, t]) => el('button', {class: 'cb-btn' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, onclick: () => setTool(k)}, t));
+  // THE PALETTE (the builder-ux goal): every tool an icon with its key, in
+  // groups, down the left of the plan; the name on hover and in the status
+  // bar. The buttons keep the tools' names, for a screen reader and the tests.
+  toolButtons = TOOL_LIST.map(([k, t, key]) => el('button', {class: 'cb-tool' + (st.tool === k ? ' cb-on' : ''), type: 'button', 'data-tool': k, 'aria-label': t, title: key ? `${t} (${key})` : t, onclick: () => setTool(k)}));
+  toolButtons.forEach((b, i) => { b.innerHTML = icon(TOOL_LIST[i][0]); if (TOOL_LIST[i][2]) b.append(el('kbd', {'aria-hidden': 'true'}, TOOL_LIST[i][2].replace('Shift+', '⇧'))); });
+  palette.replaceChildren(...toolButtons.flatMap((b, i) => i && TOOL_LIST[i][3] !== TOOL_LIST[i - 1][3] ? [el('hr'), b] : [b]));
+  palette.hidden = !st.model;
   // LOCK AND UNLOCK (the owner, 1 November 2026: "drag the satellite picture
   // to align and lock/unlock it"): unlocked, a left drag or the arrow keys
   // move the picture; locked -- as it starts, and as any other tool leaves it
@@ -962,101 +1052,127 @@ export function open(draft = null) {
   const alignBtn = el('button', {class: 'cb-btn' + (st.tool === 'align' ? ' cb-on' : ''), type: 'button', 'data-tool': 'align', onclick: () => {
    if (!st.picLocked) { setTool(st.model ? st.traceTool ?? 'brush' : 'move'); return say(`The picture is locked, ${Math.hypot(st.offset.x, st.offset.z).toFixed(2)} m from where its position put it.`); }
    if (!st.pics.length || st.picShow === 'lidar') return say(st.pics.length ? 'Show a fetched picture or a file first (Showing): the LIDAR\'s own needs no lining up.' : 'Bring a picture with a position first.', true);
-   st.picLocked = false; setTool('align'); say('Unlocked: drag the picture into line with the LIDAR -- see-through, or the LIDAR over it, makes it easier (Viewing, below).');
+   st.picLocked = false; setTool('align'); say('Unlocked: drag the picture into line with the LIDAR -- see-through, or the LIDAR over it, makes it easier (Viewing).');
   }}, st.picLocked ? 'Unlock the picture' : 'Lock the picture');
   toolButtons.push(alignBtn);
   const pct = (key, after) => el('input', {type: 'range', min: 0, max: 100, value: Math.round(st[key] * 100), 'data-alpha': key, oninput: e => { st[key] = +e.target.value / 100; viewLayers(); after?.(); }});
-  return [
-   el('div', {class: 'cb-field'}, el('label', {}, 'A picture to trace over'),
-    el('small', {}, 'Fetched for this land and placed by itself, or a file. If it sits off, unlock it and drag it into line with the LIDAR, then lock it. It is kept in your saved file, never drawn in the game, and left out of a copy made to share.'),
-    prov, keyIn, howTo, terms,
-    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
-     alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); showHint(); }}, 'Back to its position')),
-    st.pics.length ? el('small', {}, 'Showing (every picture fetched or brought is kept, each with its own lining up)') : null,
-    st.pics.length ? el('select', {class: 'cb-picshow', onchange: e => showPic(e.target.value)}, [...new Map(st.pics.map(p => [p.group, p.label])), ['lidar', 'The LIDAR\'s own']].map(([g, label]) => el('option', {value: g, selected: g === st.picShow}, label + (g === 'files' ? ` (${st.pics.filter(p => p.group === 'files').length})` : '')))) : null,
-    ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found),
-   // THE LIDAR AND THE PICTURE TOGETHER (the owner, 1 November 2026): each
-   // with its own opacity, either on top.
-   el('div', {class: 'cb-field cb-viewing'}, el('label', {}, 'Viewing'),
-    el('small', {}, 'The LIDAR as'), el('select', {class: 'cb-lidarview', onchange: e => { st.lidarView = e.target.value; paintLidar(); }}, LIDAR_VIEWS.map(k => el('option', {value: k, selected: k === st.lidarView}, {relief: 'Shaded relief', brightness: 'The laser\'s brightness', slope: 'Slope (edges bright)'}[k]))),
-    el('small', {}, 'LIDAR opacity'), pct('lidarAlpha'),
-    el('small', {}, 'Picture opacity'), pct('picAlpha'),
-    el('small', {}, 'Trace opacity'), pct('traceAlpha', () => plan.draw()),
-    el('button', {class: 'cb-btn cb-lidartop', type: 'button', onclick: e => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); e.target.textContent = st.lidarOnTop ? 'Picture on top' : 'LIDAR on top'; }}, st.lidarOnTop ? 'Picture on top' : 'LIDAR on top')),
-   // OPENSTREETMAP FIRST (the owner, 1 November 2026): the course as mappers
-   // have drawn it, kept as it is or refined from the picture or the LIDAR.
-   el('div', {class: 'cb-field'}, el('label', {}, 'OpenStreetMap'),
-    el('small', {}, 'Many courses are already drawn in OpenStreetMap: its greens, fairways, tees, bunkers, water, paths, woods and numbered holes, laid as layers and markers. Credited in the course (ODbL). Goes online only when pressed.'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
-    st.osm ? el('small', {}, st.osm.said) : null,
-    // WHICH COURSE (osm-course.js osmCourses): a club with two or more, each
-    // its own holes and boundary.
-    st.osm?.courses?.length > 1 ? el('small', {}, 'Course') : null,
-    st.osm?.courses?.length > 1 ? el('select', {class: 'cb-osmcourse', style: 'width:100%', title: 'Which of the club\'s courses to build: its holes and its boundary', onchange: e => pickCourse(e.target.value)},
-     st.osm.courses.map(c => el('option', {value: c.id, selected: c.id === st.osm.course}, `${c.name} (${c.holes} hole${c.holes === 1 ? '' : 's'} numbered)`))) : null,
-    // WHOSE TREES (osm.js mergeTrees; the owner, 1 November 2026).
-    // Not on a draft from before version 3, which has no map trees to choose:
-    // the choice would have dropped them.
-    st.osm?.osmTrees ? el('small', {}, 'Trees') : null,
-    st.osm?.osmTrees ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
-     [['merge', 'Both: the LIDAR\'s, and OpenStreetMap\'s where it has none'], ['lidar', 'The LIDAR\'s only'], ['osm', 'OpenStreetMap\'s only']].map(([v, t]) => el('option', {value: v, selected: v === (st.treesFrom ?? 'merge')}, t))) : null,
-    st.osm ? el('div', {class: 'cb-btns'},
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('picture')}, 'Refine with the picture'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('lidar')}, 'Refine with the LIDAR'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => keepOsm()}, 'Keep it as drawn')) : null,
-    st.osm ? el('small', {}, 'Refining lines the map up with the ground (LIDAR) or the picture by its bunkers, ponds and greens -- OpenStreetMap is often a metre or three off -- and adds clear greens it left out; its shapes are kept as drawn. With a survey, Refine with the LIDAR is the recommended path.') : null),
-   el('div', {class: 'cb-field'}, el('label', {}, 'Trace the course'),
-    el('small', {}, 'Auto: greens, tees, fairways, sand and water found for you to correct. Manual: draw them yourself. The same tools either way.'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: autoTrace}, st.traceMode === 'auto' ? 'Auto trace again' : 'Auto trace'), el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: manualTrace}, 'Manual trace'))),
+  // FOLDING SECTIONS (the builder-ux goal): the step's own business, each one
+  // a line until opened; which are open is kept for the session. Picture and
+  // OpenStreetMap start open until there is a picture and a trace.
+  const fold = (key, title, note, open, ...kids) => {
+   const d = el('details', {class: 'cb-fold' + (key === 'experimental' ? ' cb-experimental' : ''), 'data-fold': key}, el('summary', {}, title, note ? el('small', {}, note) : null), el('div', {class: 'cb-foldbody'}, ...kids));
+   d.open = st.folds?.[key] ?? open;
+   d.addEventListener('toggle', () => { (st.folds ??= {})[key] = d.open; });
+   return d;
+  };
+  const picture = fold('picture', 'Picture', st.pics.length ? (st.picLocked ? 'locked' : 'unlocked') : 'none yet', !st.pics.length,
+   el('small', {}, 'An aerial photo to trace over, fetched for this land or from a file. If it sits off, unlock it and drag it into line with the LIDAR, then lock it. Kept in your saved file, never drawn in the game, and left out of a copy made to share.'),
+   prov, keyIn, howTo, terms,
+   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => fetchImagery(prov.value, keyIn.value.trim(), keys)}, 'Fetch imagery for this land'),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: choosePicture}, 'A picture file'), el('button', {class: 'cb-btn', type: 'button', onclick: useLidarColour}, 'The LIDAR\'s own'),
+    alignBtn, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.offset = {x: 0, z: 0}; relay(); showHint(); }}, 'Back to its position')),
+   st.pics.length ? el('small', {}, 'Showing (every picture fetched or brought is kept, each with its own lining up)') : null,
+   st.pics.length ? el('select', {class: 'cb-picshow', onchange: e => showPic(e.target.value)}, [...new Map(st.pics.map(p => [p.group, p.label])), ['lidar', 'The LIDAR\'s own']].map(([g, label]) => el('option', {value: g, selected: g === st.picShow}, label + (g === 'files' ? ` (${st.pics.filter(p => p.group === 'files').length})` : '')))) : null,
+   ll ? null : el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', onclick: () => searchPlace(prov.value, keyIn.value.trim(), place.value, found)}, 'Find')), found);
+  // THE LIDAR AND THE PICTURE TOGETHER (the owner, 1 November 2026): each
+  // with its own opacity, either on top.
+  const viewing = fold('viewing', 'Viewing', 'what shows, how strongly', false, el('div', {class: 'cb-viewing', style: 'display:flex;flex-direction:column;gap:4px'},
+   el('small', {}, 'The LIDAR as'), el('select', {class: 'cb-lidarview', onchange: e => { st.lidarView = e.target.value; paintLidar(); }}, LIDAR_VIEWS.map(k => el('option', {value: k, selected: k === st.lidarView}, {relief: 'Shaded relief', brightness: 'The laser\'s brightness', slope: 'Slope (edges bright)'}[k]))),
+   el('small', {}, 'LIDAR opacity'), pct('lidarAlpha'),
+   el('small', {}, 'Picture opacity'), pct('picAlpha'),
+   el('small', {}, 'Trace opacity'), pct('traceAlpha', () => plan.draw()),
+   el('button', {class: 'cb-btn cb-lidartop', type: 'button', onclick: e => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); e.target.textContent = st.lidarOnTop ? 'Picture on top' : 'LIDAR on top'; }}, st.lidarOnTop ? 'Picture on top' : 'LIDAR on top')));
+  // OPENSTREETMAP FIRST (the owner, 1 November 2026): the course as mappers
+  // have drawn it, kept as it is or refined from the picture or the LIDAR.
+  const osmBits = [
+   el('small', {}, 'Many courses are already drawn in OpenStreetMap: greens, fairways, tees, bunkers, water, paths, woods and numbered holes, laid as layers and markers. Credited in the course (ODbL). Goes online only when pressed. It can be incomplete or wrong: check it against the picture.'),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
+   st.osm ? el('small', {}, st.osm.said) : null,
+   // WHICH COURSE (osm-course.js osmCourses): a club with two or more, each
+   // its own holes and boundary.
+   st.osm?.courses?.length > 1 ? el('small', {}, 'Course') : null,
+   st.osm?.courses?.length > 1 ? el('select', {class: 'cb-osmcourse', style: 'width:100%', title: 'Which of the club\'s courses to build: its holes and its boundary', onchange: e => pickCourse(e.target.value)},
+    st.osm.courses.map(c => el('option', {value: c.id, selected: c.id === st.osm.course}, `${c.name} (${c.holes} hole${c.holes === 1 ? '' : 's'} numbered)`))) : null,
+   // WHOSE TREES (osm.js mergeTrees; the owner, 1 November 2026).
+   // Not on a draft from before version 3, which has no map trees to choose:
+   // the choice would have dropped them.
+   st.osm?.osmTrees ? el('small', {}, 'Trees') : null,
+   st.osm?.osmTrees ? el('select', {class: 'cb-treesfrom', style: 'width:100%', title: 'Which trees the course keeps: the LIDAR\'s measured trees, OpenStreetMap\'s, or both', onchange: e => treesFrom(e.target.value)},
+    [['merge', 'Both: the LIDAR\'s, and OpenStreetMap\'s where it has none'], ['lidar', 'The LIDAR\'s only'], ['osm', 'OpenStreetMap\'s only']].map(([v, t]) => el('option', {value: v, selected: v === (st.treesFrom ?? 'merge')}, t))) : null,
+   st.osm ? el('div', {class: 'cb-btns'},
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('picture')}, 'Refine with the picture'),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => refineOsm('lidar')}, 'Refine with the LIDAR'),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => keepOsm()}, 'Keep it as drawn')) : null,
+   st.osm ? el('small', {}, 'Refining lines the map up with the ground (LIDAR) or the picture by its bunkers, ponds and greens -- OpenStreetMap is often a metre or three off -- and adds clear greens it left out; its shapes are kept as drawn. With a survey, Refine with the LIDAR is the recommended path.') : null];
+  // THE AUTO TRACE IS EXPERIMENTAL (the owner, 10 November 2026: "put it into
+  // an 'experimental' drop down so that users dont think its going to do a
+  // good job"). It stays, folded away with what to expect.
+  const experimental = fold('experimental', 'Experimental', 'a rough start', false,
+   el('small', {}, 'The auto trace guesses greens, tees, fairways, sand and water from the LIDAR and the picture. It is a rough start you will need to fix by hand -- far from a finished course. OpenStreetMap, where the course is mapped, is a much better start.'),
+   el('button', {class: 'cb-btn', type: 'button', onclick: autoTrace}, st.traceMode === 'auto' ? 'Auto trace again' : 'Auto trace'));
+  if (!st.model) return [
+   // NOT STARTED: the two good ways in, then the rest folded.
+   el('div', {class: 'cb-field'}, el('label', {}, 'Start the course'),
+    el('small', {}, 'Lay the course from OpenStreetMap if it is mapped there (most clubs are, at least in part), or draw it yourself with the tools: brush, pen, trees and houses.'),
+    ...osmBits,
+    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: manualTrace}, 'Draw it myself')),
+   picture, viewing, experimental];
+  // THE TOOL IN HAND'S OPTIONS, AND ONLY THEM (the owner, 4 November 2026:
+  // "This is confusing and is always showing"): each option shows while its
+  // tool is held (`data-for`, showToolOptions).
+  const toolTitle = el('span', {class: 'cb-tooltitle'});
+  const options = el('div', {class: 'cb-field cb-tooloptions'}, el('div', {class: 'cb-panehead'}, toolTitle, el('small', {}, 'Tool options')),
+   toolOption(['move'], el('small', {}, 'Drag to move the view; the wheel zooms. Pick a tool on the left to paint.')),
+   toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it; drag inside to move it, an anchor to turn it. Delete or Esc to let go.')),
+   toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', class: 'cb-brushsize', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
+   toolOption(['tree'], el('small', {}, 'Which tree'), el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { st.treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[st.landscape]).map(([k, name]) => el('option', {value: k, selected: k === st.treeKind}, name)))),
+   toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); showModel(); }}))),
+   toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
+   ...coverControls(),
+   toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], el('label', {class: 'cb-opt'}, 'Every tree\'s size', el('input', {type: 'range', class: 'cb-treescale', min: .5, max: 2, step: .05, value: st.treeScale, title: 'Every tree on the course together', oninput: e => { st.treeScale = +e.target.value; plan.draw(); refreshSave(); }}))),
+   toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], treePlanControls(el, BIOMES[st.landscape], st.treePlan, plan => { st.treePlan = plan; plan2d(); })),
+   toolOption(['sizeTree'], el('label', {class: 'cb-opt'}, 'This tree', el('input', {type: 'range', class: 'cb-onetree', min: .25, max: 3, step: .05, value: 1, disabled: !st.sizing, oninput: e => { const z = st.sizing; if (!z) return; st.model.sizeTree(z.index, z.base, +e.target.value, !z.started); z.started = true; plan.draw(); refreshSave(); }}))));
+  st.toolTitle = toolTitle;
+  // THE LAYERS (the owner: "the way i can paint things on to a layer without
+  // bleeding through to the one on top of it is great. Its just not clear thats
+  // how it works"): the list top first, the chosen one marked, and in words what
+  // a stroke on it goes under.
+  const layers = el('div', {class: 'cb-field cb-layerpanel'}, el('div', {class: 'cb-panehead'}, 'Layers', el('small', {}, 'top of the list is on top')),
+   el('label', {class: 'cb-opt'}, 'Painting', el('select', {class: 'cb-kind', title: 'The layer the brush, the outline, the eraser and smoothing work on -- or click a layer below', onchange: e => { st.kind = e.target.value; layersList(); showHint(); showModel(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k))))),
+   underLine, layerBox,
+   el('small', {}, 'Click a layer to paint it. The eye hides it from view only; the course keeps it.'), countText);
+  // SKIN FROM THE LAND (the owner: "amazing, sets it apart"): its own place.
+  const skin = el('div', {class: 'cb-field cb-skin'}, el('div', {class: 'cb-panehead'}, 'Skin from the land', el('small', {}, 'reads the slopes')),
+   el('small', {}, 'Paints the landscape\'s rock on the steep ground and its apron below, read from the land\'s heights. Paint over it, or Undo.'),
+   el('button', {class: 'cb-btn cb-hot', type: 'button', style: 'width:100%', onclick: skinLand, title: 'Paint the steep ground the landscape\'s rock and the ground below it its apron, read from the land\'s heights -- a best effort; paint over it, or Undo'}, 'Skin from the land'));
+  return [options, layers, skin,
+   fold('osm', 'OpenStreetMap', st.osm ? 'laid' : 'not fetched', false, ...osmBits),
+   picture, viewing,
    // THE LANDSCAPE, chosen here (the owner, 1 November 2026: "User should
    // select biome in the tracing step"): it decides which ground types the
    // layers offer, and is step 5's look.
-   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Landscape'),
+   fold('landscape', 'Landscape', BIOMES[st.landscape]?.name ?? '', !st.landscapePicked,
     el('small', {}, 'Which ground types the layers offer -- rock and scree in the mountains, heather and native grass on a links -- and the course\'s look.'),
     suggestionLine() ? el('small', {class: 'cb-suggest'}, suggestionLine()) : null,
     landscapeMap(document, {built: BIOME_KEYS, chosen: st.landscape, mark: (c => c && [c.lat, c.lon])(surveyPlace()), onPick: k => { st.landscape = k; st.landscapePicked = true; go(2); }}).el,
-    el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))) : null,
-   // THE TOOLS IN SECTIONS, AND ONLY THE TOOL IN HAND'S OPTIONS (the owner, 4
-   // November 2026: "This is confusing and is always showing"). A tree's height
-   // and a zone's density sat as two unlabelled numbers whatever the tool. Now
-   // each option has its name and shows while its tool is held (`data-for`,
-   // showToolOptions); the banner over the plan says how to use the tool, so
-   // the note on clicking corners went.
-   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Tools'),
-    toolSet(null, ['move', 'select']), toolSet('Surfaces', ['brush', 'erase', 'eraseAll', 'outline', 'smooth']),
-    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand, title: 'Paint the steep ground the landscape\'s rock and the ground below it its apron, read from the land\'s heights -- a best effort; paint over it, or Undo'}, 'Skin from the land'),
-    toolSet('Water and sand', ['creek', 'bunker']), toolSet('Trees', ['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree']),
-    toolSet('Ground cover', ['cover', 'coverErase']), toolSet('Houses', ['home', 'homeZone', 'homeErase']),
-    toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
-    toolOption(['tree'], el('small', {}, 'Which tree'), el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { st.treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[st.landscape]).map(([k, name]) => el('option', {value: k, selected: k === st.treeKind}, name)))),
-    toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); showModel(); }}))),
-    toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
-    ...coverControls(),
-    toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], el('label', {class: 'cb-opt'}, 'Every tree\'s size', el('input', {type: 'range', class: 'cb-treescale', min: .5, max: 2, step: .05, value: st.treeScale, title: 'Every tree on the course together', oninput: e => { st.treeScale = +e.target.value; plan.draw(); refreshSave(); }}))),
-    toolOption(['tree', 'treeBrush', 'treeZone', 'treeErase', 'sizeTree'], treePlanControls(el, BIOMES[st.landscape], st.treePlan, plan => { st.treePlan = plan; plan2d(); })),
-    toolOption(['sizeTree'], el('label', {class: 'cb-opt'}, 'This tree', el('input', {type: 'range', class: 'cb-onetree', min: .25, max: 3, step: .05, value: 1, disabled: !st.sizing, oninput: e => { const z = st.sizing; if (!z) return; st.model.sizeTree(z.index, z.base, +e.target.value, !z.started); z.started = true; plan.draw(); refreshSave(); }}))),
-    el('small', {}, 'The layer you paint, outline, erase and smooth (Rough takes every layer off)'), el('select', {class: 'cb-kind', onchange: e => { st.kind = e.target.value; layersList(); showHint(); showModel(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k)))),
-    el('small', {}, 'Layers, top first: one higher in the list shows over one lower (sand painted on rough or fairway is sand). The eye hides one from view; the course keeps it.'), layerBox,
-    el('small', {}, 'Extrapolate: lay a layer round the one picked above, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),
+    el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))),
+   // THE COURSE BOUNDARY (the owner, 1 November 2026).
+   fold('boundary', 'Course boundary', st.boundary ? `${(ringArea(st.boundary) / 1e4).toFixed(1)} ha` : 'not drawn', false,
+    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, and what is already there -- surfaces, houses and trees, the survey's too -- is removed first or kept (the choice beside it). Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
+    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Draw it again' : 'Draw the boundary'),
+     el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
+      el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove everything there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),
+     el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, title: 'Lay the landscape\'s ground and a wood outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside it'))),
+   // CLEAN-UP: what works on the whole trace at once.
+   fold('cleanup', 'Clean up', 'edges, specks, semi-rough', false,
+    el('small', {}, 'Extrapolate: lay a layer round the one being painted, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),
     el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k)))),
      el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'metres', oninput: e => { st.exWidth = +e.target.value || 4; }})),
     el('button', {class: 'cb-btn', type: 'button', onclick: extrapolateNow}, 'Extrapolate'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
      el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Tidy specks'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.chosen = st.sizing = null; st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Undo'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.chosen = st.sizing = null; st.model.redo(); paintCodes(); refreshCount(); plan.draw(); }}, 'Redo'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }}, 'Picture on/off'), el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.traceOn = !st.traceOn; showCodes(); }}, 'Trace on/off'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } say(st.smoothView ? 'Smooth view: the trace drawn as the course will have it.' : 'Cell view: the trace\'s cells as painted.'); }}, 'Smooth / cell view')),
-    countText) : null,
-   // THE COURSE BOUNDARY (the owner, 1 November 2026).
-   st.model ? el('div', {class: 'cb-field'}, el('label', {}, 'Course boundary'),
-    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, and what is already there -- surfaces, houses and trees, the survey's too -- is removed first or kept (the choice beside it). Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Draw it again' : 'Draw the boundary'),
-     el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
-      el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove everything there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),
-     el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, title: 'Lay the landscape\'s ground and a wood outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside it'))) : null,
-   next(3, 'Next: the holes')];
+     el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'))),
+   experimental];
  }
  async function fetchImagery(key, apiKey, keys) {
   const ll = lonLatOfLocal();

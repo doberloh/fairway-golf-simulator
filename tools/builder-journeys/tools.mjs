@@ -39,7 +39,10 @@ export default function ({journey, SHOTS}) {
   // since 4 November 2026), and this course's ground under a fixed spot changes
   // with it: click round the plan until two have stood.
   const trees0 = (await state()).trees; let planted = 0;
-  for (const [fx, fy] of [[.25, .70], [.27, .74], [.18, .82], [.82, .18], [.12, .12], [.88, .88], [.75, .35], [.40, .85], [.60, .12], [.10, .50], [.90, .50], [.50, .92]]) { if (planted === 2) break; await click(fx, fy); planted = (await state()).trees - trees0; }
+  // Only spots over the open plan: the tool column covers the left 15% and
+  // the course panel the right 19% (a click at 12% across once ticked the
+  // LIDAR's tree sizes and replanted 29 trees; builder-ux, 10 November 2026).
+  for (const [fx, fy] of [[.25, .70], [.27, .74], [.18, .82], [.78, .18], [.30, .15], [.70, .88], [.75, .35], [.40, .85], [.60, .12], [.22, .50], [.76, .50], [.50, .92], [.35, .60], [.65, .25], [.45, .78], [.55, .55]]) { if (planted === 2) break; await click(fx, fy); planted = (await state()).trees - trees0; }
   if (planted !== 2) throw Error(`Place tree stood ${planted} of 2 anywhere on the plan`);
   await page.getByRole('button', {name: 'Clear trees', exact: true}).click();
   await click(.25, .70);

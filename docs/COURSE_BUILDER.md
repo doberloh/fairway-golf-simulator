@@ -1792,3 +1792,32 @@ All eight pass (builder-ux, 10 November 2026). The owner, the same morning:
 Worthington's OpenStreetMap holes are "completely wrong. Many holes pointing
 to the wrong place" -- the journey clicks where the map says, which tests the
 clicking, not the course; wrong map data is item 24 of the goal.
+
+### The new layout, first stage (10 November 2026)
+
+Door 2 is now laid out as a paint program (items 8 and 5 of the goal, the
+first stage; the 3D editor follows): **menus** along the top (File, Edit,
+View, Tools, Help; menu.js, with the rules in shortcuts.js and a Node test),
+every command with its key and the keys working everywhere but a text box;
+a **step bar** of chips (done ticked, current filled, unreachable dimmed
+with the reason) with what the step still needs and **one Next button** at
+its right end; a **tool palette** of icons with their keys down the left of
+the plan (TOOL_LIST in door-real.js); the step's **panel on the right** --
+in the trace step Tool options (only the tool in hand's), Layers (the chosen
+one marked, and a line saying what a stroke on it goes under), Skin from the
+land in its own box, then folding sections (OpenStreetMap, Picture, Viewing,
+Landscape, Course boundary, Clean up, Experimental), which are open is kept
+for the session; and a **status bar** of one fixed height with Undo, Redo,
+what the tool does, what just happened (each cut to one line, the full text
+on hover), the pointer's place and the ground's height, and the zoom.
+
+Rejected on the way: a status bar that wraps. The first build let a long
+message wrap to a second line, which made the bar taller and moved the plan
+under the mouse mid-drag (the builder-door-2 journey's picture drag lost
+4 m of its 4 m north). One line each, cut short, is steadier.
+
+**The auto trace is in Experimental now** (item 23; the owner: "so that
+users dont think its going to do a good job"), in the trace step's folding
+section and under Tools > Experimental, with a line saying what to expect;
+**Manual trace** became **Draw it myself**, beside OpenStreetMap as the two
+ways to start. Not seen by a person.

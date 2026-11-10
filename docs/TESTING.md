@@ -43,6 +43,7 @@ files. Three other ways to run it:
 | --- | --- | --- |
 | `npm run test:changed` (`node tools/test.mjs --changed [commit]`) | only the files that can see a change: every test whose imports (followed through every module) reach a file changed, staged or new since the last commit, or since the commit named. Docs alone run nothing | seconds to the whole suite, by what changed |
 | `npm run test:fast` (`--fast`) | the 81 files that build no course -- 621 of the 1,236 tests: the rules, the ball, scoring, saves, challenges, the interface's pure modules | 2 seconds |
+| `node --test tests/builder-shortcuts.test.mjs` | the builder's menus and keys as rules (shortcuts.js): a letter is a tool and Ctrl plus it is not, Ctrl is Ctrl or Command, a command with two keys, a text box keeps its typing and its own undo, the shortcuts sheet lists every key | 1 second |
 | `node --test tests/builder-old-files.test.mjs` | **old files still open** (the builder-ux goal): a door 2 course file saved before the goal (`tests/fixtures/builder-ux/door2-a351f84.fairway`, with its builder's section) opens in the game as the same course -- holes, yards, trees, the lie and the ground on 576 points -- and in the builder as the same draft -- step, holes, every layer's painted cells, the picture. What it opened as is frozen in the `.expect.json` beside it; `UPDATE_OLD_FILES=1` rewrites that, only on purpose | 1 second |
 | `node --test tests/water-bed.test.mjs tests/builder-cover.test.mjs tests/builder-preview.test.mjs tests/quiet-right-click.test.mjs tests/builder-game-view.test.mjs tests/builder-parity.test.mjs tests/lidar-coverage.test.mjs tests/builder-marks.test.mjs` | hole marks dragged in both editors; how much of a square the LIDAR covers, and a square combined from what is saved; every tool the two editors share, tried in both; Game view's rules (when it rebuilds, the camera, no saving; not the picture, which no journey drives yet); a pond's bed; ground cover, holding a shape, Back to 2D from any course, rocks through the file; what the preview shows for each tool on each landscape; right click stopped in the game | |
 | `node tools/test.mjs paths water` | files whose names hold those words | |
@@ -432,7 +433,7 @@ journey fails on any uncaught error,
 for looking, not a check: it opens a course file in the editor and
 photographs a hole's green from each height (to `bench/shots/builder-look/`),
 printing the close-up sheet's square, texel and redraw time
-(COURSE_BUILDER amendment 16, *the close-up sheet*).
+(COURSE_BUILDER amendment 16, *the close-up sheet*). **Every folding section is opened as it appears** (the builder-ux goal, 10 November 2026): door 2's side panel folds its sections (`details.cb-fold`), and the journeys click buttons inside them as a player would after opening one; a journey that wants them as they start sets `window.fairwayKeepFolds`.
 
 | Journey | What it drives |
 | --- | --- |

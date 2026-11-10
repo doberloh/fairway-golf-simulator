@@ -12,6 +12,7 @@ import {readCourseFile} from '../course-file.js';
 import {saveBytes, saveHow, lastSave} from './saving.js';
 import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
 import {tipFor} from './tips.js';
+import {menuBarEl, keySheetEl, setMenus, showKeys} from './menu.js';
 
 const root = document.getElementById('builder');
 const el = (tag, attrs = {}, ...kids) => {
@@ -38,7 +39,7 @@ export function onWindowChange(f) {
 }
 export const ui = {el, root, onWindowChange};
 
-const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {class: 'cb-savenote', id: 'cbSaveNote'}), el('button', {class: 'cb-btn cb-hot', type: 'button', id: 'cbSave', hidden: true, title: 'Ctrl+S', onclick: () => saveNow()}, 'Save'), el('span', {id: 'cbTopTools'}));
+const top = el('header', {class: 'cb-top'}, el('span', {class: 'cb-brand'}, 'Fairway ', el('b', {}, 'Course Builder')), menuBarEl, el('span', {class: 'cb-title', id: 'cbTitle'}), el('span', {class: 'cb-spacer'}), el('span', {class: 'cb-savenote', id: 'cbSaveNote'}), el('button', {class: 'cb-btn cb-hot', type: 'button', id: 'cbSave', hidden: true, title: 'Ctrl+S', onclick: () => saveNow()}, 'Save'), el('span', {id: 'cbTopTools'}));
 const main = el('main', {class: 'cb-main', id: 'cbMain'});
 // THE WAIT, for everything that takes a moment (the owner, 5 November 2026: "we
 // need to indicate processing or progress of some sort"). A spinner the browser
@@ -47,7 +48,7 @@ const main = el('main', {class: 'cb-main', id: 'cbMain'});
 const busyWords = el('span', {class: 'cb-busywords'}), busyFill = el('i', {}), busyBar = el('div', {class: 'cb-busybar', hidden: true}, busyFill);
 const busyStop = el('button', {class: 'cb-btn', type: 'button', hidden: true}, 'Cancel');
 const busy = el('div', {class: 'cb-busy', hidden: true, role: 'status'}, el('span', {class: 'cb-spinner', 'aria-hidden': 'true'}), busyWords, busyBar, busyStop);
-root.append(top, main, busy);
+root.append(top, main, busy, keySheetEl);
 
 export function setTitle(t) { document.getElementById('cbTitle').textContent = t || ''; }
 // `share`: 0 to 1, how far along. `cancel`: what the Cancel button does.
@@ -83,7 +84,22 @@ export async function saveNow() {
  finally { setBusy(''); }
  refreshSave();
 }
-window.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveNow(); } });
+// THE MENUS EVERY SCREEN SHARES (menu.js; the builder-ux goal): File starts
+// with Save and Save as, Help ends the bar. A screen adds its own: `file`
+// items after Save, then Edit, View and Tools as it has them. `keys`: lines
+// for the shortcuts sheet that are not commands (the view's mouse and keys).
+export function useMenus({file = [], edit = null, view = null, tools = null, keys = []} = {}) {
+ const canSave = () => !!saver;
+ setMenus([
+  {name: 'File', items: [
+   {label: () => document.getElementById('cbSave')?.textContent === 'Save again' ? 'Save again' : 'Save', key: 'Ctrl+S', enabled: canSave, run: () => saveNow()},
+   ...file,
+   {sep: true}, {label: 'Open a course file…', key: 'Ctrl+O', run: () => openFile()},
+   {label: 'The builder\'s start', run: () => (window.fairwayBuilder.leave ?? home)()}]},
+  ...(edit ? [{name: 'Edit', items: edit}] : []), ...(view ? [{name: 'View', items: view}] : []), ...(tools ? [{name: 'Tools', items: tools}] : []),
+  {name: 'Help', items: [{label: 'Keyboard shortcuts', key: '?', run: showKeys}]},
+ ], keys);
+}
 
 // Opens a file the player picks: a built course (a ZIP) or a seeded one
 // (JSON text), told apart by their first bytes.
@@ -107,7 +123,7 @@ const doors = [
 ];
 
 export function home() {
- setTitle(''); topTools(); setSaver(null);
+ setTitle(''); topTools(); setSaver(null); window.fairwayBuilder.leave = null; useMenus();
  const msg = el('p', {class: 'cb-note', id: 'cbHomeMsg'});
  show(el('section', {class: 'cb-doors'},
   el('h1', {}, 'Build a ', el('b', {}, 'course')),
