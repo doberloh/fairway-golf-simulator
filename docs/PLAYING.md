@@ -663,7 +663,9 @@ the file to anyone else who has Fairway. It opens on three doors.
      out a tree with no room left (or one standing on it); Undo puts them
      back.
   4. **Holes**: drag any tee, aim point or green to move it, on any hole, and
-     the line follows as it goes. For each hole, left-click its **Back tee** (the middle and
+     the line follows as it goes. A click near another hole's mark places
+     your mark on the hole you are marking; only a drag moves the other
+     hole's mark. For each hole, left-click its **Back tee** (the middle and
      front if you like), any **Aim points** where it bends, in order from the
      tee, and its **Green**; then **Next hole**. 9 or 18. The game draws
      each hole's line through its aim points in turn -- two make a double

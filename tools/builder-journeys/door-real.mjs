@@ -322,13 +322,17 @@ export default function ({journey, SHOTS}) {
   if (!await page.evaluate(() => window.fairwayBuilder.editor.editor.isHidden('heather'))) throw Error('the editor should hide the heather layer');
   await page.locator('.cb-layers [data-eye="heather"]').click();
   // Only the landscape's own ground types to paint (a links: heather, not
-  // pine straw), its sky, its trees' shape (a links' shrubs, round).
+  // pine straw), its sky, its trees' shape. Seaside Links (which replaced the
+  // Scottish Links on 8 November 2026) grows shore pines, so its stand-ins are
+  // cones (tree-shape.js `standIn`); the journey expected the old links'
+  // round shrubs until the builder-ux goal (10 November 2026). Only meshes
+  // that hold trees count: an empty bushes mesh is always there.
   const paints = await page.locator('.cb-tools [data-tool^="paint:"]').evaluateAll(b => b.map(x => x.dataset.tool.slice(6)));
   if (!paints.includes('heather') || paints.includes('pinestraw') || paints.includes('litter')) throw Error(`a links should offer its own ground types only: ${paints}`);
-  const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.geometry.type === 'IcosahedronGeometry') shape = 'round'; else if (o.isInstancedMesh && o.geometry.type === 'ConeGeometry' && !shape) shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
-  if (look.sky !== '#c8d7df' || look.shape !== 'round') throw Error(`the editor should look like a links: ${JSON.stringify(look)}`);
-  // The tree height scale, at once in the view.
-  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0, wide = 0; v.scene.traverse(o => { if (o.isInstancedMesh && o.count && o.geometry.type === 'IcosahedronGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; wide = m.elements[0]; } }); return [top, wide]; });
+  const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.count && o.geometry.type === 'ConeGeometry') shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
+  if (look.sky !== '#c8d7df' || look.shape !== 'cone') throw Error(`the editor should look like Seaside Links: ${JSON.stringify(look)}`);
+  // The tree height scale, at once in the view (the first crown of the cones).
+  const crownTop = () => page.evaluate(() => { const v = window.fairwayBuilder.editor.view, m = new (v.camera.matrix.constructor)(); let top = 0, wide = 0; v.scene.traverse(o => { if (!top && o.isInstancedMesh && o.count && o.geometry.type === 'ConeGeometry') { o.getMatrixAt(0, m); top = m.elements[13] + m.elements[5]; wide = m.elements[0]; } }); return [top, wide]; });
   const [top0, wide0] = await crownTop();
   await page.locator('.cb-treescale').fill('1.5'); await page.waitForTimeout(200);
   const [top1, wide1] = await crownTop();

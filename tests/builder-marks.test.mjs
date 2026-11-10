@@ -2,7 +2,7 @@
 // (editing.js marksOf, holdMark).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {marksOf, markNear, moveMark} from '../src/builder/hole-marks.js';
+import {marksOf, markNear, moveMark, pressOn} from '../src/builder/hole-marks.js';
 import {createEditor} from '../src/builder/editing.js';
 import {validateDoc} from '../src/course-doc.js';
 
@@ -60,4 +60,14 @@ test('in the 3D editor: each mark drags, the line follows, one undo a drag', () 
  assert.deepEqual(s.holes[0].green, {x: 4, z: 85}); assert.deepEqual(s.holes[0].line.at(-1), [4, 85]);
  const count = s.undo.length, idle = e.holdMark(0, green); idle.done();
  assert.equal(s.undo.length, count, 'pressed and let go: no undo');
+});
+
+test('a press takes the hole in hand\'s mark, waits on another hole\'s, places on open ground (builder-ux)', () => {
+ // The 10th tee beside the 9th green: a click there must place the tee, not
+ // take the green (Worthington, 10 November 2026).
+ const holes = [hole(0), {tees: [], aims: [], green: null}];
+ assert.equal(pressOn(holes, 1, {x: 1, z: 199}, 5).act, 'wait');
+ assert.equal(pressOn(holes, 1, {x: 1, z: 199}, 5).mark.hole, 0);
+ assert.equal(pressOn(holes, 0, {x: 1, z: 199}, 5).act, 'take');
+ assert.equal(pressOn(holes, 1, {x: 500, z: 500}, 5).act, 'place');
 });

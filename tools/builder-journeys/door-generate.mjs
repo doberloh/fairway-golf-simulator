@@ -15,7 +15,11 @@ export async function playOneShot(t, bytes, name) {
  game.on('request', r => { if (!/^(file|data|blob):/.test(r.url())) errors.push('request ' + r.url()); });
  await game.goto(pathToFileURL(path.join(ROOT, 'dist', 'index.html')).href);
  await game.waitForFunction(() => window.lab && !document.getElementById('splash'), null, {timeout: 120000});
- const hash = await game.evaluate(b => window.lab.built(b), [...bytes]);
+ // The file goes over as one base64 string, decoded in the page: as an array
+ // of numbers (`[...bytes]`) a real course's file (Worthington's, tens of
+ // megabytes) ran the harness's Node out of memory (builder-ux, 10 November
+ // 2026).
+ const hash = await game.evaluate(s => { const bin = atob(s), b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return window.lab.built(b); }, Buffer.from(bytes).toString('base64'));
  await game.evaluate(h => window.lab.course({built: h}), hash);
  await game.waitForFunction(() => document.getElementById('app').dataset.mode === 'play', null, {timeout: 120000});
  // One tee shot, the way a keyboard player takes one (tools/smoke.mjs swing):

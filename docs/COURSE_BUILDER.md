@@ -1764,3 +1764,31 @@ Nothing is built yet. The full brief, with the targets, the order of work
 and the graphics-card precautions, is local: docs/studies/builder-ux/GOAL.md.
 Findings, decisions and what was rejected go into this section as the work
 lands.
+
+### Every builder journey green (10 November 2026)
+
+The goal's first job: the builder's smoke had run 6 of 8 since before the
+frame-rate goal, the same two failing on main. Both were found before
+anything changed:
+
+- **builder-door-2** (harness wrong): it expected the Scottish Links' round
+  shrubs in the 3D editor. Seaside Links, which replaced it on 8 November,
+  grows shore pines, drawn as cones (tree-shape.js `standIn`); the journey
+  looked only at round crowns and found none, so the tree-size check read 0.
+  It now checks the cones, and only meshes that hold trees.
+- **builder-door-2-worthington** (harness wrong twice, the builder once):
+  it expected Heartland where the landscapes now say Classic Parkland. Then
+  **a real bug**: a press within 12 pixels of *any* hole's mark picked that
+  mark up and made its hole the current one, so placing the 10th tee beside
+  the 9th green took the 9th green -- nine of Worthington's eighteen holes
+  could not be marked by clicking. Now a press on another hole's mark waits:
+  a drag of 5 pixels takes it, a click places the mark in hand on the hole
+  being marked (hole-marks.js `pressOn`; tests/builder-marks.test.mjs). The
+  current hole's own marks pick up at once, as before. Then the harness ran
+  out of memory handing the 49-megabyte file to the game as an array of
+  numbers; it goes as base64 now.
+
+All eight pass (builder-ux, 10 November 2026). The owner, the same morning:
+Worthington's OpenStreetMap holes are "completely wrong. Many holes pointing
+to the wrong place" -- the journey clicks where the map says, which tests the
+clicking, not the course; wrong map data is item 24 of the goal.

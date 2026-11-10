@@ -29,7 +29,7 @@ import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {cornersOf, anchorHit} from './layer-ops.js';
-import {markNear, moveMark} from './hole-marks.js';
+import {markNear, moveMark, pressOn} from './hole-marks.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -323,7 +323,7 @@ export function open(draft = null) {
 
  // ----------------------------------------------------------------- tools
  let dragFrom = null;
- function onTool(type, p) {
+ function onTool(type, p, e) {
   st.hover = p;
   const t = st.tool;
   if (st.step === 0 && st.preview) {
@@ -420,10 +420,28 @@ export function open(draft = null) {
   // THE MARKS DRAG (the owner, 5 November 2026): a press on any tee, aim point or
   // green picks it up, on any hole; a press on open ground places the mark in
   // hand, as before. The hole's line follows as it moves; the yards when it lands.
+  // ANOTHER HOLE'S MARK MOVES ONLY WHEN DRAGGED (the builder-ux goal, 10
+  // November 2026): a press near another hole's mark used to pick it up at
+  // once and make that hole the current one, so placing the 10th tee beside
+  // the 9th green took the 9th green instead -- at Worthington, nine of the
+  // eighteen holes could not be marked. Now a press there waits: a drag of
+  // more than a few pixels picks the other hole's mark up; a click places the
+  // mark in hand on the hole being marked. The current hole's own marks pick
+  // up at once, as before.
   if (st.step === 3 && st.land) {
    const reach = 12 * plan.px / plan.view.scale, holes = st.holes.slice(0, st.holesN), under = () => markNear(holes, st.hole, p, reach);
-   if (type === 'down') { const g = under(); if (g) { st.dragMark = g; st.hole = g.hole; canvas.style.cursor = 'grabbing'; plan.draw(); return; } markAt(p); return; }
+   if (type === 'down') {
+    const press = pressOn(holes, st.hole, p, reach);
+    if (press.act === 'take') { st.dragMark = press.mark; canvas.style.cursor = 'grabbing'; plan.draw(); return; }
+    if (press.act === 'wait') { st.dragMark = {...press.mark, waiting: true, from: p, px: [e.clientX, e.clientY]}; return; }
+    markAt(p); return;
+   }
+   if (type === 'drag' && st.dragMark?.waiting) {
+    if (Math.hypot(e.clientX - st.dragMark.px[0], e.clientY - st.dragMark.px[1]) < 5) return;
+    st.dragMark.waiting = false; st.hole = st.dragMark.hole; canvas.style.cursor = 'grabbing';
+   }
    if (type === 'drag' && st.dragMark) { moveMark(st.holes[st.dragMark.hole], st.dragMark, p); st.dragMark.moved = true; plan.draw(); return; }
+   if (type === 'up' && st.dragMark?.waiting) { const at = st.dragMark.from; st.dragMark = null; markAt(at); return; }
    if (type === 'up' && st.dragMark) { st.dragMark = null; canvas.style.cursor = ''; go(3); return; }
    if (type === 'hover') canvas.style.cursor = under() ? 'grab' : '';
   }
