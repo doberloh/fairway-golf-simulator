@@ -33,7 +33,14 @@ const models = () => meshes ??= import('../mesh-assets.js');
 function create() {
  const box = document.createElement('div'), title = document.createElement('b'), note = document.createElement('small'), canvas = document.createElement('canvas');
  box.className = 'cb-preview'; box.hidden = true; canvas.width = W; canvas.height = H;
- box.append(title, canvas, note);
+ // FOLDS AWAY (the builder-ux goal): it sits over a corner of the plan or the
+ // view, so a click on its title folds it to that line and back; the fold is
+ // kept for the session.
+ const fold = document.createElement('button');
+ fold.type = 'button'; fold.className = 'cb-previewfold'; fold.title = 'Fold the preview away, or open it again'; fold.setAttribute('aria-label', 'Fold the preview');
+ fold.addEventListener('click', () => { box.classList.toggle('cb-folded'); fold.textContent = box.classList.contains('cb-folded') ? '+' : '–'; });
+ fold.textContent = '–';
+ box.append(fold, title, canvas, note);
  const renderer = new T.WebGLRenderer({canvas, antialias: true, alpha: false, powerPreference: 'low-power'});
  renderer.setPixelRatio(Math.min(3, (devicePixelRatio || 1) * 2)); renderer.setSize(W, H, false);
  renderer.shadowMap.enabled = true;

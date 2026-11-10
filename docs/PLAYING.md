@@ -472,7 +472,8 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   step done, the one you are on filled, the ones you cannot reach yet dimmed
   (hold the pointer over one to see why) -- with what the step still needs
   beside them and one **Next** button at the right end, always in the same
-  place. The plan of the land fills the middle, the step's own panel is on
+  place. Each step's panel opens with a line saying what the step is for.
+  The plan of the land fills the middle, the step's own panel is on
   the right, and a status bar along the bottom says what the tool in hand
   does, what just happened, where the pointer is and the ground's height
   there, with **Undo**, **Redo** and the zoom buttons. On the plan: **the wheel zooms, the right button or Space drags the view**
@@ -637,8 +638,10 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      lower, so sand painted on fairway or rough is sand, and the fairway runs
      on under the bunker. The **Layers** list shows every layer the
      landscape offers, each with its area or *empty*, Rough with the ground
-     under no layer at all; click one to paint it, and its **shown/hidden**
-     button hides it from view (the course keeps it). Painting Rough takes
+     under no layer at all; click one to paint it (it is marked), and its
+     **eye** hides it from view (struck through while hidden; the course keeps
+     it). When a brush stroke goes in under a higher layer, its path flashes
+     where it went and the status bar says which layer stayed on top. Painting Rough takes
      every layer off; under the list, a line says which layers the one you
      are painting goes under (they stay on top where they are painted). The
      tool in use says what it does in the status bar, for as long as it is

@@ -24,7 +24,7 @@
 // course), trace-edit.js (the trace being drawn), imagery.js (fetched
 // pictures), lidar/trace.js (the auto trace).
 import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
-import {icon} from './icons.js';
+import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn, nodeAt} from './pen.js';
 import {createSteady} from './steady.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
@@ -367,6 +367,11 @@ export function open(draft = null) {
    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b2f10'; ctx.lineWidth = px;
    for (const q of corners) { const [sx, sy] = at(q), h = 6 * px; ctx.beginPath(); ctx.rect(sx - h, sy - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
   }
+  // A stroke that went under a higher layer, flashing where it went (underNote).
+  if (st.ghost) {
+   const left = (st.ghost.until - performance.now()) / 1800;
+   if (left > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, left * 1.5) * .9; ctx.setLineDash([4 * px, 4 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1.5 * px; for (const q of st.ghost.dabs.filter((_, i, a) => i % 3 === 0 || i === a.length - 1)) { const [x, y] = p.toScreen(q.x, q.z); ctx.beginPath(); ctx.arc(x, y, st.ghost.r * p.view.scale, 0, 7); ctx.stroke(); } ctx.restore(); }
+  }
   // The brush's circle at its size; while a steadied stroke is painted, the
   // circle sits where the brush is and a line (the string) runs to the pointer.
   if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) {
@@ -413,7 +418,7 @@ export function open(draft = null) {
     // a string set by Steadiness, and lay their dabs evenly along the way; on
     // letting go, the stroke's edge is smoothed inside the stroke only.
     const steadied = STEADIED.includes(t);
-    if (type === 'down') { m.beginStroke(); st.coverAt = null; st.steady = createSteady({string: steadied ? st.steadiness / 100 * 30 * plan.px / plan.view.scale : 0, spacing: Math.max(st.land.cell * .5, st.size * .25)}); st.strokeBox = null; }
+    if (type === 'down') { m.beginStroke(); st.coverAt = null; st.steady = createSteady({string: steadied ? st.steadiness / 100 * 30 * plan.px / plan.view.scale : 0, spacing: Math.max(st.land.cell * .5, st.size * .25)}); st.strokeBox = null; st.strokeDabs = []; }
     if (steadied && st.steady) {
      // On letting go the brush catches up to the pointer (steady.js `up`).
      const dabs = type === 'down' ? st.steady.down(p) : type === 'drag' ? st.steady.move(p) : type === 'up' ? st.steady.up(p) : [];
@@ -421,7 +426,7 @@ export function open(draft = null) {
       if (t === 'brush') m.paint({x: q.x, z: q.z, radius: st.size, kind: st.kind});
       else if (t === 'erase') m.erase({x: q.x, z: q.z, radius: st.size, kind: st.kind === 'rough' ? null : st.kind});
       else m.erase({x: q.x, z: q.z, radius: st.size});
-      patchCodes(q.x, q.z, st.size + 2);
+      patchCodes(q.x, q.z, st.size + 2); st.strokeDabs?.push(q);
       const b = st.strokeBox; st.strokeBox = b ? {x0: Math.min(b.x0, q.x), x1: Math.max(b.x1, q.x), z0: Math.min(b.z0, q.z), z1: Math.max(b.z1, q.z)} : {x0: q.x, x1: q.x, z0: q.z, z1: q.z};
      }
      if (type !== 'up') { plan.draw(); return; }
@@ -431,6 +436,7 @@ export function open(draft = null) {
      m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind});
      patchCodes(cx, cz, reach + 2);
     }
+    if (type === 'up' && t === 'brush') underNote(st.strokeBox);
     if (type === 'up') st.steady?.up();
     if ((type === 'down' || type === 'drag') && !steadied) {
      if (t === 'cover' || t === 'treeBrush') {
@@ -544,6 +550,26 @@ export function open(draft = null) {
   plan.draw();
  }
  st.treeH = 15; st.density = 120;
+ // PAINTED UNDER (the builder-ux goal; the owner: "the way i can paint things
+ // on to a layer without bleeding through to the one on top of it is great. Its
+ // just not clear thats how it works"): when a brush stroke went in under a
+ // higher layer, its path flashes faintly where it went and the status bar
+ // says which layer stayed on top -- the first time with the rule in words.
+ function underNote(box) {
+  if (!box || st.kind === 'rough') return;
+  const {cell, halfX, halfZ, nx, nz} = st.land, Ls = st.model.state.layers, m = Ls.masks.get(st.kind), v = Ls.view, code = PALETTE.indexOf(st.kind), r = st.size + 1;
+  if (!m || code < 0) return;
+  const i0 = Math.max(0, Math.floor((box.x0 - r + halfX) / cell)), i1 = Math.min(nx - 1, Math.ceil((box.x1 + r + halfX) / cell)), j0 = Math.max(0, Math.floor((box.z0 - r + halfZ) / cell)), j1 = Math.min(nz - 1, Math.ceil((box.z1 + r + halfZ) / cell));
+  const over = new Map();
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const k = j * nx + i; if (m[k] && v[k] !== code && PALETTE[v[k]]) over.set(PALETTE[v[k]], (over.get(PALETTE[v[k]]) ?? 0) + 1); }
+  if (!over.size) return;
+  const tops = [...over.keys()].map(k => LABEL(k).toLowerCase()), what = LABEL(st.kind).toLowerCase();
+  say(`The ${what} went in under the ${tops.join(' and ')}, which ${tops.length > 1 ? 'stay' : 'stays'} on top: the ${what} is there underneath.${st.toldUnder ? '' : ' Each layer paints under the ones above it in the Layers list.'}`);
+  st.toldUnder = true;
+  st.ghost = {dabs: st.strokeDabs ?? [], r: st.size, until: performance.now() + 1800};
+  const tick = () => { plan.draw(); if (st.ghost && performance.now() < st.ghost.until) requestAnimationFrame(tick); else st.ghost = null; };
+  requestAnimationFrame(tick);
+ }
  // The pen put down: no nodes, not closed.
  function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
  function closeOutline() {
@@ -587,7 +613,7 @@ export function open(draft = null) {
   plan.showLayer('picture', n !== 5 && st.picOn !== false); plan.showLayer('coverage', n === 0); showCodes();
   stepBar();
   palette.hidden = true;
-  panel.replaceChildren(...steps[n]().filter(Boolean));
+  panel.replaceChildren(el('div', {class: 'cb-intro'}, el('b', {}, STEPS[n].slice(2)), el('span', {}, INTRO[n])), ...steps[n]().filter(Boolean));
   menus();
   // Step 1's left drag draws the property box and step 4's left click places
   // a marker (the view drags with the right button or Space there); step 3
@@ -602,6 +628,16 @@ export function open(draft = null) {
  // are, dimmed with the reason when it cannot be reached yet -- what this step
  // still needs, and one Next button, always in the same place. Replaced six
  // equal buttons in a grid and a Next at the foot of a long column.
+ // WHAT EACH STEP IS FOR, in a line at the top of its panel (the builder-ux
+ // goal; the owner: "We might need different UI elements to help guide the
+ // player").
+ const INTRO = [
+  "Bring the LIDAR, the laser survey of the ground: search for it by the course's name, or open files you have. Then drag a box round the property on the relief.",
+  "Build the land: the ground's heights, the trees and the water, read from the survey. It takes from a few seconds to a minute.",
+  "Draw the course over the aerial picture: lay OpenStreetMap's version if the club is mapped, then fix it with the tools on the left -- or draw it yourself.",
+  'Mark each hole: its back tee (and the others if you like), any bends, and its green, then Next hole. The scorecard below fills itself in.',
+  'Name the course, and credit the survey and the picture you used.',
+  'Look the course over as it will play. Open it in the editor to shape it in 3D, or save it now.'];
  const NEXT = ['Next: build the land', 'Next: trace the course', 'Next: the holes', 'Next: the name', 'Next: review the course', null];
  const BLOCKED = ['', 'Choose LIDAR files first', 'Build the land first', 'Start the trace first', 'Every hole needs a tee and a green first', 'Every hole needs a tee and a green first'];
  function needs(n) {
@@ -1050,7 +1086,7 @@ export function open(draft = null) {
    const rough = k === 'rough', m = L.masks.get(k), n = rough ? L.codes.reduce((t, c) => t + (c ? 0 : 1), 0) : m ? m.reduce((t, v) => t + v, 0) : 0;
    const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n * a / 1e4).toFixed(2)} ha`;
    return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
-    rough ? el('span', {style: 'width:52px;flex:none'}) : el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 6px;font-size:11px;width:52px;flex:none', onclick: e => { e.stopPropagation(); st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }}, L.hidden.has(k) ? 'hidden' : 'shown'),
+    rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, LABEL(k), L.hidden.has(k), () => { st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }),
     el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), el('span', {style: 'flex:1'}, LABEL(k) + (rough || own.includes(k) ? '' : ' (not this landscape\'s)')),
     el('small', {}, rough ? `${ha}, under no layer` : n ? ha : 'empty'));
   }));

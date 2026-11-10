@@ -1859,3 +1859,20 @@ Erase and Smooth edges have no key here. **Not done:** the editor's left
 column is still a column of grouped buttons, not door 2's icon palette with
 the options on the right. The journeys choose the layer and press the one
 brush or pen. Not seen by a person.
+
+### Layers made clear, steps that say what they are for (10 November 2026)
+
+Item 1 (the owner: the layer rule "is great. Its just not clear thats how it
+works"): the layers' shown/hidden word buttons are **eyes** (icons.js
+`eyeButton`, both editors), struck through and red while hidden; the chosen
+layer is marked; under the "Painting" choice a line says what the layer goes
+under; and when a brush stroke in door 2 went in under a higher layer, its
+path flashes yellow for under two seconds where it went and the status bar
+says so ("The semi-rough went in under the sand and fairway, which stay on
+top"), the first time with the rule in words (door-real.js `underNote`).
+Rejected: drawing the hidden part of every stroke for as long as it is
+hidden -- the plan would show two layers at once and read as a mistake.
+Item 5: each step's panel opens with a line saying what the step is for
+(`INTRO`). The tool preview, which sat over a corner of the plan, folds to
+its title line (preview.js). Checked by the builder-door-2 journey (the line
+and the message for semi under sand). Not seen by a person.

@@ -6,6 +6,7 @@
 // view what to redraw.
 import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave, useMenus} from './builder.js';
 import {penCurve} from './pen.js';
+import {eyeButton} from './icons.js';
 import {createSteady} from './steady.js';
 import {createEditor, PAINT} from './editing.js';
 import {createView} from './view.js';
@@ -139,7 +140,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   underLine.replaceChildren(...underWords());
   layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
    return el('li', {'data-layer': k, class: k === layer ? 'cb-chosen' : '', title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
-    el('button', {class: 'cb-btn', type: 'button', 'data-eye': k, style: 'padding:2px 5px;font-size:11px', onclick: e => { e.stopPropagation(); editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }}, hid ? 'hidden' : 'shown'),
+    eyeButton(document, k, label(k), hid, () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }),
     el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
     el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
  }

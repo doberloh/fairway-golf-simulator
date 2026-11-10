@@ -165,6 +165,17 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // PAINTED UNDER (builder-ux, item 1): semi-rough brushed across that sand
+  // goes in under it, and the status bar says so.
+  await page.locator('.cb-kind').selectOption('semi');
+  if (!/Semi-rough goes under .*Sand/.test(await page.locator('.cb-under').textContent())) throw Error(`the layers panel should say semi goes under sand: ${await page.locator('.cb-under').textContent()}`);
+  [x0, y0] = await at(-62, 40); [x1, y1] = await at(-48, 40);
+  await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 6}); await page.mouse.up();
+  const saidUnder = await page.locator('.cb-note').textContent();
+  if (!/went in under the sand/.test(saidUnder)) throw Error(`a stroke under sand should say so: ${saidUnder}`);
+  if (await kindAt(-55, 40) !== 'sand') throw Error('the sand should stay on top of the semi painted under it');
+  await t.shot('painted-under');
+  await page.getByRole('button', {name: 'Undo', exact: true}).click();
   // THE STEADIED BRUSH (builder-ux, item 2): the same shaky zig-zag, 3 m
   // either side of a line, drawn with Steadiness 0 and 90 on the tee layer;
   // the steadied stroke comes out narrower.
