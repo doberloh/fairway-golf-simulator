@@ -27,7 +27,7 @@ import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refresh
 import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn, nodeAt} from './pen.js';
 import {createSteady} from './steady.js';
-import {blobs, checkHoles, mapVerdict, mapHas} from './map-checks.js';
+import {blobs, checkHoles, mapVerdict, mapHas, bendFor} from './map-checks.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
@@ -1131,6 +1131,8 @@ export function open(draft = null) {
   const marked = st.holes.slice(0, st.holesN).filter(h => h?.green && h.tees.length).length;
   log(`The course from OpenStreetMap, lined up with the LIDAR: ${marked} of ${st.holesN} holes marked (${took()}).`);
   st.built = {took: (Date.now() - t0) / 1000, steps: done};
+  const bends = addBends(.4);
+  if (bends) log(`${bends} dogleg${bends === 1 ? '' : 's'} found down the fairways (${took()}).`);
   const doubts = mapDoubts(), verdict = mapVerdict(st.holes.slice(0, st.holesN), doubts);
   st.built.doubts = doubts.length;
   if (doubts.length) { go(3); say(`Built in ${took()}: ${st.name}, ${marked} of ${st.holesN} holes from OpenStreetMap -- ${verdict.words} The list is under Checking the map; the red rings show where.`, verdict.unreliable); }
@@ -1739,7 +1741,8 @@ export function open(draft = null) {
    // the traced green it reaches, and the tee boxes along its line as its
    // back, middle and front tees -- after an auto trace, a hand correction or
    // holes marked by hand. One Undo-free step; marks can be moved after.
-   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Put each green mark on its traced green and give each hole the tee boxes along its line', onclick: fitToTrace}, 'Fit holes to the trace')), list),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Put each green mark on its traced green and give each hole the tee boxes along its line', onclick: fitToTrace}, 'Fit holes to the trace'),
+    el('button', {class: 'cb-btn', type: 'button', title: 'For each hole with no aim point whose straight line leaves the fairway, put an aim point at the bend that keeps it on the fairway', onclick: () => { const n = addBends(); go(3); say(n ? `${n} hole${n === 1 ? '' : 's'} given a bend down the fairway. Drag an aim point to move it; Drop last aim takes one off.` : 'No hole needs a bend: each runs down its fairway, or has its aim points already.'); }}, 'Find the doglegs')), list),
   scorecard(),
   next(4, 'Next: the name')];
  }
@@ -1749,14 +1752,32 @@ export function open(draft = null) {
   if (!st.model || !st.land) return [];
   const Ls = st.model.state.layers, none = new Uint8Array(st.land.nx * st.land.nz);
   const greens = blobs(Ls.masks.get('green') ?? none, st.land), tees = blobs(Ls.masks.get('tee') ?? none, st.land);
-  // Fairway or semi-rough under a spot, as traced (the line down the fairway).
+  const played = playedFn(), doubts = checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played});
+  // A line off the fairway with no other fix is offered a bend down it.
+  for (const q of doubts) if (q.kind === 'offPlay' && !q.fix) { const b = bendFor(st.holes[q.hole], played); if (b) { q.fix = {kind: 'aim', to: {x: b.x, z: b.z}, text: 'Bend it down the fairway'}; q.text += ` A bend down the fairway (${Math.round(b.share * 100)}% on) is offered.`; } }
+  return doubts;
+ }
+ // Fairway or semi-rough under a spot, as traced (the line down the fairway).
+ function playedFn() {
   const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.state.codes, fair = new Set(['fairway', 'semi'].map(k => PALETTE.indexOf(k)));
-  const played = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && fair.has(codes[j * nx + i]); };
-  return checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played});
+  return (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && fair.has(codes[j * nx + i]); };
+ }
+ // THE DOGLEGS (item 10; map-checks.js bendFor): each hole with no aim point
+ // whose straight line leaves the fairway gets the bend that keeps it on.
+ // `least`: only holes whose straight line is at least this much on the
+ // fairway already -- Build it for me's 0.4, so a hole the map drew to the
+ // wrong green is not bent into looking right (it is flagged, the bend offered
+ // as its fix); the button's 0, every hole.
+ function addBends(least = 0) {
+  if (!st.model || !st.land) return 0;
+  const played = playedFn(); let n = 0;
+  st.holes.slice(0, st.holesN).forEach(h => { const b = h && bendFor(h, played); if (b && b.was >= least) { h.aims = [{x: b.x, z: b.z}]; n++; } });
+  return n;
  }
  function applyFix(q) {
   const h = st.holes[q.hole]; if (!h || !q.fix) return;
   if (q.fix.kind === 'green') h.green = {...q.fix.to};
+  else if (q.fix.kind === 'aim') h.aims = [{...q.fix.to}];
   else { const t = h.tees.find(t => t.set === q.fix.set); if (t) Object.assign(t, q.fix.to); }
  }
  function checkBox() {

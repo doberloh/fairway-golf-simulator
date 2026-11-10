@@ -741,6 +741,9 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      few rounds over; red rings mark them on the plan. The fixes are guesses
      from the traced course: check each against the picture. When half the
      holes or more have something to check, it says the map is unreliable.
+     **Find the doglegs** gives each hole with no aim point whose straight
+     line leaves the fairway an aim point at the bend that keeps it on the
+     fairway (Build it for me does it for the holes already mostly on it).
      Drag any tee, aim point or green to move it, on any hole, and
      the line follows as it goes. While you place an aim point or a green,
      the yards from the tee (or the last aim point) follow the pointer. A

@@ -2,7 +2,7 @@
 // (src/builder/map-checks.js; the builder-ux goal, item 24).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {blobs, checkHoles, mapVerdict, mapHas, LIMITS} from '../src/builder/map-checks.js';
+import {blobs, checkHoles, mapVerdict, mapHas, bendFor, LIMITS} from '../src/builder/map-checks.js';
 
 const grid = {nx: 400, nz: 400, cell: 1, halfX: 200, halfZ: 200};
 const mask = discs => { const m = new Uint8Array(grid.nx * grid.nz); for (const [x, z, r] of discs) for (let j = 0; j < grid.nz; j++) for (let i = 0; i < grid.nx; i++) if (Math.hypot(-200 + i - x, -200 + j - z) <= r) m[j * grid.nx + i] = 1; return m; };
@@ -72,4 +72,17 @@ test('a line off the fairway is offered the green down the fairway from its tee'
  assert.ok(q?.fix, 'a fix offered');
  assert.equal(q.fix.kind, 'green');
  assert.ok(Math.hypot(q.fix.to.x + 100, q.fix.to.z + 150) < 2, `hole 1's own green, down its fairway: ${JSON.stringify(q.fix.to)}`);
+});
+
+test('a dogleg is found on the fairway, and a straight hole is left alone (item 10)', () => {
+ // An L-shaped fairway: up from the tee at (0, 150) to (0, 0), then left to the green at (-200, 0).
+ const played = (x, z) => (Math.abs(x) < 15 && z > -10 && z < 160) || (Math.abs(z) < 15 && x > -210 && x < 10);
+ const dog = {tees: [{x: 0, z: 150, set: 'back'}], aims: [], green: {x: -200, z: 0}, par: 4};
+ const b = bendFor(dog, played);
+ assert.ok(b, 'a bend found');
+ assert.ok(Math.abs(b.x) < 20 && Math.abs(b.z) < 20, `the bend at the corner: ${JSON.stringify(b)}`);
+ assert.ok(b.share > .8 && b.was < .3);
+ const straightOne = {tees: [{x: 0, z: 150, set: 'back'}], aims: [], green: {x: 0, z: 0}, par: 4};
+ assert.equal(bendFor(straightOne, played), null, 'a hole down its fairway keeps its straight line');
+ assert.equal(bendFor({...dog, aims: [{x: 0, z: 0}]}, played), null, 'a hole with aim points is left as drawn');
 });

@@ -15645,3 +15645,24 @@ batch button says so.
 **Not built:** the scorecard as a witness in the page (the pure check takes
 `card` yards; no box to type them yet); scoring the checks on damaged maps
 over the bench courses (the journey damages one hole on a made-up club).
+
+## Doglegs from the trace (10 November 2026, the builder-ux goal)
+
+map-checks.js `bendFor`: for a hole with no aim point whose straight line's
+middle runs less than 75% on fairway or semi-rough, one bend point on the
+fairway, searched every 8 m within 120 m of the hole's box, both legs at
+least 60% on and the whole no longer than 1.5 times the straight line,
+offered when it beats the straight line by a quarter (all PLACED). Tested on
+an L-shaped fairway (the bend lands at the corner) and a straight one (none).
+
+**On Worthington** (real map, Build it for me): bending every hole's line cut
+the holes to check from 9 to 3 -- but that hides a hole the map drew to the
+wrong green, which a bend can route along some fairway and make look right.
+So Build it for me bends only holes already at least 40% on the fairway (4
+on Worthington), and a hole flagged as running off the fairways is offered
+the bend as its fix, to check against the picture. Result: 9 of 18 holes
+flagged, the map called unreliable, a fix offered for all 9; taking them
+all leaves 7 things to check, all the map's numbering or lines crossing.
+**Rejected:** bending every hole automatically (above); a bend from the
+fairway's own centre line (a fairway's outline is often merged with its
+neighbour's on the map, so its centre line runs between two holes).

@@ -1978,3 +1978,14 @@ again; a deleted pond's bed and creek's channel stay in the land, as a moved
 pond leaves its pit, for Fill to surrounding. Not done: adding and removing
 holes in the 3D editor (door 2 has 9 or 18 and Clear this hole). The
 builder-tools journey deletes the pond it drew and undoes it.
+
+### Doglegs from the trace (10 November 2026)
+
+Item 10 (TODO: built holes ran straight from tee to green, so golfers aimed
+through trees and yardages ran short). map-checks.js `bendFor` finds the
+bend that keeps a hole on its fairway; **Find the doglegs** in the holes
+step bends every hole that needs one; Build it for me bends only those
+already mostly on the fairway, and offers the bend as the fix for a hole
+flagged off the fairway -- so a hole the map drew wrong is not bent into
+looking right (RESEARCH, *Doglegs from the trace*). A saved file plays as
+saved; no version moves. Not played by a person.

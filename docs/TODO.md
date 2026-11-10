@@ -1055,9 +1055,12 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   (RESEARCH, *A survey sees a shape, not a species*). Summerlin in the editor and
   Game view seen with no errors; no round played on it and the builder's smoke
   journeys not run.
-- [ ] **A real course's holes run straight from back tee to green** until the
-  player adds bends: door 2 does not yet draw a dogleg's bend from the traced
-  fairway. Worthington's test round, 96 against par 71 (a generated Midwest
+- [ ] **A real course's doglegs, checked by a person** (was: holes run straight
+  from back tee to green). Since the builder-ux goal (10 November 2026) door 2
+  finds a dogleg's bend from the traced fairway (map-checks.js `bendFor`; the
+  holes step's **Find the doglegs**, and Build it for me for holes whose
+  straight line is already 40% on the fairway); not played, and the yards
+  against Worthington's card not measured again since. Worthington's test round, 96 against par 71 (a generated Midwest
   eighteen plays at par), is partly the golfers aiming through trees on
   doglegs; its yardages are short of the card by a median 22 yards for the same
   reason.

@@ -136,6 +136,34 @@ export function checkHoles(holes, {greens = [], tees = [], boundary = null, card
  return out.sort((a, b) => a.hole - b.hole);
 }
 
+// A DOGLEG FROM THE TRACE (the builder-ux goal, item 10; TODO: "A real
+// course's holes run straight from back tee to green until the player adds
+// bends"): for a hole with no aim points whose straight line leaves the
+// fairway, the one bend point on the fairway that keeps both legs on it best.
+// Candidates every `step` metres round the hole; a leg is scored by how much
+// of it (its middle three-fifths) runs on fairway or semi-rough. Offered
+// only when both legs are at least 60% on and the bent line beats the
+// straight one by a quarter (PLACED). Returns {x, z, share, was} or null.
+export function bendFor(h, played, {step = 8, reach = 120} = {}) {
+ if (!h?.green || !h.tees?.length || h.aims?.length) return null;
+ const back = h.tees.find(t => t.set === 'back') ?? h.tees[0], g = h.green;
+ const leg = (a, b) => { const len = d(a, b); if (len < 40) return -1; let k = 0, n = 0; for (let s = len * .2; s < len * .8; s += 3) { n++; if (played(a.x + (b.x - a.x) * s / len, a.z + (b.z - a.z) * s / len)) k++; } return n ? k / n : -1; };
+ const was = leg(back, g), straight = d(back, g);
+ if (was >= .75) return null;
+ const x0 = Math.min(back.x, g.x) - reach, x1 = Math.max(back.x, g.x) + reach, z0 = Math.min(back.z, g.z) - reach, z1 = Math.max(back.z, g.z) + reach;
+ let best = null;
+ for (let x = x0; x <= x1; x += step) for (let z = z0; z <= z1; z += step) {
+  if (!played(x, z)) continue;
+  const a = {x, z}, l1 = d(back, a), l2 = d(a, g);
+  if (l1 + l2 > straight * 1.5) continue;   // no hole doubles back on itself
+  const s1 = leg(back, a), s2 = leg(a, g);
+  if (s1 < .6 || s2 < .6) continue;
+  const share = (s1 * l1 + s2 * l2) / (l1 + l2);
+  if (!best || share > best.share) best = {x, z, share};
+ }
+ return best && best.share >= Math.max(0, was) + .25 ? {...best, was: Math.max(0, was)} : null;
+}
+
 // The map as a whole: is it worth starting from? {holes, doubtful, share,
 // unreliable, words}.
 export function mapVerdict(holes, doubts, {limits = LIMITS} = {}) {
