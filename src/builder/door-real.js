@@ -93,7 +93,8 @@ const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape',
  ['creek', 'Draw a creek', 'C', 2], ['bunker', 'Dig a bunker', 'U', 2],
  ['tree', 'Place tree', 'T', 3], ['treeBrush', 'Tree brush', 'Shift+T', 3], ['treeZone', 'Tree zone', 'Z', 3], ['treeErase', 'Clear trees', 'X', 3], ['sizeTree', 'Size a tree', null, 3],
  ['cover', 'Ground cover', 'G', 4], ['coverErase', 'Clear cover', 'Shift+G', 4],
- ['home', 'House', 'O', 5], ['homeZone', 'House zone', 'Shift+O', 5], ['homeErase', 'Clear houses', null, 5]];
+ ['home', 'House', 'O', 5], ['homeZone', 'House zone', 'Shift+O', 5], ['homeErase', 'Clear houses', null, 5],
+ ['measure', 'Measure', 'M', 6]];
 // The tools that draw with the pen (pen.js), and how near the first node a
 // click closes the shape, in screen pixels.
 const PEN_TOOLS = ['outline', 'treeZone', 'boundary', 'homeZone', 'creek'], PEN_REACH = 10;
@@ -281,6 +282,7 @@ export function open(draft = null) {
     cover: `Ground cover, ${coverNow().label.toLowerCase()}: drag over open ground (${r} m round), from ${st.coverSizes[coverNow().key].min.toFixed(1)} to ${st.coverSizes[coverNow().key].max.toFixed(1)} m. Not on turf, sand, water, paths or roads.`,
     coverErase: `Clear cover: drag to take rocks and low plants off (${r} m round). Trees stay.`,
     treeErase: `Clear trees: drag to take trees off (${r} m round).`,
+    measure: st.measure?.b ? 'Measure: click to start another.' : st.measure?.a ? 'Measure: move to the far point and click; the yards follow the pointer.' : 'Measure: click a point, then another -- the yards, metres and the rise or fall between them.',
     align: `Picture unlocked: drag it into line with the LIDAR, or nudge it with the arrow keys (a quarter metre; Shift, a metre). It is ${st.offset.x.toFixed(2)} m east, ${(-st.offset.z).toFixed(2)} m north of where its position put it. Lock it when it is right.`,
    })[st.tool] ?? '';
    if (t && st.tool !== 'move') t += ' ' + view;
@@ -334,6 +336,12 @@ export function open(draft = null) {
    ctx.save(); ctx.strokeStyle = '#ff5a4f'; ctx.lineWidth = 2.5 * px; ctx.setLineDash([5 * px, 4 * px]);
    for (const q of st.doubts) if (q.at) { const [x, y] = p.toScreen(q.at.x, q.at.z); ctx.beginPath(); ctx.arc(x, y, 14 * px, 0, 7); ctx.stroke(); }
    ctx.restore();
+  }
+  // The measure, and the yards from the tee while placing a hole's marks.
+  if (st.step === 2 && st.tool === 'measure' && st.measure?.a) { const b = st.measure.b ?? st.hover; if (b) rulerLine(ctx, p, st.measure.a, b, measureWords(st.measure.a, b)); }
+  if (st.step === 3 && st.hover && st.land) {
+   const h = st.holes[st.hole], back = h?.tees.find(t => t.set === 'back') ?? h?.tees[0], from = st.mark === 'aim' || st.mark === 'green' ? (h?.aims.at(-1) ?? back) : null;
+   if (from) rulerLine(ctx, p, from, st.hover, `${measureWords(from, st.hover)}${st.mark === 'green' && h.aims.length ? ` (${Math.round((holeLine({...h, green: st.hover}).reduce((t, q, k, A) => k ? t + Math.hypot(q[0] - A[k - 1][0], q[1] - A[k - 1][1]) : 0, 0)) / .9144)} yd along the hole)` : ''}`);
   }
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
   // THE PEN (pen.js): the curve that will be filled, drawn live through the
@@ -504,6 +512,13 @@ export function open(draft = null) {
     }
     plan.draw(); return;
    }
+   // MEASURE (item 17): a click, then another; the line and its yards follow
+   // the pointer between them.
+   if (t === 'measure') {
+    if (type === 'down') st.measure = !st.measure?.a || st.measure.b ? {a: {x: p.x, z: p.z}, b: null} : {...st.measure, b: {x: p.x, z: p.z}};
+    if (type === 'down' && st.measure.b) say(measureWords(st.measure.a, st.measure.b));
+    plan.draw(); return;
+   }
    if (t === 'sizeTree' && type === 'down') {
     const pick = m.pickAt({x: p.x, z: p.z});
     if (pick?.type !== 'tree') { st.sizing = null; say('No tree there: click on a tree\'s crown.'); }
@@ -577,6 +592,21 @@ export function open(draft = null) {
   requestAnimationFrame(tick);
  }
  function endCompare() { if (!st.compareSkin) return; st.compareSkin = false; paintCodes(); showCodes(); }
+ // THE YARDS BETWEEN TWO POINTS, and the rise or fall from the land.
+ const groundAt = q => { const land = L(); if (!land?.ground) return null; const i = Math.round((q.x + land.halfX) / land.cell), j = Math.round((q.z + land.halfZ) / land.cell); return i >= 0 && j >= 0 && i < land.nx && j < land.nz ? land.ground[j * land.nx + i] + (st.landEdits?.[j * land.nx + i] ?? 0) : null; };
+ function measureWords(a, b) {
+  const m = Math.hypot(b.x - a.x, b.z - a.z), ga = groundAt(a), gb = groundAt(b), dh = ga != null && gb != null ? gb - ga : null;
+  return `${Math.round(m / .9144)} yd (${m.toFixed(1)} m)${dh != null ? `, ${dh >= 0 ? 'up' : 'down'} ${Math.abs(dh).toFixed(1)} m` : ''}`;
+ }
+ function rulerLine(ctx, p, a, b, words, colour = '#fde68a') {
+  const [ax, ay] = p.toScreen(a.x, a.z), [bx, by] = p.toScreen(b.x, b.z), px = p.px;
+  ctx.save(); ctx.lineWidth = 2 * px; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.strokeStyle = colour; ctx.setLineDash([6 * px, 4 * px]); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
+  for (const [x, y] of [[ax, ay], [bx, by]]) { ctx.fillStyle = colour; ctx.beginPath(); ctx.arc(x, y, 3.5 * px, 0, 7); ctx.fill(); }
+  ctx.font = `700 ${13 * px}px system-ui`; const w = ctx.measureText(words).width, lx = (ax + bx) / 2 + 10 * px, ly = (ay + by) / 2 - 10 * px;
+  ctx.fillStyle = 'rgba(3,12,10,.85)'; ctx.fillRect(lx - 5 * px, ly - 14 * px, w + 10 * px, 20 * px); ctx.fillStyle = '#ffffff'; ctx.fillText(words, lx, ly);
+  ctx.restore();
+ }
  // The pen put down: no nodes, not closed.
  function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
  function closeOutline() {
@@ -675,7 +705,12 @@ export function open(draft = null) {
  function menus() {
   const toolItems = TOOL_LIST.map(([k, label, key]) => ({label, key, enabled: tracing, checked: () => st.tool === k, run: () => setTool(k)}));
   useMenus({
-   edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}],
+   edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}, {sep: true},
+    // COPY, PASTE, DUPLICATE, DELETE (item 18): what Select shape has chosen.
+    {label: 'Copy', key: 'Ctrl+C', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; say(`Copied the ${st.chosen.what}: Paste (Ctrl+V) puts it where the pointer is.`); }},
+    {label: 'Paste at the pointer', key: 'Ctrl+V', enabled: () => tracing() && !!st.clip, run: () => pasteAt(st.hover ?? {x: st.clip.mid.x + 20, z: st.clip.mid.z + 20})},
+    {label: 'Duplicate', key: 'Ctrl+D', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; pasteAt({x: st.chosen.mid.x + 15, z: st.chosen.mid.z + 15}); }},
+    {label: 'Delete', key: 'Delete', enabled: () => tracing() && !!st.chosen, run: () => { const what = st.chosen.what; st.model.remove(st.chosen.pick); st.chosen = null; paintCodes(); refreshCount(); plan.draw(); say(`The ${what} deleted. Undo puts it back.`); }}],
    view: [{label: 'Zoom in', key: ['=', '+'], run: () => plan.zoomBy(1.5)}, {label: 'Zoom out', key: '-', run: () => plan.zoomBy(1 / 1.5)}, {label: 'Whole land', key: 'F', run: () => plan.fit()}, {sep: true},
     {label: 'The picture', checked: () => st.picOn !== false, run: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }},
     {label: 'The trace', checked: () => !!st.traceOn, run: () => { st.traceOn = !st.traceOn; showCodes(); }},
@@ -685,6 +720,16 @@ export function open(draft = null) {
     {sep: true}, {heading: 'Experimental'}, {label: 'Auto trace (a rough start to fix by hand)', enabled: () => st.step === 2 && !!st.land, run: () => autoTrace()}],
    keys: [{group: 'The plan', label: 'Move the view', key: 'Right-drag or Space+drag'}, {group: 'The plan', label: 'Zoom', key: 'Wheel'}, {group: 'The plan', label: 'Close an outline', key: 'Enter or double-click'}, {group: 'The plan', label: 'Drop an outline or a selection', key: 'Esc'}, {group: 'The plan', label: 'Nudge the unlocked picture', key: 'Arrows (Shift: 1 m)'}],
   });
+ }
+ function pasteAt(at) {
+  const c = st.clip; if (!c || !st.model) return;
+  const dx = at.x - c.mid.x, dz = at.z - c.mid.z;
+  st.model.copy(c.pick, dx, dz);
+  paintCodes(); refreshCount();
+  // The copy selected, ready to move.
+  if (st.tool !== 'select') setTool('select');
+  chooseShape(c.pick.type === 'shape' ? st.model.pickAt({x: at.x, z: at.z, kind: c.pick.kind}) : c.pick.type === 'tree' ? {type: 'tree', index: st.model.state.trees.length - 1} : {type: 'home', index: st.model.state.homes.length - 1});
+  plan.draw(); say(`A copy of the ${c.what}, selected: drag it where it belongs. Undo takes it back.`);
  }
  function brushSize(d) { st.size = Math.max(1, Math.min(60, Math.round(st.size * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = panel.querySelector('.cb-brushsize'); if (r) r.value = st.size; showHint(); plan.draw(); }
  const toolSet = (title, keys) => el('div', {class: 'cb-toolset'}, title ? el('b', {}, title) : null, el('div', {class: 'cb-btns'}, ...toolButtons.filter(b => keys.includes(b.dataset.tool))));
@@ -1334,6 +1379,7 @@ export function open(draft = null) {
   const options = el('div', {class: 'cb-field cb-tooloptions'}, el('div', {class: 'cb-panehead'}, toolTitle, el('small', {}, 'Tool options')),
    toolOption(['move'], el('small', {}, 'Drag to move the view; the wheel zooms. Pick a tool on the left to paint.')),
    toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it; drag inside to move it, an anchor to turn it. Esc lets go.')),
+   toolOption(['measure'], el('small', {}, 'Click a point, then another: the yards and metres between them, and how much the ground rises or falls. The holes step shows the yards from the tee as you place a hole\'s marks.')),
    toolOption(PEN_TOOLS, el('small', {}, 'Click to add nodes; the line between them is the curve that will be filled. Click the first node to close the shape, then drag any node to adjust it. Shift-click makes a sharp corner. A creek is an open line: Enter ends it.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Fill the shape (Enter)', onclick: () => { if (st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline(); else say(st.tool === 'creek' ? 'A creek needs two points.' : 'A shape needs three nodes.', true); }}, 'Apply'),
      el('button', {class: 'cb-btn', type: 'button', title: 'Take the last node off (Backspace)', onclick: () => { if (st.outline.length && !st.penEdit) { st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); } }}, 'Remove last node'),

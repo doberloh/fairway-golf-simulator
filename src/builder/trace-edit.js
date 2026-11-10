@@ -287,6 +287,24 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
     for (const k of pick.cells) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i >= 0 && j >= 0 && i < nx && j < nz) put(pick.kind, j * nx + i, 1); }
    });
   },
+  // COPY AND DELETE (the builder-ux goal, item 18; "MS Paint/real 3d editor"):
+  // what `pickAt` found, stamped again `dx`, `dz` metres away (a shape by
+  // whole cells, a tree or a house as it is), the original kept; or taken
+  // away (a shape's cells off its own layer only, so what lies under it shows).
+  // One undo step each.
+  copy(pick, dx, dz) {
+   if (!pick) return;
+   if (pick.type === 'tree') return step(() => { keepTrees(); const t = s.trees[pick.index]; s.trees.push({...t, x: t.x + dx, z: t.z + dz}); });
+   if (pick.type === 'home') return step(() => { keepHomes(); const h = s.homes[pick.index]; s.homes.push({...h, x: h.x + dx, z: h.z + dz}); });
+   const di = Math.round(dx / cell), dj = Math.round(dz / cell); if (!di && !dj) return;
+   step(() => { for (const k of pick.cells) { const i = k % nx + di, j = Math.floor(k / nx) + dj; if (i >= 0 && j >= 0 && i < nx && j < nz) put(pick.kind, j * nx + i, 1); } });
+  },
+  remove(pick) {
+   if (!pick) return;
+   if (pick.type === 'tree') return step(() => { keepTrees(); s.trees = s.trees.filter((_, q) => q !== pick.index); });
+   if (pick.type === 'home') return step(() => { keepHomes(); s.homes = s.homes.filter((_, q) => q !== pick.index); });
+   step(() => { for (const k of pick.cells) put(pick.kind, k, 0); });
+  },
   // TURNING ONE SHAPE (1 November 2026, the last of amendment 12's list):
   // what `pickAt` found turned `angle` radians about its middle -- a patch
   // cell by cell (each new cell takes the old cell it turns back onto, so no

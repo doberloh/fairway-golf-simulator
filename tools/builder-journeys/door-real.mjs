@@ -176,6 +176,13 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // MEASURE (builder-ux, item 17): 100 m across the plan is 109 yards.
+  await page.locator('[data-tool="measure"]').click();
+  for (const [x, z] of [[-150, -60], [-50, -60]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+  const measured = await page.locator('.cb-note').textContent();
+  if (!/^109 yd [(]100[.][0-9] m[)]/.test(measured)) throw Error(`the measure should say 109 yd (100 m): ${measured}`);
+  await t.shot('measure');
+  await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-kind').selectOption('sand');
   // PAINTED UNDER (builder-ux, item 1): semi-rough brushed across that sand
   // goes in under it, and the status bar says so.
   await page.locator('.cb-kind').selectOption('semi');
@@ -235,6 +242,15 @@ export default function ({journey, SHOTS}) {
   await t.shot('shape-turned');
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   if (await kindAt(-62, 40) !== 'sand') throw Error('Undo should turn the bunker back');
+  // COPY AND DELETE (builder-ux, item 18): the bunker selected, Ctrl+D lays a
+  // copy beside it, selected; Delete takes the copy away again.
+  { const [px, py] = await at(-62, 40); await page.mouse.click(px, py); }
+  const sandA = await sandCells();
+  await page.keyboard.press('Control+d');
+  const sandB = await sandCells();
+  if (!(sandB > sandA * 1.6)) throw Error(`Ctrl+D should lay a copy of the bunker: ${sandA} -> ${sandB} cells`);
+  await page.keyboard.press('Delete');
+  if (await sandCells() !== sandA) throw Error('Delete should take the copy away');
   await page.locator('[data-tool="brush"]').click();
   // The smooth view: a moment after the stroke, the trace is drawn as outlines.
   await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});

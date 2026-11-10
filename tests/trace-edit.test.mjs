@@ -206,3 +206,24 @@ test('turning one shape: a long bunker turned a quarter keeps its area and lies 
  const cells = [0, 1, 2, 201, 202, 203].map(k => k + 201 * 50 + 50);
  assert.deepEqual(turnedCells(cells, 2 * Math.PI, 201, 201).sort((a, b) => a - b), cells.sort((a, b) => a - b));
 });
+
+test('copying and deleting one shape, a tree and a house, each one undo step (builder-ux)', () => {
+ const t = createTrace(grid);
+ t.fill([[[-30, -10], [30, -10], [30, 10], [-30, 10]]], 'fairway');
+ t.paint({x: -10, z: 0, radius: 4, kind: 'sand'});
+ const sands = count(t, 'sand'), pick = t.pickAt({x: -10, z: 0});
+ t.copy(pick, 20, 0);
+ assert.equal(t.kindAt(10, 0), 'sand', 'the copy where it was put');
+ assert.equal(t.kindAt(-10, 0), 'sand', 'the original kept');
+ assert.equal(count(t, 'sand'), 2 * sands);
+ t.remove(t.pickAt({x: 10, z: 0}));
+ assert.equal(t.kindAt(10, 0), 'fairway', 'deleting a bunker shows the fairway under it');
+ t.undo(); assert.equal(t.kindAt(10, 0), 'sand'); t.undo(); assert.equal(count(t, 'sand'), sands);
+ t.addTree({x: 40, z: 40, h: 12, crown: 3});
+ t.copy(t.pickAt({x: 40, z: 40}), 0, -10);
+ assert.equal(t.state.trees.length, 2); assert.equal(t.state.trees[1].z, 30);
+ t.remove({type: 'tree', index: 0}); assert.equal(t.state.trees.length, 1); assert.equal(t.state.trees[0].z, 30);
+ t.addHome({x: -40, z: 40, rotation: 0, width: 10, depth: 8});
+ t.copy(t.pickAt({x: -40, z: 40}), 15, 0); assert.equal(t.state.homes.length, 2); assert.equal(t.state.homes[1].x, -25);
+ t.undo(); assert.equal(t.state.homes.length, 1);
+});

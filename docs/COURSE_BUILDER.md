@@ -1936,3 +1936,17 @@ straighten the lines down the fairways but cannot settle the map's numbering
 builder-build-for-me journey (a club with one hole drawn wrong). Not built:
 typing the card's yards as a witness; scoring on damaged maps of the bench
 courses. Not seen by a person.
+
+### Measure, live yardages, copy and paste (10 November 2026)
+
+Items 17 and 18, on door 2's plan. **Measure** (M) draws a line between two
+clicks with its yards, metres and the rise or fall from the land
+(door-real.js `measureWords`); while a hole's aim point or green is placed,
+the yards from the back tee (or the last aim point) follow the pointer, with
+the yards along the hole when placing a green after aim points. **Copy,
+Paste at the pointer, Duplicate, Delete** (Ctrl+C, Ctrl+V, Ctrl+D, Delete in
+the Edit menu) work on what Select shape has chosen, through trace-edit.js
+`copy` and `remove` (one undo step each; a deleted shape comes off its own
+layer only). PLACED: a paste lands centred on the pointer, Duplicate 15 m to
+the south-east; the copy comes selected. The 3D editor has neither yet. Not
+seen by a person.

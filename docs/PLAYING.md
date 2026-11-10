@@ -635,8 +635,13 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      **P** Outline fill, **S** Smooth edges, **C** Draw a creek, **U** Dig a
      bunker, **T** Place tree (**Shift+T** Tree brush, **Z** Tree zone, **X**
      Clear trees), **G** Ground cover (**Shift+G** Clear cover), **O** House
-     (**Shift+O** House zone); **[** and **]** make the brush smaller and
-     larger. The panel on the right opens with the tool's options, then the
+     (**Shift+O** House zone), **M** Measure (click two points: the yards,
+     metres and the rise or fall between them); **[** and **]** make the
+     brush smaller and larger. With a shape, tree or house selected (**V**),
+     **Ctrl+C** copies it, **Ctrl+V** pastes it where the pointer is,
+     **Ctrl+D** lays a copy beside it, and **Delete** takes it away (a
+     shape off its own layer only, so what lies under it shows); each copy
+     comes selected, ready to drag. The panel on the right opens with the tool's options, then the
      **Layers**, then **Skin from the land**, then sections that fold:
      OpenStreetMap, Picture, Viewing, Landscape, Course boundary, Clean up
      and Experimental. First the **Landscape**: it decides which ground types
@@ -731,7 +736,9 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      from the traced course: check each against the picture. When half the
      holes or more have something to check, it says the map is unreliable.
      Drag any tee, aim point or green to move it, on any hole, and
-     the line follows as it goes. A click near another hole's mark places
+     the line follows as it goes. While you place an aim point or a green,
+     the yards from the tee (or the last aim point) follow the pointer. A
+     click near another hole's mark places
      your mark on the hole you are marking; only a drag moves the other
      hole's mark. For each hole, left-click its **Back tee** (the middle and
      front if you like), any **Aim points** where it bends, in order from the
