@@ -11737,8 +11737,9 @@ as Web Mercator tiles. Each was tried with one tile (31 October 2026, no key):
 OpenStreetMap, other uses under Esri's terms (OSM wiki's summary of Esri's
 grant). USGS's NAIP image service (imagery.nationalmap.gov,
 USGSNAIPImagery/ImageServer, 0.6 m, `exportImage`) answers its description but
-timed out on an export twice -- the full-resolution US source if it holds up;
-not built yet. Microsoft's Planetary Computer serves NAIP as whole 400 MB
+timed out on an export twice (31 October 2026). **Its sibling USGSNAIPPlus
+answered on 10 November 2026 and is now the first US source** (*Sharper
+pictures for the builder*, below). Microsoft's Planetary Computer serves NAIP as whole 400 MB
 tiles (what the trace was tuned on), too big for a page to fetch. Google
 (Maps Platform terms 3.2.3) and Bing need a key and limit tracing; the owner
 asked for them, and they are offered with that said.
@@ -15534,3 +15535,45 @@ cell). Measured in the journey: a zig-zag 3 m either side of a line with a
 about the brush's own width, a straight line. Smoothing the edge on letting
 go is the trace's own majority smoothing (radius 1.5 cells) inside the
 stroke's box and on the painted layer only.
+
+## Sharper pictures for the builder (10 November 2026, the builder-ux goal)
+
+The owner: "our images that get overlayed onto the course are not very high
+resolution. That needs fixing." Two causes, both in src/builder/imagery.js:
+
+1. **The free US source stopped at zoom 16.** USGSImageryOnly is a tile
+   cache whose last level is 16, about 1.7 m a pixel at Worthington's 43.6°
+   N, though the NAIP photographs under it are 60 cm or finer.
+2. **A big course was cut to 400 tiles** (`zoomFor`'s `maxTiles`), which
+   drops a zoom level for anything much over a kilometre square, even from
+   Google or Bing.
+
+**What was done.** USGS's **NAIP Plus** image service is the first source
+offered in the United States: https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer
+(its JSON, read 10 November 2026: pixel size 0.30 m, 4 bands, Web Mercator
+102100, `maxImageWidth` and `maxImageHeight` 4,000, capabilities Image,
+Metadata, Catalog, Mensuration; its copyright line "USGS, USDA, The National
+Map: Orthoimagery. March 12, 2025"; its description: resolution from 6 inches
+to 1 metre, NAIP and high-resolution orthoimagery). It answers with
+`Access-Control-Allow-Origin: *`, so the page fetches it directly. It is not a
+tile cache: `exportImage` returns any box at any size, so the builder asks for
+blocks of 4 by 4 tiles (1,024 pixels square) by their Web Mercator box
+(`mercatorBox`) -- one request in the journey's test land where the tile cache
+took 6. The picture is asked for at the land's own cell size, never finer
+than 0.3 m, because door 2's plan draws it a cell a pixel. `maxTiles` is 640
+(PLACED): about 42 million pixels, a 3 km square at half a metre.
+
+**Measured** (bench/shots/sharpness.mjs, local, the same 250 m of Worthington
+at 43.6247° N, 95.6262° W): 145 pixels across from the tile cache (1.73 m a
+pixel) against 833 from NAIP Plus (0.30 m) -- single trees, bunker edges,
+house roofs and the road's centre line now show. The two are also different
+years' photographs. **Not measured:** how much bigger a saved course file
+grows (the picture is saved as a JPEG at quality 0.9; estimated a few
+megabytes for a 1 km course at half a metre, against well under one before);
+a big course at 1 m cells is still drawn at 1 m on the plan, as the plan
+draws the picture on the land's cells -- a picture layer of its own would be
+the next step if that shows.
+
+**Tried and not used:** USDA's own NAIP service
+(gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer)
+failed to connect from here (a TLS error, curl exit 35) on 10 November 2026.

@@ -41,7 +41,8 @@ test('the providers ask for a session or metadata with the key, then build tile 
 
 test('the free providers need no key, cover their own country, and build tile addresses', async () => {
  const {providersAt} = await import('../src/builder/imagery.js');
- assert.deepEqual(providersAt(-95.6, 43.6).slice(0, 1), ['usgs']);
+ // The sharpest free US source first (USGS NAIP Plus, the builder-ux goal), the USGS tiles after.
+ assert.deepEqual(providersAt(-95.6, 43.6).slice(0, 2), ['naip', 'usgs']);
  assert.ok(providersAt(2.35, 48.85).includes('ign') && !providersAt(2.35, 48.85).includes('usgs'));
  assert.ok(providersAt(-95.6, 43.6).includes('google') && providersAt(-95.6, 43.6).includes('bing'));
  const s = await PROVIDERS.usgs.start();
@@ -50,4 +51,28 @@ test('the free providers need no key, cover their own country, and build tile ad
  assert.match((await PROVIDERS.ign.start()).tile(1, 2, 17), /LAYER=ORTHOIMAGERY\.ORTHOPHOTOS.*TILEMATRIX=17&TILEROW=2&TILECOL=1/);
  const found = await PROVIDERS.pdok.search(null, 'Amsterdam', async () => ({json: async () => [{lon: '4.9', lat: '52.37', display_name: 'Amsterdam'}]}));
  assert.deepEqual(found[0], {lon: 4.9, lat: 52.37, label: 'Amsterdam'});
+});
+
+test('USGS NAIP Plus is asked for blocks of tiles by their Web Mercator box (builder-ux)', async () => {
+ const {mercatorBox, mosaic, tilesFor} = await import('../src/builder/imagery.js');
+ // The whole world at zoom 0, and the top-left quarter at zoom 1.
+ const R = 6378137 * Math.PI;
+ assert.deepEqual(mercatorBox(0, 0, 0).map(v => Math.round(v)), [-R, -R, R, R].map(Math.round));
+ assert.deepEqual(mercatorBox(0, 0, 1).map(v => Math.round(v)), [-R, 0, 0, R].map(Math.round));
+ assert.deepEqual(mercatorBox(0, 0, 1, 2, 2).map(v => Math.round(v)), [-R, -R, R, R].map(Math.round), 'a block of two by two at zoom 1 is the world');
+ const s = await PROVIDERS.naip.start();
+ assert.equal(s.block, 4); assert.equal(s.maxZoom, 20);
+ const url = s.tile(10, 20, 6, 4, 2);
+ assert.match(url, /^https:\/\/imagery\.nationalmap\.gov\/arcgis\/rest\/services\/USGSNAIPPlus\/ImageServer\/exportImage\?bbox=/);
+ assert.match(url, /size=1024,512&format=jpg&f=image$/);
+ // The mosaic asks for blocks of up to four tiles a side, not tile by tile.
+ const asked = [];
+ const get = async u => { asked.push(u); return {ok: true, blob: async () => u}; };
+ const decode = async () => ({});
+ global.OffscreenCanvas ??= class { constructor(w, h) { this.width = w; this.height = h; } getContext() { return {drawImage() {}, getImageData: (x, y, w, h) => ({data: new Uint8ClampedArray(w * h * 4)})}; } };
+ const box = {lon0: -95.6, lon1: -95.6 + 8 * 360 / 2 ** 16 - 1e-9, lat0: 43.6, lat1: 43.6};
+ const m = await mosaic({...s, tile: (x, y, z, w = 1, h = 1) => `${x},${y},${z},${w},${h}`}, box, {want: 1, maxTiles: 1000, get, decode});
+ const tiles = tilesFor(box, m.z).tiles.length;
+ assert.ok(asked.length > 0 && asked.every(u => +u.split(',')[3] <= 4 && +u.split(',')[4] <= 4), `blocks of at most four tiles a side: ${asked}`);
+ assert.ok(asked.length * 3 < tiles, `far fewer requests than tiles: ${asked.length} for ${tiles}`);
 });

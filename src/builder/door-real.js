@@ -1318,7 +1318,9 @@ export function open(draft = null) {
    // Fetched once a session for this provider and place: asked again (the
    // land rebuilt, door 2 opened again), it comes from memory, not the network.
    const cacheKey = `${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`, kept = IMAGERY.get(cacheKey);
-   const pic = kept ?? await mosaic(await p.start(apiKey), box, {onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
+   // As sharp as the land's own cells (the plan draws the picture a cell a
+   // pixel), never finer than 30 cm (the builder-ux goal).
+   const pic = kept ?? await mosaic(await p.start(apiKey), box, {want: Math.max(.3, st.land.cell), onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
    IMAGERY.set(cacheKey, pic);
    st.pics = st.pics.filter(q => q.group !== key).concat([{group: key, label: p.name, pic, provider: key, place: {kind: 'tiles', ...pic.tile}, toPixel: (x, z) => { const g = ll(x, z); return pic.toPixel(g.lon, g.lat); }}]);
    if (!st.credits.includes(pic.credit)) st.credits.push(pic.credit);

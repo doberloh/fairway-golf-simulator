@@ -65,8 +65,10 @@ export default function ({journey, SHOTS}) {
   await page.setViewportSize({width: 1600, height: 1000});
   const asked = []; page.on('dialog', d => { asked.push(d.message()); d.accept(); });
   // The stand-ins: OpenStreetMap's place search and USGS's tiles.
-  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/basemap\.nationalmap\.gov\//);
-  let tiles = 0;
+  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/basemap\.nationalmap\.gov\//, /^https:\/\/imagery\.nationalmap\.gov\//);
+  let tiles = 0; const blocks = [];
+  // USGS NAIP Plus (builder-ux): blocks of tiles, asked for by their box.
+  await page.route(/imagery\.nationalmap\.gov/, r => { blocks.push(r.request().url()); return r.fulfill({status: 200, contentType: 'image/png', headers: {'Access-Control-Allow-Origin': '*'}, body: tilePng([92, 138, 72])}); });
   await page.route(/nominatim\.openstreetmap\.org/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify([{lon: '-95.62', lat: '43.63', display_name: 'A test place, Minnesota'}])}));
   await page.route(/basemap\.nationalmap\.gov/, r => { tiles++; return r.fulfill({status: 200, contentType: 'image/png', headers: {'Access-Control-Allow-Origin': '*'}, body: tilePng([90, 140, 70])}); });
   const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
@@ -112,6 +114,15 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.length, null, {timeout: 60000}); await idle();
   if (!tiles) throw Error('no imagery tile was asked for');
+  // The sharpest free US source is offered first, and asks for blocks.
+  const offered = await page.locator('.cb-provider option').evaluateAll(o => o.map(x => x.value));
+  if (offered[0] !== 'naip') throw Error(`USGS NAIP should be offered first: ${offered}`);
+  await page.locator('.cb-provider').selectOption('naip');
+  await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
+  await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.some(p => p.group === 'naip'), null, {timeout: 60000}); await idle();
+  if (!blocks.length || !blocks.every(u => /exportImage\?bbox=.*size=[0-9]+,[0-9]+&format=jpg/.test(u))) throw Error(`NAIP should be asked for blocks: ${blocks.slice(0, 2)}`);
+  console.log(`       USGS NAIP: ${blocks.length} block request${blocks.length === 1 ? '' : 's'}, against ${tiles} tiles from the USGS tile cache`);
+  await page.locator('.cb-picshow').selectOption('usgs');
   // The LIDAR and the picture together: opacities, either on top, the slope.
   const pv = () => page.evaluate(() => { const v = window.fairwayBuilder.door2.plan.view; return {alpha: {...v.alpha}, order: v.order.slice()}; });
   await page.locator('[data-alpha="picAlpha"]').fill('40');

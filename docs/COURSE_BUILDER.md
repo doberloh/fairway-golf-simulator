@@ -1889,3 +1889,14 @@ whole pictures better by flicking than by a wipe. The 3D editor keeps its
 button in Surfaces, with no compare. Not seen by a person; no journey runs
 the skin on a survey steep enough (tools/capture/builder-skin.mjs does, on
 real courses).
+
+### Sharp pictures (10 November 2026)
+
+Item 7. In the United States the first picture source is now USGS's NAIP Plus
+image service, asked for 1,024-pixel blocks at the land's own cell size (never
+finer than 30 cm): on Worthington, 0.30 m a pixel against the tile cache's
+1.73 m. The tile cap is 640, up from 400, so a big course keeps its zoom.
+Details and the measurement: RESEARCH, *Sharper pictures for the builder*.
+Checked by the builder-door-2 journey (offered first, asked for blocks, with a
+stand-in server) and tests/imagery.test.mjs. Not seen by a person in the
+builder; the saved file's growth not measured.

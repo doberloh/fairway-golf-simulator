@@ -544,8 +544,10 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   3. **Trace**: first a picture to trace over (kept in your saved file, never
      drawn in the game):
      - **Fetch imagery for this land**: free national aerial photographs
-       where they cover the place -- USGS in the United States (coarse,
-       about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
+       where they cover the place -- in the United States **USGS NAIP,
+       sharpest** (the first offered: 30 to 60 cm a pixel, fetched at the
+       land's own sharpness) and the older **USGS tiles** (coarse, about
+       1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
        Spain, swisstopo in Switzerland -- or **Google** or **Bing** with your
        own key (kept in this browser only; their terms limit tracing, and the
        builder says so). **How to get a Google key** opens under the key box

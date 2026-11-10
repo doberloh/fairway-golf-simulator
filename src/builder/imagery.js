@@ -31,6 +31,13 @@ export function lonLatOf(x, y, z) {
  const n = 2 ** z, lon = x / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
  return {lon, lat};
 }
+// The box of a block of w by h tiles from tile (x, y) at zoom z, in Web
+// Mercator metres (EPSG:3857): [xmin, ymin, xmax, ymax], for an image
+// service asked for any box (USGS NAIP Plus's exportImage).
+export function mercatorBox(x, y, z, w = 1, h = 1) {
+ const R = 6378137, span = 2 * Math.PI * R / 2 ** z;
+ return [-Math.PI * R + x * span, Math.PI * R - (y + h) * span, -Math.PI * R + (x + w) * span, Math.PI * R - y * span];
+}
 // Metres a pixel of a 256-pixel tile covers at a latitude and zoom.
 export const metresPerPixel = (lat, z) => 156543.03392 * Math.cos(lat * Math.PI / 180) / 2 ** z;
 // Bing's tile address.
@@ -107,7 +114,7 @@ export const PROVIDERS = {
 // aerial photography with no key, each offered only where it covers the land
 // ([lon0, lat0, lon1, lat1], loose). A WMTS's tile at a Web Mercator zoom.
 const wmts = (base, layer, matrixSet, style = 'default', format = 'image/jpeg') => (x, y, z) => `${base}?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=${style}&TILEMATRIXSET=${matrixSet}&TILEMATRIX=${z}&TILEROW=${y}&TILECOL=${x}&FORMAT=${encodeURIComponent(format)}`;
-const free = o => ({...o, free: true, async start() { return {tile: o.tile, credit: o.credit, maxZoom: o.maxZoom}; }, search: nominatim});
+const free = o => ({...o, free: true, async start() { return {tile: o.tile, credit: o.credit, maxZoom: o.maxZoom, block: o.block ?? 1}; }, search: nominatim});
 // A place by name through OpenStreetMap's Nominatim (its policy: light use, a
 // search a second at most -- one press of Search is one request).
 async function nominatim(_key, text, get = fetch) {
@@ -115,8 +122,20 @@ async function nominatim(_key, text, get = fetch) {
  return j.map(r => ({lon: +r.lon, lat: +r.lat, label: r.display_name}));
 }
 Object.assign(PROVIDERS, {
- usgs: free({name: 'USGS (United States)', covers: [-180, 17, -64, 72], maxZoom: 16, credit: 'USDA, USGS The National Map: Orthoimagery',
-  terms: 'United States government imagery (NAIP): free to use. Its tiles stop at about 1.7 m a pixel -- coarser than Google or Bing.',
+// THE SHARPEST FREE US PICTURE (the builder-ux goal, 10 November 2026; the
+ // owner: "our images that get overlayed onto the course are not very high
+ // resolution"): USGS's NAIP Plus image service, the same NAIP and
+ // high-resolution photographs as the USGS tiles below but at their own
+ // resolution (30 cm a pixel at its finest, 60 cm for most of NAIP) instead
+ // of stopping at about 1.7 m. It is not a tile cache: it exports any box, up
+ // to 4,000 pixels square, so it is asked for a block of four by four tiles
+ // (1,024 pixels) at a time. It allows any origin, so the page fetches it
+ // directly. RESEARCH, *Sharper pictures for the builder*.
+ naip: free({name: 'USGS NAIP, sharpest (United States)', covers: [-180, 17, -64, 72], maxZoom: 20, block: 4, credit: 'USDA NAIP, USGS The National Map: Orthoimagery',
+  terms: 'United States government imagery (NAIP and high-resolution orthoimagery): free to use. The sharpest free source here: 60 cm a pixel or finer.',
+  tile: (x, y, z, w = 1, h = 1) => `https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/exportImage?bbox=${mercatorBox(x, y, z, w, h).map(v => v.toFixed(2)).join(',')}&bboxSR=3857&imageSR=3857&size=${256 * w},${256 * h}&format=jpg&f=image`}),
+ usgs: free({name: 'USGS tiles (United States)', covers: [-180, 17, -64, 72], maxZoom: 16, credit: 'USDA, USGS The National Map: Orthoimagery',
+  terms: 'United States government imagery (NAIP): free to use. Its tiles stop at about 1.7 m a pixel: USGS NAIP, sharpest, is the same photographs at their own sharpness.',
   tile: (x, y, z) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`}),
  ign: free({name: 'IGN (France)', covers: [-5.5, 41, 10, 51.5], maxZoom: 19, credit: '© IGN, BD ORTHO (Licence Ouverte 2.0)',
   terms: 'Licence Ouverte 2.0: free to use, the source credited.', tile: wmts('https://data.geopf.fr/wmts', 'ORTHOIMAGERY.ORTHOPHOTOS', 'PM', 'normal')}),
@@ -133,19 +152,26 @@ export const providersAt = (lon, lat) => Object.entries(PROVIDERS).filter(([, p]
 // The tiles over a box, fetched and stitched: a picture {width, height, rgb,
 // nir: null, toPixel(lon, lat) -> [col, row]}. `onProgress(f)`; `get` and
 // `decode` stand in for fetch and createImageBitmap in a test.
-export async function mosaic(session, box, {want = .3, maxTiles = 400, onProgress = () => {}, get = fetch, decode = b => createImageBitmap(b)} = {}) {
- const z = Math.min(session.maxZoom ?? 20, zoomFor(box, {want, maxTiles})), t = tilesFor(box, z);
+// A session with a `block` (USGS NAIP Plus) is asked for blocks of that many
+// tiles a side, `tile(x, y, z, w, h)` a block's URL; the rest tile by tile.
+// `maxTiles` (PLACED: 640, up from 400 on 10 November 2026, the builder-ux
+// goal) bounds the picture: 640 tiles is about 42 million pixels, the size of
+// a 3 km square at half a metre a pixel.
+export async function mosaic(session, box, {want = .3, maxTiles = 640, onProgress = () => {}, get = fetch, decode = b => createImageBitmap(b)} = {}) {
+ const z = Math.min(session.maxZoom ?? 20, zoomFor(box, {want, maxTiles})), t = tilesFor(box, z), n = Math.max(1, session.block ?? 1);
  const canvas = new OffscreenCanvas(t.nx * 256, t.ny * 256), cx = canvas.getContext('2d');
+ const blocks = [];
+ for (let by = 0; by < t.ny; by += n) for (let bx = 0; bx < t.nx; bx += n) blocks.push({x: t.x0 + bx, y: t.y0 + by, w: Math.min(n, t.nx - bx), h: Math.min(n, t.ny - by)});
  let done = 0, missing = 0;
- const queue = t.tiles.slice(), work = async () => {
+ const queue = blocks.slice(), work = async () => {
   for (let q; (q = queue.shift());) {
-   try { const r = await get(session.tile(q.x, q.y, q.z)); if (!r.ok) throw Error(r.status); cx.drawImage(await decode(await r.blob()), (q.x - t.x0) * 256, (q.y - t.y0) * 256); }
+   try { const r = await get(n > 1 ? session.tile(q.x, q.y, z, q.w, q.h) : session.tile(q.x, q.y, z)); if (!r.ok) throw Error(r.status); cx.drawImage(await decode(await r.blob()), (q.x - t.x0) * 256, (q.y - t.y0) * 256); }
    catch { missing++; }
-   onProgress(++done / t.tiles.length);
+   onProgress(++done / blocks.length);
   }
  };
  await Promise.all(Array.from({length: 6}, work));
- if (missing === t.tiles.length) throw Error('No imagery came back for this place.');
+ if (missing === blocks.length) throw Error('No imagery came back for this place.');
  const d = cx.getImageData(0, 0, canvas.width, canvas.height).data, N = canvas.width * canvas.height, rgb = new Uint8Array(N * 3);
  for (let k = 0; k < N; k++) { rgb[k * 3] = d[k * 4]; rgb[k * 3 + 1] = d[k * 4 + 1]; rgb[k * 3 + 2] = d[k * 4 + 2]; }
  const tile = {z, x0: t.x0, y0: t.y0};
