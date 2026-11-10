@@ -1057,10 +1057,12 @@ person.**
 - [ ] **The 3D editor's left column is not yet door 2's icon palette** (item 8):
   it has the menus, keys, one brush and pen on the chosen layer, Delete, but
   its tools are still grouped buttons with the options among them.
-- [ ] **Map data, still open** (item 24): typing the scorecard's yards as a
-  witness (map-checks.js takes `card`; there is no box for it); scoring the
-  checks on damaged maps of the bench courses; Worthington's numbering, which
-  no fix can settle without the real routing.
+- [ ] **Map data, still open** (item 24): scoring the checks on damaged maps of
+  the bench courses -- not built: each bench course would need door 2's whole
+  pipeline (its land from the LIDAR) in the page, minutes a course; the
+  journey's damaged club and the real Worthington stand in for it. And
+  Worthington's numbering, which no fix can settle without the real routing
+  (the card box, since 10 November, flags lengths that disagree with it).
 - [ ] **Plain words, the full sweep** (item 14): every tooltip (tips.js) and
   message for LIDAR, EPT, DEM, cell and the like where they are not the subject.
 - [ ] **Not measured:** the 2D plan's frame time with the picture on its own

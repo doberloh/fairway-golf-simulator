@@ -186,3 +186,14 @@ export function mapHas(laid = {}, holes = [], holesN = 18) {
   {what: 'bunkers drawn', have: laid.sand ?? 0, want: null},
  ];
 }
+
+// THE CARD AS A WITNESS (item 24): the club's scorecard pasted or typed --
+// the yards from the back tees, hole by hole, in any layout ("1 349 2 173 ...",
+// one a line, a row copied from a website) -- as [{yards}] for checkHoles'
+// `card`. Numbers from 50 to 800 are yards; hole numbers (1 to 18 in order,
+// before each yard) and totals over 800 are left out. Null if too few.
+export function cardFrom(text, holesN = 18) {
+ const nums = (String(text).match(/[0-9]+/g) ?? []).map(Number);
+ const yards = nums.filter(n => n >= 50 && n <= 800);
+ return yards.length >= Math.min(holesN, 3) ? yards.slice(0, holesN).map(y => ({yards: y})) : null;
+}

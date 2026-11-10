@@ -118,6 +118,14 @@ export default function ({journey}) {
   await page.getByRole('button', {name: /^Take the [0-9]+ fixes offered$|^Fix$/}).first().click();
   const after = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {green: s.holes[2].green, doubts: (s.doubts ?? []).filter(q => q.hole === 2 && q.fix).length}; });
   if (after.doubts || Math.abs(after.green.x - (-80)) > 6) throw Error(`the fix should put hole 3 back on its own green: ${JSON.stringify(after)}`);
+  // THE CARD AS A WITNESS (item 24): a card saying hole 1 is 420 yards (it
+  // measures about 251) flags hole 1, and only hole 1.
+  await page.locator('.cb-cardbox summary').click();
+  await page.locator('.cb-cardtext').fill('1 420\n2 251\n3 251\n4 251\n5 251\n6 251\n7 251\n8 251\n9 251\nOut 2428');
+  await page.locator('[data-card="check"]').click();
+  const cardDoubts = await page.evaluate(() => window.fairwayBuilder.door2.doubts.filter(q => q.kind === 'card').map(q => q.hole));
+  if (cardDoubts.length !== 1 || cardDoubts[0] !== 0) throw Error(`the card should flag hole 1 alone: ${JSON.stringify(cardDoubts)}`);
+  await t.shot('card');
   console.log(`       a wrong map: ${wrong.doubts.length} doubt${wrong.doubts.length === 1 ? '' : 's'} (${[...new Set(wrong.doubts.map(q => q.kind))].join(', ')}); the fix put hole 3 back on its own green`);
  });
 }

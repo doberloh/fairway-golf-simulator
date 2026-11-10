@@ -86,3 +86,10 @@ test('a dogleg is found on the fairway, and a straight hole is left alone (item 
  assert.equal(bendFor(straightOne, played), null, 'a hole down its fairway keeps its straight line');
  assert.equal(bendFor({...dog, aims: [{x: 0, z: 0}]}, played), null, 'a hole with aim points is left as drawn');
 });
+
+test('the card pasted in any layout gives the yards hole by hole (item 24)', async () => {
+ const {cardFrom} = await import('../src/builder/map-checks.js');
+ assert.deepEqual(cardFrom('349 173 390', 3).map(c => c.yards), [349, 173, 390]);
+ assert.deepEqual(cardFrom('1 349\n2 173\n3 390\nOut 912', 3).map(c => c.yards), [349, 173, 390], 'hole numbers and totals left out');
+ assert.equal(cardFrom('', 18), null);
+});

@@ -29,7 +29,7 @@ import {penCurve, closesOn, nodeAt} from './pen.js';
 import {createSteady} from './steady.js';
 import {keepDraft, keptDraft, dropDraft} from './autosave.js';
 import {readDraft} from './draft.js';
-import {blobs, checkHoles, mapVerdict, mapHas, bendFor} from './map-checks.js';
+import {blobs, checkHoles, mapVerdict, mapHas, bendFor, cardFrom} from './map-checks.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
@@ -1851,7 +1851,7 @@ export function open(draft = null) {
   if (!st.model || !st.land) return [];
   const Ls = st.model.state.layers, none = new Uint8Array(st.land.nx * st.land.nz);
   const greens = blobs(Ls.masks.get('green') ?? none, st.land), tees = blobs(Ls.masks.get('tee') ?? none, st.land);
-  const played = playedFn(), doubts = checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played});
+  const played = playedFn(), doubts = checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played, card: st.card ?? null});
   // A line off the fairway with no other fix is offered a bend down it.
   for (const q of doubts) if (q.kind === 'offPlay' && !q.fix) { const b = bendFor(st.holes[q.hole], played); if (b) { q.fix = {kind: 'aim', to: {x: b.x, z: b.z}, text: 'Bend it down the fairway'}; q.text += ` A bend down the fairway (${Math.round(b.share * 100)}% on) is offered.`; } }
   return doubts;
@@ -1891,7 +1891,14 @@ export function open(draft = null) {
     el('span', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Go to this hole and look at it', onclick: () => show(q)}, 'Show'),
      q.fix ? el('button', {class: 'cb-btn', type: 'button', title: q.fix.text, onclick: () => { applyFix(q); go(3); say(`${q.fix.text}: hole ${q.hole + 1}. Drag the mark if it is not right.`); }}, 'Fix') : null)))) : null,
    fixable.length > 1 ? el('button', {class: 'cb-btn', type: 'button', title: 'Take every fix offered -- guesses from the traced fairways and greens, to check against the picture: marks moved onto the nearest green or tee, lines turned down the fairway', onclick: () => { let taken = 0; for (let round = 0, q = fixable; round < 3 && q.length; round++) { q.forEach(applyFix); taken += q.length; q = mapDoubts().filter(x => x.fix); } go(3); say(`${taken} fixes taken. Check each hole against the picture; Next thing to check shows what is left.`); }}, `Take the ${fixable.length} fixes offered`) : null,
-   doubts.length ? el('button', {class: 'cb-btn', type: 'button', title: 'Go to the first thing to check', onclick: () => show(doubts[0])}, 'Next thing to check') : null);
+   doubts.length ? el('button', {class: 'cb-btn', type: 'button', title: 'Go to the first thing to check', onclick: () => show(doubts[0])}, 'Next thing to check') : null,
+   // THE CARD AS A WITNESS (item 24): the club's yards pasted, and every hole
+   // more than 12% (and 40 yards) off them is listed.
+   el('details', {class: 'cb-cardbox', open: !!st.card}, el('summary', {}, st.card ? `Checked against the card (${st.card.length} holes)` : 'Check against the scorecard'),
+    el('small', {}, 'Paste or type the yards from the back tees, hole by hole, from the club\'s card or website -- any layout. Holes far off them are listed above.'),
+    el('textarea', {class: 'cb-cardtext', rows: 3, placeholder: '349 173 390 328 426 ...', style: 'width:100%;background:#03100e;border:1px solid var(--line);color:inherit'}, st.cardText ?? ''),
+    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', 'data-card': 'check', title: 'Check every hole\'s length against these yards', onclick: e => { const t = e.target.closest('details').querySelector('textarea').value; const c = cardFrom(t, st.holesN); if (!c) return say('No yards found there: paste the yards hole by hole.', true); st.card = c; st.cardText = t; go(3); say(`Checked against the card: ${c.length} holes.`); }}, 'Check against the card'),
+     st.card ? el('button', {class: 'cb-btn', type: 'button', title: 'Stop checking against the card', onclick: () => { st.card = null; go(3); }}, 'Forget the card') : null)));
  }
  function fitToTrace() {
   if (!st.model) return;

@@ -2105,3 +2105,13 @@ camera faces, par 4, selected and framed for its markers to be dragged; and
 the rest. A course keeps at least one. One undo each (editing.js `addHole`,
 `removeHole`, tested); the builder-tools journey adds one and removes it.
 PLACED: 300 m and par 4 for a new hole. Not seen by a person.
+
+### The card as a witness (10 November 2026)
+
+Item 24. Checking the map has **Check against the scorecard**: the club's
+yards from the back tees pasted or typed in any layout -- map-checks.js
+`cardFrom` takes the numbers from 50 to 800 in order, leaving out hole
+numbers and totals (tested) -- and every hole more than 12% and 40 yards off
+its card is listed with the other doubts. Kept for the session (not in a
+draft). The builder-build-for-me journey pastes a card with hole 1 at 420
+yards and finds hole 1 alone flagged. Not seen by a person.

@@ -749,6 +749,9 @@ changes, newest first, each with **Back to here**.
      few rounds over; red rings mark them on the plan. The fixes are guesses
      from the traced course: check each against the picture. When half the
      holes or more have something to check, it says the map is unreliable.
+     **Check against the scorecard** takes the club's yards pasted in any
+     layout (hole numbers and totals are left out) and lists every hole more
+     than 12% (and 40 yards) off its card.
      **Find the doglegs** gives each hole with no aim point whose straight
      line leaves the fairway an aim point at the bend that keeps it on the
      fairway (Build it for me does it for the holes already mostly on it).
