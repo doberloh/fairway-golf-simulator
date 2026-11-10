@@ -42,7 +42,8 @@ test('door 2\'s step, tool and mark buttons, made from lists, have theirs', () =
  const src = fs.readFileSync(new URL('door-real.js', DIR), 'utf8');
  const steps = JSON.parse(src.match(/const STEPS = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
  for (const s of steps) assert.ok(TIPS[s], s);
- for (const [, key] of src.match(/const tools = (\[\[.*?\]\]);/)[1].matchAll(/\['(\w+)'/g)) assert.ok(TOOL_TIPS[key], key);
+ // The palette's tools (TOOL_LIST, the builder-ux goal; it was `const tools`).
+ for (const [, key] of src.match(/const TOOL_LIST = (\[\[[\s\S]*?\]\]);/)[1].matchAll(/\['(\w+)'/g)) assert.ok(TOOL_TIPS[key], key);
  for (const [, label] of src.match(/const marks = (\[\[.*?\]\])/)[1].matchAll(/, '([^']+)'\]/g)) assert.ok(TIPS[label], label);
 });
 
