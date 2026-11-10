@@ -644,9 +644,21 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      tool in use says what it does in the status bar, for as long as it is
      held. **Paint brush** paints
      the chosen layer, **Erase brush** takes the chosen layer off (what lies
-     under it shows), **Erase all layers** takes every layer off, **Outline
-     fill** fills a shape (click its corners; double-click or Enter closes
-     it, Esc drops it), **Smooth edges** rounds edges under it, **Skin from the
+     under it shows), **Erase all layers** takes every layer off. The three
+     are **steadied**: the brush trails the pointer a little, on a string,
+     so a shaky hand draws a smooth line (its circle shows where it is, with
+     a dotted line to the pointer); **Steadiness** in the tool's options sets
+     how much (0 paints right under the pointer), letting go brings the brush
+     the rest of the way, and **Smooth the edge when I let go** rounds the
+     stroke's edge. **Outline fill** is a pen: click to put down nodes, and
+     the line through them is the curve that will be filled, drawn on to
+     the pointer as you move; the first node grows when the pointer is on
+     it, and clicking it closes the shape, which you can then adjust by
+     dragging any node before pressing **Enter** (or **Apply**) to fill it.
+     Enter or a double-click also closes and fills at once; **Shift**-click
+     makes a sharp corner; **Backspace** takes the last node off; **Esc**
+     drops it. Tree zone, House zone, the course boundary and Draw a creek
+     (an open line) use the same pen. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,

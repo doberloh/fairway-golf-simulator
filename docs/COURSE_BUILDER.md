@@ -1821,3 +1821,20 @@ users dont think its going to do a good job"), in the trace step's folding
 section and under Tools > Experimental, with a line saying what to expect;
 **Manual trace** became **Draw it myself**, beside OpenStreetMap as the two
 ways to start. Not seen by a person.
+
+### The pen and the steadied brush (10 November 2026)
+
+Items 3 and 2 of the goal, on door 2's plan (the 3D editor follows with its
+layout). **The pen** (pen.js): a node at every click, the curve through them
+drawn live on to the pointer, a dotted line back to the first node, the
+first node growing yellow when a click there would close the shape; closed,
+the shape fills faintly and its nodes drag; Enter or Apply fills it. The
+same pen for Outline fill, Tree zone, House zone, the boundary and creeks.
+The fill is the curve shown, not the nodes' polygon smoothed afterwards.
+**The steadied brush** (steady.js): Paint, Erase and Erase all trail the
+pointer on a string (Steadiness, 50 by default), lay their dabs evenly, catch
+up when let go, and smooth the stroke's edge inside the stroke. Numbers and
+sources: RESEARCH, *The builder's pen and steadied brush*. Checked by the
+builder-door-2 journey (the pen's nodes, Backspace, closing on the first
+node, a dragged node, the bowed fill; a shaky stroke 12.5 m wide plain and
+7.5 m steadied). Not seen by a person.

@@ -15502,3 +15502,35 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   as an exception (Low +4.2%, Medium +1.5%; it read as canes in the flight, but kept 0.61-0.68 of
   its area): the strict rule for every model. In motion (frame-motion, Low, the outline build
   against the eighth): 0.2-1.3% of pixels, the ocotillos whole again, no page errors.
+
+## The builder's pen and steadied brush (10 November 2026, the builder-ux goal)
+
+**The pen's curve** (src/builder/pen.js) is a centripetal Catmull-Rom spline
+(alpha 0.5) through the clicked nodes. Chosen because it passes through every
+node -- a click is a node, as the owner asked ("i want to see a 'node' at each
+click") -- and, unlike the uniform Catmull-Rom, never forms a loop or a cusp
+between two nodes close together (Yuksel, Schaefer and Keyser, *On the
+parameterization of Catmull-Rom curves*, 2009; the construction is the
+Barry-Goldman pyramid as given at
+https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline). Both
+from what was known before this session; neither page fetched. A corner
+(Shift-click) mirrors the far node through it, so the curve runs straight in
+and out. Sampling: about one point a land cell (at least half a metre), 2 to
+64 a segment. On a 30 m square of nodes each side bows out by 3.75 m (an
+eighth of the side) -- what a player sees in the preview, and what is filled.
+**Rejected:** Bezier handles (a second thing to drag at every node), and the
+old straight polygon smoothed after filling (what landed was not what was
+drawn).
+
+**The steadied brush** (src/builder/steady.js) is the "lazy mouse" or
+"stabiliser" of paint programs: the brush stays put until the pointer is a
+string's length away, then moves straight towards it; on letting go it
+catches up to the pointer, so a stroke shorter than the string still paints
+(a 10 m stroke in the builder-door-2 journey painted nothing until it did).
+**PLACED:** Steadiness 0-100 is a string of 0 to 30 screen pixels (50, 15
+pixels, by default); dabs a quarter of the brush apart (at least half a
+cell). Measured in the journey: a zig-zag 3 m either side of a line with a
+4 m brush painted a stroke 12.5 m wide at Steadiness 0 and 7.5 m at 90 --
+about the brush's own width, a straight line. Smoothing the edge on letting
+go is the trace's own majority smoothing (radius 1.5 cells) inside the
+stroke's box and on the painted layer only.

@@ -165,6 +165,25 @@ export default function ({journey, SHOTS}) {
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('the brush should have painted sand');
+  // THE STEADIED BRUSH (builder-ux, item 2): the same shaky zig-zag, 3 m
+  // either side of a line, drawn with Steadiness 0 and 90 on the tee layer;
+  // the steadied stroke comes out narrower.
+  await page.locator('.cb-kind').selectOption('tee');
+  const shaky = async (z0, steady) => {
+   await page.locator('.cb-steady').fill(String(steady));
+   const pts = Array.from({length: 40}, (_, i) => [-150 + i * 2, z0 + (i % 2 ? 3 : -3)]);
+   let [sx, sy] = await at(...pts[0]); await page.mouse.move(sx, sy); await page.mouse.down();
+   for (const q of pts.slice(1)) { [sx, sy] = await at(...q); await page.mouse.move(sx, sy); }
+   await page.mouse.up();
+  };
+  await shaky(-30, 0); await shaky(-70, 90);
+  const spread = z0 => page.evaluate(z0 => { const st = window.fairwayBuilder.door2, L = st.land, m = st.model.state.layers.masks.get('tee'); let lo = 1e9, hi = -1e9; for (let x = -130; x <= -100; x++) { const i = Math.round((x + L.halfX) / L.cell); for (let z = z0 - 15; z <= z0 + 15; z += .5) { const j = Math.round((z + L.halfZ) / L.cell); if (m[j * L.nx + i]) { lo = Math.min(lo, z); hi = Math.max(hi, z); } } } return hi - lo; }, z0);
+  const [wild, calm] = [await spread(-30), await spread(-70)];
+  if (!(calm < wild - 2)) throw Error(`the steadied stroke should be narrower than the shaky one: ${calm} m against ${wild} m`);
+  console.log(`       steadied brush: a shaky stroke ${wild.toFixed(1)} m wide plain, ${calm.toFixed(1)} m at Steadiness 90`);
+  await t.shot('steadied');
+  for (let k = 0; k < 2; k++) await page.getByRole('button', {name: 'Undo', exact: true}).click();
+  await page.locator('.cb-steady').fill('50'); await page.locator('.cb-kind').selectOption('sand');
   // Select shape: the bunker clicked, then dragged 12 m south, then back by Undo.
   const sandCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('sand').reduce((t, v) => t + v, 0));
   const sand0 = await sandCells();
@@ -220,7 +239,32 @@ export default function ({journey, SHOTS}) {
   for (const [x, z] of [[100, 80], [130, 80], [130, 100], [100, 100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
   if (await kindAt(115, 90) !== 'heather') throw Error('the outline should have filled heather');
-  const treesBefore = await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length);
+  // THE PEN (builder-ux, item 3): nodes at the clicks, the curve shown while
+  // drawing, the first node closing the shape, a node dragged, then Enter
+  // fills the curve that was shown -- rounded, so the middle of a side bows
+  // out past the straight line between its nodes.
+  await page.locator('.cb-kind').selectOption('sand');
+  const pen = [[150, 20], [180, 20], [180, 50], [150, 50]];
+  for (const [x, z] of pen) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+  if (await page.evaluate(() => window.fairwayBuilder.door2.outline.length) !== 4) throw Error('the pen should hold a node a click');
+  await page.keyboard.press('Backspace');
+  if (await page.evaluate(() => window.fairwayBuilder.door2.outline.length) !== 3) throw Error('Backspace should take the last node off');
+  { const [px, py] = await at(150, 50); await page.mouse.click(px, py); }
+  { const [px, py] = await at(150.3, 20.3); await page.mouse.move(px, py); }
+  await t.shot('pen-closing');
+  { const [px, py] = await at(150, 20); await page.mouse.click(px, py); }
+  if (!await page.evaluate(() => window.fairwayBuilder.door2.penEdit)) throw Error('a click on the first node should close the shape');
+  { const [ax, ay] = await at(180, 50), [bx, by] = await at(186, 56); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 3}); await page.mouse.up(); }
+  const moved = await page.evaluate(() => window.fairwayBuilder.door2.outline[2]);
+  if (Math.hypot(moved[0] - 186, moved[1] - 56) > 1.5) throw Error(`a closed shape's node should drag: ${moved}`);
+  await t.shot('pen-closed');
+  await page.keyboard.press('Enter');
+  if (await kindAt(170, 38) !== 'sand') throw Error('the pen\'s shape should have filled sand');
+  // The curve bows out between nodes (to x 146.2 m on the left side, pen.js):
+  // sand lies past the straight line between the first and last nodes. (Not
+  // the top side: a pond lies over its bow, and water stays on top of sand.)
+  if (await kindAt(147.5, 35) !== 'sand') throw Error('the pen fills its rounded curve, not the straight lines between its nodes');
+  const treesBefore =await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length);
   await page.locator('[data-tool="treeZone"]').click();
   for (const [x, z] of [[-180, -130], [-150, -130], [-150, -100], [-180, -100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');

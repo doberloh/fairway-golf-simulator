@@ -25,6 +25,8 @@
 // pictures), lidar/trace.js (the auto trace).
 import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
 import {icon} from './icons.js';
+import {penCurve, closesOn, nodeAt} from './pen.js';
+import {createSteady} from './steady.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
@@ -91,6 +93,11 @@ const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape',
  ['tree', 'Place tree', 'T', 3], ['treeBrush', 'Tree brush', 'Shift+T', 3], ['treeZone', 'Tree zone', 'Z', 3], ['treeErase', 'Clear trees', 'X', 3], ['sizeTree', 'Size a tree', null, 3],
  ['cover', 'Ground cover', 'G', 4], ['coverErase', 'Clear cover', 'Shift+G', 4],
  ['home', 'House', 'O', 5], ['homeZone', 'House zone', 'Shift+O', 5], ['homeErase', 'Clear houses', null, 5]];
+// The tools that draw with the pen (pen.js), and how near the first node a
+// click closes the shape, in screen pixels.
+const PEN_TOOLS = ['outline', 'treeZone', 'boundary', 'homeZone', 'creek'], PEN_REACH = 10;
+// The brushes that are steadied (steady.js) and smooth their edge when let go.
+const STEADIED = ['brush', 'erase', 'eraseAll'];
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
 const KEYS = 'fairway-builder-imagery-keys';
 // Imagery fetched this session, by provider and place (fetchImagery): kept
@@ -107,7 +114,7 @@ export async function openSaved(draft) {
 export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, treePlan: null, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
-  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
+  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], sharp: new Set(), penEdit: false, penDrag: -1, steadiness: 50, smoothStroke: true, hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
   name: 'My real course', landscape: 'parkland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
   chosen: null, carry: null, sizing: null, treeScale: 1, treeKind: '', cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
@@ -245,7 +252,7 @@ export function open(draft = null) {
  // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
  // owner, 1 November 2026: "It needs to be more clear what you are doing").
  function showHint() {
-  const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} corner${n === 1 ? '' : 's'} so far: click more; double-click or Enter closes it, Esc drops it.`;
+  const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => st.penEdit ? 'closed: drag a node to adjust it; Enter fills it, Esc drops it.' : `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
   let t = '';
   if (st.step === 0) t = st.preview ? `Drag a box round the property on the relief. ${view}` : '';
   else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}, or drag any mark to move it. ${view}`;
@@ -257,7 +264,7 @@ export function open(draft = null) {
     brush: all ? `Paint brush, rough (${r} m round): drag to take every layer off.` : `Paint brush: drag to paint ${k} (${r} m round).`,
     erase: all ? `Erase brush (${r} m round): drag to take every layer off.` : `Erase brush: drag to take ${k} off (${r} m round); whatever lies under it shows.`,
     eraseAll: `Erase all layers (${r} m round): drag to take every layer off, down to rough.`,
-    outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, corner by corner.`,
+    outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, node by node; the curve follows.`,
     smooth: `Smooth brush (${r} m round): drag along a ragged edge to round it.`,
     tree: `Place tree: click to stand a ${st.treeH} m tree (not on mown ground, sand, water or a path).`,
     treeBrush: `Tree brush: drag to scatter the landscape's trees (${r} m round), from ${st.coverSizes.trees.min.toFixed(1)} to ${st.coverSizes.trees.max.toFixed(1)} m tall.`,
@@ -265,10 +272,10 @@ export function open(draft = null) {
     creek: st.outline.length ? `Draw a creek: ${st.outline.length} point${st.outline.length === 1 ? '' : 's'}; double-click or Enter ends it. Its channel is cut when the course is made.` : 'Draw a creek: click along it from its head to its foot.',
     bunker: `Dig a bunker: click to dig one ${r} m round; sand, and a hollow when the course is made.`,
     select: st.carry?.hold ? (st.carry.turn ? `Turning the ${st.chosen.what}: ${Math.round(st.carry.angle * 180 / Math.PI)} degrees; let go to set it.` : `Moving the ${st.chosen.what}: let go where it belongs. Undo puts it back.`) : st.chosen ? `${st.chosen.what[0].toUpperCase() + st.chosen.what.slice(1)} selected: drag inside the outline to move it${st.chosen.corners.length ? ', or an anchor to turn it' : ''}.` : `Select shape: click a green, bunker, fairway, pond, tree or house -- the ${k} layer where it lies.`,
-    treeZone: st.outline.length ? `Tree zone: ${corners(st.outline.length)}` : `Tree zone: click round the zone, corner by corner; it fills with ${st.density} trees a hectare.`,
-    boundary: st.outline.length ? `Course boundary: ${corners(st.outline.length)}` : 'Course boundary: click round the course, corner by corner; outside it becomes the landscape\'s wood.',
+    treeZone: st.outline.length ? `Tree zone: ${corners(st.outline.length)}` : `Tree zone: click round the zone, node by node; the curve follows; it fills with ${st.density} trees a hectare.`,
+    boundary: st.outline.length ? `Course boundary: ${corners(st.outline.length)}` : 'Course boundary: click round the course, node by node; the curve follows; outside it becomes the landscape\'s wood.',
     home: 'House: click to stand a house; it faces the nearest fairway, green or tee.',
-    homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, corner by corner; houses line it 42 m apart, each facing the course.',
+    homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, node by node; the curve follows; houses line it 42 m apart, each facing the course.',
     homeErase: `Clear houses: drag to take houses off (${r} m round).`,
     cover: `Ground cover, ${coverNow().label.toLowerCase()}: drag over open ground (${r} m round), from ${st.coverSizes[coverNow().key].min.toFixed(1)} to ${st.coverSizes[coverNow().key].max.toFixed(1)} m. Not on turf, sand, water, paths or roads.`,
     coverErase: `Clear cover: drag to take rocks and low plants off (${r} m round). Trees stay.`,
@@ -323,7 +330,28 @@ export function open(draft = null) {
    if (h.green) { const [x, y] = p.toScreen(h.green.x, h.green.z); ctx.fillStyle = on ? '#fde68a' : '#d4443a'; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `bold ${13 * px}px system-ui`; ctx.fillText(String(n + 1), x + 8 * px, y - 6 * px); }
   });
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
-  if (st.outline.length) { ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; ctx.beginPath(); st.outline.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); if (st.hover) ctx.lineTo(...p.toScreen(st.hover.x, st.hover.z)); ctx.stroke(); }
+  // THE PEN (pen.js): the curve that will be filled, drawn live through the
+  // nodes and on to the pointer; a node at every click; the first node grows
+  // when the pointer is on it, as a click there closes the shape; once closed,
+  // the shape is filled faintly and its nodes can be dragged before Enter.
+  if (st.outline.length) {
+   const closedTool = st.tool !== 'creek', reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
+   const closing = closedTool && !st.penEdit && hov && closesOn(st.outline, hov, reach);
+   const nodes = st.penEdit || closing || !hov ? st.outline : [...st.outline, hov];
+   const pts = penCurve(nodes, {closed: closedTool && (st.penEdit || closing), sharp: [...st.sharp]});
+   const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
+   if (closedTool && (st.penEdit || closing)) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
+   ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4 * px; path(); if (closedTool && (st.penEdit || closing)) ctx.closePath(); ctx.stroke();
+   ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; path(); if (closedTool && (st.penEdit || closing)) ctx.closePath(); ctx.stroke();
+   // While drawing a shape, a faint line from the pointer back to the first node.
+   if (closedTool && !st.penEdit && !closing && hov && st.outline.length >= 2) { ctx.save(); ctx.setLineDash([6 * px, 6 * px]); ctx.strokeStyle = 'rgba(255,107,214,.55)'; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.moveTo(...p.toScreen(hov[0], hov[1])); ctx.lineTo(...p.toScreen(st.outline[0][0], st.outline[0][1])); ctx.stroke(); ctx.restore(); }
+   st.outline.forEach(([x, z], q) => {
+    const [sx, sy] = p.toScreen(x, z), first = q === 0 && closedTool, big = first && (closing || st.outline.length >= 3);
+    ctx.fillStyle = first && closing ? '#fde68a' : '#ffffff'; ctx.strokeStyle = '#3b0f30'; ctx.lineWidth = 1.5 * px; ctx.beginPath();
+    if (st.sharp.has(q)) ctx.rect(sx - 4.5 * px, sy - 4.5 * px, 9 * px, 9 * px); else ctx.arc(sx, sy, (big ? (closing ? 9 : 6.5) : 4.5) * px, 0, 7);
+    ctx.fill(); ctx.stroke();
+   });
+  }
   // Creeks drawn here, as lines (the course cuts them when it is made), and
   // bunkers dug.
   for (const c of st.model?.state.creekLines ?? []) { ctx.strokeStyle = 'rgba(60,120,220,.95)'; ctx.lineWidth = Math.max(2 * px, c.width * p.view.scale); ctx.beginPath(); c.points.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); ctx.stroke(); }
@@ -339,7 +367,14 @@ export function open(draft = null) {
    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b2f10'; ctx.lineWidth = px;
    for (const q of corners) { const [sx, sy] = at(q), h = 6 * px; ctx.beginPath(); ctx.rect(sx - h, sy - h, 2 * h, 2 * h); ctx.fill(); ctx.stroke(); }
   }
-  if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) { const [x, y] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke(); }
+  // The brush's circle at its size; while a steadied stroke is painted, the
+  // circle sits where the brush is and a line (the string) runs to the pointer.
+  if (st.hover && st.step === 2 && BRUSHES.includes(st.tool)) {
+   const at = st.steady?.at ?? st.hover, [x, y] = p.toScreen(at.x, at.z);
+   ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 3 * px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke();
+   ctx.strokeStyle = '#fff'; ctx.lineWidth = px; ctx.beginPath(); ctx.arc(x, y, st.size * p.view.scale, 0, 7); ctx.stroke();
+   if (st.steady?.at) { const [hx, hy] = p.toScreen(st.hover.x, st.hover.z); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([3 * px, 3 * px]); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(hx, hy); ctx.stroke(); ctx.setLineDash([]); }
+  }
   if (st.align?.pairs) for (const q of st.align.pairs) { const [x, y] = p.toScreen(q.local.x, q.local.z); ctx.strokeStyle = '#ff6bd6'; ctx.strokeRect(x - 5 * px, y - 5 * px, 10 * px, 10 * px); }
  }
  const holeLine = h => { const back = h.tees.find(t => t.set === 'back') ?? h.tees[0]; return [...(back ? [[back.x, back.z]] : []), ...h.aims.map(a => [a.x, a.z]), ...(h.green ? [[h.green.x, h.green.z]] : [])]; };
@@ -374,8 +409,30 @@ export function open(draft = null) {
    const m = st.model;
    if (!m) { plan.draw(); return; }
    if (BRUSHES.includes(t)) {
-    if (type === 'down') { m.beginStroke(); st.coverAt = null; }
-    if (type === 'down' || type === 'drag') {
+    // THE STEADIED BRUSH (steady.js): the surface brushes trail the pointer on
+    // a string set by Steadiness, and lay their dabs evenly along the way; on
+    // letting go, the stroke's edge is smoothed inside the stroke only.
+    const steadied = STEADIED.includes(t);
+    if (type === 'down') { m.beginStroke(); st.coverAt = null; st.steady = createSteady({string: steadied ? st.steadiness / 100 * 30 * plan.px / plan.view.scale : 0, spacing: Math.max(st.land.cell * .5, st.size * .25)}); st.strokeBox = null; }
+    if (steadied && st.steady) {
+     // On letting go the brush catches up to the pointer (steady.js `up`).
+     const dabs = type === 'down' ? st.steady.down(p) : type === 'drag' ? st.steady.move(p) : type === 'up' ? st.steady.up(p) : [];
+     for (const q of dabs) {
+      if (t === 'brush') m.paint({x: q.x, z: q.z, radius: st.size, kind: st.kind});
+      else if (t === 'erase') m.erase({x: q.x, z: q.z, radius: st.size, kind: st.kind === 'rough' ? null : st.kind});
+      else m.erase({x: q.x, z: q.z, radius: st.size});
+      patchCodes(q.x, q.z, st.size + 2);
+      const b = st.strokeBox; st.strokeBox = b ? {x0: Math.min(b.x0, q.x), x1: Math.max(b.x1, q.x), z0: Math.min(b.z0, q.z), z1: Math.max(b.z1, q.z)} : {x0: q.x, x1: q.x, z0: q.z, z1: q.z};
+     }
+     if (type !== 'up') { plan.draw(); return; }
+    }
+    if (type === 'up' && steadied && st.strokeBox && st.smoothStroke && t !== 'eraseAll' && st.kind !== 'rough') {
+     const b = st.strokeBox, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2 + st.size + 2;
+     m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind});
+     patchCodes(cx, cz, reach + 2);
+    }
+    if (type === 'up') st.steady?.up();
+    if ((type === 'down' || type === 'drag') && !steadied) {
      if (t === 'cover' || t === 'treeBrush') {
       // A dab each half a brush along, as in the 3D editor.
       if (!st.coverAt || Math.hypot(p.x - st.coverAt.x, p.z - st.coverAt.z) >= Math.max(1.5, st.size * .5)) { const c = t === 'cover' ? coverNow() : coverByKey(BIOMES[st.landscape], 'trees'); m.paintCover({cover: c, x: p.x, z: p.z, radius: st.size, density: st.coverThick, ...st.coverSizes[c.key]}); st.coverAt = p; }
@@ -392,9 +449,22 @@ export function open(draft = null) {
     if (type === 'up') { m.endStroke(); refreshCount(); }
     plan.draw(); return;
    }
-   if (t === 'outline' || t === 'treeZone' || t === 'boundary' || t === 'homeZone' || t === 'creek') {
-    if (type === 'down') st.outline.push([p.x, p.z]);
-    if (type === 'double' && st.outline.length >= (t === 'creek' ? 2 : 3)) closeOutline();
+   if (PEN_TOOLS.includes(t)) {
+    // THE PEN (pen.js): a click adds a node (Shift: a sharp corner); a click on
+    // the first node closes the shape, whose nodes can then be dragged; Enter
+    // or a double-click fills it (a creek: ends it).
+    const reach = PEN_REACH * plan.px / plan.view.scale, hit = [p.x, p.z], min = t === 'creek' ? 2 : 3;
+    if (st.penEdit) {
+     if (type === 'down') st.penDrag = nodeAt(st.outline, hit, reach);
+     if (type === 'drag' && st.penDrag >= 0) st.outline[st.penDrag] = hit;
+     if (type === 'up') st.penDrag = -1;
+     plan.draw(); return;
+    }
+    if (type === 'down') {
+     if (t !== 'creek' && closesOn(st.outline, hit, reach, min)) { st.penEdit = true; st.penDrag = -1; say('Closed. Drag any node to adjust it, then press Enter (or Apply) to fill; Esc drops it.'); showToolOptions(); }
+     else { st.outline.push(hit); if (e?.shiftKey) st.sharp.add(st.outline.length - 1); }
+    }
+    if (type === 'double' && st.outline.length >= min) closeOutline();
     plan.draw(); return;
    }
    // SELECT SHAPE, as in the 3D editor (the owner, 4 November 2026): the first
@@ -474,9 +544,17 @@ export function open(draft = null) {
   plan.draw();
  }
  st.treeH = 15; st.density = 120;
+ // The pen put down: no nodes, not closed.
+ function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
  function closeOutline() {
-  // A double-click adds its own two clicks as corners; they are one point.
-  const ring = st.outline.filter((q, i, a) => !i || Math.hypot(q[0] - a[i - 1][0], q[1] - a[i - 1][1]) > .05); st.outline = [];
+  // A double-click adds its own two clicks as nodes; they are one point. The
+  // shape filled is the pen's curve through the nodes (pen.js), the very
+  // points the plan showed while drawing.
+  const keep = st.outline.map((q, i, a) => !i || Math.hypot(q[0] - a[i - 1][0], q[1] - a[i - 1][1]) > .05);
+  const nodes = st.outline.filter((_, i) => keep[i]), sharp = [];
+  st.outline.forEach((_, i) => { if (keep[i] && st.sharp.has(i)) sharp.push(keep.slice(0, i).filter(Boolean).length); });
+  const ring = nodes.length >= (st.tool === 'creek' ? 2 : 3) ? penCurve(nodes, {closed: st.tool !== 'creek', sharp, step: Math.max(.5, st.land.cell)}) : nodes;
+  dropPen();
   if (st.tool === 'creek') { if (ring.length >= 2) { st.model.addCreekLine({points: ring, width: Math.max(1.5, Math.min(12, st.size / 2))}); refreshCount(); plan.draw(); } return; }
   if (ring.length < 3) return;
   if (st.tool === 'boundary') { st.boundary = ring; say(`The course boundary: ${(ringArea(ring) / 1e4).toFixed(1)} ha. Fill outside it when it is right.`); setTool('move'); go(2); return; }
@@ -489,7 +567,9 @@ export function open(draft = null) {
   if (!document.body.contains(canvas)) return;   // door 2 not shown (the editor over it, or another door): kept, as it may come back
   if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
   if (e.key === 'Enter' && st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline();
-  if (e.key === 'Escape') { st.outline = []; chooseShape(null); plan.draw(); }
+  if (e.key === 'Escape') { dropPen(); chooseShape(null); plan.draw(); }
+  // Backspace takes the last node off a shape being drawn (the pen).
+  if (e.key === 'Backspace' && st.outline.length && !st.penEdit) { e.preventDefault(); st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); }
   // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
   const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
   if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
@@ -502,7 +582,7 @@ export function open(draft = null) {
  const can = n => n === 0 || (n === 1 && (!!st.preview || !!st.land)) || (n >= 2 && !!st.land && (n < 3 || !!st.model) && (n < 4 || st.holes.slice(0, st.holesN).every(h => h?.green && h.tees.length)) && (n !== 2 || true));
  function go(n) {
   if (!can(n)) return;
-  st.step = n; st.outline = [];
+  st.step = n; dropPen();
   if (n !== 5) { plan.clearLayer('course'); st.doc = null; }
   plan.showLayer('picture', n !== 5 && st.picOn !== false); plan.showLayer('coverage', n === 0); showCodes();
   stepBar();
@@ -628,7 +708,7 @@ export function open(draft = null) {
   if (t !== 'align') st.picLocked = true;
   if (t !== 'select') { st.chosen = null; st.carry = null; }
   if (t !== 'sizeTree') st.sizing = null;
-  st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); st.outline = [];
+  st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); dropPen();
   toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t));
   showModel(); showToolOptions();
   const lockBtn = toolButtons.find(b => b.dataset.tool === 'align'); if (lockBtn) lockBtn.textContent = st.picLocked ? 'Unlock the picture' : 'Lock the picture';
@@ -1123,8 +1203,15 @@ export function open(draft = null) {
   const toolTitle = el('span', {class: 'cb-tooltitle'});
   const options = el('div', {class: 'cb-field cb-tooloptions'}, el('div', {class: 'cb-panehead'}, toolTitle, el('small', {}, 'Tool options')),
    toolOption(['move'], el('small', {}, 'Drag to move the view; the wheel zooms. Pick a tool on the left to paint.')),
-   toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it; drag inside to move it, an anchor to turn it. Delete or Esc to let go.')),
+   toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it; drag inside to move it, an anchor to turn it. Esc lets go.')),
+   toolOption(PEN_TOOLS, el('small', {}, 'Click to add nodes; the line between them is the curve that will be filled. Click the first node to close the shape, then drag any node to adjust it. Shift-click makes a sharp corner. A creek is an open line: Enter ends it.'),
+    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Fill the shape (Enter)', onclick: () => { if (st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline(); else say(st.tool === 'creek' ? 'A creek needs two points.' : 'A shape needs three nodes.', true); }}, 'Apply'),
+     el('button', {class: 'cb-btn', type: 'button', title: 'Take the last node off (Backspace)', onclick: () => { if (st.outline.length && !st.penEdit) { st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); } }}, 'Remove last node'),
+     el('button', {class: 'cb-btn', type: 'button', title: 'Drop the shape (Esc)', onclick: () => { dropPen(); plan.draw(); }}, 'Drop'))),
    toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', class: 'cb-brushsize', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
+   // THE STEADIED BRUSH's two settings (steady.js; the owner: "can result in really squiggly lines").
+   toolOption(STEADIED, el('label', {class: 'cb-opt'}, 'Steadiness', el('input', {type: 'range', class: 'cb-steady', min: 0, max: 100, value: st.steadiness, title: 'How far the pointer may wander before the brush follows: higher draws smoother lines, 0 paints right under the pointer', oninput: e => { st.steadiness = +e.target.value; }}))),
+   toolOption(['brush', 'erase'], el('label', {class: 'cb-opt'}, 'Smooth the edge when I let go', el('input', {type: 'checkbox', class: 'cb-smoothstroke', checked: st.smoothStroke, onchange: e => { st.smoothStroke = e.target.checked; }}))),
    toolOption(['tree'], el('small', {}, 'Which tree'), el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { st.treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[st.landscape]).map(([k, name]) => el('option', {value: k, selected: k === st.treeKind}, name)))),
    toolOption(['tree'], el('label', {class: 'cb-opt'}, 'Tree height, metres', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: st.treeH, oninput: e => { st.treeH = +e.target.value || 15; showHint(); showModel(); }}))),
    toolOption(['treeZone'], el('label', {class: 'cb-opt'}, 'Trees a hectare', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: st.density, oninput: e => { st.density = +e.target.value || 120; showHint(); }}))),
