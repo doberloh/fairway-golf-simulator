@@ -1047,7 +1047,9 @@ person.**
   what fills; closing on the first node; dragging a node); the **steadied
   brush** at Steadiness 0, 50 and 90 (does 50 feel right); **layers** (is the
   "goes under" line and the flash enough to make the rule clear); the menus
-  and keys (? for the list); **Measure**, copy and paste, the hole navigator
+  and keys (? for the list); the 3D editor's icon strip, Add a hole and Remove
+  this hole; the step tips (Got it); Check against the scorecard with the
+  club's real card; **Measure**, copy and paste, the hole navigator
   (. and ,) and the overview map; the **sharp picture** zoomed in on a green;
   Skin from the land's **Before (hold)**; closing the tab mid-course and
   **Bring it back**; **Save the course for Fairway** on the review, then
