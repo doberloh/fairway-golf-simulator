@@ -1030,6 +1030,50 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   **Retaken whole on the final land** (4 November 2026, generator 87): all 41
   landscapes, the Badlands for the first time, 240 pictures, no failed batch.
 
+## The builder made easy (branch `builder-ux`, from 10 November 2026)
+
+The goal's record is docs/COURSE_BUILDER.md, *The builder-ux goal* and the
+sections after it; the brief is local (docs/studies/builder-ux/GOAL.md). Every
+builder journey passes (nine), npm test passes, the builder's frames on
+Dinosaur Mountain are main's within noise. **Nothing here has been seen by a
+person.**
+
+- [ ] **Try by hand, in this order** (the owner's): door 2 with **Build it for
+  me** on a course you know (type its name; on Worthington, pick Minnesota) --
+  the time it takes, and what the review or the holes step shows; **Checking
+  the map** on Worthington: does each doubt point at a real fault, and do the
+  fixes (one at a time, then Take the fixes offered) put holes where they
+  belong; the **pen** round a green and a bunker (does the curve shown match
+  what fills; closing on the first node; dragging a node); the **steadied
+  brush** at Steadiness 0, 50 and 90 (does 50 feel right); **layers** (is the
+  "goes under" line and the flash enough to make the rule clear); the menus
+  and keys (? for the list); **Measure**, copy and paste, the hole navigator
+  (. and ,) and the overview map; the **sharp picture** zoomed in on a green;
+  Skin from the land's **Before (hold)**; closing the tab mid-course and
+  **Bring it back**; **Save the course for Fairway** on the review, then
+  Import in the game and play a hole; the 3D editor's one brush and pen, and
+  Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
+  `npm run build`, as `dist/builder-guide.html`).
+- [ ] **The 3D editor's left column is not yet door 2's icon palette** (item 8):
+  it has the menus, keys, one brush and pen on the chosen layer, Delete, but
+  its tools are still grouped buttons with the options among them.
+- [ ] **Map data, still open** (item 24): typing the scorecard's yards as a
+  witness (map-checks.js takes `card`; there is no box for it); scoring the
+  checks on damaged maps of the bench courses; Worthington's numbering, which
+  no fix can settle without the real routing.
+- [ ] **Adding and removing holes in the 3D editor** (item 9; door 2 has 9 or
+  18 and Clear this hole).
+- [ ] **Plain words, the full sweep** (item 14): every tooltip (tips.js) and
+  message for LIDAR, EPT, DEM, cell and the like where they are not the subject.
+- [ ] **Not measured:** the 2D plan's frame time with the picture on its own
+  finer grid (one canvas drawImage a frame; up to about 36 million pixels);
+  the kept draft's time to write on a large course (it runs quietly every 3
+  minutes; on Worthington's 33 MB draft, not timed).
+- [ ] **Not kept in a draft:** the picture's brightness, contrast and date, and
+  the names in History (all come back as they start).
+- [ ] **Before a release carrying this:** `npm run release` with the guide and
+  the source zip's new folders is untried (tools/package_release.py parses).
+
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
 The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:

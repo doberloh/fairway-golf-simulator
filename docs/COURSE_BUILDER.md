@@ -2079,3 +2079,19 @@ allows (Worthington: about 0.43 m; the draft 33 MB, was 30). The placing is
 a flat map fitted from 25 exact points (exact per pixel took seconds). Seen
 in the guide's pen picture. Not measured: the plan's frame time with the
 larger picture (a drawImage of one canvas a frame).
+
+### Where the builder-ux goal was handed over (10 November 2026)
+
+- **Every builder journey passes** (nine: builder-build-for-me is new), and
+  npm test (1,550 tests; it found four new buttons with no tooltip, fixed).
+- **Frame rate on Dinosaur Mountain, High, this PC** (tools/builder-frames.mjs,
+  main's builder at 4c39aa5 against this branch's, one run each, bench/ab
+  bux-main and bux-branch, local): opening the file 17.8 s and 16.4 s; Game
+  view 37.9 s and 35.3 s; the editor 0.5 ms of processor a frame both; Game
+  view's frames 8.6/8.7, 6.3/6.3, 6.7/6.7, 3.1/3.1 and 2.5/2.4 ms --
+  the same within noise. The branch's editor run read no graphics time (the
+  probe's one gap; its processor time matches).
+- **The fingerprint is silent**: no generated ground moved; no version moves.
+- **The guide** is built by `npm run build` (dist/builder-guide.html, 1.4 MB)
+  and its pictures were taken from the final build.
+- **Open, with what to try by hand**: TODO.md, *The builder made easy*.
