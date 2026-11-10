@@ -42,6 +42,12 @@ const SHOT = {speed: 70, vla: 12, hla: -1, spin: 2700, spinAxis: 2};
 const AFTER_SHOT = [10, 40, 90, 160, 260, 420];
 // Then the overview: the camera flying up over the hole.
 const INTO_OVERVIEW = [8, 20, 45];
+// Then free flight (the frame-rate goal, 9 November 2026: Low's trees follow a
+// flying camera, and trees fade rather than pop as it comes on them): 40 m
+// over the middle of hole 1, looking at the pin, then flown ahead fast --
+// moved by the renderer's own moveFree every frame, so both builds fly
+// exactly the same path.
+const FLYING = [20, 60, 120];
 const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist',
  '--disable-gpu-vsync', '--disable-frame-rate-limit', '--disable-background-timer-throttling',
  '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'];
@@ -133,6 +139,16 @@ async function play(file, tag) {
   await page.evaluate(() => window.lab.view('overview'));
   at = 0;
   for (const n of INTO_OVERVIEW) { await grab(`overview+${n}`, n - at); at = n; }
+  await page.evaluate(() => {
+   window.lab.camera({hole: 0, along: 150, height: 40, look: 'pin'});
+   const v = window.__view, draw = v.render;
+   // Moved by the virtual clock's own time since the last move, not per draw: a
+   // build that draws twice in a frame would otherwise fly twice as far.
+   v.render = function (dt) { const now = performance.now(), step = this.__flyAt == null ? 0 : (now - this.__flyAt) / 1000; this.__flyAt = now; if (step > 0 && this.__flyOn) { this.moveFree(step, 1, 0, 0, true); this.updateFreeLook?.(); } return draw.call(this, dt); };
+  });
+  await page.evaluate(() => { window.__view.__flyOn = true; });
+  at = 0;
+  for (const n of FLYING) { await grab(`flying+${n}`, n - at); at = n; }
  } finally { await browser.close(); server.close(); }
  return out;
 }
@@ -147,7 +163,7 @@ logRun({goal: flag('goal', null), run: gate.run, tool: 'frame-motion', label: LA
  seconds: Math.round((Date.now() - started) / 1000), failed});
 if (failed) process.exit(1);
 
-console.log(`\n${TIER} · redwood PROFILE · virtual clock, a driver off tee 1 and the overview, frame for frame`);
+console.log(`\n${TIER} · redwood PROFILE · virtual clock, a driver off tee 1, the overview and free flight, frame for frame`);
 const report = {};
 for (const name of Object.keys(a.grabs)) {
  const d = diffPng(a.grabs[name], b.grabs[name]);

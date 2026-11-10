@@ -15440,3 +15440,12 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   free camera; free flight is in the still pictures and the tests) and the devices themselves (the
   stand-ins are estimates by design; the real ones are the owner's). The course's load could not be told
   apart by build (its shaders swing 19-25 s run to run).
+- **Free flight in motion** (frame-motion learns a flight after the overview: 40 m over hole 1 looking
+  at the pin, flown ahead fast by the renderer's own moveFree, moved by the virtual clock's elapsed
+  time): Low, Dinosaur Mountain, 1.2-3.5% of pixels differ from the starting build by 0.7-1.4 of 255 on
+  average, no page errors, no pop, gap or tint. **High's flight could not be compared**: from the
+  flight's first frames the two builds' pictures are the same view a few pixels apart (every edge
+  shifted), though both place the camera identically (pose and pin printed for each build, the pin
+  within 0.1 m), and the frames before the flight match (0.08-1.5%); letting the camera settle first
+  made Low diverge the same way. The fault is the tool's flight, not either build's drawing -- by eye
+  the two show the same trees and ground -- and is left as a known limit of the tool.
