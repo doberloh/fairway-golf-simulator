@@ -461,7 +461,10 @@ the file to anyone else who has Fairway. It opens on three doors.
 hold every command with its key beside it, and the keys work anywhere
 but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
 (or Ctrl+Shift+Z) undo and redo, **Ctrl+O** opens a course file, and **?**
-(Help > Keyboard shortcuts) lists every key on the screen you are on.
+(Help > Keyboard shortcuts) lists every key on the screen you are on. On
+door 2's plan the Edit menu names what Undo and Redo will take back ("Undo
+Outline fill"), and the trace step's **History** section lists the last
+changes, newest first, each with **Back to here**.
 
 - **Generate and modify a course.** Pick a landscape (on the map or the
   list) and any

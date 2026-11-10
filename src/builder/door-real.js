@@ -127,7 +127,30 @@ export function open(draft = null) {
  const notes = el('div', {class: 'cb-note', role: 'status'});
  const say = (t, err = false) => { notes.textContent = t; notes.title = t; notes.classList.toggle('cb-err', err); };
  const zoomText = el('span', {class: 'cb-stat'}), posText = el('span', {class: 'cb-stat'}), hintBar = el('div', {class: 'cb-toolhint', hidden: true});
- const plan = createPlanView(canvas, {onTool, overlay, onWindowChange: ui.onWindowChange});
+ // NAMED UNDO (item 11): the trace's undo steps carry no names, so a list of
+ // names is kept beside them -- each change named after the tool or button
+ // that made it -- for "Undo Outline fill" and the History section.
+ const names = {undo: [], redo: []};
+ st.names = names;   // for the smoke journeys
+ const historyList = el('ol', {class: 'cb-history', reversed: true});
+ function refreshHistory() {
+  const n = names.undo.length, shown = names.undo.slice(-15).map((w, i, a) => ({w, k: n - a.length + i}));
+  historyList.replaceChildren(...shown.reverse().map(({w, k}) => el('li', {}, el('span', {}, w), k < n - 1 ? el('button', {class: 'cb-btn', type: 'button', 'data-history': k, title: `Undo every change after this one (${n - 1 - k})`, onclick: () => { for (let q = n - 1; q > k; q--) undoNow(); }}, 'Back to here') : el('small', {}, 'latest'))));
+  const sum = historyList.closest('details')?.querySelector('summary small'); if (sum) sum.textContent = n ? `${n} change${n === 1 ? '' : 's'}` : 'nothing yet';
+ }
+ function nameNew(before, what) {
+  const u = st.model?.state.undo.length ?? 0;
+  if (u > before) { for (let k = before; k < u; k++) names.undo.push(what); names.redo.length = 0; }
+  while (names.undo.length > u) names.undo.shift();
+  refreshHistory?.();
+ }
+ let toolBefore = null;
+ const namedTool = (type, p, e) => {
+  if (type === 'down' || type === 'double') toolBefore = st.model?.state.undo.length ?? 0;
+  onTool(type, p, e);
+  if ((type === 'up' || type === 'double' || (type === 'down' && !BRUSHES.includes(st.tool))) && toolBefore != null) nameNew(toolBefore, (TOOL_LIST.find(t => t[0] === st.tool)?.[1]) ?? (st.tool === 'mark' ? 'Hole marks' : st.tool === 'boundary' ? 'Course boundary' : 'A change'));
+ };
+ const plan = createPlanView(canvas, {onTool: namedTool, overlay, onWindowChange: ui.onWindowChange});
  st.plan = plan;
  st.toCanvas = (x, z) => plan.toScreen(x, z);
  // THE WORKSPACE (the builder-ux goal, 10 November 2026; DESIGN in the
@@ -157,7 +180,15 @@ export function open(draft = null) {
    el('button', {class: 'cb-btn', type: 'button', title: 'Zoom in (+)', onclick: () => plan.zoomBy(1.5)}, 'Zoom in'), el('button', {class: 'cb-btn', type: 'button', title: 'Zoom out (-)', onclick: () => plan.zoomBy(1 / 1.5)}, 'Zoom out'),
    el('button', {class: 'cb-btn', type: 'button', title: 'The whole land in view (F)', onclick: () => plan.fit()}, 'Whole land')));
  show(section);
- function undoNow(redo = false) { if (!st.model) return; st.chosen = st.sizing = null; if (redo) st.model.redo(); else st.model.undo(); paintCodes(); refreshCount(); plan.draw(); }
+ section.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !st.model || b.closest('.cb-statusbar') || b.dataset.history != null) return; const before = st.model.state.undo.length, what = b.getAttribute('aria-label') || b.textContent.trim(); setTimeout(() => nameNew(before, what), 250); }, true);
+ window.addEventListener('keydown', e => { if (e.key !== 'Enter' || !st.model || !document.body.contains(canvas)) return; const before = st.model.state.undo.length, what = TOOL_LIST.find(t => t[0] === st.tool)?.[1] ?? 'A shape'; setTimeout(() => nameNew(before, what), 0); }, true);
+ function undoNow(redo = false) {
+  if (!st.model) return; st.chosen = st.sizing = null;
+  const what = redo ? names.redo.at(-1) : names.undo.at(-1);
+  if (redo) { if (st.model.redo() && names.redo.length) names.undo.push(names.redo.pop()); } else if (st.model.undo() && names.undo.length) names.redo.push(names.undo.pop());
+  paintCodes(); refreshCount(); plan.draw(); refreshHistory();
+  if (what) say(`${redo ? 'Redone' : 'Undone'}: ${what}.`);
+ }
  preview().mount(section.querySelector('.cb-planbox'));
  // THE MODEL OF WHAT THE TOOL PAINTS OR PLACES (preview.js; the owner, 4
  // November 2026), for the trace's tools; the other steps show none.
@@ -739,7 +770,7 @@ export function open(draft = null) {
  function menus() {
   const toolItems = TOOL_LIST.map(([k, label, key]) => ({label, key, enabled: tracing, checked: () => st.tool === k, run: () => setTool(k)}));
   useMenus({
-   edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}, {sep: true},
+   edit: [{label: () => names.undo.length ? `Undo ${names.undo.at(-1)}` : 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: () => names.redo.length ? `Redo ${names.redo.at(-1)}` : 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}, {sep: true},
     // COPY, PASTE, DUPLICATE, DELETE (item 18): what Select shape has chosen.
     {label: 'Copy', key: 'Ctrl+C', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; say(`Copied the ${st.chosen.what}: Paste (Ctrl+V) puts it where the pointer is.`); }},
     {label: 'Paste at the pointer', key: 'Ctrl+V', enabled: () => tracing() && !!st.clip, run: () => pasteAt(st.hover ?? {x: st.clip.mid.x + 20, z: st.clip.mid.z + 20})},
@@ -1490,6 +1521,8 @@ export function open(draft = null) {
      el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
       el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove everything there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),
      el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, title: 'Lay the landscape\'s ground and a wood outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside it'))),
+   // HISTORY (item 11): the last changes, newest first; a click undoes back to there.
+   fold('history', 'History', names.undo.length ? `${names.undo.length} change${names.undo.length === 1 ? '' : 's'}` : 'nothing yet', false, historyList),
    // CLEAN-UP: what works on the whole trace at once.
    fold('cleanup', 'Clean up', 'edges, specks, semi-rough', false,
     el('small', {}, 'Extrapolate: lay a layer round the one being painted, a width out -- semi-rough round a fairway. (The game mows a fringe round every green by itself.)'),

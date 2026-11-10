@@ -300,6 +300,8 @@ export default function ({journey, SHOTS}) {
   await t.shot('pen-closed');
   await page.keyboard.press('Enter');
   if (await kindAt(170, 38) !== 'sand') throw Error('the pen\'s shape should have filled sand');
+  // NAMED UNDO (item 11): the fill is named after the tool that made it.
+  { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Outline fill') throw Error(`the last change should be named Outline fill, not ${last}`); }
   // The curve bows out between nodes (to x 146.2 m on the left side, pen.js):
   // sand lies past the straight line between the first and last nodes. (Not
   // the top side: a pond lies over its bow, and water stays on top of sand.)

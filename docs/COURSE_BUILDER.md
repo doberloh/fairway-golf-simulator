@@ -2030,3 +2030,15 @@ from a file, or drop it there). The builder-build-for-me journey saves it
 there and plays a tee shot on it in the built game. PLACED: no button that
 opens the game itself -- the two are separate files a page cannot open for
 the player. Not seen by a person.
+
+### Named undo and a history (10 November 2026)
+
+Item 11, door 2. The trace's undo steps carry no names, so door-real.js
+keeps a list of names beside them (`names`): a change made with a plan tool
+is named after the tool, one made with a panel button after the button, a
+shape closed with Enter after the tool; Undo and Redo move the names along.
+The Edit menu says "Undo Outline fill", the status bar says what was undone,
+and the trace step's **History** fold lists the last 15 changes with **Back
+to here**. PLACED: names kept for the session only, not in a draft; the 3D
+editor's Undo is not named yet. The builder-door-2 journey checks a pen
+fill is named Outline fill. Not seen by a person.
