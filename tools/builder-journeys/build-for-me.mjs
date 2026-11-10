@@ -13,6 +13,7 @@
 import {piece} from './lidar-folder.mjs';
 import {answer} from './door-real-osm.mjs';
 import {tilePng} from './door-real.mjs';
+import {playOneShot} from './door-generate.mjs';
 
 const GEO = {lat: 43.63, lon: -95.62};
 
@@ -57,6 +58,13 @@ export default function ({journey}) {
   if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1) throw Error(`each service asked once (the picture in blocks): ${JSON.stringify(asked)}`);
   console.log(`       built in ${((Date.now() - t0) / 1000).toFixed(0)} s: ${st.built.steps.join(' ')}`);
   await t.shot('review');
+  // INTO THE GAME (item 21): Save the course for Fairway on the review, and
+  // the game opens the file and a tee shot is played on it.
+  await page.locator('[data-togame="save"]').click();
+  await page.waitForFunction(() => /Saved .*\.fairway/.test(document.querySelector('.cb-togamesaid')?.textContent ?? ''), null, {timeout: 60000});
+  const saved = Buffer.from(await page.evaluate(() => { const b = window.fairwayBuilder.lastSaved; let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); }), 'base64');
+  await playOneShot(t, saved, 'builder-build-for-me');
+  console.log(`       saved for Fairway (${(saved.length / 1e6).toFixed(1)} MB); the game opened it and a tee shot was played`);
   // THE HOLE NAVIGATOR (item 19): back on the holes step, "." frames the next
   // hole; zoomed in, the overview map shows in the corner.
   await page.locator('.cb-stepchip', {hasText: 'Holes'}).click();

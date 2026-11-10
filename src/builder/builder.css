@@ -302,3 +302,4 @@ select option{background:#03100e;color:var(--ink)}
 /* The overview map in the plan's corner (builder-ux, item 19). */
 .cb-door2 .cb-planbox .cb-mini{position:absolute;left:10px;bottom:10px;width:180px;height:180px;border:1px solid var(--line);background:#0b1f1c;box-shadow:0 4px 14px #0008;cursor:pointer;z-index:4}
 .cb-door2 .cb-planbox .cb-mini[hidden]{display:none}
+.cb-togame .cb-steps-list{margin:4px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}

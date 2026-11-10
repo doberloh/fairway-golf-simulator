@@ -57,8 +57,9 @@ import {coverageWords, percent} from './lidar-coverage.js';
 import {canPick, recallFolder, pickFolder, allowed, fileIn, bytesIn, saveIn, saveAsDownload, listIn, overPlace, removeIn} from './lidar-folder.js';
 import {readZip} from '../zip.js';
 import {createPlanView} from './plan-view.js';
-import {validateDoc} from '../course-doc.js';
-import {BIOME_KEYS} from '../settings-schema.js';
+import {validateDoc, writeBuiltFile} from '../course-doc.js';
+import {saveBytes} from './saving.js';
+import {BIOME_KEYS, BUILT_VERSION} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {GROUNDS} from '../grounds.js';
 import {openEditor} from './editor.js';
@@ -1847,7 +1848,29 @@ export function open(draft = null) {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course, painted'),
    el('small', {}, 'Every surface as the course will have it -- the outlines smoothed, the specks gone -- in the landscape\'s colours, with the trees and the holes. Go back to any step to change it.'),
    card, el('small', {}, 'Checks'), found,
-   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real', back: remount, work: {draft: whole}})}, 'Open in the editor'))];
+   el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => st.doc && openEditor(st.doc, {from: 'real', back: remount, work: {draft: whole}})}, 'Open in the editor')),
+   // FROM THE BUILDER INTO THE GAME (item 21): the course as a .fairway file
+   // from here, and what to do with it in Fairway. (Save in the top bar writes
+   // door 2's draft, which the builder reopens and the game does not.)
+   el('div', {class: 'cb-field cb-togame'}, el('div', {class: 'cb-panehead'}, 'Play it in Fairway', el('small', {}, 'two steps')),
+    el('ol', {class: 'cb-steps-list'},
+     el('li', {}, el('b', {}, 'Save the course for Fairway'), ' (below): a .fairway file, with your builder work inside it so the builder can open it again.'),
+     el('li', {}, 'Open ', el('b', {}, 'Fairway.html'), ' (beside the builder in the download), then ', el('b', {}, 'Saved courses'), ' > ', el('b', {}, 'Import courses from a file'), ' -- or drop the file on that screen. The course joins your shelf; play it from Play > a saved course.')),
+    el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-togame': 'save', title: 'Write the course as a .fairway file the game opens', onclick: saveForGame}, 'Save the course for Fairway'),
+    el('small', {class: 'cb-togamesaid'}))];
+ }
+ async function saveForGame() {
+  if (!st.doc) return say('The course is still being painted: a moment.', true);
+  setBusy('Saving the course for Fairway…');
+  try {
+   const bytes = await writeBuiltFile(validateDoc(st.doc), BUILT_VERSION, {builder: await writeDraft(await whole())});
+   const r = await saveBytes(bytes, {key: `door2-course-${st.name}`, name: st.name, file: fileName(st.name)});
+   if (r.how === 'cancelled') return;
+   const said = `Saved ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Now open Fairway.html: Saved courses > Import courses from a file.`;
+   say(said); const n = panel.querySelector('.cb-togamesaid'); if (n) n.textContent = said;
+   window.fairwayBuilder.lastSaved = bytes;
+  } catch (e) { say('Could not save the course: ' + e.message, true); }
+  finally { setBusy(''); }
  }
  // The course made (docFromLand) and drawn from the world the game will
  // build from it, so what is shown is what will be played.

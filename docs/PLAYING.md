@@ -775,6 +775,11 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   5. **Name**: the name, the landscape, and the credits for the data (an
      imagery provider's is added for you).
   6. **Review**: the whole course painted as it will be built -- every
+     **Play it in Fairway** under it: **Save the course for Fairway** writes
+     the .fairway file (with your builder work inside, so the builder can
+     open it again), then in Fairway.html: Saved courses > Import courses
+     from a file, or drop the file there. (Save in the top bar keeps door
+     2's draft, which the builder reopens and the game does not.)
      surface smoothed, in the landscape's colours, with the trees and the
      holes -- its card, and the checks. Go back to any step to change
      anything, or **Open in the editor**; the editor's **Back to 2D** comes

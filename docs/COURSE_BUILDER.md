@@ -2017,3 +2017,16 @@ photograph under the land's centre, from the service's catalogue
 2021, NAIP at 0.6 m -- shown under Showing. Not kept in a draft yet (shown
 again when fetched again); Google and Bing give no date here. Not seen by a
 person.
+
+### From the builder into the game (10 November 2026)
+
+Item 21. Door 2's review ends with **Play it in Fairway**: **Save the course
+for Fairway** writes the .fairway file straight from there (the course with
+door 2's draft inside it, as the editor's Save writes) -- until now the
+review's only Save in the top bar wrote the `.fairway-draft`, which the game
+does not open, and the course file came only from the editor -- and two
+steps say what to do with it in Fairway (Saved courses > Import courses
+from a file, or drop it there). The builder-build-for-me journey saves it
+there and plays a tee shot on it in the built game. PLACED: no button that
+opens the game itself -- the two are separate files a page cannot open for
+the player. Not seen by a person.
