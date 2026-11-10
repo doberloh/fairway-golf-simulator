@@ -2184,4 +2184,12 @@ card 9.16 and 9.13 ms opening, 6.25 and 6.27 hole 1, 6.56 and 6.48 hole 5,
 processor. **The editor's graphics-card reading is missing on some runs of
 both builds** (main 3 of 4 read, the branch 2 of 4: a frame of about half a
 millisecond is too little for the card's timer every run); in the last pair
-both read 1.34 ms. The branch is no slower anywhere.
+both read 1.34 ms. Two more pairs (bux-ab-main5/6, branch5/6) with the
+sample taken up to three times when no card time came: main's editor read
+none in either run, all three tries -- when the card's timer fails, it fails
+for the whole page, so the retry was taken out again. Every editor reading
+over six pairs: main 0.99, 1.00, 1.34 ms; the branch 0.92, 1.23, 1.34, 1.34
+ms -- one spread, the same in the pair where both read, with the branch
+drawing 190 draws a frame to main's 192. Game view in those two pairs was
+slower on both (main 48.0 and 42.3 s, the branch 43.3 and 41.2), the branch
+quicker in each pair. The branch is no slower anywhere.
