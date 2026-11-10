@@ -253,15 +253,18 @@ test('a cartoon crown is never thinned: it swaps only to the twin it ships', asy
 // Since 9 November 2026 every model over 1,500 triangles ships a far version
 // (tools/far-cluster.mjs, made when the models are packed), so a painted crown
 // big enough to be thinned is never without one -- and its far mesh is that
-// shipped version, never sprays thinned into shards.
+// shipped version, never sprays thinned into shards. Except where no far version
+// keeps the model's outline (far-cluster.mjs FAR_OUTLINE; MESH_NO_FAR, written by
+// the packing step): those are drawn whole at every distance, as before.
 test('a painted crown big enough to thin ships a far version, and is drawn with it, never thinned into shards', async () => {
  const {modelParts, hasShippedTwin} = await import('../src/mesh-assets.js');
- const {MESH_MODELS} = await import('../src/asset-meshes.js');
+ const {MESH_MODELS, MESH_NO_FAR} = await import('../src/asset-meshes.js');
+ const refused = new Set(MESH_NO_FAR);
  const {TWIN_MIN_TRIANGLES} = await import('../src/instance-cull.js');
  for (const name of Object.keys(MESH_MODELS)) {
   if (name.endsWith('_Far') || /House|Clubhouse|Bridge|RipRap|Bulkhead|Sheep|Goose|Deer|Elk|Heron|Roadrunner|Bird|Bison/.test(name)) continue;
   const leaf = modelParts(name)?.find(p => p.role === 'leaf');
-  if (leaf?.geometry.attributes.flex && leaf.geometry.index.count / 3 >= TWIN_MIN_TRIANGLES) assert.ok(hasShippedTwin(name), `${name} has no far version`);
+  if (leaf?.geometry.attributes.flex && leaf.geometry.index.count / 3 >= TWIN_MIN_TRIANGLES) assert.ok(hasShippedTwin(name) || refused.has(name), `${name} has no far version, and the packing step did not refuse one`);
  }
  const parts = modelParts('Blender_Naupaka_1'), leaf = parts.findIndex(p => p.role === 'leaf'), twin = modelParts('Blender_Naupaka_1_Far');
  const group = new T.Group(), m = new T.Matrix4(), n = 200;
@@ -271,6 +274,18 @@ test('a painted crown big enough to thin ships a far version, and is drawn with 
  group.add(mesh);
  cullInstances(group, {farPainted: .15, thinShadowsFrom: 1}).update(camera(), null);
  for (const o of group.children.filter(o => o.name === 'far trees' || o.name === 'shadow twin')) assert.equal(o.geometry, twin[leaf].geometry, `${o.name} uses the shipped far version`);
+ // A refused model -- the ocotillo -- has no far version, and the same line
+ // swaps nothing: it is drawn whole, however far.
+ assert.ok(refused.has('Blender_MxOcotillo_1') && !hasShippedTwin('Blender_MxOcotillo_1'));
+ const op = modelParts('Blender_MxOcotillo_1'), ol = op.findIndex(p => p.role === 'leaf'), og = new T.Group();
+ const om = new T.InstancedMesh(op[ol].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) om.setMatrixAt(i, m.makeScale(4, 4, 4).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 80));
+ om.userData = {model: 'Blender_MxOcotillo_1', part: ol, role: 'leaf'};
+ og.add(om);
+ const oc = cullInstances(og, {farPainted: .15, thinShadowsFrom: 1});
+ oc.update(camera(), null);
+ assert.ok(!og.children.some(o => o.name === 'far trees'), 'a refused model is never swapped');
+ assert.equal(oc.stats().thinCrowns, 0);
 });
 
 test('the tiers that split cascades split them inside their own shadow reach', async () => {

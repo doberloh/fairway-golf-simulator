@@ -52,12 +52,13 @@ check.
   Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
   call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
   built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
-  **Other thin plants' far versions, not looked at** (9 November 2026): the ocotillo's automatic far
-  version drew its canes as a leafy clump from about 30-40 m on Low and Medium, and now keeps a third
-  of its triangles (RESEARCH, *Free flight in motion*; Low +4.2% on Dinosaur Mountain). The grasses
-  (switchgrass, dune grass, sawgrass, muhly, pampas), the yuccas and sotol are thin-bladed too and
-  still get an eighth: look at each on Low from 30-60 m, and add any that clump to build-meshes
-  `AUTO_FAR_FINER`.
+  **Eighteen plants have no far version** (9 November 2026; RESEARCH, *The outline kept*): the
+  automatic far versions now keep their model's outline as the hand-made ones do, and canes, blades,
+  flat mats and layered sprays could not at any share up to a half -- both ocotillos, the halas,
+  sotol, sassafras, the Pacific dogwood, the lake junipers and others are drawn in full at every
+  distance, as on main. That costs Low most on Dinosaur Mountain (its ocotillos). Far versions made
+  by hand in Blender (cartoon.py `far_twin`) for the ones that are planted thickly would win it
+  back; the build's list of them is printed by tools/build-meshes.mjs.
 - [ ] **Two builder smoke journeys fail on main too** (found 9 November 2026, running the builder's
   smoke for the frame-rate goal; both fail the same on the build at 21eecc1). `builder-door-2`: "the
   tree height scale should grow the trees, taller and wider, at once: 0 -> 0" -- the journey reads no

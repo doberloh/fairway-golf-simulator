@@ -15317,8 +15317,9 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
 **What was built first, and why** (9 November 2026):
 
 - **A far version for every model** (tools/far-cluster.mjs, called by build-meshes.mjs): vertex
-  clustering to about an eighth of each part's triangles (a third for the ocotillo since the evening:
-  below). 130 models, 460,897 triangles to 69,838 (68,381 before the ocotillo's);
+  clustering to about an eighth of each part's triangles at first: 130 models, 460,897 triangles to
+  68,381. Since the evening each is stepped up until its outline holds (*The outline kept*, below):
+  112 models, 418,788 triangles to 123,402, and 18 drawn in full;
   the page 1 MB larger. Considered and not taken: meshoptimizer's simplifier (better shapes, but a new
   package; the install was refused here), Blender's decimate for each pack (thirty-odd jobs, and the
   packs' scripts rebuild the near models too). **The saguaros' Blender twins were one part where the
@@ -15459,14 +15460,45 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   (tools/far-cluster.mjs; it had none on main) -- turned its thin canes into a leafy clump with red
   tips. Low and Medium swap a plant to its far version below 15% of the screen's height, about 30-40 m
   for a 4-5 m ocotillo, so the clump was seen at an ordinary size; vertex clustering is at its worst on
-  thin sticks. **Fixed the same evening**: the ocotillo's far versions keep a third of their triangles
-  instead of an eighth (build-meshes `AUTO_FAR_FINER`; its two models' far versions about 2.6 times
-  larger, 1,457 triangles more in the whole catalogue), and the canes read as canes again (the same
-  flight, bench/ab/motion/oco-motion-low, local: 0.5-1.0% of pixels, all at ocotillos). Its cost on
-  Dinosaur Mountain, frame-ab against the build without it, two rounds, six spots: **Low +4.2%** by the
-  spots' mean (1.30 to 1.36 ms; 14-20% more triangles in view, the course is thick with ocotillos;
-  the 95th percentile unchanged, 1.95 to 1.94), **Medium +1.5%** (2.91 to 2.96 ms; 95th percentile 4.49
-  to 4.65). The grasses, yuccas and sotol are thin too and were not looked at (TODO). (2) A pond on Low
-  is a shade bluer with finer ripples:
+  thin sticks. Fixed the same evening, first for the ocotillo alone (a third of its triangles: Low
+  +4.2% on Dinosaur Mountain, Medium +1.5%), then for every model (*The outline kept*, next). (2) A
+  pond on Low is a shade bluer with finer ripples:
   Low has no water mirror, and the sky picture its ponds show (taken from each pond's middle) now
   holds Low's thinned trees and coarser ground.
+- **The outline kept** (9 November 2026, evening; tools/far-cluster.mjs `outlineScore`,
+  `farVersion`, `FAR_OUTLINE`). The ocotillo was not alone. Every automatic far version drawn beside
+  its model, 100 pixels tall (Low's swap size: 15% of a 675-pixel screen), from the front and the
+  side, level and from 35 degrees above, and scored three ways: **kept**, the share of the model's
+  outline the far version still covers (each outline grown by a pixel first, so a one-pixel shift
+  costs nothing); **extra**, the share of the far version drawn where the model is not (a clump); and
+  **area**, the far version's pixels over the model's with no allowance. The worst view counts.
+  The yardstick is the far versions made by hand in Blender (253 on main, seen by the owner for
+  weeks): kept 0.95 at the median and 0.88 at the tenth percentile, extra 0.08 at the ninetieth, area
+  0.91 at the median and 0.82 at the fifth percentile. The automatic ones at an eighth: kept 0.79 at
+  the median, 0.62 at the tenth percentile -- the lake junipers' low mats kept 0.19-0.23 (flattened to
+  a line), the Pacific dogwood's tiers of leaves 0.55 (a few slivers on a bare trunk), the ocotillo's
+  canes 0.79 with 0.12 extra (the clump). **The bar, PLACED a little below the hand-made ones: kept
+  0.85, extra 0.10, area 0.80.** The build tries an eighth, a sixth, a quarter, a third and a half and
+  takes the first that passes; where none does, the model gets no far version and is drawn in full at
+  every distance, as before the far versions.
+  Two scores were tried and found wanting before the area: from the side alone, the sassafras's
+  layered leaves thinned to dashes kept 0.88 (a layer seen edge-on is a few pixels, and the pixel's
+  allowance forgives a line); the view from above did not catch it either (the leaves are where they
+  were, only thinner). Its area, 0.58, did. A plain overlap of the two outlines, without the
+  allowance, was rejected first: a one-pixel shift of a thin cane costs it all.
+  Result: 112 far versions (16 at an eighth, 13 a sixth, 37 a quarter, 23 a third, 23 a half), and
+  **18 models drawn in full**: both ocotillos, the three halas, sotol, sassafras, the Pacific dogwood,
+  both lake junipers, switchgrass, lake dune grass, a creosote, a heather, sorrel, Scotch broom, flame
+  azalea and the corn patch. Their shapes -- canes, blades, flat mats and layered sprays -- do not
+  survive merging nearby points at any share up to a half; a better simplifier (meshoptimizer's,
+  refused as a new package) or far versions made by hand in Blender would serve them.
+  Its cost, frame-ab against the build with every far version at an eighth, two rounds: Dinosaur
+  Mountain **Low +14.1%** by the spots' mean (1.34 to 1.53 ms; 95th percentile 1.89 to 2.29),
+  **Medium +22.8%** (3.05 to 3.75 ms; 4.57 to 5.59) -- its ocotillos drawn in full; the Hawaii resort
+  Low +4.9% (1.37 to 1.43 ms; the halas); the Redwood Coast Low -10.9% (2.13 to 1.90), not a gain:
+  the owner's browser held the card at 25-41% through it, so read it as no change. Against where the
+  branch began, Dinosaur Mountain is still 79% faster on Low (7.4 to 1.5 ms) and 57% on Medium (8.8
+  to 3.8). **The owner's choice** (9 November 2026), offered the ocotillo's one-third far version
+  as an exception (Low +4.2%, Medium +1.5%; it read as canes in the flight, but kept 0.61-0.68 of
+  its area): the strict rule for every model. In motion (frame-motion, Low, the outline build
+  against the eighth): 0.2-1.3% of pixels, the ocotillos whole again, no page errors.
