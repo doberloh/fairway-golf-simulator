@@ -98,6 +98,12 @@ export function squareAround(lon, lat, size) {
  const h = size / 2, dLat = h / 111320, dLon = h / (111320 * Math.cos(lat * Math.PI / 180));
  return {lon0: lon - dLon, lat0: lat - dLat, lon1: lon + dLon, lat1: lat + dLat};
 }
+// A box grown by `metres` on every side: the land built past the course
+// (GRID_MARGIN), so the LIDAR is downloaded that far too.
+export function growBox(box, metres) {
+ const dLat = metres / 111320, dLon = metres / (111320 * Math.cos((box.lat0 + box.lat1) / 2 * Math.PI / 180));
+ return {lon0: box.lon0 - dLon, lat0: box.lat0 - dLat, lon1: box.lon1 + dLon, lat1: box.lat1 + dLat};
+}
 
 // ---- searching: [{source, id, title, date, tiles, points?, bytes?, ...}]
 export async function searchLidar(key, box, {get = fetch} = {}) {
@@ -288,9 +294,13 @@ function eptSource(meta, parts, lazModule) {
 // quarter the size of the same points as a plain LAS) -- and that door 2 reads
 // back instead of downloading again, by the same name. A square's name says
 // the survey, its middle and its size, so the same search finds it again.
+// A box that is not square -- drawn round the course on the map (the
+// builder-ux goal, 10 November 2026), or squares combined -- says both sides,
+// east-west first: `_1200x900m`. Before, only its height was written, and a
+// combined box read back as a square of that height.
 export function squareName(found, box) {
- const lat = (box.lat0 + box.lat1) / 2, lon = (box.lon0 + box.lon1) / 2, m = Math.round((box.lat1 - box.lat0) * 111320);
- return `${found.id}_${lat.toFixed(4)}_${lon.toFixed(4)}_${m}m.ept.zip`;
+ const lat = (box.lat0 + box.lat1) / 2, lon = (box.lon0 + box.lon1) / 2, h = Math.round((box.lat1 - box.lat0) * 111320), w = Math.round((box.lon1 - box.lon0) * 111320 * Math.cos(lat * Math.PI / 180));
+ return `${found.id}_${lat.toFixed(4)}_${lon.toFixed(4)}_${Math.abs(w - h) <= 1 ? h : `${w}x${h}`}m.ept.zip`;
 }
 const EPT_META = 'fairway-ept.json';
 async function eptZip(meta, parts) {

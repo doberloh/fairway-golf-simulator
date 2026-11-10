@@ -373,8 +373,10 @@ section 6); nothing ships early -- the branch merges when all of it is done.
     its haze, and Breckenridge's turf no longer snow; the ground shader changed,
     so a frame check on a generated course (nothing should move) is owed.
   - **LIDAR coverage and combining** (COURSE_BUILDER *How much the LIDAR
-    covers*): search a course at the edge of a survey; download a 1.5 km square,
-    then 3 km, and see it fetch only the rest and end as one ZIP. Not run online.
+    covers*): search a course at the edge of a survey; download a box drawn round
+    part of a course on the map, then a bigger one round all of it, and see it
+    fetch only the rest and end as one ZIP (named for both sides since 10
+    November 2026). Not run online.
   - **The two editors at parity** (COURSE_BUILDER): every new tool in both, by
     eye. The tree brush's look and density; Select shape in 2D (anchors, the
     turn's direction); painted water in 3D on a slope; a 2D creek and bunker in
@@ -1038,7 +1040,12 @@ builder journey passes (nine), npm test passes, the builder's frames on
 Dinosaur Mountain are main's within noise. **Nothing here has been seen by a
 person.**
 
-- [ ] **Try by hand, in this order** (the owner's): door 2 with **Build it for
+- [ ] **Try by hand, in this order** (the owner's): door 2's **Find the
+  course** by hand (10 November 2026, after the hand-over; COURSE_BUILDER,
+  *The map first, then the box, then the LIDAR*): a course by name, the map
+  round it, a box dragged round the course, Search for LIDAR, Download the box
+  here, and the box as the property on the relief -- the download and the land
+  from it not yet run on real services; door 2 with **Build it for
   me** on a course you know (type its name; on Worthington, pick Minnesota) --
   the time it takes, and what the review or the holes step shows; **Checking
   the map** on Worthington: does each doubt point at a real fault, and do the

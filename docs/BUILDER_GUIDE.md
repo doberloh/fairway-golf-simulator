@@ -65,6 +65,25 @@ and stops on the review -- or on the holes step if the map needs checking.
 Worthington Country Club took under four minutes. It works for courses in the
 United States, and everything it did can be changed afterwards.
 
+## A real course by hand: the map, the box, the LIDAR
+
+![The map round Worthington Country Club, a box dragged round the course](builder-guide/map-box.webp)
+
+Under **Find the course**, type its name, press **Find**, and click the place
+you mean. The builder shows the aerial map of the ground round it, 5 km
+across (**Map 3 km** or **8 km** if the course is not on it). Drag a box round
+the course with the left button -- up to 3 x 3 km -- and press **Search for
+LIDAR**. Only that box, and 150 m past it for the land beyond the course, is
+searched for and downloaded, so the download is no bigger than the course
+needs. Each survey found shows how much of the box it covers.
+
+When the LIDAR is in, the map gives way to the relief, and the box you drew
+is the property. Drag another on the relief to change it, then **Next: build
+the land**.
+
+If you already have LIDAR files, **Choose LIDAR files** or **Load from the
+folder** skip the map: the relief shows, and you drag the box on it.
+
 ## Checking the map
 
 OpenStreetMap is drawn by volunteers: some courses are mapped in full, some in

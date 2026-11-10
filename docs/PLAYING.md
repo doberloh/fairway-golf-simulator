@@ -506,30 +506,37 @@ changes, newest first, each with **Back to here**.
   something wrong. United States courses only; it goes
   online as it works. On Worthington Country Club it took 3 minutes 52
   seconds. Everything it did can be changed afterwards in the steps.
-  1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
-     place, **Find** (or Enter), click the place you mean in the list (each
-     is a button marked **Use ›**), choose the square round it (1 to 3 km), and
-     **Search for LIDAR**. Every source over that place is listed, each survey
-     with a small map of the square, north up: green is already saved, gold
-     would download, dark has no data. Beside it, how much of the square it
+  1. **LIDAR**: **Find the course** first, if you have no LIDAR: type a
+     course or a place, **Find** (or Enter), and click the place you mean in
+     the list (each is a button marked **Use ›**). The aerial map of the
+     ground round it comes up on the plan, 5 km across (**Map 3 km**, **5 km**
+     or **8 km across** beside **Fetch the map again**, if the course is not
+     on it), with a gold pin where the name was found. **Drag a box round the
+     course** on the map with the left button (up to 3 x 3 km; it shows its
+     size, and another drag replaces it), then **Search for LIDAR** -- which
+     waits for the box. Every source over the box is listed, each survey
+     with a small map of the box, north up: green is already saved, gold
+     would download, dark has no data. Beside it, how much of the box it
      covers and how much you hold, and the buttons say what they will do:
      **Download 2 missing tiles**, **Download what is missing**, **Load the
-     saved tiles**. It measures the square you searched, so pick a square that
-     takes in the course. **USGS
+     saved tiles**. **USGS
      3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
-     there: **Download the square here** takes just the survey over the
-     square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
-     square of Worthington is about 17 MB). **Download all tiles** gets
+     there: **Download the box here** takes just the survey over the
+     box and 150 m past it (USGS's copy on Amazon's open data; a 400 m
+     square of Worthington is about 17 MB). When it is in, the relief takes
+     the map's place and the box you drew is the property. Where no free
+     map covers the place (and no Google or Bing key has been given), the
+     box is a 1.5 km square round it. **Download all tiles** gets
      USGS's own tiles: through Fairway's bridge if it is running (the
      launch-monitor helper, which fetches them for the page), or else your
      browser downloads them and the builder reads each from your LIDAR
      folder as it arrives (at once if that folder is Downloads; otherwise
      move them in when they finish -- the builder says so).
      **Your LIDAR folder** (Chrome and Edge): every download is saved there
-     as it arrives -- a USGS square as one ZIP named for the survey, the
-     place and the size, other tiles under their own names -- and the same
+     as it arrives -- a USGS download as one ZIP named for the survey, the
+     place and its size (both sides when the box is not square), other tiles under their own names -- and the same
      download asked for again is read from there instead. A bigger or shifted
-     USGS square of the same survey fetches only what is missing and combines
+     USGS box of the same survey fetches only what is missing and combines
      it into one ZIP, which replaces the ones it took in, so nothing is
      downloaded twice. Pick it once with **Choose the folder** (Downloads is
      the easy choice: the portals' and USGS's tile downloads land there by
@@ -563,8 +570,10 @@ changes, newest first, each with **Back to here**.
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
-     their mapping agencies. Then **drag a box round the course** on the
-     relief with the left button (up to 3 x 3 km).
+     their mapping agencies. With files of your own (no map was drawn on),
+     **drag a box round the course** on the relief with the left button (up
+     to 3 x 3 km); after a search, the box from the map is already there, and
+     a drag on the relief changes it.
   2. **Land**: **Build the land**. It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it
      found.

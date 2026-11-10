@@ -11,6 +11,8 @@
 // (showDirectoryPicker is a dialog a script cannot answer), so the browser
 // remembering it between visits (IndexedDB) is not driven here.
 // Registered by tools/builder-smoke.mjs.
+import {tilePng} from './door-real.mjs';
+
 const GEO = {lat: 43.63, lon: -95.62}, R = 6378137;
 const merc = (lon, lat) => ({x: lon * Math.PI / 180 * R, y: R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))});
 // One Entwine piece: 200 x 200 points over the 1.8 km square, in Web Mercator
@@ -31,7 +33,10 @@ export default function ({journey}) {
   const {page} = t;
   await page.setViewportSize({width: 1600, height: 1000});
   const EPT = 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_TEST_1_B21/';
-  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/tnmaccess\.nationalmap\.gov\//, /^https:\/\/raw\.githubusercontent\.com\/hobuinc\//, /^https:\/\/s3-us-west-2\.amazonaws\.com\/usgs-lidar-public\//);
+  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/tnmaccess\.nationalmap\.gov\//, /^https:\/\/raw\.githubusercontent\.com\/hobuinc\//, /^https:\/\/s3-us-west-2\.amazonaws\.com\/usgs-lidar-public\//, /^https:\/\/basemap\.nationalmap\.gov\//);
+  // The map shown before the LIDAR: the USGS tile cache stood in for by a plain tile.
+  let maps = 0;
+  await page.route(/basemap\.nationalmap\.gov/, r => { maps++; return r.fulfill({status: 200, contentType: 'image/png', headers: {'Access-Control-Allow-Origin': '*'}, body: tilePng([92, 138, 72])}); });
   const json = body => ({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify(body)});
   const {bytes, cube} = piece(); let pieces = 0;
   await page.route(/nominatim\.openstreetmap\.org/, r => r.fulfill(json([{lon: String(GEO.lon), lat: String(GEO.lat), display_name: 'A test place, Minnesota'}])));
@@ -67,6 +72,13 @@ export default function ({journey}) {
    const head = await page.locator('.cb-resulthead').textContent(), res = page.locator('.cb-result');
    if (await res.count() !== 1 || !/click one to use it/.test(head) || !/Use/.test(await res.textContent()) || !await res.getAttribute('title')) throw Error(`the place found should be a button to click: ${head}`);
    await res.click();
+   // The map first; then a 1.5 km box dragged round the place on it -- the
+   // LIDAR is searched for over that box alone.
+   await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
+   const plan = page.locator('canvas.cb-plan'), at = async (x, z) => { const b = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [b.x + cx / r, b.y + cy / r]; };
+   const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
+   const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
+   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
    await page.getByRole('button', {name: 'Search for LIDAR'}).click();
    await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   }
@@ -81,7 +93,16 @@ export default function ({journey}) {
   await page.locator('[data-download="MN_TEST_1_B21"]').click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.sources.length === 1, null, {timeout: 60000}); await idle();
   const kept = await page.evaluate(() => [...window.__lidarFolder.files].map(([n, b]) => [n, b.length]));
-  if (pieces !== 1 || kept.length !== 1 || !/^MN_TEST_1_B21_43\.6300_-95\.6200_1800m\.ept\.zip$/.test(kept[0][0]) || !(kept[0][1] > 4e4 * 20)) throw Error(`the square should be downloaded once and kept in the folder: ${pieces} pieces, ${JSON.stringify(kept)}`);
+  // The box and 150 m past it: about 1.8 km a side, named for both sides
+  // when the drag was not exactly square.
+  if (pieces !== 1 || kept.length !== 1 || !/^MN_TEST_1_B21_43\.63[0-9]{2}_-95\.6[0-9]{3}_(1[78][0-9]{2}x)?1[78][0-9]{2}m\.ept\.zip$/.test(kept[0][0]) || !(kept[0][1] > 4e4 * 20) || !maps) throw Error(`the square should be downloaded once and kept in the folder: ${pieces} pieces, ${JSON.stringify(kept)}`);
+  // The box drawn on the map is the property now, on the relief that took
+  // the map's place: 1.5 km a side, a little more in the survey's grid --
+  // UTM's north is turned about 1.8 degrees from true north here, and the
+  // property is the grid's square that holds the box's four corners (about
+  // 1,549 m).
+  const prop = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {fromMap: s.boxFromMap, map: !!s.map, w: s.box.x1 - s.box.x0, h: s.box.y1 - s.box.y0}; });
+  if (!prop.fromMap || prop.map || prop.w < 1495 || prop.w > 1580 || prop.h < 1495 || prop.h > 1580) throw Error(`the box drawn on the map should be the property once the LIDAR is in: ${JSON.stringify(prop)}`);
   const said = await page.locator('.cb-note').textContent();
   if (!/Saved to your LIDAR folder \(Downloads\)/.test(said)) throw Error(`door 2 should say where the download was saved: ${said}`);
   const cover = await page.evaluate(() => { const v = window.fairwayBuilder.door2.plan.view, c = v.layers.coverage; if (!c) return {layer: false}; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let k = 3; k < d.length; k += 4) if (d[k]) n++; return {layer: true, shown: v.show.coverage, share: n / (c.width * c.height)}; });

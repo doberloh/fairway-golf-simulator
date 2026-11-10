@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {coverageOf, coverageWords, percent, squareOfName, unionBox, boxOfGeometry, overlaps} from '../src/builder/lidar-coverage.js';
-import {coverFor, coverTogether, tilesOf, squareAround, squareName, downloadLidar} from '../src/builder/lidar-search.js';
+import {coverFor, coverTogether, tilesOf, squareAround, squareName, downloadLidar, growBox} from '../src/builder/lidar-search.js';
 import {readZip} from '../src/zip.js';
 import {lonLatToMerc} from '../src/lidar/ept.js';
 
@@ -35,6 +35,7 @@ test('the words say so plainly, and nearly all never reads as all', () => {
  assert.match(coverageWords({share: .72, heldShare: 0}, 1.5), /72%.*no data/);
  assert.match(coverageWords({share: 1, heldShare: .4}, 3), /40% already saved/);
  assert.match(coverageWords({share: 0, heldShare: 0}, 1), /Nothing over/);
+ assert.equal(coverageWords({share: 1, heldShare: 0}, 'the box'), 'Covers all of the box.');
 });
 
 test('a kept square\'s name says its survey and where it is', () => {
@@ -42,6 +43,12 @@ test('a kept square\'s name says its survey and where it is', () => {
  assert.equal(q.id, 'WA_King_2021'); assert.ok(overlaps(q.box, b));
  assert.ok(Math.abs(q.box.lon0 - b.lon0) < .001);
  assert.equal(squareOfName('USGS_tile_1.laz'), null);
+ // A square keeps its old name; a box drawn round a course says both sides,
+ // and reads back as the box it was (it read back as a square before).
+ assert.match(name, /_1500m\.ept\.zip$/);
+ const r = {lon0: -122.41, lat0: 47.595, lon1: -122.39, lat1: 47.603}, rn = squareName({id: 'S'}, r), rq = squareOfName(rn);
+ assert.match(rn, /_1501x891m\.ept\.zip$/);
+ for (const k of ['lon0', 'lat0', 'lon1', 'lat1']) assert.ok(Math.abs(rq.box[k] - r[k]) < 2e-5, k);
  assert.deepEqual(unionBox([box, east]), {lon0: 0, lat0: -1, lon1: 2, lat1: 2});
  assert.deepEqual(boxOfGeometry({type: 'MultiPolygon', coordinates: [[[[1, 2], [3, 2], [3, 5], [1, 2]]]]}), {lon0: 1, lat0: 2, lon1: 3, lat1: 5});
  assert.equal(boxOfGeometry(null), null);
@@ -123,4 +130,9 @@ test('a square of another survey is left alone', async () => {
  f.files.set(other.keep.name, other.keep.bytes); s.asked.length = 0;
  const [mine] = await downloadLidar({source: 'usgs', id: 'Mine', title: 'M', ept: 'https://x/ept.json'}, b, {get: s.get, ...f});
  assert.ok(s.asked.length > 0); assert.deepEqual(mine.keep.replaces, []);
+});
+
+test('the LIDAR is downloaded 150 m past the box, as past a square', () => {
+ const sq = squareAround(-95.62, 43.63, 1500), wide = growBox(sq, 150), was = squareAround(-95.62, 43.63, 1800);
+ for (const k of ['lon0', 'lat0', 'lon1', 'lat1']) assert.ok(Math.abs(wide[k] - was[k]) < 1e-9, k);
 });

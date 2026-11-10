@@ -189,3 +189,27 @@ export async function mosaic(session, box, {want = .3, maxTiles = 640, onProgres
 }
 // A mosaic's pixel for a longitude and latitude, from its zoom and its first tile.
 export const tilePixel = ({z, x0, y0}) => (lon, lat) => { const p = tileOf(lon, lat, z); return [(p.x - x0) * 256 - .5, (p.y - y0) * 256 - .5]; };
+
+// THE MAP BEFORE THE LIDAR (the builder-ux goal, 10 November 2026; the owner:
+// "search, grab the map from a large area surrounding, display that map, then
+// allow the user to square off the course, from there we will grab LIDAR"): a
+// mosaic laid flat as door 2's plan -- its middle at 0, x east and z south in
+// metres, one pixel `cell` metres (Web Mercator's scale at its middle; across
+// 8 km it drifts by about 0.06% at the edges, under 3 m, which a box round a course
+// does not need). Longitude and latitude go through the tiles exactly.
+export function mapFrame(pic) {
+ const {z, x0, y0} = pic.tile, mid = lonLatOf(x0 + pic.width / 512, y0 + pic.height / 512, z), cell = metresPerPixel(mid.lat, z);
+ const land = {nx: pic.width, nz: pic.height, cell, halfX: pic.width * cell / 2, halfZ: pic.height * cell / 2};
+ return {land,
+  toLonLat: (x, zz) => lonLatOf(x0 + ((x + land.halfX) / cell + .5) / 256, y0 + ((zz + land.halfZ) / cell + .5) / 256, z),
+  toLocal: (lon, lat) => { const t = tileOf(lon, lat, z); return {x: ((t.x - x0) * 256 - .5) * cell - land.halfX, z: ((t.y - y0) * 256 - .5) * cell - land.halfZ}; }};
+}
+// A box drawn on the map ({x0, z0, x1, z1}, metres) in degrees, and back.
+export function boxDegrees(frame, b) {
+ const sw = frame.toLonLat(Math.min(b.x0, b.x1), Math.max(b.z0, b.z1)), ne = frame.toLonLat(Math.max(b.x0, b.x1), Math.min(b.z0, b.z1));
+ return {lon0: sw.lon, lat0: sw.lat, lon1: ne.lon, lat1: ne.lat};
+}
+export function boxLocal(frame, d) {
+ const sw = frame.toLocal(d.lon0, d.lat0), ne = frame.toLocal(d.lon1, d.lat1);
+ return {x0: sw.x, z0: ne.z, x1: ne.x, z1: sw.z};
+}

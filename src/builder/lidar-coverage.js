@@ -38,16 +38,20 @@ export const percent = v => v >= 1 ? 100 : Math.min(99, Math.round(v * 100));
 
 // THE SQUARES KEPT IN THE FOLDER are named for their survey, middle and size
 // (lidar-search.js squareName). {id, box} from a name, or null.
+// A box not square says both sides, east-west first (`_1200x900m`).
 export function squareOfName(name) {
- const m = name.match(/^(.*)_(-?\d+\.\d+)_(-?\d+\.\d+)_(\d+)m\.ept\.zip$/i); if (!m) return null;
- const lat = +m[2], lon = +m[3], h = +m[4] / 2 / 111320, w = h / Math.cos(lat * Math.PI / 180);
+ const m = name.match(/^(.*)_(-?[0-9]+\.[0-9]+)_(-?[0-9]+\.[0-9]+)_([0-9]+)(?:x([0-9]+))?m\.ept\.zip$/i); if (!m) return null;
+ const lat = +m[2], lon = +m[3], h = +(m[5] ?? m[4]) / 2 / 111320, w = +m[4] / 2 / 111320 / Math.cos(lat * Math.PI / 180);
  return {id: m[1], box: {lon0: lon - w, lat0: lat - h, lon1: lon + w, lat1: lat + h}};
 }
 export const unionBox = boxes => ({lon0: Math.min(...boxes.map(b => b.lon0)), lat0: Math.min(...boxes.map(b => b.lat0)), lon1: Math.max(...boxes.map(b => b.lon1)), lat1: Math.max(...boxes.map(b => b.lat1))});
 
-// One line for a survey, in the player's words.
-export function coverageWords(c, sizeKm) {
- const all = percent(c.share), held = percent(c.heldShare), of = `the ${sizeKm} km square`;
+// One line for a survey, in the player's words. `of`: a size in km (a square
+// round the place, as Build it for me searches) or the words for what was
+// searched ('the box', drawn round the course on the map).
+export function coverageWords(c, of) {
+ const all = percent(c.share), held = percent(c.heldShare);
+ if (typeof of === 'number') of = `the ${of} km square`;
  const covers = all === 100 ? `Covers all of ${of}` : all ? `Covers ${all}% of ${of}: the rest has no data here` : `Nothing over ${of}`;
  return c.heldShare ? `${covers}. ${held}% already saved.` : `${covers}.`;
 }

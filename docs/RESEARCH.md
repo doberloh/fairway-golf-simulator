@@ -15705,3 +15705,37 @@ green orphaned -- the best of those by fairway, with no floor: **62% right,
 fewer wrong ones at about the same ratio, so none is set (PLACED). The fix
 stays a guess, said so in the builder; reading the hole's dogleg before
 choosing its green is the next step if it matters.
+
+## The map before the LIDAR (10 November 2026, the builder-ux branch)
+
+Door 2 now shows the aerial map round a place found by name before any
+LIDAR, and searches and downloads only a box drawn round the course on it
+(docs/COURSE_BUILDER.md, *The map first, then the box, then the LIDAR*).
+
+- **5 km across by default, 3 or 8 to choose -- PLACED.** Wide enough that a
+  course whose name is found at a town's middle is still on it; the largest
+  course box (3 x 3 km, the property's cap) fits on 5 km with room round it.
+- **About 2 m a pixel -- PLACED** (`mosaic` asked for 2 m, at most 160
+  tiles): fairways, greens, bunkers and the lake read plainly on Worthington
+  (USGS tiles, zoom 16, 1.73 m a pixel at 43.6° N). A 5 km map is 12 x 12
+  tiles, 3,072 pixels a side.
+- **The USGS tile cache over USGS NAIP Plus, for this map**, measured on
+  Worthington Country Club's 5 km map from this machine (10 November 2026):
+  NAIP Plus's exportImage, which draws each 1,024-pixel block when asked, 32 s
+  (found by name to map shown; the name search is under a second); the
+  tile cache (basemap.nationalmap.gov USGSImageryOnly, the same NAIP), 0.7-2.8
+  s over three runs. NAIP Plus stays first for the trace step's picture, where
+  its 30-60 cm is the point (*Sharper pictures for the builder*).
+- **A box drawn north-up is a little larger in the survey's grid.** The
+  property is the square of the LIDAR's grid (UTM for USGS's Entwine copies)
+  that holds the box's four corners. At Worthington (-95.62°, UTM zone 15,
+  central meridian -93°) the grid's north is turned about 1.8°; a 1,500 m box
+  became 1,549 x 1,544 m, which is 1,500 m x (cos 1.8° + sin 1.8°) = 1,546 m
+  within the box's own small Mercator error. The old square round the place
+  was laid the same way.
+- **Web Mercator's scale across the map**: the map is laid flat at the scale
+  of its middle; its north and south edges differ from it by the cosine of
+  latitude -- on 5 km at 43.6° N about 0.04% at the edge, a metre; on 8 km
+  about 0.06%, under 3 m. Longitude and
+  latitude are read through the tiles exactly, so the box searched for is
+  exact; only the size shown on it carries that error.

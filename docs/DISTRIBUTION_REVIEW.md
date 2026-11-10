@@ -1961,8 +1961,9 @@ Low and Medium). **Not played by a person.**
 
 Every zip carries **Fairway Builder Guide.html** beside Fairway Builder.html
 (tools/package_release.py): docs/BUILDER_GUIDE.md built by
-tools/builder-guide.mjs into one page with its nine pictures inside it as
-WebP -- 1,330 kB -- offline, no fetched font or script (it uses the system's
+tools/builder-guide.mjs into one page with its pictures inside it as
+WebP -- 1,330 kB with nine; 1,702 kB since the tenth, the map round a
+course with a box drawn on it (10 November 2026, after the trial below) -- offline, no fetched font or script (it uses the system's
 fonts). A Markdown file in a zip shows no pictures, hence a page. The source
 zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
 and tests/fixtures/ (the old-files test's course file, 560 kB), which a build

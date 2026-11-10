@@ -3,7 +3,8 @@
 // providers' addresses -- against a fake fetch, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {tileOf, lonLatOf, metresPerPixel, quadkey, zoomFor, tilesFor, PROVIDERS} from '../src/builder/imagery.js';
+import {tileOf, lonLatOf, metresPerPixel, quadkey, zoomFor, tilesFor, PROVIDERS, mapFrame, boxDegrees, boxLocal} from '../src/builder/imagery.js';
+import {squareAround} from '../src/builder/lidar-search.js';
 
 test('Web Mercator tiles round-trip, and match the published examples', () => {
  // The tile holding a point at zoom 1, and Bing's documented quadkey example.
@@ -89,4 +90,24 @@ test('USGS NAIP says when its photograph was taken: the newest primary one under
  const d = await PROVIDERS.naip.dateAt(-95.62, 43.63, get);
  assert.equal(d.toISOString().slice(0, 10), '2021-08-21');
  assert.equal(await PROVIDERS.naip.dateAt(0, 0, async () => ({json: async () => ({})})), null);
+});
+
+// The map shown before the LIDAR (builder-ux, 10 November 2026): a box drawn
+// on it comes back in degrees, the size it was drawn, and back again.
+test('a box drawn on the map before the LIDAR is the ground it was drawn round', () => {
+ const want = squareAround(-95.62, 43.63, 5000), z = zoomFor(want, {want: 2, maxTiles: 160}), t = tilesFor(want, z);
+ const pic = {width: t.nx * 256, height: t.ny * 256, tile: {z, x0: t.x0, y0: t.y0}}, f = mapFrame(pic);
+ assert.ok(f.land.cell > 1 && f.land.cell < 4, 'about 2 m a pixel');
+ assert.ok(2 * f.land.halfX >= 5000 && 2 * f.land.halfZ >= 5000, 'the whole 5 km square shown');
+ // A point and back, to a centimetre; north is up (z falls to the north).
+ const here = f.toLocal(-95.62, 43.63), back = f.toLonLat(here.x, here.z);
+ assert.ok(Math.abs(back.lon + 95.62) < 1e-7 && Math.abs(back.lat - 43.63) < 1e-7);
+ assert.ok(f.toLocal(-95.62, 43.64).z < here.z);
+ // 1,200 m by 900 m drawn round it: in degrees, that size on the ground (0.2%).
+ const b = {x0: here.x - 600, x1: here.x + 600, z0: here.z - 450, z1: here.z + 450}, d = boxDegrees(f, b);
+ const w = (d.lon1 - d.lon0) * 111320 * Math.cos(43.63 * Math.PI / 180), h = (d.lat1 - d.lat0) * 111320;
+ assert.ok(Math.abs(w - 1200) < 3 && Math.abs(h - 900) < 3, `${w} x ${h} m`);
+ assert.ok(d.lon0 < -95.62 && d.lon1 > -95.62 && d.lat0 < 43.63 && d.lat1 > 43.63);
+ const again = boxLocal(f, d);
+ for (const k of ['x0', 'x1', 'z0', 'z1']) assert.ok(Math.abs(again[k] - b[k]) < .01, k);
 });

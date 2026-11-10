@@ -85,6 +85,24 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-lidarplace').fill('A test place');
   await page.getByRole('button', {name: 'Find', exact: true}).click();
   await page.getByText('A test place, Minnesota').click();
+  // The map round the place comes first (USGS NAIP stood in for), and the
+  // LIDAR waits for a box dragged round the course on it (the owner, 10
+  // November 2026: "search, grab the map ... square off the course, from
+  // there we will grab LIDAR").
+  await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
+  if (await page.getByRole('button', {name: 'Search for LIDAR'}).isEnabled()) throw Error('Search for LIDAR should wait for a box on the map');
+  const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
+  {
+   const [ax, ay] = await at(here.x - 600, here.z - 450), [bx, by] = await at(here.x + 600, here.z + 450);
+   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
+  }
+  const drawn = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {b: s.mapBox, d: s.findBox, words: document.querySelector('.cb-mapbox')?.textContent}; });
+  if (!drawn.b || Math.abs(drawn.b.x1 - drawn.b.x0 - 1200) > 15 || Math.abs(drawn.b.z1 - drawn.b.z0 - 900) > 15 || !drawn.d || !(drawn.d.lon0 < -95.62 && drawn.d.lon1 > -95.62) || !/1\d\d\d x \d\d\d m/.test(drawn.words)) throw Error(`the box dragged on the map should be about 1200 x 900 m round the place: ${JSON.stringify(drawn)}`);
+  await t.shot('lidar-map');
+  // The map from the USGS tile cache (quick), not the sharpest service; the
+  // counts start again for the trace step's picture.
+  if (!tiles || blocks.length) throw Error(`the map should come from the USGS tile cache: ${tiles} tiles, ${blocks.length} blocks`);
+  tiles = 0; blocks.length = 0;
   await page.getByRole('button', {name: 'Search for LIDAR'}).click();
   await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   const found = await page.locator('.cb-lidarfound').textContent();

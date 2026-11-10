@@ -1490,7 +1490,9 @@ or zip."
   words; the first line says what every survey covers together. Read from the
   USGS tiles' `boundingBox`, the Entwine copies' published outlines, IGN's tile
   geometry and swisstopo's `bbox`, all in degrees (checked 4 November 2026). **It
-  measures the square searched for, not the course**, whose edge is not known
+  measures the box searched for, not the course** (since 10 November 2026 the
+  box drawn round the course on the map, *The map first, then the box, then
+  the LIDAR*; before, a square round the place), whose edge is not known
   until it is traced. A tile's box is its full square, so a survey's tile can
   promise ground it has no points on; an Entwine outline is the truer of the two.
 - **Whole tiles** were already fetched only when missing, by name and size; the
@@ -2198,3 +2200,70 @@ on 1 of main's 6 runs and 3 of the branch's 6, and every reading, either
 build, was 1.34-1.35 ms (pair 1, both read: main 1.35, the branch 1.34); the
 processor 0.4-0.5 ms on both. Over all eighteen pairs the editor's card time
 is the same on both builds. The branch is no slower anywhere.
+
+### The map first, then the box, then the LIDAR (10 November 2026, after the hand-over)
+
+The owner, reading the hand-test list: "For grabbing lidar, we need to reverse
+the order of these things. We need to search, grab the map from a large area
+surrounding, display that map, then allow the user to square off the course,
+from there we will grab LIDAR."
+
+**Before**: Find LIDAR took a place by name, a square round the point the
+name was found at (1.5 km unless changed, 1 to 3 km), and searched and
+downloaded that square; only then did the relief show where the course was,
+and the property was drawn inside what had been downloaded. The point a name
+is found at is the club's middle at best and a town's middle at worst, so the
+square was guessed blind: too small and the course's far holes had no LIDAR
+(found only after the download), too big and the download carried ground no
+course needed.
+
+**Now** (door-real.js `fetchMap`, `boxChosen`, `leaveMap`): the place picked,
+the aerial map of a 5 km square round it comes up on the plan (**Map 3, 5 or
+8 km across**), with a gold pin where the name was found. The left button
+drags a box round the course on it (up to 3 x 3 km, like the property; a
+click without a drag keeps the box there was), and **Search for LIDAR** waits
+for the box. Only the box, and 150 m past it for the land beyond the course
+(`growBox`, GRID_MARGIN), is searched and downloaded. When the LIDAR is in,
+the relief takes the map's place and the box is the property; a drag on the
+relief changes it. LIDAR files of one's own skip the map, as before.
+
+- **The map is a plan of its own** (imagery.js `mapFrame`): the mosaic's
+  pixels laid flat in metres, its middle at 0, at Web Mercator's scale at its
+  middle -- across 8 km it drifts by about 0.06% at the edges, under 3 m, which a box
+  round a course does not need; longitude and latitude go through the tiles
+  exactly (tests/imagery.test.mjs). Nothing else is drawn in its frame: the
+  plan's land is the map's until the LIDAR comes, and every other step
+  leaves it (`leaveMap`).
+- **From the USGS tile cache, not the sharpest service.** At about 2 m a pixel
+  (PLACED: fairways and greens plain to see) the tiles are the same NAIP
+  photographs, and came in 1 s for Worthington's 5 km map; USGS NAIP Plus,
+  which draws each block when asked, took 32 s for the same map. A free tile
+  cache is taken first, then any free source, then Google or Bing where a key
+  was given; with none, the box is a 1.5 km square round the place, as before.
+- **The property is a little larger than the box drawn**, by the survey
+  grid's turn: the box is drawn north-up, and the property is the square of
+  the survey's grid (UTM) that holds its four corners. At Worthington, UTM's
+  north is turned about 1.8 degrees, and a 1,500 m box made a 1,549 m
+  property (the builder-lidar-folder journey). The old square had the same.
+- **A kept download names both sides when it is not square**
+  (`squareName`, `squareOfName`: `_1220x1250m.ept.zip`). Before, only the
+  height was written, and a combined box -- two squares that touch -- read
+  back as a square of that height, wrong in its width; a square keeps its
+  old name, so every ZIP already in a LIDAR folder reads as before.
+- **Build it for me is unchanged**: one press, a 1.5 km square round the
+  place, no stop for a box. Drawing the box first there would cost the one
+  press; reading the club's own outline from OpenStreetMap before the LIDAR
+  would give it a box without asking (not built; OpenStreetMap is read after
+  the land, `loadOsm`).
+- Found on the way: a step whose tip had been closed with Got it showed the
+  word "null" at the top of its panel (`introFor` returned null into
+  `replaceChildren`); fixed.
+
+Seen: the builder-door-2 journey (the map from a stand-in tile cache, a 1,200
+x 900 m box dragged, Search for LIDAR waiting for it) and builder-lidar-folder
+(a 1.5 km box dragged, downloaded, kept, read back, the property from it); all
+nine journeys pass. On real services, Worthington Country Club by name: the
+map in about a second, a 1,220 x 1,250 m box round the course, three USGS
+surveys each covering all of it (bench/shots/map-first.mjs, local; the guide's
+picture `map-box`). The download from the box and the land built from it on
+real services were not run. **Not tried by a person.**

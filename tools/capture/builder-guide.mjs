@@ -31,7 +31,18 @@ await ctx.addInitScript(() => { window.showSaveFilePicker = undefined; window.sh
 const page = await ctx.newPage(), conv = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
-page.on('request', r => { const u = r.url(); if (/^https?:/.test(u)) errors.push('request ' + u); });
+// The map before the LIDAR (10 November 2026): Worthington's place search and
+// the USGS tiles round it, kept locally by bench/shots/map-first.mjs (run once
+// on real services) in bench/shots/map-tiles, are served from there -- so
+// this still goes online for nothing. Without them that screen is skipped.
+const TILES = path.join(ROOT, 'bench', 'shots', 'map-tiles'), haveMap = fs.existsSync(path.join(TILES, 'place.json'));
+const kept = u => /^https:[/][/](basemap[.]nationalmap[.]gov|nominatim[.]openstreetmap[.]org)[/]/.test(u);
+await page.route(/nominatim[.]openstreetmap[.]org/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: haveMap ? fs.readFileSync(path.join(TILES, 'place.json')) : '[]'}));
+await page.route(/basemap[.]nationalmap[.]gov/, r => {
+ const m = r.request().url().match(/tile[/]([0-9]+)[/]([0-9]+)[/]([0-9]+)/), f = m && path.join(TILES, m[1], m[2], m[3] + '.jpg');
+ return f && fs.existsSync(f) ? r.fulfill({status: 200, contentType: 'image/jpeg', headers: {'Access-Control-Allow-Origin': '*'}, body: fs.readFileSync(f)}) : r.fulfill({status: 404, headers: {'Access-Control-Allow-Origin': '*'}, body: ''});
+});
+page.on('request', r => { const u = r.url(); if (/^https?:/.test(u) && !kept(u)) errors.push('request ' + u); });
 page.on('dialog', d => d.accept());
 const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy')?.hidden !== false, null, {timeout: 300000});
 // A screenshot as a WebP (quality .82), through a canvas in a second page.
@@ -50,6 +61,20 @@ await shot('home');
 await page.getByRole('button', {name: /Generate a real life course/}).click();
 await page.locator('.cb-buildname').fill('Worthington Country Club');
 await shot('build-it-for-me');
+// By hand: the course found by name, the map round it, a box dragged round
+// the course -- the LIDAR is searched for over that box.
+if (haveMap) {
+ await page.locator('.cb-lidarplace').fill('Worthington Country Club, Minnesota');
+ await page.getByRole('button', {name: 'Find', exact: true}).click();
+ await page.locator('.cb-result').first().click();
+ await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 60000}); await idle();
+ const plan = page.locator('canvas.cb-plan'), at = async (x, z) => { const b = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [b.x + cx / r, b.y + cy / r]; };
+ const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
+ await page.evaluate(h => window.fairwayBuilder.door2.plan.look(h.x + 200, h.z + 150, window.fairwayBuilder.door2.plan.view.scale * 1.6), here);
+ const [ax, ay] = await at(here.x - 700, here.z - 450), [bx, by] = await at(here.x + 520, here.z + 800);
+ await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 8}); await page.mouse.up();
+ await shot('map-box');
+} else console.log('map-box skipped: no bench/shots/map-tiles (run bench/shots/map-first.mjs once)');
 // The real course, from its draft: the holes step and the map checks.
 await page.locator('.cb-menuhead', {hasText: 'File'}).click();
 const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('menuitem', {name: /Open a course file/}).click()]);
