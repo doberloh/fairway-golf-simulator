@@ -2192,4 +2192,9 @@ over six pairs: main 0.99, 1.00, 1.34 ms; the branch 0.92, 1.23, 1.34, 1.34
 ms -- one spread, the same in the pair where both read, with the branch
 drawing 190 draws a frame to main's 192. Game view in those two pairs was
 slower on both (main 48.0 and 42.3 s, the branch 43.3 and 41.2), the branch
-quicker in each pair. The branch is no slower anywhere.
+quicker in each pair. Then six alternated pairs of the editor alone
+(`builder-frames.mjs --editor-only`, bench/ab bux-ed-*): the card's time read
+on 1 of main's 6 runs and 3 of the branch's 6, and every reading, either
+build, was 1.34-1.35 ms (pair 1, both read: main 1.35, the branch 1.34); the
+processor 0.4-0.5 ms on both. Over all eighteen pairs the editor's card time
+is the same on both builds. The branch is no slower anywhere.
