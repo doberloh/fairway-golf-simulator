@@ -117,8 +117,12 @@ export async function readCourseAny(file) {
 }
 
 const doors = [
- {key: 'generate', title: 'Generate and modify a course', text: 'Pick a landscape and every studio setting; grow it, then take it over and reshape anything.', go: () => import('./door-generate.js').then(m => m.open())},
- {key: 'real', title: 'Generate a real life course', text: 'Bring LIDAR of a real place and an aerial picture; mark the tees and greens, let the auto trace start the rest.', go: () => import('./door-real.js').then(m => m.open())},
+ // PLAIN WORDS, AND WHICH DOOR FOR WHAT (the builder-ux goal, items 13 and 14):
+ // each door says what it is for in a player's words; door 1 is where a
+ // first visit tries every tool, with nothing to download (PLACED: it is the
+ // sample course -- a grown course needs no file and no connection).
+ {key: 'generate', title: 'Generate and modify a course', text: 'A made-up course in a minute: pick a landscape, grow it, take it over and change anything. New here? Start with this one -- nothing to download.', go: () => import('./door-generate.js').then(m => m.open())},
+ {key: 'real', title: 'Generate a real life course', text: 'A real course from its laser survey (LIDAR), aerial photo and map. Type its name and Build it for me does the steps -- or do each step yourself.', go: () => import('./door-real.js').then(m => m.open())},
  {key: 'open', title: 'Open a course file', text: 'Carry on with a course or a draft you saved, or open a .fairway file somebody gave you.', go: openFile},
 ];
 
@@ -127,7 +131,7 @@ export function home() {
  const msg = el('p', {class: 'cb-note', id: 'cbHomeMsg'});
  show(el('section', {class: 'cb-doors'},
   el('h1', {}, 'Build a ', el('b', {}, 'course')),
-  el('p', {}, 'Every course you build here is a .fairway file that Fairway plays, and that you can give to anybody else who has Fairway.'),
+  el('p', {}, 'Every course you build here is a .fairway file that Fairway plays, and that you can give to anybody else who has Fairway. Help > Keyboard shortcuts (or ?) lists every key.'),
   el('div', {class: 'cb-door-row'}, doors.map(d => el('button', {class: 'cb-door', type: 'button', onclick: () => d.go().catch(e => { msg.textContent = e.message; msg.classList.add('cb-err'); })},
    el('strong', {}, d.title), el('span', {}, d.text), el('em', {}, 'Start')))),
   msg,

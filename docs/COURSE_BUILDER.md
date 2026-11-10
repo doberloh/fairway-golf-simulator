@@ -2054,3 +2054,15 @@ shows, and the tool preview starts folded (open, it covered a quarter of the
 plan at 768). Not checked: a 4K screen at 150% scaling itself (the journey
 can only change the window, not the screen's scaling), and phones, which
 are out of scope. Not seen by a person.
+
+### First visit and plain words (10 November 2026)
+
+Items 13 and 14, a first pass. The three doors say what each is for in a
+player's words, door 1 as the place a first visit tries every tool with
+nothing to download (PLACED: door 1 is the sample course -- it needs no file
+and no connection; no separate sample file ships); the home line points at
+Help > Keyboard shortcuts. Each step's panel opens with a line on what the
+step is for (`INTRO`), and every tool has its line in the status bar.
+Not done: a sweep of every tooltip (tips.js) and message for words like
+LIDAR, EPT, DEM or cell -- some remain where they are the subject (the LIDAR
+search). Not seen by a person.
