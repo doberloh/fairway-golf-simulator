@@ -6,7 +6,7 @@
 // view what to redraw.
 import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave, useMenus} from './builder.js';
 import {penCurve} from './pen.js';
-import {eyeButton} from './icons.js';
+import {eyeButton, icon} from './icons.js';
 import {createSteady} from './steady.js';
 import {createEditor, PAINT} from './editing.js';
 import {createView} from './view.js';
@@ -48,8 +48,13 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const editor = createEditor(doc), s = editor.state;
  setTitle(s.name);
  const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
- const tools = el('div', {class: 'cb-tools'}), side = el('div', {class: 'cb-side'});
- const page = el('div', {style: 'position:absolute;inset:0'}, wrap, tools, side, status);
+ const tools = el('div', {class: 'cb-tools cb-tools3d'}), side = el('div', {class: 'cb-side'});
+ // THE TOOL PALETTE (the builder-ux goal, item 8): every tool an icon with its
+ // key down the left edge, as on door 2's plan; the column beside it holds the
+ // tool's options, the layers and the clean-up only. Replaced eleven groups of
+ // named buttons with the options among them.
+ const palette = el('nav', {class: 'cb-palette cb-palette3d', 'aria-label': 'Tools'});
+ const page = el('div', {style: 'position:absolute;inset:0'}, wrap, palette, tools, side, status);
  show(page);
  preview().mount(page);
  const view = createView(wrap, editor, {onWindowChange: ui.onWindowChange});
@@ -86,7 +91,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   if (t.kind !== 'select') choose(null);
   // Only what the tool in hand uses (`data-for`; the owner, 4 November 2026).
   for (const n of tools.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(t.kind);
-  for (const b of tools.querySelectorAll('[data-tool]')) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t) || (b.dataset.tool === 'brush' && t.kind === 'paint') || (b.dataset.tool === 'pen' && t.kind === 'outline'));
+  for (const b of [...tools.querySelectorAll('[data-tool]'), ...palette.querySelectorAll('[data-tool]')]) b.classList.toggle('cb-on', b.dataset.tool === toolKey(t) || (b.dataset.tool === 'brush' && t.kind === 'paint') || (b.dataset.tool === 'pen' && t.kind === 'outline'));
   status.textContent = HINT[t.kind]?.(t) ?? '';
   canvas.style.cursor = '';
   refreshCoverSizes(); showModel();
@@ -233,9 +238,25 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   const got = editor.clearTreesFromTurf(); view.refreshTrees();
   status.textContent = got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.';
  }
- const buildTools = () => { fillLayerPick(); tools.replaceChildren(
+ // [tool, name, icon, key, group]; the palette's order.
+ const PAL = () => [
+  [{kind: 'navigate'}, 'Move', 'move', 'H', 0], [{kind: 'select'}, 'Select shape', 'select', 'V', 0],
+  [{kind: 'paint', surface: layer}, 'Paint brush', 'brush', 'B', 1], [{kind: 'outline', surface: layer}, 'Pen', 'outline', 'P', 1], [{kind: 'erase'}, 'Erase brush', 'erase', null, 1], [{kind: 'eraseAll'}, 'Erase all layers', 'eraseAll', null, 1], [{kind: 'smoothEdges'}, 'Smooth edges', 'smooth', null, 1],
+  ...SHAPES.map(([op, t]) => [{kind: 'shape', op}, t, {raise: 'raise', lower: 'lower', flatten: 'flatten'}[op] ?? ('ground' + op[0].toUpperCase() + op.slice(1)), {raise: 'R', lower: 'L'}[op] ?? null, 2]),
+  [{kind: 'pond'}, 'Draw a pond', 'pond', null, 3], [{kind: 'creek'}, 'Draw a creek', 'creek', 'C', 3], [{kind: 'bunker'}, 'Dig a bunker', 'bunker', 'U', 3],
+  [{kind: 'placeTree'}, 'Place tree', 'tree', 'T', 4], [{kind: 'cover', cover: 'trees'}, 'Tree brush', 'treeBrush', null, 4], [{kind: 'treeZone'}, 'Tree zone', 'treeZone', null, 4], [{kind: 'clear'}, 'Clear trees', 'treeErase', null, 4], [{kind: 'sizeTree'}, 'Size a tree', 'sizeTree', null, 4],
+  [{kind: 'house'}, 'House', 'home', 'O', 5], [{kind: 'homeZone'}, 'House zone', 'homeZone', null, 5], [{kind: 'clearHomes'}, 'Clear houses', 'homeErase', null, 5],
+ ];
+ function buildPalette() {
+  const list = PAL(), buttons = list.map(([t, name, ic, key]) => {
+   const b = el('button', {class: 'cb-tool', type: 'button', 'data-tool': t.kind === 'paint' ? 'brush' : t.kind === 'outline' ? 'pen' : toolKey(t), 'aria-label': name, title: `${name}${key ? ` (${key})` : ''}: ${HINT[t.kind]?.(t) ?? ''}`, onclick: () => setTool(t.kind === 'paint' || t.kind === 'outline' ? {...t, surface: layer} : t)});
+   b.innerHTML = icon(ic); if (key) b.append(el('kbd', {'aria-hidden': 'true'}, key));
+   return b;
+  });
+  palette.replaceChildren(...buttons.flatMap((b, i) => i && list[i][4] !== list[i - 1][4] ? [el('hr'), b] : [b]));
+ }
+ const buildTools = () => { fillLayerPick(); buildPalette(); tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
-   button('Move', {kind: 'navigate'}), button('Select shape', {kind: 'select'}),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'From above'),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'This hole'),
    el('button', {class: 'cb-btn', type: 'button', onclick: undo}, 'Undo'),
@@ -249,17 +270,12 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   el('div', {class: 'cb-group', 'data-for': 'cover'}, el('b', {}, 'What it lays'),
    el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax),
    range('How thick', .05, 1, .05, coverThick, v => { coverThick = v; })),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Shape the ground'), el('div', {class: 'cb-btns'}, SHAPES.map(([op, t]) => button(t, {kind: 'shape', op})))),
   // ONE BRUSH AND ONE PEN, ON THE LAYER CHOSEN (the builder-ux goal, 10
   // November 2026): the layer is the paint program's colour, chosen here or by
   // clicking it in Layers. Replaced a Paint and an Outline button for each of
   // the landscape's surfaces -- 22 buttons that were really two tools.
   el('div', {class: 'cb-group cb-surfaces'}, el('b', {}, 'Surfaces'),
    el('label', {}, 'Layer ', layerPick),
-   el('div', {class: 'cb-btns'},
-    el('button', {class: 'cb-btn', type: 'button', 'data-tool': 'brush', title: 'Paint brush (B): drag to paint the chosen layer', onclick: () => setTool({kind: 'paint', surface: layer})}, 'Paint brush'),
-    el('button', {class: 'cb-btn', type: 'button', 'data-tool': 'pen', title: 'Pen (P): click nodes round a shape -- the curve shown is what fills -- then click the first node, double-click or press Enter to fill the chosen layer', onclick: () => setTool({kind: 'outline', surface: layer})}, 'Pen'),
-    button('Erase brush', {kind: 'erase'}), button('Erase all layers', {kind: 'eraseAll'}), button('Smooth edges', {kind: 'smoothEdges'})),
    underLine,
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
@@ -272,10 +288,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (editor.extrapolate({from: layer, to: exTo, width: exWidth})) cleaned(); else status.textContent = 'Pick a layer that holds something, and another to lay round it.'; }}, 'Extrapolate')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons()),
   el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Water and sand'), el('div', {class: 'cb-btns'},
-   button('Draw a pond', {kind: 'pond'}), button('Draw a creek', {kind: 'creek'}), button('Dig a bunker', {kind: 'bunker'}))),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Trees'), el('div', {class: 'cb-btns'},
-   button('Place tree', {kind: 'placeTree'}), button('Tree brush', {kind: 'cover', cover: 'trees'}), button('Tree zone', {kind: 'treeZone'}), button('Clear trees', {kind: 'clear'}), button('Size a tree', {kind: 'sizeTree'})),
+  el('div', {class: 'cb-group'}, el('b', {}, 'Trees'),
    el('label', {'data-for': 'placeTree'}, 'Which tree ', el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[s.landscape]).map(([k, name]) => el('option', {value: k, selected: k === treeKind}, name)))),
    el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; showModel(); }})),
    el('label', {'data-for': 'treeZone'}, 'Trees a hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
@@ -284,7 +297,6 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree),
    // Live: the trees redraw as it is ticked, and Game view shows them next.
    treePlanControls(el, BIOMES[s.landscape], s.treePlan, plan => { editor.setTreePlan(plan); view.refreshTrees(); refreshSave(); })),
-  el('div', {class: 'cb-group'}, el('b', {}, 'Houses'), el('div', {class: 'cb-btns'}, button('House', {kind: 'house'}), button('House zone', {kind: 'homeZone'}), button('Clear houses', {kind: 'clearHomes'}))),
  ); };
  buildTools();
 

@@ -309,3 +309,8 @@ select option{background:#03100e;color:var(--ink)}
 /* Short windows (builder-ux, item 15): the palette's buttons shorter, so all of it shows at 768 pixels. */
 @media (max-height:860px){.cb-tool{height:34px}.cb-palette hr{margin:3px 4px}.cb-stepbar{padding:5px 12px}.cb-stepchip{padding:3px 10px 3px 3px}}
 .cb-intro .cb-gotit{align-self:flex-end;padding:4px 10px;font-size:12px}
+/* The 3D editor's palette (builder-ux, item 8): the strip down the left edge, the column of options beside it. */
+.cb-palette3d{position:absolute;left:0;top:0;bottom:0;z-index:5}
+.cb-tools.cb-tools3d{left:74px}
+.cb-tools3d ~ .cb-status,.cb-palette3d ~ .cb-status{left:306px}
+.cb-palette3d ~ .cb-preview{left:306px}

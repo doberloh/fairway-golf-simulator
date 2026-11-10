@@ -861,7 +861,10 @@ for the layer chosen there or in Layers -- the brush steadied as in door 2
 through the nodes you click (the first node, a double-click or Enter fills
 it; Shift-click a sharp corner; Backspace takes the last node off) -- with
 a line saying what the layer goes under. A surface goes on its own layer and
-covers nothing beneath it. **The menus** hold the editor's commands and keys:
+covers nothing beneath it. **The tools are an icon strip down the left edge**,
+as on door 2's plan (hold the pointer over one for its name and key), and the
+column beside it holds the tool's options, the layers and the clean-up. **The
+menus** hold the editor's commands and keys:
 **H** move, **V** select, **B** brush, **P** pen, **R** raise, **L** lower,
 **C** creek, **U** bunker, **T** place tree, **O** house, **F** from above,
 **G** Game view, **[** and **]** the brush's size; W, A, S, D, Q and E stay

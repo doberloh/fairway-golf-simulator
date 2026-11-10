@@ -2134,3 +2134,14 @@ sees but "cells" in one tooltip (now "the squares it was painted in"); LIDAR
 stays where it is the subject, explained the first time ("the laser survey of
 the ground") in the first step's tooltip, its tip and the doors. The 3D
 editor's status lines (HINT) were read the same way and kept.
+
+### The 3D editor's palette (10 November 2026)
+
+Item 8, finished. The 3D editor's tools are an icon strip down the left edge
+(editor.js `PAL`, `buildPalette`; icons.js gained the ground tools and the
+pond), with the keys in the corners as on door 2's plan; the column beside it
+keeps only the tool's options (brush, what it lays, the tree's kind and
+height), Surfaces (the layer, what it goes under, Skin from the land), Clean
+up, Ground cover's kinds, Layers and Trees' choices. Each palette button
+keeps its tool's name and `data-tool`, so the journeys run unchanged; all nine
+pass. Not seen by a person.

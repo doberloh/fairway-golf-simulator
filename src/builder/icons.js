@@ -28,6 +28,12 @@ const S = {
  raise: '<path d="M3 19c4-1 5-11 9-11s5 10 9 11"/><path d="M12 3v4M10 5l2-2 2 2"/>',
  lower: '<path d="M3 9c4 1 5 10 9 10s5-9 9-10"/><path d="M12 5v4M10 7l2 2 2-2"/>',
  flatten: '<path d="M3 15c3 0 4-3 6-3h6c2 0 3 3 6 3"/><path d="M8 9h8"/>',
+ groundSmooth: '<path d="M3 16c4-3 6 1 9-2s6-2 9 0"/><path d="M5 10h4M15 8h4" opacity=".6"/>',
+ groundRamp: '<path d="M3 19h18L21 7z"/>',
+ groundRoughen: '<path d="M3 17l3-5 2 3 3-6 2 4 3-5 2 3 3-2"/>',
+ groundRestore: '<path d="M4 12a8 8 0 1 0 3-6"/><path d="M4 4v4h4"/>',
+ groundFill: '<path d="M3 9c3 0 4 6 9 6s6-6 9-6"/><path d="M8 13h8" stroke-dasharray="2 2"/>',
+ pond: '<path d="M5 13c0-4 4-7 8-6s7 3 6 7-5 6-9 5-5-2-5-6z"/><path d="M9 13c1-1 2 1 3 0s2 1 3 0"/>',
  eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>',
  eyeOff: '<path d="M2 12s3.5-6 10-6c2 0 3.7.6 5 1.4M22 12s-3.5 6-10 6c-2 0-3.7-.6-5-1.4"/><path d="M4 20L20 4"/>',
 };

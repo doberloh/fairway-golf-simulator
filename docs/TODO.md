@@ -1054,9 +1054,6 @@ person.**
   Import in the game and play a hole; the 3D editor's one brush and pen, and
   Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
   `npm run build`, as `dist/builder-guide.html`).
-- [ ] **The 3D editor's left column is not yet door 2's icon palette** (item 8):
-  it has the menus, keys, one brush and pen on the chosen layer, Delete, but
-  its tools are still grouped buttons with the options among them.
 - [ ] **Map data, still open** (item 24): scoring the checks on damaged maps of
   the bench courses -- not built: each bench course would need door 2's whole
   pipeline (its land from the LIDAR) in the page, minutes a course; the

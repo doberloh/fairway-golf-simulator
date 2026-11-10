@@ -127,7 +127,8 @@ contrast, and USGS's photographs say when they were taken.
 
 ![The 3D editor](builder-guide/editor.webp)
 
-**Open in the editor** shows the course in 3D. Shape the ground (raise, lower,
+**Open in the editor** shows the course in 3D, with the same kind of tool
+strip down the left and the options beside it. Shape the ground (raise, lower,
 smooth, flatten, ramp), paint with the one brush and pen on the layer chosen,
 dig bunkers, draw ponds and creeks, plant trees and houses; select anything and
 press Delete to take it away. W A S D fly, Q and E go down and up, **G** shows
