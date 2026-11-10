@@ -15426,3 +15426,11 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   trees thinned, the far versions, the ground coarser at 4 px), Medium 0.08-2.9% by 0.02-0.8. Both may
   look different (the owner); the pictures are on the status page for the owner's look. No page errors;
   the pin label, wind arrows and map drawn on both.
+- **Where the goal's own rules fell short** (written at the hand-over): every change was measured
+  against the build before it, but the batched footings and drives and the hazard loop's early end only
+  inside whole-build rounds (each too small to read alone against this card's noise), and the course's
+  load could not be told apart by build at all (its shaders swing 19-25 s run to run). The fades, Low's
+  thinning as the camera walks and free flight are proven in tests and still pictures, not in motion:
+  tools/frame-motion.mjs plays a generated course, not a built file, and playing is the owner's. The
+  device figures are estimates by design. Each change's measurements and pictures are listed in the
+  goal's local brief (docs/studies/frame-rate-all-tiers/GOAL.md, *Each rule, and where it stands*).
