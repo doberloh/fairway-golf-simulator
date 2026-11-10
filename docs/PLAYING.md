@@ -487,7 +487,8 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
   square round it, builds the land, fetches the sharpest free picture, lays
   OpenStreetMap's course and lines it up with the LIDAR, takes its holes and
   its name, and stops on the review -- or on the holes step if the map left
-  some holes without a tee or a green. United States courses only; it goes
+  some holes without a tee or a green, or when **Checking the map** finds
+  something wrong. United States courses only; it goes
   online as it works. On Worthington Country Club it took 3 minutes 52
   seconds. Everything it did can be changed afterwards in the steps.
   1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
@@ -715,7 +716,21 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      traced green or tee, to stop a metre and a half short of it, and takes
      out a tree with no room left (or one standing on it); Undo puts them
      back.
-  4. **Holes**: drag any tee, aim point or green to move it, on any hole, and
+  4. **Holes**: **Checking the map** comes first when the holes came from
+     OpenStreetMap, which can be incomplete or wrong: what the map holds
+     against what the course needs (holes numbered, greens and tees drawn),
+     and each thing to check -- a green or tee mark off any green or tee, a
+     hole's line running mostly off the fairways (pointing to the wrong
+     green, or from the wrong tee), two holes on one green, two lines
+     crossing, a length that does not suit the par, a line leaving the
+     boundary, a tee far from the last green (the numbers out of order).
+     Each has **Show** (the hole, framed) and, where one suits, **Fix** (the
+     mark moved onto the nearest green or tee, or the line turned to the
+     green down the fairway); **Take the fixes offered** takes them all, a
+     few rounds over; red rings mark them on the plan. The fixes are guesses
+     from the traced course: check each against the picture. When half the
+     holes or more have something to check, it says the map is unreliable.
+     Drag any tee, aim point or green to move it, on any hole, and
      the line follows as it goes. A click near another hole's mark places
      your mark on the hole you are marking; only a drag moves the other
      hole's mark. For each hole, left-click its **Back tee** (the middle and

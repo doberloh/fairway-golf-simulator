@@ -57,5 +57,32 @@ export default function ({journey}) {
   if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1) throw Error(`each service asked once (the picture in blocks): ${JSON.stringify(asked)}`);
   console.log(`       built in ${((Date.now() - t0) / 1000).toFixed(0)} s: ${st.built.steps.join(' ')}`);
   await t.shot('review');
+
+  // A WRONG MAP (item 24; the owner: Worthington's "holes pointing to the
+  // wrong place"): the same club with hole 3's line drawn to hole 7's green.
+  // The build stops on the holes step with the doubt and a fix offered; the
+  // fix puts hole 3 back on its own green, down its fairway.
+  await page.unroute(/overpass-api\.de/);
+  await page.route(/overpass-api\.de/, r => {
+   const a = answer(), three = a.elements.find(e => e.tags?.golf === 'hole' && e.tags.ref === '3'), seven = a.elements.find(e => e.tags?.golf === 'hole' && e.tags.ref === '7');
+   three.geometry = [three.geometry[0], seven.geometry.at(-1)];
+   return r.fulfill(json(a));
+  });
+  page.on('dialog', d => d.accept());
+  await page.getByRole('button', {name: 'Back', exact: true}).click();
+  await page.getByRole('button', {name: /Generate a real life course/}).click();
+  await page.locator('.cb-buildname').fill('Testville Golf Club');
+  await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+  await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});
+  await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
+  const wrong = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, doubts: (s.doubts ?? []).map(q => ({hole: q.hole, kind: q.kind, fix: !!q.fix}))}; });
+  if (wrong.step !== 3) throw Error(`a map with doubts should stop on the holes step, not step ${wrong.step + 1}`);
+  const three = wrong.doubts.filter(q => q.hole === 2);
+  if (!three.some(q => q.fix)) throw Error(`hole 3 pointing the wrong way should be caught, with a fix: ${JSON.stringify(wrong.doubts)}`);
+  await t.shot('wrong-map');
+  await page.getByRole('button', {name: /^Take the [0-9]+ fixes offered$|^Fix$/}).first().click();
+  const after = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {green: s.holes[2].green, doubts: (s.doubts ?? []).filter(q => q.hole === 2 && q.fix).length}; });
+  if (after.doubts || Math.abs(after.green.x - (-80)) > 6) throw Error(`the fix should put hole 3 back on its own green: ${JSON.stringify(after)}`);
+  console.log(`       a wrong map: ${wrong.doubts.length} doubt${wrong.doubts.length === 1 ? '' : 's'} (${[...new Set(wrong.doubts.map(q => q.kind))].join(', ')}); the fix put hole 3 back on its own green`);
  });
 }

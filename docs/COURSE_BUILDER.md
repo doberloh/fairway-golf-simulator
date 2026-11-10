@@ -1918,3 +1918,21 @@ press still counts. **Worthington Country Club, real services: 3 min 52 s,
 builder-build-for-me journey runs it with every service stood in for. Not
 yet: a Cancel between the steps (each step's own wait has its words; the
 OpenStreetMap wait has its Cancel). Not seen by a person.
+
+### Checking the map (10 November 2026)
+
+Item 24 (the owner: "a solution for incomplete OSM data"; Worthington's map
+"completely wrong"). The holes step opens with **Checking the map**
+(map-checks.js): what the map holds against what the course needs, and each
+thing to check with Show and, where one suits, Fix, red rings on the plan,
+and Take the fixes offered (three rounds, a plain button that says they are
+guesses). Build it for me stops on the holes step when there is anything to
+check, saying how many holes and whether the map is unreliable; and when
+OpenStreetMap does not answer it says so and leaves the trace step ready to
+ask again (it used to start a blank trace, which read as "no course here").
+On Worthington: 9 of 18 holes flagged, the map called unreliable; the fixes
+straighten the lines down the fairways but cannot settle the map's numbering
+(RESEARCH, *Checking OpenStreetMap's holes, on Worthington*). Checked by the
+builder-build-for-me journey (a club with one hole drawn wrong). Not built:
+typing the card's yards as a witness; scoring on damaged maps of the bench
+courses. Not seen by a person.

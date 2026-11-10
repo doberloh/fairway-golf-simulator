@@ -27,6 +27,7 @@ import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refresh
 import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn, nodeAt} from './pen.js';
 import {createSteady} from './steady.js';
+import {blobs, checkHoles, mapVerdict, mapHas} from './map-checks.js';
 import {writeDraft, DRAFT_EXT} from './draft.js';
 import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
@@ -329,6 +330,11 @@ export function open(draft = null) {
    for (const a of h.aims) { const [x, y] = p.toScreen(a.x, a.z); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.moveTo(x - 9 * px, y); ctx.lineTo(x + 9 * px, y); ctx.moveTo(x, y - 9 * px); ctx.lineTo(x, y + 9 * px); ctx.stroke(); }
    if (h.green) { const [x, y] = p.toScreen(h.green.x, h.green.z); ctx.fillStyle = on ? '#fde68a' : '#d4443a'; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `bold ${13 * px}px system-ui`; ctx.fillText(String(n + 1), x + 8 * px, y - 6 * px); }
   });
+  if (st.step === 3 && st.doubts?.length) {
+   ctx.save(); ctx.strokeStyle = '#ff5a4f'; ctx.lineWidth = 2.5 * px; ctx.setLineDash([5 * px, 4 * px]);
+   for (const q of st.doubts) if (q.at) { const [x, y] = p.toScreen(q.at.x, q.at.z); ctx.beginPath(); ctx.arc(x, y, 14 * px, 0, 7); ctx.stroke(); }
+   ctx.restore();
+  }
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
   // THE PEN (pen.js): the curve that will be filled, drawn live through the
   // nodes and on to the pointer; a node at every click; the first node grows
@@ -1028,7 +1034,11 @@ export function open(draft = null) {
   const offer = providersAt(place.lon, place.lat).filter(k => PROVIDERS[k].free);
   if (offer.length) { await fetchImagery(offer[0], '', {}); if (st.pics.length) log(`The picture: ${PROVIDERS[offer[0]].name} (${took()}).`); }
   // 4. OpenStreetMap's course, lined up with the LIDAR.
+  st.osmFailed = null;
   await loadOsm();
+  // OpenStreetMap did not answer (a busy server): say so, and leave the trace
+  // step ready to ask again -- not a blank trace, which would read as no map.
+  if (st.osmFailed) { go(2); return say(`OpenStreetMap did not answer (${st.osmFailed}), ${took()} in. The land and the picture are ready: press Fetch OpenStreetMap to ask again, or draw the course yourself.`, true); }
   const laid = st.osm?.laid ? Object.values(st.osm.laid).reduce((a, b) => a + b, 0) : 0;
   if (!st.model || !laid) {
    if (!st.model) manualTrace();
@@ -1041,7 +1051,10 @@ export function open(draft = null) {
   const marked = st.holes.slice(0, st.holesN).filter(h => h?.green && h.tees.length).length;
   log(`The course from OpenStreetMap, lined up with the LIDAR: ${marked} of ${st.holesN} holes marked (${took()}).`);
   st.built = {took: (Date.now() - t0) / 1000, steps: done};
-  if (marked === st.holesN && can(5)) { go(4); go(5); say(`Built in ${took()}: ${st.name}, ${st.holesN} holes. Look it over here; open it in the editor, or go back to any step to change it.`); }
+  const doubts = mapDoubts(), verdict = mapVerdict(st.holes.slice(0, st.holesN), doubts);
+  st.built.doubts = doubts.length;
+  if (doubts.length) { go(3); say(`Built in ${took()}: ${st.name}, ${marked} of ${st.holesN} holes from OpenStreetMap -- ${verdict.words} The list is under Checking the map; the red rings show where.`, verdict.unreliable); }
+  else if (marked === st.holesN && can(5)) { go(4); go(5); say(`Built in ${took()}: ${st.name}, ${st.holesN} holes. Look it over here; open it in the editor, or go back to any step to change it.`); }
   else { go(3); say(`Built in ${took()}, but OpenStreetMap leaves ${st.holesN - marked} of ${st.holesN} holes without a tee or a green: mark them here (Next hole), then the name and the review.`, true); }
  }
  function stepLidar() {
@@ -1530,7 +1543,7 @@ export function open(draft = null) {
    st.osm.said = `Laid: ${Object.entries(laid).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing -- this course is not drawn in OpenStreetMap'}; ${n} holes numbered${courses.length > 1 ? ` on ${courses[0].name} (${courses.length} courses here: pick below)` : ''}${st.boundary ? '; the course boundary' : ''}.`;
    paintCodes(); st.traceTool = 'brush'; go(2); refreshCount();
    say(st.osm.said);
-  } catch (e) { if (e.name === 'AbortError') say('Stopped: nothing was changed.'); else say('OpenStreetMap: ' + e.message, true); }
+  } catch (e) { st.osmFailed = e.name === 'AbortError' ? 'stopped' : e.message; if (e.name === 'AbortError') say('Stopped: nothing was changed.'); else say('OpenStreetMap: ' + e.message, true); }
   finally { clearInterval(ticking); setBusy(''); }
  }
  function treesFrom(how) {
@@ -1633,7 +1646,7 @@ export function open(draft = null) {
  function stepHoles() {
   const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
   const marks = [['back', 'Back tee'], ['middle', 'Middle tee'], ['front', 'Front tee'], ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, onclick: () => { st.mark = m; go(3); }}, t));
-  return [el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
+  return [checkBox(), el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
    el('small', {}, 'Drag any tee, aim point or green to move it, on any hole. Click the plan to place: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
    el('select', {class: 'cb-holes', onchange: e => { st.holesN = +e.target.value; go(3); }}, [18, 9].map(n => el('option', {value: n, selected: n === st.holesN}, `${n} holes`))),
    el('div', {class: 'cb-btns'}, ...marks),
@@ -1648,6 +1661,36 @@ export function open(draft = null) {
    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Put each green mark on its traced green and give each hole the tee boxes along its line', onclick: fitToTrace}, 'Fit holes to the trace')), list),
   scorecard(),
   next(4, 'Next: the name')];
+ }
+ // CHECKING THE MAP (map-checks.js; item 24): the holes as marked, read
+ // against the greens and tees traced under them and the boundary.
+ function mapDoubts() {
+  if (!st.model || !st.land) return [];
+  const Ls = st.model.state.layers, none = new Uint8Array(st.land.nx * st.land.nz);
+  const greens = blobs(Ls.masks.get('green') ?? none, st.land), tees = blobs(Ls.masks.get('tee') ?? none, st.land);
+  // Fairway or semi-rough under a spot, as traced (the line down the fairway).
+  const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.state.codes, fair = new Set(['fairway', 'semi'].map(k => PALETTE.indexOf(k)));
+  const played = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && fair.has(codes[j * nx + i]); };
+  return checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played});
+ }
+ function applyFix(q) {
+  const h = st.holes[q.hole]; if (!h || !q.fix) return;
+  if (q.fix.kind === 'green') h.green = {...q.fix.to};
+  else { const t = h.tees.find(t => t.set === q.fix.set); if (t) Object.assign(t, q.fix.to); }
+ }
+ function checkBox() {
+  const doubts = st.doubts = mapDoubts(), verdict = mapVerdict(st.holes.slice(0, st.holesN), doubts), fixable = doubts.filter(q => q.fix);
+  const has = st.osm ? mapHas(st.osm.laid, st.holes, st.holesN) : null;
+  const show = q => { st.hole = q.hole; st.mark = q.kind === 'noTee' || q.kind === 'teeOff' ? 'back' : q.kind === 'noGreen' || q.kind === 'greenOff' ? 'green' : st.mark; go(3); if (q.at) plan.look(q.at.x, q.at.z, Math.max(plan.view.scale, 1.2)); say(q.text); };
+  return el('div', {class: 'cb-field cb-checks' + (verdict.unreliable ? ' cb-warnbox' : '')}, el('div', {class: 'cb-panehead'}, 'Checking the map', el('small', {}, doubts.length ? `${doubts.length} to check` : 'all clear')),
+   el('small', {}, st.osm ? 'OpenStreetMap can be incomplete or wrong. Each hole is checked against the greens and tees traced under it.' : 'Each hole is checked against the greens and tees traced under it.'),
+   el('div', {class: verdict.unreliable ? 'cb-coverwarn' : ''}, verdict.words),
+   has ? el('ul', {class: 'cb-has'}, has.filter(r => r.want != null).map(r => el('li', {class: r.have < r.want ? 'cb-short' : ''}, `${r.what}: ${r.have} of ${r.want}`))) : null,
+   doubts.length ? el('ul', {class: 'cb-doubts'}, doubts.slice(0, 30).map(q => el('li', {}, el('span', {}, q.text),
+    el('span', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', title: 'Go to this hole and look at it', onclick: () => show(q)}, 'Show'),
+     q.fix ? el('button', {class: 'cb-btn', type: 'button', title: q.fix.text, onclick: () => { applyFix(q); go(3); say(`${q.fix.text}: hole ${q.hole + 1}. Drag the mark if it is not right.`); }}, 'Fix') : null)))) : null,
+   fixable.length > 1 ? el('button', {class: 'cb-btn', type: 'button', title: 'Take every fix offered -- guesses from the traced fairways and greens, to check against the picture: marks moved onto the nearest green or tee, lines turned down the fairway', onclick: () => { let taken = 0; for (let round = 0, q = fixable; round < 3 && q.length; round++) { q.forEach(applyFix); taken += q.length; q = mapDoubts().filter(x => x.fix); } go(3); say(`${taken} fixes taken. Check each hole against the picture; Next thing to check shows what is left.`); }}, `Take the ${fixable.length} fixes offered`) : null,
+   doubts.length ? el('button', {class: 'cb-btn', type: 'button', title: 'Go to the first thing to check', onclick: () => show(doubts[0])}, 'Next thing to check') : null);
  }
  function fitToTrace() {
   if (!st.model) return;

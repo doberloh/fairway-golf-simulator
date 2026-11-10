@@ -15610,3 +15610,38 @@ Worthington, because a script passed the name through a shell that split it
 at its spaces ("Worthington" alone finds the town). The place search now
 marks golf courses (`golf`, from Nominatim's `type` golf_course), and Build it
 for me takes a single golf course without asking.
+
+## Checking OpenStreetMap's holes, on Worthington (10 November 2026, the builder-ux goal)
+
+The owner: "The OSM data for worthington is completely wrong. Many holes
+pointing to the wrong place." src/builder/map-checks.js reads the holes door 2
+marks from the map against the greens and tees traced under them (as pieces,
+`blobs`), the fairways (`played`) and the boundary. **PLACED thresholds**
+(`LIMITS`): a green mark more than 15 m from any green, a tee more than 20 m
+from any tee; two greens nearer than 12 m are one; a tee more than 350 m from
+the last green suggests the numbers are out of order; a par's yards from the
+back tee 70-290 (par 3), 220-520 (4), 400-720 (5) -- the USGA's guidance (men:
+par 3 to 260, par 4 240-490, par 5 450-710), widened, from memory, not fetched;
+a line whose middle three-fifths runs on fairway or semi-rough less than 40%
+points the wrong way; two lines crossing away from their ends (12% each end).
+The map is called unreliable at half its holes.
+
+**Worthington Country Club, real map** (Build it for me, bench/shots/build-for-me.mjs):
+before the line check, only 2 doubts (two back tees off any tee) -- door 2's
+`fitHoles` snaps each green mark onto the nearest traced green, which hides a
+hole pointing at the wrong one. With the line check: **9 of 18 holes have
+something to check** -- holes 3, 7, 9, 10, 12, 15 and 17 with lines 0-22% on
+the fairways, 4 and 18 with back tees off any tee -- and the map is called
+unreliable, as the owner says it is. Fixes were offered for 7 (the green down
+the fairway from the hole's tee, or the tee up the fairway to its green,
+at least 60% on and a quarter better than now; not a green another hole
+finishes on -- a first version offered those, and taking every fix made new
+"same green" doubts). Taking them all, three rounds over, leaves 9 things to
+check, most of them the numbering (hole 3's tee 664 m from hole 2's green):
+the lines now run down fairways, but which hole is which is the map's to
+answer, or the owner's. The fixes are guesses from the traced course; the
+batch button says so.
+
+**Not built:** the scorecard as a witness in the page (the pure check takes
+`card` yards; no box to type them yet); scoring the checks on damaged maps
+over the bench courses (the journey damages one hole on a made-up club).
