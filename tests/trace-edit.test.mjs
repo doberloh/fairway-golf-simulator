@@ -227,3 +227,12 @@ test('copying and deleting one shape, a tree and a house, each one undo step (bu
  t.copy(t.pickAt({x: -40, z: 40}), 15, 0); assert.equal(t.state.homes.length, 2); assert.equal(t.state.homes[1].x, -25);
  t.undo(); assert.equal(t.state.homes.length, 1);
 });
+
+test('a creek line is picked near its line and deleted, one undo (builder-ux)', () => {
+ const t = createTrace(grid);
+ t.addCreekLine({points: [[-40, 0], [0, 5], [40, 0]], width: 4});
+ assert.deepEqual(t.pickAt({x: 0, z: 6}), {type: 'creek', index: 0});
+ t.copy({type: 'creek', index: 0}, 10, 0); assert.equal(t.state.creekLines.length, 1, 'a creek is not copied');
+ t.remove({type: 'creek', index: 0}); assert.equal(t.state.creekLines.length, 0);
+ t.undo(); assert.equal(t.state.creekLines.length, 1);
+});

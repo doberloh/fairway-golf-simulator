@@ -218,3 +218,23 @@ test('skinning the land paints a butte\'s sides the landscape\'s rock, in one un
  e.undo();
  assert.equal(e.surfaceAt(75, -40), before, 'one undo takes it all back');
 });
+
+test('deleting what is selected: a pond with its water body, a creek, a tree, each one undo (builder-ux)', () => {
+ const e = createEditor(doc()), s = e.state;
+ const ponds = s.water.length, pond = e.pickAt({x: -50, z: 0});
+ assert.equal(pond.type, 'shape'); assert.equal(pond.kind, 'water');
+ assert.ok(e.removePick(pond), 'a box for the view');
+ assert.equal(e.surfaceAt(-50, 0), 'rough'); assert.equal(s.water.length, ponds - 1, 'the water body goes with it');
+ e.undo(); assert.equal(e.surfaceAt(-50, 0), 'water'); assert.equal(s.water.length, ponds);
+ e.addCreek({points: [[70, -80], [72, 0], [70, 80]], width: 3});
+ const creek = e.pickAt({x: 72, z: 0});
+ assert.deepEqual(creek, {type: 'creek', index: 0});
+ assert.ok(e.ringsOf(creek)[0].length > 4); assert.ok(Number.isFinite(e.middleOf(creek).x));
+ const held = e.holdShape(creek); assert.deepEqual(held.drop(10, 10), {box: null, pick: creek}, 'a creek is not carried');
+ e.removePick(creek); assert.equal(s.creeks.length, 0);
+ e.undo(); assert.equal(s.creeks.length, 1);
+ const trees = s.trees.length / 7 || s.trees.length, tree = e.pickAt({x: 30, z: 30});
+ assert.equal(tree.type, 'tree');
+ const before = s.trees.length; e.removePick(tree); assert.equal(s.trees.length, before - 1);
+ e.undo(); assert.equal(s.trees.length, before); assert.ok(trees);
+});

@@ -1103,8 +1103,12 @@ The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
   -- one corner checked by eye, not the whole course. The study's 80% target
   is not met.
 - [ ] **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
-- [ ] **The editor cannot move or delete a pond or creek once drawn** (only
-  Undo), add or remove holes, or stamp a green's contours beyond the brush.
+- [ ] **The editor cannot add or remove holes, or stamp a green's contours
+  beyond the brush.** Ponds and creeks: since the builder-ux goal (10 November
+  2026) a pond moves (as before) and is deleted with its water body, and a
+  creek is selected and deleted (not moved: delete it and draw it again), in
+  both editors; a deleted pond's bed and creek's channel stay in the land
+  (Fill to surrounding). Not seen by a person.
 - [ ] **Before a release carrying the builder**: check the website's demo
   check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
   game's does not confuse it (tell the owner).

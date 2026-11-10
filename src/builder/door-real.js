@@ -500,7 +500,8 @@ export function open(draft = null) {
    if (t === 'select') {
     if (type === 'down') {
      const c = st.chosen, near = c ? anchorHit(c.corners.map(([x, z]) => plan.toScreen(x, z)), ...plan.toScreen(p.x, p.z), 11 * plan.px) : -1;
-     if (c && (near >= 0 || onChosen(p))) st.carry = {turn: near >= 0, from: p, a0: Math.atan2(p.x - c.mid.x, p.z - c.mid.z), dx: 0, dz: 0, angle: 0, hold: null};
+     if (c && c.pick.type === 'creek' && onChosen(p)) say('A creek is not moved: Delete takes it away, and the pen draws it again.');
+     else if (c && (near >= 0 || onChosen(p))) st.carry = {turn: near >= 0, from: p, a0: Math.atan2(p.x - c.mid.x, p.z - c.mid.z), dx: 0, dz: 0, angle: 0, hold: null};
      else { chooseShape(m.pickAt({x: p.x, z: p.z, kind: st.kind})); if (!st.chosen) say('Nothing to select there: only rough under the pointer.'); }
     }
     if (type === 'drag' && st.carry) {
@@ -777,6 +778,8 @@ export function open(draft = null) {
    const mask = new Uint8Array(nx * nz); let sx = 0, sz = 0;
    for (const k of pick.cells) { mask[k] = 1; sx += -halfX + (k % nx) * cell; sz += -halfZ + Math.floor(k / nx) * cell; }
    rings = layerRings(mask, st.land).sort((a, b) => b.length - a.length); mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; what = LABEL(pick.kind).toLowerCase();
+  } else if (pick.type === 'creek') {
+   const c = m.creekLines[pick.index].points; rings = [[...c, ...c.slice().reverse()]]; mid = {x: c[Math.floor(c.length / 2)][0], z: c[Math.floor(c.length / 2)][1]}; what = 'creek';
   } else if (pick.type === 'home') {
    const h = m.homes[pick.index], c = Math.cos(h.rotation), sn = Math.sin(h.rotation), a = h.width / 2, b = h.depth / 2;
    rings = [[[-a, -b], [a, -b], [a, b], [-a, b]].map(([u, v]) => [h.x + u * c + v * sn, h.z - u * sn + v * c])]; mid = {x: h.x, z: h.z}; what = 'house';
@@ -785,7 +788,7 @@ export function open(draft = null) {
    rings = [Array.from({length: 24}, (_, k) => [t.x + Math.cos(k / 24 * Math.PI * 2) * r, t.z + Math.sin(k / 24 * Math.PI * 2) * r])]; mid = {x: t.x, z: t.z}; what = 'tree';
   }
   if (!rings.length) { st.chosen = null; return; }
-  st.chosen = {pick, rings, mid, what, corners: pick.type === 'tree' ? [] : cornersOf(rings[0]), cells: pick.type === 'shape' ? new Set(pick.cells) : null};
+  st.chosen = {pick, rings, mid, what, corners: pick.type === 'tree' || pick.type === 'creek' ? [] : cornersOf(rings[0]), cells: pick.type === 'shape' ? new Set(pick.cells) : null};
  }
  function onChosen(p) {
   const c = st.chosen, {nx, nz, cell, halfX, halfZ} = st.land;

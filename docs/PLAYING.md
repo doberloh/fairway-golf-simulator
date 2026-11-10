@@ -646,7 +646,8 @@ but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
      **Ctrl+C** copies it, **Ctrl+V** pastes it where the pointer is,
      **Ctrl+D** lays a copy beside it, and **Delete** takes it away (a
      shape off its own layer only, so what lies under it shows); each copy
-     comes selected, ready to drag. The panel on the right opens with the tool's options, then the
+     comes selected, ready to drag. A creek can be selected and deleted too
+     (not moved: delete it and draw it again). The panel on the right opens with the tool's options, then the
      **Layers**, then **Skin from the land**, then sections that fold:
      OpenStreetMap, Picture, Viewing, Landscape, Course boundary, Clean up
      and Experimental. First the **Landscape**: it decides which ground types

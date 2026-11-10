@@ -57,7 +57,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const canvas = view.canvas;
  // What is selected: its outline and anchors (view.js), a pick (editing.js).
  let chosen = null;
- const nameOf = c => c.type === 'shape' ? label(c.kind) : c.type === 'home' ? 'House' : c.type === 'rock' ? 'Rock' : 'Tree';
+ const nameOf = c => c.type === 'shape' ? label(c.kind) : c.type === 'home' ? 'House' : c.type === 'rock' ? 'Rock' : c.type === 'creek' ? 'Creek' : 'Tree';
  const choose = c => { chosen = c; view.select(c ? {rings: editor.ringsOf(c), mid: editor.middleOf(c), anchors: c.type === 'shape' || c.type === 'home'} : null); };
  // The smoke journeys look (never drive) through this, as the game's do through lab.
  window.fairwayBuilder.editor = current;
@@ -597,7 +597,9 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const notGame = () => !game?.showing;
  useMenus({
   file: [{label: 'Save a copy to share…', enabled: () => !!work, run: () => shareCopy()}, {sep: true}, {label: 'Back to 2D', run: () => backBtn()?.click()}, {label: 'Close the course', run: () => closeCourse()}],
-  edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: notGame, run: () => undo()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: notGame, run: () => redo()}],
+  edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: notGame, run: () => undo()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: notGame, run: () => redo()}, {sep: true},
+   // DELETE (item 9): a pond with its water, a creek, a shape, a tree, a rock, a house.
+   {label: 'Delete what is selected', key: 'Delete', enabled: () => notGame() && !!chosen, run: () => deleteChosen()}],
   view: [{label: 'From above', key: 'F', enabled: notGame, run: () => view.planView()}, {label: 'This hole', enabled: notGame, run: () => view.frameHole(selected)}, {sep: true}, {label: 'Game view', key: 'G', checked: () => !!game?.showing, run: () => toggleGame()}],
   tools: [
    {label: 'Move the view', key: 'H', enabled: notGame, checked: () => tool.kind === 'navigate', run: () => setTool({kind: 'navigate'})},
@@ -620,6 +622,16 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   ],
   keys: [{group: 'The 3D view', label: 'Move, turn', key: 'Left-drag, right-drag'}, {group: 'The 3D view', label: 'Zoom', key: 'Wheel'}, {group: 'The 3D view', label: 'Fly', key: 'W A S D, Q down, E up'}, {group: 'The 3D view', label: 'Close a shape and fill it', key: 'Enter, double-click, or the first node'}, {group: 'The 3D view', label: 'Take the last node off', key: 'Backspace'}, {group: 'The 3D view', label: 'Drop a shape or a selection', key: 'Esc'}],
  });
+ function deleteChosen() {
+  if (!chosen) return;
+  const what = nameOf(chosen), type = chosen.type, kind = chosen.kind, box = editor.removePick(chosen);
+  choose(null);
+  if (box) { view.refreshSurface(box); refreshLayers(); }
+  if (type === 'creek' || kind === 'water') { view.refreshWater(); }
+  if (type === 'tree') view.refreshTrees(); else if (type === 'rock') view.refreshRocks(); else if (type === 'home') view.refreshHomes();
+  refreshSave();
+  status.textContent = `${what} deleted${type === 'creek' || kind === 'water' ? ': its channel or bed stays in the land -- Fill to surrounding raises it' : ''}. Undo puts it back.`;
+ }
  function sizeBrush(d) { radius = Math.max(1, Math.min(60, Math.round(radius * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = tools.querySelector('.cb-group input[type=range]'); if (r) r.value = radius; status.textContent = `Brush ${radius} m round.`; }
  status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : HINT.navigate();
  return current;

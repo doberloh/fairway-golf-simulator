@@ -1963,3 +1963,18 @@ the whole land is in view, so it shows what the plan last showed whole.
 PLACED: no overview in the 3D editor (it has From above and This hole).
 The builder-build-for-me journey presses "." on the holes step. Not seen by
 a person.
+
+### Deleting ponds, creeks and the rest (10 November 2026)
+
+Item 9 (TODO: "The editor cannot move or delete a pond or creek once
+drawn"). In the 3D editor, **Delete** (the key, or Edit > Delete what is
+selected) takes away what Select shape chose: a pond with its water body, a
+creek (now pickable within its half-width and 2 m of its line), a surface
+shape off its own layer, a tree, a rock or a house; one undo each
+(editing.js `removePick`). In door 2 a creek line is selected and deleted
+the same way (trace-edit.js). PLACED: a creek is not carried -- its channel
+is cut into the land, which a carry cannot lift -- so it is deleted and drawn
+again; a deleted pond's bed and creek's channel stay in the land, as a moved
+pond leaves its pit, for Fill to surrounding. Not done: adding and removing
+holes in the 3D editor (door 2 has 9 or 18 and Clear this hole). The
+builder-tools journey deletes the pond it drew and undoes it.

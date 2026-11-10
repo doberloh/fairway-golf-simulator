@@ -140,6 +140,7 @@ export function createEditor(doc) {
   state.changed = true;
   return step;
  };
+ const segDist = (x, z, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)) : 0; return Math.hypot(x - ax - t * dx, z - az - t * dz); };
  const records = () => structuredClone({holes: state.holes, water: state.water, creeks: state.creeks, trees: state.trees, treeKinds: state.treeKinds, rocks: state.rocks, homes: state.homes, landscape: state.landscape});
  const cellBox = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)),
   Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
@@ -486,12 +487,33 @@ export function createEditor(doc) {
    if (ri >= 0) return {type: 'rock', index: ri};
    const ti = api.treeAt({x, z});
    if (ti >= 0) return {type: 'tree', index: ti};
+   // A CREEK (the builder-ux goal, item 9): within its half-width and 2 m of
+   // its line, so it can be chosen and deleted.
+   const ci = state.creeks.findIndex(c => c.points.some((q, n) => n && segDist(x, z, c.points[n - 1][0], c.points[n - 1][1], q[0], q[1]) <= q[2] / 2 + 2));
+   if (ci >= 0) return {type: 'creek', index: ci};
    const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); if (i < 0 || j < 0 || i >= r.nx || j >= r.nz) return null;
    const k0 = j * r.nx + i, want = kind && r.layers.masks.get(kind)?.[k0] ? kind : PAINT[r.layers.view[k0]];
    const m = want && want !== 'rough' ? r.layers.masks.get(want) : null; if (!m?.[k0]) return null;
    const N = r.nx * r.nz, seen = new Uint8Array(N), cells = [k0]; seen[k0] = 1;
    for (let q = 0; q < cells.length; q++) { const k = cells[q], ci = k % r.nx; for (const n of [ci > 0 ? k - 1 : -1, ci < r.nx - 1 ? k + 1 : -1, k - r.nx, k + r.nx]) if (n >= 0 && n < N && !seen[n] && m[n]) { seen[n] = 1; cells.push(n); } }
    return {type: 'shape', kind: want, cells};
+  },
+  // DELETING ONE THING (the builder-ux goal, item 9; TODO: "The editor cannot
+  // move or delete a pond or creek once drawn"): a shape off its own layer --
+  // a pond's water body with it -- a tree, a rock, a house, or a creek. One
+  // undo. A pond's dug bed and a creek's cut channel stay in the land, as a
+  // pond moved leaves its pit (Fill to surrounding raises them). Returns the
+  // box changed (metres) for the view, or null for a record alone.
+  removePick(pick) {
+   if (!pick) return null;
+   if (pick.type === 'creek') { remember('records', 0, 0, 0, 0); const c = state.creeks.splice(pick.index, 1)[0]; const xs = c.points.map(q => q[0]), zs = c.points.map(q => q[1]); return [Math.min(...xs) - 8, Math.max(...xs) + 8, Math.min(...zs) - 8, Math.max(...zs) + 8]; }
+   if (pick.type !== 'shape') { remember('records', 0, 0, 0, 0); const list = pick.type === 'home' ? 'homes' : pick.type === 'rock' ? 'rocks' : 'trees'; state[list] = state[list].filter((_, q) => q !== pick.index); return null; }
+   const box = api.boxOf(pick.cells), mid = api.middleOf(pick), step = remember('paint', ...box);
+   if (pick.kind === 'water') { const body = state.water.findIndex(w => polygonDistance(w.rings, mid.x, mid.z) < 0); if (body >= 0) { step.snapshot = records(); state.water.splice(body, 1); } }
+   state.surfacesEdited = true;
+   const m = r.layers.mask(pick.kind, true); for (const k of pick.cells) m[k] = 0;
+   recomposeBox(box);
+   return box;
   },
   moveShape(pick, dx, dz) {
    if (!pick) return null;
@@ -549,6 +571,9 @@ export function createEditor(doc) {
   // a record (a tree, a rock, a house) as it is carried, `drop` ends it and
   // returns {box, pick}, the box changed (metres) and the pick where it lies.
   holdShape(pick) {
+   // A creek is not carried (PLACED, builder-ux: delete it and draw it again):
+   // its channel is cut into the land, which a carry cannot lift.
+   if (pick.type === 'creek') return {pick, rings: api.ringsOf(pick), mid: api.middleOf(pick), box: null, set() {}, drop() { return {box: null, pick}; }};
    if (pick.type !== 'shape') {
     const list = pick.type === 'home' ? state.homes : pick.type === 'rock' ? state.rocks : state.trees, was = list[pick.index];
     const rings = api.ringsOf(pick), mid = api.middleOf(pick), step = remember('records', 0, 0, 0, 0), plain = pick.type === 'home';
@@ -598,6 +623,7 @@ export function createEditor(doc) {
   // A shape's middle, the box of its cells (metres), and its outline: the
   // rings the view draws round what is selected.
   middleOf(pick) {
+   if (pick.type === 'creek') { const c = state.creeks[pick.index].points, q = c[Math.floor(c.length / 2)]; return {x: q[0], z: q[1]}; }
    if (pick.type === 'home') { const h = state.homes[pick.index]; return {x: h.x, z: h.z}; }
    if (pick.type !== 'shape') { const q = (pick.type === 'rock' ? state.rocks : state.trees)[pick.index]; return {x: q[0], z: q[1]}; }
    let sx = 0, sz = 0; for (const k of pick.cells) { sx += r.x0 + (k % r.nx + .5) * r.cell; sz += r.z0 + (Math.floor(k / r.nx) + .5) * r.cell; }
@@ -610,6 +636,8 @@ export function createEditor(doc) {
   ringsOf(pick) {
    const round = (x, z, q) => [Array.from({length: 24}, (_, k) => [x + Math.cos(k / 24 * Math.PI * 2) * q, z + Math.sin(k / 24 * Math.PI * 2) * q])];
    if (pick.type === 'tree') { const t = state.trees[pick.index]; return round(t[0], t[1], Math.max(1.5, t[3] * state.treeScale)); }
+   // A creek: its line both ways, a thin outline along it.
+   if (pick.type === 'creek') { const c = state.creeks[pick.index].points.map(q => [q[0], q[1]]); return [[...c, ...c.slice().reverse()]]; }
    if (pick.type === 'rock') { const q = state.rocks[pick.index]; return round(q[0], q[1], Math.max(1, q[2] / 2)); }
    if (pick.type === 'home') {
     const h = state.homes[pick.index], c = Math.cos(h.rotation), sn = Math.sin(h.rotation), a = h.width / 2, b = h.depth / 2;

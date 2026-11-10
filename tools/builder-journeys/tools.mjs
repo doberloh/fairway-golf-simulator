@@ -32,6 +32,15 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Draw a creek'}).click();
   for (const [fx, fy] of [[.42, .20], [.45, .30], [.48, .40]]) await click(fx, fy);
   await page.keyboard.press('Enter');
+  // DELETE (builder-ux, item 9): the pond just drawn, selected and deleted --
+  // its water body with it -- then Undo puts it back.
+  await page.locator('[data-tool="select:"]').click();
+  await click(.65, .65);
+  const ponds = (await state()).water;
+  await page.keyboard.press('Delete');
+  if ((await state()).water !== ponds - 1) throw Error(`Delete should take the pond and its water away: ${ponds} -> ${(await state()).water}`);
+  await page.locator('.cb-group', {hasText: 'View'}).getByRole('button', {name: 'Undo', exact: true}).click();
+  if ((await state()).water !== ponds) throw Error('Undo should put the pond back');
   // A bunker.
   await page.getByRole('button', {name: 'Dig a bunker'}).click();
   await click(.55, .45);

@@ -268,6 +268,10 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
    if (hi >= 0) return {type: 'home', index: hi};
    let ti = -1, td = Infinity; s.trees.forEach((t, q) => { const d = Math.hypot(t.x - x, t.z - z); if (d <= Math.max(1.5, t.crown) && d < td) { td = d; ti = q; } });
    if (ti >= 0) return {type: 'tree', index: ti};
+   // A creek line within its half-width and 2 m (the builder-ux goal, item 9).
+   const seg = (ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)) : 0; return Math.hypot(x - ax - t * dx, z - az - t * dz); };
+   const ci = (s.creekLines ?? []).findIndex(c => c.points.some((q, n) => n && seg(c.points[n - 1][0], c.points[n - 1][1], q[0], q[1]) <= c.width / 2 + 2));
+   if (ci >= 0) return {type: 'creek', index: ci};
    const k0 = idx(x, z); if (k0 < 0) return null;
    const want = kind && kind !== 'rough' && LI[kind] != null && layers.mask(kind)?.[k0] ? kind : PALETTE[layers.view[k0]];
    const m = want && want !== 'rough' ? layers.mask(want) : null; if (!m?.[k0]) return null;
@@ -293,7 +297,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // away (a shape's cells off its own layer only, so what lies under it shows).
   // One undo step each.
   copy(pick, dx, dz) {
-   if (!pick) return;
+   if (!pick || pick.type === 'creek') return;
    if (pick.type === 'tree') return step(() => { keepTrees(); const t = s.trees[pick.index]; s.trees.push({...t, x: t.x + dx, z: t.z + dz}); });
    if (pick.type === 'home') return step(() => { keepHomes(); const h = s.homes[pick.index]; s.homes.push({...h, x: h.x + dx, z: h.z + dz}); });
    const di = Math.round(dx / cell), dj = Math.round(dz / cell); if (!di && !dj) return;
@@ -301,6 +305,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   },
   remove(pick) {
    if (!pick) return;
+   if (pick.type === 'creek') return step(() => { keepList('creekLines'); s.creekLines = s.creekLines.filter((_, q) => q !== pick.index); });
    if (pick.type === 'tree') return step(() => { keepTrees(); s.trees = s.trees.filter((_, q) => q !== pick.index); });
    if (pick.type === 'home') return step(() => { keepHomes(); s.homes = s.homes.filter((_, q) => q !== pick.index); });
    step(() => { for (const k of pick.cells) put(pick.kind, k, 0); });
