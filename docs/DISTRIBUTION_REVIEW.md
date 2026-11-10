@@ -1966,5 +1966,11 @@ WebP -- 1,330 kB -- offline, no fetched font or script (it uses the system's
 fonts). A Markdown file in a zip shows no pictures, hence a page. The source
 zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
 and tests/fixtures/ (the old-files test's course file, 560 kB), which a build
-or a test from the source needs. **Not tried:** `npm run release` with these
-changes (no release was asked for); the packager's Python parses.
+or a test from the source needs. **Tried on the branch (10 November 2026,
+07:05):** `npm run release` verified all five zips; each player zip holds
+the guide (1,403,167 bytes, identical to dist/builder-guide.html, its nine
+pictures inside) and its README names it; the zips: Windows 106.7 MB, macOS
+Apple Silicon 92.5, macOS Intel 94.9, Linux 103.3, source 36.5 (679 files).
+Opened from the zip, the page shows all nine pictures and fetches nothing.
+Those trial zips are kept aside locally (bench/ab/release-builder-ux) and
+release/ holds 0.9.11's again: a release is built from main after the merge.

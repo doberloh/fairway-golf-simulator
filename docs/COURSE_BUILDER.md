@@ -2174,14 +2174,14 @@ opening the file 16.8 s (main 17.8); Game view 39.0 s (main 37.9 -- the
 difference is all in "Preparing the graphics", which swings 19-25 s run to
 run of one build, frame-rate goal); the editor 0.4 ms of processor a frame
 (main 0.5); Game view's frames 8.5, 6.1, 6.6, 2.9 and 2.6 ms (main 8.6, 6.3,
-6.7, 3.1, 2.5). The same within noise. Measured again after the hand-over,
-main and the branch alternated twice on one card (bench/ab bux-ab-main1/2,
-bux-ab-branch1/2): opening 17.4 and 16.3 s on main, 16.6 and 16.5 on the
-branch; Game view 38.1 and 36.0 s on main, 36.3 and 36.4 on the branch -- the
-1.1 s gap above was run-to-run noise. Frames: game-open's graphics card 9.2
-and 9.1 ms on both; holes 1, 5 and 9 and flying within 0.1 ms but for one
-main run's hole 5 (6.7). **The editor's missing graphics-card reading is the
-probe, not the branch:** main's second run read none either, and the branch's
-second read 0.92 ms (main's first: 0.99). The editor costs about half a
-millisecond of processor a frame on both, too little for the card's timer to
-report every run.
+6.7, 3.1, 2.5). The same within noise. Measured again after the hand-over, on the
+final build, main and the branch alternated four times on one card (bench/ab
+bux-ab-main1-4, bux-ab-branch1-4), averages main then branch: opening 16.9
+and 16.7 s; Game view 36.9 and 36.9 s (each ranged 36.0-38.1 and 35.9-38.9 --
+the 1.1 s gap above was run-to-run noise); the game's frames on the graphics
+card 9.16 and 9.13 ms opening, 6.25 and 6.27 hole 1, 6.56 and 6.48 hole 5,
+3.54 and 3.57 hole 9, 2.92 and 2.95 flying; the editor 0.47 and 0.43 ms of
+processor. **The editor's graphics-card reading is missing on some runs of
+both builds** (main 3 of 4 read, the branch 2 of 4: a frame of about half a
+millisecond is too little for the card's timer every run); in the last pair
+both read 1.34 ms. The branch is no slower anywhere.

@@ -1068,8 +1068,10 @@ person.**
   minutes; on Worthington's 33 MB draft, not timed).
 - [ ] **Not kept in a draft:** the picture's brightness, contrast and date, and
   the names in History (all come back as they start).
-- [ ] **Before a release carrying this:** `npm run release` with the guide and
-  the source zip's new folders is untried (tools/package_release.py parses).
+- [ ] **Before a release carrying this:** build it from main after the merge,
+  as always. `npm run release` was tried on the branch (10 November 2026):
+  all five zips verified, the guide in each player zip with its pictures
+  (DISTRIBUTION_REVIEW, *The builder's guide in every download*).
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 

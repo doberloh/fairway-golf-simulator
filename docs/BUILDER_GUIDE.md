@@ -75,7 +75,7 @@ a fairway, a green or tee mark off any green or tee, two holes on one green,
 lines that cross, a length that does not suit the par, a tee far from the last
 green. Red rings mark them on the plan.
 
-![Checking the map on Worthington: nine holes to look at](builder-guide/holes-checks.webp)
+![Checking the map on Worthington, after its fixes were taken: seven things left to check, most about the map's hole numbers](builder-guide/holes-checks.webp)
 
 Each has **Show** (the hole, framed) and, where one suits, **Fix** -- the mark
 moved onto the nearest green or tee, or the line turned down the fairway. The
