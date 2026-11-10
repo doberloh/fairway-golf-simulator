@@ -15559,8 +15559,14 @@ to 1 metre, NAIP and high-resolution orthoimagery). It answers with
 tile cache: `exportImage` returns any box at any size, so the builder asks for
 blocks of 4 by 4 tiles (1,024 pixels square) by their Web Mercator box
 (`mercatorBox`) -- one request in the journey's test land where the tile cache
-took 6. The picture is asked for at the land's own cell size, never finer
-than 0.3 m, because door 2's plan draws it a cell a pixel. `maxTiles` is 640
+took 6. The picture was first asked for at the land's own cell size, because door 2's
+plan drew it a cell a pixel; that threw the sharper source away on a 1 m land
+(Worthington), so **the plan now draws the picture on a grid of its own**
+(door-real.js `finePicture`), as fine as its source, at most about 36 million
+pixels, and the picture is asked for at 0.3 m again (the tile cap decides:
+Worthington's 1.85 km land gets zoom 18, about 0.43 m). The placing is fitted
+as a flat map from a 5 by 5 grid of exact points, as converting every pixel
+through the projection took seconds. `maxTiles` is 640
 (PLACED): about 42 million pixels, a 3 km square at half a metre.
 
 **Measured** (bench/shots/sharpness.mjs, local, the same 250 m of Worthington
@@ -15570,9 +15576,7 @@ house roofs and the road's centre line now show. The two are also different
 years' photographs. **Not measured:** how much bigger a saved course file
 grows (the picture is saved as a JPEG at quality 0.9; estimated a few
 megabytes for a 1 km course at half a metre, against well under one before);
-a big course at 1 m cells is still drawn at 1 m on the plan, as the plan
-draws the picture on the land's cells -- a picture layer of its own would be
-the next step if that shows.
+the saved draft grew from 30 to 33 MB on Worthington with the 0.43 m picture.
 
 **Tried and not used:** USDA's own NAIP service
 (gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer)

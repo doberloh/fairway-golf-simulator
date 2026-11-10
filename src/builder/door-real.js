@@ -48,7 +48,7 @@ import {osmCourses, osmHoles, shiftHoles, fitHoles} from './osm-course.js';
 import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
-import {PROVIDERS, providersAt, mosaic, tilePixel} from './imagery.js';
+import {PROVIDERS, providersAt, mosaic, tilePixel, metresPerPixel} from './imagery.js';
 import {packPictures, unpackPictures} from './picture-file.js';
 import {treePlanControls} from './tree-plan.js';
 import {treeAt} from '../built-world.js';
@@ -245,8 +245,47 @@ export function open(draft = null) {
   plan.setAlpha('relief', st.lidarAlpha); plan.setAlpha('picture', st.picAlpha); plan.setAlpha('codes', st.traceAlpha);
   plan.setOrder(st.lidarOnTop ? ['picture', 'relief'] : ['relief', 'picture']);
  }
+ // THE PICTURE AS SHARP AS ITS SOURCE ON THE PLAN (the builder-ux goal, item
+ // 7; the owner: "our images ... are not very high resolution"): the trace
+ // reads the picture on the land's cells (st.picture), but the plan draws it
+ // on a grid of its own, as fine as the photograph -- 30 cm for USGS NAIP --
+ // never coarser than the land, and at most about 36 million pixels (PLACED;
+ // a 1.8 km land at 30 cm). Before, a 1 m land showed a 30 cm photograph at
+ // 1 m. The picture's own drawing is laid on the grid the same way, through
+ // its placing (`toPixel`, with the offset dragged).
+ function finePicture() {
+  const shown = st.pics.filter(q => q.group === st.picShow && q.toPixel);
+  if (!shown.length || !st.land) return null;
+  const land = st.land, c = lonLatOfLocal()?.(0, 0);
+  // The zoom it was fetched at: on the picture when fetched, in its `place` when reopened.
+  const zoomOf = q => q.pic?.tile?.z ?? (q.place?.kind === 'tiles' ? q.place.z : null);
+  const src = Math.min(...shown.map(q => zoomOf(q) != null && c ? metresPerPixel(c.lat, zoomOf(q)) : land.cell));
+  let cell = Math.max(.3, Math.min(land.cell, src));
+  const w = 2 * land.halfX, d = 2 * land.halfZ;
+  if (w * d / (cell * cell) > 36e6) cell = Math.sqrt(w * d / 36e6);
+  if (cell >= land.cell * .95) return null;
+  const nx = Math.ceil(w / cell) + 1, nz = Math.ceil(d / cell) + 1, grid = {nx, nz, cell, halfX: land.halfX, halfZ: land.halfZ};
+  // Over a land a few kilometres across the picture's placing is very nearly a
+  // flat map (a turn, a scale, a shift): fitted from a 5 by 5 grid of exact
+  // points, it is quick enough for millions of pixels (the exact placing a
+  // pixel at a time took seconds).
+  let pic = null;
+  for (const p of shown) {
+   const pairs = [];
+   for (let j = 0; j <= 4; j++) for (let i = 0; i <= 4; i++) { const x = -land.halfX + i / 4 * w, z = -land.halfZ + j / 4 * d, [col, row] = p.toPixel(x - st.offset.x, z - st.offset.z); pairs.push({local: {x, z}, pixel: {col, row}}); }
+   const flat = affineFromPairs(pairs);
+   pic = pictureOnLand(grid, st.gridder, p.pic, {affine: flat.map, into: pic});
+  }
+  const canvas = document.createElement('canvas'); canvas.width = nx; canvas.height = nz;
+  const g = canvas.getContext('2d'), img = g.createImageData(nx, nz), dd = img.data;
+  for (let k = 0; k < nx * nz; k++) if (pic.has[k]) { dd[k * 4] = pic.rgb[k * 3]; dd[k * 4 + 1] = pic.rgb[k * 3 + 1]; dd[k * 4 + 2] = pic.rgb[k * 3 + 2]; dd[k * 4 + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  return {canvas, cell};
+ }
  function paintPicture() {
   if (!st.land || !st.picture) { plan.clearLayer('picture'); return; }
+  const fine = st.picShow !== 'lidar' ? finePicture() : null;
+  if (fine) { plan.setLayerCanvas('picture', fine.canvas, fine.cell); plan.shiftLayer('picture', 0, 0); return; }
   const p = st.picture;
   plan.setLayer('picture', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) if (p.has[k]) { d[k * 4] = p.rgb[k * 3]; d[k * 4 + 1] = p.rgb[k * 3 + 1]; d[k * 4 + 2] = p.rgb[k * 3 + 2]; d[k * 4 + 3] = 255; } });
   plan.shiftLayer('picture', 0, 0);
@@ -1547,9 +1586,11 @@ export function open(draft = null) {
    // Fetched once a session for this provider and place: asked again (the
    // land rebuilt, door 2 opened again), it comes from memory, not the network.
    const cacheKey = `${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`, kept = IMAGERY.get(cacheKey);
-   // As sharp as the land's own cells (the plan draws the picture a cell a
-   // pixel), never finer than 30 cm (the builder-ux goal).
-   const pic = kept ?? await mosaic(await p.start(apiKey), box, {want: Math.max(.3, st.land.cell), onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
+   // At 30 cm a pixel, as many tiles as the cap allows (640): the plan draws
+   // the picture on a grid of its own (finePicture), so it is not held to the
+   // land's cells -- an earlier version of this goal fetched at the land's
+   // cell, which on a 1 m land threw the sharper source away.
+   const pic = kept ?? await mosaic(await p.start(apiKey), box, {want: .3, onProgress: f => setBusy(`Fetching ${p.name} imagery… ${Math.round(f * 100)}%`)});
    IMAGERY.set(cacheKey, pic);
    // The photograph's date, where the source can say (USGS NAIP).
    if (p.dateAt && !pic.date) { const c = ll(0, 0); pic.date = await p.dateAt(c.lon, c.lat).catch(() => null); }

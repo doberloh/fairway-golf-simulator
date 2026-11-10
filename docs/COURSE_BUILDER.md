@@ -2066,3 +2066,16 @@ step is for (`INTRO`), and every tool has its line in the status bar.
 Not done: a sweep of every tooltip (tips.js) and message for words like
 LIDAR, EPT, DEM or cell -- some remain where they are the subject (the LIDAR
 search). Not seen by a person.
+
+### The picture drawn as sharp as its source (10 November 2026)
+
+Item 7, finished. The plan drew the picture on the land's cells, so a 1 m
+land showed a 30 cm photograph at 1 m -- the guide's first pictures showed
+it blocky. Now the plan draws it on a grid of its own (`finePicture`;
+plan-view.js `setLayerCanvas`), as fine as the photograph's zoom, at most
+about 36 million pixels, while the trace still reads the picture on the
+land's cells; and the picture is fetched at 30 cm again, as the tile cap
+allows (Worthington: about 0.43 m; the draft 33 MB, was 30). The placing is
+a flat map fitted from 25 exact points (exact per pixel took seconds). Seen
+in the guide's pen picture. Not measured: the plan's frame time with the
+larger picture (a drawImage of one canvas a frame).
