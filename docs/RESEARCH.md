@@ -15436,16 +15436,28 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   (tools/frame-motion.mjs, now `--built`: a driver off the first tee and the overview on a virtual
   clock, frame for frame against the starting build): Low 0.6-6.2% of pixels differ by 0.2-2.5 of 255
   on average (the far trees thinned), High 0.08-1.5% by 0.02-0.46; no page errors; the frames show no
-  pop, gap or tint. Free flight in motion: measured on Low, and High's comparison a known limit of the tool (the
-  next bullet). Still unmeasured: the devices themselves (the
+  pop, gap or tint. Free flight in motion: measured on Low and High (the next bullet). Still unmeasured: the devices themselves (the
   stand-ins are estimates by design; the real ones are the owner's). The course's load could not be told
   apart by build (its shaders swing 19-25 s run to run).
-- **Free flight in motion** (frame-motion learns a flight after the overview: 40 m over hole 1 looking
-  at the pin, flown ahead fast by the renderer's own moveFree, moved by the virtual clock's elapsed
-  time): Low, Dinosaur Mountain, 1.2-3.5% of pixels differ from the starting build by 0.7-1.4 of 255 on
-  average, no page errors, no pop, gap or tint. **High's flight could not be compared**: from the
-  flight's first frames the two builds' pictures are the same view a few pixels apart (every edge
-  shifted), though both place the camera identically (pose and pin printed for each build, the pin
-  within 0.1 m), and the frames before the flight match (0.08-1.5%); letting the camera settle first
-  made Low diverge the same way. The fault is the tool's flight, not either build's drawing -- by eye
-  the two show the same trees and ground -- and is left as a known limit of the tool.
+- **Free flight in motion** (frame-motion flies after the overview: 40 m over hole 1, aimed at the pin,
+  flown level toward it at the fast free-flight speed, the pose set outright from the virtual clock
+  every frame): Dinosaur Mountain, against the starting build, **Low 1.9-4.4% of pixels** (0.7-1.4 of
+  255 on average: Low's thinned and far trees), **High 0.36-0.79%** (0.12-0.24: far crowns, a little
+  shadow speckle), no page errors, no pop, gap or tint.
+  **What first looked like High failing was the test** (9 November 2026, worth knowing for the next
+  comparison on a built course): the flight's frames differed in 26-37% of pixels, every edge a few
+  pixels off. Not the camera's easing (the same with the pose set outright), nor extra draws (one a
+  frame in both). The drawn camera, recorded with each picture, had the same place, lens and canvas
+  but headings 0.4 degrees apart: a BUILT course cuts its cups afresh every round (built-world.js
+  `placeBuiltPins`, `Round.pinSeed`), so each load's pin stood a metre or two from the other's,
+  and the flight was aimed at it. An earlier check that found the two poses identical had happened to
+  draw close pins. frame-motion now starts both builds' rounds on one pin seed, and records the
+  drawn camera and the flight's start for both.
+  **Seen in the Low flight, left as Low's look** (the owner, 9 November: Low and Medium may look
+  different): (1) the ocotillo's far version -- made by the new automatic far versions
+  (tools/far-cluster.mjs; it had none on main) -- turns its thin canes into a leafy clump with red tips.
+  Low and Medium swap a plant to its far version below 15% of the screen's height, about 30-40 m for a
+  4-5 m ocotillo, so the clump is seen at an ordinary size; vertex clustering is at its worst on thin
+  sticks. Open in TODO for the owner's eye. (2) A pond on Low is a shade bluer with finer ripples:
+  Low has no water mirror, and the sky picture its ponds show (taken from each pond's middle) now
+  holds Low's thinned trees and coarser ground.

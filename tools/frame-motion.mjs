@@ -44,9 +44,9 @@ const AFTER_SHOT = [10, 40, 90, 160, 260, 420];
 const INTO_OVERVIEW = [8, 20, 45];
 // Then free flight (the frame-rate goal, 9 November 2026: Low's trees follow a
 // flying camera, and trees fade rather than pop as it comes on them): 40 m
-// over the middle of hole 1, looking at the pin, then flown ahead fast --
-// moved by the renderer's own moveFree every frame, so both builds fly
-// exactly the same path.
+// over the middle of hole 1, looking at the pin, then flown level toward it at
+// the fast free-flight speed -- the pose set outright from the virtual clock
+// every frame, so both builds fly exactly the same path.
 const FLYING = [20, 60, 120];
 const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist',
  '--disable-gpu-vsync', '--disable-frame-rate-limit', '--disable-background-timer-throttling',
@@ -85,7 +85,7 @@ async function play(file, tag) {
  const builtBytes = process.argv.includes('--built') ? fs.readFileSync(path.resolve(ROOT, process.argv[process.argv.indexOf('--built') + 1])) : null;
  const server = await new Promise(r => { const s = createServer((req, res) => { if (builtBytes && req.url === '/built.fairway') { res.writeHead(200, {'Content-Type': 'application/zip'}); res.end(builtBytes); return; } res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); }); s.listen(0, '127.0.0.1', () => r(s)); });
  const browser = await chromium.launch({headless: true, args: GPU_ARGS});
- const out = {errors: [], grabs: {}};
+ const out = {errors: [], grabs: {}, cams: {}};
  try {
   const page = await browser.newPage({viewport: {width: 1600, height: 900}, deviceScaleFactor: 2});
   await page.addInitScript(CLOCK);
@@ -106,14 +106,19 @@ async function play(file, tag) {
     const out = r.call(this, window.__vhold ? 0 : dt);
     if (window.__finalFrame) {
      window.__finalFrame = false;
-     if (window.__grabWanted) { try { window.__grabbed = this.canvas.toDataURL('image/png'); } catch (e) { window.__grabbed = 'error ' + e.message; } }
+     if (window.__grabWanted) { try { window.__grabbed = this.canvas.toDataURL('image/png'); } catch (e) { window.__grabbed = 'error ' + e.message; } const c = this.camera, r = n => Math.round(n * 1000) / 1000; window.__grabCam = {pos: c.position.toArray().map(r), quat: c.quaternion.toArray().map(r), fov: r(c.fov), aspect: r(c.aspect), near: r(c.near), far: r(c.far), shift: c.view ? r(c.view.offsetY) : 0, canvas: [this.canvas.width, this.canvas.height]}; }
      const d = window.__stepDone; window.__stepDone = null; d && d();
     }
     return out;
    };
   });
   const built = builtBytes ? await page.evaluate(async () => window.lab.built(new Uint8Array(await (await fetch('/built.fairway')).arrayBuffer()))) : null;
-  await page.evaluate(o => window.lab.course(o), {biome: 'redwood', holes: 9, seed: 'PROFILE', ...(built ? {built} : {})});
+  // One pin seed for both builds: a built course cuts its cups afresh for every
+  // round (Round.pinSeed), so two loads put the pin a metre or two apart -- and
+  // the flight below, aimed at the pin, set off 0.4 degrees apart and differed
+  // in a third of its pixels (9 November 2026).
+  await page.evaluate(([o, group]) => window.lab.course(o, group), [{biome: 'redwood', holes: 9, seed: 'PROFILE', ...(built ? {built} : {})},
+   {players: [{name: 'Bench', team: 'A', hand: 'RH'}], mode: 'stroke', tee: 'blue', pinSeed: 'frame-motion'}]);
   await page.waitForTimeout(4000);
   // Hold the clock, put the moving things back to their start, and from here
   // on move only by steps.
@@ -128,6 +133,7 @@ async function play(file, tag) {
    fs.mkdirSync(path.dirname(file), {recursive: true});
    fs.writeFileSync(file, Buffer.from(url.split(',')[1], 'base64'));
    out.grabs[name] = file;
+   out.cams[name] = await page.evaluate(() => window.__grabCam);
   };
   const fired = await page.evaluate(s => window.__takeShot(s), SHOT);
   if (fired === false) throw Error('the shot was refused');
@@ -142,11 +148,27 @@ async function play(file, tag) {
   await page.evaluate(() => {
    window.lab.camera({hole: 0, along: 150, height: 40, look: 'pin'});
    const v = window.__view, draw = v.render;
-   // Moved by the virtual clock's own time since the last move, not per draw: a
-   // build that draws twice in a frame would otherwise fly twice as far.
-   v.render = function (dt) { const now = performance.now(), step = this.__flyAt == null ? 0 : (now - this.__flyAt) / 1000; this.__flyAt = now; if (step > 0 && this.__flyOn) { this.moveFree(step, 1, 0, 0, true); this.updateFreeLook?.(); } return draw.call(this, dt); };
+   // PLACED, not steered: the pose is worked out from the virtual clock and set
+   // outright (placeCamera) before every draw. moveFree only moves the target
+   // and lets the camera ease after it, and the eased pose drifted a few pixels
+   // apart between builds (High, 26-34% of pixels, 9 November 2026) although
+   // both drew once a frame and started from one pose. A set pose cannot drift.
+   const p = v.camera.position, yaw = v.freeYaw, pitch = v.freePitch, speed = v.config.freeSpeed * 3;
+   const dir = {x: Math.sin(yaw) * Math.cos(pitch), z: Math.cos(yaw) * Math.cos(pitch)};
+   v.__flyFrom = {x: p.x, y: p.y, z: p.z};
+   const h = v.world.holes[0], r4 = n => Math.round(n * 1e4) / 1e4;
+   window.__flyStartState = {yaw: r4(yaw * 180 / Math.PI), pitch: r4(pitch * 180 / Math.PI), from: [r4(p.x), r4(p.y), r4(p.z)], pin: [r4(h.worldPin.x), r4(h.worldPin.z)], mode: v.config.mode, hole: window.lab.state?.()?.hole};
+   v.render = function (dt) {
+    if (this.__flyOn) {
+     if (this.__flyStart == null) this.__flyStart = performance.now();
+     const s = speed * (performance.now() - this.__flyStart) / 1000, f = this.__flyFrom;
+     this.placeCamera({x: f.x + dir.x * s, y: f.y, z: f.z + dir.z * s}, yaw, pitch);
+    }
+    return draw.call(this, dt);
+   };
   });
   await page.evaluate(() => { window.__view.__flyOn = true; });
+  out.flyStart = await page.evaluate(() => window.__flyStartState);
   at = 0;
   for (const n of FLYING) { await grab(`flying+${n}`, n - at); at = n; }
  } finally { await browser.close(); server.close(); }
@@ -169,10 +191,12 @@ for (const name of Object.keys(a.grabs)) {
  const d = diffPng(a.grabs[name], b.grabs[name]);
  writeDiffPng(a.grabs[name], b.grabs[name], path.join(OUT, `diff-${name}.png`));
  report[name] = d;
+ if (JSON.stringify(a.cams[name]) !== JSON.stringify(b.cams[name])) console.log('  ' + name + ' camera differs: A ' + JSON.stringify(a.cams[name]) + ' B ' + JSON.stringify(b.cams[name]));
  console.log(`  ${name.padEnd(13)} A vs B: ${(d.share * 100).toFixed(3)}% of pixels changed, mean difference ${d.mean.toFixed(3)} of 255`);
 }
 const hud = diffPng(path.join(OUT, 'A-hud-after-shot.png'), path.join(OUT, 'B-hud-after-shot.png'));
 console.log(`  screen after the shot, interface included: ${(hud.share * 100).toFixed(3)}% changed`);
 console.log(`  page errors: A ${a.errors.length}, B ${b.errors.length}${[...a.errors, ...b.errors].length ? ' -- ' + [...new Set([...a.errors, ...b.errors])].slice(0, 3).join(' | ') : ''}`);
-fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify({report, hud, errors: {a: a.errors, b: b.errors}}, null, 1));
+console.log(`  free flight starts: A ${JSON.stringify(a.flyStart)}\n                     B ${JSON.stringify(b.flyStart)}`);
+fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify({report, hud, errors: {a: a.errors, b: b.errors}, flyStart: {a: a.flyStart, b: b.flyStart}, cams: {a: a.cams, b: b.cams}}, null, 1));
 console.log(`\n  ${((Date.now() - started) / 1000).toFixed(0)} s on the card; pictures in bench/ab/motion/${LABEL}/`);

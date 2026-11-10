@@ -52,6 +52,12 @@ check.
   Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
   call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
   built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
+  **The ocotillo's far version on Low and Medium, for the owner's eye** (found 9 November 2026 in
+  the free-flight motion comparison, bench/ab/motion/motion8-dino-low, local): the automatic far
+  version (tools/far-cluster.mjs, an eighth of the triangles; main had none for it) turns its thin
+  canes into a leafy clump with red tips, and Low and Medium swap to it from about 30-40 m. If it
+  reads wrong in play: give thin-stemmed models a finer far version, or none, and measure Low and
+  Medium on Dinosaur Mountain (its ocotillos were among the models drawn in full before).
 - [ ] **Two builder smoke journeys fail on main too** (found 9 November 2026, running the builder's
   smoke for the frame-rate goal; both fail the same on the build at 21eecc1). `builder-door-2`: "the
   tree height scale should grow the trees, taller and wider, at once: 0 -> 0" -- the journey reads no
