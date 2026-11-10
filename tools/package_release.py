@@ -91,7 +91,7 @@ DOCS = [path for path, _ in PORTABLE] + [
     'docs/ARCHITECTURE.md', 'docs/PROJECT_HANDOFF.md', 'docs/TODO.md', 'docs/IDEAS.md', 'docs/TESTING.md',
     'docs/PROCEDURAL_GENERATION.md', 'docs/RESEARCH.md',
     'docs/LANDSCAPE_RESEARCH.md', 'docs/BALL_BEHAVIOUR_KNOBS.md',
-    'docs/REFERENCES.md',
+    'docs/REFERENCES.md', 'docs/BUILDER_GUIDE.md', 'docs/COURSE_BUILDER.md',
 ]
 ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html',
                'vite.builder.config.js', 'builder.html']
@@ -105,7 +105,10 @@ ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.htm
 # home-screen icons and the manifest -- and a source archive without it builds a
 # game that installs to a phone with no icon.
 DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
-               'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'}}
+               'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'},
+               # The builder guide's pictures, and the old-files test's fixture
+               # (the builder-ux goal): a build or a test from the source needs them.
+               'docs/builder-guide': {'.webp'}, 'tests/fixtures': {'.fairway', '.json'}}
 
 
 # WHAT COUNTS AS SOURCE IS WHAT GIT TRACKS, not whatever sits on disk.
@@ -141,6 +144,12 @@ def main():
     builder_path = ROOT / 'dist/builder.html'
     if not builder_path.is_file():
         raise SystemExit('No dist/builder.html. Run npm run build first.')
+    # THE BUILDER'S GUIDE, with its pictures inside it (the builder-ux goal,
+    # 10 November 2026; docs/BUILDER_GUIDE.md, built by tools/builder-guide.mjs
+    # in the same `npm run build`): beside the builder in every download.
+    guide_path = ROOT / 'dist/builder-guide.html'
+    if not guide_path.is_file():
+        raise SystemExit('No dist/builder-guide.html. Run npm run build first.')
     files = [ROOT / name for name in DOCS + ROOT_SOURCE]
     tracked = tracked_files()
     for directory, suffixes in DIRECTORIES.items():
@@ -188,7 +197,7 @@ def main():
         if path.stat().st_mtime_ns < bundle_path.stat().st_mtime_ns:
             raise SystemExit(f'{path.relative_to(ROOT).as_posix()} is older than the bridge bundle. Run npm run server.')
         servers[platform] = path
-    common = [(html_path, 'Fairway.html'), (builder_path, 'Fairway Builder.html')] + [(ROOT / p, n) for p, n in PORTABLE] + [(bundle_path, SERVER_SOURCE)]
+    common = [(html_path, 'Fairway.html'), (builder_path, 'Fairway Builder.html'), (guide_path, 'Fairway Builder Guide.html')] + [(ROOT / p, n) for p, n in PORTABLE] + [(bundle_path, SERVER_SOURCE)]
     packages = {name: [(servers[platform], program)] + common for name, platform, program in PLATFORMS}
     packages['Fairway-source.zip'] = [(p, p.relative_to(ROOT).as_posix()) for p in files]
     OUT.mkdir(exist_ok=True)

@@ -1956,3 +1956,15 @@ every zip, the smoke set on the branch (41 of 41, before the evening's far-versi
 change measured against the build before it on the graphics card and seen still and in motion.
 **Not measured again after the far versions' outline rule:** High and Ultra (it was measured on
 Low and Medium). **Not played by a person.**
+
+## The builder's guide in every download (10 November 2026, the builder-ux goal)
+
+Every zip carries **Fairway Builder Guide.html** beside Fairway Builder.html
+(tools/package_release.py): docs/BUILDER_GUIDE.md built by
+tools/builder-guide.mjs into one page with its nine pictures inside it as
+WebP -- 1,330 kB -- offline, no fetched font or script (it uses the system's
+fonts). A Markdown file in a zip shows no pictures, hence a page. The source
+zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
+and tests/fixtures/ (the old-files test's course file, 560 kB), which a build
+or a test from the source needs. **Not tried:** `npm run release` with these
+changes (no release was asked for); the packager's Python parses.
