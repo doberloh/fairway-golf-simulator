@@ -2154,3 +2154,18 @@ a missing green every time; 13% of holes raise a false alarm as built. The
 fix for a wrong green was right only 14% of the time and wrong 59%; it now
 offers only a green no hole finishes on, which is right 62% and wrong 29%
 (RESEARCH, *The map checks, scored*). The journeys pass with it.
+
+### The final checks, on the finished branch (10 November 2026, 06:10)
+
+After the last items (the 3D palette, holes in 3D, tips, the card, the
+scored map checks): **all nine builder journeys pass**; **npm test: 1,552
+tests, 1,551 pass, none fail** (one is the suite's standing to-do); the
+guide's pictures retaken from the final builder; dist/ rebuilt. **Dinosaur
+Mountain, High** (builder-frames, bench/ab bux-final against bux-main):
+opening the file 16.8 s (main 17.8); Game view 39.0 s (main 37.9 -- the
+difference is all in "Preparing the graphics", which swings 19-25 s run to
+run of one build, frame-rate goal); the editor 0.4 ms of processor a frame
+(main 0.5); Game view's frames 8.5, 6.1, 6.6, 2.9 and 2.6 ms (main 8.6, 6.3,
+6.7, 3.1, 2.5). The same within noise. The probe read no graphics-card time
+on the editor view in the branch's runs (main's: 0.98 ms); its processor time
+matches -- a gap in the measurement, written down here.
