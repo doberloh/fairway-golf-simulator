@@ -15436,8 +15436,8 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   (tools/frame-motion.mjs, now `--built`: a driver off the first tee and the overview on a virtual
   clock, frame for frame against the starting build): Low 0.6-6.2% of pixels differ by 0.2-2.5 of 255
   on average (the far trees thinned), High 0.08-1.5% by 0.02-0.46; no page errors; the frames show no
-  pop, gap or tint. Still unmeasured: free flight in motion (the tool flies the shot cameras, not the
-  free camera; free flight is in the still pictures and the tests) and the devices themselves (the
+  pop, gap or tint. Free flight in motion: measured on Low, and High's comparison a known limit of the tool (the
+  next bullet). Still unmeasured: the devices themselves (the
   stand-ins are estimates by design; the real ones are the owner's). The course's load could not be told
   apart by build (its shaders swing 19-25 s run to run).
 - **Free flight in motion** (frame-motion learns a flight after the overview: 40 m over hole 1 looking
