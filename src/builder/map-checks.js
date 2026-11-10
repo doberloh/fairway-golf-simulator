@@ -20,6 +20,14 @@ export const LIMITS = {
  unreliable: .5,   // a map is unreliable when this share of its holes has a doubt
  onPlay: .4,       // a hole longer than par 3's whose line's middle runs on fairway or semi less than this
  crossEnds: .12,   // two holes' lines crossing, away from their ends by this share of each
+ // The fix for a hole pointing the wrong way offers only a green NO hole
+ // finishes on -- when a map draws a hole to the wrong green, its own is left
+ // orphaned -- the best of them by fairway, with no floor. Measured over 16
+ // real courses with each hole's green swapped in turn
+ // (tools/map-checks-bench.mjs): the right green offered 62% of the time and a
+ // wrong one 29%, against 14% and 59% for the first rule (any green no other
+ // hole uses, at least 60% on the fairway). PLACED.
+ orphan: true, orphanFloor: 0,
 };
 const YD = .9144;
 const d = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -119,10 +127,11 @@ export function checkHoles(holes, {greens = [], tees = [], boundary = null, card
   holes.forEach((h, n) => { if (!h?.green || !greens.length) return; const g = nearest(greens, h.green); if (g.d <= limits.onGreen) owner.set(g.b, [...(owner.get(g.b) ?? []), n]); });
   const better = (h, n) => {
    if (!h?.green || !h.tees?.length) return null;
-   const back = h.tees.find(t => t.set === 'back') ?? h.tees[0], now = Math.max(0, run(back, h.green)), floor = Math.max(.6, now + .25);
+   const back = h.tees.find(t => t.set === 'back') ?? h.tees[0], now = Math.max(0, run(back, h.green)), floor = Math.max(limits.fixOn ?? .6, now + .25);
    let best = null;
-   for (const g of greens) { if ((owner.get(g) ?? []).some(m => m !== n)) continue; const r = run(back, g); if (r >= floor && r > (best?.r ?? 0)) best = {r, gain: r - now, fix: {kind: 'green', to: {x: g.x, z: g.z}, text: 'Aim it at the green down the fairway'}}; }
-   for (const t of tees) { const r = run(t, h.green); if (r >= floor && r > (best?.r ?? 0)) best = {r, gain: r - now, fix: {kind: 'tee', set: back.set, to: {x: t.x, z: t.z}, text: 'Start it from the tee up the fairway'}}; }
+   // `orphan`: only a green no hole finishes on, the best of them with no floor.
+   for (const g of greens) { if (limits.orphan ? owner.has(g) : (owner.get(g) ?? []).some(m => m !== n)) continue; const r = run(back, g); if (r >= (limits.orphan ? (limits.orphanFloor ?? 0) : floor) && r > (best?.r ?? -1)) best = {r, gain: r - now, fix: {kind: 'green', to: {x: g.x, z: g.z}, text: 'Aim it at the green down the fairway'}}; }
+   if (!limits.orphan) for (const t of tees) { const r = run(t, h.green); if (r >= floor && r > (best?.r ?? 0)) best = {r, gain: r - now, fix: {kind: 'tee', set: back.set, to: {x: t.x, z: t.z}, text: 'Start it from the tee up the fairway'}}; }
    return best;
   };
   const tried = new Map(), bestOf = n => { if (!tried.has(n)) tried.set(n, better(holes[n], n)); return tried.get(n); };

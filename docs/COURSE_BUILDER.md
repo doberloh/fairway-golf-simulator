@@ -2145,3 +2145,12 @@ height), Surfaces (the layer, what it goes under, Skin from the land), Clean
 up, Ground cover's kinds, Layers and Trees' choices. Each palette button
 keeps its tool's name and `data-tool`, so the journeys run unchanged; all nine
 pass. Not seen by a person.
+
+### The map checks, scored on 16 real courses (10 November 2026)
+
+Item 24's last part. tools/map-checks-bench.mjs damages each hole of the
+bench courses in turn: a wrong green is caught every time, a moved tee 96%,
+a missing green every time; 13% of holes raise a false alarm as built. The
+fix for a wrong green was right only 14% of the time and wrong 59%; it now
+offers only a green no hole finishes on, which is right 62% and wrong 29%
+(RESEARCH, *The map checks, scored*). The journeys pass with it.

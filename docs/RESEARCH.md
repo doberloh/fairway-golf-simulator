@@ -15676,3 +15676,32 @@ neighbour's on the map, so its centre line runs between two holes).
 point with `acquisition_date` (milliseconds), `Year`, `resolution_value`
 and `Category` (1 the primary mosaic). Under Worthington's centre: 16 items,
 the newest primary m_4309519_se_15_060_20210821 -- 21 August 2021, 0.6 m.
+
+## The map checks, scored (10 November 2026, the builder-ux goal)
+
+tools/map-checks-bench.mjs reads each built course in bench/courses (16 of
+the 17; Dinosaur Mountain's 99 MB file skipped) -- its holes and the surfaces
+the game plays, sampled every 2 m -- and damages one hole at a time, on the
+holes the checks raise no doubt about as built:
+
+| Damage | Caught |
+| --- | --- |
+| The green swapped for the one two holes on (a line to the wrong place) | 236 of 236 |
+| The back tee moved 80 m sideways | 227 of 236 (96%) |
+| The green left out | 236 of 236 |
+
+**False alarms** on the courses as built: 34 of 270 holes (13%) -- 12 of them
+Worthington's 18, which the owner says is mapped wrong, so not all false.
+
+**The fix for a wrong green** was the weak part. The first rule -- any green
+no other hole uses, the line from the tee at least 60% on the fairway -- put
+the green back 14% of the time and offered a wrong one 59%: real holes bend,
+so a straight line from the tee rarely runs down the right fairway, and a
+neighbour's fairway often scored better. Loosening the 60% made it worse (a
+floor of 45%: 15% right, 66% wrong). **The rule kept** offers only a green
+*no* hole finishes on -- a map's hole drawn to the wrong green leaves its own
+green orphaned -- the best of those by fairway, with no floor: **62% right,
+29% wrong**. A floor on that (20%: 49/23; 40%: 41/18) trades right fixes for
+fewer wrong ones at about the same ratio, so none is set (PLACED). The fix
+stays a guess, said so in the builder; reading the hole's dogleg before
+choosing its green is the next step if it matters.

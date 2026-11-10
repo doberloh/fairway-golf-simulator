@@ -1056,12 +1056,12 @@ person.**
   Import in the game and play a hole; the 3D editor's one brush and pen, and
   Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
   `npm run build`, as `dist/builder-guide.html`).
-- [ ] **Map data, still open** (item 24): scoring the checks on damaged maps of
-  the bench courses -- not built: each bench course would need door 2's whole
-  pipeline (its land from the LIDAR) in the page, minutes a course; the
-  journey's damaged club and the real Worthington stand in for it. And
-  Worthington's numbering, which no fix can settle without the real routing
-  (the card box, since 10 November, flags lengths that disagree with it).
+- [ ] **Map data, still open** (item 24): the fix for a hole drawn to the wrong
+  green is right 62% of the time and wrong 29% over 16 real courses
+  (tools/map-checks-bench.mjs; RESEARCH, *The map checks, scored*): a fix is
+  a guess to check against the photograph, and a better one would need the
+  hole's dogleg read before choosing its green. And Worthington's numbering,
+  which no fix can settle without the real routing.
 - [ ] **Not measured:** the 2D plan's frame time with the picture on its own
   finer grid (one canvas drawImage a frame; up to about 36 million pixels);
   the kept draft's time to write on a large course (it runs quietly every 3
