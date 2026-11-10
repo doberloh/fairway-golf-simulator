@@ -144,6 +144,7 @@ export function open(draft = null) {
   while (names.undo.length > u) names.undo.shift();
   refreshHistory?.();
  }
+ const named = (what, run) => () => { const before = st.model?.state.undo.length ?? 0; run(); nameNew(before, what); };
  let toolBefore = null;
  const namedTool = (type, p, e) => {
   if (type === 'down' || type === 'double') toolBefore = st.model?.state.undo.length ?? 0;
@@ -823,9 +824,12 @@ export function open(draft = null) {
    edit: [{label: () => names.undo.length ? `Undo ${names.undo.at(-1)}` : 'Undo', key: 'Ctrl+Z', enabled: () => !!st.model, run: () => undoNow()}, {label: () => names.redo.length ? `Redo ${names.redo.at(-1)}` : 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: () => !!st.model, run: () => undoNow(true)}, {sep: true},
     // COPY, PASTE, DUPLICATE, DELETE (item 18): what Select shape has chosen.
     {label: 'Copy', key: 'Ctrl+C', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; say(`Copied the ${st.chosen.what}: Paste (Ctrl+V) puts it where the pointer is.`); }},
-    {label: 'Paste at the pointer', key: 'Ctrl+V', enabled: () => tracing() && !!st.clip, run: () => pasteAt(st.hover ?? {x: st.clip.mid.x + 20, z: st.clip.mid.z + 20})},
-    {label: 'Duplicate', key: 'Ctrl+D', enabled: () => tracing() && !!st.chosen, run: () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; pasteAt({x: st.chosen.mid.x + 15, z: st.chosen.mid.z + 15}); }},
-    {label: 'Delete', key: 'Delete', enabled: () => tracing() && !!st.chosen, run: () => { const what = st.chosen.what; st.model.remove(st.chosen.pick); st.chosen = null; paintCodes(); refreshCount(); plan.draw(); say(`The ${what} deleted. Undo puts it back.`); }}],
+    // Named like a tool's change, so History and "Undo Duplicate" show them
+    // (found by the evidence pictures, 10 November 2026: a key or menu
+    // change went into the undo with no name, and History said nothing yet).
+    {label: 'Paste at the pointer', key: 'Ctrl+V', enabled: () => tracing() && !!st.clip, run: named('Paste', () => pasteAt(st.hover ?? {x: st.clip.mid.x + 20, z: st.clip.mid.z + 20}))},
+    {label: 'Duplicate', key: 'Ctrl+D', enabled: () => tracing() && !!st.chosen, run: named('Duplicate', () => { st.clip = {pick: st.chosen.pick, mid: {...st.chosen.mid}, what: st.chosen.what}; pasteAt({x: st.chosen.mid.x + 15, z: st.chosen.mid.z + 15}); })},
+    {label: 'Delete', key: 'Delete', enabled: () => tracing() && !!st.chosen, run: named('Delete', () => { const what = st.chosen.what; st.model.remove(st.chosen.pick); st.chosen = null; paintCodes(); refreshCount(); plan.draw(); say(`The ${what} deleted. Undo puts it back.`); })}],
    view: [{label: 'Zoom in', key: ['=', '+'], run: () => plan.zoomBy(1.5)}, {label: 'Zoom out', key: '-', run: () => plan.zoomBy(1 / 1.5)}, {label: 'Whole land', key: 'F', run: () => { st.miniDirty = true; plan.fit(); }}, {sep: true},
     // THE HOLE NAVIGATOR (item 19).
     {label: 'This hole, framed', key: 'Shift+F', enabled: () => st.step >= 2 && !!st.holes[st.hole]?.tees?.length, run: () => frameHole(st.hole)},

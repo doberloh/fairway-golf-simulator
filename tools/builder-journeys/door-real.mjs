@@ -251,8 +251,11 @@ export default function ({journey, SHOTS}) {
   await page.keyboard.press('Control+d');
   const sandB = await sandCells();
   if (!(sandB > sandA * 1.6)) throw Error(`Ctrl+D should lay a copy of the bunker: ${sandA} -> ${sandB} cells`);
+  // Named in History like any tool's change (a key once went in unnamed).
+  { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Duplicate') throw Error(`Ctrl+D should be named Duplicate in History, not ${last}`); }
   await page.keyboard.press('Delete');
   if (await sandCells() !== sandA) throw Error('Delete should take the copy away');
+  { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Delete') throw Error(`Delete should be named in History, not ${last}`); }
   await page.locator('[data-tool="brush"]').click();
   // The smooth view: a moment after the stroke, the trace is drawn as outlines.
   await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});

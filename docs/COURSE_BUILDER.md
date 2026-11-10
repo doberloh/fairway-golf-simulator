@@ -2043,6 +2043,14 @@ to here**. PLACED: names kept for the session only, not in a draft; the 3D
 editor's Undo is not named yet. The builder-door-2 journey checks a pen
 fill is named Outline fill. Not seen by a person.
 
+**A gap found by the evidence pictures (10 November 2026, after the
+hand-over):** Paste, Duplicate and Delete, made with their keys or the Edit
+menu, went into the undo with no name -- the History fold said "nothing yet"
+after a Ctrl+D, and Edit said plain "Undo". The names were taken only from
+plan tools, panel buttons and Enter. The three menu entries now name their
+change (`named` in door-real.js), and the builder-door-2 journey checks
+Ctrl+D is named Duplicate and Delete is named Delete.
+
 ### Screens that fit (10 November 2026)
 
 Item 15. The builder-build-for-me journey sets the window to a small
@@ -2166,6 +2174,14 @@ opening the file 16.8 s (main 17.8); Game view 39.0 s (main 37.9 -- the
 difference is all in "Preparing the graphics", which swings 19-25 s run to
 run of one build, frame-rate goal); the editor 0.4 ms of processor a frame
 (main 0.5); Game view's frames 8.5, 6.1, 6.6, 2.9 and 2.6 ms (main 8.6, 6.3,
-6.7, 3.1, 2.5). The same within noise. The probe read no graphics-card time
-on the editor view in the branch's runs (main's: 0.98 ms); its processor time
-matches -- a gap in the measurement, written down here.
+6.7, 3.1, 2.5). The same within noise. Measured again after the hand-over,
+main and the branch alternated twice on one card (bench/ab bux-ab-main1/2,
+bux-ab-branch1/2): opening 17.4 and 16.3 s on main, 16.6 and 16.5 on the
+branch; Game view 38.1 and 36.0 s on main, 36.3 and 36.4 on the branch -- the
+1.1 s gap above was run-to-run noise. Frames: game-open's graphics card 9.2
+and 9.1 ms on both; holes 1, 5 and 9 and flying within 0.1 ms but for one
+main run's hole 5 (6.7). **The editor's missing graphics-card reading is the
+probe, not the branch:** main's second run read none either, and the branch's
+second read 0.92 ms (main's first: 0.99). The editor costs about half a
+millisecond of processor a frame on both, too little for the card's timer to
+report every run.
