@@ -40,7 +40,10 @@ check.
   courses*): far versions for every model, the swap cross-faded, Low's trees (the owner's rule), the
   ground drawn coarser with distance (with a 1.5 m level), the field baked on every core, the houses'
   footings and drives batched, two per-frame processor costs cut, the builder's cost readout and
-  weight note. Dinosaur Mountain 39-54% faster on every tier; Game view opens in 29 s, not 45-51.
+  weight note, the dissolve on fade meshes only. Dinosaur Mountain 59-82% faster on every tier (Low 7.4 to
+  1.3 ms on the RTX 4090, Ultra 20.0 to 8.2), generated courses no slower; Game view opens in 29 s, not
+  45-51. High and Ultra miss 120 a second at the 95th percentile on the large built courses (their
+  heavy frames redraw a far shadow map: 8-15 ms).
   **Seen only in captures and measured, not played -- to check:** the dissolve where trees turn into
   their far versions (does it shimmer?); Low's thinning far from the hole, and its fade-in as you
   walk; free flight on Low (the 250 m ring); seams between the ground's squares (skirts) and the
