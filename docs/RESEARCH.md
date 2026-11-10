@@ -15426,11 +15426,17 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   trees thinned, the far versions, the ground coarser at 4 px), Medium 0.08-2.9% by 0.02-0.8. Both may
   look different (the owner); the pictures are on the status page for the owner's look. No page errors;
   the pin label, wind arrows and map drawn on both.
-- **Where the goal's own rules fell short** (written at the hand-over): every change was measured
-  against the build before it, but the batched footings and drives and the hazard loop's early end only
-  inside whole-build rounds (each too small to read alone against this card's noise), and the course's
-  load could not be told apart by build at all (its shaders swing 19-25 s run to run). The fades, Low's
-  thinning as the camera walks and free flight are proven in tests and still pictures, not in motion:
-  tools/frame-motion.mjs plays a generated course, not a built file, and playing is the owner's. The
-  device figures are estimates by design. Each change's measurements and pictures are listed in the
-  goal's local brief (docs/studies/frame-rate-all-tiers/GOAL.md, *Each rule, and where it stands*).
+- **The last changes measured alone, and the look in motion** (after the hand-over, the goal's
+  check asked for them): the footings and drives batched, against a build with homes.js as it was,
+  Dinosaur Mountain High by the houses (hole 9's tee, its play camera, 40 m over hole 1), three rounds:
+  6.96 to 5.59 ms a frame (-19.6%). The hazard loop's early end, against a build without it (the first
+  tee, hole 9's tee, the overview), three rounds: 5.76 to 5.55 ms (-3.7%). The field baked on every core
+  on the other large course too: Troon North in the builder, Game view 48.3 to 30.8 s, building the
+  course 21.0 to 5.5 s, frames there 24.6 to 11.7 ms, the worst frame flying 79 to 21 ms. **In motion**
+  (tools/frame-motion.mjs, now `--built`: a driver off the first tee and the overview on a virtual
+  clock, frame for frame against the starting build): Low 0.6-6.2% of pixels differ by 0.2-2.5 of 255
+  on average (the far trees thinned), High 0.08-1.5% by 0.02-0.46; no page errors; the frames show no
+  pop, gap or tint. Still unmeasured: free flight in motion (the tool flies the shot cameras, not the
+  free camera; free flight is in the still pictures and the tests) and the devices themselves (the
+  stand-ins are estimates by design; the real ones are the owner's). The course's load could not be told
+  apart by build (its shaders swing 19-25 s run to run).

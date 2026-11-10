@@ -2,6 +2,8 @@
 // The same round, frame for frame, in two builds -- with the camera moving.
 //
 //   node tools/frame-motion.mjs --goal <name> --cap 40 --a bench/ab/hooked-base/index.html --b bench/ab/hooked-final/index.html --tier ultra
+//   ... --built <x.fairway>   a built course from its file instead of Redwood Coast (the
+//                             frame-rate goal, 9 November 2026: fades and Low's trees in motion)
 //
 // tools/frame-look.mjs stops the clock, so it cannot see what only happens in
 // motion: the far shadow maps that now wait up to three frames, the cloud
@@ -74,7 +76,8 @@ const CLOCK = () => {
 
 async function play(file, tag) {
  const html = fs.readFileSync(path.resolve(ROOT, file));
- const server = await new Promise(r => { const s = createServer((_, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); }); s.listen(0, '127.0.0.1', () => r(s)); });
+ const builtBytes = process.argv.includes('--built') ? fs.readFileSync(path.resolve(ROOT, process.argv[process.argv.indexOf('--built') + 1])) : null;
+ const server = await new Promise(r => { const s = createServer((req, res) => { if (builtBytes && req.url === '/built.fairway') { res.writeHead(200, {'Content-Type': 'application/zip'}); res.end(builtBytes); return; } res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); res.end(html); }); s.listen(0, '127.0.0.1', () => r(s)); });
  const browser = await chromium.launch({headless: true, args: GPU_ARGS});
  const out = {errors: [], grabs: {}};
  try {
@@ -103,7 +106,8 @@ async function play(file, tag) {
     return out;
    };
   });
-  await page.evaluate(o => window.lab.course(o), {biome: 'redwood', holes: 9, seed: 'PROFILE'});
+  const built = builtBytes ? await page.evaluate(async () => window.lab.built(new Uint8Array(await (await fetch('/built.fairway')).arrayBuffer()))) : null;
+  await page.evaluate(o => window.lab.course(o), {biome: 'redwood', holes: 9, seed: 'PROFILE', ...(built ? {built} : {})});
   await page.waitForTimeout(4000);
   // Hold the clock, put the moving things back to their start, and from here
   // on move only by steps.
