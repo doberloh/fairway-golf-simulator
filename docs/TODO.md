@@ -34,9 +34,10 @@ check.
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
-  withdrawn (AGENTS.md). **Running as a /goal** on branch `frame-rate-all-tiers` (its spec, log and
-  status page in docs/studies/frame-rate-all-tiers/GOAL.md, local; the computer free on the branch,
-  AGENTS.md, deleted in the merge). Built so far (RESEARCH, *Frame rate on every tier: the large built
+  withdrawn (AGENTS.md). **Done as a /goal** on branch `frame-rate-all-tiers` (its spec, log and
+  status page in docs/studies/frame-rate-all-tiers/GOAL.md, local), cleared by the owner, merged and
+  **released as 0.9.11** (9 November 2026); the branch's free use of the computer ended with the
+  merge. Built (RESEARCH, *Frame rate on every tier: the large built
   courses*): far versions for every model, the swap cross-faded, Low's trees (the owner's rule), the
   ground drawn coarser with distance (with a 1.5 m level), the field baked on every core, the houses'
   footings and drives batched, two per-frame processor costs cut, the builder's cost readout and
@@ -112,6 +113,16 @@ check.
   (RESEARCH, *The remakes' frame cost on Low*): Redwood Coast's graphics +0.24 ms a frame (about 13%,
   the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
   the retaken pictures; play it (not played); the brittlebush is shardy close up.
+
+## Release 0.9.11 (9 November 2026)
+
+- [ ] **Play 0.9.11 by hand.** Released at the owner's word ("Lets get this merged into main and do
+  a new patch version. Push to github as well as the live website"), the website's demo redeployed
+  with it. The frame-rate work was measured and seen only in captures and in motion on the virtual
+  clock: the dissolve to far versions, Low's thinning and fade-in as you walk and fly, the distant
+  ground's seams, the builder's readout and weight note, and High and Ultra after the far versions'
+  outline rule are still to be seen in play (the list under *Frame rate on every tier and device*;
+  DISTRIBUTION_REVIEW, the addendum for v0.9.11).
 
 ## Release 0.9.10 (9 November 2026)
 

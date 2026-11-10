@@ -349,7 +349,8 @@ software arm in, the processor at full use, and the crash precautions kept --
 the gate, one graphics job at a time, software rendering alone, retry once,
 stop after a crash. One addition, about measuring rather than safety: nothing
 heavy on the processor beside a frame measurement, because a busy machine has
-inflated timings tenfold here before. It deletes itself in the merge.
+inflated timings tenfold here before. It deleted itself in the merge (9 November 2026, released as
+v0.9.11), and main asks before graphics work again.
 
 ## The graphics profile
 

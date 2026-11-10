@@ -51,43 +51,6 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
-## On the frame-rate-all-tiers branch, the whole computer is free
-
-The frame-rate goal (9 November 2026; its local brief
-docs/studies/frame-rate-all-tiers/GOAL.md) needs the graphics card again and
-again. The owner: "overrides the need to ask to use the GPU or CPU and allows
-the agent to use the full PC utilization." So **on this branch, for its goal
-and every single-turn request on it, nothing in *Nothing runs on the graphics
-card*, *A `/goal` that says "GPU allowed"* or *Ask before a graphics profile*
-needs asking**: `npm run smoke`, captures, the game and the builder in the
-browser pane, `npm run profile` (full sweeps too), `tools/frame-ab.mjs` and
-its siblings, the software arm (`--only weak`, `smoke --software`), Blender,
-and the processor at full use -- tests and the bench on every core, long
-runs. No run cap. The precautions from the crashes stay, because a crash
-costs more than any of this saves:
-
-- **Not while the owner plays.** Graphics jobs go through `node
-  tools/gpu-run.mjs --goal frame-rate-all-tiers --util 45 --temp 80 --rest 1
-  -- <command>` (the capture tools gate themselves), which reads `nvidia-smi`
-  first and logs the run. A game in the process list, or the card above 45%
-  (Chrome Remote Desktop alone holds it at 17-47%): wait, and say so.
-- **One graphics job at a time**, minutes rather than hours. Above 80 °C, stop
-  and cool down for 10 minutes. The processor may be full beside a graphics
-  job, but **not beside a frame measurement** -- a busy processor inflated
-  timings tenfold once; that is a measuring rule, not a safety one.
-- **Software rendering runs alone**, nothing heavy beside it (it took the
-  machine down on 13 October 2026).
-- **After every job, leave nothing running**: browsers, browser-pane tabs,
-  Blender and servers closed, the card checked (*Leave no processes running*
-  still holds).
-- **A hung run, driver reset or lost WebGL context**: write it down, wait 10
-  minutes, retry once; a second failure ends graphics-card use until the
-  owner is back. **After a machine crash, stop everything** until the owner
-  says.
-- **This section is for this branch only. Delete it in the merge** (and its
-  pointer under *Nothing runs on the graphics card*), so main's rules are as
-  before. RULES_HISTORY.md keeps the story.
-
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -319,9 +282,8 @@ owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
 browser pane, `npm run profile`. Earlier permission does not carry over -- the
 exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
-cartoon look is main's*). **On the frame-rate-all-tiers branch none of this
-needs asking** (*On the frame-rate-all-tiers branch, the whole computer is
-free*; deleted in its merge).
+cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
+merged (9 November 2026; RULES_HISTORY.md).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.
