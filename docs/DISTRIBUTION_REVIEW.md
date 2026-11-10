@@ -1932,3 +1932,12 @@ the fingerprints (no unrecorded change), the packager's verification of every zi
 of the remakes against main (RESEARCH, *The remakes' frame cost on Low*). **Not run:** the smoke
 set (no interface file changed since 0.9.9). **Not played by a person**: the plants were seen only
 in captures.
+
+## Note, 9 November 2026: the frame-rate branch (unreleased)
+
+Branch `frame-rate-all-tiers`, not merged or released. **Sizes:** the game's page 58.4 to 59.5 MB (the
+far versions made for 130 models when they are packed, about 1 MB, and the new modules), the builder's
+54.0 to 55.1 MB. **A second inline worker** (src/bake-worker.js, a built course's field baked on other
+cores): bundled into the page as the ground workers are (`?worker&inline`), so it runs from file:// and
+from the bridge alike; a browser that refuses workers bakes on the main thread as before. Nothing else
+about the offline build changed. The next release's addendum takes these.
