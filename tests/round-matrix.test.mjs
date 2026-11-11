@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Round, FORMATS} from '../src/game.js';
-import {awardedPutts} from '../src/putting.js';
+import {awardedPutts, PUTTING_MODES} from '../src/putting.js';
 import {skins, decidedHoles, skinsWinner} from '../src/skins.js';
 import {goalStatus} from '../src/round-goals.js';
 import {recordWeekly} from '../src/weekly.js';
@@ -336,7 +336,7 @@ function configs({holes = 3, changes = false} = {}) {
    for (const teams of PLAYED[mode].teams ? splits(n) : [Array(n).fill('A'), [...Array(n)].map((_, i) => i % 2 ? 'B' : 'A')].filter((t, k) => k === 0 || n > 1))
     for (const endless of [false, true])
      if (allowed(mode, teams, endless))
-      for (const putting of ['holeout', 'dartboard', 'decimal'])
+      for (const putting of PUTTING_MODES)
        out.push({mode, teams, endless, putting, holes, changes, outOfBounds: out.length % 2 ? 'e5' : 'stroke'});
  return out;
 }
@@ -375,6 +375,10 @@ test('the matrix reaches every format, every group size and both team splits', (
  assert.ok(list.some(c => c.mode === 'match' && c.teams.join('') === 'ABBB'), 'match play one against three');
  assert.ok(list.some(c => c.mode === 'scramble' && c.teams.join('') === 'AAAA'), 'a scramble of one team of four');
  assert.ok(list.some(c => c.endless && c.mode === 'skins'), 'skins run endlessly');
+ // Every putting mode (putting.js PUTTING_MODES, the gimme circle since 10
+ // November 2026) is played in every format.
+ for (const putting of PUTTING_MODES) for (const mode of PLAYED_FORMATS)
+  assert.ok(list.some(c => c.mode === mode && c.putting === putting), `${mode} with ${putting} putting`);
 });
 
 test('groups a format cannot take are refused at the start', () => {
@@ -437,13 +441,13 @@ function checkGoal(r, why, h) {
 }
 test('rounds with a goal: sudden death and bogey-free nine, every group', () => {
  let played = 0;
- for (let n = 1; n <= 4; n++) for (const putting of ['holeout', 'dartboard', 'decimal']) for (const seed of SEEDS) {
+ for (let n = 1; n <= 4; n++) for (const putting of PUTTING_MODES) for (const seed of SEEDS) {
   const teams = Array(n).fill('A');
   playRound({mode: 'stroke', teams, endless: true, putting, holes: 3, changes: true, outOfBounds: 'stroke', goal: 'suddendeath'}, seed);
   playRound({mode: 'stroke', teams, endless: false, putting, holes: 9, changes: true, outOfBounds: 'e5', goal: 'bogeyfree'}, seed);
   played += 2;
  }
- assert.equal(played, 72);
+ assert.equal(played, 4 * PUTTING_MODES.length * SEEDS.length * 2);
  // A goal the round cannot carry is refused.
  const p = [{name: 'Alex', team: 'A'}];
  assert.throws(() => new Round({players: p, goal: 'suddendeath'}), /endless/);
@@ -465,7 +469,7 @@ const total = card => cent(card.filter(Number.isFinite).reduce((a, b) => a + b, 
 test('the course of the week: eighteen holes of stroke play for every group, and each golfer\'s best for the week', () => {
  const key = 'WEEK-2026-43@g1';
  let played = 0;
- for (let n = 1; n <= 4; n++) for (const putting of ['holeout', 'dartboard', 'decimal']) {
+ for (let n = 1; n <= 4; n++) for (const putting of PUTTING_MODES) {
   const profs = Array.from({length: n}, () => ({}));
   for (const seed of SEEDS) {
    const r = playRound({mode: 'stroke', teams: Array(n).fill('A'), endless: false, putting, holes: 18, changes: false, outOfBounds: 'stroke', weekly: key}, seed);
@@ -485,7 +489,7 @@ test('the course of the week: eighteen holes of stroke play for every group, and
    played++;
   }
  }
- assert.equal(played, 4 * 3 * SEEDS.length);
+ assert.equal(played, 4 * PUTTING_MODES.length * SEEDS.length);
 });
 
 test('a friend\'s challenge: every group against the friend\'s card, compared hole by hole', () => {

@@ -48,7 +48,7 @@ import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {surfaceLabel,isGround,GROUNDS} from './grounds.js';
-import {puttingConfig,scoreText,sumScores} from './putting.js';
+import {puttingConfig,scoreText,sumScores,GIMME,puttingFieldsFor,puttingName,awardWords} from './putting.js';
 import {createLayout} from './layout.js';
 import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
 import {createPopups} from './popups.js';
@@ -328,14 +328,19 @@ const rememberPutting=()=>{if(!rangeMode)savedPutting=round.putting;};
 const playerPutting=()=>savedPutting||round.putting;
 // Hands the choice back and forgets it -- called once on the way out of practice.
 const restorePutting=()=>{const p=playerPutting();savedPutting=null;return p;};
-const PUTTING_MODES=`<option value="holeout">Hole out · make every putt</option><option value="dartboard">Dartboard · 1, 2 or 3 putts</option><option value="decimal">Decimal · distance-based putts</option>`;
+const PUTTING_MODES=`<option value="holeout">Hole out · make every putt</option><option value="dartboard">Dartboard · 1, 2 or 3 putts</option><option value="decimal">Decimal · distance-based putts</option><option value="gimme">Gimme circle · inside it is one putt</option>`;
 // What each putting mode means is not explained on screen: the option's own
 // words say it (the owner, 18 October 2026: "the putting description is not
 // needed anywhere").
 // Distance fields for either surface. `id` prefixes them so the round panel and
 // the putting panel can both be in the DOM without colliding.
-const puttingFields=(id,p)=>['one','two','three'].map((key,i)=>`<label class="field">${i+1}-putt distance (yd)<input id="${id}-${key}" type="number" min=".1" max="100" step=".1" value="${p[key]}"></label>`).join('');
-const readPutting=id=>puttingConfig({mode:$(id+'Mode').value,...Object.fromEntries(['one','two','three'].map(k=>[k,Number($(id+'-'+k).value)]))});
+// The gimme circle is set in feet, the unit a gimme is spoken of in; the three
+// rings stay in yards. Each group is a div because `.drawer label.field` sets a
+// display that would beat the `hidden` attribute on the label itself.
+const puttingFields=(id,p)=>`<div id="${id}-rings">${['one','two','three'].map((key,i)=>`<label class="field">${i+1}-putt distance (yd)<input id="${id}-${key}" type="number" min=".1" max="100" step=".1" value="${p[key]}"></label>`).join('')}</div><div id="${id}-gimmeField"><label class="field">Gimme circle (ft)<input id="${id}-gimme" type="number" min="${GIMME.min}" max="${GIMME.max}" step="${GIMME.step}" value="${p.gimme}"></label></div>`;
+// Shows the fields the chosen mode uses: rings, the gimme circle, or neither.
+const showPuttingFields=(id,mode)=>{const f=puttingFieldsFor(mode);$(id+'-distances').hidden=!f.rings&&!f.gimme;$(id+'-rings').hidden=!f.rings;$(id+'-gimmeField').hidden=!f.gimme;};
+const readPutting=id=>puttingConfig({mode:$(id+'Mode').value,...Object.fromEntries(['one','two','three','gimme'].map(k=>[k,Number($(id+'-'+k).value)]))});
 // Writes to whichever copy is live: the player's held choice while they are in
 // the range or the lab, the round itself otherwise.
 const applyPutting=cfg=>{if(savedPutting)savedPutting=cfg;else{round.putting=cfg;round.gimme=0;view.setPutting(cfg);}};
@@ -1487,7 +1492,7 @@ $('lieLabel').textContent=surfaceLabel(lie);
  // On the range the button says WHY it is off. A disabled control with no
  // explanation reads as broken, and "putting" on a practice ground is a
  // reasonable thing to go looking for -- there is simply no putting there yet.
- if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'The range always holes out: choose putts in Range controls':'Putting: '+{holeout:'hole out',dartboard:'dartboard',decimal:'decimal putting'}[round.putting.mode];}icon();
+ if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'The range always holes out: choose putts in Range controls':'Putting: '+puttingName(round.putting);}icon();
 }
 // A putt is previewed by running the shot, not by describing it. Everything else
 // keeps a straight target line, which is what an aim line means for a ball that
@@ -2157,8 +2162,8 @@ function spinHoleOutBall(canvas,finish){
 }
 function renderResult(event){
  if(hud1)nextShotCard();
- const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
- let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:''}</p>`.replace('<p></p>','')+gridHTML();
+ const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?awardWords(event.putts,round.putting).title:r.hazard?r.hazard:'Shot information';
+ let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?awardWords(event.putts,round.putting).line:''}</p>`.replace('<p></p>','')+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
  // the bar at the foot of the screen steps between them. A duplicate list here
  // would be a second way to answer the same question, and the worse one.
@@ -2961,7 +2966,7 @@ function openPlaySettings(name,content){
   $('saveFlight').onclick=()=>{settings.turf=turfConfig({stimp:Number($('greenStimp').value),fairway:Number($('fairwayRoll').value),semi:Number($('semiRoll').value),rough:Number($('roughRoll').value),firmness:$('turfFirmness')?.value});save();updateAim();closePanel();toast('Turf conditions saved.');};
  }else{
   const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
-  const explain=()=>{const m=$('puttingMode').value;$('putting-distances').hidden=m==='holeout';};$('puttingMode').onchange=explain;explain();
+  const explain=()=>showPuttingFields('putting',$('puttingMode').value);$('puttingMode').onchange=explain;explain();
   $('savePutting').onclick=()=>{try{puttingGuard();applyPutting(readPutting('putting'));save();updateHUD();closePanel();toast('Putting mode saved. Existing scores stay as recorded.');}catch(e){$('playError').textContent=e.message;}};
  }
 }
@@ -4437,10 +4442,10 @@ function wireFormatFields(){
  $('roundPuttingMode').value=playerPutting().mode;
  // Applied as it is changed. A button here would have been a third place to
  // press Save for one setting, and both panels already have a primary action.
- const puttNote=()=>{const m=$('roundPuttingMode').value;$('roundPutting-distances').hidden=m==='holeout';};
+ const puttNote=()=>showPuttingFields('roundPutting',$('roundPuttingMode').value);
  const puttApply=()=>{try{puttingGuard();applyPutting(readPutting('roundPutting'));save();updateHUD();$('roundError').textContent='';}catch(e){$('roundError').textContent=e.message;toast(e.message);}};
  puttNote();$('roundPuttingMode').onchange=()=>{puttNote();puttApply();};
- for(const k of ['one','two','three'])$('roundPutting-'+k).onchange=puttApply;
+ for(const k of ['one','two','three','gimme'])$('roundPutting-'+k).onchange=puttApply;
  // Applied as it is changed, like putting: to the round being played and to
  // every round after it.
  $('roundOB').onchange=()=>{const v=$('roundOB').value;if(!OB_RULES[v])return;Round.defaultOutOfBounds=v;round.outOfBounds=v;saveRules();save();};
