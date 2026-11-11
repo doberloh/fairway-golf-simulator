@@ -30,13 +30,6 @@ often has the how-to already worked out.
   sim handicap the game already keeps. Match play has no handicaps today.
   Rules go in a pure module beside `scoring.js` with Node tests. Small to
   medium. (Claude, 16 October 2026)
-- **Computer opponents.** Golfers to play against, each missing the way a
-  real golfer of their handicap misses: a solo player gets a match, and match
-  play gets an opponent. The ball model is shared, so they only need a choice
-  of club and aim and a believable miss. Medium. (Claude, 16 October 2026)
-- **A tournament weekend.** Four rounds on one course against a field of
-  computer opponents, with a leaderboard and a cut. Needs computer opponents
-  first. Large. (Claude, 16 October 2026)
 - **Tees per golfer.** Each golfer plays their own tee, with mixed-tee scoring
   and the CSVs to match. Medium. (was: *Per-player tee choice*)
 - **A course built for your game.** The generator lays out holes around the

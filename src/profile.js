@@ -23,6 +23,7 @@
 // the profile's id, and each seat's shots and card go to that profile. A player
 // with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
+import {isTee} from './tees.js';
 import {validateBag, stockBag} from './clubs.js';
 import {WEARABLE, reward, isUnlocked} from './rewards.js';
 import {normaliseProgress, normaliseEarned} from './achievements.js';
@@ -143,7 +144,7 @@ export function normaliseProfile(d) {
  const play = {};
  if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
  if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
- if (['blue', 'white', 'red'].includes(d.tee)) play.tee = d.tee;
+ if (isTee(d.tee)) play.tee = d.tee;
  // XP (Phase 4): the total, the ledger of recent awards a mulligan can take
  // back (progression.js `award`), the last day the daily bonus was given, the
  // range's daily trickle, and whether the 'XP is new' note is still to show.
@@ -277,7 +278,7 @@ export function setProfilePlay(store, id, {hand, input, tee} = {}) {
  if (['RH', 'LH'].includes(hand)) p.hand = hand;
  if (['monitor', 'meter'].includes(input)) p.input = input;
  // The golfer's own tee (round 13), remembered for the next group they join.
- if (['blue', 'white', 'red'].includes(tee)) p.tee = tee;
+ if (isTee(tee)) p.tee = tee;
  storeProfiles(store);
  return p;
 }

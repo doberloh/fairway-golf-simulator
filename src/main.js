@@ -15,7 +15,8 @@ import {planShotCamera,planReview} from './tv-camera.js';
 import {aimTarget,localWind} from './shot-visuals.js';
 import {playsLike} from './plays-like.js';
 import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
-import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
+import {planCourse,planScorecard,playCameraMode,aimDelta} from './course-plan.js';
+import {TEE_ORDER,GENERATED_TEES,courseSets,teeFor,teeOn,teeName} from './tees.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
 import './style.css';
@@ -705,7 +706,7 @@ function placeForTurn(from=null){
  // Bingo Bango Bongo: every golfer's ball where it lies (the engine keeps them).
  if(c.def.order==='holes'){const st=c.play,tee=st.spots[Math.min(st.h,st.spots.length-1)];round.positions=round.players.map((_,s)=>{const q=st.pos?.[s]||tee;return {x:q.x,z:q.z};});}
  if(p)round.positions[seat]={x:p.x,z:p.z};
- else if(!rangeMode){const tee=course.tees[round.teeOf(seat)]||course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
+ else if(!rangeMode){const tee=teeOn(course.tees,round.teeOf(seat))||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
  round.active=seat;round.teePlaced=true;round.strokes[seat]=c.def.order==='spotOut'||c.def.order==='holes'?t.strokes:0;
  const at=round.positions[seat];
  c.aimAt=t.target?{x:t.target.x,z:t.target.z}:t.zone?{...t.zone}:typeof t.call==='number'?{x:at.x,z:at.z+t.call*YARD}:null;
@@ -1375,7 +1376,7 @@ function toggleKeysHelp(on=$('keysHelp').hidden){
 }
 function updateHUD(){
  syncArmed();if(panel==='monitor')monitorSetup?.paint();
- const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
+ const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';syncTeeSelect(course.tees);$('activeTee').value=teeFor(round.tee,Object.keys(course.tees))??round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
   // Reading is off on a FLAT range green: the grid paints one colour and the
   // heat map one shade. Switches that can only produce a featureless wash are
@@ -1414,7 +1415,7 @@ function updateHUD(){
  // the tee yardage.
  $('holeDistance').innerHTML=practice
   ? `${Math.round(distance()/YARD)}`
-  : `${Math.round(course.tees[round.tee]?.yards??course.routeLength/YARD)}`;
+  : `${Math.round(teeOn(course.tees,round.tee)?.yards??course.routeLength/YARD)}`;
  // THE GOLFER'S OWN COLOUR, on the two chips that say who is up: the same dot
  // as beside their scorecard row, so the chip and the name on the card are
  // recognisably the same person. (It was their tracer's colour too until 15
@@ -2833,7 +2834,7 @@ function setUpRangeTurn(pick=false){
   p=st.next??(st.mode==='chip'?chipSpot(course,st.green,st.yards,st.n):puttSpot(course,st.green,st.feet,st.n));
  }
  st.next=null;
- if(!p){const tee=course.tees[round.teeOf(round.active)]||course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
+ if(!p){const tee=teeOn(course.tees,round.teeOf(round.active))||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
  round.positions[round.active]={x:p.x,z:p.z};round.teePlaced=true;
  shotShape={...DEFAULT_SHAPE};cancelSwing();rangePlaced=aimTurned=false;
  const toPin=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
@@ -4295,7 +4296,24 @@ let groupDraft=null;
 // connected on this device (spec Q14): until then everyone is on the Swing
 // Meter and the hand is something only a monitor is told.
 // The tee sets' own colours, for the dots on a golfer's tee buttons.
-const TEE_DOT={blue:'#2b5fb4',white:'#f4f1e8',red:'#b8322b'};
+const TEE_DOT={black:'#1c1d21',blue:'#2b5fb4',white:'#f4f1e8',silver:'#aab1ba',gold:'#d0a028',red:'#b8322b'};
+// THE SETS A GOLFER CAN CHOOSE (tees.js; the owner, 10 November 2026: up to
+// six on a built course, three on a generated one): the built course's own
+// when it is in memory, all six when it is built but not loaded yet (the
+// nearest is played), a generated course's three otherwise.
+function setupTees(){
+ if(!settings.built)return GENERATED_TEES;
+ const doc=builtStore.now(settings.built);
+ return doc?(courseSets(doc.holes)??GENERATED_TEES):TEE_ORDER;
+}
+// A set's letter on a seat's button: black and blue both start with B.
+const teeLetter=(t,sets)=>sets.includes('black')&&sets.includes('blue')&&(t==='black'||t==='blue')?(t==='black'?'Bk':'Bl'):t[0].toUpperCase();
+// The Playing tee list, rebuilt when the course's sets change.
+function syncTeeSelect(tees){
+ const sel=$('activeTee'),sets=TEE_ORDER.filter(t=>tees&&tees[t]),key=sets.join();
+ if(!sel||!sets.length||sel.dataset.sets===key)return;
+ sel.dataset.sets=key;sel.innerHTML=sets.map(t=>`<option value="${t}">${teeName(t)} tees</option>`).join('');
+}
 const bridgeSeen=()=>{if(monitorConnected)return true;try{return !!localStorage.getItem(BRIDGE_KEY);}catch{return false;}};
 function groupEditor(hostId,start,onChange){
  const host=$(hostId);if(!host)return null;
@@ -4322,7 +4340,7 @@ function groupEditor(hostId,start,onChange){
   // A SEAT EACH (round 13): the colour, the ball in its frame, who it is (the
   // picker), title, level and handicap, the golfer's own tee, and -- once a
   // monitor has been seen -- what they play with and which hand they swing.
-  const teeOf=p=>p.tee||round.tee||'blue';
+  const teeOf=p=>p.tee||round.tee||'blue',tees=setupTees();
   const seatPick=(label,id,aria,opts,value)=>`<div class="seat-pick"><span class="seat-k">${label}</span><span class="seat-line"><button type="button" class="seat-arrow" data-step="-1" tabindex="-1" aria-hidden="true">◀</button><span class="seat-val"><b>${escape((opts.find(o=>o[0]===value)||opts[0])[1].toUpperCase())}</b><select id="${id}" aria-label="${aria}">${opts.map(([v,t])=>`<option value="${v}" ${v===value?"selected":""}>${t}</option>`).join("")}</select></span><button type="button" class="seat-arrow" data-step="1" tabindex="-1" aria-hidden="true">▶</button></span></div>`;
   host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
    return `<div class="player-row seat${bridgeSeen()?' play':''}" data-seat="${i}">`
@@ -4334,7 +4352,7 @@ function groupEditor(hostId,start,onChange){
    // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
    +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
    +`</div>`
-   +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${['blue','white','red'].map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeOf(p)===t}" aria-label="${t[0].toUpperCase()+t.slice(1)} tees"><i style="background:${TEE_DOT[t]}"></i>${t[0].toUpperCase()}</button>`).join('')}</span>`
+   +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${tees.map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeFor(teeOf(p),tees)===t}" aria-label="${teeName(t)} tees" title="${teeName(t)} tees"><i style="background:${TEE_DOT[t]}"></i>${teeLetter(t,tees)}</button>`).join('')}</span>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
    // Round 14 (frame c-play2l): each picker a label line, then its value on a
    // full-width line with an arrow at each end; the select is still there,
@@ -4409,7 +4427,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -4945,7 +4963,7 @@ function drawRoundHud(){
  const c=clubs[$('club').value],putt=c?.code==='PT'||!!ballOnGreen;
  // The hole slab.
  const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
-  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole),title:holeNameOf(round.hole)});
+  :holeSlab({hole:round.hole,par:course.par,yards:teeOn(course.tees,round.teeOf(round.active))?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole),title:holeNameOf(round.hole)});
  // The hole's own name in place of the course's (architect-courses, phase 2);
  // the course's stays as the slab's tooltip.
  setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a" title="${escape(s.name)}">${escape(s.title||s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
@@ -6570,7 +6588,7 @@ function renderPanel(name,content){
   const pars=allPars.slice(from);
   // Yardages come off the built course, which an endless run no longer has for
   // any hole but the one under the player's feet.
-  const teeRows=round.endless?[]:enabledTees(settings).map(t=>({name:t,yards:world.holes.map(h=>Math.round(h.tees[t].yards))}));
+  const teeRows=round.endless?[]:TEE_ORDER.filter(t=>world.holes.every(h=>h.tees[t])).map(t=>({name:t,yards:world.holes.map(h=>Math.round(h.tees[t].yards))}));
   const hcol=h=>from+h+1;
   // SKINS (skins.js): the count on the top line, the result once the round is
   // over, and a Skins row under the golfers -- each decided hole's winner as

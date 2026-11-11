@@ -1679,7 +1679,7 @@ it**: the ODbL asks for the credit, which the builder adds to the course's
 credits, and a database made from it and shared stays ODbL -- a shared
 `.fairway` built from it carries that licence (the owner's call to allow,
 named here so a release can say so). **Since 1 November 2026, LIDAR too**
-(amendments 13-14): *Search for LIDAR* asks the National Map's product API
+(amendments 13-14): *Search for LIDAR* (since 10 November 2026 *Build it myself*, and Build it for me, over a box drawn on the map) asks the National Map's product API
 (tnmaccess.nationalmap.gov), IGN's WFS (data.geopf.fr) and swisstopo's STAC catalogue (data.geo.admin.ch); *Download the
 square here* reads USGS's Entwine copy on Amazon's open data
 (s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles or swisstopo's zipped LAS;
@@ -1956,3 +1956,43 @@ every zip, the smoke set on the branch (41 of 41, before the evening's far-versi
 change measured against the build before it on the graphics card and seen still and in motion.
 **Not measured again after the far versions' outline rule:** High and Ultra (it was measured on
 Low and Medium). **Not played by a person.**
+
+## The builder's guide in every download (10 November 2026, the builder-ux goal)
+
+Every zip carries **Fairway Builder Guide.html** beside Fairway Builder.html
+(tools/package_release.py): docs/BUILDER_GUIDE.md built by
+tools/builder-guide.mjs into one page with its pictures inside it as
+WebP -- 1,330 kB with nine; 1,702 kB since the tenth, the map round a
+course with a box drawn on it (10 November 2026, after the trial below); 1,975 kB since Build it for me's picture became its warning over that map, a whole map in place of a nearly empty panel; 1,989 kB with the tee-sets section (10 November 2026) -- offline, no fetched font or script (it uses the system's
+fonts). A Markdown file in a zip shows no pictures, hence a page. The source
+zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
+and tests/fixtures/ (the old-files test's course file, 560 kB), which a build
+or a test from the source needs. **Tried on the branch (10 November 2026,
+07:05):** `npm run release` verified all five zips; each player zip holds
+the guide (1,403,167 bytes, identical to dist/builder-guide.html, its nine
+pictures inside) and its README names it; the zips: Windows 106.7 MB, macOS
+Apple Silicon 92.5, macOS Intel 94.9, Linux 103.3, source 36.5 (679 files).
+Opened from the zip, the page shows all nine pictures and fetches nothing.
+Those trial zips are kept aside locally (bench/ab/release-builder-ux) and
+release/ holds 0.9.11's again: a release is built from main after the merge.
+
+## Addendum, 10 November 2026: v0.9.12
+
+**v0.9.12** is published at the owner's request ("Merge back into main. Generate a new hotfix
+release version push to github and update the live website with the new demo version"), as
+"Fairway 0.9.12 (beta)", tag `v0.9.12`, not a pre-release, the same six files, from the merge of
+`builder-ux` into `main`, notes in `docs/releases/v0.9.12.md`. Content: the Course Builder made
+easy (docs/COURSE_BUILDER.md, *The builder-ux goal* and the sections after it) -- one search bar,
+a box on the map, Build it for me or Build it myself, the map checks, door 2 as a paint program,
+the 3D editor's palette, the six tee sets from OpenStreetMap, tee markers inside narrow built
+tees -- and **Fairway Builder Guide.html in every player zip** (the section above). **Version
+numbers unchanged** (generator 103, schema 47, built 3): saves, rounds, built course files and
+0.9.11's friend-challenge codes carry over; a built file naming no tee set plays its old blue,
+white and red. **Sizes:** the game page 60.4 MB (unchanged in practice), the builder's 56.1 MB,
+the guide 2.0 MB; the zips, built on the branch before the merge: Windows 107.1 MB, Linux 103.7,
+Apple Silicon 93.0, Intel 95.4, source 37.0 (682 files) -- about 1.5 MB each over 0.9.11, the
+guide. Nothing else about the offline build changed. **Checked:** the full tests (1,564; none
+failing) on the release commit's content, the packager's verification of every zip, all nine
+builder journeys and the 41 smoke journeys on the branch's last code change. **Not played by a
+person:** a built course with four or more tee sets in a round, tee markers on a narrow built tee,
+Build it myself from a drawn box on the real services (TODO, *Release 0.9.12*).

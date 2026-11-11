@@ -19,6 +19,16 @@ export function markNear(holes, current, p, reach) {
  for (let n = 0; n < holes.length; n++) { if (n === current) continue; const m = best(n); if (m) { const d = Math.hypot(m.x - p.x, m.z - p.z); if (d < d0) { d0 = d; got = m; } } }
  return got;
 }
+// What a press on the plan does (the builder-ux goal, 10 November 2026): on a
+// mark of the hole in hand, `take` it at once; on another hole's mark, `wait`
+// -- a drag of a few pixels takes that mark, a click places the mark in hand
+// here (placing the 10th tee beside the 9th green used to take the green);
+// on open ground, `place`. {act, mark?}.
+export function pressOn(holes, current, p, reach) {
+ const g = markNear(holes, current, p, reach);
+ if (!g) return {act: 'place'};
+ return {act: g.hole === current ? 'take' : 'wait', mark: g};
+}
 // The mark put at `p`. Its set and place in the list stay.
 export function moveMark(h, m, p) {
  if (m.kind === 'green') h.green = {...h.green, x: p.x, z: p.z};

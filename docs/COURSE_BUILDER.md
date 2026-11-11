@@ -770,7 +770,8 @@ After trying the builder, the owner amended the goal:
       hole had one tee, the line's first point. **`fitHoles`** now puts each
       green mark on the green it reaches and gives each hole the tee boxes
       along its line -- back, middle, front -- so white and red are real
-      tees. Door 2's holes step has **Fit holes to the trace** for holes
+      tees (since 10 November 2026 the six tee sets, by the map's tags and
+      the boxes' distance: *Six tee sets*, below). Door 2's holes step has **Fit holes to the trace** for holes
       marked by hand or after an auto trace.
     - **A map with numbered greens and no hole lines** (Worthington's): each
       green's tee is chosen for all holes at once (the Hungarian method,
@@ -1490,7 +1491,9 @@ or zip."
   words; the first line says what every survey covers together. Read from the
   USGS tiles' `boundingBox`, the Entwine copies' published outlines, IGN's tile
   geometry and swisstopo's `bbox`, all in degrees (checked 4 November 2026). **It
-  measures the square searched for, not the course**, whose edge is not known
+  measures the box searched for, not the course** (since 10 November 2026 the
+  box drawn round the course on the map, *The map first, then the box, then
+  the LIDAR*; before, a square round the place), whose edge is not known
   until it is traced. A tile's box is its full square, so a survey's tile can
   promise ground it has no points on; an Entwine outline is the truer of the two.
 - **Whole tiles** were already fetched only when missing, by name and size; the
@@ -1729,3 +1732,651 @@ from where the survey lies (landscape-map.js `landscapeAt` at the land's
 centre, taken unasked when the land is built unless one was chosen) and
 marks the survey on the map; a survey off the map, or in a landscape not
 built yet, says so.
+
+## The builder-ux goal (branch `builder-ux`, from 9 November 2026)
+
+By 9 November 2026 the owner had played every part of the builder that TODO
+listed as "not played by a person" (those entries are closed in TODO's
+`# Done`). The owner's verdict: the layer rule (paint goes under the layers
+above it) and Skin from the land are right and stay; a real course takes
+about 15 minutes with OpenStreetMap data, which is fast; but "The UI is
+extremely basic and really confusing. It needs to run more like an MS
+Paint/real 3d editor than what it does today."
+
+What the goal is to do, in short: make the layer rule visible; steady the
+brush so strokes come out smooth; turn every outline tool into a pen with
+nodes, a live preview of the curve that will be filled, and closing on the
+first node; give the steps a clear flow; add a one-press "Build it for me"
+from a course name; make the pictures under the course sharp (the free US
+tiles stop at about 1.7 m a pixel, and big courses are cut to 400 tiles,
+src/builder/imagery.js `zoomFor`); and a UI/UX pass over every flow, with a
+paint-program layout (menu bar, tool palette, options, layers, status bar)
+in the game's own interface kit. Claude added: moving and deleting ponds,
+creeks and holes, doglegs from the trace, named undo with a history, an
+automatic draft, first-visit tips, plain wording, and checks at small and
+large screen sizes. The owner added, on 10 November 2026: a measure tool and
+live yardages, copy and paste, a hole navigator, brightness and contrast for
+the picture, a clear step from the builder into the game, a player's guide
+with screenshots shipped in the zips (`Fairway Builder Guide.html`, kept
+current by every builder change: AGENTS.md's documentation list), a test
+that old course files and drafts still open, and **the auto trace moved into
+an Experimental menu** ("so that users dont think its going to do a good
+job"), with no more work on its accuracy.
+
+Nothing is built yet. The full brief, with the targets, the order of work
+and the graphics-card precautions, is local: docs/studies/builder-ux/GOAL.md.
+Findings, decisions and what was rejected go into this section as the work
+lands.
+
+### Every builder journey green (10 November 2026)
+
+The goal's first job: the builder's smoke had run 6 of 8 since before the
+frame-rate goal, the same two failing on main. Both were found before
+anything changed:
+
+- **builder-door-2** (harness wrong): it expected the Scottish Links' round
+  shrubs in the 3D editor. Seaside Links, which replaced it on 8 November,
+  grows shore pines, drawn as cones (tree-shape.js `standIn`); the journey
+  looked only at round crowns and found none, so the tree-size check read 0.
+  It now checks the cones, and only meshes that hold trees.
+- **builder-door-2-worthington** (harness wrong twice, the builder once):
+  it expected Heartland where the landscapes now say Classic Parkland. Then
+  **a real bug**: a press within 12 pixels of *any* hole's mark picked that
+  mark up and made its hole the current one, so placing the 10th tee beside
+  the 9th green took the 9th green -- nine of Worthington's eighteen holes
+  could not be marked by clicking. Now a press on another hole's mark waits:
+  a drag of 5 pixels takes it, a click places the mark in hand on the hole
+  being marked (hole-marks.js `pressOn`; tests/builder-marks.test.mjs). The
+  current hole's own marks pick up at once, as before. Then the harness ran
+  out of memory handing the 49-megabyte file to the game as an array of
+  numbers; it goes as base64 now.
+
+All eight pass (builder-ux, 10 November 2026). The owner, the same morning:
+Worthington's OpenStreetMap holes are "completely wrong. Many holes pointing
+to the wrong place" -- the journey clicks where the map says, which tests the
+clicking, not the course; wrong map data is item 24 of the goal.
+
+### The new layout, first stage (10 November 2026)
+
+Door 2 is now laid out as a paint program (items 8 and 5 of the goal, the
+first stage; the 3D editor follows): **menus** along the top (File, Edit,
+View, Tools, Help; menu.js, with the rules in shortcuts.js and a Node test),
+every command with its key and the keys working everywhere but a text box;
+a **step bar** of chips (done ticked, current filled, unreachable dimmed
+with the reason) with what the step still needs and **one Next button** at
+its right end; a **tool palette** of icons with their keys down the left of
+the plan (TOOL_LIST in door-real.js); the step's **panel on the right** --
+in the trace step Tool options (only the tool in hand's), Layers (the chosen
+one marked, and a line saying what a stroke on it goes under), Skin from the
+land in its own box, then folding sections (OpenStreetMap, Picture, Viewing,
+Landscape, Course boundary, Clean up, Experimental), which are open is kept
+for the session; and a **status bar** of one fixed height with Undo, Redo,
+what the tool does, what just happened (each cut to one line, the full text
+on hover), the pointer's place and the ground's height, and the zoom.
+
+Rejected on the way: a status bar that wraps. The first build let a long
+message wrap to a second line, which made the bar taller and moved the plan
+under the mouse mid-drag (the builder-door-2 journey's picture drag lost
+4 m of its 4 m north). One line each, cut short, is steadier.
+
+**The auto trace is in Experimental now** (item 23; the owner: "so that
+users dont think its going to do a good job"), in the trace step's folding
+section and under Tools > Experimental, with a line saying what to expect;
+**Manual trace** became **Draw it myself**, beside OpenStreetMap as the two
+ways to start. Not seen by a person.
+
+### The pen and the steadied brush (10 November 2026)
+
+Items 3 and 2 of the goal, on door 2's plan (the 3D editor follows with its
+layout). **The pen** (pen.js): a node at every click, the curve through them
+drawn live on to the pointer, a dotted line back to the first node, the
+first node growing yellow when a click there would close the shape; closed,
+the shape fills faintly and its nodes drag; Enter or Apply fills it. The
+same pen for Outline fill, Tree zone, House zone, the boundary and creeks.
+The fill is the curve shown, not the nodes' polygon smoothed afterwards.
+**The steadied brush** (steady.js): Paint, Erase and Erase all trail the
+pointer on a string (Steadiness, 50 by default), lay their dabs evenly, catch
+up when let go, and smooth the stroke's edge inside the stroke. Numbers and
+sources: RESEARCH, *The builder's pen and steadied brush*. Checked by the
+builder-door-2 journey (the pen's nodes, Backspace, closing on the first
+node, a dragged node, the bowed fill; a shaky stroke 12.5 m wide plain and
+7.5 m steadied). Not seen by a person.
+
+### The 3D editor: one brush, one pen, menus (10 November 2026)
+
+The editor's Paint and Outline groups listed every surface of the landscape
+as a button each -- 22 buttons that were two tools. Now **Surfaces** holds
+one **Paint brush** and one **Pen** for the layer chosen in its list or by
+clicking a row of Layers (the chosen row marked), with the line saying what
+it goes under, Erase, Erase all, Smooth edges and Skin from the land. The
+brush is steadied (steady.js, as door 2's: the string measured in metres
+where the stroke starts, from the camera); the pen draws pen.js's curve
+through the nodes and fills it (the first node, a double-click or Enter;
+Shift for a corner; Backspace). **PLACED:** in 3D a click on the first node
+fills at once -- there is no adjusting the nodes after closing, as there is
+on door 2's plan, because a node on uneven ground is hard to pick up again in
+perspective. **The menus** (useMenus) give the editor File (Save a copy to
+share, Back to 2D, Close), Edit, View (From above F, This hole, Game view G)
+and Tools with keys; W, A, S, D, Q and E are left to the camera's flying, so
+Erase and Smooth edges have no key here. **Not done:** the editor's left
+column is still a column of grouped buttons, not door 2's icon palette with
+the options on the right. The journeys choose the layer and press the one
+brush or pen. Not seen by a person.
+
+### Layers made clear, steps that say what they are for (10 November 2026)
+
+Item 1 (the owner: the layer rule "is great. Its just not clear thats how it
+works"): the layers' shown/hidden word buttons are **eyes** (icons.js
+`eyeButton`, both editors), struck through and red while hidden; the chosen
+layer is marked; under the "Painting" choice a line says what the layer goes
+under; and when a brush stroke in door 2 went in under a higher layer, its
+path flashes yellow for under two seconds where it went and the status bar
+says so ("The semi-rough went in under the sand and fairway, which stay on
+top"), the first time with the rule in words (door-real.js `underNote`).
+Rejected: drawing the hidden part of every stroke for as long as it is
+hidden -- the plan would show two layers at once and read as a mistake.
+Item 5: each step's panel opens with a line saying what the step is for
+(`INTRO`). The tool preview, which sat over a corner of the plan, folds to
+its title line (preview.js). Checked by the builder-door-2 journey (the line
+and the message for semi under sand). Not seen by a person.
+
+### Skin from the land, given its place (10 November 2026)
+
+Item 4 (the owner: "amazing, sets it apart"). Its output is unchanged. On
+door 2's plan it has its own box under the layers; it says what it painted
+in hectares ("scree on 3.2 ha of steep ground, hardpan on 5.1 ha below
+it"); and **Before (hold)** draws the trace as it was before the skin for as
+long as it is held (Space or Enter toggles it from the keyboard). PLACED: a
+held button rather than a slider between the two -- the eye compares two
+whole pictures better by flicking than by a wipe. The 3D editor keeps its
+button in Surfaces, with no compare. Not seen by a person; no journey runs
+the skin on a survey steep enough (tools/capture/builder-skin.mjs does, on
+real courses).
+
+### Sharp pictures (10 November 2026)
+
+Item 7. In the United States the first picture source is now USGS's NAIP Plus
+image service, asked for 1,024-pixel blocks at the land's own cell size (never
+finer than 30 cm): on Worthington, 0.30 m a pixel against the tile cache's
+1.73 m. The tile cap is 640, up from 400, so a big course keeps its zoom.
+Details and the measurement: RESEARCH, *Sharper pictures for the builder*.
+Checked by the builder-door-2 journey (offered first, asked for blocks, with a
+stand-in server) and tests/imagery.test.mjs. Not seen by a person in the
+builder; the saved file's growth not measured.
+
+### Build it for me (10 November 2026)
+
+Item 6. Door 2's own steps run in turn (`buildForMe`). As first built, at
+the top of door 2's first step: a course's name and one press -- the place (a
+golf course on the map wins over the town it is named after; several of the
+same name are listed to pick from, and the build goes on), the USGS survey
+covering most of a 1.5 km square round it. **Since the later pass the same
+day** (*One search bar for both ways*, below) it starts from the course found
+and boxed on the map in **Find the course**, after a warning: the USGS survey
+covering most of the box (newest on a tie) downloaded through Entwine, the
+land, the first free picture source (USGS NAIP in the US), OpenStreetMap laid
+and refined with the LIDAR, the club's holes, boundary and name; then the
+review, or the holes step if the map left holes unmarked. It stops with
+what to do by hand when there is no survey that downloads in the page, or
+no course on the map. The folder for the LIDAR is asked for first, while the
+press still counts. **Worthington Country Club, real services: 3 min 52 s,
+18 of 18 holes** (RESEARCH, *Build it for me, on a real course*); the
+builder-build-for-me journey runs it with every service stood in for. Not
+yet: a Cancel between the steps (each step's own wait has its words; the
+OpenStreetMap wait has its Cancel). Not seen by a person.
+
+### Checking the map (10 November 2026)
+
+Item 24 (the owner: "a solution for incomplete OSM data"; Worthington's map
+"completely wrong"). The holes step opens with **Checking the map**
+(map-checks.js): what the map holds against what the course needs, and each
+thing to check with Show and, where one suits, Fix, red rings on the plan,
+and Take the fixes offered (three rounds, a plain button that says they are
+guesses). Build it for me stops on the holes step when there is anything to
+check, saying how many holes and whether the map is unreliable; and when
+OpenStreetMap does not answer it says so and leaves the trace step ready to
+ask again (it used to start a blank trace, which read as "no course here").
+On Worthington: 9 of 18 holes flagged, the map called unreliable; the fixes
+straighten the lines down the fairways but cannot settle the map's numbering
+(RESEARCH, *Checking OpenStreetMap's holes, on Worthington*). Checked by the
+builder-build-for-me journey (a club with one hole drawn wrong). Not built:
+typing the card's yards as a witness; scoring on damaged maps of the bench
+courses. Not seen by a person.
+
+### Measure, live yardages, copy and paste (10 November 2026)
+
+Items 17 and 18, on door 2's plan. **Measure** (M) draws a line between two
+clicks with its yards, metres and the rise or fall from the land
+(door-real.js `measureWords`); while a hole's aim point or green is placed,
+the yards from the back tee (or the last aim point) follow the pointer, with
+the yards along the hole when placing a green after aim points. **Copy,
+Paste at the pointer, Duplicate, Delete** (Ctrl+C, Ctrl+V, Ctrl+D, Delete in
+the Edit menu) work on what Select shape has chosen, through trace-edit.js
+`copy` and `remove` (one undo step each; a deleted shape comes off its own
+layer only). PLACED: a paste lands centred on the pointer, Duplicate 15 m to
+the south-east; the copy comes selected. The 3D editor has neither yet. Not
+seen by a person.
+
+### The hole navigator and the overview map (10 November 2026)
+
+Item 19, on door 2's plan. A hole clicked in the holes list or the scorecard
+is framed from its tees to its green with 45 m round it (`frameHole`); View
+has This hole, framed (Shift+F), Next hole (.) and Previous hole (,) from
+the trace step on, and Whole land (F). Zoomed in, an **overview map** of the
+whole land (180 pixels) sits in the plan's corner with the view outlined;
+a click moves the view there. Its picture is taken from the plan whenever
+the whole land is in view, so it shows what the plan last showed whole.
+PLACED: no overview in the 3D editor (it has From above and This hole).
+The builder-build-for-me journey presses "." on the holes step. Not seen by
+a person.
+
+### Deleting ponds, creeks and the rest (10 November 2026)
+
+Item 9 (TODO: "The editor cannot move or delete a pond or creek once
+drawn"). In the 3D editor, **Delete** (the key, or Edit > Delete what is
+selected) takes away what Select shape chose: a pond with its water body, a
+creek (now pickable within its half-width and 2 m of its line), a surface
+shape off its own layer, a tree, a rock or a house; one undo each
+(editing.js `removePick`). In door 2 a creek line is selected and deleted
+the same way (trace-edit.js). PLACED: a creek is not carried -- its channel
+is cut into the land, which a carry cannot lift -- so it is deleted and drawn
+again; a deleted pond's bed and creek's channel stay in the land, as a moved
+pond leaves its pit, for Fill to surrounding. Not done: adding and removing
+holes in the 3D editor (door 2 has 9 or 18 and Clear this hole). The
+builder-tools journey deletes the pond it drew and undoes it.
+
+### Doglegs from the trace (10 November 2026)
+
+Item 10 (TODO: built holes ran straight from tee to green, so golfers aimed
+through trees and yardages ran short). map-checks.js `bendFor` finds the
+bend that keeps a hole on its fairway; **Find the doglegs** in the holes
+step bends every hole that needs one; Build it for me bends only those
+already mostly on the fairway, and offers the bend as the fix for a hole
+flagged off the fairway -- so a hole the map drew wrong is not bent into
+looking right (RESEARCH, *Doglegs from the trace*). A saved file plays as
+saved; no version moves. Not played by a person.
+
+### Never losing work: the kept draft (10 November 2026)
+
+Item 12. Door 2's draft (the same as Save writes) is kept in the browser's
+IndexedDB (autosave.js, its own database `fairway-builder-autosave`) at each
+step and every 3 minutes once there is land, quietly, and on leaving the
+page; a keep asked for while one is being written runs after it, so the
+latest is kept. Door 2 opened fresh offers it back (name, step, time) with
+Bring it back or Discard; a Save to a file drops it. **Found on the way:**
+the first build shared the LIDAR folder's database name, `fairway-builder`,
+at version 1 with no store for it, so every keep failed silently; and Build
+it for me named a course the map leaves unnamed "A golf course"
+(osm-course.js's word) -- it takes the place's name now. PLACED: one draft
+kept, door 2 only (the 3D editor's work goes into door 2's draft through
+Back to 2D, and is saved with Save). Checked by the builder-build-for-me
+journey. Not seen by a person.
+
+### The picture's brightness, contrast and date (10 November 2026)
+
+Item 20. Viewing has **Picture brightness** and **Picture contrast** (50-180%
+and 50-200%) and Reset: a canvas filter on the picture layer as the plan
+draws it (plan-view.js `setFilter`); the picture kept in the file is not
+changed. **When it was photographed**: for USGS NAIP the newest primary
+photograph under the land's centre, from the service's catalogue
+(`identify`; imagery.js `dateAt`, tested) -- Worthington's is 21 August
+2021, NAIP at 0.6 m -- shown under Showing. Not kept in a draft yet (shown
+again when fetched again); Google and Bing give no date here. Not seen by a
+person.
+
+### From the builder into the game (10 November 2026)
+
+Item 21. Door 2's review ends with **Play it in Fairway**: **Save the course
+for Fairway** writes the .fairway file straight from there (the course with
+door 2's draft inside it, as the editor's Save writes) -- until now the
+review's only Save in the top bar wrote the `.fairway-draft`, which the game
+does not open, and the course file came only from the editor -- and two
+steps say what to do with it in Fairway (Saved courses > Import courses
+from a file, or drop it there). The builder-build-for-me journey saves it
+there and plays a tee shot on it in the built game. PLACED: no button that
+opens the game itself -- the two are separate files a page cannot open for
+the player. Not seen by a person.
+
+### Named undo and a history (10 November 2026)
+
+Item 11, door 2. The trace's undo steps carry no names, so door-real.js
+keeps a list of names beside them (`names`): a change made with a plan tool
+is named after the tool, one made with a panel button after the button, a
+shape closed with Enter after the tool; Undo and Redo move the names along.
+The Edit menu says "Undo Outline fill", the status bar says what was undone,
+and the trace step's **History** fold lists the last 15 changes with **Back
+to here**. PLACED: names kept for the session only, not in a draft; the 3D
+editor's Undo is not named yet. The builder-door-2 journey checks a pen
+fill is named Outline fill. Not seen by a person.
+
+**A gap found by the evidence pictures (10 November 2026, after the
+hand-over):** Paste, Duplicate and Delete, made with their keys or the Edit
+menu, went into the undo with no name -- the History fold said "nothing yet"
+after a Ctrl+D, and Edit said plain "Undo". The names were taken only from
+plan tools, panel buttons and Enter. The three menu entries now name their
+change (`named` in door-real.js), and the builder-door-2 journey checks
+Ctrl+D is named Duplicate and Delete is named Delete.
+
+### Screens that fit (10 November 2026)
+
+Item 15. The builder-build-for-me journey sets the window to a small
+laptop's 1366 x 768 and to 2560 x 1440 and fails if the step bar's Next, the
+status bar, the side panel or the palette leaves it, or the page scrolls
+sideways; both pass, pictures in bench/shots/builder-smoke. On short
+windows (under 860 pixels) the palette's buttons are shorter so all of it
+shows, and the tool preview starts folded (open, it covered a quarter of the
+plan at 768). Not checked: a 4K screen at 150% scaling itself (the journey
+can only change the window, not the screen's scaling), and phones, which
+are out of scope. Not seen by a person.
+
+### First visit and plain words (10 November 2026)
+
+Items 13 and 14, a first pass. The three doors say what each is for in a
+player's words, door 1 as the place a first visit tries every tool with
+nothing to download (PLACED: door 1 is the sample course -- it needs no file
+and no connection; no separate sample file ships); the home line points at
+Help > Keyboard shortcuts. Each step's panel opens with a line on what the
+step is for (`INTRO`), and every tool has its line in the status bar.
+Not done: a sweep of every tooltip (tips.js) and message for words like
+LIDAR, EPT, DEM or cell -- some remain where they are the subject (the LIDAR
+search). Not seen by a person.
+
+### The picture drawn as sharp as its source (10 November 2026)
+
+Item 7, finished. The plan drew the picture on the land's cells, so a 1 m
+land showed a 30 cm photograph at 1 m -- the guide's first pictures showed
+it blocky. Now the plan draws it on a grid of its own (`finePicture`;
+plan-view.js `setLayerCanvas`), as fine as the photograph's zoom, at most
+about 36 million pixels, while the trace still reads the picture on the
+land's cells; and the picture is fetched at 30 cm again, as the tile cap
+allows (Worthington: about 0.43 m; the draft 33 MB, was 30). The placing is
+a flat map fitted from 25 exact points (exact per pixel took seconds). Seen
+in the guide's pen picture. Not measured: the plan's frame time with the
+larger picture (a drawImage of one canvas a frame).
+
+### Where the builder-ux goal was handed over (10 November 2026)
+
+- **Every builder journey passes** (nine: builder-build-for-me is new), and
+  npm test (1,550 tests; it found four new buttons with no tooltip, fixed).
+- **Frame rate on Dinosaur Mountain, High, this PC** (tools/builder-frames.mjs,
+  main's builder at 4c39aa5 against this branch's, one run each, bench/ab
+  bux-main and bux-branch, local): opening the file 17.8 s and 16.4 s; Game
+  view 37.9 s and 35.3 s; the editor 0.5 ms of processor a frame both; Game
+  view's frames 8.6/8.7, 6.3/6.3, 6.7/6.7, 3.1/3.1 and 2.5/2.4 ms --
+  the same within noise. The branch's editor run read no graphics time (the
+  probe's one gap; its processor time matches).
+- **The fingerprint is silent**: no generated ground moved; no version moves.
+- **The guide** is built by `npm run build` (dist/builder-guide.html, 1.4 MB)
+  and its pictures were taken from the final build.
+- **Open, with what to try by hand**: TODO.md, *The builder made easy*.
+
+### Adding and removing holes in the 3D editor (10 November 2026)
+
+Item 9, finished. Under Holes: **Add a hole** puts a new hole after the last,
+its back tee where the view is centred and its green 300 m on the way the
+camera faces, par 4, selected and framed for its markers to be dragged; and
+**Remove this hole** (asked once) takes the selected hole out and renumbers
+the rest. A course keeps at least one. One undo each (editing.js `addHole`,
+`removeHole`, tested); the builder-tools journey adds one and removes it.
+PLACED: 300 m and par 4 for a new hole. Not seen by a person.
+
+### The card as a witness (10 November 2026)
+
+Item 24. Checking the map has **Check against the scorecard**: the club's
+yards from the back tees pasted or typed in any layout -- map-checks.js
+`cardFrom` takes the numbers from 50 to 800 in order, leaving out hole
+numbers and totals (tested) -- and every hole more than 12% and 40 yards off
+its card is listed with the other doubts. Kept for the session (not in a
+draft). The builder-build-for-me journey pastes a card with hole 1 at 420
+yards and finds hole 1 alone flagged. Not seen by a person.
+
+### First-visit tips (10 November 2026)
+
+Item 13, finished. Each door 2 step's line is a tip until **Got it** closes it,
+remembered in the browser (localStorage, `fairway-builder-tips-seen`); Help >
+Show the step tips again brings them back, and Help > The builder guide says
+where the guide is. Door 1 stays the sample course (no file, no connection).
+The builder-build-for-me journey closes the first tip and finds it gone when
+door 2 opens again. Not seen by a person.
+
+### Plain words, the sweep (10 November 2026)
+
+Item 14, finished. Every tooltip (tips.js, 120 lines) and every message door
+2 shows was searched for the builder's own words -- EPSG, raster, mask,
+codes, cells, EPT, DEM, gridder -- and read: none was left in what a player
+sees but "cells" in one tooltip (now "the squares it was painted in"); LIDAR
+stays where it is the subject, explained the first time ("the laser survey of
+the ground") in the first step's tooltip, its tip and the doors. The 3D
+editor's status lines (HINT) were read the same way and kept.
+
+### The 3D editor's palette (10 November 2026)
+
+Item 8, finished. The 3D editor's tools are an icon strip down the left edge
+(editor.js `PAL`, `buildPalette`; icons.js gained the ground tools and the
+pond), with the keys in the corners as on door 2's plan; the column beside it
+keeps only the tool's options (brush, what it lays, the tree's kind and
+height), Surfaces (the layer, what it goes under, Skin from the land), Clean
+up, Ground cover's kinds, Layers and Trees' choices. Each palette button
+keeps its tool's name and `data-tool`, so the journeys run unchanged; all nine
+pass. Not seen by a person.
+
+### The map checks, scored on 16 real courses (10 November 2026)
+
+Item 24's last part. tools/map-checks-bench.mjs damages each hole of the
+bench courses in turn: a wrong green is caught every time, a moved tee 96%,
+a missing green every time; 13% of holes raise a false alarm as built. The
+fix for a wrong green was right only 14% of the time and wrong 59%; it now
+offers only a green no hole finishes on, which is right 62% and wrong 29%
+(RESEARCH, *The map checks, scored*). The journeys pass with it.
+
+### The final checks, on the finished branch (10 November 2026, 06:10)
+
+After the last items (the 3D palette, holes in 3D, tips, the card, the
+scored map checks): **all nine builder journeys pass**; **npm test: 1,552
+tests, 1,551 pass, none fail** (one is the suite's standing to-do); the
+guide's pictures retaken from the final builder; dist/ rebuilt. **Dinosaur
+Mountain, High** (builder-frames, bench/ab bux-final against bux-main):
+opening the file 16.8 s (main 17.8); Game view 39.0 s (main 37.9 -- the
+difference is all in "Preparing the graphics", which swings 19-25 s run to
+run of one build, frame-rate goal); the editor 0.4 ms of processor a frame
+(main 0.5); Game view's frames 8.5, 6.1, 6.6, 2.9 and 2.6 ms (main 8.6, 6.3,
+6.7, 3.1, 2.5). The same within noise. Measured again after the hand-over, on the
+final build, main and the branch alternated four times on one card (bench/ab
+bux-ab-main1-4, bux-ab-branch1-4), averages main then branch: opening 16.9
+and 16.7 s; Game view 36.9 and 36.9 s (each ranged 36.0-38.1 and 35.9-38.9 --
+the 1.1 s gap above was run-to-run noise); the game's frames on the graphics
+card 9.16 and 9.13 ms opening, 6.25 and 6.27 hole 1, 6.56 and 6.48 hole 5,
+3.54 and 3.57 hole 9, 2.92 and 2.95 flying; the editor 0.47 and 0.43 ms of
+processor. **The editor's graphics-card reading is missing on some runs of
+both builds** (main 3 of 4 read, the branch 2 of 4: a frame of about half a
+millisecond is too little for the card's timer every run); in the last pair
+both read 1.34 ms. Two more pairs (bux-ab-main5/6, branch5/6) with the
+sample taken up to three times when no card time came: main's editor read
+none in either run, all three tries -- when the card's timer fails, it fails
+for the whole page, so the retry was taken out again. Every editor reading
+over six pairs: main 0.99, 1.00, 1.34 ms; the branch 0.92, 1.23, 1.34, 1.34
+ms -- one spread, the same in the pair where both read, with the branch
+drawing 190 draws a frame to main's 192. Game view in those two pairs was
+slower on both (main 48.0 and 42.3 s, the branch 43.3 and 41.2), the branch
+quicker in each pair. Then six alternated pairs of the editor alone
+(`builder-frames.mjs --editor-only`, bench/ab bux-ed-*): the card's time read
+on 1 of main's 6 runs and 3 of the branch's 6, and every reading, either
+build, was 1.34-1.35 ms (pair 1, both read: main 1.35, the branch 1.34); the
+processor 0.4-0.5 ms on both. Over all eighteen pairs the editor's card time
+is the same on both builds. The branch is no slower anywhere.
+
+### The map first, then the box, then the LIDAR (10 November 2026, after the hand-over)
+
+The owner, reading the hand-test list: "For grabbing lidar, we need to reverse
+the order of these things. We need to search, grab the map from a large area
+surrounding, display that map, then allow the user to square off the course,
+from there we will grab LIDAR."
+
+**Before**: Find LIDAR took a place by name, a square round the point the
+name was found at (1.5 km unless changed, 1 to 3 km), and searched and
+downloaded that square; only then did the relief show where the course was,
+and the property was drawn inside what had been downloaded. The point a name
+is found at is the club's middle at best and a town's middle at worst, so the
+square was guessed blind: too small and the course's far holes had no LIDAR
+(found only after the download), too big and the download carried ground no
+course needed.
+
+**Now** (door-real.js `fetchMap`, `boxChosen`, `leaveMap`): the place picked,
+the aerial map of a 5 km square round it comes up on the plan (**Map 3, 5 or
+8 km across**), with a gold pin where the name was found. The left button
+drags a box round the course on it (up to 3 x 3 km, like the property; a
+click without a drag keeps the box there was), and **Search for LIDAR** waits
+for the box (since the pass after: **Build it for me** and **Build it
+myself**, *One search bar for both ways*). Only the box, and 150 m past it for the land beyond the course
+(`growBox`, GRID_MARGIN), is searched and downloaded. When the LIDAR is in,
+the relief takes the map's place and the box is the property; a drag on the
+relief changes it. LIDAR files of one's own skip the map, as before.
+
+- **The map is a plan of its own** (imagery.js `mapFrame`): the mosaic's
+  pixels laid flat in metres, its middle at 0, at Web Mercator's scale at its
+  middle -- across 8 km it drifts by about 0.06% at the edges, under 3 m, which a box
+  round a course does not need; longitude and latitude go through the tiles
+  exactly (tests/imagery.test.mjs). Nothing else is drawn in its frame: the
+  plan's land is the map's until the LIDAR comes, and every other step
+  leaves it (`leaveMap`).
+- **From the USGS tile cache, not the sharpest service.** At about 2 m a pixel
+  (PLACED: fairways and greens plain to see) the tiles are the same NAIP
+  photographs, and came in 1 s for Worthington's 5 km map; USGS NAIP Plus,
+  which draws each block when asked, took 32 s for the same map. A free tile
+  cache is taken first, then any free source, then Google or Bing where a key
+  was given; with none, the box is a 1.5 km square round the place, as before.
+- **The property is a little larger than the box drawn**, by the survey
+  grid's turn: the box is drawn north-up, and the property is the square of
+  the survey's grid (UTM) that holds its four corners. At Worthington, UTM's
+  north is turned about 1.8 degrees, and a 1,500 m box made a 1,549 m
+  property (the builder-lidar-folder journey). The old square had the same.
+- **A kept download names both sides when it is not square**
+  (`squareName`, `squareOfName`: `_1220x1250m.ept.zip`). Before, only the
+  height was written, and a combined box -- two squares that touch -- read
+  back as a square of that height, wrong in its width; a square keeps its
+  old name, so every ZIP already in a LIDAR folder reads as before.
+- **Build it for me was left as it was in this pass** -- one press, a 1.5 km
+  square round the place, no stop for a box -- on the reasoning that drawing
+  the box first would cost the one press. **The owner overruled that the same
+  day** (*One search bar for both ways*, next): the box is drawn first for
+  both. Reading the club's own outline from OpenStreetMap before the LIDAR,
+  to box it without asking, is still not built (OpenStreetMap is read after
+  the land, `loadOsm`).
+- Found on the way: a step whose tip had been closed with Got it showed the
+  word "null" at the top of its panel (`introFor` returned null into
+  `replaceChildren`); fixed.
+
+Seen: the builder-door-2 journey (the map from a stand-in tile cache, a 1,200
+x 900 m box dragged, Search for LIDAR -- Build it myself since -- waiting for it) and builder-lidar-folder
+(a 1.5 km box dragged, downloaded, kept, read back, the property from it); all
+nine journeys pass. On real services, Worthington Country Club by name: the
+map in about a second, a 1,220 x 1,250 m box round the course, three USGS
+surveys each covering all of it (bench/shots/map-first.mjs, local; the guide's
+picture `map-box`). The download from the box and the land built from it on
+real services were not run. **Not tried by a person.**
+
+### One search bar for both ways, and the land built on Next (10 November 2026)
+
+The owner, the same day: "build it for me needs to also do this as well. We
+should combine the 'search' bar for both into one search bar" -- search the
+course, box it off, then **Build it for me** ("this should show a disclaimer
+that it might not always get it right") or **Build it myself**; and "When you
+click build the land, the generator should immediately start building, no
+need to have an extra click here as the box around the course is already
+set."
+
+**Now** (door-real.js `findField`, `findPlace`, `askForMe`, `buildForMe`,
+`enter`):
+
+- **One field, Find the course.** Build it for me's own name field is gone.
+  Find takes a golf course on the map at once when the search finds exactly
+  one (over the town it is named after, as Build it for me did); otherwise
+  the list, golf courses first, each a button. A single place that is not a
+  golf course is still listed to click (the owner, 1 November 2026: results
+  that read as clickable), not taken.
+- **Two buttons under the map, both waiting for the box**: **Build it for
+  me** and **Build it myself**. Build it myself is the old Search for LIDAR
+  under a new name: every source over the box, a survey picked, each step by
+  hand.
+- **Build it for me warns first** (`askForMe`): "It might not always get it
+  right", why (OpenStreetMap's map can be wrong or missing: a hole the wrong
+  way, a green or tee missing, a bunker off its place), that its doubts show
+  on the holes step and every hole wants looking over; **Build it** builds,
+  **Cancel** closes it. Asked every time, not remembered (PLACED: a build is
+  minutes of downloading, one more press is cheap beside it, and the warning
+  is the point). The build is as before, over the box: the survey covering
+  most of the box, the box as the property (`previewLand` with
+  `st.findBox`). Where no free map covers the place, the box is the 1.5 km
+  square round it, as for Build it myself.
+- **Next: build the land builds at once** (`enter`, the step bar's Next and
+  its chips): into the land step with the property boxed and no land yet, the
+  build starts without the Build the land press. Land already built is built
+  again by Next only when the box changed since (`st.landBox`) and nothing
+  is traced yet -- a rebuild clears the trace, so once there is one, it waits
+  for **Build it again** (PLACED). A second build while one runs is refused
+  (`st.building`).
+
+Rejected: a disclaimer shown once and remembered (the owner asked for it on
+the press); keeping a separate name field for Build it for me (the request
+was one bar); auto-taking any single result (it would undo the 1 November
+clickable-results request for towns and places).
+
+Seen: all nine builder journeys pass -- builder-build-for-me now finds the
+club by name in the one bar (taken over its town without a click), drags a
+1.5 km box on a stand-in map, checks both buttons wait for it, the warning,
+Cancel closing it, Build it, and the box as the property (1,495-1,580 m);
+builder-door-2 checks Next starts the land; builder-lidar-folder uses Build it
+myself. The guide's `build-it-for-me` picture is the warning over the
+Worthington box. Not run on real services since; **not tried by a person.**
+
+### Six tee sets, the pen without Apply, and no guessed greens (10 November 2026)
+
+The owner tried the branch and reported: Build it for me good; the map
+checks' warnings point to real issues; the pen mostly good but "we dont need
+to have an apply button"; the brush great; layers good; saving good; the
+quick checks good. Then three changes and a new feature:
+
+- **The pen closes and fills at once** (door-real.js `onTool`): a click on
+  the first node, or Enter, or a double-click, closes the shape and fills
+  it; the closed-but-unfilled state (nodes dragged, then Enter or **Apply**)
+  is gone, and so is Apply. Ctrl+Z takes a fill back. Rejected: keeping node
+  dragging after the close (it is what made Apply necessary).
+- **No guessed green for a hole drawn to the wrong one** (map-checks.js):
+  "we should just remove the green fix attempts then and just tell the user
+  it needs fixing". Off the fairways, sharing a green or crossing another,
+  a hole is flagged "needs fixing by hand"; the orphan-green rule (62%
+  right, 29% wrong; RESEARCH, *The map checks, scored*) is removed. A mark a
+  few metres off its green or tee keeps its Fix, and a line off the fairway
+  keeps the bend down it, offered "if its green is right".
+- **Six tee sets** (src/tees.js, the owner: "up to 6 tees ... black -> blue
+  -> white -> silver -> gold -> red. This needs to feed from the open street
+  map data. Generated courses should still just have 3 tees"):
+  - the builder marks tees by set (the holes step's six coloured buttons,
+    the 3D editor's six); its scorecard has a column for each set the
+    course has;
+  - from OpenStreetMap, `osmTeeSets` reads `tee=*` tags and the holes'
+    `dist:*` keys, and `fitHoles` gives each traced tee box its sets (a
+    tagged box its tags; the rest the course's sets by distance, a box
+    carrying several when a hole has fewer boxes than sets -- first built a
+    set a box, which left a one-box-a-hole course with one set). The rules
+    and what real maps hold: RESEARCH, *Tee sets from OpenStreetMap*;
+  - the game plays a built course's sets (built-world.js `builtLine` with
+    the course's `courseSets`), lists them on each golfer's seat, in the
+    round's tee choice, **Playing tee** and the scorecard, and plays the
+    nearest a course has for a set it lacks; a generated course keeps blue,
+    white and red; an older built file plays as before (PROJECT_HANDOFF,
+    *A BUILT COURSE IS A WORLD FROM A FILE*, (24));
+  - a draft from before reads its back, middle and front as blue, white and
+    red.
+- **Tee markers inside narrow built tees** (renderer.js; the owner: "Our tee
+  markers need to stay inside the teebox on built courses"): each comes in
+  until it is six inches inside the traced box (`h.onTee`); sets sharing a
+  box stand side by side.
+
+Seen: npm test passes (tests/tees.test.mjs new; round-tees, osm-course,
+builder-map-checks, builder-tips changed); all nine builder journeys pass
+(build-for-me: its course's tees all of the six, blue, white and red from
+the stand-in map; the wrong hole flagged with no green guessed; door-2: the
+pen filling on the first node with no Apply, a one-set scorecard); npm run
+smoke (see TESTING). **Not seen by a person**: the six tees in a round, the
+markers on a real narrow tee, the holes step's six buttons.

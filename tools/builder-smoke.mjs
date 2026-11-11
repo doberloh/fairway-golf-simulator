@@ -63,6 +63,15 @@ async function run() {
    // hidden, so Save downloads as in Firefox; a journey that tests the dialog's
    // one-click resave puts a stand-in back (door-real.mjs).
    await context.addInitScript(() => { window.showSaveFilePicker = undefined; });
+   // THE FOLDING SECTIONS OPEN (the builder-ux goal, 10 November 2026): door
+   // 2's side panel folds its sections (details.cb-fold), and a journey clicks
+   // buttons inside them as a player would after opening one. Every section is
+   // opened as it appears, unless a journey asks to see them as they start
+   // (window.fairwayKeepFolds); builder-door-2 checks the folding itself.
+   await context.addInitScript(() => {
+    const openAll = () => { if (!window.fairwayKeepFolds) for (const d of document.querySelectorAll('details.cb-fold:not([open])')) d.open = true; };
+    new MutationObserver(openAll).observe(document, {childList: true, subtree: true});
+   });
    const page = await context.newPage();
    const errors = [], requests = [], allow = [];
    page.on('pageerror', e => errors.push('pageerror: ' + e.message));

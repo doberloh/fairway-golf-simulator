@@ -239,6 +239,11 @@ file is indistinguishable from a forgotten one. What each holds:
 - **REFERENCES.md** -- every outside source behind RESEARCH and
   LANDSCAPE_RESEARCH.
 - **PLAYING.md** -- everything a player can see, set or press.
+- **BUILDER_GUIDE.md** -- the player's guide to the Course Builder, with
+  screenshots, shipped in the zips as `Fairway Builder Guide.html`. Any
+  change to the builder updates its words, and a changed screen retakes its
+  pictures (`tools/capture/builder-guide.mjs`). (The owner, 10 November
+  2026.)
 - **README.md** (root) -- what the project is, how to build it, what the
   repository holds, what is claimed.
 - **docs/README.md** -- the index; a document added, removed or renamed is not
@@ -283,7 +288,8 @@ browser pane, `npm run profile`. Earlier permission does not carry over -- the
 exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
-merged (9 November 2026; RULES_HISTORY.md).
+merged (9 November 2026; RULES_HISTORY.md). The builder-ux branch's ended
+when it was merged (10 November 2026).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.

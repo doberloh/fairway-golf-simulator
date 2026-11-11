@@ -17,11 +17,20 @@
 // - ON THEIR GREENS AND TEES: a hole line is drawn by hand, its ends near the
 //   green and the back tee; `fitHoles` puts each green mark on the traced
 //   green it reaches (its middle when the mark was off it or by its edge),
-//   and gives each hole the tee boxes along its first stretch -- the farthest
-//   its back tee, the nearest its front, the rest middle -- so a hole has the
-//   tees the course has, not one point.
+//   and gives each hole the tee boxes along its first stretch, so a hole has
+//   the tees the course has, not one point.
+// - THEIR TEE SETS (tees.js; the owner, 10 November 2026: up to six, "This
+//   needs to feed from the open street map data"). A hole line's own tee
+//   names none (set null) and, with no box to stand on, carries every set
+//   the course has. A box the map tags
+//   (tee=blue, tee=blue;white) is that set, or those; the rest take the
+//   course's sets by distance, the farthest box the longest set. The course's
+//   sets: those the map's tags name; else the hole lines' dist:* keys (TPC
+//   Scottsdale's four: championship, players, resort, forward); else as many
+//   as the holes most often have boxes (`osmTeeSets`, `fitHoles`).
 // Pure (no DOM); tests/osm-course.test.mjs.
 import {TRACE} from '../lidar/trace.js';
+import {setsFromTag, setsForCount, inOrder, colourOf} from '../tees.js';
 
 // A ring's middle: the mean of its points, the closing one counted once.
 const ringMiddle = ring => { const r = ring.length > 1 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? ring.slice(0, -1) : ring; return {x: r.reduce((s, p) => s + p[0], 0) / r.length, z: r.reduce((s, p) => s + p[1], 0) / r.length}; };
@@ -98,7 +107,7 @@ export function osmHoles(feats, {within = null, only = null, codes = null, land 
   const n = +l.tags.ref;
   if (n < 1 || n > 18) continue;
   if (holes[n - 1]) { doubled.push(n); continue; }
-  holes[n - 1] = {tees: [{x: pts[0][0], z: pts[0][1], set: 'back'}], aims: pts.slice(1, -1).map(([x, z]) => ({x, z})), green: {x: pts.at(-1)[0], z: pts.at(-1)[1]}, par: +l.tags.par || null};
+  holes[n - 1] = {tees: [{x: pts[0][0], z: pts[0][1], set: null}], aims: pts.slice(1, -1).map(([x, z]) => ({x, z})), green: {x: pts.at(-1)[0], z: pts.at(-1)[1]}, par: +l.tags.par || null};
  }
  // NUMBERED GREENS (Worthington's map numbers its eighteen greens and draws
  // one hole line): a number no line gave takes its green's middle, and the
@@ -164,7 +173,7 @@ export function osmHoles(feats, {within = null, only = null, codes = null, land 
  want.forEach(({n, g}, r) => {
   const t = cols[pick[r]]; if (!t) return;
   const a = numbered.find(q => +q.tags.ref === n);
-  holes[n - 1] = {tees: [{x: t.x, z: t.z, set: 'back'}], aims: [], green: g, par: +a?.tags.par || null, guessed: true};
+  holes[n - 1] = {tees: [{x: t.x, z: t.z, set: null}], aims: [], green: g, par: +a?.tags.par || null, guessed: true};
   fromGreens.push(n);
  });
  holes.doubled = doubled; holes.fromGreens = fromGreens;
@@ -235,6 +244,22 @@ function along(pts, x, z) {
 const lineOf = h => [[h.tees[0].x, h.tees[0].z], ...h.aims.map(a => [a.x, a.z]), [h.green.x, h.green.z]];
 const lengthOf = pts => pts.reduce((s, p, i) => i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0);
 
+// THE MAP'S TEE SETS: each tee box it tags with a set (`tagged`: its middle and
+// sets, local metres, as the features are), and the course's sets when the map
+// names them -- the tagged sets together, else the hole lines' `dist:*` keys
+// (the sets by name where they are colours, else as many as there are keys,
+// setsForCount) -- or null, for fitHoles to count. `within`: a course's rings.
+export function osmTeeSets(feats, {within = null} = {}) {
+ const inside = p => !within || within.some(r => insideRing(r, p.x, p.z));
+ const tagged = feats.areas.filter(a => a.tags.golf === 'tee').map(a => ({...ringMiddle(a.rings[0]), ring: a.rings[0], sets: setsFromTag(a.tags.tee ?? a.tags['golf:tee'])})).filter(t => t.sets.length && inside(t));
+ if (tagged.length) return {tagged, sets: inOrder(tagged.flatMap(t => t.sets))};
+ const keys = new Set();
+ for (const l of holeLines(feats)) { if (within && !lineIn(within, l.points)) continue; for (const k of Object.keys(l.tags)) if (/^dist:/.test(k)) keys.add(k.slice(5)); }
+ if (!keys.size) return {tagged, sets: null};
+ const named = inOrder([...keys].flatMap(k => setsFromTag(k)));
+ return {tagged, sets: named.length === keys.size ? named : setsForCount(keys.size)};
+}
+
 // THE HOLES ON THE GROUND: each green mark on the traced green it reaches
 // within `reach` metres, each hole given the tee boxes along its first
 // stretch. PLACED: a green mark is moved to its green's middle when it was off
@@ -244,7 +269,16 @@ const lengthOf = pts => pts.reduce((s, p, i) => i ? s + Math.hypot(p[0] - pts[i 
 // its start, and that hole's line passes nearest it. Returns the holes (new
 // objects) with a `fit` note each: {green: 'on'|'moved'|'none', moved (m),
 // tees: n}.
-export function fitHoles(holes, codes, land, {reach = 25} = {}) {
+// THE BOXES' SETS: `tagged` (osmTeeSets) gives a box the sets of the tagged
+// box it holds or lies within 8 m of; the others take, farthest first, the
+// course's `sets` not tagged on that hole, spread over them by distance (the
+// farthest box the longest set, the nearest the shortest; with fewer boxes
+// than sets a box carries several -- one box, all of them -- so every hole
+// has every set the course has: mappers often draw one box for several sets,
+// and a course read that way played one set alone). `sets` null:
+// as many as the holes most often have boxes, a tie the more (PLACED), three
+// at the least (setsForCount).
+export function fitHoles(holes, codes, land, {reach = 25, tagged = [], sets = null} = {}) {
  const G = patches(codes, land, TRACE.indexOf('green')), T = patches(codes, land, TRACE.indexOf('tee'));
  const lines = holes.map(h => h && lineOf(h));
  // Each tee box to the one hole it belongs to.
@@ -262,6 +296,13 @@ export function fitHoles(holes, codes, land, {reach = 25} = {}) {
   holes.forEach((h, i) => { if (!h) return; const L = lengthOf(lines[i]), a = along(backed[i], t.x, t.z), at = a.along - BACK_REACH, lim = at < 0 ? 15 : 25; if (a.off < lim && at >= -reachOf(h) && at <= .6 * L && a.off < bo) { bo = a.off; best = i; } });
   if (best >= 0) teesOf[best].push(t);
  }
+ const tagOf = t => tagged.filter(q => t.has(q.x, q.z) || Math.hypot(q.x - t.x, q.z - t.z) < 8).flatMap(q => q.sets);
+ if (!sets) {
+  const count = new Map(); for (const b of teesOf) if (b.length) count.set(b.length, (count.get(b.length) ?? 0) + 1);
+  const mode = [...count].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0]?.[0] ?? 3;
+  sets = setsForCount(mode);
+ }
+ const course = sets;
  return holes.map((h, i) => {
   if (!h) return h;
   const out = {...h, tees: h.tees.map(t => ({...t})), aims: h.aims.map(a => ({...a})), green: {...h.green}, fit: {green: 'none', moved: 0, tees: 0}};
@@ -275,9 +316,16 @@ export function fitHoles(holes, codes, land, {reach = 25} = {}) {
   const cap = {3: 250, 4: 500, 5: 640}[h.par] ?? 640;
   const boxes = teesOf[i].filter(t => Math.hypot(t.x - out.green.x, t.z - out.green.z) / .9144 <= cap).sort((a, b) => Math.hypot(b.x - out.green.x, b.z - out.green.z) - Math.hypot(a.x - out.green.x, a.z - out.green.z));
   if (boxes.length) {
-   out.tees = boxes.map((t, k) => ({x: t.x, z: t.z, set: k === 0 ? 'back' : k === boxes.length - 1 ? 'front' : 'middle'}));
+   const tags = boxes.map(tagOf), used = new Set(tags.flat()), free = course.filter(c => !used.has(c)), plain = boxes.filter((_, k) => !tags[k].length);
+   // Fewer untagged boxes than sets to give them: each set to a box, spread
+   // by distance, so a box may carry several (one box, every set) and every
+   // set the course has is on the hole. As many or more: each box a set.
+   const pool = free.length ? free : course, mine = plain.map(() => []);
+   if (!plain.length) { /* every box tagged */ } else if (plain.length < pool.length) pool.forEach((set, i) => mine[Math.round(i * (plain.length - 1) / Math.max(1, pool.length - 1))].push(set));
+   else plain.forEach((_, j) => mine[j].push(pool[Math.round(j * (pool.length - 1) / Math.max(1, plain.length - 1))]));
+   out.tees = boxes.flatMap((t, k) => (tags[k].length ? tags[k] : mine[plain.indexOf(t)]).map(set => ({x: t.x, z: t.z, set})));
    out.fit.tees = boxes.length;
-  }
+  } else out.tees = out.tees.flatMap(t => colourOf(t.set) ? [{...t, set: colourOf(t.set)}] : course.map(set => ({...t, set})));
   return out;
  });
 }

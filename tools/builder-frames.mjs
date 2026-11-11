@@ -5,6 +5,7 @@
 //   ... --tier low|medium|high|ultra   the game view's graphics setting (default high)
 //   ... --page dist/builder.html       another build of the builder
 //   ... --frames 150 --label x         frames a sample; where the results go (bench/ab)
+//   ... --editor-only                  open the course and time the editor only (about 40 s)
 //   ... --util 45 --temp 80 --rest 1   the gate's limits (tools/gpu-gate.mjs)
 //   ... --profile                      DevTools' sampling profiler over Game view's opening:
 //                                      the processor's self time by function, heaviest first
@@ -105,6 +106,12 @@ try {
  report('open the course into the editor', t0, t1, await phases(t0, t1));
  await measure('editor', null, 'editor');
 
+ // --editor-only stops here: a short run to compare the editor's frames,
+ // whose graphics-card time the card's timer drops for a whole page on about
+ // a third of runs (the builder-ux goal, 10 November 2026), so a comparison
+ // needs more runs than the whole journey can afford.
+ gameview: {
+ if (flag('editor-only', false)) break gameview;
  // GAME VIEW: the button pressed to the game's picture shown and settled.
  const cdp = flag('profile', false) ? await page.context().newCDPSession(page) : null;
  if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', {interval: 200}); await cdp.send('Profiler.start'); }
@@ -131,6 +138,7 @@ try {
  // Flying ahead fast: new ground comes into view every frame.
  await page.locator('.cb-gamecanvas').focus();
  await measure('game-flying', {start: async () => { await page.keyboard.down('ShiftLeft'); await page.keyboard.down('KeyW'); }, stop: async () => { await page.keyboard.up('KeyW'); await page.keyboard.up('ShiftLeft'); }});
+ }
  out.errors = errors;
  if (errors.length) console.log(`  page errors: ${errors.length}: ${errors.slice(0, 3).join(' | ')}`);
 } catch (e) { failed = String(e.message).split('\n')[0]; console.log(`FAILED ${failed}`); }

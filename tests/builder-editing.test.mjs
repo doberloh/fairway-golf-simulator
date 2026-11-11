@@ -218,3 +218,36 @@ test('skinning the land paints a butte\'s sides the landscape\'s rock, in one un
  e.undo();
  assert.equal(e.surfaceAt(75, -40), before, 'one undo takes it all back');
 });
+
+test('deleting what is selected: a pond with its water body, a creek, a tree, each one undo (builder-ux)', () => {
+ const e = createEditor(doc()), s = e.state;
+ const ponds = s.water.length, pond = e.pickAt({x: -50, z: 0});
+ assert.equal(pond.type, 'shape'); assert.equal(pond.kind, 'water');
+ assert.ok(e.removePick(pond), 'a box for the view');
+ assert.equal(e.surfaceAt(-50, 0), 'rough'); assert.equal(s.water.length, ponds - 1, 'the water body goes with it');
+ e.undo(); assert.equal(e.surfaceAt(-50, 0), 'water'); assert.equal(s.water.length, ponds);
+ e.addCreek({points: [[70, -80], [72, 0], [70, 80]], width: 3});
+ const creek = e.pickAt({x: 72, z: 0});
+ assert.deepEqual(creek, {type: 'creek', index: 0});
+ assert.ok(e.ringsOf(creek)[0].length > 4); assert.ok(Number.isFinite(e.middleOf(creek).x));
+ const held = e.holdShape(creek); assert.deepEqual(held.drop(10, 10), {box: null, pick: creek}, 'a creek is not carried');
+ e.removePick(creek); assert.equal(s.creeks.length, 0);
+ e.undo(); assert.equal(s.creeks.length, 1);
+ const trees = s.trees.length / 7 || s.trees.length, tree = e.pickAt({x: 30, z: 30});
+ assert.equal(tree.type, 'tree');
+ const before = s.trees.length; e.removePick(tree); assert.equal(s.trees.length, before - 1);
+ e.undo(); assert.equal(s.trees.length, before); assert.ok(trees);
+});
+
+test('a hole added after the last and one removed, the rest renumbered, one undo each (builder-ux)', () => {
+ const e = createEditor(doc()), s = e.state;
+ const n = e.addHole({x: 0, z: 50, dx: 0, dz: -1});
+ assert.equal(n, 9); assert.equal(s.holes.length, 10);
+ assert.deepEqual([s.holes[9].number, s.holes[9].par], [10, 4]);
+ assert.ok(Math.abs(s.holes[9].green.z - (50 - 300)) < 1e-9, 'its green 300 m on');
+ assert.ok(e.removeHole(2)); assert.equal(s.holes.length, 9);
+ assert.deepEqual(s.holes.map(h => h.number), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+ e.undo(); assert.equal(s.holes.length, 10); e.undo(); assert.equal(s.holes.length, 9);
+ const one = createEditor(doc()); for (let k = 0; k < 8; k++) one.removeHole(0);
+ assert.equal(one.removeHole(0), false, 'a course keeps one hole');
+});

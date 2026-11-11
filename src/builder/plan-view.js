@@ -34,7 +34,12 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
   setLand(land) { v.land = land; v.layers = {}; v.shift = {}; api.fit(); },
   fit() { if (!v.land) return; size(); v.cx = 0; v.cz = 0; v.scale = fitScale(); api.draw(); },
   // A layer, painted one RGBA texel a cell: `paint(rgba, nx, nz)`.
+  // A layer with its own cell (metres a pixel), finer than the land's: the
+  // picture drawn as sharp as its source (the builder-ux goal, item 7).
+  // `canvas` covers the land from its corner, `cell` metres a pixel.
+  setLayerCanvas(name, canvas, cell) { v.layers[name] = canvas; (v.cells ??= {})[name] = cell; api.draw(); },
   setLayer(name, paint) {
+   if (v.cells) delete v.cells[name];
    const {nx, nz} = v.land, c = document.createElement('canvas'); c.width = nx; c.height = nz;
    const cx = c.getContext('2d'), id = cx.createImageData(nx, nz); paint(id.data, nx, nz); cx.putImageData(id, 0, 0);
    v.layers[name] = c; api.draw();
@@ -47,6 +52,8 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
    const id = c.getContext('2d').createImageData(w, h); paint(id.data, i0, j0, w, h); c.getContext('2d').putImageData(id, i0, j0); api.draw();
   },
   showLayer(name, on) { v.show[name] = on; api.draw(); },
+  // How a layer looks while drawn: a CSS filter ('brightness(1.2) contrast(1.1)'), or null.
+  setFilter(name, f) { (v.filter ??= {})[name] = f || 'none'; api.draw(); },
   setAlpha(name, a) { v.alpha[name] = Math.max(0, Math.min(1, a)); api.draw(); },
   // The layers' drawing order, bottom first (names left out keep their place).
   setOrder(names) { v.order = [...names, ...ORDER.filter(n => !names.includes(n))]; api.draw(); },
@@ -72,8 +79,13 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
   ctx.imageSmoothingEnabled = v.scale * cell < 2;
   for (const name of v.order) {
    const c = v.layers[name], a = v.alpha[name] ?? 1; if (!c || !v.show[name] || a <= 0) continue;
-   const s = v.shift[name] ?? {x: 0, z: 0}, [x0, y0] = api.toScreen(-halfX - cell / 2 + s.x, -halfZ - cell / 2 + s.z);
-   ctx.globalAlpha = a; ctx.setTransform(v.scale * cell, 0, 0, v.scale * cell, x0, y0); ctx.drawImage(c, 0, 0);
+   const own = v.cells?.[name] ?? cell, s = v.shift[name] ?? {x: 0, z: 0}, [x0, y0] = api.toScreen(-halfX - own / 2 + s.x, -halfZ - own / 2 + s.z);
+   // A layer's look (the picture's brightness and contrast, builder-ux item
+   // 20): a canvas filter while it is drawn, the layer itself unchanged.
+   ctx.filter = v.filter?.[name] ?? 'none';
+   ctx.imageSmoothingEnabled = v.scale * own < 2;
+   ctx.globalAlpha = a; ctx.setTransform(v.scale * own, 0, 0, v.scale * own, x0, y0); ctx.drawImage(c, 0, 0);
+   ctx.filter = 'none';
   }
   ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
   overlay?.(ctx, api);

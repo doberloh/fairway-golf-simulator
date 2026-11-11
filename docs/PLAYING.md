@@ -62,6 +62,8 @@ Every biome now mixes several plant forms: conifers/alder/ferns; desert trees/ca
 
 Use the player avatar or format button to create a 1–4 player, 9/18-hole local round. Stroke play keeps each golfer active until they finish the hole. Scramble rotates through teammates and lets the team select a lie; only the chosen result's penalty is counted. Match play uses singles or two best-ball teams and finishes when the lead exceeds remaining holes. Match teams must each have at least one golfer. Match play does not implement alternate-shot/foursomes or handicaps.
 
+**Tees: up to six on a built course, three on a generated one.** Each golfer picks a tee on their seat in the round panel (and **Playing tee** changes it during a round). A generated course has **blue, white and red**, as always. A course from Fairway Course Builder has the sets it was built with -- up to six, longest first: **black, blue, white, silver, gold, red** -- read from OpenStreetMap where the map names them, and the scorecard lists a row for each. A golfer whose tee the course lacks plays the nearest it has (a tie goes to the longer: silver on a course of white and gold plays white). A built course from before 10 November 2026 plays its blue, white and red as it did. On a built course the tee markers stand inside the traced tee box however narrow it is, and sets that share a box stand side by side.
+
 **Skins** is for two to four golfers, each playing for themselves, and is played like stroke play: each golfer plays the hole out, and the lowest score on the last hole has honours. Every hole is worth a skin. Once everyone has finished a hole, **the lowest score alone wins it**, together with any skins carried to it; **any tie for the lowest carries** the skins on to the next hole, even when only two of four tied and the others scored worse. Skins still carried after the last hole go unclaimed. A golfer who joins mid-round plays for skins from the hole they join. Each golfer's chip in the top bar says how many skins they have; once skins have carried, the course line under the title says what the hole is worth (*3 skins on this hole*); the last golfer to hole out sees on their banner who won the hole, or that the skins carried; and the scorecard has a **Skins** row with each hole's winner and what it paid, and a line on top with the count -- and, at the end, who won the skins. Every golfer plays every hole out, so a skins round counts toward the sim handicap like stroke play. Skins earns **30 XP a skin**, paid the moment the hole is decided, and the golfer with the most skins alone wins the round. There are no handicap strokes: skins is gross. Skins can be played on 9 or 18 holes, on any course, and in an endless run; not on the course of the week, which is stroke play only.
 
 Putting offers three modes, set in two places that share one copy of the setting: the **Format & tees** section of the round panel, where the mode and its distances sit inline with format and tees, and *Putting options* in the tools tray during a round. Both write the same choice; the round-panel fields apply as soon as they are changed. **Hole out** requires actual cup capture, with a 107.95 mm diameter cup, a floor 101.6 mm down — the four inches the USGA requires — and a 42.67 mm ball. The rim is a surface the ball genuinely runs on rather than a rule about speed: a putt can catch the lip, ride it round — up to about two thirds of the way on a quick green — and either drop or come back out at you, and how long it rides depends on the green's Stimp, because the lip costs the ball what its own turf costs it. Once a ball is below the lip it drops: the inside of the cup cannot grip a slow ball hard enough to carry it round, so a holed putt does not circle the hole. Dead centre the cup catches a ball arriving at about 1.75 m/s. There is no gimme distance. A close putting camera activates when playing from a green; the white locator disappears within 5 m of the cup. **Dartboard** awards 1, 2, or 3 putts only after a shot stops on the current green. **Decimal** interpolates between the three adjustable distances and records two decimal places. At 2/8/16-yard thresholds, a 5-yard leave adds 1.50 putts and a 12-yard leave adds 2.50. The shot itself also counts. Both automatic modes cap at three putts outside the outer circle. Rings are visible only where they lie on the green. In scramble, players choose a candidate before its automatic putts are applied. Existing scores are not recalculated when the mode changes.
@@ -457,39 +459,91 @@ Everything it makes is a **.fairway file**: open it in the game
 with *Import courses from a file* on Saved courses, or drop it there, and give
 the file to anyone else who has Fairway. It opens on three doors.
 
+**The menus** along the top -- **File**, **Edit**, **View**, **Tools**, **Help** --
+hold every command with its key beside it, and the keys work anywhere
+but in a box you are typing in: **Ctrl+S** saves, **Ctrl+Z** and **Ctrl+Y**
+(or Ctrl+Shift+Z) undo and redo, **Ctrl+O** opens a course file, and **?**
+(Help > Keyboard shortcuts) lists every key on the screen you are on. On
+door 2's plan the Edit menu names what Undo and Redo will take back ("Undo
+Outline fill"), and the trace step's **History** section lists the last
+changes, newest first, each with **Back to here**.
+
 - **Generate and modify a course.** Pick a landscape (on the map or the
   list) and any
   studio setting, grow the course, and press **Take it over**: from then on
   everything on it is yours to change.
 - **Generate a real life course.** Build a course from LIDAR of a real
-  place, in six steps (the buttons along the top of the left side), on a plan
-  of the land: **the wheel zooms, the right button or Space drags the view**
+  place, in six steps, shown along the top as a row of chips -- a tick on each
+  step done, the one you are on filled, the ones you cannot reach yet dimmed
+  (hold the pointer over one to see why) -- with what the step still needs
+  beside them and one **Next** button at the right end, always in the same
+  place. Each step's panel opens with a tip saying what the step is for,
+  until you close it with **Got it** (Help > Show the step tips again brings
+  them back).
+  The plan of the land fills the middle, the step's own panel is on
+  the right, and a status bar along the bottom says what the tool in hand
+  does, what just happened, where the pointer is and the ground's height
+  there, with **Undo**, **Redo** and the zoom buttons. Zoomed in, a small
+  **overview map** of the whole land sits in the plan's corner with what is
+  in view outlined; click it to go there. **F** shows the whole land,
+  **Shift+F** frames the hole you are on, **.** and **,** go to the next
+  and previous hole and frame it, and a click on a hole in the holes list
+  frames it too. On the plan: **the wheel zooms, the right button or Space drags the view**
   (as does the trace step's **Move the view** tool), and **Whole land**
   brings it all back.
-  1. **LIDAR**: **Find LIDAR** first, if you have none: type a course or a
-     place, **Find** (or Enter), click the place you mean in the list (each
-     is a button marked **Use ›**), choose the square round it (1 to 3 km), and
-     **Search for LIDAR**. Every source over that place is listed, each survey
-     with a small map of the square, north up: green is already saved, gold
-     would download, dark has no data. Beside it, how much of the square it
+  **Your work is kept as you go**: door 2's draft is kept in this browser at
+  each step and every three minutes, so a closed tab or a crash costs a few
+  minutes at most; opening door 2 again offers **Bring it back** or
+  **Discard**. Saving to a file drops the kept copy (the file holds it). It
+  never leaves the computer.
+  1. **LIDAR**: **Find the course** first, if you have no LIDAR -- one
+     search bar for both ways of building: type the course's name (and its
+     town, if the name is common), **Find** (or Enter). A golf course on the
+     map is taken at once, even over the town it is named after; otherwise
+     click the place you mean in the list (each is a button marked **Use ›**,
+     golf courses first). The aerial map of the
+     ground round it comes up on the plan, 5 km across (**Map 3 km**, **5 km**
+     or **8 km across** beside **Fetch the map again**, if the course is not
+     on it), with a gold pin where the name was found. **Drag a box round the
+     course** on the map with the left button (up to 3 x 3 km; it shows its
+     size, and another drag replaces it). Then one of two buttons, both waiting
+     for the box:
+     **Build it for me** first says that it might not always get it right
+     (OpenStreetMap's map of a course can be wrong or missing: a hole pointing
+     the wrong way, a green or tee missing, a bunker off its place -- look
+     every hole over before playing it); **Build it** there runs the steps
+     below for you, **Cancel** leaves it. It downloads the newest USGS survey
+     that covers most of the box, builds the land with the box as the
+     property, fetches the sharpest free picture, lays OpenStreetMap's course
+     and lines it up with the LIDAR, takes its holes and its name, and stops
+     on the review -- or on the holes step if the map left some holes without
+     a tee or a green, or when **Checking the map** finds something wrong.
+     United States courses only; it goes online as it works. On Worthington
+     Country Club it took 3 minutes 52 seconds. Everything it did can be
+     changed afterwards in the steps.
+     **Build it myself** lists every source over the box, each survey
+     with a small map of the box, north up: green is already saved, gold
+     would download, dark has no data. Beside it, how much of the box it
      covers and how much you hold, and the buttons say what they will do:
      **Download 2 missing tiles**, **Download what is missing**, **Load the
-     saved tiles**. It measures the square you searched, so pick a square that
-     takes in the course. **USGS
+     saved tiles**. **USGS
      3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
-     there: **Download the square here** takes just the survey over the
-     square and 150 m past it (USGS's copy on Amazon's open data; a 400 m
-     square of Worthington is about 17 MB). **Download all tiles** gets
+     there: **Download the box here** takes just the survey over the
+     box and 150 m past it (USGS's copy on Amazon's open data; a 400 m
+     square of Worthington is about 17 MB). When it is in, the relief takes
+     the map's place and the box you drew is the property. Where no free
+     map covers the place (and no Google or Bing key has been given), the
+     box is a 1.5 km square round it. **Download all tiles** gets
      USGS's own tiles: through Fairway's bridge if it is running (the
      launch-monitor helper, which fetches them for the page), or else your
      browser downloads them and the builder reads each from your LIDAR
      folder as it arrives (at once if that folder is Downloads; otherwise
      move them in when they finish -- the builder says so).
      **Your LIDAR folder** (Chrome and Edge): every download is saved there
-     as it arrives -- a USGS square as one ZIP named for the survey, the
-     place and the size, other tiles under their own names -- and the same
+     as it arrives -- a USGS download as one ZIP named for the survey, the
+     place and its size (both sides when the box is not square), other tiles under their own names -- and the same
      download asked for again is read from there instead. A bigger or shifted
-     USGS square of the same survey fetches only what is missing and combines
+     USGS box of the same survey fetches only what is missing and combines
      it into one ZIP, which replaces the ones it took in, so nothing is
      downloaded twice. Pick it once with **Choose the folder** (Downloads is
      the easy choice: the portals' and USGS's tile downloads land there by
@@ -523,16 +577,24 @@ the file to anyone else who has Fairway. It opens on three doors.
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
-     their mapping agencies. Then **drag a box round the course** on the
-     relief with the left button (up to 3 x 3 km).
-  2. **Land**: **Build the land**. It says how the ground was found, how much
+     their mapping agencies. With files of your own (no map was drawn on),
+     **drag a box round the course** on the relief with the left button (up
+     to 3 x 3 km); after a search, the box from the map is already there, and
+     a drag on the relief changes it.
+  2. **Land**: **Next: build the land** starts building the land at once --
+     the box is already the property, so there is nothing more to press.
+     After the box is changed, **Build it again** (pressing Next does it too
+     while nothing is traced on the land; once you have traced, only Build it
+     again does, as building clears the trace). It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it
      found.
   3. **Trace**: first a picture to trace over (kept in your saved file, never
      drawn in the game):
      - **Fetch imagery for this land**: free national aerial photographs
-       where they cover the place -- USGS in the United States (coarse,
-       about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
+       where they cover the place -- in the United States **USGS NAIP,
+       sharpest** (the first offered: 30 to 60 cm a pixel, fetched at the
+       land's own sharpness, and saying when it was photographed) and the
+       older **USGS tiles** (coarse, about 1.7 m a pixel), IGN in France, PDOK in the Netherlands, PNOA in
        Spain, swisstopo in Switzerland -- or **Google** or **Bing** with your
        own key (kept in this browser only; their terms limit tracing, and the
        builder says so). **How to get a Google key** opens under the key box
@@ -597,11 +659,28 @@ the file to anyone else who has Fairway. It opens on three doors.
      6 m), **the LIDAR's only**, or **OpenStreetMap's only**. Undo takes a
      change back.
 
-     Or **Auto trace** (the greens, tees, fairways, sand and water found
-     for you -- from the LIDAR alone, with no picture, the mown turf, the
-     built-up pads as greens and tees, sand and water; a start to correct,
-     weaker than with a picture or OpenStreetMap) or **Manual trace** (a blank course to draw), and the same
-     tools for either. First the **Landscape**: it decides which ground types
+     Or **Draw it myself**: a blank course to draw with the tools. The
+     **auto trace** (the greens, tees, fairways, sand and water guessed
+     from the LIDAR and the picture) is under **Experimental**, the folded
+     section at the foot of the panel, or **Tools > Experimental**: it is a
+     rough start you will need to fix by hand, far from a finished course.
+     **The tools are the palette down the left of the plan**, an icon each
+     with its key in the corner: **H** Move the view, **V** Select shape,
+     **B** Paint brush, **E** Erase brush (**Shift+E** erase all layers),
+     **P** Outline fill, **S** Smooth edges, **C** Draw a creek, **U** Dig a
+     bunker, **T** Place tree (**Shift+T** Tree brush, **Z** Tree zone, **X**
+     Clear trees), **G** Ground cover (**Shift+G** Clear cover), **O** House
+     (**Shift+O** House zone), **M** Measure (click two points: the yards,
+     metres and the rise or fall between them); **[** and **]** make the
+     brush smaller and larger. With a shape, tree or house selected (**V**),
+     **Ctrl+C** copies it, **Ctrl+V** pastes it where the pointer is,
+     **Ctrl+D** lays a copy beside it, and **Delete** takes it away (a
+     shape off its own layer only, so what lies under it shows); each copy
+     comes selected, ready to drag. A creek can be selected and deleted too
+     (not moved: delete it and draw it again). The panel on the right opens with the tool's options, then the
+     **Layers**, then **Skin from the land**, then sections that fold:
+     OpenStreetMap, Picture, Viewing, Landscape, Course boundary, Clean up
+     and Experimental. First the **Landscape**: it decides which ground types
      are offered (rock and scree in the mountains, native grass and heather
      on a links, pine straw where needles fall) and is the course's look.
      It is **chosen for you from where the survey lies** -- the map of the
@@ -614,14 +693,30 @@ the file to anyone else who has Fairway. It opens on three doors.
      lower, so sand painted on fairway or rough is sand, and the fairway runs
      on under the bunker. The **Layers** list shows every layer the
      landscape offers, each with its area or *empty*, Rough with the ground
-     under no layer at all; click one to paint it, and its **shown/hidden**
-     button hides it from view (the course keeps it). Painting Rough takes
-     every layer off. The tool in use says what it does in a box at the top
-     middle of the view, for as long as it is held. **Paint brush** paints
+     under no layer at all; click one to paint it (it is marked), and its
+     **eye** hides it from view (struck through while hidden; the course keeps
+     it). When a brush stroke goes in under a higher layer, its path flashes
+     where it went and the status bar says which layer stayed on top. Painting Rough takes
+     every layer off; under the list, a line says which layers the one you
+     are painting goes under (they stay on top where they are painted). The
+     tool in use says what it does in the status bar, for as long as it is
+     held. **Paint brush** paints
      the chosen layer, **Erase brush** takes the chosen layer off (what lies
-     under it shows), **Erase all layers** takes every layer off, **Outline
-     fill** fills a shape (click its corners; double-click or Enter closes
-     it, Esc drops it), **Smooth edges** rounds edges under it, **Skin from the
+     under it shows), **Erase all layers** takes every layer off. The three
+     are **steadied**: the brush trails the pointer a little, on a string,
+     so a shaky hand draws a smooth line (its circle shows where it is, with
+     a dotted line to the pointer); **Steadiness** in the tool's options sets
+     how much (0 paints right under the pointer), letting go brings the brush
+     the rest of the way, and **Smooth the edge when I let go** rounds the
+     stroke's edge. **Outline fill** is a pen: click to put down nodes, and
+     the line through them is the curve that will be filled, drawn on to
+     the pointer as you move; the first node grows when the pointer is on
+     it, and clicking it closes the shape and fills it at once -- so does
+     **Enter**, or a double-click (no Apply button since 10 November 2026;
+     **Ctrl+Z** takes a fill back); **Shift**-click
+     makes a sharp corner; **Backspace** takes the last node off; **Esc**
+     drops it. Tree zone, House zone, the course boundary and Draw a creek
+     (an open line) use the same pen. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
@@ -662,28 +757,69 @@ the file to anyone else who has Fairway. It opens on three doors.
      traced green or tee, to stop a metre and a half short of it, and takes
      out a tree with no room left (or one standing on it); Undo puts them
      back.
-  4. **Holes**: drag any tee, aim point or green to move it, on any hole, and
-     the line follows as it goes. For each hole, left-click its **Back tee** (the middle and
-     front if you like), any **Aim points** where it bends, in order from the
-     tee, and its **Green**; then **Next hole**. 9 or 18. The game draws
+  4. **Holes**: **Checking the map** comes first when the holes came from
+     OpenStreetMap, which can be incomplete or wrong: what the map holds
+     against what the course needs (holes numbered, greens and tees drawn),
+     and each thing to check -- a green or tee mark off any green or tee, a
+     hole's line running mostly off the fairways (pointing to the wrong
+     green, or from the wrong tee), two holes on one green, two lines
+     crossing, a length that does not suit the par, a line leaving the
+     boundary, a tee far from the last green (the numbers out of order).
+     Each has **Show** (the hole, framed) and, where one suits, **Fix** (a
+     mark a few metres off moved onto the nearest green or tee; a line off
+     the fairway bent down it, when its green is the right one); **Take the
+     fixes offered** takes them all, a few rounds over; red rings mark them
+     on the plan. A hole drawn to the **wrong green** -- off the fairways,
+     sharing a green, crossing another -- is only flagged, saying it needs
+     fixing by hand: drag its green or tee onto the right one, with the
+     picture to go by (since 10 November 2026; the builder's guess at the
+     right green was wrong too often). When half the
+     holes or more have something to check, it says the map is unreliable.
+     **Check against the scorecard** takes the club's yards pasted in any
+     layout (hole numbers and totals are left out) and lists every hole more
+     than 12% (and 40 yards) off its card.
+     **Find the doglegs** gives each hole with no aim point whose straight
+     line leaves the fairway an aim point at the bend that keeps it on the
+     fairway (Build it for me does it for the holes already mostly on it).
+     Drag any tee, aim point or green to move it, on any hole, and
+     the line follows as it goes. While you place an aim point or a green,
+     the yards from the tee (or the last aim point) follow the pointer. A
+     click near another hole's mark places
+     your mark on the hole you are marking; only a drag moves the other
+     hole's mark. For each hole, pick a tee set -- **Black, Blue, White,
+     Silver, Gold** or **Red**, each with its colour -- and left-click its
+     tee (the longest first; then any others, picking each set first), any
+     **Aim points** where it bends, in order from the tee, and its
+     **Green**; then **Next hole**. 9 or 18. The game draws
      each hole's line through its aim points in turn -- two make a double
      dogleg -- measures its yards along that line, and points the tee shot
      at the first; an aim point no farther on than the one before (or at the
      green) is skipped, and the step says so. The **Scorecard** under the
      holes: each hole's **par** and **handicap index**, which you set (a *
      marks one worked out for you: par from the yards, the index down the
-     card), and its yards from the **blue, white and red** tees -- the game's
-     names for the back, middle and front tees -- exactly as the game will
-     measure them. The yards are not typed: move the tees, aim points or
-     green to change them. Players start on the white tees, so a hole with a
-     middle tee plays shorter than its back tee for most rounds; a hole with
-     one tee plays the same from all three. Out, In and Total add up.
+     card), and a column of yards for each tee set the course has, longest
+     first (a course marked with blue tees alone has one) -- exactly as the
+     game will measure them. The yards are not typed: move the tees, aim
+     points or green to change them. Players start on the white tees, or
+     the nearest set; a hole without one of the course's sets plays it from
+     its nearest. From OpenStreetMap, the sets come from the map: a tee box
+     it tags (tee=blue, or tee=blue;white for one box of two sets) is that
+     set; untagged boxes take the course's sets by distance, the farthest
+     the longest, a box carrying several when a hole has fewer boxes than
+     the course has sets. How many sets: the map's tags, else the names of
+     its holes' yardages (dist:*), else as many as the holes most often have
+     boxes -- three at the least. Out, In and Total add up.
      **Fit holes to the trace** puts each hole's green mark on the traced
      green it reaches and gives each hole the traced tee boxes along its
      line -- after an auto trace, a correction, or holes you marked yourself.
   5. **Name**: the name, the landscape, and the credits for the data (an
      imagery provider's is added for you).
   6. **Review**: the whole course painted as it will be built -- every
+     **Play it in Fairway** under it: **Save the course for Fairway** writes
+     the .fairway file (with your builder work inside, so the builder can
+     open it again), then in Fairway.html: Saved courses > Import courses
+     from a file, or drop the file there. (Save in the top bar keeps door
+     2's draft, which the builder reopens and the game does not.)
      surface smoothed, in the landscape's colours, with the trees and the
      holes -- its card, and the checks. Go back to any step to change
      anything, or **Open in the editor**; the editor's **Back to 2D** comes
@@ -750,24 +886,37 @@ a hectare, each named. **Clean up** works on the layer picked there: **Erase bru
 layers**, **Smooth edges**, **Smooth all edges**, **Tidy specks** and
 **Extrapolate**, as in door 2's trace. It has the same **Layers**: every
 surface the course holds, top first, its area kept up to date as you paint,
-with **shown/hidden** and an **Erase** brush for each; **Paint** puts a
-surface on its own layer and covers nothing beneath it. Left-drag moves round the course,
+with **shown/hidden** and an **Erase** brush for each; **click a layer to
+paint it**. **Surfaces** has one **Paint brush** (B) and one **Pen** (P)
+for the layer chosen there or in Layers -- the brush steadied as in door 2
+(Steadiness, and Smooth the edge when I let go), the pen drawing its curve
+through the nodes you click (the first node, a double-click or Enter fills
+it; Shift-click a sharp corner; Backspace takes the last node off) -- with
+a line saying what the layer goes under. A surface goes on its own layer and
+covers nothing beneath it. **The tools are an icon strip down the left edge**,
+as on door 2's plan (hold the pointer over one for its name and key), and the
+column beside it holds the tool's options, the layers and the clean-up. **The
+menus** hold the editor's commands and keys:
+**H** move, **V** select, **B** brush, **P** pen, **R** raise, **L** lower,
+**C** creek, **U** bunker, **T** place tree, **O** house, **F** from above,
+**G** Game view, **[** and **]** the brush's size; W, A, S, D, Q and E stay
+the camera's. Left-drag moves round the course,
 right-drag turns, the wheel zooms; **W A S D** fly forward, left, back and
 right, **Q** and **E** down and up, Shift three times as fast (faster the
 higher you are); **From above** and **This hole** jump the view. The surfaces
 are drawn as the course will have them -- each one's outline smoothed --
 not in the editing grid's squares; while you paint, the squares show for a
 moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
-Roughen and Restore (the brush's size and strength above them); **Paint** any
-surface or ground type -- **Road** among them in every landscape, and
-**Outline** with Road draws a parking lot by its edge; **Skin from the land** (under Paint) paints, in one
+Roughen and Restore (the brush's size and strength above them); paint any
+surface or ground type -- **Road** among them in every landscape, and the
+**Pen** on Road draws a parking lot by its edge; **Skin from the land** (under Surfaces) paints, in one
 go, the landscape's own rock on the land's steep ground -- a butte's or a
 mountain's sides, a badland face; native grass where the landscape has no
 rock, as on dunes -- and its apron (scree, bare clay, the desert's hard
 floor, heather) on the gentler ground just below, leaving flat tops, the holes' turf, sand,
 paths and water alone; it is a best effort from the heights, so paint over
-it or Undo it in one step, or paint the ground by hand instead; **Outline** draws one by its edge; dig a bunker,
-draw a pond or a creek (it runs downhill), paint or outline **Water** (it gets a
+it or Undo it in one step, or paint the ground by hand instead (on door 2's plan it has its own box, says how many hectares of each it painted, and **Before (hold)** shows the course as it was until you let go); the **Pen** draws one by its edge; dig a bunker,
+**Add a hole** (a new hole after the last, its tee where the view is centred and its green 300 m on, for you to drag into place) and **Remove this hole** (the rest renumbered) are under Holes; draw a pond or a creek (it runs downhill), paint **Water** with the brush or the pen (it gets a
 level and a bed when the stroke ends, and erased water goes), **Place tree**
 (one, the kind you pick by name or any of the landscape's, at a height you set,
 never on turf, sand, water, paths or roads), **Tree

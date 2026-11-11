@@ -1,4 +1,5 @@
 // Yardages are measured along the playing line; the blue tee is the reference.
+import {GENERATED_TEES,TEE_COLOURS} from './tees.js';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // THE ONE SEEDED GENERATOR. course.js re-exports this as `random` rather than
 // keeping its own copy: there were two, written differently but producing
@@ -6,7 +7,9 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // the course grown there. Two implementations that must never diverge is a
 // promise nobody can keep.
 export function rng(seed){let a=2166136261;for(const c of String(seed)){a^=c.charCodeAt(0);a=Math.imul(a,16777619);}return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,a|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-export const TEE_COLORS={blue:'#4385d5',white:'#f4f2e7',red:'#d75c52'};
+// A generated course's three tee sets (tees.js holds all six; the owner, 10
+// November 2026: generated courses still have just three).
+export const TEE_COLORS=Object.fromEntries(GENERATED_TEES.map(t=>[t,TEE_COLOURS[t]]));
 export function enabledTees(){return Object.keys(TEE_COLORS);}
 // WHAT A HOLE OF EACH PAR IS ALLOWED TO BE, in yards along the playing line off
 // the back tee.

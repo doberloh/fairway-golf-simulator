@@ -408,6 +408,9 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .plan-card td.yd{color:var(--ink-dim)}
 .plan-card .tee-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .plan-card .tee-dot.blue{background:#4385d5}.plan-card .tee-dot.white{background:#f4f2e7}.plan-card .tee-dot.red{background:#d75c52}
+/* The six tee sets (tees.js; a built course can have up to six), wherever a tee dot shows. */
+.tee-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.tee-dot.black{background:#26282c}.tee-dot.blue{background:#4385d5}.tee-dot.white{background:#f4f2e7}.tee-dot.silver{background:#b4bac2}.tee-dot.gold{background:#d6a72c}.tee-dot.red{background:#d75c52}
 
 /* THE COURSE-LENGTH GROUP GETS THE FULL WIDTH OF THE PANEL. The card it holds
    is up to twenty-two columns wide -- eighteen holes plus out, in and total,

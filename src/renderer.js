@@ -14,7 +14,8 @@ import {GROUNDS} from './grounds.js';
 import {clubColour} from './dispersion.js';
 import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
-import {TEE_COLORS,greenGradient} from './course-plan.js';
+import {greenGradient} from './course-plan.js';
+import {TEE_COLOURS} from './tees.js';
 import {greenDistance} from './course.js';
 import {worldOf,biomeOf} from './biomes.js';
 import {clubhouseModel} from './clubhouse.js';
@@ -2535,7 +2536,8 @@ export class GolfView{
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
-  for(const [name,t] of Object.entries(h.tees)){
+  const teeList=Object.entries(h.tees);
+  teeList.forEach(([name,t],k)=>{
    const target=teeAim(h,t);
    const dx=target.x-t.x,dz=target.z-t.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
    // ON THE TEE, SIX INCHES IN FROM ITS EDGE.
@@ -2544,17 +2546,34 @@ export class GolfView{
    // markers of every tee on the course were a METRE off the mown surface they
    // mark, sitting in the collar. The pair now straddles the pad the way a real
    // set does: in from each edge by `TEE_MARKER_INSET`, which is six inches.
-   const inset=TEE_PAD.x-TEE_MARKER_INSET;
-   for(const side of [-inset,inset]){
+   //
+   // SETS SHARING A TEE (a built course: one box for blue and white, or a
+   // hole with fewer boxes than the course has sets) stand side by side, each
+   // pair 40 cm inside the one before, not all on one spot (PLACED).
+   const shared=teeList.slice(0,k).filter(([,u])=>Math.abs(u.x-t.x)<.01&&Math.abs(u.z-t.z)<.01).length;
+   const inset=Math.max(.3,TEE_PAD.x-TEE_MARKER_INSET-shared*.4);
+   for(const sideSign of [-1,1]){
     // Perpendicular to the line of play, set a metre back from the tee centre.
-    const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
+    // ON A BUILT TEE, INSIDE ITS BOX (the owner, 10 November 2026: "Our tee
+    // markers need to stay inside the teebox on built courses"): a traced box
+    // can be narrower or shorter than the generated pad, so the marker comes
+    // in, 10 cm at a time, until it stands six inches inside the box's edge
+    // -- and forward to the tee mark itself if a metre back is off the box.
+    let side=sideSign*inset,back=1;
+    const at=()=>({x:t.x+uz*side-ux*back,z:t.z-ux*side-uz*back});
+    if(h.onTee){
+     const ok=()=>{const p=at();return h.onTee(p.x,p.z,TEE_MARKER_INSET);};
+     if(!h.onTee(t.x-ux,t.z-uz,TEE_MARKER_INSET))back=0;
+     while(!ok()&&Math.abs(side)>.3)side-=sideSign*.1;
+    }
+    const {x,z}=at(),q=h.toWorld({x,z});
     // A moulded marker, a squat dome on a collar 11 cm tall (the furniture);
     // a ball on the turf where the build has none.
-    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLORS[name],bark:'#4f4a44'},{batch:true});
-    const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
+    const made=this.furniture('Blender_TeeMarker_1',.11,{accent:TEE_COLOURS[name],bark:'#4f4a44'},{batch:true});
+    const marker=made??new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLOURS[name]));
     marker.position.set(q.x,h.height(x,z)+(made?0:.085),q.z);group.add(marker);
    }
-  }
+  });
   // Numbered tee sign, timber posts, and a timber bench beside every tee.
   const c=document.createElement('canvas');c.width=128;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203f30';ctx.fillRect(0,0,128,160);ctx.strokeStyle='#b9c4a0';ctx.strokeRect(6,6,116,148);ctx.textAlign='center';ctx.fillStyle='#f5efd9';ctx.font='52px '+UI_FONT;ctx.fillText(String(h.hole+1).padStart(2,'0'),64,73);ctx.font='15px '+UI_FONT;ctx.fillText('PAR '+h.par,64,107);ctx.fillText(Math.round(h.routeLength/YARD)+' YD',64,134);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
   // THE SIGN STANDS BESIDE THE BLUE TEE, ON THE PLAYER'S RIGHT.
@@ -3871,12 +3890,12 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   fill((world.builtWater||[]).map(b=>b.rings),'#70a6aa');fill(o.sand,'#efe0b9');fill(o.green,mt.green??'#b3cc86');
  }
  for(const hole of full?world.holes:[course]){
-  if(hole.built){for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLORS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
+  if(hole.built){for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLOURS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
    const[gx,gy]=to(hole.green.x,hole.green.z,hole);ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);continue;}
   ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,world.bio.mapTurf?.semi??'#a1b481'],[0,world.bio.mapTurf?.fairway??'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
   for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
   for(const p of hole.bunkers){ctx.fillStyle='#efe0b9';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
-  for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLORS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
+  for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLOURS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
   // The disc is the green, so it is drawn around the green's centre; the number
   // that labels the hole goes with it.
   const centre=hole.green??hole.pin;

@@ -50,7 +50,7 @@ export default function ({journey, ROOT, SHOTS}) {
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
   await page.getByRole('button', {name: 'Next: build the land'}).click();
   // 2. The land.
-  await page.getByRole('button', {name: 'Build the land'}).click();
+  // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 900000}); await idle();
   say(`land: ${await page.locator('.cb-note').first().textContent()} (${secs()})`);
   await page.getByRole('button', {name: 'Next: trace the course'}).click();
@@ -66,9 +66,11 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.waitForFunction(() => window.fairwayBuilder.door2.model, null, {timeout: 600000}); await idle();
   const traceSays = await page.locator('.cb-note').first().textContent();
   // The landscape suggested from where the survey lies (the US landscapes
-  // goal): Worthington, Minnesota, is Heartland, taken unasked.
+  // goal): Worthington, Minnesota, is Classic Parkland, taken unasked (it was
+  // Heartland until the landscapes were pared to fifteen, 8 November 2026;
+  // regions.js OLD_KEYS reads heartland as parkland).
   const suggest = await page.locator('.cb-suggest').first().textContent().catch(() => '');
-  if (!/Heartland/.test(suggest) || await page.locator('.cb-landscape').inputValue() !== 'heartland') throw Error(`the landscape suggested: "${suggest}", chosen ${await page.locator('.cb-landscape').inputValue()}`);
+  if (!/Classic Parkland/.test(suggest) || await page.locator('.cb-landscape').inputValue() !== 'parkland') throw Error(`the landscape suggested: "${suggest}", chosen ${await page.locator('.cb-landscape').inputValue()}`);
   say(`suggested: ${suggest}`);
   await t.shot('worthington-traced');
   await page.getByRole('button', {name: 'Next: the holes'}).click();

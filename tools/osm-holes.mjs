@@ -18,7 +18,7 @@ const centroid = r => ({x: r.reduce((s, p) => s + p[0], 0) / r.length, z: r.redu
 export function holesFromOsm(ways, card, log = () => {}) {
  const greens = ways.filter(w => w.tags.golf === 'green' && /^\d+$/.test(w.tags.ref || '')).map(w => ({n: +w.tags.ref, ...centroid(w.ring)}));
  const tees = ways.filter(w => w.tags.golf === 'tee').map(w => centroid(w.ring));
- const holes = [], used = new Set(), sets = ['back', 'middle', 'front'];
+ const holes = [], used = new Set(), sets = ['blue', 'white', 'red'];   // the longest first (src/tees.js; back, middle and front before the six)
  for (let n = 1; n <= card.par.length; n++) {
   const g = greens.find(q => q.n === n); if (!g) continue;
   const want = card.blue[n - 1] * .9144;

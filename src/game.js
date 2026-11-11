@@ -1,4 +1,5 @@
 import {puttingConfig,awardedPutts} from './putting.js';
+import {isTee,teeFor} from './tees.js';
 import {goalProblem} from './round-goals.js';
 // HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
 // the default, and every golfer from before this -- plays off the launch
@@ -23,8 +24,8 @@ function upgradeSave(data){
  if(rest.mode!=='stroke')throw Error('Invalid saved skins game.');
  return {...rest,mode:'skins'};
 }
-// A golfer's tee, when they carry one, is one of the three sets.
-const validTee=p=>p.tee===undefined||p.tee===null||['blue','white','red'].includes(p.tee);
+// A golfer's tee, when they carry one, is one of the six sets (tees.js).
+const validTee=p=>p.tee===undefined||p.tee===null||isTee(p.tee);
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -45,7 +46,7 @@ export class Round{
   if(mode==='skins'&&players.length<2)throw Error('Skins is for two to four golfers.');
   if(endless&&mode==='match')throw Error('Match play needs a last hole, so it cannot run endlessly.');
   if(typeof seed!=='string'||seed.length>40)throw Error('Invalid round seed.');
-  if(!['blue','white','red'].includes(tee))throw Error('Invalid tee selection.');this.tee=tee;
+  if(!isTee(tee))throw Error('Invalid tee selection.');this.tee=tee;
   // Out of bounds is stroke and distance under the Rules of Golf; 'e5' adds the
   // two-stroke drop of Model Local Rule E-5 (relief.js).
   if(!['stroke','e5'].includes(outOfBounds))throw Error('Invalid out-of-bounds rule.');this.outOfBounds=outOfBounds;
@@ -103,9 +104,9 @@ export class Round{
  nextInOrder(){const id=(this.order||this.players.map(p=>p.id)).find(i=>!this.done[i]);return id===undefined?-1:id;}
  // EACH GOLFER'S OWN TEE (round 13, 17 October 2026): a golfer may carry `tee`,
  // and plays every hole from it; one without plays from the round's. A course
- // without that tee set falls back to the round's, then to the first there is.
+ // without that tee set plays the nearest it has (tees.js teeFor: up to six sets).
  teeOf(seat){return this.players[seat]?.tee||this.tee;}
- placeTee(tees){if(this.teePlaced)return;const name=tees[this.tee]?this.tee:Object.keys(tees)[0];this.tee=name;this.positions=this.players.map((_,i)=>{const t=tees[this.teeOf(i)]||tees[name];return {x:t.x,z:t.z};});this.teePlaced=true;}
+ placeTee(tees){if(this.teePlaced)return;const have=Object.keys(tees),name=teeFor(this.tee,have)??have[0];this.tee=name;this.positions=this.players.map((_,i)=>{const t=tees[teeFor(this.teeOf(i),have)]||tees[name];return {x:t.x,z:t.z};});this.teePlaced=true;}
  // Change the group WITHOUT restarting. Every per-player array is resized in
  // step, matched by position: a golfer who stays keeps their scorecard, their
  // strokes on this hole and where their ball is sitting.
@@ -122,7 +123,7 @@ export class Round{
   if(!next.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
   if(this.mode==='match'&&new Set(next.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   if(this.mode==='skins'&&next.length<2)throw Error('Skins is for two to four golfers.');
-  const tee=tees&&tees[this.tee];
+  const tee=tees&&tees[teeFor(this.tee,Object.keys(tees))];
   // WHICH SEAT EACH GOLFER CAME FROM. `seat` is the id they held before the
   // edit; a golfer who has just been added has none.
   //
@@ -140,7 +141,7 @@ export class Round{
   this.strokes=take(this.strokes,()=>0);
   this.puttStrokes=take(this.puttStrokes,()=>0);
   this.done=take(this.done,()=>false);
-  this.positions=from.map((seat,i)=>{if(seat>=0)return this.positions[seat];const own=tees&&tees[next[i].tee]||tee;return own?{x:own.x,z:own.z}:{x:0,z:0};});
+  this.positions=from.map((seat,i)=>{if(seat>=0)return this.positions[seat];const own=tees&&next[i].tee&&tees[teeFor(next[i].tee,Object.keys(tees))]||tee;return own?{x:own.x,z:own.z}:{x:0,z:0};});
   // `seat` is an instruction to this method, not part of a golfer. Spreading it
   // through would persist it into every save and then be read back as a seat in
   // a group that has since changed.

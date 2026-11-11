@@ -45,6 +45,10 @@ the change that made it stale, not a follow-up.
   recognise one (`tools/blender/`, `vendor/blender-<pack>/`, `Blender_*`),
   the headless pipeline and its contact sheet, what the game keeps from a
   model, and the packs so far (Lakeshore Dunes).
+- **[BUILDER_GUIDE.md](BUILDER_GUIDE.md)** — the player's guide to the Course
+  Builder, with pictures (docs/builder-guide/, taken by
+  tools/capture/builder-guide.mjs); built into `Fairway Builder Guide.html`
+  and shipped in every download. Every builder change updates it (AGENTS.md).
 - **[COURSE_BUILDER.md](COURSE_BUILDER.md)** — Fairway Course Builder,
   the second program in every download (branch `course-builder`, begun 31
   October 2026): generate a course and reshape it, or build one from LIDAR

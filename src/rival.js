@@ -50,6 +50,7 @@
 import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from './settings-schema.js';
 import {courseSettings, settingsDiff, checksum} from './course-library.js';
 import {puttingConfig} from './putting.js';
+import {isTee} from './tees.js';
 import {firmnessName} from './firmness.js';
 
 const PREFIX = 'FWC1';
@@ -288,7 +289,7 @@ export function readRivalCode(code) {
  const q = head.q || {}, t = q.turf && typeof q.turf === 'object' ? q.turf : {};
  let putting;
  try { putting = puttingConfig(q.putting); } catch { putting = puttingConfig(); }
- const rules = {tee: ['blue', 'white', 'red'].includes(q.tee) ? q.tee : 'blue', putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three},
+ const rules = {tee: isTee(q.tee) ? q.tee : 'blue', putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three},
   ob: q.ob === 'e5' ? 'e5' : 'stroke', lie: q.lie !== false, input: q.input === 'meter' ? 'meter' : 'monitor',
   turf: Object.fromEntries(['stimp', 'fairway', 'semi', 'rough', 'firmness'].filter(k => Number.isFinite(t[k]) && t[k] >= 0 && t[k] < 1000).map(k => [k, t[k]]))};
  let shots;

@@ -19,7 +19,9 @@ export default function ({journey, SHOTS}) {
   const click = async (fx, fy, opts) => { const [x, y] = at(fx, fy); await page.mouse.click(x, y, opts); await page.waitForTimeout(120); };
   const s0 = await state();
   // An outline of semi-rough: four corners, Enter.
-  await page.locator('.cb-group', {hasText: 'Outline'}).getByRole('button', {name: 'Semi', exact: true}).click();
+  // The layer chosen, then the Pen (builder-ux: one pen, not an Outline button per surface).
+  await page.locator('.cb-layerpick').selectOption('semi');
+  await page.getByRole('button', {name: 'Pen', exact: true}).click();
   for (const [fx, fy] of [[.30, .30], [.36, .30], [.36, .36], [.30, .36]]) await click(fx, fy);
   await page.keyboard.press('Enter');
   // A pond: four corners and Enter.
@@ -30,6 +32,15 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Draw a creek'}).click();
   for (const [fx, fy] of [[.42, .20], [.45, .30], [.48, .40]]) await click(fx, fy);
   await page.keyboard.press('Enter');
+  // DELETE (builder-ux, item 9): the pond just drawn, selected and deleted --
+  // its water body with it -- then Undo puts it back.
+  await page.locator('[data-tool="select:"]').click();
+  await click(.65, .65);
+  const ponds = (await state()).water;
+  await page.keyboard.press('Delete');
+  if ((await state()).water !== ponds - 1) throw Error(`Delete should take the pond and its water away: ${ponds} -> ${(await state()).water}`);
+  await page.locator('.cb-group', {hasText: 'View'}).getByRole('button', {name: 'Undo', exact: true}).click();
+  if ((await state()).water !== ponds) throw Error('Undo should put the pond back');
   // A bunker.
   await page.getByRole('button', {name: 'Dig a bunker'}).click();
   await click(.55, .45);
@@ -39,7 +50,10 @@ export default function ({journey, SHOTS}) {
   // since 4 November 2026), and this course's ground under a fixed spot changes
   // with it: click round the plan until two have stood.
   const trees0 = (await state()).trees; let planted = 0;
-  for (const [fx, fy] of [[.25, .70], [.27, .74], [.18, .82], [.82, .18], [.12, .12], [.88, .88], [.75, .35], [.40, .85], [.60, .12], [.10, .50], [.90, .50], [.50, .92]]) { if (planted === 2) break; await click(fx, fy); planted = (await state()).trees - trees0; }
+  // Only spots over the open plan: the tool column covers the left 15% and
+  // the course panel the right 19% (a click at 12% across once ticked the
+  // LIDAR's tree sizes and replanted 29 trees; builder-ux, 10 November 2026).
+  for (const [fx, fy] of [[.25, .70], [.27, .74], [.18, .82], [.78, .18], [.30, .15], [.70, .88], [.75, .35], [.40, .85], [.60, .12], [.22, .50], [.76, .50], [.50, .92], [.35, .60], [.65, .25], [.45, .78], [.55, .55]]) { if (planted === 2) break; await click(fx, fy); planted = (await state()).trees - trees0; }
   if (planted !== 2) throw Error(`Place tree stood ${planted} of 2 anywhere on the plan`);
   await page.getByRole('button', {name: 'Clear trees', exact: true}).click();
   await click(.25, .70);
@@ -85,6 +99,18 @@ export default function ({journey, SHOTS}) {
   const report = await page.evaluate(() => [...document.querySelectorAll('.cb-side li')].map(li => li.textContent).filter(t => /par/.test(t)).slice(0, 3));
   console.log(`       ${report.join(' | ')}`);
   await t.shot('reports');
+  // ADD AND REMOVE A HOLE (builder-ux, item 9): one added where the view
+  // looks, then taken out again (the question answered yes).
+  {
+   const holes = () => page.evaluate(() => window.fairwayBuilder.editor.editor.state.holes.length);
+   const n0 = await holes();
+   await page.locator('[data-hole="add"]').click();
+   if (await holes() !== n0 + 1) throw Error(`Add a hole should add one: ${n0} -> ${await holes()}`);
+   await t.shot('hole-added');
+   page.once('dialog', d => d.accept());
+   await page.locator('[data-hole="remove"]').click();
+   if (await holes() !== n0) throw Error('Remove this hole should take it out again');
+  }
   const [download] = await Promise.all([page.waitForEvent('download', {timeout: 120000}), page.locator('#cbSave').click()]);
   const saved = path.join(SHOTS, 'builder-tools-saved.fairway');
   await download.saveAs(saved);

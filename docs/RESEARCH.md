@@ -11737,8 +11737,9 @@ as Web Mercator tiles. Each was tried with one tile (31 October 2026, no key):
 OpenStreetMap, other uses under Esri's terms (OSM wiki's summary of Esri's
 grant). USGS's NAIP image service (imagery.nationalmap.gov,
 USGSNAIPImagery/ImageServer, 0.6 m, `exportImage`) answers its description but
-timed out on an export twice -- the full-resolution US source if it holds up;
-not built yet. Microsoft's Planetary Computer serves NAIP as whole 400 MB
+timed out on an export twice (31 October 2026). **Its sibling USGSNAIPPlus
+answered on 10 November 2026 and is now the first US source** (*Sharper
+pictures for the builder*, below). Microsoft's Planetary Computer serves NAIP as whole 400 MB
 tiles (what the trace was tuned on), too big for a page to fetch. Google
 (Maps Platform terms 3.2.3) and Bing need a key and limit tracing; the owner
 asked for them, and they are offered with that said.
@@ -15502,3 +15503,329 @@ Low draws nearly as much as Medium: no tier setting reached the trees on a built
   as an exception (Low +4.2%, Medium +1.5%; it read as canes in the flight, but kept 0.61-0.68 of
   its area): the strict rule for every model. In motion (frame-motion, Low, the outline build
   against the eighth): 0.2-1.3% of pixels, the ocotillos whole again, no page errors.
+
+## The builder's pen and steadied brush (10 November 2026, the builder-ux goal)
+
+**The pen's curve** (src/builder/pen.js) is a centripetal Catmull-Rom spline
+(alpha 0.5) through the clicked nodes. Chosen because it passes through every
+node -- a click is a node, as the owner asked ("i want to see a 'node' at each
+click") -- and, unlike the uniform Catmull-Rom, never forms a loop or a cusp
+between two nodes close together (Yuksel, Schaefer and Keyser, *On the
+parameterization of Catmull-Rom curves*, 2009; the construction is the
+Barry-Goldman pyramid as given at
+https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline). Both
+from what was known before this session; neither page fetched. A corner
+(Shift-click) mirrors the far node through it, so the curve runs straight in
+and out. Sampling: about one point a land cell (at least half a metre), 2 to
+64 a segment. On a 30 m square of nodes each side bows out by 3.75 m (an
+eighth of the side) -- what a player sees in the preview, and what is filled.
+**Rejected:** Bezier handles (a second thing to drag at every node), and the
+old straight polygon smoothed after filling (what landed was not what was
+drawn).
+
+**The steadied brush** (src/builder/steady.js) is the "lazy mouse" or
+"stabiliser" of paint programs: the brush stays put until the pointer is a
+string's length away, then moves straight towards it; on letting go it
+catches up to the pointer, so a stroke shorter than the string still paints
+(a 10 m stroke in the builder-door-2 journey painted nothing until it did).
+**PLACED:** Steadiness 0-100 is a string of 0 to 30 screen pixels (50, 15
+pixels, by default); dabs a quarter of the brush apart (at least half a
+cell). Measured in the journey: a zig-zag 3 m either side of a line with a
+4 m brush painted a stroke 12.5 m wide at Steadiness 0 and 7.5 m at 90 --
+about the brush's own width, a straight line. Smoothing the edge on letting
+go is the trace's own majority smoothing (radius 1.5 cells) inside the
+stroke's box and on the painted layer only.
+
+## Sharper pictures for the builder (10 November 2026, the builder-ux goal)
+
+The owner: "our images that get overlayed onto the course are not very high
+resolution. That needs fixing." Two causes, both in src/builder/imagery.js:
+
+1. **The free US source stopped at zoom 16.** USGSImageryOnly is a tile
+   cache whose last level is 16, about 1.7 m a pixel at Worthington's 43.6°
+   N, though the NAIP photographs under it are 60 cm or finer.
+2. **A big course was cut to 400 tiles** (`zoomFor`'s `maxTiles`), which
+   drops a zoom level for anything much over a kilometre square, even from
+   Google or Bing.
+
+**What was done.** USGS's **NAIP Plus** image service is the first source
+offered in the United States: https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer
+(its JSON, read 10 November 2026: pixel size 0.30 m, 4 bands, Web Mercator
+102100, `maxImageWidth` and `maxImageHeight` 4,000, capabilities Image,
+Metadata, Catalog, Mensuration; its copyright line "USGS, USDA, The National
+Map: Orthoimagery. March 12, 2025"; its description: resolution from 6 inches
+to 1 metre, NAIP and high-resolution orthoimagery). It answers with
+`Access-Control-Allow-Origin: *`, so the page fetches it directly. It is not a
+tile cache: `exportImage` returns any box at any size, so the builder asks for
+blocks of 4 by 4 tiles (1,024 pixels square) by their Web Mercator box
+(`mercatorBox`) -- one request in the journey's test land where the tile cache
+took 6. The picture was first asked for at the land's own cell size, because door 2's
+plan drew it a cell a pixel; that threw the sharper source away on a 1 m land
+(Worthington), so **the plan now draws the picture on a grid of its own**
+(door-real.js `finePicture`), as fine as its source, at most about 36 million
+pixels, and the picture is asked for at 0.3 m again (the tile cap decides:
+Worthington's 1.85 km land gets zoom 18, about 0.43 m). The placing is fitted
+as a flat map from a 5 by 5 grid of exact points, as converting every pixel
+through the projection took seconds. `maxTiles` is 640
+(PLACED): about 42 million pixels, a 3 km square at half a metre.
+
+**Measured** (bench/shots/sharpness.mjs, local, the same 250 m of Worthington
+at 43.6247° N, 95.6262° W): 145 pixels across from the tile cache (1.73 m a
+pixel) against 833 from NAIP Plus (0.30 m) -- single trees, bunker edges,
+house roofs and the road's centre line now show. The two are also different
+years' photographs. **Not measured:** how much bigger a saved course file
+grows (the picture is saved as a JPEG at quality 0.9; estimated a few
+megabytes for a 1 km course at half a metre, against well under one before);
+the saved draft grew from 30 to 33 MB on Worthington with the 0.43 m picture.
+
+**Tried and not used:** USDA's own NAIP service
+(gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer)
+failed to connect from here (a TLS error, curl exit 35) on 10 November 2026.
+
+## Build it for me, on a real course (10 November 2026, the builder-ux goal)
+
+The owner's yardstick: "A real course for me depending on if there is open
+street map data can be like 15 mins." Build it for me (door-real.js
+`buildForMe`) runs door 2's own steps from a name (since 10 November 2026,
+later, from the course found and boxed on the map: *The map before the
+LIDAR*; the run below took a 1.5 km square round the place). Measured on **Worthington
+Country Club**, Minnesota, against the real services, from this PC over its
+home connection (bench/shots/build-for-me.mjs, local; one run):
+
+| Step | Done at |
+| --- | --- |
+| The place (Nominatim; two golf courses of that name, Minnesota and Florida, so it asks which -- one click) | a few seconds |
+| The LIDAR: USGS 3DEP *MN MORiverBigSioux 1 B21*, a 1.5 km square plus its margin, through Entwine | 134 s |
+| The land, 1,850 x 1,845 cells at 1 m | 172 s |
+| The picture, USGS NAIP Plus, 2,560 x 2,304 pixels | 184 s |
+| OpenStreetMap (Overpass about 35 s), laid, refined with the LIDAR, the holes found | 232 s |
+
+**3 minutes 52 seconds** from the press to the review, with 18 of 18 holes
+marked from the map and no page error; the player's part is typing the name
+and one click to choose Minnesota. The map laid 18 fairways, 26 tees, 23
+greens, 20 bunkers, 15 ponds, 143 roads, 8 paths and 430 houses. The owner
+says Worthington's map is "completely wrong. Many holes pointing to the wrong
+place" -- the review shows hole lines crossing (13 to 16); item 24 of the
+goal is to check the map rather than trust it. The run against the card:
+5,962 yards from the back (the card's blue, 6,282).
+
+**PLACED:** the square is 1.5 km (door 2's default); the survey is the one
+covering most of it, the newest on a tie; the picture the first free source
+offered there. **Found on the way:** the first two runs built the town of
+Worthington, because a script passed the name through a shell that split it
+at its spaces ("Worthington" alone finds the town). The place search now
+marks golf courses (`golf`, from Nominatim's `type` golf_course), and Build it
+for me takes a single golf course without asking.
+
+## Checking OpenStreetMap's holes, on Worthington (10 November 2026, the builder-ux goal)
+
+The owner: "The OSM data for worthington is completely wrong. Many holes
+pointing to the wrong place." src/builder/map-checks.js reads the holes door 2
+marks from the map against the greens and tees traced under them (as pieces,
+`blobs`), the fairways (`played`) and the boundary. **PLACED thresholds**
+(`LIMITS`): a green mark more than 15 m from any green, a tee more than 20 m
+from any tee; two greens nearer than 12 m are one; a tee more than 350 m from
+the last green suggests the numbers are out of order; a par's yards from the
+back tee 70-290 (par 3), 220-520 (4), 400-720 (5) -- the USGA's guidance (men:
+par 3 to 260, par 4 240-490, par 5 450-710), widened, from memory, not fetched;
+a line whose middle three-fifths runs on fairway or semi-rough less than 40%
+points the wrong way; two lines crossing away from their ends (12% each end).
+The map is called unreliable at half its holes.
+
+**Worthington Country Club, real map** (Build it for me, bench/shots/build-for-me.mjs):
+before the line check, only 2 doubts (two back tees off any tee) -- door 2's
+`fitHoles` snaps each green mark onto the nearest traced green, which hides a
+hole pointing at the wrong one. With the line check: **9 of 18 holes have
+something to check** -- holes 3, 7, 9, 10, 12, 15 and 17 with lines 0-22% on
+the fairways, 4 and 18 with back tees off any tee -- and the map is called
+unreliable, as the owner says it is. Fixes were offered for 7 (the green down
+the fairway from the hole's tee, or the tee up the fairway to its green,
+at least 60% on and a quarter better than now; not a green another hole
+finishes on -- a first version offered those, and taking every fix made new
+"same green" doubts). Taking them all, three rounds over, leaves 9 things to
+check, most of them the numbering (hole 3's tee 664 m from hole 2's green):
+the lines now run down fairways, but which hole is which is the map's to
+answer, or the owner's. The fixes are guesses from the traced course; the
+batch button says so.
+
+**Not built:** the scorecard as a witness in the page (the pure check takes
+`card` yards; no box to type them yet); scoring the checks on damaged maps
+over the bench courses (the journey damages one hole on a made-up club).
+
+## Doglegs from the trace (10 November 2026, the builder-ux goal)
+
+map-checks.js `bendFor`: for a hole with no aim point whose straight line's
+middle runs less than 75% on fairway or semi-rough, one bend point on the
+fairway, searched every 8 m within 120 m of the hole's box, both legs at
+least 60% on and the whole no longer than 1.5 times the straight line,
+offered when it beats the straight line by a quarter (all PLACED). Tested on
+an L-shaped fairway (the bend lands at the corner) and a straight one (none).
+
+**On Worthington** (real map, Build it for me): bending every hole's line cut
+the holes to check from 9 to 3 -- but that hides a hole the map drew to the
+wrong green, which a bend can route along some fairway and make look right.
+So Build it for me bends only holes already at least 40% on the fairway (4
+on Worthington), and a hole flagged as running off the fairways is offered
+the bend as its fix, to check against the picture. Result: 9 of 18 holes
+flagged, the map called unreliable, a fix offered for all 9; taking them
+all leaves 7 things to check, all the map's numbering or lines crossing.
+**Rejected:** bending every hole automatically (above); a bend from the
+fairway's own centre line (a fairway's outline is often merged with its
+neighbour's on the map, so its centre line runs between two holes).
+
+**The photo's date** (10 November 2026): the NAIP Plus service's
+`identify` with `returnCatalogItems=true` lists the photographs under a
+point with `acquisition_date` (milliseconds), `Year`, `resolution_value`
+and `Category` (1 the primary mosaic). Under Worthington's centre: 16 items,
+the newest primary m_4309519_se_15_060_20210821 -- 21 August 2021, 0.6 m.
+
+## The map checks, scored (10 November 2026, the builder-ux goal)
+
+tools/map-checks-bench.mjs reads each built course in bench/courses (16 of
+the 17; Dinosaur Mountain's 99 MB file skipped) -- its holes and the surfaces
+the game plays, sampled every 2 m -- and damages one hole at a time, on the
+holes the checks raise no doubt about as built:
+
+| Damage | Caught |
+| --- | --- |
+| The green swapped for the one two holes on (a line to the wrong place) | 236 of 236 |
+| The back tee moved 80 m sideways | 227 of 236 (96%) |
+| The green left out | 236 of 236 |
+
+**False alarms** on the courses as built: 34 of 270 holes (13%) -- 12 of them
+Worthington's 18, which the owner says is mapped wrong, so not all false.
+
+**The fix for a wrong green** was the weak part. The first rule -- any green
+no other hole uses, the line from the tee at least 60% on the fairway -- put
+the green back 14% of the time and offered a wrong one 59%: real holes bend,
+so a straight line from the tee rarely runs down the right fairway, and a
+neighbour's fairway often scored better. Loosening the 60% made it worse (a
+floor of 45%: 15% right, 66% wrong). **The rule kept** offers only a green
+*no* hole finishes on -- a map's hole drawn to the wrong green leaves its own
+green orphaned -- the best of those by fairway, with no floor: **62% right,
+29% wrong**. A floor on that (20%: 49/23; 40%: 41/18) trades right fixes for
+fewer wrong ones at about the same ratio, so none is set (PLACED). The fix
+stays a guess, said so in the builder; reading the hole's dogleg before
+choosing its green is the next step if it matters.
+
+**Withdrawn, 10 November 2026.** The owner, after trying the checks on
+Worthington ("the warnings do point to real issues"): "we should just remove
+the green fix attempts then and just tell the user it needs fixing". A hole
+drawn to the wrong green (off the fairways, sharing a green, crossing
+another) is now flagged with "it needs fixing by hand" and no green offered;
+29% wrong was too often for a button that moves a hole. Kept: a mark a few
+metres off its green or tee moved onto the nearest, and a bend down the
+fairway for a line off it (a dogleg mapped straight), offered "if its green
+is right". The bench still runs; its *fixed* column is 0 by design.
+
+## Tee sets from OpenStreetMap (10 November 2026, the builder-ux branch)
+
+The owner: "We need to add support for multiple tees in the game more than
+just blue white red. We should have support for up to 6 tees. Many courses
+have 4 at minimum. black -> blue -> white -> silver -> gold -> red. This needs
+to feed from the open street map data. Generated courses should still just
+have 3 tees." (src/tees.js; COURSE_BUILDER, *Six tee sets*.)
+
+**The source.** The OpenStreetMap wiki, *Tag:golf=tee*
+(https://wiki.openstreetmap.org/wiki/Tag:golf=tee, read 10 November 2026):
+a tee's set is "often mapped as `tee=<COLOUR>`" (its example
+`tee=yellow`; colours named on the page: blue, white, red, green, yellow,
+black), or named (`tee=championship`; the page lists Championship,
+Members', Women's) or numbered (`tee=<NUMBER>`). The page says nothing of
+several sets on one box, of `colour=*`, or of yardage tags.
+
+**What the maps hold** -- the 16 courses kept in bench/courses (osm.json
+each), counted 10 November 2026: of 1,020 golf=tee areas, **one** names a
+set: Worthington's `tee=blue;white;gold;red` (so ";" separates sets in
+practice), and one more says `tee=teebox`. **TPC Scottsdale's** hole lines
+carry yardages under four named keys, `dist:championship`,
+`dist:players`, `dist:resort`, `dist:forward`; no other course has
+`dist:*`. So the tags settle a course's sets rarely, and **the count of
+boxes does the work**.
+
+The rules, every one PLACED:
+
+- **The order and colours**: the owner's order, black (longest) to red.
+  Blue, white and red keep the game's colours; black #26282c, silver
+  #b4bac2, gold #d6a72c chosen to read apart on turf.
+- **Tag values**: the six colours; yellow is gold, grey/gray silver;
+  championship, champion(s), tips, tournament and pro(fessional) are black;
+  green, orange, numbers and anything else name no set. ";", "," or "/"
+  separate several.
+- **A course's sets**: the sets its tags name, together (Worthington: blue,
+  white, gold, red -- four, no black); else its holes' `dist:*` keys, by
+  colour where they are colours, else as many as there are keys (TPC
+  Scottsdale: four); else as many as the holes most often have tee boxes
+  (a tie the more), **three at the least**. Four are black, blue, white,
+  red; five add gold between white and red; six are all.
+- **Boxes to sets**: a tagged box (or one within 8 m of a tagged box's
+  middle) is its sets. The rest, farthest first, share the course's sets the
+  hole's tags left free, spread by distance: with as many boxes as sets or
+  more, a box each (the farthest the longest); with fewer, each set goes to
+  the box at its place in the spread, so a box can carry several -- one box,
+  every set. (First built as one set a box: a course whose holes had one box
+  each became a one-set course. The Build it for me journey showed it.) A
+  hole with no box keeps the map's own tee, carrying every set.
+- **A set a hole lacks** is played from the hole's nearest set in the order;
+  **a set the course lacks** likewise (a golfer on silver, on a course of
+  white and gold, plays white: a tie goes to the longer). A golfer's
+  remembered tee is kept as chosen; the nearest is worked out each course.
+- **Built courses from before** (the builder's back, middle and front) still
+  play blue, white and red spread over their tees by distance, exactly as
+  before -- no BUILT_VERSION bump: an unchanged file plays the same. Their
+  marks, opened again in the builder, read as blue, white and red.
+- **Generated courses** keep blue, white and red; the biome fingerprints are
+  unchanged (`tools/biome-fingerprint.mjs --check`, 10 November 2026).
+
+**Tee markers on narrow built tees** (the owner: "Our tee markers need to
+stay inside the teebox on built courses"): a generated pad is 6 m wide and
+the markers stand 15 cm (six inches) inside its edges; a traced box can be
+narrower or shorter. On a built hole each marker now comes in 10 cm at a
+time until it stands 15 cm inside the box (the baked tee field, `h.onTee`),
+to 30 cm from the line at the least, and stands level with the tee mark when
+a metre behind it is off the box. Sets sharing one box stand side by side,
+each pair 40 cm inside the one before (PLACED). Not yet looked at on a real
+narrow tee in the game.
+
+## The map before the LIDAR (10 November 2026, the builder-ux branch)
+
+Door 2 now shows the aerial map round a place found by name before any
+LIDAR, and searches and downloads only a box drawn round the course on it
+(docs/COURSE_BUILDER.md, *The map first, then the box, then the LIDAR*).
+
+- **5 km across by default, 3 or 8 to choose -- PLACED.** Wide enough that a
+  course whose name is found at a town's middle is still on it; the largest
+  course box (3 x 3 km, the property's cap) fits on 5 km with room round it.
+- **About 2 m a pixel -- PLACED** (`mosaic` asked for 2 m, at most 160
+  tiles): fairways, greens, bunkers and the lake read plainly on Worthington
+  (USGS tiles, zoom 16, 1.73 m a pixel at 43.6° N). A 5 km map is 12 x 12
+  tiles, 3,072 pixels a side.
+- **The USGS tile cache over USGS NAIP Plus, for this map**, measured on
+  Worthington Country Club's 5 km map from this machine (10 November 2026):
+  NAIP Plus's exportImage, which draws each 1,024-pixel block when asked, 32 s
+  (found by name to map shown; the name search is under a second); the
+  tile cache (basemap.nationalmap.gov USGSImageryOnly, the same NAIP), 0.7-2.8
+  s over three runs. NAIP Plus stays first for the trace step's picture, where
+  its 30-60 cm is the point (*Sharper pictures for the builder*).
+- **A box drawn north-up is a little larger in the survey's grid.** The
+  property is the square of the LIDAR's grid (UTM for USGS's Entwine copies)
+  that holds the box's four corners. At Worthington (-95.62°, UTM zone 15,
+  central meridian -93°) the grid's north is turned about 1.8°; a 1,500 m box
+  became 1,549 x 1,544 m, which is 1,500 m x (cos 1.8° + sin 1.8°) = 1,546 m
+  within the box's own small Mercator error. The old square round the place
+  was laid the same way.
+- **Web Mercator's scale across the map**: the map is laid flat at the scale
+  of its middle; its north and south edges differ from it by the cosine of
+  latitude -- on 5 km at 43.6° N about 0.04% at the edge, a metre; on 8 km
+  about 0.06%, under 3 m. Longitude and
+  latitude are read through the tiles exactly, so the box searched for is
+  exact; only the size shown on it carries that error.
+- **Build it for me from the same box** (the owner, later the same day: one
+  search bar for both ways; COURSE_BUILDER, *One search bar for both ways*).
+  It downloads the survey covering most of the drawn box, not a 1.5 km square
+  round the place; the box is the property. Its warning ("might not always
+  get it right") is asked every time, not remembered -- PLACED. Next: build
+  the land starts the build at once when there is no land yet, or when the
+  box changed and nothing is traced -- PLACED (a rebuild clears the trace).
+  No new timings: the Worthington figures under *Build it for me, on a real
+  course* are from the 1.5 km square.
