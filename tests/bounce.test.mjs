@@ -118,7 +118,12 @@ test('a cart path is hard: no pitch mark, and most of the speed comes back', () 
 test('side spin about the vertical does not kick the ball sideways off level ground', () => {
  const b = bounce([0, -15, 15], [-500, 300, 0], UP, row('green'));
  assert.ok(Math.abs(b.v[0]) < 1e-9);
- assert.ok(b.w[1] > 250 && b.w[1] <= 300, 'spin about the normal is not what a bounce on a green works on');
+ // Friction takes none of it: what goes is the share the pitch mark swallows
+ // of ALL the ball's spin (`dig`), so a firm green, which takes no mark, keeps
+ // every turn.
+ assert.ok(b.w[1] > 200 && b.w[1] <= 300, 'spin about the normal is not what a bounce on a green works on');
+ const firm = bounce([0, -15, 15], [-500, 300, 0], UP, row('green', 'firm'));
+ assert.ok(Math.abs(firm.w[1] - 300) < 1e-6, String(firm.w[1]));
 });
 
 test('a slope turns the bounce: landing into a rise stands the ball up, onto a fall sends it on', () => {

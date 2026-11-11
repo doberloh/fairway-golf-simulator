@@ -10,7 +10,7 @@ says which number moves which behaviour. This document says why the numbers are
 what they are.
 
 **To check a change, run `node tools/ball-bench.mjs`.** It scores the ball
-against 147 real-world targets and names the source of each. It takes about a
+against 149 real-world targets and names the source of each. It takes about a
 second.
 
 A number marked **PLACED** is a judgement, not a measurement: nobody has
@@ -54,6 +54,18 @@ championship-green launcher tests (below). SOFT and MEDIUM are PLACED from the
 R&A's 2008 launcher tests on six British greens, where the same 5 iron ran
 anything from 0 to 14 yd and a sand wedge from -1 to +3, and from Haake's
 finding that soft greens stop a ball in one bite whatever its spin.
+
+**Every number here is either measured or placed on its own reasoning.** No
+ruling made about the ball before 11 November 2026 is used, as a limit or as a
+target; they were deleted with the model they were made for. A number that is
+not measured is marked PLACED, with the reasoning beside it.
+
+**The medium green sits between its neighbours.** Nothing measures it, so it is
+placed on one rule: for the same landing it never brings a ball back further
+than BOTH a soft green and a firm one do. At a 52 degree landing 8,500 rpm
+stops where it lands, 10,000 comes back 1.4 yd and 12,000 comes back 4.3. On
+the measured firm green the USGA's figures have a 12,000 rpm wedge at a steep
+56 degrees coming back up to 10 yd, and the model follows them.
 
 **Soft does not mean more spin-back.** Haake's 721 impacts on 16 greens found
 two kinds of green. On soft, wet ones the ball loses all its backspin in the
@@ -209,9 +221,9 @@ comes back at all.
 
 TrackMan's "Chip Shot Code" (about 6,000 chips) measured launch and spin by
 loft; its roll figures are the author's estimates. With a 10 yd carry on a
-medium green at Stimp 10 the model rolls a 7 iron 4.9 times its carry (TrackMan:
-more than 3.5), a pitching wedge 2.5 (2.5), a gap wedge 1.4 (1.5) and a sand
-wedge 0.7 (1 or less). On a firm green at Stimp 12.5: 6.1, 3.2, 1.9 and 0.9.
+medium green at Stimp 10 the model rolls a 7 iron 4.6 times its carry (TrackMan:
+more than 3.5), a pitching wedge 2.3 (2.5), a gap wedge 1.3 (1.5) and a sand
+wedge 0.6 (1 or less). On a firm green at Stimp 12.5: 6.1, 3.2, 1.9 and 0.9.
 
 ## Rolling
 
@@ -253,9 +265,8 @@ far steeper bank.
 
 ### The putt speed question
 
-**Decided by the owner, 11 November 2026: keep the realistic speed.** Asked
-whether putts should need what a real putt needs or what GSPro asks for, the
-answer was "Keep realistic". Do not reopen it without a new reason.
+**A putt here needs the speed a real putt needs.** That is the laboratory's
+answer, and it is the one followed.
 
 Simulators disagree here by 30%, and this is which side Fairway is on. On Stimp 10, a 10 ft putt:
 
@@ -305,9 +316,8 @@ centred limit there; Holmes notes a narrow rim bounces less than turf does.
 rattling in at walking pace; a ball that flies into the hole off a full shot
 arrives at ten times the speed, and by 9 m/s into a surface the bounce is down
 to almost nothing (`hardE`, `hardSpeed`, PLACED), as a green's is under a hard
-landing. Without it a slam dunk came back out of the cup a metre high, which
-the owner saw in the first picture taken of the new ball. A wedge, a 7 iron or
-a pitch flown into the hole now stays in.
+landing. Without it a slam dunk came back out of the cup a metre high. A
+wedge, a 7 iron or a pitch flown into the hole stays in.
 
 **The flagstick** gives and is smooth (`pinE` 0.10, `pinMu` 0.10, PLACED to
 match the tests): a square hit all but stops the ball, so a centred putt drops
@@ -315,10 +325,70 @@ at up to 3.6 m/s with the stick in, while one glancing it 15 to 25 mm off centre
 is knocked out slightly more often than with it out. That is what Mase (Cal
 Poly, 2019) and Molinari found.
 
-**Inside the hole the stick is half an inch across**, its real size
-(`FLAGSTICK_HOLE_R`). It is DRAWN an inch across at the green, the owner's call
-of 15 October 2026 for visibility, which leaves 41.3 mm beside it for a 42.7 mm
-ball: nothing could ever be holed with it in.
+**A ball meets a real flagstick, whatever is drawn.** In the air it is 0.75 in
+across (`FLAGSTICK_HIT_R`), the widest the Rules allow near the green; inside
+the hole it is the half inch of its base (`FLAGSTICK_HOLE_R`), which leaves
+47.6 mm beside it for a 42.7 mm ball. The stick is DRAWN wider, 2 in tapering
+to 1 in, so that it can be seen from the fairway; that is the picture only. At
+the drawn inch 41.3 mm would be left and nothing could be holed with it in.
+
+## The strike: what the lie and the Swing Meter hand the ball
+
+The ball model flies whatever it is given. Two things decide what that is
+before it starts, and both are in `src/swing-meter.js`.
+
+**The lie.** One rule for every golfer: the Swing Meter takes it off the
+swing, and a launch monitor's shot has it taken off what was measured (a mat
+cannot be rough), unless the round switches that off.
+
+- **Speed** (`LIE_SPEED`, PLACED: nobody publishes ball speed by lie).
+  Semi-rough keeps 96%, rough 90%, sand 85%. Rough sits inside what other
+  simulators take (5 to 15%). Sand is a compromise one table has to make: a
+  ball picked clean off a fairway bunker loses about 5%, a heavy one 30%.
+- **Spin: the flyer** (`lieSpin`, `LIE_SPIN`). Grass caught between the face
+  and the ball takes away the friction a lofted face needs to spin it; a
+  strong-lofted face barely needs any. MEASURED (USGA 2006, modern grooves,
+  light rough): a sand wedge launched at 29 degrees lands with 4,800 rpm out
+  of the rough against 9,100 off the fairway; a 5 iron launched at 16 degrees
+  keeps all of its spin. So the loss is keyed to the LAUNCH ANGLE, which a
+  Swing Meter shot and a monitor's both have: nothing at 16 degrees or under,
+  the whole loss at 28 and over -- 45% in rough, 20% in semi-rough (PLACED, for
+  grass half as long). A 7 iron keeps 85% of its spin out of the rough, a 9
+  iron two thirds, every wedge 55%; a bump-and-run, hit with the face turned
+  down, loses almost none. Sand takes none. The overhaul's ground types
+  (heather, fescue and the rest) are not given a loss yet. (Keyed to the spin
+  number at first, which had a lob wedge losing less than a pitching wedge;
+  loft is what the grass acts on.)
+
+**The Swing Meter's spin** is the club's own, changed only by the geometry of
+the strike (`HEIGHT_SPIN`, PLACED) and by the dial (`SPIN_SCALE`: a step off
+is a quarter less, each step on a tenth more). Spin follows the loft the face
+presents to the swing's path: Low (4 degrees down) spins 8% less, High 8%
+more, a Bump & run about half, and a Flop 15% LESS than stock, because it adds
+loft to a face already past the 50 degrees or so where the ball starts to
+slide up the face. Nothing is trimmed to make a ball stop or stay; what a shot
+does on the green is the ball model's alone.
+
+What that comes to (`node tools/meter-landings.mjs`; full swings onto a level
+green at Stimp 10; yards past the pitch mark, minus = came back):
+
+| Full swing | spin rpm | carry yd | soft | medium | firm | spin +3: soft | medium | firm | from rough: spin | medium |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 7 iron | 6,500 | 155 | +1.8 | +3.7 | +11.3 | +0.3 | +1.4 | +6.3 | 5,530 | +7.0 |
+| 9 iron | 8,000 | 125 | +0.4 | +1.6 | +6.3 | -0.4 | +0.4 | +4.0 | 5,300 | +6.6 |
+| Pitching wedge | 9,000 | 100 | -0.1 | +0.8 | +4.2 | -1.6 | -1.3 | +1.0 | 4,950 | +6.2 |
+| Gap wedge | 8,750 | 85 | 0.0 | +0.8 | +4.0 | -1.5 | -1.2 | +0.9 | 4,810 | +6.1 |
+| Sand wedge | 8,500 | 65 | 0.0 | +0.9 | +3.8 | -1.4 | -1.1 | +0.7 | 4,680 | +5.9 |
+| Lob wedge | 8,200 | 50 | 0.0 | +0.7 | +3.0 | -1.6 | -1.4 | -0.3 | 4,510 | +5.0 |
+
+A stock wedge stops within a yard of its mark on a soft or medium green and
+runs 3 to 4 yd on a firm one. With all the spin the dial has it comes back a
+yard or a yard and a half on soft and medium. Out of the rough the same wedge
+runs 5 to 6 yd, and a 10 yd sand wedge chip runs 7 yd where it ran 4.6. Over every club, height, swing from 30% to full overswing,
+firmness, level ground and a 2% rise, the furthest a stock-spin shot comes
+back is 1.1 yd at Stimp 8, 1.4 at Stimp 10 and 2.1 at Stimp 13 (a hard, high
+wedge into the rise). A launch monitor's shot is whatever was measured: a
+12,000 rpm wedge comes back 4 yd on a medium green and up to 10 on a firm one.
 
 ## What a whole shot does (`simulateShot`)
 
@@ -352,9 +422,10 @@ The result now also carries `landingSpin` (rpm at first touchdown) and
 
 | Tool | What it does |
 | --- | --- |
-| `node tools/ball-bench.mjs` | The ball against 147 real-world targets, by section, each naming its source. `--only greens,cup`, `--json`, `--set green.mu=.5,.3,.2` to try a constant without writing it, `--shot 120,16.3,7097` or `--land 22,51,9100` for one shot hop by hop on each firmness. Exits 1 on any failure. |
+| `node tools/ball-bench.mjs` | The ball against 148 real-world targets, by section, each naming its source. `--only greens,cup`, `--json`, `--set green.mu=.5,.3,.2` to try a constant without writing it, `--shot 120,16.3,7097` or `--land 22,51,9100` for one shot hop by hop on each firmness. Exits 1 on any failure. |
 | `node tools/flight-fit.mjs` | The air model against the published flights and the owner's private sessions (`docs/sources/private/`, not in the repository). `--fit` searches for better constants and prints them. |
 | `tools/flight-targets.mjs` | The published flights, as data. |
+| `node tools/meter-landings.mjs [--sweep] [--stimp 12]` | What the Swing Meter's own shots do when they land: every club hit at a green, at stock spin and with spin added, on each green firmness, and out of the rough. `--sweep` finds the furthest any stock-spin shot comes back. The table in *The strike* comes from it. |
 | `node tools/ball-paths.mjs [--against other/src/physics.js] > paths.html` | Side-on pictures (SVG) of what a ball does from its pitch mark to rest, this ball against another checkout's when asked: a drive on a fairway, a 7 iron, a spun wedge, a chip. Processor only. |
 | `tests/ball-bench.test.mjs` | Runs the bench inside `npm test`, one test per section. |
 | `tests/aero.test.mjs`, `bounce.test.mjs`, `turf.test.mjs`, `cup.test.mjs` | The rules each part must keep whatever its numbers are: a bounce never adds energy, firmer never bounces lower, a release runs exactly its Stimp, the hole never speeds a ball up. |

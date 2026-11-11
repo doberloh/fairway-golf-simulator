@@ -65,9 +65,10 @@ test('the orderings that make each ground what it is', () => {
  assert.ok(rollDeceleration('heather') > rollDeceleration('rough'));
  assert.ok(rollDeceleration('native') > rollDeceleration('rough'));
  // The lie: hardpan is a tight lie but cleaner than rough; heather the worst
- // grass; nothing is better than a fairway or worse than a bunker.
+ // grass; nothing is better than a fairway, and the worst ground (heather, bare
+ // coral and rock) costs a little more than a bunker does.
  assert.ok(lie('hardpan') > lie('rough') && lie('heather') < lie('rough'));
- for (const k of GROUND_KINDS) assert.ok(lie(k) <= 1 && lie(k) >= lie('sand') - .03, `${k}: lie ${lie(k)}`);
+ for (const k of GROUND_KINDS) assert.ok(lie(k) <= 1 && lie(k) >= lie('sand') - .08, `${k}: lie ${lie(k)}`);
  // Waste sand takes spin as a bunker does.
  assert.ok(GROUNDS.waste.killsSpin);
 });

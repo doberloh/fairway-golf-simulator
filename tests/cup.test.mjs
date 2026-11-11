@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cupSim, rollAtCup, flyAtCup, captureSpeed, CUP, CUP_RADIUS, BALL_RADIUS, CUP_DEPTH} from '../src/cup.js';
-import {simulateShot, CUP_RADIUS as PHYSICS_CUP, R, FLAGSTICK_HOLE_R, FLAGSTICK_BASE_R} from '../src/physics.js';
+import {simulateShot, CUP_RADIUS as PHYSICS_CUP, R, FLAGSTICK_HOLE_R, FLAGSTICK_HIT_R, FLAGSTICK_BASE_R} from '../src/physics.js';
 import {launchForDistance} from '../src/turf.js';
 
 const G = 9.80665;
@@ -95,7 +95,9 @@ test('the flagstick: no difference at dying pace, and it saves a centred putt fa
  assert.ok(captureSpeed(.02, pin) <= captureSpeed(.02) + .1);
  // A ball must fit beside the stick or nothing is ever holed with it in.
  assert.ok(CUP_RADIUS - FLAGSTICK_HOLE_R > 2 * BALL_RADIUS);
- assert.ok(FLAGSTICK_HOLE_R < FLAGSTICK_BASE_R);
+ // What a ball meets is a real stick (0.75 in in the air, 0.5 in in the hole),
+ // whatever width is drawn.
+ assert.ok(FLAGSTICK_HOLE_R < FLAGSTICK_HIT_R && FLAGSTICK_HIT_R <= .009525 + 1e-9 && FLAGSTICK_HIT_R < FLAGSTICK_BASE_R);
 });
 
 test('a ball that flies into the hole stays in it: a slam dunk does not bounce back out', () => {

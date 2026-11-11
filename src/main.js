@@ -46,7 +46,7 @@ import {isoWeek,weekIndex,weekKey,weeklySettings,weeklyBiome,recordWeekly,bestEv
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_SPIN,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {surfaceLabel,isGround,GROUNDS} from './grounds.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
@@ -1787,7 +1787,7 @@ function stepShape(which,dir,wrap=true){
  shotShape={...shotShape,[which]:list[j]};
  drawShapeControls();updateAim();
 }
-// THE LIE, before every shot and for every way of playing (the owner's rule):
+// THE LIE, before every shot and for every way of playing:
 // the surface the ball sits on and what it costs. In the shot controls for the
 // Swing Meter, and in the monitor window -- where it says when the round has the
 // monitor penalty switched off.
@@ -1795,7 +1795,8 @@ function drawLie(){
  if(!course||!round)return;
  const lie=currentLie(),f=onMat()?1:lieFactor(lie);
  const name=onMat()?'Mat':surfaceLabel(lie);
- const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
+ // Grass takes a wedge's spin as well (the flyer, swing-meter.js `lieSpin`).
+ const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed${LIE_SPIN.loss[lie]?' · wedges spin less':''}`:`${name} · full ball speed`;
  const meter=$('lieReadout');
  if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
  const mon=$('monLie');
@@ -1938,13 +1939,13 @@ function takeShot(data=null,struck=null){
  // the Swing Meter; the meter calls back in with the struck numbers.
  if(!data&&!struck)return meterPress();
  closePanel();const c=clubs[$('club').value],lie=course.surface(round.position.x,round.position.z);
- // THE LIE (14 October 2026, the owner's rule): rough, semi-rough and sand cost
- // ball speed, by one table, for every golfer. The Swing Meter has already taken
+ // THE LIE: rough, semi-rough and sand cost ball speed, and grass costs a
+ // high-spinning shot spin (the flyer), by one table, for every golfer. The Swing Meter has already taken
  // it off its swing (swing-meter.js). A MONITOR'S MEASURED BALL SPEED is
  // multiplied by the same share unless the round switches that off -- and the
  // measured number is kept beside the one played, so it is shown and recorded
- // exactly as sent, with the penalty in red (shot-data.js). Launch, direction,
- // spin and axis are never touched. The range and the lab's typed shots are
+ // exactly as sent, with the penalty in red (shot-data.js). Launch, direction
+ // and axis are never touched. The range and the lab's typed shots are
  // played off the mat. PROJECT_HANDOFF *The simulator never invents ball data*.
  const factor=onMat()?1:lieFactor(lie);let launch,lieRecord=null;
  if(data)({launch,lie:lieRecord}=monitorLie(data,lie,{on:round.monitorLie,range:onMat()}));

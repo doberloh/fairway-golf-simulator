@@ -21,7 +21,7 @@ The vocabulary used throughout:
 ## The one rule
 
 **Change a number, then run `node tools/ball-bench.mjs`.** It scores the ball
-against 147 real-world targets in about a second and names the source of each.
+against 149 real-world targets in about a second and names the source of each.
 A change that makes one shot look right and fails the bench has traded a
 measurement for a feeling. To try a value without writing it:
 
@@ -112,7 +112,7 @@ landing angle and time in the air, not only carry.
 | `hardE`, `hardSpeed` | how dead the cup is to a HARD hit: by `hardSpeed` m/s into the rim, wall or floor the bounce has fallen to `hardE`. Raise `hardSpeed` and a ball flown into the hole starts bouncing back out |
 | `pinE`, `pinMu` | the flagstick's give and grip. Raise `pinMu` and a ball rolling into the stick climbs it and pops back out |
 | `dt` | the cup's time step. Not a tuning knob |
-| `FLAGSTICK_HOLE_R` (`src/physics.js`) | the stick's size inside the hole. At the drawn inch nothing can be holed with it in |
+| `FLAGSTICK_HIT_R`, `FLAGSTICK_HOLE_R` (`src/physics.js`) | the stick a ball meets: 0.75 in across in the air, 0.5 in inside the hole. The drawn stick (`FLAGSTICK_TOP_R`, `FLAGSTICK_BASE_R`) is wider and is the picture only; at the drawn inch nothing could be holed with it in |
 
 ## Things that are NOT knobs
 
@@ -143,8 +143,9 @@ Swing Meter* says so.
 | `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |
 | `shapedLaunch` heights | Low −4°, High +4° launch; near the green a wedge's Bump & run is 55% of its launch on half its spin, Flop +10° |
 | `SPIN_SCALE` | the spin setting (X, the Spin box): −1 is 75% of the club's spin, +1 to +3 add a tenth each |
-| `HEIGHT_SPIN`, `KIND_SPIN` | **the guard that a ball with no spin added never comes back**: High and Flop carry less of the club's spin (85% and 68%), and the four wedges carry 85% to 90% on the meter. Found by sweeping every short club, height and power on soft, medium and firm greens from Stimp 8 to 13, level and into a 2% rise, against the ball model of 11 November 2026; `tests/swing-meter.test.mjs` holds it |
-| `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 80% (72% until 14 October 2026). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
+| `HEIGHT_SPIN` | what a height does to the club's spin, from the geometry of the strike: Low 0.92, High 1.08, Bump & run 0.5, Flop 0.85. Nothing here is tuned to what the ball does on the green; `node tools/meter-landings.mjs` prints that |
+| `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 85% (PLACED). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
+| `LIE_SPIN` (`lieSpin`) | **the flyer**: grass takes spin from a lofted shot. `from` (16 degrees of launch) is where it starts, `full` (28) where the whole `loss` is reached: rough 0.45, semi-rough 0.20. Raise `loss.rough` and wedges out of the rough run further; raise `from` and fewer clubs are touched. Sand has no loss |
 | `RUN_UP` | the marker starts at the bar's left edge and runs this far (the miss area, 0.3 bar lengths) to the strike line; taps before it are ignored |
 | `SWING_RANGES`, `swingZoom` | a short full shot's bar: half or quarter of the club's full carry, the shortest that holds the circle with a quarter to spare; `startSwing`'s `zoom` runs a half bar 12% and a quarter bar 25% slower (putts too) |
 | `PUTT_RANGES` | how far the putting bar reaches: a quarter of the putter's roll up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
@@ -174,5 +175,4 @@ than to have one quietly traded for the other.
 - **Putt speed.** Fairway models the skid, so a 10 ft putt on Stimp 10 needs
   5.3 mph; GSPro needs 4.1. Making Fairway match it means removing the skid
   (docs/BALL_PHYSICS.md, *The putt speed question*), which every laboratory
-  measurement says is there. The owner chose the realistic speed (11 November
-  2026).
+  measurement says is there.

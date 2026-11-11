@@ -138,8 +138,17 @@ export const stimpDeceleration = stimp => STIMP_RELEASE_SPEED ** 2 / (2 * stimp 
 //   mown      tight, mown turf, whose rolling resistance follows the speed law
 //             below. Long grass, sand and bare ground slow a ball the same at
 //             any speed, and hold one on a far steeper bank than a green can.
+// THE MEDIUM GREEN SITS BETWEEN ITS NEIGHBOURS. Firm is measured (the USGA's
+// launcher tests) and soft follows Haake (the spin is spent in one bite and
+// the pitch mark swallows the rest). Nothing measures the green in between, so
+// it is PLACED, on one rule: for the same landing a medium green should never
+// bring a ball back further than BOTH a soft and a firm one do. Its first
+// placing broke that -- a 10,000 rpm wedge came back 2.5 yd on medium against
+// 1.6 on soft and none on firm -- so `shear`, `arm` and `dig` were placed
+// again: at a 52 degree landing 8,500 rpm stops where it lands, 10,000 comes
+// back 1.4 yd and 12,000 comes back 4.3. tools/ball-bench.mjs holds the rule.
 const SURFACES = {
- green:   {e0: [.44, .50, .56], eHi: [.07, .10, .14], tilt: [18.5, 16.0, 11.6], mu: [.55, .45, .40], shear: [10, 6.5, 4.9], arm: [1, .92, .85], grab: 0, dig: [.27, .095, 0], slide: .42, stimp: null, firm: 'green', mown: true},
+ green:   {e0: [.44, .50, .56], eHi: [.07, .10, .14], tilt: [18.5, 16.0, 11.6], mu: [.55, .45, .40], shear: [10, 5.8, 4.9], arm: [1, .96, .85], grab: 0, dig: [.27, .20, 0], slide: .42, stimp: null, firm: 'green', mown: true},
  fringe:  {e0: [.42, .48, .54], eHi: [.07, .10, .135], tilt: [19.0, 16.5, 12.5], mu: [.52, .34, .26], arm: [1, .92, .85], grab: .03, dig: [.26, .10, .02], slide: .45, stimp: 6.5, firm: 'green', mown: true},
  fairway: {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.9, 4.9, 6.2], firm: 'course', mown: true},
  tee:     {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.3, 4.0, 5.0], firm: 'course', mown: true},

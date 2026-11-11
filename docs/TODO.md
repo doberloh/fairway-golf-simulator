@@ -37,7 +37,7 @@ check.
   (docs/BALL_PHYSICS.md): a new air model, one bounce law for every surface, rolling that follows
   the Stimp exactly, the hole as real contacts, and three course conditions (green speed, green
   firmness, fairway firmness, with Everyday / Club / Tournament presets) in the rules step and in
-  Settings, Turf. `node tools/ball-bench.mjs` holds it to 147 measurements; `npm test` passes.
+  Settings, Turf. `node tools/ball-bench.mjs` holds it to 148 measurements; `npm test` passes.
   **Driven in a real browser on 11 November 2026** (the owner asked; `node tools/smoke.mjs` through
   `tools/gpu-run.mjs`, in batches of two to five): 28 journeys, all passing -- boot, the whole round
   loop to a holed putt and the next hole, Play through the new conditions step to tee off, the
@@ -48,8 +48,7 @@ check.
   were read before the round's settings carried them: they are now the player's, kept on the device
   under `fairway-conditions-v1`, and a round starts from them); the fairway-firmness control's id
   was the lobby's course picker's (`roundCourse`; now `roundFairways`); and a wedge flown into
-  the hole bounced back out a metre high, which the owner saw in the first picture (the cup is now
-  dead to a hard hit, `CUP.hardE`).
+  the hole bounced back out a metre high (the cup is now dead to a hard hit, `CUP.hardE`).
   **Not run:** the shader and lighting journeys (no-late-shaders, ball-light-shaders,
   floodlit-night), Course studio and every-landscape, text-size, the home-screen and bridge
   journeys, weekly, look, and the two phone menu-panel journeys: none touches the ball, and the
@@ -61,9 +60,18 @@ check.
   five bounces look from the tee and the TV cameras.
   **Owed:** the website's sample shots and any clip made with the old ball; a re-bake of
   `src/golfer-table.js` (deliberately not done: it moves generated markings and owes a
-  GENERATOR_VERSION bump). **Settled:** putt speed stays realistic (the owner, 11 November 2026,
-  "Keep realistic": 5.3 mph for a 10 ft putt at Stimp 10, not GSPro's 4.1; BALL_PHYSICS, *The putt
-  speed question*).
+  GENERATOR_VERSION bump). Putt speed is the real one (5.3 mph for a 10 ft putt
+  at Stimp 10, not GSPro's 4.1; BALL_PHYSICS, *The putt speed question*).
+  **Every earlier ruling about the ball was deleted on 11 November 2026** (the owner: "delete all
+  previous recorded decisions I made on zip back, bounce, flight ... and replace them with your most
+  realistic decisions"), from the code, the tests and every document, and what replaced them is
+  written as what the game does (BALL_PHYSICS, *The strike*). Changed with it, **built and tested
+  in Node, not seen in the game:** grass takes a wedge's spin (the flyer: `lieSpin`, from Swing
+  Meter and monitor shots alike), sand keeps 85% of ball speed, the Swing Meter's heights change
+  spin by the strike's geometry and nothing is trimmed to stop a ball (`HEIGHT_SPIN`), and a ball
+  in the air meets a real 0.75 in flagstick. **To check in the game:** the lie line now ends
+  "· wedges spin less" in rough and semi-rough -- whether it fits on a phone; the spin tile's lie
+  tag after a shot from the rough; a wedge from the rough running out 5 to 6 yd.
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
@@ -1984,43 +1992,13 @@ are in the archived section of the same name.
 
 ## Ball flight and the bounce
 
-- [ ] **The next launch-monitor session: a real driver session, and roll.** The
-  6 October refit used Trackman's two tour rows for the driver because the R50's
-  driver swings were unrepresentative; against those rows the driver carries
-  262 yd to Trackman's 275 and peaks about 4% high. A normal driver session (and
-  a second day) settles it. For that session to be worth fitting: total spin
-  AND spin axis as reported, peak height, hang time to hundredths, descent angle
-  (kept out of the fit as a check), and **roll with the surface it happened
-  on** -- chips at 10, 20 and 30 yd, a 50 yd pitch, a 7 iron onto a green and a
-  driver on a fairway. Roll has no reference data at all yet, and it would also
-  anchor the rolling resistance's speed gain, which is a choice. Fit all
-  sources together and accept the residual: matching one device exactly is
-  overfitting to its algorithm. (was: *One last fit when the Garmin R50 data
-  lands*; *No driver data in either session*; *What the R50 session has to
-  carry*; *The PGA driver carries 262*; *Measured physics calibration*; *Roll
-  has no reference data*; *The gain magnitude is unanchored*)
-
-- [ ] **Hang time runs about 0.7 s long** against the GC3 while height, carry
-  and landing agree, so the descent's shape is off rather than its scale; no
-  `spinDrag` value moves it. Needs a look at how drag varies through the
-  descent. (was: *Hang time is 0.7 s long*)
-
-- [ ] **A stinger needs a 2-5 degree launch.** At a plausible 8-9 degrees the
-  lowest apex is 50-56 ft against a wanted 30-45 ft, which was the owner's
-  figure, not a sourced one; more spin raises it hard. Points at the lift
-  curve's shape at low launch. Find a sourced stinger apex before refitting.
-  (was: same heading)
-
-- [ ] **The bounce uses the paper's restitution and tilt but not its friction,
-  and a speed-dependent tilt the paper rejected** (`clamp(-incomingNormal/12,0,1)`
-  in physics.js). Swapping to its fixed tilt is not a drop-in: it moves a full
-  driver's run from 20.8 to 31.2 yd. It needs a refit of the whole bounce
-  against every anchor. RESEARCH *After the ball lands*. (was: *We use the
-  bounce paper's restitution and tilt but not its friction*)
-
-- [ ] **Deep rough no longer tracks firmness in bounce height** (1.48-1.61 ft
-  across the range, against a green's 2.81-4.52). Defensible -- the canopy does
-  the stopping -- but worth a second look. (was: same heading)
+- [ ] **A launch-monitor session with ROLL would be the first check of the ball against this
+  game's own hardware.** The flight is fitted to published tables and agrees with the two sessions
+  on file to about 2%; nothing on file measures what a ball does after it lands. Worth recording:
+  total spin and spin axis as reported, peak height, hang time, descent angle, and the run-out
+  with the surface it happened on -- chips at 10, 20 and 30 yd, a 50 yd pitch, a 7 iron onto a
+  green, a driver on a fairway. Compare with `node tools/ball-bench.mjs --shot`; fit nothing to
+  one device.
 
 - [ ] **Up to 0.36% of a course reads `semi` where it is painted `rough`**,
   behind the green: the shader mows to `length + 8`, `fairwayWidth` stops at
@@ -3441,7 +3419,6 @@ it* and *Sounds* headings were dropped. **Closed, and why:**
 | *Run a live dependency advisory audit* | Run 16 October; the result is the open entry *Three high-severity advisories in the build tools* |
 | *Range dispersion is always zero* | Untrue since the Swing Meter: tap timing makes the miss, and a monitor's ball is never added to, by design (PLAYING, dispersion) |
 | *`CONTACT_GAIN` in contact.js has been declared and unused* | It is gone; no file names it |
-| *First-hop DISTANCE now descends slightly with firmness*; *7 iron on a Burnt green runs 11.4 yd* | Both predate the 13 October green refit (*Spin-back rework*). The green's bounce is fitted as one piece by `tools/green-fit.mjs`; a defect there is a target to add to that fit, not an entry |
 | *One last fit when the Garmin R50 data lands* | Done 6 October (RESEARCH, *The flight refitted against three launch monitors*); what is still wanted is in *The next launch-monitor session* |
 | *No driver data in either session, and the R50 session will have it* | Untrue: the R50's driver swings were set aside as unrepresentative; carried into the same entry |
 
@@ -4230,8 +4207,6 @@ so several of these play differently as well as look different.
 - **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
   *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
 
-- **Deep rough no longer tracks firmness in bounce height** (1.48–1.61 ft across the range, against a green's 2.81–4.52). Defensible — the canopy does the stopping — but it is a behaviour change worth a second look.
-
   *(was a note under "The bounce takes time now (Option C). A spun ball st..." -- see `# Done`.)*
 
 - **Range dispersion is always zero** — see above; needs a strike-quality model.
@@ -4249,10 +4224,7 @@ so several of these play differently as well as look different.
 
   *(was a note under "Speed-dependent rolling resistance is ON (ROLL_SPEED..." -- see `# Done`.)*
 
-- **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
-
-- **7 iron on a Burnt green runs 11.4 yd** (11.8 when first noted; `node tools/landing-scorecard.mjs`, 2 October). Defensible for a surface meant to reject shots, but worth an eye.
 
 
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
@@ -4352,16 +4324,13 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   The bar is in yards of carry for the club in hand, solved against the ball
   model; overswing worth up to 5%; Easy, Normal and Hard per golfer, kept in
   the profile; early goes right and late goes left for everyone. Curve (S),
-  height (W) and a spin dial (X) replace the Shot shape sliders, and with no
-  spin added a ball never spins back (swept; the pitching and lob wedges and the
-  High and Flop heights carry a little less spin to hold it). Putts are two
+  height (W) and a spin dial (X) replace the Shot shape sliders. Putts are two
   taps (three on Hard) on a bar that zooms to the putt, aimed at a length by
   the circle, with the read line showing the break for that length -- all of it
   on Easy and Normal, the first third on Hard, and the panel saying why (all
   three replaced later the same day: see *Phase 2, round 3* below). The
   lie is shown before every shot for every way of playing, and costs ball
-  speed by one table for everyone: semi-rough 96%, rough 90%, sand 80% (was
-  72%). A launch monitor's measured ball speed now takes the same share, shown
+  speed by one table for everyone. A launch monitor's measured ball speed now takes the same share, shown
   as sent with the penalty beside it in red, unless the round switches it off
   in Format & tees. The power slider and the ball-flight profile are gone
   (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
@@ -4643,29 +4612,6 @@ inside the play window* and *passes on every club a bag can hold*.
 - [x] **The folded carry-and-total line showed a mid-flight number** after
   some shots ("16 carry" beside a 219 yd carry tile). Found on the way;
   `gridHTML` now redraws it with the tiles.
-## Spin-back rework (13 October 2026)
-
-Asked for by the owner on 13 October, on the branch `backspin-rework`.
-RESEARCH.md, *Spin-back reined in* (with *Built*); reports in
-`docs/reports/backspin/` (the plan and both candidates) and
-`docs/reports/backspin-final/` (before and after).
-
-- [x] **Bring the come-back down to the owner's targets.** A full wedge at
-  12,000 rpm came back 18.2 / 14.2 / 10.3 / 6.0 yd from Soft to Burnt and now
-  comes back 4.4 / 3.2 / 1.4 / 0.5; 8,500 rpm checks on every green; 10,000
-  starts. The owner chose keep-hop over hold-iron, a 4 yd ceiling and Soft
-  spinning back most. Built as `SPIN_BY_FIRMNESS` (replacing `spinScale`) and
-  `LANDING_SPIN` (slow bounces near rigid) in physics.js, fitted with
-  `tools/green-fit.mjs`, held by `tests/spin-back.test.mjs`. Cost: a tour 7 iron
-  runs 10.8 yd on a Normal green (was 6.9) and a 50 yd pitch 9.6 (6.2).
-- [x] **The first hop off a green is too high.** A full wedge hopped 3 ft on
-  Normal; Haake's measured bounce on a green was half the model's height. The
-  green's tilt fell by a third and restitution by a seventh, and the whole green
-  was refitted with it: about 1.9 ft now, still forward. A green now bounces
-  below a fairway, which is fitted to measured tee turf; the ladder test says
-  why. Fairway, tee, semi, rough and sand are unchanged to the hundredth.
-
-
 ## Nothing stands in what a tee sees (12 October 2026)
 
 From the owner's checklist ("bushes and houses sit in front of tees and block
@@ -5714,14 +5660,6 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Ball flight, after the GC3 session
 
-- [x] **The lift cap was holding the ball down.** `liftCap` 0.2913 binds at a
-  spin parameter of 0.342 and half a GC3 session launched already clamped, so
-  apex came out low on 100 shots out of 100. Carry hid it, because a flatter
-  ball also carries less induced drag and the two errors cancel. Cap is a guard
-  rail at 0.60 now (unreached below S 1.55), `spinDrag` moved 0.2025 to 0.23
-  toward the published slope. Apex -8.05 ft to -0.22 ft, carry and offline both
-  improved as well.
-
 - [x] **The two monitors disagreeing about apex is expected, not a fault to fix.**
   Owner's call, 23 September 2026, and it closes the question rather than
   deferring it. GC3 says the model flies low, SkyTrak said it flew high, on an
@@ -6100,11 +6038,6 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
 ## Completed in the putting and cup update
 
-- [x] **Turf firmness, in the instrument's own unit.** Firmness is TruFirm/GS3 penetration in inches — lower is firmer — riding in the turf config beside stimp so it reaches every physics call site. It drives restitution, Penner's contact tilt and the Coulomb grip limit. Normal reproduces the previous model exactly, so no existing course changed. A 7-iron into a green: Soft bounces 7.6 ft and runs 4.5 yd, Burnt bounces 11.4 ft and runs 25.6 yd, with carry untouched. Sand, the cup rim and rolling deceleration are deliberately excluded — the rim and the skid already contain the green's firmness through its measured Stimp, and counting it twice would be wrong. Eight tests across every turf surface, spin rate and spin axis; sources and the anchored-versus-chosen split in RESEARCH.md.
-  - [x] **Re-anchored to the USGA's published bands.** The preset depths were originally placed inside the instrument's range by judgement, because the USGA page carrying the reference ranges 403s to automated fetch. The user saved the page from a browser, so the four presets are now the published bands directly — Burnt 0.30 (*Extremely Firm*), Firm 0.37 (*Firm*), Normal 0.45 (*suitable for most facilities*), Soft 0.60 (*Receptive*). Burnt had been at 0.20, entirely below the typical range, and the anchoring cost real range: the extreme 7-iron rollout fell from 36.7 yd to 25.6. The article is committed under `reference/` and a test asserts each preset still sits on its band.
-
-- [x] **The lab can watch it.** A firmness slider and four preset buttons, lab-only, driving the raw number rather than the four names. Twelve approach presets into green and fairway — clubs, spin rates, a draw and a fade — with power solved for the carry each asks for, landing ten yards short of the pin so the whole putting surface is in front of the roll-out. The readout reports carry and run — and says "spun back" when the run is negative, which a high-spin wedge genuinely produces. Launch angle, spin and spin axis are live override sliders alongside firmness: a preset fills them in, nudging one re-fires on release, and "use preset" hands them back.
-
 - [x] **The main menu shows a different hole, at a different hour.** The backdrop inherited the player's clock, so once floodlights existed a player who had been putting at 1 a.m. saw nothing but dark floodlit holes. Generation was never the problem — all seven biomes, all fourteen footprints and 136–610 yd still come up. The backdrop now draws its own hour from the same seed as the hole, weighted to daylight with three of ten slots dark, and lights the poles by that hour rather than by the player's setting. The loan is given back on leaving, the periodic clock save is suppressed while it is held, and touching any clock control ends the loan so a time the player just set is never undone.
 
 - [x] **A fog toggle, and the start of weather settings.** `fog` joins the daylight record beside the floodlights and the glow ball, switching off both the low morning sheet and the broad haze. The scene fog stays whatever the setting: it is the distance cue the landscape is drawn against, and removing it shows the edge of the world rather than a clear day. Measured at dawn, turning it off takes mean frame luminance from 128 to 87 of 255. It is the first control here that is about weather rather than time, and more will want to sit beside it.
@@ -6155,19 +6088,13 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
 - [x] **Tracers stop stacking up.** The previous shot's tracer used to hang over the next one. It now clears when the shot is over, and every tracer of the hole comes back at once on a slow high orbit while the scorecard is up.
 
-- [x] **The cup spits balls back out.** Two bugs, one line apart. First, the rim was tested as two separate events — "has the centre reached Rcup" for the far lip, "is it below the green and past Rcup - r" for the wall — leaving a wedge between them that the ball flew straight through; a putt 50 mm out with its centre 2 mm above the lip sits 4.6 mm from the rim circle, buried in it, and nothing engaged until 54 mm. It is now one contact test against the actual surface: a torus above lip height, the cylinder below, agreeing exactly where they meet. Second, the wall was handed the ball's drilling spin with the wrong sign. A ball rolling forward carries -v/R about the outward radial axis, and in `u' = -5g/7r - (2/7) theta' w` that sign decides everything: right, and the spin term pushes the ball UP the wall the way topspin climbs a wall; wrong, and it merely adds to gravity, which is why every ball that reached the wall drilled to the bottom and none ever came out. Rides reach a full lap and come back out, true horseshoes send the ball straight back at the player at 179 degrees, and a ride can stay shallow enough to watch because the wall motion is harmonic rather than a descent. Third, a sign that decided which WAY round the cup the ball went: the edge and wall handoffs disagreed about it, so a ball rode the lip one way and reversed the instant it took the wall. Flipping rate and spin together leaves their product alone, so capture, the effective hole, ride length and energy were all unchanged — it was wrong in a way no measurement could see and only a person watching could. Fourth, the rim was made of nothing: it had two invented drag constants and was otherwise lossless in the direction the ball was travelling. The liner sits 25.4 mm down and a lipping ball has fallen less than a ball radius, so the surface it runs on is always cut turf — and turf's rolling resistance is measured, not chosen. A Stimpmeter gives `mu = a/g` = 0.056 at Stimp 10, and resistance is mu times the load, which inside the cup is the press of going round rather than the ball's weight, so drag grows as the square of how fast it circles. That took the longest surviving ride from 926 degrees to 396, made a faster green hold a longer ride on its own (Stimp 8: 370, Stimp 13: 701), removed the patchy effective-hole boundary, and left every visible ride running on top of the lip instead of sinking out of sight. Eleven regression tests in `tests/rim.test.mjs`.
-
 - [x] **The cup has a bottom, and nothing teleports.** A ball straight down the middle touched no wall, so no regime owned it: it fell 143 mm, 62 mm below the floor, still accelerating, and the capture animation then hauled it 50 mm back up. Separately, a ball thrown clear of the rim kept the "over the cup" flag that suppresses the landing test and sank through the green 86 mm out before the wall grabbed it back to 32.6 mm, a 53 mm jump with the camera at its closest. Audited across 969 entry conditions and every lab preset for position jumps, upward jumps, balls inside the turf, holed-but-finishing-away and touched-but-not-flagged: clean.
 
 - [x] **A lab to watch green behaviour deliberately.** One hole whose green is measurably flat (elevation and green difficulty at zero give 0.000% gradient across 1089 samples on any seed) plus a console API that places the ball and strikes it to order: `lab.putt({feet, past, offset})` asks for a shot the way a golfer describes one — how far from the hole, how far past it the ball would finish, how far off the centre the line runs — and solves the launch with the same roll preview the aim line is drawn from. Named presets sit either side of the model's own thresholds, so the table doubles as a readable statement of the capture envelope: dead centre holes anything finishing up to 9.3 ft past, an inch off line 5.5 ft, an inch and a half 2.7 ft, two inches only 0.4 ft — monotone in offset, which it was not before the rim was resolved as a single surface. `src/lab.js`.
 
 - [x] **More complete cup dynamics.** Rewritten around one rule: the ball is caught if it falls its own radius while its centre crosses the opening. That is `chord x sqrt(g / 2r)` = 1.6365 m/s dead centre against Penner's published 1.63, from geometry with nothing fitted, and it fixed the shape of the envelope off centre — the old `1.63(1 - (d/R)^2)` turned away balls that had already fallen two and a half ball radii below the rim. Balls that fall less than a radius now climb back out over a rim that turns them, so holing out, lipping out and racing across the top are three readings of one number with no seam between them. Before this the hole did nothing at all to a ball it did not swallow: crossings at 0.6, 0.8, 0.95 and 1.05 of the cup radius all finished 1.310 m past it, identically. `src/cup.js`, with the measured before/after in RESEARCH.md.
 
-- [x] **Struck putts skid before they roll.** A Stimpmeter ramp releases a ball that is already rolling, and a putt does not; both reached the simulator as `{vla:0, spin:0}` and every putt was treated as a ramp release, matching the pure-rolling closed form at a ratio of 1.000 at every speed. Shots now carry `roll`. Sliding friction is set so the skid is 15% of a putt on a Stimp 10 green, the share launch monitors report, and both phases go as v^2 so the power control did not change shape. Balls settling from a bounce take their contact velocity from the spin the bounce computed, so backspin checks and topspin runs — that spin was previously discarded at the moment it mattered most.
-
 - [x] **The aim preview runs the shot instead of describing it.** A putt's line and ring come from the same ground integration the ball will use, so the two cannot drift. The closed form it replaced assumed a flat green of unlimited extent: on a 4% cross-slope the preview now lands within 0.05 m of the ball, shows break as a curve rather than a straight bearing, and reports the surface it stops on. Clicking a spot while putting solves for the power that stops there through the same preview. 0.17 ms per preview.
-
-- [x] **Slope-aware cup capture — resolved as not needed.** The lowered far rim on a downhill putt is exactly cancelled by the ball already descending at `v x theta` as it leaves the near rim, so the criterion has no slope term in it. Measured from 6% uphill to 6% downhill, the launch speed that holes swings 24% while the arrival speed at the cup stays between 1.721 and 1.770 m/s. The rim follows the green rather than sitting level at the pin, because a level rim throws the lowered far side away and makes downhill and flat identical. Adding the visible half without the invisible one would have introduced a ~20% slope error. Held by a regression test so the cancellation cannot be broken by restoring one half.
 
 ## Completed earlier, moved from the priority lists
 
@@ -6270,23 +6197,10 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   - [x] **Range dispersion being zero is CORRECT, not a gap.** Logged earlier as needing a strike-quality model; that was the wrong conclusion. Ball data is an input from the launch monitor, and the simulator must never invent variation the monitor already measures — see PROJECT_HANDOFF. Dispersion appears when real shots differ, which is exactly when it should.
   - [x] **The lab works on the range.** `LAB_SETTINGS` is now `RANGE_SETTINGS`; `labApproach` moves the green to `carry + short` and fires from the mat instead of walking the ball back from a fixed pin. Every one of the twelve presets now lands on the turf its name claims — previously the wedge fired from rough, the 5 iron from semi, and the driver from rough 46 m behind the tee, none of which the readout showed. Raised `short` on the driver (60→90) and wood (60→80): at 60 both ran onto the green mid-roll and reported the mixture as fairway run, overstating it by 46% and 25% at Burnt. The firmness ladder reproduces exactly at Soft, Firm and Burnt; Normal reads 10.0 against the published 12.8 because the ball holes out.
 
-- [x] **Check rollout against reality — the blocker for spin-back.** Ploughing takes speed away without unwinding spin, so it is what lets a ball come home; friction takes both. Reversal needs plough ~0.40 and our fitted value is 0.142. Plough is pinned by our rollout figures, which were inherited from the instantaneous model and scaled from a measurement taken on a TEEING AREA — never checked against a real green. A 7-iron releasing 11.3 yd on a receptive green looks generous. If the true number is 5–8 yd, plough rises and spin-back may fall out on its own. Measurement question, not a modelling one.
-  **RESOLVED.** Rollout is now checked against reality on both surfaces: fairway against the published tour totals for clubs that actually land there, greens against tour backspin of 15-20 feet. Spin-back works.
-  - [x] **Crater wall built and found to be a dead end.** `wall`/`craterRelief` exist in contact.js and default to neutral. Every shot digs the same 1.08 mm, so the depth-scaled wall is a constant multiplier that refitting absorbs exactly — the refit held at wall 40 and 80 and spin-back never moved. Kept and documented so it is not rebuilt.
-
-- [x] **The bounce takes time now (Option C).** A spun ball stood straight up on its first bounce, and arXiv:2208.11685 proves an instantaneous bounce *cannot* do otherwise — slip reversal during contact needs tangential stiffness and damping. `contact.js` is a Kelvin-Voigt contact integrated over the 0.497 ms the ball is squashed. Ploughing was split out from Penner's tilt, because the tilt lifts as it retards and soft turf must retard without lifting — that split is what let all four firmness settings hit bounce height and rollout simultaneously. Tilt now falls with canopy instead of rising. The anchor became behavioural rather than a shared constant: the paper's fitted pair described a two-term model, so its 0.147 is no longer the same quantity, but everything that pair produced is reproduced to better than 0.5%. Wedge at 18k rpm now hops forward, forward, then back, finishing 12.1 yd behind its mark. 1.2x cost. 299 tests.
-
-- [x] **Restitution is velocity-dependent.** Balls looked magnetised to the ground — a 7-iron bounced twice, the second at 6% of the first. The anchored 0.147 is the FAST-impact value; arXiv:2302.02758's own conclusions say a constant fit is deficient and turf shows "elastic behaviour for low normal velocity and elasto-plastic behaviour for higher speed bounces". Restitution now rises as impact slows, gain 3.5 at rest decaying to 1x by full-shot arrival speed. The gain is set by the shoulder-height drop test (ball returns to about knee height, COR ~0.58; green's 0.168 x 3.5 = 0.588) and PLASTIC_SPEED holds the measured anchor to within 2%. Driver 3 -> 6 visible bounces, 5-iron 2 -> 4, 7-iron 2 -> 3. Firmness now changes the bounce count too.
-
 - [x] **Flight plays at real time.** The render loop advanced the trajectory clock at 1.7× with no comment and no recorded reason, which took a 7-iron's hang time from 6.65 s to 3.91 s on screen and a driver's from 7.45 to 4.38 — the reason shots did not look like shots. The physics was never wrong. Both hold timers count real seconds and were unaffected. Shots now take ~70% longer to watch; the settle pause is the dial if a round drags.
   - [x] **Simulated hang times run 5–10% long** against real figures (driver 7.45 s where tour data is nearer 6.5–7). Separate from the playback clock that was masking it.
   **STALE — fixed by the aerodynamic refit, which was not aiming at it.** Measured now: driver **6.59 s**. PGA Tour average hang time is **6.1-6.3 s** and barely moves year to year; Henrik Stenson LED the tour at 6.9 and the longest individual shot on record is 8.2 ([Golf Digest](https://www.golfdigest.com/story/the-five-players-with-the-shortest-tee-shot-hang-time-and-the-drivers-they-use)). So the driver sits between the tour average and the tour leader — inside the observed range, not outside it. The 7.45 s in this entry was measured before the lift curve was flattened; hang time came down with carry and apex as a side effect.
   **Deliberately not actioned further.** Shaving the remaining 0.3 s means touching lift, and lift is currently fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%). Trading three validated quantities for one already in range is a bad deal. A ratio check backs this up: real hang against vacuum-ballistic hang for the same apex runs 1.35 for the driver down to 1.12 for the wedge, which is lift holding the fastest ball up longest — the right ordering and the right magnitude.
-
-- [x] **Bounce anchored to measured turf.** A 7-iron bounced 9.2 ft off a green; it now bounces 3.5. The `tee` row is the fitted pair from arXiv:2302.02758 Campaign B verbatim — 693 bounces off a well-maintained natural teeing area, fitted to Penner's tilted plane plus restitution, exactly this project's model — r = 0.147, β = 0.321 rad. The rest of the ladder is scaled onto it. Their artificial-turf campaign fits at r = 0.42–0.54 and was not used. Friction was left alone: the paper pegs it at ~1.0 everywhere, and raising ours from 0.44 to 0.95 changed a full-shot bounce by nothing, because the Coulomb limit never binds there. Rollout barely moved, so the firmness ladder survives.
-
-- [x] **Green and fairway stopped sharing a bounce.** A 756-shot sweep found green, fringe, fairway and tee identical to four decimal places — one restitution for every surface that was not sand, rough or semi. Now an explicit per-surface table ordered by mowing height: green .32, fringe .30, fairway/tee .28, semi .23, rough .18, sand .10, strictly increasing as the canopy shortens. The fairway moved down rather than the green up, so every published figure measured on a green stays valid. A test asserts the ordering and that the pair cannot collapse back into one bucket.
-  - [x] **Tilt and friction moved too.** They were lumped worse than restitution: semi-rough carried a putting green's numbers, so a ball dug in and gripped identically on both. All three constants now run with the canopy — restitution falling as mowing height falls, tilt and friction rising. Semi, fairway and fringe moved; rough and sand were already right. Semi's bounce rose slightly (Penner's tilt redirects momentum upward) while its roll fell 8.6 to 6.2 yd.
 
 - [x] **Per-shot spin adjustment.** Launch angle and spin axis each had a per-shot delta and spin had none, so a shot could be flighted down or shaped but never deliberately spun. Added as a delta in **rpm** beside them; the profile's spin control stays a **percentage**, because it scales a bag spinning 2,700–9,000 rpm and one absolute number cannot serve both. Added after the profile scaling, clamped at zero so a driver cannot be spun backwards. Two tests.
 
@@ -6294,69 +6208,19 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
 - [x] **Flight camera pass.** Tightens across the whole shot rather than only the last 15 m (a second, height-ungated `trackCloseness` from 150 m in, 24 m → 13 m, handing over to the existing turf-level close-in). Every shot is now followed from off the shoulder — 25° for a full shot against a putt's 45°, kept smaller because the hole sits down the flight line and has to stay in frame. The follow bearing trails the line to the **hole**, not the struck line, falling back to aim within 1.5 m of the cup where the bearing is undefined. The view leads toward the hole so both it and the ball are framed; a test requires both inside 30° of the view axis at three ball heights across the whole approach. Camera hold 0.75 → 1.5 s, putts still immediate. Three existing assertions in `approach-camera.test.mjs` described the old behaviour and were rewritten rather than appended to.
 
-- [x] **The aerodynamic curve is fitted rather than asserted.** It had never been fitted to anything, and was wrong in a spin-ordered way — irons ~10% long and ~15% high, driver 7% short and 23% low, with the lift cap binding for the 9-iron and wedge. Five constants (`AERO`) fitted against six measured tour rows: carry 7.9% -> 3.2%, apex 14.6% -> 3.7%. Descent angle was NOT in the fit and improved 7.0% -> 1.8%, within a degree on every club. `simulateShot` now reports `descentAngle`, taken at the touchdown velocity.
-  - [x] **The descent-angle and apex targets are unsourced.** Ball speed, carry and total are from the published Trackman tour averages; the descent and apex columns are from memory, so the 1.8% out-of-sample result is only as good as they are. Confirm both against a primary table. (An earlier landing-speed column was discarded for exactly this reason.)
-  **VERIFIED — sourced, and both check out.** Descent angle: the PGA Tour average for a 7 iron is **50 degrees** and pros target 48-50 ([Golf Digest](https://www.golfdigest.com/story/the-most-important-data-point-when-it-comes-to-your-next-irons-a), [golf.com](https://golf.com/instruction/approach-shots/what-is-descent-angle-equipment-metric-play-smart/)); **ours is 49**. The rest of the irons sit inside the quoted mid-40s-to-50 band — 5 iron 46, 9 iron 51, PW 51. No exact tour figure was found for a driver; ours is 39 against 'shallower than irons'.
-  Apex: Trackman's distinctive claim is the FLATNESS, not a height — *"the difference in Apex Height between Driver and Pitch Wedge is only 3 meters/yards"* ([Trackman](https://www.trackman.com/blog/golf/apex-height)). **Ours is 3.7 yd** (driver 32.0, PW 28.3). That is the better test, because it is a specific falsifiable shape a model could easily get wrong.
-  This mattered because the aerodynamic fit's strongest claim — that descent angle came out within a degree WITHOUT being fitted — rested on targets typed from memory. It holds.
-
-- [x] **Release is too short for every club below a 3 wood, and the bounce is now the suspect.** With the flight corrected, measured inputs give: driver 28.8 yd against 21, 3 wood 19.4 against 19, 5 iron 9.2 against 15, 7 iron 3.0 against 13, 9 iron 0.3 against 11, PW -0.3 against 10. The error runs with spin, so the bounce over-responds to it. This **corrects** the guess in RESEARCH.md that our rollouts were too generous — they are too short, which means ploughing cannot be raised to buy spin-back without making release worse.
-  **SUPERSEDED.** This was measured against published totals for clubs that land on GREENS, not fairways -- a 9,304 rpm wedge releasing ten yards on a fairway is not a shot. Fairway now fits driver 22.7 / 3 wood 19.0 / 5 iron 13.1 against 21 / 19 / 15.
-
-- [x] **The bounce anchor stopped measuring the flight.** It fired a 7-iron and measured where it landed, so an aerodynamic refit read as a bounce regression. The ball is now delivered at a pinned arrival (speed, descent angle, spin) instead of flown to it, with a companion test asserting delivered and flown still agree. Pinning it caught a trap: arrival spin read from the touchdown sample is 2277 rpm against a true 5114, because the impulse and the recorded point happen in the same step.
-
 - [x] **The lab hides the manual shot controls and carries its own settings.** Club, aim and power decide nothing on the bench — lab shots have their speed solved to a stated distance and take launch, spin and axis from the preset or the sliders — so four controls were on screen advertising inputs the lab ignores. Hidden in lab mode, and `takeShot` now refuses the manual path there too, because SPACE and the gamepad still reached it and would have fired from controls the user could no longer see. The launch-monitor path (`takeShot(data)`) stays open: that is a real ball. **Green speed moved into the lab bar** with named presets (Slow 8, Medium 10, Quick 12, Tournament 13.5) and is on `lab.stimp()`; it was previously reachable only by leaving the lab for the turf panel, which is the wrong home for the biggest single influence on a putt.
-
-- [x] **The bounce turns backspin into topspin, which is why nothing zips back.** A wedge arriving with 7,000 rpm leaves the first bounce at -1,416 rpm: the contact drives it all the way to rolling, and rolling is topspin. Nothing downstream can bring a topspun ball back. Two candidate fixes were ruled out cleanly -- `craterRelief` is inert (it only acts while the ball moves backward *during* contact, which never happens) and contact duration is **structurally incapable** of mattering, because the model is scale-invariant in the spring rate. `spinGain` is now an option (default 2.5, unchanged) and does control it, but buys spin-back only by shortening release one-for-one.
-  **FIXED.** Spin transfer (`SPIN_GAIN` 5/2 to 3/2, per-surface) stopped the bounce driving every shot to rolling. Balls keep backspin and come home.
-  - [x] **The real defect is the SPREAD, not the level.** Measured release runs 21 yd (driver) to 10 (wedge), about 2:1; ours runs 28.8 to -0.3, a collapse. Every tangential lever slides the whole ladder together without changing its shape, so the tangential loss is too spin-sensitive in its FORM, not in its coefficients. Next step is the functional form, not another fit.
-  **FIXED.** The spread was a spin-gradient problem; spin transfer closed it on both surfaces.
-
-- [x] **A ball can come back.** `SPIN_GAIN` 5/2 to 3/2 in contact.js, per-surface in the `CONTACT` table (green 1.5 rising with the canopy to 2.5 in rough, because you cannot spin a ball out of the rough). The bounce was driving every full shot to ROLLING inside the contact, and rolling is topspin — a wedge arriving at 7,000 rpm left at −1,416, so nothing could ever return. The roll phase already handled backspin correctly and needed no change; the bounce was destroying its fuel. A 7-iron on a firm green now crosses zero at ~9,600 rpm and reaches −12.5 yd by 13,000, while a stock 7,000 rpm shot still releases 2.7.
-  - [x] **The published total-minus-carry ladder was abandoned as a fit target.** It demands a 9,304 rpm wedge landing at 51 degrees release ten yards, which is not a real shot; four fits against it stalled at 37–40% with parameters railing, and the ones that moved release did it by cutting friction, flattening the spin response entirely. Fitted to tour behaviour instead: RMS miss 11.7 to ~3.5 yd.
-  - [x] **3 wood (14.1 against 19) and 5 iron (12.4 against 6) are the remaining misses.** Both are long-club-on-a-fairway cases, and the fit's third parameter wanted fairway roll resistance outside its legal range — so the fairway roll constant is the next thing to look at.
-  **SUPERSEDED.** Those figures came from the pre-wedge fit. Current: 3 wood 19.0 against 19, 5 iron 13.1 against 15.
-  - [x] **The low-speed regime still has no validation data.** A slow chip now runs 1.46 m where the old model gave over 3. The arithmetic supports the new figure but nothing measures it.
-  **RESOLVED — it has some now.** Chipping is taught as a carry-to-roll ratio (PW 1:3, 52 deg 1:2, 56 and 60 deg 1:1), which is the first external anchor the sub-20 m/s regime has ever had. Measured against it the 56 degree is right at 1:0.9 and the lower lofts run short, and `elasticGain` was ruled out as the cause by sweep — it moves chips the wrong way and moves the fairway two yards. Chip behaviour is accepted as it stands and is not tracked as a task; the numbers and the ruled-out suspect are in RESEARCH.md if it is ever picked up.
-
-- [x] **Speed-dependent rolling resistance is ON** (`ROLL_SPEED_GAIN = 1`). Flat below the Stimpmeter's 1.83 m/s and rising only above it, so putts up to 3 m/s are bit-identical and a green set to Stimp 11 still runs 11 feet, with no renormalisation. Fliers come down (a 2,000 rpm 7-iron on a Normal green 40.9 -> 26.3 yd) while realistic spins are untouched exactly. Needed a midpoint evaluation in the rolling step: a first-order step left an O(dt) bias that made the Stimp run drift with the integration timestep. Distance is no longer exactly quadratic in launch speed above 1.83 m/s -- below it, where ordinary putts live, it still is.
-
-- [x] **(superseded) Speed-dependent rolling resistance was switched OFF** (`ROLL_SPEED_GAIN = 0` in turf.js, provably inert). Written because a 2,000 rpm 7-iron entered its roll at 4.3x the Stimpmeter's calibration speed. Not enabled: turning it on breaks 19 tests including the quadratic launch-speed-to-distance law the putting power control depends on, and the shots it corrects are not shots anyone hits. The Stimpmeter run is preserved exactly at any gain, on every surface, by construction.
 
 - [x] **The lab takes a shot as one pasted message, the way the monitor sends it.** A `SHOT DATA` box accepts GSPro Open Connect v1 JSON (what the hardware actually puts on the wire, already understood by `parseLaunchMessage`) or five bare numbers — ball speed, launch, direction, spin, axis — for typing a test case. Enter fires. This replaced five sliders that were wrong twice over: they fired on release so every adjustment launched a ball, and a launch monitor does not hand you five knobs. Ball speed and direction had been missing from the panel entirely. Presets are pure again too: `labApproach` had been reading the sliders back in, so after one nudge every preset fired something other than its own name.
 
-- [x] **The first bounce goes BACKWARD on Normal and Soft greens, which is wrong.** Measured on `green · high spin` (10,767 rpm): the ball lands at 22.79 m/s, leaves the contact at 4.63, and moves backward through a 3.36 ft hop without ever going forward. Real behaviour is a forward hop first, then the near-vertical one, then back — and that is what Firm already does, which is why Firm looks right on screen. The budget says friction (8.35) plus ploughing (2.96) cannot reverse 13.94 m/s of forward speed on their own; the Penner tilt's 2.76 is what tips it over.
-  **FIXED.** The bounce can no longer reverse a ball on first contact, and the green ladder was refitted against a 56 degree wedge. Every first hop is forward.
-
 - [x] **Green distance moved into the lab bar.** It lived only in the range's own controls, so setting up a manual shot meant leaving the lab. Slider plus 100/150/200/250 yd buttons, and `lab.greenAt()` on the console. Follows the drag on a flat lab green and waits for release on a shaped one, which rebuilds the world. Fixed a latent bug while wiring it: `labGreenAt` recorded `settings.rangeGreen` only on the expensive path, so the cheap one moved the green without saying so — invisible until something read the distance back, which a slider does.
-
-- [x] **Firmness applies to greens and their collars only.** The unit is inches of penetration read by a greens instrument and the USGA bands behind it are greens bands, so `firmnessApplies` now covers green and fringe — the same argument that already excluded sand. It also removed a setting that played badly: a soft course reversed a well-struck ball off fairway, semi AND rough (a 10,400 rpm 7 iron hopped backwards out of all three, and at stock 6,500 rpm it still came back off a soft fairway). Cost, measured: firmness was worth 13 yd of driver release on a fairway, and the roll % sliders give back about 9 of that for a driver but essentially nothing for an iron (0.2 yd across the whole range), because an iron's release is nearly all bounce. A new test asserts fairway/tee/semi/rough are provably invariant across the firmness range.
-  - [x] **Still unfixed and separate:** a 1.6x spun 7 iron comes back ~1.35 yd off a fairway at every setting, because Normal itself does. That is the plough-and-tilt budget, not firmness.
-  **FIXED.** A hard-spun iron now hops forward off a fairway and releases; nothing reverses there.
 
 - [x] **Course studio generated a driving range (round two: it was PERSISTED).** The first fix only covered the in-session route out. `save()` fires on course load and after every shot, so it fires while the lab and the range are open, and it wrote `range: true` to localStorage — after a reload every world built from it was a range, studio included, and no amount of in-session restoring touched that. Now: `saveRecord` stores the remembered course rather than the range, the loader replaces a stored range outright instead of merging it, `openStudioSetup` leaves the range BEFORE the panel renders (doing it after would have discarded the settings just entered), and `enterStudio` keeps a last-resort strip that cannot discard anything. `courseFallback` keeps the player's style, bag, flight profile and turf while resetting the world shape, because spreading a range's own settings over the defaults carried its elevation 0 and flat greens into the course.
 
 - [x] **(first attempt, incomplete) Course studio generated a driving range.** `enterLab` and `enterRange` REPLACE `settings` wholesale rather than editing it — both are a different world, one hand-built hole with a fixed seed and no elevation — and nothing put the old settings back on the way out. So `range: true` survived the trip and the next thing to read `settings` built a range: the studio, and the menu's showcase hole with it. The player's seed, biome, style and bag were also being reset to defaults by any visit to either. Both now save the course on the way in (`rememberCourse`) and put it back in `returnToMenu`, which the code already calls "the one way out of play or the studio".
 
-- [x] **The bounce can no longer push a ball backwards; only retained spin can.** Backward first hops on fairway, semi and rough were not spin — rough eats the spin properly (keeps -1% against a green's 30%) — they were Penner's TILT, which rotates the contact normal against travel so part of the rebound comes out as backward horizontal. That kick is near-constant (0.41-0.64 m/s, it scales with the rebound) while surviving forward speed collapses from 2.62 on a green to 0.10 in rough, so the kick simply took over. The tangential component is now floored at zero when the ball leaves with no backspin. Flooring it unconditionally was tried first and killed the green's check (-2.6 -> -0.3 yd); gating on the sign of the outgoing spin separates the two cases with no threshold to pick. Also repaired the non-monotonic firmness ladder in the anchor, which had been written up as two mechanisms competing and was actually this.
-  - [x] **Fairway still hops backward** at its current ploughing, because it keeps 366 rpm and is allowed to. That is the separate ordering problem below.
-  **FIXED** by the ground/canopy plough split and the fairway refit.
-  - [x] **`plough` is ordered by mowing height, so a fairway digs 34% harder than a green** and is modelled as the softer ground — backwards for native soil against a watered green. Proposed: fairway/tee firmest at .1100 rising to the green at .1416. Measured, it also moves the driver from 14.6 toward its sourced 21 yd. Open question is whether plough should SPLIT into ground softness (ordered as above) and canopy grab (ordered by mowing height), because a flat reorder makes a ball landing in rough run 4.4 yd against a green's 0.3.
-  **FIXED.** `plough` is now the sum of GROUND softness (firmest first) and CANOPY grab (by mowing height), which are genuinely different orders.
-
 - [x] **Checkpoint before the tilt work:** `.checkpoints/20260915-023232-before-tilt-gate/` with a RESTORE.md holding the measurements. `.checkpoints/` is gitignored.
 
-- [x] **`plough` split into GROUND softness and CANOPY grab.** One number was carrying two unrelated facts and every ordering of it contradicted something: by canopy, a fairway dug harder than a green (fairway as the softer ground -- backwards); by ground firmness, a ball landing in rough ran further than one landing on a fairway. Ground now runs firmest first (fairway, semi, rough, fringe, green) and canopy by mowing height (green shaved, rough 50 mm), with the ball feeling the sum. Friction came down 5% alongside it, because it is the largest single term taking forward speed off a bounce and a hard-spun iron was keeping almost none. Measured: no first hop is negative on any surface, rough stops a ball sooner than fairway (1.5 vs 3.4 yd), the green still checks -3.1 yd, and the driver reaches 18.0 on a fairway against a sourced 21 (was 14.6).
-  - [x] **A green tilt cut was tried and rejected** -- it buys forward carry by flattening the hop (3.3 ft to 1.1) and cost the Firm check, which already looked right on screen.
-  - [x] **Soft greens still suck back more than firm ones** (-4.8 against -1.4 for a hard-spun iron). Real golf is the other way: you cannot spin a ball back off a soft green, it plugs. Driven by `PLOUGH_BY_FIRMNESS`, not by the surface table.
-  **WRONG, AND NOW REVERSED.** This asserted that real golf has firm greens sucking a ball back hardest. It does not, and the model no longer does either. Every source says a soft receptive green grips a spinning ball while a firm one is harder to hold -- which is why setups FIRM greens to protect par. Left here as a correction rather than deleted, because an entry that says the opposite of the code is exactly how this nearly got 'fixed' back to being wrong.
-
 - [x] **A ball climbing into rising ground no longer passes through it.** `v[1] <= 0` alone missed a ball still gaining height while the terrain came up faster, measured at 59 mm of penetration on a 39-degree slope. Being below the surface is a collision whichever way the ball is travelling.
-
-- [x] **Greens and fairways re-anchored to research, each against the clubs that actually land on them.** The reference shot was a 7 iron at 10,400 rpm -- not a shot anyone hits -- and is now a full 56 degree wedge (88 mph, 31 deg, 10,000 rpm, 103 yd carry). The firmness direction was backwards: sources are unanimous that a soft receptive green grips and checks while a firm one is harder to hold, and course setups firm greens to protect par. Tour backspin is 15-20 FEET, not the 18+ yards our ladder was carrying. Titleist slow-motion confirms the first bounce goes FORWARD with reversal starting at the second, so the no-reverse floor is observationally grounded.
-  - [x] **The published total-minus-carry figures were fine all along** -- they were being pointed at the wrong surface. Driver/3 wood/5 iron land on fairways and their totals are real; wedge totals are not fairway roll-outs because those shots land on greens. Four earlier fits were spent trying to make a 9,304 rpm wedge release ten yards on a fairway.
-  - [x] Fairway fitted to driver 22.7 / 3 wood 19.0 / 5 iron 13.1 against 21 / 19 / 15, RMS 1.47 yd. Spin transfer at the rigid ceiling 2.5 is what closed the gradient; ploughing moved all three together.
-  - [x] Greens fitted across 56 wedge, PW, 9 iron and 7 iron. Firmness now scrubs spin rather than digging -- the fit flattened ploughing across firmness on its own, which is what a tight shallow-marking putting surface should do.
 
 - [x] **Lab box moves and resizes.** Dragged by its title line, resized from the corner. The listener is wired once and guarded, because `showLabBar` replaces innerHTML on every redraw and re-wiring would stack listeners; inline position and size survive a redraw because the bar element itself is not replaced.
 
@@ -7495,18 +7359,6 @@ engineering provenance pass, not legal advice.
   view is drawn in it whatever the window's size; old saves convert; the mat
   offset steps by 0.1 ft. RESEARCH.md, the bay section.
 
-- [x] **The flight refitted against Trackman, a GC3 and the R50 (6 October).**
-  At the owner's request. All three agreed the old curve flew wedges slightly
-  high and long irons and woods low; peak height's typical miss is now 1.7% on
-  the GC3 (was 4.7), 2.8% on the R50 (7.0) and 5.5% on Trackman (8.3), carry
-  within 1.5-2.5%. Lift is a power law in spin (Smits and Smith's form); spin
-  decay scales with airspeed at the published rate. Rollout and backspin
-  checked rather than assumed: fairway runs moved toward their anchors, chips
-  unchanged, a tour wedge's spin-back on a Soft green 2.4 -> 4.6 yd. Rejected:
-  airspeed-dependent lift and drag, and a freely fitted spin decay (it tripled
-  spin-back). `tools/flight-fit.mjs`; the data stays in docs/sources/private.
-  RESEARCH.md, *The flight refitted against three launch monitors*.
-
 - [x] **The shot controls' title bar dropped to the bottom once the panel was
   moved (6 October).** A moved panel is a plain block, where the trick that
   lifted the bar (`order:-1`) does nothing. The bar now goes first in the
@@ -7534,13 +7386,6 @@ engineering provenance pass, not legal advice.
   the drawn ball moves. `src/roll-hop.js`. **Off by default** since the same
   day, at the owner's request, to revisit: `ROLL_HOP.enabled` or
   `lab.rollHop(true)` turns it on.
-
-- [x] **A ball with no spin got lift (6 October).** Found on the owner's R50
-  session: a 144 mph knuckleball (346 rpm) carried 111 yd in the model where a
-  ball with no lift carries 61-64, and still 99 yd with no spin at all. Lift now
-  fades to zero below a spin parameter of 0.04 (`AERO.liftTaper`); the
-  knuckleball carries 72 yd, and 131 of the session's 133 shots are unchanged
-  to the decimal. `tests/low-spin.test.mjs`.
 
 - [x] **v0.3 published, and the website deployed live (7 October).** "Fairway
   0.3 (beta)", at the owner's request, from `main` at 568e125: player profiles
@@ -7577,19 +7422,6 @@ engineering provenance pass, not legal advice.
   pinned the mirror; they now pin the right way. RESEARCH.md, *Left and right
   were mirrored*.
 
-- [x] **The lip edge grips only as hard as the ball presses on it (3 October).**
-  The same rule as the cup wall. Longest lip-out ride 296 to 212 degrees at
-  Stimp 10 and 382 to 231 at Stimp 13 over 1,518 putts; 5 outcomes changed;
-  insensitive to the friction chosen (0.3 to 0.7). The full 360-degree lip-out
-  is gone, the known trade-off. docs/reports/LIP_GRIP_REPORT.md.
-
-- [x] **Keyboard, touch and controller chips spun far too hard (2 October).**
-  Spin fell with the square root of power, so a 10% wedge left at 337 rpm per
-  mph (a full swing's 107) and spun back behind its mark. Now proportional to
-  power for chips, the square root for pitches and full swings, blended
-  between 30% and 70% (`spinForPower`, clubs.js), on Trackman's chip and 50
-  yard wedge figures. Branch `ball-landing`; RESEARCH.md *After the ball lands*.
-
 - [x] **Balls checking back in bunkers (2 October).** Sand kept a third of a
   wedge's backspin through the first contact; in real bunkers 28 of 264
   landings came back over 0.3 m, up to 2.2 m. Sand now takes the spin: 4 of
@@ -7605,19 +7437,6 @@ engineering provenance pass, not legal advice.
   (2 October).** About 3.3 degrees of turn per 1% of cross-slope, the slope
   explaining nearly all of it over 973 landings; the triangle mesh is not the
   cause. The greens reading flat on screen is what makes it look causeless.
-
-- [x] **"Chips roll too short" withdrawn as a defect (2 October).** It was
-  measured against one chart (pitching wedge 1:3); two more published charts
-  give 1:2 and 1:1, and the model's 1:1.9, 1:0.9 and 1:0.5 sit inside the
-  spread for every club. Every tuning lever that would push chips toward 1:3
-  breaks a full-shot anchor.
-
-- [x] **Stale: "PLOUGH_BY_FIRMNESS is too high at the soft end" (closed 2
-  October).** It asserted Soft 1.797 against Firm 0.634 and that soft greens
-  rolled back more than firm ones. The table has since been fitted flat (0.394
-  at every firmness) and softer greens check harder, which is what golf does
-  (a full wedge comes back 2.8 yd on Soft and runs 1.7 on Burnt). The entry
-  described code that no longer exists. Original text: **Same root cause as the inverted firmness order:** `PLOUGH_BY_FIRMNESS` is too high at the soft end (Soft 1.797, Normal 1.0 against Firm 0.634), so soft ground both skips the forward hop and produces MORE rollback than firm — backwards from real golf, where firm fast greens give the dramatic zip-back and soft ones plug and sit. Pulling the soft end down should fix both.    *(was a note under "The first bounce goes BACKWARD on Normal and Soft gr..." -- see `# Done`.)*
 
 - [x] **Bunkers buried under a neighbour's rough (2 October, generator 34).**
   Spotted by the owner behind a green on the website's desert clip: a white

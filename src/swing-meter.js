@@ -30,29 +30,49 @@ import {launchForDistance, struckDistance} from './turf.js';
 import {playsLike} from './plays-like.js';
 import {GROUNDS} from './grounds.js';
 
-// THE LIE, as a share of ball speed kept. One table for every golfer: the Swing
-// Meter takes it off the swing, and (unless the round switches it off) a launch
-// monitor shot has it taken off its measured ball speed (main.js, *THE LIE*).
-// Sand was 72% until 14 October 2026; the owner softened it to 80% when the rule
-// was extended to monitor shots. Placed, not published -- RESEARCH.md *The lie
-// costs ball speed* has the simulators it was compared with.
-// The overhaul's ground types (grounds.js) add their own rows: rock, scree,
-// heather and the rest each keep a share of their own.
-export const LIE_SPEED = {semi: .96, rough: .9, sand: .8, ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.lie]))};
+// THE LIE costs a shot ball speed and, out of grass, spin. One rule for every
+// golfer: the Swing Meter takes it off the swing, and (unless the round
+// switches it off) a launch monitor's shot has it taken off what it measured.
+//
+// SPEED, as the share kept. PLACED: nobody publishes ball speed by lie. Semi
+// rough 96% and rough 90% sit inside what other simulators take (5 to 15% from
+// rough) and the USGA's light-rough landings, which arrive within 5% of the
+// fairway's. Sand keeps 85%: a ball picked clean off a fairway bunker loses
+// about 5%, a heavy one 30%, and one table has to serve both.
+// The ground types (grounds.js) add their own rows: rock, scree, heather and
+// the rest each keep a share of their own.
+export const LIE_SPEED = {semi: .96, rough: .9, sand: .85, ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.lie]))};
+// SPIN: THE FLYER. Grass caught between the face and the ball takes away the
+// friction a lofted face needs to spin it; a strong-lofted face barely needs
+// any, so it loses nothing. MEASURED (the USGA's 2006 groove study, modern
+// grooves, light rough): a sand wedge launched at 29 degrees lands with 4,800
+// rpm out of the rough against 9,100 off the fairway, while a 5 iron launched
+// at 16 degrees keeps all of its spin. So the loss is keyed to the LAUNCH
+// ANGLE, which a Swing Meter shot and a launch monitor's both have: nothing at
+// `from` degrees or under, the whole `loss` at `full` and over. Semi rough's
+// loss is PLACED at under half of rough's, for grass half as long. Sand is not
+// grass, and a clean strike from it spins as usual. The ground types are not
+// given a loss yet.
+export const LIE_SPIN = {from: 16, full: 28, loss: {semi: .2, rough: .45}};
+export const lieSpin = (surface, launch) => {
+ const loss = LIE_SPIN.loss[surface];
+ return loss && launch > LIE_SPIN.from ? 1 - loss * Math.min(1, (launch - LIE_SPIN.from) / (LIE_SPIN.full - LIE_SPIN.from)) : 1;
+};
 export const lieFactor = surface => LIE_SPEED[surface] ?? 1;
 export const LIE_NAMES = {semi: 'semi-rough', rough: 'rough', sand: 'sand', ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.word]))};
 // A LAUNCH MONITOR'S SHOT FROM A LIE. The measured ball speed is multiplied by
-// the lie's share -- unless the round switched that off (`on`), or the ball is on
-// the range's mat -- and launch, direction, spin and axis are left exactly as
-// measured. The measured speed is kept beside the played one (`lie.before`,
-// `lie.measured`) so it is shown and recorded as sent, with the penalty in red
-// beside it (shot-data.js). Returns what to fly and what to record.
+// the lie's share and the measured spin by the flyer's -- unless the round
+// switched that off (`on`), or the ball is on the range's mat -- and launch,
+// direction and axis are left exactly as measured. The measured speed is kept
+// beside the played one (`lie.before`, `lie.measured`) so it is shown and
+// recorded as sent, with the penalty in red beside it (shot-data.js); `lie.spin`
+// is the share of spin kept. Returns what to fly and what to record.
 export function monitorLie(data, surface, {on = true, range = false} = {}) {
  const f = range ? 1 : lieFactor(surface);
  if (f >= 1) return {launch: data, lie: null};
- const penalise = !!on;
- return {launch: penalise ? {...data, speed: data.speed * f} : data,
-  lie: {surface, factor: penalise ? f : 1, before: data.speed, measured: true}};
+ const penalise = !!on, spin = penalise ? lieSpin(surface, data.vla) : 1;
+ return {launch: penalise ? {...data, speed: data.speed * f, spin: data.spin * spin} : data,
+  lie: {surface, factor: penalise ? f : 1, spin, before: data.speed, measured: true}};
 }
 
 // Per golfer, kept in the profile. `rise` is the seconds the marker takes from
@@ -103,25 +123,19 @@ export const spinName = s => s === 0 ? 'Club spin' : s < 0 ? 'Less spin' : `Spin
 // What a chosen shape does to a club's full swing. Spin axis in degrees,
 // positive curves right (a fade), as a launch monitor reports it.
 const CURVE_AXIS = {draw: -8, straight: 0, fade: 8};
-// Each added step is another tenth of the club's spin; a step off is a quarter
-// less. Three steps on a full pitching wedge is about 11,100 rpm -- enough, on a
-// soft or normal green and a steep landing, to bring it back, which is the
-// golfer's choice to make.
+// HOW MUCH SPIN THE DIAL ADDS OR TAKES OFF: each added step is another tenth
+// of the club's spin; a step off is a quarter less.
 const SPIN_SCALE = {'-1': .75, 0: 1, 1: 1.1, 2: 1.2, 3: 1.3};
-// THE CLUB'S OWN SPIN NEVER BRINGS A BALL BACK. Dial at 0 or -1, no ball may
-// finish behind where it first landed, from any club, height, firmness or
-// landing slope (tests/swing-meter.test.mjs sweeps it). Stock spin already only
-// checks on level ground; a steep landing comes back sooner, so the High and
-// Flop heights carry a little less of the club's spin. Worked out against the
-// ball model, with a margin, not chosen by eye.
-const HEIGHT_SPIN = {low: 1, normal: 1, high: .85, bump: .5, flop: .68};
-// Found by sweeping every club x height x power (30% to full overswing) x
-// green firmness x Stimp 8 to 13 x level and 2% slopes, against the ball model
-// of 11 November 2026: at the club's own spin only the four wedges came back,
-// by at most half a yard, on the quickest greens landing into a 2% rise. They
-// carry this much of their stock spin on the Swing Meter. Steeper slopes roll any ball back by gravity, spin or not; that
-// is the course, not the strike, and is not what this guards.
-const KIND_SPIN = {wedge: .9, gap: .86, sand: .9, lob: .85};
+// WHAT A HEIGHT DOES TO THE SPIN. Spin follows the loft the face presents to
+// the swing's path. Hit low, the face is turned down (launch 4 degrees lower)
+// and the ball spins about 8% less; hit high, the opposite. A bump-and-run
+// halves the launch and so about halves the spin. A flop adds 10 degrees to a
+// face already past the loft where spin stops rising (about 50 degrees: the
+// ball slides up the face instead of gripping it), so it spins a little LESS
+// than a stock shot, not more. PLACED from that geometry; nothing here is
+// tuned to make a ball stop or come back -- what a shot does on the green is
+// the ball model's business (docs/BALL_PHYSICS.md).
+const HEIGHT_SPIN = {low: .92, normal: 1, high: 1.08, bump: .5, flop: .85};
 export function shapedLaunch(club, shape, {short = false} = {}) {
  const s = validShape(shape);
  if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, zone: 1, flop: false};
@@ -130,7 +144,7 @@ export function shapedLaunch(club, shape, {short = false} = {}) {
   : kind === 'low' ? club.vla - 4 : kind === 'high' ? club.vla + 4 : club.vla;
  return {
   vla: clamp(vla, 3, 60),
-  spin: club.spin * HEIGHT_SPIN[kind] * (KIND_SPIN[club.kind] ?? 1) * SPIN_SCALE[s.spin],
+  spin: club.spin * HEIGHT_SPIN[kind] * SPIN_SCALE[s.spin],
   axis: CURVE_AXIS[s.curve],
   // The strike zone's width, as a share of the difficulty's: a flop is harder to
   // hit cleanly, and every step of added spin narrows it.
@@ -331,7 +345,7 @@ export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.spee
 // share for that carry is read off the same ball model the bar is drawn from,
 // with the lie's lost speed made up.
 //
-// WHAT IT ALLOWS FOR (the owner's call, 14 October 2026): the slope and the lie
+// WHAT IT ALLOWS FOR: the slope and the lie
 // always; the WIND only on Easy -- on Normal and Hard judging the wind is the
 // golfer's job, and the wind dial is on screen. Altitude and temperature are
 // always in: they are the air, not something a golfer reads.
@@ -349,7 +363,10 @@ export function targetShare({club, shape, short = false, lie, difficulty, metres
  const f = lieFactor(lie);
  // The carry the bar must ask for: on a clean lie the level carry itself; from
  // the rough, the carry of the speed that the lie will cut down to the right one.
- const asked = f < 1 ? carryAtSpeed(club, launch, Math.min(club.speed * 1.3, speedForCarry(club, launch, level) / f)) : level;
+ // The grass takes spin as well, so the speed is the one that carries the
+ // distance with the spin the lie leaves.
+ const lying = {...launch, spin: launch.spin * lieSpin(lie, launch.vla)};
+ const asked = f < 1 ? carryAtSpeed(club, launch, Math.min(club.speed * 1.3, speedForCarry(club, lying, level) / f)) : level;
  const share = asked / full;
  return share > 1 + 1e-6 ? {share: 1, out: true} : {share: Math.max(0, share), out: false};
 }
@@ -388,6 +405,6 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
  }
  const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
  const comp = curveCompensation(club, launch, speed);
- const spin = launch.spin * spinForPower(clamp(speed / club.speed, 0, 1.2));
+ const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
  return {shot: {speed: speed * factor, vla: launch.vla, hla: comp + fx.hla, spin, spinAxis: launch.axis + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
 }

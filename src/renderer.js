@@ -32,7 +32,7 @@ import {tracerStyle,summaryStyle,stopColour,hexRgb} from './rewards.js';
 import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 
 // The flagstick's dimensions live in physics.js beside the collider that uses
-// them (FLAGSTICK_HEIGHT and the two radii), so what is drawn is what is hit.
+// them (FLAGSTICK_HEIGHT and the two drawn radii). A ball meets a real, thinner stick (FLAGSTICK_HIT_R).
 //
 // FLAGSTICKS STAY VISIBLE FROM ANYWHERE (the owner, 13 October 2026: "work on
 // the visibility of the flagsticks from a distance"). Drawn to size, a 7 ft

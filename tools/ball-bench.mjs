@@ -192,6 +192,15 @@ const SECTIONS = {
   // A 10,000 rpm wedge on a medium green: comes back a little. Not ten yards.
   const med = land({speed: 21, angle: 52, spin: 10000, turf: cond('medium')});
   check('medium, 10,000 rpm wedge: run', med.run / YARD, -4, 1.5, 'yd', 'PLACED: stops or backs up a little');
+  // Nothing measures a medium green, so it is held to its neighbours: for the
+  // same landing it never brings a ball back further than BOTH a soft green and
+  // a firm one do (half a yard of grace). PLACED.
+  let between = 0, cases = 0;
+  for (const angle of [48, 52, 56]) for (const rpm of [8500, 10000, 12000]) {
+   const [soft, medium, firmRun] = FIRMS.map(f => land({speed: 21, angle, spin: rpm, turf: cond(f)}).run / YARD);
+   cases++; if (medium >= Math.min(soft, firmRun) - .5 && medium <= Math.max(soft, firmRun) + .5) between++;
+  }
+  check('medium lies between soft and firm (9 spun wedges)', between, cases, cases, '', 'PLACED');
   // No amount of ordinary spin rips a ball back ten yards on the flat.
   let worst = 0;
   for (const f of FIRMS) for (const st of [9, 11, 13]) for (const w of [9000, 10500, 12000]) for (const a of [48, 52, 56]) worst = Math.min(worst, land({speed: 21, angle: a, spin: w, turf: cond(f, st)}).run);

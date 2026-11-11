@@ -25,25 +25,22 @@ const CUP_REACH=CUP_R+.012;
 
 // The floodlight mast, at its base where it is widest.
 export const POLE_RADIUS=.34;
-// A flagstick. The renderer draws these same numbers, and simulateShot
-// collides with them.
+// A flagstick. TWO SIZES, because one is a picture and one is what a ball
+// meets. The Equipment Rules govern its diameter (no more than 2 in, and no
+// more than 0.75 in from 3 in above the green down into the hole) and say
+// nothing about its height; seven and eight feet are usual.
 //
-// HEIGHT IS NOT REGULATED. The Equipment Rules govern the flagstick's DIAMETER
-// and say nothing at all about how tall it is. Seven and eight feet are the
-// usual heights; it is eight since 15 October 2026.
-//
-// THE OWNER'S PIN (15 October 2026): eight feet, 2 in (50.8 mm) across at the
-// top tapering to 1 in (25.4 mm) at the bottom, so it reads on screen beside a
-// green (RESEARCH *Why our pins look small*). **1 in at the green is over the
-// 0.75 in (19 mm) the Rules allow from 3 in above to 3 in below the surface**
-// -- the owner's call, for visibility. Drawn and hit alike: the collider is the
-// base radius, so a ball beside the pin in the cup has 41.3 mm between pin and
-// liner against a 42.7 mm ball.
+// DRAWN (renderer.js): eight feet, 2 in across at the top tapering to 1 in at
+// the green, so it reads on screen from the fairway. That is wider than a real
+// stick and is the picture's business only.
 export const FLAGSTICK_HEIGHT=8*0.3048, FLAGSTICK_TOP_R=.0254, FLAGSTICK_BASE_R=.0127;
-// INSIDE THE HOLE the stick is its real size, half an inch across. Drawn at
-// the owner's inch it leaves 41.3 mm beside it for a 42.7 mm ball, and nothing
-// could ever be holed with the pin in; a real stick leaves 47.6 mm.
-export const FLAGSTICK_HOLE_R=.00635;
+// HIT: a real stick. A ball in the air meets one 0.75 in across, the widest
+// the Rules allow near the green and what a tapered tournament stick measures
+// a few feet up; a ball dropping into the hole meets the half inch of its
+// base, which leaves 47.6 mm beside it for a 42.7 mm ball. A ball that looks
+// as if it brushed the drawn stick's edge and flew on missed the real one by
+// under 4 mm at the green.
+export const FLAGSTICK_HIT_R=.009525, FLAGSTICK_HOLE_R=.00635;
 // The drawn trunk uses this too, so a trunk you can see is a trunk you hit.
 export function trunkRadius(tree){return NO_TRUNK.has(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,3.6);}
 
@@ -190,7 +187,7 @@ export function simulateShot(shot,course,options={}){
   if(hole.hole===course.hole&&!options.flagsticks.current)continue;
   const at=hole.worldPin;if(!at)continue;
   const floor=course.world.height(at.x,at.z)-CUP_DEPTH;
-  solids.push({x:at.x,z:at.z,y:floor,h:FLAGSTICK_HEIGHT+CUP_DEPTH,radius:FLAGSTICK_BASE_R,flagstick:true});
+  solids.push({x:at.x,z:at.z,y:floor,h:FLAGSTICK_HEIGHT+CUP_DEPTH,radius:FLAGSTICK_HIT_R,flagstick:true});
  }
  const pinIn=!!(options.flagsticks&&options.flagsticks.current);
  for(const source of solids){if(!(source.radius??trunkRadius(source)))continue;const tree=course.world?{...source,...course.toLocal(source)}:source,key=Math.floor(tree.x/cellSize)+','+Math.floor(tree.z/cellSize);if(!treeCells.has(key))treeCells.set(key,[]);treeCells.get(key).push(tree);}
