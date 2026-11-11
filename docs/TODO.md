@@ -37,7 +37,7 @@ check.
   (docs/BALL_PHYSICS.md): a new air model, one bounce law for every surface, rolling that follows
   the Stimp exactly, the hole as real contacts, and three course conditions (green speed, green
   firmness, fairway firmness, with Everyday / Club / Tournament presets) in the rules step and in
-  Settings, Turf. `node tools/ball-bench.mjs` holds it to 142 measurements; `npm test` passes.
+  Settings, Turf. `node tools/ball-bench.mjs` holds it to 145 measurements; `npm test` passes.
   **Not seen in the game at all -- nothing here has been played or opened in a browser. To check:**
   the rules step shows COURSE CONDITIONS with four pickers and a preset moves the other three; the
   same in Golfers & rules mid-round and in Settings, Turf (a change applies at once and survives a
