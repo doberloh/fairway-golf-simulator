@@ -139,7 +139,7 @@ export function rulesColumn(doc, q) {
  if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
  if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
  // The course as it plays today (turf.js): a preset, then the three settings.
- const cond = [['roundConditions', 'COURSE'], ['roundStimp', 'GREEN SPEED'], ['roundGreens', 'GREENS'], ['roundCourse', 'FAIRWAYS']].filter(([id]) => q(id));
+ const cond = [['roundConditions', 'COURSE'], ['roundStimp', 'GREEN SPEED'], ['roundGreens', 'GREENS'], ['roundFairways', 'FAIRWAYS']].filter(([id]) => q(id));
  if (cond.length) {
   rules.append(make(doc, 'h3', 'sx-head', 'COURSE CONDITIONS'));
   for (const [id, label] of cond) rules.append(picker(doc, q(id), label));
