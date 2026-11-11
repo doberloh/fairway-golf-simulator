@@ -118,6 +118,25 @@ often has the how-to already worked out.
 
 ## Under the hood
 
+- **The lie takes spin as well as speed (the flyer).** From rough a ball comes
+  out with far less spin and lands flatter: the USGA measured a sand wedge at
+  4,800 rpm from light rough against 9,100 from the fairway, and the shot ran
+  about 60% further. Today the lie rule takes ball speed only
+  (`swing-meter.js` `LIE_SPEED`), so a shot from rough stops as well as one
+  from the fairway. Pureplay shows the lie as a range of power AND spin before
+  each shot. A spin share per lie beside the speed one, shown the same way; it
+  changes a rule players have seen, so it wants the owner's say. Small to
+  medium. (Claude, 11 November 2026, from the ball model rebuild)
+- **Wet and windy days as course conditions.** A fourth setting, or presets
+  that include it: dew and rain slow a green by a foot or two of Stimp and
+  soften everything. The ball model would take it as it is (it is the three
+  conditions moved together); what is missing is the look. Medium.
+  (Claude, 11 November 2026)
+- **Grain on the greens.** Putting with or against the grain moves a
+  Stimpmeter roll by 24 to 30 in (Penn State); bermuda landscapes would have
+  it. No published directional model exists, so it would be placed. Medium.
+  (Claude, 11 November 2026)
+
 - **Washington's surveys listed in the builder, through the bridge.** The
   Washington Lidar Portal answers what covers a box only to its own page,
   and its download needs the pass its page hands a browser, so door 2 now
