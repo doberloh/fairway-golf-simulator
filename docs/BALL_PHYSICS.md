@@ -297,6 +297,14 @@ What comes out, against what is published:
 The rim's own bounce (`CUP.rimE`, 0.10) is the one number chosen to put the
 centred limit there; Holmes notes a narrow rim bounces less than turf does.
 
+**A hard hit inside the cup is dead.** The rim, wall and floor bounce a putt
+rattling in at walking pace; a ball that flies into the hole off a full shot
+arrives at ten times the speed, and by 9 m/s into a surface the bounce is down
+to almost nothing (`hardE`, `hardSpeed`, PLACED), as a green's is under a hard
+landing. Without it a slam dunk came back out of the cup a metre high, which
+the owner saw in the first picture taken of the new ball. A wedge, a 7 iron or
+a pitch flown into the hole now stays in.
+
 **The flagstick** gives and is smooth (`pinE` 0.10, `pinMu` 0.10, PLACED to
 match the tests): a square hit all but stops the ball, so a centred putt drops
 at up to 3.6 m/s with the stick in, while one glancing it 15 to 25 mm off centre

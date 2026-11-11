@@ -38,6 +38,13 @@ export const CUP = {
  wallE: .40, wallMu: .30,
  floorE: .30, floorMu: .40,
  pinE: .10, pinMu: .10,
+ // A HARD HIT IS DEAD. Those are the bounces of a ball rattling in at putting
+ // pace. A ball that flies into the hole off a full shot arrives at ten times
+ // the speed, and the liner, the soil behind it and the cut turf give as a
+ // green does under a hard landing (turf.js): by `hardSpeed` m/s into a
+ // surface the bounce is down to `hardE`. Without this a slam dunk came back
+ // out of the cup a metre high (the owner, 11 November 2026).
+ hardE: .04, hardSpeed: 9,
  settle: .12,
  // The micro-step, seconds. 1/4000 s moves a 2 m/s ball half a millimetre.
  dt: 1 / 4000,
@@ -59,7 +66,8 @@ function collide(p, v, w, n, pen, e, mu, settle) {
  p[0] += n[0] * pen; p[1] += n[1] * pen; p[2] += n[2] * pen;
  const vn = dot(v, n);
  if (vn >= 0) return 0;
- const jn = -(1 + (-vn > settle ? e : 0)) * vn;
+ const soft = Math.max(0, 1 + vn / CUP.hardSpeed);
+ const jn = -(1 + (-vn > settle ? CUP.hardE + (e - CUP.hardE) * soft * soft : 0)) * vn;
  // Velocity of the point of the ball touching the surface.
  cross(w, n, tmp);
  const sx = v[0] - vn * n[0] - R * tmp[0], sy = v[1] - vn * n[1] - R * tmp[1], sz = v[2] - vn * n[2] - R * tmp[2];
@@ -206,6 +214,14 @@ export function rollAtCup(speed, offset = 0, env = {}) {
  const p = [offset, slope * z0 + R * Math.hypot(1, slope), z0];
  const v = [0, slope * speed, speed], w = [speed / R, 0, 0];
  return cupSim({p, v, w}, hole, env);
+}
+// A ball arriving ON THE FLY, for tests and benches: `speed` m/s, `descent`
+// degrees below horizontal, backspin `rpm`, crossing lip height `at` metres
+// along the hole's diameter from its middle (negative is the near side) and
+// `side` metres off line. Returns cupSim's result.
+export function flyAtCup({speed, descent, rpm = 0, at = 0, side = 0}, env = {}) {
+ const a = descent * Math.PI / 180, vz = speed * Math.cos(a), vy = -speed * Math.sin(a), up = .25, t = up / -vy;
+ return cupSim({p: [side, R + up, at - vz * t], v: [0, vy, vz], w: [-rpm * Math.PI / 30, 0, 0]}, {x: 0, z: 0, y: 0, gx: 0, gz: 0}, {e: .12, ...env});
 }
 // The fastest a ball can be rolling at the front edge and still be holed, at a
 // given offset from the middle of the hole (m/s), by bisection.

@@ -26,7 +26,7 @@ import {bounce, TILT, SEVERITY} from '../src/bounce.js';
 import {turfOf, SURFACE_TABLE, ROLL, clearTurfCache, struckDistance, launchForDistance, rollDecelerationAt, FOOT} from '../src/turf.js';
 import {flyBall, AERO} from '../src/aero.js';
 import {NORMALISED, DRIVER_CHART, TOUR, USGA_EXAMPLE} from './flight-targets.mjs';
-import {captureSpeed, rollAtCup, CUP, CUP_RADIUS} from '../src/cup.js';
+import {captureSpeed, rollAtCup, flyAtCup, CUP, CUP_RADIUS} from '../src/cup.js';
 
 const argv = process.argv.slice(2);
 const opts = k => argv.flatMap((a, i) => a === k ? [argv[i + 1]] : []);
@@ -373,6 +373,15 @@ const SECTIONS = {
   const made = rollAtCup(.9, .01), last = made.points.at(-1);
   check('a holed ball rests on the cup floor', (0 - last.y) / INCH, 2.9, 3.3, 'in', 'cup 4 in deep, ball centre 0.84 in above its floor');
   check('and takes a moment to settle', made.t, .25, 3, 's');
+  // A ball that flies into the hole off a full shot stays in it. No measurement
+  // exists (PLACED), but a slam dunk that comes back out a metre high is not golf.
+  let dunks = 0, tried = 0, highest = 0;
+  for (const [speed, descent, rpm] of [[21.9, 51, 9100], [24.7, 46, 5100], [10, 40, 5000]]) for (const at of [-.04, -.02, 0, .02, .04]) {
+   const r = flyAtCup({speed, descent, rpm, at}); tried++; if (r.holed) dunks++;
+   highest = Math.max(highest, ...r.points.map(q => q.y));
+  }
+  check('balls flown into the hole that stay in (of 15)', dunks, 13, tried, '', 'PLACED');
+  check('highest any of them comes back out', highest, 0, .3, 'm', 'PLACED: it does not pop out of the cup');
   // The flagstick (Mase 2019; Molinari 2019): no difference at dying pace; at
   // high speed a centred putt is saved by the stick.
   const pin = {pin: .00635};

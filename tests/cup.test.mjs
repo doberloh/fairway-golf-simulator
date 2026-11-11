@@ -4,7 +4,7 @@
 // the rules a real hole obeys. Then the same hole inside a whole shot.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cupSim, rollAtCup, captureSpeed, CUP, CUP_RADIUS, BALL_RADIUS, CUP_DEPTH} from '../src/cup.js';
+import {cupSim, rollAtCup, flyAtCup, captureSpeed, CUP, CUP_RADIUS, BALL_RADIUS, CUP_DEPTH} from '../src/cup.js';
 import {simulateShot, CUP_RADIUS as PHYSICS_CUP, R, FLAGSTICK_HOLE_R, FLAGSTICK_BASE_R} from '../src/physics.js';
 import {launchForDistance} from '../src/turf.js';
 
@@ -98,13 +98,23 @@ test('the flagstick: no difference at dying pace, and it saves a centred putt fa
  assert.ok(FLAGSTICK_HOLE_R < FLAGSTICK_BASE_R);
 });
 
-test('a ball dropped straight into the hole stays in; a ball slammed in can bounce out', () => {
- const drop = speed => { const p = [0, .3, 0], v = [0, -speed, 0], w = [0, 0, 0]; return cupSim({p, v, w}, {x: 0, z: 0, y: 0, gx: 0, gz: 0}, {}); };
- assert.ok(drop(1).holed);
- assert.ok(drop(3).holed);
- // 20 m/s onto the cup floor comes back up over the lip.
- const dunk = drop(20);
- assert.ok(dunk.points.some(q => q.y > BALL_RADIUS), 'a dunk at full speed bounces back out of the cup');
+test('a ball that flies into the hole stays in it: a slam dunk does not bounce back out', () => {
+ // The owner saw a wedge fly into the cup and come back out a metre high
+ // (11 November 2026): the cup's bounces were a putt's, at ten times the speed.
+ const drop = speed => cupSim({p: [0, .3, 0], v: [0, -speed, 0], w: [0, 0, 0]}, {x: 0, z: 0, y: 0, gx: 0, gz: 0}, {});
+ for (const speed of [1, 3, 8, 20]) assert.ok(drop(speed).holed, `dropped at ${speed} m/s`);
+ // Full shots on the fly, with and without the stick, anywhere across the hole.
+ for (const pin of [0, .00635]) for (const [speed, descent, rpm] of [[21.9, 51, 9100], [24.7, 46, 5100], [10, 40, 5000]]) {
+  let held = 0;
+  for (const at of [-.04, -.02, 0, .02, .04]) {
+   const r = flyAtCup({speed, descent, rpm, at}, {pin});
+   if (r.holed) held++;
+   assert.ok(Math.max(...r.points.map(q => q.y)) < .3, `${speed} m/s at ${at}: nothing leaves the cup above knee height`);
+  }
+  assert.ok(held >= 4, `${speed} m/s at ${descent} degrees, pin ${pin ? 'in' : 'out'}: ${held} of 5 stayed in`);
+ }
+ // A putt's rattle is still lively: the same surfaces give a slow ball a real bounce.
+ assert.ok(CUP.hardE < CUP.rimE && CUP.hardE < CUP.floorE && CUP.hardSpeed > 4);
 });
 
 test('the constants are a hole\'s: nothing bounces like a superball, nothing is frictionless', () => {

@@ -109,6 +109,7 @@ landing angle and time in the air, not only carry.
 | `rimE` | the rim's bounce. Raise it and firmer centred putts drop (a ball popped up by the back rim comes down in the hole): Holmes, 1.63 m/s at 0, 1.97 at 0.3 |
 | `rimMu`, `wallMu` | grip of the rim and the liner: how long a ball rides round before it drops or lips out |
 | `wallE`, `floorE` | how much a ball rattles off the liner and the bottom |
+| `hardE`, `hardSpeed` | how dead the cup is to a HARD hit: by `hardSpeed` m/s into the rim, wall or floor the bounce has fallen to `hardE`. Raise `hardSpeed` and a ball flown into the hole starts bouncing back out |
 | `pinE`, `pinMu` | the flagstick's give and grip. Raise `pinMu` and a ball rolling into the stick climbs it and pops back out |
 | `dt` | the cup's time step. Not a tuning knob |
 | `FLAGSTICK_HOLE_R` (`src/physics.js`) | the stick's size inside the hole. At the drawn inch nothing can be holed with it in |
