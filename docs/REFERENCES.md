@@ -939,3 +939,7 @@ tables, the pages that could not be fetched, and the sources read and not used.
 - GSPro 4.0, "Physics 2.1" (3 November 2026): https://gsprogolf.com/change-log.html .
   Cut its conditions to green firmness, fairway firmness and Stimp the same week.
 - No product publishes a restitution, a friction or a spin-retention figure.
+
+## The gimme circle (10 November 2026)
+
+- The Rules of Golf, Rule 3.2b(1), Conceding the next stroke -- https://www.usga.org/content/usga/home-page/rules/rules-2019/rules-of-golf/rule-3.html -- a conceded next stroke means the player has holed out with that stroke, so it counts. Cited from the Rules as known; not fetched this session. Taken: a gimme adds one stroke. Not taken: concessions belong to match play; the game's gimme circle is a simulator convention in every format (RESEARCH *The gimme circle*).

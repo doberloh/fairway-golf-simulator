@@ -155,6 +155,19 @@ check.
   the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
   the retaken pictures; play it (not played); the brittlebush is shardy close up.
 
+## Gimme circle (branch `gimme-circle`, 10 November 2026)
+
+- [ ] **Play the gimme circle by hand** (the owner, 10 November 2026: "We need to add 'single
+  gimmie circle' mode to the game. User sets the gimmie circle size."). Built as a fourth putting
+  mode, *Gimme circle*: one circle round the cup, its size in feet (0.5-30, 3 to start), set in
+  Play's rules step and in Putting options mid-round; a ball resting on the green inside it is
+  given one putt and the hole ends; outside it the golfer putts out. The rule is putting.js with
+  tests/putting-gimme.test.mjs, the round matrix plays it in every format, a friend's challenge
+  carries it. **Not seen in play, and no smoke run** (no graphics card asked for): check the circle
+  is drawn on the green and easy to see at 3 ft and at 30 ft, the size field shows only for this
+  mode in both places (and the ring distances hide), the shot card says "Gimme", and the scorecard
+  counts the extra stroke. RESEARCH *The gimme circle* has the placed numbers.
+
 ## Fairway Tour (picked 9 November 2026; the next feature, after the builder-ux goal)
 
 The owner, 9 November 2026: "Fairway tour is going to be our next feature."

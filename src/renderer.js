@@ -71,6 +71,7 @@ import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
+import {puttingRings} from './putting.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
@@ -3075,8 +3076,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.ballShadow.material.opacity=this.ballShadowInk*(1-t)*(1-t);
  }
  setPutting(config){
-  this.putting=config;if(this.puttingRings){this.group.remove(this.puttingRings);this.puttingRings.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.puttingRings=new T.Group();this.group.add(this.puttingRings);if(!config||config.mode==='holeout')return;
-  const h=this.course;[config.one,config.two,config.three].forEach((yards,i)=>{const points=[],radius=yards*YARD;for(let j=0;j<256;j++){const a=j/256*TAU,b=(j+1)/256*TAU,pts=[a,b].map(t=>({x:h.pin.x+Math.cos(t)*radius,z:h.pin.z+Math.sin(t)*radius}));if(pts.some(p=>h.surface(p.x,p.z)!=='green'))continue;for(const p of pts){const w=h.toWorld(p);points.push(new T.Vector3(w.x,h.height(p.x,p.z)+.025,w.z));}}const line=new T.LineSegments(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:['#f7f6ae','#edb351','#e68670'][i],transparent:true,opacity:.85,depthWrite:false}));this.puttingRings.add(line);});
+  this.putting=config;if(this.puttingRings){this.group.remove(this.puttingRings);this.puttingRings.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.puttingRings=new T.Group();this.group.add(this.puttingRings);if(!config)return;
+  // The rings come from putting.js: three for dartboard and decimal, one for the
+  // gimme circle, none for hole out.
+  const h=this.course;puttingRings(config).forEach(({radius,colour})=>{const points=[];for(let j=0;j<256;j++){const a=j/256*TAU,b=(j+1)/256*TAU,pts=[a,b].map(t=>({x:h.pin.x+Math.cos(t)*radius,z:h.pin.z+Math.sin(t)*radius}));if(pts.some(p=>h.surface(p.x,p.z)!=='green'))continue;for(const p of pts){const w=h.toWorld(p);points.push(new T.Vector3(w.x,h.height(p.x,p.z)+.025,w.z));}}const line=new T.LineSegments(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:colour,transparent:true,opacity:.85,depthWrite:false}));this.puttingRings.add(line);});
  }
 
  // Scratch space for a line's points, grown when a longer one is asked for and
