@@ -49,7 +49,7 @@
 
 import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from './settings-schema.js';
 import {courseSettings, settingsDiff, checksum} from './course-library.js';
-import {puttingConfig} from './putting.js';
+import {puttingConfig, puttingName} from './putting.js';
 import {isTee} from './tees.js';
 import {firmnessName} from './firmness.js';
 
@@ -165,15 +165,15 @@ export function rulesOf(round, seat, settings = {}, input = 'monitor') {
  const turf = Object.fromEntries(['stimp', 'fairway', 'semi', 'rough', 'firmness'].filter(k => Number.isFinite(t[k])).map(k => [k, t[k]]));
  return {
   tee: p.tee || round.tee,
-  putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three},
+  putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three, gimme: putting.gimme},
   ob: round.outOfBounds,
   lie: round.monitorLie,
   input: input === 'meter' ? 'meter' : 'monitor',
   turf,
  };
 }
-const PUTTING_NAMES = {holeout: 'hole out', dartboard: 'dartboard putting', decimal: 'decimal putting'};
-const puttingText = p => p.mode === 'holeout' ? PUTTING_NAMES.holeout : `${PUTTING_NAMES[p.mode]} (${p.one}/${p.two}/${p.three} yd)`;
+// Old codes carry no gimme circle; puttingConfig gives them the default.
+const puttingText = p => { try { return puttingName(p); } catch { return 'hole out'; } };
 // Each rule in words, for the setup's list.
 export function describeRules(r) {
  const t = r.turf || {};
@@ -289,7 +289,7 @@ export function readRivalCode(code) {
  const q = head.q || {}, t = q.turf && typeof q.turf === 'object' ? q.turf : {};
  let putting;
  try { putting = puttingConfig(q.putting); } catch { putting = puttingConfig(); }
- const rules = {tee: isTee(q.tee) ? q.tee : 'blue', putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three},
+ const rules = {tee: isTee(q.tee) ? q.tee : 'blue', putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three, gimme: putting.gimme},
   ob: q.ob === 'e5' ? 'e5' : 'stroke', lie: q.lie !== false, input: q.input === 'meter' ? 'meter' : 'monitor',
   turf: Object.fromEntries(['stimp', 'fairway', 'semi', 'rough', 'firmness'].filter(k => Number.isFinite(t[k]) && t[k] >= 0 && t[k] < 1000).map(k => [k, t[k]]))};
  let shots;

@@ -130,7 +130,8 @@ score to par against that course's pars.
 | Course of the week | 18 holes of stroke play, 1-4 golfers, every putting mode; the week kept through a save, and each golfer's best for the week (first finish, only a better round replaces it) |  |  |  |  |  |
 | A friend's challenge | 9 and 18 holes, 1-4 golfers against a friend's card; every golfer's comparison checked after every hole, the final line (beat, wins by, tied), the challenge kept through a save |  |  |  |  |  |
 
-Each under all three putting modes (hole out, dartboard, decimal), both
+Each under every putting mode (putting.js `PUTTING_MODES`: hole out, dartboard,
+decimal, gimme circle; the suite fails if a format misses one), both
 out-of-bounds rules, over 3 holes, then 9 and 18 with group changes.
 
 **A new format cannot skip it.** The formats are listed once, `FORMATS` in
@@ -141,12 +142,14 @@ rules -- AGENTS.md, *Game rules live in pure modules with Node tests*.
 
 Other round suites pin one behaviour each with a hand-written card:
 `core` (formats finish, scramble penalties), `play` (putting modes, mulligans,
-sim drops), `honours` (playing order, golfers added, removed and reordered),
+sim drops), `putting-gimme` (the gimme circle: one putt inside, none outside,
+the edge inside, off the green never; its size checked; an old save without
+one loads at 3 ft; a scramble lie given; the one ring drawn), `honours` (playing order, golfers added, removed and reordered),
 `relief` (water and out of bounds under the Rules), `skins`, `mixed-groups`
 (monitor and Swing Meter golfers together), `endless`, `round-library` and
 `course-library` (saving), `weekly`, `challenges`, `rival` (a friend's
 challenge: the code made and read, refused when cut short, altered or from
-another version, the comparison, and shots read back from a code flying to the
+another version, the gimme circle and its size carried, and an older code without one read at the default, the comparison, and shots read back from a code flying to the
 same millimetre on a freshly grown course with trees and wind).
 
 **`tests/challenge-matrix.test.mjs` plays every challenge with every group of
@@ -197,7 +200,7 @@ All in `tests/`, one file per subject; `tests/worlds.mjs` builds and memoises
 the courses several suites share, and builds many at once on worker threads
 (`measured`, with the measuring modules in `tests/measure/`).
 
-- **A round and its records** -- `round-matrix`, `core`, `play`, `honours`,
+- **A round and its records** -- `round-matrix`, `core`, `play`, `putting-gimme`, `honours`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,

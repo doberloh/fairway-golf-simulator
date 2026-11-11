@@ -19,7 +19,7 @@ const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 2000, minZ:
 const rawDrive = {origin: {x: 3.0004917, z: -1.2345678}, aim: 1.23456789, speed: 150 * MPH, vla: 12.3456, hla: 1.0987, spin: 2600.4, spinAxis: 6.789};
 const rawPitch = {origin: {x: 0.5, z: 230.25}, aim: -3.3333333, speed: 60 * MPH, vla: 30.123, hla: -0.555, spin: 7000.7, spinAxis: 0, roll: 2.345};
 const settings = {...DEFAULT_COURSE, seed: 'RIVAL-1', holes: 9};
-const rules = {tee: 'white', putting: {mode: 'holeout', one: 3, two: 10, three: 20}, ob: 'stroke', lie: true, input: 'meter', turf: {stimp: 11, fairway: 100, semi: 100, rough: 100, firmness: 0.45}};
+const rules = {tee: 'white', putting: {mode: 'holeout', one: 3, two: 10, three: 20, gimme: 3}, ob: 'stroke', lie: true, input: 'meter', turf: {stimp: 11, fairway: 100, semi: 100, rough: 100, firmness: 0.45}};
 const card = [4, 5, 3, 4, 4, 6, 3, 5, 4];
 // Seat 0 drives, then pitches from where the drive stopped; seat 1 hits one
 // pitch a hole. As main.js does: grid the shot, fly it, log it.
@@ -199,4 +199,14 @@ test('shots from a code fly again to the same millimetre on a freshly grown cour
   assert.deepEqual([Math.round(r.end.x * 1000), Math.round(r.end.z * 1000)], [s[9], s[10]], `hole ${h + 1}, shot ${++n}`);
  }));
  assert.equal(n, 8);
+});
+
+test('a challenge carries the gimme circle and its size, and an older code without one still reads', () => {
+ const round = new Round({players: [{name: 'Alex', team: 'A', hand: 'RH'}], putting: {mode: 'gimme', gimme: 4}});
+ const r = R.rulesOf(round, 0, {}, 'meter');
+ assert.deepEqual([r.putting.mode, r.putting.gimme], ['gimme', 4]);
+ assert.deepEqual(R.rulesDiff(rules, r, 'Sam').filter(l => l.startsWith('Putting')), ['Putting: Sam hole out, you gimme circle (4 ft).']);
+ assert.deepEqual(R.readRivalCode(make({rules: {...rules, putting: {mode: 'gimme', gimme: 4}}})).rules.putting, {mode: 'gimme', one: 3, two: 10, three: 20, gimme: 4});
+ // A code made by 0.9.12 carries no gimme: it reads with the default circle.
+ assert.equal(R.readRivalCode(make({rules: {...rules, putting: {mode: 'dartboard', one: 3, two: 10, three: 20}}})).rules.putting.gimme, 3);
 });

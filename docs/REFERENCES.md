@@ -855,3 +855,7 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - Meshy API pricing and Image to 3D, https://docs.meshy.ai/en/api/pricing and https://docs.meshy.ai/en/api/image-to-3d: meshy-7.1 and meshy-6 both 30 credits textured; `remove_lighting` only with the Meshy 6 texture model.
 - Autumn colour of the species, read as search summaries: https://themarthablog.com/?p=105677, https://www.woodlanddunes.org/?p=7377, https://storymaps.arcgis.com/stories/116c411218f547b8bcea69f23bc0b3b7, https://mortonarb.org/app/uploads/2021/10/Fall-color-report-10-28-2021-Edited-by-Beth-1.pdf.
 - Pollinations (image.pollinations.ai): read and rejected for pictures of each tree: cropped, wrong shapes, one image per 45 seconds.
+
+## The gimme circle (10 November 2026)
+
+- The Rules of Golf, Rule 3.2b(1), Conceding the next stroke -- https://www.usga.org/content/usga/home-page/rules/rules-2019/rules-of-golf/rule-3.html -- a conceded next stroke means the player has holed out with that stroke, so it counts. Cited from the Rules as known; not fetched this session. Taken: a gimme adds one stroke. Not taken: concessions belong to match play; the game's gimme circle is a simulator convention in every format (RESEARCH *The gimme circle*).

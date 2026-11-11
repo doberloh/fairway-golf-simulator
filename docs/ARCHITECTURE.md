@@ -90,7 +90,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **Playing a round**
 - `src/game.js` -- round rules, teams, scores, undo, drops; `src/relief.js` -- penalty relief
-- `src/scoring.js`, `src/putting.js`, `src/presentation.js` -- against par, putting modes, replay timing
+- `src/scoring.js`, `src/putting.js`, `src/presentation.js` -- against par, putting modes (hole out, dartboard, decimal, gimme circle: `PUTTING_MODES`), replay timing
 - `src/round-goals.js` -- rounds with a goal (Sudden death, Bogey-free nine): which rounds can carry one, each golfer's goal from the card
 - `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
 - `src/range.js` -- the driving range (a hand-built hole): its greens as a list (centre, six targets, short game), their slopes and cups, chip and putt spots; `src/endless.js` -- endless runs

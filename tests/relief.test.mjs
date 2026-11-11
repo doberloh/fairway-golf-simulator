@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {crossingPoint, backOnLine, lateral, e5, reliefOptions, CLUB_LENGTH, WATER, OUT} from '../src/relief.js';
 import {Round} from '../src/game.js';
+import {PUTTING_MODES} from '../src/putting.js';
 
 // A drawn hole, 200 m long, played up the z axis. The pin is at z 200. A
 // fairway 30 m wide runs to z 185, a pond of radius 10 sits on it at z 120, the
@@ -205,7 +206,7 @@ test('a golfer waiting for relief keeps the choice through a change of group, an
 });
 
 test('relief scores the same under every putting mode, and in an endless run', () => {
- for (const mode of ['holeout', 'dartboard', 'decimal']) {
+ for (const mode of PUTTING_MODES) {
   for (const endless of [false, true]) {
    const r = new Round({players: [P[0]], putting: {mode}, endless, seed: endless ? 'RUN-1' : ''});
    r.takeShot(water, pin);
