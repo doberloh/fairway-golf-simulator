@@ -18,7 +18,7 @@ test('Stimp releases stop at the stated feet, independent of integration timeste
 });
 test('surface resistance gives finite stops, ordered rollout, and monotonic roll controls',()=>{
  const runs=['green','fairway','semi','rough','sand'].map(s=>simulateShot(release(4),flat(s)).total);for(let i=1;i<runs.length;i++)assert(runs[i]<runs[i-1]);
- for(const surface of ['fairway','semi','rough']){const slow=simulateShot(release(4),flat(surface),{turf:{[surface]:50}}),fast=simulateShot(release(4),flat(surface),{turf:{[surface]:150}});assert(Math.abs(fast.total/slow.total-3)<.02);assert(fast.time<10);}
+ for(const surface of ['fairway','semi','rough']){const slow=simulateShot(release(4),flat(surface),{turf:{courseFirmness:'soft'}}),fast=simulateShot(release(4),flat(surface),{turf:{courseFirmness:'firm'}});assert(fast.total>slow.total*1.15,`${surface}: firm ${fast.total} against soft ${slow.total}`);assert(fast.time<12);}
  const slope={...flat('rough'),height:(x,z)=>z*.12};const resting=simulateShot({...putt,speed:0},slope);assert(resting.total<.001);assert.throws(()=>turfConfig({stimp:0}));
 });
 test('ball and cup use regulation SI dimensions and a swept, speed-limited opening',()=>{

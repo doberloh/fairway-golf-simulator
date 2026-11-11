@@ -167,13 +167,12 @@ test('the spin dial: -1 to +3, each added step more spin than the last', () => {
 
 // THE OWNER'S RULE: with no spin added, a ball never spins back. Swept on level
 // ground and a 2% rise into the landing (steeper than that, gravity rolls any
-// ball back whatever its spin, which is the course and not the strike), at the
-// softest firmness, where a ball grips hardest, for every short club and height
-// at a full swing and at full overswing. The full sweep across every club,
-// power and firmness is in RESEARCH.md *The Swing Meter*; this is the corner of
-// it where a come-back was ever found.
+// ball back whatever its spin, which is the course and not the strike), on
+// soft, medium and firm greens at Stimp 13 -- the quickest green is where a
+// ball that has stopped is likeliest to trickle back -- for every short club
+// and height at a full swing and at full overswing.
 test('with the club\'s own spin, nothing spins back', () => {
- const soft = turfConfig({firmness: 'Soft'});
+ const greens = ['soft', 'medium', 'firm'].map(greenFirmness => turfConfig({stimp: 13, greenFirmness}));
  const bag = ['iron8', 'iron9', 'wedge', 'gap', 'sand', 'lob'];
  const all = bagClubs([...bag.map(k => ({id: 'c' + k, name: k, kind: k, carry: CLUB_KINDS[k].carry})), {id: 'putter', name: 'Putter', kind: 'putter', carry: 30}]);
  const green = g => ({height: (x, z) => z * g, surface: () => 'green', pin: {x: 9e9, z: 9e9}, trees: [], homes: [], bounds: {x: 1e6, minZ: -1e6, maxZ: 1e6}});
@@ -184,9 +183,9 @@ test('with the club\'s own spin, nothing spins back', () => {
    const l = shapedLaunch(club, {height, spin: 0}, {short});
    for (const share of [1, 1 + OVERSWING_CARRY]) {
     const speed = speedForCarry(club, l, share * fullCarry(club, l));
-    for (const g of [0, .02]) {
-     const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, speed, vla: l.vla, hla: 0, spin: l.spin * spinForPower(Math.min(1.2, speed / club.speed)), spinAxis: 0}, green(g), {turf: soft});
-     assert.ok(r.total >= r.carry - .05 * YARD, `${club.kind} ${height}${short ? ' (short)' : ''} at ${share} on a ${g * 100}% rise came back ${((r.carry - r.total) / YARD).toFixed(2)} yd`);
+    for (const g of [0, .02]) for (const turf of greens) {
+     const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, speed, vla: l.vla, hla: 0, spin: l.spin * spinForPower(Math.min(1.2, speed / club.speed)), spinAxis: 0}, green(g), {turf});
+     assert.ok(r.total >= r.carry - .05 * YARD, `${club.kind} ${height}${short ? ' (short)' : ''} at ${share} on a ${turf.greenFirmness} green with a ${g * 100}% rise came back ${((r.carry - r.total) / YARD).toFixed(2)} yd`);
     }
    }
   }

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cupCapture,simulateShot,R,CUP_RADIUS,YARD} from '../src/physics.js';
+import {simulateShot,R,CUP_RADIUS,YARD} from '../src/physics.js';
+import {rollAtCup} from '../src/cup.js';
 import {makeGroundGrid,groundHeight} from '../src/terrain-grid.js';
 import {groundGeometry} from '../src/ground.js';
 import {generateCourse,generateWorld,fairwayWidth,greenDistance} from '../src/course.js';
@@ -18,7 +19,7 @@ test('slow balls over the cup fall from the full opening, including a stationary
  for(const dt of [1/120,1/240,1/480]){const r=simulateShot({...shot,origin:{x:.045,z:-.08},speed:.25,roll:.25},flat,{dt});assert(r.holed);}
 });
 test('capture speed decreases toward the lip and fast putts still miss',()=>{
- const pin=flat.pin;assert(cupCapture([0,R,-.1],[0,R,.1],[0,0,1.5],pin));assert(!cupCapture([0,R,-.1],[0,R,.1],[0,0,1.8],pin));assert(cupCapture([.045,R,-.1],[.045,R,.1],[0,0,.3],pin));assert(!cupCapture([.045,R,-.1],[.045,R,.1],[0,0,.8],pin));assert(!simulateShot({...shot,speed:3},flat).holed);
+ assert(rollAtCup(1.5,0).holed);assert(!rollAtCup(2.2,0).holed);assert(rollAtCup(.3,.045).holed);assert(!rollAtCup(.9,.045).holed);assert(!simulateShot({...shot,speed:3},flat).holed);
 });
 test('adaptive bunker mesh has shared seam vertices, no cracks, and matching contact heights',()=>{
  const sample=(x,z)=>3+Math.sin(x*.5)*Math.cos(z*.4),g=makeGroundGrid(sample,12,12,3,(x,z)=>Math.hypot(x,z)<5),geometry=groundGeometry(g),p=geometry.attributes.position,index=geometry.index,edges=new Map();

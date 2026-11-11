@@ -228,6 +228,7 @@ export function simulateShot(shot,course,options={}){
   const old=[p[0],p[1],p[2]];
   prevV[0]=v[0];prevV[1]=v[1];prevV[2]=v[2];
   const wasRolling=rolling,prevW=rolling?[w[0],w[1]]:null,prevOm=rolling?null:[om[0],om[1],om[2]];
+  let rested=false;
   if(!rolling){
    // Midpoint (RK2) at 240 Hz, the same whatever the frame rate.
    const above=p[1]-course.height(p[0],p[2]);
@@ -236,9 +237,7 @@ export function simulateShot(shot,course,options={}){
    airAcceleration(vm,om,air,above+vm[1]*dt/2,a2);
    for(let i=0;i<3;i++){p[i]+=vm[i]*dt;v[i]+=a2[i]*dt;}
    const f=spinDecay(hypot(v[0],v[1],v[2]),dt,air.rho);om[0]*=f;om[1]*=f;om[2]*=f;
-  }else if(groundStep(course,p,v,w,dt,turf,skidTotal)){
-   break;
-  }
+  }else rested=groundStep(course,p,v,w,dt,turf,skidTotal);
   // THE HOLE comes before the ground, because it is the one place the ground
   // is not there. A ball whose path this step crosses the opening -- rolling,
   // or in the air and down at the level of the lip -- is handed to cup.js from
@@ -251,7 +250,10 @@ export function simulateShot(shot,course,options={}){
    const pinY=course.height(pin.x,pin.z);
    const approaching=(pin.x-old[0])*prevV[0]+(pin.z-old[2])*prevV[2]>0||hypot(old[0]-pin.x,old[2]-pin.z)<CUP_R;
    const low=old[1]+u*(p[1]-old[1])-R<=pinY+.006;
-   if(near<(wasRolling?CUP_REACH:CUP_R)&&approaching&&(wasRolling||low)){
+   // A ball that has stopped with its centre over the opening is not at rest:
+   // there is nothing under it.
+   const hanging=rested&&hypot(p[0]-pin.x,p[2]-pin.z)<CUP_R;
+   if(hanging||(!rested&&near<(wasRolling?CUP_REACH:CUP_R)&&approaching&&(wasRolling||low))){
     const [gx,gz]=slopeAt(course,pin.x,pin.z,CUP_R);
     const hole={x:pin.x,z:pin.z,y:pinY,gx,gz};
     // Back to the start of the step, as a free rigid ball.
@@ -275,6 +277,7 @@ export function simulateShot(shot,course,options={}){
     continue;
    }
   }
+  if(rested)break;
   const ground=course.height(p[0],p[2])+R,surface=course.surface(p[0],p[2]);
   // Below the ground is a collision whichever way the ball is travelling: on a
   // steep slope the terrain can come up faster than a climbing ball does.

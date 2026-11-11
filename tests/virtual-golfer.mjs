@@ -36,6 +36,7 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
  // A roughly normal stray, from two draws.
  const stray = () => (rnd() + rnd() - 1) * skill * 1.7;
  const list = Object.entries(clubs).filter(([id]) => id !== 'putter');
+ let last = null, stuck = 0;
  const nearest = metres => list.sort((a, b) => Math.abs(a[1].carry - metres / YARD) - Math.abs(b[1].carry - metres / YARD))[0][0];
  // ONE SHOT. `hole` is a generated hole (or the range's), `from` where the
  // ball lies, `aimAt` what the challenge aims at (null: the pin, or the
@@ -44,7 +45,13 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
  function shot({hole, from, aimAt = null, call = null, club: wantKind = null, onRange = false, spin = 0}) {
   const lie = onRange ? 'tee' : hole.surface(from.x, from.z), pin = hole.pin, toPin = Math.hypot(pin.x - from.x, pin.z - from.z);
   // The club: the putter on the green; the challenge's; else for the distance (setUpTurn, challengeClub).
-  let id = lie === 'green' ? 'putter' : nearest(aimAt ? Math.hypot(aimAt.x - from.x, aimAt.z - from.z) : toPin);
+  // NO PROGRESS, MORE CLUB. A ball that lands on a steep bank rolls back down
+  // it, and a golfer who then plays the same shot again does so for ever. One
+  // whose last shot from here finished back where it started takes a third
+  // more club each time, as a person would.
+  stuck = last && !aimAt && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 4 && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
+  const push = 1 + stuck / 3;
+  let id = lie === 'green' ? 'putter' : nearest((aimAt ? Math.hypot(aimAt.x - from.x, aimAt.z - from.z) : toPin) * push);
   if (wantKind && lie !== 'green') id = list.find(([, c]) => c.kind === wantKind)?.[0] || id;
   // The putter from off the green, when asked (a golfer putting from the
   // fringe and close in on the semi-rough): `list` leaves it out.
@@ -54,6 +61,7 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
   // fairway at the club's carry -- and a chip landed short so it runs to the hole.
   let target = aimAt || (putt ? pin : fairwayAim(hole, from, c.carry * YARD));
   if (!aimAt && !putt && shortGame(c, toPin / YARD) && toPin > 3 * CHIP_ROLL) { const k = (toPin - CHIP_ROLL) / toPin;target = {x: from.x + (pin.x - from.x) * k, z: from.z + (pin.z - from.z) * k}; }
+  if (push > 1 && !putt) target = {x: from.x + (target.x - from.x) * push, z: from.z + (target.z - from.z) * push};
   const aim = Math.atan2(target.x - from.x, target.z - from.z) * 180 / Math.PI;
   const range = putt ? Math.max(.1, toPin) : Math.hypot(target.x - from.x, target.z - from.z);
   const shape = {...(call === 'draw' || call === 'fade' ? {curve: call} : call === 'high' || call === 'low' ? {height: call} : {}), ...(spin ? {spin} : {})};
@@ -78,6 +86,7 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
   const out = swingLaunch(sw, ctx);
   const result = simulateShot({origin: {...from}, aim, ...out.shot}, hole, {wind: wind(hole), altitude: hole.bio?.altitude ?? 0, temperature: hole.bio?.temperature, turf,
    flagsticks: {current: lie !== 'green' && !putt}});
+  last = {from: {...from}, end: {x: result.end.x, z: result.end.z}};
   const rest = result.hazard ? null : hole.surface(result.end.x, result.end.z);
   return {result, club: c.kind, facts: ballFacts({origin: from, result, rest, club: c.kind})};
  }

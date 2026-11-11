@@ -124,6 +124,8 @@ export function dropdown(select, {field = null, up = false, label = null, head =
  select.classList.add('dd-native'); select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
  field.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (open?.select === select) close(); else openList(d); });
  select.addEventListener('change', () => paintField(d));
+ // 'paint': the value was set from code, which fires no change event.
+ select.addEventListener('paint', () => paintField(d));
  paintField(d);
  return (select.__dd = {open: () => openList(d), close, field, refresh: () => paintField(d)});
 }

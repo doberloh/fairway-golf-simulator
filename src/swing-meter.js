@@ -26,7 +26,7 @@
 // Meter*, says which is which.
 import {simulateShot, YARD, R, clamp} from './physics.js';
 import {spinForPower} from './clubs.js';
-import {launchForDistance, rollDeceleration, struckDistance} from './turf.js';
+import {launchForDistance, struckDistance} from './turf.js';
 import {playsLike} from './plays-like.js';
 import {GROUNDS} from './grounds.js';
 
@@ -114,14 +114,14 @@ const SPIN_SCALE = {'-1': .75, 0: 1, 1: 1.1, 2: 1.2, 3: 1.3};
 // checks on level ground; a steep landing comes back sooner, so the High and
 // Flop heights carry a little less of the club's spin. Worked out against the
 // ball model, with a margin, not chosen by eye.
-const HEIGHT_SPIN = {low: 1, normal: 1, high: .85, bump: .5, flop: .8};
+const HEIGHT_SPIN = {low: 1, normal: 1, high: .85, bump: .5, flop: .68};
 // Found by sweeping every club x height x power (30% to full overswing) x
-// firmness x level and 2% slopes (14 October 2026): at the club's own spin only
-// the pitching and lob wedges came back, by at most half a yard on a soft green
-// landing into a 2% rise. They carry this much of their stock spin on the
-// Swing Meter. Steeper slopes roll any ball back by gravity, spin or not; that
+// green firmness x Stimp 8 to 13 x level and 2% slopes, against the ball model
+// of 11 November 2026: at the club's own spin only the four wedges came back,
+// by at most half a yard, on the quickest greens landing into a 2% rise. They
+// carry this much of their stock spin on the Swing Meter. Steeper slopes roll any ball back by gravity, spin or not; that
 // is the course, not the strike, and is not what this guards.
-const KIND_SPIN = {wedge: .95, lob: .85};
+const KIND_SPIN = {wedge: .9, gap: .86, sand: .9, lob: .85};
 export function shapedLaunch(club, shape, {short = false} = {}) {
  const s = validShape(shape);
  if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, zone: 1, flop: false};
@@ -301,7 +301,7 @@ export function previewTrack(club, launch, speed) {
 
 // A PUTT'S BAR IS IN DISTANCE OF ROLL on a flat green at today's Stimp: full is
 // as far as the putter's full stroke rolls today.
-export function puttFullRoll(putter, turf) { return struckDistance(putter.speed, rollDeceleration('green', turf)); }
+export function puttFullRoll(putter, turf) { return struckDistance(putter.speed, turf); }
 // THE PUTTING BAR ZOOMS TO THE PUTT. Spread over the putter's whole roll, a
 // nine-foot putt is a tenth of the bar and a tenth of a second to stop in, which
 // is not a putt anyone could make on purpose. So the bar's full line is a
@@ -321,7 +321,7 @@ export function puttRange(putter, turf, aimMetres) {
  for (const k of PUTT_RANGES) if (aimMetres * 1.25 <= full * k) return full * k;
  return full * PUTT_RANGES.at(-1);
 }
-export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.speed * 3, launchForDistance(metres, rollDeceleration('green', turf))); }
+export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.speed * 3, launchForDistance(metres, turf)); }
 
 // THE TARGET MARKER (Phase 2): where on the bar to stop for the ball to come
 // down in the aim circle. Found by flying the ball, not by a rule of thumb: the

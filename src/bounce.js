@@ -97,7 +97,14 @@ export function bounce(v, w, n, row) {
  // Velocity of the ball's contact point along the surface: its travel, less
  // what its spin carries the bottom of the ball backwards (or, with backspin,
  // plus what it carries it forwards).
- const cx = w[1] * nz - w[2] * ny, cy = w[2] * nx - w[0] * nz, cz = w[0] * ny - w[1] * nx;
+ // Spin about the ground's own normal (a ball turning like a top, which is
+ // what the tilt of a draw's or a fade's spin axis amounts to) is left out: it
+ // twists on the spot and drives the ball nowhere. Only the tilted pitch-mark
+ // face would make it kick sideways, and that face is a stand-in for a
+ // two-dimensional effect, not a wall.
+ const twist = w[0] * n[0] + w[1] * n[1] + w[2] * n[2];
+ const wx = w[0] - twist * n[0], wy = w[1] - twist * n[1], wz = w[2] - twist * n[2];
+ const cx = wy * nz - wz * ny, cy = wz * nx - wx * nz, cz = wx * ny - wy * nx;
  const sx = v[0] - vnn * nx - R * cx, sy = v[1] - vnn * ny - R * cy, sz = v[2] - vnn * nz - R * cz;
  const slip = Math.hypot(sx, sy, sz);
  // A solid sphere (I = 2/5 m r^2): an impulse at its surface moves the contact

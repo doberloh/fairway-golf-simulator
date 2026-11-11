@@ -81,6 +81,8 @@ export function picker(doc, select, label, {words = optionWords} = {}) {
  v.append(left, box, right);
  row.append(k, v);
  select.addEventListener('change', paint);
+ // 'paint': the value was set from code, which fires no change event.
+ select.addEventListener('paint', paint);
  paint();
  return row;
 }
@@ -136,6 +138,12 @@ export function rulesColumn(doc, q) {
  const dist = q('roundPutting-distances'); if (dist) rules.append(dist);
  if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
  if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
+ // The course as it plays today (turf.js): a preset, then the three settings.
+ const cond = [['roundConditions', 'COURSE'], ['roundStimp', 'GREEN SPEED'], ['roundGreens', 'GREENS'], ['roundCourse', 'FAIRWAYS']].filter(([id]) => q(id));
+ if (cond.length) {
+  rules.append(make(doc, 'h3', 'sx-head', 'COURSE CONDITIONS'));
+  for (const [id, label] of cond) rules.append(picker(doc, q(id), label));
+ }
  const tee = q('roundTee'); if (tee) { tee.hidden = true; rules.append(tee); }
  return rules;
 }

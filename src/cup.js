@@ -189,7 +189,9 @@ export function cupSim(ball, hole, env = {}) {
 export function rollAtCup(speed, offset = 0, env = {}) {
  const slope = env.slope || 0;   // rise per metre along the putt's line (+ uphill)
  const hole = {x: 0, z: 0, y: 0, gx: 0, gz: slope};
- const z0 = -CUP.zone;
+ // Started a few millimetres short of the front edge, so `speed` is the speed
+ // it reaches the hole with and not one it has since lost on the green.
+ const z0 = -(CUP_RADIUS + .004);
  const p = [offset, slope * z0 + R * Math.hypot(1, slope), z0];
  const v = [0, slope * speed, speed], w = [speed / R, 0, 0];
  return cupSim({p, v, w}, hole, env);
