@@ -50,7 +50,7 @@ export default function ({journey, ROOT, SHOTS}) {
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
   await page.getByRole('button', {name: 'Next: build the land'}).click();
   // 2. The land.
-  await page.getByRole('button', {name: 'Build the land'}).click();
+  // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 900000}); await idle();
   say(`land: ${await page.locator('.cb-note').first().textContent()} (${secs()})`);
   await page.getByRole('button', {name: 'Next: trace the course'}).click();

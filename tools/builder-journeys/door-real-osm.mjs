@@ -58,7 +58,7 @@ export default function ({journey, SHOTS}) {
   await chooser.setFiles(las);
   await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 60000}); await idle();
   await page.getByRole('button', {name: 'Next: build the land'}).click();
-  await page.getByRole('button', {name: 'Build the land'}).click();
+  // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();
   await page.getByRole('button', {name: 'Next: trace the course'}).click();
   // The place, then OpenStreetMap.

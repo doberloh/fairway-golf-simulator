@@ -494,27 +494,32 @@ changes, newest first, each with **Back to here**.
   minutes at most; opening door 2 again offers **Bring it back** or
   **Discard**. Saving to a file drops the kept copy (the file holds it). It
   never leaves the computer.
-  **Build it for me** is at the top of the first step: type the course's
-  name (and its town, if the name is common), press it, and the builder
-  runs the steps below for you -- finds the course (a golf course on the map
-  is taken over the town it is named after; if two places share the name it
-  asks which), downloads the newest USGS survey that covers most of a 1.5 km
-  square round it, builds the land, fetches the sharpest free picture, lays
-  OpenStreetMap's course and lines it up with the LIDAR, takes its holes and
-  its name, and stops on the review -- or on the holes step if the map left
-  some holes without a tee or a green, or when **Checking the map** finds
-  something wrong. United States courses only; it goes
-  online as it works. On Worthington Country Club it took 3 minutes 52
-  seconds. Everything it did can be changed afterwards in the steps.
-  1. **LIDAR**: **Find the course** first, if you have no LIDAR: type a
-     course or a place, **Find** (or Enter), and click the place you mean in
-     the list (each is a button marked **Use ›**). The aerial map of the
+  1. **LIDAR**: **Find the course** first, if you have no LIDAR -- one
+     search bar for both ways of building: type the course's name (and its
+     town, if the name is common), **Find** (or Enter). A golf course on the
+     map is taken at once, even over the town it is named after; otherwise
+     click the place you mean in the list (each is a button marked **Use ›**,
+     golf courses first). The aerial map of the
      ground round it comes up on the plan, 5 km across (**Map 3 km**, **5 km**
      or **8 km across** beside **Fetch the map again**, if the course is not
      on it), with a gold pin where the name was found. **Drag a box round the
      course** on the map with the left button (up to 3 x 3 km; it shows its
-     size, and another drag replaces it), then **Search for LIDAR** -- which
-     waits for the box. Every source over the box is listed, each survey
+     size, and another drag replaces it). Then one of two buttons, both waiting
+     for the box:
+     **Build it for me** first says that it might not always get it right
+     (OpenStreetMap's map of a course can be wrong or missing: a hole pointing
+     the wrong way, a green or tee missing, a bunker off its place -- look
+     every hole over before playing it); **Build it** there runs the steps
+     below for you, **Cancel** leaves it. It downloads the newest USGS survey
+     that covers most of the box, builds the land with the box as the
+     property, fetches the sharpest free picture, lays OpenStreetMap's course
+     and lines it up with the LIDAR, takes its holes and its name, and stops
+     on the review -- or on the holes step if the map left some holes without
+     a tee or a green, or when **Checking the map** finds something wrong.
+     United States courses only; it goes online as it works. On Worthington
+     Country Club it took 3 minutes 52 seconds. Everything it did can be
+     changed afterwards in the steps.
+     **Build it myself** lists every source over the box, each survey
      with a small map of the box, north up: green is already saved, gold
      would download, dark has no data. Beside it, how much of the box it
      covers and how much you hold, and the buttons say what they will do:
@@ -574,7 +579,11 @@ changes, newest first, each with **Back to here**.
      **drag a box round the course** on the relief with the left button (up
      to 3 x 3 km); after a search, the box from the map is already there, and
      a drag on the relief changes it.
-  2. **Land**: **Build the land**. It says how the ground was found, how much
+  2. **Land**: **Next: build the land** starts building the land at once --
+     the box is already the property, so there is nothing more to press.
+     After the box is changed, **Build it again** (pressing Next does it too
+     while nothing is traced on the land; once you have traced, only Build it
+     again does, as building clears the trace). It says how the ground was found, how much
      was filled in where no laser reached the ground, and how many trees it
      found.
   3. **Trace**: first a picture to trace over (kept in your saved file, never

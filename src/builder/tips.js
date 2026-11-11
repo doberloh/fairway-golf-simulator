@@ -51,7 +51,7 @@ export const TIPS = {
  '4 Holes': 'Step 4: each hole\'s tees, aim points and green',
  '5 Name': 'Step 5: the course\'s name, landscape and credits',
  '6 Review': 'Step 6: the whole course painted as it will be built',
- 'Next: build the land': 'Go on to step 2 once the property is boxed',
+ 'Next: build the land': 'Build the land from the LIDAR inside the box: it starts at once',
  'Next: trace the course': 'Go on to step 3 once the land is built',
  'Next: the holes': 'Go on to step 4 once the course is traced',
  'Next: the name': 'Go on to step 5 once every hole has a tee and a green',

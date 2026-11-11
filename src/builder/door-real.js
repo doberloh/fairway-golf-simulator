@@ -337,7 +337,7 @@ export function open(draft = null) {
  function showHint() {
   const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => st.penEdit ? 'closed: drag a node to adjust it; Enter fills it, Esc drops it.' : `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
   let t = '';
-  if (st.step === 0) t = st.map ? `Drag a box round the course on the map, then Search for LIDAR over it. ${view}` : st.preview ? `Drag a box round the property on the relief. ${view}` : '';
+  if (st.step === 0) t = st.map ? `Drag a box round the course on the map, then Build it for me or Build it myself. ${view}` : st.preview ? `Drag a box round the property on the relief. ${view}` : '';
   else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}, or drag any mark to move it. ${view}`;
   else if (st.step === 2 && !st.model && st.tool !== 'align') t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
   else if (st.step === 2) {
@@ -810,7 +810,7 @@ export function open(draft = null) {
  // goal; the owner: "We might need different UI elements to help guide the
  // player").
  const INTRO = [
-  "Bring the LIDAR, the laser survey of the ground. Find the course by name: the builder shows the map round it, you drag a box round the course, and the LIDAR is searched for over that box. Or open files you have, and drag the box on the relief.",
+  "Find the course by name: the builder shows the aerial map round it. Drag a box round the course, then Build it for me -- every step done for you -- or Build it myself, picking the LIDAR and doing each step. Or open LIDAR files you have, and drag the box on the relief.",
   "Build the land: the ground's heights, the trees and the water, read from the survey. It takes from a few seconds to a minute.",
   "Draw the course over the aerial picture: lay OpenStreetMap's version if the club is mapped, then fix it with the tools on the left -- or draw it yourself.",
   'Mark each hole: its back tee (and the others if you like), any bends, and its green, then Next hole. The scorecard below fills itself in.',
@@ -830,7 +830,7 @@ export function open(draft = null) {
  const NEXT = ['Next: build the land', 'Next: trace the course', 'Next: the holes', 'Next: the name', 'Next: review the course', null];
  const BLOCKED = ['', 'Choose LIDAR files first', 'Build the land first', 'Start the trace first', 'Every hole needs a tee and a green first', 'Every hole needs a tee and a green first'];
  function needs(n) {
-  if (n === 0) return st.map && !st.findBox ? 'Drag a box round the course on the map.' : st.map ? 'Search for LIDAR over the box, then download it.' : !st.preview && !st.land ? 'Find the course by name, choose LIDAR files, or load them from your folder.' :!st.box && !st.land ? 'Drag a box round the property on the relief.' : '';
+  if (n === 0) return st.map && !st.findBox ? 'Drag a box round the course on the map.' : st.map ? 'Build it for me, or Build it myself: the LIDAR searched for over the box.' : !st.preview && !st.land ? 'Find the course by name, choose LIDAR files, or load them from your folder.' :!st.box && !st.land ? 'Drag a box round the property on the relief.' : '';
   if (n === 1) return st.land ? '' : 'Build the land from the LIDAR.';
   if (n === 2) return st.model ? '' : 'Start the trace: lay OpenStreetMap\'s course, or draw it yourself.';
   if (n === 3) {
@@ -844,13 +844,28 @@ export function open(draft = null) {
   const n = st.step, done = i => i < n && can(i + 1);
   stepChips.replaceChildren(...STEPS.flatMap((s, i) => [
    i ? el('span', {class: 'cb-steparrow', 'aria-hidden': 'true'}, '›') : null,
-   el('button', {class: 'cb-stepchip' + (i === n ? ' cb-here' : done(i) ? ' cb-done' : ''), type: 'button', disabled: !can(i), title: can(i) ? s.slice(2) : BLOCKED[i], 'aria-current': i === n ? 'step' : null, onclick: () => go(i)},
+   el('button', {class: 'cb-stepchip' + (i === n ? ' cb-here' : done(i) ? ' cb-done' : ''), type: 'button', disabled: !can(i), title: can(i) ? s.slice(2) : BLOCKED[i], 'aria-current': i === n ? 'step' : null, onclick: () => enter(i)},
     el('i', {}, done(i) ? '✓' : String(i + 1)), s.slice(2))].filter(Boolean)));
   stepNeeds.textContent = needs(n);
   nextBtn.hidden = !NEXT[n];
-  if (NEXT[n]) { nextBtn.textContent = NEXT[n]; nextBtn.classList.toggle('cb-wait', !can(n + 1)); nextBtn.title = can(n + 1) ? '' : BLOCKED[n + 1]; nextBtn.onclick = () => { if (can(n + 1)) go(n + 1); else say(n + 1 === 4 ? 'Every hole needs a tee and a green.' : needs(n) || 'Finish this step first.', true); }; }
+  if (NEXT[n]) { nextBtn.textContent = NEXT[n]; nextBtn.classList.toggle('cb-wait', !can(n + 1)); nextBtn.title = can(n + 1) ? (n === 0 ? 'Build the land from the LIDAR inside the box: it starts at once' : '') : BLOCKED[n + 1]; nextBtn.onclick = () => { if (can(n + 1)) enter(n + 1); else say(n + 1 === 4 ? 'Every hole needs a tee and a green.' : needs(n) || 'Finish this step first.', true); }; }
  }
  st.stepBar = stepBar;
+ // A STEP CHOSEN BY THE PLAYER (the step bar's Next or a chip). Into Build the
+ // land with the property boxed and no land built from it yet, the build
+ // starts at once (the owner, 10 November 2026: "When you click build the
+ // land, the generator should immediately start building, no need to have an
+ // extra click here as the box around the course is already set"). Land
+ // already built is built again only for a box changed since and while
+ // nothing is traced on it -- a rebuild clears the trace, so then it waits
+ // for Build it again.
+ const boxKey = b => b ? [b.x0, b.y0, b.x1, b.y1].map(v => v.toFixed(2)).join(',') : '';
+ const landWanted = () => !!st.box && !st.building && !st.sources.some(s => s.restored) && (!st.land || (!st.model && !!st.landBox && st.landBox !== boxKey(st.box)));
+ function enter(n) {
+  const build = n === 1 && st.step !== 1 && landWanted();
+  go(n);
+  if (build && st.step === 1) buildLand();
+ }
  // DOOR 2'S MENUS (menu.js): Edit's undo, View's zoom and what is shown, every
  // trace tool with its key, and the experimental auto trace.
  const tracing = () => st.step === 2 && !!st.model;
@@ -986,16 +1001,24 @@ export function open(draft = null) {
  const findList = el('ul', {class: 'cb-found'}), findOut = el('div', {class: 'cb-lidarfound'}), mapText = el('small', {class: 'cb-mapbox'});
  const MAP_SIZES = [3000, 5000, 8000];
  function findField() {
-  const place = el('input', {class: 'cb-lidarplace', placeholder: 'A course or a place, by name', value: st.find?.label ?? '', onkeydown: e => { if (e.key === 'Enter') findPlace(place.value); }});
+  const place = el('input', {class: 'cb-lidarplace', placeholder: 'A golf course, by name (and town)', value: st.find?.label ?? '', onkeydown: e => { if (e.key === 'Enter') findPlace(place.value); }});
   const size = el('select', {class: 'cb-mapsize', title: 'How much ground the map shows round the place: a wider map if the course is not on it'}, MAP_SIZES.map(m => el('option', {value: m, selected: m === (st.mapSize ?? 5000)}, `Map ${m / 1000} km across`)));
   size.onchange = () => { st.mapSize = +size.value; if (st.find) fetchMap(); };
   boxWords();
-  return el('div', {class: 'cb-field'}, el('label', {}, 'Find the course'),
-   el('small', {}, 'Type the course\'s name and pick it: the builder shows the aerial map round it. Drag a box round the course on the map, then search for LIDAR over just that box -- USGS 3DEP, IGN LiDAR HD and swisstopo download here; state and national portals open in a new tab. Goes online only when pressed.'),
-   el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', title: 'Look the name up (OpenStreetMap\'s place search)', onclick: () => findPlace(place.value)}, 'Find')), findList,
+  // ONE SEARCH BAR FOR BOTH WAYS (the owner, 10 November 2026: "search
+  // course, box off the course, click build it for me ... or alternatively,
+  // click build it myself"): Build it myself is the search over the box, the
+  // survey picked and each step done by hand.
+  const ready = !!st.findBox, wait = st.find ? 'Drag a box round the course on the map first' : 'Find the course and pick it first';
+  return el('div', {class: 'cb-field cb-buildme'}, el('label', {}, 'Find the course'),
+   el('small', {}, 'Type the course\'s name and Find: the builder shows the aerial map round it. Drag a box round the course on the map, then Build it for me -- every step done for you -- or Build it myself, choosing the LIDAR and doing each step. Goes online only when pressed.'),
+   el('div', {class: 'cb-row', style: 'margin:4px 0'}, place, el('button', {class: 'cb-btn', type: 'button', title: 'Look the course up by name (OpenStreetMap\'s place search)', onclick: () => findPlace(place.value)}, 'Find')), findList,
    st.find ? el('div', {class: 'cb-btns'}, size, el('button', {class: 'cb-btn', type: 'button', 'data-map': 'show', title: `The aerial map round ${st.find.label}, to draw the box on`, onclick: () => fetchMap()}, st.map ? 'Fetch the map again' : 'Show the map')) : null,
    mapText,
-   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: !st.findBox, 'data-find': 'search', title: st.findBox ? 'Ask every source that covers the box what it holds there' : st.find ? 'Drag a box round the course on the map first' : 'Find the course and pick it first', onclick: () => searchAll()}, 'Search for LIDAR')), findOut);
+   el('div', {class: 'cb-btns'},
+    el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: !ready, 'data-build': 'ask', title: ready ? 'Every step done for you over the box: the USGS LIDAR, the land, the picture, OpenStreetMap\'s course and its holes' : wait, onclick: () => askForMe()}, 'Build it for me'),
+    el('button', {class: 'cb-btn', type: 'button', disabled: !ready, 'data-find': 'search', title: ready ? 'Search every source over the box for its LIDAR (USGS 3DEP, IGN LiDAR HD and swisstopo download here; state and national portals open in a new tab), pick one, and do each step yourself' : wait, onclick: () => { forMeAsk.replaceChildren(); searchAll(); }}, 'Build it myself')),
+   forMeAsk, findOut);
  }
  function boxWords() {
   const b = st.mapBox;
@@ -1004,9 +1027,16 @@ export function open(draft = null) {
  async function findPlace(text) {
   if (!text.trim()) return;
   try {
-   const r = await PROVIDERS.usgs.search(null, text);
-   resultList(findList, r, f => { const same = st.find && st.find.lon === f.lon && st.find.lat === f.lat; st.find = f; if (!same) { st.findBox = null; st.mapBox = null; findOut.replaceChildren(); } findList.replaceChildren(); fetchMap(); });
-   if (!r.length) say('Nothing found by that name.', true);
+   let r = await PROVIDERS.usgs.search(null, text.trim());
+   const use = f => { const same = st.find && st.find.lon === f.lon && st.find.lat === f.lat; st.find = f; if (!same) { st.findBox = null; st.mapBox = null; findOut.replaceChildren(); forMeAsk.replaceChildren(); } findList.replaceChildren(); fetchMap(); };
+   if (!r.length) return say(`Nothing found called ${text.trim()}. Try the name with its town.`, true);
+   // A golf course on the map wins over the town it is named after: one golf
+   // course is taken without asking (as Build it for me did when it had a
+   // name field of its own); otherwise the player picks, golf courses first.
+   const golf = r.filter(f => f.golf);
+   if (golf.length === 1) return use(golf[0]);
+   if (golf.length > 1) r = [...golf, ...r.filter(f => !f.golf)];
+   resultList(findList, r, use);
   } catch (e) { say('The search failed: ' + e.message, true); }
  }
  // The map: the first free aerial picture that covers the place (USGS NAIP in
@@ -1024,7 +1054,7 @@ export function open(draft = null) {
   const here = providersAt(f.lon, f.lat).filter(k => PROVIDERS[k].free || keys[k]), key = here.find(k => PROVIDERS[k].free && !PROVIDERS[k].block) ?? here[0];
   if (!key) {
    st.findBox = squareAround(f.lon, f.lat, 1500); st.mapBox = null; boxWords(); go(0);
-   return say(`No aerial map covers ${f.label.split(',')[0]} without a key, so the box is a 1.5 km square round it: search for LIDAR over it. (A Google key, given in the trace step, shows the map here too.)`);
+   return say(`No aerial map covers ${f.label.split(',')[0]} without a key, so the box is a 1.5 km square round it: Build it for me, or Build it myself. (A Google key, given in the trace step, shows the map here too.)`);
   }
   const p = PROVIDERS[key], size = st.mapSize ?? 5000, box = squareAround(f.lon, f.lat, size);
   const cacheKey = `map:${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`;
@@ -1042,17 +1072,17 @@ export function open(draft = null) {
    plan.setLand(frame.land); plan.setLayerCanvas('picture', canvas, frame.land.cell); plan.setFilter('picture', null); plan.setAlpha('picture', 1);
    const here = frame.toLocal(f.lon, f.lat); plan.look(here.x, here.z, plan.view.scale);
    boxWords(); go(0);
-   say(`The map round ${f.label.split(',')[0]} (${p.name}, ${size / 1000} km across${pic.missing ? `, ${pic.missing} pieces missing` : ''}): drag a box round the course, then Search for LIDAR over it.${st.mapBox ? ' The box you drew is kept.' : ''}`);
+   say(`The map round ${f.label.split(',')[0]} (${p.name}, ${size / 1000} km across${pic.missing ? `, ${pic.missing} pieces missing` : ''}): drag a box round the course, then Build it for me or Build it myself.${st.mapBox ? ' The box you drew is kept.' : ''}`);
   } catch (e) {
    st.findBox ??= squareAround(f.lon, f.lat, 1500); boxWords(); go(0);
-   say(`The map did not come (${e.message}), so the box is a 1.5 km square round the place: search for LIDAR over it.`, true);
+   say(`The map did not come (${e.message}), so the box is a 1.5 km square round the place: Build it for me, or Build it myself.`, true);
   } finally { setBusy(''); }
  }
  // The box drawn: the search is over it from now on, and an earlier search's
  // list (over another box) goes.
  function boxChosen() {
   st.findBox = boxDegrees(st.map, st.mapBox); findOut.replaceChildren(); boxWords(); go(0);
-  say(`The box round the course: ${(st.mapBox.x1 - st.mapBox.x0).toFixed(0)} x ${(st.mapBox.z1 - st.mapBox.z0).toFixed(0)} m. Search for LIDAR over it, or drag another.`);
+  say(`The box round the course: ${(st.mapBox.x1 - st.mapBox.x0).toFixed(0)} x ${(st.mapBox.z1 - st.mapBox.z0).toFixed(0)} m. Build it for me, or Build it myself -- or drag another.`);
  }
  // Leaving the map (another step, or the LIDAR come): the plan shows the land
  // again, or the relief, or nothing yet.
@@ -1262,42 +1292,36 @@ export function open(draft = null) {
  // it cannot decide (which place of several) or when something is missing (no
  // survey that downloads here, a course not on the map). Every step stays
  // there to do by hand, and everything it did can be changed after.
- function buildField() {
-  const name = el('input', {class: 'cb-buildname', placeholder: 'A golf course, by name (and town)', value: st.find?.label ?? '', onkeydown: e => { if (e.key === 'Enter') buildForMe(name.value); }});
-  return el('div', {class: 'cb-field cb-buildme'}, el('label', {}, 'Build it for me'),
-   el('small', {}, 'Type the course\'s name and the builder does the steps for you: finds it, downloads the USGS LIDAR, builds the land, fetches the aerial picture, lays the course from OpenStreetMap and lines it up, and marks the holes. United States courses; it goes online as it works. You can change everything after.'),
-   el('div', {class: 'cb-row', style: 'margin:4px 0'}, name, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-build': 'go', title: 'Run every step for this course', onclick: () => buildForMe(name.value)}, 'Build it for me')), buildList);
+ // Since 10 November 2026 it starts from the course found and boxed on the
+ // map, like Build it myself (the owner: one search bar for both), and is
+ // first a warning that it may not get it right (the owner: "this should
+ // show a disclaimer that it might not always get it right"); Build it there
+ // builds. (It had a name field of its own and took a 1.5 km square round
+ // the place found.)
+ const forMeAsk = el('div');
+ function askForMe() {
+  findOut.replaceChildren();
+  forMeAsk.replaceChildren(el('div', {class: 'cb-field cb-formeask'},
+   el('b', {}, 'It might not always get it right'),
+   el('small', {}, 'Build it for me reads the course from the survey and OpenStreetMap\'s map of it, and the map can be wrong or missing: a hole may point the wrong way, a green or a tee may be missing, a bunker may sit off its place. What it doubts is shown on the holes step -- look every hole over before you play it. It goes online as it works (United States courses), and you can change everything after.'),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-build': 'go', title: 'Run every step for the course in the box', onclick: () => { forMeAsk.replaceChildren(); buildForMe(); }}, 'Build it'),
+    el('button', {class: 'cb-btn', type: 'button', 'data-build': 'no', title: 'Do not build it now', onclick: () => forMeAsk.replaceChildren()}, 'Cancel'))));
+  say('Build it for me: read the warning, then Build it.');
  }
- const buildList = el('ul');
- async function buildForMe(text, place = null) {
-  if (!place && !text.trim()) return say('Type the course\'s name first.', true);
+ async function buildForMe() {
+  const place = st.find, box = st.findBox;
+  if (!place || !box) return say('Find the course and drag a box round it on the map first.', true);
   // The folder first, while the press still counts as one (a browser asks for
   // leave to use a folder only inside a click).
   const dir = await ensureFolder();
   const t0 = Date.now(), took = () => `${Math.round((Date.now() - t0) / 1000)} s`, done = [];
   const log = line => { done.push(line); say(line); };
-  if (!place) {
-   setBusy(`Finding ${text.trim()}…`);
-   let found = [];
-   try { found = await PROVIDERS.usgs.search(null, text.trim()); } catch (e) { setBusy(''); return say('The search failed: ' + e.message, true); }
-   setBusy('');
-   if (!found.length) return say(`Nothing found called ${text.trim()}. Try the name with its town.`, true);
-   // A golf course on the map wins over the town it is named after; one golf
-   // course is taken without asking. Otherwise the player picks, golf courses
-   // first, and the build goes on.
-   const golf = found.filter(f => f.golf);
-   if (golf.length === 1) found = golf; else if (golf.length > 1) found = [...golf, ...found.filter(f => !f.golf)];
-   if (found.length > 1 && golf.length !== 1) { resultList(buildList, found, f => { buildList.replaceChildren(); buildForMe(text, f); }); return say(`${found.length} places found: click the one you mean, and the build goes on.`); }
-   place = found[0];
-  }
-  st.find = place; st.findSize ??= 1500;
-  // 1. The newest USGS survey that covers the most of the square.
-  setBusy(`Searching USGS for LIDAR round ${place.label.split(',')[0]}…`);
-  const box = squareAround(place.lon, place.lat, st.findSize); st.findBox = box;
+  // 1. The newest USGS survey that covers the most of the box.
+  setBusy(`Searching USGS for LIDAR over the box round ${place.label.split(',')[0]}…`);
   let surveys = [];
   try { surveys = (await searchLidar('usgs', box)).filter(f => f.ept); } catch (e) { setBusy(''); return say('The LIDAR search failed: ' + e.message, true); }
   setBusy('');
-  if (!surveys.length) { go(0); await searchAll(); return say('No USGS survey here downloads in the builder. The sources that cover the place are listed under Find LIDAR: download one, load it, and carry on by hand.', true); }
+  if (!surveys.length) { go(0); await searchAll(); return say('No USGS survey here downloads in the builder. The sources that cover the place are listed under Find the course: download one, load it, and carry on by hand.', true); }
   const ranked = surveys.map(f => ({f, share: coverFor(f, box).share ?? 0, date: String(f.date ?? '')})).sort((a, b) => b.share - a.share || b.date.localeCompare(a.date));
   const pick = ranked[0].f;
   const before = st.sources.length;
@@ -1351,7 +1375,7 @@ export function open(draft = null) {
     el('button', {class: 'cb-btn', type: 'button', 'data-recover': 'no', onclick: () => { dropDraft(); recoverBox.replaceChildren(); say('The kept work is discarded.'); }}, 'Discard'))));
  });
  function stepLidar() {
-  return [recoverBox, buildField(), findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
+  return [recoverBox, findField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'Load the LIDAR'),
    el('small', {}, 'LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with its .hdr, BIL, SRTM HGT), or a ZIP of them (a state portal\'s download). Several at once; a .prj or .hdr beside a file is read with it. Their coverage shows yellow on the relief.'),
    el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Pick LIDAR files from anywhere on this computer', onclick: chooseLand}, 'Choose LIDAR files'), fileList),
   el('div', {class: 'cb-field'}, el('label', {}, 'The property'), el('small', {}, 'Drag a box on the relief round the course with the left button (up to 3 x 3 km); 150 m past it are built too, for the land beyond. The wheel zooms; the right button or Space drags the view.'), boxText),
@@ -1440,20 +1464,22 @@ export function open(draft = null) {
  async function buildLand() {
   if (!st.box) return say('Load the LIDAR first.', true);
   if (st.sources.some(s => s.restored)) return say('This draft keeps the land it built, not the LIDAR files: bring them again in step 1 to build the land anew.', true);
+  if (st.building) return;
+  st.building = true;
   setBusy('Building the land…');
   try {
    const r = await landFromSources(st.sources, st.box, {pause: frame, onStep: (what, f) => setBusy(`Building the land… ${what} ${Math.round(f * 100)}%`)});
    // The pictures stay (the owner, 1 November 2026: keep the imagery when
    // the mode changes): placed by position, they lie on new land as on old;
    // one lined up by matched points was matched to the old land, and goes.
-   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, landEdits: null, creeks: [], pics: st.pics.filter(p => p.provider || p.file), picture: null});
+   Object.assign(st, {land: r.land, gridder: r.gridder, trees: r.trees, model: null, landEdits: null, creeks: [], pics: st.pics.filter(p => p.provider || p.file), picture: null, landBox: boxKey(st.box)});
    suggestLandscape();
    if (st.picShow === 'matched') st.picShow = null;
    landText.textContent = `${(2 * r.land.halfX).toFixed(0)} x ${(2 * r.land.halfZ).toFixed(0)} m at ${r.land.cell} m; ground ${r.land.method === 'classified' ? 'from the survey\'s own classes' : 'found by a ground filter'}; ${(100 * r.land.filled.reduce((s, v) => s + v, 0) / r.land.filled.length).toFixed(1)}% filled where no laser reached the ground; ${r.trees.length.toLocaleString()} trees.`;
    say(landText.textContent);
    paintRelief(); if (st.picShow) relay(); go(1);
   } catch (e) { say('Could not build the land: ' + e.message, true); }
-  finally { setBusy(''); }
+  finally { st.building = false; setBusy(''); }
  }
 
  // 3. Trace: the picture, then auto or manual, then the tools.

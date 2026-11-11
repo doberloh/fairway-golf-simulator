@@ -17,8 +17,8 @@ offline; it goes online only when you ask it for something from the internet
   landscape, grow it, take it over, change anything. New here? Start with this
   one: there is nothing to download, and every tool is there to try.
 - **Generate a real life course** -- a real course, from its survey, its
-  photograph and its map. Type its name and **Build it for me** does the steps,
-  or do each step yourself.
+  photograph and its map. Find it by name, box it on the map, and **Build it
+  for me** does the steps -- or **Build it myself**.
 - **Open a course file** -- carry on with a course or a draft you saved, or open
   a `.fairway` file somebody gave you.
 
@@ -45,41 +45,50 @@ On the plan, the wheel zooms, the right button or Space drags the view, **F**
 shows the whole land, and a small map in the corner shows where you are when
 zoomed in -- click it to go there.
 
-## A real course, the quick way: Build it for me
+## A real course: find it, box it, build it
 
-![Build it for me, at the top of the first step](builder-guide/build-it-for-me.webp)
+![The map round Worthington Country Club, a box dragged round the course](builder-guide/map-box.webp)
 
-Type the course's name (add its town if the name is common) and press **Build
-it for me**. The builder:
+Under **Find the course**, type the course's name (add its town if the name is
+common) and press **Find**. A golf course on the map is taken at once, even
+over a town of the same name; if the search finds several places, click the
+one you mean. The builder shows the aerial map of the ground round it, 5 km
+across (**Map 3 km** or **8 km** if the course is not on it). Drag a box round
+the course with the left button -- up to 3 x 3 km. That box is the property:
+only it, and 150 m past it for the land beyond the course, is downloaded and
+built.
 
-1. finds the course (a golf course on the map wins over a town of the same
-   name; if two courses share the name it asks which),
-2. downloads the newest USGS survey covering the course,
-3. builds the land,
-4. fetches the sharpest free aerial photograph,
-5. lays the course from OpenStreetMap and lines it up with the survey,
-6. marks the holes from the map, with the doglegs it can read from the
+Then choose how to build it.
+
+### Build it for me
+
+![Build it for me, and its warning](builder-guide/build-it-for-me.webp)
+
+Press **Build it for me**. It first says that **it might not always get it
+right** -- OpenStreetMap's map of a course can be wrong or missing, so a hole
+may point the wrong way or a green may be missing -- and **Build it** goes on
+(**Cancel** if you would rather not). The builder:
+
+1. downloads the newest USGS survey covering the most of the box,
+2. builds the land,
+3. fetches the sharpest free aerial photograph,
+4. lays the course from OpenStreetMap and lines it up with the survey,
+5. marks the holes from the map, with the doglegs it can read from the
    fairways,
 
 and stops on the review -- or on the holes step if the map needs checking.
 Worthington Country Club took under four minutes. It works for courses in the
-United States, and everything it did can be changed afterwards.
+United States, and everything it did can be changed afterwards. Look every
+hole over before you play it.
 
-## A real course by hand: the map, the box, the LIDAR
+### Build it myself
 
-![The map round Worthington Country Club, a box dragged round the course](builder-guide/map-box.webp)
-
-Under **Find the course**, type its name, press **Find**, and click the place
-you mean. The builder shows the aerial map of the ground round it, 5 km
-across (**Map 3 km** or **8 km** if the course is not on it). Drag a box round
-the course with the left button -- up to 3 x 3 km -- and press **Search for
-LIDAR**. Only that box, and 150 m past it for the land beyond the course, is
-searched for and downloaded, so the download is no bigger than the course
-needs. Each survey found shows how much of the box it covers.
-
-When the LIDAR is in, the map gives way to the relief, and the box you drew
-is the property. Drag another on the relief to change it, then **Next: build
-the land**.
+Press **Build it myself**: every source of LIDAR over the box is listed, with
+how much of the box each survey covers. Download one (or open a state portal's
+page, and put what it gives you in your LIDAR folder). When the LIDAR is in,
+the map gives way to the relief, and the box you drew is the property -- drag
+another on the relief to change it. **Next: build the land** builds the land
+at once; then the trace, the holes, the name and the review, each by hand.
 
 If you already have LIDAR files, **Choose LIDAR files** or **Load from the
 folder** skip the map: the relief shows, and you drag the box on it.

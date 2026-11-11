@@ -122,7 +122,7 @@ const doors = [
  // first visit tries every tool, with nothing to download (PLACED: it is the
  // sample course -- a grown course needs no file and no connection).
  {key: 'generate', title: 'Generate and modify a course', text: 'A made-up course in a minute: pick a landscape, grow it, take it over and change anything. New here? Start with this one -- nothing to download.', go: () => import('./door-generate.js').then(m => m.open())},
- {key: 'real', title: 'Generate a real life course', text: 'A real course from its laser survey (LIDAR), aerial photo and map. Type its name and Build it for me does the steps -- or do each step yourself.', go: () => import('./door-real.js').then(m => m.open())},
+ {key: 'real', title: 'Generate a real life course', text: 'A real course from its laser survey (LIDAR), aerial photo and map. Find it by name, box it on the map, and Build it for me does the steps -- or build it yourself.', go: () => import('./door-real.js').then(m => m.open())},
  {key: 'open', title: 'Open a course file', text: 'Carry on with a course or a draft you saved, or open a .fairway file somebody gave you.', go: openFile},
 ];
 

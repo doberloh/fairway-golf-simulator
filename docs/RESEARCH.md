@@ -15586,7 +15586,9 @@ failed to connect from here (a TLS error, curl exit 35) on 10 November 2026.
 
 The owner's yardstick: "A real course for me depending on if there is open
 street map data can be like 15 mins." Build it for me (door-real.js
-`buildForMe`) runs door 2's own steps from a name. Measured on **Worthington
+`buildForMe`) runs door 2's own steps from a name (since 10 November 2026,
+later, from the course found and boxed on the map: *The map before the
+LIDAR*; the run below took a 1.5 km square round the place). Measured on **Worthington
 Country Club**, Minnesota, against the real services, from this PC over its
 home connection (bench/shots/build-for-me.mjs, local; one run):
 
@@ -15739,3 +15741,12 @@ LIDAR, and searches and downloads only a box drawn round the course on it
   about 0.06%, under 3 m. Longitude and
   latitude are read through the tiles exactly, so the box searched for is
   exact; only the size shown on it carries that error.
+- **Build it for me from the same box** (the owner, later the same day: one
+  search bar for both ways; COURSE_BUILDER, *One search bar for both ways*).
+  It downloads the survey covering most of the drawn box, not a 1.5 km square
+  round the place; the box is the property. Its warning ("might not always
+  get it right") is asked every time, not remembered -- PLACED. Next: build
+  the land starts the build at once when there is no land yet, or when the
+  box changed and nothing is traced -- PLACED (a rebuild clears the trace).
+  No new timings: the Worthington figures under *Build it for me, on a real
+  course* are from the 1.5 km square.

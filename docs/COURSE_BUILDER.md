@@ -1905,11 +1905,14 @@ builder; the saved file's growth not measured.
 
 ### Build it for me (10 November 2026)
 
-Item 6. At the top of door 2's first step: a course's name and one press,
-and door 2's own steps run in turn (`buildForMe`): the place (a golf course
-on the map wins over the town it is named after; several of the same name
-are listed to pick from, and the build goes on), the USGS survey covering
-most of the 1.5 km square (newest on a tie) downloaded through Entwine, the
+Item 6. Door 2's own steps run in turn (`buildForMe`). As first built, at
+the top of door 2's first step: a course's name and one press -- the place (a
+golf course on the map wins over the town it is named after; several of the
+same name are listed to pick from, and the build goes on), the USGS survey
+covering most of a 1.5 km square round it. **Since the later pass the same
+day** (*One search bar for both ways*, below) it starts from the course found
+and boxed on the map in **Find the course**, after a warning: the USGS survey
+covering most of the box (newest on a tie) downloaded through Entwine, the
 land, the first free picture source (USGS NAIP in the US), OpenStreetMap laid
 and refined with the LIDAR, the club's holes, boundary and name; then the
 review, or the holes step if the map left holes unmarked. It stops with
@@ -2222,7 +2225,8 @@ the aerial map of a 5 km square round it comes up on the plan (**Map 3, 5 or
 8 km across**), with a gold pin where the name was found. The left button
 drags a box round the course on it (up to 3 x 3 km, like the property; a
 click without a drag keeps the box there was), and **Search for LIDAR** waits
-for the box. Only the box, and 150 m past it for the land beyond the course
+for the box (since the pass after: **Build it for me** and **Build it
+myself**, *One search bar for both ways*). Only the box, and 150 m past it for the land beyond the course
 (`growBox`, GRID_MARGIN), is searched and downloaded. When the LIDAR is in,
 the relief takes the map's place and the box is the property; a drag on the
 relief changes it. LIDAR files of one's own skip the map, as before.
@@ -2250,20 +2254,76 @@ relief changes it. LIDAR files of one's own skip the map, as before.
   height was written, and a combined box -- two squares that touch -- read
   back as a square of that height, wrong in its width; a square keeps its
   old name, so every ZIP already in a LIDAR folder reads as before.
-- **Build it for me is unchanged**: one press, a 1.5 km square round the
-  place, no stop for a box. Drawing the box first there would cost the one
-  press; reading the club's own outline from OpenStreetMap before the LIDAR
-  would give it a box without asking (not built; OpenStreetMap is read after
+- **Build it for me was left as it was in this pass** -- one press, a 1.5 km
+  square round the place, no stop for a box -- on the reasoning that drawing
+  the box first would cost the one press. **The owner overruled that the same
+  day** (*One search bar for both ways*, next): the box is drawn first for
+  both. Reading the club's own outline from OpenStreetMap before the LIDAR,
+  to box it without asking, is still not built (OpenStreetMap is read after
   the land, `loadOsm`).
 - Found on the way: a step whose tip had been closed with Got it showed the
   word "null" at the top of its panel (`introFor` returned null into
   `replaceChildren`); fixed.
 
 Seen: the builder-door-2 journey (the map from a stand-in tile cache, a 1,200
-x 900 m box dragged, Search for LIDAR waiting for it) and builder-lidar-folder
+x 900 m box dragged, Search for LIDAR -- Build it myself since -- waiting for it) and builder-lidar-folder
 (a 1.5 km box dragged, downloaded, kept, read back, the property from it); all
 nine journeys pass. On real services, Worthington Country Club by name: the
 map in about a second, a 1,220 x 1,250 m box round the course, three USGS
 surveys each covering all of it (bench/shots/map-first.mjs, local; the guide's
 picture `map-box`). The download from the box and the land built from it on
 real services were not run. **Not tried by a person.**
+
+### One search bar for both ways, and the land built on Next (10 November 2026)
+
+The owner, the same day: "build it for me needs to also do this as well. We
+should combine the 'search' bar for both into one search bar" -- search the
+course, box it off, then **Build it for me** ("this should show a disclaimer
+that it might not always get it right") or **Build it myself**; and "When you
+click build the land, the generator should immediately start building, no
+need to have an extra click here as the box around the course is already
+set."
+
+**Now** (door-real.js `findField`, `findPlace`, `askForMe`, `buildForMe`,
+`enter`):
+
+- **One field, Find the course.** Build it for me's own name field is gone.
+  Find takes a golf course on the map at once when the search finds exactly
+  one (over the town it is named after, as Build it for me did); otherwise
+  the list, golf courses first, each a button. A single place that is not a
+  golf course is still listed to click (the owner, 1 November 2026: results
+  that read as clickable), not taken.
+- **Two buttons under the map, both waiting for the box**: **Build it for
+  me** and **Build it myself**. Build it myself is the old Search for LIDAR
+  under a new name: every source over the box, a survey picked, each step by
+  hand.
+- **Build it for me warns first** (`askForMe`): "It might not always get it
+  right", why (OpenStreetMap's map can be wrong or missing: a hole the wrong
+  way, a green or tee missing, a bunker off its place), that its doubts show
+  on the holes step and every hole wants looking over; **Build it** builds,
+  **Cancel** closes it. Asked every time, not remembered (PLACED: a build is
+  minutes of downloading, one more press is cheap beside it, and the warning
+  is the point). The build is as before, over the box: the survey covering
+  most of the box, the box as the property (`previewLand` with
+  `st.findBox`). Where no free map covers the place, the box is the 1.5 km
+  square round it, as for Build it myself.
+- **Next: build the land builds at once** (`enter`, the step bar's Next and
+  its chips): into the land step with the property boxed and no land yet, the
+  build starts without the Build the land press. Land already built is built
+  again by Next only when the box changed since (`st.landBox`) and nothing
+  is traced yet -- a rebuild clears the trace, so once there is one, it waits
+  for **Build it again** (PLACED). A second build while one runs is refused
+  (`st.building`).
+
+Rejected: a disclaimer shown once and remembered (the owner asked for it on
+the press); keeping a separate name field for Build it for me (the request
+was one bar); auto-taking any single result (it would undo the 1 November
+clickable-results request for towns and places).
+
+Seen: all nine builder journeys pass -- builder-build-for-me now finds the
+club by name in the one bar (taken over its town without a click), drags a
+1.5 km box on a stand-in map, checks both buttons wait for it, the warning,
+Cancel closing it, Build it, and the box as the property (1,495-1,580 m);
+builder-door-2 checks Next starts the land; builder-lidar-folder uses Build it
+myself. The guide's `build-it-for-me` picture is the warning over the
+Worthington box. Not run on real services since; **not tried by a person.**

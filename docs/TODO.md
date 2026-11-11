@@ -1041,13 +1041,16 @@ Dinosaur Mountain are main's within noise. **Nothing here has been seen by a
 person.**
 
 - [ ] **Try by hand, in this order** (the owner's): door 2's **Find the
-  course** by hand (10 November 2026, after the hand-over; COURSE_BUILDER,
-  *The map first, then the box, then the LIDAR*): a course by name, the map
-  round it, a box dragged round the course, Search for LIDAR, Download the box
-  here, and the box as the property on the relief -- the download and the land
-  from it not yet run on real services; door 2 with **Build it for
-  me** on a course you know (type its name; on Worthington, pick Minnesota) --
-  the time it takes, and what the review or the holes step shows; **Checking
+  course** (10 November 2026, after the hand-over; COURSE_BUILDER, *The map
+  first, then the box, then the LIDAR* and *One search bar for both ways*): a
+  course by name in the one search bar, the map round it, a box dragged round
+  the course; then **Build it myself**, Download the box here, the box as the
+  property on the relief, and **Next: build the land** starting the build by
+  itself -- the download and the land from a drawn box not yet run on real
+  services; then **Build it for me** on a course you know, from the same bar
+  and a box (on Worthington, the club is taken at once): does its warning
+  read right, the time it takes, and what the review or the holes step
+  shows; **Checking
   the map** on Worthington: does each doubt point at a real fault, and do the
   fixes (one at a time, then Take the fixes offered) put holes where they
   belong; the **pen** round a green and a bunker (does the curve shown match

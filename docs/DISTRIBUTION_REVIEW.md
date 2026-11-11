@@ -1679,7 +1679,7 @@ it**: the ODbL asks for the credit, which the builder adds to the course's
 credits, and a database made from it and shared stays ODbL -- a shared
 `.fairway` built from it carries that licence (the owner's call to allow,
 named here so a release can say so). **Since 1 November 2026, LIDAR too**
-(amendments 13-14): *Search for LIDAR* asks the National Map's product API
+(amendments 13-14): *Search for LIDAR* (since 10 November 2026 *Build it myself*, and Build it for me, over a box drawn on the map) asks the National Map's product API
 (tnmaccess.nationalmap.gov), IGN's WFS (data.geopf.fr) and swisstopo's STAC catalogue (data.geo.admin.ch); *Download the
 square here* reads USGS's Entwine copy on Amazon's open data
 (s3-us-west-2.amazonaws.com/usgs-lidar-public) or IGN's COPC tiles or swisstopo's zipped LAS;
@@ -1963,7 +1963,7 @@ Every zip carries **Fairway Builder Guide.html** beside Fairway Builder.html
 (tools/package_release.py): docs/BUILDER_GUIDE.md built by
 tools/builder-guide.mjs into one page with its pictures inside it as
 WebP -- 1,330 kB with nine; 1,702 kB since the tenth, the map round a
-course with a box drawn on it (10 November 2026, after the trial below) -- offline, no fetched font or script (it uses the system's
+course with a box drawn on it (10 November 2026, after the trial below); 1,975 kB since Build it for me's picture became its warning over that map, a whole map in place of a nearly empty panel -- offline, no fetched font or script (it uses the system's
 fonts). A Markdown file in a zip shows no pictures, hence a page. The source
 zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
 and tests/fixtures/ (the old-files test's course file, 560 kB), which a build

@@ -1,6 +1,8 @@
-// BUILD IT FOR ME (the builder-ux goal, item 6, 10 November 2026): a course's
-// name typed, one press, and door 2 runs its own steps -- the place, the
-// newest USGS survey over the square downloaded, the land, the sharpest
+// BUILD IT FOR ME (the builder-ux goal, item 6, 10 November 2026): a course
+// found by name in door 2's one search bar, boxed on the map round it, Build
+// it for me and its warning (it may not get it right), Build it -- and door 2
+// runs its own steps: the newest USGS survey over the box downloaded, the
+// land (the box as the property), the sharpest
 // picture, OpenStreetMap's course lined up with the LIDAR, its holes, its name
 // -- to the review. Every service is stood in for (page.route): the place
 // search answers a town and the golf course named after it (the course wins
@@ -18,11 +20,32 @@ import {playOneShot} from './door-generate.mjs';
 const GEO = {lat: 43.63, lon: -95.62};
 
 export default function ({journey}) {
- journey('builder-build-for-me', 'Build it for me: a course name, one press, door 2\'s steps run to the review -- the club chosen over its town, the survey downloaded, the land, the picture, OpenStreetMap\'s nine holes lined up', async t => {
+ journey('builder-build-for-me', 'Build it for me: a course found by name and boxed on the map, its warning, Build it, and door 2\'s steps run to the review -- the club chosen over its town, the survey downloaded, the land, the picture, OpenStreetMap\'s nine holes lined up', async t => {
   const {page} = t;
   await page.setViewportSize({width: 1600, height: 1000});
   const EPT = 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_TEST_1_B21/';
-  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/tnmaccess\.nationalmap\.gov\//, /^https:\/\/raw\.githubusercontent\.com\/hobuinc\//, /^https:\/\/s3-us-west-2\.amazonaws\.com\/usgs-lidar-public\//, /^https:\/\/imagery\.nationalmap\.gov\//, /^https:\/\/overpass-api\.de\//);
+  t.allow.push(/^https:\/\/nominatim\.openstreetmap\.org\//, /^https:\/\/tnmaccess\.nationalmap\.gov\//, /^https:\/\/raw\.githubusercontent\.com\/hobuinc\//, /^https:\/\/s3-us-west-2\.amazonaws\.com\/usgs-lidar-public\//, /^https:\/\/imagery\.nationalmap\.gov\//, /^https:\/\/overpass-api\.de\//, /^https:\/\/basemap\.nationalmap\.gov\//);
+  // The map the course is boxed on: the USGS tile cache stood in for.
+  let maps = 0;
+  await page.route(/basemap\.nationalmap\.gov/, r => { maps++; return r.fulfill({status: 200, contentType: 'image/png', headers: {'Access-Control-Allow-Origin': '*'}, body: tilePng([92, 138, 72])}); });
+  const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
+  // The one search bar (the owner, 10 November 2026): the name typed and
+  // Find -- the golf course taken over the town of the same name without
+  // asking -- the map shown, a 1.5 km box dragged round the course on it,
+  // then Build it for me, its warning, and Build it.
+  async function findAndBox() {
+   await page.locator('.cb-lidarplace').fill('Testville Golf Club');
+   await page.getByRole('button', {name: 'Find', exact: true}).click();
+   await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
+   if (await page.getByRole('button', {name: 'Build it for me', exact: true}).isEnabled()) throw Error('Build it for me should wait for a box on the map');
+   const plan = page.locator('canvas.cb-plan'), at = async (x, z) => { const b = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [b.x + cx / r, b.y + cy / r]; };
+   const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
+   const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
+   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
+   await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+   const warn = await page.locator('.cb-formeask').textContent().catch(() => '');
+   if (!/might not always get it right/.test(warn)) throw Error(`Build it for me should first warn that it might not get it right: ${warn}`);
+  }
   const json = body => ({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify(body)});
   const {bytes, cube} = piece(); const asked = {place: 0, osm: 0, picture: 0, pieces: 0};
   await page.route(/nominatim\.openstreetmap\.org/, r => { asked.place++; return r.fulfill(json([
@@ -47,10 +70,15 @@ export default function ({journey}) {
   if (!await page.locator('.cb-intro').count()) throw Error('the first step should open on its tip');
   await page.locator('.cb-gotit').click();
   if (await page.locator('.cb-intro').count()) throw Error('Got it should close the tip');
-  await page.locator('.cb-buildname').fill('Testville Golf Club');
+  await findAndBox();
+  if (!/Golf Club/.test(await page.evaluate(() => window.fairwayBuilder.door2.find?.label))) throw Error('the golf course should be taken over its town without asking');
   await t.shot('start');
-  const t0 = Date.now();
+  // Cancel leaves it; pressed again, Build it builds.
+  await page.locator('[data-build="no"]').click();
+  if (await page.locator('.cb-formeask').count()) throw Error('Cancel should close the warning');
   await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+  const t0 = Date.now();
+  await page.getByRole('button', {name: 'Build it', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built || /OpenStreetMap has no course|No USGS|Nothing found|failed|Could not/.test(document.querySelector('.cb-note')?.textContent ?? ''), null, {timeout: 600000});
   await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
   const st = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, find: s.find?.label, name: s.name, holesN: s.holesN, marked: s.holes.slice(0, s.holesN).filter(h => h?.green && h.tees.length).length, pics: s.pics.map(p => p.group), land: !!s.land, trace: s.traceMode, built: s.built, note: document.querySelector('.cb-note').textContent}; });
@@ -59,7 +87,11 @@ export default function ({journey}) {
   if (!st.land || !st.pics.includes('naip') || !/^openstreetmap\+lidar$/.test(st.trace)) throw Error(`every step should have run: ${JSON.stringify(st)}`);
   if (st.holesN !== 9 || st.marked !== 9) throw Error(`OpenStreetMap's nine holes should be marked: ${st.marked} of ${st.holesN}`);
   if (st.step !== 5) throw Error(`a complete course should land on the review, not step ${st.step + 1}`);
-  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1) throw Error(`each service asked once (the picture in blocks): ${JSON.stringify(asked)}`);
+  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1 || !maps) throw Error(`each service asked once (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
+  // The box drawn on the map is the property built (1.5 km, a little more in
+  // the survey's grid, turned about 1.8 degrees from north here).
+  const prop = await page.evaluate(() => { const b = window.fairwayBuilder.door2.box; return {w: b.x1 - b.x0, h: b.y1 - b.y0}; });
+  if (prop.w < 1495 || prop.w > 1580 || prop.h < 1495 || prop.h > 1580) throw Error(`the box drawn on the map should be the property built: ${JSON.stringify(prop)}`);
   console.log(`       built in ${((Date.now() - t0) / 1000).toFixed(0)} s: ${st.built.steps.join(' ')}`);
   await t.shot('review');
   // INTO THE GAME (item 21): Save the course for Fairway on the review, and
@@ -111,8 +143,8 @@ export default function ({journey}) {
   await t.shot('recover');
   await page.locator('[data-recover="no"]').click();
   if (await page.locator('.cb-intro').count()) throw Error('a tip closed once should not show again');
-  await page.locator('.cb-buildname').fill('Testville Golf Club');
-  await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+  await findAndBox();
+  await page.getByRole('button', {name: 'Build it', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});
   await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
   const wrong = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, doubts: (s.doubts ?? []).map(q => ({hole: q.hole, kind: q.kind, fix: !!q.fix}))}; });

@@ -79,7 +79,7 @@ export default function ({journey}) {
    const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
    const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
    await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
-   await page.getByRole('button', {name: 'Search for LIDAR'}).click();
+   await page.getByRole('button', {name: 'Build it myself'}).click();
    await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   }
   await page.getByRole('button', {name: /Generate a real life course/}).click();

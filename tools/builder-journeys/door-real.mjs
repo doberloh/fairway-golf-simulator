@@ -90,7 +90,7 @@ export default function ({journey, SHOTS}) {
   // November 2026: "search, grab the map ... square off the course, from
   // there we will grab LIDAR").
   await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
-  if (await page.getByRole('button', {name: 'Search for LIDAR'}).isEnabled()) throw Error('Search for LIDAR should wait for a box on the map');
+  if (await page.getByRole('button', {name: 'Build it myself'}).isEnabled() || await page.getByRole('button', {name: 'Build it for me', exact: true}).isEnabled()) throw Error('Build it for me and Build it myself should wait for a box on the map');
   const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
   {
    const [ax, ay] = await at(here.x - 600, here.z - 450), [bx, by] = await at(here.x + 600, here.z + 450);
@@ -103,7 +103,7 @@ export default function ({journey, SHOTS}) {
   // counts start again for the trace step's picture.
   if (!tiles || blocks.length) throw Error(`the map should come from the USGS tile cache: ${tiles} tiles, ${blocks.length} blocks`);
   tiles = 0; blocks.length = 0;
-  await page.getByRole('button', {name: 'Search for LIDAR'}).click();
+  await page.getByRole('button', {name: 'Build it myself'}).click();
   await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   const found = await page.locator('.cb-lidarfound').textContent();
   if (!/MN TEST 1 B21/.test(found) || !/2 tiles/.test(found) || !/MnGeo Lidar \(Minnesota\)/.test(found) || /Iowa/.test(found)) throw Error(`the search should list the survey and Minnesota's own portal: ${found}`);
@@ -120,7 +120,8 @@ export default function ({journey, SHOTS}) {
   if (Math.abs(box.x1 - box.x0 - 380) > 6 || Math.abs(box.y1 - box.y0 - 280) > 6) throw Error(`the dragged property should be about 380 x 280 m, not ${JSON.stringify(box)}`);
   await page.getByRole('button', {name: 'Next: build the land'}).click();
   // 2. The land.
-  await page.getByRole('button', {name: 'Build the land'}).click();
+  // Next starts the build at once: the box is set, no second press (the owner, 10 November 2026).
+  if (!await page.evaluate(() => window.fairwayBuilder.door2.building || !!window.fairwayBuilder.door2.land)) throw Error('Next: build the land should start building at once');
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();
   await page.getByRole('button', {name: 'Next: trace the course'}).click();
   // 3. The place (the survey states no map grid), the imagery, a drag to align.
