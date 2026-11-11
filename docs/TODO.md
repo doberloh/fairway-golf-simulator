@@ -135,6 +135,15 @@ designed yet; the first job is a plan for the owner to approve.
   built courses can host events, and what the season rewards. Large. (Claude,
   from the owner's pick, 9 November 2026.)
 
+## Release 0.9.12 (10 November 2026)
+
+- [ ] **Play 0.9.12 by hand.** Released at the owner's word ("Merge back into main. Generate a new
+  hotfix release version push to github and update the live website with the new demo version"),
+  the website's demo redeployed with it. The owner tried the builder-ux branch before the merge;
+  not reported tried: a built course with four or more tee sets in a round (seat buttons, Playing
+  tee, scorecard), tee markers on a narrow built tee, and Build it myself from a drawn box on the
+  real services (DISTRIBUTION_REVIEW, the addendum for v0.9.12).
+
 ## Release 0.9.11 (9 November 2026)
 
 - [ ] **Play 0.9.11 by hand.** Released at the owner's word ("Lets get this merged into main and do
@@ -1031,41 +1040,6 @@ section 6); nothing ships early -- the branch merges when all of it is done.
   docs/reports/us-landscapes-showcase.html (local). No page error on any.
   **Retaken whole on the final land** (4 November 2026, generator 87): all 41
   landscapes, the Badlands for the first time, 240 pictures, no failed batch.
-
-## The builder made easy (branch `builder-ux`, from 10 November 2026)
-
-The goal's record is docs/COURSE_BUILDER.md, *The builder-ux goal* and the
-sections after it; the brief is local (docs/studies/builder-ux/GOAL.md). Every
-builder journey passes (nine), npm test passes, the builder's frames on
-Dinosaur Mountain are main's within noise. **Nothing here has been seen by a
-person.**
-
-- [ ] **Try by hand, still open** (the owner tried the rest on 10 November
-  2026; the record is under # Done): **Build it myself** from a box on the
-  map -- Download the box here on real services, the box as the property, and
-  **Next: build the land** starting the build by itself; and the pen as
-  changed that day (no Apply: the first node or Enter fills at once).
-- [ ] **Map data, still open** (item 24): Worthington's numbering, which no
-  check can settle without the real routing. (The guessed green for a hole
-  drawn to the wrong one is gone since 10 November 2026: the owner, "just
-  tell the user it needs fixing".)
-- [ ] **The six tee sets, not seen by a person** (10 November 2026;
-  COURSE_BUILDER, *Six tee sets*): a built course with four or more sets in
-  a round -- each golfer's seat buttons, Playing tee, the scorecard's rows,
-  a golfer on a set the course lacks; the tee markers on a narrow built tee
-  and sets sharing a box; the holes step's six coloured buttons and its
-  scorecard columns; a course from OpenStreetMap whose map tags its tees
-  (Worthington has one tagged box: blue, white, gold, red).
-- [ ] **Not measured:** the 2D plan's frame time with the picture on its own
-  finer grid (one canvas drawImage a frame; up to about 36 million pixels);
-  the kept draft's time to write on a large course (it runs quietly every 3
-  minutes; on Worthington's 33 MB draft, not timed).
-- [ ] **Not kept in a draft:** the picture's brightness, contrast and date, and
-  the names in History (all come back as they start).
-- [ ] **Before a release carrying this:** build it from main after the merge,
-  as always. `npm run release` was tried on the branch (10 November 2026):
-  all five zips verified, the guide in each player zip with its pictures
-  (DISTRIBUTION_REVIEW, *The builder's guide in every download*).
 
 ## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
 
@@ -2578,6 +2552,40 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 # Done
 
 ## The builder made easy (branch `builder-ux`, from 10 November 2026)
+
+- [x] **Goal closed** (the owner, 10 November 2026, after trying the branch:
+  "Im happy with these changes. Mark everything complete for this goal.
+  Merge back into main"). Merged into main and released as v0.9.12. The
+  open items as they stood, closed at that word -- the six tee sets in a
+  round and the markers on a narrow built tee were not reported tried, the
+  two times below were never measured, and the draft still forgets the
+  picture's settings and History's names:
+  > - **Try by hand, still open** (the owner tried the rest on 10 November
+  > 2026; the record is under # Done): **Build it myself** from a box on the
+  > map -- Download the box here on real services, the box as the property, and
+  > **Next: build the land** starting the build by itself; and the pen as
+  > changed that day (no Apply: the first node or Enter fills at once).
+  > - **Map data, still open** (item 24): Worthington's numbering, which no
+  > check can settle without the real routing. (The guessed green for a hole
+  > drawn to the wrong one is gone since 10 November 2026: the owner, "just
+  > tell the user it needs fixing".)
+  > - **The six tee sets, not seen by a person** (10 November 2026;
+  > COURSE_BUILDER, *Six tee sets*): a built course with four or more sets in
+  > a round -- each golfer's seat buttons, Playing tee, the scorecard's rows,
+  > a golfer on a set the course lacks; the tee markers on a narrow built tee
+  > and sets sharing a box; the holes step's six coloured buttons and its
+  > scorecard columns; a course from OpenStreetMap whose map tags its tees
+  > (Worthington has one tagged box: blue, white, gold, red).
+  > - **Not measured:** the 2D plan's frame time with the picture on its own
+  > finer grid (one canvas drawImage a frame; up to about 36 million pixels);
+  > the kept draft's time to write on a large course (it runs quietly every 3
+  > minutes; on Worthington's 33 MB draft, not timed).
+  > - **Not kept in a draft:** the picture's brightness, contrast and date, and
+  > the names in History (all come back as they start).
+  > - **Before a release carrying this:** build it from main after the merge,
+  > as always. `npm run release` was tried on the branch (10 November 2026):
+  > all five zips verified, the guide in each player zip with its pictures
+  > (DISTRIBUTION_REVIEW, *The builder's guide in every download*).
 
 - [x] **Tried by hand** (the owner, 10 November 2026, on the builder-ux branch):
   "build it for me is good"; Checking the map's warnings "do point to real

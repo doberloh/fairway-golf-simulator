@@ -51,43 +51,6 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
-## On the builder-ux branch, the graphics card is free for the builder
-
-The builder-ux goal (9 November 2026; its local brief
-docs/studies/builder-ux/GOAL.md) has to see the Course Builder working,
-screen by screen, again and again, overnight. The owner: "Yes, add and
-commit". So **on this branch, for its goal and every single-turn request on
-it, these need no asking and have no run cap**: `node
-tools/builder-smoke.mjs` and its journeys, captures of the builder and of
-built courses (`tools/builder-look.mjs`, `tools/capture/`), `node
-tools/builder-frames.mjs`, `tools/play-built.mjs`, and the builder or the
-game in the browser pane. `npm run smoke` too, when a change touches the
-game. Not freed: software rendering (`--software`, `profile --only weak`),
-which this work does not need, and full profile sweeps. The precautions from
-the crashes stay:
-
-- **Not while the owner plays.** Graphics jobs go through `node
-  tools/gpu-run.mjs --goal builder-ux --util 60 --temp 85 --rest 1 --
-  <command>`, which reads `nvidia-smi` first and logs the run. The tools
-  that gate themselves (`builder-frames.mjs`, the `frame-*` tools, captures)
-  have stricter defaults and a cap of 6 runs: pass them `--goal builder-ux
-  --util 60 --temp 85 --rest 1 --cap 1000`. A game in the process list, or
-  the card above 60% (the owner, 9 November 2026, raised from 45%): wait,
-  and say so.
-- **One graphics job at a time**, minutes rather than hours. Above 85 °C (the
-  owner, 9 November 2026, raised from 80 °C), stop
-  and cool down for 10 minutes. Nothing heavy on the processor beside a frame
-  measurement.
-- **After every job, leave nothing running**: browsers, browser-pane tabs and
-  servers closed, the card checked (*Leave no processes running* still holds).
-- **A hung run, driver reset or lost WebGL context**: write it down, wait 10
-  minutes, retry once; a second failure ends graphics-card use until the
-  owner is back. **After a machine crash, stop everything** until the owner
-  says.
-- **This section is for this branch only. Delete it in the merge** (and its
-  pointer under *Nothing runs on the graphics card*), so main's rules are as
-  before. RULES_HISTORY.md keeps the story.
-
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -280,7 +243,7 @@ file is indistinguishable from a forgotten one. What each holds:
   screenshots, shipped in the zips as `Fairway Builder Guide.html`. Any
   change to the builder updates its words, and a changed screen retakes its
   pictures (`tools/capture/builder-guide.mjs`). (The owner, 10 November
-  2026; being written on the builder-ux branch.)
+  2026.)
 - **README.md** (root) -- what the project is, how to build it, what the
   repository holds, what is claimed.
 - **docs/README.md** -- the index; a document added, removed or renamed is not
@@ -325,10 +288,8 @@ browser pane, `npm run profile`. Earlier permission does not carry over -- the
 exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
-merged (9 November 2026; RULES_HISTORY.md). **On the builder-ux branch the
-builder's journeys, captures and frame checks need no asking** (*On the
-builder-ux branch, the graphics card is free for the builder*; deleted in
-its merge).
+merged (9 November 2026; RULES_HISTORY.md). The builder-ux branch's ended
+when it was merged (10 November 2026).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.

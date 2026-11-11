@@ -1975,3 +1975,24 @@ Apple Silicon 92.5, macOS Intel 94.9, Linux 103.3, source 36.5 (679 files).
 Opened from the zip, the page shows all nine pictures and fetches nothing.
 Those trial zips are kept aside locally (bench/ab/release-builder-ux) and
 release/ holds 0.9.11's again: a release is built from main after the merge.
+
+## Addendum, 10 November 2026: v0.9.12
+
+**v0.9.12** is published at the owner's request ("Merge back into main. Generate a new hotfix
+release version push to github and update the live website with the new demo version"), as
+"Fairway 0.9.12 (beta)", tag `v0.9.12`, not a pre-release, the same six files, from the merge of
+`builder-ux` into `main`, notes in `docs/releases/v0.9.12.md`. Content: the Course Builder made
+easy (docs/COURSE_BUILDER.md, *The builder-ux goal* and the sections after it) -- one search bar,
+a box on the map, Build it for me or Build it myself, the map checks, door 2 as a paint program,
+the 3D editor's palette, the six tee sets from OpenStreetMap, tee markers inside narrow built
+tees -- and **Fairway Builder Guide.html in every player zip** (the section above). **Version
+numbers unchanged** (generator 103, schema 47, built 3): saves, rounds, built course files and
+0.9.11's friend-challenge codes carry over; a built file naming no tee set plays its old blue,
+white and red. **Sizes:** the game page 60.4 MB (unchanged in practice), the builder's 56.1 MB,
+the guide 2.0 MB; the zips, built on the branch before the merge: Windows 107.1 MB, Linux 103.7,
+Apple Silicon 93.0, Intel 95.4, source 37.0 (682 files) -- about 1.5 MB each over 0.9.11, the
+guide. Nothing else about the offline build changed. **Checked:** the full tests (1,564; none
+failing) on the release commit's content, the packager's verification of every zip, all nine
+builder journeys and the 41 smoke journeys on the branch's last code change. **Not played by a
+person:** a built course with four or more tee sets in a round, tee markers on a narrow built tee,
+Build it myself from a drawn box on the real services (TODO, *Release 0.9.12*).

@@ -366,7 +366,8 @@ does not need; the same crash precautions. It deletes itself in the merge.
 The same evening the owner raised its gate from 45% and 80 °C to 60% and
 85 °C ("increase the GPU threshold to 60% and 85C"), and the tools that gate
 themselves are passed the same limits, since their own defaults (10%, 60 °C,
-6 runs) would have stopped the goal overnight.
+6 runs) would have stopped the goal overnight. It deleted itself in the merge (10
+November 2026, released as v0.9.12), and main asks before graphics work again.
 
 ## The graphics profile
 
