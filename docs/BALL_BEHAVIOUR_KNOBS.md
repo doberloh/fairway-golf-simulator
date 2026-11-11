@@ -174,4 +174,5 @@ than to have one quietly traded for the other.
 - **Putt speed.** Fairway models the skid, so a 10 ft putt on Stimp 10 needs
   5.3 mph; GSPro needs 4.1. Making Fairway match it means removing the skid
   (docs/BALL_PHYSICS.md, *The putt speed question*), which every laboratory
-  measurement says is there.
+  measurement says is there. The owner chose the realistic speed (11 November
+  2026).

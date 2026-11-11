@@ -253,16 +253,20 @@ far steeper bank.
 
 ### The putt speed question
 
-Simulators disagree here by 30%, and the owner should know which side Fairway
-is on. On Stimp 10, a 10 ft putt:
+**Decided by the owner, 11 November 2026: keep the realistic speed.** Asked
+whether putts should need what a real putt needs or what GSPro asks for, the
+answer was "Keep realistic". Do not reopen it without a new reason.
+
+Simulators disagree here by 30%, and this is which side Fairway is on. On Stimp 10, a 10 ft putt:
 
 - needs **5.3 mph** in Fairway and in TGC 2019, which model the skid;
 - needs **4.1 mph** in GSPro, which treats the monitor's ball speed as if the
   ball were already rolling at short range.
 
 4.1 mph is the Stimpmeter's own release speed, not a measurement of a struck
-putt. The lab evidence is all on the skid's side, so it was followed. If putts
-feel short against another simulator, this is why.
+putt. The lab evidence is all on the skid's side, so it was followed. A player
+coming from a simulator that leaves the skid out will find putts short here at
+first; that is this, and it is meant.
 
 | Level putt | Stimp 8 | Stimp 10 | Stimp 12 |
 | --- | --- | --- | --- |

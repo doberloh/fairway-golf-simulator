@@ -62,7 +62,8 @@ Decisions, and what was turned down:
 - **Putt speed follows the laboratory, not the other simulators.** A putt skids
   up to a roll and loses about 29% of its launch speed (Perry, Brouillette,
   Pope, Quintic). GSPro's chart behaves as if the monitor's ball speed were
-  rolling speed (4.1 mph for 10 ft at Stimp 10; here 5.3). The owner is told.
+  rolling speed (4.1 mph for 10 ft at Stimp 10; here 5.3). The owner was asked
+  and chose the realistic speed (11 November 2026).
 - **Soft greens stop a ball; they do not spin it back** (Haake's two kinds of
   green). The old table had Soft coming back most, as a choice made for the
   game against the one measured study; that choice is reversed.

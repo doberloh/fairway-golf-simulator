@@ -61,7 +61,8 @@ check.
   five bounces look from the tee and the TV cameras.
   **Owed:** the website's sample shots and any clip made with the old ball; a re-bake of
   `src/golfer-table.js` (deliberately not done: it moves generated markings and owes a
-  GENERATOR_VERSION bump); the putt-speed choice is the owner's to confirm (BALL_PHYSICS, *The putt
+  GENERATOR_VERSION bump). **Settled:** putt speed stays realistic (the owner, 11 November 2026,
+  "Keep realistic": 5.3 mph for a 10 ft putt at Stimp 10, not GSPro's 4.1; BALL_PHYSICS, *The putt
   speed question*).
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
