@@ -2,6 +2,94 @@
 
 Reviewed September 10, 2026; the claim below corrected 1 October and again 6 October. Research informs the model architecture, and the coefficients below are approximations. **The measured agreement claimed is the flight fitted to three launch monitors** -- Trackman's published PGA and LPGA tour averages, a 111-shot GC3 session and the owner's 115-shot R50 session -- with peak height within 1.7 to 5.5% and carry within 1.5 to 2.5% (typical miss) on each; see *The flight refitted against three launch monitors*. The website says "around 3%", which those figures support. Nothing is claimed beyond them: no commercial calibration, no agreement with any device not named here, and roll still has no reference data at all.
 
+## The ball model rebuilt (11 November 2026)
+
+**Everything in this file about how the ball flies, bounces, spins, rolls or
+drops, written before this date, describes a model that has been replaced.**
+Those sections are kept as the record of what was tried; the numbers and
+constants in them (`CONTACT`, `AERO`'s old keys, the `*_BY_FIRMNESS` tables,
+`ROLL_SPEED_GAIN`, the compliant contact, the cup's edge and wall regimes,
+tools/green-fit.mjs) no longer exist. **docs/BALL_PHYSICS.md is the model as it
+stands, with every source and link**; docs/BALL_BEHAVIOUR_KNOBS.md says which
+number moves what; `node tools/ball-bench.mjs` scores it.
+
+Why it was rebuilt (the owner, after a round, 10 November 2026): spinning balls
+reacted erratically on greens and came back too far, putts did not roll the
+right distance, drives did not bounce, chip and approach run-out felt wrong,
+the ball met the hole stiffly, and there were too many turf settings. The old
+landing was a stack of separately fitted corrections (a tilt, a restitution
+gain, ploughing in two parts, three firmness tables, a rule that a ball could
+not leave its first bounce backwards) and its rolling carried a placed rule
+that slowed fast balls.
+
+What was measured, in figures (sources and links in BALL_PHYSICS.md):
+
+- **Flight.** TrackMan's normalised 6 iron (130 mph, 14.7 deg, 6,088 rpm, 77 F):
+  184 yd, 33.8 yd high, landing at 48.0 deg; in a constant 10 / 20 mph headwind
+  -18 / -41 yd, tailwind +14 / +23. Model: 184.8 yd, 33.9, 47.5 deg; -18.5,
+  -41.8, +13.7, +22.6. TrackMan's 60-row driver chart: average miss 0.1%,
+  typical 1.3%. Tour averages 2023 (raw): 2.3%. The owner's GC3: 1.7%; R50:
+  2.3%. USGA example 257.64 yd in 6.39 s: 259.2 yd in 6.29 s. Fitted drag and
+  lift at a drive's speed and spin: 0.219 and 0.153; Acushnet measured 0.222 and
+  0.152 (US 6,913,550). The old model carried a tour drive 262 yd against 275.
+- **A firm green.** USGA and R&A, 57 launcher shots on a championship green
+  (Stimp 10-11): rebound speed (ft/s) = 70.65 - 1.02 x angle; rebound angle =
+  1.48 x angle - 27.08; rebound backspin = spin - 4,690 rpm; first bounce (ft) =
+  72.3 - 1.2 x angle; total run (ft) = 246 - 3.54 x angle - 0.0065 x spin. Model
+  bias over 54 landings: +0.2 ft/s, -0.8 deg, +30 rpm, 0.0 ft, +5 ft.
+- **The constant spin loss** is the finding that shaped the friction: plain
+  friction takes more spin off a harder landing, the measurement says the same
+  4,690 rpm comes off all of them, so the turf's grip is capped at a shear
+  limit (4.9 m/s of ball speed on the firm green).
+- **Rolling.** Stimp exact. A TrackMan-measured putt of 12.1 mph skidded 70 in
+  and ran 38 ft 10 in; model at Stimp 10: 68 in and 38 ft 11 in, with
+  deceleration going as speed to the power 0.42 above 0.5 m/s. Steepest slope a
+  ball stops on: 6.9 / 5.5 / 4.5% at Stimp 8 / 10 / 12 (Lemons' chart: 7.0 /
+  5.8 / 4.9), not fitted. Break against AimPoint's charts: within about 15%.
+- **The hole.** Centred capture 1.77 m/s (Holmes 1.63 with no rim bounce, 1.97
+  with restitution 0.3; rim restitution here 0.10), 1.56 / 1.22 / 0.71 at a
+  quarter, half and three quarters of the way to the edge (Penner's fit: 1.53 /
+  1.22 / 0.71).
+- **Fairway.** A tour drive (29.5 m/s, 36 deg, 1,950 rpm at landing) runs 30.5 /
+  20.1 / 9.8 yd on firm / medium / soft (tour 2007 fairway hits 30.1 +/- 3.5;
+  USGA 2018 launcher 17.8 +/- 13.3; one irrigation cycle -7.7).
+- **Chips** (10 yd carry, medium green, Stimp 10): roll over carry 4.9 / 2.5 /
+  1.4 / 0.7 for a 7 iron, pitching wedge, gap wedge and sand wedge (TrackMan's
+  estimates: over 3.5 / 2.5 / 1.5 / 1 or less).
+
+Decisions, and what was turned down:
+
+- **Putt speed follows the laboratory, not the other simulators.** A putt skids
+  up to a roll and loses about 29% of its launch speed (Perry, Brouillette,
+  Pope, Quintic). GSPro's chart behaves as if the monitor's ball speed were
+  rolling speed (4.1 mph for 10 ft at Stimp 10; here 5.3). The owner is told.
+- **Soft greens stop a ball; they do not spin it back** (Haake's two kinds of
+  green). The old table had Soft coming back most, as a choice made for the
+  game against the one measured study; that choice is reversed.
+- **PLACED:** the medium and soft columns of every surface; everything about
+  semi-rough, rough, sand and the wild ground types (no measurement of a ball
+  LANDING in rough or sand was found); the wind profile's exponent (0.16; the stated wind is the wind 20 m up, chosen
+  so a 6 iron loses what TrackMan's wind table says, since at the weather
+  service's 10 m a 20 mph headwind cost 48 yd against the table's 41); the
+  flagstick's give and grip; the three presets; that spin about the vertical
+  does not kick a ball sideways.
+- **Turned down:** Penner's tilt growing in proportion to total speed (a
+  rolling ball gets kicked into the air; the Bristol data fit a constant tilt
+  slightly better); a tilt with a constant part (a ball skips for ever); a
+  straight-line drag (drives 5% short); a flat rolling deceleration (cannot
+  reach the measured long putt, and stops a ball on slopes the architects'
+  chart says it will not); a rim restitution of 0.3 (catches a centred putt at
+  2.0 m/s, above what Cal Poly holed); a flagstick as lively as turf (a centred
+  putt climbs it and comes back out of the hole); re-baking
+  `src/golfer-table.js` (it would move generated markings).
+- **Not obtained:** Cross 2025 (paywalled), Roh and Lee 2010, the Bristol
+  paper's fitted table, any measured run after landing by club from a
+  shot-tracking company, any published putt speed against measured roll on a
+  stimped green, a flagstick's restitution.
+
+The four research reports behind this (simulators and what players say; flight;
+the ground; putting and the cup) are local, in `docs/studies/ball-physics/`.
+
 ## Open research
 
 - [OpenFairway](https://github.com/digitalhand/openfairway), MIT-licensed golf physics project. Its architecture combines Reynolds/spin-dependent aerodynamics, spin decay, ground interaction, and launch-monitor normalization. [Aerodynamics.cs](https://github.com/digitalhand/openfairway/blob/main/addons/openfairway/physics/Aerodynamics.cs) documents ball-flight coefficient bounds and air-density calculation. Fairway is an independent JavaScript implementation; it does not bundle or claim to port OpenFairway's current calibration curves.
@@ -10,6 +98,8 @@ Reviewed September 10, 2026; the claim below corrected 1 October and again 6 Oct
 - [libgolf](https://github.com/gdifiore/libgolf), a GPL-3.0 open-source trajectory library with aerodynamic, terrain, bounce, and roll abstractions and a WebAssembly route. Inspected as an alternative architecture; no code is bundled or copied.
 
 ## Equations and assumptions
+
+**Superseded 11 November 2026 where it describes the ball: see *The ball model rebuilt* at the top of this file and docs/BALL_PHYSICS.md.** Kept as the record of the model it describes.
 
 Sphere: mass 0.04593 kg, radius 0.021335 m; projected area πr²; gravity 9.80665 m/s². Air density uses a dry-air exponential barometric approximation with biome temperature and altitude. Dynamic viscosity is fixed at 1.81×10⁻⁵ kg/(m·s), a simplification.
 
@@ -130,6 +220,8 @@ The first attempt was drawn half a turn out of register. The map's projection ne
 The fix required no new field. The course map is already an orthographic top-down view of the same coordinates, so `src/green-map.js` samples the same `course.height` onto a grid and paints it there, with the map framed on the green whenever the ball is on it. The one substantive decision is the normalisation: the colour range is taken from the putting surface alone, never from the sampled square around it. A green in a hollow measured against the bank behind it puts the whole putting surface into a narrow slice of the ramp, so a green with 1.3 ft of genuine relief renders as a single flat colour — the failure mode is silent and looks exactly like a green with no slope, which is why it is asserted in a test rather than left to inspection.
 
 ## Turf firmness
+
+**Superseded 11 November 2026 where it describes the ball: see *The ball model rebuilt* at the top of this file and docs/BALL_PHYSICS.md.** Kept as the record of the model it describes.
 
 Firmness is a different axis from green speed, and conflating the two is the usual mistake. A green can be quick and soft — a Stimp 12 surface that still takes a pitch mark — or slow and baked hard. Speed is what a ball does once it is rolling and is owned by `rollDeceleration`; firmness is what happens the moment it lands.
 

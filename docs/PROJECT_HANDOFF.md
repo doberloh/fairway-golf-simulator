@@ -546,6 +546,8 @@ The California Coast's `cliffCoast` (course.js): its coast line runs `offset` me
 
 ## Firmness is a separate axis from speed
 
+**Superseded 11 November 2026: the ball model was rebuilt (docs/BALL_PHYSICS.md).** What follows describes the model before it -- its firmness tables, compliant contact and fitted come-back ladder no longer exist. What still holds from it: firmness and green speed are separate things, and every green is checked against every club that lands on one. The invariants that hold now are in docs/ARCHITECTURE.md, *The traps*, under Physics.
+
 `firmness.js` owns it. The value is TruFirm/GS3 penetration in inches — lower is firmer — and it rides in the turf config beside `stimp`, so it reaches every physics call site the same way. `turfConfig` accepts a preset name or a number and normalises to a number; anything unrecognised reads as Normal rather than throwing, because an old save has no firmness at all.
 
 **The four preset depths are the USGA's published GS3 bands and are not free to move.** They are not tuning knobs: each one sits on a named band from Green Section Record vol. 62 no. 22, the bands are quoted in RESEARCH.md (the page 403s to automated fetch; the saved copy is local, under `docs/sources/`, and not in the repository), and a test asserts each preset is still inside its band. If a setting feels wrong, change the *multipliers* — which are the unanchored part — rather than sliding a depth off the band it is named for.
@@ -3158,6 +3160,8 @@ Anything downstream of impact is fair game: how the ball flies, how it bounces, 
 
 
 ## The bounce, spin, and why a ball comes back
+
+**Superseded 11 November 2026: the ball model was rebuilt (docs/BALL_PHYSICS.md).** What follows describes the model before it -- its firmness tables, compliant contact and fitted come-back ladder no longer exist. What still holds from it: firmness and green speed are separate things, and every green is checked against every club that lands on one. The invariants that hold now are in docs/ARCHITECTURE.md, *The traps*, under Physics.
 
 `SPIN_GAIN` in `contact.js` is **3/2**, not the rigid-sphere 5/2, and the `CONTACT` table in `physics.js` carries a per-surface `spin` column rising with the mowing height (green 1.5 to rough 2.5).
 

@@ -31,7 +31,7 @@ const TITLES = {
 };
 
 test('the bench ran every section', () => {
- assert.ok(checks.length > 120, `${checks.length} checks; ${run.stderr}`);
+ assert.ok(checks.length > 140, `${checks.length} checks; ${run.stderr}`);
  assert.deepEqual([...new Set(checks.map(c => c.section))].sort(), Object.keys(TITLES).sort());
 });
 for (const [section, title] of Object.entries(TITLES)) test(title, () => {

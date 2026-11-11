@@ -436,6 +436,13 @@ const SECTIONS = {
   const u = flyBall({speed: USGA_EXAMPLE.mph * MPH, vla: USGA_EXAMPLE.vla, spin: USGA_EXAMPLE.spin}, {temperature: USGA_EXAMPLE.tempC});
   check('USGA example: carry', u.carry / YARD, USGA_EXAMPLE.carry * .965, USGA_EXAMPLE.carry * 1.035, 'yd', `USGA ${USGA_EXAMPLE.carry}`);
   check('USGA example: time in the air', u.hang, USGA_EXAMPLE.hang - .45, USGA_EXAMPLE.hang + .45, 's', `USGA ${USGA_EXAMPLE.hang}`);
+  // The game's own wind is slower near the ground, and is stated at the height
+  // where a 6 iron flies, so a stated wind still does what TrackMan's table says.
+  const six = w => flyBall({speed: 130 * MPH, vla: 14.7, spin: 6088}, {temperature: 25, wind: [0, 0, w * MPH]}).carry / YARD;
+  check('the game's wind, 10 mph head, 6 iron: carry change', six(-10) - six(0), -21, -15, 'yd', 'TrackMan -18');
+  check('the game's wind, 20 mph head, 6 iron: carry change', six(-20) - six(0), -45, -37, 'yd', 'TrackMan -41');
+  const lowChip = w => flyBall({speed: 30 * MPH, vla: 12, spin: 1500}, {wind: [0, 0, w * MPH]}).carry;
+  check('a low chip in a 20 mph headwind loses', (1 - lowChip(-20) / lowChip(0)) * 100, 0, 4, '%', 'it never climbs into the wind');
   // No spin, no lift: a knuckleball falls short.
   check('a ball with no spin carries far less', flyBall({speed: 144 * MPH, vla: 12, spin: 0}).carry / flyBall({speed: 144 * MPH, vla: 12, spin: 2600}).carry, .25, .7, 'x');
   // Spin dies in the air at about 4% a second (TrackMan), faster for a drive.

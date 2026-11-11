@@ -2074,7 +2074,9 @@ let gameAudio=null,lastSoundScene=0;
 function soundsOf(r,h){
  if(r._sounds)return r._sounds;
  const list=[...(r.contacts||[]),...canopyContacts(r.points||[],view.world?.trees||[],q=>h.toWorld(q))];
- if(r.holed)list.push({t:r.time,what:'cup',speed:1,...r.end});
+ // The cup's own rattle comes from the hole's contacts (cup.js); a ball that
+ // slid in too gently to make one still gets the drop.
+ if(r.holed&&!list.some(c=>c.what==='cup'))list.push({t:r.time,what:'cup',speed:1,...r.end});
  list.sort((a,b)=>a.t-b.t);
  Object.defineProperty(r,'_sounds',{value:list});
  return list;

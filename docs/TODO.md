@@ -31,6 +31,26 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+- [ ] **The ball model rebuilt** (branch `ball-physics-rework`, 10-11 November 2026; the owner, after
+  a round: spin on greens erratic and too much come-back, putts the wrong length, no bounces in
+  the fairway, chip and approach run-out off, the hole stiff, too many turf settings). Built
+  (docs/BALL_PHYSICS.md): a new air model, one bounce law for every surface, rolling that follows
+  the Stimp exactly, the hole as real contacts, and three course conditions (green speed, green
+  firmness, fairway firmness, with Everyday / Club / Tournament presets) in the rules step and in
+  Settings, Turf. `node tools/ball-bench.mjs` holds it to 142 measurements; `npm test` passes.
+  **Not seen in the game at all -- nothing here has been played or opened in a browser. To check:**
+  the rules step shows COURSE CONDITIONS with four pickers and a preset moves the other three; the
+  same in Golfers & rules mid-round and in Settings, Turf (a change applies at once and survives a
+  reload); the range's Lab tools firmness slider (soft to firm) and its three chips; a drive
+  bouncing four or five times; a wedge on each firmness; a putt dropping, lipping out and rattling
+  in the cup (the scripted ease is gone: does the camera and the hole-out banner still time
+  right?); a chip-in with the pin in; the cup sound (it now plays when the ball first rattles into the cup, not when it has come to
+  rest: is that the right moment?); the aim preview and the
+  putting bar against where the ball finishes; the TV cameras on a ball that now bounces higher.
+  **Owed:** `npm run smoke` (asked for, since it uses the graphics card); the website's sample
+  shots and any clip made with the old ball; a re-bake of `src/golfer-table.js` (deliberately not
+  done: it moves generated markings and owes a GENERATOR_VERSION bump); the putt-speed choice is
+  the owner's to confirm (BALL_PHYSICS, *The putt speed question*).
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is

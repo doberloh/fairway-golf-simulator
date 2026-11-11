@@ -63,7 +63,11 @@ export const AERO = {
  spinTau: 21.5,
  // Wind is given at `windHeight` metres and falls off toward the ground as a
  // power law of height (open, mown country): w(z) = w x (z / windHeight)^windShear.
- windHeight: 10, windShear: 0.16, windFloor: 0.5,
+ // 20 m is where a mid iron spends its flight, and is chosen so that a stated
+ // wind does to a 6 iron what TrackMan's wind table says a wind of that speed
+ // does (10 and 20 mph headwinds: -18 and -41 yd; here -18.0 and -41.8). At the
+ // weather service's 10 m the same stated wind cost 48 yd.
+ windHeight: 20, windShear: 0.16, windFloor: 0.5,
 };
 const SPIN_TAU_SPEED = 100 * MPH;
 

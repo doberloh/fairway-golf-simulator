@@ -15,7 +15,8 @@ the change that made it stale, not a follow-up.
 | know what is tested, and how | [TESTING.md](TESTING.md) |
 | find the command for something | [COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md) |
 | change the code | [ARCHITECTURE.md](ARCHITECTURE.md), then [../AGENTS.md](../AGENTS.md); search [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the detail |
-| know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
+| know why a number is what it is | [RESEARCH.md](RESEARCH.md); for the ball, [BALL_PHYSICS.md](BALL_PHYSICS.md) |
+| change how the ball behaves | [BALL_BEHAVIOUR_KNOBS.md](BALL_BEHAVIOUR_KNOBS.md), then `node tools/ball-bench.mjs` |
 | know what is left to do | [TODO.md](TODO.md) |
 | find something new to build, or note an idea | [IDEAS.md](IDEAS.md) |
 
@@ -83,6 +84,10 @@ the change that made it stale, not a follow-up.
   whole.
 - **[PROCEDURAL_GENERATION.md](PROCEDURAL_GENERATION.md)** — what the
   generator produces, in what order, and which stage owns which decision.
+- **[BALL_PHYSICS.md](BALL_PHYSICS.md)** — the ball model in full, as rebuilt
+  on 11 November 2026: how the ball flies, bounces, spins, rolls and drops,
+  what each part was measured against, and every source. Anything about the
+  ball in an older document describes the model this replaced.
 - **[BALL_BEHAVIOUR_KNOBS.md](BALL_BEHAVIOUR_KNOBS.md)** — the plain-language
   map from a tuning parameter to the ball behaviour it changes. Written for
   somebody who wants a different result, not a different equation.

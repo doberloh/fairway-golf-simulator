@@ -100,7 +100,15 @@ export function cupSim(ball, hole, env = {}) {
  const N = [-hole.gx / slopeLen, 1 / slopeLen, -hole.gz / slopeLen];
  const floorY = hole.y - CUP_DEPTH;
  let still = 0, lastTouch = null;
- const heard = (what, speed) => { if (speed > .25 && lastTouch !== what) contacts.push({t, what, speed, x: p[0], y: p[1], z: p[2]}); lastTouch = what; };
+ // For the sound (audio.js): the ball landing on the green beside the hole,
+ // striking the flagstick, and -- once -- rattling into the cup. The rim itself
+ // is silent; a ball riding it makes no sound a golfer would name.
+ let rattled = false;
+ const heard = (what, speed) => {
+  if (what === 'rim' || (what === 'cup' && rattled)) return;
+  if (speed > .25 && lastTouch !== what) { contacts.push({t, what, speed, x: p[0], y: p[1], z: p[2]}); if (what === 'cup') rattled = true; }
+  lastTouch = what;
+ };
  const end = t + maxTime;
  while (t < end) {
   v[1] -= G * dt;
