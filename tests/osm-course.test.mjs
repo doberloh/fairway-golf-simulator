@@ -3,7 +3,7 @@
 // street maps holes actually line up with the holes on the real courses").
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmCourses, osmHoles, shiftHoles, fitHoles, assign} from '../src/builder/osm-course.js';
+import {osmCourses, osmHoles, shiftHoles, fitHoles, assign, osmTeeSets} from '../src/builder/osm-course.js';
 import {osmFeatures} from '../src/builder/osm.js';
 import {TRACE} from '../src/lidar/trace.js';
 
@@ -73,6 +73,47 @@ test('holes moved with the map, then put on their greens and given the tee boxes
  const hole = {tees: [{x: 6, z: 112, set: 'back'}], aims: [], green: {x: 6, z: -105}, par: 4};
  const [fit] = fitHoles(shiftHoles([hole], {x: -6, z: 0}), codes, land);
  assert.equal(fit.green.x, 0); assert.ok(Math.abs(fit.green.z + 120) < 1.5, `on the green's middle: ${JSON.stringify(fit.green)}`);
- assert.equal(fit.fit.tees, 2); assert.deepEqual(fit.tees.map(t => t.set), ['back', 'front']);
+ assert.equal(fit.fit.tees, 2);
+ assert.deepEqual(fit.tees.map(t => `${t.z}:${t.set}`), ['150:blue', '110:white', '110:red'], 'two untagged boxes on a three-set course: every set on one of them, by distance');
  assert.equal(fit.tees[0].z, 150, 'the back tee behind the one the map gave');
+});
+
+// THE TEE SETS FROM THE MAP (tees.js; the owner, 10 November 2026: up to six,
+// "This needs to feed from the open street map data").
+test('tee boxes take the sets the map tags, and the course\'s sets by distance where it tags none', () => {
+ const land = {nx: 401, nz: 401, cell: 1, halfX: 200, halfZ: 200}, codes = new Uint8Array(401 * 401), at = (x, z) => (z + 200) * 401 + x + 200;
+ for (let z = -130; z <= -110; z++) for (let x = -10; x <= 10; x++) if (Math.hypot(x, z + 120) < 10) codes[at(x, z)] = TRACE.indexOf('green');
+ for (const tz of [160, 130, 100, 70]) for (let z = tz - 3; z <= tz + 3; z++) for (let x = -4; x <= 4; x++) codes[at(x, z)] = TRACE.indexOf('tee');
+ const hole = {tees: [{x: 0, z: 160, set: 'blue'}], aims: [], green: {x: 0, z: -120}, par: 4};
+ // Untagged, four boxes: a four-set course, black at the back.
+ const [plain] = fitHoles([hole], codes, land);
+ assert.deepEqual(plain.tees.map(t => t.set), ['black', 'blue', 'white', 'red']);
+ // The second box tagged blue and white: both there, the rest spread over the others.
+ const [tagged] = fitHoles([hole], codes, land, {tagged: [{x: 0, z: 130, sets: ['blue', 'white']}], sets: ['black', 'blue', 'white', 'gold', 'red']});
+ assert.deepEqual(tagged.tees.map(t => `${t.z}:${t.set}`), ['160:black', '130:blue', '130:white', '100:gold', '70:red']);
+ // A hole with no box keeps the map's tee, as the course's longest set.
+ const [none] = fitHoles([{...hole, tees: [{x: 150, z: 150, set: 'back'}], green: {x: 150, z: -150}}], codes, land, {sets: ['black', 'white', 'red']});
+ assert.deepEqual(none.tees.map(t => t.set), ['blue'], 'an old back mark reads as blue');
+});
+
+test('the course\'s sets from the map: its tags together, else its holes\' dist:* keys', () => {
+ const tee = (id, tags, x) => way(id, {golf: 'tee', ...tags}, box(x - 4, -4, x + 4, 4));
+ const tagged = osmTeeSets(osmFeatures({elements: [tee(1, {tee: 'blue;white;gold;red'}, 0), tee(2, {tee: 'teebox'}, 50), tee(3, {}, 100)]}, toLocal));
+ assert.deepEqual(tagged.sets, ['blue', 'white', 'gold', 'red'], 'Worthington\'s one tagged box names the course\'s four');
+ assert.equal(tagged.tagged.length, 1);
+ const hole = (id, tags) => way(id, {golf: 'hole', ref: String(id), ...tags}, [[0, 300], [0, 0]], false);
+ const named = osmTeeSets(osmFeatures({elements: [hole(1, {'dist:championship': '420', 'dist:players': '400', 'dist:resort': '370', 'dist:forward': '330'})]}, toLocal));
+ assert.deepEqual(named.sets, ['black', 'blue', 'white', 'red'], 'TPC Scottsdale\'s four names: a four-set course');
+ const colours = osmTeeSets(osmFeatures({elements: [hole(1, {'dist:blue': '400', 'dist:red': '330'})]}, toLocal));
+ assert.deepEqual(colours.sets, ['blue', 'red']);
+ assert.equal(osmTeeSets(osmFeatures({elements: [hole(1, {})]}, toLocal)).sets, null, 'nothing named: fitHoles counts the boxes');
+});
+
+test('one tee box on a hole carries every set the course has; the game plays them side by side', () => {
+ const land = {nx: 401, nz: 401, cell: 1, halfX: 200, halfZ: 200}, codes = new Uint8Array(401 * 401), at = (x, z) => (z + 200) * 401 + x + 200;
+ for (let z = -130; z <= -110; z++) for (let x = -10; x <= 10; x++) if (Math.hypot(x, z + 120) < 10) codes[at(x, z)] = TRACE.indexOf('green');
+ for (let z = 147; z <= 153; z++) for (let x = -4; x <= 4; x++) codes[at(x, z)] = TRACE.indexOf('tee');
+ const [one] = fitHoles([{tees: [{x: 0, z: 150, set: 'blue'}], aims: [], green: {x: 0, z: -120}, par: 4}], codes, land, {sets: ['black', 'blue', 'white', 'red']});
+ assert.deepEqual(one.tees.map(t => t.set), ['black', 'blue', 'white', 'red']);
+ assert.ok(one.tees.every(t => t.z === 150), 'all on the one box');
 });

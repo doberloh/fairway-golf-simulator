@@ -24,7 +24,7 @@ import {landingZones} from './markings.js';
 const YARD = .9144;
 const INK = '#1d2a22', SOFT = '#5b6b60', RULE = '#c9d2c4', FAIRWAY = '#7fae5c', SEMI = '#b9cf8f', GREEN = '#3f8f4f', SAND = '#e9d8a6', WATER = '#7fb3d5';
 const M = 42, WIDTH = PAGE.width - 2 * M;
-const TEE_INK = {blue: '#3a6fb8', white: '#8a8a82', red: '#c0504d'};
+const TEE_INK = {black: '#26282c', blue: '#3a6fb8', white: '#8a8a82', silver: '#9aa1aa', gold: '#c49a22', red: '#c0504d'};
 
 // The text of a note, wrapped to `width` points.
 function wrap(s, size, width) {

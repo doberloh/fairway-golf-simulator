@@ -65,13 +65,16 @@ test('a line across the rough, and two lines crossing, are caught (the map point
  assert.ok(kinds.some(k => k.endsWith(':crossing')), kinds.join(' '));
 });
 
-test('a line off the fairway is offered the green down the fairway from its tee', () => {
+// The owner, 10 November 2026: "remove the green fix attempts then and just
+// tell the user it needs fixing" (the guess was wrong 29% of the time).
+test('a hole drawn to the wrong green is flagged to fix by hand, with no green guessed', () => {
  const played = (x, z) => G.some(([gx]) => Math.abs(x - gx) < 15) && z > -140 && z < 140;
  const wrong = hole(0, {green: {x: 100, z: -150}});
- const q = checkHoles([wrong, hole(1)], {greens, tees, played}).find(q => q.kind === 'offPlay');
- assert.ok(q?.fix, 'a fix offered');
- assert.equal(q.fix.kind, 'green');
- assert.ok(Math.hypot(q.fix.to.x + 100, q.fix.to.z + 150) < 2, `hole 1's own green, down its fairway: ${JSON.stringify(q.fix.to)}`);
+ const got = checkHoles([wrong, hole(1)], {greens, tees, played}), q = got.find(q => q.kind === 'offPlay');
+ assert.ok(q, 'flagged');
+ assert.equal(q.fix, undefined, 'no fix offered');
+ assert.match(q.text, /needs fixing by hand/);
+ assert.ok(!got.some(q => q.fix?.kind === 'green' && q.kind !== 'greenOff'), 'no hole aimed at another green');
 });
 
 test('a dogleg is found on the fairway, and a straight hole is left alone (item 10)', () => {

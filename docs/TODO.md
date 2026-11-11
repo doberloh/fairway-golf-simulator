@@ -1040,38 +1040,22 @@ builder journey passes (nine), npm test passes, the builder's frames on
 Dinosaur Mountain are main's within noise. **Nothing here has been seen by a
 person.**
 
-- [ ] **Try by hand, in this order** (the owner's): door 2's **Find the
-  course** (10 November 2026, after the hand-over; COURSE_BUILDER, *The map
-  first, then the box, then the LIDAR* and *One search bar for both ways*): a
-  course by name in the one search bar, the map round it, a box dragged round
-  the course; then **Build it myself**, Download the box here, the box as the
-  property on the relief, and **Next: build the land** starting the build by
-  itself -- the download and the land from a drawn box not yet run on real
-  services; then **Build it for me** on a course you know, from the same bar
-  and a box (on Worthington, the club is taken at once): does its warning
-  read right, the time it takes, and what the review or the holes step
-  shows; **Checking
-  the map** on Worthington: does each doubt point at a real fault, and do the
-  fixes (one at a time, then Take the fixes offered) put holes where they
-  belong; the **pen** round a green and a bunker (does the curve shown match
-  what fills; closing on the first node; dragging a node); the **steadied
-  brush** at Steadiness 0, 50 and 90 (does 50 feel right); **layers** (is the
-  "goes under" line and the flash enough to make the rule clear); the menus
-  and keys (? for the list); the 3D editor's icon strip, Add a hole and Remove
-  this hole; the step tips (Got it); Check against the scorecard with the
-  club's real card; **Measure**, copy and paste, the hole navigator
-  (. and ,) and the overview map; the **sharp picture** zoomed in on a green;
-  Skin from the land's **Before (hold)**; closing the tab mid-course and
-  **Bring it back**; **Save the course for Fairway** on the review, then
-  Import in the game and play a hole; the 3D editor's one brush and pen, and
-  Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
-  `npm run build`, as `dist/builder-guide.html`).
-- [ ] **Map data, still open** (item 24): the fix for a hole drawn to the wrong
-  green is right 62% of the time and wrong 29% over 16 real courses
-  (tools/map-checks-bench.mjs; RESEARCH, *The map checks, scored*): a fix is
-  a guess to check against the photograph, and a better one would need the
-  hole's dogleg read before choosing its green. And Worthington's numbering,
-  which no fix can settle without the real routing.
+- [ ] **Try by hand, still open** (the owner tried the rest on 10 November
+  2026; the record is under # Done): **Build it myself** from a box on the
+  map -- Download the box here on real services, the box as the property, and
+  **Next: build the land** starting the build by itself; and the pen as
+  changed that day (no Apply: the first node or Enter fills at once).
+- [ ] **Map data, still open** (item 24): Worthington's numbering, which no
+  check can settle without the real routing. (The guessed green for a hole
+  drawn to the wrong one is gone since 10 November 2026: the owner, "just
+  tell the user it needs fixing".)
+- [ ] **The six tee sets, not seen by a person** (10 November 2026;
+  COURSE_BUILDER, *Six tee sets*): a built course with four or more sets in
+  a round -- each golfer's seat buttons, Playing tee, the scorecard's rows,
+  a golfer on a set the course lacks; the tee markers on a narrow built tee
+  and sets sharing a box; the holes step's six coloured buttons and its
+  scorecard columns; a course from OpenStreetMap whose map tags its tees
+  (Worthington has one tagged box: blue, white, gold, red).
 - [ ] **Not measured:** the 2D plan's frame time with the picture on its own
   finer grid (one canvas drawImage a frame; up to about 36 million pixels);
   the kept draft's time to write on a large course (it runs quietly every 3
@@ -2592,6 +2576,44 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 
 # Done
+
+## The builder made easy (branch `builder-ux`, from 10 November 2026)
+
+- [x] **Tried by hand** (the owner, 10 November 2026, on the builder-ux branch):
+  "build it for me is good"; Checking the map's warnings "do point to real
+  issues" (and the guessed green for a wrong hole was dropped for it: "just
+  tell the user it needs fixing"); the pen "mostly good but we dont need to
+  have an apply button" (taken out the same day); the steadied brush "great";
+  layers "good"; saving "good"; "all the quick checks look good" -- the
+  menus and keys, tips, Measure, copy and paste, the hole navigator, the
+  sharp picture, Skin from the land, Bring it back, Save for Fairway, the 3D
+  editor's pieces and the guide. The list as it was:
+  > **Try by hand, in this order** (the owner's): door 2's **Find the
+  > course** (10 November 2026, after the hand-over; COURSE_BUILDER, *The map
+  > first, then the box, then the LIDAR* and *One search bar for both ways*): a
+  > course by name in the one search bar, the map round it, a box dragged round
+  > the course; then **Build it myself**, Download the box here, the box as the
+  > property on the relief, and **Next: build the land** starting the build by
+  > itself -- the download and the land from a drawn box not yet run on real
+  > services; then **Build it for me** on a course you know, from the same bar
+  > and a box (on Worthington, the club is taken at once): does its warning
+  > read right, the time it takes, and what the review or the holes step
+  > shows; **Checking
+  > the map** on Worthington: does each doubt point at a real fault, and do the
+  > fixes (one at a time, then Take the fixes offered) put holes where they
+  > belong; the **pen** round a green and a bunker (does the curve shown match
+  > what fills; closing on the first node; dragging a node); the **steadied
+  > brush** at Steadiness 0, 50 and 90 (does 50 feel right); **layers** (is the
+  > "goes under" line and the flash enough to make the rule clear); the menus
+  > and keys (? for the list); the 3D editor's icon strip, Add a hole and Remove
+  > this hole; the step tips (Got it); Check against the scorecard with the
+  > club's real card; **Measure**, copy and paste, the hole navigator
+  > (. and ,) and the overview map; the **sharp picture** zoomed in on a green;
+  > Skin from the land's **Before (hold)**; closing the tab mid-course and
+  > **Bring it back**; **Save the course for Fairway** on the review, then
+  > Import in the game and play a hole; the 3D editor's one brush and pen, and
+  > Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
+  > `npm run build`, as `dist/builder-guide.html`).
 
 - [x] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
   screenshot: "What are these trees. We need to remake them with meshy i think. They don't look

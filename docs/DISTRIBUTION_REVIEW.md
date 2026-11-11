@@ -1963,7 +1963,7 @@ Every zip carries **Fairway Builder Guide.html** beside Fairway Builder.html
 (tools/package_release.py): docs/BUILDER_GUIDE.md built by
 tools/builder-guide.mjs into one page with its pictures inside it as
 WebP -- 1,330 kB with nine; 1,702 kB since the tenth, the map round a
-course with a box drawn on it (10 November 2026, after the trial below); 1,975 kB since Build it for me's picture became its warning over that map, a whole map in place of a nearly empty panel -- offline, no fetched font or script (it uses the system's
+course with a box drawn on it (10 November 2026, after the trial below); 1,975 kB since Build it for me's picture became its warning over that map, a whole map in place of a nearly empty panel; 1,989 kB with the tee-sets section (10 November 2026) -- offline, no fetched font or script (it uses the system's
 fonts). A Markdown file in a zip shows no pictures, hence a page. The source
 zip gains docs/BUILDER_GUIDE.md, docs/COURSE_BUILDER.md, docs/builder-guide/
 and tests/fixtures/ (the old-files test's course file, 560 kB), which a build

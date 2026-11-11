@@ -25,6 +25,7 @@ import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {preview} from './preview.js';
 import {treePlanControls} from './tree-plan.js';
 import {changeMark, sameMark, poseFrom} from './game-look.js';
+import {TEE_ORDER, teeName} from '../tees.js';
 
 const {el} = ui;
 export let current = null;   // {editor, view} while the editor is open (tests and the console)
@@ -315,7 +316,8 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  }
  const parSelect = el('select', {class: 'cb-epar', title: 'The picked hole\'s par', onchange: e => { editor.setPar(selected, +e.target.value); refreshHoles(); }}, [3, 4, 5, 6].map(v => el('option', {value: v}, `Par ${v}`)));
  const holeTools = el('div', {class: 'cb-btns'},
-  button('Back tee', {kind: 'tee', set: 'back'}), button('Middle tee', {kind: 'tee', set: 'middle'}), button('Front tee', {kind: 'tee', set: 'front'}),
+  // A tee of each of the six sets (tees.js; the owner, 10 November 2026).
+  ...TEE_ORDER.map(set => button(`${teeName(set)} tee`, {kind: 'tee', set})),
   button('Green', {kind: 'green'}), button('Add a bend', {kind: 'bend'}), button('Drag markers', {kind: 'marks'}),
   // ADD AND REMOVE A HOLE (item 9): a new hole where the view is looking, its
   // green 300 m on the way the camera faces; or the selected hole taken out.

@@ -17,6 +17,8 @@ import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features, distanceFrom} from '../lidar/trace.js';
 import {GRID_MARGIN, builtLine} from '../built-world.js';
+// The longest tee set's yards (built-world.js builtLine: its first name).
+const backYards = L => L.yards[L.names[0]];
 import {digBed, levelFrom, shoreOf, digBowl, creekStations, carveCreek} from './water-bed.js';
 import {CREEK_FIELDS} from '../course-doc.js';
 
@@ -286,7 +288,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   // Par, unless given, from the back tee's yards along the line as the game
   // measures them (built-world.js builtLine) -- round the doglegs, not
   // straight to the green (until 1 November 2026: straight).
-  return {number: h.number ?? i + 1, par: h.par ?? parFor(builtLine({tees: h.tees, green: h.green, line}).yards.blue), index: h.index ?? i + 1, tees: h.tees.map(t => ({x: r2(t.x), z: r2(t.z), set: t.set || 'middle'})),
+  return {number: h.number ?? i + 1, par: h.par ?? parFor(backYards(builtLine({tees: h.tees, green: h.green, line}))), index: h.index ?? i + 1, tees: h.tees.map(t => ({x: r2(t.x), z: r2(t.z), set: t.set || 'middle'})),
    green: {x: r2(h.green.x), z: r2(h.green.z)}, line};
  });
  // The trees: those standing on rough or semi-rough (a canopy peak over a

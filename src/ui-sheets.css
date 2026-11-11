@@ -737,7 +737,10 @@
  #drawer .sx-golfers .seat .player-who>select option{font:15px var(--font-ui);color:#111;background:#fff;text-transform:none}
  #drawer .sx-golfers .seat .player-who>input{width:100%;height:36px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 20px "Saira Condensed",var(--font-ui),sans-serif;text-align:center}
  #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
- #drawer .seat-tees{display:flex;gap:6px}
+ #drawer .seat-tees{display:flex;gap:6px;flex-wrap:wrap}
+ /* Four to six sets (a built course): tighter, so a seat stays one row where it can. */
+ #drawer .seat-tees:has(>.seat-tee:nth-child(4)){gap:3px}
+ #drawer .seat-tees:has(>.seat-tee:nth-child(4)) .seat-tee{padding:0 7px}
  #drawer .seat-tee{position:relative;isolation:isolate;display:flex;align-items:center;gap:5px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft);font:800 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
  #drawer .seat-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:none}
  #drawer .seat-tee[aria-pressed=true]{color:#111}

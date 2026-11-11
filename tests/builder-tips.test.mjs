@@ -44,7 +44,10 @@ test('door 2\'s step, tool and mark buttons, made from lists, have theirs', () =
  for (const s of steps) assert.ok(TIPS[s], s);
  // The palette's tools (TOOL_LIST, the builder-ux goal; it was `const tools`).
  for (const [, key] of src.match(/const TOOL_LIST = (\[\[[\s\S]*?\]\]);/)[1].matchAll(/\['(\w+)'/g)) assert.ok(TOOL_TIPS[key], key);
- for (const [, label] of src.match(/const marks = (\[\[.*?\]\])/)[1].matchAll(/, '([^']+)'\]/g)) assert.ok(TIPS[label], label);
+ // The marks: the six tee sets (each its own title, tees.js), then these.
+ const marks = src.match(/const marks = \[\.\.\.TEE_ORDER\.map\(m => \[m, teeName\(m\)\]\), (.*?)\]\.map/);
+ assert.ok(marks && /title: TEE_COLOURS\[m\] \?/.test(src), 'the tee marks carry a title');
+ for (const [, label] of marks[1].matchAll(/, '([^']+)'\]/g)) assert.ok(TIPS[label], label);
 });
 
 test('a tool\'s tip before its label\'s; a label given as a single string only', () => {

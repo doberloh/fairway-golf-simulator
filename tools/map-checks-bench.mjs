@@ -11,6 +11,9 @@
 //   no green     -- its green left out (an incomplete map).
 // Caught: that hole has a doubt (or a crossing or shared green naming it).
 // Fixed: for a wrong green, a fix offered that puts it back within 15 m.
+// (Since 10 November 2026 no fix is offered for a wrong green -- the owner:
+// tell the player it needs fixing -- so Fixed is 0 and a wrong fix counts any
+// other fix offered for that hole, which should also be none.)
 // False alarms: doubts on the course as built, undamaged.
 //
 //   node tools/map-checks-bench.mjs [--only worthington,chambers-bay] [--skip-big]
@@ -20,7 +23,7 @@ import {fileURLToPath} from 'node:url';
 import {readBuiltFile} from '../src/course-doc.js';
 import {worldFromDoc} from '../src/built-world.js';
 import {blobs, checkHoles, LIMITS} from '../src/builder/map-checks.js';
-const limits = {...LIMITS, ...(process.env.FIX_ON ? {fixOn: +process.env.FIX_ON} : {}), ...(process.env.ORPHAN ? {orphan: process.env.ORPHAN === '1'} : {}), ...(process.env.ORPHAN_FLOOR ? {orphanFloor: +process.env.ORPHAN_FLOOR} : {})};
+const limits = LIMITS;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2), only = argv.includes('--only') ? argv[argv.indexOf('--only') + 1].split(',') : null;

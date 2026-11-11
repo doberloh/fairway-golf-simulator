@@ -105,9 +105,18 @@ green. Red rings mark them on the plan.
 
 ![Checking the map on Worthington, after its fixes were taken: seven things left to check, most about the map's hole numbers](builder-guide/holes-checks.webp)
 
-Each has **Show** (the hole, framed) and, where one suits, **Fix** -- the mark
-moved onto the nearest green or tee, or the line turned down the fairway. The
-fixes are guesses from the traced course: check each against the photograph.
+Each has **Show** (the hole, framed) and, where one suits, **Fix** -- a mark a
+few metres off moved onto the nearest green or tee, or a bend down the fairway.
+A hole the map drew to the **wrong green** is only flagged: it needs fixing by
+hand -- drag its green or tee onto the right one, with the photograph to go by.
+(The builder used to guess the right green, and was wrong too often.)
+
+**Tee sets.** A course has up to six, longest first: **black, blue, white,
+silver, gold, red**. On the holes step, pick a set and click where its tee is;
+the scorecard shows a column for each set the course has. From OpenStreetMap
+the sets come from the map's tags where it has them, and otherwise from how
+many tee boxes the holes have, the farthest box the longest set. In Fairway a
+golfer whose set the course lacks plays the nearest one it has.
 When half the holes or more have something to check, the map is called
 unreliable: go through every hole. **Find the doglegs** gives holes with no bend
 the bend their fairway takes. **.** and **,** go to the next and previous hole.
@@ -130,10 +139,11 @@ draws a smooth line. **Steadiness** in the tool's options sets how much; 0
 paints right under the pointer. **[** and **]** change its size.
 
 **The pen** (P, Outline fill) draws a shape node by node: the curve through the
-nodes is drawn as you go, and it is exactly what fills. Click the first node to
-close the shape (it grows yellow when the pointer is on it), drag any node to
-adjust it, then press **Enter**. Shift-click makes a sharp corner; Backspace
-takes the last node off; Esc drops the shape. Tree zones, house zones, the
+nodes is drawn as you go, and it is exactly what fills. Click the first node
+again (it grows yellow when the pointer is on it), or press **Enter**, and the
+shape closes and fills at once -- **Ctrl+Z** takes it back if it is not right.
+Shift-click makes a sharp corner; Backspace takes the last node off; Esc drops
+the shape. Tree zones, house zones, the
 course boundary and creeks use the same pen.
 
 ![The pen, round a green, about to close](builder-guide/pen.webp)

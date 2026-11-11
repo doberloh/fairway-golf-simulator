@@ -316,3 +316,4 @@ select option{background:#03100e;color:var(--ink)}
 .cb-tools.cb-tools3d{left:74px}
 .cb-tools3d ~ .cb-status,.cb-palette3d ~ .cb-status{left:306px}
 .cb-palette3d ~ .cb-preview{left:306px}
+.cb-teedot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}

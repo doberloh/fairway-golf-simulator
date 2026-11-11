@@ -62,6 +62,8 @@ Every biome now mixes several plant forms: conifers/alder/ferns; desert trees/ca
 
 Use the player avatar or format button to create a 1–4 player, 9/18-hole local round. Stroke play keeps each golfer active until they finish the hole. Scramble rotates through teammates and lets the team select a lie; only the chosen result's penalty is counted. Match play uses singles or two best-ball teams and finishes when the lead exceeds remaining holes. Match teams must each have at least one golfer. Match play does not implement alternate-shot/foursomes or handicaps.
 
+**Tees: up to six on a built course, three on a generated one.** Each golfer picks a tee on their seat in the round panel (and **Playing tee** changes it during a round). A generated course has **blue, white and red**, as always. A course from Fairway Course Builder has the sets it was built with -- up to six, longest first: **black, blue, white, silver, gold, red** -- read from OpenStreetMap where the map names them, and the scorecard lists a row for each. A golfer whose tee the course lacks plays the nearest it has (a tie goes to the longer: silver on a course of white and gold plays white). A built course from before 10 November 2026 plays its blue, white and red as it did. On a built course the tee markers stand inside the traced tee box however narrow it is, and sets that share a box stand side by side.
+
 **Skins** is for two to four golfers, each playing for themselves, and is played like stroke play: each golfer plays the hole out, and the lowest score on the last hole has honours. Every hole is worth a skin. Once everyone has finished a hole, **the lowest score alone wins it**, together with any skins carried to it; **any tie for the lowest carries** the skins on to the next hole, even when only two of four tied and the others scored worse. Skins still carried after the last hole go unclaimed. A golfer who joins mid-round plays for skins from the hole they join. Each golfer's chip in the top bar says how many skins they have; once skins have carried, the course line under the title says what the hole is worth (*3 skins on this hole*); the last golfer to hole out sees on their banner who won the hole, or that the skins carried; and the scorecard has a **Skins** row with each hole's winner and what it paid, and a line on top with the count -- and, at the end, who won the skins. Every golfer plays every hole out, so a skins round counts toward the sim handicap like stroke play. Skins earns **30 XP a skin**, paid the moment the hole is decided, and the golfer with the most skins alone wins the round. There are no handicap strokes: skins is gross. Skins can be played on 9 or 18 holes, on any course, and in an endless run; not on the course of the week, which is stroke play only.
 
 Putting offers three modes, set in two places that share one copy of the setting: the **Format & tees** section of the round panel, where the mode and its distances sit inline with format and tees, and *Putting options* in the tools tray during a round. Both write the same choice; the round-panel fields apply as soon as they are changed. **Hole out** requires actual cup capture, with a 107.95 mm diameter cup, a floor 101.6 mm down — the four inches the USGA requires — and a 42.67 mm ball. The rim is a surface the ball genuinely runs on rather than a rule about speed: a putt can catch the lip, ride it round — up to about two thirds of the way on a quick green — and either drop or come back out at you, and how long it rides depends on the green's Stimp, because the lip costs the ball what its own turf costs it. Once a ball is below the lip it drops: the inside of the cup cannot grip a slow ball hard enough to carry it round, so a holed putt does not circle the hole. Dead centre the cup catches a ball arriving at about 1.75 m/s. There is no gimme distance. A close putting camera activates when playing from a green; the white locator disappears within 5 m of the cup. **Dartboard** awards 1, 2, or 3 putts only after a shot stops on the current green. **Decimal** interpolates between the three adjustable distances and records two decimal places. At 2/8/16-yard thresholds, a 5-yard leave adds 1.50 putts and a 12-yard leave adds 2.50. The shot itself also counts. Both automatic modes cap at three putts outside the outer circle. Rings are visible only where they lie on the green. In scramble, players choose a candidate before its automatic putts are applied. Existing scores are not recalculated when the mode changes.
@@ -709,9 +711,9 @@ changes, newest first, each with **Back to here**.
      stroke's edge. **Outline fill** is a pen: click to put down nodes, and
      the line through them is the curve that will be filled, drawn on to
      the pointer as you move; the first node grows when the pointer is on
-     it, and clicking it closes the shape, which you can then adjust by
-     dragging any node before pressing **Enter** (or **Apply**) to fill it.
-     Enter or a double-click also closes and fills at once; **Shift**-click
+     it, and clicking it closes the shape and fills it at once -- so does
+     **Enter**, or a double-click (no Apply button since 10 November 2026;
+     **Ctrl+Z** takes a fill back); **Shift**-click
      makes a sharp corner; **Backspace** takes the last node off; **Esc**
      drops it. Tree zone, House zone, the course boundary and Draw a creek
      (an open line) use the same pen. **Smooth edges** rounds edges under it, **Skin from the
@@ -763,11 +765,15 @@ changes, newest first, each with **Back to here**.
      green, or from the wrong tee), two holes on one green, two lines
      crossing, a length that does not suit the par, a line leaving the
      boundary, a tee far from the last green (the numbers out of order).
-     Each has **Show** (the hole, framed) and, where one suits, **Fix** (the
-     mark moved onto the nearest green or tee, or the line turned to the
-     green down the fairway); **Take the fixes offered** takes them all, a
-     few rounds over; red rings mark them on the plan. The fixes are guesses
-     from the traced course: check each against the picture. When half the
+     Each has **Show** (the hole, framed) and, where one suits, **Fix** (a
+     mark a few metres off moved onto the nearest green or tee; a line off
+     the fairway bent down it, when its green is the right one); **Take the
+     fixes offered** takes them all, a few rounds over; red rings mark them
+     on the plan. A hole drawn to the **wrong green** -- off the fairways,
+     sharing a green, crossing another -- is only flagged, saying it needs
+     fixing by hand: drag its green or tee onto the right one, with the
+     picture to go by (since 10 November 2026; the builder's guess at the
+     right green was wrong too often). When half the
      holes or more have something to check, it says the map is unreliable.
      **Check against the scorecard** takes the club's yards pasted in any
      layout (hole numbers and totals are left out) and lists every hole more
@@ -780,21 +786,29 @@ changes, newest first, each with **Back to here**.
      the yards from the tee (or the last aim point) follow the pointer. A
      click near another hole's mark places
      your mark on the hole you are marking; only a drag moves the other
-     hole's mark. For each hole, left-click its **Back tee** (the middle and
-     front if you like), any **Aim points** where it bends, in order from the
-     tee, and its **Green**; then **Next hole**. 9 or 18. The game draws
+     hole's mark. For each hole, pick a tee set -- **Black, Blue, White,
+     Silver, Gold** or **Red**, each with its colour -- and left-click its
+     tee (the longest first; then any others, picking each set first), any
+     **Aim points** where it bends, in order from the tee, and its
+     **Green**; then **Next hole**. 9 or 18. The game draws
      each hole's line through its aim points in turn -- two make a double
      dogleg -- measures its yards along that line, and points the tee shot
      at the first; an aim point no farther on than the one before (or at the
      green) is skipped, and the step says so. The **Scorecard** under the
      holes: each hole's **par** and **handicap index**, which you set (a *
      marks one worked out for you: par from the yards, the index down the
-     card), and its yards from the **blue, white and red** tees -- the game's
-     names for the back, middle and front tees -- exactly as the game will
-     measure them. The yards are not typed: move the tees, aim points or
-     green to change them. Players start on the white tees, so a hole with a
-     middle tee plays shorter than its back tee for most rounds; a hole with
-     one tee plays the same from all three. Out, In and Total add up.
+     card), and a column of yards for each tee set the course has, longest
+     first (a course marked with blue tees alone has one) -- exactly as the
+     game will measure them. The yards are not typed: move the tees, aim
+     points or green to change them. Players start on the white tees, or
+     the nearest set; a hole without one of the course's sets plays it from
+     its nearest. From OpenStreetMap, the sets come from the map: a tee box
+     it tags (tee=blue, or tee=blue;white for one box of two sets) is that
+     set; untagged boxes take the course's sets by distance, the farthest
+     the longest, a box carrying several when a hole has fewer boxes than
+     the course has sets. How many sets: the map's tags, else the names of
+     its holes' yardages (dist:*), else as many as the holes most often have
+     boxes -- three at the least. Out, In and Total add up.
      **Fit holes to the trace** puts each hole's green mark on the traced
      green it reaches and gives each hole the traced tee boxes along its
      line -- after an auto trace, a correction, or holes you marked yourself.

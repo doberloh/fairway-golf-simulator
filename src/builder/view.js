@@ -14,7 +14,7 @@ import {TREE_ROLES} from '../course-doc.js';
 import {standIn} from './tree-shape.js';
 import {GROUNDS} from '../grounds.js';
 import {PAINT} from './editing.js';
-import {TEE_COLORS} from '../course-plan.js';
+import {TEE_COLOURS, colourOf} from '../tees.js';
 import {LAYER_ORDER} from './layers.js';
 import {regionOf} from '../regions.js';
 import {seasonPalette} from '../seasons.js';
@@ -375,7 +375,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   s.holes.forEach((h, i) => {
    const on = i === selected, line = new T.BufferGeometry().setFromPoints(h.line.map(([x, z]) => new T.Vector3(x, editor.height(x, z) + .6, z)));
    layers.holes.add(new T.Line(line, new T.LineBasicMaterial({color: on ? '#fde68a' : '#ffffff', transparent: true, opacity: on ? 1 : .55})));
-   for (const t of h.tees) { const m = new T.Mesh(ball, new T.MeshBasicMaterial({color: TEE_COLORS[{back: 'blue', middle: 'white', front: 'red'}[t.set] || 'white'] || '#ffffff'})); m.position.set(t.x, editor.height(t.x, t.z) + .8, t.z); layers.holes.add(m); }
+   for (const t of h.tees) { const m = new T.Mesh(ball, new T.MeshBasicMaterial({color: TEE_COLOURS[colourOf(t.set) ?? 'white']})); m.position.set(t.x, editor.height(t.x, t.z) + .8, t.z); layers.holes.add(m); }
    const g = new T.Group(); g.add(new T.Mesh(pole, new T.MeshBasicMaterial({color: '#f4f2e7'}))); g.add(new T.Mesh(flag, new T.MeshBasicMaterial({color: on ? '#fde68a' : '#d4443a', side: T.DoubleSide})));
    g.position.set(h.green.x, editor.height(h.green.x, h.green.z), h.green.z); g.userData.hole = i; layers.holes.add(g);
   });

@@ -770,7 +770,8 @@ After trying the builder, the owner amended the goal:
       hole had one tee, the line's first point. **`fitHoles`** now puts each
       green mark on the green it reaches and gives each hole the tee boxes
       along its line -- back, middle, front -- so white and red are real
-      tees. Door 2's holes step has **Fit holes to the trace** for holes
+      tees (since 10 November 2026 the six tee sets, by the map's tags and
+      the boxes' distance: *Six tee sets*, below). Door 2's holes step has **Fit holes to the trace** for holes
       marked by hand or after an auto trace.
     - **A map with numbered greens and no hole lines** (Worthington's): each
       green's tee is chosen for all holes at once (the Hungarian method,
@@ -2327,3 +2328,55 @@ Cancel closing it, Build it, and the box as the property (1,495-1,580 m);
 builder-door-2 checks Next starts the land; builder-lidar-folder uses Build it
 myself. The guide's `build-it-for-me` picture is the warning over the
 Worthington box. Not run on real services since; **not tried by a person.**
+
+### Six tee sets, the pen without Apply, and no guessed greens (10 November 2026)
+
+The owner tried the branch and reported: Build it for me good; the map
+checks' warnings point to real issues; the pen mostly good but "we dont need
+to have an apply button"; the brush great; layers good; saving good; the
+quick checks good. Then three changes and a new feature:
+
+- **The pen closes and fills at once** (door-real.js `onTool`): a click on
+  the first node, or Enter, or a double-click, closes the shape and fills
+  it; the closed-but-unfilled state (nodes dragged, then Enter or **Apply**)
+  is gone, and so is Apply. Ctrl+Z takes a fill back. Rejected: keeping node
+  dragging after the close (it is what made Apply necessary).
+- **No guessed green for a hole drawn to the wrong one** (map-checks.js):
+  "we should just remove the green fix attempts then and just tell the user
+  it needs fixing". Off the fairways, sharing a green or crossing another,
+  a hole is flagged "needs fixing by hand"; the orphan-green rule (62%
+  right, 29% wrong; RESEARCH, *The map checks, scored*) is removed. A mark a
+  few metres off its green or tee keeps its Fix, and a line off the fairway
+  keeps the bend down it, offered "if its green is right".
+- **Six tee sets** (src/tees.js, the owner: "up to 6 tees ... black -> blue
+  -> white -> silver -> gold -> red. This needs to feed from the open street
+  map data. Generated courses should still just have 3 tees"):
+  - the builder marks tees by set (the holes step's six coloured buttons,
+    the 3D editor's six); its scorecard has a column for each set the
+    course has;
+  - from OpenStreetMap, `osmTeeSets` reads `tee=*` tags and the holes'
+    `dist:*` keys, and `fitHoles` gives each traced tee box its sets (a
+    tagged box its tags; the rest the course's sets by distance, a box
+    carrying several when a hole has fewer boxes than sets -- first built a
+    set a box, which left a one-box-a-hole course with one set). The rules
+    and what real maps hold: RESEARCH, *Tee sets from OpenStreetMap*;
+  - the game plays a built course's sets (built-world.js `builtLine` with
+    the course's `courseSets`), lists them on each golfer's seat, in the
+    round's tee choice, **Playing tee** and the scorecard, and plays the
+    nearest a course has for a set it lacks; a generated course keeps blue,
+    white and red; an older built file plays as before (PROJECT_HANDOFF,
+    *A BUILT COURSE IS A WORLD FROM A FILE*, (24));
+  - a draft from before reads its back, middle and front as blue, white and
+    red.
+- **Tee markers inside narrow built tees** (renderer.js; the owner: "Our tee
+  markers need to stay inside the teebox on built courses"): each comes in
+  until it is six inches inside the traced box (`h.onTee`); sets sharing a
+  box stand side by side.
+
+Seen: npm test passes (tests/tees.test.mjs new; round-tees, osm-course,
+builder-map-checks, builder-tips changed); all nine builder journeys pass
+(build-for-me: its course's tees all of the six, blue, white and red from
+the stand-in map; the wrong hole flagged with no green guessed; door-2: the
+pen filling on the first node with no Apply, a one-set scorecard); npm run
+smoke (see TESTING). **Not seen by a person**: the six tees in a round, the
+markers on a real narrow tee, the holes step's six buttons.

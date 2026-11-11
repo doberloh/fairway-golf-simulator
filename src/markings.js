@@ -103,6 +103,7 @@ export function placeMarkings({holes, surface, nearest, halfX, halfZ, streams}) 
 // club and age dials; since the designer went, 2 November 2026, every course
 // is worn as its members' club of mature age was.)
 import {GOLFER_TABLE} from './golfer-table.js';
+import {teeOn} from './tees.js';
 const YD = .9144;
 // Where drives come down: a good player's from the back tee, an average
 // golfer's from the middle one, along the hole's line (moved here from
@@ -114,8 +115,8 @@ function alongLine(center, from, metres, length) {
 }
 export function landingZones({center, length, tees}) {
  const T = GOLFER_TABLE;
- const good = Math.min(length - 95, alongLine(center, tees.blue?.z ?? 0, T.good.clubs.driver.total * YD, length));
- const average = Math.min(length - 110, alongLine(center, tees.white?.z ?? 0, T.average.clubs.driver.total * YD, length));
+ const good = Math.min(length - 95, alongLine(center, teeOn(tees, 'blue')?.z ?? 0, T.good.clubs.driver.total * YD, length));
+ const average = Math.min(length - 110, alongLine(center, teeOn(tees, 'white')?.z ?? 0, T.average.clubs.driver.total * YD, length));
  return {good, average};
 }
 function stream(seed) { let a = 2166136261; for (const c of String(seed)) { a ^= c.charCodeAt(0); a = Math.imul(a, 16777619); } return () => { a += 0x6D2B79F5; let t = Math.imul(a ^ a >>> 15, a | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }

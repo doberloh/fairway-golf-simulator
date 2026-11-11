@@ -87,6 +87,10 @@ export default function ({journey}) {
   if (!st.land || !st.pics.includes('naip') || !/^openstreetmap\+lidar$/.test(st.trace)) throw Error(`every step should have run: ${JSON.stringify(st)}`);
   if (st.holesN !== 9 || st.marked !== 9) throw Error(`OpenStreetMap's nine holes should be marked: ${st.marked} of ${st.holesN}`);
   if (st.step !== 5) throw Error(`a complete course should land on the review, not step ${st.step + 1}`);
+  // THE TEE SETS (tees.js): every tee mark one of the six, from the map.
+  const sets = await page.evaluate(() => [...new Set(window.fairwayBuilder.door2.holes.flatMap(h => h?.tees.map(t => t.set) ?? []))]);
+  if (!sets.length || sets.some(s => !['black', 'blue', 'white', 'silver', 'gold', 'red'].includes(s))) throw Error(`every tee should be one of the six sets: ${sets}`);
+  console.log(`       tee sets from the map: ${sets.join(', ')}`);
   if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1 || !maps) throw Error(`each service asked once (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
   // The box drawn on the map is the property built (1.5 km, a little more in
   // the survey's grid, turned about 1.8 degrees from north here).
@@ -126,8 +130,10 @@ export default function ({journey}) {
 
   // A WRONG MAP (item 24; the owner: Worthington's "holes pointing to the
   // wrong place"): the same club with hole 3's line drawn to hole 7's green.
-  // The build stops on the holes step with the doubt and a fix offered; the
-  // fix puts hole 3 back on its own green, down its fairway.
+  // The build stops on the holes step with the doubt, saying it needs fixing
+  // by hand -- no other green guessed for it (the owner, 10 November 2026:
+  // "remove the green fix attempts then and just tell the user it needs
+  // fixing").
   await page.unroute(/overpass-api\.de/);
   await page.route(/overpass-api\.de/, r => {
    const a = answer(), three = a.elements.find(e => e.tags?.golf === 'hole' && e.tags.ref === '3'), seven = a.elements.find(e => e.tags?.golf === 'hole' && e.tags.ref === '7');
@@ -147,22 +153,22 @@ export default function ({journey}) {
   await page.getByRole('button', {name: 'Build it', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});
   await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
-  const wrong = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, doubts: (s.doubts ?? []).map(q => ({hole: q.hole, kind: q.kind, fix: !!q.fix}))}; });
+  const wrong = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, doubts: (s.doubts ?? []).map(q => ({hole: q.hole, other: q.other, kind: q.kind, fix: q.fix?.kind ?? null, text: q.text}))}; });
   if (wrong.step !== 3) throw Error(`a map with doubts should stop on the holes step, not step ${wrong.step + 1}`);
-  const three = wrong.doubts.filter(q => q.hole === 2);
-  if (!three.some(q => q.fix)) throw Error(`hole 3 pointing the wrong way should be caught, with a fix: ${JSON.stringify(wrong.doubts)}`);
+  const three = wrong.doubts.filter(q => q.hole === 2 || q.other === 2);
+  if (!three.length || !three.some(q => /by hand/.test(q.text))) throw Error(`hole 3 pointing the wrong way should be caught, to fix by hand: ${JSON.stringify(wrong.doubts)}`);
+  if (wrong.doubts.some(q => q.fix === 'green' && q.kind !== 'greenOff')) throw Error(`no hole should be aimed at a guessed green: ${JSON.stringify(wrong.doubts)}`);
   await t.shot('wrong-map');
-  await page.getByRole('button', {name: /^Take the [0-9]+ fixes offered$|^Fix$/}).first().click();
-  const after = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {green: s.holes[2].green, doubts: (s.doubts ?? []).filter(q => q.hole === 2 && q.fix).length}; });
-  if (after.doubts || Math.abs(after.green.x - (-80)) > 6) throw Error(`the fix should put hole 3 back on its own green: ${JSON.stringify(after)}`);
   // THE CARD AS A WITNESS (item 24): a card saying hole 1 is 420 yards (it
   // measures about 251) flags hole 1, and only hole 1.
   await page.locator('.cb-cardbox summary').click();
   await page.locator('.cb-cardtext').fill('1 420\n2 251\n3 251\n4 251\n5 251\n6 251\n7 251\n8 251\n9 251\nOut 2428');
   await page.locator('[data-card="check"]').click();
   const cardDoubts = await page.evaluate(() => window.fairwayBuilder.door2.doubts.filter(q => q.kind === 'card').map(q => q.hole));
-  if (cardDoubts.length !== 1 || cardDoubts[0] !== 0) throw Error(`the card should flag hole 1 alone: ${JSON.stringify(cardDoubts)}`);
+  // Hole 1, and hole 3 -- still drawn to hole 7's green, as nothing fixes a
+  // wrong green for the player any more.
+  if (cardDoubts.join() !== '0,2') throw Error(`the card should flag holes 1 and 3 alone: ${JSON.stringify(cardDoubts)}`);
   await t.shot('card');
-  console.log(`       a wrong map: ${wrong.doubts.length} doubt${wrong.doubts.length === 1 ? '' : 's'} (${[...new Set(wrong.doubts.map(q => q.kind))].join(', ')}); the fix put hole 3 back on its own green`);
+  console.log(`       a wrong map: ${wrong.doubts.length} doubt${wrong.doubts.length === 1 ? '' : 's'} (${[...new Set(wrong.doubts.map(q => q.kind))].join(', ')}); hole 3 left to fix by hand, no green guessed`);
  });
 }

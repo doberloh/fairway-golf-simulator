@@ -777,6 +777,10 @@ only, kept under the ignored bench/shots/lidar/, never committed.
   (https://overpass-api.de; ODbL) -- the hand-drawn outlines the trace is
   scored against and the numbered greens and tees the scripted build marks
   holes from.
+- OpenStreetMap wiki, *Tag:golf=tee* --
+  https://wiki.openstreetmap.org/wiki/Tag:golf=tee (read 10 November 2026)
+  -- `tee=<COLOUR>`, named and numbered tees: how the builder reads a tee
+  box's set (RESEARCH, *Tee sets from OpenStreetMap*).
 - GolfPass, *Worthington Country Club scorecard and layout* --
   https://www.golfpass.com/travel-advisor/courses/8463-worthington-country-club/scorecard-and-layout
   -- par 71, the blue tees 6,282 yards hole by hole: the lengths the built

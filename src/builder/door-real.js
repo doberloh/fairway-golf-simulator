@@ -25,7 +25,7 @@
 // pictures), lidar/trace.js (the auto trace).
 import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
 import {icon, eyeButton} from './icons.js';
-import {penCurve, closesOn, nodeAt} from './pen.js';
+import {penCurve, closesOn} from './pen.js';
 import {createSteady} from './steady.js';
 import {keepDraft, keptDraft, dropDraft} from './autosave.js';
 import {readDraft} from './draft.js';
@@ -44,7 +44,8 @@ import {crsOf, toMetres, parseHeader} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
 import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT} from './osm.js';
-import {osmCourses, osmHoles, shiftHoles, fitHoles} from './osm-course.js';
+import {osmCourses, osmHoles, shiftHoles, fitHoles, osmTeeSets} from './osm-course.js';
+import {TEE_ORDER, TEE_COLOURS, GENERATED_TEES, courseSets, backTee, colourOf, teeName} from '../tees.js';
 import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY} from './real-course.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
@@ -119,7 +120,7 @@ export async function openSaved(draft) {
 export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, treePlan: null, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
-  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], sharp: new Set(), penEdit: false, penDrag: -1, steadiness: 50, smoothStroke: true, hover: null, holes: [], hole: 0, holesN: 18, mark: 'back',
+  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], sharp: new Set(), steadiness: 50, smoothStroke: true, hover: null, holes: [], hole: 0, holesN: 18, mark: 'blue',
   name: 'My real course', landscape: 'parkland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
   chosen: null, carry: null, sizing: null, treeScale: 1, treeKind: '', cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
@@ -335,7 +336,7 @@ export function open(draft = null) {
  // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
  // owner, 1 November 2026: "It needs to be more clear what you are doing").
  function showHint() {
-  const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => st.penEdit ? 'closed: drag a node to adjust it; Enter fills it, Esc drops it.' : `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
+  const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
   let t = '';
   if (st.step === 0) t = st.map ? `Drag a box round the course on the map, then Build it for me or Build it myself. ${view}` : st.preview ? `Drag a box round the property on the relief. ${view}` : '';
   else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}, or drag any mark to move it. ${view}`;
@@ -439,7 +440,7 @@ export function open(draft = null) {
   // The measure, and the yards from the tee while placing a hole's marks.
   if (st.step === 2 && st.tool === 'measure' && st.measure?.a) { const b = st.measure.b ?? st.hover; if (b) rulerLine(ctx, p, st.measure.a, b, measureWords(st.measure.a, b)); }
   if (st.step === 3 && st.hover && st.land) {
-   const h = st.holes[st.hole], back = h?.tees.find(t => t.set === 'back') ?? h?.tees[0], from = st.mark === 'aim' || st.mark === 'green' ? (h?.aims.at(-1) ?? back) : null;
+   const h = st.holes[st.hole], back = backTee(h?.tees), from = st.mark === 'aim' || st.mark === 'green' ? (h?.aims.at(-1) ?? back) : null;
    if (from) rulerLine(ctx, p, from, st.hover, `${measureWords(from, st.hover)}${st.mark === 'green' && h.aims.length ? ` (${Math.round((holeLine({...h, green: st.hover}).reduce((t, q, k, A) => k ? t + Math.hypot(q[0] - A[k - 1][0], q[1] - A[k - 1][1]) : 0, 0)) / .9144)} yd along the hole)` : ''}`);
   }
   if (st.boundary && st.step >= 2 && st.step < 5) { ctx.save(); ctx.setLineDash([10 * px, 6 * px]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2.5 * px; ctx.beginPath(); st.boundary.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); ctx.stroke(); ctx.restore(); }
@@ -449,15 +450,15 @@ export function open(draft = null) {
   // the shape is filled faintly and its nodes can be dragged before Enter.
   if (st.outline.length) {
    const closedTool = st.tool !== 'creek', reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
-   const closing = closedTool && !st.penEdit && hov && closesOn(st.outline, hov, reach);
-   const nodes = st.penEdit || closing || !hov ? st.outline : [...st.outline, hov];
-   const pts = penCurve(nodes, {closed: closedTool && (st.penEdit || closing), sharp: [...st.sharp]});
+   const closing = closedTool && hov && closesOn(st.outline, hov, reach);
+   const nodes = closing || !hov ? st.outline : [...st.outline, hov];
+   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp]});
    const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
-   if (closedTool && (st.penEdit || closing)) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
-   ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4 * px; path(); if (closedTool && (st.penEdit || closing)) ctx.closePath(); ctx.stroke();
-   ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; path(); if (closedTool && (st.penEdit || closing)) ctx.closePath(); ctx.stroke();
+   if (closedTool && closing) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
+   ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
+   ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
    // While drawing a shape, a faint line from the pointer back to the first node.
-   if (closedTool && !st.penEdit && !closing && hov && st.outline.length >= 2) { ctx.save(); ctx.setLineDash([6 * px, 6 * px]); ctx.strokeStyle = 'rgba(255,107,214,.55)'; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.moveTo(...p.toScreen(hov[0], hov[1])); ctx.lineTo(...p.toScreen(st.outline[0][0], st.outline[0][1])); ctx.stroke(); ctx.restore(); }
+   if (closedTool && !closing && hov && st.outline.length >= 2) { ctx.save(); ctx.setLineDash([6 * px, 6 * px]); ctx.strokeStyle = 'rgba(255,107,214,.55)'; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.moveTo(...p.toScreen(hov[0], hov[1])); ctx.lineTo(...p.toScreen(st.outline[0][0], st.outline[0][1])); ctx.stroke(); ctx.restore(); }
    st.outline.forEach(([x, z], q) => {
     const [sx, sy] = p.toScreen(x, z), first = q === 0 && closedTool, big = first && (closing || st.outline.length >= 3);
     ctx.fillStyle = first && closing ? '#fde68a' : '#ffffff'; ctx.strokeStyle = '#3b0f30'; ctx.lineWidth = 1.5 * px; ctx.beginPath();
@@ -495,7 +496,7 @@ export function open(draft = null) {
   }
   if (st.align?.pairs) for (const q of st.align.pairs) { const [x, y] = p.toScreen(q.local.x, q.local.z); ctx.strokeStyle = '#ff6bd6'; ctx.strokeRect(x - 5 * px, y - 5 * px, 10 * px, 10 * px); }
  }
- const holeLine = h => { const back = h.tees.find(t => t.set === 'back') ?? h.tees[0]; return [...(back ? [[back.x, back.z]] : []), ...h.aims.map(a => [a.x, a.z]), ...(h.green ? [[h.green.x, h.green.z]] : [])]; };
+ const holeLine = h => { const back = backTee(h.tees); return [...(back ? [[back.x, back.z]] : []), ...h.aims.map(a => [a.x, a.z]), ...(h.green ? [[h.green.x, h.green.z]] : [])]; };
 
  // ----------------------------------------------------------------- tools
  let dragFrom = null;
@@ -586,17 +587,15 @@ export function open(draft = null) {
    }
    if (PEN_TOOLS.includes(t)) {
     // THE PEN (pen.js): a click adds a node (Shift: a sharp corner); a click on
-    // the first node closes the shape, whose nodes can then be dragged; Enter
-    // or a double-click fills it (a creek: ends it).
+    // the first node closes the shape and fills it at once; Enter or a
+    // double-click closes and fills it too (a creek: ends it). (Until 10
+    // November 2026 closing left the shape open to drag its nodes, filled by
+    // Enter or an Apply button; the owner: "we dont need to have an apply
+    // button. Lets just close the shape and apply when either enter is
+    // pressed or the starting node is clicked again." Undo takes it back.)
     const reach = PEN_REACH * plan.px / plan.view.scale, hit = [p.x, p.z], min = t === 'creek' ? 2 : 3;
-    if (st.penEdit) {
-     if (type === 'down') st.penDrag = nodeAt(st.outline, hit, reach);
-     if (type === 'drag' && st.penDrag >= 0) st.outline[st.penDrag] = hit;
-     if (type === 'up') st.penDrag = -1;
-     plan.draw(); return;
-    }
     if (type === 'down') {
-     if (t !== 'creek' && closesOn(st.outline, hit, reach, min)) { st.penEdit = true; st.penDrag = -1; say('Closed. Drag any node to adjust it, then press Enter (or Apply) to fill; Esc drops it.'); showToolOptions(); }
+     if (t !== 'creek' && closesOn(st.outline, hit, reach, min)) { closeOutline(); plan.draw(); return; }
      else { st.outline.push(hit); if (e?.shiftKey) st.sharp.add(st.outline.length - 1); }
     }
     if (type === 'double' && st.outline.length >= min) closeOutline();
@@ -745,7 +744,7 @@ export function open(draft = null) {
  }
  function goHole(n) { if (!st.holesN) return; st.hole = (n + st.holesN) % st.holesN; if (st.step === 3) go(3); frameHole(st.hole); say(`Hole ${st.hole + 1}${st.holes[st.hole]?.green ? '' : ': not marked yet'}.`); }
  // The pen put down: no nodes, not closed.
- function dropPen() { st.outline = []; st.sharp = new Set(); st.penEdit = false; st.penDrag = -1; }
+ function dropPen() { st.outline = []; st.sharp = new Set(); }
  function closeOutline() {
   // A double-click adds its own two clicks as nodes; they are one point. The
   // shape filled is the pen's curve through the nodes (pen.js), the very
@@ -769,7 +768,7 @@ export function open(draft = null) {
   if (e.key === 'Enter' && st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline();
   if (e.key === 'Escape') { dropPen(); chooseShape(null); plan.draw(); }
   // Backspace takes the last node off a shape being drawn (the pen).
-  if (e.key === 'Backspace' && st.outline.length && !st.penEdit) { e.preventDefault(); st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); }
+  if (e.key === 'Backspace' && st.outline.length) { e.preventDefault(); st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); }
   // The unlocked picture nudged: a quarter metre a press, a metre with Shift.
   const nudge = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
   if (nudge && st.step === 2 && st.tool === 'align' && !st.picLocked) { e.preventDefault(); const s = e.shiftKey ? 1 : .25; st.offset = {x: st.offset.x + nudge[0] * s, z: st.offset.z + nudge[1] * s}; relay(); }
@@ -813,7 +812,7 @@ export function open(draft = null) {
   "Find the course by name: the builder shows the aerial map round it. Drag a box round the course, then Build it for me -- every step done for you -- or Build it myself, picking the LIDAR and doing each step. Or open LIDAR files you have, and drag the box on the relief.",
   "Build the land: the ground's heights, the trees and the water, read from the survey. It takes from a few seconds to a minute.",
   "Draw the course over the aerial picture: lay OpenStreetMap's version if the club is mapped, then fix it with the tools on the left -- or draw it yourself.",
-  'Mark each hole: its back tee (and the others if you like), any bends, and its green, then Next hole. The scorecard below fills itself in.',
+  'Mark each hole: its tees (pick a set, black to red, the longest first), any bends, and its green, then Next hole. The scorecard below fills itself in.',
   'Name the course, and credit the survey and the picture you used.',
   'Look the course over as it will play. Open it in the editor to shape it in 3D, or save it now.'];
  // FIRST-VISIT TIPS (item 13): each step's line is a tip until it is closed
@@ -1667,9 +1666,9 @@ export function open(draft = null) {
    toolOption(['move'], el('small', {}, 'Drag to move the view; the wheel zooms. Pick a tool on the left to paint.')),
    toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it; drag inside to move it, an anchor to turn it. Esc lets go.')),
    toolOption(['measure'], el('small', {}, 'Click a point, then another: the yards and metres between them, and how much the ground rises or falls. The holes step shows the yards from the tee as you place a hole\'s marks.')),
-   toolOption(PEN_TOOLS, el('small', {}, 'Click to add nodes; the line between them is the curve that will be filled. Click the first node to close the shape, then drag any node to adjust it. Shift-click makes a sharp corner. A creek is an open line: Enter ends it.'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Fill the shape (Enter)', onclick: () => { if (st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline(); else say(st.tool === 'creek' ? 'A creek needs two points.' : 'A shape needs three nodes.', true); }}, 'Apply'),
-     el('button', {class: 'cb-btn', type: 'button', title: 'Take the last node off (Backspace)', onclick: () => { if (st.outline.length && !st.penEdit) { st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); } }}, 'Remove last node'),
+   toolOption(PEN_TOOLS, el('small', {}, 'Click to add nodes; the line between them is the curve that will be filled. Click the first node again, or press Enter, to close the shape and fill it (Ctrl+Z takes it back). Shift-click makes a sharp corner. A creek is an open line: Enter or a double-click ends it.'),
+    el('div', {class: 'cb-btns'},
+     el('button', {class: 'cb-btn', type: 'button', title: 'Take the last node off (Backspace)', onclick: () => { if (st.outline.length) { st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); } }}, 'Remove last node'),
      el('button', {class: 'cb-btn', type: 'button', title: 'Drop the shape (Esc)', onclick: () => { dropPen(); plan.draw(); }}, 'Drop'))),
    toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush size, metres round', el('input', {type: 'range', class: 'cb-brushsize', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
    // THE STEADIED BRUSH's two settings (steady.js; the owner: "can result in really squiggly lines").
@@ -1904,7 +1903,9 @@ export function open(draft = null) {
   const ring = c?.rings[0] ?? o.edge;
   st.boundary = ring ? ring.map(([x, z]) => [x + sh.x, z + sh.z]) : st.boundary;
   const raw = osmHoles(o.feats, {within: c?.rings ?? null, only: c?.only ?? null, codes: o.codes, land: st.land});
-  const holes = fitHoles(shiftHoles(raw, sh), st.model.state.codes, st.land), n = holes.filter(Boolean).length;
+  // The tee sets the map names (tees.js; osm-course.js osmTeeSets), moved with the map.
+  const teeTags = osmTeeSets(o.feats, {within: c?.rings ?? null});
+  const holes = fitHoles(shiftHoles(raw, sh), st.model.state.codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets}), n = holes.filter(Boolean).length;
   // Eighteen when all eighteen are numbered; nine when 1 to 9 are and the
   // back nine is not (a club's nine with a stray number beside it).
   if (n) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null} : undefined); st.holesN = holes.slice(0, 18).filter(Boolean).length < 18 && holes.slice(0, 9).filter(Boolean).length === 9 ? 9 : holes.length > 9 ? 18 : 9; }
@@ -1956,41 +1957,46 @@ export function open(draft = null) {
  // edit the card (not yardage tho)"): each hole's par and handicap index, set
  // by hand, and its yards from the three tee sets -- not editable: AS THE GAME
  // WILL MEASURE THEM (built-world.js builtLine: along the line through the aim
- // points, blue the farthest tee, white and red the nearer; players start on
- // white). Par is worked from the blue yards until set; the index runs 1 to
- // 18 down the card until set.
- const cardOf = h => { if (!h?.green || !h.tees.length) return null; const L = builtLine({tees: h.tees, green: h.green, line: holeLine(h)}); return {...L.yards, skipped: L.skipped, par: h.par ?? parFor(L.yards.blue), auto: h.par == null}; };
+ // points, each of the course's tee sets from its tee, or the nearest set the
+ // hole has; players start on white, or the nearest). Par is worked from the
+ // longest set's yards until set; the index runs 1 to 18 down the card until set.
+ // The course's sets (tees.js): those its marks name, longest first.
+ const sets = () => courseSets(st.holes.slice(0, st.holesN)) ?? GENERATED_TEES;
+ const firstSet = () => sets()[0];
+ const cardOf = h => { if (!h?.green || !h.tees.length) return null; const names = sets(), L = builtLine({tees: h.tees, green: h.green, line: holeLine(h)}, names); return {...L.yards, skipped: L.skipped, par: h.par ?? parFor(L.yards[names[0]]), back: L.yards[names[0]], auto: h.par == null}; };
  function scorecard() {
   const rows = Array.from({length: st.holesN}, (_, n) => ({n, h: st.holes[n], c: cardOf(st.holes[n])}));
   const yd = v => v == null ? '--' : Math.round(v);
   const sum = (list, f) => list.reduce((t, x) => t + (f(x) ?? 0), 0);
-  const total = (label, list) => el('tr', {class: 'cb-cardsum'}, el('td', {}, label), el('td', {}, sum(list, x => x.c?.par)), el('td'), ...['blue', 'white', 'red'].map(k => el('td', {}, Math.round(sum(list, x => x.c?.[k])))));
+  const total = (label, list) => el('tr', {class: 'cb-cardsum'}, el('td', {}, label), el('td', {}, sum(list, x => x.c?.par)), el('td'), ...sets().map(k => el('td', {}, Math.round(sum(list, x => x.c?.[k])))));
   const body = rows.map(({n, h, c}) => el('tr', {class: n === st.hole ? 'cb-cur' : ''},
    el('td', {style: 'cursor:pointer', title: 'Mark this hole', onclick: () => { st.hole = n; go(3); frameHole(n); }}, n + 1),
-   el('td', {}, el('select', {class: 'cb-par', 'data-hole': n, disabled: !c, title: 'This hole\'s par: worked from the blue yards (*), or set by hand', onchange: e => { if (!h) return; h.par = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
-    el('option', {value: 'auto', selected: !c || c.auto}, c ? `${parFor(c.blue)}*` : '--'), [3, 4, 5, 6].map(v => el('option', {value: v, selected: !!c && !c.auto && c.par === v}, v)))),
+   el('td', {}, el('select', {class: 'cb-par', 'data-hole': n, disabled: !c, title: 'This hole\'s par: worked from the longest tees\' yards (*), or set by hand', onchange: e => { if (!h) return; h.par = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
+    el('option', {value: 'auto', selected: !c || c.auto}, c ? `${parFor(c.back)}*` : '--'), [3, 4, 5, 6].map(v => el('option', {value: v, selected: !!c && !c.auto && c.par === v}, v)))),
    el('td', {}, el('select', {class: 'cb-index', 'data-hole': n, disabled: !c, title: 'This hole\'s handicap index: 1 the hardest, where strokes are given first', onchange: e => { if (!h) return; h.index = e.target.value === 'auto' ? null : +e.target.value; go(3); }},
     el('option', {value: 'auto', selected: h?.index == null}, `${n + 1}*`), Array.from({length: st.holesN}, (_, q) => q + 1).map(v => el('option', {value: v, selected: h?.index === v}, v)))),
-   el('td', {}, yd(c?.blue)), el('td', {}, yd(c?.white)), el('td', {}, yd(c?.red))));
+   ...sets().map(k => el('td', {}, yd(c?.[k])))));
   const half = st.holesN === 18 ? [total('Out', rows.slice(0, 9)), ...body.slice(9), total('In', rows.slice(9))] : [];
   const skipped = rows.filter(x => x.c?.skipped);
   const used = rows.map(x => x.h?.index ?? x.n + 1), twice = [...new Set(used.filter((v, q) => used.indexOf(v) !== q))].sort((p, q) => p - q);
   return el('div', {class: 'cb-field cb-card'}, el('label', {}, 'Scorecard'),
-   el('small', {}, 'Set each hole\'s par and handicap index. The yards are the game\'s own, measured along each hole\'s line through its aim points; to change them, move the tees, the aim points or the green. Blue, white and red are the game\'s names for the back, middle and front tees -- players start on white -- and a hole with one tee plays the same from all three. * = worked out for you.'),
-   el('table', {}, el('thead', {}, el('tr', {}, ...['Hole', 'Par', 'Index', 'Blue', 'White', 'Red'].map(t => el('th', {}, t)))),
+   el('small', {}, 'Set each hole\'s par and handicap index. The yards are the game\'s own, measured along each hole\'s line through its aim points; to change them, move the tees, the aim points or the green. One column for each tee set the course has, longest first (black, blue, white, silver, gold, red: up to six) -- players start on white, or the nearest set -- and a hole without one of them plays it from its nearest set. * = worked out for you.'),
+   el('table', {}, el('thead', {}, el('tr', {}, ...['Hole', 'Par', 'Index', ...sets().map(teeName)].map(t => el('th', {}, t)))),
     el('tbody', {}, ...(st.holesN === 18 ? [...body.slice(0, 9), ...half] : body), total('Total', rows))),
    twice.length ? el('small', {class: 'cb-err'}, `Handicap index on more than one hole: ${twice.join(', ')} -- each hole needs its own.`) : null,
    skipped.length ? el('small', {class: 'cb-err'}, `The game skips an aim point that is no farther on than the one before (or is at the green): ${skipped.map(x => `hole ${x.n + 1} (${x.c.skipped})`).join(', ')}.`) : null);
  }
  function stepHoles() {
   const list = el('ul', {}, Array.from({length: st.holesN}, (_, n) => { const h = st.holes[n], sk = cardOf(h)?.skipped; return el('li', {class: n === st.hole ? 'cb-cur' : '', style: 'cursor:pointer', onclick: () => { st.hole = n; go(3); frameHole(n); }}, `Hole ${n + 1}: ${h?.tees.length ? h.tees.map(t => t.set).join(', ') + ' tee' : 'no tee'}, ${h?.aims.length ? h.aims.length + ' aim point' + (h.aims.length > 1 ? 's' : '') + (sk ? ` (${sk} skipped by the game)` : '') : 'straight'}, ${h?.green ? 'green' : 'no green'}`); }));
-  const marks = [['back', 'Back tee'], ['middle', 'Middle tee'], ['front', 'Front tee'], ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, onclick: () => { st.mark = m; go(3); }}, t));
+  // THE SIX TEE SETS (tees.js; the owner, 10 November 2026), each a button
+  // with its colour, then an aim point and the green.
+  const marks = [...TEE_ORDER.map(m => [m, teeName(m)]), ['aim', 'Aim point'], ['green', 'Green']].map(([m, t]) => el('button', {class: 'cb-btn' + (st.mark === m ? ' cb-on' : ''), type: 'button', 'data-mark': m, title: TEE_COLOURS[m] ? `Place this hole's ${t.toLowerCase()} tee` : t, onclick: () => { st.mark = m; go(3); }}, TEE_COLOURS[m] ? el('i', {class: 'cb-teedot', style: `background:${TEE_COLOURS[m]}`}) : null, t));
   return [checkBox(), el('div', {class: 'cb-field'}, el('label', {}, `Hole ${st.hole + 1}`),
-   el('small', {}, 'Drag any tee, aim point or green to move it, on any hole. Click the plan to place: the back tee (the middle and front if you like), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
+   el('small', {}, 'Drag any tee, aim point or green to move it, on any hole. Click the plan to place: a tee (pick its set -- black, blue, white, silver, gold or red -- first; the longest first, then any others), any aim points where the hole bends, in order from the tee, and the green. The game draws the hole\'s line through every aim point in turn -- two make a double dogleg -- measures the yards along it, and aims the tee shot at the first; an aim point no farther on than the one before is skipped.'),
    el('select', {class: 'cb-holes', onchange: e => { st.holesN = +e.target.value; go(3); }}, [18, 9].map(n => el('option', {value: n, selected: n === st.holesN}, `${n} holes`))),
    el('div', {class: 'cb-btns'}, ...marks),
-   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.hole = Math.max(0, st.hole - 1); st.mark = 'back'; go(3); }}, 'Previous hole'),
-    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { st.hole = Math.min(st.holesN - 1, st.hole + 1); st.mark = 'back'; go(3); }}, 'Next hole'),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.hole = Math.max(0, st.hole - 1); st.mark = firstSet(); go(3); }}, 'Previous hole'),
+    el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => { st.hole = Math.min(st.holesN - 1, st.hole + 1); st.mark = firstSet(); go(3); }}, 'Next hole'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole] = {tees: [], aims: [], green: null}; go(3); }}, 'Clear this hole'),
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.holes[st.hole]?.aims.pop(); go(3); }}, 'Drop last aim')),
    // FIT TO THE TRACE (osm-course.js fitHoles): every hole's green mark on
@@ -2009,8 +2015,10 @@ export function open(draft = null) {
   const Ls = st.model.state.layers, none = new Uint8Array(st.land.nx * st.land.nz);
   const greens = blobs(Ls.masks.get('green') ?? none, st.land), tees = blobs(Ls.masks.get('tee') ?? none, st.land);
   const played = playedFn(), doubts = checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played, card: st.card ?? null});
-  // A line off the fairway with no other fix is offered a bend down it.
-  for (const q of doubts) if (q.kind === 'offPlay' && !q.fix) { const b = bendFor(st.holes[q.hole], played); if (b) { q.fix = {kind: 'aim', to: {x: b.x, z: b.z}, text: 'Bend it down the fairway'}; q.text += ` A bend down the fairway (${Math.round(b.share * 100)}% on) is offered.`; } }
+  // A line off the fairway is offered a bend down it -- for a dogleg mapped
+  // as a straight line, when its green is the right one. (A wrong green is
+  // never guessed at: map-checks.js says it needs fixing by hand.)
+  for (const q of doubts) if (q.kind === 'offPlay' && !q.fix) { const b = bendFor(st.holes[q.hole], played); if (b) { q.fix = {kind: 'aim', to: {x: b.x, z: b.z}, text: 'Bend it down the fairway'}; q.text += ` If its green is right, it may be a dogleg: a bend down the fairway (${Math.round(b.share * 100)}% on) is offered.`; } }
   return doubts;
  }
  // Fairway or semi-rough under a spot, as traced (the line down the fairway).
@@ -2039,7 +2047,7 @@ export function open(draft = null) {
  function checkBox() {
   const doubts = st.doubts = mapDoubts(), verdict = mapVerdict(st.holes.slice(0, st.holesN), doubts), fixable = doubts.filter(q => q.fix);
   const has = st.osm ? mapHas(st.osm.laid, st.holes, st.holesN) : null;
-  const show = q => { st.hole = q.hole; st.mark = q.kind === 'noTee' || q.kind === 'teeOff' ? 'back' : q.kind === 'noGreen' || q.kind === 'greenOff' ? 'green' : st.mark; go(3); if (q.at) plan.look(q.at.x, q.at.z, Math.max(plan.view.scale, 1.2)); say(q.text); };
+  const show = q => { st.hole = q.hole; st.mark = q.kind === 'noTee' || q.kind === 'teeOff' ? firstSet() : q.kind === 'noGreen' || q.kind === 'greenOff' ? 'green' : st.mark; go(3); if (q.at) plan.look(q.at.x, q.at.z, Math.max(plan.view.scale, 1.2)); say(q.text); };
   return el('div', {class: 'cb-field cb-checks' + (verdict.unreliable ? ' cb-warnbox' : '')}, el('div', {class: 'cb-panehead'}, 'Checking the map', el('small', {}, doubts.length ? `${doubts.length} to check` : 'all clear')),
    el('small', {}, st.osm ? 'OpenStreetMap can be incomplete or wrong. Each hole is checked against the greens and tees traced under it.' : 'Each hole is checked against the greens and tees traced under it.'),
    el('div', {class: verdict.unreliable ? 'cb-coverwarn' : ''}, verdict.words),
@@ -2059,16 +2067,24 @@ export function open(draft = null) {
  }
  function fitToTrace() {
   if (!st.model) return;
-  const want = st.holes.slice(0, st.holesN), fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.state.codes, st.land);
+  const want = st.holes.slice(0, st.holesN), sh = st.osm?.shift ?? {x: 0, z: 0}, teeTags = st.osm?.feats ? osmTeeSets(st.osm.feats) : {tagged: [], sets: null};
+  const fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.state.codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets});
   let greens = 0, tees = 0;
   fit.forEach((h, n) => { if (!h) return; if (h.fit.green === 'moved') greens++; tees += h.fit.tees; st.holes[n] = {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null, index: want[n].index ?? null}; });
   go(3); say(`Fitted: ${greens} green mark${greens === 1 ? '' : 's'} moved onto a green; ${tees} tee boxes given to holes. Drag any mark to move it.`);
  }
  function markAt(p) {
   const h = st.holes[st.hole] ??= {tees: [], aims: [], green: null};
-  if (st.mark === 'green') { h.green = {x: p.x, z: p.z}; st.mark = 'back'; }
+  if (st.mark === 'green') { h.green = {x: p.x, z: p.z}; st.mark = firstSet(); }
   else if (st.mark === 'aim') h.aims.push({x: p.x, z: p.z});
-  else { h.tees = h.tees.filter(t => t.set !== st.mark); h.tees.push({x: p.x, z: p.z, set: st.mark}); h.tees.sort((a, b) => ['back', 'middle', 'front'].indexOf(a.set) - ['back', 'middle', 'front'].indexOf(b.set)); if (st.mark === 'back') st.mark = 'green'; }
+  else {
+   // A tee of one of the six sets (tees.js), longest first; the hole's first
+   // tee placed, the green is next.
+   const first = !h.tees.length;
+   h.tees = h.tees.filter(t => colourOf(t.set) !== st.mark); h.tees.push({x: p.x, z: p.z, set: st.mark});
+   h.tees.sort((a, b) => TEE_ORDER.indexOf(colourOf(a.set)) - TEE_ORDER.indexOf(colourOf(b.set)));
+   if (first) st.mark = 'green';
+  }
   go(3);
  }
 
@@ -2206,7 +2222,7 @@ export function open(draft = null) {
   // The LIDAR files are not in a draft: stand-ins carry their names and map
   // grid, so the place is known (imagery, OpenStreetMap); building the land
   // anew needs the files again. Everything else comes back as it was left.
-  Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: d.holes ?? [], holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box,
+  Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: (d.holes ?? []).map(h => h && {...h, tees: (h.tees ?? []).map(t => ({...t, set: colourOf(t.set) ?? 'blue'}))}), holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box,
    sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], geo: d.geo ?? null, treePlan: d.treePlan ?? null, ...(d.view ?? {})});
   let lostPics = 0;
   if (d.land) {

@@ -15708,6 +15708,85 @@ fewer wrong ones at about the same ratio, so none is set (PLACED). The fix
 stays a guess, said so in the builder; reading the hole's dogleg before
 choosing its green is the next step if it matters.
 
+**Withdrawn, 10 November 2026.** The owner, after trying the checks on
+Worthington ("the warnings do point to real issues"): "we should just remove
+the green fix attempts then and just tell the user it needs fixing". A hole
+drawn to the wrong green (off the fairways, sharing a green, crossing
+another) is now flagged with "it needs fixing by hand" and no green offered;
+29% wrong was too often for a button that moves a hole. Kept: a mark a few
+metres off its green or tee moved onto the nearest, and a bend down the
+fairway for a line off it (a dogleg mapped straight), offered "if its green
+is right". The bench still runs; its *fixed* column is 0 by design.
+
+## Tee sets from OpenStreetMap (10 November 2026, the builder-ux branch)
+
+The owner: "We need to add support for multiple tees in the game more than
+just blue white red. We should have support for up to 6 tees. Many courses
+have 4 at minimum. black -> blue -> white -> silver -> gold -> red. This needs
+to feed from the open street map data. Generated courses should still just
+have 3 tees." (src/tees.js; COURSE_BUILDER, *Six tee sets*.)
+
+**The source.** The OpenStreetMap wiki, *Tag:golf=tee*
+(https://wiki.openstreetmap.org/wiki/Tag:golf=tee, read 10 November 2026):
+a tee's set is "often mapped as `tee=<COLOUR>`" (its example
+`tee=yellow`; colours named on the page: blue, white, red, green, yellow,
+black), or named (`tee=championship`; the page lists Championship,
+Members', Women's) or numbered (`tee=<NUMBER>`). The page says nothing of
+several sets on one box, of `colour=*`, or of yardage tags.
+
+**What the maps hold** -- the 16 courses kept in bench/courses (osm.json
+each), counted 10 November 2026: of 1,020 golf=tee areas, **one** names a
+set: Worthington's `tee=blue;white;gold;red` (so ";" separates sets in
+practice), and one more says `tee=teebox`. **TPC Scottsdale's** hole lines
+carry yardages under four named keys, `dist:championship`,
+`dist:players`, `dist:resort`, `dist:forward`; no other course has
+`dist:*`. So the tags settle a course's sets rarely, and **the count of
+boxes does the work**.
+
+The rules, every one PLACED:
+
+- **The order and colours**: the owner's order, black (longest) to red.
+  Blue, white and red keep the game's colours; black #26282c, silver
+  #b4bac2, gold #d6a72c chosen to read apart on turf.
+- **Tag values**: the six colours; yellow is gold, grey/gray silver;
+  championship, champion(s), tips, tournament and pro(fessional) are black;
+  green, orange, numbers and anything else name no set. ";", "," or "/"
+  separate several.
+- **A course's sets**: the sets its tags name, together (Worthington: blue,
+  white, gold, red -- four, no black); else its holes' `dist:*` keys, by
+  colour where they are colours, else as many as there are keys (TPC
+  Scottsdale: four); else as many as the holes most often have tee boxes
+  (a tie the more), **three at the least**. Four are black, blue, white,
+  red; five add gold between white and red; six are all.
+- **Boxes to sets**: a tagged box (or one within 8 m of a tagged box's
+  middle) is its sets. The rest, farthest first, share the course's sets the
+  hole's tags left free, spread by distance: with as many boxes as sets or
+  more, a box each (the farthest the longest); with fewer, each set goes to
+  the box at its place in the spread, so a box can carry several -- one box,
+  every set. (First built as one set a box: a course whose holes had one box
+  each became a one-set course. The Build it for me journey showed it.) A
+  hole with no box keeps the map's own tee, carrying every set.
+- **A set a hole lacks** is played from the hole's nearest set in the order;
+  **a set the course lacks** likewise (a golfer on silver, on a course of
+  white and gold, plays white: a tie goes to the longer). A golfer's
+  remembered tee is kept as chosen; the nearest is worked out each course.
+- **Built courses from before** (the builder's back, middle and front) still
+  play blue, white and red spread over their tees by distance, exactly as
+  before -- no BUILT_VERSION bump: an unchanged file plays the same. Their
+  marks, opened again in the builder, read as blue, white and red.
+- **Generated courses** keep blue, white and red; the biome fingerprints are
+  unchanged (`tools/biome-fingerprint.mjs --check`, 10 November 2026).
+
+**Tee markers on narrow built tees** (the owner: "Our tee markers need to
+stay inside the teebox on built courses"): a generated pad is 6 m wide and
+the markers stand 15 cm (six inches) inside its edges; a traced box can be
+narrower or shorter. On a built hole each marker now comes in 10 cm at a
+time until it stands 15 cm inside the box (the baked tee field, `h.onTee`),
+to 30 cm from the line at the least, and stands level with the tee mark when
+a metre behind it is off the box. Sets sharing one box stand side by side,
+each pair 40 cm inside the one before (PLACED). Not yet looked at on a real
+narrow tee in the game.
+
 ## The map before the LIDAR (10 November 2026, the builder-ux branch)
 
 Door 2 now shows the aerial map round a place found by name before any

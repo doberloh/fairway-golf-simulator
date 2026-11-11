@@ -374,7 +374,7 @@ export function createEditor(doc) {
   // renumbered in order. A course keeps at least one. One undo each.
   addHole({x, z, dx = 0, dz = -1}) {
    const L = Math.hypot(dx, dz) || 1, gx = x + dx / L * 300, gz = z + dz / L * 300;
-   api.editHoles(hs => { const n = hs.length + 1; hs.push({number: n, par: 4, index: n, tees: [{x, z, set: 'back'}], green: {x: gx, z: gz}, line: [[x, z], [gx, gz]]}); });
+   api.editHoles(hs => { const n = hs.length + 1; hs.push({number: n, par: 4, index: n, tees: [{x, z, set: 'blue'}], green: {x: gx, z: gz}, line: [[x, z], [gx, gz]]}); });
    return state.holes.length - 1;
   },
   removeHole(hole) {

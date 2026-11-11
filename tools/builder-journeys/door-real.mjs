@@ -302,9 +302,10 @@ export default function ({journey, SHOTS}) {
   await page.keyboard.press('Enter');
   if (await kindAt(115, 90) !== 'heather') throw Error('the outline should have filled heather');
   // THE PEN (builder-ux, item 3): nodes at the clicks, the curve shown while
-  // drawing, the first node closing the shape, a node dragged, then Enter
-  // fills the curve that was shown -- rounded, so the middle of a side bows
-  // out past the straight line between its nodes.
+  // drawing, and a click on the first node closing the shape and filling it
+  // at once (the owner, 10 November 2026: no Apply button) -- the curve that
+  // was shown, rounded, so the middle of a side bows out past the straight
+  // line between its nodes. (Enter closing and filling is the heather above.)
   await page.locator('.cb-kind').selectOption('sand');
   const pen = [[150, 20], [180, 20], [180, 50], [150, 50]];
   for (const [x, z] of pen) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
@@ -315,12 +316,9 @@ export default function ({journey, SHOTS}) {
   { const [px, py] = await at(150.3, 20.3); await page.mouse.move(px, py); }
   await t.shot('pen-closing');
   { const [px, py] = await at(150, 20); await page.mouse.click(px, py); }
-  if (!await page.evaluate(() => window.fairwayBuilder.door2.penEdit)) throw Error('a click on the first node should close the shape');
-  { const [ax, ay] = await at(180, 50), [bx, by] = await at(186, 56); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 3}); await page.mouse.up(); }
-  const moved = await page.evaluate(() => window.fairwayBuilder.door2.outline[2]);
-  if (Math.hypot(moved[0] - 186, moved[1] - 56) > 1.5) throw Error(`a closed shape's node should drag: ${moved}`);
+  if (await page.evaluate(() => window.fairwayBuilder.door2.outline.length)) throw Error('a click on the first node should close the shape and fill it');
+  if (await page.getByRole('button', {name: 'Apply', exact: true}).count()) throw Error('the pen should have no Apply button');
   await t.shot('pen-closed');
-  await page.keyboard.press('Enter');
   if (await kindAt(170, 38) !== 'sand') throw Error('the pen\'s shape should have filled sand');
   // NAMED UNDO (item 11): the fill is named after the tool that made it.
   { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Outline fill') throw Error(`the last change should be named Outline fill, not ${last}`); }
@@ -363,7 +361,9 @@ export default function ({journey, SHOTS}) {
   // The scorecard: nine holes and a total, the yards the game will measure;
   // par and handicap index set by hand (hole 2 a par 5, index 1).
   const card = await page.locator('.cb-card tbody tr').evaluateAll(rows => rows.map(r => [...r.children].map(c => c.querySelector('select')?.value ?? c.textContent)));
-  if (card.length !== 10 || card[9][0] !== 'Total' || !(+card[0][3] > 150) || card[0][4] !== card[0][3]) throw Error(`the scorecard should list nine holes and a total, white as blue with one tee: ${JSON.stringify(card.slice(0, 2))}`);
+  // One column a tee set the course has (tees.js): marked with blue tees only, Blue alone.
+  const head = await page.locator('.cb-card thead th').allTextContents();
+  if (card.length !== 10 || card[9][0] !== 'Total' || !(+card[0][3] > 150) || card[0].length !== 4 || head.join() !== 'Hole,Par,Index,Blue') throw Error(`the scorecard should list nine holes and a total, one column for the one tee set: ${JSON.stringify({head, rows: card.slice(0, 2)})}`);
   if (await page.locator('.cb-card input').count()) throw Error('the scorecard\'s yards are the game\'s, not typed');
   await page.locator('.cb-par[data-hole="1"]').selectOption('5');
   await page.locator('.cb-index[data-hole="1"]').selectOption('1');

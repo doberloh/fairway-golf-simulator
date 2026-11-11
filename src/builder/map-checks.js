@@ -5,10 +5,13 @@
 // number, a line from tee to green and a par; mappers leave some out and
 // draw some wrong. These checks read the holes door 2 marked from the map
 // against the course traced under them, and say what looks wrong, where, and
-// the fix that suits it -- for the player to take or leave. Pure; no DOM;
+// -- for a mark a few metres off its green or tee -- the fix that suits it,
+// for the player to take or leave; a hole drawn to the wrong green is only
+// flagged, to fix by hand. Pure; no DOM;
 // tests/builder-map-checks.test.mjs.
 //
 // Every threshold is PLACED (10 November 2026), for the owner to overrule.
+import {backTee} from '../tees.js';
 export const LIMITS = {
  onGreen: 15,      // a green mark further than this (m) from any green
  onTee: 20,        // a tee mark further than this (m) from any tee
@@ -20,14 +23,6 @@ export const LIMITS = {
  unreliable: .5,   // a map is unreliable when this share of its holes has a doubt
  onPlay: .4,       // a hole longer than par 3's whose line's middle runs on fairway or semi less than this
  crossEnds: .12,   // two holes' lines crossing, away from their ends by this share of each
- // The fix for a hole pointing the wrong way offers only a green NO hole
- // finishes on -- when a map draws a hole to the wrong green, its own is left
- // orphaned -- the best of them by fairway, with no floor. Measured over 16
- // real courses with each hole's green swapped in turn
- // (tools/map-checks-bench.mjs): the right green offered 62% of the time and a
- // wrong one 29%, against 14% and 59% for the first rule (any green no other
- // hole uses, at least 60% on the fairway). PLACED.
- orphan: true, orphanFloor: 0,
 };
 const YD = .9144;
 const d = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -49,7 +44,7 @@ export function blobs(mask, {nx, nz, cell, halfX, halfZ}, {min = 4} = {}) {
 }
 const nearest = (list, p) => list.reduce((best, b) => { const dd = Math.max(0, d(b, p) - b.r); return !best || dd < best.d ? {b, d: dd} : best; }, null);
 // The line a hole is played along: back tee, aim points, green.
-const lineOf = h => { const back = h.tees.find(t => t.set === 'back') ?? h.tees[0]; return [...(back ? [back] : []), ...(h.aims ?? []), ...(h.green ? [h.green] : [])]; };
+const lineOf = h => { const back = backTee(h.tees); return [...(back ? [back] : []), ...(h.aims ?? []), ...(h.green ? [h.green] : [])]; };
 const lengthOf = h => { const L = lineOf(h); let s = 0; for (let i = 1; i < L.length; i++) s += d(L[i - 1], L[i]); return s; };
 const inRing = (ring, p) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, zi] = ring[i], [xj, zj] = ring[j]; if ((zi > p.z) !== (zj > p.z) && p.x < (xj - xi) * (p.z - zi) / (zj - zi) + xi) c = !c; } return c; };
 
@@ -109,39 +104,21 @@ export function checkHoles(holes, {greens = [], tees = [], boundary = null, card
  }
  // Playing order: each tee near the last green.
  for (let n = 1; n < holes.length; n++) {
-  const prev = holes[n - 1]?.green, h = holes[n], back = h?.tees?.find(t => t.set === 'back') ?? h?.tees?.[0];
+  const prev = holes[n - 1]?.green, h = holes[n], back = backTee(h?.tees);
   if (prev && back && d(prev, back) > limits.walk) out.push({hole: n, kind: 'order', text: `Hole ${n + 1} starts ${Math.round(d(prev, back))} m from hole ${n}'s green: the map's numbers may be out of order.`, at: back});
  }
- // THE FIX FOR A HOLE POINTING THE WRONG WAY (off the fairways, sharing a
- // green, crossing another): the line from its tee to each green, and to its
- // green from each tee, at a length a par 3 to 5 is played over, scored by how
- // much of its middle runs on fairway; offered when clearly better than the
- // line it has (at least 60% on, and a quarter more than now). For two lines
- // crossing, both holes are tried and the better fix is offered.
- if (played) {
-  const spanYd = [limits.par[3][0], limits.par[5][1]];
-  const run = (a, b) => { const len = d(a, b), yd = len / YD; if (yd < spanYd[0] || yd > spanYd[1]) return -1; let k = 0, m = 0; for (let t = len * .2; t < len * .8; t += 4) { m++; if (played(a.x + (b.x - a.x) * t / len, a.z + (b.z - a.z) * t / len)) k++; } return m >= 5 ? k / m : -1; };
-  // A green another hole finishes on is not offered (two holes on one green
-  // was a fix that made new doubts, on Worthington).
-  const owner = new Map();
-  holes.forEach((h, n) => { if (!h?.green || !greens.length) return; const g = nearest(greens, h.green); if (g.d <= limits.onGreen) owner.set(g.b, [...(owner.get(g.b) ?? []), n]); });
-  const better = (h, n) => {
-   if (!h?.green || !h.tees?.length) return null;
-   const back = h.tees.find(t => t.set === 'back') ?? h.tees[0], now = Math.max(0, run(back, h.green)), floor = Math.max(limits.fixOn ?? .6, now + .25);
-   let best = null;
-   // `orphan`: only a green no hole finishes on, the best of them with no floor.
-   for (const g of greens) { if (limits.orphan ? owner.has(g) : (owner.get(g) ?? []).some(m => m !== n)) continue; const r = run(back, g); if (r >= (limits.orphan ? (limits.orphanFloor ?? 0) : floor) && r > (best?.r ?? -1)) best = {r, gain: r - now, fix: {kind: 'green', to: {x: g.x, z: g.z}, text: 'Aim it at the green down the fairway'}}; }
-   if (!limits.orphan) for (const t of tees) { const r = run(t, h.green); if (r >= floor && r > (best?.r ?? 0)) best = {r, gain: r - now, fix: {kind: 'tee', set: back.set, to: {x: t.x, z: t.z}, text: 'Start it from the tee up the fairway'}}; }
-   return best;
-  };
-  const tried = new Map(), bestOf = n => { if (!tried.has(n)) tried.set(n, better(holes[n], n)); return tried.get(n); };
-  for (const q of out) {
-   if (q.fix || !['offPlay', 'shared', 'crossing'].includes(q.kind)) continue;
-   let pick = null;
-   for (const n of q.other != null ? [q.hole, q.other] : [q.hole]) { const b = bestOf(n); if (b && (!pick || b.gain > pick.gain)) pick = {...b, n}; }
-   if (pick) { q.hole = pick.n; q.fix = pick.fix; q.text += ` For hole ${pick.n + 1}, a line ${Math.round(pick.r * 100)}% on the fairway is offered.`; }
-  }
- }
+ // A HOLE POINTING THE WRONG WAY (off the fairways, sharing a green,
+ // crossing another) is left for the player to fix by hand, with no green
+ // offered (the owner, 10 November 2026: "we should just remove the green fix
+ // attempts then and just tell the user it needs fixing"). The guess it
+ // replaced -- the line aimed at a green no hole finishes on, the best by
+ // fairway -- put the right green back 62% of the time and a wrong one 29%
+ // over 16 real courses (tools/map-checks-bench.mjs; RESEARCH, *The map
+ // checks, scored*): too often wrong to offer as a fix.
+ const byHand = {offPlay: ' It needs fixing by hand: drag its green or back tee onto the right one (the picture shows which).',
+  shared: ' One of them needs its green moved by hand onto its own green.',
+  crossing: ' It needs fixing by hand: check both against the picture.'};
+ for (const q of out) if (byHand[q.kind]) q.text += byHand[q.kind];
  return out.sort((a, b) => a.hole - b.hole);
 }
 
@@ -155,7 +132,7 @@ export function checkHoles(holes, {greens = [], tees = [], boundary = null, card
 // straight one by a quarter (PLACED). Returns {x, z, share, was} or null.
 export function bendFor(h, played, {step = 8, reach = 120} = {}) {
  if (!h?.green || !h.tees?.length || h.aims?.length) return null;
- const back = h.tees.find(t => t.set === 'back') ?? h.tees[0], g = h.green;
+ const back = backTee(h.tees), g = h.green;
  const leg = (a, b) => { const len = d(a, b); if (len < 40) return -1; let k = 0, n = 0; for (let s = len * .2; s < len * .8; s += 3) { n++; if (played(a.x + (b.x - a.x) * s / len, a.z + (b.z - a.z) * s / len)) k++; } return n ? k / n : -1; };
  const was = leg(back, g), straight = d(back, g);
  if (was >= .75) return null;

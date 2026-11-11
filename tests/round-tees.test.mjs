@@ -30,6 +30,17 @@ test('a golfer who joins starts from their own tee, and a tee rides through the 
  assert.equal(back.teeOf(1), 'red');
 });
 
-test('only the three tee sets are allowed', () => {
- assert.throws(() => new Round({players: [{name: 'Ann', team: 'A', hand: 'RH', tee: 'gold'}]}), /Invalid player/);
+// THE SIX SETS (tees.js; the owner, 10 November 2026): any of them may be
+// chosen; a course without it plays the nearest it has.
+test('the six tee sets are allowed, and nothing else', () => {
+ for (const tee of ['black', 'blue', 'white', 'silver', 'gold', 'red']) assert.doesNotThrow(() => new Round({players: [{name: 'Ann', team: 'A', hand: 'RH', tee}], tee}));
+ assert.throws(() => new Round({players: [{name: 'Ann', team: 'A', hand: 'RH', tee: 'green'}]}), /Invalid player/);
+ assert.throws(() => new Round({tee: 'purple'}), /Invalid tee/);
+});
+
+test('a golfer on a set the course lacks plays the nearest it has', () => {
+ const r = new Round({players: [{name: 'Ann', team: 'A', hand: 'RH', tee: 'black'}, {name: 'Cal', team: 'A', hand: 'RH', tee: 'gold'}, {name: 'Bo', team: 'A', hand: 'RH', tee: 'silver'}], tee: 'black'});
+ r.placeTee(tees);
+ assert.deepEqual(r.positions, [{x: 0, z: 0}, {x: 0, z: 40}, {x: 0, z: 20}], 'black from blue, gold from red, silver from white');
+ assert.equal(r.tee, 'blue', 'the round plays its nearest set');
 });

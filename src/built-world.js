@@ -35,7 +35,8 @@ import {streamIndex} from './streams.js';
 import {GROUND_PLANTS, TREE_SIZE, tallHeight, crownRadius} from './species.js';
 import {BUILT_FIELD, BUILT_CHANNELS, BUILT_GROUND_CODE, fieldSize, bakeBuiltField} from './built-field.js';
 export {BUILT_FIELD, BUILT_CHANNELS, BUILT_GROUND_CODE, fieldSize, bakeBuiltField};
-import {TEE_COLORS, rng} from './course-plan.js';
+import {rng} from './course-plan.js';
+import {GENERATED_TEES, colourOf, courseSets, teeFor} from './tees.js';
 import {choosePin} from './course.js';
 
 export const YARD = .9144;
@@ -314,11 +315,17 @@ const lerpLine = (pts, z) => {
 // green) at the origin, +z towards the green, placeHole's turn. The line runs
 // from the back tee through each bend to the green; a bend no farther on than
 // the one before, or within a metre of the green, is skipped (`skipped`) --
-// the centre must be a function of the distance down the hole. The three tee
-// sets, blue, white and red, are the tees by distance, farthest first, spread
-// over the three (one tee plays all three; two make white and red the
-// nearer). A tee's yards are along the line from where it stands across it.
-export function builtLine(rec) {
+// the centre must be a function of the distance down the hole.
+// THE TEE SETS (tees.js; the owner, 10 November 2026: up to six, from
+// OpenStreetMap). `names`: the course's sets, longest first (tees.js
+// courseSets over every hole); each is the hole's tee of that set, or of the
+// nearest set it has (teeFor) -- a hole may lack one the course has. A course
+// whose tees name no set (from the builder before the six: back, middle and
+// front) plays blue, white and red as it always did: the tees by distance,
+// farthest first, spread over the three (one tee plays all three; two make
+// white and red the nearer). A tee's yards are along the line from where it
+// stands across it. `back` is always the farthest tee: the hole's frame.
+export function builtLine(rec, names = null) {
  const tees = [...rec.tees].sort((a, b) => Math.hypot(b.x - rec.green.x, b.z - rec.green.z) - Math.hypot(a.x - rec.green.x, a.z - rec.green.z));
  const back = tees[0], dir = Math.atan2(rec.green.x - back.x, rec.green.z - back.z), c = Math.cos(dir), sn = Math.sin(dir);
  const local = p => { const x = (p[0] ?? p.x) - back.x, z = (p[1] ?? p.z) - back.z; return {x: x * c - z * sn, z: x * sn + z * c}; };
@@ -328,14 +335,23 @@ export function builtLine(rec) {
  pts.push({x: green.x, z: length});
  const center = z => lerpLine(pts, z);
  const yardsFrom = t => { const z0 = Math.max(0, local(t).z); let d = 0, prev = {x: center(z0), z: z0}; for (let z = z0 + 1; z <= length; z += 1) { const q = {x: center(z), z}; d += Math.hypot(q.x - prev.x, q.z - prev.z); prev = q; } return d / YARD; };
- const names = Object.keys(TEE_COLORS);
- const sets = names.map((name, i) => tees[Math.min(tees.length - 1, Math.round(i * (tees.length - 1) / Math.max(1, names.length - 1)))]);
+ names ??= courseSets([rec]);
+ let sets;
+ if (names) {
+  // Each set, the hole's tee of it -- or of the nearest it has, the farthest
+  // such tee when there are two (tees are farthest first).
+  const have = tees.map(t => colourOf(t.set)).filter(Boolean);
+  sets = names.map(name => { const c = teeFor(name, have); return tees.find(t => colourOf(t.set) === c) ?? back; });
+ } else {
+  names = [...GENERATED_TEES];
+  sets = names.map((name, i) => tees[Math.min(tees.length - 1, Math.round(i * (tees.length - 1) / Math.max(1, names.length - 1)))]);
+ }
  return {tees, back, dir, local, green, length, pts, center, skipped, names, sets, yards: Object.fromEntries(names.map((name, i) => [name, yardsFrom(sets[i])]))};
 }
 // A built hole: the game's hole contract (range.js buildRange keeps the
 // shortest list of it) from a stored record, measured against the field.
-export function builtHole(rec, index, s, bio, field, greenPolys) {
- const line = builtLine(rec), {back, dir} = line;
+export function builtHole(rec, index, s, bio, field, greenPolys, names = null) {
+ const line = builtLine(rec, names), {back, dir} = line;
  const h = {built: true, hole: index, number: rec.number, par: rec.par, index: rec.index, settings: s, bio, seed: s.seed,
   ponds: [], bunkers: [], collections: [], trees: [], phase: 0, doglegAngle: 0, greenWave2: 0, greenWave3: 0, greenWave5: 0, greenAspect: 1, greenTurn: 0};
  // placeHole reads the pin, green, tee and centre to cache their world
@@ -365,7 +381,7 @@ export function builtHole(rec, index, s, bio, field, greenPolys) {
  const greenSize = gpoly ? Math.max(4, Math.sqrt(Math.abs(polygonArea(gpoly)) / Math.PI)) : 12;
  // Each tee set's yards along the playing line, as course-plan.js measures them.
  h.tees = Object.fromEntries(line.names.map((name, i) => { const q = local(line.sets[i]); return [name, {x: q.x, z: q.z, yards: line.yards[name]}]; }));
- Object.assign(h, {length, routeLength: length, yards: h.tees.blue.yards, center, width: z => Math.max(leftWidth(z), rightWidth(z)), leftWidth, rightWidth,
+ Object.assign(h, {length, routeLength: length, yards: h.tees[line.names[0]].yards, center, width: z => Math.max(leftWidth(z), rightWidth(z)), leftWidth, rightWidth,
   fairwayStart: mowStart, mowStart, turnFraction: .5, greenSize, tee: {x: 0, z: 0}, green: {x: green.x, z: green.z}, pin: {x: green.x, z: green.z},
   bounds: {x: 80, minZ: -40, maxZ: length + 50}});
  // A green's distance is the outline's, exact (course.js greenDistance asks
@@ -373,6 +389,11 @@ export function builtHole(rec, index, s, bio, field, greenPolys) {
  // field's reach. Local coordinates in, metres out, negative on the green.
  h.greenPoly = gpoly;
  h.greenDist = (x, z) => { const w = h.toWorld({x, z}); return gpoly ? polygonDistance(gpoly, w.x, w.z) : Math.hypot(x - green.x, z - green.z) - greenSize; };
+ // Whether a spot (local) is on a tee box, at least `margin` metres in from
+ // its edge: the renderer keeps the tee markers inside a narrow built tee (the
+ // owner, 10 November 2026: "Our tee markers need to stay inside the teebox on
+ // built courses").
+ h.onTee = (x, z, margin = 0) => { const w = h.toWorld({x, z}); return builtFieldAt(field, w.x, w.z, CH.tee) <= -margin; };
  h.worldPin = h.toWorld(h.pin); h.worldGreen = h.toWorld(h.green); h.worldTee = h.toWorld(h.tee); h.cell = h.toWorld({x: center(length / 2), z: length / 2});
  return h;
 }
@@ -418,7 +439,9 @@ export function worldFromDoc(doc, settings = {}, {field: baked = null} = {}) {
  const field = baked && baked.ex === ex && baked.ez === ez ? baked : bakeBuiltField(doc, ex, ez);
  const sample = landSampler(doc);
  const greenPolys = greenParts(doc.surfaces.green || []);
- const holes = [...doc.holes].sort((a, b) => a.number - b.number).map((rec, i) => builtHole(rec, i, s, bio, field, greenPolys));
+ // The course's tee sets, longest first (null: a course from before the six).
+ const teeSets = courseSets(doc.holes);
+ const holes = [...doc.holes].sort((a, b) => a.number - b.number).map((rec, i) => builtHole(rec, i, s, bio, field, greenPolys, teeSets));
  // Finer ground where the ball rolls and where edges meet: greens, tees,
  // sand and water within 3 m, as the generator refines its own.
  const near = (x, z, c) => Math.abs(builtFieldAt(field, x, z, c)) < 3 || builtFieldAt(field, x, z, c) < 0;
