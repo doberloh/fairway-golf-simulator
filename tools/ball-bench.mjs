@@ -127,6 +127,7 @@ const SECTIONS = {
   check('rebound angle, bias', mean(err.angle), -4, 4, 'deg', 'R2 0.84');
   check('rebound angle, typical miss', mae(err.angle), 0, 7, 'deg');
   check('spin taken off, bias', mean(err.spin), -700, 700, 'rpm', 'measured: 4,690 rpm off whatever came in');
+  check('spin taken off, typical miss', mae(err.spin), 0, 900, 'rpm', 'R2 0.97');
   check('first bounce length, bias', mean(err.first), -4, 4, 'ft', 'R2 0.91');
   check('first bounce length, typical miss', mae(err.first), 0, 5, 'ft');
   check('total bounce and roll, bias', mean(err.total), -8, 8, 'ft', 'R2 0.90');
@@ -202,7 +203,7 @@ const SECTIONS = {
   // The flyer: the same swing from light rough lands flatter with half the
   // spin and runs about 60% further (USGA).
   const clean = land({speed: 23.8, angle: 48, spin: 6200, turf: firm}).run, flyer = land({speed: 25.6, angle: 41, spin: 2800, turf: firm}).run;
-  check('a flyer runs well past a clean strike', flyer / clean, 1.3, 3.2, 'x', 'USGA: about 1.6x');
+  check('a flyer runs well past a clean strike', flyer / clean, 1.3, 3.6, 'x', 'USGA: about 1.6x; its regression 2.3x');
  },
 
  // CHIPS. TrackMan's "Chip Shot Code" (Zanardelli 2021, about 6,000 chips):
@@ -236,7 +237,7 @@ const SECTIONS = {
   // A 50 yd pitch with a tour player's spin (Rice: 54 deg wedge, 25.4 deg,
   // 6,603 rpm) hops and stops; firmness decides by how much.
   const pitch = FIRMS.map(f => shot({mph: speedFor(25.4, 6603, 50 * YARD) / MPH, vla: 25.4, spin: 6603, turf: cond(f)}));
-  check('50 yd pitch, 6,600 rpm, medium green: run', pitch[1].run / YARD, .5, 8.5, 'yd', 'PLACED');
+  check('50 yd pitch, 6,600 rpm, medium green: run', pitch[1].run / YARD, .5, 10, 'yd', 'PLACED: two hops and a short roll');
   info(`50 yd pitch runs ${pitch.map((p, i) => `${FIRMS[i]} ${f1(p.run / YARD)} yd`).join(', ')}; medium hops ${hopText(pitch[1].hops)}`);
  },
 

@@ -86,6 +86,12 @@ export const stimpDeceleration = stimp => STIMP_RELEASE_SPEED ** 2 / (2 * stimp 
 //             spinning ball GRIPS (spin spent in one bite: Haake's "rolling"
 //             greens, soft and wet) or SKIDS (keeps backspin for the next
 //             bounce: his "slipping" greens, firm and sandy).
+//   shear     the most the turf can hold a sliding ball back in one bounce
+//             (m/s of the ball's speed) before it tears: turf is strong
+//             against a ball coming down on it and weak sideways (Haake). It
+//             is why the USGA measured the SAME 4,690 rpm taken off every full
+//             shot whatever its speed and angle, where plain friction would
+//             take more off a harder landing.
 //   arm       how much of that friction turns the ball, against a hard floor's
 //             1. Turf pushes back on a ball a little ahead of its centre (Haake's
 //             film: 2-5 mm), so a ball leaves a bounce short of rolling and a
@@ -101,7 +107,7 @@ export const stimpDeceleration = stimp => STIMP_RELEASE_SPEED ** 2 / (2 * stimp 
 //             dense tee 3 ft 4 in (USGA 2018).
 //   firm      which condition moves this surface: 'green', 'course' or none.
 const SURFACES = {
- green:   {e0: [.44, .50, .56], eHi: [.07, .10, .14], tilt: [18.5, 16.0, 11.6], mu: [.50, .30, .2235], arm: [1, .92, .85], grab: 0, dig: [.27, .095, 0], slide: .42, stimp: null, firm: 'green'},
+ green:   {e0: [.44, .50, .56], eHi: [.07, .10, .14], tilt: [18.5, 16.0, 11.6], mu: [.55, .45, .40], shear: [10, 6.5, 4.9], arm: [1, .92, .85], grab: 0, dig: [.27, .095, 0], slide: .42, stimp: null, firm: 'green'},
  fringe:  {e0: [.42, .48, .54], eHi: [.07, .10, .135], tilt: [19.0, 16.5, 12.5], mu: [.52, .34, .26], arm: [1, .92, .85], grab: .03, dig: [.26, .10, .02], slide: .45, stimp: 6.5, firm: 'green'},
  fairway: {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.9, 4.9, 6.2], firm: 'course'},
  tee:     {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.3, 4.0, 5.0], firm: 'course'},
@@ -160,7 +166,7 @@ export function turfOf(surface, conditions) {
  const stimp = surface === 'green' ? (c.stimp ?? DEFAULT_TURF.stimp) : at(base.stimp, f);
  row = {
   surface, firmness: f,
-  e0: at(base.e0, f), eHi: at(base.eHi, f), tilt: at(base.tilt, f), mu: at(base.mu, f), grab: at(base.grab ?? 0, f), dig: at(base.dig ?? 0, f),
+  e0: at(base.e0, f), eHi: at(base.eHi, f), tilt: at(base.tilt, f), mu: at(base.mu, f), shear: at(base.shear ?? 0, f), grab: at(base.grab ?? 0, f), dig: at(base.dig ?? 0, f),
   slide: base.slide, arm: at(base.arm ?? 1, f), stimp,
   // `roll` is the Stimp's own average deceleration; `c` the constant of the
   // speed law the ball is actually slowed by.

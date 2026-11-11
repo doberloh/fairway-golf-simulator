@@ -105,7 +105,7 @@ export function bounce(v, w, n, row) {
  // slip / 3.5 -- or a little more, because turf does not push on the very
  // bottom of the ball (`arm`, turf.js).
  const arm = firm ? mix('arm') : row.arm ?? 1;
- const need = slip / (1 + 2.5 * arm), can = mix('mu') * jn, jt = Math.min(need, can);
+ const need = slip / (1 + 2.5 * arm), can = Math.min(mix('mu') * jn, row.shear ? mix('shear') : Infinity), jt = Math.min(need, can);
  const ux = slip > 1e-9 ? sx / slip : 0, uy = slip > 1e-9 ? sy / slip : 0, uz = slip > 1e-9 ? sz / slip : 0;
  const out = [v[0] + jn * nx - jt * ux, v[1] + jn * ny - jt * uy, v[2] + jn * nz - jt * uz];
  const k = 2.5 * arm * jt / R;
