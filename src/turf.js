@@ -67,75 +67,117 @@ export const FOOT = .3048;
 export const stimpDeceleration = stimp => STIMP_RELEASE_SPEED ** 2 / (2 * stimp * FOOT);
 
 // ---- every surface -----------------------------------------------------------
-// One row per surface. The columns:
+// One row per surface. A column written [soft, medium, firm] moves with the
+// surface's firmness condition; a single number does not. The columns:
 //
 //   e0, eHi   restitution of a slow bounce (e0) and of a fast one (eHi, at
 //             `E_FAST` m/s into the ground and above). Turf gives a soft landing
 //             to a hard impact -- the ball craters it -- and a livelier one to
 //             a gentle hop, which is why a ball bounces three or four times and
-//             does not just thud. Penner (2002) fitted the curve on a green.
+//             does not just thud. Penner (2001) measured the curve on a lawn and
+//             Haake's drop tests on greens agree with it.
 //   tilt      degrees the ground is effectively tilted back toward an arriving
-//             ball at the reference impact (18.6 m/s, 44.4 degrees from the
-//             vertical): the front wall of the pitch mark it is digging. Grows
-//             with speed and with how glancing the impact is. Penner (2002).
+//             ball at the reference impact (Haake's 5 iron: 18.6 m/s, 44.4
+//             degrees from the vertical): the front wall of the pitch mark it is
+//             digging (Penner 2002). Grows with the speed into the ground and
+//             with how glancing the arrival is.
 //   mu        friction the turf can exert on the ball during the bounce, as a
 //             share of how hard the ball is pressed in. Decides whether a
-//             spinning ball GRIPS (spin is spent in one bite) or SKIDS (it keeps
-//             some backspin for the next bounce).
-//   grab      share of the ball's travel the grass itself swallows on contact,
-//             beyond friction: nothing on a green, most of it in heavy rough.
+//             spinning ball GRIPS (spin spent in one bite: Haake's "rolling"
+//             greens, soft and wet) or SKIDS (keeps backspin for the next
+//             bounce: his "slipping" greens, firm and sandy).
+//   arm       how much of that friction turns the ball, against a hard floor's
+//             1. Turf pushes back on a ball a little ahead of its centre (Haake's
+//             film: 2-5 mm), so a ball leaves a bounce short of rolling and a
+//             skidding one keeps more backspin than its lost speed would say.
+//             This is what brings a spun wedge back on a firm green.
+//   grab      share of the ball's travel the grass itself swallows at every
+//             contact, beyond friction: nothing on a green, a third in rough.
+//   dig       the further share a hard landing loses in its own pitch mark,
+//             at the reference impact; a gentle hop loses none of it.
 //   slide     friction while the ball is skidding along the ground.
-//   roll      rolling deceleration, m/s^2, on the level. A green's comes from
-//             the Stimp reading instead.
+//   stimp     how far a Stimpmeter would roll a ball on it, feet. A green's is
+//             the player's setting; a good fairway measured 5 ft 8 in and a
+//             dense tee 3 ft 4 in (USGA 2018).
 //   firm      which condition moves this surface: 'green', 'course' or none.
-//
-// `like` rows (the wild ground types in grounds.js) are written from their own
-// table below.
 const SURFACES = {
- green:   {e0: .51, eHi: .12, tilt: 15.4, mu: .40, grab: 0,   slide: .30, roll: null, firm: 'green'},
- fringe:  {e0: .48, eHi: .12, tilt: 16.0, mu: .43, grab: .03, slide: .34, roll: 1.05, firm: 'green'},
- fairway: {e0: .50, eHi: .13, tilt: 16.5, mu: .42, grab: .04, slide: .38, roll: 1.45, firm: 'course'},
- tee:     {e0: .50, eHi: .13, tilt: 16.5, mu: .42, grab: .04, slide: .38, roll: 1.45, firm: 'course'},
- semi:    {e0: .42, eHi: .11, tilt: 17.5, mu: .48, grab: .14, slide: .50, roll: 2.6,  firm: 'course'},
- rough:   {e0: .32, eHi: .09, tilt: 18.5, mu: .55, grab: .32, slide: .65, roll: 4.6,  firm: 'course'},
- sand:    {e0: .12, eHi: .03, tilt: 6.0,  mu: .70, grab: .65, slide: .90, roll: 9.0,  firm: null, killsSpin: true},
- water:   {e0: 0,   eHi: 0,   tilt: 0,    mu: 1,   grab: 1,   slide: 1,   roll: 12,   firm: null, killsSpin: true},
+ green:   {e0: [.44, .50, .56], eHi: [.07, .10, .14], tilt: [18.5, 16.0, 11.6], mu: [.50, .30, .2235], arm: [1, .92, .85], grab: 0, dig: [.27, .095, 0], slide: .42, stimp: null, firm: 'green'},
+ fringe:  {e0: [.42, .48, .54], eHi: [.07, .10, .135], tilt: [19.0, 16.5, 12.5], mu: [.52, .34, .26], arm: [1, .92, .85], grab: .03, dig: [.26, .10, .02], slide: .45, stimp: 6.5, firm: 'green'},
+ fairway: {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.9, 4.9, 6.2], firm: 'course'},
+ tee:     {e0: [.42, .48, .54], eHi: [.08, .105, .13], tilt: [15.0, 13.0, 11.6], mu: [.50, .40, .30], arm: [1, .95, .9], grab: .02, dig: [.36, .19, .095], slide: .45, stimp: [3.3, 4.0, 5.0], firm: 'course'},
+ semi:    {e0: [.34, .40, .46], eHi: [.06, .09, .12],  tilt: [15.0, 13.5, 12.0], mu: [.60, .48, .38], grab: .12, dig: [.24, .18, .11], slide: .55, stimp: [2.3, 2.8, 3.4], firm: 'course'},
+ rough:   {e0: [.26, .30, .35], eHi: [.05, .07, .09],  tilt: [15.0, 14.0, 13.0], mu: [.65, .55, .47], grab: .36, dig: [.27, .22, .18], slide: .70, stimp: [1.3, 1.6, 1.9], firm: 'course'},
+ sand:    {e0: .12, eHi: .02, tilt: 6.0, mu: .70, grab: .65, slide: .90, stimp: .8, firm: null, killsSpin: true},
+ water:   {e0: 0, eHi: 0, tilt: 0, mu: 1, grab: 1, slide: 1, stimp: .5, firm: null, killsSpin: true},
 };
 for (const [k, g] of Object.entries(GROUNDS)) SURFACES[k] = {...g.turf, firm: null, killsSpin: !!g.killsSpin};
 export const E_FAST = 20;
 // The reference impact Penner's tilt was measured at (Haake's 5 iron).
 export const TILT_SPEED = 18.6, TILT_ANGLE = 44.4;
 
-// WHAT FIRMNESS DOES, per step from medium (-1 soft, +1 firm). Firm ground gives
-// more back, is dug into less and holds the ball less; soft ground does the
-// opposite of all three. Rolling on anything but a green is quicker when it is
-// firm (dry, tight turf) and slower when it is soft.
-export const FIRM_EFFECT = {e: .22, tilt: -.25, mu: -.16, roll: -.22, grab: -.25};
+// ROLLING RESISTANCE RISES GENTLY WITH SPEED. A Stimp reading is one number --
+// how far a ball released at 1.83 m/s runs -- and it fixes the AVERAGE
+// deceleration over that run, not its shape. Four independent things say the
+// shape is not flat (docs/BALL_PHYSICS.md, *Rolling resistance and speed*):
+// Ping's overhead-camera study (Burritt and Henrikson 2024) measured friction
+// falling as the ball slowed on three surfaces of four; Quintic's last foot of
+// roll is 12 in where a flat deceleration gives 7; a TrackMan-measured 12.1 mph
+// putt that skidded 70 in ran 38 ft 10 in, which a flat deceleration can only
+// reach on an impossible green; and the USGA's championship-green launcher
+// tests run out far shorter than a flat deceleration allows.
+//
+// So deceleration goes as speed to the power ROLL.power above ROLL.floor m/s
+// and is flat below it, scaled so that a Stimpmeter release still runs EXACTLY
+// the Stimp reading. A flat floor is what lets a ball come to rest on a slope
+// at all: with none, it could not stop on any slope, and with this one it will
+// not stop above about three quarters of the textbook limit -- which is where
+// the architects' "critical slope" charts put it.
+export const ROLL = {power: .42, floor: .5};
+// The constant c in a(v) = c x max(v, floor)^power for a surface that rolls
+// `stimp` feet on a Stimpmeter.
+function rollConstant(stimp) {
+ const p = ROLL.power, vf = ROLL.floor, vs = STIMP_RELEASE_SPEED, q = 2 - p;
+ return (Math.pow(vf, q) / 2 + (Math.pow(vs, q) - Math.pow(vf, q)) / q) / (stimp * FOOT);
+}
+// How far a ball already rolling at `speed` runs on the level.
+export function rollOut(row, speed) {
+ const p = ROLL.power, vf = ROLL.floor, q = 2 - p, v = Math.max(0, speed);
+ if (v <= vf) return v * v / (2 * row.c * Math.pow(vf, p));
+ return (Math.pow(vf, q) / 2 + (Math.pow(v, q) - Math.pow(vf, q)) / q) / row.c;
+}
 
+const at = (x, f) => !Array.isArray(x) ? x : f <= 0 ? x[1] + (x[1] - x[0]) * f : x[1] + (x[2] - x[1]) * f;
 const cache = new Map();
 // One surface's row under the given conditions. Cached: the same few rows are
 // asked for at every bounce and every step of a roll.
 export function turfOf(surface, conditions) {
  const c = conditions || DEFAULT_TURF;
- const key = surface + '|' + (c.stimp ?? 10) + '|' + (c.greenFirmness ?? 0) + '|' + (c.courseFirmness ?? 0);
+ const key = surface + '|' + (c.stimp ?? 10) + '|' + (c.greenFirmness ?? 0) + '|' + (c.courseFirmness ?? 0) + '|' + ROLL.power + '|' + ROLL.floor;
  let row = cache.get(key);
  if (row) return row;
  const base = SURFACES[surface] || SURFACES.rough;
  const f = base.firm === 'green' ? firmnessValue(c.greenFirmness) : base.firm === 'course' ? firmnessValue(c.courseFirmness) : 0;
+ const stimp = surface === 'green' ? (c.stimp ?? DEFAULT_TURF.stimp) : at(base.stimp, f);
  row = {
   surface, firmness: f,
-  e0: clamp(base.e0 * (1 + FIRM_EFFECT.e * f), 0, .9), eHi: clamp(base.eHi * (1 + FIRM_EFFECT.e * f), 0, .9),
-  tilt: base.tilt * (1 + FIRM_EFFECT.tilt * f),
-  mu: base.mu * (1 + FIRM_EFFECT.mu * f),
-  grab: clamp(base.grab * (1 + FIRM_EFFECT.grab * f), 0, 1),
-  slide: base.slide,
-  roll: surface === 'green' ? stimpDeceleration(c.stimp ?? DEFAULT_TURF.stimp) : base.roll * (base.firm === 'course' ? 1 + FIRM_EFFECT.roll * f : 1),
+  e0: at(base.e0, f), eHi: at(base.eHi, f), tilt: at(base.tilt, f), mu: at(base.mu, f), grab: at(base.grab ?? 0, f), dig: at(base.dig ?? 0, f),
+  slide: base.slide, arm: at(base.arm ?? 1, f), stimp,
+  // `roll` is the Stimp's own average deceleration; `c` the constant of the
+  // speed law the ball is actually slowed by.
+  roll: stimpDeceleration(stimp), c: rollConstant(stimp),
   hard: !!base.hard, killsSpin: !!base.killsSpin,
+  // The same surface at its firmest, which a gentle bounce is played off
+  // (bounce.js, SEVERITY).
+  firmer: base.firm && f < 1 ? turfOf(surface, {...c, [base.firm === 'green' ? 'greenFirmness' : 'courseFirmness']: 1}) : null,
  };
  if (cache.size > 4000) cache.clear();
  cache.set(key, row);
  return row;
 }
+// Forget cached rows: after a tool has changed SURFACES or ROLL.
+export const clearTurfCache = () => cache.clear();
+// The table itself, for tools that fit it (tools/ball-fit.mjs). Not for the game.
+export const SURFACE_TABLE = SURFACES;
 // Restitution of a bounce arriving at `speed` m/s into the surface.
 export function restitution(row, speed) {
  if (row.hard) return row.e0;
@@ -144,15 +186,12 @@ export function restitution(row, speed) {
 }
 
 // ---- rolling -----------------------------------------------------------------
-// Rolling deceleration on the level, m/s^2, at a given speed. ROLL_SPEED says
-// how much harder grass resists a ball rolling faster than a Stimpmeter's
-// release; see docs/BALL_PHYSICS.md, *Rolling resistance and speed*.
-export const ROLL_SPEED = {gain: 0};
+// The Stimp-average rolling deceleration of a surface, m/s^2.
 export const rollDeceleration = (surface, conditions) => turfOf(surface, conditions).roll;
+// The deceleration a ball rolling at `speed` actually feels.
 export function rollDecelerationAt(surface, conditions, speed = STIMP_RELEASE_SPEED) {
- const a = turfOf(surface, conditions).roll;
- if (!(ROLL_SPEED.gain > 0)) return a;
- return a * (1 + ROLL_SPEED.gain * Math.max(0, speed / STIMP_RELEASE_SPEED - 1));
+ const row = turfOf(surface, conditions);
+ return row.c * Math.pow(Math.max(speed, ROLL.floor), ROLL.power);
 }
 export const slideFriction = (surface, conditions) => turfOf(surface, conditions).slide;
 
@@ -163,15 +202,7 @@ export const slideFriction = (surface, conditions) => turfOf(surface, conditions
 // deceleration. These are the same two phases physics.js integrates over real
 // ground, written as arithmetic for the swing meter's bar and the putt lengths.
 const skidRun = (speed, mu) => 12 * speed * speed / (49 * mu * G);
-const rollRun = (speed, surface, conditions) => {
- const a = rollDeceleration(surface, conditions), k = ROLL_SPEED.gain, vs = STIMP_RELEASE_SPEED;
- if (!(k > 0) || speed <= vs) return speed * speed / (2 * a);
- // Above the release speed the resistance grows, so the run is integrated.
- let d = vs * vs / (2 * a);
- const n = 48, h = (speed - vs) / n;
- for (let i = 0; i < n; i++) { const u = vs + (i + .5) * h; d += u / (a * (1 + k * (u / vs - 1))) * h; }
- return d;
-};
+const rollRun = (speed, surface, conditions) => rollOut(turfOf(surface, conditions), speed);
 // How far a putt struck at `speed` runs on a level green.
 export function struckDistance(speed, conditions, surface = 'green') {
  const v = Math.max(0, speed);

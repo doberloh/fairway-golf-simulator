@@ -36,16 +36,27 @@ export function airViscosity(temp = 18) {
 //   - lift rises steeply with spin ratio and then flattens, so it is written
 //     as a saturating curve, CL = liftMax x S / (S + liftHalf). It is zero for
 //     a ball that is not spinning, with no extra rule needed to make it so.
-//   - drag is a floor plus a part that grows with spin ratio.
+//   - drag is a floor plus a part that grows with spin ratio: slowly at a
+//     drive's low ratio, quickly through an iron's, flattening at a wedge's
+//     (CD = dragBase + dragRise x S^2 / (S^2 + dragHalf^2)). A straight line
+//     cannot be right at both ends: fitted to irons it leaves every drive 4-6%
+//     short, and Acushnet's wind-tunnel figures for a production ball (US
+//     patent 6,913,550: CD 0.222 at a drive's speed and spin, about 0.31 at a
+//     slow iron's) say the same.
 //   - below the dimples' critical Reynolds number the boundary layer stops
 //     tripping and drag climbs toward a smooth sphere's. That is a slow ball: a
 //     chip, a pitch, or the last second of a high wedge.
-// The numbers are fitted to launch-monitor flights (tools/flight-fit.mjs) and
-// held inside the ranges those papers measured.
+// The numbers are fitted to flights (tools/flight-fit.mjs, 11 November 2026):
+// TrackMan's normalised 6 iron in calm and in wind (carry within 0.6%, peak
+// height 0.4%, landing angle 0.4 degrees), its 60-row driver chart (1.7%), the
+// 2023 tour averages (2.7%, a raw table), and the owner's GC3 and R50 sessions
+// (1.7% and 2.3%). They were not fitted to a wind tunnel, and came out on one:
+// at a drive's speed and spin they give CD 0.219 and CL 0.153, where Acushnet
+// measured 0.222 and 0.152 on a production ball.
 export const AERO = {
- liftMax: 0.445, liftHalf: 0.215,
- dragBase: 0.215, dragSpin: 0.36, dragSpin2: 0,
- dragLow: 0.12, lowRe: 62000, lowReWidth: 12000,
+ liftMax: 0.5386, liftHalf: 0.2148,
+ dragBase: 0.1964, dragRise: 0.2402, dragHalf: 0.2633,
+ dragLow: 0.0603, lowRe: 78070, lowReWidth: 12000,
  // Seconds for spin to fall by 1/e at 100 mph in sea-level air. The torque that
  // slows the spin grows with airspeed and density, so a drive sheds spin faster
  // than a wedge. Smits and Smith measured 23.8 s, Tavares et al. 18.9 s by radar.
@@ -60,7 +71,7 @@ export function coefficients(speed, spin, rho = 1.225, mu = 1.81e-5) {
  const u = Math.max(speed, 0.1);
  const s = Math.abs(spin) * R / u, re = rho * u * 2 * R / mu;
  const sc = Math.min(s, 1.2);
- const cd = AERO.dragBase + AERO.dragSpin * sc + AERO.dragSpin2 * sc * sc
+ const cd = AERO.dragBase + AERO.dragRise * sc * sc / (sc * sc + AERO.dragHalf * AERO.dragHalf)
   + AERO.dragLow / (1 + Math.exp((re - AERO.lowRe) / AERO.lowReWidth));
  const cl = AERO.liftMax * sc / (sc + AERO.liftHalf);
  return {cd, cl, s, re};
@@ -68,8 +79,8 @@ export function coefficients(speed, spin, rho = 1.225, mu = 1.81e-5) {
 
 // The wind a ball at height `y` above the ground feels, given the wind at the
 // reference height. Mutates and returns `out`.
-export function windAt(wind, y, out = [0, 0, 0]) {
- const f = Math.pow(Math.max(y, AERO.windFloor) / AERO.windHeight, AERO.windShear);
+export function windAt(wind, y, out = [0, 0, 0], uniform = false) {
+ const f = uniform ? 1 : Math.pow(Math.max(y, AERO.windFloor) / AERO.windHeight, AERO.windShear);
  out[0] = wind[0] * f; out[1] = wind[1] * f; out[2] = wind[2] * f;
  return out;
 }
@@ -79,7 +90,7 @@ export function windAt(wind, y, out = [0, 0, 0]) {
 // the terrain height under the ball (for the wind's height). Writes into `out`.
 const scratch = [0, 0, 0];
 export function airAcceleration(v, w, air, height, out = [0, 0, 0]) {
- const wind = air.wind ? windAt(air.wind, height, scratch) : null;
+ const wind = air.wind ? windAt(air.wind, height, scratch, air.uniform) : null;
  const ux = v[0] - (wind ? wind[0] : 0), uy = v[1] - (wind ? wind[1] : 0), uz = v[2] - (wind ? wind[2] : 0);
  const u = Math.hypot(ux, uy, uz);
  if (u < 0.01) { out[0] = 0; out[1] = -G; out[2] = 0; return out; }
@@ -99,7 +110,10 @@ export function airAcceleration(v, w, air, height, out = [0, 0, 0]) {
 export const spinDecay = (speed, dt, rho = 1.225) =>
  Math.exp(-dt * speed / SPIN_TAU_SPEED / AERO.spinTau * (rho / 1.225));
 
-export const makeAir = ({altitude = 0, temperature = 18, wind = null} = {}) => ({
+// `uniformWind` blows the same at every height: what TrackMan's wind tables
+// assume, and so what they are compared under. The game's wind has a profile.
+export const makeAir = ({altitude = 0, temperature = 18, wind = null, uniformWind = false} = {}) => ({
+ uniform: !!uniformWind,
  rho: airDensity(altitude, temperature), mu: airViscosity(temperature),
  wind: wind && (wind[0] || wind[1] || wind[2]) ? wind : null,
 });

@@ -28,13 +28,16 @@ const R = BALL_RADIUS;
 //   rim    the cut edge of the turf, and the inch of soil above the liner
 //   wall   the liner
 //   floor  the bottom of the liner
-//   pin    a fibreglass flagstick
+//   pin    a fibreglass flagstick. It gives, and it is smooth: a square hit
+//          all but stops the ball (Mase, Cal Poly 2019), so a centred putt
+//          far too fast for the hole alone still drops, while one that
+//          glances the stick is as likely knocked out as helped.
 // `settle` is the approach speed below which a contact no longer bounces.
 export const CUP = {
- rimE: .30, rimMu: .40,
+ rimE: .10, rimMu: .40,
  wallE: .40, wallMu: .30,
  floorE: .30, floorMu: .40,
- pinE: .45, pinMu: .30,
+ pinE: .10, pinMu: .10,
  settle: .12,
  // The micro-step, seconds. 1/4000 s moves a 2 m/s ball half a millimetre.
  dt: 1 / 4000,
@@ -80,20 +83,22 @@ function collide(p, v, w, n, pen, e, mu, settle) {
 // `hole` is {x, z, y, gx, gz}: the middle of the hole, the height of the green
 // there, and the green's slope (rise per metre along x and z) -- the lip
 // follows the slope, as a cup cut straight down into a tilted green does.
-// `env`: {roll: the green's rolling deceleration (m/s^2), slide: its sliding
+// `env`: {rollAt: the green's rolling deceleration at a speed (m/s^2), slide: its sliding
 // friction, e: its restitution for a slow bounce, pin: flagstick radius or 0,
 // t: the clock on entry, sample: seconds between recorded points, maxTime}.
 // Returns {holed, lipped, pinHits, rest, t, points, contacts}.
 export function cupSim(ball, hole, env = {}) {
  const {p, v, w} = ball, dt = env.dt || CUP.dt;
- const roll = env.roll ?? .55, slide = env.slide ?? .3, greenE = env.e ?? .3, pin = env.pin || 0;
+ const slide = env.slide ?? .4, greenE = env.e ?? .3, pin = env.pin || 0;
+ // The green's rolling deceleration at a given speed (turf.js); a Stimp 10
+ // green's flat average when none is handed in.
+ const rollAt = env.rollAt || (() => env.roll ?? .55);
  const sample = env.sample ?? 1 / 240, maxTime = env.maxTime ?? 8;
  const points = [], contacts = [];
  let t = env.t || 0, next = t, lipped = false, pinHits = 0, holed = false, rest = false;
  const slopeLen = Math.hypot(hole.gx, 1, hole.gz);
  const N = [-hole.gx / slopeLen, 1 / slopeLen, -hole.gz / slopeLen];
  const floorY = hole.y - CUP_DEPTH;
- const rollMu = roll / G;
  let still = 0, lastTouch = null;
  const heard = (what, speed) => { if (speed > .25 && lastTouch !== what) contacts.push({t, what, speed, x: p[0], y: p[1], z: p[2]}); lastTouch = what; };
  const end = t + maxTime;
@@ -154,7 +159,7 @@ export function cupSim(ball, hole, env = {}) {
   if (touching && pressed > 0) {
    const speed = Math.hypot(v[0], v[1], v[2]);
    if (speed > 1e-6) {
-    const k = Math.max(0, 1 - rollMu * pressed / speed);
+    const k = Math.max(0, 1 - rollAt(speed) / G * pressed / speed);
     v[0] *= k; v[1] *= k; v[2] *= k; w[0] *= k; w[1] *= k; w[2] *= k;
    }
   }

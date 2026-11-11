@@ -6,7 +6,7 @@
 // with every constant's source; tools/ball-bench.mjs scores it against real
 // measurements.
 import {G, R, MASS, MPH, YARD, AERO, airDensity, coefficients, makeAir, airAcceleration, spinDecay} from './aero.js';
-import {turfOf, rollDecelerationAt, slideFriction, restitution} from './turf.js';
+import {turfOf, rollDecelerationAt, slideFriction, restitution, ROLL} from './turf.js';
 import {bounce} from './bounce.js';
 import {CUP_RADIUS as CUP_R, CUP_DEPTH, CUP, cupSim} from './cup.js';
 import {NO_TRUNK} from './species.js';
@@ -40,6 +40,10 @@ export const POLE_RADIUS=.34;
 // base radius, so a ball beside the pin in the cup has 41.3 mm between pin and
 // liner against a 42.7 mm ball.
 export const FLAGSTICK_HEIGHT=8*0.3048, FLAGSTICK_TOP_R=.0254, FLAGSTICK_BASE_R=.0127;
+// INSIDE THE HOLE the stick is its real size, half an inch across. Drawn at
+// the owner's inch it leaves 41.3 mm beside it for a 42.7 mm ball, and nothing
+// could ever be holed with the pin in; a real stick leaves 47.6 mm.
+export const FLAGSTICK_HOLE_R=.00635;
 // The drawn trunk uses this too, so a trunk you can see is a trunk you hit.
 export function trunkRadius(tree){return NO_TRUNK.has(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,3.6);}
 
@@ -70,10 +74,14 @@ export function groundStep(course,p,v,w,dt,turf,skid={value:0}){
     // the rolling case comes from the rolling constraint, which does not hold
     // yet. A ball with backspin left is slowed the same way, and if the spin
     // outlasts the travel it is the spin that wins: the ball comes back.
-    const ux=sx/slip,uz=sz/slip,drag=slideFriction(surface,turf)*G/Math.sqrt(metric);
+    const row=turfOf(surface,turf),ux=sx/slip,uz=sz/slip,drag=row.slide*G/Math.sqrt(metric),
+     // A ball sliding with BACKSPIN shears the turf ahead of it, and loses less
+     // spin for its lost speed than a hard floor would take (turf.js `arm`).
+     // A putt skidding up to a roll has no backspin and is not affected.
+     spinUp=2.5*(w[0]*v[0]+w[1]*v[2]<-1e-9?row.arm??1:1);
     const gx=-G*dx/metric,gz=-G*dz/metric,vx0=v[0],vz0=v[2],before=[p[0],p[2]];
     v[0]+=(gx-drag*ux)*dt;v[2]+=(gz-drag*uz)*dt;
-    w[0]+=2.5*drag*ux*dt;w[1]+=2.5*drag*uz*dt;
+    w[0]+=spinUp*drag*ux*dt;w[1]+=spinUp*drag*uz*dt;
     p[0]+=(vx0+v[0])*.5*dt;p[2]+=(vz0+v[2])*.5*dt;p[1]=course.height(p[0],p[2])+R;
     skid.value+=hypot(p[0]-before[0],p[2]-before[1]);
     // Once the contact point has caught up the ball is rolling; an overshoot
@@ -253,7 +261,7 @@ export function simulateShot(shot,course,options={}){
     else om=prevOm;
     const row=turfOf('green',turf);
     if(carry===null&&wasRolling)carry=0;
-    const out=cupSim({p,v,w:om},hole,{t:t-dt,roll:row.roll,slide:row.slide,e:restitution(row,Math.max(.2,Math.abs(v[1]))),pin:pinIn?FLAGSTICK_BASE_R:0});
+    const out=cupSim({p,v,w:om},hole,{t:t-dt,rollAt:s=>row.c*Math.pow(Math.max(s,ROLL.floor),ROLL.power),slide:row.slide,e:restitution(row,Math.max(.2,Math.abs(v[1]))),pin:pinIn?FLAGSTICK_HOLE_R:0});
     for(const c of out.contacts)contacts.push(c);
     for(const q of out.points)points.push(q);
     flagHits+=out.pinHits;t=out.t;
