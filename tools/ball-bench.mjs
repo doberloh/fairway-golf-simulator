@@ -32,6 +32,7 @@ const argv = process.argv.slice(2);
 const opts = k => argv.flatMap((a, i) => a === k ? [argv[i + 1]] : []);
 const opt = k => opts(k)[0] ?? null;
 const R = 0.021335, RAD = Math.PI / 180, INCH = .0254;
+const QUIET = argv.includes('--quiet');
 
 // ---- constants changed for this run ------------------------------------------
 for (const kv of opts('--set')) {
@@ -90,10 +91,10 @@ const f1 = (x, d = 1) => Number.isFinite(x) ? x.toFixed(d) : String(x);
 function check(name, value, lo, hi, unit = '', note = '') {
  const pass = value >= lo && value <= hi;
  checks.push({section, name, value, lo, hi, unit, note, pass});
- if (!opt('--quiet')) console.log(`  ${pass ? 'ok  ' : 'FAIL'} ${name.padEnd(46)} ${f1(value, 2).padStart(8)} ${unit.padEnd(5)} want ${f1(lo, 2)} to ${f1(hi, 2)}${note ? '   ' + note : ''}`);
+ if (!QUIET) console.log(`  ${pass ? 'ok  ' : 'FAIL'} ${name.padEnd(46)} ${f1(value, 2).padStart(8)} ${unit.padEnd(5)} want ${f1(lo, 2)} to ${f1(hi, 2)}${note ? '   ' + note : ''}`);
  return pass;
 }
-const info = text => { if (!opt('--quiet')) console.log('       ' + text); };
+const info = text => { if (!QUIET) console.log('       ' + text); };
 
 // ---- sections ----------------------------------------------------------------
 const SECTIONS = {
@@ -314,7 +315,7 @@ const SECTIONS = {
   check('launch for 20 ft runs 20 ft', putt(launchForDistance(20 * FOOT, turf) / MPH).total / FOOT, 19.7, 20.3, 'ft');
   // Distance scales with Stimp a little less than in proportion (the skid does not).
   check('Stimp 12 against Stimp 8, same putt', putt(6, cond('medium', 12)).total / putt(6, cond('medium', 8)).total, 1.3, 1.5, 'x', 'pure roll would be 1.5');
-  if (!opt('--quiet')) {
+  if (!QUIET) {
    console.log('       launch speed (mph) for a level putt, by Stimp:  ft      8      10      12');
    for (const ft of [3, 5, 10, 15, 20, 30, 40, 50, 60]) console.log('       ' + ' '.repeat(46) + String(ft).padStart(3) + [8, 10, 12].map(s => f1(launchForDistance(ft * FOOT, cond('medium', s)) / MPH, 2).padStart(8)).join(''));
   }
@@ -439,10 +440,10 @@ const SECTIONS = {
   // The game's own wind is slower near the ground, and is stated at the height
   // where a 6 iron flies, so a stated wind still does what TrackMan's table says.
   const six = w => flyBall({speed: 130 * MPH, vla: 14.7, spin: 6088}, {temperature: 25, wind: [0, 0, w * MPH]}).carry / YARD;
-  check('the game's wind, 10 mph head, 6 iron: carry change', six(-10) - six(0), -21, -15, 'yd', 'TrackMan -18');
-  check('the game's wind, 20 mph head, 6 iron: carry change', six(-20) - six(0), -45, -37, 'yd', 'TrackMan -41');
+  check('the game wind, 10 mph head, 6 iron: carry change', six(-10) - six(0), -21, -15, 'yd', 'TrackMan -18');
+  check('the game wind, 20 mph head, 6 iron: carry change', six(-20) - six(0), -45, -37, 'yd', 'TrackMan -41');
   const lowChip = w => flyBall({speed: 30 * MPH, vla: 12, spin: 1500}, {wind: [0, 0, w * MPH]}).carry;
-  check('a low chip in a 20 mph headwind loses', (1 - lowChip(-20) / lowChip(0)) * 100, 0, 4, '%', 'it never climbs into the wind');
+  check('a low chip in a 20 mph headwind changes by', (lowChip(-20) / lowChip(0) - 1) * 100, -5, 5, '%', 'it never climbs into the wind');
   // No spin, no lift: a knuckleball falls short.
   check('a ball with no spin carries far less', flyBall({speed: 144 * MPH, vla: 12, spin: 0}).carry / flyBall({speed: 144 * MPH, vla: 12, spin: 2600}).carry, .25, .7, 'x');
   // Spin dies in the air at about 4% a second (TrackMan), faster for a drive.
@@ -474,7 +475,7 @@ const only = opt('--only')?.split(',');
 for (const [name, run] of Object.entries(SECTIONS)) {
  if (only && !only.includes(name)) continue;
  section = name;
- if (!opt('--quiet')) console.log(`\n${name.toUpperCase()}`);
+ if (!QUIET) console.log(`\n${name.toUpperCase()}`);
  run();
 }
 const failed = checks.filter(c => !c.pass);
