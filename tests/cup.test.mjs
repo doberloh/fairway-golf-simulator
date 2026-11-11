@@ -166,6 +166,18 @@ test('holing works on a slope, both ways and across', () => {
  }
 });
 
+test('a ball set down anywhere round the lip ends, promptly, either in the hole or at rest', () => {
+ for (const mm of [-3, -1, -.3, 0, .3, 1, 3]) {
+  const course = green(0, 0, {x: 0, z: CUP_RADIUS + mm / 1000});
+  const began = Date.now();
+  const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, hla: 0, spinAxis: 0, speed: .001, vla: 0, spin: 0}, course, {turf: {stimp: 10}});
+  assert.ok(Date.now() - began < 4000, `${mm} mm: took ${Date.now() - began} ms`);
+  assert.ok(r.holed || Math.hypot(r.end.x, r.end.z) < .02, `${mm} mm: ended ${r.end.z}`);
+  if (mm < -1) assert.ok(r.holed, `${mm} mm inside the rim drops`);
+  if (mm > 1) assert.ok(!r.holed, `${mm} mm outside the rim stays out`);
+ }
+});
+
 test('with no pin on the course there is no hole to fall in', () => {
  const course = {...green(), pin: null};
  const r = putt(launchForDistance(3.3, {stimp: 10}), course);

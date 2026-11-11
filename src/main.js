@@ -4445,11 +4445,13 @@ function wireConditions(id,after){
   el('Greens').value=firmnessName(t.greenFirmness);el('Course').value=firmnessName(t.courseFirmness);
   if(el('Conditions'))el('Conditions').value=presetOf(t)||'custom';
   for(const k of ['Stimp','Greens','Course','Conditions'])el(k)?.dispatchEvent(new Event('paint'));};
- const apply=()=>{settings.turf=turfConfig({stimp:Number(el('Stimp').value),greenFirmness:el('Greens').value,courseFirmness:el('Course').value});
-  save();updateAim();show();after?.();};
+ // A change that cannot be applied says why and puts the controls back, as
+ // putting's does: a thrown error here would otherwise leave them lying.
+ const set=turf=>{try{settings.turf=turfConfig(turf);save();updateAim();after?.();}catch(e){toast(e.message);}show();};
+ const apply=()=>set({stimp:Number(el('Stimp').value),greenFirmness:el('Greens').value,courseFirmness:el('Course').value});
  for(const k of ['Stimp','Greens','Course'])el(k).onchange=apply;
  if(el('Conditions'))el('Conditions').onchange=()=>{const p=CONDITION_PRESETS[el('Conditions').value];
-  if(p){settings.turf=turfConfig({stimp:p.stimp,greenFirmness:p.greenFirmness,courseFirmness:p.courseFirmness});save();updateAim();after?.();}show();};
+  if(p)set({stimp:p.stimp,greenFirmness:p.greenFirmness,courseFirmness:p.courseFirmness});else show();};
  show();
 }
 // Wires everything `formatFields` rendered. Returns the format note redraw so a

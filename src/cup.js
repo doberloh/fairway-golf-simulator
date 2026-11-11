@@ -186,6 +186,9 @@ export function cupSim(ball, hole, env = {}) {
   if (!holed && rho > CUP.zone && dx * v[0] + dz * v[2] > 0) break;
   if (!holed && p[1] - hole.y > .6) break;
  }
+ // Out of time and neither in nor away: it is perched on the lip, and there it
+ // stays. (Without this the course would hand the same ball straight back.)
+ if (t >= end) rest = true;
  if (holed || rest) { v[0] = 0; v[1] = 0; v[2] = 0; w[0] = 0; w[1] = 0; w[2] = 0; }
  points.push({x: p[0], y: p[1], z: p[2], t, v: Math.hypot(v[0], v[1], v[2]), w: Math.hypot(w[0], w[1], w[2]) * 30 / Math.PI});
  return {holed, lipped: lipped && !holed, pinHits, rest: rest || holed, t, points, contacts};
