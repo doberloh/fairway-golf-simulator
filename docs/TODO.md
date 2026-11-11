@@ -37,20 +37,32 @@ check.
   (docs/BALL_PHYSICS.md): a new air model, one bounce law for every surface, rolling that follows
   the Stimp exactly, the hole as real contacts, and three course conditions (green speed, green
   firmness, fairway firmness, with Everyday / Club / Tournament presets) in the rules step and in
-  Settings, Turf. `node tools/ball-bench.mjs` holds it to 145 measurements; `npm test` passes.
-  **Not seen in the game at all -- nothing here has been played or opened in a browser. To check:**
-  the rules step shows COURSE CONDITIONS with four pickers and a preset moves the other three; the
-  same in Golfers & rules mid-round and in Settings, Turf (a change applies at once and survives a
-  reload); the range's Lab tools firmness slider (soft to firm) and its three chips; a drive
-  bouncing four or five times; a wedge on each firmness; a putt dropping, lipping out and rattling
-  in the cup (the scripted ease is gone: does the camera and the hole-out banner still time
-  right?); a chip-in with the pin in; the cup sound (it now plays when the ball first rattles into the cup, not when it has come to
-  rest: is that the right moment?); the aim preview and the
-  putting bar against where the ball finishes; the TV cameras on a ball that now bounces higher.
-  **Owed:** `npm run smoke` (asked for, since it uses the graphics card); the website's sample
-  shots and any clip made with the old ball; a re-bake of `src/golfer-table.js` (deliberately not
-  done: it moves generated markings and owes a GENERATOR_VERSION bump); the putt-speed choice is
-  the owner's to confirm (BALL_PHYSICS, *The putt speed question*).
+  Settings, Turf. `node tools/ball-bench.mjs` holds it to 147 measurements; `npm test` passes.
+  **Driven in a real browser on 11 November 2026** (the owner asked; `node tools/smoke.mjs` through
+  `tools/gpu-run.mjs`, in batches of two to five): 28 journeys, all passing -- boot, the whole round
+  loop to a holed putt and the next hole, Play through the new conditions step to tee off, the
+  range and its greens, a saved course played to the hole-out, the launch monitor, a mixed group, a
+  friend's challenge, relief, every menu panel, every play-screen control at nine screen sizes, a
+  hole on a phone both ways, the challenges, skins, sound, profile, bag, level-up and no swallowed
+  errors. **It found three things the Node tests could not:** opening Play threw (the conditions
+  were read before the round's settings carried them: they are now the player's, kept on the device
+  under `fairway-conditions-v1`, and a round starts from them); the fairway-firmness control's id
+  was the lobby's course picker's (`roundCourse`; now `roundFairways`); and a wedge flown into
+  the hole bounced back out a metre high, which the owner saw in the first picture (the cup is now
+  dead to a hard hit, `CUP.hardE`).
+  **Not run:** the shader and lighting journeys (no-late-shaders, ball-light-shaders,
+  floodlit-night), Course studio and every-landscape, text-size, the home-screen and bridge
+  journeys, weekly, look, and the two phone menu-panel journeys: none touches the ball, and the
+  graphics card had crashed that night.
+  **Seen in pictures only, not played by a person -- to check:** how the hole-out banner and the
+  cameras time against a ball that now really falls and rattles; the cup sound, which now plays as
+  the ball rattles in rather than once it has stopped; whether seven pickers in the rules step sit
+  well on a phone; the range's Lab tools firmness slider and its three chips; how a drive's four or
+  five bounces look from the tee and the TV cameras.
+  **Owed:** the website's sample shots and any clip made with the old ball; a re-bake of
+  `src/golfer-table.js` (deliberately not done: it moves generated markings and owes a
+  GENERATOR_VERSION bump); the putt-speed choice is the owner's to confirm (BALL_PHYSICS, *The putt
+  speed question*).
 - [ ] **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
   builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
   moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is

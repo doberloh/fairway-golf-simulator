@@ -21,7 +21,7 @@ The vocabulary used throughout:
 ## The one rule
 
 **Change a number, then run `node tools/ball-bench.mjs`.** It scores the ball
-against 145 real-world targets in about a second and names the source of each.
+against 147 real-world targets in about a second and names the source of each.
 A change that makes one shot look right and fails the bench has traded a
 measurement for a feeling. To try a value without writing it:
 

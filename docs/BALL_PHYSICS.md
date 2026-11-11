@@ -10,7 +10,7 @@ says which number moves which behaviour. This document says why the numbers are
 what they are.
 
 **To check a change, run `node tools/ball-bench.mjs`.** It scores the ball
-against 145 real-world targets and names the source of each. It takes about a
+against 147 real-world targets and names the source of each. It takes about a
 second.
 
 A number marked **PLACED** is a judgement, not a measurement: nobody has
@@ -348,7 +348,7 @@ The result now also carries `landingSpin` (rpm at first touchdown) and
 
 | Tool | What it does |
 | --- | --- |
-| `node tools/ball-bench.mjs` | The ball against 145 real-world targets, by section, each naming its source. `--only greens,cup`, `--json`, `--set green.mu=.5,.3,.2` to try a constant without writing it, `--shot 120,16.3,7097` or `--land 22,51,9100` for one shot hop by hop on each firmness. Exits 1 on any failure. |
+| `node tools/ball-bench.mjs` | The ball against 147 real-world targets, by section, each naming its source. `--only greens,cup`, `--json`, `--set green.mu=.5,.3,.2` to try a constant without writing it, `--shot 120,16.3,7097` or `--land 22,51,9100` for one shot hop by hop on each firmness. Exits 1 on any failure. |
 | `node tools/flight-fit.mjs` | The air model against the published flights and the owner's private sessions (`docs/sources/private/`, not in the repository). `--fit` searches for better constants and prints them. |
 | `tools/flight-targets.mjs` | The published flights, as data. |
 | `node tools/ball-paths.mjs [--against other/src/physics.js] > paths.html` | Side-on pictures (SVG) of what a ball does from its pitch mark to rest, this ball against another checkout's when asked: a drive on a fairway, a 7 iron, a spun wedge, a chip. Processor only. |
