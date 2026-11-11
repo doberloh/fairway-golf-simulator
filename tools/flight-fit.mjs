@@ -27,7 +27,7 @@ import {pathToFileURL} from 'node:url';
 // --physics FILE evaluates another physics module instead (a copy of an older
 // src/physics.js placed beside it, so its own imports resolve): before and after.
 const physicsArg = (() => { const i = process.argv.indexOf('--physics'); return i >= 0 ? process.argv[i + 1] : null; })();
-const {simulateShot, airDensity, AERO, MPH, YARD} = await import(physicsArg ? pathToFileURL(path.resolve(physicsArg)).href : '../src/physics.js');
+const {flyBall, airDensity, AERO, MPH, YARD} = await import(physicsArg ? pathToFileURL(path.resolve(physicsArg)).href : '../src/aero.js');
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PRIVATE = path.join(ROOT, 'docs', 'sources', 'private');
@@ -102,16 +102,15 @@ const SHOTS = [...trackman(), ...gc3(), ...r50()];
 for (const s of SHOTS) if (/Driver/.test(s.club)) s.weight = +(opt('--driver') || 1);
 // Altitude giving a stated density at a stated temperature.
 const altFor = ({density, tempC}) => { let lo = -2000, hi = 6000; for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (airDensity(m, tempC) > density) lo = m; else hi = m; } return (lo + hi) / 2; };
-for (const s of SHOTS) s.opts = s.air ? {altitude: altFor(s.air), temperature: s.air.tempC, wind: [0, 0, 0]} : {wind: [0, 0, 0]};
+const SOURCE_TEMP = {Trackman: +(opt('--trackman-temp') || 25), GC3: +(opt('--gc3-temp') || 21)};
+for (const s of SHOTS) s.opts = s.air ? {altitude: altFor(s.air), temperature: s.air.tempC} : {temperature: SOURCE_TEMP[s.source] ?? 18};
 
 // ---- the model ---------------------------------------------------------------
 // Flat ground of one surface: carry, apex, descent and hang are all decided
 // before it is touched.
-const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 9000, minZ: -9000, maxZ: 9000}, trees: []};
 function fly(s) {
- const m = simulateShot({origin: {x: 0, z: 0}, aim: 0, speed: s.mph * MPH, vla: s.vla, hla: s.hla, spin: s.spin, spinAxis: s.axis}, flat, s.opts);
- const k = m.points.findIndex((q, j) => j > 2 && q.y <= 0.03 && q.t > .2);
- return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descentAngle, hang: (m.points[k] ?? m.points.at(-1)).t};
+ const m = flyBall({speed: s.mph * MPH, vla: s.vla, hla: s.hla, spin: s.spin, spinAxis: s.axis}, s.opts);
+ return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descent, hang: m.hang};
 }
 function evaluate() {
  return SHOTS.map(s => { const m = fly(s); return {...s, m,
@@ -125,7 +124,7 @@ function evaluate() {
 // player reads off the card; landing angle in degrees where the source gives it,
 // at a quarter weight, because the bounce and the roll are fed by it.
 // Hang time (GC3 only) is off unless --hang gives it a weight per second squared.
-const W = {apex: 1, carry: 2, land: .25, hang: +(opt('--hang') || 0)};
+const W = {apex: 1, carry: 2, land: +(opt('--land') || 1), hang: +(opt('--hang') || 0)};
 function cost(rows) {
  const by = {};
  for (const r of rows) (by[r.source] ??= []).push(r);
@@ -162,7 +161,11 @@ function report(rows, title) {
  }
 }
 
-const KEYS = ['liftK', 'liftP', 'liftC', 'spinDrag', 'dragBase', 'dragCrisis', 'crisisRe', 'crisisWidth', 'spinTau'];
+// Held inside what the wind tunnels measured: a fit that leaves these has
+// stopped describing a golf ball.
+const BOUNDS = {liftMax: [.3, .7], liftHalf: [.08, .5], dragBase: [.17, .28], dragSpin: [.1, .6], dragSpin2: [0, .6], dragLow: [0, .3], lowRe: [40000, 90000], lowReWidth: [4000, 30000], spinTau: [18, 25]};
+const bounds = () => Object.entries(BOUNDS).reduce((p, [k, [lo, hi]]) => p + (AERO[k] < lo ? 1e4 * (lo - AERO[k]) ** 2 / lo ** 2 : AERO[k] > hi ? 1e4 * (AERO[k] - hi) ** 2 / hi ** 2 : 0), 0);
+const KEYS = ['liftMax', 'liftHalf', 'dragBase', 'dragSpin', 'dragSpin2', 'dragLow', 'lowRe', 'lowReWidth', 'spinTau'];
 const setAero = v => { for (const [k, x] of Object.entries(v)) AERO[k] = x; };
 if (opt('--set')) setAero(Object.fromEntries(opt('--set').split(',').map(kv => { const [k, v] = kv.split('='); return [k, +v]; })));
 
@@ -175,9 +178,10 @@ if (argv.includes('--fit')) {
  // starting size, so a Reynolds number and a coefficient take comparable steps.
  // spinTau is left out by default: fitted freely it slows the decay for wedges
  // and triples their spin-back, so it is held at the published rate (physics.js).
- const keys = (opt('--keys') || 'liftK,liftP,liftC,spinDrag,dragBase,dragCrisis').split(',');
+ const keys = (opt('--keys') || 'liftMax,liftHalf,dragBase,dragSpin,dragLow').split(',');
  const base = keys.map(k => AERO[k]);
- const at = x => { setAero(Object.fromEntries(keys.map((k, i) => [k, base[i] * (1 + x[i])]))); return cost(evaluate()); };
+ // A constant at zero cannot be moved by a ratio, so it moves by tenths instead.
+ const at = x => { setAero(Object.fromEntries(keys.map((k, i) => [k, base[i] ? base[i] * (1 + x[i]) : x[i] * .1]))); return cost(evaluate()) + bounds(); };
  const n = keys.length, step = +(opt('--step') || .15);
  let simplex = [Array(n).fill(0), ...keys.map((_, i) => keys.map((_, j) => i === j ? step : 0))].map(x => ({x, f: at(x)}));
  const iters = +(opt('--iters') || 400);
