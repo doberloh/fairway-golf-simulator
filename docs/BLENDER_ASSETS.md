@@ -325,7 +325,7 @@ every earlier model lacked:
   `add_lump(subdiv=3)`, `cloud_crown`'s default, is a UV sphere of 12 segments
   and 7 rings, 144 faces, where it was a 320-face icosphere. A maple crown
   9,700 -> 4,400 triangles. The 80-face icosphere was tried and rejected:
-  hexagonal outlines (CARTOON_OVERHAUL *Frame rate*).
+  hexagonal outlines (history/CARTOON_OVERHAUL.md *Frame rate*).
 
 The library's shapes: `cloud_crown` (a crown as a cloud of soft lobes on an
 ellipsoid, flattened underneath), `skirt` (one conifer tier: a drooping star
@@ -354,7 +354,7 @@ Every sheet a round draws is copied to `bench/shots/overhaul/rounds/<pack>-r<n>.
 each. Replaces the Kenney broadleaf family for `oak`, `maple`, `aspen`, `alder`
 everywhere. The aspen's accent is its dark trunk scars (`accents` in
 vegetation.js). Rounds and what each fixed: the pack script's header and
-CARTOON_OVERHAUL.md *Rounds*.
+history/CARTOON_OVERHAUL.md *Rounds*.
 
 ### cartoon_conifer
 

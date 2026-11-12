@@ -849,7 +849,7 @@ const hasHeath=w=>!!(w.holes.length&&(w.built?w.builtOutlines?.heather?.length:O
 // between 28 and 48 m with the grass tiles, and nothing stood on heather past
 // them -- the long grass grows only where grass may, and heather allows none
 // -- so beyond 48 m a heath was flat purple paint, which the overhaul had
-// already found cannot give it volume (CARTOON_OVERHAUL.md, *Heather*, round
+// already found cannot give it volume (history/CARTOON_OVERHAUL.md, *Heather*, round
 // 6). Here each cushion far off is a low dome in the cushion's own colours,
 // as a far wood is a dome for its trees: growing in where the near cushions
 // shrink away, and sinking out at the tier's long-grass reach, where the

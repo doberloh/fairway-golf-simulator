@@ -955,7 +955,7 @@ v0.6.1 zips.
 that commit. It carries five journeys since 0.6.1: shot views and the studio
 bar; each golfer's own bag and nothing standing in a tee's view; the spin-back
 rework; every sound, synthesised; and the shot line in the play window with
-the tiles along the bottom (TODO, `# Done`, each under its own heading).
+the tiles along the bottom (DONE.md, each under its own heading).
 **`GENERATOR_VERSION` is 35** (bushes and houses out of the tees' view), so a
 round saved in 0.6.x opens with the version notice; course codes still load,
 on the new ground, and the website's sample course code is written from the

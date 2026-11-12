@@ -18,6 +18,7 @@ the change that made it stale, not a follow-up.
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md); for the ball, [BALL_PHYSICS.md](BALL_PHYSICS.md) |
 | change how the ball behaves | [BALL_BEHAVIOUR_KNOBS.md](BALL_BEHAVIOUR_KNOBS.md), then `node tools/ball-bench.mjs` |
 | know what is left to do | [TODO.md](TODO.md) |
+| know what was built, and why | search [DONE.md](DONE.md) |
 | find something new to build, or note an idea | [IDEAS.md](IDEAS.md) |
 
 ## The full set
@@ -58,14 +59,20 @@ the change that made it stale, not a follow-up.
   measured against, the test course. Read it first when working on the
   builder.
 - **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the cartoon
-  overhaul, merged 27 October 2026: the record of remaking every model, texture, landscape and the
-  lighting in the Cartoon style, its art direction, the baselines it is judged
-  against, its rounds, every rule it has set aside, and how its rounds were worked (*Working on the branch*). Read it
-  before more work on the look.
+  overhaul, merged 27 October 2026: what still governs work on the look --
+  its art direction, every rule it set aside, its tools, and how its rounds
+  were worked (*Working on the branch*). Read it before more work on the look.
 - **[UI_POLISH.md](UI_POLISH.md)** — the 1.0 interface polish (from 27
   October 2026): its checklist from the research, the interface audit tool,
-  the rounds, the decisions (one look for chosen, one for the cursor) and the
-  press counts into every mode.
+  the house style, the decisions (one look for chosen, one for the cursor),
+  the press counts into every mode and what each change cost.
+- **[history/](history/)** — the journals of finished branches, word for
+  word, cut from the two pages above on 12 November 2026:
+  [history/CARTOON_OVERHAUL.md](history/CARTOON_OVERHAUL.md) (every round of
+  every model, texture and light, the two later goals, the frame-rate pass)
+  and [history/UI_POLISH.md](history/UI_POLISH.md) (the rounds, the audits,
+  the owner's lists after playing). Searched when asking why something was
+  done; not kept up with the game.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and
   cannot see, which formats and groups the round tests play, every smoke
@@ -91,9 +98,11 @@ the change that made it stale, not a follow-up.
 - **[BALL_BEHAVIOUR_KNOBS.md](BALL_BEHAVIOUR_KNOBS.md)** — the plain-language
   map from a tuning parameter to the ball behaviour it changes. Written for
   somebody who wants a different result, not a different equation.
-- **[TODO.md](TODO.md)** — open work at the top under its section headings,
-  everything finished in `# Done` at the foot with what was actually built.
-  As much a changelog as a list.
+- **[TODO.md](TODO.md)** — open work only, under its section headings: what
+  is wrong, unfinished or owed a check. Short enough to read whole.
+- **[DONE.md](DONE.md)** — everything finished, with what was actually built
+  and what was ruled out: the changelog. It was the foot of TODO.md until 12
+  November 2026. Search it; it is long.
 - **[IDEAS.md](IDEAS.md)** — what could be built and nobody has decided to
   build: modes, practice, looks, biomes, and the ideas turned down. Read only
   when looking for something new (AGENTS.md says when).

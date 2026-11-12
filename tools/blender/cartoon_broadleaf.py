@@ -17,7 +17,7 @@
 #               third of the height across, high up, small round clumps
 #   red alder   a slender grey trunk, a narrow pointed-oval open crown
 #
-# ROUNDS (CARTOON_OVERHAUL.md, *Rounds*). Round 1: crowns built of separate
+# ROUNDS (history/CARTOON_OVERHAUL.md, *Rounds*). Round 1: crowns built of separate
 # masses -- the oaks came out as flat pancakes on thin stems (acacias, not
 # oaks), the aspens and alders as stacked balls (topiary). Round 2: one dome
 # per oak over a trunk twice as thick with its limbs showing; one narrow open

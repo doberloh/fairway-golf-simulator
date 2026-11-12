@@ -8,11 +8,11 @@ carries only README.md, CONTRIBUTING.md, LICENSE and this file.
 
 **Read `docs/ARCHITECTURE.md` first** (about 4 thousand tokens): the product,
 every file, the units, the pipeline and the traps. **Never read
-PROJECT_HANDOFF.md, TODO.md or RESEARCH.md whole** -- about 80, 90 and 140
+PROJECT_HANDOFF.md, DONE.md or RESEARCH.md whole** -- about 150, 165 and 280
 thousand tokens. List headings (`grep -n "^## \|^### " docs/PROJECT_HANDOFF.md`),
 search (`grep -n -i "<subject>" docs/*.md`), and read only matching sections.
-TODO.md's open work is above `# Done` (about 5 thousand tokens, fine to read
-whole); search PLAYING.md the same way.
+TODO.md is open work only (about 5 thousand tokens, fine to read whole);
+what was finished is in DONE.md. Search PLAYING.md the same way.
 
 Preserve the portable offline single-file build, Cartoon-only graphics,
 complete 9/18-hole landscapes, seeded procedural holes, real ball and cup
@@ -25,8 +25,8 @@ is not permission to widen an unrelated task.
 
 ## The cartoon look is main's (merged 27 October 2026)
 
-The cartoon overhaul (25-27 October 2026; the record is
-docs/CARTOON_OVERHAUL.md) redesigned every landscape, model, mowing pattern,
+The cartoon overhaul (25-27 October 2026; its rules are in
+docs/CARTOON_OVERHAUL.md, its journal in docs/history/) redesigned every landscape, model, mowing pattern,
 the water and the light, and is merged: it is what main looks like now. While
 it was a branch it had two rules of its own -- every landscape free to move,
 and the graphics card used without asking. **Both ended with the merge.**
@@ -122,6 +122,9 @@ read-only token.
   (plain, player-facing, like the earlier ones), plus a DISTRIBUTION_REVIEW
   addendum and a TODO entry, on the release branch; merge; build and tag from
   THAT commit; publish with `--notes-file docs/releases/v<version>.md`.
+- **A release's TODO entry replaces the last release's**, never sits beside
+  it: only the newest release can be downloaded, so only it is owed a play.
+  It heads *Play the current build by hand*; the old one goes to DONE.md.
 - **Editing or deleting a published release is the owner's call.**
 - **After publishing, the website needs a redeploy for its demo.** The
   Download buttons follow the new release by themselves; the browser demo and
@@ -220,10 +223,18 @@ file is indistinguishable from a forgotten one. What each holds:
 
 - **RESEARCH.md** -- anything with a number: what the model does, what it is
   anchored to, what it measured, where it departs from its source.
-- **TODO.md** -- open work at the top; finished work in `# Done` under a copy of
-  its heading. Move a ticked entry there with what was built, **close any open
-  entry the change made untrue**, and never nest an open item under a finished
-  one. An idea is not an entry (*Ideas live in IDEAS.md*).
+- **TODO.md** -- open work only (the owner, 12 November 2026). **A finished
+  entry moves to DONE.md in the same pass**, under a copy of its heading, with
+  what was built -- never ticked and left. **Close any open entry the change
+  made untrue**, and never nest an open item under a finished one. An idea is
+  not an entry (*Ideas live in IDEAS.md*).
+- **DONE.md** -- the record of finished work, with its reasoning and dead
+  ends. Searched, never read whole; added to, not rewritten.
+- **`docs/history/`** -- the journals of finished branches, word for word
+  (the owner, 12 November 2026). **Not part of this sweep and never edited to
+  keep up**; search it when asking why something was done. When a journey
+  merges, its page keeps what still governs later work and its round-by-round
+  record moves here.
 - **TESTING.md** -- what is tested and by which layer; a suite or smoke
   journey added, removed or changing what it covers.
 - **IDEAS.md** -- what could be built; only when the change builds, kills or

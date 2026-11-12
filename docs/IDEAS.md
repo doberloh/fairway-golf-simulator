@@ -20,7 +20,7 @@ wrong, unfinished or owed a check; this file holds what might be nice.
   other work. Say who and when.
 
 Where an idea came from TODO, "was:" names the original, kept word for word in
-TODO.md under *The open list before the 16 October prune* in `# Done`, which
+DONE.md under *The open list before the 16 October prune*, which
 often has the how-to already worked out. Ideas marked "from TODO, 11 November
 2026" left the open list at that day's prune; their originals are under *The
 open list before the 11 November 2026 prune*.
@@ -117,7 +117,7 @@ open list before the 11 November 2026 prune*.
   and normals (or the inverted-hull trick on trees and rocks) would give the
   cartoon look ink lines round crowns, trunks and stones. The cheap version --
   darkening a surface where it turns from the eye -- was tried in the cartoon
-  overhaul and showed nothing (CARTOON_OVERHAUL *Lighting*, round 10): trunks
+  overhaul and showed nothing (history/CARTOON_OVERHAUL.md *Lighting*, round 10): trunks
   are already dark and stones small. A real pass costs a frame the branch is
   already over main by. The inverted hull is now on the tee furniture only
   (0.8 cm, rounds 16-17), where it costs nothing; on trees and rocks it would

@@ -6,7 +6,7 @@ bitten. Every point names the section of a longer document that has the
 detail.
 
 **The long documents are for searching, not reading.** PROJECT_HANDOFF.md is
-about 80 thousand tokens, TODO.md about 90 thousand, RESEARCH.md about 140
+about 150 thousand tokens, DONE.md about 165 thousand, RESEARCH.md about 280
 thousand. Reading any of them whole spends a large share of a session before
 any work starts. Instead:
 
@@ -15,8 +15,9 @@ grep -n "^## \|^### " docs/PROJECT_HANDOFF.md   # its sections, with line number
 grep -n -i "cup\|capture" docs/*.md             # every doc that mentions a subject
 ```
 
-then read only the sections that match. TODO.md's open work is everything above
-`# Done`; RESEARCH.md is one dated section per finding.
+then read only the sections that match. TODO.md is open work only and short
+enough to read whole; what was finished is in DONE.md. RESEARCH.md is one dated
+section per finding.
 
 **Keep this file short** -- under about 40 KB. It summarises; it never becomes
 the only place something is written. A new file, invariant or trap gets its
@@ -384,7 +385,9 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 ## Where else to look
 
 - **docs/README.md** -- which document answers which question.
-- **TODO.md** -- open work above `# Done`, the record of what was built below it.
+- **TODO.md** -- open work only; fine to read whole.
+- **DONE.md** -- the record of what was built, and what was ruled out. Search it.
+- **history/** -- the round-by-round journals of finished branches (the cartoon overhaul, the 1.0 polish). Search them for why; `docs/*.md` does not reach them.
 - **IDEAS.md** -- what could be built; read only when looking for something new.
 - **TESTING.md** -- what is tested, by which layer, and what only a person checks.
 - **RESEARCH.md** -- every number, its source and the measurement behind it.

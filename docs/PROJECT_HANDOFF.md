@@ -1164,7 +1164,7 @@ screen shape to them.
   is the point -- a % radius, a 99 px one, a small badge or dot whose radius is
   half its size (square-box round 5). **A new box is a rectangle with square
   corners; do not bring a skew or a rounding back for one piece.** The rules below that speak of the slant are
-  history, kept so the old decisions read right; UI_POLISH.md, *Square boxes*,
+  history, kept so the old decisions read right; history/UI_POLISH.md, *Square boxes*,
   has the rounds.
 - **A design canvas 1280 wide, as tall as the screen's shape needs**: 720 on
   16:9, 800 on 16:10, 960 on 4:3, scaled to fill the screen. Wider than 16:9 the

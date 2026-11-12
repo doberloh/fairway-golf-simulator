@@ -9043,7 +9043,7 @@ and the long grass's marram got a fourth round (splayed, `rounds/grass-r4.png`).
 
 ## The overhaul's lighting (25 October 2026)
 
-The cartoon light, five rounds (docs/CARTOON_OVERHAUL.md *Lighting*). Rendering
+The cartoon light, five rounds (docs/history/CARTOON_OVERHAUL.md *Lighting*). Rendering
 only; no generated ground moved. Every number here is PLACED by eye against the
 captures unless it says otherwise.
 
@@ -9099,7 +9099,7 @@ REFERENCES (Inasa Fujio); *Belt of Venus*.
 
 ## The overhaul's frame rate, first pass (25 October 2026)
 
-The numbers, the changes and what was rejected are in docs/CARTOON_OVERHAUL.md
+The numbers, the changes and what was rejected are in docs/history/CARTOON_OVERHAUL.md
 *Frame rate*; the figures that set the levers:
 
 - **Where a frame went** (`tools/frame-tris.mjs`, High, first tee): Autumn
@@ -9203,7 +9203,7 @@ ground.js: past the single crowns (farSize, 6-12 m), clusters from a jittered gr
 
 ## Reading the ground, the overhaul's phase (26 October 2026)
 
-Numbers behind docs/CARTOON_OVERHAUL.md *Reading the ground*:
+Numbers behind docs/history/CARTOON_OVERHAUL.md *Reading the ground*:
 - Clear: green definition 85 (lift 3.9, bend 4.0), bands 65; Natural 50 and 40
   (unchanged). PLACED from the captures.
 - The putting surface's sheen cap: 0.10 either way below lift 2.3 (definition

@@ -11,13 +11,14 @@
 //   - the lighting rounds, bench/shots/overhaul/light-r*/;
 //   - every asset and texture's rounds: the contact sheets in
 //     bench/shots/overhaul/rounds/ and the in-game sets beside them, under the
-//     rounds tables of docs/CARTOON_OVERHAUL.md, which are the notes;
+//     rounds tables of docs/history/CARTOON_OVERHAUL.md, which are the notes;
 //   - the ground types (src/grounds.js) and where each lies, with the overhead
 //     maps tools/surface-map.mjs draws (bench/shots/overhaul/maps/);
 //   - generation time (tools/gen-time.mjs --json), the game's size (dist/ and
 //     main's kept build) and frame rate per tier (tools/profile.mjs --json),
 //     main against the branch;
-//   - the *Rules set aside* and *Frame rate* sections of CARTOON_OVERHAUL.md.
+//   - *Rules set aside* (CARTOON_OVERHAUL.md) and *Frame rate* (its journal,
+//     docs/history/CARTOON_OVERHAUL.md).
 //
 // The page links its pictures rather than embedding them (hundreds of JPEGs);
 // it lives in docs/reports/ (never committed: AGENTS.md *What stays local*)
@@ -37,7 +38,11 @@ const has = f => fs.existsSync(f);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const readJson = f => has(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
 const biomes = Object.keys(BIOMES);
-const DOC = fs.readFileSync('docs/CARTOON_OVERHAUL.md', 'utf8');
+// The page and its journal, read as one: the rounds, the two later goals,
+// *Frame rate* and *Reading the ground* moved to docs/history/ on 12 November
+// 2026, and *Rules set aside* stayed.
+const DOC = fs.readFileSync('docs/CARTOON_OVERHAUL.md', 'utf8') + '\n'
+  + fs.readFileSync('docs/history/CARTOON_OVERHAUL.md', 'utf8');
 
 // ---------------------------------------------------------------- markdown
 // Just enough of it for the overhaul's own page: paragraphs, bullets, tables,

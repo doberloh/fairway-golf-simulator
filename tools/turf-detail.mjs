@@ -1,5 +1,5 @@
 // THE TURF DETAIL ATLAS (the cartoon overhaul, 25 October 2026;
-// docs/CARTOON_OVERHAUL.md *Ground textures*).
+// docs/history/CARTOON_OVERHAUL.md *Ground textures*).
 //
 //   node tools/turf-detail.mjs            write src/turf-detail.js and a preview
 //

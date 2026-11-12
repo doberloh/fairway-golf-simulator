@@ -131,8 +131,9 @@ which question. The five that matter most:
   the invariants, and the traps in full. Search it; it is long.
 - **[docs/RESEARCH.md](docs/RESEARCH.md)** — every number in the simulator,
   what it is anchored to, and where it knowingly departs from its source.
-- **[docs/TODO.md](docs/TODO.md)** — open work at the top, a changelog of
-  what was actually built at the foot.
+- **[docs/TODO.md](docs/TODO.md)** — open work.
+- **[docs/DONE.md](docs/DONE.md)** — a changelog of what was actually built.
+  Search it; it is long.
 
 ## Contributing
 
