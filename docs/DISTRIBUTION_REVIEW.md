@@ -2023,8 +2023,11 @@ merge: Windows 107.1 MB (107,142,087 bytes), Linux 103.7 (103,738,828), Apple Si
 (92,986,368), Intel 95.4 (95,356,127), source 36.9 (685 files) -- within 5 KB of 0.9.12's.
 Nothing about the offline build changed. **Checked:** the full tests (1,584; none failing) on the
 release commit's content, `node tools/ball-bench.mjs` (148 of 148), the biome fingerprints
-(unchanged), the packager's verification of every zip. **No smoke run on this release's code:**
-28 journeys passed on 11 November, before the flyer, sand at 85%, the height spin factors, the
-real-width flagstick and the merge of the gimme circle; the owner asked for no graphics-card run
-this turn. **Played by the owner** on the branch on 12 November ("it feels way better"); what
+(unchanged), the packager's verification of every zip. **The smoke run came after the release, not before it:**
+at publication the last run was 28 journeys on 11 November, before the flyer, sand at 85%, the
+height spin factors, the real-width flagstick and the merge of the gimme circle. The owner asked
+for it the same afternoon ("Run smoke test"), and **all 41 journeys passed on the released build**
+(`dist/index.html` as published, sha256 c534741c...; seven batches through `tools/gpu-run.mjs`,
+about 16 minutes, the card at 42 to 52 °C). The nine builder journeys were not run; the builder's
+code did not change in this release. **Played by the owner** on the branch on 12 November ("it feels way better"); what
 nobody has reported seeing is in TODO, *Play the current build by hand*.
