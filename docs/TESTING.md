@@ -28,8 +28,9 @@ generator checks can run any time.
 
 **GitHub** runs `npm test`, the ground check, and three smoke journeys (`boot`,
 `range`, `endless-round`) under a software renderer on every push
-(`.github/workflows/test.yml`). The smoke step there is slow and has not yet
-gone green reliably -- TODO, *Found on GitHub*.
+(`.github/workflows/test.yml`). The smoke step there is slow and still fails
+now and then (green on six of the eight pushes before 11 November 2026) --
+TODO, *The smoke step on GitHub still fails now and then*.
 
 ## Running the Node tests
 
@@ -495,7 +496,7 @@ measures every landscape and plays eight virtual golfers on both;
 
 ## Checked only by a person
 
-Kept current in TODO.md, *The owner's hands-on checks*: a real launch monitor
+Kept current in TODO.md, *Only the owner can check*: a real launch monitor
 through the bridge, the iPhone launch monitor, the server program on a Mac and
 Linux, a real phone's frame rate, Safari and Firefox, and how anything looks.
 A feature nobody has seen working is reported as not seen (AGENTS.md).
