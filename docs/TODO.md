@@ -42,32 +42,6 @@ Claude at the 11 November prune, and the owner may overrule them):
 goes in [IDEAS.md](IDEAS.md), not in this list. An entry here is something
 wrong, unfinished, or owed a check.
 
-## On this branch (`ball-physics-rework`, not merged)
-
-- [ ] **The rebuilt ball: play it, then merge.** Built 10-11 November 2026
-  (docs/BALL_PHYSICS.md): a new air model, one bounce law, rolling that follows
-  the Stimp, the hole as real contacts, three course conditions. `npm test`
-  passes, `node tools/ball-bench.mjs` holds 148 measurements, and 28 smoke
-  journeys passed on 11 November. **Not played by a person.** Check in a round:
-  the hole-out banner, the cameras and the cup sound against a ball that now
-  falls and rattles in; a drive's four or five bounces from the tee and the TV
-  cameras; a wedge from the rough running out 5 to 6 yd; the lie line's
-  "· wedges spin less" and the spin tile's lie tag, on a phone too; the seven
-  pickers in Play's rules step on a phone; the range's Lab firmness slider and
-  its three chips. **Smoke journeys not run on this branch:** no-late-shaders,
-  ball-light-shaders, floodlit-night, Course studio, every-landscape,
-  text-size, home-screen, bridge, weekly, look, and the two phone menu-panel
-  journeys. **Owed once it merges:** the website's sample shots and any clip
-  made with the old ball; a re-bake of `src/golfer-table.js` (it moves
-  generated markings, so a `GENERATOR_VERSION` bump). (was: *The ball model
-  rebuilt*)
-- [ ] **The gimme circle: play it.** On main and merged into this branch;
-  tested in Node (putting.js, the round matrix), no smoke run. Check: the
-  circle is drawn and easy to see at 3 ft and at 30 ft; the size field shows
-  only for this mode, in the rules step and in Putting options, and the ring
-  distances hide; the shot card says "Gimme"; the scorecard counts the stroke.
-  (was: *Play the gimme circle by hand*)
-
 ## Next feature
 
 - [ ] **Plan the Fairway Tour with the owner, before any code** (the owner, 9
@@ -167,9 +141,22 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.12, 10 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.13, 12 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The rebuilt ball** (0.9.13; the owner played the branch on 12 November
+    and said it "feels way better", naming no single check): the hole-out
+    banner, the cameras and the cup sound against a ball that now falls and
+    rattles in; a drive's four or five bounces from the tee and the TV
+    cameras; a wedge from the rough running out 5 to 6 yd; the lie line's
+    "· wedges spin less" and the spin tile's lie tag, on a phone too; the
+    seven pickers in Play's rules step on a phone; the range's Lab firmness
+    slider and its three chips.
+  - **The gimme circle** (0.9.13; tested in Node only, no smoke run): the
+    circle drawn and easy to see at 3 ft and at 30 ft; the size field showing
+    only for this mode, in the rules step and in Putting options, with the
+    ring distances hidden; the shot card saying "Gimme"; the scorecard
+    counting the stroke.
   - **The fifteen landscapes** (0.9.8 to 0.9.10; signed off from captures): a
     round on a few. A drive off a rock tee and a ball on a rock flank on
     Desert Mountain; the Badlands' holes round its formations; the cactus,
@@ -200,7 +187,8 @@ here is a claim of support until it is done.
   - **A friend's challenge**, end to end: a code out, pasted in, their dashed
     shot lines, their row on the scorecard.
   (was: the twelve *Release 0.9 ... 0.9.12* entries and every "built, not
-  played" entry of the sections archived on 11 November)
+  played" entry of the sections archived on 11 November; *The rebuilt ball:
+  play it, then merge*; *The gimme circle: play it*)
 - [ ] **A real launch monitor through the bridge.** Everything is checked
   against a pretend bridge. Check: the ball arrives and the numbers update;
   the club data against the device's own app; reconnecting, duplicated shots,
@@ -268,6 +256,17 @@ here is a claim of support until it is done.
 
 ## Housekeeping
 
+- [ ] **What the rebuilt ball still owes** (merged and released as 0.9.13, 12
+  November 2026). **Smoke journeys never run on the new ball:** no-late-shaders,
+  ball-light-shaders, floodlit-night, Course studio, every-landscape,
+  text-size, home-screen, bridge, weekly, look, and the two phone menu-panel
+  journeys; and no smoke run at all since the flyer, sand at 85%, the height
+  spin factors, the real-width flagstick and the gimme circle went in (28
+  journeys passed on 11 November, before them). Graphics card: ask first.
+  **The website's sample shots** and any clip made with the old ball.
+  **A re-bake of `src/golfer-table.js`**, which was made with the old ball;
+  it moves generated markings, so it is a `GENERATOR_VERSION` bump and wants
+  its own reason. (was: *The rebuilt ball: play it, then merge*)
 - [ ] **Clean up after the retired landscapes** (42 pared to 15, 6-8 November
   2026). Unused now: the retired landscapes' entries in course-names, crest,
   hole-names, renderer, seasons and the palettes; models no landscape plants

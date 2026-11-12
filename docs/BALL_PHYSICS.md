@@ -2,7 +2,8 @@
 
 How a golf ball flies, lands, bounces, rolls and drops in Fairway, what each
 part is built on, and what it was measured against. Written 11 November 2026,
-when the whole model was rebuilt (branch `ball-physics-rework`). Everything
+when the whole model was rebuilt (branch `ball-physics-rework`, merged and
+released as 0.9.13 on 12 November 2026). Everything
 about the ball in older documents describes the model this replaced.
 
 **To change how the ball behaves, start at docs/BALL_BEHAVIOUR_KNOBS.md**: it
@@ -114,6 +115,16 @@ FITTED 11 November 2026 with `tools/flight-fit.mjs`:
 | The owner's GC3 session, 111 shots | Foresight's model | 1.7% |
 | The owner's R50 session, 115 shots | Garmin's model, air stated | 2.3% |
 | USGA's worked example (160 mph, 10 deg, 2,520 rpm, 75 F: 257.6 yd in 6.39 s) | the only published flight time | 259.2 yd in 6.29 s |
+
+**Signed averages and the sideways finish** (measured 12 November 2026, the
+same tool; "typical miss" above is the size of the miss, these are which way
+it leans). Carry: tour averages -0.3%, GC3 +0.2%, R50 +0.8%. Peak height:
+-1.2%, +1.1%, -1.6%. Where the ball finishes sideways was never fitted, and is
+reported by the tool since that day: against the GC3's own offline figure the
+model is 0.1 yd away on a typical shot and on the same side in 92 of 92 shots
+that both put a yard or more off the line; against the R50's, 0.3 yd and 97 of
+97. The website's sentence ("average ball carry, offline, and apex numbers are
+within 3% of real launch monitor data") rests on these.
 
 The constants were not fitted to a wind tunnel and came out on one: at a
 drive's speed and spin they give CD 0.219 and CL 0.153, where Acushnet measured
@@ -423,7 +434,7 @@ The result now also carries `landingSpin` (rpm at first touchdown) and
 | Tool | What it does |
 | --- | --- |
 | `node tools/ball-bench.mjs` | The ball against 148 real-world targets, by section, each naming its source. `--only greens,cup`, `--json`, `--set green.mu=.5,.3,.2` to try a constant without writing it, `--shot 120,16.3,7097` or `--land 22,51,9100` for one shot hop by hop on each firmness. Exits 1 on any failure. |
-| `node tools/flight-fit.mjs` | The air model against the published flights and the owner's private sessions (`docs/sources/private/`, not in the repository). `--fit` searches for better constants and prints them. |
+| `node tools/flight-fit.mjs` | The air model against the published flights and the owner's private sessions (`docs/sources/private/`, not in the repository). For the two sessions it also reports the sideways finish against the device's own (never fitted). `--fit` searches for better constants and prints them. |
 | `tools/flight-targets.mjs` | The published flights, as data. |
 | `node tools/meter-landings.mjs [--sweep] [--stimp 12]` | What the Swing Meter's own shots do when they land: every club hit at a green, at stock spin and with spin added, on each green firmness, and out of the rough. `--sweep` finds the furthest any stock-spin shot comes back. The table in *The strike* comes from it. |
 | `node tools/ball-paths.mjs [--against other/src/physics.js] > paths.html` | Side-on pictures (SVG) of what a ball does from its pitch mark to rest, this ball against another checkout's when asked: a drive on a fairway, a 7 iron, a spun wedge, a chip. Processor only. |

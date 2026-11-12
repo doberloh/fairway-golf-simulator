@@ -31,7 +31,10 @@ What was measured, in figures (sources and links in BALL_PHYSICS.md):
   -18 / -41 yd, tailwind +14 / +23. Model: 184.8 yd, 33.9, 47.5 deg; -18.5,
   -41.8, +13.7, +22.6. TrackMan's 60-row driver chart: average miss 0.1%,
   typical 1.3%. Tour averages 2023 (raw): 2.3%. The owner's GC3: 1.7%; R50:
-  2.3%. USGA example 257.64 yd in 6.39 s: 259.2 yd in 6.29 s. Fitted drag and
+  2.3%. Signed averages (12 November 2026): carry -0.3%, +0.2% and +0.8%
+  against the tour table, the GC3 and the R50; peak height -1.2%, +1.1% and
+  -1.6%; sideways finish, never fitted, 0.1 yd from the GC3's and 0.3 yd from
+  the R50's on a typical shot, on the same side in 92 of 92 and 97 of 97. USGA example 257.64 yd in 6.39 s: 259.2 yd in 6.29 s. Fitted drag and
   lift at a drive's speed and spin: 0.219 and 0.153; Acushnet measured 0.222 and
   0.152 (US 6,913,550). The old model carried a tour drive 262 yd against 275.
 - **A firm green.** USGA and R&A, 57 launcher shots on a championship green

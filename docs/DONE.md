@@ -25,6 +25,35 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The ball rebuilt (branch `ball-physics-rework`, 10-12 November 2026)
+
+- **The rebuilt ball: play it, then merge.** DONE: played by the owner on 12
+  November 2026 ("ive played it and it feels way better"), merged into main
+  and released as 0.9.13 the same day. What was built (docs/BALL_PHYSICS.md is
+  the model in full; docs/BALL_BEHAVIOUR_KNOBS.md its tuning values): a new
+  air model (`src/aero.js`) fitted to TrackMan's normalised tables and driver
+  chart; one bounce law (`src/bounce.js`) on Penner's tilted contact face,
+  with greens of two kinds after Haake; rolling that follows the Stimp, with a
+  putt's skid; the hole as real contacts (`src/cup.js`); three course
+  conditions (`src/turf.js`: green speed, green firmness, fairway firmness)
+  asked at the start of a round, with three presets; the lie taking a lofted
+  shot's spin as well as speed (the flyer). At the owner's word on 11
+  November every earlier ruling of theirs about the ball was deleted from the
+  code, tests and documents and replaced by choices made on measurements or
+  marked PLACED. `node tools/ball-bench.mjs` holds 148 measurements;
+  `node tools/meter-landings.mjs` prints what the Swing Meter's shots do on a
+  green. 28 smoke journeys passed on 11 November, before the last changes.
+  What it still owes is one entry in TODO.md, *What the rebuilt ball still
+  owes*; what nobody has reported seeing is in *Play the current build by
+  hand*.
+
+### Release 0.9.13 (12 November 2026)
+
+- **Released at the owner's word** ("please merge this back into main. Create
+  a new patch release. Push to github and the live website demo"): the
+  rebuilt ball and the gimme circle (DISTRIBUTION_REVIEW, the addendum for
+  v0.9.13). "Patch" was read as the next number after 0.9.12.
+
 ## The open list before the 11 November 2026 prune
 
 The owner asked on 11 November 2026 for the list to be pared down again: "The

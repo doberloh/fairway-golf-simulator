@@ -63,7 +63,7 @@ function gc3() {
   // Columns: A club, F carry, H peak height ft, I offline, K descent, L hang,
   // M ball speed, N launch, O direction, R total spin, S spin axis.
   return rows.filter(r => num(r.M) && num(r.R) && num(r.F)).map(r => ({source: 'GC3', club: String(r.A).replace(/[^\w ]/g, ''), mph: num(r.M), vla: num(r.N), hla: num(r.O) ?? 0,
-   spin: num(r.R), axis: num(r.S) ?? 0, carry: num(r.F), apexFt: num(r.H), descent: num(r.K), hang: num(r.L)}));
+   spin: num(r.R), axis: num(r.S) ?? 0, carry: num(r.F), apexFt: num(r.H), descent: num(r.K), hang: num(r.L), side: num(r.I)}));
  }
 }
 // One file out of a zip, by its central directory: enough for an .xlsx.
@@ -93,6 +93,7 @@ function r50() {
   .filter(r => r['Club Type'] !== 'Driver')
   .map(r => ({source: 'R50', club: r['Club Type'] === 'Lob Wedge' ? `${r['Club Name']} wedge` : r['Club Type'], mph: +r['Ball Speed'], vla: +r['Launch Angle'],
    hla: +r['Launch Direction'], spin: +r['Spin Rate'], axis: +r['Spin Axis'], carry: +r['Carry Distance'], apexFt: +r['Apex Height'],
+   side: Number.isFinite(+r['Carry Deviation Distance']) && r['Carry Deviation Distance'] !== '' ? +r['Carry Deviation Distance'] : null,
    air: {density: +r['Air Density'], tempC: (+r['Temperature'] - 32) * 5 / 9}}));
 }
 
@@ -122,7 +123,17 @@ for (const s of SHOTS) s.opts ??= s.air ? {altitude: altFor(s.air), temperature:
 // before it is touched.
 function fly(s) {
  const m = flyBall({speed: s.mph * MPH, vla: s.vla, hla: s.hla, spin: s.spin, spinAxis: s.axis}, s.opts);
- return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descent, hang: m.hang};
+ return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descent, hang: m.hang, side: m.side / YARD};
+}
+// SIDEWAYS FINISH (added 12 November 2026): where a device reports how far
+// offline the ball carried (yards, right positive), the model's own figure is
+// set beside it. Reported, never fitted: it is not in `cost`. "Same side"
+// counts only shots both put at least a yard off the line.
+function sideLine(rs) {
+ const s = rs.filter(r => r.side != null && Number.isFinite(r.m.side));
+ if (!s.length) return '';
+ const off = s.filter(r => Math.abs(r.side) >= 1 && Math.abs(r.m.side) >= 1);
+ return `  offline ${sg(mean(s.map(r => r.m.side - r.side)))} yd (typical ${mean(s.map(r => Math.abs(r.m.side - r.side))).toFixed(1)} yd, ${sg(mean(s.map(r => (r.m.side - r.side) / r.carry * 100)))}% of carry); same side ${off.filter(r => r.side * r.m.side > 0).length} of ${off.length}`;
 }
 function evaluate() {
  return SHOTS.map(s => { const m = fly(s); return {...s, m,
@@ -168,7 +179,8 @@ function report(rows, title) {
   const rs = rows.filter(r => r.source === src);
   const land = rs.filter(r => r.landErr != null);
   console.log(`  ${src.padEnd(9)} n=${String(rs.length).padStart(3)}  carry ${sg(mean(rs.map(r => r.carryPct)))}% (rms ${rms(rs.map(r => r.carryPct)).toFixed(1)}%)  apex ${sg(mean(rs.map(r => r.apexPct)))}% (rms ${rms(rs.map(r => r.apexPct)).toFixed(1)}%)`
-   + (land.length ? `  landing ${sg(mean(land.map(r => r.landErr)))} deg (rms ${rms(land.map(r => r.landErr)).toFixed(1)})` : ''));
+   + (land.length ? `  landing ${sg(mean(land.map(r => r.landErr)))} deg (rms ${rms(land.map(r => r.landErr)).toFixed(1)})` : '')
+   + sideLine(rs));
   const clubs = [...new Set(rs.map(r => r.club))];
   for (const c of clubs) {
    const cs = rs.filter(r => r.club === c);
